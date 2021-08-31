@@ -43,7 +43,7 @@ phases:
       -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
       -n ${INTEGRATION_TEST_SUBNET_ID}
       -m 35
-      -r 'Test(VSphere|Docker)Kubernetes.*(SimpleFlow|OIDC|ExternalEtcd|Upgrade|Autoimport)'
+      -r 'Test'
     - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
     - export GIT_HASH=$(cat bin/githash)
     - >
