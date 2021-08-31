@@ -10,9 +10,11 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"k8s.io/apimachinery/pkg/version"
+	"sigs.k8s.io/cluster-api/api/v1alpha3"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -23,7 +25,7 @@ const (
 	secretObjectName = "csi-vsphere-config"
 )
 
-var eksaClustersResourceName = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
+var capiClustersResourceType = fmt.Sprintf("clusters.%s", v1alpha3.GroupVersion.Group)
 
 func TestKubectlApplyKubeSpecSuccess(t *testing.T) {
 	spec := "specfile"
@@ -66,6 +68,28 @@ func TestKubectlApplyKubeSpecFromBytesError(t *testing.T) {
 	e.EXPECT().ExecuteWithStdin(ctx, data, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
 	if err := k.ApplyKubeSpecFromBytes(ctx, cluster, data); err == nil {
 		t.Errorf("Kubectl.ApplyKubeSpecFromBytes() error = nil, want not nil")
+	}
+}
+
+func TestKubectlCreateNamespaceSuccess(t *testing.T) {
+	var kubeconfig, namespace string
+
+	k, ctx, _, e := newKubectl(t)
+	expectedParam := []string{"create", "namespace", namespace, "--kubeconfig", kubeconfig}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
+	if err := k.CreateNamespace(ctx, kubeconfig, namespace); err != nil {
+		t.Errorf("Kubectl.CreateNamespace() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlCreateNamespaceError(t *testing.T) {
+	var kubeconfig, namespace string
+
+	k, ctx, _, e := newKubectl(t)
+	expectedParam := []string{"create", "namespace", namespace, "--kubeconfig", kubeconfig}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
+	if err := k.CreateNamespace(ctx, kubeconfig, namespace); err == nil {
+		t.Errorf("Kubectl.CreateNamespace() error = nil, want not nil")
 	}
 }
 
@@ -137,7 +161,7 @@ func TestKubectlDeleteClusterSuccess(t *testing.T) {
 	}
 
 	k, ctx, _, e := newKubectl(t)
-	expectedParam := []string{"delete", "cluster", clusterToDelete.Name, "--kubeconfig", managementCluster.KubeconfigFile}
+	expectedParam := []string{"delete", capiClustersResourceType, clusterToDelete.Name, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
 	if err := k.DeleteCluster(ctx, managementCluster, clusterToDelete); err != nil {
 		t.Errorf("Kubectl.DeleteCluster() error = %v, want nil", err)
@@ -154,7 +178,7 @@ func TestKubectlDeleteClusterError(t *testing.T) {
 	}
 
 	k, ctx, _, e := newKubectl(t)
-	expectedParam := []string{"delete", "cluster", clusterToDelete.Name, "--kubeconfig", managementCluster.KubeconfigFile}
+	expectedParam := []string{"delete", capiClustersResourceType, clusterToDelete.Name, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
 	if err := k.DeleteCluster(ctx, managementCluster, clusterToDelete); err == nil {
 		t.Errorf("Kubectl.DeleteCluster() error = nil, want not nil")
@@ -234,7 +258,7 @@ func TestKubectlGetMachines(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			fileContent := test.ReadFile(t, tt.jsonResponseFile)
 			k, ctx, cluster, e := newKubectl(t)
-			e.EXPECT().Execute(ctx, []string{"get", "machines", "-o", "json", "--kubeconfig", cluster.KubeconfigFile}).Return(*bytes.NewBufferString(fileContent), nil)
+			e.EXPECT().Execute(ctx, []string{"get", "machines", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}).Return(*bytes.NewBufferString(fileContent), nil)
 
 			gotMachines, err := k.GetMachines(ctx, cluster)
 			if err != nil {
@@ -256,12 +280,12 @@ func TestKubectlLoadSecret(t *testing.T) {
 	}{
 		{
 			testName: "SuccessScenario",
-			params:   []string{"create", "secret", "generic", secretObjectName, "--type", secretObjectType, "--from-literal", "test_cluster", "--kubeconfig", "test_cluster.kind.kubeconfig"},
+			params:   []string{"create", "secret", "generic", secretObjectName, "--type", secretObjectType, "--from-literal", "test_cluster", "--kubeconfig", "test_cluster.kind.kubeconfig", "--namespace", constants.EksaSystemNamespace},
 			wantErr:  nil,
 		},
 		{
 			testName: "ErrorScenario",
-			params:   []string{"create", "secret", "generic", secretObjectName, "--type", secretObjectType, "--from-literal", "test_cluster", "--kubeconfig", "test_cluster.kind.kubeconfig"},
+			params:   []string{"create", "secret", "generic", secretObjectName, "--type", secretObjectType, "--from-literal", "test_cluster", "--kubeconfig", "test_cluster.kind.kubeconfig", "--namespace", constants.EksaSystemNamespace},
 			wantErr:  errors.New("error loading secret: "),
 		},
 	}
@@ -287,12 +311,12 @@ func TestKubectlGetSecret(t *testing.T) {
 	}{
 		{
 			testName: "SuccessScenario",
-			params:   []string{"get", "secret", secretObjectName, "-o", "json", "--namespace", "eksa-system", "--kubeconfig", "c.kubeconfig"},
+			params:   []string{"get", "secret", secretObjectName, "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "c.kubeconfig"},
 			wantErr:  nil,
 		},
 		{
 			testName: "ErrorScenario",
-			params:   []string{"get", "secret", secretObjectName, "-o", "json", "--namespace", "eksa-system", "--kubeconfig", "c.kubeconfig"},
+			params:   []string{"get", "secret", secretObjectName, "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "c.kubeconfig"},
 			wantErr:  errors.New("error getting secret: "),
 		},
 	}
@@ -301,7 +325,7 @@ func TestKubectlGetSecret(t *testing.T) {
 			k, ctx, cluster, e := newKubectl(t)
 			e.EXPECT().Execute(ctx, tc.params).Return(bytes.Buffer{}, tc.wantErr)
 
-			_, err := k.GetSecret(ctx, secretObjectName, executables.WithNamespace("eksa-system"), executables.WithCluster(cluster))
+			_, err := k.GetSecret(ctx, secretObjectName, executables.WithNamespace(constants.EksaSystemNamespace), executables.WithCluster(cluster))
 
 			if (tc.wantErr != nil && err == nil) && !reflect.DeepEqual(tc.wantErr, err) {
 				t.Errorf("%v got = %v, want %v", tc.testName, err, tc.wantErr)
@@ -339,7 +363,7 @@ func TestKubectlGetClusters(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			fileContent := test.ReadFile(t, tt.jsonResponseFile)
 			k, ctx, cluster, e := newKubectl(t)
-			e.EXPECT().Execute(ctx, []string{"get", "clusters.cluster.x-k8s.io", "-o", "json", "--kubeconfig", cluster.KubeconfigFile}).Return(*bytes.NewBufferString(fileContent), nil)
+			e.EXPECT().Execute(ctx, []string{"get", "clusters.cluster.x-k8s.io", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}).Return(*bytes.NewBufferString(fileContent), nil)
 
 			gotClusters, err := k.GetClusters(ctx, cluster)
 			if err != nil {
@@ -838,19 +862,26 @@ func TestKubectlUpdateAnnotation(t *testing.T) {
 	}
 }
 
-func TestKubectlUpdateClusterAnnotation(t *testing.T) {
+func TestKubectlRemoveAnnotation(t *testing.T) {
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(ctx, []string{
-		"annotate", eksaClustersResourceName, cluster.Name,
-		"key1=val1", "--overwrite",
-		"--kubeconfig", cluster.KubeconfigFile,
+		"annotate", "cluster", "test-cluster", "key1-", "--kubeconfig", cluster.KubeconfigFile,
 	})
 
-	a := map[string]string{
-		"key1": "val1",
-	}
-	err := k.UpdateEksaClusterAnnotations(ctx, a, cluster)
+	err := k.RemoveAnnotation(ctx, "cluster", "test-cluster", "key1", executables.WithCluster(cluster))
 	if err != nil {
-		t.Fatalf("Kubectl.UpdateAnnotation() error = %v, want nil", err)
+		t.Fatalf("Kubectl.RemoveAnnotation() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlRemoveAnnotationInNamespace(t *testing.T) {
+	k, ctx, cluster, e := newKubectl(t)
+	e.EXPECT().Execute(ctx, []string{
+		"annotate", "cluster", "test-cluster", "key1-", "--kubeconfig", cluster.KubeconfigFile, "--namespace", "",
+	})
+
+	err := k.RemoveAnnotationInNamespace(ctx, "cluster", "test-cluster", "key1", cluster, "")
+	if err != nil {
+		t.Fatalf("Kubectl.RemoveAnnotationInNamespace() error = %v, want nil", err)
 	}
 }

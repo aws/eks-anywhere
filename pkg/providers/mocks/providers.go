@@ -96,18 +96,18 @@ func (mr *MockProviderMockRecorder) DatacenterConfig() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DatacenterConfig", reflect.TypeOf((*MockProvider)(nil).DatacenterConfig))
 }
 
-// DatacenterResourceName mocks base method.
-func (m *MockProvider) DatacenterResourceName() string {
+// DatacenterResourceType mocks base method.
+func (m *MockProvider) DatacenterResourceType() string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DatacenterResourceName")
+	ret := m.ctrl.Call(m, "DatacenterResourceType")
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
-// DatacenterResourceName indicates an expected call of DatacenterResourceName.
-func (mr *MockProviderMockRecorder) DatacenterResourceName() *gomock.Call {
+// DatacenterResourceType indicates an expected call of DatacenterResourceType.
+func (mr *MockProviderMockRecorder) DatacenterResourceType() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DatacenterResourceName", reflect.TypeOf((*MockProvider)(nil).DatacenterResourceName))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DatacenterResourceType", reflect.TypeOf((*MockProvider)(nil).DatacenterResourceType))
 }
 
 // EnvMap mocks base method.
@@ -226,18 +226,18 @@ func (mr *MockProviderMockRecorder) MachineConfigs() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MachineConfigs", reflect.TypeOf((*MockProvider)(nil).MachineConfigs))
 }
 
-// MachineResourceName mocks base method.
-func (m *MockProvider) MachineResourceName() string {
+// MachineResourceType mocks base method.
+func (m *MockProvider) MachineResourceType() string {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MachineResourceName")
+	ret := m.ctrl.Call(m, "MachineResourceType")
 	ret0, _ := ret[0].(string)
 	return ret0
 }
 
-// MachineResourceName indicates an expected call of MachineResourceName.
-func (mr *MockProviderMockRecorder) MachineResourceName() *gomock.Call {
+// MachineResourceType indicates an expected call of MachineResourceType.
+func (mr *MockProviderMockRecorder) MachineResourceType() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MachineResourceName", reflect.TypeOf((*MockProvider)(nil).MachineResourceName))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MachineResourceType", reflect.TypeOf((*MockProvider)(nil).MachineResourceType))
 }
 
 // Name mocks base method.

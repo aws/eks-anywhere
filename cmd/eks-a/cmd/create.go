@@ -7,7 +7,7 @@ import (
 var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create resources",
-	Long:  "Use eks-a create to create resources, such as clusters",
+	Long:  "Use eksctl anywhere create to create resources, such as clusters",
 }
 
 func init() {

@@ -11,7 +11,10 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -74,7 +77,7 @@ func (g *Govc) SearchTemplate(ctx context.Context, datacenter string, machineCon
 		return "", fmt.Errorf("%v", err)
 	}
 
-	params := strings.Fields("find -json " + "/" + datacenter + " -type VirtualMachine -name " + filepath.Base(machineConfig.Spec.Template))
+	params := []string{"find", "-json", "/" + datacenter, "-type", "VirtualMachine", "-name", filepath.Base(machineConfig.Spec.Template)}
 	templateResponse, err := g.executable.ExecuteWithEnv(ctx, envMap, params...)
 	if err != nil {
 		return "", fmt.Errorf("error getting template: %v", err)
@@ -119,6 +122,28 @@ func (g *Govc) LibraryElementExists(ctx context.Context, library string) (bool, 
 	}
 
 	return response.Len() > 0, nil
+}
+
+func (g *Govc) ResizeDisk(ctx context.Context, template, diskName string, diskSizeInGB int) error {
+	_, err := g.exec(ctx, "vm.disk.change", "-vm", template, "-disk.name", diskName, "-size", strconv.Itoa(diskSizeInGB)+"G")
+	if err != nil {
+		return fmt.Errorf("Failed to resize disk %s: %v", diskName, err)
+	}
+	return nil
+}
+
+func (g *Govc) DevicesInfo(ctx context.Context, template string) (interface{}, error) {
+	response, err := g.exec(ctx, "device.info", "-vm", template, "-json")
+	if err != nil {
+		return nil, fmt.Errorf("Error getting template device infomation: %v", err)
+	}
+
+	var devicesInfo map[string]interface{}
+	err = yaml.Unmarshal(response.Bytes(), &devicesInfo)
+	if err != nil {
+		return nil, fmt.Errorf("Error unmarshalling devices info: %v", err)
+	}
+	return devicesInfo["Devices"].(interface{}), nil
 }
 
 func (g *Govc) TemplateHasSnapshot(ctx context.Context, template string) (bool, error) {
@@ -175,10 +200,33 @@ func (g *Govc) CreateLibrary(ctx context.Context, datastore, library string) err
 	return nil
 }
 
-func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string) error {
+func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string, resizeDisk2 bool) error {
 	logger.V(4).Info("Deploying template", "dir", templateDir, "templateName", templateName)
 	if err := g.deployTemplate(ctx, library, templateName, templateDir, resourcePool); err != nil {
 		return err
+	}
+
+	if resizeDisk2 {
+		// Get devices information template to identify second disk properly
+		logger.V(4).Info("Getting devices info for template")
+		devicesInfo, err := g.DevicesInfo(ctx, templateName)
+		if err != nil {
+			return err
+		}
+		for _, deviceInfo := range devicesInfo.([]interface{}) {
+			deviceMetadata := deviceInfo.(map[string]interface{})["DeviceInfo"]
+			deviceLabel := deviceMetadata.(map[string]interface{})["Label"].(string)
+			if strings.EqualFold(deviceLabel, "Hard disk 2") {
+				// Get the name of the hard disk and resize the disk to 20G
+				diskName := deviceInfo.(map[string]interface{})["Name"].(string)
+				logger.V(4).Info("Resizing disk 2 of template to 20G")
+				err := g.ResizeDisk(ctx, templateName, diskName, 20)
+				if err != nil {
+					return fmt.Errorf("Error resizing disk 2 to 20G: %v", err)
+				}
+				break
+			}
+		}
 	}
 
 	logger.V(4).Info("Taking template snapshot", "templateName", templateName)

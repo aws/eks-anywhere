@@ -86,6 +86,20 @@ func (mr *MockClusterClientMockRecorder) CreateBootstrapCluster(arg0, arg1 inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBootstrapCluster", reflect.TypeOf((*MockClusterClient)(nil).CreateBootstrapCluster), varargs...)
 }
 
+// CreateNamespace mocks base method.
+func (m *MockClusterClient) CreateNamespace(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateNamespace", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateNamespace indicates an expected call of CreateNamespace.
+func (mr *MockClusterClientMockRecorder) CreateNamespace(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespace", reflect.TypeOf((*MockClusterClient)(nil).CreateNamespace), arg0, arg1, arg2)
+}
+
 // DeleteBootstrapCluster mocks base method.
 func (m *MockClusterClient) DeleteBootstrapCluster(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()

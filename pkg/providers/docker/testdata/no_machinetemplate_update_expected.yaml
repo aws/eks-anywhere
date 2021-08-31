@@ -2,7 +2,7 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: Cluster
 metadata:
   name: fluxAddonTestCluster
-  namespace: default
+  namespace: eksa-system
 spec:
   clusterNetwork:
     pods:
@@ -16,31 +16,31 @@ spec:
     apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
     kind: KubeadmControlPlane
     name: fluxAddonTestCluster
-    namespace: default
+    namespace: eksa-system
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: DockerCluster
     name: fluxAddonTestCluster
-    namespace: default
+    namespace: eksa-system
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: DockerCluster
 metadata:
   name: fluxAddonTestCluster
-  namespace: default
+  namespace: eksa-system
 ---
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
 metadata:
   name: fluxAddonTestCluster
-  namespace: default
+  namespace: eksa-system
 spec:
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: DockerMachineTemplate
     name: test-control-plane-template-original
-    namespace: default
+    namespace: eksa-system
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: 
@@ -79,7 +79,7 @@ apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
 kind: KubeadmConfigTemplate
 metadata:
   name: fluxAddonTestCluster-md-0
-  namespace: default
+  namespace: eksa-system
 spec:
   template:
     spec:
@@ -94,7 +94,7 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachineDeployment
 metadata:
   name: fluxAddonTestCluster-md-0
-  namespace: default
+  namespace: eksa-system
 spec:
   clusterName: fluxAddonTestCluster
   replicas: 0
@@ -107,11 +107,11 @@ spec:
           apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
           kind: KubeadmConfigTemplate
           name: fluxAddonTestCluster-md-0
-          namespace: default
+          namespace: eksa-system
       clusterName: fluxAddonTestCluster
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
         kind: DockerMachineTemplate
         name: test-worker-node-template-original
-        namespace: default
+        namespace: eksa-system
       version: 

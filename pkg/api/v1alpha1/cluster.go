@@ -103,6 +103,17 @@ func WithWorkerMachineGroupRef(ref ProviderRefAccessor) ClusterGenerateOpt {
 	}
 }
 
+func WithEtcdMachineGroupRef(ref ProviderRefAccessor) ClusterGenerateOpt {
+	return func(c *ClusterGenerate) {
+		if c.Spec.ExternalEtcdConfiguration != nil {
+			c.Spec.ExternalEtcdConfiguration.MachineGroupRef = &Ref{
+				Kind: ref.Kind(),
+				Name: ref.Name(),
+			}
+		}
+	}
+}
+
 func NewCluster(clusterName string) *Cluster {
 	c := &Cluster{
 		TypeMeta: metav1.TypeMeta{

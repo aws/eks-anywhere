@@ -7,7 +7,7 @@ import (
 var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "Delete resources",
-	Long:  "Use eks-a delete to delete clusters",
+	Long:  "Use eksctl anywhere delete to delete clusters",
 }
 
 func init() {

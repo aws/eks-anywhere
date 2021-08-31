@@ -2,7 +2,7 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: Cluster
 metadata:
   name: test-cluster
-  namespace: default
+  namespace: eksa-system
 spec:
   clusterNetwork:
     pods:
@@ -16,24 +16,24 @@ spec:
     apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
     kind: KubeadmControlPlane
     name: test-cluster
-    namespace: default
+    namespace: eksa-system
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: DockerCluster
     name: test-cluster
-    namespace: default
+    namespace: eksa-system
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: DockerCluster
 metadata:
   name: test-cluster
-  namespace: default
+  namespace: eksa-system
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: DockerMachineTemplate
 metadata:
   name: test-cluster-control-plane-template-1234567890000
-  namespace: default
+  namespace: eksa-system
 spec:
   template:
     spec:
@@ -46,13 +46,13 @@ apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
 metadata:
   name: test-cluster
-  namespace: default
+  namespace: eksa-system
 spec:
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: DockerMachineTemplate
     name: test-cluster-control-plane-template-1234567890000
-    namespace: default
+    namespace: eksa-system
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
@@ -98,7 +98,7 @@ apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: DockerMachineTemplate
 metadata:
   name: test-cluster-worker-node-template-1234567890000
-  namespace: default
+  namespace: eksa-system
 spec:
   template:
     spec:
@@ -111,7 +111,7 @@ apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
 kind: KubeadmConfigTemplate
 metadata:
   name: test-cluster-md-0
-  namespace: default
+  namespace: eksa-system
 spec:
   template:
     spec:
@@ -126,7 +126,7 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachineDeployment
 metadata:
   name: test-cluster-md-0
-  namespace: default
+  namespace: eksa-system
 spec:
   clusterName: test-cluster
   replicas: 3
@@ -139,11 +139,11 @@ spec:
           apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
           kind: KubeadmConfigTemplate
           name: test-cluster-md-0
-          namespace: default
+          namespace: eksa-system
       clusterName: test-cluster
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
         kind: DockerMachineTemplate
         name: test-cluster-worker-node-template-1234567890000
-        namespace: default
+        namespace: eksa-system
       version: v1.19.6-eks-1-19-2

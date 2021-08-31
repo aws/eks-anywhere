@@ -42,6 +42,13 @@ func (c *VSphereMachineConfig) IsControlPlane() bool {
 	return false
 }
 
+func (c *VSphereMachineConfig) IsEtcd() bool {
+	if s, ok := c.Annotations[etcdAnnotation]; ok {
+		return s == "true"
+	}
+	return false
+}
+
 type OSFamily string
 
 const (

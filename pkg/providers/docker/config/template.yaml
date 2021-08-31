@@ -2,7 +2,7 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: Cluster
 metadata:
   name: {{.clusterName}}
-  namespace: default
+  namespace: {{.eksaSystemNamespace}}
 spec:
   clusterNetwork:
     pods:
@@ -16,32 +16,32 @@ spec:
     apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
     kind: KubeadmControlPlane
     name: {{.clusterName}}
-    namespace: default
+    namespace: {{.eksaSystemNamespace}}
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: DockerCluster
     name: {{.clusterName}}
-    namespace: default
+    namespace: {{.eksaSystemNamespace}}
 {{- if .externalEtcd }}
   managedExternalEtcdRef:
     apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
     kind: EtcdadmCluster
     name: {{.clusterName}}-etcd
-    namespace: default
+    namespace: {{.eksaSystemNamespace}}
 {{- end }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: DockerCluster
 metadata:
   name: {{.clusterName}}
-  namespace: default
+  namespace: {{.eksaSystemNamespace}}
 ---
 {{- if .needsNewControlPlaneTemplate }}
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: DockerMachineTemplate
 metadata:
   name: {{.controlPlaneTemplateName}}
-  namespace: default
+  namespace: {{.eksaSystemNamespace}}
 spec:
   template:
     spec:
@@ -55,13 +55,13 @@ apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
 metadata:
   name: {{.clusterName}}
-  namespace: default
+  namespace: {{.eksaSystemNamespace}}
 spec:
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: DockerMachineTemplate
     name: {{.controlPlaneTemplateName}}
-    namespace: default
+    namespace: {{.eksaSystemNamespace}}
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: {{.kubernetesRepository}}
@@ -112,7 +112,7 @@ apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: DockerMachineTemplate
 metadata:
   name: {{.workloadTemplateName}}
-  namespace: default
+  namespace: {{.eksaSystemNamespace}}
 spec:
   template:
     spec:
@@ -126,7 +126,7 @@ apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
 kind: KubeadmConfigTemplate
 metadata:
   name: {{.clusterName}}-md-0
-  namespace: default
+  namespace: {{.eksaSystemNamespace}}
 spec:
   template:
     spec:
@@ -141,7 +141,7 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachineDeployment
 metadata:
   name: {{.clusterName}}-md-0
-  namespace: default
+  namespace: {{.eksaSystemNamespace}}
 spec:
   clusterName: {{.clusterName}}
   replicas: {{.worker_replicas}}
@@ -154,13 +154,13 @@ spec:
           apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
           kind: KubeadmConfigTemplate
           name: {{.clusterName}}-md-0
-          namespace: default
+          namespace: {{.eksaSystemNamespace}}
       clusterName: {{.clusterName}}
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
         kind: DockerMachineTemplate
         name: {{.workloadTemplateName}}
-        namespace: default
+        namespace: {{.eksaSystemNamespace}}
       version: {{.kubernetesVersion}}
 {{- if .externalEtcd }}
 ---
@@ -168,7 +168,7 @@ kind: EtcdadmCluster
 apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
 metadata:
   name: {{.clusterName}}-etcd
-  namespace: default
+  namespace: {{.eksaSystemNamespace}}
 spec:
   replicas: {{.externalEtcdReplicas}}
   etcdadmConfigSpec:
@@ -179,14 +179,14 @@ spec:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: DockerMachineTemplate
     name: {{.etcdTemplateName}}
-    namespace: default
+    namespace: {{.eksaSystemNamespace}}
 ---
 {{- if .needsNewEtcdTemplate }}
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: DockerMachineTemplate
 metadata:
   name: {{.etcdTemplateName}}
-  namespace: default
+  namespace: {{.eksaSystemNamespace}}
 spec:
   template:
     spec:

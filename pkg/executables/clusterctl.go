@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -143,7 +144,7 @@ func writeInfrastructureBundle(clusterSpec *cluster.Spec, rootFolder string, bun
 }
 
 func (c *Clusterctl) MoveManagement(ctx context.Context, from, to *types.Cluster) error {
-	params := []string{"move", "--to-kubeconfig", to.KubeconfigFile}
+	params := []string{"move", "--to-kubeconfig", to.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}
 	if from.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", from.KubeconfigFile)
 	}
@@ -158,6 +159,7 @@ func (c *Clusterctl) GetWorkloadKubeconfig(ctx context.Context, clusterName stri
 	stdOut, err := c.executable.Execute(
 		ctx, "get", "kubeconfig", clusterName,
 		"--kubeconfig", cluster.KubeconfigFile,
+		"--namespace", constants.EksaSystemNamespace,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("error executing get kubeconfig: %v", err)

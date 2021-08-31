@@ -18,6 +18,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	mocksmanager "github.com/aws/eks-anywhere/pkg/clustermanager/mocks"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	mockswriter "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	mocksprovider "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -43,8 +44,9 @@ var clusterDeployments = map[string]*types.Deployment{
 }
 
 var (
-	eksaVSphereDatacenterResourceName = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaVSphereMachineResourceName    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaClusterResourceType           = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
+	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
 )
 
 func TestClusterManagerInstallNetworkingSuccess(t *testing.T) {
@@ -209,7 +211,7 @@ func TestClusterManagerCreateWorkloadClusterSuccess(t *testing.T) {
 
 	c, m := newClusterManager(t)
 	m.provider.EXPECT().GenerateDeploymentFileForCreate(ctx, cluster, clusterSpec, "cluster-name-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpec(ctx, cluster, test.OfType("string"))
+	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, cluster, test.OfType("string"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	m.client.EXPECT().GetMachines(ctx, cluster).Return([]types.Machine{}, nil)
 	kubeconfig := []byte("content")
@@ -238,7 +240,7 @@ func TestClusterManagerCreateWorkloadClusterWithExternalEtcdSuccess(t *testing.T
 
 	c, m := newClusterManager(t)
 	m.provider.EXPECT().GenerateDeploymentFileForCreate(ctx, cluster, clusterSpec, "cluster-name-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpec(ctx, cluster, test.OfType("string"))
+	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, cluster, test.OfType("string"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForManagedExternalEtcdReady(ctx, cluster, "60m", clusterName)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	m.client.EXPECT().GetMachines(ctx, cluster).Return([]types.Machine{}, nil)
@@ -275,7 +277,7 @@ func TestClusterManagerCreateWorkloadClusterSuccessWithExtraObjects(t *testing.T
 
 	c, m := newClusterManager(t)
 	m.provider.EXPECT().GenerateDeploymentFileForCreate(ctx, cluster, clusterSpec, "cluster-name-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpec(ctx, cluster, test.OfType("string"))
+	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, cluster, test.OfType("string"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	m.client.EXPECT().GetMachines(ctx, cluster).Return([]types.Machine{}, nil)
 	kubeconfig := []byte("content")
@@ -317,7 +319,7 @@ func TestClusterManagerCreateWorkloadClusterErrorApplyingExtraObjects(t *testing
 
 	c, m := newClusterManager(t)
 	m.provider.EXPECT().GenerateDeploymentFileForCreate(ctx, cluster, clusterSpec, "cluster-name-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpec(ctx, cluster, test.OfType("string"))
+	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, cluster, test.OfType("string"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	m.client.EXPECT().GetMachines(ctx, cluster).Return([]types.Machine{}, nil)
 	kubeconfig := []byte("content")
@@ -346,7 +348,7 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesTimeout(t *testing.T)
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 50*time.Microsecond, 100*time.Microsecond))
 	m.provider.EXPECT().GenerateDeploymentFileForCreate(ctx, cluster, clusterSpec, "cluster-name-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpec(ctx, cluster, test.OfType("string"))
+	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, cluster, test.OfType("string"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	// Fail once
 	m.client.EXPECT().GetMachines(ctx, cluster).Times(1).Return(nil, errors.New("error get machines"))
@@ -376,7 +378,7 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesSuccessAfterRetries(t
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 1*time.Minute, 2*time.Minute))
 	m.provider.EXPECT().GenerateDeploymentFileForCreate(ctx, cluster, clusterSpec, "cluster-name-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpec(ctx, cluster, test.OfType("string"))
+	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, cluster, test.OfType("string"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	// Fail a bunch of times
 	m.client.EXPECT().GetMachines(ctx, cluster).Times(retries-5).Return(nil, errors.New("error get machines"))
@@ -426,7 +428,7 @@ func TestClusterManagerUpgradeWorkloadClusterSuccess(t *testing.T) {
 
 	c, m := newClusterManager(t)
 	m.provider.EXPECT().GenerateDeploymentFileForUpgrade(ctx, mCluster, wCluster, wClusterSpec, "workload-cluster-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpec(ctx, mCluster, test.OfType("string"))
+	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, mCluster, test.OfType("string"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", wClusterName).MaxTimes(2)
 	m.client.EXPECT().GetMachines(ctx, mCluster).Return([]types.Machine{}, nil)
 	m.client.EXPECT().WaitForDeployment(ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
@@ -457,7 +459,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForMachinesTimeout(t *testing.T
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 50*time.Microsecond, 100*time.Microsecond))
 	m.provider.EXPECT().GenerateDeploymentFileForUpgrade(ctx, mCluster, wCluster, wClusterSpec, "workload-cluster-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpec(ctx, mCluster, test.OfType("string"))
+	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, mCluster, test.OfType("string"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", wClusterName)
 	// Fail once
 	m.client.EXPECT().GetMachines(ctx, mCluster).Times(1).Return(nil, errors.New("error get machines"))
@@ -491,7 +493,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForCapiTimeout(t *testing.T) {
 
 	c, m := newClusterManager(t)
 	m.provider.EXPECT().GenerateDeploymentFileForUpgrade(ctx, mCluster, wCluster, wClusterSpec, "workload-cluster-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpec(ctx, mCluster, test.OfType("string"))
+	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, mCluster, test.OfType("string"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", wClusterName).MaxTimes(2)
 	m.client.EXPECT().GetMachines(ctx, mCluster).Return([]types.Machine{}, nil)
 	m.client.EXPECT().WaitForDeployment(ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).Return(errors.New("time out"))
@@ -658,10 +660,10 @@ func TestClusterManagerPauseEKSAControllerReconcileSuccessWithoutMachineConfig(t
 	expectedPauseAnnotation := map[string]string{"anywhere.eks.amazonaws.com/paused": "true"}
 
 	cm, m := newClusterManager(t)
-	m.provider.EXPECT().DatacenterResourceName().Return(eksaVSphereDatacenterResourceName)
-	m.provider.EXPECT().MachineResourceName().Return("")
-	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaVSphereDatacenterResourceName, clusterSpec.Spec.DatacenterRef.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
-	m.client.EXPECT().UpdateEksaClusterAnnotations(ctx, expectedPauseAnnotation, clusterObj).Return(nil)
+	m.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType)
+	m.provider.EXPECT().MachineResourceType().Return("")
+	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaVSphereDatacenterResourceType, clusterSpec.Spec.DatacenterRef.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
+	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaClusterResourceType, clusterObj.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
 
 	if err := cm.PauseEKSAControllerReconcile(ctx, clusterObj, clusterSpec, m.provider); err != nil {
 		t.Errorf("ClusterManager.PauseEKSAControllerReconcile() error = %v, wantErr nil", err)
@@ -700,15 +702,61 @@ func TestClusterManagerPauseEKSAControllerReconcileSuccessWithMachineConfig(t *t
 	expectedPauseAnnotation := map[string]string{"anywhere.eks.amazonaws.com/paused": "true"}
 
 	cm, m := newClusterManager(t)
-	m.provider.EXPECT().DatacenterResourceName().Return(eksaVSphereDatacenterResourceName)
-	m.provider.EXPECT().MachineResourceName().Return(eksaVSphereMachineResourceName).Times(3)
-	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaVSphereDatacenterResourceName, clusterSpec.Spec.DatacenterRef.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
-	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaVSphereMachineResourceName, clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
-	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaVSphereMachineResourceName, clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
-	m.client.EXPECT().UpdateEksaClusterAnnotations(ctx, expectedPauseAnnotation, clusterObj).Return(nil)
+	m.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType)
+	m.provider.EXPECT().MachineResourceType().Return(eksaVSphereMachineResourceType).Times(3)
+	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaVSphereDatacenterResourceType, clusterSpec.Spec.DatacenterRef.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
+	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaVSphereMachineResourceType, clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
+	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaVSphereMachineResourceType, clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
+	m.client.EXPECT().UpdateAnnotationInNamespace(ctx, eksaClusterResourceType, clusterObj.Name, expectedPauseAnnotation, clusterObj, "").Return(nil)
 
 	if err := cm.PauseEKSAControllerReconcile(ctx, clusterObj, clusterSpec, m.provider); err != nil {
 		t.Errorf("ClusterManager.PauseEKSAControllerReconcile() error = %v, wantErr nil", err)
+	}
+}
+
+func TestClusterManagerResumeEKSAControllerReconcileSuccessWithoutMachineConfig(t *testing.T) {
+	ctx := context.Background()
+	clusterName := "cluster-name"
+
+	clusterObj := &types.Cluster{
+		Name: clusterName,
+	}
+
+	clusterSpec := &cluster.Spec{
+		Cluster: &v1alpha1.Cluster{
+			Spec: v1alpha1.ClusterSpec{
+				DatacenterRef: v1alpha1.Ref{
+					Kind: v1alpha1.VSphereDatacenterKind,
+					Name: "data-center-name",
+				},
+			},
+		},
+	}
+	clusterSpec.PauseReconcile()
+
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterName,
+		},
+		Spec: v1alpha1.VSphereDatacenterConfigSpec{
+			Insecure: true,
+		},
+	}
+	pauseAnnotation := "anywhere.eks.amazonaws.com/paused"
+
+	cm, m := newClusterManager(t)
+	m.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType)
+	m.provider.EXPECT().MachineResourceType().Return("")
+	m.provider.EXPECT().DatacenterConfig().Return(datacenterConfig)
+	m.client.EXPECT().RemoveAnnotationInNamespace(ctx, eksaVSphereDatacenterResourceType, clusterSpec.Spec.DatacenterRef.Name, pauseAnnotation, clusterObj, "").Return(nil)
+	m.client.EXPECT().RemoveAnnotationInNamespace(ctx, eksaClusterResourceType, clusterObj.Name, pauseAnnotation, clusterObj, "").Return(nil)
+
+	if err := cm.ResumeEKSAControllerReconcile(ctx, clusterObj, clusterSpec, m.provider); err != nil {
+		t.Errorf("ClusterManager.ResumeEKSAControllerReconcile() error = %v, wantErr nil", err)
+	}
+	annotations := clusterSpec.GetAnnotations()
+	if _, ok := annotations[pauseAnnotation]; ok {
+		t.Errorf("%s annotation exists, should be removed", pauseAnnotation)
 	}
 }
 

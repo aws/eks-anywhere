@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -25,6 +26,7 @@ type ClusterClient interface {
 	GetKubeconfig(ctx context.Context, clusterName string) (string, error)
 	ClusterExists(ctx context.Context, clusterName string) (bool, error)
 	ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error
+	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 }
 
 type (
@@ -47,6 +49,10 @@ func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *
 	c := &types.Cluster{
 		Name:           clusterSpec.Name,
 		KubeconfigFile: kubeconfigFile,
+	}
+
+	if err := b.clusterClient.CreateNamespace(ctx, c.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
+		return nil, err
 	}
 
 	err = cluster.ApplyExtraObjects(ctx, b.clusterClient, c, clusterSpec)

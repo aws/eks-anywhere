@@ -112,11 +112,11 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 		)
 	}
 
-	if !old.IsControlPlane() {
-		vspheremachineconfiglog.Info("Machine config is not associated with control plane")
+	if !old.IsControlPlane() && !old.IsEtcd() {
+		vspheremachineconfiglog.Info("Machine config is not associated with control plane or etcd")
 		return allErrs
 	}
-	vspheremachineconfiglog.Info("Machine config is associated with control plane")
+	vspheremachineconfiglog.Info("Machine config is associated with control plane or etcd")
 
 	if old.Spec.MemoryMiB != new.Spec.MemoryMiB {
 		allErrs = append(

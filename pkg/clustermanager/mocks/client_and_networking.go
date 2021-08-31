@@ -81,6 +81,20 @@ func (mr *MockClusterClientMockRecorder) ApplyKubeSpecFromBytesForce(arg0, arg1,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesForce", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpecFromBytesForce), arg0, arg1, arg2)
 }
 
+// ApplyKubeSpecWithNamespace mocks base method.
+func (m *MockClusterClient) ApplyKubeSpecWithNamespace(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ApplyKubeSpecWithNamespace", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ApplyKubeSpecWithNamespace indicates an expected call of ApplyKubeSpecWithNamespace.
+func (mr *MockClusterClientMockRecorder) ApplyKubeSpecWithNamespace(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecWithNamespace", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpecWithNamespace), arg0, arg1, arg2, arg3)
+}
+
 // DeleteCluster mocks base method.
 func (m *MockClusterClient) DeleteCluster(arg0 context.Context, arg1, arg2 *types.Cluster) error {
 	m.ctrl.T.Helper()
@@ -213,6 +227,20 @@ func (mr *MockClusterClientMockRecorder) MoveManagement(arg0, arg1, arg2 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveManagement", reflect.TypeOf((*MockClusterClient)(nil).MoveManagement), arg0, arg1, arg2)
 }
 
+// RemoveAnnotationInNamespace mocks base method.
+func (m *MockClusterClient) RemoveAnnotationInNamespace(arg0 context.Context, arg1, arg2, arg3 string, arg4 *types.Cluster, arg5 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveAnnotationInNamespace", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveAnnotationInNamespace indicates an expected call of RemoveAnnotationInNamespace.
+func (mr *MockClusterClientMockRecorder) RemoveAnnotationInNamespace(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveAnnotationInNamespace", reflect.TypeOf((*MockClusterClient)(nil).RemoveAnnotationInNamespace), arg0, arg1, arg2, arg3, arg4, arg5)
+}
+
 // SaveLog mocks base method.
 func (m *MockClusterClient) SaveLog(arg0 context.Context, arg1 *types.Cluster, arg2 *types.Deployment, arg3 string, arg4 filewriter.FileWriter) error {
 	m.ctrl.T.Helper()
@@ -239,20 +267,6 @@ func (m *MockClusterClient) UpdateAnnotationInNamespace(arg0 context.Context, ar
 func (mr *MockClusterClientMockRecorder) UpdateAnnotationInNamespace(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAnnotationInNamespace", reflect.TypeOf((*MockClusterClient)(nil).UpdateAnnotationInNamespace), arg0, arg1, arg2, arg3, arg4, arg5)
-}
-
-// UpdateEksaClusterAnnotations mocks base method.
-func (m *MockClusterClient) UpdateEksaClusterAnnotations(arg0 context.Context, arg1 map[string]string, arg2 *types.Cluster) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateEksaClusterAnnotations", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateEksaClusterAnnotations indicates an expected call of UpdateEksaClusterAnnotations.
-func (mr *MockClusterClientMockRecorder) UpdateEksaClusterAnnotations(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEksaClusterAnnotations", reflect.TypeOf((*MockClusterClient)(nil).UpdateEksaClusterAnnotations), arg0, arg1, arg2)
 }
 
 // WaitForControlPlaneReady mocks base method.

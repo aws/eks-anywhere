@@ -80,9 +80,12 @@ func generateClusterConfig(clusterName string) error {
 		// in controller code
 		cpMachineConfig := v1alpha1.NewVSphereMachineConfigGenerate(clusterName + "-cp")
 		workerMachineConfig := v1alpha1.NewVSphereMachineConfigGenerate(clusterName)
+		etcdMachineConfig := v1alpha1.NewVSphereMachineConfigGenerate(fmt.Sprintf("%s-etcd", clusterName))
 		clusterConfigOpts = append(clusterConfigOpts,
 			v1alpha1.WithCPMachineGroupRef(cpMachineConfig),
-			v1alpha1.WithWorkerMachineGroupRef(workerMachineConfig))
+			v1alpha1.WithWorkerMachineGroupRef(workerMachineConfig),
+			v1alpha1.WithEtcdMachineGroupRef(etcdMachineConfig),
+		)
 		cpMcYaml, err := yaml.Marshal(cpMachineConfig)
 		if err != nil {
 			return fmt.Errorf("error outputting yaml: %v", err)
@@ -91,7 +94,11 @@ func generateClusterConfig(clusterName string) error {
 		if err != nil {
 			return fmt.Errorf("error outputting yaml: %v", err)
 		}
-		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml)
+		etcdMcYaml, err := yaml.Marshal(etcdMachineConfig)
+		if err != nil {
+			return fmt.Errorf("error outputting yaml: %v", err)
+		}
+		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml, etcdMcYaml)
 	default:
 		return fmt.Errorf("not a valid provider")
 	}

@@ -99,6 +99,15 @@ spec:
                 properties:
                   count:
                     type: integer
+                  machineGroupRef:
+                    description: MachineGroupRef defines the machine group configuration
+                      for the etcd machines.
+                    properties:
+                      kind:
+                        type: string
+                      name:
+                        type: string
+                    type: object
                 type: object
               gitOpsRef:
                 properties:

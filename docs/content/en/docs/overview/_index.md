@@ -6,15 +6,16 @@ description: >
   Provides an overview of EKS Anywhere
 ---
 
-EKS Anywhere will use the `eksctl` executable to create a Kubernetes cluster in your environment.
+EKS Anywhere uses the `eksctl` executable to create a Kubernetes cluster in your environment.
 Currently it allows you to create and delete clusters in a vSphere environment.
 You can run cluster create and delete commands from an Ubuntu or Mac administrative machine.
 
-To create a cluster you will need to create a specification file which includes all of your vSphere details and information about your EKS cluster.
-The `eksctl anywhere create cluster` command will create a temporary bootstrap cluster on your admin machine which will be used to create a workload cluster in vSphere.
-Once the workload cluster is created the cluster management resources will be moved to your workload cluster and the local bootstrap cluster will be deleted.
+To create a cluster, you need to create a specification file that includes all of your vSphere details and information about your EKS cluster.
+Running the `eksctl anywhere create cluster` command from your admin machine creates the workload cluster in vSphere.
+It does this by first creating a temporary bootstrap cluster to direct the workload cluster creation.
+Once the workload cluster is created, the cluster management resources are moved to your workload cluster and the local bootstrap cluster is deleted.
 
-Once your workload cluster is created a KUBECONFIG file will be stored on your admin machine with RBAC admin permissions for the workload cluster.
+Once your workload cluster is created, a KUBECONFIG file is stored on your admin machine with RBAC admin permissions for the workload cluster.
 You’ll be able to use that file with `kubectl` to set up and deploy workloads.
 Here’s a diagram that explains the process visually.
 
@@ -27,5 +28,3 @@ The delete process is similar to the create process.
 
 Next steps:
 * [Getting Started](/docs/getting-started/)
-* [Examples](/docs/examples/)
-

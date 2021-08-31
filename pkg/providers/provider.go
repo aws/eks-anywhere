@@ -27,8 +27,8 @@ type Provider interface {
 	GetDeployments() map[string][]string
 	GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle
 	DatacenterConfig() DatacenterConfig
-	DatacenterResourceName() string
-	MachineResourceName() string
+	DatacenterResourceType() string
+	MachineResourceType() string
 	MachineConfigs() []MachineConfig
 	ValidateNewSpec(ctx context.Context, cluster *types.Cluster) error
 	GenerateMHC() ([]byte, error)

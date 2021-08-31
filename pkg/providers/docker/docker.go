@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -34,7 +35,7 @@ const (
 //go:embed config/template.yaml
 var defaultClusterConfig string
 
-var eksaDockerResourceName = fmt.Sprintf("dockerdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+var eksaDockerResourceType = fmt.Sprintf("dockerdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 
 type ProviderClient interface {
 	GetDockerLBPort(ctx context.Context, clusterName string) (port string, err error)
@@ -53,7 +54,7 @@ type ProviderKubectlClient interface {
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error)
 	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*v1alpha3.MachineDeployment, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error)
-	UpdateAnnotation(ctx context.Context, resourceName, name string, annotations map[string]string, opts ...executables.KubectlOpt) error
+	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 }
 
 func NewProvider(providerConfig *v1alpha1.DockerDatacenterConfig, docker ProviderClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc) providers.Provider {
@@ -80,11 +81,11 @@ func (p *provider) Name() string {
 	return ProviderName
 }
 
-func (p *provider) DatacenterResourceName() string {
-	return eksaDockerResourceName
+func (p *provider) DatacenterResourceType() string {
+	return eksaDockerResourceType
 }
 
-func (p *provider) MachineResourceName() string {
+func (p *provider) MachineResourceType() string {
 	return ""
 }
 
@@ -164,6 +165,7 @@ func BuildTemplateMap(clusterSpec *cluster.Spec) map[string]interface{} {
 		"kindNodeImage":          bundle.EksD.KindNode.VersionedImage(),
 		"extraArgs":              clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).ToPartialYaml(),
 		"externalEtcdVersion":    bundle.KubeDistro.EtcdVersion,
+		"eksaSystemNamespace":    constants.EksaSystemNamespace,
 	}
 
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
@@ -197,7 +199,7 @@ func (p *provider) generateTemplateValuesForUpgrade(ctx context.Context, bootstr
 
 	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(c, clusterSpec.Cluster)
 	if !needsNewControlPlaneTemplate {
-		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, executables.WithCluster(bootstrapCluster))
+		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
 			return nil, err
 		}
@@ -208,7 +210,7 @@ func (p *provider) generateTemplateValuesForUpgrade(ctx context.Context, bootstr
 
 	needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(c, clusterSpec.Cluster)
 	if !needsNewWorkloadTemplate {
-		md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, executables.WithCluster(bootstrapCluster))
+		md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
 			return nil, err
 		}
@@ -221,7 +223,7 @@ func (p *provider) generateTemplateValuesForUpgrade(ctx context.Context, bootstr
 		// TODO: replace controlPlaneMachineConfig with etcdMachineConfig once available in final GA spec
 		needsNewEtcdTemplate = NeedsNewEtcdTemplate(c, clusterSpec.Cluster)
 		if !needsNewEtcdTemplate {
-			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, executables.WithCluster(bootstrapCluster))
+			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
 				return nil, err
 			}
@@ -233,7 +235,8 @@ func (p *provider) generateTemplateValuesForUpgrade(ctx context.Context, bootstr
 			*/
 			err = p.providerKubectlClient.UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", workloadCluster.Name),
 				map[string]string{etcdv1alpha3.UpgradeInProgressAnnotation: "true"},
-				executables.WithCluster(bootstrapCluster))
+				executables.WithCluster(bootstrapCluster),
+				executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
 				return nil, err
 			}
