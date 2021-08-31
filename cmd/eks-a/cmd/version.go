@@ -10,8 +10,8 @@ import (
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
-	Short: "Get the eks-a version",
-	Long:  "This command prints the version of eks-a",
+	Short: "Get the eksctl anywhere version",
+	Long:  "This command prints the version of eksctl anywhere",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return printVersion()
 	},

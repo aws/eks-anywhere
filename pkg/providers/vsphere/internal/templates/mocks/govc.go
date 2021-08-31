@@ -92,17 +92,17 @@ func (mr *MockGovcClientMockRecorder) CreateTag(ctx, tag, category interface{}) 
 }
 
 // DeployTemplateFromLibrary mocks base method.
-func (m *MockGovcClient) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string) error {
+func (m *MockGovcClient) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string, resizeDisk2 bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeployTemplateFromLibrary", ctx, templateDir, templateName, library, resourcePool)
+	ret := m.ctrl.Call(m, "DeployTemplateFromLibrary", ctx, templateDir, templateName, library, resourcePool, resizeDisk2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeployTemplateFromLibrary indicates an expected call of DeployTemplateFromLibrary.
-func (mr *MockGovcClientMockRecorder) DeployTemplateFromLibrary(ctx, templateDir, templateName, library, resourcePool interface{}) *gomock.Call {
+func (mr *MockGovcClientMockRecorder) DeployTemplateFromLibrary(ctx, templateDir, templateName, library, resourcePool, resizeDisk2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployTemplateFromLibrary", reflect.TypeOf((*MockGovcClient)(nil).DeployTemplateFromLibrary), ctx, templateDir, templateName, library, resourcePool)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployTemplateFromLibrary", reflect.TypeOf((*MockGovcClient)(nil).DeployTemplateFromLibrary), ctx, templateDir, templateName, library, resourcePool, resizeDisk2)
 }
 
 // ImportTemplate mocks base method.

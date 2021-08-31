@@ -42,7 +42,7 @@ var dc = &deleteClusterOptions{}
 var deleteClusterCmd = &cobra.Command{
 	Use:          "cluster (<cluster-name>|-f <config-file>)",
 	Short:        "Workload cluster",
-	Long:         "This command is used to delete workload clusters created by eks-a",
+	Long:         "This command is used to delete workload clusters created by eksctl anywhere",
 	PreRunE:      preRunDeleteCluster,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {

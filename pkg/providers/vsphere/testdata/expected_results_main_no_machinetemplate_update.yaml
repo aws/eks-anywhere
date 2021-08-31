@@ -4,7 +4,7 @@ metadata:
   labels:
     cluster.x-k8s.io/cluster-name: test
   name: test
-  namespace: default
+  namespace: eksa-system
 spec:
   clusterNetwork:
     pods:
@@ -19,12 +19,16 @@ spec:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: VSphereCluster
     name: test
+  managedExternalEtcdRef:
+    apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
+    kind: EtcdadmCluster
+    name: test-etcd
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereCluster
 metadata:
   name: test
-  namespace: default
+  namespace: eksa-system
 spec:
   cloudProviderConfiguration:
     global:
@@ -59,7 +63,7 @@ apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
 metadata:
   name: test
-  namespace: default
+  namespace: eksa-system
 spec:
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
@@ -69,9 +73,11 @@ spec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
       etcd:
-        local:
-          imageRepository: public.ecr.aws/eks-distro/etcd-io
-          imageTag: v3.4.14-eks-1-19-4
+        external:
+          endpoints: []
+          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
+          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
+          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
       dns:
         type: CoreDNS
         imageRepository: public.ecr.aws/eks-distro/coredns
@@ -162,7 +168,7 @@ apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
 kind: KubeadmConfigTemplate
 metadata:
   name: test-md-0
-  namespace: default
+  namespace: eksa-system
 spec:
   template:
     spec:
@@ -191,7 +197,7 @@ metadata:
   labels:
     cluster.x-k8s.io/cluster-name: test
   name: test-md-0
-  namespace: default
+  namespace: eksa-system
 spec:
   clusterName: test
   replicas: 3
@@ -220,7 +226,7 @@ metadata:
   labels:
     cluster.x-k8s.io/cluster-name: test
   name: test-crs-0
-  namespace: default
+  namespace: eksa-system
 spec:
   clusterSelector:
     matchLabels:
@@ -241,11 +247,40 @@ spec:
   - kind: ConfigMap
     name: vsphere-csi-controller
 ---
+kind: EtcdadmCluster
+apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
+metadata:
+  name: test-etcd
+  namespace: eksa-system
+spec:
+  replicas: 3
+  etcdadmConfigSpec:
+    etcdadmBuiltin: true
+    format: cloud-config
+    cloudInitConfig:
+      version: 3.4.14
+      installDir: "/usr/bin"
+    preEtcdadmCommands:
+      - hostname "{{ ds.meta_data.hostname }}"
+      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+      - echo "127.0.0.1   localhost" >>/etc/hosts
+      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+      - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+    users:
+      - name: capv
+        sshAuthorizedKeys:
+          - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
+        sudo: ALL=(ALL) NOPASSWD:ALL
+  infrastructureTemplate:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    kind: VSphereMachineTemplate
+    name: test-etcd-template-original
+---
 apiVersion: v1
 kind: Secret
 metadata:
   name: vsphere-csi-controller
-  namespace: default
+  namespace: eksa-system
 stringData:
   data: |
     apiVersion: v1
@@ -365,7 +400,7 @@ data:
 kind: ConfigMap
 metadata:
   name: vsphere-csi-controller-role
-  namespace: default
+  namespace: eksa-system
 ---
 apiVersion: v1
 data:
@@ -385,7 +420,7 @@ data:
 kind: ConfigMap
 metadata:
   name: vsphere-csi-controller-binding
-  namespace: default
+  namespace: eksa-system
 ---
 apiVersion: v1
 data:
@@ -399,7 +434,7 @@ data:
 kind: ConfigMap
 metadata:
   name: csi.vsphere.vmware.com
-  namespace: default
+  namespace: eksa-system
 ---
 apiVersion: v1
 data:
@@ -532,7 +567,7 @@ data:
 kind: ConfigMap
 metadata:
   name: vsphere-csi-node
-  namespace: default
+  namespace: eksa-system
 ---
 apiVersion: v1
 data:
@@ -657,7 +692,7 @@ data:
 kind: ConfigMap
 metadata:
   name: vsphere-csi-controller
-  namespace: default
+  namespace: eksa-system
 ---
 apiVersion: v1
 data:
@@ -672,4 +707,4 @@ data:
 kind: ConfigMap
 metadata:
   name: internal-feature-states.csi.vsphere.vmware.com
-  namespace: default
+  namespace: eksa-system

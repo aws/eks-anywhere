@@ -8,11 +8,8 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
-)
-
-const (
-	eksaSystemNamespace = "eksa-system"
 )
 
 func TestValidateEksaControllerReady(t *testing.T) {
@@ -49,7 +46,7 @@ func TestValidateEksaControllerReady(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(tt *testing.T) {
 			fileContent := test.ReadFile(t, tc.getDeploymentsResponse)
-			e.EXPECT().Execute(ctx, []string{"get", "deployments", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", eksaSystemNamespace}).Return(*bytes.NewBufferString(fileContent), nil)
+			e.EXPECT().Execute(ctx, []string{"get", "deployments", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}).Return(*bytes.NewBufferString(fileContent), nil)
 			err := upgradevalidations.ValidateEksaSystemComponents(ctx, k, cluster)
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)

@@ -14,6 +14,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -22,7 +23,6 @@ import (
 )
 
 const (
-	eksaSystemNamespace = "eksa-system"
 	eksaConfigFileName  = "eksa-cluster.yaml"
 	fluxSystemNamespace = "flux-system"
 	gitRepositoryVar    = "T_GIT_REPOSITORY"
@@ -275,7 +275,7 @@ func (e *E2ETest) validateFluxDeployments(ctx context.Context) error {
 
 func (e *E2ETest) validateEksaSystemDeployments(ctx context.Context) error {
 	expectedDeployments := map[string]int{"eksa-controller-manager": 1}
-	return e.validateDeployments(ctx, eksaSystemNamespace, expectedDeployments)
+	return e.validateDeployments(ctx, constants.EksaSystemNamespace, expectedDeployments)
 }
 
 func (e *E2ETest) validateDeployments(ctx context.Context, namespace string, expectedeployments map[string]int) error {
@@ -544,7 +544,7 @@ func (e *E2ETest) clusterConfGitPath() string {
 	if len(p) == 0 {
 		p = path.Join("clusters", e.ClusterName)
 	}
-	return path.Join(p, eksaSystemNamespace, eksaConfigFileName)
+	return path.Join(p, constants.EksaSystemNamespace, eksaConfigFileName)
 }
 
 func (e *E2ETest) clusterConfigGitPath() string {

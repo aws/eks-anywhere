@@ -18,6 +18,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -119,7 +120,7 @@ func (r *capiResourceFetcher) fetchClusterForRef(ctx context.Context, refId type
 	for _, c := range clusters.Items {
 		if kind == anywherev1.VSphereDatacenterKind || kind == anywherev1.DockerDatacenterKind {
 			if c.Spec.DatacenterRef.Name == refId.Name {
-				if _, err := r.clusterByName(ctx, refId.Namespace, c.Name); err == nil { // further validates a capi cluster exists
+				if _, err := r.clusterByName(ctx, constants.EksaSystemNamespace, c.Name); err == nil { // further validates a capi cluster exists
 					return &c, nil
 				}
 			}
@@ -127,13 +128,13 @@ func (r *capiResourceFetcher) fetchClusterForRef(ctx context.Context, refId type
 		if kind == anywherev1.VSphereMachineConfigKind {
 			for _, machineRef := range c.Spec.WorkerNodeGroupConfigurations {
 				if machineRef.MachineGroupRef != nil && machineRef.MachineGroupRef.Name == refId.Name {
-					if _, err := r.clusterByName(ctx, refId.Namespace, c.Name); err == nil { // further validates a capi cluster exists
+					if _, err := r.clusterByName(ctx, constants.EksaSystemNamespace, c.Name); err == nil { // further validates a capi cluster exists
 						return &c, nil
 					}
 				}
 			}
 			if c.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name == refId.Name {
-				if _, err := r.clusterByName(ctx, refId.Namespace, c.Name); err == nil { // further validates a capi cluster exists
+				if _, err := r.clusterByName(ctx, constants.EksaSystemNamespace, c.Name); err == nil { // further validates a capi cluster exists
 					return &c, nil
 				}
 			}
@@ -148,7 +149,7 @@ func (r *capiResourceFetcher) machineDeployments(ctx context.Context, c *anywher
 	if err != nil {
 		return nil, err
 	}
-	o := &client.ListOptions{LabelSelector: labels.NewSelector().Add(*req), Namespace: c.Namespace}
+	o := &client.ListOptions{LabelSelector: labels.NewSelector().Add(*req), Namespace: constants.EksaSystemNamespace}
 	err = r.client.List(ctx, machineDeployments, o)
 	if err != nil {
 		return nil, err
@@ -190,7 +191,7 @@ func (r *capiResourceFetcher) VSphereMachineTemplate(ctx context.Context, cs *an
 		return nil, err
 	}
 	vsphereMachineTemplate := &vspherev3.VSphereMachineTemplate{}
-	err = r.FetchObjectByName(ctx, md.Spec.Template.Spec.InfrastructureRef.Name, md.GetNamespace(), vsphereMachineTemplate)
+	err = r.FetchObjectByName(ctx, md.Spec.Template.Spec.InfrastructureRef.Name, constants.EksaSystemNamespace, vsphereMachineTemplate)
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +210,7 @@ func (r *capiResourceFetcher) clusterBundle(ctx context.Context, cs *anywherev1.
 func (r *capiResourceFetcher) ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*kubeadmnv1alpha3.KubeadmControlPlane, error) {
 	// Fetch capi cluster
 	capiCluster := &clusterv1.Cluster{}
-	err := r.FetchObjectByName(ctx, cs.Name, cs.Namespace, capiCluster)
+	err := r.FetchObjectByName(ctx, cs.Name, constants.EksaSystemNamespace, capiCluster)
 	if err != nil {
 		return nil, err
 	}

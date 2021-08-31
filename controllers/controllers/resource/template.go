@@ -27,7 +27,7 @@ type VsphereTemplate struct {
 
 func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdcSpec anywherev1.VSphereDatacenterConfig, vmcSpec anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
 	// passing the same vspheremachineconfig for worker and cp as control plane updates are prohibited in controller
-	templateBuilder := vsphere.NewVsphereTemplateBuilder(&vdcSpec.Spec, &vmcSpec.Spec, &vmcSpec.Spec, r.now)
+	templateBuilder := vsphere.NewVsphereTemplateBuilder(&vdcSpec.Spec, &vmcSpec.Spec, &vmcSpec.Spec, &vmcSpec.Spec, r.now)
 	clusterName := clusterSpec.ObjectMeta.Name
 	kubeadmControlPlane, err := r.ControlPlane(ctx, eksaCluster)
 	if err != nil {

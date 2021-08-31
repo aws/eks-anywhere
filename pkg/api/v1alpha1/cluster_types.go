@@ -12,6 +12,11 @@ const (
 	// ControlPlaneAnnotation is an annotation that can be applied to EKS-A machineconfig
 	// object to prevent a controller from making changes to that resource.
 	controlPlaneAnnotation = "anywhere.eks.amazonaws.com/control-plane"
+
+	clusterResourceType = "clusters.anywhere.eks.amazonaws.com"
+
+	// etcdAnnotation can be applied to EKS-A machineconfig CR for etcd, to prevent controller from making changes to it
+	etcdAnnotation = "anywhere.eks.amazonaws.com/etcd"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -204,6 +209,8 @@ type KindAccessor interface {
 // ExternalEtcdConfiguration defines the configuration options for using unstacked etcd topology
 type ExternalEtcdConfiguration struct {
 	Count int `json:"count,omitempty"`
+	// MachineGroupRef defines the machine group configuration for the etcd machines.
+	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -239,6 +246,14 @@ func (c *Cluster) PausedAnnotation() string {
 
 func (c *Cluster) ControlPlaneAnnotation() string {
 	return controlPlaneAnnotation
+}
+
+func (c *Cluster) ResourceType() string {
+	return clusterResourceType
+}
+
+func (c *Cluster) EtcdAnnotation() string {
+	return etcdAnnotation
 }
 
 // +kubebuilder:object:root=true

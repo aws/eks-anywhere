@@ -38,7 +38,7 @@ var requiredEnvVars = []string{
 	"AWS_SSH_KEY_NAME", "AWS_CONTROL_PLANE_MACHINE_TYPE", "AWS_NODE_MACHINE_TYPE", "AWS_SESSION_TOKEN", "GITHUB_TOKEN",
 }
 
-var eksaAwsResourceName = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+var eksaAwsResourceType = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 
 type provider struct {
 	clusterName           string
@@ -115,11 +115,11 @@ func (p *provider) Name() string {
 	return ProviderName
 }
 
-func (p *provider) DatacenterResourceName() string {
-	return eksaAwsResourceName
+func (p *provider) DatacenterResourceType() string {
+	return eksaAwsResourceType
 }
 
-func (p *provider) MachineResourceName() string {
+func (p *provider) MachineResourceType() string {
 	return ""
 }
 

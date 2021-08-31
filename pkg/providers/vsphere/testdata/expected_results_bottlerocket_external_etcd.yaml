@@ -4,7 +4,7 @@ metadata:
   labels:
     cluster.x-k8s.io/cluster-name: test
   name: test
-  namespace: default
+  namespace: eksa-system
 spec:
   clusterNetwork:
     pods:
@@ -28,7 +28,7 @@ apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereCluster
 metadata:
   name: test
-  namespace: default
+  namespace: eksa-system
 spec:
   cloudProviderConfiguration:
     global:
@@ -61,7 +61,7 @@ apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereMachineTemplate
 metadata:
   name: test-control-plane-template-1234567890000
-  namespace: default
+  namespace: eksa-system
 spec:
   template:
     spec:
@@ -86,7 +86,7 @@ apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereMachineTemplate
 metadata:
   name: test-worker-node-template-1234567890000
-  namespace: default
+  namespace: eksa-system
 spec:
   template:
     spec:
@@ -111,7 +111,7 @@ apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
 metadata:
   name: test
-  namespace: default
+  namespace: eksa-system
 spec:
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
@@ -235,7 +235,7 @@ apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
 kind: KubeadmConfigTemplate
 metadata:
   name: test-md-0
-  namespace: default
+  namespace: eksa-system
 spec:
   template:
     spec:
@@ -270,7 +270,7 @@ metadata:
   labels:
     cluster.x-k8s.io/cluster-name: test
   name: test-md-0
-  namespace: default
+  namespace: eksa-system
 spec:
   clusterName: test
   replicas: 3
@@ -299,7 +299,7 @@ metadata:
   labels:
     cluster.x-k8s.io/cluster-name: test
   name: test-crs-0
-  namespace: default
+  namespace: eksa-system
 spec:
   clusterSelector:
     matchLabels:
@@ -324,7 +324,7 @@ kind: EtcdadmCluster
 apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
 metadata:
   name: test-etcd
-  namespace: default
+  namespace: eksa-system
 spec:
   replicas: 3
   etcdadmConfigSpec:
@@ -348,7 +348,7 @@ apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereMachineTemplate
 metadata:
   name: test-etcd-template-1234567890000
-  namespace: 'default'
+  namespace: 'eksa-system'
 spec:
   template:
     spec:
@@ -373,7 +373,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: vsphere-csi-controller
-  namespace: default
+  namespace: eksa-system
 stringData:
   data: |
     apiVersion: v1
@@ -493,7 +493,7 @@ data:
 kind: ConfigMap
 metadata:
   name: vsphere-csi-controller-role
-  namespace: default
+  namespace: eksa-system
 ---
 apiVersion: v1
 data:
@@ -513,7 +513,7 @@ data:
 kind: ConfigMap
 metadata:
   name: vsphere-csi-controller-binding
-  namespace: default
+  namespace: eksa-system
 ---
 apiVersion: v1
 data:
@@ -527,7 +527,7 @@ data:
 kind: ConfigMap
 metadata:
   name: csi.vsphere.vmware.com
-  namespace: default
+  namespace: eksa-system
 ---
 apiVersion: v1
 data:
@@ -660,7 +660,7 @@ data:
 kind: ConfigMap
 metadata:
   name: vsphere-csi-node
-  namespace: default
+  namespace: eksa-system
 ---
 apiVersion: v1
 data:
@@ -785,7 +785,7 @@ data:
 kind: ConfigMap
 metadata:
   name: vsphere-csi-controller
-  namespace: default
+  namespace: eksa-system
 ---
 apiVersion: v1
 data:
@@ -800,4 +800,4 @@ data:
 kind: ConfigMap
 metadata:
   name: internal-feature-states.csi.vsphere.vmware.com
-  namespace: default
+  namespace: eksa-system

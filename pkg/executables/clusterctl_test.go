@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	specv1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
 	mockswriter "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
@@ -295,7 +296,7 @@ func TestClusterctlMoveManagement(t *testing.T) {
 			testName:     "no kubeconfig",
 			from:         &types.Cluster{},
 			to:           &types.Cluster{},
-			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", ""},
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "", "--namespace", constants.EksaSystemNamespace},
 		},
 		{
 			testName: "no kubeconfig in 'from' cluster",
@@ -303,7 +304,7 @@ func TestClusterctlMoveManagement(t *testing.T) {
 			to: &types.Cluster{
 				KubeconfigFile: "to.kubeconfig",
 			},
-			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig"},
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace},
 		},
 		{
 			testName: "with both kubeconfigs",
@@ -313,7 +314,7 @@ func TestClusterctlMoveManagement(t *testing.T) {
 			to: &types.Cluster{
 				KubeconfigFile: "to.kubeconfig",
 			},
-			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--kubeconfig", "from.kubeconfig"},
+			wantMoveArgs: []interface{}{"move", "--to-kubeconfig", "to.kubeconfig", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "from.kubeconfig"},
 		},
 	}
 
@@ -435,7 +436,7 @@ var versionBundle = &cluster.VersionsBundle{
 		},
 		Eksa: v1alpha1.EksaBundle{
 			CliTools: v1alpha1.Image{
-				URI: "public.ecr.aws/l0g8r8j6/modelrocket/base:v1-19-1-75ac0bf61974d7ea5d83c17a1c629f26c142cca7",
+				URI: "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v1-19-1-75ac0bf61974d7ea5d83c17a1c629f26c142cca7",
 			},
 		},
 		ExternalEtcdBootstrap: v1alpha1.EtcdadmBootstrapBundle{

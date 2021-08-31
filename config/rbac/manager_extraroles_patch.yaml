@@ -112,6 +112,8 @@
       - secrets/status
       - configmaps
       - configmaps/status
+      - namespaces
+      - namespaces/status
     verbs:
       - get
       - list

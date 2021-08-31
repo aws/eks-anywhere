@@ -19,6 +19,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -29,14 +30,14 @@ const (
 )
 
 var (
-	capiClustersResourceName          = fmt.Sprintf("clusters.%s", v1alpha3.GroupVersion.Group)
-	eksaClustersResourceName          = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
-	eksaVSphereDatacenterResourceName = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaVSphereMachineResourceName    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaAwsResourceName               = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaGitOpsResourceName            = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaOIDCResourceName              = fmt.Sprintf("oidcconfigs.%s", v1alpha1.GroupVersion.Group)
-	etcdadmClustersResourceName       = fmt.Sprintf("etcdadmclusters.%s", etcdv1alpha3.GroupVersion.Group)
+	capiClustersResourceType          = fmt.Sprintf("clusters.%s", v1alpha3.GroupVersion.Group)
+	eksaClustersResourceType          = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
+	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaAwsResourceType               = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaGitOpsResourceType            = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaOIDCResourceType              = fmt.Sprintf("oidcconfigs.%s", v1alpha1.GroupVersion.Group)
+	etcdadmClustersResourceType       = fmt.Sprintf("etcdadmclusters.%s", etcdv1alpha3.GroupVersion.Group)
 )
 
 type Kubectl struct {
@@ -54,8 +55,17 @@ func NewKubectl(executable Executable) *Kubectl {
 	}
 }
 
+func (k *Kubectl) CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error {
+	params := []string{"create", "namespace", namespace, "--kubeconfig", kubeconfig}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error creating namespace %v: %v", namespace, err)
+	}
+	return nil
+}
+
 func (k *Kubectl) LoadSecret(ctx context.Context, secretObject string, secretObjectType string, secretObjectName string, kubeConfFile string) error {
-	params := []string{"create", "secret", "generic", secretObjectName, "--type", secretObjectType, "--from-literal", secretObject, "--kubeconfig", kubeConfFile}
+	params := []string{"create", "secret", "generic", secretObjectName, "--type", secretObjectType, "--from-literal", secretObject, "--kubeconfig", kubeConfFile, "--namespace", constants.EksaSystemNamespace}
 	_, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error loading secret: %v", err)
@@ -65,6 +75,18 @@ func (k *Kubectl) LoadSecret(ctx context.Context, secretObject string, secretObj
 
 func (k *Kubectl) ApplyKubeSpec(ctx context.Context, cluster *types.Cluster, spec string) error {
 	params := []string{"apply", "-f", spec}
+	if cluster.KubeconfigFile != "" {
+		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
+	}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error executing apply: %v", err)
+	}
+	return nil
+}
+
+func (k *Kubectl) ApplyKubeSpecWithNamespace(ctx context.Context, cluster *types.Cluster, spec string, namespace string) error {
+	params := []string{"apply", "-f", spec, "--namespace", namespace}
 	if cluster.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
 	}
@@ -100,11 +122,11 @@ func (k *Kubectl) ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *type
 }
 
 func (k *Kubectl) WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
-	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ControlPlaneReady", fmt.Sprintf("%s/%s", capiClustersResourceName, newClusterName), "default")
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ControlPlaneReady", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
 }
 
 func (k *Kubectl) WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
-	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ManagedEtcdReady", fmt.Sprintf("clusters.%s/%s", v1alpha3.GroupVersion.Group, newClusterName), "default")
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ManagedEtcdReady", fmt.Sprintf("clusters.%s/%s", v1alpha3.GroupVersion.Group, newClusterName), constants.EksaSystemNamespace)
 }
 
 func (k *Kubectl) WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error {
@@ -121,7 +143,7 @@ func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, f
 }
 
 func (k *Kubectl) DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error {
-	params := []string{"delete", "cluster", clusterToDelete.Name, "--kubeconfig", managementCluster.KubeconfigFile}
+	params := []string{"delete", capiClustersResourceType, clusterToDelete.Name, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}
 	_, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error deleting cluster %s apply: %v", clusterToDelete.Name, err)
@@ -179,7 +201,7 @@ func (k *Kubectl) ValidateNodes(ctx context.Context, kubeconfig string) error {
 
 func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cpName string, kubeconfig string) error {
 	template := "{{.status.replicas}},{{.status.readyReplicas}},{{.status.ready}}"
-	params := []string{"get", "KubeadmControlPlane", cpName, "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig}
+	params := []string{"get", "KubeadmControlPlane", cpName, "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
 	buffer, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return err
@@ -202,7 +224,7 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cpName string, 
 
 func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfig string) error {
 	template := "{{.status.replicas}},{{.status.readyReplicas}},{{.status.phase}}"
-	params := []string{"get", "MachineDeployment", clusterName + "-md-0", "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig}
+	params := []string{"get", "MachineDeployment", clusterName + "-md-0", "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
 	buffer, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return err
@@ -303,7 +325,7 @@ type machinesResponse struct {
 }
 
 func (k *Kubectl) GetMachines(ctx context.Context, cluster *types.Cluster) ([]types.Machine, error) {
-	params := []string{"get", "machines", "-o", "json", "--kubeconfig", cluster.KubeconfigFile}
+	params := []string{"get", "machines", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting machines: %v", err)
@@ -323,7 +345,7 @@ type ClustersResponse struct {
 }
 
 func (k *Kubectl) ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error {
-	params := []string{"get", "crd", capiClustersResourceName, "--kubeconfig", cluster.KubeconfigFile}
+	params := []string{"get", "crd", capiClustersResourceType, "--kubeconfig", cluster.KubeconfigFile}
 	_, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error getting clusters crd: %v", err)
@@ -332,7 +354,7 @@ func (k *Kubectl) ValidateClustersCRD(ctx context.Context, cluster *types.Cluste
 }
 
 func (k *Kubectl) GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error) {
-	params := []string{"get", capiClustersResourceName, "-o", "json", "--kubeconfig", cluster.KubeconfigFile}
+	params := []string{"get", capiClustersResourceType, "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting clusters: %v", err)
@@ -530,8 +552,8 @@ func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt)
 	return response.Items, nil
 }
 
-func (k *Kubectl) UpdateAnnotation(ctx context.Context, resourceName, name string, annotations map[string]string, opts ...KubectlOpt) error {
-	params := []string{"annotate", resourceName, name}
+func (k *Kubectl) UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...KubectlOpt) error {
+	params := []string{"annotate", resourceType, objectName}
 	for k, v := range annotations {
 		params = append(params, fmt.Sprintf("%s=%s", k, v))
 	}
@@ -543,16 +565,26 @@ func (k *Kubectl) UpdateAnnotation(ctx context.Context, resourceName, name strin
 	return nil
 }
 
-func (k *Kubectl) UpdateEksaClusterAnnotations(ctx context.Context, annotations map[string]string, cluster *types.Cluster) error {
-	return k.UpdateAnnotation(ctx, eksaClustersResourceName, cluster.Name, annotations, WithOverwrite(), WithCluster(cluster))
-}
-
 func (k *Kubectl) UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error {
 	return k.UpdateAnnotation(ctx, resourceType, objectName, annotations, WithOverwrite(), WithCluster(cluster), WithNamespace(namespace))
 }
 
+func (k *Kubectl) RemoveAnnotation(ctx context.Context, resourceType, objectName string, key string, opts ...KubectlOpt) error {
+	params := []string{"annotate", resourceType, objectName, fmt.Sprintf("%s-", key)}
+	applyOpts(&params, opts...)
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error removing annotation: %v", err)
+	}
+	return nil
+}
+
+func (k *Kubectl) RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error {
+	return k.RemoveAnnotation(ctx, resourceType, objectName, key, WithCluster(cluster), WithNamespace(namespace))
+}
+
 func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error) {
-	params := []string{"get", eksaClustersResourceName, cluster.Name, "-o", "json", "--kubeconfig", cluster.KubeconfigFile}
+	params := []string{"get", eksaClustersResourceType, cluster.Name, "-o", "json", "--kubeconfig", cluster.KubeconfigFile}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa cluster: %v", err)
@@ -568,7 +600,7 @@ func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*
 }
 
 func (k *Kubectl) GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string) (*v1alpha1.GitOpsConfig, error) {
-	params := []string{"get", eksaGitOpsResourceName, gitOpsConfigName, "-o", "json", "--kubeconfig", kubeconfigFile}
+	params := []string{"get", eksaGitOpsResourceType, gitOpsConfigName, "-o", "json", "--kubeconfig", kubeconfigFile}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa GitOpsConfig: %v", err)
@@ -584,7 +616,7 @@ func (k *Kubectl) GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName stri
 }
 
 func (k *Kubectl) GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, kubeconfigFile string) (*v1alpha1.OIDCConfig, error) {
-	params := []string{"get", eksaOIDCResourceName, oidcConfigName, "-o", "json", "--kubeconfig", kubeconfigFile}
+	params := []string{"get", eksaOIDCResourceType, oidcConfigName, "-o", "json", "--kubeconfig", kubeconfigFile}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa OIDCConfig: %v", err)
@@ -600,7 +632,7 @@ func (k *Kubectl) GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, 
 }
 
 func (k *Kubectl) GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string) (*v1alpha1.VSphereDatacenterConfig, error) {
-	params := []string{"get", eksaVSphereDatacenterResourceName, vsphereDatacenterConfigName, "-o", "json", "--kubeconfig", kubeconfigFile}
+	params := []string{"get", eksaVSphereDatacenterResourceType, vsphereDatacenterConfigName, "-o", "json", "--kubeconfig", kubeconfigFile}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa vsphere cluster %v", err)
@@ -616,7 +648,7 @@ func (k *Kubectl) GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDat
 }
 
 func (k *Kubectl) GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string) (*v1alpha1.VSphereMachineConfig, error) {
-	params := []string{"get", eksaVSphereMachineResourceName, vsphereMachineConfigName, "-o", "json", "--kubeconfig", kubeconfigFile}
+	params := []string{"get", eksaVSphereMachineResourceType, vsphereMachineConfigName, "-o", "json", "--kubeconfig", kubeconfigFile}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa vsphere cluster %v", err)
@@ -632,7 +664,7 @@ func (k *Kubectl) GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachin
 }
 
 func (k *Kubectl) GetEksaAWSDatacenterConfig(ctx context.Context, awsDatacenterConfigName string, kubeconfigFile string) (*v1alpha1.AWSDatacenterConfig, error) {
-	params := []string{"get", eksaAwsResourceName, awsDatacenterConfigName, "-o", "json", "--kubeconfig", kubeconfigFile}
+	params := []string{"get", eksaAwsResourceType, awsDatacenterConfigName, "-o", "json", "--kubeconfig", kubeconfigFile}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa aws cluster %v", err)
@@ -658,7 +690,7 @@ func (k *Kubectl) GetCurrentClusterContext(ctx context.Context, cluster *types.C
 }
 
 func (k *Kubectl) GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, opts ...KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error) {
-	params := []string{"get", etcdadmClustersResourceName, fmt.Sprintf("%s-etcd", cluster.Name), "-o", "json"}
+	params := []string{"get", etcdadmClustersResourceType, fmt.Sprintf("%s-etcd", cluster.Name), "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {

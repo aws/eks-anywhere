@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -35,6 +36,7 @@ func TestBootstrapperCreateBootstrapClusterSuccessNoExtraObjects(t *testing.T) {
 			ctx := context.Background()
 			b, client := newBootstrapper(t)
 			client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
+			client.EXPECT().CreateNamespace(ctx, kubeconfigFile, constants.EksaSystemNamespace)
 
 			got, err := b.CreateBootstrapCluster(ctx, clusterSpec, tt.opts...)
 			if err != nil {
@@ -58,6 +60,7 @@ func TestBootstrapperCreateBootstrapClusterSuccessExtraObjects(t *testing.T) {
 	ctx := context.Background()
 	b, client := newBootstrapper(t)
 	client.EXPECT().CreateBootstrapCluster(ctx, clusterSpec).Return(kubeconfigFile, nil)
+	client.EXPECT().CreateNamespace(ctx, kubeconfigFile, constants.EksaSystemNamespace)
 	client.EXPECT().ApplyKubeSpecFromBytes(ctx, wantCluster, gomock.Any())
 
 	got, err := b.CreateBootstrapCluster(ctx, clusterSpec)

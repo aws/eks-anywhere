@@ -12,9 +12,9 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:              "eks-a",
+	Use:              "anywhere",
 	Short:            "Amazon EKS Anywhere",
-	Long:             `Use eks-a to build your own self-managing cluster on your hardware with the best of Amazon EKS`,
+	Long:             `Use eksctl anywhere to build your own self-managing cluster on your hardware with the best of Amazon EKS`,
 	PersistentPreRun: rootPersistentPreRun,
 }
 

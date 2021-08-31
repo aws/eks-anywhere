@@ -43,9 +43,9 @@ However, you can look into the [Dex LDAP Connector](https://dexidp.io/docs/conne
 Yes, you can install the [aws-iam-authenticator](https://github.com/kubernetes-sigs/aws-iam-authenticator) on your EKS-A cluster to achieve this.
 
 
-## EKS-A add-on recommendations
+## EKS-A integrations recommendations
 
-### Which add-ons are recommended with EKS-A?
+### Which integrations are recommended with EKS-A?
 
 EKS Anywhere offers AWS support for certain third-party vendor components,
 namely Ubuntu TLS, Cilium, and Flux.

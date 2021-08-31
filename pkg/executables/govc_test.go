@@ -104,6 +104,7 @@ type deployTemplateTest struct {
 	deployFolder             string
 	templateInLibraryPathAbs string
 	templateName             string
+	resizeDisk2              bool
 	ctx                      context.Context
 	fakeExecResponse         *bytes.Buffer
 	expectations             []*gomock.Call
@@ -121,6 +122,7 @@ func newDeployTemplateTest(t *testing.T) *deployTemplateTest {
 		deployFolder:             "/SDDC-Datacenter/vm/Templates",
 		templateInLibraryPathAbs: "/eks-a-templates/ubuntu-2004-kube-v1.19.6",
 		templateName:             "ubuntu-2004-kube-v1.19.6",
+		resizeDisk2:              false,
 		ctx:                      context.Background(),
 		fakeExecResponse:         bytes.NewBufferString("dummy"),
 		expectations:             make([]*gomock.Call, 0),
@@ -164,7 +166,7 @@ func (dt *deployTemplateTest) expectMarkAsTemplateToReturn(err error) {
 
 func (dt *deployTemplateTest) DeployTemplateFromLibrary() error {
 	gomock.InOrder(dt.expectations...)
-	return dt.govc.DeployTemplateFromLibrary(dt.ctx, dt.deployFolder, dt.templateName, templateLibrary, dt.resourcePool)
+	return dt.govc.DeployTemplateFromLibrary(dt.ctx, dt.deployFolder, dt.templateName, templateLibrary, dt.resourcePool, dt.resizeDisk2)
 }
 
 func (dt *deployTemplateTest) assertDeployTemplateSuccess(t *testing.T) {
@@ -185,8 +187,8 @@ func TestSearchTemplateItExists(t *testing.T) {
 
 	g, executable, env := setup(t)
 	machineConfig := newMachineConfig(t)
-	machineConfig.Spec.Template = "/SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6"
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "VirtualMachine", "-name", filepath.Base(machineConfig.Spec.Template)).Return(*bytes.NewBufferString("[\"/SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6\"]"), nil)
+	machineConfig.Spec.Template = "/SDDC Datacenter/vm/Templates/ubuntu 2004-kube-v1.19.6"
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "find", "-json", "/"+datacenter, "-type", "VirtualMachine", "-name", filepath.Base(machineConfig.Spec.Template)).Return(*bytes.NewBufferString("[\"/SDDC Datacenter/vm/Templates/ubuntu 2004-kube-v1.19.6\"]"), nil)
 
 	_, err := g.SearchTemplate(ctx, datacenter, machineConfig)
 	if err != nil {
@@ -372,8 +374,8 @@ func TestGovcValidateVCenterSetup(t *testing.T) {
 	ctx := context.Background()
 	providerConfig := v1alpha1.VSphereDatacenterConfig{
 		Spec: v1alpha1.VSphereDatacenterConfigSpec{
-			Datacenter: "SDDC-Datacenter",
-			Network:    "/SDDC-Datacenter/network/test-network",
+			Datacenter: "SDDC Datacenter",
+			Network:    "/SDDC Datacenter/network/test network",
 			Server:     "test.com",
 			Insecure:   true,
 		},
@@ -397,7 +399,7 @@ func TestGovcValidateVCenterSetup(t *testing.T) {
 	executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(bytes.Buffer{}, nil)
 
 	params = []string{"find", "-maxdepth=1", filepath.Dir(providerConfig.Spec.Network), "-type", "n", "-name", filepath.Base(providerConfig.Spec.Network)}
-	executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(*bytes.NewBufferString("test"), nil)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(*bytes.NewBufferString("/SDDC Datacenter/network/test network"), nil)
 
 	g := executables.NewGovc(executable, writer)
 
@@ -412,7 +414,7 @@ func TestGovcValidateVCenterSetupMachineConfig(t *testing.T) {
 	datacenterConfig := v1alpha1.VSphereDatacenterConfig{
 		Spec: v1alpha1.VSphereDatacenterConfigSpec{
 			Datacenter: "SDDC Datacenter",
-			Network:    "/SDDC Datacenter/network/test-network",
+			Network:    "/SDDC Datacenter/network/test network",
 			Server:     "test.com",
 			Insecure:   true,
 		},

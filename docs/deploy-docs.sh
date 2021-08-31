@@ -15,7 +15,7 @@
 #
 # To deploy to a development environment make sure you have
 # ${AWS_PROFILE} set to your account
-# ${AMPLIFY_APP_ID} (optional) set to your Amplify app or a stack named modelrocket-docs-devstack
+# ${AMPLIFY_APP_ID} (optional) set to your Amplify app or a stack named eks-anywhere-docs-devstack
 # ${AMPLIFY_APP_BRANCH} (optional) set to Amplify branch you want to deploy to [default: main]
 
 set -euo pipefail
@@ -49,7 +49,7 @@ cancel_job() {
 GIT_COMMIT=$(git rev-parse --short HEAD)
 FILE=${1:-public.zip}
 APP=${AMPLIFY_APP_ID:-$(aws cloudformation describe-stacks \
-    --stack-name modelrocket-docs-devstack \
+    --stack-name eks-anywhere-docs-devstack \
     --query 'Stacks[].Outputs[?OutputKey==`EksAnywhereDocsappId`].OutputValue' \
     --output text)}
 BRANCH=${AMPLIFY_APP_BRANCH:-main}

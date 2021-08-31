@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -20,7 +21,7 @@ type Factory struct {
 
 type GovcClient interface {
 	CreateLibrary(ctx context.Context, datastore, library string) error
-	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string) error
+	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string, resizeDisk2 bool) error
 	SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error)
 	ImportTemplate(ctx context.Context, library, ovaURL, name string) error
 	LibraryElementExists(ctx context.Context, library string) (bool, error)
@@ -54,7 +55,8 @@ func (f *Factory) CreateIfMissing(ctx context.Context, datacenter string, machin
 
 	logger.V(2).Info("Template not available. Creating", "template", machineConfig.Spec.Template)
 
-	if err = f.createTemplate(ctx, machineConfig.Spec.Template, ovaURL); err != nil {
+	osFamily := machineConfig.Spec.OSFamily
+	if err = f.createTemplate(ctx, machineConfig.Spec.Template, ovaURL, string(osFamily)); err != nil {
 		return err
 	}
 
@@ -64,7 +66,7 @@ func (f *Factory) CreateIfMissing(ctx context.Context, datacenter string, machin
 	return nil
 }
 
-func (f *Factory) createTemplate(ctx context.Context, templatePath, ovaURL string) error {
+func (f *Factory) createTemplate(ctx context.Context, templatePath, ovaURL, osFamily string) error {
 	if err := f.createLibraryIfMissing(ctx); err != nil {
 		return err
 	}
@@ -77,7 +79,11 @@ func (f *Factory) createTemplate(ctx context.Context, templatePath, ovaURL strin
 		return err
 	}
 
-	if err := f.client.DeployTemplateFromLibrary(ctx, templateDir, templateName, f.templateLibrary, f.resourcePool); err != nil {
+	var resizeDisk2 bool
+	if strings.EqualFold(osFamily, string(v1alpha1.Bottlerocket)) {
+		resizeDisk2 = true
+	}
+	if err := f.client.DeployTemplateFromLibrary(ctx, templateDir, templateName, f.templateLibrary, f.resourcePool, resizeDisk2); err != nil {
 		return fmt.Errorf("failed deploying template: %v", err)
 	}
 
