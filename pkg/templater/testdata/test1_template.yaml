@@ -1,0 +1,5 @@
+key1: {{ .Key1 }}
+key2: {{ .Key2 }}
+{{ if .Conditional }}
+key3: {{ .Key3 }}
+{{ end }}

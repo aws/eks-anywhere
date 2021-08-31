@@ -1,0 +1,15 @@
+domain: anywhere.eks.amazonaws.com
+layout:
+- go.kubebuilder.io/v3
+projectName: release
+repo: release
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: anywhere.eks.amazonaws.com
+  group: release
+  kind: Release
+  path: release/api/v1alpha1
+  version: v1alpha1
+version: "3"

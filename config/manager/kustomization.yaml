@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- manager.yaml
+
+patchesStrategicMerge:
+- manager_service_account_patch.yaml

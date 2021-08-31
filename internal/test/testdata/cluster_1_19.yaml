@@ -1,0 +1,39 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: eksa-unit-test
+spec:
+  controlPlaneConfiguration:
+    count: 3
+  kubernetesVersion: "1.19"
+  workerNodeGroupConfigurations:
+    - count: 1
+  datacenterRef:
+    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+    kind: VSphereDatacenter
+    name: eksa-unit-test
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereDatacenterConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  controlPlaneEndpointIp: "myControlPlaneEndpointIp"
+  controlPlaneDiskGiB: 25
+  controlPlaneVMsMemoryMiB: 8192
+  controlPlaneVMsNumCPUs: 2
+  datacenter: "myDatacenter"
+  datastore: "myDatastore"
+  folder: "myFolder"
+  network: "myNetwork"
+  resourcePool: "myResourcePool"
+  server: "myServer"
+  sshAuthorizedKey: "mySshAuthorizedKey"
+  sshUsername: "mySshUsername"
+  storagePolicyName: "myStoragePolicyName"
+  template: "myTemplate"
+  thumbprint: "myTlsThumbprint"
+  insecure: false
+  workloadDiskGiB: 25
+  workloadVMsMemoryMiB: 8192
+  workloadVMsNumCPUs: 2

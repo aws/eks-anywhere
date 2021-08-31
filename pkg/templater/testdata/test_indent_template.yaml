@@ -1,0 +1,5 @@
+key1: {{ .Key1 }}
+key2: {{ .Key2 }}
+{{ if .Conditional }}
+{{ .KeyAndValue3 | indent 2 }}
+{{ end }}

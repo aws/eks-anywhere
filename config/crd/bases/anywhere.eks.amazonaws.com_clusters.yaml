@@ -1,0 +1,164 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.1
+  creationTimestamp: null
+  name: clusters.anywhere.eks.amazonaws.com
+spec:
+  group: anywhere.eks.amazonaws.com
+  names:
+    kind: Cluster
+    listKind: ClusterList
+    plural: clusters
+    singular: cluster
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Cluster is the Schema for the clusters API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ClusterSpec defines the desired state of Cluster
+            properties:
+              clusterNetwork:
+                properties:
+                  cni:
+                    description: CNI specifies the CNI plugin to be installed in the
+                      cluster
+                    type: string
+                  pods:
+                    description: Comma-separated list of CIDR blocks to use for pod
+                      and service subnets. Defaults to 192.168.0.0/16 for pod subnet.
+                    properties:
+                      cidrBlocks:
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  services:
+                    properties:
+                      cidrBlocks:
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                type: object
+              controlPlaneConfiguration:
+                properties:
+                  count:
+                    description: Count defines the number of desired control plane
+                      nodes. Defaults to 1.
+                    type: integer
+                  endpoint:
+                    description: Endpoint defines the host ip and port to use for
+                      the control plane.
+                    properties:
+                      host:
+                        description: Host defines the ip that you want to use to connect
+                          to the control plane
+                        type: string
+                    required:
+                    - host
+                    type: object
+                  machineGroupRef:
+                    description: MachineGroupRef defines the machine group configuration
+                      for the control plane.
+                    properties:
+                      kind:
+                        type: string
+                      name:
+                        type: string
+                    type: object
+                type: object
+              datacenterRef:
+                properties:
+                  kind:
+                    type: string
+                  name:
+                    type: string
+                type: object
+              externalEtcdConfiguration:
+                description: ExternalEtcdConfiguration defines the configuration options
+                  for using unstacked etcd topology
+                properties:
+                  count:
+                    type: integer
+                type: object
+              gitOpsRef:
+                properties:
+                  kind:
+                    type: string
+                  name:
+                    type: string
+                type: object
+              identityProviderRefs:
+                items:
+                  properties:
+                    kind:
+                      type: string
+                    name:
+                      type: string
+                  type: object
+                type: array
+              kubernetesVersion:
+                type: string
+              overrideClusterSpecFile:
+                type: string
+              proxyConfiguration:
+                properties:
+                  httpProxy:
+                    type: string
+                  httpsProxy:
+                    type: string
+                  noProxy:
+                    items:
+                      type: string
+                    type: array
+                type: object
+              workerNodeGroupConfigurations:
+                items:
+                  properties:
+                    count:
+                      description: Count defines the number of desired worker nodes.
+                        Defaults to 1.
+                      type: integer
+                    machineGroupRef:
+                      description: MachineGroupRef defines the machine group configuration
+                        for the worker nodes.
+                      properties:
+                        kind:
+                          type: string
+                        name:
+                          type: string
+                      type: object
+                  type: object
+                type: array
+            type: object
+          status:
+            description: ClusterStatus defines the observed state of Cluster
+            type: object
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

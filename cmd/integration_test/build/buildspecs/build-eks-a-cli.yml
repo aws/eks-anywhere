@@ -1,0 +1,13 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+    - make e2e
+    - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" >> bin/githash
+
+artifacts:
+  files:
+  - "bin/**/*"
+  - "cmd/integration_test/build/**/*"
+  - "ATTRIBUTION.txt"

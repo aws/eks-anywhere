@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-eks-a
+  labels:
+    app: hello-eks-a
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello-eks-a
+  template:
+    metadata:
+      labels:
+        app: hello-eks-a
+    spec:
+      containers:
+      - name: hello
+        image: public.ecr.aws/r8h4l0e2/hello:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-eks-a
+spec:
+  type: NodePort
+  selector:
+    app: hello-eks-a
+  ports:
+    - port: 80

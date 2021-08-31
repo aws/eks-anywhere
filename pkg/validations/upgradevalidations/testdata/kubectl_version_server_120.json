@@ -1,0 +1,24 @@
+{
+  "clientVersion": {
+    "major": "1",
+    "minor": "21",
+    "gitVersion": "v1.21.2",
+    "gitCommit": "092fbfbf53427de67cac1e9fa54aaa09a28371d7",
+    "gitTreeState": "clean",
+    "buildDate": "2021-06-16T12:59:11Z",
+    "goVersion": "go1.16.5",
+    "compiler": "gc",
+    "platform": "darwin/amd64"
+  },
+  "serverVersion": {
+    "major": "1",
+    "minor": "20+",
+    "gitVersion": "v1.20.16-eks-1-20-4",
+    "gitCommit": "3cdb4c9ab835e2964c8eaeb3ee77d088c7fa36aa",
+    "gitTreeState": "clean",
+    "buildDate": "2021-05-05T13:09:23Z",
+    "goVersion": "go1.13.15",
+    "compiler": "gc",
+    "platform": "linux/amd64"
+  }
+}

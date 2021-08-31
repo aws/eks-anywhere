@@ -1,0 +1,79 @@
+// +build e2e
+
+package e2e
+
+import (
+	"testing"
+
+	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/test/framework"
+)
+
+func runConformanceFlow(test *framework.E2ETest) {
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+	test.RunConformanceTests()
+	test.StopIfFailed()
+	test.DeleteCluster()
+}
+
+func TestDockerKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+	)
+	runConformanceFlow(test)
+}
+
+func TestDockerKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+	)
+	runConformanceFlow(test)
+}
+
+func TestVSphereKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu120()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+	)
+	runConformanceFlow(test)
+}
+
+func TestVSphereKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu121()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+	)
+	runConformanceFlow(test)
+}
+
+func TestVSphereKubernetes120BottleRocketThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithBottleRocket120()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+	)
+	runConformanceFlow(test)
+}
+
+func TestVSphereKubernetes121BottleRocketThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithBottleRocket121()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+	)
+	runConformanceFlow(test)
+}

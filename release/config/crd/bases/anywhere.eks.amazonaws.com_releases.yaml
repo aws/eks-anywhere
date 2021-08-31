@@ -1,0 +1,175 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: releases.anywhere.eks.amazonaws.com
+spec:
+  group: anywhere.eks.amazonaws.com
+  names:
+    kind: Release
+    listKind: ReleaseList
+    plural: releases
+    singular: release
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Release is the Schema for the releases API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ReleaseSpec defines the desired state of Release
+            properties:
+              latestVersion:
+                description: EKS-A Latest Release version following semver
+                type: string
+              releases:
+                description: List of all eks-a releases
+                items:
+                  description: EksARelease defines each release of EKS-Anywhere
+                  properties:
+                    bundleManifestUrl:
+                      description: Manifest url to parse bundle information from for
+                        this EKS-A release
+                      type: string
+                    date:
+                      format: date-time
+                      type: string
+                    eksABinary:
+                      description: EKS Anywhere binary bundle
+                      properties:
+                        darwin:
+                          description: EKS Anywhere Darwin binary
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            sha256:
+                              description: The sha256 of the asset, only applies for
+                                'file' store
+                              type: string
+                            sha512:
+                              description: The sha512 of the asset, only applies for
+                                'file' store
+                              type: string
+                            uri:
+                              description: The URI where the asset is located
+                              type: string
+                          type: object
+                        linux:
+                          description: EKS Anywhere Linux binary
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            sha256:
+                              description: The sha256 of the asset, only applies for
+                                'file' store
+                              type: string
+                            sha512:
+                              description: The sha512 of the asset, only applies for
+                                'file' store
+                              type: string
+                            uri:
+                              description: The URI where the asset is located
+                              type: string
+                          type: object
+                      required:
+                      - darwin
+                      - linux
+                      type: object
+                    gitCommit:
+                      description: Git commit the component is built from, before
+                        any patches
+                      type: string
+                    gitTag:
+                      description: Git tag the component is built from, before any
+                        patches
+                      type: string
+                    number:
+                      description: Monotonically increasing release number
+                      minimum: 1
+                      type: integer
+                    version:
+                      description: EKS-A release version
+                      type: string
+                  required:
+                  - bundleManifestUrl
+                  - date
+                  - eksABinary
+                  - gitCommit
+                  - gitTag
+                  - number
+                  - version
+                  type: object
+                type: array
+            required:
+            - latestVersion
+            - releases
+            type: object
+          status:
+            description: ReleaseStatus defines the observed state of Release
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

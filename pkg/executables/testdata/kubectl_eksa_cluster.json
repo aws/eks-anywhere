@@ -1,0 +1,62 @@
+{
+  "apiVersion": "anywhere.eks.amazonaws.com/v1alpha1",
+  "kind": "Cluster",
+  "metadata": {
+    "annotations": {
+      "anywhere.eks.amazonaws.com/paused": "true",
+      "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"anywhere.eks.amazonaws.com/v1alpha1\",\"kind\":\"Cluster\",\"metadata\":{\"annotations\":{\"anywhere.eks.amazonaws.com/paused\":\"true\"},\"creationTimestamp\":\"2021-07-14T22:40:54Z\",\"generation\":1,\"managedFields\":[{\"apiVersion\":\"anywhere.eks.amazonaws.com/v1alpha1\",\"fieldsType\":\"FieldsV1\",\"fieldsV1\":{\"f:metadata\":{\"f:annotations\":{\".\":{},\"f:kubectl.kubernetes.io/last-applied-configuration\":{}}},\"f:spec\":{\".\":{},\"f:controlPlaneReplicas\":{},\"f:infrastructureRef\":{\".\":{},\"f:apiVersion\":{},\"f:kind\":{},\"f:name\":{}},\"f:kubernetesVersion\":{},\"f:workerNodeReplicas\":{}},\"f:status\":{}},\"manager\":\"kubectl-client-side-apply\",\"operation\":\"Update\",\"time\":\"2021-07-14T22:40:54Z\"}],\"name\":\"sigb\",\"namespace\":\"default\",\"resourceVersion\":\"4373\",\"selfLink\":\"/apis/anywhere.eks.amazonaws.com/v1alpha1/namespaces/default/clusters/sigb\",\"uid\":\"260ba2f7-1307-449a-8a8c-00abcdc946b9\"},\"spec\":{\"controlPlaneReplicas\":3,\"infrastructureRef\":{\"apiVersion\":\"anywhere.eks.amazonaws.com/v1alpha1\",\"kind\":\"VSphereDatacenter\",\"name\":\"sigb\"},\"kubernetesVersion\":\"1.19\",\"workerNodeReplicas\":3},\"status\":{}}\n"
+    },
+    "creationTimestamp": "2021-07-14T22:40:54Z",
+    "generation": 1,
+    "managedFields": [
+      {
+        "apiVersion": "anywhere.eks.amazonaws.com/v1alpha1",
+        "fieldsType": "FieldsV1",
+        "fieldsV1": {
+          "f:metadata": {
+            "f:annotations": {
+              ".": {},
+              "f:anywhere.eks.amazonaws.com/paused": {},
+              "f:kubectl.kubernetes.io/last-applied-configuration": {}
+            }
+          },
+          "f:spec": {
+            ".": {},
+            "f:controlPlaneReplicas": {},
+            "f:infrastructureRef": {
+              ".": {},
+              "f:apiVersion": {},
+              "f:kind": {},
+              "f:name": {}
+            },
+            "f:kubernetesVersion": {},
+            "f:workerNodeReplicas": {}
+          },
+          "f:status": {}
+        },
+        "manager": "kubectl-client-side-apply",
+        "operation": "Update",
+        "time": "2021-07-14T22:44:08Z"
+      }
+    ],
+    "name": "test-cluster",
+    "namespace": "default",
+    "resourceVersion": "6333",
+    "selfLink": "/apis/anywhere.eks.amazonaws.com/v1alpha1/namespaces/default/clusters/test-cluster",
+    "uid": "260ba2f7-1307-449a-8a8c-00abcdc946b9"
+  },
+  "spec": {
+    "controlPlaneConfiguration": {
+      "count": 3
+    },
+    "datacenterRef": {
+      "kind": "VSphereDatacenterConfig",
+      "name": "test-cluster"
+    },
+    "kubernetesVersion": "1.19",
+    "workerNodeGroupConfigurations": [{
+        "count": 3
+    }]
+  },
+  "status": {}
+}

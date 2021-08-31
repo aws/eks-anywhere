@@ -1,0 +1,138 @@
+{
+  "apiVersion": "v1",
+  "items": [
+    {
+      "apiVersion": "apps/v1",
+      "kind": "Deployment",
+      "metadata": {
+        "annotations": {
+          "deployment.kubernetes.io/revision": "1",
+          "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"apps/v1\",\"kind\":\"Deployment\",\"metadata\":{\"annotations\":{},\"labels\":{\"control-plane\":\"eksa-controller-manager\"},\"name\":\"eksa-controller-manager\",\"namespace\":\"eksa-system\"},\"spec\":{\"replicas\":1,\"selector\":{\"matchLabels\":{\"control-plane\":\"eksa-controller-manager\"}},\"template\":{\"metadata\":{\"labels\":{\"control-plane\":\"eksa-controller-manager\"}},\"spec\":{\"containers\":[{\"args\":[\"--leader-elect\"],\"image\":\"public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:v0.0.1-8539f509df046a4f567d2182dde824b957136599\",\"imagePullPolicy\":\"Always\",\"livenessProbe\":{\"httpGet\":{\"path\":\"/healthz\",\"port\":\"healthz\"}},\"name\":\"manager\",\"ports\":[{\"containerPort\":8081,\"name\":\"healthz\",\"protocol\":\"TCP\"}],\"readinessProbe\":{\"httpGet\":{\"path\":\"/readyz\",\"port\":\"healthz\"}}}],\"securityContext\":{\"fsGroup\":1000},\"serviceAccountName\":\"eksa-controller-manager\",\"terminationGracePeriodSeconds\":10,\"tolerations\":[{\"effect\":\"NoSchedule\",\"key\":\"node-role.kubernetes.io/master\"}]}}}}\n"
+        },
+        "creationTimestamp": "2021-07-19T19:12:29Z",
+        "generation": 1,
+        "labels": {
+          "control-plane": "eksa-controller-manager"
+        },
+        "name": "eksa-controller-manager",
+        "namespace": "eksa-system",
+        "resourceVersion": "2058",
+        "uid": "71c664ea-ad07-471e-90a8-73497b776d31"
+      },
+      "spec": {
+        "progressDeadlineSeconds": 600,
+        "replicas": 1,
+        "revisionHistoryLimit": 10,
+        "selector": {
+          "matchLabels": {
+            "control-plane": "eksa-controller-manager"
+          }
+        },
+        "strategy": {
+          "rollingUpdate": {
+            "maxSurge": "25%",
+            "maxUnavailable": "25%"
+          },
+          "type": "RollingUpdate"
+        },
+        "template": {
+          "metadata": {
+            "creationTimestamp": null,
+            "labels": {
+              "control-plane": "eksa-controller-manager"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "args": [
+                  "--leader-elect"
+                ],
+                "image": "public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:v0.0.1-8539f509df046a4f567d2182dde824b957136599",
+                "imagePullPolicy": "Always",
+                "livenessProbe": {
+                  "failureThreshold": 3,
+                  "httpGet": {
+                    "path": "/healthz",
+                    "port": "healthz",
+                    "scheme": "HTTP"
+                  },
+                  "periodSeconds": 10,
+                  "successThreshold": 1,
+                  "timeoutSeconds": 1
+                },
+                "name": "manager",
+                "ports": [
+                  {
+                    "containerPort": 8081,
+                    "name": "healthz",
+                    "protocol": "TCP"
+                  }
+                ],
+                "readinessProbe": {
+                  "failureThreshold": 3,
+                  "httpGet": {
+                    "path": "/readyz",
+                    "port": "healthz",
+                    "scheme": "HTTP"
+                  },
+                  "periodSeconds": 10,
+                  "successThreshold": 1,
+                  "timeoutSeconds": 1
+                },
+                "resources": {},
+                "terminationMessagePath": "/dev/termination-log",
+                "terminationMessagePolicy": "File"
+              }
+            ],
+            "dnsPolicy": "ClusterFirst",
+            "restartPolicy": "Always",
+            "schedulerName": "default-scheduler",
+            "securityContext": {
+              "fsGroup": 1000
+            },
+            "serviceAccount": "eksa-controller-manager",
+            "serviceAccountName": "eksa-controller-manager",
+            "terminationGracePeriodSeconds": 10,
+            "tolerations": [
+              {
+                "effect": "NoSchedule",
+                "key": "node-role.kubernetes.io/master"
+              }
+            ]
+          }
+        }
+      },
+      "status": {
+        "availableReplicas": 1,
+        "conditions": [
+          {
+            "lastTransitionTime": "2021-07-19T19:12:42Z",
+            "lastUpdateTime": "2021-07-19T19:12:42Z",
+            "message": "Deployment has minimum availability.",
+            "reason": "MinimumReplicasAvailable",
+            "status": "True",
+            "type": "Available"
+          },
+          {
+            "lastTransitionTime": "2021-07-19T19:12:29Z",
+            "lastUpdateTime": "2021-07-19T19:12:42Z",
+            "message": "ReplicaSet \"eksa-controller-manager-59f69bd75c\" has successfully progressed.",
+            "reason": "NewReplicaSetAvailable",
+            "status": "True",
+            "type": "Progressing"
+          }
+        ],
+        "observedGeneration": 1,
+        "readyReplicas": 1,
+        "replicas": 1,
+        "updatedReplicas": 1
+      }
+    }
+  ],
+  "kind": "List",
+  "metadata": {
+    "resourceVersion": "",
+    "selfLink": ""
+  }
+}

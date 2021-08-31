@@ -1,0 +1,8 @@
+apiVersion: troubleshoot.sh/v1beta2
+kind: SupportBundle
+metadata:
+  name: example
+spec:
+  collectors:
+    - clusterInfo: {}
+    - clusterResources: {}

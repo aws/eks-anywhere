@@ -1,0 +1,28 @@
+# This kustomization.yaml is not intended to be run by itself,
+# since it depends on service name and namespace that are out of this kustomize package.
+# It should be run by config/default
+resources:
+- bases/anywhere.eks.amazonaws.com_clusters.yaml
+- bases/anywhere.eks.amazonaws.com_awsdatacenterconfigs.yaml
+- bases/anywhere.eks.amazonaws.com_dockerdatacenterconfigs.yaml
+- bases/anywhere.eks.amazonaws.com_vspheredatacenterconfigs.yaml
+- bases/anywhere.eks.amazonaws.com_vspheremachineconfigs.yaml
+- bases/anywhere.eks.amazonaws.com_bundles.yaml
+- bases/anywhere.eks.amazonaws.com_gitopsconfigs.yaml
+- bases/anywhere.eks.amazonaws.com_oidcconfigs.yaml
+#+kubebuilder:scaffold:crdkustomizeresource
+
+patchesStrategicMerge:
+# [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
+# patches here are for enabling the conversion webhook for each CRD
+- patches/webhook_in_clusters.yaml
+#+kubebuilder:scaffold:crdkustomizewebhookpatch
+
+# [CERTMANAGER] To enable webhook, uncomment all the sections with [CERTMANAGER] prefix.
+# patches here are for enabling the CA injection for each CRD
+- patches/cainjection_in_clusters.yaml
+#+kubebuilder:scaffold:crdkustomizecainjectionpatch
+
+# the following config is for teaching kustomize how to do kustomization for CRDs.
+configurations:
+- kustomizeconfig.yaml
