@@ -1,0 +1,158 @@
+apiVersion: cluster.x-k8s.io/v1alpha3
+kind: Cluster
+metadata:
+  name: test-cluster
+  namespace: default
+spec:
+  clusterNetwork:
+    apiServerPort: 443
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+    kind: KubeadmControlPlane
+    name: test-cluster-control-plane
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    kind: AWSCluster
+    name: test-cluster
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: AWSCluster
+metadata:
+  name: test-cluster
+  namespace: default
+spec:
+  region: us-west-2
+  sshKeyName: default
+  networkSpec:
+    cni:
+      cniIngressRules:
+        # https://docs.cilium.io/en/v1.9/operations/system_requirements/
+        - description: etcd access (cilium)
+          fromPort: 2379
+          protocol: tcp
+          toPort: 2380
+        - description: VXLAN overlay (cilium)
+          fromPort: 8472
+          protocol: udp
+          toPort: 8472
+        - description: health checks (cilium)
+          fromPort: 4240
+          protocol: tcp
+          toPort: 4240
+        - description: health checks (cilium)
+          fromPort: 0
+          protocol: icmp
+          toPort: 0
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+kind: KubeadmControlPlane
+metadata:
+  name: test-cluster-control-plane
+  namespace: default
+spec:
+  infrastructureTemplate:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    kind: AWSMachineTemplate
+    name: test-cluster-control-plane-template-1234567890000
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      imageRepository: public.ecr.aws/eks-distro/kubernetes
+      etcd:
+        local:
+          imageRepository: public.ecr.aws/eks-distro/etcd-io
+          imageTag: v3.4.14-eks-1-19-2
+      dns:
+        type: CoreDNS
+        imageRepository: public.ecr.aws/eks-distro/coredns
+        imageTag: v1.8.0-eks-1-19-2
+      apiServer:
+        extraArgs:
+          cloud-provider: aws
+      controllerManager:
+        extraArgs:
+          cloud-provider: aws
+    initConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          cloud-provider: aws
+        name: '{{ ds.meta_data.local_hostname }}'
+    joinConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          cloud-provider: aws
+        name: '{{ ds.meta_data.local_hostname }}'
+  replicas: 3
+  version: v1.19.6-eks-1-19-2
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: AWSMachineTemplate
+metadata:
+  name: test-cluster-control-plane-template-1234567890000
+  namespace: default
+spec:
+  template:
+    spec:
+      iamInstanceProfile: test-cluster-control-plane.cluster-api-provider-aws.sigs.k8s.io
+      instanceType: t3.medium
+      sshKeyName: default
+      rootVolume:
+        size: 32
+      ami:
+        id: anotherAMIID
+---
+apiVersion: cluster.x-k8s.io/v1alpha3
+kind: MachineDeployment
+metadata:
+  name: test-cluster-md-0
+  namespace: default
+spec:
+  clusterName: test-cluster
+  replicas: 3
+  selector:
+    matchLabels: null
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+          kind: KubeadmConfigTemplate
+          name: test-cluster-md-0
+      clusterName: test-cluster
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+        kind: AWSMachineTemplate
+        name: test-cluster-worker-node-template-1234567890000
+      version: v1.19.6-eks-1-19-2
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: AWSMachineTemplate
+metadata:
+  name: test-cluster-worker-node-template-1234567890000
+  namespace: default
+spec:
+  template:
+    spec:
+      iamInstanceProfile: test-cluster-nodes.cluster-api-provider-aws.sigs.k8s.io
+      instanceType: t3.medium
+      sshKeyName: default
+      ami:
+        id: anotherAMIID
+      rootVolume:
+        size: 32
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+kind: KubeadmConfigTemplate
+metadata:
+  name: test-cluster-md-0
+  namespace: default
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            cloud-provider: aws
+          name: '{{ ds.meta_data.local_hostname }}'

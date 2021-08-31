@@ -1,0 +1,217 @@
+{
+  "apiVersion": "v1",
+  "items": [
+    {
+      "apiVersion": "cluster.x-k8s.io/v1alpha3",
+      "kind": "Machine",
+      "metadata": {
+        "annotations": {
+          "controlplane.cluster.x-k8s.io/kubeadm-cluster-configuration": "{\"etcd\":{\"local\":{\"imageRepository\":\"public.ecr.aws/eks-distro/etcd-io\",\"imageTag\":\"v3.4.14-eks-1-19-4\"}},\"networking\":{},\"apiServer\":{\"certSANs\":[\"localhost\",\"127.0.0.1\"]},\"controllerManager\":{\"extraArgs\":{\"enable-hostpath-provisioner\":\"true\"}},\"scheduler\":{},\"dns\":{\"type\":\"CoreDNS\",\"imageRepository\":\"public.ecr.aws/eks-distro/coredns\",\"imageTag\":\"v1.8.0-eks-1-19-4\"},\"imageRepository\":\"public.ecr.aws/eks-distro/kubernetes\"}"
+        },
+        "creationTimestamp": "2021-05-20T19:20:12Z",
+        "finalizers": [
+          "machine.cluster.x-k8s.io"
+        ],
+        "generation": 1,
+        "labels": {
+          "cluster.x-k8s.io/cluster-name": "eksa-test-capd",
+          "cluster.x-k8s.io/etcd-cluster": ""
+        },
+        "managedFields": [
+          {
+            "apiVersion": "cluster.x-k8s.io/v1alpha3",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:annotations": {
+                  ".": {},
+                  "f:controlplane.cluster.x-k8s.io/kubeadm-cluster-configuration": {}
+                },
+                "f:finalizers": {
+                  ".": {},
+                  "v:\"machine.cluster.x-k8s.io\"": {}
+                },
+                "f:labels": {
+                  ".": {},
+                  "f:cluster.x-k8s.io/cluster-name": {},
+                  "f:cluster.x-k8s.io/etcd-cluste": {}
+                },
+                "f:ownerReferences": {
+                  ".": {},
+                  "k:{\"uid\":\"d79d1227-530b-4506-991c-09dc61d7d954\"}": {
+                    ".": {},
+                    "f:apiVersion": {},
+                    "f:blockOwnerDeletion": {},
+                    "f:controller": {},
+                    "f:kind": {},
+                    "f:name": {},
+                    "f:uid": {}
+                  }
+                }
+              },
+              "f:spec": {
+                ".": {},
+                "f:bootstrap": {
+                  ".": {},
+                  "f:configRef": {
+                    ".": {},
+                    "f:apiVersion": {},
+                    "f:kind": {},
+                    "f:name": {},
+                    "f:namespace": {},
+                    "f:uid": {}
+                  },
+                  "f:dataSecretName": {}
+                },
+                "f:clusterName": {},
+                "f:infrastructureRef": {
+                  ".": {},
+                  "f:apiVersion": {},
+                  "f:kind": {},
+                  "f:name": {},
+                  "f:namespace": {},
+                  "f:uid": {}
+                },
+                "f:providerID": {},
+                "f:version": {}
+              },
+              "f:status": {
+                "f:addresses": {}
+              }
+            },
+            "manager": "clusterctl",
+            "operation": "Update",
+            "time": "2021-05-20T19:20:12Z"
+          },
+          {
+            "apiVersion": "cluster.x-k8s.io/v1alpha3",
+            "fieldsType": "FieldsV1",
+            "fieldsV1": {
+              "f:metadata": {
+                "f:ownerReferences": {
+                  "k:{\"uid\":\"8e77b4a1-9120-4b31-b014-14fa794db45f\"}": {
+                    ".": {},
+                    "f:apiVersion": {},
+                    "f:blockOwnerDeletion": {},
+                    "f:controller": {},
+                    "f:kind": {},
+                    "f:name": {},
+                    "f:uid": {}
+                  }
+                }
+              },
+              "f:status": {
+                ".": {},
+                "f:bootstrapReady": {},
+                "f:conditions": {},
+                "f:infrastructureReady": {},
+                "f:lastUpdated": {},
+                "f:observedGeneration": {},
+                "f:phase": {}
+              }
+            },
+            "manager": "manager",
+            "operation": "Update",
+            "time": "2021-05-20T19:20:13Z"
+          }
+        ],
+        "name": "eksa-test-capd-control-plane-5nfdg",
+        "namespace": "default",
+        "ownerReferences": [
+          {
+            "apiVersion": "controlplane.cluster.x-k8s.io/v1alpha3",
+            "blockOwnerDeletion": true,
+            "controller": true,
+            "kind": "KubeadmControlPlane",
+            "name": "eksa-test-capd-control-plane",
+            "uid": "d79d1227-530b-4506-991c-09dc61d7d954"
+          }
+        ],
+        "resourceVersion": "7427",
+        "selfLink": "/apis/cluster.x-k8s.io/v1alpha3/namespaces/default/machines/eksa-test-capd-control-plane-5nfdg",
+        "uid": "f8b7881c-9623-4641-9b75-1fec560178c5"
+      },
+      "spec": {
+        "bootstrap": {
+          "configRef": {
+            "apiVersion": "bootstrap.cluster.x-k8s.io/v1alpha3",
+            "kind": "KubeadmConfig",
+            "name": "eksa-test-capd-control-plane-z95hz",
+            "namespace": "default",
+            "uid": "1ebdc47d-2dbc-4268-a098-e53ca9a5c19c"
+          },
+          "dataSecretName": "eksa-test-capd-control-plane-z95hz"
+        },
+        "clusterName": "eksa-test-capd",
+        "infrastructureRef": {
+          "apiVersion": "infrastructure.cluster.x-k8s.io/v1alpha3",
+          "kind": "DockerMachine",
+          "name": "eksa-test-capd-control-plane-mrtzr",
+          "namespace": "default",
+          "uid": "fb7c15aa-35f4-463f-9152-0870666f7395"
+        },
+        "providerID": "docker:////eksa-test-capd-control-plane-5nfdg",
+        "version": "v1.19.8-eks-1-19-4"
+      },
+      "status": {
+        "bootstrapReady": true,
+        "conditions": [
+          {
+            "lastTransitionTime": "2021-05-20T19:20:13Z",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2021-05-20T19:20:15Z",
+            "status": "True",
+            "type": "APIServerPodHealthy"
+          },
+          {
+            "lastTransitionTime": "2021-05-20T19:20:13Z",
+            "status": "True",
+            "type": "BootstrapReady"
+          },
+          {
+            "lastTransitionTime": "2021-05-20T19:40:18Z",
+            "status": "True",
+            "type": "ControllerManagerPodHealthy"
+          },
+          {
+            "lastTransitionTime": "2021-05-20T19:20:15Z",
+            "status": "True",
+            "type": "EtcdMemberHealthy"
+          },
+          {
+            "lastTransitionTime": "2021-05-20T19:20:15Z",
+            "status": "True",
+            "type": "EtcdPodHealthy"
+          },
+          {
+            "lastTransitionTime": "2021-05-20T19:20:13Z",
+            "status": "True",
+            "type": "InfrastructureReady"
+          },
+          {
+            "lastTransitionTime": "2021-05-20T19:20:13Z",
+            "status": "True",
+            "type": "NodeHealthy"
+          },
+          {
+            "lastTransitionTime": "2021-05-20T19:40:18Z",
+            "status": "True",
+            "type": "SchedulerPodHealthy"
+          }
+        ],
+        "infrastructureReady": true,
+        "lastUpdated": "2021-05-20T19:20:13Z",
+        "observedGeneration": 1,
+        "phase": "Running"
+      }
+    }
+  ],
+  "kind": "List",
+  "metadata": {
+    "resourceVersion": "",
+    "selfLink": ""
+  }
+}

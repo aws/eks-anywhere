@@ -1,0 +1,13 @@
+.idea
+*.sw*
+.DS_Store
+bin/*
+.vscode
+*.kubeconfig
+*.config
+_output
+vendor
+public.zip
+docs/public
+docs/node_modules
+docs/public.zip

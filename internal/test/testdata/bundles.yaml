@@ -1,0 +1,392 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Bundles
+spec:
+  cliMaxVersion: ""
+  cliMinVersion: ""
+  number: 0
+  versionsBundles:
+  - aws:
+      clusterTemplate:
+        uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/cluster-template.yaml
+      components:
+        uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/infrastructure-components.yaml
+      controller:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-aws/cluster-api-aws-controller:v0.6.4-25df7d96779e2a305a22c6e3f9425c3465a77244
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      metadata:
+        uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/metadata.yaml
+      version: v0.6.4
+    bottlerocketBootstrap:
+      bootstrap:
+        uri: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap:v1-18-7-51a138f2cb28ccc98ced838ffc6ab984110123b1
+    bootstrap:
+      components:
+        uri: config/clusterctl/overrides/bootstrap-kubeadm/v0.3.19/bootstrap-components.yaml
+      controller:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v0.3.19-eks-a-0.0.1.build.38
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      metadata:
+        uri: config/clusterctl/overrides/bootstrap-kubeadm/v0.3.19/metadata.yaml
+      version: v0.3.19
+    certManager:
+      acmesolver:
+        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-acmesolver:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+      cainjector:
+        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-cainjector:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+      controller:
+        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-controller:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+      webhook:
+        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-webhook:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+    cilium:
+      cilium:
+        uri: public.ecr.aws/l0g8r8j6/cilium/cilium:v1.9.6
+      manifest: {}
+      operator:
+        uri: public.ecr.aws/l0g8r8j6/cilium/operator-generic:v1.9.6
+    clusterAPI:
+      components:
+        uri: config/clusterctl/overrides/cluster-api/v0.3.19/core-components.yaml
+      controller:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/cluster-api-controller:v0.3.19-eks-a-0.0.1.build.38
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      metadata:
+        uri: config/clusterctl/overrides/cluster-api/v0.3.19/metadata.yaml
+      version: v0.3.19
+    controlPlane:
+      components:
+        uri: config/clusterctl/overrides/control-plane-kubeadm/v0.3.19/control-plane-components.yaml
+      controller:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v0.3.19-eks-a-0.0.1.build.38
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      metadata:
+        uri: config/clusterctl/overrides/control-plane-kubeadm/v0.3.19/metadata.yaml
+      version: v0.3.19
+    docker:
+      clusterTemplate:
+        uri: config/clusterctl/overrides/infrastructure-docker/v0.3.19/cluster-template-development.yaml
+      components:
+        uri: config/clusterctl/overrides/infrastructure-docker/v0.3.19/infrastructure-components-development.yaml
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      manager:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/capd-manager:v0.3.19-eks-a-0.0.1.build.38
+      metadata:
+        uri: config/clusterctl/overrides/infrastructure-docker/v0.3.19/metadata.yaml
+      version: v0.3.19
+    eksD:
+      channel: 1-18
+      gitCommit: 3e8cd38b0e561c0d6484bc7cd5b4590db6152d88
+      kindNode:
+        description: kind/node container image
+        name: kind/node
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind/node:v1.18.16-eks-d-1-18-4-eks-a-0.0.1.build.38
+      kubeVersion: v1.18.16
+      manifestUrl: embed:///testdata/kubernetes-1-18-eks-4.yaml
+      name: eks-d-1-18
+      ova:
+        bottlerocket: {}
+        ubuntu:
+          arch:
+          - amd64
+          description: Tarball for ubuntu-v1.18.16-eks-d-1-18-4-eks-a-0.0.1.build.38-amd64.ova
+          name: ubuntu-v1.18.16-eks-d-1-18-4-eks-a-0.0.1.build.38-amd64.ova
+          os: linux
+          sha256: 11e82581255f3e0c4f4fcd599563325dbce3f9f671d3e8b016573f8cd4374577
+          sha512: debcab288498da515e8404870a6f07bb8aad6220039d55d4338a3fa0f879f6cf03cbf641b9a6767aadd3c1447fa3a99574fd56170fa1b6f12dd1e1571d8eecb8
+          uri: https://dev-release-prod-pdx.s3-us-west-2.amazonaws.com/artifacts/0.0.1.build.38/eks-distro/ova/1-18/1-18-4/ubuntu-v1.18.16-eks-d-1-18-4-eks-a-0.0.1.build.38-amd64.ova
+    eksa:
+      cliTools:
+        uri: public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v1-20-1-736a94fc884dd47656233e4777a7945af541cc18
+      components:
+        uri: embed:///config/eksa-components.yaml
+    flux:
+      helmController:
+        uri: public.ecr.aws/l0g8r8j6/fluxcd/helm-controller:v0.10.0-d82011942ec8a447ba89a70ff9a84bf7b9579492
+      kustomizeController:
+        uri: public.ecr.aws/l0g8r8j6/fluxcd/kustomize-controller:v0.11.1-d82011942ec8a447ba89a70ff9a84bf7b9579492
+      notificationController:
+        uri: public.ecr.aws/l0g8r8j6/fluxcd/notification-controller:v0.13.0-d82011942ec8a447ba89a70ff9a84bf7b9579492
+      sourceController:
+        uri: public.ecr.aws/l0g8r8j6/fluxcd/source-controller:v0.12.1-8539f509df046a4f567d2182dde824b957136599
+    kubeVersion: "1.18"
+    vSphere:
+      clusterAPIController:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v0.7.8-eks-a-0.0.1.build.38
+      clusterTemplate:
+        uri: config/clusterctl/overrides/infrastructure-vsphere/v0.7.8/cluster-template.yaml
+      components:
+        uri: config/clusterctl/overrides/infrastructure-vsphere/v0.7.8/infrastructure-components.yaml
+      driver:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      kubeVip:
+        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+      manager:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+      metadata:
+        uri: config/clusterctl/overrides/infrastructure-vsphere/v0.7.8/metadata.yaml
+      syncer:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b
+      version: v0.7.8
+  - aws:
+      clusterTemplate:
+        uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/cluster-template.yaml
+      components:
+        uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/infrastructure-components.yaml
+      controller:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-aws/cluster-api-aws-controller:v0.6.4-25df7d96779e2a305a22c6e3f9425c3465a77244
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      metadata:
+        uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/metadata.yaml
+      version: v0.6.4
+    bottlerocketBootstrap:
+      bootstrap:
+        uri: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap:v1-19-6-51a138f2cb28ccc98ced838ffc6ab984110123b
+    bootstrap:
+      components:
+        uri: config/clusterctl/overrides/bootstrap-kubeadm/v0.3.19/bootstrap-components.yaml
+      controller:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v0.3.19-eks-a-0.0.1.build.38
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      metadata:
+        uri: config/clusterctl/overrides/bootstrap-kubeadm/v0.3.19/metadata.yaml
+      version: v0.3.19
+    certManager:
+      acmesolver:
+        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-acmesolver:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+      cainjector:
+        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-cainjector:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+      controller:
+        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-controller:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+      webhook:
+        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-webhook:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+    cilium:
+      cilium:
+        uri: public.ecr.aws/l0g8r8j6/cilium/cilium:v1.9.6
+      manifest: {}
+      operator:
+        uri: public.ecr.aws/l0g8r8j6/cilium/operator-generic:v1.9.6
+    clusterAPI:
+      components:
+        uri: config/clusterctl/overrides/cluster-api/v0.3.19/core-components.yaml
+      controller:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/cluster-api-controller:v0.3.19-eks-a-0.0.1.build.38
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      metadata:
+        uri: config/clusterctl/overrides/cluster-api/v0.3.19/metadata.yaml
+      version: v0.3.19
+    controlPlane:
+      components:
+        uri: config/clusterctl/overrides/control-plane-kubeadm/v0.3.19/control-plane-components.yaml
+      controller:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v0.3.19-eks-a-0.0.1.build.38
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      metadata:
+        uri: config/clusterctl/overrides/control-plane-kubeadm/v0.3.19/metadata.yaml
+      version: v0.3.19
+    docker:
+      clusterTemplate:
+        uri: config/clusterctl/overrides/infrastructure-docker/v0.3.19/cluster-template-development.yaml
+      components:
+        uri: config/clusterctl/overrides/infrastructure-docker/v0.3.19/infrastructure-components-development.yaml
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      manager:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/capd-manager:v0.3.19-eks-a-0.0.1.build.38
+      metadata:
+        uri: config/clusterctl/overrides/infrastructure-docker/v0.3.19/metadata.yaml
+      version: v0.3.19
+    eksD:
+      channel: 1-19
+      gitCommit: 3e8cd38b0e561c0d6484bc7cd5b4590db6152d88
+      kindNode:
+        description: kind/node container image
+        name: kind/node
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind/node:v1.19.8-eks-d-1-19-4-eks-a-0.0.1.build.38
+      kubeVersion: v1.19.8
+      manifestUrl: embed:///testdata/kubernetes-1-19-eks-4.yaml
+      name: kubernetes-1-19-eks-4
+      ova:
+        bottlerocket: {}
+        ubuntu:
+          arch:
+          - amd64
+          description: Tarball for ubuntu-v1.19.8-eks-d-1-19-4-eks-a-0.0.1.build.38-amd64.ova
+          name: ubuntu-v1.19.8-eks-d-1-19-4-eks-a-0.0.1.build.38-amd64.ova
+          os: linux
+          sha256: 11e82581255f3e0c4f4fcd599563325dbce3f9f671d3e8b016573f8cd4374577
+          sha512: debcab288498da515e8404870a6f07bb8aad6220039d55d4338a3fa0f879f6cf03cbf641b9a6767aadd3c1447fa3a99574fd56170fa1b6f12dd1e1571d8eecb8
+          uri: https://dev-release-prod-pdx.s3-us-west-2.amazonaws.com/artifacts/0.0.1.build.38/eks-distro/ova/1-19/1-19-4/ubuntu-v1.19.8-eks-d-1-19-4-eks-a-0.0.1.build.38-amd64.ova
+    eksa:
+      cliTools:
+        uri: public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v1-20-1-736a94fc884dd47656233e4777a7945af541cc18
+      components:
+        uri: embed:///config/eksa-components.yaml
+    flux:
+      helmController:
+        uri: public.ecr.aws/l0g8r8j6/fluxcd/helm-controller:v0.10.0-d82011942ec8a447ba89a70ff9a84bf7b9579492
+      kustomizeController:
+        uri: public.ecr.aws/l0g8r8j6/fluxcd/kustomize-controller:v0.11.1-d82011942ec8a447ba89a70ff9a84bf7b9579492
+      notificationController:
+        uri: public.ecr.aws/l0g8r8j6/fluxcd/notification-controller:v0.13.0-d82011942ec8a447ba89a70ff9a84bf7b9579492
+      sourceController:
+        uri: public.ecr.aws/l0g8r8j6/fluxcd/source-controller:v0.12.1-8539f509df046a4f567d2182dde824b957136599
+    kubeVersion: "1.19"
+    vSphere:
+      clusterAPIController:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v0.7.8-eks-a-0.0.1.build.38
+      clusterTemplate:
+        uri: config/clusterctl/overrides/infrastructure-vsphere/v0.7.8/cluster-template.yaml
+      components:
+        uri: config/clusterctl/overrides/infrastructure-vsphere/v0.7.8/infrastructure-components.yaml
+      driver:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      kubeVip:
+        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+      manager:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+      metadata:
+        uri: config/clusterctl/overrides/infrastructure-vsphere/v0.7.8/metadata.yaml
+      syncer:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b
+      version: v0.7.8
+  - aws:
+      clusterTemplate:
+        uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/cluster-template.yaml
+      components:
+        uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/infrastructure-components.yaml
+      controller:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-aws/cluster-api-aws-controller:v0.6.4-25df7d96779e2a305a22c6e3f9425c3465a77244
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      metadata:
+        uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/metadata.yaml
+      version: v0.6.4
+    bottlerocketBootstrap:
+      bootstrap:
+        uri: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap:v1-20-3-51a138f2cb28ccc98ced838ffc6ab984110123b1
+    bootstrap:
+      components:
+        uri: config/clusterctl/overrides/bootstrap-kubeadm/v0.3.19/bootstrap-components.yaml
+      controller:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v0.3.19-eks-a-0.0.1.build.38
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      metadata:
+        uri: config/clusterctl/overrides/bootstrap-kubeadm/v0.3.19/metadata.yaml
+      version: v0.3.19
+    certManager:
+      acmesolver:
+        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-acmesolver:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+      cainjector:
+        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-cainjector:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+      controller:
+        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-controller:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+      webhook:
+        uri: public.ecr.aws/l0g8r8j6/jetstack/cert-manager-webhook:v1.1.0-17655eca4c3db6708da08de4e04ea646d1cfd0c9
+    cilium:
+      cilium:
+        uri: public.ecr.aws/l0g8r8j6/cilium/cilium:v1.9.6
+      manifest: {}
+      operator:
+        uri: public.ecr.aws/l0g8r8j6/cilium/operator-generic:v1.9.6
+    clusterAPI:
+      components:
+        uri: config/clusterctl/overrides/cluster-api/v0.3.19/core-components.yaml
+      controller:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/cluster-api-controller:v0.3.19-eks-a-0.0.1.build.38
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      metadata:
+        uri: config/clusterctl/overrides/cluster-api/v0.3.19/metadata.yaml
+      version: v0.3.19
+    controlPlane:
+      components:
+        uri: config/clusterctl/overrides/control-plane-kubeadm/v0.3.19/control-plane-components.yaml
+      controller:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v0.3.19-eks-a-0.0.1.build.38
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      metadata:
+        uri: config/clusterctl/overrides/control-plane-kubeadm/v0.3.19/metadata.yaml
+      version: v0.3.19
+    docker:
+      clusterTemplate:
+        uri: config/clusterctl/overrides/infrastructure-docker/v0.3.19/cluster-template-development.yaml
+      components:
+        uri: config/clusterctl/overrides/infrastructure-docker/v0.3.19/infrastructure-components-development.yaml
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      manager:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/capd-manager:v0.3.19-eks-a-0.0.1.build.38
+      metadata:
+        uri: config/clusterctl/overrides/infrastructure-docker/v0.3.19/metadata.yaml
+      version: v0.3.19
+    eksD:
+      channel: 1-20
+      gitCommit: 3e8cd38b0e561c0d6484bc7cd5b4590db6152d88
+      kindNode:
+        description: kind/node container image
+        name: kind/node
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind/node:v1.20.4-eks-d-1-20-1-eks-a-0.0.1.build.38
+      kubeVersion: v1.20.4
+      manifestUrl: embed:///testdata/kubernetes-1-20-eks-1.yaml
+      name: eks-d-1-20
+      ova:
+        bottlerocket: {}
+        ubuntu:
+          arch:
+          - amd64
+          description: Tarball for ubuntu-v1.20.4-eks-d-1-20-1-eks-a-0.0.1.build.38-amd64.ova
+          name: ubuntu-v1.20.4-eks-d-1-20-1-eks-a-0.0.1.build.38-amd64.ova
+          os: linux
+          sha256: 11e82581255f3e0c4f4fcd599563325dbce3f9f671d3e8b016573f8cd4374577
+          sha512: debcab288498da515e8404870a6f07bb8aad6220039d55d4338a3fa0f879f6cf03cbf641b9a6767aadd3c1447fa3a99574fd56170fa1b6f12dd1e1571d8eecb8
+          uri: https://dev-release-prod-pdx.s3-us-west-2.amazonaws.com/artifacts/0.0.1.build.38/eks-distro/ova/1-20/1-20-1/ubuntu-v1.20.4-eks-d-1-20-1-eks-a-0.0.1.build.38-amd64.ova
+    eksa:
+      cliTools:
+        uri: public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v1-20-1-736a94fc884dd47656233e4777a7945af541cc18
+      components:
+        uri: embed:///config/eksa-components.yaml
+    flux:
+      helmController:
+        uri: public.ecr.aws/l0g8r8j6/fluxcd/helm-controller:v0.10.0-d82011942ec8a447ba89a70ff9a84bf7b9579492
+      kustomizeController:
+        uri: public.ecr.aws/l0g8r8j6/fluxcd/kustomize-controller:v0.11.1-d82011942ec8a447ba89a70ff9a84bf7b9579492
+      notificationController:
+        uri: public.ecr.aws/l0g8r8j6/fluxcd/notification-controller:v0.13.0-d82011942ec8a447ba89a70ff9a84bf7b9579492
+      sourceController:
+        uri: public.ecr.aws/l0g8r8j6/fluxcd/source-controller:v0.12.1-8539f509df046a4f567d2182dde824b957136599
+    kubeVersion: "1.20"
+    vSphere:
+      clusterAPIController:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v0.7.8-eks-a-0.0.1.build.38
+      clusterTemplate:
+        uri: config/clusterctl/overrides/infrastructure-vsphere/v0.7.8/cluster-template.yaml
+      components:
+        uri: config/clusterctl/overrides/infrastructure-vsphere/v0.7.8/infrastructure-components.yaml
+      driver:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      kubeVip:
+        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+      manager:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+      metadata:
+        uri: config/clusterctl/overrides/infrastructure-vsphere/v0.7.8/metadata.yaml
+      syncer:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b
+      version: v0.7.8
+status: {}

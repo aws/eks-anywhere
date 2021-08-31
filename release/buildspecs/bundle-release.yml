@@ -1,0 +1,11 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+    - ./release/scripts/setup.sh
+    - /docker.sh
+
+  build:
+    commands:
+    - make bundle-release -C $PROJECT_PATH

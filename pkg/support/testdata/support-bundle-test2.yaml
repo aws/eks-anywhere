@@ -1,0 +1,5 @@
+apiVersion: 
+kind: SupportBundle
+metadata:
+  name: example
+spec:

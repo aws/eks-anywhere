@@ -1,0 +1,64 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  creationTimestamp: null
+  name: fluxAddonTestCluster
+spec:
+  clusterNetwork:
+    pods: {}
+    services: {}
+  controlPlaneConfiguration: {}
+  datacenterRef: {}
+  gitOpsRef:
+    kind: GitOpsConfig
+    name: test-gitops
+  kubernetesVersion: "1.19"
+status: {}
+
+---
+kind: VSphereDatacenterConfig
+metadata:
+  creationTimestamp: null
+  name: fluxAddonTestCluster
+spec:
+  datacenter: SDDC-Datacenter
+  insecure: false
+  network: ""
+  server: ""
+  thumbprint: ""
+status: {}
+
+---
+kind: VSphereMachineConfig
+metadata:
+  creationTimestamp: null
+  name: fluxAddonTestCluster
+spec:
+  datastore: ""
+  folder: ""
+  memoryMiB: 0
+  numCPUs: 0
+  osFamily: ""
+  resourcePool: ""
+  template: /SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6
+status: {}
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: GitOpsConfig
+metadata:
+  creationTimestamp: null
+  name: test-gitops
+  namespace: default
+spec:
+  flux:
+    github:
+      branch: testBranch
+      clusterConfigPath: user/provided/path
+      fluxSystemNamespace: flux-system
+      owner: mFowler
+      personal: true
+      repository: testRepo
+status: {}
+
+---

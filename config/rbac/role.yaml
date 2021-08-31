@@ -1,0 +1,46 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - bundles
+  - clusters
+  - dockerdatacenterconfigs
+  - vspheredatacenterconfigs
+  - vspheremachineconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - bundles/finalizers
+  - clusters/finalizers
+  - dockerdatacenterconfigs/finalizers
+  - vspheredatacenterconfigs/finalizers
+  - vspheremachineconfigs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - bundles/status
+  - clusters/status
+  - dockerdatacenterconfigs/status
+  - vspheredatacenterconfigs/status
+  - vspheremachineconfigs/status
+  verbs:
+  - get
+  - patch
+  - update

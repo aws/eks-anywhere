@@ -1,0 +1,121 @@
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+    - cluster.x-k8s.io
+    resources:
+    - clusters
+    - clusters/status
+    verbs:
+    - get
+    - list
+    - patch
+    - update
+    - watch
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+      - controlplane.cluster.x-k8s.io
+    resources:
+      - '*'
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+      - cluster.x-k8s.io
+    resources:
+      - machinedeployments
+      - machinedeployments/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+      - bootstrap.cluster.x-k8s.io
+    resources:
+      - kubeadmconfigtemplates
+      - kubeadmconfigtemplates/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+      - addons.cluster.x-k8s.io
+    resources:
+      - clusterresourcesets
+      - clusterresourcesets/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+      - infrastructure.cluster.x-k8s.io
+    resources:
+      - vsphereclusters
+      - vsphereclusters/status
+      - vspheremachinetemplates
+      - vspheremachinetemplates/status
+      - dockerclusters
+      - dockerclusters/status
+      - dockermachinetemplates
+      - dockermachinetemplates/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+      - create
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+      - etcdcluster.cluster.x-k8s.io
+    resources:
+      - etcdadmclusters
+      - etcdadmclusters/status
+    verbs:
+      - get
+      - list
+      - watch
+      - patch
+      - update
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
+      - ""
+    resources:
+      - secrets
+      - secrets/status
+      - configmaps
+      - configmaps/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+      - create

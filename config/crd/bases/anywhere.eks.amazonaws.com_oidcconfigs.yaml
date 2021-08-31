@@ -1,0 +1,91 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.1
+  creationTimestamp: null
+  name: oidcconfigs.anywhere.eks.amazonaws.com
+spec:
+  group: anywhere.eks.amazonaws.com
+  names:
+    kind: OIDCConfig
+    listKind: OIDCConfigList
+    plural: oidcconfigs
+    singular: oidcconfig
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: OIDCConfig is the Schema for the oidcconfigs API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: OIDCConfigSpec defines the desired state of OIDCConfig
+            properties:
+              clientId:
+                description: ClientId defines the client ID for the OpenID Connect
+                  client
+                type: string
+              groupsClaim:
+                description: GroupsClaim defines the name of a custom OpenID Connect
+                  claim for specifying user groups
+                type: string
+              groupsPrefix:
+                description: GroupsPrefix defines a string to be prefixed to all groups
+                  to prevent conflicts with other authentication strategies
+                type: string
+              issuerUrl:
+                description: IssuerUrl defines the URL of the OpenID issuer, only
+                  HTTPS scheme will be accepted
+                type: string
+              requiredClaims:
+                description: RequiredClaims defines a key=value pair that describes
+                  a required claim in the ID Token
+                items:
+                  properties:
+                    claim:
+                      type: string
+                    value:
+                      type: string
+                  type: object
+                type: array
+              usernameClaim:
+                description: UsernameClaim defines the OpenID claim to use as the
+                  user name. Note that claims other than the default ('sub') is not
+                  guaranteed to be unique and immutable
+                type: string
+              usernamePrefix:
+                description: UsernamePrefix defines a string to prefixed to all usernames.
+                  If not provided, username claims other than 'email' are prefixed
+                  by the issuer URL to avoid clashes. To skip any prefixing, provide
+                  the value '-'.
+                type: string
+            type: object
+          status:
+            description: OIDCConfigStatus defines the observed state of OIDCConfig
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

@@ -1,0 +1,11 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+      - image: public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:v0.0.1-8539f509df046a4f567d2182dde824b957136599
+        name: manager

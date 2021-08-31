@@ -1,0 +1,8 @@
+key1: value 1
+key2: 2
+key3:
+- value array 1
+- value array 2
+key4:
+- key_in_nest_array: value
+  key_in_nest_array_2: 22

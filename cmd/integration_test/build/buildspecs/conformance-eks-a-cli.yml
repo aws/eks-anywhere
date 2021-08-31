@@ -1,0 +1,53 @@
+version: 0.2
+
+env:
+  variables:
+    T_VSPHERE_CIDR: "198.18.0.0/16"
+  secrets-manager:
+    VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
+    VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
+    GOVC_URL: "vsphere_ci_beta_connection:vsphere_url"
+    GOVC_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
+    GOVC_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
+    GOVC_INSECURE: "vsphere_ci_beta_connection:govc_insecure"
+    T_VSPHERE_DATACENTER: "vsphere_ci_beta_connection:vsphere_datacenter"
+    T_VSPHERE_DATASTORE: "vsphere_ci_beta_connection:datastore"
+    T_VSPHERE_FOLDER: "vsphere_ci_beta_connection:folder"
+    T_VSPHERE_NETWORK: "vsphere_ci_beta_connection:network"
+    T_VSPHERE_RESOURCE_POOL: "vsphere_ci_beta_connection:resource_pool"
+    T_VSPHERE_SERVER: "vsphere_ci_beta_connection:server"
+    T_VSPHERE_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_18: "vsphere_ci_beta_connection:template_18"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_19: "vsphere_ci_beta_connection:template_19"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_20: "vsphere_ci_beta_connection:template_20"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_21: "vsphere_ci_beta_connection:template_21"
+    T_VSPHERE_TEMPLATE_BR_1_20: "vsphere_ci_beta_connection:template_br_20"
+    T_VSPHERE_TEMPLATE_BR_1_21: "vsphere_ci_beta_connection:template_br_21"
+    T_VSPHERE_TLS_INSECURE: "vsphere_ci_beta_connection:tls_insecure"
+    T_VSPHERE_TLS_THUMBPRINT: "vsphere_ci_beta_connection:tls_thumbprint"
+
+phases:
+  pre_build:
+    commands:
+    - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/set_profile.sh
+    - make e2e
+    - /docker.sh
+    - cp ./bin/linux/eks-a ./bin/eks-a
+  build:
+    commands:
+    - export JOB_ID=$CODEBUILD_BUILD_ID
+    - > 
+      ./bin/test e2e run
+      -a ${INTEGRATION_TEST_AL2_AMI_ID}
+      -s ${INTEGRATION_TEST_STORAGE_BUCKET}
+      -j ${JOB_ID}
+      -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
+      -n ${INTEGRATION_TEST_SUBNET_ID}
+      -m 25
+      -r 'Test(VSphere|Docker)Kubernetes.*ConformanceFlow'
+  post_build:
+    commands:
+    - >
+      ./bin/test e2e cleanup vsphere
+      -n eksa-test
+      -v 4

@@ -1,0 +1,95 @@
+providers:
+  - name: "docker"
+    url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-docker/v0.3.19/infrastructure-components-development.yaml"
+    type: "InfrastructureProvider"
+    version: "v0.3.19"
+  - name: "vsphere"
+    url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-vsphere/v0.7.8/infrastructure-components.yaml"
+    type: "InfrastructureProvider"
+    version: "v0.7.8"
+  - name: "aws"
+    url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-aws/v0.6.4/infrastructure-components.yaml"
+    type: "InfrastructureProvider"
+    version: "v0.6.4"
+  - name: "cluster-api"
+    url: "{{.dir}}/cluster-name/generated/overrides/cluster-api/v0.3.19/core-components.yaml"
+    type: "CoreProvider"
+    version: "v0.3.19"
+  - name: "kubeadm"
+    url: "{{.dir}}/cluster-name/generated/overrides/control-plane-kubeadm/v0.3.19/control-plane-components.yaml"
+    type: "ControlPlaneProvider"
+    version: "v0.3.19"
+  - name: "kubeadm"
+    url: "{{.dir}}/cluster-name/generated/overrides/bootstrap-kubeadm/v0.3.19/bootstrap-components.yaml"
+    type: "BootstrapProvider"
+    version: "v0.3.19"
+  - name: "etcdadm-bootstrap"
+    url: "{{.dir}}/cluster-name/generated/overrides/bootstrap-etcdadm-bootstrap/v0.1.0/bootstrap-components.yaml"
+    type: "BootstrapProvider"
+    version: "v0.1.0"
+  - name: "etcdadm-controller"
+    url: "{{.dir}}/cluster-name/generated/overrides/bootstrap-etcdadm-controller/v0.1.0/bootstrap-components.yaml"
+    type: "BootstrapProvider"
+    version: "v0.1.0"
+
+overridesFolder: {{.dir}}/cluster-name/generated/overrides
+images:
+  cert-manager/cert-manager-cainjector:
+    repository: public.ecr.aws/l0g8r8j6/jetstack
+    tag: v1.1.0
+  cert-manager/cert-manager-controller:
+    repository: public.ecr.aws/l0g8r8j6/jetstack
+    tag: v1.1.0
+  cert-manager/cert-manager-webhook:
+    repository: public.ecr.aws/l0g8r8j6/jetstack
+    tag: v1.1.0
+  cluster-api/cluster-api-controller:
+    repository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api
+    tag: v0.3.19-eks-a-0.0.1.build.38
+  cluster-api/kube-rbac-proxy:
+    repository: public.ecr.aws/l0g8r8j6/brancz
+    tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.1
+  bootstrap-kubeadm/kubeadm-bootstrap-controller:
+    repository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api
+    tag: v0.3.19-eks-a-0.0.1.build.38
+  bootstrap-kubeadm/kube-rbac-proxy:
+    repository: public.ecr.aws/l0g8r8j6/brancz
+    tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.1
+  control-plane-kubeadm/kubeadm-control-plane-controller:
+    repository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api
+    tag: v0.3.19-eks-a-0.0.1.build.38
+  control-plane-kubeadm/kube-rbac-proxy:
+    repository: public.ecr.aws/l0g8r8j6/brancz
+    tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.1
+  infrastructure-aws/cluster-api-aws-controller:
+    repository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-aws
+    tag: v0.6.4-25df7d96779e2a305a22c6e3f9425c3465a77244
+  infrastructure-aws/kube-rbac-proxy:
+    repository: public.ecr.aws/l0g8r8j6/brancz
+    tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.1
+  infrastructure-vsphere/manager:
+    repository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release
+    tag: v0.7.8-eks-a-0.0.1.build.38
+  infrastructure-vsphere/kube-rbac-proxy:
+    repository: public.ecr.aws/l0g8r8j6/brancz
+    tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.8.0
+  infrastructure-docker/capd-manager:
+    repository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api
+    tag: v0.3.19-eks-a-0.0.1.build.38
+  infrastructure-docker/kube-rbac-proxy:
+    repository: public.ecr.aws/l0g8r8j6/brancz
+    tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.0
+  bootstrap-etcdadm-bootstrap/etcdadm-bootstrap-provider:
+    repository: public.ecr.aws/l0g8r8j6/mrajashree
+    tag: v0.1.0
+  bootstrap-etcdadm-bootstrap/kube-rbac-proxy:
+    repository: public.ecr.aws/l0g8r8j6/brancz
+    tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.0
+  bootstrap-etcdadm-controller/etcdadm-controller:
+    repository: public.ecr.aws/l0g8r8j6/mrajashree
+    tag: v0.1.0
+  bootstrap-etcdadm-controller/kube-rbac-proxy:
+    repository: public.ecr.aws/l0g8r8j6/brancz
+    tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.0
+cert-manager:
+  timeout: 30m

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhook-service
+  namespace: system
+spec:
+  selector:
+    control-plane: eksa-controller-manager
