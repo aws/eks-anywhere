@@ -47,8 +47,8 @@ but the [VMWare OVA import guide can be found here](https://docs.vmware.com/en/V
 
 EKS Anywhere supports the following operating system families
 
-* Ubuntu (default)
-* Bottlerocket
+* Bottlerocket (default)
+* Ubuntu
 
 A list of OVAs for this release can be found on the [artifacts page]({{< relref "artifacts" >}}).
 
@@ -58,6 +58,8 @@ A list of OVAs for this release can be found on the [artifacts page]({{< relref 
    ![Import ova drop down](/images/ss1.jpg)
 1. Select an OVF template using URL or selecting a local OVF file and click on *Next*. If you are not able to select an
    OVF template using URL, download the file and use Local file option.
+   
+   Note: If you are using Bottlerocket OVAs, please select local file option.
    ![Import ova wizard](/images/ss2.jpg)
 1. Select a folder where you want to deploy your OVF package (most of our OVF templates are under SDDC-Datacenter
    directory) and click on *Next*. You cannot have an OVF template with the same name in one directory. For workload
@@ -88,8 +90,6 @@ To deploy a template using `govc`, you must first ensure that you have
 [GOVC installed](https://github.com/vmware/govmomi/blob/master/govc/README.md). You need to set and export three
 environment variables to run `govc` GOVC_USERNAME, GOVC_PASSWORD and GOVC_URL.
 
-Note: If you are using Bottlerocket OVA, please refer the above section and use the Web User Interface to import the OVA. 
-
 1. Import the template to a content library in vCenter using URL or selecting a local OVA file
 
     Using URL:
@@ -104,20 +104,25 @@ Note: If you are using Bottlerocket OVA, please refer the above section and use 
     govc library.import <library name> <path to OVA file on local machine>
     ```
 
-1. Deploy the template
+2. Deploy the template
 
     ```
     govc library.deploy -pool <resource pool> -folder <folder location to deploy template> /<library name>/<template name> <name of new VM>
     ```
+   2a. If using Bottlerocket template, resize disk 2 to 20G
+   ```
+   govc vm.disk.change -vm <template name> -disk.label "Hard disk 2" -size 20G
+   ```
 
-1. Take a snapshot of the VM (It is highly recommended that you snapshot the VM. This will reduce the time it takes to provision machines
+
+3. Take a snapshot of the VM (It is highly recommended that you snapshot the VM. This will reduce the time it takes to provision machines
    and cluster creation will be faster. If you prefer not to take snapshot, skip this step)
 
     ```
     govc snapshot.create -vm ubuntu-2004-kube-v1.19.6 root
     ```
 
-1. Mark the new VM as a template
+4. Mark the new VM as a template
 
     ```
     govc vm.markastemplate <name of new VM>
