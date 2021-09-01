@@ -308,6 +308,9 @@ spec:
           criSocket: /var/run/containerd/containerd.sock
           kubeletExtraArgs:
             cloud-provider: external
+{{- if hasPrefix .kubernetesVersion "v1.21"}}
+            cgroup-driver: systemd
+{{- end }}
           name: '{{"{{"}} ds.meta_data.hostname {{"}}"}}'
 {{- if and .proxyConfig (ne .format "bottlerocket")}}
       files:
