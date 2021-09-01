@@ -12,15 +12,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 const resultsSeparator = "\n------------\n"
 
-func ParseBundleFromDoc(bundleConfig string) (*v1beta2.SupportBundle, error) {
+func ParseBundleFromDoc(clusterSpec *cluster.Spec, bundleConfig string) (*EksaDiagnosticBundle, error) {
+	af := NewAnalyzerFactory()
+	cf := NewCollectorFactory()
 	if bundleConfig == "" {
 		// user did not provide any bundle-config to the support-bundle command, generate one using the default collectors & analyzers
-		return newBundleConfig(), nil
+		return NewBundleConfig(clusterSpec, af, cf), nil
 	}
 
 	// parse bundle-config provided by the user
@@ -28,10 +32,93 @@ func ParseBundleFromDoc(bundleConfig string) (*v1beta2.SupportBundle, error) {
 	if err != nil {
 		return nil, err
 	}
-	return supportbundle.ParseSupportBundleFromDoc(collectorContent)
+	bundle, err := supportbundle.ParseSupportBundleFromDoc(collectorContent)
+	if err != nil {
+		return nil, err
+	}
+	return NewCustomBundleConfig(bundle, af, cf), nil
 }
 
-func CollectBundleFromSpec(sinceTimeValue *time.Time, spec *v1beta2.SupportBundleSpec) (string, error) {
+func ParseTimeOptions(since string, sinceTime string) (*time.Time, error) {
+	var sinceTimeValue time.Time
+	var err error
+	if sinceTime == "" && since == "" {
+		return &sinceTimeValue, nil
+	} else if sinceTime != "" && since != "" {
+		return nil, fmt.Errorf("at most one of `sinceTime` or `since` could be specified")
+	} else if sinceTime != "" {
+		sinceTimeValue, err = time.Parse(time.RFC3339, sinceTime)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse --since-time option: %v", err)
+		}
+	} else if since != "" {
+		duration, err := time.ParseDuration(since)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse --since option: %v", err)
+		}
+		now := time.Now()
+		sinceTimeValue = now.Add(0 - duration)
+	}
+	return &sinceTimeValue, nil
+}
+
+type EksaDiagnosticBundle struct {
+	Bundle           *v1beta2.SupportBundle
+	AnalyzerFactory  AnalyzerFactory
+	CollectorFactory CollectorFactory
+}
+
+func NewCustomBundleConfig(customBundle *v1beta2.SupportBundle, af AnalyzerFactory, cf CollectorFactory) *EksaDiagnosticBundle {
+	return &EksaDiagnosticBundle{
+		Bundle:           customBundle,
+		AnalyzerFactory:  af,
+		CollectorFactory: cf,
+	}
+}
+
+func NewDefaultBundleConfig(af AnalyzerFactory, cf CollectorFactory) *EksaDiagnosticBundle {
+	b := &EksaDiagnosticBundle{
+		Bundle: &v1beta2.SupportBundle{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "SupportBundle",
+				APIVersion: "troubleshoot.sh/v1beta2",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "defaultBundle",
+			},
+			Spec: v1beta2.SupportBundleSpec{},
+		},
+		AnalyzerFactory:  af,
+		CollectorFactory: cf,
+	}
+	return b.WithDefaultAnalyzers().WithDefaultCollectors()
+}
+
+func NewBundleConfig(spec *cluster.Spec, af AnalyzerFactory, cf CollectorFactory) *EksaDiagnosticBundle {
+	b := &EksaDiagnosticBundle{
+		Bundle: &v1beta2.SupportBundle{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "SupportBundle",
+				APIVersion: "troubleshoot.sh/v1beta2",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: fmt.Sprintf("%sBundle", spec.Name),
+			},
+			Spec: v1beta2.SupportBundleSpec{},
+		},
+		AnalyzerFactory:  af,
+		CollectorFactory: cf,
+	}
+	return b.
+		WithGitOpsConfig(spec.GitOpsConfig).
+		WithOidcConfig(spec.OIDCConfig).
+		WithExternalEtcd(spec.Spec.ExternalEtcdConfiguration).
+		WithDatacenterConfig(spec.Spec.DatacenterRef).
+		WithDefaultAnalyzers().
+		WithDefaultCollectors()
+}
+
+func (e *EksaDiagnosticBundle) CollectBundleFromSpec(sinceTimeValue *time.Time) (string, error) {
 	k8sConfig, err := k8sutil.GetRESTConfig()
 	if err != nil {
 		return "", fmt.Errorf("failed to convert kube flags to rest config: %v", err)
@@ -65,15 +152,15 @@ func CollectBundleFromSpec(sinceTimeValue *time.Time, spec *v1beta2.SupportBundl
 		SinceTime:                 sinceTimeValue,
 	}
 
-	archivePath, err := supportbundle.CollectSupportBundleFromSpec(spec, additionalRedactors, createOpts)
+	archivePath, err := supportbundle.CollectSupportBundleFromSpec(&e.Bundle.Spec, additionalRedactors, createOpts)
 	if err != nil {
 		return "", err
 	}
 	return archivePath, nil
 }
 
-func AnalyzeBundle(spec *v1beta2.SupportBundleSpec, archivePath string) error {
-	analyzeResults, err := supportbundle.AnalyzeAndExtractSupportBundle(spec, archivePath)
+func (e *EksaDiagnosticBundle) AnalyzeBundle(archivePath string) error {
+	analyzeResults, err := supportbundle.AnalyzeAndExtractSupportBundle(&e.Bundle.Spec, archivePath)
 	if err != nil {
 		return err
 	}
@@ -83,27 +170,49 @@ func AnalyzeBundle(spec *v1beta2.SupportBundleSpec, archivePath string) error {
 	return nil
 }
 
-func ParseTimeOptions(since string, sinceTime string) (*time.Time, error) {
-	var sinceTimeValue time.Time
-	var err error
-	if sinceTime == "" && since == "" {
-		return &sinceTimeValue, nil
-	} else if sinceTime != "" && since != "" {
-		return nil, fmt.Errorf("at most one of `sinceTime` or `since` could be specified")
-	} else if sinceTime != "" {
-		sinceTimeValue, err = time.Parse(time.RFC3339, sinceTime)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse --since-time option: %v", err)
-		}
-	} else if since != "" {
-		duration, err := time.ParseDuration(since)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse --since option: %v", err)
-		}
-		now := time.Now()
-		sinceTimeValue = now.Add(0 - duration)
+func (e *EksaDiagnosticBundle) PrintBundleConfig() error {
+	bundleYaml, err := yaml.Marshal(e.Bundle)
+	if err != nil {
+		return fmt.Errorf("error outputting yaml: %v", err)
 	}
-	return &sinceTimeValue, nil
+	fmt.Println(string(bundleYaml))
+	return nil
+}
+
+func (e *EksaDiagnosticBundle) WithDefaultCollectors() *EksaDiagnosticBundle {
+	e.Bundle.Spec.Collectors = append(e.Bundle.Spec.Collectors, e.CollectorFactory.DefaultCollectors()...)
+	return e
+}
+
+func (e *EksaDiagnosticBundle) WithDefaultAnalyzers() *EksaDiagnosticBundle {
+	e.Bundle.Spec.Analyzers = append(e.Bundle.Spec.Analyzers, e.AnalyzerFactory.DefaultAnalyzers()...)
+	return e
+}
+
+func (e *EksaDiagnosticBundle) WithDatacenterConfig(config v1alpha1.Ref) *EksaDiagnosticBundle {
+	e.Bundle.Spec.Analyzers = append(e.Bundle.Spec.Analyzers, e.AnalyzerFactory.DataCenterConfigAnalyzers(config)...)
+	return e
+}
+
+func (e *EksaDiagnosticBundle) WithOidcConfig(config *v1alpha1.OIDCConfig) *EksaDiagnosticBundle {
+	if config != nil {
+		e.Bundle.Spec.Analyzers = append(e.Bundle.Spec.Analyzers, e.AnalyzerFactory.EksaOidcAnalyzers()...)
+	}
+	return e
+}
+
+func (e *EksaDiagnosticBundle) WithExternalEtcd(config *v1alpha1.ExternalEtcdConfiguration) *EksaDiagnosticBundle {
+	if config != nil {
+		e.Bundle.Spec.Analyzers = append(e.Bundle.Spec.Analyzers, e.AnalyzerFactory.EksaExternalEtcdAnalyzers()...)
+	}
+	return e
+}
+
+func (e *EksaDiagnosticBundle) WithGitOpsConfig(config *v1alpha1.GitOpsConfig) *EksaDiagnosticBundle {
+	if config != nil {
+		e.Bundle.Spec.Analyzers = append(e.Bundle.Spec.Analyzers, e.AnalyzerFactory.EksaGitopsAnalyzers()...)
+	}
+	return e
 }
 
 func showAnalyzeResults(analyzeResults []*analyzerunner.AnalyzeResult) {
@@ -124,388 +233,4 @@ func showAnalyzeResults(analyzeResults []*analyzerunner.AnalyzeResult) {
 		results = results + result
 	}
 	logger.Info(results)
-}
-
-func GenerateBundleConfig() error {
-	config := newBundleConfig()
-	clusterYaml, err := yaml.Marshal(config)
-	if err != nil {
-		return fmt.Errorf("error outputting yaml: %v", err)
-	}
-	fmt.Println(string(clusterYaml))
-	return nil
-}
-
-func newBundleConfig() *v1beta2.SupportBundle {
-	return &v1beta2.SupportBundle{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "SupportBundle",
-			APIVersion: "troubleshoot.sh/v1beta2",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "example",
-		},
-		Spec: v1beta2.SupportBundleSpec{
-			Collectors: getDefaultCollectors(),
-			Analyzers:  getDefaultAnalyzers(),
-		},
-	}
-}
-
-func getDefaultCollectors() []*v1beta2.Collect {
-	return []*v1beta2.Collect{
-		{
-			ClusterInfo: &v1beta2.ClusterInfo{},
-		},
-		{
-			ClusterResources: &v1beta2.ClusterResources{},
-		},
-		{
-			Secret: &v1beta2.Secret{
-				Namespace:    "eksa-system",
-				SecretName:   "eksa-license",
-				IncludeValue: true,
-				Key:          "license",
-			},
-		},
-		{
-			Logs: &v1beta2.Logs{
-				Namespace: "capd-system",
-				Name:      "logs/capd-system",
-			},
-		},
-		{
-			Logs: &v1beta2.Logs{
-				Namespace: "capi-kubeadm-bootstrap-system",
-				Name:      "logs/capi-kubeadm-bootstrap-system",
-			},
-		},
-		{
-			Logs: &v1beta2.Logs{
-				Namespace: "capi-kubeadm-control-plane-system",
-				Name:      "logs/capi-kubeadm-control-plane-system",
-			},
-		},
-		{
-			Logs: &v1beta2.Logs{
-				Namespace: "capi-system",
-				Name:      "logs/capi-system",
-			},
-		},
-		{
-			Logs: &v1beta2.Logs{
-				Namespace: "capi-webhook-system",
-				Name:      "logs/capi-webhook-system",
-			},
-		},
-		{
-			Logs: &v1beta2.Logs{
-				Namespace: "cert-manager",
-				Name:      "logs/cert-manager",
-			},
-		},
-		{
-			Logs: &v1beta2.Logs{
-				Namespace: "eksa-system",
-				Name:      "logs/eksa-system",
-			},
-		},
-		{
-			Logs: &v1beta2.Logs{
-				Namespace: "default",
-				Name:      "logs/default",
-			},
-		},
-		{
-			Logs: &v1beta2.Logs{
-				Namespace: "etcdadm-bootstrap-provider-system",
-				Name:      "logs/etcdadm-bootstrap-provider-system",
-			},
-		},
-		{
-			Logs: &v1beta2.Logs{
-				Namespace: "etcdadm-controller-system",
-				Name:      "logs/etcdadm-controller-system",
-			},
-		},
-		{
-			Logs: &v1beta2.Logs{
-				Namespace: "kube-node-lease",
-				Name:      "logs/kube-node-lease",
-			},
-		},
-		{
-			Logs: &v1beta2.Logs{
-				Namespace: "kube-public",
-				Name:      "logs/kube-public",
-			},
-		},
-		{
-			Logs: &v1beta2.Logs{
-				Namespace: "kube-system",
-				Name:      "logs/kube-system",
-			},
-		},
-	}
-}
-
-func getDefaultAnalyzers() []*v1beta2.Analyze {
-	return []*v1beta2.Analyze{
-		{
-			DeploymentStatus: &v1beta2.DeploymentStatus{
-				Name:      "capi-kubeadm-bootstrap-controller-manager",
-				Namespace: "capi-kubeadm-bootstrap-system",
-				Outcomes: []*v1beta2.Outcome{
-					{
-						Fail: &v1beta2.SingleOutcome{
-							When:    "< 1",
-							Message: "capi-kubeadm-bootstrap-controller-manager is not ready.",
-						},
-					}, {
-						Pass: &v1beta2.SingleOutcome{
-							Message: "capi-kubeadm-bootstrap-controller-manager is running.",
-						},
-					},
-				},
-			},
-		}, {
-			DeploymentStatus: &v1beta2.DeploymentStatus{
-				Name:      "capi-kubeadm-control-plane-controller-manager",
-				Namespace: "capi-kubeadm-control-plane-system",
-				Outcomes: []*v1beta2.Outcome{
-					{
-						Fail: &v1beta2.SingleOutcome{
-							When:    "< 1",
-							Message: "capi-kubeadm-control-plane-controller-manager is not ready.",
-						},
-					}, {
-						Pass: &v1beta2.SingleOutcome{
-							Message: "capi-kubeadm-control-plane-controller-manager is running.",
-						},
-					},
-				},
-			},
-		}, {
-			DeploymentStatus: &v1beta2.DeploymentStatus{
-				Name:      "capi-controller-manager",
-				Namespace: "capi-system",
-				Outcomes: []*v1beta2.Outcome{
-					{
-						Pass: &v1beta2.SingleOutcome{
-							Message: "capi-controller-manager is running.",
-						},
-					}, {
-						Fail: &v1beta2.SingleOutcome{
-							When:    "< 1",
-							Message: "capi-controller-manager is not ready.",
-						},
-					},
-				},
-			},
-		}, {
-			DeploymentStatus: &v1beta2.DeploymentStatus{
-				Name:      "capi-controller-manager",
-				Namespace: "capi-webhook-system",
-				Outcomes: []*v1beta2.Outcome{
-					{
-						Pass: &v1beta2.SingleOutcome{
-							Message: "capi webhook controller manager is running.",
-						},
-					}, {
-						Fail: &v1beta2.SingleOutcome{
-							When:    "< 1",
-							Message: "capi webhook controller manager is not ready.",
-						},
-					},
-				},
-			},
-		}, {
-			DeploymentStatus: &v1beta2.DeploymentStatus{
-				Name:      "capi-kubeadm-bootstrap-controller-manager",
-				Namespace: "capi-webhook-system",
-				Outcomes: []*v1beta2.Outcome{
-					{
-						Pass: &v1beta2.SingleOutcome{
-							Message: "capi-kubeadm-bootstrap-controller-manager is running.",
-						},
-					}, {
-						Fail: &v1beta2.SingleOutcome{
-							When:    "< 1",
-							Message: "capi-kubeadm-bootstrap-controller-manager is not ready.",
-						},
-					},
-				},
-			},
-		}, {
-			DeploymentStatus: &v1beta2.DeploymentStatus{
-				Name:      "capi-kubeadm-control-plane-controller-manager",
-				Namespace: "capi-webhook-system",
-				Outcomes: []*v1beta2.Outcome{
-					{
-						Pass: &v1beta2.SingleOutcome{
-							Message: "capi-kubeadm-control-plane-controller-manager is running.",
-						},
-					}, {
-						Fail: &v1beta2.SingleOutcome{
-							When:    "< 1",
-							Message: "capi-kubeadm-control-plane-controller-manager is not ready.",
-						},
-					},
-				},
-			},
-		}, {
-			DeploymentStatus: &v1beta2.DeploymentStatus{
-				Name:      "cert-manager",
-				Namespace: "cert-manager",
-				Outcomes: []*v1beta2.Outcome{
-					{
-						Pass: &v1beta2.SingleOutcome{
-							Message: "cert-manager is running.",
-						},
-					}, {
-						Fail: &v1beta2.SingleOutcome{
-							When:    "< 1",
-							Message: "cert-manager is not ready.",
-						},
-					},
-				},
-			},
-		}, {
-			DeploymentStatus: &v1beta2.DeploymentStatus{
-				Name:      "cert-manager-cainjector",
-				Namespace: "cert-manager",
-				Outcomes: []*v1beta2.Outcome{
-					{
-						Pass: &v1beta2.SingleOutcome{
-							Message: "cert-manager-cainjector is running.",
-						},
-					}, {
-						Fail: &v1beta2.SingleOutcome{
-							When:    "< 1",
-							Message: "cert-manager-cainjector is not ready.",
-						},
-					},
-				},
-			},
-		}, {
-			DeploymentStatus: &v1beta2.DeploymentStatus{
-				Name:      "cert-manager-webhook",
-				Namespace: "cert-manager",
-				Outcomes: []*v1beta2.Outcome{
-					{
-						Pass: &v1beta2.SingleOutcome{
-							Message: "cert-manager-webhook is running.",
-						},
-					}, {
-						Fail: &v1beta2.SingleOutcome{
-							When:    "< 1",
-							Message: "cert-manager-webhook is not ready.",
-						},
-					},
-				},
-			},
-		}, {
-			DeploymentStatus: &v1beta2.DeploymentStatus{
-				Name:      "coredns",
-				Namespace: "kube-system",
-				Outcomes: []*v1beta2.Outcome{
-					{
-						Pass: &v1beta2.SingleOutcome{
-							Message: "coredns is running.",
-						},
-					}, {
-						Fail: &v1beta2.SingleOutcome{
-							When:    "< 1",
-							Message: "coredns is not ready.",
-						},
-					},
-				},
-			},
-		}, {
-			DeploymentStatus: &v1beta2.DeploymentStatus{
-				Name:      "local-path-provisioner",
-				Namespace: "local-path-storage",
-				Outcomes: []*v1beta2.Outcome{
-					{
-						Pass: &v1beta2.SingleOutcome{
-							Message: "local-path-provisioner is running.",
-						},
-					}, {
-						Fail: &v1beta2.SingleOutcome{
-							When:    "< 1",
-							Message: "local-path-provisioner is not ready.",
-						},
-					},
-				},
-			},
-		}, {
-			DeploymentStatus: &v1beta2.DeploymentStatus{
-				Name:      "capv-controller-manager",
-				Namespace: "capv-system",
-				Outcomes: []*v1beta2.Outcome{
-					{
-						Pass: &v1beta2.SingleOutcome{
-							Message: "capv-controller-manager is running.",
-						},
-					}, {
-						Fail: &v1beta2.SingleOutcome{
-							When:    "< 1",
-							Message: "capv-controller-manager is not ready.",
-						},
-					},
-				},
-			},
-		}, {
-			DeploymentStatus: &v1beta2.DeploymentStatus{
-				Name:      "capv-controller-manager",
-				Namespace: "capi-webhook-system",
-				Outcomes: []*v1beta2.Outcome{
-					{
-						Pass: &v1beta2.SingleOutcome{
-							Message: "capv-controller-manager is running.",
-						},
-					}, {
-						Fail: &v1beta2.SingleOutcome{
-							When:    "< 1",
-							Message: "capv-controller-manager is not ready.",
-						},
-					},
-				},
-			},
-		}, {
-			DeploymentStatus: &v1beta2.DeploymentStatus{
-				Name:      "etcdadm-bootstrap-provider-controller-manager",
-				Namespace: "etcdadm-bootstrap-provider-system",
-				Outcomes: []*v1beta2.Outcome{
-					{
-						Pass: &v1beta2.SingleOutcome{
-							Message: "etcdadm-bootstrap-provider-controller-manager is running.",
-						},
-					}, {
-						Fail: &v1beta2.SingleOutcome{
-							When:    "< 1",
-							Message: "etcdadm-bootstrap-provider-controller-manager is not ready.",
-						},
-					},
-				},
-			},
-		}, {
-			DeploymentStatus: &v1beta2.DeploymentStatus{
-				Name:      "etcdadm-controller-controller-manager",
-				Namespace: "etcdadm-controller-system",
-				Outcomes: []*v1beta2.Outcome{
-					{
-						Pass: &v1beta2.SingleOutcome{
-							Message: "etcdadm-controller-controller-manager is running.",
-						},
-					}, {
-						Fail: &v1beta2.SingleOutcome{
-							When:    "< 1",
-							Message: "etcdadm-controller-controller-manager is not ready.",
-						},
-					},
-				},
-			},
-		},
-	}
 }
