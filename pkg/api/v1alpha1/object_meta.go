@@ -6,5 +6,6 @@ package v1alpha1
 // and https://github.com/kubernetes-sigs/cluster-api/blob/bf790fc2a53614ff5d3405c83c0de0dd3303bb1f/api/v1alpha2/common_types.go#L67-L128
 // as needed.
 type ObjectMeta struct {
-	Name string `json:"name,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Namespace string `json:"namespace,omitempty"`
 }

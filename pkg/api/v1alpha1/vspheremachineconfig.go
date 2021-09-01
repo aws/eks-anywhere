@@ -19,7 +19,8 @@ func NewVSphereMachineConfigGenerate(name string) *VSphereMachineConfigGenerate 
 			APIVersion: SchemeBuilder.GroupVersion.String(),
 		},
 		ObjectMeta: ObjectMeta{
-			Name: name,
+			Name:      name,
+			Namespace: "anywhere-system",
 		},
 		Spec: VSphereMachineConfigSpec{
 			DiskGiB:   25,
@@ -44,6 +45,10 @@ func (c *VSphereMachineConfigGenerate) Kind() string {
 
 func (c *VSphereMachineConfigGenerate) Name() string {
 	return c.ObjectMeta.Name
+}
+
+func (c *VSphereMachineConfigGenerate) Namespace() string {
+	return c.ObjectMeta.Namespace
 }
 
 func GetVSphereMachineConfigs(fileName string) (map[string]*VSphereMachineConfig, error) {

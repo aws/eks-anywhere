@@ -14,7 +14,8 @@ func NewVSphereDatacenterConfigGenerate(clusterName string) *VSphereDatacenterCo
 			APIVersion: SchemeBuilder.GroupVersion.String(),
 		},
 		ObjectMeta: ObjectMeta{
-			Name: clusterName,
+			Name:      clusterName,
+			Namespace: "anywhere-system",
 		},
 		Spec: VSphereDatacenterConfigSpec{},
 	}
@@ -30,6 +31,10 @@ func (c *VSphereDatacenterConfigGenerate) Kind() string {
 
 func (c *VSphereDatacenterConfigGenerate) Name() string {
 	return c.ObjectMeta.Name
+}
+
+func (c *VSphereDatacenterConfigGenerate) Namespace() string {
+	return c.ObjectMeta.Namespace
 }
 
 func GetVSphereDatacenterConfig(fileName string) (*VSphereDatacenterConfig, error) {

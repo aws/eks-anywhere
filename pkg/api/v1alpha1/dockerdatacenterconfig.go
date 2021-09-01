@@ -14,7 +14,8 @@ func NewDockerDatacenterConfigGenerate(clusterName string) *DockerDatacenterConf
 			APIVersion: SchemeBuilder.GroupVersion.String(),
 		},
 		ObjectMeta: ObjectMeta{
-			Name: clusterName,
+			Name:      clusterName,
+			Namespace: "anywhere-system",
 		},
 		Spec: DockerDatacenterConfigSpec{},
 	}
@@ -30,6 +31,10 @@ func (c *DockerDatacenterConfigGenerate) Kind() string {
 
 func (c *DockerDatacenterConfigGenerate) Name() string {
 	return c.ObjectMeta.Name
+}
+
+func (c *DockerDatacenterConfigGenerate) Namespace() string {
+	return c.ObjectMeta.Namespace
 }
 
 func GetDockerDatacenterConfig(fileName string) (*DockerDatacenterConfig, error) {
