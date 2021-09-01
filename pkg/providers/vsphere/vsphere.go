@@ -722,9 +722,13 @@ func (p *vsphereProvider) checkDatastoreUsage(ctx context.Context, clusterSpec *
 
 	if etcdMachineConfig != nil {
 		etcdNeedGiB := etcdMachineConfig.Spec.DiskGiB * clusterSpec.Spec.ExternalEtcdConfiguration.Count
-		usage[etcdMachineConfig.Spec.Datastore] = &datastoreUsage{
-			availableSpace: etcdAvailableSpace,
-			needGiBSpace:   etcdNeedGiB,
+		if _, ok := usage[etcdMachineConfig.Spec.Datastore]; ok {
+			usage[etcdMachineConfig.Spec.Datastore].needGiBSpace += etcdNeedGiB
+		} else {
+			usage[etcdMachineConfig.Spec.Datastore] = &datastoreUsage{
+				availableSpace: etcdAvailableSpace,
+				needGiBSpace:   etcdNeedGiB,
+			}
 		}
 	}
 
