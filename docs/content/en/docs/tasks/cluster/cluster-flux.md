@@ -24,17 +24,29 @@ In the event that GitOps installation fails, EKS-A cluster creation will continu
 
 Currently, you can manage a subset of cluster properties with GitOps:
 
-- `Cluster.workerNodeGroupConfigurations[0].count`
-- `Cluster.workerNodeGroupConfigurations[0].machineGroupRef.name`
+`Cluster`:
+- `controlPlaneConfig.count`
+- `controlPlaneConfigurations.machineGroupRef.name`
+- `workerNodeGroupConfigurations.count`
+- `workerNodeGroupConfigurations.machineGroupRef.name`
+- `etcdConfiguration.externalConfiguration.machineGroupRef.name`
 
-For a VsphereMachineConfig associated with worker nodes via the workerNodeGroups.machineGroupRef.name, you may update the following fields with GitOps:
+`VSphereDatacenterConfig`:
+- `datastore`
+- `folder`
+- `resourcePool`
 
-- `VsphereMachineConfig.diskGiB`
-- `VsphereMachineConfig.numCPUs`
-- `VsphereMachineConfig.memoryMiB`
-- `VsphereMachineConfig.template`
+`VSphereMachineConfig`:
+- `diskGiB`
+- `numCPUs`
+- `memoryMiB`
+- `template`
 
 Any other changes to the cluster configuration in the git repository will be ignored.
+If an immutable immutable field is changed in Git repsitory, there are two ways to find the error message:
+1. If a notification webhook is set up, check the error message in notification channel.
+2. Check the Flux Kustomization Controller log: `kubectl logs -f -n flux-system kustomize-controller-******` for error message containing text similar to `Invalid value: 1: field is immutable`
+
 
 ## Getting Started with EKS-A GitOps
 
@@ -46,7 +58,7 @@ In order to use GitOps to manage cluster scaling, you need a couple of things:
 
 ### Create a GitHub Personal Access Token
 
-[Create a PAT](https://github.com/settings/tokens/new) to access your provided github repository.
+[Create a Personal Access Token (PAT)](https://github.com/settings/tokens/new) to access your provided github repository.
 It must be scoped for all `repo` permissions.
 
 >**_NOTE:_** GitOps configuration only works with hosted github.com and will not work on self hosted GitHub Enterprise instances.
@@ -86,14 +98,13 @@ You can provide the PAT to EKS-A in one of two ways:
 
 ### Create GitOps configuration repo
 
-If you have an existing repo you can set that as your repository name in the configuration.
+If you have an existing repo you can set it as your repository name in the configuration.
 If you specify a repo in your `GitOpsConfig` which does not exist EKS-A will create it for you.
 If you would like to create a new repo you can [click here](https://github.new) to create a new repo.
 
-Your repo will contain your cluster specification file(s).
-If you have multiple files you should store them in subfolders and specify the [path in your configuration]({{< relref "#__path__-optional">}}).
+If your repository contains multiple cluster specification files, store them in subfolders and specify the [configuration path](/docs/reference/clusterspec/gitops/#__clusterconfigpath__-optional) in your cluster specification.
 
-Example repo structure:
+Example repository structure:
 ```
 clusters
 ├── dev
