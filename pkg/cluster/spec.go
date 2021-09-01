@@ -219,7 +219,7 @@ func (s *Spec) getBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
 	}
 
 	bundles := &v1alpha1.Bundles{}
-	if err = yaml.UnmarshalStrict(content, bundles); err != nil {
+	if err = yaml.Unmarshal(content, bundles); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal bundles manifest from [%s] to build cluster spec: %v", release.BundleManifestUrl, err)
 	}
 
@@ -258,7 +258,7 @@ func (s *Spec) getReleases(releasesManifest string) (*v1alpha1.Release, error) {
 	}
 
 	releases := &v1alpha1.Release{}
-	if err = yaml.UnmarshalStrict(content, releases); err != nil {
+	if err = yaml.Unmarshal(content, releases); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal release manifest to build cluster spec: %v", err)
 	}
 
@@ -390,7 +390,7 @@ func (s *Spec) getEksdRelease(versionsBundle *v1alpha1.VersionsBundle) (*eksdv1a
 	}
 
 	eksd := &eksdv1alpha1.Release{}
-	if err = yaml.UnmarshalStrict(content, eksd); err != nil {
+	if err = yaml.Unmarshal(content, eksd); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal eksd manifest to build cluster spec: %v", err)
 	}
 
