@@ -14,7 +14,7 @@ import (
 var binaries = []string{cliBinary, e2eBinary, eksctlBinary}
 
 const (
-	cliBinary    = "eks-a"
+	cliBinary    = "eksctl-anywhere"
 	e2eBinary    = "e2e.test"
 	eksctlBinary = "eksctl"
 )

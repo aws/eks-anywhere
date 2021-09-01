@@ -10,7 +10,7 @@ PROJECT_PATH="${2? Specify second argument - project path}"
 BUILD_IDENTIFIER="${3? Specify third argument - build identifier}"
 GIT_HASH="${4?Specify fourth argument - git hash of the tar builds}"
 
-REPO="eks-a"
+REPO="eksctl-anywhere"
 BINARY_PATH="bin"
 TAR_PATH="${CODEBUILD_SRC_DIR}/${PROJECT_PATH}/${BUILD_IDENTIFIER}-${GIT_HASH}/artifacts"
 
@@ -18,7 +18,7 @@ function build::cli::move_artifacts() {
   local -r os=$1
   local -r cli_artifacts_path=$2
 
-  mv ${BINARY_PATH}/${os}/eks-a ${cli_artifacts_path}
+  mv ${BINARY_PATH}/${os}/eksctl-anywhere ${cli_artifacts_path}
   mv ATTRIBUTION.txt ${cli_artifacts_path}
 }
 
