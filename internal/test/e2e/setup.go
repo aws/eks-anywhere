@@ -49,10 +49,6 @@ func newSession(amiId, instanceProfileName, storageBucket, jobId, subnetId strin
 	return e, nil
 }
 
-func (e *E2ESession) setupPath(value string) {
-	e.testEnvVars["PATH"] = value
-}
-
 func (e *E2ESession) setup(regex string) error {
 	err := e.uploadBinaries()
 	if err != nil {
@@ -95,8 +91,6 @@ func (e *E2ESession) setup(regex string) error {
 	if err != nil {
 		return err
 	}
-
-	e.setupPath("$PATH:`pwd`/bin")
 
 	return nil
 }
