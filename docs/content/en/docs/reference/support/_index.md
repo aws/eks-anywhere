@@ -3,7 +3,7 @@ title: "Support"
 linkTitle: "Support"
 weight: 50
 description: >
-  Beta support for EKS-A
+  Support for EKS-A
 ---
 
 EKS Anywhere support licenses are available to AWS customers who pay for

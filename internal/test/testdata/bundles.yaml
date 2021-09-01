@@ -100,7 +100,7 @@ spec:
           uri: https://dev-release-prod-pdx.s3-us-west-2.amazonaws.com/artifacts/0.0.1.build.38/eks-distro/ova/1-18/1-18-4/ubuntu-v1.18.16-eks-d-1-18-4-eks-a-0.0.1.build.38-amd64.ova
     eksa:
       cliTools:
-        uri: public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v1-20-1-736a94fc884dd47656233e4777a7945af541cc18
+        uri: public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v1-21-4-ed8ad899e40f0a0e625b7a49d7d90e6077f97a28
       components:
         uri: embed:///config/eksa-components.yaml
     flux:
@@ -228,7 +228,7 @@ spec:
           uri: https://dev-release-prod-pdx.s3-us-west-2.amazonaws.com/artifacts/0.0.1.build.38/eks-distro/ova/1-19/1-19-4/ubuntu-v1.19.8-eks-d-1-19-4-eks-a-0.0.1.build.38-amd64.ova
     eksa:
       cliTools:
-        uri: public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v1-20-1-736a94fc884dd47656233e4777a7945af541cc18
+        uri: public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v1-21-4-ed8ad899e40f0a0e625b7a49d7d90e6077f97a28
       components:
         uri: embed:///config/eksa-components.yaml
     flux:
@@ -356,7 +356,7 @@ spec:
           uri: https://dev-release-prod-pdx.s3-us-west-2.amazonaws.com/artifacts/0.0.1.build.38/eks-distro/ova/1-20/1-20-1/ubuntu-v1.20.4-eks-d-1-20-1-eks-a-0.0.1.build.38-amd64.ova
     eksa:
       cliTools:
-        uri: public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v1-20-1-736a94fc884dd47656233e4777a7945af541cc18
+        uri: public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v1-21-4-ed8ad899e40f0a0e625b7a49d7d90e6077f97a28
       components:
         uri: embed:///config/eksa-components.yaml
     flux:
