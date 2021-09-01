@@ -62,6 +62,11 @@ func generateClusterConfig(clusterName string) error {
 	case docker.ProviderName:
 		datacenterConfig := v1alpha1.NewDockerDatacenterConfigGenerate(clusterName)
 		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))
+		clusterConfigOpts = append(clusterConfigOpts,
+			v1alpha1.ControlPlaneConfigCount(1),
+			v1alpha1.ExternalETCDConfigCount(1),
+			v1alpha1.WorkerNodeConfigCount(1),
+		)
 		dcyaml, err := yaml.Marshal(datacenterConfig)
 		if err != nil {
 			return fmt.Errorf("error outputting yaml: %v", err)
@@ -71,6 +76,11 @@ func generateClusterConfig(clusterName string) error {
 		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithClusterEndpoint())
 		datacenterConfig := v1alpha1.NewVSphereDatacenterConfigGenerate(clusterName)
 		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))
+		clusterConfigOpts = append(clusterConfigOpts,
+			v1alpha1.ControlPlaneConfigCount(2),
+			v1alpha1.ExternalETCDConfigCount(3),
+			v1alpha1.WorkerNodeConfigCount(2),
+		)
 		dcyaml, err := yaml.Marshal(datacenterConfig)
 		if err != nil {
 			return fmt.Errorf("error outputting yaml: %v", err)
