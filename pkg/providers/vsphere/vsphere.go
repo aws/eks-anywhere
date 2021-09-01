@@ -589,9 +589,6 @@ func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSp
 	}
 
 	if controlPlaneMachineConfig.Spec.Template == "" {
-		if controlPlaneMachineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
-			return errors.New("template field is required when osFamily is bottlerocket")
-		}
 		logger.V(1).Info("Control plane VSphereMachineConfig template is not set. Using default template.")
 		err := p.setupDefaultTemplate(ctx, clusterSpec, controlPlaneMachineConfig, p.controlPlaneTemplateFactory)
 		if err != nil {
