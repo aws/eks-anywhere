@@ -23,8 +23,8 @@ const (
 	govcPassword    = "GOVC_PASSWORD"
 	govcURL         = "GOVC_URL"
 	govcInsecure    = "GOVC_INSECURE"
-	vSphereUsername = "VSPHERE_USERNAME"
-	vSpherePassword = "VSPHERE_PASSWORD"
+	vSphereUsername = "EKSA_VSPHERE_USERNAME"
+	vSpherePassword = "EKSA_VSPHERE_PASSWORD"
 	vSphereServer   = "VSPHERE_SERVER"
 	templateLibrary = "eks-a-templates"
 )

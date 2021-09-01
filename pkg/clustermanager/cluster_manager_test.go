@@ -217,7 +217,7 @@ func TestClusterManagerCreateWorkloadClusterSuccess(t *testing.T) {
 	kubeconfig := []byte("content")
 	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, cluster).Return(kubeconfig, nil)
 	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
-	m.writer.EXPECT().Write("cluster-name-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
 
 	if _, err := c.CreateWorkloadCluster(ctx, cluster, clusterSpec, m.provider); err != nil {
 		t.Errorf("ClusterManager.CreateWorkloadCluster() error = %v, wantErr nil", err)
@@ -247,7 +247,7 @@ func TestClusterManagerCreateWorkloadClusterWithExternalEtcdSuccess(t *testing.T
 	kubeconfig := []byte("content")
 	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, cluster).Return(kubeconfig, nil)
 	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
-	m.writer.EXPECT().Write("cluster-name-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
 
 	if _, err := c.CreateWorkloadCluster(ctx, cluster, clusterSpec, m.provider); err != nil {
 		t.Errorf("ClusterManager.CreateWorkloadCluster() error = %v, wantErr nil", err)
@@ -283,7 +283,7 @@ func TestClusterManagerCreateWorkloadClusterSuccessWithExtraObjects(t *testing.T
 	kubeconfig := []byte("content")
 	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, cluster).Return(kubeconfig, nil)
 	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
-	m.writer.EXPECT().Write("cluster-name-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil())).Return(wantKubeconfigFile, nil)
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil())).Return(wantKubeconfigFile, nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, wantCluster, gomock.Any())
 
 	got, err := c.CreateWorkloadCluster(ctx, cluster, clusterSpec, m.provider)
@@ -325,7 +325,7 @@ func TestClusterManagerCreateWorkloadClusterErrorApplyingExtraObjects(t *testing
 	kubeconfig := []byte("content")
 	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, cluster).Return(kubeconfig, nil)
 	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
-	m.writer.EXPECT().Write("cluster-name-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil())).Return(wantKubeconfigFile, nil)
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil())).Return(wantKubeconfigFile, nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, wantCluster, gomock.Any()).Return(errors.New("error applying"))
 
 	if _, err := c.CreateWorkloadCluster(ctx, cluster, clusterSpec, m.provider); err == nil {
@@ -356,6 +356,10 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesTimeout(t *testing.T)
 	m.client.EXPECT().GetMachines(ctx, cluster).MinTimes(1).Return([]types.Machine{{Metadata: types.MachineMetadata{
 		Labels: map[string]string{clusterv1.MachineControlPlaneLabelName: ""},
 	}}}, nil)
+	kubeconfig := []byte("content")
+	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, cluster).Return(kubeconfig, nil)
+	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
 
 	if _, err := c.CreateWorkloadCluster(ctx, cluster, clusterSpec, m.provider); err == nil {
 		t.Error("ClusterManager.CreateWorkloadCluster() error = nil, wantErr not nil")
@@ -410,7 +414,7 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesSuccessAfterRetries(t
 	kubeconfig := []byte("content")
 	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, cluster).Return(kubeconfig, nil)
 	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
-	m.writer.EXPECT().Write("cluster-name-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
 
 	if _, err := c.CreateWorkloadCluster(ctx, cluster, clusterSpec, m.provider); err != nil {
 		t.Errorf("ClusterManager.CreateWorkloadCluster() error = %v, wantErr nil", err)

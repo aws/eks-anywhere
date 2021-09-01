@@ -166,13 +166,7 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		return nil, err
 	}
 
-	var err error
-	workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
-	if err != nil {
-		return nil, fmt.Errorf("error generating workload kubeconfig: %v", err)
-	}
-
-	err = cluster.ApplyExtraObjects(ctx, c.clusterClient, workloadCluster, clusterSpec)
+	err := cluster.ApplyExtraObjects(ctx, c.clusterClient, workloadCluster, clusterSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error applying extra resources to workload cluster: %v", err)
 	}
@@ -345,6 +339,19 @@ func (c *ClusterManager) applyCluster(ctx context.Context, managementCluster, wo
 	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, workloadCluster.Name)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster control plane to be ready: %v", err)
+	}
+
+	if !isUpgrade {
+		err = c.Retrier.Retry(
+			func() error {
+				workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
+				return err
+			},
+		)
+
+		if err != nil {
+			return fmt.Errorf("error generating workload kubeconfig: %v", err)
+		}
 	}
 
 	logger.V(3).Info("Waiting for controlplane and worker machines to be ready")

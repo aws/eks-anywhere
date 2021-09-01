@@ -88,3 +88,9 @@ func WithExternalEtcdTopology(count int) ClusterFiller {
 		c.Spec.ExternalEtcdConfiguration.Count = count
 	}
 }
+
+func WithStackedEtcdTopology() ClusterFiller {
+	return func(c *v1alpha1.Cluster) {
+		c.Spec.ExternalEtcdConfiguration = nil
+	}
+}

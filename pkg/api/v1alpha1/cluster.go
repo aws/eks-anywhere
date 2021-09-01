@@ -34,12 +34,7 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 			Name: clusterName,
 		},
 		Spec: ClusterSpec{
-			KubernetesVersion:             Kube121,
-			ControlPlaneConfiguration:     ControlPlaneConfiguration{Count: 2},
-			WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{Count: 2}},
-			ExternalEtcdConfiguration: &ExternalEtcdConfiguration{
-				Count: 3,
-			},
+			KubernetesVersion: Kube121,
 			ClusterNetwork: ClusterNetwork{
 				Pods: Pods{
 					CidrBlocks: []string{"192.168.0.0/16"},
@@ -55,6 +50,26 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 		opt(config)
 	}
 	return config
+}
+
+func ControlPlaneConfigCount(count int) ClusterGenerateOpt {
+	return func(c *ClusterGenerate) {
+		c.Spec.ControlPlaneConfiguration.Count = count
+	}
+}
+
+func ExternalETCDConfigCount(count int) ClusterGenerateOpt {
+	return func(c *ClusterGenerate) {
+		c.Spec.ExternalEtcdConfiguration = &ExternalEtcdConfiguration{
+			Count: count,
+		}
+	}
+}
+
+func WorkerNodeConfigCount(count int) ClusterGenerateOpt {
+	return func(c *ClusterGenerate) {
+		c.Spec.WorkerNodeGroupConfigurations = []WorkerNodeGroupConfiguration{{Count: count}}
+	}
 }
 
 func WithClusterEndpoint() ClusterGenerateOpt {
