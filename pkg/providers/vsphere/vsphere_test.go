@@ -1528,13 +1528,22 @@ func TestSetupAndValidateCreateClusterOsFamilyEmpty(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	_, writer := test.NewWriter(t)
+	govc := NewDummyProviderGovcClient()
+	govc.osTag = bottlerocketOSTag
+	provider := NewProviderCustomNet(datacenterConfig, machineConfigs, clusterConfig, govc, nil, writer, &DummyNetClient{}, test.FakeNow, false)
 	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = ""
+	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].Name = ""
 	workerNodeMachineConfigName := clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 	provider.machineConfigs[workerNodeMachineConfigName].Spec.OSFamily = ""
+	provider.machineConfigs[workerNodeMachineConfigName].Spec.Users[0].Name = ""
 	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily = ""
+	provider.machineConfigs[etcdMachineConfigName].Spec.Users[0].Name = ""
 	var tctx testContext
 	tctx.SaveContext()
 
@@ -1542,14 +1551,14 @@ func TestSetupAndValidateCreateClusterOsFamilyEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
 	}
-	if provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily != v1alpha1.Ubuntu {
-		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Ubuntu)
+	if provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily != v1alpha1.Bottlerocket {
+		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Bottlerocket)
 	}
-	if provider.machineConfigs[workerNodeMachineConfigName].Spec.OSFamily != v1alpha1.Ubuntu {
-		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Ubuntu)
+	if provider.machineConfigs[workerNodeMachineConfigName].Spec.OSFamily != v1alpha1.Bottlerocket {
+		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Bottlerocket)
 	}
-	if provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily != v1alpha1.Ubuntu {
-		t.Fatalf("got osFamily for etcd machine as %v, want %v", provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily, v1alpha1.Ubuntu)
+	if provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily != v1alpha1.Bottlerocket {
+		t.Fatalf("got osFamily for etcd machine as %v, want %v", provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily, v1alpha1.Bottlerocket)
 	}
 }
 

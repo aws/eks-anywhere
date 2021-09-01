@@ -25,9 +25,9 @@ func NewVSphereMachineConfigGenerate(name string) *VSphereMachineConfigGenerate 
 			DiskGiB:   25,
 			NumCPUs:   2,
 			MemoryMiB: 8192,
-			OSFamily:  Ubuntu,
+			OSFamily:  Bottlerocket,
 			Users: []UserConfiguration{{
-				Name:              "capv",
+				Name:              "ec2-user",
 				SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},
 			}},
 		},

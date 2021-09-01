@@ -55,6 +55,8 @@ const (
 	publicKeyFileName        = "eks-a-id_rsa.pub"
 	defaultTemplateLibrary   = "eks-a-templates"
 	defaultTemplatesFolder   = "vm/Templates"
+	bottlerocketDefaultUser  = "ec2-user"
+	ubuntuDefaultUser        = "capv"
 )
 
 //go:embed config/template.yaml
@@ -390,6 +392,24 @@ func (p *vsphereProvider) validateEnv(ctx context.Context) error {
 	return nil
 }
 
+func (p *vsphereProvider) validateSSHUsername(machineConfig *v1alpha1.VSphereMachineConfig) error {
+	if len(machineConfig.Spec.Users[0].Name) <= 0 {
+		if machineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
+			machineConfig.Spec.Users[0].Name = bottlerocketDefaultUser
+		} else {
+			machineConfig.Spec.Users[0].Name = ubuntuDefaultUser
+		}
+		logger.V(1).Info(fmt.Sprintf("SSHUsername is not set or is empty for VSphereMachineConfig %v. Defaulting to %s", machineConfig.Name, machineConfig.Spec.Users[0].Name))
+	} else {
+		if machineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
+			if machineConfig.Spec.Users[0].Name != bottlerocketDefaultUser {
+				return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket.", machineConfig.Spec.Users[0].Name)
+			}
+		}
+	}
+	return nil
+}
+
 func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	var etcdMachineConfig *v1alpha1.VSphereMachineConfig
 	if p.datacenterConfig.Spec.Insecure {
@@ -505,10 +525,6 @@ func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSp
 		if len(etcdMachineConfig.Spec.Users) <= 0 {
 			etcdMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{}}
 		}
-		if len(etcdMachineConfig.Spec.Users[0].Name) <= 0 {
-			logger.V(1).Info("VSphereMachineConfig SSHUsername for etcd machines is not set or is empty. Defaulting to 'capv'.")
-			etcdMachineConfig.Spec.Users[0].Name = "capv"
-		}
 		if len(etcdMachineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
 			etcdMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
 		}
@@ -519,14 +535,6 @@ func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSp
 	}
 	if len(workerNodeGroupMachineConfig.Spec.Users) <= 0 {
 		workerNodeGroupMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{}}
-	}
-	if len(controlPlaneMachineConfig.Spec.Users[0].Name) <= 0 {
-		logger.V(1).Info("VSphereMachineConfig SSHUsername for control plane is not set or is empty. Defaulting to 'capv'.")
-		controlPlaneMachineConfig.Spec.Users[0].Name = "capv"
-	}
-	if len(workerNodeGroupMachineConfig.Spec.Users[0].Name) <= 0 {
-		logger.V(1).Info("VSphereMachineConfig SSHUsername for worker nodes is not set or is empty. Defaulting to 'capv'.")
-		workerNodeGroupMachineConfig.Spec.Users[0].Name = "capv"
 	}
 	if len(controlPlaneMachineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
 		controlPlaneMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
@@ -559,12 +567,25 @@ func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSp
 		return errors.New("control plane and etcd machines must have the same osFamily specified")
 	}
 	if len(string(controlPlaneMachineConfig.Spec.OSFamily)) <= 0 {
-		logger.Info("Warning: OS family not specified in cluster specification. Defaulting to Ubuntu.")
-		controlPlaneMachineConfig.Spec.OSFamily = v1alpha1.Ubuntu
-		workerNodeGroupMachineConfig.Spec.OSFamily = v1alpha1.Ubuntu
+		logger.Info("Warning: OS family not specified in cluster specification. Defaulting to Bottlerocket.")
+		controlPlaneMachineConfig.Spec.OSFamily = v1alpha1.Bottlerocket
+		workerNodeGroupMachineConfig.Spec.OSFamily = v1alpha1.Bottlerocket
 		if etcdMachineConfig != nil {
-			etcdMachineConfig.Spec.OSFamily = v1alpha1.Ubuntu
+			etcdMachineConfig.Spec.OSFamily = v1alpha1.Bottlerocket
 		}
+	}
+
+	if err := p.validateSSHUsername(controlPlaneMachineConfig); err == nil {
+		if err = p.validateSSHUsername(workerNodeGroupMachineConfig); err != nil {
+			return fmt.Errorf("error validating SSHUsername for worker node VSphereMachineConfig %v: %v", workerNodeGroupMachineConfig.Name, err)
+		}
+		if etcdMachineConfig != nil {
+			if err = p.validateSSHUsername(etcdMachineConfig); err != nil {
+				return fmt.Errorf("error validating SSHUsername for etcd VSphereMachineConfig %v: %v", etcdMachineConfig.Name, err)
+			}
+		}
+	} else {
+		return fmt.Errorf("error validating SSHUsername for control plane VSphereMachineConfig %v: %v", controlPlaneMachineConfig.Name, err)
 	}
 
 	if controlPlaneMachineConfig.Spec.Template == "" {
