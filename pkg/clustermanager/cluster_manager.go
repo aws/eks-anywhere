@@ -92,6 +92,8 @@ type ClusterClient interface {
 	UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error
 	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string) (*v1alpha1.VSphereMachineConfig, error)
+	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster) error
+	ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster) error
 }
 
 type Networking interface {
@@ -219,6 +221,18 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	err := c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, workloadCluster.Name)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster control plane to be ready: %v", err)
+	}
+
+	logger.V(3).Info("Waiting for workload cluster control plane replicas to be ready after upgrade")
+	err = c.waitForControlPlaneReplicasReady(ctx, managementCluster, clusterSpec)
+	if err != nil {
+		return fmt.Errorf("error waiting for workload cluster control plane replicas to be ready: %v", err)
+	}
+
+	logger.V(3).Info("Waiting for workload cluster machine deployment replicas to be ready after upgrade")
+	err = c.waitForMachineDeploymentReplicasReady(ctx, managementCluster, clusterSpec)
+	if err != nil {
+		return fmt.Errorf("error waiting for workload cluster machinedeployment replicas to be ready: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for workload cluster capi components to be ready after upgrade")
@@ -472,6 +486,50 @@ func (c *ClusterManager) GenerateDeploymentFile(ctx context.Context, bootstrapCl
 	return writtenFile, nil
 }
 
+func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	isCpReady := func() error {
+		return c.clusterClient.ValidateControlPlaneNodes(ctx, managementCluster)
+	}
+
+	err := isCpReady()
+	if err == nil {
+		return nil
+	}
+
+	timeout := time.Duration(clusterSpec.Spec.ControlPlaneConfiguration.Count) * c.machineMaxWait
+	if timeout <= c.machinesMinWait {
+		timeout = c.machinesMinWait
+	}
+
+	r := retrier.New(timeout)
+	if err := r.Retry(isCpReady); err != nil {
+		return fmt.Errorf("retries exhausted waiting for controlplane replicas to be ready: %v", err)
+	}
+	return nil
+}
+
+func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	isMdReady := func() error {
+		return c.clusterClient.ValidateWorkerNodes(ctx, managementCluster)
+	}
+
+	err := isMdReady()
+	if err == nil {
+		return nil
+	}
+
+	timeout := time.Duration(clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count) * c.machineMaxWait
+	if timeout <= c.machinesMinWait {
+		timeout = c.machinesMinWait
+	}
+
+	r := retrier.New(timeout)
+	if err := r.Retry(isMdReady); err != nil {
+		return fmt.Errorf("retries exhausted waiting for machinedeployment replicas to be ready: %v", err)
+	}
+	return nil
+}
+
 func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluster *types.Cluster) error {
 	readyNodes, totalNodes := 0, 0
 	policy := func(_ int, _ error) (bool, time.Duration) {
@@ -524,7 +582,14 @@ func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster 
 		// Extracted from cluster-api: NodeRef is considered a better signal than InfrastructureReady,
 		// because it ensures the node in the workload cluster is up and running.
 		if m.Status.NodeRef != nil {
-			ready += 1
+			for _, c := range m.Status.Conditions {
+				if c.Type == "NodeHealthy" {
+					if c.Status == "True" {
+						ready += 1
+					}
+					break
+				}
+			}
 		}
 		if _, ok := m.Metadata.Labels[clusterv1.MachineControlPlaneLabelName]; ok {
 			controlPlaneNodesCount++

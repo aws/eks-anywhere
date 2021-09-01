@@ -14,7 +14,8 @@ type Machine struct {
 }
 
 type MachineStatus struct {
-	NodeRef *ResourceRef `json:"nodeRef,omitempty"`
+	NodeRef    *ResourceRef `json:"nodeRef,omitempty"`
+	Conditions Conditions
 }
 
 type MachineMetadata struct {
@@ -25,6 +26,17 @@ type ResourceRef struct {
 	APIVersion string `json:"apiVersion"`
 	Kind       string `json:"kind"`
 	Name       string `json:"Name"`
+}
+
+type Conditions []Condition
+
+type ConditionType string
+
+type ConditionStatus string
+
+type Condition struct {
+	Type   ConditionType   `json:"type"`
+	Status ConditionStatus `json:"status"`
 }
 
 type CAPICluster struct {

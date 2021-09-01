@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 
 	etcdv1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
@@ -199,48 +199,42 @@ func (k *Kubectl) ValidateNodes(ctx context.Context, kubeconfig string) error {
 	return nil
 }
 
-func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cpName string, kubeconfig string) error {
-	template := "{{.status.replicas}},{{.status.readyReplicas}},{{.status.ready}}"
-	params := []string{"get", "KubeadmControlPlane", cpName, "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
-	buffer, err := k.executable.Execute(ctx, params...)
+func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster) error {
+	cp, err := k.GetKubeadmControlPlane(ctx, cluster, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return err
 	}
-	data := strings.Split(buffer.String(), ",")
-	replicas, err0 := strconv.Atoi(data[0])
-	readyReplicas, err1 := strconv.Atoi(data[1])
-	ready, err2 := strconv.ParseBool(data[2])
-	if err0 != nil || err1 != nil || err2 != nil {
-		return fmt.Errorf("error parsing KubeadmControlPlane data")
+
+	if !cp.Status.Ready {
+		return errors.New("control plane are not ready")
 	}
-	if !ready {
-		return fmt.Errorf("control plane nodes are not ready")
+
+	if cp.Status.UnavailableReplicas != 0 {
+		return fmt.Errorf("%v control plane replicas are unavailable", cp.Status.UnavailableReplicas)
 	}
-	if readyReplicas != replicas {
-		return fmt.Errorf("%v control plane nodes are not ready", replicas-readyReplicas)
+
+	if cp.Status.ReadyReplicas != cp.Status.Replicas {
+		return fmt.Errorf("%v control plane replicas are not ready", cp.Status.Replicas-cp.Status.ReadyReplicas)
 	}
 	return nil
 }
 
-func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfig string) error {
-	template := "{{.status.replicas}},{{.status.readyReplicas}},{{.status.phase}}"
-	params := []string{"get", "MachineDeployment", clusterName + "-md-0", "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
-	buffer, err := k.executable.Execute(ctx, params...)
+func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster) error {
+	md, err := k.GetMachineDeployment(ctx, cluster, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return err
 	}
-	data := strings.Split(buffer.String(), ",")
-	replicas, err0 := strconv.Atoi(data[0])
-	readyReplicas, err1 := strconv.Atoi(data[1])
-	phase := data[2]
-	if err0 != nil || err1 != nil {
-		return fmt.Errorf("error parsing MachineDeployment data")
+
+	if md.Status.Phase != "Running" {
+		return fmt.Errorf("machine deployment is in %s phase", md.Status.Phase)
 	}
-	if phase != "Running" {
-		return fmt.Errorf("worker nodes are in %s phase", phase)
+
+	if md.Status.UnavailableReplicas != 0 {
+		return fmt.Errorf("%v machine deployment replicas are unavailable", md.Status.UnavailableReplicas)
 	}
-	if readyReplicas != replicas {
-		return fmt.Errorf("%v worker nodes are not ready", replicas-readyReplicas)
+
+	if md.Status.ReadyReplicas != md.Status.Replicas {
+		return fmt.Errorf("%v machine deployment replicas are not ready", md.Status.Replicas-md.Status.ReadyReplicas)
 	}
 	return nil
 }
