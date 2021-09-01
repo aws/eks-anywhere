@@ -63,22 +63,22 @@ func ParseTimeOptions(since string, sinceTime string) (*time.Time, error) {
 }
 
 type EksaDiagnosticBundle struct {
-	Bundle           *v1beta2.SupportBundle
-	AnalyzerFactory  AnalyzerFactory
-	CollectorFactory CollectorFactory
+	bundle           *v1beta2.SupportBundle
+	analyzerFactory  AnalyzerFactory
+	collectorFactory CollectorFactory
 }
 
 func NewCustomBundleConfig(customBundle *v1beta2.SupportBundle, af AnalyzerFactory, cf CollectorFactory) *EksaDiagnosticBundle {
 	return &EksaDiagnosticBundle{
-		Bundle:           customBundle,
-		AnalyzerFactory:  af,
-		CollectorFactory: cf,
+		bundle:           customBundle,
+		analyzerFactory:  af,
+		collectorFactory: cf,
 	}
 }
 
 func NewDefaultBundleConfig(af AnalyzerFactory, cf CollectorFactory) *EksaDiagnosticBundle {
 	b := &EksaDiagnosticBundle{
-		Bundle: &v1beta2.SupportBundle{
+		bundle: &v1beta2.SupportBundle{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "SupportBundle",
 				APIVersion: "troubleshoot.sh/v1beta2",
@@ -88,15 +88,15 @@ func NewDefaultBundleConfig(af AnalyzerFactory, cf CollectorFactory) *EksaDiagno
 			},
 			Spec: v1beta2.SupportBundleSpec{},
 		},
-		AnalyzerFactory:  af,
-		CollectorFactory: cf,
+		analyzerFactory:  af,
+		collectorFactory: cf,
 	}
 	return b.WithDefaultAnalyzers().WithDefaultCollectors()
 }
 
 func NewBundleConfig(spec *cluster.Spec, af AnalyzerFactory, cf CollectorFactory) *EksaDiagnosticBundle {
 	b := &EksaDiagnosticBundle{
-		Bundle: &v1beta2.SupportBundle{
+		bundle: &v1beta2.SupportBundle{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "SupportBundle",
 				APIVersion: "troubleshoot.sh/v1beta2",
@@ -106,8 +106,8 @@ func NewBundleConfig(spec *cluster.Spec, af AnalyzerFactory, cf CollectorFactory
 			},
 			Spec: v1beta2.SupportBundleSpec{},
 		},
-		AnalyzerFactory:  af,
-		CollectorFactory: cf,
+		analyzerFactory:  af,
+		collectorFactory: cf,
 	}
 	return b.
 		WithGitOpsConfig(spec.GitOpsConfig).
@@ -152,7 +152,7 @@ func (e *EksaDiagnosticBundle) CollectBundleFromSpec(sinceTimeValue *time.Time) 
 		SinceTime:                 sinceTimeValue,
 	}
 
-	archivePath, err := supportbundle.CollectSupportBundleFromSpec(&e.Bundle.Spec, additionalRedactors, createOpts)
+	archivePath, err := supportbundle.CollectSupportBundleFromSpec(&e.bundle.Spec, additionalRedactors, createOpts)
 	if err != nil {
 		return "", err
 	}
@@ -160,7 +160,7 @@ func (e *EksaDiagnosticBundle) CollectBundleFromSpec(sinceTimeValue *time.Time) 
 }
 
 func (e *EksaDiagnosticBundle) AnalyzeBundle(archivePath string) error {
-	analyzeResults, err := supportbundle.AnalyzeAndExtractSupportBundle(&e.Bundle.Spec, archivePath)
+	analyzeResults, err := supportbundle.AnalyzeAndExtractSupportBundle(&e.bundle.Spec, archivePath)
 	if err != nil {
 		return err
 	}
@@ -171,7 +171,7 @@ func (e *EksaDiagnosticBundle) AnalyzeBundle(archivePath string) error {
 }
 
 func (e *EksaDiagnosticBundle) PrintBundleConfig() error {
-	bundleYaml, err := yaml.Marshal(e.Bundle)
+	bundleYaml, err := yaml.Marshal(e.bundle)
 	if err != nil {
 		return fmt.Errorf("error outputting yaml: %v", err)
 	}
@@ -180,37 +180,37 @@ func (e *EksaDiagnosticBundle) PrintBundleConfig() error {
 }
 
 func (e *EksaDiagnosticBundle) WithDefaultCollectors() *EksaDiagnosticBundle {
-	e.Bundle.Spec.Collectors = append(e.Bundle.Spec.Collectors, e.CollectorFactory.DefaultCollectors()...)
+	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.DefaultCollectors()...)
 	return e
 }
 
 func (e *EksaDiagnosticBundle) WithDefaultAnalyzers() *EksaDiagnosticBundle {
-	e.Bundle.Spec.Analyzers = append(e.Bundle.Spec.Analyzers, e.AnalyzerFactory.DefaultAnalyzers()...)
+	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.DefaultAnalyzers()...)
 	return e
 }
 
 func (e *EksaDiagnosticBundle) WithDatacenterConfig(config v1alpha1.Ref) *EksaDiagnosticBundle {
-	e.Bundle.Spec.Analyzers = append(e.Bundle.Spec.Analyzers, e.AnalyzerFactory.DataCenterConfigAnalyzers(config)...)
+	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.DataCenterConfigAnalyzers(config)...)
 	return e
 }
 
 func (e *EksaDiagnosticBundle) WithOidcConfig(config *v1alpha1.OIDCConfig) *EksaDiagnosticBundle {
 	if config != nil {
-		e.Bundle.Spec.Analyzers = append(e.Bundle.Spec.Analyzers, e.AnalyzerFactory.EksaOidcAnalyzers()...)
+		e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.EksaOidcAnalyzers()...)
 	}
 	return e
 }
 
 func (e *EksaDiagnosticBundle) WithExternalEtcd(config *v1alpha1.ExternalEtcdConfiguration) *EksaDiagnosticBundle {
 	if config != nil {
-		e.Bundle.Spec.Analyzers = append(e.Bundle.Spec.Analyzers, e.AnalyzerFactory.EksaExternalEtcdAnalyzers()...)
+		e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.EksaExternalEtcdAnalyzers()...)
 	}
 	return e
 }
 
 func (e *EksaDiagnosticBundle) WithGitOpsConfig(config *v1alpha1.GitOpsConfig) *EksaDiagnosticBundle {
 	if config != nil {
-		e.Bundle.Spec.Analyzers = append(e.Bundle.Spec.Analyzers, e.AnalyzerFactory.EksaGitopsAnalyzers()...)
+		e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.EksaGitopsAnalyzers()...)
 	}
 	return e
 }
