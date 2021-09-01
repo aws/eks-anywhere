@@ -16,6 +16,16 @@ const (
 	fluxUserProvidedPath      = "test/testerson"
 )
 
+func runUpgradeFlowWithFlux(test *framework.E2ETest, updateVersion v1alpha1.KubernetesVersion, opts ...framework.E2ETestOpt) {
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+	test.UpgradeCluster(opts...)
+	test.ValidateCluster(updateVersion)
+	test.ValidateFlux()
+	test.StopIfFailed()
+	test.DeleteCluster()
+}
+
 func runFluxFlow(test *framework.E2ETest) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()

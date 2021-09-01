@@ -123,7 +123,7 @@ github_subdir = "docs"
 
 # Uncomment this if you have a newer GitHub repo with "main" as the default branch,
 # or specify a new value if you want to reference another branch in your GitHub links
-# github_branch= "main"
+github_branch= "main"
 
 # Google Custom Search Engine ID. Remove or comment out to disable search.
 # gcs_engine_id = "d72aa9b2712488cc3"
@@ -177,8 +177,8 @@ enable = false
         desc = "Development takes place here!"
 
 [[params.versions]]
-fullversion = "v0.5.0"
-version = "v0.5.0"
-githubbranch = "v0.5.0"
+fullversion = "main"
+version = "main"
+githubbranch = "main"
 docsbranch = "main"
 url = "/docs"

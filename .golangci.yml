@@ -1,0 +1,20 @@
+run:
+  timeout: 5m
+  skip-files:
+  - "zz_generated.*\\.go$"
+  skip-dirs:
+  - ".*/mocks"
+  - "controllers/tilt_modules"
+  build-tags:
+  - exclude_graphdriver_btrfs
+  - exclude_graphdriver_devicemapper
+linters:
+  enable:
+    - gofumpt
+    - gci
+linters-settings:
+  gci:
+    local-prefixes: github.com/aws/eks-anywhere
+issues:
+  max-same-issues: 0
+  max-issues-per-linter: 0
