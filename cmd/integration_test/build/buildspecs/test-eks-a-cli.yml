@@ -4,8 +4,8 @@ env:
   variables:
     T_VSPHERE_CIDR: "198.18.0.0/16"
   secrets-manager:
-    VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
-    VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
+    EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
+    EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
     GOVC_URL: "vsphere_ci_beta_connection:vsphere_url"
     GOVC_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
     GOVC_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
@@ -31,7 +31,7 @@ phases:
     commands:
     - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/set_profile.sh
     - /docker.sh
-    - cp ./bin/linux/eks-a ./bin/eks-a
+    - cp ./bin/linux/eksctl-anywhere ./bin/eksctl-anywhere
   build:
     commands:
     - export JOB_ID=$CODEBUILD_BUILD_ID
