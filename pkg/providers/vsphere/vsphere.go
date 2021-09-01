@@ -43,6 +43,8 @@ const (
 	eksaLicense              = "EKSA_LICENSE"
 	vSphereUsernameKey       = "VSPHERE_USERNAME"
 	vSpherePasswordKey       = "VSPHERE_PASSWORD"
+	eksavSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
+	eksavSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
 	vSphereServerKey         = "VSPHERE_SERVER"
 	govcInsecure             = "GOVC_INSECURE"
 	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
@@ -357,11 +359,19 @@ func (p *vsphereProvider) validateControlPlaneIpUniqueness(ip string) error {
 }
 
 func (p *vsphereProvider) validateEnv(ctx context.Context) error {
-	if vSphereUsername, ok := os.LookupEnv(vSphereUsernameKey); !ok || len(vSphereUsername) <= 0 {
-		return fmt.Errorf("%s is not set or is empty", vSphereUsernameKey)
+	if vSphereUsername, ok := os.LookupEnv(eksavSphereUsernameKey); ok && len(vSphereUsername) > 0 {
+		if err := os.Setenv(vSphereUsernameKey, vSphereUsername); err != nil {
+			return fmt.Errorf("unable to set %s: %v", eksavSphereUsernameKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", eksavSphereUsernameKey)
 	}
-	if vSpherePassword, ok := os.LookupEnv(vSpherePasswordKey); !ok || len(vSpherePassword) <= 0 {
-		return fmt.Errorf("%s is not set or is empty", vSpherePasswordKey)
+	if vSpherePassword, ok := os.LookupEnv(eksavSpherePasswordKey); ok && len(vSpherePassword) > 0 {
+		if err := os.Setenv(vSpherePasswordKey, vSpherePassword); err != nil {
+			return fmt.Errorf("unable to set %s: %v", eksavSpherePasswordKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", eksavSpherePasswordKey)
 	}
 	if len(p.datacenterConfig.Spec.Server) <= 0 {
 		return errors.New("VSphereDatacenterConfig server is not set or is empty")

@@ -197,26 +197,28 @@ type testContext struct {
 }
 
 func (tctx *testContext) SaveContext() {
-	tctx.oldUsername, tctx.isUsernameSet = os.LookupEnv(vSphereUsernameKey)
-	tctx.oldPassword, tctx.isPasswordSet = os.LookupEnv(vSpherePasswordKey)
+	tctx.oldUsername, tctx.isUsernameSet = os.LookupEnv(eksavSphereUsernameKey)
+	tctx.oldPassword, tctx.isPasswordSet = os.LookupEnv(eksavSpherePasswordKey)
 	tctx.oldServername, tctx.isServernameSet = os.LookupEnv(vSpherePasswordKey)
 	tctx.oldExpClusterResourceSet, tctx.isExpClusterResourceSetSet = os.LookupEnv(vSpherePasswordKey)
-	os.Setenv(vSphereUsernameKey, expectedVSphereUsername)
-	os.Setenv(vSpherePasswordKey, expectedVSpherePassword)
+	os.Setenv(eksavSphereUsernameKey, expectedVSphereUsername)
+	os.Setenv(vSphereUsernameKey, os.Getenv(eksavSphereUsernameKey))
+	os.Setenv(eksavSpherePasswordKey, expectedVSpherePassword)
+	os.Setenv(vSpherePasswordKey, os.Getenv(eksavSpherePasswordKey))
 	os.Setenv(vSphereServerKey, expectedVSphereServer)
 	os.Setenv(expClusterResourceSetKey, expectedExpClusterResourceSet)
 }
 
 func (tctx *testContext) RestoreContext() {
 	if tctx.isUsernameSet {
-		os.Setenv(vSphereUsernameKey, tctx.oldUsername)
+		os.Setenv(eksavSphereUsernameKey, tctx.oldUsername)
 	} else {
-		os.Unsetenv(vSphereUsernameKey)
+		os.Unsetenv(eksavSphereUsernameKey)
 	}
 	if tctx.isPasswordSet {
-		os.Setenv(vSpherePasswordKey, tctx.oldPassword)
+		os.Setenv(eksavSpherePasswordKey, tctx.oldPassword)
 	} else {
-		os.Unsetenv(vSpherePasswordKey)
+		os.Unsetenv(eksavSpherePasswordKey)
 	}
 }
 
@@ -606,11 +608,11 @@ func TestSetupAndValidateCreateClusterNoUsername(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(vSphereUsernameKey)
+	os.Unsetenv(eksavSphereUsernameKey)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "failed setup and validations: VSPHERE_USERNAME is not set or is empty", err)
+	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_USERNAME is not set or is empty", err)
 }
 
 func TestSetupAndValidateCreateClusterNoPassword(t *testing.T) {
@@ -620,11 +622,11 @@ func TestSetupAndValidateCreateClusterNoPassword(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(vSpherePasswordKey)
+	os.Unsetenv(eksavSpherePasswordKey)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "failed setup and validations: VSPHERE_PASSWORD is not set or is empty", err)
+	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_PASSWORD is not set or is empty", err)
 }
 
 func TestSetupAndValidateDeleteCluster(t *testing.T) {
@@ -646,11 +648,11 @@ func TestSetupAndValidateDeleteClusterNoPassword(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(vSpherePasswordKey)
+	os.Unsetenv(eksavSpherePasswordKey)
 
 	err := provider.SetupAndValidateDeleteCluster(ctx)
 
-	thenErrorExpected(t, "failed setup and validations: VSPHERE_PASSWORD is not set or is empty", err)
+	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_PASSWORD is not set or is empty", err)
 }
 
 func TestSetupAndValidateUpgradeCluster(t *testing.T) {
@@ -675,11 +677,11 @@ func TestSetupAndValidateUpgradeClusterNoUsername(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(vSphereUsernameKey)
+	os.Unsetenv(eksavSphereUsernameKey)
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "failed setup and validations: VSPHERE_USERNAME is not set or is empty", err)
+	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_USERNAME is not set or is empty", err)
 }
 
 func TestSetupAndValidateUpgradeClusterNoPassword(t *testing.T) {
@@ -689,11 +691,11 @@ func TestSetupAndValidateUpgradeClusterNoPassword(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(vSpherePasswordKey)
+	os.Unsetenv(eksavSpherePasswordKey)
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "failed setup and validations: VSPHERE_PASSWORD is not set or is empty", err)
+	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_PASSWORD is not set or is empty", err)
 }
 
 func TestSetupAndValidateUpgradeClusterIpExists(t *testing.T) {

@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	githubToken   = "GITHUB_TOKEN"
+	githubToken   = "EKSA_GITHUB_TOKEN"
 	validPATValue = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	gitProvider   = "github"
 )
