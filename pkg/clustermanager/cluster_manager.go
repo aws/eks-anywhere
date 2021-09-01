@@ -611,7 +611,7 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 	pausedAnnotation := map[string]string{clusterSpec.PausedAnnotation(): "true"}
 	err := c.Retrier.Retry(
 		func() error {
-			return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Spec.DatacenterRef.Name, pausedAnnotation, cluster, "")
+			return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 		},
 	)
 	if err != nil {
@@ -629,7 +629,7 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 		}
 		err := c.Retrier.Retry(
 			func() error {
-				return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, "")
+				return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 			},
 		)
 		if err != nil {
@@ -638,7 +638,7 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 		if clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name != clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name {
 			err := c.Retrier.Retry(
 				func() error {
-					return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, pausedAnnotation, cluster, "")
+					return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 				},
 			)
 			if err != nil {
@@ -650,7 +650,7 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 				// etcd machines have a separate machineGroupRef which hasn't been paused yet, so apply pause annotation
 				err := c.Retrier.Retry(
 					func() error {
-						return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, "")
+						return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 					},
 				)
 				if err != nil {
@@ -662,7 +662,7 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 
 	err = c.Retrier.Retry(
 		func() error {
-			return c.clusterClient.UpdateAnnotationInNamespace(ctx, clusterSpec.ResourceType(), cluster.Name, pausedAnnotation, cluster, "")
+			return c.clusterClient.UpdateAnnotationInNamespace(ctx, clusterSpec.ResourceType(), cluster.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 		},
 	)
 	if err != nil {
@@ -675,7 +675,7 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 	pausedAnnotation := clusterSpec.PausedAnnotation()
 	err := c.Retrier.Retry(
 		func() error {
-			return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Spec.DatacenterRef.Name, pausedAnnotation, cluster, "")
+			return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 		},
 	)
 	if err != nil {
@@ -693,7 +693,7 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 		}
 		err := c.Retrier.Retry(
 			func() error {
-				return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, "")
+				return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 			},
 		)
 		if err != nil {
@@ -702,7 +702,7 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 		if clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name != clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name {
 			err := c.Retrier.Retry(
 				func() error {
-					return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, pausedAnnotation, cluster, "")
+					return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 				},
 			)
 			if err != nil {
@@ -714,7 +714,7 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 				// etcd machines have a separate machineGroupRef which hasn't been resumed yet, so apply pause annotation with false value
 				err := c.Retrier.Retry(
 					func() error {
-						return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, "")
+						return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 					},
 				)
 				if err != nil {
@@ -726,7 +726,7 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 
 	err = c.Retrier.Retry(
 		func() error {
-			return c.clusterClient.RemoveAnnotationInNamespace(ctx, clusterSpec.ResourceType(), cluster.Name, pausedAnnotation, cluster, "")
+			return c.clusterClient.RemoveAnnotationInNamespace(ctx, clusterSpec.ResourceType(), cluster.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 		},
 	)
 	if err != nil {
