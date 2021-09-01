@@ -28,8 +28,8 @@ const (
 	vsphereTemplateBR121Var     = "T_VSPHERE_TEMPLATE_BR_1_21"
 	vsphereTlsInsecureVar       = "T_VSPHERE_TLS_INSECURE"
 	vsphereTlsThumbprintVar     = "T_VSPHERE_TLS_THUMBPRINT"
-	vsphereUsernameVar          = "VSPHERE_USERNAME"
-	vspherePasswordVar          = "VSPHERE_PASSWORD"
+	vsphereUsernameVar          = "EKSA_VSPHERE_USERNAME"
+	vspherePasswordVar          = "EKSA_VSPHERE_PASSWORD"
 	cidrVar                     = "T_VSPHERE_CIDR"
 	govcUrlVar                  = "GOVC_URL"
 )

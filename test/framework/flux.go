@@ -27,7 +27,7 @@ const (
 	fluxSystemNamespace = "flux-system"
 	gitRepositoryVar    = "T_GIT_REPOSITORY"
 	githubUserVar       = "T_GITHUB_USER"
-	githubTokenVar      = "GITHUB_TOKEN"
+	githubTokenVar      = "EKSA_GITHUB_TOKEN"
 )
 
 var fluxRequiredEnvVars = []string{
