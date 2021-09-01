@@ -22,24 +22,24 @@ import (
 	"github.com/pkg/errors"
 )
 
-// GetCliArtifacts returns the artifacts for eks-a cli
+// GetCliArtifacts returns the artifacts for eksctl-anywhere cli
 func (r *ReleaseConfig) GetEksACliArtifacts() ([]Artifact, error) {
 	osList := []string{"linux", "darwin"}
 	arch := "amd64"
 
 	artifacts := []Artifact{}
 	for _, os := range osList {
-		releaseName := fmt.Sprintf("eks-a-%s-%s-%s.tar.gz", r.ReleaseVersion, os, arch)
+		releaseName := fmt.Sprintf("eksctl-anywhere-%s-%s-%s.tar.gz", r.ReleaseVersion, os, arch)
 
 		var sourceS3Key string
 		var sourceS3Prefix string
 		var releaseS3Path string
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
-			sourceS3Key = fmt.Sprintf("eks-a-%s-%s.tar.gz", os, arch)
+			sourceS3Key = fmt.Sprintf("eksctl-anywhere-%s-%s.tar.gz", os, arch)
 			sourceS3Prefix = fmt.Sprintf("eks-a-cli/latest/%s", os)
 		} else {
-			sourceS3Key = fmt.Sprintf("eks-a-%s-%s-%s.tar.gz", r.ReleaseVersion, os, arch)
+			sourceS3Key = fmt.Sprintf("eksctl-anywhere-%s-%s-%s.tar.gz", r.ReleaseVersion, os, arch)
 			sourceS3Prefix = fmt.Sprintf("releases/eks-a/%d/artifacts/eks-a/%s/%s", r.ReleaseNumber, r.ReleaseVersion, os)
 		}
 
@@ -95,7 +95,7 @@ func (r *ReleaseConfig) GetEksARelease() (anywherev1alpha1.EksARelease, error) {
 		}
 
 		bundleArchiveArtifact := anywherev1alpha1.Archive{
-			Name:        fmt.Sprintf("eks-a-%s", archiveArtifact.OS),
+			Name:        fmt.Sprintf("eksctl-anywhere-%s", archiveArtifact.OS),
 			Description: "EKS Anywhere CLI",
 			OS:          archiveArtifact.OS,
 			Arch:        archiveArtifact.Arch,
@@ -104,7 +104,7 @@ func (r *ReleaseConfig) GetEksARelease() (anywherev1alpha1.EksARelease, error) {
 			SHA512:      sha512,
 		}
 
-		bundleArchiveArtifacts[fmt.Sprintf("eks-a-%s", archiveArtifact.OS)] = bundleArchiveArtifact
+		bundleArchiveArtifacts[fmt.Sprintf("eksctl-anywhere-%s", archiveArtifact.OS)] = bundleArchiveArtifact
 	}
 
 	eksARelease := anywherev1alpha1.EksARelease{
@@ -114,8 +114,8 @@ func (r *ReleaseConfig) GetEksARelease() (anywherev1alpha1.EksARelease, error) {
 		GitCommit: r.CliRepoHead,
 		GitTag:    r.ReleaseVersion,
 		EksABinary: anywherev1alpha1.BinaryBundle{
-			LinuxBinary:  bundleArchiveArtifacts["eks-a-linux"],
-			DarwinBinary: bundleArchiveArtifacts["eks-a-darwin"],
+			LinuxBinary:  bundleArchiveArtifacts["eksctl-anywhere-linux"],
+			DarwinBinary: bundleArchiveArtifacts["eksctl-anywhere-darwin"],
 		},
 		BundleManifestUrl: bundleManifestUrl,
 	}

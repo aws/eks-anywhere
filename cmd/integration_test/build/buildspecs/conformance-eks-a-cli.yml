@@ -32,7 +32,7 @@ phases:
     - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/set_profile.sh
     - make e2e
     - /docker.sh
-    - cp ./bin/linux/eks-a ./bin/eks-a
+    - cp ./bin/linux/eksctl-anywhere ./bin/eksctl-anywhere
   build:
     commands:
     - export JOB_ID=$CODEBUILD_BUILD_ID
