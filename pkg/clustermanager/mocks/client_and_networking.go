@@ -95,6 +95,20 @@ func (mr *MockClusterClientMockRecorder) ApplyKubeSpecWithNamespace(arg0, arg1, 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecWithNamespace", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpecWithNamespace), arg0, arg1, arg2, arg3)
 }
 
+// CreateNamespace mocks base method.
+func (m *MockClusterClient) CreateNamespace(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateNamespace", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateNamespace indicates an expected call of CreateNamespace.
+func (mr *MockClusterClientMockRecorder) CreateNamespace(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespace", reflect.TypeOf((*MockClusterClient)(nil).CreateNamespace), arg0, arg1, arg2)
+}
+
 // DeleteCluster mocks base method.
 func (m *MockClusterClient) DeleteCluster(arg0 context.Context, arg1, arg2 *types.Cluster) error {
 	m.ctrl.T.Helper()

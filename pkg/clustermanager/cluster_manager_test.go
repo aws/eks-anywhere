@@ -631,6 +631,7 @@ func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
 
 	c, m := newClusterManager(t)
 
+	m.client.EXPECT().CreateNamespace(ctx, cluster.KubeconfigFile, "anywhere-system")
 	m.client.EXPECT().ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any())
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, gomock.Any())
 	if err := c.CreateEKSAResources(ctx, cluster, clusterSpec, datacenterConfig, machineConfigs); err != nil {

@@ -92,6 +92,7 @@ type ClusterClient interface {
 	UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error
 	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string) (*v1alpha1.VSphereMachineConfig, error)
+	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 }
 
 type Networking interface {
@@ -572,6 +573,10 @@ func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpe
 
 func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
 	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error {
+	err := c.clusterClient.CreateNamespace(ctx, cluster.KubeconfigFile, "anywhere-system")
+	if err != nil {
+		return err
+	}
 	resourcesSpec, err := clustermarshaller.MarshalClusterSpec(clusterSpec, datacenterConfig, machineConfigs)
 	if err != nil {
 		return err
