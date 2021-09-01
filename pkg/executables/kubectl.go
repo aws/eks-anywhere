@@ -206,7 +206,7 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 	}
 
 	if !cp.Status.Ready {
-		return errors.New("control plane are not ready")
+		return errors.New("control plane is not ready")
 	}
 
 	if cp.Status.UnavailableReplicas != 0 {
