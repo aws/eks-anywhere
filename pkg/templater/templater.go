@@ -49,7 +49,6 @@ func Execute(templateContent string, data interface{}) ([]byte, error) {
 			return pad + strings.Replace(v, "\n", "\n"+pad, -1)
 		},
 		"stringsJoin": strings.Join,
-		"hasPrefix":   strings.HasPrefix,
 	}
 	temp = temp.Funcs(funcMap)
 
