@@ -82,6 +82,9 @@ func WithGitOpsRef(name string) ClusterFiller {
 
 func WithExternalEtcdTopology(count int) ClusterFiller {
 	return func(c *v1alpha1.Cluster) {
-		c.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: count}
+		if c.Spec.ExternalEtcdConfiguration == nil {
+			c.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{}
+		}
+		c.Spec.ExternalEtcdConfiguration.Count = count
 	}
 }
