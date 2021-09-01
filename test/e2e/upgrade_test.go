@@ -27,7 +27,6 @@ func runSimpleUpgradeFlow(test *framework.E2ETest, updateVersion v1alpha1.Kubern
 	test.CreateCluster()
 	test.UpgradeCluster(opts...)
 	test.ValidateCluster(updateVersion)
-	test.ValidateFlux()
 	test.StopIfFailed()
 	test.DeleteCluster()
 }
@@ -74,14 +73,15 @@ func TestVSphereKubernetes120To121MultipleFieldsUpgrade(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetesWithFlux120To121Upgrade(t *testing.T) {
+func TestVSphereKubernetes120To121UpgradeWithFlux(t *testing.T) {
+	t.Skip("Needs extra setup for GitOps/Flux")
 	provider := framework.NewVSphere(t, framework.WithUbuntu120())
 	test := framework.NewE2ETest(t,
 		provider,
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 	)
-	runSimpleUpgradeFlow(
+	runUpgradeFlowWithFlux(
 		test,
 		v1alpha1.Kube121,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
