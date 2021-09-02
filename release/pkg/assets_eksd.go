@@ -127,6 +127,11 @@ func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDRe
 		return anywherev1alpha1.EksDRelease{}, errors.Cause(err)
 	}
 
+	tarballArtifactsFuncs := map[string]func() ([]Artifact, error){
+		"etcdadm":   r.GetEtcdadmAssets,
+		"cri-tools": r.GetCriToolsAssets,
+	}
+
 	bundleArchiveArtifacts := map[string]anywherev1alpha1.Archive{}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 
@@ -171,6 +176,36 @@ func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDRe
 		}
 	}
 
+	for componentName, artifactFunc := range tarballArtifactsFuncs {
+		artifacts, err := artifactFunc()
+		if err != nil {
+			return anywherev1alpha1.EksDRelease{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
+		}
+		for _, artifact := range artifacts {
+			if artifact.Archive != nil {
+				archiveArtifact := artifact.Archive
+
+				tarfile := filepath.Join(archiveArtifact.ArtifactPath, archiveArtifact.ReleaseName)
+				sha256, sha512, err := r.readShaSums(tarfile)
+				if err != nil {
+					return anywherev1alpha1.EksDRelease{}, errors.Cause(err)
+				}
+
+				bundleArchiveArtifact := anywherev1alpha1.Archive{
+					Name:        archiveArtifact.ReleaseName,
+					Description: fmt.Sprintf("%s tarball for %s/%s", componentName, archiveArtifact.OS, archiveArtifact.Arch),
+					OS:          archiveArtifact.OS,
+					Arch:        archiveArtifact.Arch,
+					URI:         archiveArtifact.ReleaseCdnURI,
+					SHA256:      sha256,
+					SHA512:      sha512,
+				}
+
+				bundleArchiveArtifacts[componentName] = bundleArchiveArtifact
+			}
+		}
+	}
+
 	eksdRelease, err := getEksdRelease(eksDManifestUrl)
 	if err != nil {
 		return anywherev1alpha1.EksDRelease{}, err
@@ -184,8 +219,14 @@ func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDRe
 		GitCommit:      r.BuildRepoHead,
 		KindNode:       bundleImageArtifacts["kind-node"],
 		Ova: anywherev1alpha1.ArchiveBundle{
-			Bottlerocket: bundleArchiveArtifacts["bottlerocket"],
-			Ubuntu:       bundleArchiveArtifacts["ubuntu"],
+			Bottlerocket: anywherev1alpha1.OvaArchive{
+				Archive: bundleArchiveArtifacts["bottlerocket"],
+			},
+			Ubuntu: anywherev1alpha1.OvaArchive{
+				Archive: bundleArchiveArtifacts["ubuntu"],
+				Etcdadm: bundleArchiveArtifacts["etcdadm"],
+				Crictl:  bundleArchiveArtifacts["cri-tools"],
+			},
 		},
 	}
 
