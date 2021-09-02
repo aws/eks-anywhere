@@ -168,7 +168,7 @@ Message: bundles.anywhere.eks.amazonaws.com is present on the cluster
 a support bundle has been created in the current directory:	{"path": "support-bundle-2021-09-02T19_29_41.tar.gz"}
 ```
 
-### Generating a Custom Support Bundle Configuration for your EKS-A Cluster
+### Generating a custom Support Bundle configuration for your EKS-A Cluster
 EKS-A will automatically generate a support bundle based on your cluster configuration;
 however, if you'd like to customize the support bundle to collect specific information,
 you can generate your own support bundle configuration yaml for EKS-A to run on your cluster.
