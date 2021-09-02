@@ -30,7 +30,7 @@ This archive can then be used to aid in further troubleshooting and debugging.
 
 If you provide a cluster configuration file containing your cluster spec using the `-f` flag,
 `generate support-bundle` will customize the auto-generated support bundle collectors and analyzers 
-to match the state of your cluster. No need to provide your own bundle configuration.
+to match the state of your cluster.
 
 If you provide a support bundle configuration file using the `--bundle-config` flag, 
 for example one generated with `generate support-bundle-config`, 
@@ -50,8 +50,7 @@ Flags:
 You only need to run a single command to generate a support bundle, collect information and analyze the output:
 `eksctl anywhere generate support-bundle -f myCluster.yaml`
 
-This command will generate a support bundle customized for your cluster,
-collect the information from your cluster,
+This command will collect the information from your cluster
 and run an analysis of the collected information.
 
 The collected information will be saved to your local disk in an archive which can be used for 
