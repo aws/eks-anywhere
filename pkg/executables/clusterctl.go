@@ -9,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 
+	anywherev1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -186,7 +187,10 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, clusterSpec *cluste
 		"--control-plane", clusterctlConfig.controlPlaneVersion,
 		"--infrastructure", fmt.Sprintf("%s:%s", provider.Name(), provider.Version(clusterSpec)),
 		"--config", clusterctlConfig.configFile,
-		"--watching-namespace", constants.EksaSystemNamespace,
+	}
+	// Not supported for docker controllers at this time
+	if clusterSpec.Spec.DatacenterRef.Name != anywherev1alpha1.DockerDatacenterKind {
+		params = append(params, "--watching-namespace", constants.EksaSystemNamespace)
 	}
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		params = append(params, "--bootstrap", clusterctlConfig.etcdadmBootstrapVersion,
