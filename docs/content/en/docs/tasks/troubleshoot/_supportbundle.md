@@ -33,7 +33,7 @@ to match the state of your cluster.
 
 If you provide a support bundle configuration file using the `--bundle-config` flag, 
 for example one generated with `generate support-bundle-config`, 
-`generate support-bundle` will use the provided configuration when collecting information from you cluster and analyzing the results.
+`generate support-bundle` will use the provided configuration when collecting information from your cluster and analyzing the results.
 
 ```
 Flags:
