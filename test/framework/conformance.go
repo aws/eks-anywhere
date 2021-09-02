@@ -24,6 +24,7 @@ func (e *E2ETest) RunConformanceTests() {
 	kubeVersion, err := e.getEksdReleaseKubeVersion()
 	if err != nil {
 		e.T.Errorf("Error getting EKS-D release KubeVersion from bundle: %v", err)
+		return
 	}
 	e.T.Log("Downloading Sonobuoy binary for testing")
 	err = conformance.Download()
