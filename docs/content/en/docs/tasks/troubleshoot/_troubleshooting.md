@@ -187,7 +187,7 @@ govc vm.power -off -force $VM_NAME
 govc object.destroy $VM_NAME
 ```
 
-### Troubleshooting GitOps Integration
+### Troubleshooting GitOps integration
 #### Cluster creation failure leaves outdated cluster configuration in Github.com repository
 Failed cluster creation can sometimes leave behind cluster configuration files committed to your Github.com repository.
 Make sure to delete these configuration files before you re-try `eksctl anywhere create cluster`. If these configuration files are not deleted, GitOps installation will fail but cluster creation will continue.
