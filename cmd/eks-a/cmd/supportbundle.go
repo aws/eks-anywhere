@@ -93,7 +93,7 @@ func (csbo *createSupportBundleOptions) createBundle(since, sinceTime, bundleCon
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
 	os.Setenv("KUBECONFIG", csbo.kubeConfig(clusterSpec.Name))
-	supportBundle, err := support.ParseBundleFromDoc(bundleConfig)
+	supportBundle, err := support.ParseBundleFromDoc(clusterSpec, bundleConfig)
 	if err != nil {
 		return fmt.Errorf("failed to parse collector: %v", err)
 	}
@@ -104,13 +104,13 @@ func (csbo *createSupportBundleOptions) createBundle(since, sinceTime, bundleCon
 		return fmt.Errorf("failed parse since time: %v", err)
 	}
 
-	archivePath, err := support.CollectBundleFromSpec(sinceTimeValue, &supportBundle.Spec)
+	archivePath, err := supportBundle.CollectBundleFromSpec(sinceTimeValue)
 	if err != nil {
 		return fmt.Errorf("run collectors: %v", err)
 	}
 
 	logger.Info("\r \033[36mAnalyzing support bundle\033[m")
-	err = support.AnalyzeBundle(&supportBundle.Spec, archivePath)
+	err = supportBundle.AnalyzeBundle(archivePath)
 	if err != nil {
 		return fmt.Errorf("there is an error when analyzing: %v", err)
 	}
