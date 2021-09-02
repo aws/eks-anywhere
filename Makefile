@@ -210,7 +210,15 @@ verify-mocks: mocks ## Verify if mocks need to be updated
 	fi
 
 .PHONY: e2e
-e2e: e2e-tests-binary integration-test-binary ## Run integration tests
+e2e: eks-a-e2e integration-test-binary ## Build integration tests
+	$(MAKE) e2e-tests-binary E2E_TAGS=e2e
+
+.PHONY: conformance-tests
+conformance-tests: eks-a-e2e integration-test-binary ## Build e2e conformance tests
+	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
+
+.PHONY: eks-a-e2e
+eks-a-e2e:
 	if [ "$(CODEBUILD_CI)" = "true" ]; then \
 		make eks-a-cross-platform; \
 	else \
@@ -219,7 +227,7 @@ e2e: e2e-tests-binary integration-test-binary ## Run integration tests
 
 .PHONY: e2e-tests-binary
 e2e-tests-binary:
-	go test ./test/e2e -c -o bin/e2e.test -tags e2e -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION)"
+	go test ./test/e2e -c -o bin/e2e.test -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION)"
 
 .PHONY: integration-test-binary
 integration-test-binary:

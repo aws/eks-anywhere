@@ -15,8 +15,6 @@ See the [Kubernetes Components](https://kubernetes.io/docs/concepts/overview/com
 
 ### Manual cluster scaling
 
-To manually scale the cluster you can modify your cluster configuration manifest and apply the manifest.
-
 Horizontally scaling the cluster is done by increasing the number for the control plane or worker node groups under the Cluster specification.
 
 >**_NOTE:_** If etcd is running on your control plane (the default configuration) you should scale your control plane in odd numbers (3, 5, 7...).

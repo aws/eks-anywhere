@@ -187,10 +187,18 @@ func (e *E2ETest) Run(name string, args ...string) {
 	e.T.Log("Running shell command", "[", command, "]")
 	cmd := exec.CommandContext(context.Background(), "sh", shArgs...)
 
+	envPath := os.Getenv("PATH")
+	workDir, err := os.Getwd()
+	if err != nil {
+		e.T.Fatalf("Error finding current directory: %v", err)
+	}
+
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s/bin:%s", workDir, envPath))
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		e.T.Fatalf("Error running command %s %v: %v", name, args, err)
 	}
