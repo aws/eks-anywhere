@@ -116,7 +116,7 @@ func (e *E2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion) {
 	err := r.Retry(func() error {
 		err := e.KubectlClient.ValidateNodes(ctx, e.cluster().KubeconfigFile)
 		if err != nil {
-			return fmt.Errorf("error validating cluster: %v", err)
+			return fmt.Errorf("error validating nodes status: %v", err)
 		}
 		return nil
 	})
@@ -124,9 +124,14 @@ func (e *E2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion) {
 		e.T.Fatalf("%v", err)
 	}
 	e.T.Log("Validating cluster node version")
-	err = e.KubectlClient.ValidateNodesVersion(ctx, e.cluster().KubeconfigFile, kubeVersion)
+	err = retrier.Retry(60, 1*time.Second, func() error {
+		if err = e.KubectlClient.ValidateNodesVersion(ctx, e.cluster().KubeconfigFile, kubeVersion); err != nil {
+			return fmt.Errorf("error validating nodes version: %v", err)
+		}
+		return nil
+	})
 	if err != nil {
-		e.T.Fatalf("error validating cluster: %v", err)
+		e.T.Fatal(err)
 	}
 }
 
