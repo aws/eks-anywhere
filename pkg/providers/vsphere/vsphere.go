@@ -33,6 +33,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/internal/templates"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -986,7 +987,10 @@ func (vs *VsphereTemplateBuilder) GenerateDeploymentFile(clusterSpec *cluster.Sp
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *vs.etcdMachineSpec
 	}
-	values := BuildTemplateMap(clusterSpec, *vs.datacenterSpec, *vs.controlPlaneMachineSpec, *vs.workerNodeGroupMachineSpec, etcdMachineSpec)
+	values, err := BuildTemplateMap(clusterSpec, *vs.datacenterSpec, *vs.controlPlaneMachineSpec, *vs.workerNodeGroupMachineSpec, etcdMachineSpec)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -1000,7 +1004,7 @@ func (vs *VsphereTemplateBuilder) GenerateDeploymentFile(clusterSpec *cluster.Sp
 	return bytes, nil
 }
 
-func BuildTemplateMap(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphereDatacenterConfigSpec, controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec v1alpha1.VSphereMachineConfigSpec) map[string]interface{} {
+func BuildTemplateMap(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphereDatacenterConfigSpec, controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec v1alpha1.VSphereMachineConfigSpec) (map[string]interface{}, error) {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
@@ -1059,6 +1063,14 @@ func BuildTemplateMap(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphere
 		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
 	}
 
+	k8sVersion, err := semver.New(bundle.KubeDistro.Kubernetes.Tag)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing kubernetes version %v: %v", bundle.KubeDistro.Kubernetes.Tag, err)
+	}
+	if k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
+		values["cgroupDriverSystemd"] = true
+	}
+
 	if clusterSpec.Spec.ProxyConfiguration != nil {
 		values["proxyConfig"] = true
 		var noProxyList []string
@@ -1100,7 +1112,7 @@ func BuildTemplateMap(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphere
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
 	}
 
-	return values
+	return values, nil
 }
 
 func (p *vsphereProvider) generateTemplateValuesForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, error) {
