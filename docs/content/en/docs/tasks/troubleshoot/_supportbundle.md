@@ -45,7 +45,7 @@ Flags:
   -w, --w-config string        Kubeconfig file to use when creating support bundle for a workload cluster
 ```
 
-### Collecting and Analyzing A Bundle
+### Collecting and analyzing a bundle
 You only need to run a single command to generate a support bundle, collect information and analyze the output:
 `eksctl anywhere generate support-bundle -f myCluster.yaml`
 
