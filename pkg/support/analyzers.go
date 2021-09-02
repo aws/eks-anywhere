@@ -109,10 +109,6 @@ func (a *analyzerFactory) EksaExternalEtcdAnalyzers() []*v1beta2.Analyze {
 			Name:             "etcdadm-bootstrap-provider-controller-manager",
 			Namespace:        "etcdadm-bootstrap-provider-system",
 			ExpectedReplicas: 1,
-		}, {
-			Name:             "local-path-provisioner",
-			Namespace:        "local-path-storage",
-			ExpectedReplicas: 1,
 		},
 	}
 	return a.generateDeploymentAnalyzers(deployments)
