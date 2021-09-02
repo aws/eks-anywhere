@@ -200,6 +200,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/internal/templates/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/templates/factory.go" GovcClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/internal/tags/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/tags/factory.go" GovcClient
 	${GOPATH}/bin/mockgen -destination=pkg/validations/upgradevalidations/mocks/upgradevalidations.go -package=mocks -source "pkg/validations/upgradevalidations/upgradevalidations.go" ValidationsKubectlClient
+	${GOPATH}/bin/mockgen -destination=pkg/support/interfaces/mocks/support.go -package=mocks -source "pkg/support/interfaces.go" DiagnosticBundle,AnalyzerFactory,CollectorFactory
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
