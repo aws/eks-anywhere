@@ -49,7 +49,7 @@ This archive can then be used to aid in further troubleshooting and debugging.
 
 If you provide a cluster configuration file containing your cluster spec using the `-f` flag,
 `generate support-bundle` will customize the auto-generated support bundle collectors and analyzers 
-to match the state of your cluster. No need to provide your own bundle configuration.
+to match the state of your cluster.
 
 If you provide a support bundle configuration file using the `--bundle-config` flag, 
 for example one generated with `generate support-bundle-config`, 
