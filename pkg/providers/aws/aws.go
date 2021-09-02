@@ -56,8 +56,8 @@ type ProviderClient interface {
 }
 
 type ProviderKubectlClient interface {
-	GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error)
-	GetEksaAWSDatacenterConfig(ctx context.Context, awsDatacenterConfigName string, kubeconfigFile string) (*v1alpha1.AWSDatacenterConfig, error)
+	GetEksaCluster(ctx context.Context, cluster *types.Cluster, namespace string) (*v1alpha1.Cluster, error)
+	GetEksaAWSDatacenterConfig(ctx context.Context, awsDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.AWSDatacenterConfig, error)
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error)
 	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*v1alpha3.MachineDeployment, error)
 }
@@ -237,11 +237,11 @@ func (p *provider) generateTemplateValuesForUpgrade(ctx context.Context, bootstr
 	var controlPlaneTemplateName string
 	var workloadTemplateName string
 
-	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster)
+	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, clusterSpec.Namespace)
 	if err != nil {
 		return nil, err
 	}
-	ac, err := p.providerKubectlClient.GetEksaAWSDatacenterConfig(ctx, p.datacenterConfig.Name, workloadCluster.KubeconfigFile)
+	ac, err := p.providerKubectlClient.GetEksaAWSDatacenterConfig(ctx, p.datacenterConfig.Name, workloadCluster.KubeconfigFile, clusterSpec.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -376,6 +376,6 @@ func (p *provider) MachineConfigs() []providers.MachineConfig {
 	return nil
 }
 
-func (p *provider) ValidateNewSpec(_ context.Context, _ *types.Cluster) error {
+func (p *provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
 	return nil
 }

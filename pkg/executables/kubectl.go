@@ -589,8 +589,8 @@ func (k *Kubectl) RemoveAnnotationInNamespace(ctx context.Context, resourceType,
 	return k.RemoveAnnotation(ctx, resourceType, objectName, key, WithCluster(cluster), WithNamespace(namespace))
 }
 
-func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error) {
-	params := []string{"get", eksaClustersResourceType, cluster.Name, "-o", "json", "--kubeconfig", cluster.KubeconfigFile}
+func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, namespace string) (*v1alpha1.Cluster, error) {
+	params := []string{"get", eksaClustersResourceType, cluster.Name, "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa cluster: %v", err)
@@ -605,8 +605,8 @@ func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*
 	return response, nil
 }
 
-func (k *Kubectl) GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string) (*v1alpha1.GitOpsConfig, error) {
-	params := []string{"get", eksaGitOpsResourceType, gitOpsConfigName, "-o", "json", "--kubeconfig", kubeconfigFile}
+func (k *Kubectl) GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error) {
+	params := []string{"get", eksaGitOpsResourceType, gitOpsConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa GitOpsConfig: %v", err)
@@ -621,8 +621,8 @@ func (k *Kubectl) GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName stri
 	return response, nil
 }
 
-func (k *Kubectl) GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, kubeconfigFile string) (*v1alpha1.OIDCConfig, error) {
-	params := []string{"get", eksaOIDCResourceType, oidcConfigName, "-o", "json", "--kubeconfig", kubeconfigFile}
+func (k *Kubectl) GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.OIDCConfig, error) {
+	params := []string{"get", eksaOIDCResourceType, oidcConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa OIDCConfig: %v", err)
@@ -637,8 +637,8 @@ func (k *Kubectl) GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, 
 	return response, nil
 }
 
-func (k *Kubectl) GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string) (*v1alpha1.VSphereDatacenterConfig, error) {
-	params := []string{"get", eksaVSphereDatacenterResourceType, vsphereDatacenterConfigName, "-o", "json", "--kubeconfig", kubeconfigFile}
+func (k *Kubectl) GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error) {
+	params := []string{"get", eksaVSphereDatacenterResourceType, vsphereDatacenterConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa vsphere cluster %v", err)
@@ -653,8 +653,8 @@ func (k *Kubectl) GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDat
 	return response, nil
 }
 
-func (k *Kubectl) GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string) (*v1alpha1.VSphereMachineConfig, error) {
-	params := []string{"get", eksaVSphereMachineResourceType, vsphereMachineConfigName, "-o", "json", "--kubeconfig", kubeconfigFile}
+func (k *Kubectl) GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error) {
+	params := []string{"get", eksaVSphereMachineResourceType, vsphereMachineConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa vsphere cluster %v", err)
@@ -669,8 +669,8 @@ func (k *Kubectl) GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachin
 	return response, nil
 }
 
-func (k *Kubectl) GetEksaAWSDatacenterConfig(ctx context.Context, awsDatacenterConfigName string, kubeconfigFile string) (*v1alpha1.AWSDatacenterConfig, error) {
-	params := []string{"get", eksaAwsResourceType, awsDatacenterConfigName, "-o", "json", "--kubeconfig", kubeconfigFile}
+func (k *Kubectl) GetEksaAWSDatacenterConfig(ctx context.Context, awsDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.AWSDatacenterConfig, error) {
+	params := []string{"get", eksaAwsResourceType, awsDatacenterConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa aws cluster %v", err)

@@ -50,7 +50,7 @@ type provider struct {
 }
 
 type ProviderKubectlClient interface {
-	GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error)
+	GetEksaCluster(ctx context.Context, cluster *types.Cluster, namespace string) (*v1alpha1.Cluster, error)
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error)
 	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*v1alpha3.MachineDeployment, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error)
@@ -192,7 +192,7 @@ func (p *provider) generateTemplateValuesForUpgrade(ctx context.Context, bootstr
 	var controlPlaneTemplateName, workloadTemplateName, etcdTemplateName string
 	var needsNewEtcdTemplate bool
 
-	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster)
+	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, clusterSpec.Namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -370,6 +370,6 @@ func (p *provider) MachineConfigs() []providers.MachineConfig {
 	return nil
 }
 
-func (p *provider) ValidateNewSpec(_ context.Context, _ *types.Cluster) error {
+func (p *provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
 	return nil
 }

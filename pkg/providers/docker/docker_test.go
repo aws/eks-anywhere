@@ -169,7 +169,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 					KubernetesVersion: v1alpha1.Kube118,
 				},
 			}
-			kubectl.EXPECT().GetEksaCluster(ctx, cluster).Return(oriCluster, nil)
+			kubectl.EXPECT().GetEksaCluster(ctx, cluster, gomock.Any()).Return(oriCluster, nil)
 			got, err := p.GenerateDeploymentFileForUpgrade(ctx, bootstrapCluster, cluster, tt.clusterSpec, "cluster.yaml")
 			if err != nil {
 				t.Fatalf("provider.GenerateDeploymentFileForUpgrade() error = %v, wantErr nil", err)
@@ -214,7 +214,7 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 		},
 	}
 
-	kubectl.EXPECT().GetEksaCluster(ctx, cluster).Return(clusterSpec.Cluster, nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Namespace).Return(clusterSpec.Cluster, nil)
 	kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(cp, nil)
 	kubectl.EXPECT().GetMachineDeployment(ctx, cluster, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(md, nil)
 

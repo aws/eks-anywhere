@@ -310,48 +310,48 @@ func (mr *MockProviderKubectlClientMockRecorder) CreateNamespace(arg0, arg1, arg
 }
 
 // GetEksaCluster mocks base method.
-func (m *MockProviderKubectlClient) GetEksaCluster(arg0 context.Context, arg1 *types.Cluster) (*v1alpha1.Cluster, error) {
+func (m *MockProviderKubectlClient) GetEksaCluster(arg0 context.Context, arg1 *types.Cluster, arg2 string) (*v1alpha1.Cluster, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEksaCluster", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetEksaCluster", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*v1alpha1.Cluster)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEksaCluster indicates an expected call of GetEksaCluster.
-func (mr *MockProviderKubectlClientMockRecorder) GetEksaCluster(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockProviderKubectlClientMockRecorder) GetEksaCluster(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaCluster), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaCluster), arg0, arg1, arg2)
 }
 
 // GetEksaVSphereDatacenterConfig mocks base method.
-func (m *MockProviderKubectlClient) GetEksaVSphereDatacenterConfig(arg0 context.Context, arg1, arg2 string) (*v1alpha1.VSphereDatacenterConfig, error) {
+func (m *MockProviderKubectlClient) GetEksaVSphereDatacenterConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.VSphereDatacenterConfig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEksaVSphereDatacenterConfig", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetEksaVSphereDatacenterConfig", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*v1alpha1.VSphereDatacenterConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEksaVSphereDatacenterConfig indicates an expected call of GetEksaVSphereDatacenterConfig.
-func (mr *MockProviderKubectlClientMockRecorder) GetEksaVSphereDatacenterConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockProviderKubectlClientMockRecorder) GetEksaVSphereDatacenterConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereDatacenterConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaVSphereDatacenterConfig), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereDatacenterConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaVSphereDatacenterConfig), arg0, arg1, arg2, arg3)
 }
 
 // GetEksaVSphereMachineConfig mocks base method.
-func (m *MockProviderKubectlClient) GetEksaVSphereMachineConfig(arg0 context.Context, arg1, arg2 string) (*v1alpha1.VSphereMachineConfig, error) {
+func (m *MockProviderKubectlClient) GetEksaVSphereMachineConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.VSphereMachineConfig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEksaVSphereMachineConfig", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetEksaVSphereMachineConfig", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*v1alpha1.VSphereMachineConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEksaVSphereMachineConfig indicates an expected call of GetEksaVSphereMachineConfig.
-func (mr *MockProviderKubectlClientMockRecorder) GetEksaVSphereMachineConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockProviderKubectlClientMockRecorder) GetEksaVSphereMachineConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaVSphereMachineConfig), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaVSphereMachineConfig), arg0, arg1, arg2, arg3)
 }
 
 // GetEtcdadmCluster mocks base method.

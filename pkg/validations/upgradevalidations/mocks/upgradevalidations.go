@@ -53,63 +53,63 @@ func (mr *MockValidationsKubectlClientMockRecorder) GetClusters(ctx, cluster int
 }
 
 // GetEksaCluster mocks base method.
-func (m *MockValidationsKubectlClient) GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error) {
+func (m *MockValidationsKubectlClient) GetEksaCluster(ctx context.Context, cluster *types.Cluster, namespace string) (*v1alpha1.Cluster, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEksaCluster", ctx, cluster)
+	ret := m.ctrl.Call(m, "GetEksaCluster", ctx, cluster, namespace)
 	ret0, _ := ret[0].(*v1alpha1.Cluster)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEksaCluster indicates an expected call of GetEksaCluster.
-func (mr *MockValidationsKubectlClientMockRecorder) GetEksaCluster(ctx, cluster interface{}) *gomock.Call {
+func (mr *MockValidationsKubectlClientMockRecorder) GetEksaCluster(ctx, cluster, namespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockValidationsKubectlClient)(nil).GetEksaCluster), ctx, cluster)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockValidationsKubectlClient)(nil).GetEksaCluster), ctx, cluster, namespace)
 }
 
 // GetEksaGitOpsConfig mocks base method.
-func (m *MockValidationsKubectlClient) GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName, kubeconfigFile string) (*v1alpha1.GitOpsConfig, error) {
+func (m *MockValidationsKubectlClient) GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName, kubeconfigFile, namespace string) (*v1alpha1.GitOpsConfig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEksaGitOpsConfig", ctx, gitOpsConfigName, kubeconfigFile)
+	ret := m.ctrl.Call(m, "GetEksaGitOpsConfig", ctx, gitOpsConfigName, kubeconfigFile, namespace)
 	ret0, _ := ret[0].(*v1alpha1.GitOpsConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEksaGitOpsConfig indicates an expected call of GetEksaGitOpsConfig.
-func (mr *MockValidationsKubectlClientMockRecorder) GetEksaGitOpsConfig(ctx, gitOpsConfigName, kubeconfigFile interface{}) *gomock.Call {
+func (mr *MockValidationsKubectlClientMockRecorder) GetEksaGitOpsConfig(ctx, gitOpsConfigName, kubeconfigFile, namespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaGitOpsConfig", reflect.TypeOf((*MockValidationsKubectlClient)(nil).GetEksaGitOpsConfig), ctx, gitOpsConfigName, kubeconfigFile)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaGitOpsConfig", reflect.TypeOf((*MockValidationsKubectlClient)(nil).GetEksaGitOpsConfig), ctx, gitOpsConfigName, kubeconfigFile, namespace)
 }
 
 // GetEksaOIDCConfig mocks base method.
-func (m *MockValidationsKubectlClient) GetEksaOIDCConfig(ctx context.Context, oidcConfigName, kubeconfigFile string) (*v1alpha1.OIDCConfig, error) {
+func (m *MockValidationsKubectlClient) GetEksaOIDCConfig(ctx context.Context, oidcConfigName, kubeconfigFile, namespace string) (*v1alpha1.OIDCConfig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEksaOIDCConfig", ctx, oidcConfigName, kubeconfigFile)
+	ret := m.ctrl.Call(m, "GetEksaOIDCConfig", ctx, oidcConfigName, kubeconfigFile, namespace)
 	ret0, _ := ret[0].(*v1alpha1.OIDCConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEksaOIDCConfig indicates an expected call of GetEksaOIDCConfig.
-func (mr *MockValidationsKubectlClientMockRecorder) GetEksaOIDCConfig(ctx, oidcConfigName, kubeconfigFile interface{}) *gomock.Call {
+func (mr *MockValidationsKubectlClientMockRecorder) GetEksaOIDCConfig(ctx, oidcConfigName, kubeconfigFile, namespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaOIDCConfig", reflect.TypeOf((*MockValidationsKubectlClient)(nil).GetEksaOIDCConfig), ctx, oidcConfigName, kubeconfigFile)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaOIDCConfig", reflect.TypeOf((*MockValidationsKubectlClient)(nil).GetEksaOIDCConfig), ctx, oidcConfigName, kubeconfigFile, namespace)
 }
 
 // GetEksaVSphereDatacenterConfig mocks base method.
-func (m *MockValidationsKubectlClient) GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName, kubeconfigFile string) (*v1alpha1.VSphereDatacenterConfig, error) {
+func (m *MockValidationsKubectlClient) GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName, kubeconfigFile, namespace string) (*v1alpha1.VSphereDatacenterConfig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEksaVSphereDatacenterConfig", ctx, vsphereDatacenterConfigName, kubeconfigFile)
+	ret := m.ctrl.Call(m, "GetEksaVSphereDatacenterConfig", ctx, vsphereDatacenterConfigName, kubeconfigFile, namespace)
 	ret0, _ := ret[0].(*v1alpha1.VSphereDatacenterConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEksaVSphereDatacenterConfig indicates an expected call of GetEksaVSphereDatacenterConfig.
-func (mr *MockValidationsKubectlClientMockRecorder) GetEksaVSphereDatacenterConfig(ctx, vsphereDatacenterConfigName, kubeconfigFile interface{}) *gomock.Call {
+func (mr *MockValidationsKubectlClientMockRecorder) GetEksaVSphereDatacenterConfig(ctx, vsphereDatacenterConfigName, kubeconfigFile, namespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereDatacenterConfig", reflect.TypeOf((*MockValidationsKubectlClient)(nil).GetEksaVSphereDatacenterConfig), ctx, vsphereDatacenterConfigName, kubeconfigFile)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereDatacenterConfig", reflect.TypeOf((*MockValidationsKubectlClient)(nil).GetEksaVSphereDatacenterConfig), ctx, vsphereDatacenterConfigName, kubeconfigFile, namespace)
 }
 
 // ValidateClustersCRD mocks base method.

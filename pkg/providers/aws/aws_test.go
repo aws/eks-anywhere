@@ -32,6 +32,7 @@ func TestProviderGenerateDeploymentFileSuccess(t *testing.T) {
 			testName: "no AWS options",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Name = "test-cluster"
+				s.Namespace = "test-namespace"
 				s.Spec.KubernetesVersion = "1.19"
 				s.Spec.ControlPlaneConfiguration.Count = 3
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
@@ -128,8 +129,8 @@ func TestProviderGenerateDeploymentFileSuccess(t *testing.T) {
 					KubernetesVersion: v1alpha1.Kube118,
 				},
 			}
-			kubectl.EXPECT().GetEksaCluster(ctx, cluster).Return(oriCluster, nil)
-			kubectl.EXPECT().GetEksaAWSDatacenterConfig(ctx, tt.providerConfig.Name, cluster.KubeconfigFile).Return(&tt.providerConfig, nil)
+			kubectl.EXPECT().GetEksaCluster(ctx, cluster, tt.clusterSpec.Namespace).Return(oriCluster, nil)
+			kubectl.EXPECT().GetEksaAWSDatacenterConfig(ctx, tt.providerConfig.Name, cluster.KubeconfigFile, tt.clusterSpec.Namespace).Return(&tt.providerConfig, nil)
 			got, err := p.GenerateDeploymentFileForUpgrade(ctx, bootstrapCluster, cluster, tt.clusterSpec, fileName)
 			if err != nil {
 				t.Fatalf("provider.GenerateDeploymentFile() error = %v, wantErr nil", err)
