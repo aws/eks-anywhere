@@ -130,7 +130,7 @@ func WithWaitForMachines(machineBackoff, machineMaxWait, machinesMinWait time.Du
 
 func (c *ClusterManager) MoveCapi(ctx context.Context, from, to *types.Cluster, checkers ...types.NodeReadyChecker) error {
 	logger.V(3).Info("Waiting for management machines to be ready before move")
-	if err := c.waitForNodesReady(ctx, from); err != nil {
+	if err := c.waitForNodesReady(ctx, from, checkers...); err != nil {
 		return err
 	}
 
