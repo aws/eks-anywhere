@@ -96,24 +96,7 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 
 #### Upgradeable Attributes
 
-`Cluster`:
-- `kubernetesVersion`
-- `controlPlaneConfig.count`
-- `controlPlaneConfigurations.machineGroupRef.name`
-- `workerNodeGroupConfigurations.count`
-- `workerNodeGroupConfigurations.machineGroupRef.name`
-- `etcdConfiguration.externalConfiguration.machineGroupRef.name`
-
-`VSphereDatacenterConfig`:
-- `datastore`
-- `folder`
-- `resourcePool`
-
-`VSphereMachineConfig`:
-- `diskGiB`
-- `numCPUs`
-- `memoryMiB`
-- `template`
+{{% content "mutable.md" %}}
 
 ### Troubleshooting
 

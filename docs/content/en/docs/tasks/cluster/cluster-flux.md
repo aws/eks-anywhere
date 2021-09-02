@@ -24,23 +24,7 @@ In the event that GitOps installation fails, EKS-A cluster creation will continu
 
 Currently, you can manage a subset of cluster properties with GitOps:
 
-`Cluster`:
-- `controlPlaneConfig.count`
-- `controlPlaneConfigurations.machineGroupRef.name`
-- `workerNodeGroupConfigurations.count`
-- `workerNodeGroupConfigurations.machineGroupRef.name`
-- `etcdConfiguration.externalConfiguration.machineGroupRef.name`
-
-`VSphereDatacenterConfig`:
-- `datastore`
-- `folder`
-- `resourcePool`
-
-`VSphereMachineConfig`:
-- `diskGiB`
-- `numCPUs`
-- `memoryMiB`
-- `template`
+{{% content "mutable.md" %}}
 
 Any other changes to the cluster configuration in the git repository will be ignored.
 If an immutable immutable field is changed in Git repsitory, there are two ways to find the error message:
