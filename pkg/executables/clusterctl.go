@@ -186,6 +186,7 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, clusterSpec *cluste
 		"--control-plane", clusterctlConfig.controlPlaneVersion,
 		"--infrastructure", fmt.Sprintf("%s:%s", provider.Name(), provider.Version(clusterSpec)),
 		"--config", clusterctlConfig.configFile,
+		"--watching-namespace", constants.EksaSystemNamespace,
 	}
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		params = append(params, "--bootstrap", clusterctlConfig.etcdadmBootstrapVersion,
