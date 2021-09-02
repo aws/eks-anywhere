@@ -3,7 +3,6 @@ package bootstrapper_test
 import (
 	"context"
 	"errors"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"reflect"
 	"testing"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper/mocks"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
