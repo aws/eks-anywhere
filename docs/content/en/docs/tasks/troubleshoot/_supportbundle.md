@@ -19,7 +19,7 @@ collecting relevant information, archiving it locally, and performing analysis o
 
 `eksctl anywhere generate support-bundle-config` will generate a Support Bundle config yaml file for you to customize.
 
-### Collecting a Support Bundle and Running Analyzers
+### Collecting a Support Bundle and running analyzers
 ```
 eksctl anywhere generate support-bundle
 ```
