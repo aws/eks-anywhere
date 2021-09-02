@@ -14,7 +14,7 @@ cluster resource information, and other relevant debugging information.
 
 EKS-A has two Support Bundle commands:
 
-`eksctl anywhere genereate support-bundle` will execute a support bundle on your cluster, 
+`eksctl anywhere generate support-bundle` will execute a support bundle on your cluster, 
 collecting relevant information, archiving it locally, and performing analysis of the results.
 
 `eksctl anywhere generate support-bundle-config` will generate a Support Bundle config yaml file for you to customize.
