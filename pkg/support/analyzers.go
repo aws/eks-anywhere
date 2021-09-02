@@ -138,10 +138,22 @@ func (a *analyzerFactory) eksaVsphereAnalyzers() []*v1beta2.Analyze {
 }
 
 func (a *analyzerFactory) eksaDockerAnalyzers() []*v1beta2.Analyze {
+	var analyazers []*v1beta2.Analyze
+
 	crds := []string{
 		fmt.Sprintf("dockerdatacenterconfigs.%s", v1alpha1.GroupVersion.Group),
 	}
-	return a.generateCrdAnalyzers(crds)
+
+	deployments := []eksaDeployment{
+		{
+			Name:             "local-path-provisioner",
+			Namespace:        "local-path-storage",
+			ExpectedReplicas: 1,
+		},
+	}
+
+	analyazers = append(analyazers, a.generateCrdAnalyzers(crds)...)
+	return append(analyazers, a.generateDeploymentAnalyzers(deployments)...)
 }
 
 type eksaDeployment struct {
