@@ -26,10 +26,10 @@ func TestCiliumGenerateManifestSuccess(t *testing.T) {
 
 var ciliumBundle = v1alpha1.CiliumBundle{
 	Cilium: v1alpha1.Image{
-		URI: "public.ecr.aws/isovalent/operator-generic-eksa:v1.9.9-beta1",
+		URI: "public.ecr.aws/isovalent/cilium:v1.9.10-eksa.1",
 	},
 	Operator: v1alpha1.Image{
-		URI: "public.ecr.aws/isovalent/operator-generic-eksa:v1.9.9-beta1",
+		URI: "public.ecr.aws/isovalent/operator-generic:v1.9.10-eksa.1",
 	},
 	Manifest: v1alpha1.Manifest{
 		URI: "testdata/cilium_manifest.yaml",
