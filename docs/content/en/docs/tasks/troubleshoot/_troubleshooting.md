@@ -201,7 +201,7 @@ This can cause the GitOps installation to fail if you re-try the creation of a c
 If cluster creation failure leaves behind an empty github repository,
 please manually delete the created Github.com repository before attempting cluster creation again.
 
-#### Changes Not Syncing to Cluster
+#### Changes not syncing to cluster
 Please remember that the only fields currently supported for GitOps are:
 
 - `controlPlaneReplicas`
