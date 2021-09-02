@@ -11,8 +11,6 @@ import (
 )
 
 func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err error) {
-	kubeconfig := u.Opts.WorkloadCluster.KubeconfigFile
-	clusterName := u.Opts.WorkloadCluster.Name
 	k := u.Opts.Kubectl
 
 	var upgradeValidations []validations.ValidationResult
@@ -21,17 +19,17 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		validations.ValidationResult{
 			Name:        "control plane ready",
 			Remediation: fmt.Sprintf("ensure control plane nodes and pods for cluster %s are Ready", u.Opts.WorkloadCluster.Name),
-			Err:         k.ValidateControlPlaneNodes(ctx, clusterName, kubeconfig),
+			Err:         k.ValidateControlPlaneNodes(ctx, u.Opts.WorkloadCluster),
 		},
 		validations.ValidationResult{
 			Name:        "worker nodes ready",
 			Remediation: fmt.Sprintf("ensure machine deployments for cluster %s are Ready", u.Opts.WorkloadCluster.Name),
-			Err:         k.ValidateWorkerNodes(ctx, clusterName, kubeconfig),
+			Err:         k.ValidateWorkerNodes(ctx, u.Opts.WorkloadCluster),
 		},
 		validations.ValidationResult{
 			Name:        "nodes ready",
 			Remediation: fmt.Sprintf("check the Status of the control plane and worker nodes in cluster %s and verify they are Ready", u.Opts.WorkloadCluster.Name),
-			Err:         k.ValidateNodes(ctx, kubeconfig),
+			Err:         k.ValidateNodes(ctx, u.Opts.WorkloadCluster.KubeconfigFile),
 		},
 		validations.ValidationResult{
 			Name:        "cluster CRDs ready",

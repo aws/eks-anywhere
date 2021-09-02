@@ -14,7 +14,8 @@ type Machine struct {
 }
 
 type MachineStatus struct {
-	NodeRef *ResourceRef `json:"nodeRef,omitempty"`
+	NodeRef    *ResourceRef `json:"nodeRef,omitempty"`
+	Conditions Conditions
 }
 
 type MachineMetadata struct {
@@ -25,6 +26,17 @@ type ResourceRef struct {
 	APIVersion string `json:"apiVersion"`
 	Kind       string `json:"kind"`
 	Name       string `json:"Name"`
+}
+
+type Conditions []Condition
+
+type ConditionType string
+
+type ConditionStatus string
+
+type Condition struct {
+	Type   ConditionType   `json:"type"`
+	Status ConditionStatus `json:"status"`
 }
 
 type CAPICluster struct {
@@ -49,3 +61,22 @@ type Info struct {
 }
 
 type NowFunc func() time.Time
+
+type NodeReadyChecker func(status MachineStatus) bool
+
+func WithNodeRef() NodeReadyChecker {
+	return func(status MachineStatus) bool {
+		return status.NodeRef != nil
+	}
+}
+
+func WithNodeHealthy() NodeReadyChecker {
+	return func(status MachineStatus) bool {
+		for _, c := range status.Conditions {
+			if c.Type == "NodeHealthy" {
+				return c.Status == "True"
+			}
+		}
+		return false
+	}
+}

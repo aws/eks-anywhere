@@ -1,0 +1,353 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "cluster.x-k8s.io/v1alpha3",
+            "kind": "Machine",
+            "metadata": {
+                "annotations": {
+                    "controlplane.cluster.x-k8s.io/kubeadm-cluster-configuration": "{\"etcd\":{\"local\":{\"imageRepository\":\"public.ecr.aws/eks-distro/etcd-io\",\"imageTag\":\"v3.4.14-eks-1-19-4\"}},\"networking\":{},\"apiServer\":{\"certSANs\":[\"localhost\",\"127.0.0.1\"]},\"controllerManager\":{\"extraArgs\":{\"enable-hostpath-provisioner\":\"true\"}},\"scheduler\":{},\"dns\":{\"type\":\"CoreDNS\",\"imageRepository\":\"public.ecr.aws/eks-distro/coredns\",\"imageTag\":\"v1.8.0-eks-1-19-4\"},\"imageRepository\":\"public.ecr.aws/eks-distro/kubernetes\"}"
+                },
+                "creationTimestamp": "2021-05-20T19:20:12Z",
+                "finalizers": [
+                    "machine.cluster.x-k8s.io"
+                ],
+                "generation": 1,
+                "labels": {
+                    "cluster.x-k8s.io/cluster-name": "eksa-test-capd",
+                    "cluster.x-k8s.io/control-plane": ""
+                },
+                "managedFields": [
+                    {
+                        "apiVersion": "cluster.x-k8s.io/v1alpha3",
+                        "fieldsType": "FieldsV1",
+                        "fieldsV1": {
+                            "f:metadata": {
+                                "f:annotations": {
+                                    ".": {},
+                                    "f:controlplane.cluster.x-k8s.io/kubeadm-cluster-configuration": {}
+                                },
+                                "f:finalizers": {
+                                    ".": {},
+                                    "v:\"machine.cluster.x-k8s.io\"": {}
+                                },
+                                "f:labels": {
+                                    ".": {},
+                                    "f:cluster.x-k8s.io/cluster-name": {},
+                                    "f:cluster.x-k8s.io/control-plane": {}
+                                },
+                                "f:ownerReferences": {
+                                    ".": {},
+                                    "k:{\"uid\":\"d79d1227-530b-4506-991c-09dc61d7d954\"}": {
+                                        ".": {},
+                                        "f:apiVersion": {},
+                                        "f:blockOwnerDeletion": {},
+                                        "f:controller": {},
+                                        "f:kind": {},
+                                        "f:name": {},
+                                        "f:uid": {}
+                                    }
+                                }
+                            },
+                            "f:spec": {
+                                ".": {},
+                                "f:bootstrap": {
+                                    ".": {},
+                                    "f:configRef": {
+                                        ".": {},
+                                        "f:apiVersion": {},
+                                        "f:kind": {},
+                                        "f:name": {},
+                                        "f:namespace": {},
+                                        "f:uid": {}
+                                    },
+                                    "f:dataSecretName": {}
+                                },
+                                "f:clusterName": {},
+                                "f:infrastructureRef": {
+                                    ".": {},
+                                    "f:apiVersion": {},
+                                    "f:kind": {},
+                                    "f:name": {},
+                                    "f:namespace": {},
+                                    "f:uid": {}
+                                },
+                                "f:providerID": {},
+                                "f:version": {}
+                            },
+                            "f:status": {
+                                "f:addresses": {}
+                            }
+                        },
+                        "manager": "clusterctl",
+                        "operation": "Update",
+                        "time": "2021-05-20T19:20:12Z"
+                    },
+                    {
+                        "apiVersion": "cluster.x-k8s.io/v1alpha3",
+                        "fieldsType": "FieldsV1",
+                        "fieldsV1": {
+                            "f:metadata": {
+                                "f:ownerReferences": {
+                                    "k:{\"uid\":\"8e77b4a1-9120-4b31-b014-14fa794db45f\"}": {
+                                        ".": {},
+                                        "f:apiVersion": {},
+                                        "f:blockOwnerDeletion": {},
+                                        "f:controller": {},
+                                        "f:kind": {},
+                                        "f:name": {},
+                                        "f:uid": {}
+                                    }
+                                }
+                            },
+                            "f:status": {
+                                ".": {},
+                                "f:bootstrapReady": {},
+                                "f:conditions": {},
+                                "f:infrastructureReady": {},
+                                "f:lastUpdated": {},
+                                "f:nodeRef": {
+                                    ".": {},
+                                    "f:apiVersion": {},
+                                    "f:kind": {},
+                                    "f:name": {},
+                                    "f:uid": {}
+                                },
+                                "f:observedGeneration": {},
+                                "f:phase": {}
+                            }
+                        },
+                        "manager": "manager",
+                        "operation": "Update",
+                        "time": "2021-05-20T19:20:13Z"
+                    }
+                ],
+                "name": "eksa-test-capd-control-plane-5nfdg",
+                "namespace": "default",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "controlplane.cluster.x-k8s.io/v1alpha3",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "KubeadmControlPlane",
+                        "name": "eksa-test-capd-control-plane",
+                        "uid": "d79d1227-530b-4506-991c-09dc61d7d954"
+                    }
+                ],
+                "resourceVersion": "7427",
+                "selfLink": "/apis/cluster.x-k8s.io/v1alpha3/namespaces/default/machines/eksa-test-capd-control-plane-5nfdg",
+                "uid": "f8b7881c-9623-4641-9b75-1fec560178c5"
+            },
+            "spec": {
+                "bootstrap": {
+                    "configRef": {
+                        "apiVersion": "bootstrap.cluster.x-k8s.io/v1alpha3",
+                        "kind": "KubeadmConfig",
+                        "name": "eksa-test-capd-control-plane-z95hz",
+                        "namespace": "default",
+                        "uid": "1ebdc47d-2dbc-4268-a098-e53ca9a5c19c"
+                    },
+                    "dataSecretName": "eksa-test-capd-control-plane-z95hz"
+                },
+                "clusterName": "eksa-test-capd",
+                "infrastructureRef": {
+                    "apiVersion": "infrastructure.cluster.x-k8s.io/v1alpha3",
+                    "kind": "DockerMachine",
+                    "name": "eksa-test-capd-control-plane-mrtzr",
+                    "namespace": "default",
+                    "uid": "fb7c15aa-35f4-463f-9152-0870666f7395"
+                },
+                "providerID": "docker:////eksa-test-capd-control-plane-5nfdg",
+                "version": "v1.19.8-eks-1-19-4"
+            },
+            "status": {
+                "bootstrapReady": true,
+                "infrastructureReady": true,
+                "lastUpdated": "2021-05-20T19:20:13Z",
+                "nodeRef": {
+                    "apiVersion": "v1",
+                    "kind": "Node",
+                    "name": "eksa-test-capd-control-plane-5nfdg",
+                    "uid": "088cd50b-17af-46b3-be84-6b564b2e15bc"
+                },
+                "observedGeneration": 1,
+                "phase": "Running"
+            }
+        },
+        {
+            "apiVersion": "cluster.x-k8s.io/v1alpha3",
+            "kind": "Machine",
+            "metadata": {
+                "creationTimestamp": "2021-05-20T19:20:13Z",
+                "finalizers": [
+                    "machine.cluster.x-k8s.io"
+                ],
+                "generateName": "eksa-test-capd-md-0-bb7885f6f-",
+                "generation": 1,
+                "labels": {
+                    "cluster.x-k8s.io/cluster-name": "eksa-test-capd",
+                    "cluster.x-k8s.io/deployment-name": "eksa-test-capd-md-0",
+                    "machine-template-hash": "663441929"
+                },
+                "managedFields": [
+                    {
+                        "apiVersion": "cluster.x-k8s.io/v1alpha3",
+                        "fieldsType": "FieldsV1",
+                        "fieldsV1": {
+                            "f:metadata": {
+                                "f:finalizers": {
+                                    ".": {},
+                                    "v:\"machine.cluster.x-k8s.io\"": {}
+                                },
+                                "f:generateName": {},
+                                "f:labels": {
+                                    ".": {},
+                                    "f:cluster.x-k8s.io/cluster-name": {},
+                                    "f:cluster.x-k8s.io/deployment-name": {},
+                                    "f:machine-template-hash": {}
+                                },
+                                "f:ownerReferences": {
+                                    ".": {},
+                                    "k:{\"uid\":\"fb22a4d6-aa24-4a01-9229-f2dbcbfcf117\"}": {
+                                        ".": {},
+                                        "f:apiVersion": {},
+                                        "f:blockOwnerDeletion": {},
+                                        "f:controller": {},
+                                        "f:kind": {},
+                                        "f:name": {},
+                                        "f:uid": {}
+                                    }
+                                }
+                            },
+                            "f:spec": {
+                                ".": {},
+                                "f:bootstrap": {
+                                    ".": {},
+                                    "f:configRef": {
+                                        ".": {},
+                                        "f:apiVersion": {},
+                                        "f:kind": {},
+                                        "f:name": {},
+                                        "f:namespace": {},
+                                        "f:uid": {}
+                                    },
+                                    "f:dataSecretName": {}
+                                },
+                                "f:clusterName": {},
+                                "f:infrastructureRef": {
+                                    ".": {},
+                                    "f:apiVersion": {},
+                                    "f:kind": {},
+                                    "f:name": {},
+                                    "f:namespace": {},
+                                    "f:uid": {}
+                                },
+                                "f:providerID": {},
+                                "f:version": {}
+                            },
+                            "f:status": {
+                                "f:addresses": {}
+                            }
+                        },
+                        "manager": "clusterctl",
+                        "operation": "Update",
+                        "time": "2021-05-20T19:20:13Z"
+                    },
+                    {
+                        "apiVersion": "cluster.x-k8s.io/v1alpha3",
+                        "fieldsType": "FieldsV1",
+                        "fieldsV1": {
+                            "f:metadata": {
+                                "f:ownerReferences": {
+                                    "k:{\"uid\":\"0ae9cb5f-003d-4ed7-b58f-d2f3d12ea5ae\"}": {
+                                        ".": {},
+                                        "f:apiVersion": {},
+                                        "f:blockOwnerDeletion": {},
+                                        "f:controller": {},
+                                        "f:kind": {},
+                                        "f:name": {},
+                                        "f:uid": {}
+                                    }
+                                }
+                            },
+                            "f:status": {
+                                ".": {},
+                                "f:bootstrapReady": {},
+                                "f:conditions": {},
+                                "f:infrastructureReady": {},
+                                "f:lastUpdated": {},
+                                "f:nodeRef": {
+                                    ".": {},
+                                    "f:apiVersion": {},
+                                    "f:kind": {},
+                                    "f:name": {},
+                                    "f:uid": {}
+                                },
+                                "f:observedGeneration": {},
+                                "f:phase": {}
+                            }
+                        },
+                        "manager": "manager",
+                        "operation": "Update",
+                        "time": "2021-05-20T19:20:13Z"
+                    }
+                ],
+                "name": "eksa-test-capd-md-0-bb7885f6f-gkb85",
+                "namespace": "default",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "cluster.x-k8s.io/v1alpha3",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "MachineSet",
+                        "name": "eksa-test-capd-md-0-bb7885f6f",
+                        "uid": "fb22a4d6-aa24-4a01-9229-f2dbcbfcf117"
+                    }
+                ],
+                "resourceVersion": "1551",
+                "selfLink": "/apis/cluster.x-k8s.io/v1alpha3/namespaces/default/machines/eksa-test-capd-md-0-bb7885f6f-gkb85",
+                "uid": "afcc18ef-316c-4c73-8841-ce219ae15ba0"
+            },
+            "spec": {
+                "bootstrap": {
+                    "configRef": {
+                        "apiVersion": "bootstrap.cluster.x-k8s.io/v1alpha3",
+                        "kind": "KubeadmConfig",
+                        "name": "eksa-test-capd-md-0-fndhz",
+                        "namespace": "default",
+                        "uid": "1067f7dd-dbcd-44c7-b6c4-84cbf94b4d00"
+                    },
+                    "dataSecretName": "eksa-test-capd-md-0-fndhz"
+                },
+                "clusterName": "eksa-test-capd",
+                "infrastructureRef": {
+                    "apiVersion": "infrastructure.cluster.x-k8s.io/v1alpha3",
+                    "kind": "DockerMachine",
+                    "name": "eksa-test-capd-md-0-8xltl",
+                    "namespace": "default",
+                    "uid": "a64032ac-1e29-4c4e-83ee-2350cf74c825"
+                },
+                "providerID": "docker:////eksa-test-capd-md-0-bb7885f6f-gkb85",
+                "version": "v1.19.8-eks-1-19-4"
+            },
+            "status": {
+                "bootstrapReady": true,
+                "infrastructureReady": true,
+                "lastUpdated": "2021-05-20T19:20:13Z",
+                "nodeRef": {
+                    "apiVersion": "v1",
+                    "kind": "Node",
+                    "name": "eksa-test-capd-md-0-bb7885f6f-gkb85",
+                    "uid": "404a5f4b-9bcb-445a-b506-53e2237eee6f"
+                },
+                "observedGeneration": 1,
+                "phase": "Running"
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": "",
+        "selfLink": ""
+    }
+}
