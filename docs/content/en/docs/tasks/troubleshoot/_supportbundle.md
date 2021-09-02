@@ -1,8 +1,7 @@
 ---
-title: "Support Bundle"
-linkTitle: "Support Bundle"
-weight: 40
-date: 2017-01-05
+title: "Generating a Support Bundle"
+linkTitle: "Generating a Support Bundle"
+weight: 30
 description: >
     Using the Support Bundle with your EKS-A Cluster
 ---
