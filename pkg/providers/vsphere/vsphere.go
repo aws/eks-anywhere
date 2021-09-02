@@ -33,6 +33,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/internal/templates"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -43,6 +44,8 @@ const (
 	eksaLicense              = "EKSA_LICENSE"
 	vSphereUsernameKey       = "VSPHERE_USERNAME"
 	vSpherePasswordKey       = "VSPHERE_PASSWORD"
+	eksavSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
+	eksavSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
 	vSphereServerKey         = "VSPHERE_SERVER"
 	govcInsecure             = "GOVC_INSECURE"
 	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
@@ -53,6 +56,8 @@ const (
 	publicKeyFileName        = "eks-a-id_rsa.pub"
 	defaultTemplateLibrary   = "eks-a-templates"
 	defaultTemplatesFolder   = "vm/Templates"
+	bottlerocketDefaultUser  = "ec2-user"
+	ubuntuDefaultUser        = "capv"
 )
 
 //go:embed config/template.yaml
@@ -357,11 +362,19 @@ func (p *vsphereProvider) validateControlPlaneIpUniqueness(ip string) error {
 }
 
 func (p *vsphereProvider) validateEnv(ctx context.Context) error {
-	if vSphereUsername, ok := os.LookupEnv(vSphereUsernameKey); !ok || len(vSphereUsername) <= 0 {
-		return fmt.Errorf("%s is not set or is empty", vSphereUsernameKey)
+	if vSphereUsername, ok := os.LookupEnv(eksavSphereUsernameKey); ok && len(vSphereUsername) > 0 {
+		if err := os.Setenv(vSphereUsernameKey, vSphereUsername); err != nil {
+			return fmt.Errorf("unable to set %s: %v", eksavSphereUsernameKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", eksavSphereUsernameKey)
 	}
-	if vSpherePassword, ok := os.LookupEnv(vSpherePasswordKey); !ok || len(vSpherePassword) <= 0 {
-		return fmt.Errorf("%s is not set or is empty", vSpherePasswordKey)
+	if vSpherePassword, ok := os.LookupEnv(eksavSpherePasswordKey); ok && len(vSpherePassword) > 0 {
+		if err := os.Setenv(vSpherePasswordKey, vSpherePassword); err != nil {
+			return fmt.Errorf("unable to set %s: %v", eksavSpherePasswordKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", eksavSpherePasswordKey)
 	}
 	if len(p.datacenterConfig.Spec.Server) <= 0 {
 		return errors.New("VSphereDatacenterConfig server is not set or is empty")
@@ -375,6 +388,24 @@ func (p *vsphereProvider) validateEnv(ctx context.Context) error {
 	if _, ok := os.LookupEnv(eksaLicense); !ok {
 		if err := os.Setenv(eksaLicense, ""); err != nil {
 			return fmt.Errorf("unable to set %s: %v", eksaLicense, err)
+		}
+	}
+	return nil
+}
+
+func (p *vsphereProvider) validateSSHUsername(machineConfig *v1alpha1.VSphereMachineConfig) error {
+	if len(machineConfig.Spec.Users[0].Name) <= 0 {
+		if machineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
+			machineConfig.Spec.Users[0].Name = bottlerocketDefaultUser
+		} else {
+			machineConfig.Spec.Users[0].Name = ubuntuDefaultUser
+		}
+		logger.V(1).Info(fmt.Sprintf("SSHUsername is not set or is empty for VSphereMachineConfig %v. Defaulting to %s", machineConfig.Name, machineConfig.Spec.Users[0].Name))
+	} else {
+		if machineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
+			if machineConfig.Spec.Users[0].Name != bottlerocketDefaultUser {
+				return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket.", machineConfig.Spec.Users[0].Name)
+			}
 		}
 	}
 	return nil
@@ -461,6 +492,7 @@ func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSp
 	if len(workerNodeGroupMachineConfig.Spec.ResourcePool) <= 0 {
 		return errors.New("VSphereMachineConfig VM resourcePool for worker nodes is not set or is empty")
 	}
+
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		var ok bool
 		if clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
@@ -494,10 +526,6 @@ func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSp
 		if len(etcdMachineConfig.Spec.Users) <= 0 {
 			etcdMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{}}
 		}
-		if len(etcdMachineConfig.Spec.Users[0].Name) <= 0 {
-			logger.V(1).Info("VSphereMachineConfig SSHUsername for etcd machines is not set or is empty. Defaulting to 'capv'.")
-			etcdMachineConfig.Spec.Users[0].Name = "capv"
-		}
 		if len(etcdMachineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
 			etcdMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
 		}
@@ -508,14 +536,6 @@ func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSp
 	}
 	if len(workerNodeGroupMachineConfig.Spec.Users) <= 0 {
 		workerNodeGroupMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{}}
-	}
-	if len(controlPlaneMachineConfig.Spec.Users[0].Name) <= 0 {
-		logger.V(1).Info("VSphereMachineConfig SSHUsername for control plane is not set or is empty. Defaulting to 'capv'.")
-		controlPlaneMachineConfig.Spec.Users[0].Name = "capv"
-	}
-	if len(workerNodeGroupMachineConfig.Spec.Users[0].Name) <= 0 {
-		logger.V(1).Info("VSphereMachineConfig SSHUsername for worker nodes is not set or is empty. Defaulting to 'capv'.")
-		workerNodeGroupMachineConfig.Spec.Users[0].Name = "capv"
 	}
 	if len(controlPlaneMachineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
 		controlPlaneMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
@@ -548,12 +568,25 @@ func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSp
 		return errors.New("control plane and etcd machines must have the same osFamily specified")
 	}
 	if len(string(controlPlaneMachineConfig.Spec.OSFamily)) <= 0 {
-		logger.Info("Warning: OS family not specified in cluster specification. Defaulting to Ubuntu.")
-		controlPlaneMachineConfig.Spec.OSFamily = v1alpha1.Ubuntu
-		workerNodeGroupMachineConfig.Spec.OSFamily = v1alpha1.Ubuntu
+		logger.Info("Warning: OS family not specified in cluster specification. Defaulting to Bottlerocket.")
+		controlPlaneMachineConfig.Spec.OSFamily = v1alpha1.Bottlerocket
+		workerNodeGroupMachineConfig.Spec.OSFamily = v1alpha1.Bottlerocket
 		if etcdMachineConfig != nil {
-			etcdMachineConfig.Spec.OSFamily = v1alpha1.Ubuntu
+			etcdMachineConfig.Spec.OSFamily = v1alpha1.Bottlerocket
 		}
+	}
+
+	if err := p.validateSSHUsername(controlPlaneMachineConfig); err == nil {
+		if err = p.validateSSHUsername(workerNodeGroupMachineConfig); err != nil {
+			return fmt.Errorf("error validating SSHUsername for worker node VSphereMachineConfig %v: %v", workerNodeGroupMachineConfig.Name, err)
+		}
+		if etcdMachineConfig != nil {
+			if err = p.validateSSHUsername(etcdMachineConfig); err != nil {
+				return fmt.Errorf("error validating SSHUsername for etcd VSphereMachineConfig %v: %v", etcdMachineConfig.Name, err)
+			}
+		}
+	} else {
+		return fmt.Errorf("error validating SSHUsername for control plane VSphereMachineConfig %v: %v", controlPlaneMachineConfig.Name, err)
 	}
 
 	for _, obj := range p.machineConfigs {
@@ -566,9 +599,6 @@ func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSp
 	}
 
 	if controlPlaneMachineConfig.Spec.Template == "" {
-		if controlPlaneMachineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
-			return errors.New("template field is required when osFamily is bottlerocket")
-		}
 		logger.V(1).Info("Control plane VSphereMachineConfig template is not set. Using default template.")
 		err := p.setupDefaultTemplate(ctx, clusterSpec, controlPlaneMachineConfig, p.controlPlaneTemplateFactory)
 		if err != nil {
@@ -699,9 +729,13 @@ func (p *vsphereProvider) checkDatastoreUsage(ctx context.Context, clusterSpec *
 
 	if etcdMachineConfig != nil {
 		etcdNeedGiB := etcdMachineConfig.Spec.DiskGiB * clusterSpec.Spec.ExternalEtcdConfiguration.Count
-		usage[etcdMachineConfig.Spec.Datastore] = &datastoreUsage{
-			availableSpace: etcdAvailableSpace,
-			needGiBSpace:   etcdNeedGiB,
+		if _, ok := usage[etcdMachineConfig.Spec.Datastore]; ok {
+			usage[etcdMachineConfig.Spec.Datastore].needGiBSpace += etcdNeedGiB
+		} else {
+			usage[etcdMachineConfig.Spec.Datastore] = &datastoreUsage{
+				availableSpace: etcdAvailableSpace,
+				needGiBSpace:   etcdNeedGiB,
+			}
 		}
 	}
 
@@ -962,7 +996,10 @@ func (vs *VsphereTemplateBuilder) GenerateDeploymentFile(clusterSpec *cluster.Sp
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *vs.etcdMachineSpec
 	}
-	values := BuildTemplateMap(clusterSpec, *vs.datacenterSpec, *vs.controlPlaneMachineSpec, *vs.workerNodeGroupMachineSpec, etcdMachineSpec)
+	values, err := BuildTemplateMap(clusterSpec, *vs.datacenterSpec, *vs.controlPlaneMachineSpec, *vs.workerNodeGroupMachineSpec, etcdMachineSpec)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -976,7 +1013,7 @@ func (vs *VsphereTemplateBuilder) GenerateDeploymentFile(clusterSpec *cluster.Sp
 	return bytes, nil
 }
 
-func BuildTemplateMap(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphereDatacenterConfigSpec, controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec v1alpha1.VSphereMachineConfigSpec) map[string]interface{} {
+func BuildTemplateMap(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphereDatacenterConfigSpec, controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec v1alpha1.VSphereMachineConfigSpec) (map[string]interface{}, error) {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
@@ -1035,6 +1072,14 @@ func BuildTemplateMap(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphere
 		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
 	}
 
+	k8sVersion, err := semver.New(bundle.KubeDistro.Kubernetes.Tag)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing kubernetes version %v: %v", bundle.KubeDistro.Kubernetes.Tag, err)
+	}
+	if k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
+		values["cgroupDriverSystemd"] = true
+	}
+
 	if clusterSpec.Spec.ProxyConfiguration != nil {
 		values["proxyConfig"] = true
 		var noProxyList []string
@@ -1076,7 +1121,7 @@ func BuildTemplateMap(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphere
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
 	}
 
-	return values
+	return values, nil
 }
 
 func (p *vsphereProvider) generateTemplateValuesForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, error) {

@@ -4,8 +4,8 @@ env:
   variables:
     T_VSPHERE_CIDR: "198.18.0.0/16"
   secrets-manager:
-    VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
-    VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
+    EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
+    EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
     GOVC_URL: "vsphere_ci_beta_connection:vsphere_url"
     GOVC_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
     GOVC_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
@@ -30,9 +30,9 @@ phases:
   pre_build:
     commands:
     - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/set_profile.sh
-    - make e2e
+    - make conformance-tests
     - /docker.sh
-    - cp ./bin/linux/eks-a ./bin/eks-a
+    - cp ./bin/linux/eksctl-anywhere ./bin/eksctl-anywhere
   build:
     commands:
     - export JOB_ID=$CODEBUILD_BUILD_ID
@@ -44,7 +44,7 @@ phases:
       -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
       -n ${INTEGRATION_TEST_SUBNET_ID}
       -m 25
-      -r 'Test(VSphere|Docker)Kubernetes.*ConformanceFlow'
+      -r 'Test'
   post_build:
     commands:
     - >

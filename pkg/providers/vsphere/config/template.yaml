@@ -176,6 +176,22 @@ spec:
       controllerManager:
         extraArgs:
           cloud-provider: external
+{{- if (eq .format "bottlerocket") }}
+        extraVolumes:
+        - hostPath: /var/lib/kubeadm/controller-manager.conf
+          mountPath: /etc/kubernetes/controller-manager.conf
+          name: kubeconfig
+          pathType: File
+          readOnly: true
+      scheduler:
+        extraVolumes:
+        - hostPath: /var/lib/kubeadm/scheduler.conf
+          mountPath: /etc/kubernetes/scheduler.conf
+          name: kubeconfig
+          pathType: File
+          readOnly: true
+      certificatesDir: /var/lib/kubeadm/pki
+{{- end }}
     files:
     - content: |
         apiVersion: v1
@@ -308,6 +324,9 @@ spec:
           criSocket: /var/run/containerd/containerd.sock
           kubeletExtraArgs:
             cloud-provider: external
+{{- if .cgroupDriverSystemd}}
+            cgroup-driver: systemd
+{{- end }}
           name: '{{"{{"}} ds.meta_data.hostname {{"}}"}}'
 {{- if and .proxyConfig (ne .format "bottlerocket")}}
       files:

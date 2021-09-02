@@ -15,11 +15,12 @@ import (
 )
 
 const (
-	GitProviderName   = "github"
-	GithubTokenEnv    = "GITHUB_TOKEN"
-	githubUrlTemplate = "https://github.com/%v/%v.git"
-	patRegex          = "^[A-Za-z0-9_]{40}$"
-	repoPermissions   = "repo"
+	GitProviderName    = "github"
+	EksaGithubTokenEnv = "EKSA_GITHUB_TOKEN"
+	GithubTokenEnv     = "GITHUB_TOKEN"
+	githubUrlTemplate  = "https://github.com/%v/%v.git"
+	patRegex           = "^[A-Za-z0-9_]{40}$"
+	repoPermissions    = "repo"
 )
 
 type githubProvider struct {
@@ -162,18 +163,13 @@ func (g *githubProvider) Validate(ctx context.Context) error {
 
 func validateGithubAccessToken() error {
 	r := regexp.MustCompile(patRegex)
-
-	logger.V(4).Info("Checking validity of Github Access Token")
-
-	logger.V(4).Info("Checking validity of Github Access Token environment variable", "env var", GithubTokenEnv)
-	val, ok := os.LookupEnv(GithubTokenEnv)
+	logger.V(4).Info("Checking validity of Github Access Token environment variable", "env var", EksaGithubTokenEnv)
+	val, ok := os.LookupEnv(EksaGithubTokenEnv)
 	if !ok {
-		fmt.Printf("Val %v, \nok %v", val, ok)
-		return fmt.Errorf("github access token environment variable %s is invalid; could not get var from environment", GithubTokenEnv)
+		return fmt.Errorf("github access token environment variable %s is invalid; could not get var from environment", EksaGithubTokenEnv)
 	}
-
 	if !r.MatchString(val) {
-		return fmt.Errorf("github access token environment variable %s is invalid; must match format %s", GithubTokenEnv, patRegex)
+		return fmt.Errorf("github access token environment variable %s is invalid; must match format %s", EksaGithubTokenEnv, patRegex)
 	}
 	return nil
 }
@@ -185,8 +181,11 @@ func GetGithubAccessTokenFromEnv() (string, error) {
 	}
 
 	env := make(map[string]string)
-	if val, ok := os.LookupEnv(GithubTokenEnv); ok && len(val) > 0 {
+	if val, ok := os.LookupEnv(EksaGithubTokenEnv); ok && len(val) > 0 {
 		env[GithubTokenEnv] = val
+		if err := os.Setenv(GithubTokenEnv, val); err != nil {
+			return "", fmt.Errorf("unable to set %s: %v", GithubTokenEnv, err)
+		}
 	}
 	return env[GithubTokenEnv], nil
 }

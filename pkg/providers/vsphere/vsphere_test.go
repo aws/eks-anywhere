@@ -42,6 +42,7 @@ const (
 	expectedExpClusterResourceSet = "expClusterResourceSetKey"
 	eksd119Release                = "kubernetes-1-19-eks-4"
 	eksd119ReleaseTag             = "eksdRelease:kubernetes-1-19-eks-4"
+	eksd121ReleaseTag             = "eksdRelease:kubernetes-1-21-eks-4"
 	ubuntuOSTag                   = "os:ubuntu"
 	bottlerocketOSTag             = "os:bottlerocket"
 	testTemplate                  = "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
@@ -100,7 +101,7 @@ func (pc *DummyProviderGovcClient) ImportTemplate(ctx context.Context, library, 
 }
 
 func (pc *DummyProviderGovcClient) GetTags(ctx context.Context, path string) (tags []string, err error) {
-	return []string{eksd119ReleaseTag, pc.osTag}, nil
+	return []string{eksd119ReleaseTag, eksd121ReleaseTag, pc.osTag}, nil
 }
 
 func (pc *DummyProviderGovcClient) ListTags(ctx context.Context) ([]string, error) {
@@ -198,26 +199,28 @@ type testContext struct {
 }
 
 func (tctx *testContext) SaveContext() {
-	tctx.oldUsername, tctx.isUsernameSet = os.LookupEnv(vSphereUsernameKey)
-	tctx.oldPassword, tctx.isPasswordSet = os.LookupEnv(vSpherePasswordKey)
+	tctx.oldUsername, tctx.isUsernameSet = os.LookupEnv(eksavSphereUsernameKey)
+	tctx.oldPassword, tctx.isPasswordSet = os.LookupEnv(eksavSpherePasswordKey)
 	tctx.oldServername, tctx.isServernameSet = os.LookupEnv(vSpherePasswordKey)
 	tctx.oldExpClusterResourceSet, tctx.isExpClusterResourceSetSet = os.LookupEnv(vSpherePasswordKey)
-	os.Setenv(vSphereUsernameKey, expectedVSphereUsername)
-	os.Setenv(vSpherePasswordKey, expectedVSpherePassword)
+	os.Setenv(eksavSphereUsernameKey, expectedVSphereUsername)
+	os.Setenv(vSphereUsernameKey, os.Getenv(eksavSphereUsernameKey))
+	os.Setenv(eksavSpherePasswordKey, expectedVSpherePassword)
+	os.Setenv(vSpherePasswordKey, os.Getenv(eksavSpherePasswordKey))
 	os.Setenv(vSphereServerKey, expectedVSphereServer)
 	os.Setenv(expClusterResourceSetKey, expectedExpClusterResourceSet)
 }
 
 func (tctx *testContext) RestoreContext() {
 	if tctx.isUsernameSet {
-		os.Setenv(vSphereUsernameKey, tctx.oldUsername)
+		os.Setenv(eksavSphereUsernameKey, tctx.oldUsername)
 	} else {
-		os.Unsetenv(vSphereUsernameKey)
+		os.Unsetenv(eksavSphereUsernameKey)
 	}
 	if tctx.isPasswordSet {
-		os.Setenv(vSpherePasswordKey, tctx.oldPassword)
+		os.Setenv(eksavSpherePasswordKey, tctx.oldPassword)
 	} else {
-		os.Unsetenv(vSpherePasswordKey)
+		os.Unsetenv(eksavSpherePasswordKey)
 	}
 }
 
@@ -372,6 +375,57 @@ func TestProviderGenerateDeploymentFileUpgradeCmdUpdateMachineTemplateExternalEt
 
 			fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
 			writtenFile, err := provider.GenerateDeploymentFileForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, fileName)
+			if err != nil {
+				t.Fatalf("failed to generate deployment file: %v", err)
+			}
+			if fileName == "" {
+				t.Fatalf("empty fileName returned by GenerateDeploymentFile")
+			}
+			test.AssertFilesEquals(t, writtenFile, tt.wantDeploymentFile)
+		})
+	}
+}
+
+func TestProviderGenerateDeploymentFileCreateCmdSystemdCgroupForK8sVersion(t *testing.T) {
+	tests := []struct {
+		testName           string
+		clusterconfigFile  string
+		wantDeploymentFile string
+	}{
+		{
+			testName:           "main",
+			clusterconfigFile:  "cluster_main_121.yaml",
+			wantDeploymentFile: "testdata/expected_results_121.yaml",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			var tctx testContext
+			tctx.SaveContext()
+			defer tctx.RestoreContext()
+			ctx := context.Background()
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+			cluster := &types.Cluster{
+				Name: "test",
+			}
+			clusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
+
+			datacenterConfig := givenDatacenterConfig(t, tt.clusterconfigFile)
+			machineConfigs := givenMachineConfigs(t, tt.clusterconfigFile)
+			_, writer := test.NewWriter(t)
+			provider := NewProviderCustomNet(datacenterConfig, machineConfigs, clusterSpec.Cluster, NewDummyProviderGovcClient(), kubectl, writer, &DummyNetClient{}, test.FakeNow, false)
+			if provider == nil {
+				t.Fatalf("provider object is nil")
+			}
+
+			err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+			if err != nil {
+				t.Fatalf("failed to setup and validate: %v", err)
+			}
+
+			fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
+			writtenFile, err := provider.GenerateDeploymentFileForCreate(context.Background(), cluster, clusterSpec, fileName)
 			if err != nil {
 				t.Fatalf("failed to generate deployment file: %v", err)
 			}
@@ -607,11 +661,11 @@ func TestSetupAndValidateCreateClusterNoUsername(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(vSphereUsernameKey)
+	os.Unsetenv(eksavSphereUsernameKey)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "failed setup and validations: VSPHERE_USERNAME is not set or is empty", err)
+	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_USERNAME is not set or is empty", err)
 }
 
 func TestSetupAndValidateCreateClusterNoPassword(t *testing.T) {
@@ -621,11 +675,11 @@ func TestSetupAndValidateCreateClusterNoPassword(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(vSpherePasswordKey)
+	os.Unsetenv(eksavSpherePasswordKey)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "failed setup and validations: VSPHERE_PASSWORD is not set or is empty", err)
+	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_PASSWORD is not set or is empty", err)
 }
 
 func TestSetupAndValidateDeleteCluster(t *testing.T) {
@@ -647,11 +701,11 @@ func TestSetupAndValidateDeleteClusterNoPassword(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(vSpherePasswordKey)
+	os.Unsetenv(eksavSpherePasswordKey)
 
 	err := provider.SetupAndValidateDeleteCluster(ctx)
 
-	thenErrorExpected(t, "failed setup and validations: VSPHERE_PASSWORD is not set or is empty", err)
+	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_PASSWORD is not set or is empty", err)
 }
 
 func TestSetupAndValidateUpgradeCluster(t *testing.T) {
@@ -676,11 +730,11 @@ func TestSetupAndValidateUpgradeClusterNoUsername(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(vSphereUsernameKey)
+	os.Unsetenv(eksavSphereUsernameKey)
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "failed setup and validations: VSPHERE_USERNAME is not set or is empty", err)
+	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_USERNAME is not set or is empty", err)
 }
 
 func TestSetupAndValidateUpgradeClusterNoPassword(t *testing.T) {
@@ -690,11 +744,11 @@ func TestSetupAndValidateUpgradeClusterNoPassword(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(vSpherePasswordKey)
+	os.Unsetenv(eksavSpherePasswordKey)
 
 	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "failed setup and validations: VSPHERE_PASSWORD is not set or is empty", err)
+	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_PASSWORD is not set or is empty", err)
 }
 
 func TestSetupAndValidateUpgradeClusterIpExists(t *testing.T) {
@@ -1527,13 +1581,22 @@ func TestSetupAndValidateCreateClusterOsFamilyEmpty(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	_, writer := test.NewWriter(t)
+	govc := NewDummyProviderGovcClient()
+	govc.osTag = bottlerocketOSTag
+	provider := NewProviderCustomNet(datacenterConfig, machineConfigs, clusterConfig, govc, nil, writer, &DummyNetClient{}, test.FakeNow, false)
 	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = ""
+	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].Name = ""
 	workerNodeMachineConfigName := clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 	provider.machineConfigs[workerNodeMachineConfigName].Spec.OSFamily = ""
+	provider.machineConfigs[workerNodeMachineConfigName].Spec.Users[0].Name = ""
 	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily = ""
+	provider.machineConfigs[etcdMachineConfigName].Spec.Users[0].Name = ""
 	var tctx testContext
 	tctx.SaveContext()
 
@@ -1541,14 +1604,14 @@ func TestSetupAndValidateCreateClusterOsFamilyEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
 	}
-	if provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily != v1alpha1.Ubuntu {
-		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Ubuntu)
+	if provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily != v1alpha1.Bottlerocket {
+		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Bottlerocket)
 	}
-	if provider.machineConfigs[workerNodeMachineConfigName].Spec.OSFamily != v1alpha1.Ubuntu {
-		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Ubuntu)
+	if provider.machineConfigs[workerNodeMachineConfigName].Spec.OSFamily != v1alpha1.Bottlerocket {
+		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Bottlerocket)
 	}
-	if provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily != v1alpha1.Ubuntu {
-		t.Fatalf("got osFamily for etcd machine as %v, want %v", provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily, v1alpha1.Ubuntu)
+	if provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily != v1alpha1.Bottlerocket {
+		t.Fatalf("got osFamily for etcd machine as %v, want %v", provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily, v1alpha1.Bottlerocket)
 	}
 }
 

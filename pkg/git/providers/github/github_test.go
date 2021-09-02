@@ -112,15 +112,16 @@ type testContext struct {
 }
 
 func (tctx *testContext) SaveContext(token string) {
-	tctx.oldGithubToken, tctx.isGithubTokenSet = os.LookupEnv(github.GithubTokenEnv)
+	tctx.oldGithubToken, tctx.isGithubTokenSet = os.LookupEnv(github.EksaGithubTokenEnv)
+	os.Setenv(github.EksaGithubTokenEnv, token)
 	os.Setenv(github.GithubTokenEnv, token)
 }
 
 func (tctx *testContext) RestoreContext() {
 	if tctx.isGithubTokenSet {
-		os.Setenv(github.GithubTokenEnv, tctx.oldGithubToken)
+		os.Setenv(github.EksaGithubTokenEnv, tctx.oldGithubToken)
 	} else {
-		os.Unsetenv(github.GithubTokenEnv)
+		os.Unsetenv(github.EksaGithubTokenEnv)
 	}
 }
 

@@ -27,7 +27,7 @@ const (
 	fluxSystemNamespace = "flux-system"
 	gitRepositoryVar    = "T_GIT_REPOSITORY"
 	githubUserVar       = "T_GITHUB_USER"
-	githubTokenVar      = "GITHUB_TOKEN"
+	githubTokenVar      = "EKSA_GITHUB_TOKEN"
 )
 
 var fluxRequiredEnvVars = []string{
@@ -367,7 +367,7 @@ func (e *E2ETest) waitForWorkerNodeValidation() error {
 	ctx := context.Background()
 	return retrier.Retry(10, time.Second*10, func() error {
 		e.T.Log("Attempting to validate worker nodes...")
-		if err := e.KubectlClient.ValidateWorkerNodes(ctx, e.ClusterName, e.cluster().KubeconfigFile); err != nil {
+		if err := e.KubectlClient.ValidateWorkerNodes(ctx, e.cluster()); err != nil {
 			e.T.Logf("Worker node validation failed: %v", err)
 			return fmt.Errorf("error while validating worker nodes: %v", err)
 		}

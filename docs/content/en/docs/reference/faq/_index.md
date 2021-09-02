@@ -6,7 +6,7 @@ description: >
   Frequently asked questions about EKS Anywhere
 ---
 
-## AuthN / AuthZ authentication
+## AuthN / AuthZ 
 
 ### How do my applications running on EKS-A authenticate with AWS services using IAM credentials?
 
@@ -41,31 +41,6 @@ However, you can look into the [Dex LDAP Connector](https://dexidp.io/docs/conne
 
 ### Can I use AWS IAM for Kubernetes resource access control on EKS-A?
 Yes, you can install the [aws-iam-authenticator](https://github.com/kubernetes-sigs/aws-iam-authenticator) on your EKS-A cluster to achieve this.
-
-
-## EKS-A integrations recommendations
-
-### Which integrations are recommended with EKS-A?
-
-EKS Anywhere offers AWS support for certain third-party vendor components,
-namely Ubuntu TLS, Cilium, and Flux.
-It also provides flexibility for you to integrate with your choice of tools in other areas.
-Below is a list of suggested third-party tools your consideration.
-
-| Feature                       | Suggest third-party tools                 |
-|-------------------------------|-------------------------------------------|
-| Ingress controller	        | [Emissary-ingress](https://www.getambassador.io/products/api-gateway/) (previously Ambassador)          |
-| Service type load balancer    | [KubeVip](https://kube-vip.io/) / [Metal LB](https://metallb.universe.tf/)                       |
-| Local container repository    | [Harbor](https://goharbor.io/)                                    |
-| Monitoring                    | [Prometheus](https://sysdig.com/products/monitor/prometheus-monitoring/)+[Grafana](https://grafana.com/)+[FluentBit](https://fluentbit.io/kubernetes/) / [Datadog](https://www.datadoghq.com/blog/monitoring-kubernetes-with-datadog/) / [NewRelic](https://newrelic.com/platform/kubernetes/monitoring-guide)  |
-| Log analytics                 | [Splunk](https://www.splunk.com/en_us/blog/platform/introducing-the-splunk-operator-for-kubernetes.html)                                    |
-| Secret management             | [Hashi Vault](https://www.vaultproject.io/docs/platform/k8s)                               |
-| Policy agent                  | [Open Policy Agent](https://www.openpolicyagent.org/docs/latest/kubernetes-introduction/)                                       |
-| Service mesh                  | [Linkerd](https://linkerd.io/) or [Istio](https://istio.io/)                         |
-| Infrastructure-as-code        | [Terraform](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/guides/getting-started)                                 |
-| Cost management               | [KubeCost](https://www.kubecost.com/)                                  |
-| Etcd backup and restore       | [Velero](https://velero.io/)                                    |
-| Storage                       | Default storage class, any compatible CSI |
 
 ## Miscellaneous
 

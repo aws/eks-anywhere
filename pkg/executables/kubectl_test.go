@@ -221,11 +221,76 @@ func TestKubectlGetMachines(t *testing.T) {
 		{
 			testName:         "machines with no node ref",
 			jsonResponseFile: "testdata/kubectl_machines_no_node_ref_no_labels.json",
-			wantMachines:     []types.Machine{{}, {}},
+			wantMachines: []types.Machine{
+				{
+					Status: types.MachineStatus{
+						Conditions: types.Conditions{
+							{
+								Status: "True",
+								Type:   "Ready",
+							},
+							{
+								Status: "True",
+								Type:   "APIServerPodHealthy",
+							},
+							{
+								Status: "True",
+								Type:   "BootstrapReady",
+							},
+							{
+								Status: "True",
+								Type:   "ControllerManagerPodHealthy",
+							},
+							{
+								Status: "True",
+								Type:   "EtcdMemberHealthy",
+							},
+							{
+								Status: "True",
+								Type:   "EtcdPodHealthy",
+							},
+							{
+								Status: "True",
+								Type:   "InfrastructureReady",
+							},
+							{
+								Status: "True",
+								Type:   "NodeHealthy",
+							},
+							{
+								Status: "True",
+								Type:   "SchedulerPodHealthy",
+							},
+						},
+					},
+				},
+				{
+					Status: types.MachineStatus{
+						Conditions: types.Conditions{
+							{
+								Status: "True",
+								Type:   "Ready",
+							},
+							{
+								Status: "True",
+								Type:   "BootstrapReady",
+							},
+							{
+								Status: "True",
+								Type:   "InfrastructureReady",
+							},
+							{
+								Status: "True",
+								Type:   "NodeHealthy",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
-			testName:         "machines with node ref",
-			jsonResponseFile: "testdata/kubectl_machines_with_node_ref.json",
+			testName:         "machines with no conditions",
+			jsonResponseFile: "testdata/kubectl_machines_no_conditions.json",
 			wantMachines: []types.Machine{
 				{
 					Metadata: types.MachineMetadata{
@@ -261,6 +326,99 @@ func TestKubectlGetMachines(t *testing.T) {
 			},
 		},
 		{
+			testName:         "machines with node ref",
+			jsonResponseFile: "testdata/kubectl_machines_with_node_ref.json",
+			wantMachines: []types.Machine{
+				{
+					Metadata: types.MachineMetadata{
+						Labels: map[string]string{
+							"cluster.x-k8s.io/cluster-name":  "eksa-test-capd",
+							"cluster.x-k8s.io/control-plane": "",
+						},
+					},
+					Status: types.MachineStatus{
+						NodeRef: &types.ResourceRef{
+							APIVersion: "v1",
+							Kind:       "Node",
+							Name:       "eksa-test-capd-control-plane-5nfdg",
+						},
+						Conditions: types.Conditions{
+							{
+								Status: "True",
+								Type:   "Ready",
+							},
+							{
+								Status: "True",
+								Type:   "APIServerPodHealthy",
+							},
+							{
+								Status: "True",
+								Type:   "BootstrapReady",
+							},
+							{
+								Status: "True",
+								Type:   "ControllerManagerPodHealthy",
+							},
+							{
+								Status: "True",
+								Type:   "EtcdMemberHealthy",
+							},
+							{
+								Status: "True",
+								Type:   "EtcdPodHealthy",
+							},
+							{
+								Status: "True",
+								Type:   "InfrastructureReady",
+							},
+							{
+								Status: "True",
+								Type:   "NodeHealthy",
+							},
+							{
+								Status: "True",
+								Type:   "SchedulerPodHealthy",
+							},
+						},
+					},
+				},
+				{
+					Metadata: types.MachineMetadata{
+						Labels: map[string]string{
+							"cluster.x-k8s.io/cluster-name":    "eksa-test-capd",
+							"cluster.x-k8s.io/deployment-name": "eksa-test-capd-md-0",
+							"machine-template-hash":            "663441929",
+						},
+					},
+					Status: types.MachineStatus{
+						NodeRef: &types.ResourceRef{
+							APIVersion: "v1",
+							Kind:       "Node",
+							Name:       "eksa-test-capd-md-0-bb7885f6f-gkb85",
+						},
+						Conditions: types.Conditions{
+							{
+								Status: "True",
+								Type:   "Ready",
+							},
+							{
+								Status: "True",
+								Type:   "BootstrapReady",
+							},
+							{
+								Status: "True",
+								Type:   "InfrastructureReady",
+							},
+							{
+								Status: "True",
+								Type:   "NodeHealthy",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			testName:         "etcd machines",
 			jsonResponseFile: "testdata/kubectl_etcd_machines_no_node_ref.json",
 			wantMachines: []types.Machine{
@@ -269,6 +427,46 @@ func TestKubectlGetMachines(t *testing.T) {
 						Labels: map[string]string{
 							"cluster.x-k8s.io/cluster-name": "eksa-test-capd",
 							"cluster.x-k8s.io/etcd-cluster": "",
+						},
+					},
+					Status: types.MachineStatus{
+						Conditions: types.Conditions{
+							{
+								Status: "True",
+								Type:   "Ready",
+							},
+							{
+								Status: "True",
+								Type:   "APIServerPodHealthy",
+							},
+							{
+								Status: "True",
+								Type:   "BootstrapReady",
+							},
+							{
+								Status: "True",
+								Type:   "ControllerManagerPodHealthy",
+							},
+							{
+								Status: "True",
+								Type:   "EtcdMemberHealthy",
+							},
+							{
+								Status: "True",
+								Type:   "EtcdPodHealthy",
+							},
+							{
+								Status: "True",
+								Type:   "InfrastructureReady",
+							},
+							{
+								Status: "True",
+								Type:   "NodeHealthy",
+							},
+							{
+								Status: "True",
+								Type:   "SchedulerPodHealthy",
+							},
 						},
 					},
 				},

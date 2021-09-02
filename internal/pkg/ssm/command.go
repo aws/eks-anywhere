@@ -85,7 +85,7 @@ func Run(session *session.Session, instanceId string, command string, opts ...Co
 
 	logger.V(2).Info("Waiting for ssm command to finish")
 	var commandOut *ssm.GetCommandInvocationOutput
-	r := retrier.New(180 * time.Minute)
+	r := retrier.New(180*time.Minute, retrier.WithMaxRetries(2160, 5*time.Second))
 	err = r.Retry(func() error {
 		var err error
 		commandOut, err = service.GetCommandInvocation(commandIn)

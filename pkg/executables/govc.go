@@ -30,8 +30,8 @@ const (
 	govcInsecure         = "GOVC_INSECURE"
 	govcTlsHostsFile     = "govc_known_hosts"
 	govcTlsKnownHostsKey = "GOVC_TLS_KNOWN_HOSTS"
-	vSphereUsernameKey   = "VSPHERE_USERNAME"
-	vSpherePasswordKey   = "VSPHERE_PASSWORD"
+	vSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
+	vSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
 	vSphereServerKey     = "VSPHERE_SERVER"
 	byteToGiB            = 1073741824.0
 	deployOptsFile       = "deploy-opts.json"

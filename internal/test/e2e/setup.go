@@ -14,7 +14,7 @@ import (
 var binaries = []string{cliBinary, e2eBinary, eksctlBinary}
 
 const (
-	cliBinary    = "eks-a"
+	cliBinary    = "eksctl-anywhere"
 	e2eBinary    = "e2e.test"
 	eksctlBinary = "eksctl"
 )
@@ -47,10 +47,6 @@ func newSession(amiId, instanceProfileName, storageBucket, jobId, subnetId strin
 	}
 
 	return e, nil
-}
-
-func (e *E2ESession) setupPath(value string) {
-	e.testEnvVars["PATH"] = value
 }
 
 func (e *E2ESession) setup(regex string) error {
@@ -95,8 +91,6 @@ func (e *E2ESession) setup(regex string) error {
 	if err != nil {
 		return err
 	}
-
-	e.setupPath("$PATH:`pwd`/bin")
 
 	return nil
 }

@@ -297,6 +297,34 @@ func (mr *MockClusterClientMockRecorder) UpdateAnnotationInNamespace(arg0, arg1,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAnnotationInNamespace", reflect.TypeOf((*MockClusterClient)(nil).UpdateAnnotationInNamespace), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
+// ValidateControlPlaneNodes mocks base method.
+func (m *MockClusterClient) ValidateControlPlaneNodes(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateControlPlaneNodes", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateControlPlaneNodes indicates an expected call of ValidateControlPlaneNodes.
+func (mr *MockClusterClientMockRecorder) ValidateControlPlaneNodes(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateControlPlaneNodes", reflect.TypeOf((*MockClusterClient)(nil).ValidateControlPlaneNodes), arg0, arg1)
+}
+
+// ValidateWorkerNodes mocks base method.
+func (m *MockClusterClient) ValidateWorkerNodes(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateWorkerNodes", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateWorkerNodes indicates an expected call of ValidateWorkerNodes.
+func (mr *MockClusterClientMockRecorder) ValidateWorkerNodes(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateWorkerNodes", reflect.TypeOf((*MockClusterClient)(nil).ValidateWorkerNodes), arg0, arg1)
+}
+
 // WaitForControlPlaneReady mocks base method.
 func (m *MockClusterClient) WaitForControlPlaneReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
 	m.ctrl.T.Helper()

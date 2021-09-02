@@ -127,17 +127,17 @@ func (mr *MockValidationsKubectlClientMockRecorder) ValidateClustersCRD(ctx, clu
 }
 
 // ValidateControlPlaneNodes mocks base method.
-func (m *MockValidationsKubectlClient) ValidateControlPlaneNodes(ctx context.Context, clusterName, kubeconfig string) error {
+func (m *MockValidationsKubectlClient) ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateControlPlaneNodes", ctx, clusterName, kubeconfig)
+	ret := m.ctrl.Call(m, "ValidateControlPlaneNodes", ctx, cluster)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ValidateControlPlaneNodes indicates an expected call of ValidateControlPlaneNodes.
-func (mr *MockValidationsKubectlClientMockRecorder) ValidateControlPlaneNodes(ctx, clusterName, kubeconfig interface{}) *gomock.Call {
+func (mr *MockValidationsKubectlClientMockRecorder) ValidateControlPlaneNodes(ctx, cluster interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateControlPlaneNodes", reflect.TypeOf((*MockValidationsKubectlClient)(nil).ValidateControlPlaneNodes), ctx, clusterName, kubeconfig)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateControlPlaneNodes", reflect.TypeOf((*MockValidationsKubectlClient)(nil).ValidateControlPlaneNodes), ctx, cluster)
 }
 
 // ValidateNodes mocks base method.
@@ -155,17 +155,17 @@ func (mr *MockValidationsKubectlClientMockRecorder) ValidateNodes(ctx, kubeconfi
 }
 
 // ValidateWorkerNodes mocks base method.
-func (m *MockValidationsKubectlClient) ValidateWorkerNodes(ctx context.Context, clusterName, kubeconfig string) error {
+func (m *MockValidationsKubectlClient) ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateWorkerNodes", ctx, clusterName, kubeconfig)
+	ret := m.ctrl.Call(m, "ValidateWorkerNodes", ctx, cluster)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ValidateWorkerNodes indicates an expected call of ValidateWorkerNodes.
-func (mr *MockValidationsKubectlClientMockRecorder) ValidateWorkerNodes(ctx, clusterName, kubeconfig interface{}) *gomock.Call {
+func (mr *MockValidationsKubectlClientMockRecorder) ValidateWorkerNodes(ctx, cluster interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateWorkerNodes", reflect.TypeOf((*MockValidationsKubectlClient)(nil).ValidateWorkerNodes), ctx, clusterName, kubeconfig)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateWorkerNodes", reflect.TypeOf((*MockValidationsKubectlClient)(nil).ValidateWorkerNodes), ctx, cluster)
 }
 
 // Version mocks base method.

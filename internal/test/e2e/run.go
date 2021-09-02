@@ -110,7 +110,7 @@ func (e *E2ESession) runTests(regex string) error {
 		command,
 	)
 	if err != nil {
-		return fmt.Errorf("error running e2e tests: %v", err)
+		return fmt.Errorf("error running e2e tests on instance %s: %v", e.instanceId, err)
 	}
 
 	key := "Integration-Test-Done"
