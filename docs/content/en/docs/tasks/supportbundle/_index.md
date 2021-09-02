@@ -15,29 +15,10 @@ cluster resource information, and other relevant debugging information.
 
 EKS-A has two Support Bundle commands:
 
-`eksctl anywhere generate support-bundle-config` will generate a Support Bundle config yaml file for you to customize. 
-
-`eksctl anywhere genereate support-bundle` will execute the support bundle on your cluster, 
+`eksctl anywhere genereate support-bundle` will execute a support bundle on your cluster, 
 collecting relevant information, archiving it locally, and performing analysis of the results.
 
-### Generating a Support Bundle Configuration for your EKS-A Cluster
-EKS-A will automatically generate a support bundle based on your cluster configuration; 
-however, if you'd like to customize the support bundle to collect specific information,
-you can generate your own support bundle configuration yaml for EKS-A to run on your cluster.
-
-`eksctl anywhere generate support-bundle-config` will generate a default support bundle configuration and print it  as yaml.
-
-`eksctl anywhere generate support-bundle-config -f myCluster.yaml` will generate a support bundle configuration customized to your cluster and print it as yaml.
-
-To run a customized support bundle configuration yaml file on your cluster, 
-save this output to a file and run the command `eksctl anywhere generate support-bundle` using the flag `--bundle-config`.
-
-```
-eksctl anywhere generate support-bundle-config
-Flags:
-  -f, --filename string   Filename that contains EKS-A cluster configuration
-  -h, --help              help for support-bundle-config
-```
+`eksctl anywhere generate support-bundle-config` will generate a Support Bundle config yaml file for you to customize.
 
 ### Collecting a Support Bundle and Running Analyzers
 ```
@@ -187,4 +168,23 @@ Message: bundles.anywhere.eks.amazonaws.com is present on the cluster
 #### Archive phase:
 ``` 
 a support bundle has been created in the current directory:	{"path": "support-bundle-2021-09-02T19_29_41.tar.gz"}
+```
+
+### Generating a Custom Support Bundle Configuration for your EKS-A Cluster
+EKS-A will automatically generate a support bundle based on your cluster configuration;
+however, if you'd like to customize the support bundle to collect specific information,
+you can generate your own support bundle configuration yaml for EKS-A to run on your cluster.
+
+`eksctl anywhere generate support-bundle-config` will generate a default support bundle configuration and print it  as yaml.
+
+`eksctl anywhere generate support-bundle-config -f myCluster.yaml` will generate a support bundle configuration customized to your cluster and print it as yaml.
+
+To run a customized support bundle configuration yaml file on your cluster,
+save this output to a file and run the command `eksctl anywhere generate support-bundle` using the flag `--bundle-config`.
+
+```
+eksctl anywhere generate support-bundle-config
+Flags:
+  -f, --filename string   Filename that contains EKS-A cluster configuration
+  -h, --help              help for support-bundle-config
 ```
