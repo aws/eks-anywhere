@@ -45,6 +45,11 @@ var capiDeployments = map[string][]string{
 	"cert-manager":                      {"cert-manager", "cert-manager-cainjector", "cert-manager-webhook"},
 }
 
+var externalEtcdDeployments = map[string][]string{
+	"etcdadm-controller-system":         {"etcdadm-controller-controller-manager"},
+	"etcdadm-bootstrap-provider-system": {"etcdadm-bootstrap-provider-controller-manager"},
+}
+
 // map between file name and the capi/v deployments
 var clusterDeployments = map[string]*types.Deployment{
 	"kubeadm-bootstrap-controller-manager.log":         {Name: "capi-kubeadm-bootstrap-controller-manager", Namespace: "capi-kubeadm-bootstrap-system", Container: "manager"},
@@ -204,11 +209,13 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return err
 	}
 
+	var externalEtcdTopology bool
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		logger.V(3).Info("Waiting for external etcd to be ready after upgrade")
 		if err := c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWaitStr, workloadCluster.Name); err != nil {
 			return fmt.Errorf("error waiting for workload cluster etcd to be ready: %v", err)
 		}
+		externalEtcdTopology = true
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready after upgrade")
@@ -230,7 +237,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for workload cluster capi components to be ready after upgrade")
-	err = c.waitForCapi(ctx, workloadCluster, provider)
+	err = c.waitForCapi(ctx, workloadCluster, provider, externalEtcdTopology)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster capi components to be ready: %v", err)
 	}
@@ -367,13 +374,20 @@ func (c *ClusterManager) InstallCapi(ctx context.Context, clusterSpec *cluster.S
 		return fmt.Errorf("error initializing capi resources in cluster: %v", err)
 	}
 
-	return c.waitForCapi(ctx, cluster, provider)
+	return c.waitForCapi(ctx, cluster, provider, clusterSpec.Spec.ExternalEtcdConfiguration != nil)
 }
 
-func (c *ClusterManager) waitForCapi(ctx context.Context, cluster *types.Cluster, provider providers.Provider) error {
+func (c *ClusterManager) waitForCapi(ctx context.Context, cluster *types.Cluster, provider providers.Provider, externalEtcdTopology bool) error {
 	err := c.waitForDeployments(ctx, capiDeployments, cluster)
 	if err != nil {
 		return err
+	}
+
+	if externalEtcdTopology {
+		err := c.waitForDeployments(ctx, externalEtcdDeployments, cluster)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = c.waitForDeployments(ctx, provider.GetDeployments(), cluster)
