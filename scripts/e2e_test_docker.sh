@@ -41,6 +41,7 @@ export AWS_SDK_LOAD_CONFIG=true
 export AWS_CONFIG_FILE=$(pwd)/config_file
 export AWS_PROFILE=e2e-docker-test
 unset AWS_ROLE_ARN AWS_WEB_IDENTITY_TOKEN_FILE
+cp $REPO_ROOT/bin/linux/eksctl-anywhere $REPO_ROOT/bin/
 $REPO_ROOT/bin/test e2e run \
     -a ${INTEGRATION_TEST_AL2_AMI_ID} \
     -s ${INTEGRATION_TEST_STORAGE_BUCKET} \

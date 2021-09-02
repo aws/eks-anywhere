@@ -210,20 +210,12 @@ verify-mocks: mocks ## Verify if mocks need to be updated
 	fi
 
 .PHONY: e2e
-e2e: eks-a-e2e integration-test-binary ## Build integration tests
+e2e: eks-a-release-cross-platform integration-test-binary ## Build integration tests
 	$(MAKE) e2e-tests-binary E2E_TAGS=e2e
 
 .PHONY: conformance-tests
-conformance-tests: eks-a-e2e integration-test-binary ## Build e2e conformance tests
+conformance-tests: eks-a-release-cross-platform integration-test-binary ## Build e2e conformance tests
 	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
-
-.PHONY: eks-a-e2e
-eks-a-e2e:
-	if [ "$(CODEBUILD_CI)" = "true" ]; then \
-		make eks-a-cross-platform; \
-	else \
-		make eks-a; \
-	fi
 
 .PHONY: e2e-tests-binary
 e2e-tests-binary:
