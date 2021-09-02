@@ -10,15 +10,15 @@ description: >
 
 To delete a cluster you will need:
 - cluster name or cluster configuration 
-- kubeconfig for the cluster
+- kubeconfig for your cluster
 
 Run the following commands to delete the cluster:
 
 1. Set up `CLUSTER_NAME` and `KUBECONFIG` environment variables:
-```bash
-export CLUSTER_NAME=dev
-export KUBECONFIG=${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
-```
+    ```bash
+    export CLUSTER_NAME=dev
+    export KUBECONFIG=${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
+    ```
 
 2. Run the delete command:
 - If you are running the delete command from the directory which has the cluster folder with `${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.yaml`:

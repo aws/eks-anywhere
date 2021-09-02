@@ -81,7 +81,7 @@ func (r *ReleaseConfig) GetCiliumBundle(imageDigests map[string]string) (anywher
 	}
 	ciliumImageTagMap := map[string]string{
 		"cilium":           ciliumGitTag,
-		"operator-generic": "v1.9.9-beta1",
+		"operator-generic": ciliumGitTag,
 	}
 
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
@@ -98,7 +98,7 @@ func (r *ReleaseConfig) GetCiliumBundle(imageDigests map[string]string) (anywher
 			Description: fmt.Sprintf("Container image for %s image", image),
 			OS:          "linux",
 			Arch:        []string{"amd64"},
-			URI:         fmt.Sprintf("%s/%s-eksa:%s", ciliumContainerRegistry, image, tag),
+			URI:         fmt.Sprintf("%s/%s:%s", ciliumContainerRegistry, image, tag),
 			ImageDigest: imageDigest,
 		}
 
