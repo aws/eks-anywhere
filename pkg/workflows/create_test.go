@@ -107,7 +107,7 @@ func (c *createTestSetup) expectCreateWorkload() {
 
 func (c *createTestSetup) expectMoveManagement() {
 	c.clusterManager.EXPECT().MoveCapi(
-		c.ctx, c.bootstrapCluster, c.workloadCluster,
+		c.ctx, c.bootstrapCluster, c.workloadCluster, gomock.Any(),
 	)
 }
 

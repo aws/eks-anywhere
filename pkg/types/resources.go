@@ -61,3 +61,22 @@ type Info struct {
 }
 
 type NowFunc func() time.Time
+
+type NodeReadyChecker func(status MachineStatus) bool
+
+func WithNodeRef() NodeReadyChecker {
+	return func(status MachineStatus) bool {
+		return status.NodeRef != nil
+	}
+}
+
+func WithNodeHealthy() NodeReadyChecker {
+	return func(status MachineStatus) bool {
+		for _, c := range status.Conditions {
+			if c.Type == "NodeHealthy" {
+				return c.Status == "True"
+			}
+		}
+		return false
+	}
+}

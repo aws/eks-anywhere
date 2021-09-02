@@ -214,7 +214,7 @@ func (s *CreateWorkloadClusterTask) Name() string {
 
 func (s *MoveClusterManagementTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Moving cluster management from bootstrap to workload cluster")
-	err := commandContext.ClusterManager.MoveCapi(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster)
+	err := commandContext.ClusterManager.MoveCapi(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, types.WithNodeRef())
 	if err != nil {
 		commandContext.SetError(err)
 		return nil

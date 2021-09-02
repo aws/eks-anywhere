@@ -225,17 +225,22 @@ func (mr *MockClusterManagerMockRecorder) InstallStorageClass(arg0, arg1, arg2 i
 }
 
 // MoveCapi mocks base method.
-func (m *MockClusterManager) MoveCapi(arg0 context.Context, arg1, arg2 *types.Cluster) error {
+func (m *MockClusterManager) MoveCapi(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 ...types.NodeReadyChecker) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MoveCapi", arg0, arg1, arg2)
+	varargs := []interface{}{arg0, arg1, arg2}
+	for _, a := range arg3 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "MoveCapi", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // MoveCapi indicates an expected call of MoveCapi.
-func (mr *MockClusterManagerMockRecorder) MoveCapi(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) MoveCapi(arg0, arg1, arg2 interface{}, arg3 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveCapi", reflect.TypeOf((*MockClusterManager)(nil).MoveCapi), arg0, arg1, arg2)
+	varargs := append([]interface{}{arg0, arg1, arg2}, arg3...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveCapi", reflect.TypeOf((*MockClusterManager)(nil).MoveCapi), varargs...)
 }
 
 // PauseEKSAControllerReconcile mocks base method.
