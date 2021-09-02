@@ -51,8 +51,8 @@ func Run(session *session.Session, instanceId string, command string, opts ...Co
 		opt(c)
 	}
 	var result *ssm.SendCommandOutput
-	r := retrier.New(180*time.Minute, retrier.WithMaxRetries(50, 10*time.Second), retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
-		if request.IsErrorThrottle(err) {
+	r := retrier.New(180*time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
+		if request.IsErrorThrottle(err) && totalRetries < 50 {
 			return true, 10 * time.Second
 		}
 		return false, 0
