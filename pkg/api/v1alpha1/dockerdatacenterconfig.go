@@ -15,7 +15,7 @@ func NewDockerDatacenterConfigGenerate(clusterName string) *DockerDatacenterConf
 		},
 		ObjectMeta: ObjectMeta{
 			Name:      clusterName,
-			Namespace: "anywhere-system",
+			Namespace: "",
 		},
 		Spec: DockerDatacenterConfigSpec{},
 	}

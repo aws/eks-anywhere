@@ -93,6 +93,7 @@ type ClusterClient interface {
 	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string) (*v1alpha1.VSphereMachineConfig, error)
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
+	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 }
 
 type Networking interface {
@@ -573,9 +574,12 @@ func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpe
 
 func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
 	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error {
-	err := c.clusterClient.CreateNamespace(ctx, cluster.KubeconfigFile, "anywhere-system")
+	err := c.clusterClient.GetNamespace(ctx, cluster.KubeconfigFile, clusterSpec.Namespace)
 	if err != nil {
-		return err
+		err := c.clusterClient.CreateNamespace(ctx, cluster.KubeconfigFile, clusterSpec.Namespace)
+		if err != nil {
+			return err
+		}
 	}
 	resourcesSpec, err := clustermarshaller.MarshalClusterSpec(clusterSpec, datacenterConfig, machineConfigs)
 	if err != nil {
@@ -592,6 +596,7 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 
 func (c *ClusterManager) applyVersionBundle(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
 	clusterSpec.Bundles.Name = clusterSpec.Name
+	clusterSpec.Bundles.Namespace = clusterSpec.Namespace
 	bundleObj, err := yaml.Marshal(clusterSpec.Bundles)
 	if err != nil {
 		return fmt.Errorf("error outputting bundle yaml: %v", err)

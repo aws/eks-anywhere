@@ -15,7 +15,7 @@ func NewVSphereDatacenterConfigGenerate(clusterName string) *VSphereDatacenterCo
 		},
 		ObjectMeta: ObjectMeta{
 			Name:      clusterName,
-			Namespace: "anywhere-system",
+			Namespace: "",
 		},
 		Spec: VSphereDatacenterConfigSpec{},
 	}

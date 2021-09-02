@@ -2,6 +2,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
   name: test
+  namespace: test-namespace
 spec:
   controlPlaneConfiguration:
     count: 3
@@ -37,6 +38,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereMachineConfig
 metadata:
   name: test-cp
+  namespace: test-namespace
 spec:
   diskGiB: 25
   datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
@@ -56,6 +58,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereMachineConfig
 metadata:
   name: test-wn
+  namespace: test-namespace
 spec:
   diskGiB: 25
   datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
@@ -75,6 +78,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereMachineConfig
 metadata:
   name: test-etcd
+  namespace: test-namespace
 spec:
   diskGiB: 25
   datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
@@ -94,6 +98,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereDatacenterConfig
 metadata:
   name: test
+  namespace: test-namespace
 spec:
   datacenter: "SDDC-Datacenter"
   network: "/SDDC-Datacenter/network/sddc-cgw-network-1"

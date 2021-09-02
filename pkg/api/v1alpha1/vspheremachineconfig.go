@@ -20,7 +20,7 @@ func NewVSphereMachineConfigGenerate(name string) *VSphereMachineConfigGenerate 
 		},
 		ObjectMeta: ObjectMeta{
 			Name:      name,
-			Namespace: "anywhere-system",
+			Namespace: "",
 		},
 		Spec: VSphereMachineConfigSpec{
 			DiskGiB:   25,

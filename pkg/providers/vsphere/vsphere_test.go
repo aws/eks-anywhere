@@ -145,6 +145,7 @@ func givenEmptyClusterSpec() *cluster.Spec {
 	return test.NewClusterSpec(func(s *cluster.Spec) {
 		s.VersionsBundle.KubeVersion = "1.19"
 		s.VersionsBundle.EksD.Name = eksd119Release
+		s.Namespace = "test-namespace"
 	})
 }
 
@@ -1664,6 +1665,7 @@ func TestSetupAndValidateCreateClusterDefaultTemplate(t *testing.T) {
 		s.VersionsBundle.EksD.Name = eksd119Release
 		s.VersionsBundle.EksD.KubeVersion = "v1.19.8"
 		s.VersionsBundle.KubeVersion = "1.19"
+		s.Namespace = "test-namespace"
 	})
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
 	provider := givenProvider(t)

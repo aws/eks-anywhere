@@ -32,7 +32,7 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 		},
 		ObjectMeta: ObjectMeta{
 			Name:      clusterName,
-			Namespace: "anywhere-system",
+			Namespace: "",
 		},
 		Spec: ClusterSpec{
 			KubernetesVersion:             Kube121,
@@ -123,7 +123,7 @@ func NewCluster(clusterName string) *Cluster {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterName,
-			Namespace: "anywhere-system",
+			Namespace: "",
 		},
 		Spec: ClusterSpec{
 			KubernetesVersion: Kube119,

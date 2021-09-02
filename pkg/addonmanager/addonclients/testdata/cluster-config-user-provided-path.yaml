@@ -3,7 +3,6 @@ kind: Cluster
 metadata:
   creationTimestamp: null
   name: fluxAddonTestCluster
-  namespace: anywhere-system
 spec:
   clusterNetwork:
     pods: {}

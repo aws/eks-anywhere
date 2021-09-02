@@ -461,7 +461,6 @@ func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSp
 	if len(workerNodeGroupMachineConfig.Spec.ResourcePool) <= 0 {
 		return errors.New("VSphereMachineConfig VM resourcePool for worker nodes is not set or is empty")
 	}
-
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		var ok bool
 		if clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
@@ -555,6 +554,19 @@ func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSp
 		if etcdMachineConfig != nil {
 			etcdMachineConfig.Spec.OSFamily = v1alpha1.Ubuntu
 		}
+	}
+
+	if clusterSpec.Namespace == "" {
+		logger.V(1).Info("Namespace for cluster spec is not set or is empty. Defaulting to 'anywhere-system'.")
+		clusterSpec.Namespace = "anywhere-system"
+	}
+	for _, obj := range p.machineConfigs {
+		if obj.Namespace != clusterSpec.Namespace {
+			return errors.New("ClusterSpec and VSphereMachineConfig objects must have the same namespace specified")
+		}
+	}
+	if p.datacenterConfig.Namespace != clusterSpec.Namespace {
+		return errors.New("ClusterSpec and VSphereDatacenterConfig objects must have the same namespace specified")
 	}
 
 	if controlPlaneMachineConfig.Spec.Template == "" {

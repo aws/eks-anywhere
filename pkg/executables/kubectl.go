@@ -55,6 +55,12 @@ func NewKubectl(executable Executable) *Kubectl {
 	}
 }
 
+func (k *Kubectl) GetNamespace(ctx context.Context, kubeconfig string, namespace string) error {
+	params := []string{"get", "namespace", namespace, "--kubeconfig", kubeconfig}
+	_, err := k.executable.Execute(ctx, params...)
+	return err
+}
+
 func (k *Kubectl) CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error {
 	params := []string{"create", "namespace", namespace, "--kubeconfig", kubeconfig}
 	_, err := k.executable.Execute(ctx, params...)
