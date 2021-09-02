@@ -7,7 +7,7 @@ description: >
 ---
 
 This guide covers the use of the EKS-A Support Bundle for troubleshooting and support.
-This allows you to gather cluster information, save it to your admin machine, and perform analysis of the results.
+This allows you to gather cluster information, save it to your administrative machine, and perform analysis of the results.
 
 EKS-A leverages [troubleshoot.sh](https://troubleshoot.sh/) to [collect](https://troubleshoot.sh/docs/collect/) and [analyze](https://troubleshoot.sh/docs/analyze/) kubernetes cluster logs, 
 cluster resource information, and other relevant debugging information. 
