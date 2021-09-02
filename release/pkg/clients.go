@@ -275,7 +275,7 @@ func (r *ReleaseConfig) CreateProdReleaseClients() (*SourceClients, *ReleaseClie
 	}
 
 	// Get release ECR Public auth config
-	fmt.Printf("Release container registry is: %s", r.SourceContainerRegistry)
+	fmt.Printf("Release container registry is: %s", r.ReleaseContainerRegistry)
 	releaseEcrPublicClient := ecrpublic.New(releaseSession)
 	releaseAuthConfig, err := getEcrPublicAuthConfig(releaseEcrPublicClient)
 	if err != nil {
