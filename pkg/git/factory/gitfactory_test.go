@@ -23,7 +23,7 @@ func TestGitFactoryHappyPath(t *testing.T) {
 		authTokenEnv string
 	}{
 		{
-			testName:     "valid token var, valid provider",
+			testName:     "valid token var",
 			authTokenEnv: validPATValue,
 		},
 	}
@@ -58,14 +58,15 @@ type testContext struct {
 }
 
 func (tctx *testContext) SaveContext(token string) {
-	tctx.oldGithubToken, tctx.isGithubTokenSet = os.LookupEnv(github.GithubTokenEnv)
-	os.Setenv(github.GithubTokenEnv, token)
+	tctx.oldGithubToken, tctx.isGithubTokenSet = os.LookupEnv(github.EksaGithubTokenEnv)
+	os.Setenv(github.EksaGithubTokenEnv, validPATValue)
+	os.Setenv(github.GithubTokenEnv, validPATValue)
 }
 
 func (tctx *testContext) RestoreContext() {
 	if tctx.isGithubTokenSet {
-		os.Setenv(github.GithubTokenEnv, tctx.oldGithubToken)
+		os.Setenv(github.EksaGithubTokenEnv, tctx.oldGithubToken)
 	} else {
-		os.Unsetenv(github.GithubTokenEnv)
+		os.Unsetenv(github.EksaGithubTokenEnv)
 	}
 }
