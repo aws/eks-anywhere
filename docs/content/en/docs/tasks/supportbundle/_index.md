@@ -69,8 +69,7 @@ Flags:
 You only need to run a single command to generate a support bundle, collect information and analyze the output:
 `eksctl anywhere generate support-bundle -f myCluster.yaml`
 
-This command will generate a support bundle customized for your cluster,
-collect the information from your cluster,
+This command will collect the information from your cluster
 and run an analysis of the collected information.
 
 The collected information will be saved to your local disk in an archive which can be used for 
