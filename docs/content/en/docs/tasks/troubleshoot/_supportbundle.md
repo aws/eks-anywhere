@@ -55,7 +55,7 @@ and run an analysis of the collected information.
 The collected information will be saved to your local disk in an archive which can be used for 
 debugging and obtaining additional in-depth support.
 
-The anlysis will be printed to your console.
+The analysis will be printed to your console.
 
 #### Collect phase:
 ```
