@@ -42,9 +42,11 @@ phases:
       -j ${JOB_ID}
       -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
       -n ${INTEGRATION_TEST_SUBNET_ID}
-      -m 35
+      -m 40
       -r 'Test'
     - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
+  post_build:
+    commands:
     - export GIT_HASH=$(cat bin/githash)
     - >
       ./cmd/integration_test/build/script/upload_artifacts.sh
@@ -52,9 +54,7 @@ phases:
       "eks-a-cli"
       $CODEBUILD_BUILD_NUMBER
       $GIT_HASH
-#  post_build:
-#    commands:
-#    - >
-#      ./bin/test e2e cleanup vsphere
-#      -n eksa-test
-#      -v 4
+    # - >
+    #   ./bin/test e2e cleanup vsphere
+    #   -n eksa-test
+    #   -v 4
