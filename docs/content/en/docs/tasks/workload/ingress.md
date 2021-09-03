@@ -24,7 +24,7 @@ We currently recommend using Emissary-ingress Kubernetes Ingress Controller by A
 
 ## Setting up Emissary-ingress for Ingress Controller
 
-1. Set up a test web application in your cluster. You can use EKS-A's [Hello Test App]({{< ref "/docs/tasks/workload/test-app" >}}), as an example. Apply YAML for this application.
+1. Deploy the [Hello EKS Anywhere]({{< ref "/docs/tasks/workload/test-app" >}}) test application.
     ```bash
     kubectl apply -f https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml
     ```
