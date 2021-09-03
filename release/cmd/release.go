@@ -232,8 +232,7 @@ var releaseCmd = &cobra.Command{
 			} else {
 				release = &anywherev1alpha1.Release{
 					Spec: anywherev1alpha1.ReleaseSpec{
-						LatestVersion: releaseVersion,
-						Releases:      []anywherev1alpha1.EksARelease{},
+						Releases: []anywherev1alpha1.EksARelease{},
 					},
 				}
 			}
@@ -242,6 +241,7 @@ var releaseCmd = &cobra.Command{
 			release.APIVersion = "anywhere.eks.amazonaws.com/v1alpha1"
 			release.Kind = "Release"
 			release.CreationTimestamp = v1.Time{Time: releaseTime}
+			release.Spec.LatestVersion = releaseVersion
 
 			artifactsTable, err := releaseConfig.PrepareEksARelease(sourceClients)
 			if err != nil {
