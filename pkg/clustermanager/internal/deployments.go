@@ -32,3 +32,7 @@ var ClusterDeployments = map[string]*types.Deployment{
 	"capv-controller-manager.log":                      {Name: "capv-controller-manager", Namespace: "capv-system", Container: "manager"},
 	"wh-capv-controller-manager.log":                   {Name: "capv-controller-manager", Namespace: "capi-webhook-system", Container: "manager"},
 }
+
+var EksaDeployments = map[string][]string{
+	"eksa-system": {"eksa-controller-manager"},
+}
