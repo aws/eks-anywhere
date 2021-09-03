@@ -57,9 +57,7 @@ This PAT should have at least the following permissions:
 
 >**_NOTE:_** The PAT must belong to the `owner` of the `repository` or, if using an organization as the `owner`, the creator of the `PAT` must have repo permission in that organization.
 
-You can provide the PAT to EKS-A in the following way:
-
-* Set the `$EKSA_GITHUB_TOKEN` environment variable to the value of your PAT
+You need to set your PAT as the environment variable $EKSA_GITHUB_TOKEN to use it during cluster creation:
 
    ```
    export EKSA_GITHUB_TOKEN=ghp_MyValidPersonalAccessTokenWithRepoPermissions
