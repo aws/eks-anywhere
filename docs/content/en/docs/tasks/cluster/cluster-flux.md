@@ -59,10 +59,10 @@ This PAT should have at least the following permissions:
 
 You can provide the PAT to EKS-A in one of two ways:
 
-* (default) Set the `$GITHUB_TOKEN` environment variable to the value of your PAT
+* (default) Set the `$EKSA_GITHUB_TOKEN` environment variable to the value of your PAT
 
    ```
-   export GITHUB_TOKEN=ghp_MyValidPersonalAccessTokenWithRepoPermissions
+   export EKSA_GITHUB_TOKEN=ghp_MyValidPersonalAccessTokenWithRepoPermissions
    ```
 
 * A Github Token file with read permissions.
