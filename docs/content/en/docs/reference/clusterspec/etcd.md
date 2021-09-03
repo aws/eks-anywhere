@@ -3,7 +3,7 @@ title: "etcd configuration reference"
 linkTitle: "etcd"
 weight: 20
 description: >
-  EKS-A cluster yaml etcd specification reference
+  EKS Anywhere cluster yaml etcd specification reference
 ---
 
 ### Unstacked etcd topology (recommended)
@@ -17,7 +17,7 @@ The unstacked etcd topology is recommended for a HA cluster for the following re
 * External etcd topology decouples the control plane components and etcd member. So if a control plane-only node fails, or if there is a memory leak in a component like kube-apiserver, it won't directly impact an etcd member.
 * Etcd is resource intensive, so it is safer to have dedicated nodes for etcd, since it could use more disk space or higher bandwidth. Having a separate etcd cluster for these reasons could ensure a more resilient HA setup.
 
-EKS-A supports both topologies. In order to configure a cluster with the unstacked/external etcd topology, you need to configure your cluster by updating the configuration file before creating the cluster. This is a generic template with detailed descriptions below for reference:
+EKS Anywhere supports both topologies. In order to configure a cluster with the unstacked/external etcd topology, you need to configure your cluster by updating the configuration file before creating the cluster. This is a generic template with detailed descriptions below for reference:
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster

@@ -3,12 +3,12 @@ title: "OIDC reference"
 linkTitle: "OIDC"
 weight: 30
 description: >
-  EKS-A cluster yaml specification OIDC reference
+  EKS Anywhere cluster yaml specification OIDC reference
 ---
 
 
 ## OIDC support (optional)
-EKS-A can create clusters that support api server OIDC authentication. In order to add OIDC support, you need to configure your cluster by updating the configuration file before creating the cluster. This is a generic template with detailed descriptions below for reference:
+EKS Anywhere can create clusters that support api server OIDC authentication. In order to add OIDC support, you need to configure your cluster by updating the configuration file before creating the cluster. This is a generic template with detailed descriptions below for reference:
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster

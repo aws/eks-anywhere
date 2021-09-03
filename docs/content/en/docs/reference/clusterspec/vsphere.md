@@ -3,7 +3,7 @@ title: "vSphere configuration reference"
 linkTitle: "vSphere"
 weight: 10
 description: >
-  Full EKS-A configuration reference for a VMware vSphere cluster.
+  Full EKS Anywhere configuration reference for a VMware vSphere cluster.
 ---
 
 This is a generic template with detailed descriptions below for reference

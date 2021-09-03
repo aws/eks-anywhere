@@ -19,11 +19,11 @@ Once your workload cluster is created, a KUBECONFIG file is stored on your admin
 You’ll be able to use that file with `kubectl` to set up and deploy workloads.
 Here’s a diagram that explains the process visually.
 
-![EKS-A create cluster overview](/images/eks-a_create_cluster.png)
+![EKS Anywhere create cluster overview](/images/eks-a_create_cluster.png)
 
 The delete process is similar to the create process.
 
-![EKS-A delete cluster overview](/images/eks-a_delete_cluster.png)
+![EKS Anywhere delete cluster overview](/images/eks-a_delete_cluster.png)
 
 
 Next steps:

@@ -5,7 +5,7 @@ weight: 40
 
 EKS Anywhere supports a vSphere provider for production grade EKS Anywhere deployments.
 The purpose of this doc is to walk you through getting set-up with EKS Anywhere (EKS-A).
-EKS-A allows you to provision and manage Amazon EKS on your own infrastructure.
+EKS Anywhere allows you to provision and manage Amazon EKS on your own infrastructure.
 
 ## Prerequisite Checklist
 
@@ -26,7 +26,7 @@ To run EKS Anywhere, you will need the following:
       --provider vsphere > eksa-cluster.yaml
    ```
 
-    A production grade EKS-A cluster should be made with at least three control plane nodes and three worker nodes
+    A production grade EKS Anywhere cluster should be made with at least three control plane nodes and three worker nodes
     for high availability and rolling upgrades.:
     ```
       controlPlaneConfiguration:

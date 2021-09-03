@@ -15,7 +15,7 @@ CARGO_NET_GIT_FETCH_WITH_CLI=true cargo install --force tuftool
 curl -O "https://cache.bottlerocket.aws/root.json"
 sha512sum -c <<<"90393204232a1ad6b0a45528b1f7df1a3e37493b1e05b1c149f081849a292c8dafb4ea5f7ee17bcc664e35f66e37e4cfa4aae9de7a2a28aa31ae6ac3d9bea4d5  root.json"
 ```
-4. Export the desired Kubernetes Version. EKS-A currently supports 1.21 and 1.20
+4. Export the desired Kubernetes Version. EKS Anywhere currently supports 1.21 and 1.20
 ```
 export KUBEVERSION="1.21"
 ```
@@ -51,7 +51,7 @@ EKS-D Release
 * `eksdRelease:kubernetes-1-20-eks-6`
 
 ## Building your own Ubuntu OVA
-The EKS-A project OVA building process leverages upstream [image-builder repository.](https://github.com/kubernetes-sigs/image-builder)
+The EKS Anywhere project OVA building process leverages upstream [image-builder repository.](https://github.com/kubernetes-sigs/image-builder)
 If you want to build an OVA with a custom Ubuntu base image to use for an EKS-Anywhere cluster, please follow the instructions below.
 
 Having access to a vSphere environment and docker running locally are prerequisites for building your own images.

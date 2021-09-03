@@ -50,8 +50,8 @@ sudo mv /tmp/eksctl-anywhere /usr/local/bin/
 
 ### (Optional) Install additional tools
 
-There are some additional tools you may want for your EKS-A clusters.
-The EKS Distro project publishes some additional binaries and EKS-A bundles them for usage.
+There are some additional tools you may want for your EKS Anywhere clusters.
+The EKS Distro project publishes some additional binaries and EKS Anywhere bundles them for usage.
 
 This brew formula includes
 

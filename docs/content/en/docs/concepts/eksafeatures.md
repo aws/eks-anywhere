@@ -1,10 +1,10 @@
 ---
-title: "Compare EKS-A and EKS"
-linkTitle: "Compare EKS-A and EKS"
+title: "Compare EKS Anywhere and EKS"
+linkTitle: "Compare EKS Anywhere"
 weight: 4
 date: 2017-01-05
 description: >
-  Comparing Amazon EKS-A features to Amazon EKS
+  Comparing Amazon EKS Anywhere features to Amazon EKS
 ---
 
 Amazon EKS Anywhere is a new deployment option for Amazon EKS
@@ -30,10 +30,10 @@ To learn more about Amazon EKS, see [Amazon Elastic Kubernetes Service](https://
 | Networking and Security       | Cilium CNI                           | Amazon VPC CNI, Other compatible 3rd-party CNI plugins |
 | Console                       | Connect to EKS console using EKS Connector (Public Preview) | EKS Console |
 | GitOps                        | Flux controller                      | Flux controller                 |
-| Deployment Types              | EKS-A clusters on VMware vSphere     | Amazon EC2, AWS Fargate         |
+| Deployment Types              | EKS Anywhere clusters on VMware vSphere     | Amazon EC2, AWS Fargate         |
 | Hardware (Server, Network Equipment, Storage, etc.) | Managed by customer     | Managed by AWS          |
 | Load Balancer                 | [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)  | Elastic Load Balancing including Application Load Balancer (ALB), Network Load Balancer (NLB), and Classic Load Balancer |
-| Support                       | AWS Support (EKS-A Subscription required) | AWS Support   |
+| Support                       | AWS Support (EKS Anywhere Subscription required) | AWS Support   |
 | Pricing                       | Free to download, Annual subscription for AWS Support  | Hourly pricing per cluster |
 | Serverless                    | Not supported                         | Amazon EKS on AWS Fargate      |
 | Logging and monitoring        | [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)            | CloudWatch, CloudTrail, [3rd-party solutions](https://aws.amazon.com/eks/partners/) |

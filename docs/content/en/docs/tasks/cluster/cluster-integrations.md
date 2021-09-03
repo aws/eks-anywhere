@@ -3,7 +3,7 @@ title: "Add integrations to cluster"
 linkTitle: "Add integrations to cluster"
 weight: 11
 description: >
-  How to add integrations to an EKS-A cluster
+  How to add integrations to an EKS Anywhere cluster
 ---
 
 EKS Anywhere offers AWS support for certain third-party vendor components,
