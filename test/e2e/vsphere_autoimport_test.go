@@ -72,7 +72,6 @@ func TestVSphereKubernetes121UbuntuAutoimport(t *testing.T) {
 }
 
 func TestVSphereKubernetes120BottlerocketAutoimport(t *testing.T) {
-	t.Skip("BR OVAs need to be updated to prevent 2nd disk from being too small when importing from library")
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
 			api.WithTemplate(""),
@@ -88,7 +87,6 @@ func TestVSphereKubernetes120BottlerocketAutoimport(t *testing.T) {
 }
 
 func TestVSphereKubernetes121BottlerocketAutoimport(t *testing.T) {
-	t.Skip("BR OVAs need to be updated to prevent 2nd disk from being too small when importing from library")
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
 			api.WithTemplate(""),

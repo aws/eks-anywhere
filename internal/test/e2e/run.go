@@ -11,13 +11,14 @@ import (
 )
 
 type ParallelRunConf struct {
-	MaxIntances         int
+	MaxInstances        int
 	AmiId               string
 	InstanceProfileName string
 	StorageBucket       string
 	JobId               string
 	SubnetId            string
 	Regex               string
+	TestsToSkip         []string
 }
 
 type instanceTestsResults struct {
@@ -26,10 +27,12 @@ type instanceTestsResults struct {
 }
 
 func RunTestsInParallel(conf ParallelRunConf) error {
-	testsList, err := listTests(conf.Regex)
+	testsList, skippedTests, err := listTests(conf.Regex, conf.TestsToSkip)
 	if err != nil {
 		return err
 	}
+
+	logger.Info("Running tests", "selected", testsList, "skipped", skippedTests)
 
 	var wg sync.WaitGroup
 	resultCh := make(chan instanceTestsResults)
@@ -61,7 +64,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			logger.Error(r.err, "An e2e instance run has failed", "jobId", r.conf.jobId, "tests", r.conf.regex)
 			failedInstances += 1
 		} else {
-			logger.Info("Ec2 instance tests completed succesfully", "jobId", r.conf.jobId, "tests", r.conf.regex)
+			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "tests", r.conf.regex)
 		}
 	}
 
@@ -135,12 +138,12 @@ func (e *E2ESession) commandWithEnvVars(command string) string {
 }
 
 func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
-	testPerInstance := len(testsList) / conf.MaxIntances
+	testPerInstance := len(testsList) / conf.MaxInstances
 	if testPerInstance == 0 {
 		testPerInstance = 1
 	}
 
-	runConfs := make([]instanceRunConf, 0, conf.MaxIntances)
+	runConfs := make([]instanceRunConf, 0, conf.MaxInstances)
 
 	testsInCurrentInstance := make([]string, 0, testPerInstance)
 	for _, testName := range testsList {
