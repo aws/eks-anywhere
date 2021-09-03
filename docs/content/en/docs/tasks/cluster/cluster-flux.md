@@ -149,7 +149,7 @@ For a full spec reference see the [Cluster Spec reference]({{< relref "../../ref
 
 ### Test GitOps controller
 
-After your cluster is created you can test the GitOps contoller by modifying the cluster specification.
+After your cluster is created you can test the GitOps controller by modifying the cluster specification.
 
 1. Clone your git repo and modify the cluster specification.
    The default path for the cluster file is:

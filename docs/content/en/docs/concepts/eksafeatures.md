@@ -31,7 +31,7 @@ To learn more about Amazon EKS, see [Amazon Elastic Kubernetes Service](https://
 | Console                       | Connect to EKS console using EKS Connector (Public Preview) | EKS Console |
 | GitOps                        | Flux controller                      | Flux controller                 |
 | Deployment Types              | EKS-A clusters on VMware vSphere     | Amazon EC2, AWS Fargate         |
-| Hardware (Server, Network Equiment, Storage, etc.) | Managed by customer     | Managed by AWS          |
+| Hardware (Server, Network Equipment, Storage, etc.) | Managed by customer     | Managed by AWS          |
 | Load Balancer                 | [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)  | Elastic Load Balancing including Application Load Balancer (ALB), Network Load Balancer (NLB), and Classic Load Balancer |
 | Support                       | AWS Support (EKS-A Subscription required) | AWS Support   |
 | Pricing                       | Free to download, Annual subscription for AWS Support  | Hourly pricing per cluster |

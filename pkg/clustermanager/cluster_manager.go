@@ -14,6 +14,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -35,32 +36,6 @@ const (
 	etcdWaitStr       = "60m"
 	deploymentWaitStr = "30m"
 )
-
-// map where key = namespace and value is a capi deployment
-var capiDeployments = map[string][]string{
-	"capi-kubeadm-bootstrap-system":     {"capi-kubeadm-bootstrap-controller-manager"},
-	"capi-kubeadm-control-plane-system": {"capi-kubeadm-control-plane-controller-manager"},
-	"capi-system":                       {"capi-controller-manager"},
-	"capi-webhook-system":               {"capi-controller-manager", "capi-kubeadm-bootstrap-controller-manager", "capi-kubeadm-control-plane-controller-manager"},
-	"cert-manager":                      {"cert-manager", "cert-manager-cainjector", "cert-manager-webhook"},
-}
-
-// map between file name and the capi/v deployments
-var clusterDeployments = map[string]*types.Deployment{
-	"kubeadm-bootstrap-controller-manager.log":         {Name: "capi-kubeadm-bootstrap-controller-manager", Namespace: "capi-kubeadm-bootstrap-system", Container: "manager"},
-	"kubeadm-control-plane-controller-manager.log":     {Name: "capi-kubeadm-control-plane-controller-manager", Namespace: "capi-kubeadm-control-plane-system", Container: "manager"},
-	"capi-controller-manager.log":                      {Name: "capi-controller-manager", Namespace: "capi-system", Container: "manager"},
-	"wh-capi-controller-manager.log":                   {Name: "capi-controller-manager", Namespace: "capi-webhook-system", Container: "manager"},
-	"wh-capi-kubeadm-bootstrap-controller-manager.log": {Name: "capi-kubeadm-bootstrap-controller-manager", Namespace: "capi-webhook-system", Container: "manager"},
-	"wh-kubeadm-control-plane-controller-manager.log":  {Name: "capi-kubeadm-control-plane-controller-manager", Namespace: "capi-webhook-system", Container: "manager"},
-	"cert-manager.log":                                 {Name: "cert-manager", Namespace: "cert-manager"},
-	"cert-manager-cainjector.log":                      {Name: "cert-manager-cainjector", Namespace: "cert-manager"},
-	"cert-manager-webhook.log":                         {Name: "cert-manager-webhook", Namespace: "cert-manager"},
-	"coredns.log":                                      {Name: "coredns", Namespace: "kube-system"},
-	"local-path-provisioner.log":                       {Name: "local-path-provisioner", Namespace: "local-path-storage"},
-	"capv-controller-manager.log":                      {Name: "capv-controller-manager", Namespace: "capv-system", Container: "manager"},
-	"wh-capv-controller-manager.log":                   {Name: "capv-controller-manager", Namespace: "capi-webhook-system", Container: "manager"},
-}
 
 type ClusterManager struct {
 	clusterClient   ClusterClient
@@ -206,11 +181,13 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return err
 	}
 
+	var externalEtcdTopology bool
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		logger.V(3).Info("Waiting for external etcd to be ready after upgrade")
 		if err := c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWaitStr, workloadCluster.Name); err != nil {
 			return fmt.Errorf("error waiting for workload cluster etcd to be ready: %v", err)
 		}
+		externalEtcdTopology = true
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready after upgrade")
@@ -232,7 +209,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for workload cluster capi components to be ready after upgrade")
-	err = c.waitForCapi(ctx, workloadCluster, provider)
+	err = c.waitForCapi(ctx, workloadCluster, provider, externalEtcdTopology)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster capi components to be ready: %v", err)
 	}
@@ -369,13 +346,20 @@ func (c *ClusterManager) InstallCapi(ctx context.Context, clusterSpec *cluster.S
 		return fmt.Errorf("error initializing capi resources in cluster: %v", err)
 	}
 
-	return c.waitForCapi(ctx, cluster, provider)
+	return c.waitForCapi(ctx, cluster, provider, clusterSpec.Spec.ExternalEtcdConfiguration != nil)
 }
 
-func (c *ClusterManager) waitForCapi(ctx context.Context, cluster *types.Cluster, provider providers.Provider) error {
-	err := c.waitForDeployments(ctx, capiDeployments, cluster)
+func (c *ClusterManager) waitForCapi(ctx context.Context, cluster *types.Cluster, provider providers.Provider, externalEtcdTopology bool) error {
+	err := c.waitForDeployments(ctx, internal.CapiDeployments, cluster)
 	if err != nil {
 		return err
+	}
+
+	if externalEtcdTopology {
+		err := c.waitForDeployments(ctx, internal.ExternalEtcdDeployments, cluster)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = c.waitForDeployments(ctx, provider.GetDeployments(), cluster)
@@ -444,13 +428,13 @@ func (c *ClusterManager) SaveLogs(ctx context.Context, cluster *types.Cluster) e
 		return nil
 	}
 	var wg sync.WaitGroup
-	wg.Add(len(clusterDeployments))
+	wg.Add(len(internal.ClusterDeployments))
 
 	w, err := c.writer.WithDir(logDir)
 	if err != nil {
 		return err
 	}
-	for fileName, deployment := range clusterDeployments {
+	for fileName, deployment := range internal.ClusterDeployments {
 		go func(dep *types.Deployment, f string) {
 			// Ignoring error for now
 			defer wg.Done()

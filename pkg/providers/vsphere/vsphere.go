@@ -825,7 +825,8 @@ func (p *vsphereProvider) defaultTemplateForClusterSpec(clusterSpec *cluster.Spe
 	osFamily := machineConfig.Spec.OSFamily
 	eksd := clusterSpec.VersionsBundle.EksD
 
-	var ova releasev1alpha1.Archive
+	var ova releasev1alpha1.OvaArchive
+
 	switch osFamily {
 	case v1alpha1.Bottlerocket:
 		ova = eksd.Ova.Bottlerocket

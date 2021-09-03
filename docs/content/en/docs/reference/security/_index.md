@@ -28,7 +28,7 @@ This tool will provision an initially secure Kubernetes cluster.
 
 AWS is responsible for vetting and securely sourcing the services
 and tools packaged with EKS-A and the cluster it creates
-(such as coredns, cillium, flux, capi, and govc). 
+(such as coredns, cilium, flux, capi, and govc). 
 
 The EKS-A build and delivery infrastructure, or supply chain, is secured to the standard of any AWS service
 and AWS takes responsibility for the secure and reliable delivery of a quality product 

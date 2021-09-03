@@ -102,8 +102,14 @@ type EksDRelease struct {
 }
 
 type ArchiveBundle struct {
-	Bottlerocket Archive `json:"bottlerocket,omitempty"`
-	Ubuntu       Archive `json:"ubuntu,omitempty"`
+	Bottlerocket OvaArchive `json:"bottlerocket,omitempty"`
+	Ubuntu       OvaArchive `json:"ubuntu,omitempty"`
+}
+
+type OvaArchive struct {
+	Archive `json:",inline"`
+	Etcdadm Archive `json:"etcdadm,omitempty"`
+	Crictl  Archive `json:"crictl,omitempty"`
 }
 
 type BottlerocketBootstrapBundle struct {

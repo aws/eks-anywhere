@@ -401,6 +401,8 @@ func GetEksdRelease(cliVersion version.Info, clusterConfig *eksav1alpha1.Cluster
 	s := &Spec{
 		releasesManifestURL: releasesManifestURL,
 		configFS:            configFS,
+		httpClient:          &http.Client{},
+		userAgent:           userAgent("cli", cliVersion.GitVersion),
 	}
 
 	bundles, err := s.getBundles(cliVersion)

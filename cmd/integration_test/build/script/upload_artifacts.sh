@@ -19,7 +19,7 @@ function build::cli::move_artifacts() {
   local -r cli_artifacts_path=$2
 
   mv ${BINARY_PATH}/${os}/eksctl-anywhere ${cli_artifacts_path}
-  mv ATTRIBUTION.txt ${cli_artifacts_path}
+  cp ATTRIBUTION.txt ${cli_artifacts_path}
 }
 
 function build::cli::create_tarball() {
