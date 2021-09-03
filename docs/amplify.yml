@@ -4,7 +4,7 @@ applications:
       phases:
         build:
           commands:
-            - make build
+            - make release
       artifacts:
         baseDirectory: public
         files:
