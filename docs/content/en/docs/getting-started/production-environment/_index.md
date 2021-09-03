@@ -52,8 +52,8 @@ To run EKS Anywhere, you will need the following:
    name and password. Make sure you use single quotes around the values so that your shell does not interpret the values:
    
    ```bash
-   export VSPHERE_USERNAME='billy'
-   export VSPHERE_PASSWORD='t0p$ecret'
+   export EKSA_VSPHERE_USERNAME='billy'
+   export EKSA_VSPHERE_PASSWORD='t0p$ecret'
    ```
 
 1. Create a cluster

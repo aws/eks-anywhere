@@ -9,7 +9,7 @@ description: >
 # GitOps Support (Optional)
 EKS-A can create clusters that supports GitOps configuration management with Flux. 
 In order to add GitOps support, you need to configure your cluster by updating the configuration file before creating the cluster. 
-This is a generic template with detailed descriptions below for reference:
+Please note that for the GitOps config to work successfully the environment variable `EKSA_GITHUB_TOKEN` needs to be set with a valid [Github PAT](https://github.com/settings/tokens/new). This is a generic template with detailed descriptions below for reference:
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster

@@ -626,7 +626,7 @@ func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpe
 	if err != nil {
 		return fmt.Errorf("error applying eks-a components spec: %v", err)
 	}
-	return nil
+	return c.waitForDeployments(ctx, internal.EksaDeployments, cluster)
 }
 
 func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,

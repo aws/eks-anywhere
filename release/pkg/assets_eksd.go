@@ -193,7 +193,7 @@ func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDRe
 
 				bundleArchiveArtifact := anywherev1alpha1.Archive{
 					Name:        archiveArtifact.ReleaseName,
-					Description: fmt.Sprintf("%s tarball for %s/%s", componentName, archiveArtifact.OS, archiveArtifact.Arch),
+					Description: fmt.Sprintf("%s tarball for %s/%s", componentName, archiveArtifact.OS, archiveArtifact.Arch[0]),
 					OS:          archiveArtifact.OS,
 					Arch:        archiveArtifact.Arch,
 					URI:         archiveArtifact.ReleaseCdnURI,

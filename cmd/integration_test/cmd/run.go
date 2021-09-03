@@ -20,6 +20,7 @@ const (
 	subnetIdFlagName        = "subnet-id"
 	regexFlagName           = "regex"
 	maxInstancesFlagName    = "max-instances"
+	skipFlagName            = "skip"
 )
 
 var runE2ECmd = &cobra.Command{
@@ -48,6 +49,7 @@ func init() {
 	runE2ECmd.Flags().StringP(subnetIdFlagName, "n", "", "EC2 subnet ID")
 	runE2ECmd.Flags().StringP(regexFlagName, "r", "", "Run only those tests and examples matching the regular expression. Equivalent to go test -run")
 	runE2ECmd.Flags().IntP(maxInstancesFlagName, "m", 1, "Run tests in parallel with multiple EC2 instances")
+	runE2ECmd.Flags().StringSlice(skipFlagName, nil, "List of tests to skip")
 
 	for _, flag := range requiredFlags {
 		if err := runE2ECmd.MarkFlagRequired(flag); err != nil {
@@ -64,15 +66,17 @@ func runE2E(ctx context.Context) error {
 	subnetId := viper.GetString(subnetIdFlagName)
 	testRegex := viper.GetString(regexFlagName)
 	maxInstances := viper.GetInt(maxInstancesFlagName)
+	testsToSkip := viper.GetStringSlice(skipFlagName)
 
 	runConf := e2e.ParallelRunConf{
-		MaxIntances:         maxInstances,
+		MaxInstances:        maxInstances,
 		AmiId:               amiId,
 		InstanceProfileName: instanceProfileName,
 		StorageBucket:       storageBucket,
 		JobId:               jobId,
 		SubnetId:            subnetId,
 		Regex:               testRegex,
+		TestsToSkip:         testsToSkip,
 	}
 
 	err := e2e.RunTestsInParallel(runConf)

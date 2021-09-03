@@ -204,11 +204,38 @@ var releaseCmd = &cobra.Command{
 		}
 
 		if devRelease || !bundleRelease {
-			release := &anywherev1alpha1.Release{
-				Spec: anywherev1alpha1.ReleaseSpec{
-					LatestVersion: releaseVersion,
-					Releases:      []anywherev1alpha1.EksARelease{},
-				},
+			var eksAReleaseManifestKey string
+			release := &anywherev1alpha1.Release{}
+
+			if devRelease {
+				eksAReleaseManifestKey = eksAReleaseManifestFile
+			} else {
+				eksAReleaseManifestKey = "/releases/eks-a/manifest.yaml"
+			}
+			eksAReleaseManifestUrl := fmt.Sprintf("%s%s", releaseConfig.CDN, eksAReleaseManifestKey)
+
+			exists, err := pkg.ExistsInS3(releaseClients, releaseConfig.ReleaseBucket, eksAReleaseManifestKey)
+			if err != nil {
+				fmt.Printf("Error checking if release manifest exists in S3: %v", err)
+				os.Exit(1)
+			}
+			if exists {
+				contents, err := pkg.ReadHttpFile(eksAReleaseManifestUrl)
+				if err != nil {
+					fmt.Printf("Error reading release manifest from S3: %v", err)
+					os.Exit(1)
+				}
+				if err = yaml.Unmarshal(contents, release); err != nil {
+					fmt.Printf("Error unmarshaling releases manifest from [%s]: %v", eksAReleaseManifestUrl, err)
+					os.Exit(1)
+				}
+			} else {
+				release = &anywherev1alpha1.Release{
+					Spec: anywherev1alpha1.ReleaseSpec{
+						LatestVersion: releaseVersion,
+						Releases:      []anywherev1alpha1.EksARelease{},
+					},
+				}
 			}
 
 			release.Name = "eks-anywhere"
@@ -253,11 +280,6 @@ var releaseCmd = &cobra.Command{
 			if err != nil {
 				fmt.Printf("Error writing manifest file to disk: %v\n", err)
 				os.Exit(1)
-			}
-
-			eksAReleaseManifestKey := eksAReleaseManifestFile
-			if !devRelease {
-				eksAReleaseManifestKey = fmt.Sprintf("/releases/eks-a/%s/manifest.yaml", releaseConfig.ReleaseVersion)
 			}
 
 			err = pkg.UploadFileToS3(eksAReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(eksAReleaseManifestKey), releaseClients.S3.Uploader)

@@ -35,15 +35,15 @@ Ensure you are running Docker 20.x.x for example:
 Docker version 20.10.6, build 370c289
 ```
 
-### VSPHERE_USERNAME is not set or is empty
+### EKSA_VSPHERE_USERNAME is not set or is empty
 ```
-❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "failed setup and validations: VSPHERE_USERNAME is not set or is empty", "remediation": ""}
+❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "failed setup and validations: EKSA_VSPHERE_USERNAME is not set or is empty", "remediation": ""}
 ```
 Two environment variables need to be set and exported in your environment to create clusters successfully.
 Be sure to use single quotes around your user name and password to avoid shell manipulation of these values.
 ```
-export VSPHERE_USERNAME='<vSphere-username>'
-export VSPHERE_PASSWORD='<vSphere-password>'
+export EKSA_VSPHERE_USERNAME='<vSphere-username>'
+export EKSA_VSPHERE_PASSWORD='<vSphere-password>'
 ```
 
 ### vSphere authentication failed
@@ -54,8 +54,8 @@ Error: failed to create cluster: validations failed
 Two environment variables need to be set and exported in your environment to create clusters successfully.
 Be sure to use single quotes around your user name and password to avoid shell manipulation of these values.
 ```
-export VSPHERE_USERNAME='<vSphere-username>'
-export VSPHERE_PASSWORD='<vSphere-password>'
+export EKSA_VSPHERE_USERNAME='<vSphere-username>'
+export EKSA_VSPHERE_PASSWORD='<vSphere-password>'
 ```
 
 ### Error: old cluster config file exists under my-cluster, please use a different clusterName to proceed

@@ -17,6 +17,7 @@ package pkg
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/pkg/errors"
@@ -96,7 +97,7 @@ func (r *ReleaseConfig) GetEksARelease() (anywherev1alpha1.EksARelease, error) {
 
 		bundleArchiveArtifact := anywherev1alpha1.Archive{
 			Name:        fmt.Sprintf("eksctl-anywhere-%s", archiveArtifact.OS),
-			Description: "EKS Anywhere CLI",
+			Description: fmt.Sprintf("EKS Anywhere %s CLI", strings.Title(archiveArtifact.OS)),
 			OS:          archiveArtifact.OS,
 			Arch:        archiveArtifact.Arch,
 			URI:         archiveArtifact.ReleaseCdnURI,
