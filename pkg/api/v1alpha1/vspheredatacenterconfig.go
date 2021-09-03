@@ -14,8 +14,7 @@ func NewVSphereDatacenterConfigGenerate(clusterName string) *VSphereDatacenterCo
 			APIVersion: SchemeBuilder.GroupVersion.String(),
 		},
 		ObjectMeta: ObjectMeta{
-			Name:      clusterName,
-			Namespace: "",
+			Name: clusterName,
 		},
 		Spec: VSphereDatacenterConfigSpec{},
 	}

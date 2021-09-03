@@ -589,13 +589,13 @@ func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSp
 		return fmt.Errorf("error validating SSHUsername for control plane VSphereMachineConfig %v: %v", controlPlaneMachineConfig.Name, err)
 	}
 
-	for _, obj := range p.machineConfigs {
-		if obj.Namespace != clusterSpec.Namespace {
-			return errors.New("ClusterSpec and VSphereMachineConfig objects must have the same namespace specified")
+	for _, machineConfig := range p.machineConfigs {
+		if machineConfig.Namespace != clusterSpec.Namespace {
+			return errors.New("VSphereMachineConfig and Cluster objects must have the same namespace specified")
 		}
 	}
 	if p.datacenterConfig.Namespace != clusterSpec.Namespace {
-		return errors.New("ClusterSpec and VSphereDatacenterConfig objects must have the same namespace specified")
+		return errors.New("VSphereDatacenterConfig and Cluster objects must have the same namespace specified")
 	}
 
 	if controlPlaneMachineConfig.Spec.Template == "" {
@@ -1392,7 +1392,7 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 		return err
 	}
 
-	prevDatacenter, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, prevSpec.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace)
+	prevDatacenter, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, prevSpec.Spec.DatacenterRef.Name, cluster.KubeconfigFile, prevSpec.Namespace)
 	if err != nil {
 		return err
 	}
@@ -1404,10 +1404,14 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 	nSpec := datacenter.Spec
 
 	for _, machineConfig := range p.machineConfigs {
-		err := p.validateMachineConfigImmutability(ctx, cluster, machineConfig)
+		err := p.validateMachineConfigImmutability(ctx, cluster, machineConfig, clusterSpec)
 		if err != nil {
 			return err
 		}
+	}
+
+	if datacenter.Namespace != prevDatacenter.Namespace {
+		return fmt.Errorf("namespace is immutable. Previous value %s, new value %s", prevDatacenter.Namespace, datacenter.Namespace)
 	}
 
 	if nSpec.Server != oSpec.Server {
@@ -1440,14 +1444,18 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 	return nil
 }
 
-func (p *vsphereProvider) validateMachineConfigImmutability(ctx context.Context, cluster *types.Cluster, newConfig *v1alpha1.VSphereMachineConfig) error {
-	prevMachineConfig, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, newConfig.Name, cluster.KubeconfigFile, newConfig.Namespace)
+func (p *vsphereProvider) validateMachineConfigImmutability(ctx context.Context, cluster *types.Cluster, newConfig *v1alpha1.VSphereMachineConfig, clusterSpec *cluster.Spec) error {
+	prevMachineConfig, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, newConfig.Name, cluster.KubeconfigFile, clusterSpec.Namespace)
 	if err != nil {
 		return err
 	}
 
 	if newConfig.Spec.StoragePolicyName != prevMachineConfig.Spec.StoragePolicyName {
 		return fmt.Errorf("spec.storagePolicyName is immutable. Previous value %s, new value %s", prevMachineConfig.Spec.StoragePolicyName, newConfig.Spec.StoragePolicyName)
+	}
+
+	if newConfig.Namespace != prevMachineConfig.Namespace {
+		return fmt.Errorf("namespace is immutable. Previous value %s, new value %s", prevMachineConfig.Namespace, newConfig.Namespace)
 	}
 
 	if !reflect.DeepEqual(newConfig.Spec.Users, prevMachineConfig.Spec.Users) {

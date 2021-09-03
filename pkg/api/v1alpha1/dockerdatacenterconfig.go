@@ -14,8 +14,7 @@ func NewDockerDatacenterConfigGenerate(clusterName string) *DockerDatacenterConf
 			APIVersion: SchemeBuilder.GroupVersion.String(),
 		},
 		ObjectMeta: ObjectMeta{
-			Name:      clusterName,
-			Namespace: "",
+			Name: clusterName,
 		},
 		Spec: DockerDatacenterConfigSpec{},
 	}

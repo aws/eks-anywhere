@@ -647,11 +647,12 @@ func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpe
 
 func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
 	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error {
-	err := c.clusterClient.GetNamespace(ctx, cluster.KubeconfigFile, clusterSpec.Namespace)
-	if err != nil {
-		err := c.clusterClient.CreateNamespace(ctx, cluster.KubeconfigFile, clusterSpec.Namespace)
-		if err != nil {
-			return err
+	if clusterSpec.Namespace != "" {
+		if err := c.clusterClient.GetNamespace(ctx, cluster.KubeconfigFile, clusterSpec.Namespace); err != nil {
+			err := c.clusterClient.CreateNamespace(ctx, cluster.KubeconfigFile, clusterSpec.Namespace)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	resourcesSpec, err := clustermarshaller.MarshalClusterSpec(clusterSpec, datacenterConfig, machineConfigs)

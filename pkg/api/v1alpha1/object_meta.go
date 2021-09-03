@@ -7,5 +7,5 @@ package v1alpha1
 // as needed.
 type ObjectMeta struct {
 	Name      string `json:"name,omitempty"`
-	Namespace string `json:"namespace"`
+	Namespace string `json:"namespace,omitempty"`
 }

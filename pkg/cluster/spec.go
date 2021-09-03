@@ -139,7 +139,7 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 	if len(s.Cluster.Spec.IdentityProviderRefs) != 0 {
 		// Since we only support one configuration, and only OIDCConfig, for identityProviderRefs, it is safe to assume that
 		// it is the only element that exists in the array
-		oidcConfig, err := eksav1alpha1.GetAndValidateOIDCConfig(clusterConfigPath, s.Cluster.Spec.IdentityProviderRefs[0].Name)
+		oidcConfig, err := eksav1alpha1.GetAndValidateOIDCConfig(clusterConfigPath, s.Cluster.Spec.IdentityProviderRefs[0].Name, clusterConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -147,7 +147,7 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 	}
 
 	if s.Cluster.Spec.GitOpsRef != nil {
-		gitOpsConfig, err := eksav1alpha1.GetAndValidateGitOpsConfig(clusterConfigPath, s.Cluster.Spec.GitOpsRef.Name)
+		gitOpsConfig, err := eksav1alpha1.GetAndValidateGitOpsConfig(clusterConfigPath, s.Cluster.Spec.GitOpsRef.Name, clusterConfig)
 		if err != nil {
 			return nil, err
 		}

@@ -31,8 +31,7 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 			APIVersion: SchemeBuilder.GroupVersion.String(),
 		},
 		ObjectMeta: ObjectMeta{
-			Name:      clusterName,
-			Namespace: "",
+			Name: clusterName,
 		},
 		Spec: ClusterSpec{
 			KubernetesVersion: Kube121,
@@ -137,8 +136,7 @@ func NewCluster(clusterName string) *Cluster {
 			APIVersion: SchemeBuilder.GroupVersion.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      clusterName,
-			Namespace: "",
+			Name: clusterName,
 		},
 		Spec: ClusterSpec{
 			KubernetesVersion: Kube119,

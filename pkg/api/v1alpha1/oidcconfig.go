@@ -1,18 +1,19 @@
 package v1alpha1
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 )
 
 const OIDCConfigKind = "OIDCConfig"
 
-func GetAndValidateOIDCConfig(fileName string, refName string) (*OIDCConfig, error) {
+func GetAndValidateOIDCConfig(fileName string, refName string, clusterConfig *Cluster) (*OIDCConfig, error) {
 	config, err := getOIDCConfig(fileName)
 	if err != nil {
 		return nil, err
 	}
-	err = validateOIDCConfig(config, refName)
+	err = validateOIDCConfig(config, refName, clusterConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +33,7 @@ func getOIDCConfig(fileName string) (*OIDCConfig, error) {
 	return &config, nil
 }
 
-func validateOIDCConfig(config *OIDCConfig, refName string) error {
+func validateOIDCConfig(config *OIDCConfig, refName string, clusterConfig *Cluster) error {
 	if config == nil {
 		return nil
 	}
@@ -40,6 +41,10 @@ func validateOIDCConfig(config *OIDCConfig, refName string) error {
 		return fmt.Errorf("OIDCConfig retrieved with name %v does not match name (%v) specified in "+
 			"identityProviderRefs", config.Name, refName)
 	}
+	if config.Namespace != clusterConfig.Namespace {
+		return errors.New("OIDCConfig and Cluster objects must have the same namespace specified")
+	}
+
 	if config.Spec.ClientId == "" {
 		return fmt.Errorf("OIDCConfig clientId is required")
 	}

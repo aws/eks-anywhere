@@ -19,8 +19,7 @@ func NewVSphereMachineConfigGenerate(name string) *VSphereMachineConfigGenerate 
 			APIVersion: SchemeBuilder.GroupVersion.String(),
 		},
 		ObjectMeta: ObjectMeta{
-			Name:      name,
-			Namespace: "",
+			Name: name,
 		},
 		Spec: VSphereMachineConfigSpec{
 			DiskGiB:   25,
