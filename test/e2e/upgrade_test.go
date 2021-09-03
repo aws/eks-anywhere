@@ -74,7 +74,6 @@ func TestVSphereKubernetes120UbuntuTo121MultipleFieldsUpgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes120UbuntuTo121WithFluxUpgrade(t *testing.T) {
-	t.Skip("Needs extra setup for GitOps/Flux")
 	provider := framework.NewVSphere(t, framework.WithUbuntu120())
 	test := framework.NewE2ETest(t,
 		provider,
@@ -164,7 +163,6 @@ func TestVSphereKubernetes120BottlerocketTo121MultipleFieldsUpgrade(t *testing.T
 }
 
 func TestVSphereKubernetes120BottlerocketTo121WithFluxUpgrade(t *testing.T) {
-	t.Skip("Needs extra setup for GitOps/Flux")
 	provider := framework.NewVSphere(t, framework.WithBottleRocket120())
 	test := framework.NewE2ETest(t,
 		provider,

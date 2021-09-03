@@ -35,7 +35,6 @@ func runFluxFlow(test *framework.E2ETest) {
 }
 
 func TestDockerKubernetes119Flux(t *testing.T) {
-	t.Skip("Needs extra setup for GitOps/Flux")
 	test := framework.NewE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube119)),
@@ -47,7 +46,6 @@ func TestDockerKubernetes119Flux(t *testing.T) {
 }
 
 func TestDockerKubernetes119ThreeReplicasFlux(t *testing.T) {
-	t.Skip("Needs extra setup for GitOps/Flux")
 	test := framework.NewE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube119)),
@@ -59,7 +57,6 @@ func TestDockerKubernetes119ThreeReplicasFlux(t *testing.T) {
 }
 
 func TestVSphereKubernetes119Flux(t *testing.T) {
-	t.Skip("Needs extra setup for GitOps/Flux")
 	test := framework.NewE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu119()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube119)),
@@ -71,7 +68,6 @@ func TestVSphereKubernetes119Flux(t *testing.T) {
 }
 
 func TestVSphereKubernetes119ThreeReplicasFlux(t *testing.T) {
-	t.Skip("Needs extra setup for GitOps/Flux")
 	test := framework.NewE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu119()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube119)),
@@ -83,7 +79,6 @@ func TestVSphereKubernetes119ThreeReplicasFlux(t *testing.T) {
 }
 
 func TestDockerKubernetes118Flux(t *testing.T) {
-	t.Skip("Needs extra setup for GitOps/Flux")
 	test := framework.NewE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithFlux(),
@@ -93,7 +88,6 @@ func TestDockerKubernetes118Flux(t *testing.T) {
 }
 
 func TestDockerKubernetes12OFlux(t *testing.T) {
-	t.Skip("Needs extra setup for GitOps/Flux")
 	test := framework.NewE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithFlux(),
@@ -103,7 +97,6 @@ func TestDockerKubernetes12OFlux(t *testing.T) {
 }
 
 func TestDockerKubernetes121Flux(t *testing.T) {
-	t.Skip("Needs extra setup for GitOps/Flux")
 	test := framework.NewE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithFlux(),
@@ -113,7 +106,6 @@ func TestDockerKubernetes121Flux(t *testing.T) {
 }
 
 func TestVSphereKubernetes118Flux(t *testing.T) {
-	t.Skip("Needs extra setup for GitOps/Flux")
 	test := framework.NewE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu118()),
 		framework.WithFlux(),
@@ -123,7 +115,6 @@ func TestVSphereKubernetes118Flux(t *testing.T) {
 }
 
 func TestVSphereKubernetes120Flux(t *testing.T) {
-	t.Skip("Needs extra setup for GitOps/Flux")
 	test := framework.NewE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu120()),
 		framework.WithFlux(),
@@ -133,7 +124,6 @@ func TestVSphereKubernetes120Flux(t *testing.T) {
 }
 
 func TestVSphereKubernetes121Flux(t *testing.T) {
-	t.Skip("Needs extra setup for GitOps/Flux")
 	test := framework.NewE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu121()),
 		framework.WithFlux(),
@@ -143,7 +133,6 @@ func TestVSphereKubernetes121Flux(t *testing.T) {
 }
 
 func TestDockerKubernetes119GitopsOptionsFlux(t *testing.T) {
-	t.Skip("Needs extra setup for GitOps/Flux")
 	test := framework.NewE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube119)),
@@ -158,7 +147,6 @@ func TestDockerKubernetes119GitopsOptionsFlux(t *testing.T) {
 }
 
 func TestVSphereKubernetes119GitopsOptionsFlux(t *testing.T) {
-	t.Skip("Needs extra setup for GitOps/Flux")
 	test := framework.NewE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu119()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube119)),
