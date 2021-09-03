@@ -302,6 +302,17 @@ func UploadArtifacts(releaseClients *ReleaseClients, r *ReleaseConfig, eksArtifa
 				if err != nil {
 					return errors.Cause(err)
 				}
+
+				checksumExtensions := []string{".sha256", ".sha512"}
+				for _, extension := range checksumExtensions {
+					checksumFile := filepath.Join(artifact.Archive.ArtifactPath, artifact.Archive.ReleaseName) + extension
+					fmt.Printf("Checksum - %s\n", checksumFile)
+					key := filepath.Join(artifact.Archive.ReleaseS3Path, artifact.Archive.ReleaseName) + extension
+					err := UploadFileToS3(checksumFile, aws.String(r.ReleaseBucket), aws.String(key), s3Uploader)
+					if err != nil {
+						return errors.Cause(err)
+					}
+				}
 			}
 
 			if artifact.Manifest != nil {
