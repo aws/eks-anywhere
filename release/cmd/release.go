@@ -212,7 +212,7 @@ var releaseCmd = &cobra.Command{
 			} else {
 				eksAReleaseManifestKey = "/releases/eks-a/manifest.yaml"
 			}
-			eksAReleaseManifestUrl := fmt.Sprintf("%s/%s", releaseConfig.CDN, eksAReleaseManifestKey)
+			eksAReleaseManifestUrl := fmt.Sprintf("%s%s", releaseConfig.CDN, eksAReleaseManifestKey)
 
 			exists, err := pkg.ExistsInS3(releaseClients, releaseConfig.ReleaseBucket, eksAReleaseManifestKey)
 			if err != nil {
