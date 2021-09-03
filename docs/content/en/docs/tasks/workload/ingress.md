@@ -56,6 +56,9 @@ Alternatively, you can set up MetalLB Load Balancer by following the instruction
         targetPort: 8080
       selector:
         service: ambassador
+      targetPort: 8080
+    selector:
+      service: ambassador
     EOF
     ```
 
