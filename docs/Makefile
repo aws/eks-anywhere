@@ -3,7 +3,7 @@ CONTAINER_IMAGE   = $(IMAGE_REGISTRY)/eks-a-hugo
 CONTAINER_RUN     = docker run --rm --interactive --tty --volume $(CURDIR)/../:/src
 DOCS_ARCHIVE      = public.zip
 
-.PHONY: help build submodule zip deploy serve server container-build container-serve container-server clean
+.PHONY: help build release submodule zip deploy serve server container-build container-serve container-server clean
 
 help: ## Show this help. Requires locally installed npm and hugo.
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {sub("\\\\n",sprintf("\n%22c"," "), $$2);printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -11,6 +11,8 @@ help: ## Show this help. Requires locally installed npm and hugo.
 build: submodule ## Generate the static site into the /public folder
 	npm install
 	hugo --environment production --cleanDestinationDir
+
+release: build
 
 submodule: ## initialize the docsy theme submodule
 	git submodule update --init --recursive
