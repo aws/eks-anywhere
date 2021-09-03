@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
+	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	mocksmanager "github.com/aws/eks-anywhere/pkg/clustermanager/mocks"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	mockswriter "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
@@ -26,22 +27,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
-
-var clusterDeployments = map[string]*types.Deployment{
-	"kubeadm-bootstrap-controller-manager.log":         {Name: "capi-kubeadm-bootstrap-controller-manager", Namespace: "capi-kubeadm-bootstrap-system", Container: "manager"},
-	"kubeadm-control-plane-controller-manager.log":     {Name: "capi-kubeadm-control-plane-controller-manager", Namespace: "capi-kubeadm-control-plane-system", Container: "manager"},
-	"capi-controller-manager.log":                      {Name: "capi-controller-manager", Namespace: "capi-system", Container: "manager"},
-	"wh-capi-controller-manager.log":                   {Name: "capi-controller-manager", Namespace: "capi-webhook-system", Container: "manager"},
-	"wh-capi-kubeadm-bootstrap-controller-manager.log": {Name: "capi-kubeadm-bootstrap-controller-manager", Namespace: "capi-webhook-system", Container: "manager"},
-	"wh-kubeadm-control-plane-controller-manager.log":  {Name: "capi-kubeadm-control-plane-controller-manager", Namespace: "capi-webhook-system", Container: "manager"},
-	"cert-manager.log":                                 {Name: "cert-manager", Namespace: "cert-manager"},
-	"cert-manager-cainjector.log":                      {Name: "cert-manager-cainjector", Namespace: "cert-manager"},
-	"cert-manager-webhook.log":                         {Name: "cert-manager-webhook", Namespace: "cert-manager"},
-	"coredns.log":                                      {Name: "coredns", Namespace: "kube-system"},
-	"local-path-provisioner.log":                       {Name: "local-path-provisioner", Namespace: "local-path-storage"},
-	"capv-controller-manager.log":                      {Name: "capv-controller-manager", Namespace: "capv-system", Container: "manager"},
-	"wh-capv-controller-manager.log":                   {Name: "capv-controller-manager", Namespace: "capi-webhook-system", Container: "manager"},
-}
 
 var (
 	eksaClusterResourceType           = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
@@ -139,13 +124,67 @@ func TestClusterManagerInstallStorageClassClientError(t *testing.T) {
 	}
 }
 
+func TestClusterManagerCapiWaitForDeploymentStackedEtcd(t *testing.T) {
+	ctx := context.Background()
+	clusterObj := &types.Cluster{}
+	c, m := newClusterManager(t)
+	clusterSpecStackedEtcd := test.NewClusterSpec()
+
+	m.client.EXPECT().InitInfrastructure(ctx, clusterSpecStackedEtcd, clusterObj, m.provider)
+	for namespace, deployments := range internal.CapiDeployments {
+		for _, deployment := range deployments {
+			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)
+		}
+	}
+	providerDeployments := map[string][]string{}
+	m.provider.EXPECT().GetDeployments().Return(providerDeployments)
+	for namespace, deployments := range providerDeployments {
+		for _, deployment := range deployments {
+			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)
+		}
+	}
+	if err := c.InstallCapi(ctx, clusterSpecStackedEtcd, clusterObj, m.provider); err != nil {
+		t.Errorf("ClusterManager.InstallCapi() error = %v, wantErr nil", err)
+	}
+}
+
+func TestClusterManagerCapiWaitForDeploymentExternalEtcd(t *testing.T) {
+	ctx := context.Background()
+	clusterObj := &types.Cluster{}
+	c, m := newClusterManager(t)
+	clusterSpecExternalEtcd := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 1}
+	})
+	m.client.EXPECT().InitInfrastructure(ctx, clusterSpecExternalEtcd, clusterObj, m.provider)
+	for namespace, deployments := range internal.CapiDeployments {
+		for _, deployment := range deployments {
+			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)
+		}
+	}
+	for namespace, deployments := range internal.ExternalEtcdDeployments {
+		for _, deployment := range deployments {
+			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)
+		}
+	}
+	providerDeployments := map[string][]string{}
+	m.provider.EXPECT().GetDeployments().Return(providerDeployments)
+	for namespace, deployments := range providerDeployments {
+		for _, deployment := range deployments {
+			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)
+		}
+	}
+	if err := c.InstallCapi(ctx, clusterSpecExternalEtcd, clusterObj, m.provider); err != nil {
+		t.Errorf("ClusterManager.InstallCapi() error = %v, wantErr nil", err)
+	}
+}
+
 func TestClusterManagerSaveLogsSuccess(t *testing.T) {
 	ctx := context.Background()
 	cluster := &types.Cluster{Name: "cluster-name"}
 
 	c, m := newClusterManager(t)
 	m.writer.EXPECT().WithDir(gomock.Any()).Return(m.writer, nil)
-	for file, logCmd := range clusterDeployments {
+	for file, logCmd := range internal.ClusterDeployments {
 		m.client.EXPECT().SaveLog(ctx, cluster, logCmd, file, m.writer).Times(1).Return(nil)
 	}
 
