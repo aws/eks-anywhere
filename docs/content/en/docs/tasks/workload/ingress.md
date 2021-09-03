@@ -4,7 +4,7 @@ linkTitle: "Add an ingress controller"
 weight: 30
 date: 2017-01-05
 description: >
-  How to deploy an ingress controller for simple host or URL based HTTP routing into workload running in EKS-A
+  How to deploy an ingress controller for simple host or URL-based HTTP routing into workload running in EKS-A
 ---
 
 <!-- overview -->
@@ -24,13 +24,13 @@ We currently recommend using Emissary-ingress Kubernetes Ingress Controller by A
 
 ## Setting up Emissary-ingress for Ingress Controller
 
-1. Set up a test web application in your cluster. You can use Ambassador's [Quote of the Moment service], as an example. Apply YAML for this application.
+1. Set up a test web application in your cluster. You can use EKS-A's [Hello Test App](https://github.com/aws/eks-anywhere/blob/main/docs/content/en/docs/tasks/workload/test-app.md), as an example. Apply YAML for this application.
     ```bash
-    kubectl apply -f https://app.getambassador.io/yaml/ambassador-docs/latest/quickstart/qotm.yaml
+    kubectl apply -f https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml
     ```
 
-2. Set up kube-vip service type: Load Balancer in your cluster by following the instructions [here](https://eksanywhere.jgarr.net/docs/tasks/workload/loadbalance/#setting-up-kube-vip-for-service-type-load-balancer). 
-Alternatively, you can set up MetalLB Load Balancer by following the instructions [here](https://eksanywhere.jgarr.net/docs/tasks/workload/loadbalance/#alternatives)
+2. Set up kube-vip service type: Load Balancer in your cluster by following the instructions [here]({{< ref "/docs/tasks/workload/loadbalance#setting-up-kube-vip-for-service-type-load-balancer" >}}).
+Alternatively, you can set up MetalLB Load Balancer by following the instructions [here]({{< ref "/docs/tasks/workload/loadbalance#alternatives" >}})
 
 3. Install Ambassador CRDs and ClusterRoles and RoleBindings
 
@@ -53,9 +53,9 @@ Alternatively, you can set up MetalLB Load Balancer by following the instruction
       externalTrafficPolicy: Local
       ports:
       - port: 80
-      targetPort: 8080
-    selector:
-      service: ambassador
+        targetPort: 8080
+      selector:
+        service: ambassador
     EOF
     ```
 
@@ -67,18 +67,17 @@ Alternatively, you can set up MetalLB Load Balancer by following the instruction
     apiVersion: getambassador.io/v2
     kind: Mapping
     metadata:
-      name: quote-backend
+      name: hello-backend
     spec:
       prefix: /backend/
-      service: quote
+      service: hello-eks-a
     EOF
     ```  
  
 6. Store the Emissary-ingress load balancer IP address to a local environment variable. You will use this variable to test accessing your service.
 
     ```bash
-    export EMISSARY_LB_ENDPOINT=$(kubectl get svc ambassador \ 
-      -o "go-template={{range .status.loadBalancer.ingress}}{{or .ip .hostname}}{{end}}")
+    export EMISSARY_LB_ENDPOINT=$(kubectl get svc ambassador -o "go-template={{range .status.loadBalancer.ingress}}{{or .ip .hostname}}{{end}}")
     ```   
  
 7. Test the configuration by accessing the service through the Emissary-ingress load balancer.
@@ -86,14 +85,37 @@ Alternatively, you can set up MetalLB Load Balancer by following the instruction
     ```bash
     curl -Lk http://$EMISSARY_LB_ENDPOINT/backend/
     ```   
+
+   NOTE: URL base path will need to match what is specified in the prefix exactly, including the trailing '/'
  
-You should see something like this in the output
 
-```html
-  {
-   "server": "idle-cranberry-8tbb6iks",
-   "quote": "Non-locality is the driver of truth. By summoning, we vibrate.",
-   "time": "2021-02-26T15:55:06.884798988Z"
-  }
 
-```
+   You should see something like this in the output
+
+   ```html
+   ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
+
+   Thank you for using
+
+   ███████╗██╗  ██╗███████╗                                             
+   ██╔════╝██║ ██╔╝██╔════╝                                             
+   █████╗  █████╔╝ ███████╗                                             
+   ██╔══╝  ██╔═██╗ ╚════██║                                             
+   ███████╗██║  ██╗███████║                                             
+   ╚══════╝╚═╝  ╚═╝╚══════╝                                             
+                                                                     
+    █████╗ ███╗   ██╗██╗   ██╗██╗    ██╗██╗  ██╗███████╗██████╗ ███████╗
+   ██╔══██╗████╗  ██║╚██╗ ██╔╝██║    ██║██║  ██║██╔════╝██╔══██╗██╔════╝
+   ███████║██╔██╗ ██║ ╚████╔╝ ██║ █╗ ██║███████║█████╗  ██████╔╝█████╗  
+   ██╔══██║██║╚██╗██║  ╚██╔╝  ██║███╗██║██╔══██║██╔══╝  ██╔══██╗██╔══╝  
+   ██║  ██║██║ ╚████║   ██║   ╚███╔███╔╝██║  ██║███████╗██║  ██║███████╗
+   ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝    ╚══╝╚══╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝
+                                                                     
+   You have successfully deployed the hello-eks-a pod hello-eks-a-c5b9bc9d8-fx2fr
+
+   For more information check out
+   https://anywhere.eks.amazonaws.com
+
+   ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
+
+   ```
