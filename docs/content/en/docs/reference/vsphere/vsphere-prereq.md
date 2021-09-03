@@ -1,9 +1,9 @@
 ---
-title: "Prerequisites for EKS-A on VMware vSphere "
+title: "Prerequisites for EKS Anywhere on VMware vSphere "
 linkTitle: "vSphere prereqs"
 weight: 15
 description: >
-  Preparing a VMware vSphere provider for EKS-A
+  Preparing a VMware vSphere provider for EKS Anywhere
 ---
 
 # Prerequisite Checklist

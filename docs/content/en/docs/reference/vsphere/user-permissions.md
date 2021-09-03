@@ -2,10 +2,10 @@
 title: "vSphere permissions"
 weight: 20
 description: >
-  Permissions needed by the EKS-A vSphere user
+  Permissions needed by the EKS Anywhere vSphere user
 ---
 
-The permissions needed by the EKS-A vSphere user are just short of full administrative access. For example:
+The permissions needed by the EKS Anywhere vSphere user are just short of full administrative access. For example:
  
 ## Virtual machine
 
