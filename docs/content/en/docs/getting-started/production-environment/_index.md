@@ -56,7 +56,7 @@ To run EKS Anywhere, you will need the following:
    export VSPHERE_PASSWORD='t0p$ecret'
    ```
 
-   EKS-Anywhere clusters function as both workload and management clusters.
+   EKS Anywhere clusters function as both workload and management clusters.
    Management clusters are responsible for the lifecycle of workload clusters (i.e. create, upgrade, and delete clusters), while workload clusters run user applications.
 
    Future versions of EKS Anywhere will allow users to create a dedicated management cluster that will manage multiple workload clusters.
