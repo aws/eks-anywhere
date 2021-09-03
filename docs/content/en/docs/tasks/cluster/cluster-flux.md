@@ -57,32 +57,13 @@ This PAT should have at least the following permissions:
 
 >**_NOTE:_** The PAT must belong to the `owner` of the `repository` or, if using an organization as the `owner`, the creator of the `PAT` must have repo permission in that organization.
 
-You can provide the PAT to EKS-A in one of two ways:
+You can provide the PAT to EKS-A in the following way:
 
-* (default) Set the `$EKSA_GITHUB_TOKEN` environment variable to the value of your PAT
+* Set the `$EKSA_GITHUB_TOKEN` environment variable to the value of your PAT
 
    ```
    export EKSA_GITHUB_TOKEN=ghp_MyValidPersonalAccessTokenWithRepoPermissions
    ```
-
-* A Github Token file with read permissions.
-  The file should be plain text with only the token text inside.
-  **Do not commit and push this file to a public GitHub repo.**
-
-  Provide the full path to the file in your GitOps configuration in the field `authTokenPath` of the `flux` `gitops` spec.
-  ```
-  apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-  kind: GitOpsConfig
-  metadata:
-    name: my-gitops-config
-  spec:
-    flux:
-      github:
-        personal: true
-        repository: mygithubrepository
-        owner: mygithubusername
-        authTokenPath: ./GH_TOKEN.txt
-  ```
 
 ### Create GitOps configuration repo
 
