@@ -189,7 +189,7 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, clusterSpec *cluste
 		"--config", clusterctlConfig.configFile,
 	}
 	// Not supported for docker controllers at this time
-	if clusterSpec.Spec.DatacenterRef.Name != anywherev1alpha1.DockerDatacenterKind {
+	if clusterSpec.Spec.DatacenterRef.Kind != anywherev1alpha1.DockerDatacenterKind {
 		params = append(params, "--watching-namespace", constants.EksaSystemNamespace)
 	}
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {

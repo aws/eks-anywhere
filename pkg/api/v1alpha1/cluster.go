@@ -287,7 +287,7 @@ func validateEtcdReplicas(clusterConfig *Cluster) error {
 		return errors.New("external etcd count cannot be an even number")
 	}
 	if clusterConfig.Spec.ExternalEtcdConfiguration.Count != 3 && clusterConfig.Spec.ExternalEtcdConfiguration.Count != 5 {
-		if clusterConfig.Spec.DatacenterRef.Name != DockerDatacenterKind {
+		if clusterConfig.Spec.DatacenterRef.Kind != DockerDatacenterKind {
 			// only log warning about recommended etcd cluster size for providers other than docker
 			logger.Info("Warning: The recommended size of an external etcd cluster is 3 or 5")
 		}
