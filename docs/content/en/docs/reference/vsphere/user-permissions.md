@@ -1,8 +1,8 @@
 ---
-title: "Required vSphere permissions"
+title: "vSphere permissions"
 weight: 20
 description: >
-  The permissions needed by the EKS-A vSphere user
+  Permissions needed by the EKS-A vSphere user
 ---
 
 The permissions needed by the EKS-A vSphere user are just short of full administrative access. For example:
