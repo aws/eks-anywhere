@@ -43,9 +43,9 @@ phases:
       -m 40
       -r 'Test'
       --skip 'TestDockerKubernetes119Flux,TestDockerKubernetes119ThreeReplicasFlux,TestVSphereKubernetes119Flux,TestVSphereKubernetes119ThreeReplicasFlux,TestDockerKubernetes118Flux,TestDockerKubernetes12OFlux,TestDockerKubernetes121Flux,TestVSphereKubernetes118Flux,TestVSphereKubernetes120Flux,TestVSphereKubernetes121Flux,TestDockerKubernetes119GitopsOptionsFlux,TestVSphereKubernetes119GitopsOptionsFlux,TestVSphereKubernetes120UbuntuTo121WithFluxUpgrade,TestVSphereKubernetes120BottlerocketTo121WithFluxUpgrade'
-    - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
   post_build:
     commands:
+    - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
     - export GIT_HASH=$(cat bin/githash)
     - >
       ./cmd/integration_test/build/script/upload_artifacts.sh
