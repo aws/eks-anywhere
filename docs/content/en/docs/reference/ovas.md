@@ -51,8 +51,8 @@ EKS-D Release
 * `eksdRelease:kubernetes-1-20-eks-6`
 
 ## Building your own Ubuntu OVA
-Our OVA building process leverages upstream [image-builder repository.](https://github.com/kubernetes-sigs/image-builder)
-If you want to build an OVA with a custom ubuntu base image to use for an EKS-Anywhere cluster, please follow the instructions below.
+The EKS-A project OVA building process leverages upstream [image-builder repository.](https://github.com/kubernetes-sigs/image-builder)
+If you want to build an OVA with a custom Ubuntu base image to use for an EKS-Anywhere cluster, please follow the instructions below.
 
 Having access to a vSphere environment and docker running locally are prerequisites for building your own images.
 
@@ -65,8 +65,8 @@ Configuration:
 * Change configuration
 * Add new disk
 * Add or remove device
-* Change Memory
-* Change Settings
+* Change memory
+* Change settings
 * Set annotation
 
 Interaction:
@@ -93,7 +93,7 @@ Provisioning
 #### Network
 * Assign network to vm
 
-### Steps to Build an OVA
+### Steps to build an OVA
 1. Spin up a builder-base docker container and exec into it. Please use the most recent tag for the image on its repository [here](https://gallery.ecr.aws/eks-distro-build-tooling/builder-base)
 ```
 docker exec -it public.ecr.aws/eks-distro-build-tooling/builder-base:930624e251df041349f3d3089c983fcf394f1c60 bash
@@ -130,11 +130,11 @@ cd eks-anywhere-build-tooling/projects/kubernetes-sigs/image-builder
 ```
 export VSPHERE_CONNECTION_DATA=\"$(cat vsphere.json | jq -c . | sed 's/"/\\"/g')\"
 ```
-5. Download the most recent release bundle manifest and get the latest URLs for etcdadm and crictl for the intended Kubernetes version.
+5. Download the most recent release bundle manifest and get the latest URLs for `etcdadm` and `crictl` for the intended Kubernetes version.
 ```
 wget https://anywhere-assets.eks.amazonaws.com/bundle-release.yaml
 ```
-7. Export the CRICTL_URL and ETCADM_HTTP_SOURCE environment variables with URL from the previous step.
+7. Export the CRICTL_URL and ETCADM_HTTP_SOURCE environment variables with the URLs from previous step.
 ```
 export CRICTL_URL=<crictl url>
 export ETCDADM_HTTP_SOURCE=<etcdadm url>
@@ -143,9 +143,9 @@ export ETCDADM_HTTP_SOURCE=<etcdadm url>
 ```
 govc library.create "CodeBuild"
 ```
-8. Update ubuntu configuration file with the new custom iso URL and its checksum at
+8. Update the Ubuntu configuration file with the new custom ISO URL and its checksum at
 `image-builder/images/capi/packer/ova/ubuntu-2004.json`
-9. Setup image-builder and run the OVA build for the kube version.
+9. Setup image-builder and run the OVA build for the Kubernetes version.
 ```
 make release-ova-ubuntu-2004-1-21
 ```
