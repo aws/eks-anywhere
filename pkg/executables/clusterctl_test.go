@@ -51,6 +51,7 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			env:             map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
 			wantExecArgs: []interface{}{
 				"init", "--core", core, "--bootstrap", bootstrap, "--control-plane", controlPlane, "--infrastructure", "aws:v0.6.4", "--config", test.OfType("string"),
+				"--watching-namespace", constants.EksaSystemNamespace,
 			},
 			wantConfig: "testdata/clusterctl_expected.yaml",
 		},
@@ -64,7 +65,8 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			providerVersion: versionBundle.VSphere.Version,
 			env:             map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
 			wantExecArgs: []interface{}{
-				"init", "--core", core, "--bootstrap", bootstrap, "--control-plane", controlPlane, "--infrastructure", "vsphere:v0.7.8", "--config", test.OfType("string"), "--kubeconfig", "tmp/k.kubeconfig",
+				"init", "--core", core, "--bootstrap", bootstrap, "--control-plane", controlPlane, "--infrastructure", "vsphere:v0.7.8", "--config", test.OfType("string"),
+				"--watching-namespace", constants.EksaSystemNamespace, "--kubeconfig", "tmp/k.kubeconfig",
 			},
 			wantConfig: "testdata/clusterctl_expected.yaml",
 		},
@@ -160,7 +162,7 @@ func TestClusterctlInitInfrastructureInstallEtcdadmControllers(t *testing.T) {
 			env:             map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
 			wantExecArgs: []interface{}{
 				"init", "--core", core, "--bootstrap", bootstrapKubeadm, "--control-plane", controlPlane, "--infrastructure", "vsphere:v0.7.8", "--config", test.OfType("string"),
-				"--bootstrap", bootstrapEtcdamBootstrap, "--bootstrap", bootstrapEtcdamController, "--kubeconfig", "tmp/k.kubeconfig",
+				"--watching-namespace", constants.EksaSystemNamespace, "--bootstrap", bootstrapEtcdamBootstrap, "--bootstrap", bootstrapEtcdamController, "--kubeconfig", "tmp/k.kubeconfig",
 			},
 			wantConfig: "testdata/clusterctl_expected.yaml",
 		},
