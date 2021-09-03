@@ -59,7 +59,7 @@ The analysis will be printed to your console.
 
 #### Collect phase:
 ```
-$ ./bin/eks-a generate support-bundle -f ./testcluster100.yaml
+$ ./bin/eksctl anywhere generate support-bundle -f ./testcluster100.yaml
  Collecting support bundle cluster-info
  Collecting support bundle cluster-resources
  Collecting support bundle secret
