@@ -857,11 +857,17 @@ func TestClusterManagerResumeEKSAControllerReconcileSuccessWithoutMachineConfig(
 }
 
 func TestClusterManagerInstallCustomComponentsSuccess(t *testing.T) {
+	ctx := context.Background()
 	tt := newTest(t)
 	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "testdata/testOverrideClusterSpec.yaml"
 
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Not(gomock.Nil())).Return(nil)
 
+	for namespace, deployments := range internal.EksaDeployments {
+		for _, deployment := range deployments {
+			tt.mocks.client.EXPECT().WaitForDeployment(ctx, tt.cluster, "30m", "Available", deployment, namespace)
+		}
+	}
 	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.clusterSpec, tt.cluster); err != nil {
 		t.Errorf("ClusterManager.InstallCustomComponents() error = %v, wantErr nil", err)
 	}
