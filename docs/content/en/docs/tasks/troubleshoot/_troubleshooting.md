@@ -62,7 +62,7 @@ export VSPHERE_PASSWORD='<vSphere-password>'
 ```
 Error: old cluster config file exists under my-cluster, please use a different clusterName to proceed
 ```
-The directory `my-cluster` directory already exists in the current directory.
+The `my-cluster` directory already exists in the current directory.
 Either use a different cluster name or move the directory.
 
 ### failed to create cluster: node(s) already exist for a cluster with the name
