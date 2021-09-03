@@ -59,8 +59,8 @@ To run EKS Anywhere, you will need the following:
    EKS-Anywhere clusters function as both workload and management clusters.
    Management clusters are responsible for the lifecycle of workload clusters (i.e. create, upgrade, and delete clusters), while workload clusters run user applications.
 
-   Future versions of EKS-Anywhere will allow users to create separate clusters that will manage multiple workload clusters.
-   This will provide a more centralized cluster management experience.
+   Future versions of EKS Anywhere will allow users to create a dedicated management cluster that will manage multiple workload clusters.
+   This will provide separate security requirements for different cluster types and a scalable cluster management solution.
 
 1. Create a cluster
 
