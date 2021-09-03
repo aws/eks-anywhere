@@ -7,7 +7,7 @@ description: >
 ---
 
 # GitOps Support (Optional)
-EKS-A can create clusters that supports GitOps configuration managment with Flux. 
+EKS-A can create clusters that supports GitOps configuration management with Flux. 
 In order to add GitOps support, you need to configure your cluster by updating the configuration file before creating the cluster. 
 This is a generic template with detailed descriptions below for reference:
 ```yaml
@@ -77,6 +77,6 @@ spec:
 * __Type__: string
 
 #### __branch__ (optional)
-* __Description__: The branch to use whe commiting the configuration.
+* __Description__: The branch to use when commiting the configuration.
 * __Default__: `main`
 * __Type__: string

@@ -8,7 +8,7 @@ description: >
 ---
 
 When you are scaling your EKS Anywhere cluster, consider the number of nodes you need for your control plane and for your data plane.
-Each plane can be scaled horizontially (add more nodes) or vertically (provide nodes with more resources).
+Each plane can be scaled horizontally (add more nodes) or vertically (provide nodes with more resources).
 In each case you can scale the cluster manually, semi-automatically, or automatically.
 
 See the [Kubernetes Components](https://kubernetes.io/docs/concepts/overview/components/) documentation to learn the differences between the control plane and the data plane (worker nodes).

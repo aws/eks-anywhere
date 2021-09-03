@@ -39,7 +39,7 @@ Docker version 20.10.6, build 370c289
 ```
 ❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "failed setup and validations: VSPHERE_USERNAME is not set or is empty", "remediation": ""}
 ```
-Two environment variables need to be set and exported in your environemnt to create clusters successfully.
+Two environment variables need to be set and exported in your environment to create clusters successfully.
 Be sure to use single quotes around your user name and password to avoid shell manipulation of these values.
 ```
 export VSPHERE_USERNAME='<vSphere-username>'
@@ -51,7 +51,7 @@ export VSPHERE_PASSWORD='<vSphere-password>'
 ❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "error validating vCenter setup: vSphere authentication failed: govc: ServerFaultCode: Cannot complete login due to an incorrect user name or password.\n", "remediation": ""}
 Error: failed to create cluster: validations failed
 ```
-Two environment variables need to be set and exported in your environemnt to create clusters successfully.
+Two environment variables need to be set and exported in your environment to create clusters successfully.
 Be sure to use single quotes around your user name and password to avoid shell manipulation of these values.
 ```
 export VSPHERE_USERNAME='<vSphere-username>'
@@ -157,7 +157,7 @@ kubectl get nodes -o=custom-columns="NAME:.metadata.name,IP:.status.addresses[2]
 ```
 If Kubernetes is not working at all, you can get the IPs of the VMs from vCenter or using `govc`.
 
-When you get the external IP you can ssh into the nodes using the private ssh key assoicated with the public ssh key you provided in your cluster configuration:
+When you get the external IP you can ssh into the nodes using the private ssh key associated with the public ssh key you provided in your cluster configuration:
 ```
 ssh -i <ssh-private-key> <ssh-username>@<external-IP>
 ```
