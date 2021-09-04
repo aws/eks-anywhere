@@ -16,6 +16,7 @@ env:
     T_VSPHERE_NETWORK: "vsphere_ci_beta_connection:network"
     T_VSPHERE_RESOURCE_POOL: "vsphere_ci_beta_connection:resource_pool"
     T_VSPHERE_SERVER: "vsphere_ci_beta_connection:server"
+    T_VSPHERE_SSH_AUTHORIZED_KEY: "vsphere_ci_beta_connection:ssh_authorized_key"
     T_VSPHERE_TEMPLATE_UBUNTU_1_18: "vsphere_ci_beta_connection:template_18"
     T_VSPHERE_TEMPLATE_UBUNTU_1_19: "vsphere_ci_beta_connection:template_19"
     T_VSPHERE_TEMPLATE_UBUNTU_1_20: "vsphere_ci_beta_connection:template_20"
