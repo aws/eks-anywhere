@@ -33,6 +33,7 @@ var releasesManifestURL string
 type Spec struct {
 	*eksav1alpha1.Cluster
 	OIDCConfig          *eksav1alpha1.OIDCConfig
+	AWSIamConfig        *eksav1alpha1.AWSIamConfig
 	GitOpsConfig        *eksav1alpha1.GitOpsConfig
 	releasesManifestURL string
 	bundlesManifestURL  string
@@ -100,6 +101,7 @@ type KubeDistro struct {
 	Pause               v1alpha1.Image
 	EtcdImage           v1alpha1.Image
 	EtcdVersion         string
+	AwsIamAuthIamge     v1alpha1.Image
 }
 
 func (k *KubeDistro) deepCopy() *KubeDistro {
@@ -180,14 +182,21 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 		KubeDistro:     kubeDistro,
 	}
 	s.eksdRelease = eksd
-	if len(s.Cluster.Spec.IdentityProviderRefs) != 0 {
-		// Since we only support one configuration, and only OIDCConfig, for identityProviderRefs, it is safe to assume that
-		// it is the only element that exists in the array
-		oidcConfig, err := eksav1alpha1.GetAndValidateOIDCConfig(clusterConfigPath, s.Cluster.Spec.IdentityProviderRefs[0].Name, clusterConfig)
-		if err != nil {
-			return nil, err
+	for _, identityProvider := range s.Cluster.Spec.IdentityProviderRefs {
+		if identityProvider.Kind == eksav1alpha1.OIDCConfigKind {
+			oidcConfig, err := eksav1alpha1.GetAndValidateOIDCConfig(clusterConfigPath, identityProvider.Name)
+			if err != nil {
+				return nil, err
+			}
+			s.OIDCConfig = oidcConfig
 		}
-		s.OIDCConfig = oidcConfig
+		if identityProvider.Kind == eksav1alpha1.AWSIamConfigKind {
+			awsIamConfig, err := eksav1alpha1.GetAndValidateAWSIamConfig(clusterConfigPath, identityProvider.Name)
+			if err != nil {
+				return nil, err
+			}
+			s.AWSIamConfig = awsIamConfig
+		}
 	}
 
 	if s.Cluster.Spec.GitOpsRef != nil {
@@ -407,6 +416,7 @@ func buildKubeDistro(eksd *eksdv1alpha1.Release) (*KubeDistro, error) {
 		"external-provisioner-image":  &kubeDistro.ExternalProvisioner,
 		"pause-image":                 &kubeDistro.Pause,
 		"etcd-image":                  &kubeDistro.EtcdImage,
+		"aws-iam-authenticator-image": &kubeDistro.AwsIamAuthIamge,
 	}
 
 	for assetName, image := range kubeDistroComponents {

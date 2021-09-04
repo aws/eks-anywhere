@@ -442,15 +442,13 @@ func validateIdentityProviderRefs(clusterConfig *Cluster) error {
 	if len(refs) == 0 {
 		return nil
 	}
-	// Only 1 ref of type OIDCConfig is supported as of now
-	if len(refs) > 1 {
-		return errors.New("multiple identityProviderRefs not supported at this time")
-	}
-	if refs[0].Kind != OIDCConfigKind {
-		return errors.New("only OIDCConfig Kind is supported at this time")
-	}
-	if refs[0].Name == "" {
-		return errors.New("specify a valid name for OIDCConfig identityProviderRef")
+	for _, ref := range refs {
+		if ref.Kind != OIDCConfigKind && ref.Kind != AWSIamConfigKind {
+			return fmt.Errorf("kind: %s is not supported", ref.Kind)
+		}
+		if ref.Name == "" {
+			return errors.New("specify a valid name for identityProviderRef")
+		}
 	}
 	return nil
 }
