@@ -107,6 +107,14 @@ spec:
           name: audit-log
           pathType: FileOrCreate
           readOnly: false
+{{- if .awsIamAuth}}
+        - hostPath: /etc/kubernetes/aws-iam-authenticator/
+          mountPath: /etc/kubernetes/aws-iam-authenticator/
+          name: authconfig
+        - hostPath: /var/aws-iam-authenticator/
+          mountPath: /var/aws-iam-authenticator/
+          name: awsiamcert
+{{- end}}
       controllerManager:
         extraArgs:
           enable-hostpath-provisioner: "true"
@@ -119,6 +127,40 @@ spec:
 {{ .auditPolicy | indent 8 }}
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
+{{- if .awsIamAuth}}
+    - content: |
+        # clusters refers to the remote service.
+        clusters:
+          - name: aws-iam-authenticator
+            cluster:
+              certificate-authority: /var/aws-iam-authenticator/cert.pem
+              server: https://localhost:21362/authenticate
+        # users refers to the API Server's webhook configuration
+        # (we don't need to authenticate the API server).
+        users:
+          - name: apiserver
+        # kubeconfig files require a context. Provide one for the API Server.
+        current-context: webhook
+        contexts:
+        - name: webhook
+          context:
+            cluster: aws-iam-authenticator
+            user: apiserver
+      owner: 10000:10000
+      path: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
+    - contentFrom:
+        secret:
+          name: aws-iam-authenticator-ca
+          key: cert.pem
+      owner: 10000:10000
+      path: /var/aws-iam-authenticator/cert.pem
+    - contentFrom:
+        secret:
+          name: aws-iam-authenticator-ca
+          key: key.pem
+      owner: 10000:10000
+      path: /var/aws-iam-authenticator/key.pem
+{{- end}}
     initConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock

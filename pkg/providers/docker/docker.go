@@ -175,7 +175,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 		"corednsRepository":      bundle.KubeDistro.CoreDNS.Repository,
 		"corednsVersion":         bundle.KubeDistro.CoreDNS.Tag,
 		"kindNodeImage":          bundle.EksD.KindNode.VersionedImage(),
-		"apiserverExtraArgs":     clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).ToPartialYaml(),
+		"apiserverExtraArgs":     clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).ToPartialYaml(),
 		"externalEtcdVersion":    bundle.KubeDistro.EtcdVersion,
 		"eksaSystemNamespace":    constants.EksaSystemNamespace,
 		"auditPolicy":            common.GetAuditPolicy(),
@@ -186,6 +186,9 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
 		values["externalEtcdReplicas"] = clusterSpec.Spec.ExternalEtcdConfiguration.Count
+	}
+	if clusterSpec.AWSIamConfig != nil {
+		values["awsIamAuth"] = true
 	}
 	return values
 }
