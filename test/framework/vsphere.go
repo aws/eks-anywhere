@@ -41,6 +41,7 @@ var requiredEnvVars = []string{
 	vsphereNetworkVar,
 	vsphereResourcePoolVar,
 	vsphereServerVar,
+	vsphereSshAuthorizedKeyVar,
 	vsphereTemplateUbuntu118Var,
 	vsphereTemplateUbuntu119Var,
 	vsphereTemplateUbuntu120Var,
