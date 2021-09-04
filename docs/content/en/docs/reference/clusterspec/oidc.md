@@ -3,12 +3,14 @@ title: "OIDC reference"
 linkTitle: "OIDC"
 weight: 30
 description: >
-  EKS-A cluster yaml specification OIDC reference
+  EKS Anywhere cluster yaml specification OIDC reference
 ---
 
 
 ## OIDC support (optional)
-EKS-A can create clusters that support api server OIDC authentication. In order to add OIDC support, you need to configure your cluster by updating the configuration file before creating the cluster. This is a generic template with detailed descriptions below for reference:
+EKS Anywhere can create clusters that support api server OIDC authentication.
+In order to add OIDC support, you need to configure your cluster by updating the configuration file before creating the cluster.
+This is a generic template with detailed descriptions below for reference:
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
@@ -37,7 +39,8 @@ spec:
     usernamePrefix: ""
 ```
 ### identityProviderRefs (Under Cluster)
-List of identity providers you want configured for the Cluster. Right now, only 1 provider of type `OIDCConfig` is supported.
+List of identity providers you want configured for the Cluster.
+Right now, only 1 provider of type `OIDCConfig` is supported.
 This would include a reference to the `OIDCConfig` object with the configuration below.
 
 ### clientId (required)
@@ -53,7 +56,8 @@ This would include a reference to the `OIDCConfig` object with the configuration
 * Description: IssuerUrl defines the URL of the OpenID issuer, only HTTPS scheme will be accepted
 * Type: string
 ### requiredClaims
-List of RequiredClaim objects listed below. Only one is supported at this time.
+List of RequiredClaim objects listed below.
+Only one is supported at this time.
 
 ### requiredClaims[0]
 * Description: RequiredClaim defines a key=value pair that describes a required claim in the ID Token
@@ -63,9 +67,12 @@ List of RequiredClaim objects listed below. Only one is supported at this time.
     * type: string
 * Type: object
 ### usernameClaim
-* Description: UsernameClaim defines the OpenID claim to use as the user name. Note that claims other than the default ('sub') is not guaranteed to be unique and immutable
+* Description: UsernameClaim defines the OpenID claim to use as the user name.
+Note that claims other than the default ('sub') is not guaranteed to be unique and immutable
 * Type: string
 ### usernamePrefix
-* Description: UsernamePrefix defines a string to be prefixed to all usernames. If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes. To skip any prefixing, provide the value '-'.
+* Description: UsernamePrefix defines a string to be prefixed to all usernames.
+If not provided, username claims other than 'email' are prefixed by the issuer URL to avoid clashes.
+To skip any prefixing, provide the value '-'.
 * Type: string
 

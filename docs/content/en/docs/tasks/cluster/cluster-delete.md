@@ -5,7 +5,7 @@ linkTitle: "Delete cluster"
 weight: 40
 date: 2017-01-05
 description: >
-  How to delete an EKS-A cluster
+  How to delete an EKS Anywhere cluster
 ---
 
 To delete a cluster you will need:

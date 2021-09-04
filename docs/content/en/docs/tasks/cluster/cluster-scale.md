@@ -75,4 +75,4 @@ This has some concerns in an on-prem environment.
 Automatic scaling does not work with some providers such as Docker or bare metal.
 An EKS Anywhere cluster currently is not intended to be used with the Kubernetes Cluster Autoscaler so that it does not interfere with built in controllers or cause unexpected machine thrashing.
 
-In future versions of EKS-A we will be adding support for automatic autoscaling for specific providers.
+In future versions of EKS Anywhere we will be adding support for automatic autoscaling for specific providers.

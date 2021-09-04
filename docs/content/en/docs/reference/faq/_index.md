@@ -8,7 +8,7 @@ description: >
 
 ## AuthN / AuthZ 
 
-### How do my applications running on EKS-A authenticate with AWS services using IAM credentials?
+### How do my applications running on EKS Anywhere authenticate with AWS services using IAM credentials?
 
 You can leverage the [IAM Role for Service Account (IRSA)](https://aws.amazon.com/blogs/opensource/introducing-fine-grained-iam-roles-service-accounts/) feature 
 and follow the [special instructions for DIY Kubernetes](https://github.com/aws/amazon-eks-pod-identity-webhook/blob/master/SELF_HOSTED_SETUP.md)
@@ -24,32 +24,29 @@ This solution includes the following steps at a high level:
 1. Finally, configure your pods by using the service account created in the previous step and assume the IAM role.
 
 The key pair solution above requires you to set up and maintain your key hosting (e.g. key rotation).
-A solution that is currently in development will allow your IAM role credentials to be securely injected to the EKS Anywhere cluster
-and assumed by the pods without any key pair.
+A solution that is currently in development will allow your IAM role credentials to be securely injected to the EKS Anywhere cluster and assumed by the pods without any key pair.
 
 ### Does EKS Anywhere support OIDC (including Azure AD and AD FS)?
 
-Yes, EKS-A can create clusters that support API server OIDC authentication.
-This means you can federate authentication through AD FS locally or through Azure AD,
-along with other IDPs that support the OIDC standard.
-In order to add OIDC support to your EKS-A clusters, you need to configure your cluster by updating the configuration file before creating the cluster.
+Yes, EKS Anywhere can create clusters that support API server OIDC authentication.
+This means you can federate authentication through AD FS locally or through Azure AD, along with other IDPs that support the OIDC standard.
+In order to add OIDC support to your EKS Anywhere clusters, you need to configure your cluster by updating the configuration file before creating the cluster.
 Please see the [OIDC reference]({{< relref "../../reference/clusterspec/oidc.md" >}}) for details.
 
 ### Does EKS Anywhere support LDAP?
-EKS-A does not support LDAP out of the box.
+EKS Anywhere does not support LDAP out of the box.
 However, you can look into the [Dex LDAP Connector](https://dexidp.io/docs/connectors/ldap/).
 
-### Can I use AWS IAM for Kubernetes resource access control on EKS-A?
-Yes, you can install the [aws-iam-authenticator](https://github.com/kubernetes-sigs/aws-iam-authenticator) on your EKS-A cluster to achieve this.
+### Can I use AWS IAM for Kubernetes resource access control on EKS Anywhere?
+Yes, you can install the [aws-iam-authenticator](https://github.com/kubernetes-sigs/aws-iam-authenticator) on your EKS Anywhere cluster to achieve this.
 
 ## Miscellaneous
 
-### Can I connect my EKS-A cluster to EKS?
+### Can I connect my EKS Anywhere cluster to EKS?
 
-Yes, you can install EKS Connector to connect your EKS-A cluster to AWS EKS.
-EKS Connector is a software agent that you can install on the EKS-A cluster that enables the cluster to communicate back to AWS.
-Once connected, you can immediately see the EKS-A cluster with workload and cluster configuration information on the EKS console,
-alongside your EKS clusters. 
+Yes, you can install EKS Connector to connect your EKS Anywhere cluster to AWS EKS.
+EKS Connector is a software agent that you can install on the EKS Anywhere cluster that enables the cluster to communicate back to AWS.
+Once connected, you can immediately see the EKS Anywhere cluster with workload and cluster configuration information on the EKS console, alongside your EKS clusters. 
 
 #### How does the EKS Connector authenticate with AWS?
 
@@ -76,7 +73,7 @@ to invoke the EKS Connector on the cluster.
 Yes, you can leverage AWS services from your EKS Anywhere clusters on-premises through [Amazon Controllers for Kubernetes (ACK)](https://aws.amazon.com/blogs/containers/aws-controllers-for-kubernetes-ack/).
 
 
-### Can I deploy EKS-A on other clouds?
+### Can I deploy EKS Anywhere on other clouds?
 
 EKS Anywhere can be installed on any infrastructure with the required VMware vSphere versions.
 See EKS Anywhere [vSphere prerequisite]({{< relref "../vsphere" >}}) documentation.

@@ -3,7 +3,7 @@ title: "Troubleshooting"
 linkTitle: "Troubleshooting"
 weight: 40
 description: >
-  Troubleshooting EKS-A clusters
+  Troubleshooting EKS Anywhere clusters
 ---
 
 This guide covers some generic troubleshooting techniques and then cover more detailed examples. You may want to search this document for a fragment of the error you are seeing.
@@ -14,7 +14,7 @@ If you’re having trouble running `eksctl anywhere` you may get more verbose ou
 
 ### Cannot run docker commands
 
-The EKS Anywhere binary requires access to run docker commands without using `sudo`
+The EKS Anywhere binary requires access to run docker commands without using `sudo`.
 If you're using a Linux distribution you will need to be using Docker 20.x.x add your user needs to be part of the docker group.
 
 To add your user to the docker group you can use.
@@ -78,24 +78,30 @@ A bootstrap cluster already exists with the same name. If you are sure the clust
 If your bootstrap cluster has problems you may get detailed logs by looking at the files created under the `${CLUSTER_NAME}/logs` folder. The capv-controller-manager log file will surface issues with vsphere specific configuration while the capi-controller-manager log file might surface other generic issues with the cluster configuration passed in.
 
 You may also access the logs from your bootstrap cluster directly as below:
-```
+```bash
 export KUBECONFIG=${PWD}/${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconfig
 kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager
 ```
 
-It also might be useful to start a shell session on the docker container running the bootstrap cluster by running
-`docker ps` and then `docker exec -it <container-id> bash` the kind container.
+It also might be useful to start a shell session on the docker container running the bootstrap cluster by running `docker ps` and then `docker exec -it <container-id> bash` the kind container.
 
 ### Memory or disk resource problem
-There are various disk and memory issues that can cause problems. Make sure docker is configured with enough memory. Make sure the system wide Docker memory configuration provides enough RAM for the bootstrap cluster.
+There are various disk and memory issues that can cause problems.
+Make sure docker is configured with enough memory.
+Make sure the system wide Docker memory configuration provides enough RAM for the bootstrap cluster.
 
-Make sure you do not have unneeded KinD clusters running `kind get clusters`. You may want to delete unneeded clusters with `kind delete cluster --name <cluster-name>`. If you do not have kind installed, you may install it from https://kind.sigs.k8s.io/ or use `docker ps` to see the KinD clusters and `docker stop` to stop the cluster.
+Make sure you do not have unneeded KinD clusters running `kind get clusters`.
+You may want to delete unneeded clusters with `kind delete cluster --name <cluster-name>`.
+If you do not have kind installed, you may install it from https://kind.sigs.k8s.io/ or use `docker ps` to see the KinD clusters and `docker stop` to stop the cluster.
  
-Make sure you do not have any unneeded Docker containers running with `docker ps`. Terminate any unneeded Docker containers.
+Make sure you do not have any unneeded Docker containers running with `docker ps`.
+Terminate any unneeded Docker containers.
    
-Make sure Docker isn't out of disk resources. If you don't have any other docker containers running you may want to run `docker system prune` to clean up disk space.
+Make sure Docker isn't out of disk resources.
+If you don't have any other docker containers running you may want to run `docker system prune` to clean up disk space.
 
-You may want to restart Docker. To restart Docker on Ubuntu `sudo systemctl restart docker`.
+You may want to restart Docker.
+To restart Docker on Ubuntu `sudo systemctl restart docker`.
 
 ### Waiting for cert-manager to be available... Error: timed out waiting for the condition
 ```
@@ -117,8 +123,9 @@ Failed to create cluster {"error": "error waiting for workload cluster control p
 This can be an issue with the number of control plane and worker node replicas defined in your cluster yaml file.
 Try to start off with a smaller number (3 or 5 is recommended for control plane) in order to bring up the cluster.
 
-This error can also occur because your vCenter server is using self-signed certificates and you have `insecure` set to true in the generated cluster yaml. To check if this is the case, run the commands below:
-```
+This error can also occur because your vCenter server is using self-signed certificates and you have `insecure` set to true in the generated cluster yaml.
+To check if this is the case, run the commands below:
+```bash
 export KUBECONFIG=${PWD}/${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconfig
 kubectl get machines
 ```
@@ -148,10 +155,12 @@ Capv troubleshooting guide: https://github.com/kubernetes-sigs/cluster-api-provi
 ### Workload VM is created on vSphere but can not power on
 A similar issue is the VM does power on but does not show any logs on the console and does not have any IPs assigned.
 
-This issue can occur if the `resourcePool` that the VM uses does not have enough CPU or memory resources to run a VM. To resolve this issue, increase the CPU and/or memory reservations or limits for the resourcePool.
+This issue can occur if the `resourcePool` that the VM uses does not have enough CPU or memory resources to run a VM.
+To resolve this issue, increase the CPU and/or memory reservations or limits for the resourcePool.
 
 ### Workload VMs start but Kubernetes not working properly
-If the workload VMs start, but Kubernetes does not start or is not working properly, you may want to log onto the VMs and check the logs there. If Kubernetes is at least partially working, you may use `kubectl` to get the IPs of the nodes:
+If the workload VMs start, but Kubernetes does not start or is not working properly, you may want to log onto the VMs and check the logs there.
+If Kubernetes is at least partially working, you may use `kubectl` to get the IPs of the nodes:
 ```
 kubectl get nodes -o=custom-columns="NAME:.metadata.name,IP:.status.addresses[2].address"
 ```
@@ -163,24 +172,31 @@ ssh -i <ssh-private-key> <ssh-username>@<external-IP>
 ```
 
 ### create command stuck on `Creating new workload cluster`
-There can we a few reasons if the create command is stuck on `Creating new workload cluster` for over 30 min. First, check the vSphere UI to see if any workload VM are created.
+There can we a few reasons if the create command is stuck on `Creating new workload cluster` for over 30 min.
+First, check the vSphere UI to see if any workload VM are created.
 
 If any VMs are created, check to see if they have any IPv4 IPs assigned to them.
 
-If there are no IPv4 IPs assigned to them, this is most likely because you don't have a DHCP server configured for the `network` configured in the cluster config yaml. Ensure that you have DHCP running and run the create command again.
+If there are no IPv4 IPs assigned to them, this is most likely because you don't have a DHCP server configured for the `network` configured in the cluster config yaml.
+Ensure that you have DHCP running and run the create command again.
 
-If there are any IPv4 IPs assigned, check if one of the VMs have the controlPlane IP specified in `Cluster.spec.controlPlaneConfiguration.endpoint.host` in the clusterconfig yaml. If this IP is not present on any control plane VM, make sure the `network` has access to the following endpoints:
+If there are any IPv4 IPs assigned, check if one of the VMs have the controlPlane IP specified in `Cluster.spec.controlPlaneConfiguration.endpoint.host` in the clusterconfig yaml.
+If this IP is not present on any control plane VM, make sure the `network` has access to the following endpoints:
+
 {{% content "domains.md" %}}
 
 If no VMs are created, check the `capi-controller-manager`, `capv-controller-manager` and `capi-kubeadm-control-plane-controller-manager` logs using the commands mentioned in [Generic cluster unavailable](#problem-generic-cluster-unavailable) section.
 
 ### Cluster Deletion Fails
-If cluster deletion fails, you may need to manually delete the VMs associated with the cluster. The VMs should be named with the cluster name. You can power off and delete from disk using the vCenter web user interface. You may also use `govc`:
+If cluster deletion fails, you may need to manually delete the VMs associated with the cluster.
+The VMs should be named with the cluster name.
+You can power off and delete from disk using the vCenter web user interface.
+You may also use `govc`:
 ```
 govc find -type VirtualMachine --name '<cluster-name>*'
 ```
-This will give you a list of virtual machines that should be associated with your cluster. For each of the VMs you
-want to delete run:
+This will give you a list of virtual machines that should be associated with your cluster.
+For each of the VMs you want to delete run:
 ```
 VM_NAME=vm-to-destroy
 govc vm.power -off -force $VM_NAME
@@ -188,18 +204,19 @@ govc object.destroy $VM_NAME
 ```
 
 ### Troubleshooting GitOps integration
-#### Cluster creation failure leaves outdated cluster configuration in Github.com repository
-Failed cluster creation can sometimes leave behind cluster configuration files committed to your Github.com repository.
-Make sure to delete these configuration files before you re-try `eksctl anywhere create cluster`. If these configuration files are not deleted, GitOps installation will fail but cluster creation will continue.
+#### Cluster creation failure leaves outdated cluster configuration in GitHub.com repository
+Failed cluster creation can sometimes leave behind cluster configuration files committed to your GitHub.com repository.
+Make sure to delete these configuration files before you re-try `eksctl anywhere create cluster`.
+If these configuration files are not deleted, GitOps installation will fail but cluster creation will continue.
 
 They'll generally be located under the directory
-`clusters/$CLUSTER_NAME` if you used the default path in your `flux` `gitops` config. Delete the entire directory named $CLUSTER_NAME.
+`clusters/$CLUSTER_NAME` if you used the default path in your `flux` `gitops` config.
+Delete the entire directory named $CLUSTER_NAME.
 
-#### Cluster creation failure leaves empty Github.com repository
-Failed cluster creation can sometimes leave behind a completely empty Github.com repository.
+#### Cluster creation failure leaves empty GitHub.com repository
+Failed cluster creation can sometimes leave behind a completely empty GitHub.com repository.
 This can cause the GitOps installation to fail if you re-try the creation of a cluster which uses this repository.
-If cluster creation failure leaves behind an empty github repository,
-please manually delete the created Github.com repository before attempting cluster creation again.
+If cluster creation failure leaves behind an empty github repository, please manually delete the created GitHub.com repository before attempting cluster creation again.
 
 #### Changes not syncing to cluster
 Please remember that the only fields currently supported for GitOps are:
@@ -209,7 +226,7 @@ Please remember that the only fields currently supported for GitOps are:
 
 If you've changed these fields and they're not syncing to the cluster as you'd expect,
 check out the logs of the pod in the `source-controller` deployment in the `flux-system` namespaces.
-If `flux` is having a problem connecting to your Github repository the problem will be logged here.
+If `flux` is having a problem connecting to your GitHub repository the problem will be logged here.
 
 ```sh
 $ kubectl get pods -n flux-system
@@ -229,16 +246,15 @@ A well behaved flux pod will simply log the ongoing reconciliation process, like
 {"level":"info","ts":"2021-07-01T20:00:52.982Z","logger":"controller.gitrepository","msg":"Reconciliation finished in 970.03174ms, next run in 1m0s","reconciler group":"source.toolkit.fluxcd.io","reconciler kind":"GitRepository","name":"flux-system","namespace":"flux-system"}
 ```
 
-If there are issues connecting to Github, you'll instead see exceptions in the `source-controller` log stream.
+If there are issues connecting to GitHub, you'll instead see exceptions in the `source-controller` log stream.
 For example, if the deploy key used by `flux` has been deleted, you'd see something like this:
 ```sh
 {"level":"error","ts":"2021-07-01T20:04:56.335Z","logger":"controller.gitrepository","msg":"Reconciler error","reconciler group":"source.toolkit.fluxcd.io","reconciler kind":"GitRepository","name":"flux-system","namespace":"flux-system","error":"unable to clone 'ssh://git@github.com/youruser/gitops-vsphere-test', error: ssh: handshake failed: ssh: unable to authenticate, attempted methods [none publickey], no supported methods remain"}
 ```
 
 #### Other ways to troubleshoot GitOps integration
-If you're still having problems after deleting any empty EKS-A created Github repositories
-and looking at the `source-controller` logs, you can look for additional issues by checking out the deployments
-in the `flux-system` and `eksa-system` namespaces and ensure they're running and their log streams are free from exceptions.
+If you're still having problems after deleting any empty EKS Anywhere created GitHub repositories and looking at the `source-controller` logs.
+You can look for additional issues by checking out the deployments in the `flux-system` and `eksa-system` namespaces and ensure they're running and their log streams are free from exceptions.
 
 ```sh
 $ kubectl get deployments -n flux-system

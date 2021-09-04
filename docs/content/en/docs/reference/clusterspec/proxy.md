@@ -3,11 +3,11 @@ title: "Proxy configuration reference"
 linkTitle: "Proxy"
 weight: 90
 description: >
-  EKS-A cluster yaml specification proxy configuration reference
+  EKS Anywhere cluster yaml specification proxy configuration reference
 ---
 
 ## Proxy support (optional)
-You can configure EKS-A to use a proxy to connect to the Internet. This is the
+You can configure EKS Anywhere to use a proxy to connect to the Internet. This is the
 generic template with proxy configuration for your reference:
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
