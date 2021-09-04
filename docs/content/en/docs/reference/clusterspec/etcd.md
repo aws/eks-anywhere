@@ -49,6 +49,9 @@ spec:
    # etcd configuration
    externalEtcdConfiguration:
       count: 3
+      machineGroupRef:
+        kind: VSphereMachineConfig
+        name: my-cluster-name-etcd
    kubernetesVersion: "1.19"
    workerNodeGroupConfigurations:
       - count: 1
@@ -63,8 +66,6 @@ This field accepts any configuration parameters for running external etcd.
 This determines the number of etcd members in the cluster.
 The recommended number is 3.
 
-**NOTE**
-
-* Currently the etcd machines use the same values for the VSphere machine configuration as the control plane machines.
-This includes all the fields you set on the VSphereMachineConfig object for control plane machines such as OS Family, memory, disk size, CPU etc.
+#### machineGroupRef (required)
+Refers to the Kubernetes object with vsphere specific configuration for your nodes.
 
