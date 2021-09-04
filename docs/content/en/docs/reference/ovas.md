@@ -52,7 +52,7 @@ EKS-D Release
 
 ## Building your own Ubuntu OVA
 The EKS Anywhere project OVA building process leverages upstream [image-builder repository.](https://github.com/kubernetes-sigs/image-builder)
-If you want to build an OVA with a custom Ubuntu base image to use for an EKS-Anywhere cluster, please follow the instructions below.
+If you want to build an OVA with a custom Ubuntu base image to use for an EKS Anywhere cluster, please follow the instructions below.
 
 Having access to a vSphere environment and docker running locally are prerequisites for building your own images.
 

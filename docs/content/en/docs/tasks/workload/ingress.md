@@ -14,7 +14,7 @@ A production-quality Kubernetes cluster requires planning and preparation for va
 <!-- body -->
 
 
-The purpose of this document is to walk you through getting set up with a recommended Kubernetes Ingress Controller for EKS Anywhere (EKS-A).
+The purpose of this document is to walk you through getting set up with a recommended Kubernetes Ingress Controller for EKS Anywhere.
 Ingress Controller is essential in order to have routing rules that decide how external users access services running in a Kubernetes cluster. It enables efficient distribution of incoming network traffic among multiple backend services.
 
 

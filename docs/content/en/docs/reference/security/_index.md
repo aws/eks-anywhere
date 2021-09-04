@@ -102,13 +102,13 @@ EKS Anywhere support for [Key Management Services (KMS)](https://kubernetes.io/d
 
 ### The EKS Anywhere `kubeconfig` file
 
-`eksctl anywhere create cluster` creates an EKS-A-based Kubernetes cluster and outputs a [`kubeconfig`](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/) file with administrative privileges to the `$PWD/$CLUSTER_NAME` directory.
+`eksctl anywhere create cluster` creates an EKS Anywhere-based Kubernetes cluster and outputs a [`kubeconfig`](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/) file with administrative privileges to the `$PWD/$CLUSTER_NAME` directory.
 
 By default, this `kubeconfig` file uses certificate-based authentication and contains the user certificate data for the administrative user.
 
 **The `kubeconfig` file grants administrative privileges over your cluster to the bearer and the certificate key should be treated as you would any other private key or administrative password.**
 
-The EKS-A-generated kubeconfig file should only be used for interacting with the cluster via `eksctl anywhere` commands, such as `upgrade`, and for the most privileged administrative tasks.
+The EKS Anywhere-generated kubeconfig file should only be used for interacting with the cluster via `eksctl anywhere` commands, such as `upgrade`, and for the most privileged administrative tasks.
 For more information about creating limited roles for day-to-day administration and development, please see the [official introduction to Role Based Access Control (RBAC)](https://kubernetes.io/docs/reference/access-authn-authz/rbac/).
 
 ### GitOps

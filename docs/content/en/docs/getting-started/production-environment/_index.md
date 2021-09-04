@@ -4,7 +4,7 @@ weight: 40
 ---
 
 EKS Anywhere supports a vSphere provider for production grade EKS Anywhere deployments.
-The purpose of this doc is to walk you through getting set-up with EKS Anywhere (EKS-A).
+The purpose of this doc is to walk you through getting set-up with EKS Anywhere.
 EKS Anywhere allows you to provision and manage Amazon EKS on your own infrastructure.
 
 ## Prerequisite Checklist

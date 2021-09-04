@@ -37,7 +37,7 @@ Please see the [OIDC reference]({{< relref "../../reference/clusterspec/oidc.md"
 EKS Anywhere does not support LDAP out of the box.
 However, you can look into the [Dex LDAP Connector](https://dexidp.io/docs/connectors/ldap/).
 
-### Can I use AWS IAM for Kubernetes resource access control on EKS-A?
+### Can I use AWS IAM for Kubernetes resource access control on EKS Anywhere?
 Yes, you can install the [aws-iam-authenticator](https://github.com/kubernetes-sigs/aws-iam-authenticator) on your EKS Anywhere cluster to achieve this.
 
 ## Miscellaneous

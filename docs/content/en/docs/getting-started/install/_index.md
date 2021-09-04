@@ -3,7 +3,7 @@ title: Install EKS Anywhere
 weight: 10
 ---
 
-To create an EKS Anywhere (EKS-A) cluster you will need [`eksctl`](https://eksctl.io) and the `eksctl-anywhere` plugin.
+To create an EKS Anywhere cluster you will need [`eksctl`](https://eksctl.io) and the `eksctl-anywhere` plugin.
 This will let you create a cluster in multiple providers for local development or production workloads.
 
 ### Local machine prerequisites
