@@ -1,6 +1,6 @@
 ---
-title: "OVAs on vSphere"
-linkTitle: "OVAs on vSphere"
+title: "Import OVAs"
+linkTitle: "Import OVAs"
 weight: 30
 description: >
   Importing EKS Anywhere OVAs to vSphere

@@ -1,12 +1,10 @@
 ---
-title: "Prerequisites for EKS Anywhere on VMware vSphere "
-linkTitle: "vSphere prereqs"
+title: "Requirements for EKS Anywhere on VMware vSphere "
+linkTitle: "Requirements"
 weight: 15
 description: >
   Preparing a VMware vSphere provider for EKS Anywhere
 ---
-
-# Prerequisite Checklist
 
 To run EKS Anywhere, you will need:
 
