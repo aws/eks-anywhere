@@ -81,7 +81,7 @@ func (r *ReleaseConfig) PrepareBundleRelease(sourceClients *SourceClients) (map[
 	}
 	fmt.Println("Artifacts download complete")
 
-	err = renameArtifacts(sourceClients, artifactsTable)
+	err = r.renameArtifacts(sourceClients, artifactsTable)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -103,7 +103,7 @@ func (r *ReleaseConfig) PrepareEksARelease(sourceClients *SourceClients) (map[st
 	}
 	fmt.Println("Artifacts download complete")
 
-	err = renameArtifacts(sourceClients, artifactsTable)
+	err = r.renameArtifacts(sourceClients, artifactsTable)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -112,7 +112,7 @@ func (r *ReleaseConfig) PrepareEksARelease(sourceClients *SourceClients) (map[st
 	return artifactsTable, nil
 }
 
-func renameArtifacts(sourceClients *SourceClients, artifacts map[string][]Artifact) error {
+func (r *ReleaseConfig) renameArtifacts(sourceClients *SourceClients, artifacts map[string][]Artifact) error {
 	fmt.Println("============================================================")
 	fmt.Println("                 Renaming Artifacts                         ")
 	fmt.Println("============================================================")
@@ -159,7 +159,7 @@ func renameArtifacts(sourceClients *SourceClients, artifacts map[string][]Artifa
 					if err != nil {
 						return errors.Cause(err)
 					}
-					regex := fmt.Sprintf("public.ecr.aws.*%s.*", imageTagOverride.Repository)
+					regex := fmt.Sprintf("%s/%s.*", r.SourceContainerRegistry, imageTagOverride.Repository)
 					compiledRegex, err := regexp.Compile(regex)
 					if err != nil {
 						return errors.Cause(err)
