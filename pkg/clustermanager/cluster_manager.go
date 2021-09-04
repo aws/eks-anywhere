@@ -48,6 +48,7 @@ type ClusterManager struct {
 	machineMaxWait     time.Duration
 	machineBackoff     time.Duration
 	machinesMinWait    time.Duration
+	awsIamAuth         AwsIamAuth
 }
 
 type ClusterClient interface {
@@ -81,9 +82,14 @@ type Networking interface {
 	GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
 }
 
+type AwsIamAuth interface {
+	GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
+	GenerateCertKeyPairSecret() ([]byte, error)
+}
+
 type ClusterManagerOpt func(*ClusterManager)
 
-func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, opts ...ClusterManagerOpt) *ClusterManager {
+func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, opts ...ClusterManagerOpt) *ClusterManager {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
@@ -96,6 +102,7 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 		machineMaxWait:     machineMaxWait,
 		machineBackoff:     machineBackoff,
 		machinesMinWait:    machinesMinWait,
+		awsIamAuth:         awsIamAuth,
 	}
 
 	for _, o := range opts {
@@ -493,6 +500,38 @@ func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, workloa
 	)
 	if err != nil {
 		return fmt.Errorf("error applying machine health checks: %v", err)
+	}
+	return nil
+}
+
+func (c *ClusterManager) InstallAwsIamAuth(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	awsIamAuthManifest, err := c.awsIamAuth.GenerateManifest(clusterSpec)
+	if err != nil {
+		return fmt.Errorf("error generating aws-iam-authenticator manifest: %v", err)
+	}
+	err = c.Retrier.Retry(
+		func() error {
+			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, awsIamAuthManifest)
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error applying aws-iam-authenticator manifest: %v", err)
+	}
+	return nil
+}
+
+func (c *ClusterManager) CreateAwsIamAuthCaSecret(ctx context.Context, cluster *types.Cluster) error {
+	awsIamAuthCaSecret, err := c.awsIamAuth.GenerateCertKeyPairSecret()
+	if err != nil {
+		return fmt.Errorf("error generating aws-iam-authenticator ca secret: %v", err)
+	}
+	err = c.Retrier.Retry(
+		func() error {
+			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, awsIamAuthCaSecret)
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error applying aws-iam-authenticator ca secret: %v", err)
 	}
 	return nil
 }

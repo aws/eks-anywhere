@@ -1090,6 +1090,7 @@ func newTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) *testSetup 
 type clusterManagerMocks struct {
 	writer             *mockswriter.MockFileWriter
 	networking         *mocksmanager.MockNetworking
+	awsIamAuth         *mocksmanager.MockAwsIamAuth
 	client             *mocksmanager.MockClusterClient
 	provider           *mocksprovider.MockProvider
 	diagnosticsBundle  *mocksdiagnostics.MockDiagnosticBundle
@@ -1101,13 +1102,14 @@ func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (
 	m := &clusterManagerMocks{
 		writer:             mockswriter.NewMockFileWriter(mockCtrl),
 		networking:         mocksmanager.NewMockNetworking(mockCtrl),
+		awsIamAuth:         mocksmanager.NewMockAwsIamAuth(mockCtrl),
 		client:             mocksmanager.NewMockClusterClient(mockCtrl),
 		provider:           mocksprovider.NewMockProvider(mockCtrl),
 		diagnosticsFactory: mocksdiagnostics.NewMockDiagnosticBundleFactory(mockCtrl),
 		diagnosticsBundle:  mocksdiagnostics.NewMockDiagnosticBundle(mockCtrl),
 	}
 
-	c := clustermanager.New(m.client, m.networking, m.writer, m.diagnosticsFactory, opts...)
+	c := clustermanager.New(m.client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, opts...)
 
 	return c, m
 }
