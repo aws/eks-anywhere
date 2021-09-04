@@ -336,12 +336,6 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 				tagOptions["eksDReleaseChannel"],
 				r.BundleNumber,
 			)
-		} else if name == "eks-anywhere-cli-tools" {
-			sourceImageUri = fmt.Sprintf("%s/%s:eks-a-%d",
-				r.SourceContainerRegistry,
-				repoName,
-				r.BundleNumber,
-			)
 		} else if name == "eks-anywhere-cluster-controller" {
 			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%d",
 				r.SourceContainerRegistry,
@@ -394,12 +388,6 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 			repoName,
 			tagOptions["gitTag"],
 			tagOptions["eksDReleaseChannel"],
-			semVer,
-		)
-	} else if name == "eks-anywhere-cli-tools" {
-		releaseImageUri = fmt.Sprintf("%s/%s:eks-a-%s",
-			r.ReleaseContainerRegistry,
-			repoName,
 			semVer,
 		)
 	} else if name == "eks-anywhere-cluster-controller" {
