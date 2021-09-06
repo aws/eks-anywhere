@@ -12,7 +12,7 @@ Then if you want to delete your cluster, use the `delete cluster` command to del
 
 ### Testing
 
-Refer [this](https://github.com/aws/modelrocket-cli/tree/main/test/e2e) doc for running e2e tests locally.
+Refer [this](https://github.com/aws/eks-anywhere/tree/main/test/e2e) doc for running e2e tests locally.
 
 ### Docker Support
 
