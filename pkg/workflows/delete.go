@@ -122,7 +122,7 @@ func (s *installCapi) Name() string {
 
 func (s *moveClusterManagement) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Moving cluster management from workload cluster")
-	err := commandContext.ClusterManager.MoveCapi(ctx, commandContext.WorkloadCluster, commandContext.BootstrapCluster)
+	err := commandContext.ClusterManager.MoveCapi(ctx, commandContext.WorkloadCluster, commandContext.BootstrapCluster, types.WithNodeRef())
 	if err != nil {
 		commandContext.SetError(err)
 		return nil

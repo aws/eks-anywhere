@@ -1,4 +1,4 @@
-// +build e2e
+// +build conformance_e2e
 
 package e2e
 

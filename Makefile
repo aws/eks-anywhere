@@ -20,7 +20,7 @@ KUSTOMIZE_VERSION := 4.2.0
 KUBEBUILDER := $(TOOLS_BIN_DIR)/kubebuilder
 KUBEBUILDER_VERSION := v3.1.0
 
-CONTROLLER_GEN_BIN := contoller-gen
+CONTROLLER_GEN_BIN := controller-gen
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)
 
 # This removes the compile dependency on C libraries from github.com/containers/storage which is imported by github.com/replicatedhq/troubleshoot
@@ -29,7 +29,7 @@ BUILD_TAGS := exclude_graphdriver_btrfs exclude_graphdriver_devicemapper
 GO_ARCH:=$(shell go env GOARCH)
 GO_OS:=$(shell go env GOOS)
 
-DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow 
+DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow
 
 .PHONY: build
 build: eks-a eks-a-tool lint unit-test ## Generate binaries, run go lint and unit tests
@@ -42,7 +42,7 @@ eks-a-binary: ALL_LINKER_FLAGS := $(LINKER_FLAGS) -X github.com/aws/eks-anywhere
 eks-a-binary: LINKER_FLAGS_ARG := -ldflags "$(ALL_LINKER_FLAGS)"
 eks-a-binary: BUILD_TAGS_ARG := -tags "$(BUILD_TAGS)"
 eks-a-binary: OUTPUT_FILE ?= bin/eksctl-anywhere
-eks-a-binary: 
+eks-a-binary:
 	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) go build $(BUILD_TAGS_ARG) $(LINKER_FLAGS_ARG) -o $(OUTPUT_FILE) github.com/aws/eks-anywhere/cmd/eks-a
 
 .PHONY: eks-a-embed-config
@@ -64,8 +64,8 @@ eks-a-cross-platform: ## Generate binaries for Linux and MacOS
 
 .PHONY: eks-a-release-cross-platform
 eks-a-release-cross-platform: ## Generate binaries for Linux and MacOS
-	$(MAKE) eks-a-binary GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/eksctl-anywhere LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'
-	$(MAKE) eks-a-binary GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/eksctl-anywhere LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'
+	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/eksctl-anywhere LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'
+	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/eksctl-anywhere LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'
 
 $(TOOLS_BIN_DIR):
 	mkdir -p $(TOOLS_BIN_DIR)
@@ -78,7 +78,7 @@ $(KUBEBUILDER): $(TOOLS_BIN_DIR)
 	chmod +x $(KUBEBUILDER)
 
 $(CONTROLLER_GEN): $(TOOLS_BIN_DIR)
-	cd $(TOOLS_BIN_DIR); go build -tags=tools -o $(CONTROLLER_GEN_BIN) sigs.k8s.io/controller-tools/cmd/controller-gen 
+	cd $(TOOLS_BIN_DIR); go build -tags=tools -o $(CONTROLLER_GEN_BIN) sigs.k8s.io/controller-tools/cmd/controller-gen
 
 .PHONY: lint
 lint: bin/golangci-lint ## Run golangci-lint
@@ -200,6 +200,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/internal/templates/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/templates/factory.go" GovcClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/internal/tags/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/tags/factory.go" GovcClient
 	${GOPATH}/bin/mockgen -destination=pkg/validations/upgradevalidations/mocks/upgradevalidations.go -package=mocks -source "pkg/validations/upgradevalidations/upgradevalidations.go" ValidationsKubectlClient
+	${GOPATH}/bin/mockgen -destination=pkg/support/interfaces/mocks/support.go -package=mocks -source "pkg/support/interfaces.go" DiagnosticBundle,AnalyzerFactory,CollectorFactory
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
@@ -210,16 +211,30 @@ verify-mocks: mocks ## Verify if mocks need to be updated
 	fi
 
 .PHONY: e2e
-e2e: e2e-tests-binary integration-test-binary ## Run integration tests
+e2e: eks-a-e2e integration-test-binary ## Build integration tests
+	$(MAKE) e2e-tests-binary E2E_TAGS=e2e
+
+.PHONY: conformance-tests
+conformance-tests: eks-a-e2e integration-test-binary ## Build e2e conformance tests
+	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
+
+.PHONY: eks-a-e2e
+eks-a-e2e:
 	if [ "$(CODEBUILD_CI)" = "true" ]; then \
-		make eks-a-cross-platform; \
+		if [[ "$(CODEBUILD_BUILD_ID)" =~ "aws-staging-eks-a-build" ]]; then \
+			make eks-a-release-cross-platform GIT_VERSION=$(shell cat release/triggers/eks-a-release/development/RELEASE_VERSION) RELEASE_MANIFEST_URL=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml; \
+			make eks-a-release GIT_VERSION=$(DEV_GIT_VERSION); \
+		else \
+			make eks-a-cross-platform; \
+			make eks-a; \
+		fi \
 	else \
 		make eks-a; \
 	fi
 
 .PHONY: e2e-tests-binary
 e2e-tests-binary:
-	go test ./test/e2e -c -o bin/e2e.test -tags e2e -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION)"
+	go test ./test/e2e -c -o bin/e2e.test -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL)"
 
 .PHONY: integration-test-binary
 integration-test-binary:

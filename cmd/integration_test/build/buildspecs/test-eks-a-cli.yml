@@ -31,7 +31,6 @@ phases:
     commands:
     - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/set_profile.sh
     - /docker.sh
-    - cp ./bin/linux/eksctl-anywhere ./bin/eksctl-anywhere
   build:
     commands:
     - export JOB_ID=$CODEBUILD_BUILD_ID
@@ -42,8 +41,11 @@ phases:
       -j ${JOB_ID}
       -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
       -n ${INTEGRATION_TEST_SUBNET_ID}
-      -m 35
-      -r 'Test(VSphere|Docker)Kubernetes.*(SimpleFlow|OIDC|ExternalEtcd|Upgrade|Autoimport)'
+      -m 40
+      -r 'Test'
+      --skip 'TestDockerKubernetes119Flux,TestDockerKubernetes119ThreeReplicasFlux,TestVSphereKubernetes119Flux,TestVSphereKubernetes119ThreeReplicasFlux,TestDockerKubernetes118Flux,TestDockerKubernetes12OFlux,TestDockerKubernetes121Flux,TestVSphereKubernetes118Flux,TestVSphereKubernetes120Flux,TestVSphereKubernetes121Flux,TestDockerKubernetes119GitopsOptionsFlux,TestVSphereKubernetes119GitopsOptionsFlux,TestVSphereKubernetes120UbuntuTo121WithFluxUpgrade,TestVSphereKubernetes120BottlerocketTo121WithFluxUpgrade'
+  post_build:
+    commands:
     - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
     - export GIT_HASH=$(cat bin/githash)
     - >
@@ -52,9 +54,7 @@ phases:
       "eks-a-cli"
       $CODEBUILD_BUILD_NUMBER
       $GIT_HASH
-#  post_build:
-#    commands:
-#    - >
-#      ./bin/test e2e cleanup vsphere
-#      -n eksa-test
-#      -v 4
+    # - >
+    #   ./bin/test e2e cleanup vsphere
+    #   -n eksa-test
+    #   -v 4

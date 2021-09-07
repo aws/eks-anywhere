@@ -4,7 +4,7 @@ linkTitle: "Verify cluster"
 weight: 11
 date: 2017-01-05
 description: >
-  How to verify an EKS-A cluster is running properly
+  How to verify an EKS Anywhere cluster is running properly
 ---
 To verify that a cluster control plane is up and running, use the `kubectl` command to show that the control plane pods are all running.
 

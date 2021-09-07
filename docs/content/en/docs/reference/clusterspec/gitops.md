@@ -7,9 +7,9 @@ description: >
 ---
 
 # GitOps Support (Optional)
-EKS-A can create clusters that supports GitOps configuration managment with Flux. 
+EKS Anywhere can create clusters that supports GitOps configuration management with Flux. 
 In order to add GitOps support, you need to configure your cluster by updating the configuration file before creating the cluster. 
-This is a generic template with detailed descriptions below for reference:
+Please note that for the GitOps config to work successfully the environment variable `EKSA_GITHUB_TOKEN` needs to be set with a valid [GitHub PAT](https://github.com/settings/tokens/new). This is a generic template with detailed descriptions below for reference:
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
@@ -45,7 +45,7 @@ spec:
 ### Flux Configuration Spec Details
 ### __github__ (required)
 * __Description__: `github` is the only currently supported git provider.
-  This defines your github configuration to be used by EKS-A and flux.
+  This defines your github configuration to be used by EKS Anywhere and flux.
 * __Type__: object
 
 ### github Configuration Spec Details
@@ -67,7 +67,7 @@ spec:
 * __Type__: boolean
 
 #### __clusterConfigPath__ (optional)
-* __Description__: The path relative to the root of the git repository where EKS-A will store the cluster configuration files.
+* __Description__: The path relative to the root of the git repository where EKS Anywhere will store the cluster configuration files.
 * __Default__: `clusters/$CLUSTER_NAME`
 * __Type__: string
 
@@ -77,6 +77,6 @@ spec:
 * __Type__: string
 
 #### __branch__ (optional)
-* __Description__: The branch to use whe commiting the configuration.
+* __Description__: The branch to use when commiting the configuration.
 * __Default__: `main`
 * __Type__: string

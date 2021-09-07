@@ -80,6 +80,10 @@ func UpdateUbuntuTemplate121Var() api.VSphereFiller {
 	return api.WithStringFromEnvVar(vsphereTemplateUbuntu121Var, api.WithTemplate)
 }
 
+func UpdateBottlerocketTemplate121() api.VSphereFiller {
+	return api.WithStringFromEnvVar(vsphereTemplateBR121Var, api.WithTemplate)
+}
+
 func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 	checkRequiredEnvVars(t, requiredEnvVars)
 	c := buildGovc(t)
@@ -111,25 +115,37 @@ func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 
 func WithUbuntu121() VSphereOpt {
 	return func(v *VSphere) {
-		v.fillers = append(v.fillers, api.WithStringFromEnvVar(vsphereTemplateUbuntu121Var, api.WithTemplate))
+		v.fillers = append(v.fillers,
+			api.WithStringFromEnvVar(vsphereTemplateUbuntu121Var, api.WithTemplate),
+			api.WithOsFamily(v1alpha1.Ubuntu),
+		)
 	}
 }
 
 func WithUbuntu120() VSphereOpt {
 	return func(v *VSphere) {
-		v.fillers = append(v.fillers, api.WithStringFromEnvVar(vsphereTemplateUbuntu120Var, api.WithTemplate))
+		v.fillers = append(v.fillers,
+			api.WithStringFromEnvVar(vsphereTemplateUbuntu120Var, api.WithTemplate),
+			api.WithOsFamily(v1alpha1.Ubuntu),
+		)
 	}
 }
 
 func WithUbuntu119() VSphereOpt {
 	return func(v *VSphere) {
-		v.fillers = append(v.fillers, api.WithStringFromEnvVar(vsphereTemplateUbuntu119Var, api.WithTemplate))
+		v.fillers = append(v.fillers,
+			api.WithStringFromEnvVar(vsphereTemplateUbuntu119Var, api.WithTemplate),
+			api.WithOsFamily(v1alpha1.Ubuntu),
+		)
 	}
 }
 
 func WithUbuntu118() VSphereOpt {
 	return func(v *VSphere) {
-		v.fillers = append(v.fillers, api.WithStringFromEnvVar(vsphereTemplateUbuntu118Var, api.WithTemplate))
+		v.fillers = append(v.fillers,
+			api.WithStringFromEnvVar(vsphereTemplateUbuntu118Var, api.WithTemplate),
+			api.WithOsFamily(v1alpha1.Ubuntu),
+		)
 	}
 }
 

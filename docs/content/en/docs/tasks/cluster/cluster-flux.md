@@ -9,16 +9,16 @@ description: >
 
 ## GitOps Support (optional)
 
-EKS-A supports a [GitOps](https://www.weave.works/technologies/gitops/) workflow for the management of your cluster.
+EKS Anywhere supports a [GitOps](https://www.weave.works/technologies/gitops/) workflow for the management of your cluster.
 
-When you create a cluster with GitOps enabled, EKS-A will automatically commit your cluster configuration to the provided GitHub repository and install a GitOps toolkit on your cluster which watches that committed configuration file.
+When you create a cluster with GitOps enabled, EKS Anywhere will automatically commit your cluster configuration to the provided GitHub repository and install a GitOps toolkit on your cluster which watches that committed configuration file.
 You can then manage the scale of the cluster by making changes to the version controlled cluster configuration file and committing the changes.
 Once a change is detected by the GitOps controller running in your cluster, the scale of the cluster will be adjusted to match the committed configuration file.
 
 If you'd like to learn more about GitOps and the associated best practices, [check out this introduction from Weaveworks](https://www.weave.works/technologies/gitops/).
 
 >**_NOTE:_** Installing a GitOps controller needs to be done during cluster creation.
-In the event that GitOps installation fails, EKS-A cluster creation will continue.
+In the event that GitOps installation fails, EKS Anywhere cluster creation will continue.
 
 ### Supported Cluster Properties
 
@@ -32,7 +32,7 @@ If an immutable immutable field is changed in Git repsitory, there are two ways 
 2. Check the Flux Kustomization Controller log: `kubectl logs -f -n flux-system kustomize-controller-******` for error message containing text similar to `Invalid value: 1: field is immutable`
 
 
-## Getting Started with EKS-A GitOps
+## Getting Started with EKS Anywhere GitOps
 
 In order to use GitOps to manage cluster scaling, you need a couple of things:
 
@@ -49,41 +49,20 @@ It must be scoped for all `repo` permissions.
 
 This PAT should have at least the following permissions:
 
-![Github PAT permissions](/images/ss5.png)
+![GitHub PAT permissions](/images/ss5.png)
 
 >**_NOTE:_** The PAT must belong to the `owner` of the `repository` or, if using an organization as the `owner`, the creator of the `PAT` must have repo permission in that organization.
 
-You can provide the PAT to EKS-A in one of two ways:
-
-* (default) Set the `$GITHUB_TOKEN` environment variable to the value of your PAT
+You need to set your PAT as the environment variable $EKSA_GITHUB_TOKEN to use it during cluster creation:
 
    ```
-   export GITHUB_TOKEN=ghp_MyValidPersonalAccessTokenWithRepoPermissions
+   export EKSA_GITHUB_TOKEN=ghp_MyValidPersonalAccessTokenWithRepoPermissions
    ```
-
-* A Github Token file with read permissions.
-  The file should be plain text with only the token text inside.
-  **Do not commit and push this file to a public GitHub repo.**
-
-  Provide the full path to the file in your GitOps configuration in the field `authTokenPath` of the `flux` `gitops` spec.
-  ```
-  apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-  kind: GitOpsConfig
-  metadata:
-    name: my-gitops-config
-  spec:
-    flux:
-      github:
-        personal: true
-        repository: mygithubrepository
-        owner: mygithubusername
-        authTokenPath: ./GH_TOKEN.txt
-  ```
 
 ### Create GitOps configuration repo
 
-If you have an existing repo you can set it as your repository name in the configuration.
-If you specify a repo in your `GitOpsConfig` which does not exist EKS-A will create it for you.
+If you have an existing repo you can set that as your repository name in the configuration.
+If you specify a repo in your `GitOpsConfig` which does not exist EKS Anywhere will create it for you.
 If you would like to create a new repo you can [click here](https://github.new) to create a new repo.
 
 If your repository contains multiple cluster specification files, store them in subfolders and specify the [configuration path](/docs/reference/clusterspec/gitops/#__clusterconfigpath__-optional) in your cluster specification.
@@ -135,7 +114,7 @@ For a full spec reference see the [Cluster Spec reference]({{< relref "../../ref
 
 >**_NOTE:_** After your cluster is created the cluster configuration will automatically be commited to your git repo.
 
-1. Create an EKS-A cluster with GitOps enabled.
+1. Create an EKS Anywhere cluster with GitOps enabled.
 
     ```bash
     CLUSTER_NAME=gitops
@@ -144,7 +123,7 @@ For a full spec reference see the [Cluster Spec reference]({{< relref "../../ref
 
 ### Test GitOps controller
 
-After your cluster is created you can test the GitOps contoller by modifying the cluster specification.
+After your cluster is created you can test the GitOps controller by modifying the cluster specification.
 
 1. Clone your git repo and modify the cluster specification.
    The default path for the cluster file is:

@@ -564,8 +564,6 @@ func TestPreflightValidations(t *testing.T) {
 				Provider:        provider,
 			}
 
-			workloadCluster.Name = testclustername
-
 			clusterSpec.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
 			existingClusterSpec := &cluster.Spec{
 				Cluster:      clusterSpec.DeepCopy(),
@@ -585,8 +583,8 @@ func TestPreflightValidations(t *testing.T) {
 			provider.EXPECT().DatacenterConfig().Return(existingProviderSpec).MaxTimes(1)
 			provider.EXPECT().ValidateNewSpec(ctx, workloadCluster).Return(nil).MaxTimes(1)
 			k.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Spec.DatacenterRef.Name, gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
-			k.EXPECT().ValidateControlPlaneNodes(ctx, testclustername, kubeconfigFilePath).Return(tc.cpResponse)
-			k.EXPECT().ValidateWorkerNodes(ctx, testclustername, kubeconfigFilePath).Return(tc.workerResponse)
+			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster).Return(tc.cpResponse)
+			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster).Return(tc.workerResponse)
 			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
 			k.EXPECT().ValidateClustersCRD(ctx, workloadCluster).Return(tc.crdResponse)
 			k.EXPECT().GetClusters(ctx, workloadCluster).Return(tc.getClusterResponse, nil)

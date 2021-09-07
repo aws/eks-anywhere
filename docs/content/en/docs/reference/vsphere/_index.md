@@ -3,7 +3,7 @@ title: "VMware vSphere"
 linkTitle: "VMware vSphere"
 weight: 15
 description: >
-  Specification for VMware vSphere provider
+  Preparing a VMware vSphere provider for EKS Anywhere
 ---
 
 <!-- overview -->
@@ -35,10 +35,10 @@ The administrative machine and the target workload environment will need network
 
 # Default templates
 
-If you don't specify a template in the cluster spec file, EKS-A will use the proper default one for the Kubernetes minor version and OS family you specified in the spec file.
+If you don't specify a template in the cluster spec file, EKS Anywhere will use the proper default one for the Kubernetes minor version and OS family you specified in the spec file.
 If the template doesn't exist, it will import the appropriate OVA into vSphere and add the necessary tags.
 
-The default OVA for a Kubernetes minor version + OS family will change over time, for example, when a new EKS-D version is released. In that case, new clusters will use the new OVA (EKS-A will import it automatically).
+The default OVA for a Kubernetes minor version + OS family will change over time, for example, when a new EKS-D version is released. In that case, new clusters will use the new OVA (EKS Anywhere will import it automatically).
 
 # Import an OVA/OVF template to vSphere
 
@@ -195,6 +195,6 @@ govc tags.attach eksdRelease:kubernetes-1-20-eks-2 <Template Path>
 ```
 govc tags.ls <Template Path> 
 ```
-** NOTE: If the tags above are not applied as shown exactly, eks-a template validations will fail and CLI will abort
+** NOTE: If the tags above are not applied as shown exactly, EKS Anywhere template validations will fail and CLI will abort
 
 After you are done you can use the template for your workload cluster.

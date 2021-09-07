@@ -24,6 +24,7 @@ import (
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/ecrpublic"
@@ -275,7 +276,7 @@ func (r *ReleaseConfig) CreateProdReleaseClients() (*SourceClients, *ReleaseClie
 	}
 
 	// Get release ECR Public auth config
-	fmt.Printf("Release container registry is: %s", r.SourceContainerRegistry)
+	fmt.Printf("Release container registry is: %s", r.ReleaseContainerRegistry)
 	releaseEcrPublicClient := ecrpublic.New(releaseSession)
 	releaseAuthConfig, err := getEcrPublicAuthConfig(releaseEcrPublicClient)
 	if err != nil {
@@ -369,7 +370,7 @@ func getEcrPublicAuthConfig(ecrPublicClient *ecrpublic.ECRPublic) (*docker.AuthC
 }
 
 func getEksdRelease(eksdReleaseURL string) (*eksdv1alpha1.Release, error) {
-	content, err := readHttpFile(eksdReleaseURL)
+	content, err := ReadHttpFile(eksdReleaseURL)
 	if err != nil {
 		return nil, err
 	}
@@ -382,7 +383,7 @@ func getEksdRelease(eksdReleaseURL string) (*eksdv1alpha1.Release, error) {
 	return eksd, nil
 }
 
-func readHttpFile(uri string) ([]byte, error) {
+func ReadHttpFile(uri string) ([]byte, error) {
 	fmt.Printf("Downloading %s\n", uri)
 	resp, err := http.Get(uri)
 	if err != nil {
@@ -396,4 +397,24 @@ func readHttpFile(uri string) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func ExistsInS3(releaseClients *ReleaseClients, bucket string, key string) (bool, error) {
+	s3Client := releaseClients.S3.Client
+	_, err := s3Client.HeadObject(&s3.HeadObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case "NotFound":
+				return false, nil
+			default:
+				return false, err
+			}
+		}
+		return false, err
+	}
+	return true, nil
 }

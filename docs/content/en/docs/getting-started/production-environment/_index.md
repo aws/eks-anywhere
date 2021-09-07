@@ -4,8 +4,8 @@ weight: 40
 ---
 
 EKS Anywhere supports a vSphere provider for production grade EKS Anywhere deployments.
-The purpose of this doc is to walk you through getting set-up with EKS Anywhere (EKS-A).
-EKS-A allows you to provision and manage Amazon EKS on your own infrastructure.
+The purpose of this doc is to walk you through getting set-up with EKS Anywhere.
+EKS Anywhere allows you to provision and manage Amazon EKS on your own infrastructure.
 
 ## Prerequisite Checklist
 
@@ -26,7 +26,7 @@ To run EKS Anywhere, you will need the following:
       --provider vsphere > eksa-cluster.yaml
    ```
 
-    A production grade EKS-A cluster should be made with at least three control plane nodes and three worker nodes
+    A production grade EKS Anywhere cluster should be made with at least three control plane nodes and three worker nodes
     for high availability and rolling upgrades.:
     ```
       controlPlaneConfiguration:
@@ -52,9 +52,14 @@ To run EKS Anywhere, you will need the following:
    name and password. Make sure you use single quotes around the values so that your shell does not interpret the values:
    
    ```bash
-   export VSPHERE_USERNAME='billy'
-   export VSPHERE_PASSWORD='t0p$ecret'
+   export EKSA_VSPHERE_USERNAME='billy'
+   export EKSA_VSPHERE_PASSWORD='t0p$ecret'
    ```
+
+   EKS Anywhere clusters function as both workload and management clusters.
+   Management clusters are responsible for the lifecycle of workload clusters (i.e. create, upgrade, and delete clusters), while workload clusters run user applications.
+
+   Future versions of EKS Anywhere will enable users to create a dedicated management cluster that will govern multiple workload clusters allowing for segmentation of different cluster types.
 
 1. Create a cluster
 

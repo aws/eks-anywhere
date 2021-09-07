@@ -206,6 +206,8 @@ func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) 
 		"etcdadm-controller":           r.GetEtcdadmControllerAssets,
 		"cluster-controller":           r.GetClusterControllerAssets,
 		"kindnetd":                     r.GetKindnetdAssets,
+		"etcdadm":                      r.GetEtcdadmAssets,
+		"cri-tools":                    r.GetCriToolsAssets,
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
@@ -320,7 +322,7 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 	} else if r.ReleaseEnvironment == "production" {
 		if name == "bottlerocket-bootstrap" {
 			sourceImageUri = fmt.Sprintf("%s/%s:v%s-%s-eks-a-%d",
-				r.ReleaseContainerRegistry,
+				r.SourceContainerRegistry,
 				repoName,
 				tagOptions["eksDReleaseChannel"],
 				tagOptions["eksDReleaseNumber"],
@@ -332,12 +334,6 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 				repoName,
 				tagOptions["gitTag"],
 				tagOptions["eksDReleaseChannel"],
-				r.BundleNumber,
-			)
-		} else if name == "eks-anywhere-cli-tools" {
-			sourceImageUri = fmt.Sprintf("%s/%s:eks-a-%d",
-				r.SourceContainerRegistry,
-				repoName,
 				r.BundleNumber,
 			)
 		} else if name == "eks-anywhere-cluster-controller" {
@@ -392,12 +388,6 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 			repoName,
 			tagOptions["gitTag"],
 			tagOptions["eksDReleaseChannel"],
-			semVer,
-		)
-	} else if name == "eks-anywhere-cli-tools" {
-		releaseImageUri = fmt.Sprintf("%s/%s:eks-a-%s",
-			r.ReleaseContainerRegistry,
-			repoName,
 			semVer,
 		)
 	} else if name == "eks-anywhere-cluster-controller" {

@@ -30,9 +30,8 @@ phases:
   pre_build:
     commands:
     - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/set_profile.sh
-    - make e2e
+    - make conformance-tests
     - /docker.sh
-    - cp ./bin/linux/eksctl-anywhere ./bin/eksctl-anywhere
   build:
     commands:
     - export JOB_ID=$CODEBUILD_BUILD_ID
@@ -44,7 +43,7 @@ phases:
       -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
       -n ${INTEGRATION_TEST_SUBNET_ID}
       -m 25
-      -r 'Test(VSphere|Docker)Kubernetes.*ConformanceFlow'
+      -r 'Test'
   post_build:
     commands:
     - >

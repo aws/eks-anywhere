@@ -6,9 +6,9 @@ date: 2017-01-05
 description: >
   How to perform a cluster version upgrade
 ---
-EKS-A provides the command `upgrade`, which allows you to `upgrade` various aspects of your EKS-A cluster.
-When you run `eksctl anywhere upgrade cluster -f ./cluster.yaml`, EKS-A runs a set of preflight checks to ensure your cluster is ready to be upgraded.
-EKS-A then performs the upgrade, modifying your cluster to match the updated specification. 
+EKS Anywhere provides the command `upgrade`, which allows you to `upgrade` various aspects of your EKS Anywhere cluster.
+When you run `eksctl anywhere upgrade cluster -f ./cluster.yaml`, EKS Anywhere runs a set of preflight checks to ensure your cluster is ready to be upgraded.
+EKS Anywhere then performs the upgrade, modifying your cluster to match the updated specification. 
 
 
 ### Minor Version Upgrades
@@ -91,7 +91,7 @@ GitOps field not specified, resume flux kustomization skipped
 ```
 
 ### Upgradeable Cluster Attributes
-EKS-A `upgrade` supports upgrading more than just the `kubernetesVersion`, 
+EKS Anywhere `upgrade` supports upgrading more than just the `kubernetesVersion`, 
 allowing you to upgrade a number of fields simultaneously with the same procedure.
 
 #### Upgradeable Attributes

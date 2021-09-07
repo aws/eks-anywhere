@@ -1,0 +1,15 @@
+version: 1
+applications:
+  - frontend:
+      phases:
+        build:
+          commands:
+            - make release
+      artifacts:
+        baseDirectory: public
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+    appRoot: docs

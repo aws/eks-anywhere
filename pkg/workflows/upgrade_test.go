@@ -123,7 +123,7 @@ func (c *upgradeTestSetup) expectUpgradeWorkloadToReturn(err error) {
 func (c *upgradeTestSetup) expectMoveManagementToBootstrap() {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().MoveCapi(
-			c.ctx, c.workloadCluster, c.bootstrapCluster,
+			c.ctx, c.workloadCluster, c.bootstrapCluster, gomock.Any(), gomock.Any(),
 		),
 	)
 }
@@ -131,7 +131,7 @@ func (c *upgradeTestSetup) expectMoveManagementToBootstrap() {
 func (c *upgradeTestSetup) expectMoveManagementToWorkload() {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().MoveCapi(
-			c.ctx, c.bootstrapCluster, c.workloadCluster,
+			c.ctx, c.bootstrapCluster, c.workloadCluster, gomock.Any(), gomock.Any(),
 		),
 	)
 }

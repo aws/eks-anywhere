@@ -42,6 +42,7 @@ const (
 	expectedExpClusterResourceSet = "expClusterResourceSetKey"
 	eksd119Release                = "kubernetes-1-19-eks-4"
 	eksd119ReleaseTag             = "eksdRelease:kubernetes-1-19-eks-4"
+	eksd121ReleaseTag             = "eksdRelease:kubernetes-1-21-eks-4"
 	ubuntuOSTag                   = "os:ubuntu"
 	bottlerocketOSTag             = "os:bottlerocket"
 	testTemplate                  = "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
@@ -100,7 +101,7 @@ func (pc *DummyProviderGovcClient) ImportTemplate(ctx context.Context, library, 
 }
 
 func (pc *DummyProviderGovcClient) GetTags(ctx context.Context, path string) (tags []string, err error) {
-	return []string{eksd119ReleaseTag, pc.osTag}, nil
+	return []string{eksd119ReleaseTag, eksd121ReleaseTag, pc.osTag}, nil
 }
 
 func (pc *DummyProviderGovcClient) ListTags(ctx context.Context) ([]string, error) {
@@ -373,6 +374,57 @@ func TestProviderGenerateDeploymentFileUpgradeCmdUpdateMachineTemplateExternalEt
 
 			fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
 			writtenFile, err := provider.GenerateDeploymentFileForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, fileName)
+			if err != nil {
+				t.Fatalf("failed to generate deployment file: %v", err)
+			}
+			if fileName == "" {
+				t.Fatalf("empty fileName returned by GenerateDeploymentFile")
+			}
+			test.AssertFilesEquals(t, writtenFile, tt.wantDeploymentFile)
+		})
+	}
+}
+
+func TestProviderGenerateDeploymentFileCreateCmdSystemdCgroupForK8sVersion(t *testing.T) {
+	tests := []struct {
+		testName           string
+		clusterconfigFile  string
+		wantDeploymentFile string
+	}{
+		{
+			testName:           "main",
+			clusterconfigFile:  "cluster_main_121.yaml",
+			wantDeploymentFile: "testdata/expected_results_121.yaml",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			var tctx testContext
+			tctx.SaveContext()
+			defer tctx.RestoreContext()
+			ctx := context.Background()
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+			cluster := &types.Cluster{
+				Name: "test",
+			}
+			clusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
+
+			datacenterConfig := givenDatacenterConfig(t, tt.clusterconfigFile)
+			machineConfigs := givenMachineConfigs(t, tt.clusterconfigFile)
+			_, writer := test.NewWriter(t)
+			provider := NewProviderCustomNet(datacenterConfig, machineConfigs, clusterSpec.Cluster, NewDummyProviderGovcClient(), kubectl, writer, &DummyNetClient{}, test.FakeNow, false)
+			if provider == nil {
+				t.Fatalf("provider object is nil")
+			}
+
+			err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+			if err != nil {
+				t.Fatalf("failed to setup and validate: %v", err)
+			}
+
+			fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
+			writtenFile, err := provider.GenerateDeploymentFileForCreate(context.Background(), cluster, clusterSpec, fileName)
 			if err != nil {
 				t.Fatalf("failed to generate deployment file: %v", err)
 			}

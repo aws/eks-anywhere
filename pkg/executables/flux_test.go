@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	githubToken   = "EKSA_GITHUB_TOKEN"
-	validPATValue = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	gitProvider   = "github"
+	githubToken        = "GITHUB_TOKEN"
+	eksaGithubTokenEnv = "EKSA_GITHUB_TOKEN"
+	validPATValue      = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	gitProvider        = "github"
 )
 
 type testFluxContext struct {
@@ -26,15 +27,16 @@ type testFluxContext struct {
 }
 
 func (tctx *testFluxContext) SaveContext() {
-	tctx.oldGithubToken, tctx.isGithubTokenSet = os.LookupEnv(githubToken)
-	os.Setenv(githubToken, validPATValue)
+	tctx.oldGithubToken, tctx.isGithubTokenSet = os.LookupEnv(eksaGithubTokenEnv)
+	os.Setenv(eksaGithubTokenEnv, validPATValue)
+	os.Setenv(githubToken, os.Getenv(eksaGithubTokenEnv))
 }
 
 func (tctx *testFluxContext) RestoreContext() {
 	if tctx.isGithubTokenSet {
-		os.Setenv(githubToken, tctx.oldGithubToken)
+		os.Setenv(eksaGithubTokenEnv, tctx.oldGithubToken)
 	} else {
-		os.Unsetenv(githubToken)
+		os.Unsetenv(eksaGithubTokenEnv)
 	}
 }
 

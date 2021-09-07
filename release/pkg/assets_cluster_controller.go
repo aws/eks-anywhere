@@ -81,7 +81,7 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		sourceS3Prefix = "projects/aws/eks-anywhere/latest/manifests/cluster-controller"
 	} else {
-		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/eks-anywhere/manifests/cluster-controller/%s", r.BundleNumber, gitTag)
+		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/eks-anywhere-cluster-controller/manifests/%s", r.BundleNumber, gitTag)
 	}
 
 	if r.DevRelease {

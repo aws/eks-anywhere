@@ -116,7 +116,7 @@ func (e *E2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion) {
 	err := r.Retry(func() error {
 		err := e.KubectlClient.ValidateNodes(ctx, e.cluster().KubeconfigFile)
 		if err != nil {
-			return fmt.Errorf("error validating cluster: %v", err)
+			return fmt.Errorf("error validating nodes status: %v", err)
 		}
 		return nil
 	})
@@ -124,9 +124,14 @@ func (e *E2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion) {
 		e.T.Fatalf("%v", err)
 	}
 	e.T.Log("Validating cluster node version")
-	err = e.KubectlClient.ValidateNodesVersion(ctx, e.cluster().KubeconfigFile, kubeVersion)
+	err = retrier.Retry(180, 1*time.Second, func() error {
+		if err = e.KubectlClient.ValidateNodesVersion(ctx, e.cluster().KubeconfigFile, kubeVersion); err != nil {
+			return fmt.Errorf("error validating nodes version: %v", err)
+		}
+		return nil
+	})
 	if err != nil {
-		e.T.Fatalf("error validating cluster: %v", err)
+		e.T.Fatal(err)
 	}
 }
 
@@ -187,10 +192,18 @@ func (e *E2ETest) Run(name string, args ...string) {
 	e.T.Log("Running shell command", "[", command, "]")
 	cmd := exec.CommandContext(context.Background(), "sh", shArgs...)
 
+	envPath := os.Getenv("PATH")
+	workDir, err := os.Getwd()
+	if err != nil {
+		e.T.Fatalf("Error finding current directory: %v", err)
+	}
+
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s/bin:%s", workDir, envPath))
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		e.T.Fatalf("Error running command %s %v: %v", name, args, err)
 	}

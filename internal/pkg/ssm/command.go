@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ssm"
 
@@ -49,11 +50,24 @@ func Run(session *session.Session, instanceId string, command string, opts ...Co
 	for _, opt := range opts {
 		opt(c)
 	}
-
-	logger.V(2).Info("Running ssm command", "cmd", command)
-	result, err := service.SendCommand(c)
+	var result *ssm.SendCommandOutput
+	r := retrier.New(180*time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
+		if request.IsErrorThrottle(err) && totalRetries < 50 {
+			return true, 10 * time.Second
+		}
+		return false, 0
+	}))
+	err := r.Retry(func() error {
+		var err error
+		logger.V(2).Info("Running ssm command", "cmd", command)
+		result, err = service.SendCommand(c)
+		if err != nil {
+			return fmt.Errorf("error sending ssm command: %v", err)
+		}
+		return nil
+	})
 	if err != nil {
-		return fmt.Errorf("error sending ssm command: %v", err)
+		return fmt.Errorf("retries exhausted sending ssm command: %v", err)
 	}
 
 	logger.V(2).Info("SSM command started", "commandId", result.Command.CommandId)
@@ -85,7 +99,7 @@ func Run(session *session.Session, instanceId string, command string, opts ...Co
 
 	logger.V(2).Info("Waiting for ssm command to finish")
 	var commandOut *ssm.GetCommandInvocationOutput
-	r := retrier.New(180 * time.Minute)
+	r = retrier.New(180*time.Minute, retrier.WithMaxRetries(2160, 15*time.Second))
 	err = r.Retry(func() error {
 		var err error
 		commandOut, err = service.GetCommandInvocation(commandIn)

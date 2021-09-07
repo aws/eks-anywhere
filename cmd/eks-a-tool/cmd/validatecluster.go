@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
@@ -27,7 +28,11 @@ var validateClusterCmd = &cobra.Command{
 		if !validations.FileExists(kubeconfig) {
 			log.Fatalf("Error validating the cluster: kubeconfig file %s not found", kubeconfig)
 		}
-		err = validateCluster(cmd.Context(), clusterName, kubeconfig)
+		cluster := &types.Cluster{
+			Name:           clusterName,
+			KubeconfigFile: kubeconfig,
+		}
+		err = validateCluster(cmd.Context(), cluster)
 		if err != nil {
 			log.Fatalf("Error validating the cluster: %v", err)
 		}
@@ -39,23 +44,23 @@ func init() {
 	rootCmd.AddCommand(validateClusterCmd)
 }
 
-func validateCluster(ctx context.Context, clusterName string, kubeconfig string) error {
+func validateCluster(ctx context.Context, cluster *types.Cluster) error {
 	executableBuilder, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	kubectl := executableBuilder.BuildKubectlExecutable()
-	err = kubectl.ValidateNodes(ctx, kubeconfig)
+	err = kubectl.ValidateNodes(ctx, cluster.KubeconfigFile)
 	if err != nil {
 		return err
 	}
-	err = kubectl.ValidateControlPlaneNodes(ctx, clusterName, kubeconfig)
+	err = kubectl.ValidateControlPlaneNodes(ctx, cluster)
 	if err != nil {
 		return err
 	}
-	err = kubectl.ValidateWorkerNodes(ctx, clusterName, kubeconfig)
+	err = kubectl.ValidateWorkerNodes(ctx, cluster)
 	if err != nil {
 		return err
 	}
-	return kubectl.ValidatePods(ctx, kubeconfig)
+	return kubectl.ValidatePods(ctx, cluster.KubeconfigFile)
 }
