@@ -10,13 +10,17 @@ Full documentation for releases can be found on [https://anywhere.eks.amazonaws.
 ## Development
 
 The EKS Anywhere is tested using
-[Prow](https://github.com/kubernetes/test-infra/tree/master/prow), the Kubernetes CI system. EKS operates an installation of Prow, which is visible at [https://prow.eks.amazonaws.com/](https://prow.eks.amazonaws.com/).
-Please read our [CONTRIBUTING](CONTRIBUTING.md) guide before making a Pull Request.
+[Prow](https://github.com/kubernetes/test-infra/tree/master/prow), the Kubernetes CI system.
+EKS operates an installation of Prow, which is visible at [https://prow.eks.amazonaws.com/](https://prow.eks.amazonaws.com/).
+Please read our [CONTRIBUTING](CONTRIBUTING.md) guide before making a pull request.
 Refer to our [end to end guide](https://github.com/aws/eks-anywhere/tree/main/test/e2e) to run E2E tests locally.
 
 ## Security
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+If you discover a potential security issue in this project, or think you may
+have discovered a security issue, we ask that you notify AWS Security via our
+[vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/).
+Please do **not** create a public GitHub issue.
 
 ## License
 
