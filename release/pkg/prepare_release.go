@@ -159,7 +159,7 @@ func (r *ReleaseConfig) renameArtifacts(sourceClients *SourceClients, artifacts 
 					if err != nil {
 						return errors.Cause(err)
 					}
-					regex := fmt.Sprintf("%s/%s.*", r.SourceContainerRegistry, imageTagOverride.Repository)
+					regex := fmt.Sprintf("public.ecr.aws.*%s.*", imageTagOverride.Repository)
 					compiledRegex, err := regexp.Compile(regex)
 					if err != nil {
 						return errors.Cause(err)
