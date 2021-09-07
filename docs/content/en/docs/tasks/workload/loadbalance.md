@@ -20,7 +20,9 @@ Load Balancing is essential in order to maximize availability and scalability. I
 
 ## Current Recommendation: Kube-Vip
 
-We currently recommend using Kube-Vip Kubernetes Service-type Load Balancer. Previously designed to support control-plane resiliency, it has since been expanded to provide load-balancing for applications and services within a Kubernetes cluster. Detailed information about Kube-Vip can be found [here](https://kube-vip.io/).
+We currently recommend using Kube-Vip Kubernetes Service-type Load Balancer.
+Previously designed to support control-plane resiliency, it has since been expanded to provide load-balancing for applications and services within a Kubernetes cluster.
+Detailed information about Kube-Vip can be found [here](https://kube-vip.io/).
 
 ## Setting up Kube-Vip for Service-type Load Balancer
 
@@ -31,7 +33,8 @@ We currently recommend using Kube-Vip Kubernetes Service-type Load Balancer. Pre
     kubectl apply -f - -n kube-system
     ```
 
-2. Create a configMap to specify the IP range for load balancer. You can use either a CIDR block or an IP range
+2. Create a configMap to specify the IP range for load balancer.
+You can use either a CIDR block or an IP range
 
     ```bash
     CIDR=192.168.0.0/24 # Use your CIDR range here
@@ -55,7 +58,8 @@ We currently recommend using Kube-Vip Kubernetes Service-type Load Balancer. Pre
     kubectl apply -f "https://kube-vip.io/manifests/rbac.yaml"
     ```
 
-5. Create the kube-vip daemonset. An example manifest has been included at the end of this document which you can use in place of this step.
+5. Create the kube-vip daemonset.
+An example manifest has been included at the end of this document which you can use in place of this step.
 
     ```bash
     alias kube-vip="docker run --network host --rm plndr/kube-vip:v0.3.5"
@@ -81,7 +85,8 @@ We currently recommend using Kube-Vip Kubernetes Service-type Load Balancer. Pre
     kubectl expose deployment hello-eks-a --port=80 --type=LoadBalancer --name=hello-eks-a
     ```
 
-8. Describe the service to get the IP. The external IP will be the one in CIDR range specified in step 4
+8. Describe the service to get the IP.
+The external IP will be the one in CIDR range specified in step 4
 
     ```bash
     EXTERNAL_IP=$(kubectl get svc hello-eks-a -o jsonpath='{.spec.externalIP}')
@@ -192,7 +197,8 @@ MetalLB installation is described [here](https://metallb.universe.tf/installatio
 
 ### Prerequisites
 
-You will need Helm installed on your system as this is the easiest way to deploy MetalLB. Helm can be installed from [here](https://helm.sh/docs/intro/install/)
+You will need Helm installed on your system as this is the easiest way to deploy MetalLB.
+Helm can be installed from [here](https://helm.sh/docs/intro/install/)
 
 ### Steps
 
