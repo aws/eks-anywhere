@@ -1,35 +1,26 @@
 ## Amazon EKS Anywhere
 
-Amazon EKS Anywhere is a new deployment option for Amazon EKS that enables you to easily create and operate Kubernetes clusters on-premises, on your own virtual machines. It brings a consistent AWS management experience to your data center, building on the strengths of [Amazon EKS Distro](https://github.com/aws/eks-distro), the same distribution of Kubernetes that powers EKS on AWS. Its goal is to include full lifecycle management of multiple Kubernetes clusters that are capable of operating completely independently of any AWS services.
+Amazon EKS Anywhere is a new deployment option for Amazon EKS that enables you to easily create and operate Kubernetes clusters on-premises with your own virtual machines.
+It brings a consistent AWS management experience to your data center, building on the strengths of [Amazon EKS Distro](https://github.com/aws/eks-distro), the same distribution of Kubernetes that powers EKS on AWS.
+Its goal is to include full lifecycle management of multiple Kubernetes clusters that are capable of operating completely independently of any AWS services.
 
-Here are the steps to create a cluster using the EKS Anywhere CLI:
+Here are the steps for [getting started](https://anywhere.eks.amazonaws.com/docs/getting-started/) with EKS Anywhere.
+Full documentation for releases can be found on [https://anywhere.eks.amazonaws.com](https://anywhere.eks.amazonaws.com/).
 
-1. Ensure that you have all the binaries installed as mentioned in the `pkg/executables` folder of this repository
-2. Run `eksctl anywhere generate clusterconfig <cluster-name> -p <provider> > eksa-cluster.yaml` to create a config template. Choose between VSphere or Docker(for development purposes).
-3. Run `eksctl anywhere create cluster -f eksa-cluster.yaml` to create your cluster.
+## Development
 
-Then if you want to delete your cluster, use the `delete cluster` command to delete.
-
-### Testing
-
-Refer [this](https://github.com/aws/eks-anywhere/tree/main/test/e2e) doc for running e2e tests locally.
-
-### Docker Support
-
-EKS Anywhere supports cluster management with docker infrastructure.  
-**NOTE**: The Docker support is not designed for production use and is intended for development environments only.
-
-### Logging
-
-EKS-A supports verbosity flag (-v), by default this is set to 0. Increasing this value increases the log volume.
-
-## Releases
-
-Full documentation for releases can be found on [https://anywhere.eks.amazonaws.com](https://anywhere.eks.amazonaws.com).
+The EKS Anywhere is tested using
+[Prow](https://github.com/kubernetes/test-infra/tree/master/prow), the Kubernetes CI system.
+EKS operates an installation of Prow, which is visible at [https://prow.eks.amazonaws.com/](https://prow.eks.amazonaws.com/).
+Please read our [CONTRIBUTING](CONTRIBUTING.md) guide before making a pull request.
+Refer to our [end to end guide](https://github.com/aws/eks-anywhere/tree/main/test/e2e) to run E2E tests locally.
 
 ## Security
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+If you discover a potential security issue in this project, or think you may
+have discovered a security issue, we ask that you notify AWS Security via our
+[vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/).
+Please do **not** create a public GitHub issue.
 
 ## License
 
