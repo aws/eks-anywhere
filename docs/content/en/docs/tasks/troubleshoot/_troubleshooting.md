@@ -35,6 +35,18 @@ Ensure you are running Docker 20.x.x for example:
 Docker version 20.10.6, build 370c289
 ```
 
+### ECR access denied
+
+```
+Error: failed to create cluster: unable to initialize executables: failed to setup eks-a dependencies: Error response from daemon: pull access denied for public.ecr.aws/***/cli-tools, repository does not exist or may require 'docker login': denied: Your authorization token has expired. Reauthenticate and try again.
+```
+
+All images needed for EKS Anywhere are public and do not need authentication. Old cached credentials could trigger this error.
+Remove cached credentials by running:
+```sh
+docker logout public.ecr.aws
+```
+
 ### EKSA_VSPHERE_USERNAME is not set or is empty
 ```
 ❌ Validation failed	{"validation": "vsphere Provider setup is valid", "error": "failed setup and validations: EKSA_VSPHERE_USERNAME is not set or is empty", "remediation": ""}
