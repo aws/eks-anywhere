@@ -29,13 +29,13 @@ Currently, you can manage a subset of cluster properties with GitOps:
 - `Cluster.workerNodeGroupConfigurations[0].machineGroupRef.name`
 
 `Worker Nodes`:
-- `VsphereMachineConfig.datastore`
-- `VsphereMachineConfig.diskGiB`
-- `VsphereMachineConfig.folder`
-- `VsphereMachineConfig.memoryMiB`
-- `VsphereMachineConfig.numCPUs`
-- `VsphereMachineConfig.resourcePool`
-- `VsphereMachineConfig.template`
+- `VSphereMachineConfig.datastore`
+- `VSphereMachineConfig.diskGiB`
+- `VSphereMachineConfig.folder`
+- `VSphereMachineConfig.memoryMiB`
+- `VSphereMachineConfig.numCPUs`
+- `VSphereMachineConfig.resourcePool`
+- `VSphereMachineConfig.template`
 
 Any other changes to the cluster configuration in the git repository will be ignored.
 If an immutable immutable field is changed in Git repsitory, there are two ways to find the error message:

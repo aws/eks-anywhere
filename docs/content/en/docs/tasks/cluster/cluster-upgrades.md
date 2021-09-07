@@ -105,13 +105,13 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `etcdConfiguration.externalConfiguration.machineGroupRef.name`
 
 `VSphereMachineConfig`:
-- `VsphereMachineConfig.datastore`
-- `VsphereMachineConfig.diskGiB`
-- `VsphereMachineConfig.folder`
-- `VsphereMachineConfig.memoryMiB`
-- `VsphereMachineConfig.numCPUs`
-- `VsphereMachineConfig.resourcePool`
-- `VsphereMachineConfig.template`
+- `VSphereMachineConfig.datastore`
+- `VSphereMachineConfig.diskGiB`
+- `VSphereMachineConfig.folder`
+- `VSphereMachineConfig.memoryMiB`
+- `VSphereMachineConfig.numCPUs`
+- `VSphereMachineConfig.resourcePool`
+- `VSphereMachineConfig.template`
 
 ### Troubleshooting
 
