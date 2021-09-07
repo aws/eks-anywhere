@@ -41,7 +41,7 @@ Docker version 20.10.6, build 370c289
 Error: failed to create cluster: unable to initialize executables: failed to setup eks-a dependencies: Error response from daemon: pull access denied for public.ecr.aws/***/cli-tools, repository does not exist or may require 'docker login': denied: Your authorization token has expired. Reauthenticate and try again.
 ```
 
-All images needed for EKS Anywhere are public and no need authentication. However, some old cached credentials could trigger this error.
+All images needed for EKS Anywhere are public and do not need authentication. Old cached credentials could trigger this error.
 Remove cached credentials by running:
 ```sh
 docker logout public.ecr.aws
