@@ -22,6 +22,7 @@ func init() {
 func runSimpleFlow(test *framework.E2ETest) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
+	test.StopIfFailed()
 	test.DeleteCluster()
 }
 

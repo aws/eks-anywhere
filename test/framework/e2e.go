@@ -104,9 +104,6 @@ func (e *E2ETest) GenerateClusterConfig() {
 
 func (e *E2ETest) CreateCluster() {
 	e.RunEKSA("anywhere", "create", "cluster", "-f", e.ClusterConfigLocation, "-v", "4")
-	e.cleanup(func() {
-		os.RemoveAll(e.ClusterName)
-	})
 }
 
 func (e *E2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion) {
@@ -145,8 +142,7 @@ func (e *E2ETest) UpgradeCluster(opts ...E2ETestOpt) {
 	for _, opt := range opts {
 		opt(e)
 	}
-	e.buildClusterConfigFile()
-	e.RunEKSA("anywhere", "upgrade", "cluster", "-f", e.ClusterConfigLocation, "-v", "4")
+	e.RunEKSA("anywhere", "upgrade", "cluster", "-f", fmt.Sprintf("%s-eks-a-cluster.yaml", e.ClusterName), "-v", "4")
 }
 
 func (e *E2ETest) buildClusterConfigFile() {
@@ -183,6 +179,9 @@ func (e *E2ETest) buildClusterConfigFile() {
 
 func (e *E2ETest) DeleteCluster() {
 	e.RunEKSA("anywhere", "delete", "cluster", e.ClusterName, "-v", "4")
+	e.cleanup(func() {
+		os.RemoveAll(e.ClusterName)
+	})
 }
 
 func (e *E2ETest) Run(name string, args ...string) {
