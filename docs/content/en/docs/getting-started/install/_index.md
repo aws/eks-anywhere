@@ -20,7 +20,13 @@ This will let you create a cluster in multiple providers for local development o
 
 #### Via Homebrew (macOS and Linux)
 
+{{% alert title="Warning" color="warning" %}}
+EKS Anywhere only works on computers with x86 and amd64 process architecture.
+It currently will not work on computers with Apple Silicon or Arm based processors.
+{{% /alert %}}
+
 You can install `eksctl` and `eksctl-anywhere` with [homebrew](http://homebrew.sh/).
+This package will also install `kubectl` and the `aws-iam-authenticator` which will be helpful to test EKS clusters.
 
 ```bash
 brew install aws/tap/eks-anywhere
@@ -29,6 +35,7 @@ brew install aws/tap/eks-anywhere
 #### Manually (macOS and Linux)
 
 Install the latest release of `eksctl`.
+The EKS Anywhere plugin requires `eksctl` version 0.66.0 or newer.
 
 ```bash
 curl "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" \
@@ -40,26 +47,11 @@ sudo mv /tmp/eksctl /usr/local/bin/
 Install the `eksctl-anywhere` plugin.
 
 ```bash
-curl "https://github.com/aws/eks-anywhere/releases/latest/download/eksctl-anywhere_$(uname -s)_amd64.tar.gz" \
+export EKSA_RELEASE="0.5.0" OS="$(uname -s | tr A-Z a-z)"
+curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/1/artifacts/eks-a/v${EKSA_RELEASE}/${OS}/eksctl-anywhere-v${EKSA_RELEASE}-${OS}-amd64.tar.gz" \
     --silent --location \
-    | tar xz -C /tmp
-sudo mv /tmp/eksctl-anywhere /usr/local/bin/
-```
-
-### (Optional) Install additional tools
-
-There are some additional tools you may want for your EKS Anywhere clusters.
-The EKS Distro project publishes some additional binaries and EKS Anywhere bundles them for usage.
-
-This brew formula includes
-
-* eksctl
-* eksctl-anywhere
-* kubectl
-* aws-iam-authenticator
-
-```bash
-brew install aws/tap/eks-anywhere-bundle
+    | tar xz ./eksctl-anywhere
+sudo mv ./eksctl-anywhere /usr/local/bin/
 ```
 
 ### Upgrade eksctl-anywhere
@@ -72,6 +64,7 @@ brew upgrade eksctl-anywhere
 ```
 
 If you installed `eksctl-anywhere` manually you should follow the installation steps to download the latest release.
+
 You can verify your installed version with
 
 ```bash
