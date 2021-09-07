@@ -6,9 +6,9 @@ weight: 20
 ## EKS Anywhere docker provider deployments
 
 EKS Anywhere supports a Docker provider for *development and testing use cases only.* 
-This allows you to try EKS-A on your local system before deploying to a supported provider.
+This allows you to try EKS Anywhere on your local system before deploying to a supported provider.
 
-To install the EKS-A binaries and see system requirements please follow the [installation guide]({{< relref "../install" >}}).
+To install the EKS Anywhere binaries and see system requirements please follow the [installation guide]({{< relref "../install" >}}).
 
 ## Steps
 

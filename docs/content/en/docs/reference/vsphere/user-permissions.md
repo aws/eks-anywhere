@@ -1,11 +1,11 @@
 ---
-title: "Required vSphere permissions"
+title: "User permissions"
 weight: 20
 description: >
-  The permissions needed by the EKS-A vSphere user
+  The permissions needed by the EKS Anywhere vSphere user
 ---
 
-The permissions needed by the EKS-A vSphere user are just short of full administrative access. For example:
+The permissions needed by the EKS Anywhere vSphere user are just short of full administrative access. For example:
  
 ## Virtual machine
 
@@ -51,5 +51,3 @@ The permissions needed by the EKS-A vSphere user are just short of full administ
 
 * Assign a virtual machine to resource pool
 
-Further information about vSphere permissions can be found
-[here](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.security.doc/GUID-5372F580-5C23-4E9C-8A4E-EF1B4DD9033E.html)

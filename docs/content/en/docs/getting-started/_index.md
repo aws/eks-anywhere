@@ -12,7 +12,7 @@ card:
   - anchor: "#production-environment"
     title: Production environment
 description: >
-  The Getting started section includes information on starting to set up your own EKS-A local or production environment.
+  The Getting started section includes information on starting to set up your own EKS Anywhere local or production environment.
 ---
 
 <!-- overview -->

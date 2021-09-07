@@ -5,17 +5,17 @@ weight: 12
 ---
 
 The `eksctl` CLI, with the EKS Anywhere plugin added, lets you create and manage EKS Anywhere clusters.
-While a cluster is running, most EKS-A administration can be done using `kubectl` or other native Kubernetes tools.
+While a cluster is running, most EKS Anywhere administration can be done using `kubectl` or other native Kubernetes tools.
 
 Use this page as a reference to useful `eksctl anywhere` command examples for working with EKS Anywhere clusters.
 Available `eksctl anywhere` commands include:
 
-* `create cluster` To create an EKS-A cluster
-* `delete cluster`  To delete an EKS-A cluster
+* `create cluster` To create an EKS Anywhere cluster
+* `delete cluster`  To delete an EKS Anywhere cluster
 * `generate` [`clusterconfig` | `support-bundle` | `support-bundle-config`] To generate cluster and support configs
 * `help`  To get help information
 * `upgrade` To upgrade a workload cluster
-* `version` To get the EKS-A version
+* `version` To get the EKS Anywhere version
 
 Options used with multiple commands include:
 
@@ -38,13 +38,13 @@ Here are some examples.
 Using `eksctl anywhere generate clusterconfig` you can generate a cluster configuration
 for a specific provider (`-p` or `--provider`*provider_name*). Here are examples:
 
-Generate a configuration file to create an EKS-A cluster for a `vsphere` provider:
+Generate a configuration file to create an EKS Anywhere cluster for a `vsphere` provider:
 
 ```
 export CLUSTER_NAME=vsphere01
 eksctl anywhere generate clusterconfig ${CLUSTER_NAME} -p vsphere > ${CLUSTER_NAME}.yaml
 ```
-Generate a configuration file to create an EKS-A cluster for a Docker provider:
+Generate a configuration file to create an EKS Anywhere cluster for a Docker provider:
 
 ```
 export CLUSTER_NAME=docker01
@@ -67,7 +67,7 @@ eksctl anywhere generate support-bundle-config > ${CLUSTER_NAME}_bundle_config.y
 ```
 ### `eksctl anywhere generate support-bundle`
 
-Once you have a bundle config file, generate a support bundle from an existing EKS-A cluster.
+Once you have a bundle config file, generate a support bundle from an existing EKS Anywhere cluster.
 Additional options available for this command include:
 
 * `--bundle-config string` To identify the bundle config file to use to generate the support bundle
@@ -101,7 +101,7 @@ eksctl anywhere generate support-bundle --bundle-config ${CLUSTER_NAME}_bundle_c
 
 ## `eksctl anywhere create cluster`
 
-Create an EKS-A cluster from a cluster configuration file you generated (and modified) earlier.
+Create an EKS Anywhere cluster from a cluster configuration file you generated (and modified) earlier.
 This example sets verbosity to most verbose (`-v 9`):
 
 ```
@@ -113,7 +113,7 @@ See [local](../../getting-started/local-environment) and [production](../../gett
 
 ## `eksctl anywhere upgrade cluster`
 
-Upgrade an existing EKS-A cluster.
+Upgrade an existing EKS Anywhere cluster.
 This example uses maximum verbosity and forces a cleanup of the previously created bootstrap cluster:
 
 ```
@@ -125,7 +125,7 @@ For more information on this and other ways to upgrade a cluster, see [Upgrade c
 
 ## `eksctl anywhere delete cluster`
 
-Delete an existing EKS-A cluster.
+Delete an existing EKS Anywhere cluster.
 This example deletes all VMs and the forces the deletion of the previously created bootstrap cluster:
 
 ```

@@ -18,6 +18,10 @@ set -e
 set -x
 set -o pipefail
 
+BASE_DIRECTORY=$(git rev-parse --show-toplevel)
+SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+source ${SCRIPT_ROOT}/setup-aws-config.sh
+
 RELEASE_VERSION="${1?Specify first argument - latest version}"
 ARTIFACTS_DIR="${2?Specify second argument - artifacts path}"
 SOURCE_BUCKET="${3?Specify third argument - source bucket}"

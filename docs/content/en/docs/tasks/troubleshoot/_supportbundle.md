@@ -3,16 +3,16 @@ title: "Generating a Support Bundle"
 linkTitle: "Generating a Support Bundle"
 weight: 30
 description: >
-    Using the Support Bundle with your EKS-A Cluster
+    Using the Support Bundle with your EKS Anywhere Cluster
 ---
 
-This guide covers the use of the EKS-A Support Bundle for troubleshooting and support.
+This guide covers the use of the EKS Anywhere Support Bundle for troubleshooting and support.
 This allows you to gather cluster information, save it to your administrative machine, and perform analysis of the results.
 
-EKS-A leverages [troubleshoot.sh](https://troubleshoot.sh/) to [collect](https://troubleshoot.sh/docs/collect/) and [analyze](https://troubleshoot.sh/docs/analyze/) kubernetes cluster logs, 
+EKS Anywhere leverages [troubleshoot.sh](https://troubleshoot.sh/) to [collect](https://troubleshoot.sh/docs/collect/) and [analyze](https://troubleshoot.sh/docs/analyze/) kubernetes cluster logs, 
 cluster resource information, and other relevant debugging information. 
 
-EKS-A has two Support Bundle commands:
+EKS Anywhere has two Support Bundle commands:
 
 `eksctl anywhere generate support-bundle` will execute a support bundle on your cluster, 
 collecting relevant information, archiving it locally, and performing analysis of the results.
@@ -168,10 +168,10 @@ Message: bundles.anywhere.eks.amazonaws.com is present on the cluster
 a support bundle has been created in the current directory:	{"path": "support-bundle-2021-09-02T19_29_41.tar.gz"}
 ```
 
-### Generating a custom Support Bundle configuration for your EKS-A Cluster
-EKS-A will automatically generate a support bundle based on your cluster configuration;
+### Generating a custom Support Bundle configuration for your EKS Anywhere Cluster
+EKS Anywhere will automatically generate a support bundle based on your cluster configuration;
 however, if you'd like to customize the support bundle to collect specific information,
-you can generate your own support bundle configuration yaml for EKS-A to run on your cluster.
+you can generate your own support bundle configuration yaml for EKS Anywhere to run on your cluster.
 
 `eksctl anywhere generate support-bundle-config` will generate a default support bundle configuration and print it  as yaml.
 

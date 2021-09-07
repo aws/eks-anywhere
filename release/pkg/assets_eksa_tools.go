@@ -16,6 +16,7 @@ package pkg
 
 import (
 	"fmt"
+	"path/filepath"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/pkg/errors"
@@ -23,6 +24,12 @@ import (
 
 // GetEksAToolsAssets returns the eks-a artifacts for eks-a-tools image
 func (r *ReleaseConfig) GetEksAToolsAssets() ([]Artifact, error) {
+	projectSource := "projects/aws/eks-anywhere-build-tooling"
+	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
+	gitTag, err := readFile(tagFile)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
 	name := "eks-anywhere-cli-tools"
 
 	var sourceRepoName string
@@ -39,7 +46,9 @@ func (r *ReleaseConfig) GetEksAToolsAssets() ([]Artifact, error) {
 		releaseRepoName = "cli-tools"
 	}
 
-	tagOptions := map[string]string{}
+	tagOptions := map[string]string{
+		"gitTag": gitTag,
+	}
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
 		SourceImageURI:  r.GetSourceImageURI(name, sourceRepoName, tagOptions),

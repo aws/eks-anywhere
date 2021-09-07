@@ -1,49 +1,21 @@
 ---
-title: "VMware vSphere"
-linkTitle: "VMware vSphere"
-weight: 15
+title: "Import OVAs"
+linkTitle: "Import OVAs"
+weight: 30
 description: >
-  Preparing a VMware vSphere provider for EKS Anywhere
+  Importing EKS Anywhere OVAs to vSphere
 ---
 
-<!-- overview -->
+If you want to specify an OVF template, you will need to import OVA files into vSphere before you can use it in your EKS Anywhere cluster.
+This guide was written using VMware Cloud on AWS,
+but the [VMWare OVA import guide can be found here](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vm_admin.doc/GUID-17BEDA21-43F6-41F4-8FB2-E01D275FE9B4.html).
 
-Deploying a production grade cluster on vSphere.
-
-<!-- body -->
-
-# Prerequisite Checklist
-
-To run EKS Anywhere, you will need:
-
-* A vSphere 7+ environment running vCenter
-* Capacity to deploy 8-10VMs
-* DHCP service running in vSphere environment in the primary VM network for your workload cluster
-* One network in vSphere to use for the cluster. This network must have inbound access into vCenter
-* A OVA imported into vSphere and converted into template for the workload VMs
-* User credentials to [create vms and attach networks, etc]({{< relref "user-permissions.md" >}})
-
-A minimum workload cluster will require 6 to 10 VMs and each VM will require:
-
-* 2 vCPU
-* 8GB RAM
-* 20GB Disk
-
-The administrative machine and the target workload environment will need network access to:
-
-{{% content "domains.md" %}}
-
-# Default templates
-
+{{% alert title="Note" color="primary" %}}
 If you don't specify a template in the cluster spec file, EKS Anywhere will use the proper default one for the Kubernetes minor version and OS family you specified in the spec file.
 If the template doesn't exist, it will import the appropriate OVA into vSphere and add the necessary tags.
 
-The default OVA for a Kubernetes minor version + OS family will change over time, for example, when a new EKS-D version is released. In that case, new clusters will use the new OVA (EKS Anywhere will import it automatically).
-
-# Import an OVA/OVF template to vSphere
-
-If you prefer to specify a template, you will need to import OVA files into vSphere to run EKS Anywhere. This guide was written using VMware Cloud on AWS,
-but the [VMWare OVA import guide can be found here](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vm_admin.doc/GUID-17BEDA21-43F6-41F4-8FB2-E01D275FE9B4.html).
+The default OVA for a Kubernetes minor version + OS family will change over time, for example, when a new EKS Distro version is released. In that case, new clusters will use the new OVA (EKS Anywhere will import it automatically).
+{{% /alert %}}
 
 EKS Anywhere supports the following operating system families
 
@@ -195,6 +167,6 @@ govc tags.attach eksdRelease:kubernetes-1-20-eks-2 <Template Path>
 ```
 govc tags.ls <Template Path> 
 ```
-** NOTE: If the tags above are not applied as shown exactly, EKS Anywhere template validations will fail and CLI will abort
+** NOTE: If the tags above are not applied as shown exactly, eks-a template validations will fail and CLI will abort
 
 After you are done you can use the template for your workload cluster.

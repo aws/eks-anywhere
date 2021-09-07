@@ -14,7 +14,7 @@ A production-quality Kubernetes cluster requires planning and preparation for va
 <!-- body -->
 
 
-The purpose of this document is to walk you through getting set up with a recommended Kubernetes Ingress Controller for EKS Anywhere (EKS-A).
+The purpose of this document is to walk you through getting set up with a recommended Kubernetes Ingress Controller for EKS Anywhere.
 Ingress Controller is essential in order to have routing rules that decide how external users access services running in a Kubernetes cluster. It enables efficient distribution of incoming network traffic among multiple backend services.
 
 
@@ -24,7 +24,7 @@ We currently recommend using Emissary-ingress Kubernetes Ingress Controller by A
 
 ## Setting up Emissary-ingress for Ingress Controller
 
-1. Set up a test web application in your cluster. You can use EKS-A's [Hello Test App](https://github.com/aws/eks-anywhere/blob/main/docs/content/en/docs/tasks/workload/test-app.md), as an example. Apply YAML for this application.
+1. Deploy the [Hello EKS Anywhere]({{< ref "/docs/tasks/workload/test-app" >}}) test application.
     ```bash
     kubectl apply -f https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml
     ```
