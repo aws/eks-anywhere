@@ -97,8 +97,12 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 #### Upgradeable Attributes
 
 `Cluster`:
-- `Cluster.workerNodeGroupConfigurations[0].count`
-- `Cluster.workerNodeGroupConfigurations[0].machineGroupRef.name`
+- `kubernetesVersion`
+- `controlPlaneConfig.count`
+- `controlPlaneConfigurations.machineGroupRef.name`
+- `workerNodeGroupConfigurations.count`
+- `workerNodeGroupConfigurations.machineGroupRef.name`
+- `etcdConfiguration.externalConfiguration.machineGroupRef.name`
 
 `VSphereMachineConfig`:
 - `VsphereMachineConfig.datastore`
