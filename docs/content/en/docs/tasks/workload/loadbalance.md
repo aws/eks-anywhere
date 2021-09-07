@@ -46,13 +46,13 @@ We currently recommend using Kube-Vip Kubernetes Service-type Load Balancer. Pre
 3. Deploy kubevip-cloud-provider 
 
     ```bash
-    kubectl apply -f https://kube-vip.io/manifests/controller.yaml
+    kubectl apply -f "https://kube-vip.io/manifests/controller.yaml"
     ```
 
 4. Create ClusterRoles and RoleBindings for kube-vip daemonset
 
     ```bash
-    kubectl apply -f https://kube-vip.io/manifests/rbac.yaml
+    kubectl apply -f "https://kube-vip.io/manifests/rbac.yaml"
     ```
 
 5. Create the kube-vip daemonset. An example manifest has been included at the end of this document which you can use in place of this step.
@@ -62,22 +62,29 @@ We currently recommend using Kube-Vip Kubernetes Service-type Load Balancer. Pre
     kube-vip manifest daemonset --services --inCluster --arp --interface eth0 | kubectl apply -f -
     ```   
  
-6. Deploy nginx 
+6. Deploy the example [hello-eks-anywhere](https://gallery.ecr.aws/aws-containers/hello-eks-anywhere) 
 
     ```bash
-    kubectl apply -f https://k8s.io/examples/application/deployment.yaml
+    kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
     ```
 
-7. Expose the nginx service
+7. Expose the hello-eks-a service as a LoadBalencer type service
+
+    Delete the default NodePort service that was deployed with the example application.
 
     ```bash
-    kubectl expose deployment nginx-deployment --port=80 --type=LoadBalancer --name=nginx
+    kubectl delete svc hello-eks-a
+    ```
+
+    Expose the deployment as a LoadBalencer type
+    ```bash
+    kubectl expose deployment hello-eks-a --port=80 --type=LoadBalancer --name=hello-eks-a
     ```
 
 8. Describe the service to get the IP. The external IP will be the one in CIDR range specified in step 4
 
     ```bash
-    EXTERNAL_IP=$(kubectl get svc nginx -o jsonpath='{.spec.externalIP}')
+    EXTERNAL_IP=$(kubectl get svc hello-eks-a -o jsonpath='{.spec.externalIP}')
     ```
 
 9. Ensure the load balancer is working by curl'ing the IP you got in step 8
@@ -88,36 +95,36 @@ We currently recommend using Kube-Vip Kubernetes Service-type Load Balancer. Pre
  
 You should see something like this in the output
 
-```html
-<!DOCTYPE html>
-<html>
-<head>
-<title>Welcome to nginx!</title>
-<style>
-    body {
-        width: 35em;
-        margin: 0 auto;
-        font-family: Tahoma, Verdana, Arial, sans-serif;
-    }
-</style>
-</head>
-<body>
-<h1>Welcome to nginx!</h1>
-<p>If you see this page, the nginx web server is successfully installed and
-working. Further configuration is required.</p>
+```
+⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
 
-<p>For online documentation and support please refer to
-<a href="http://nginx.org/">nginx.org</a>.<br/>
-Commercial support is available at
-<a href="http://nginx.com/">nginx.com</a>.</p>
+Thank you for using
 
-<p><em>Thank you for using nginx.</em></p>
-</body>
-</html>
+███████╗██╗  ██╗███████╗
+██╔════╝██║ ██╔╝██╔════╝
+█████╗  █████╔╝ ███████╗
+██╔══╝  ██╔═██╗ ╚════██║
+███████╗██║  ██╗███████║
+╚══════╝╚═╝  ╚═╝╚══════╝
+
+ █████╗ ███╗   ██╗██╗   ██╗██╗    ██╗██╗  ██╗███████╗██████╗ ███████╗
+██╔══██╗████╗  ██║╚██╗ ██╔╝██║    ██║██║  ██║██╔════╝██╔══██╗██╔════╝
+███████║██╔██╗ ██║ ╚████╔╝ ██║ █╗ ██║███████║█████╗  ██████╔╝█████╗  
+██╔══██║██║╚██╗██║  ╚██╔╝  ██║███╗██║██╔══██║██╔══╝  ██╔══██╗██╔══╝  
+██║  ██║██║ ╚████║   ██║   ╚███╔███╔╝██║  ██║███████╗██║  ██║███████╗
+╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝    ╚══╝╚══╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝
+
+You have successfully deployed the hello-eks-a pod hello-eks-a-c5b9bc9d8-qp6bg
+
+For more information check out
+https://anywhere.eks.amazonaws.com
+
+⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
 
 ```
 
-Here is an example manifest for kube-vip from step 5. Also available [here](https://raw.githubusercontent.com/kube-vip/kube-vip/f0f0ec3bc953d4b42c78f1b35ba944804a9e31aa/example/deploy/0.3.5.yaml)
+Here is an example manifest for kube-vip from step 5.
+Also available [here](https://raw.githubusercontent.com/kube-vip/kube-vip/f0f0ec3bc953d4b42c78f1b35ba944804a9e31aa/example/deploy/0.3.5.yaml)
 
 ```yaml
 apiVersion: apps/v1
@@ -177,10 +184,11 @@ status:
   numberReady: 0
 ```
 
-
 ## Alternatives
 
-This is not the recommended choice but as an alternative, MetalLB Load Balancer can be set up. MetalLB is a native Kubernetes load balancing solution for bare-metal Kubernetes clusters. MetalLB installation is described [here](https://metallb.universe.tf/installation/)
+This is not the recommended choice but as an alternative, MetalLB Load Balancer can be set up.
+MetalLB is a native Kubernetes load balancing solution for bare-metal Kubernetes clusters.
+MetalLB installation is described [here](https://metallb.universe.tf/installation/)
 
 ### Prerequisites
 
@@ -221,26 +229,6 @@ You will need Helm installed on your system as this is the easiest way to deploy
     helm install metallb metallb/metallb -f values.yaml
     ```
 
-5. Deploy nginx
+5. Test an application
 
-    ```bash
-    kubectl apply -f https://k8s.io/examples/application/deployment.yaml
-    ```
-
-6. Expose a LoadBalancer for nginx 
-
-    ```bash
-    kubectl expose deployment nginx-deployment --port=80 --type=LoadBalancer --name=nginx
-    ```
-
-7. Get the load balancer external IP
-
-    ```
-    EXTERNAL_IP=$(kubectl get svc nginx -o jsonpath='{.spec.externalIP}')
-    ```
-
-8. Hit the external ip
-
-    ```bash
-    curl ${EXTERNAL_IP}
-    ```
+    Follow [steps 6 through 9 above]({{< relref "#setting-up-kube-vip-for-service-type-load-balancer" >}}) to validate your load balancer is working.
