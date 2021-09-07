@@ -33,6 +33,9 @@ For a VsphereMachineConfig associated with worker nodes via the workerNodeGroups
 - `VsphereMachineConfig.numCPUs`
 - `VsphereMachineConfig.memoryMiB`
 - `VsphereMachineConfig.template`
+- `VsphereMachineConfig.datastore`
+- `VsphereMachineConfig.folder`
+- `VsphereMachineConfig.resourcePool`
 
 Any other changes to the cluster configuration in the git repository will be ignored.
 

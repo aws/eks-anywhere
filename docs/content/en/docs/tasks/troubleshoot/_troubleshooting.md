@@ -221,8 +221,20 @@ If cluster creation failure leaves behind an empty github repository, please man
 #### Changes not syncing to cluster
 Please remember that the only fields currently supported for GitOps are:
 
-- `controlPlaneReplicas`
-- `workerNodeReplicas`
+Cluster
+
+- `Cluster.workerNodeGroupConfigurations[0].count`
+- `Cluster.workerNodeGroupConfigurations[0].machineGroupRef.name`
+
+Worker Nodes
+
+- `VsphereMachineConfig.diskGiB`
+- `VsphereMachineConfig.numCPUs`
+- `VsphereMachineConfig.memoryMiB`
+- `VsphereMachineConfig.template`
+- `VsphereMachineConfig.datastore`
+- `VsphereMachineConfig.folder`
+- `VsphereMachineConfig.resourcePool`
 
 If you've changed these fields and they're not syncing to the cluster as you'd expect,
 check out the logs of the pod in the `source-controller` deployment in the `flux-system` namespaces.
