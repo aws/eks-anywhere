@@ -167,6 +167,8 @@ govc tags.attach eksdRelease:kubernetes-1-20-eks-2 <Template Path>
 ```
 govc tags.ls <Template Path> 
 ```
-** NOTE: If the tags above are not applied as shown exactly, eks-a template validations will fail and CLI will abort
+{{% alert title="Note" color="primary" %}}
+If the tags above are not applied as shown exactly, eks-a template validations will fail and CLI will abort
+{{% /alert %}}
 
 After you are done you can use the template for your workload cluster.
