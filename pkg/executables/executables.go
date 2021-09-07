@@ -88,8 +88,8 @@ func (e *linuxDockerExecutable) buildCommand(envs map[string]string, cli string,
 		envVars = append(envVars, "-e", fmt.Sprintf("%s=%s", k, v))
 	}
 	dockerCommands := []string{
-		"run", "-i", "--network", "host", "-v", fmt.Sprintf("%s:%s", directory, directory), "-w",
-		directory, "-v", "/var/run/docker.sock:/var/run/docker.sock", "-v", "/usr/bin/docker:/usr/bin/docker",
+		"run", "-i", "--network", "host", "-v", fmt.Sprintf("%s:%s", directory, directory),
+		"-w", directory, "-v", "/var/run/docker.sock:/var/run/docker.sock",
 	}
 	dockerCommands = append(dockerCommands, envVars...)
 	dockerCommands = append(dockerCommands, "--entrypoint", cli, e.image)
