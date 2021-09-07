@@ -107,7 +107,7 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `VsphereMachineConfig.memoryMiB`
 - `VsphereMachineConfig.numCPUs`
 - `VsphereMachineConfig.resourcePool`
-- `template`
+- `VsphereMachineConfig.template`
 
 ### Troubleshooting
 

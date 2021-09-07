@@ -35,7 +35,7 @@ Currently, you can manage a subset of cluster properties with GitOps:
 - `VsphereMachineConfig.memoryMiB`
 - `VsphereMachineConfig.numCPUs`
 - `VsphereMachineConfig.resourcePool`
-- `template`
+- `VsphereMachineConfig.template`
 
 Any other changes to the cluster configuration in the git repository will be ignored.
 If an immutable immutable field is changed in Git repsitory, there are two ways to find the error message:
