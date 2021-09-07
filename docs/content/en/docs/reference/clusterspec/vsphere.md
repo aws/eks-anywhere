@@ -84,6 +84,7 @@ The following additional optional configuration can also be included.
 * [OIDC]({{< relref "oidc.md" >}})
 * [etcd]({{< relref "etcd.md" >}})
 * [proxy]({{< relref "proxy.md" >}})
+* [gitops]({{< relref "gitops.md" >}})
 
 ### name (required)
 Name of your cluster `my-cluster-name` in this example
