@@ -27,19 +27,22 @@ spec:
       endpoint:
          host: ""
       machineGroupRef:
-         kind: VSphereMachineConfig
-         name: my-cluster-machines
+        kind: VSphereMachineConfig
+        name: my-cluster-machines
    datacenterRef:
       kind: VSphereDatacenterConfig
       name: my-cluster-datacenter
    externalEtcdConfiguration:
      count: 3
+     machineGroupRef:
+        kind: VSphereMachineConfig
+        name: my-cluster-machines
    kubernetesVersion: "1.21"
    workerNodeGroupConfigurations:
    - count: 1
-      machineGroupRef:
-         kind: VSphereMachineConfig
-         name: my-cluster-machines
+     machineGroupRef:
+       kind: VSphereMachineConfig
+       name: my-cluster-machines
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -119,7 +122,13 @@ Number of worker nodes
 ### workerNodeGroupsConfiguration[0].machineGroupRef (required)
 Refers to the Kubernetes object with vsphere specific configuration for your nodes. See `VSphereMachineConfig Fields` below.
 
-### datacenterRef (required)
+### externalEtcdConfiguration.count
+Number of etcd members
+
+### externalEtcdConfiguration.machineGroupRef
+Refers to the Kubernetes object with vsphere specific configuration for your etcd members. See `VSphereMachineConfig Fields` below.
+
+### datacenterRef
 Refers to the Kubernetes object with vsphere environment specific configuration. See `VSphereDatacenterConfig Fields` below.
 
 ### kubernetesVersion (required)
