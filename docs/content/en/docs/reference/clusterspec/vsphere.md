@@ -210,7 +210,7 @@ The default is generating a key in your `$(pwd)/<cluster-name>` folder when not 
 
 ### template (optional)
 The VM template to use for your EKS Anywhere cluster. This template was created when you
-[imported the OVA file into vSphere](#import-an-ovaovf-template-to-vsphere).
+[imported the OVA file into vSphere]({{< relref "../vsphere/vsphere-ovas.md" >}}).
 This is a required field if you are using Bottlerocket OVAs.
 
 ### datastore (required)
