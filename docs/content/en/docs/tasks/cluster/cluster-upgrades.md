@@ -21,7 +21,7 @@ You are advised to upgrade your clusters in development environments first and v
 
 Cluster upgrades are performed in place using a rolling process (similar to Kubernetes Deployments).
 Upgrades can only happen one minor version at a time (e.g. `1.20` -> `1.21`).
-Control plane components will be upgraded before worker nodes.
+Control plane and worker nodes will be upgraded simultaneously.
 
 A new VM is created with the new version and then an old VM is removed.
 This happens one at a time until all the control plan components have been upgraded.
@@ -103,18 +103,15 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `workerNodeGroupConfigurations.count`
 - `workerNodeGroupConfigurations.machineGroupRef.name`
 - `etcdConfiguration.externalConfiguration.machineGroupRef.name`
-- `etcdConfiguration.externalConfiguration.count`
-
-`VSphereDatacenterConfig`:
-- `datastore`
-- `folder`
-- `resourcePool`
 
 `VSphereMachineConfig`:
-- `diskGiB`
-- `numCPUs`
-- `memoryMiB`
-- `template`
+- `VSphereMachineConfig.datastore`
+- `VSphereMachineConfig.diskGiB`
+- `VSphereMachineConfig.folder`
+- `VSphereMachineConfig.memoryMiB`
+- `VSphereMachineConfig.numCPUs`
+- `VSphereMachineConfig.resourcePool`
+- `VSphereMachineConfig.template`
 
 ### Troubleshooting
 
