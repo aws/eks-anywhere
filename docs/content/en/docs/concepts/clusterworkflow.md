@@ -317,7 +317,7 @@ All control plane and nodes are on the same network.
 * **CAPI endpoint**: A static IP address should have been assigned to the control plane configuration endpoint, to provide access to the Cluster API.
 It should have been set up to not conflict with any other node IP addresses in the cluster.
 This is a specific requirement of CAPI, not EKS Anywhere.
-* **Proxy server**: If a [proxy server]({{< relref "../reference/clusterspec/proxy" >}}) was identified to the EKS Anywhere workload cluster, that server should have interfaces that make it accessible from both the cluster nodes as well as the Internet.
+* **Proxy server**: If a [proxy server]({{< relref "../reference/clusterspec/proxy" >}}) was identified to the EKS Anywhere workload cluster, that server should have inbound access from the cluster nodes and outbound access to the internet.
 
 Networking for the cluster itself has the following attributes:
 
@@ -328,7 +328,7 @@ Refer to the clusterNetwork section of your configuration file to see how the ci
 
 Networking setups for accessing cluster resources on your running EKS Anywhere cluster include the following documented features:
 
-* **Load balancers**: You can add external load balancers to your EKS Anywhere cluster. EKS Anywhere project documents how to configure [KubeVip]({{< relref "../tasks/workload/loadbalance/#current-recommendation-kube-vip" >}}) (recommended) and [MetalLB]]({{< relref "../tasks/workload/loadbalance/#alternatives" >}}).
+* **Load balancers**: You can add external load balancers to your EKS Anywhere cluster. EKS Anywhere project documents how to configure [KubeVip]({{< relref "../tasks/workload/loadbalance/#current-recommendation-kube-vip" >}}) (recommended) and [MetalLB]({{< relref "../tasks/workload/loadbalance/metallb.md" >}}).
 * **Ingress controller**: You can add a Kubernetes ingress controller to EKS Anywhere.
 The project documents the use of [Emissary-ingress]({{< relref "../tasks/workload/ingress" >}}) ingress controller.
 
