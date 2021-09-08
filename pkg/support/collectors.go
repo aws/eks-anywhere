@@ -21,7 +21,7 @@ func (c *collectorFactory) DefaultCollectors() []*v1beta2.Collect {
 		{
 			Secret: &v1beta2.Secret{
 				Namespace:    "eksa-system",
-				Name:         "eksa-license",
+				SecretName:   "eksa-license",
 				IncludeValue: true,
 				Key:          "license",
 			},
