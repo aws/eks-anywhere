@@ -48,7 +48,7 @@ EKS Anywhere software is divided into two types of components.
 The CLI interface for managing clusters and the cluster components an controllers used to run workloads and configure clusters.
 The software you need to obtain includes:
 
-* **Command line tools**: Binaries to [install on the administrative machine]]({{< relref "../getting-started/install" >}}), include `eksctl`, `eksctl-anywhere`, `kubectl`, and `aws-iam-authenticator`.
+* **Command line tools**: Binaries to [install on the administrative machine]({{< relref "../getting-started/install" >}}), include `eksctl`, `eksctl-anywhere`, `kubectl`, and `aws-iam-authenticator`.
 * **Cluster components and controllers**: These include [artifacts]({{< relref "../reference/artifacts" >}}) such as OVAs for different operating systems and Kubernetes versions to [Import to vSphere]({{< relref "../reference/vsphere/vsphere-ovas" >}}).
 
 The sites to which the administrative machine and the target workload environment need access are listed in the [Requirements]({{< relref "../reference/vsphere/vsphere-prereq" >}}) section. 
