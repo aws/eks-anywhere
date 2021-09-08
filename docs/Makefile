@@ -29,7 +29,7 @@ deploy: zip ## Deploy docs to Amplify
 	bash ./deploy-docs.sh public.zip
 
 serve: submodule ## Boot the development server.
-	hugo server --buildFuture --baseUrl http://127.0.0.1
+	hugo server --bind 10.94.148.92 --buildFuture --baseUrl http://10.94.148.92:1313
 
 server: serve
 
