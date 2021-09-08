@@ -8,6 +8,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/ec2"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
 
 type ParallelRunConf struct {
@@ -127,12 +128,12 @@ func (e *E2ESession) runTests(regex string) error {
 }
 
 func (e *E2ESession) commandWithEnvVars(command string) string {
-	fullCommand := make([]string, 0, len(e.testEnvVars)+1)
-
+	fullCommand := make([]string, 0, len(e.testEnvVars)+2)
+	jobIdCommand := fmt.Sprintf("export %s=%s", e2etests.JobIdVar, e.jobId)
 	for k, v := range e.testEnvVars {
 		fullCommand = append(fullCommand, fmt.Sprintf("export %s=%s", k, v))
 	}
-	fullCommand = append(fullCommand, command)
+	fullCommand = append(fullCommand, jobIdCommand, command)
 
 	return strings.Join(fullCommand, "; ")
 }

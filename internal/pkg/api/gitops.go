@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"os"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -36,6 +37,13 @@ func WithFluxOwner(username string) GitOpsConfigOpt {
 func WithFluxRepository(repository string) GitOpsConfigOpt {
 	return func(c *v1alpha1.GitOpsConfig) {
 		c.Spec.Flux.Github.Repository = repository
+	}
+}
+
+func WithFluxRepositorySuffix(suffix string) GitOpsConfigOpt {
+	return func(c *v1alpha1.GitOpsConfig) {
+		repository := c.Spec.Flux.Github.Repository
+		c.Spec.Flux.Github.Repository = fmt.Sprintf("%s-%s", repository, suffix)
 	}
 }
 
