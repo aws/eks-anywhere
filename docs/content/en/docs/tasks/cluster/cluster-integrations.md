@@ -21,7 +21,6 @@ Below is a list of suggested third-party tools your consideration.
 | Secret management             | [Hashi Vault](https://www.vaultproject.io/docs/platform/k8s)                               |
 | Policy agent                  | [Open Policy Agent](https://www.openpolicyagent.org/docs/latest/kubernetes-introduction/)                                       |
 | Service mesh                  | [Linkerd](https://linkerd.io/) or [Istio](https://istio.io/)                         |
-| Infrastructure-as-code        | [Terraform](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/guides/getting-started)                                 |
 | Cost management               | [KubeCost](https://www.kubecost.com/)                                  |
 | Etcd backup and restore       | [Velero](https://velero.io/)                                    |
 | Storage                       | Default storage class, any compatible CSI |
