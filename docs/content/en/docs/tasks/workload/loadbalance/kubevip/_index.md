@@ -9,11 +9,11 @@ description: >
 
 <!-- overview -->
 
-The purpose of this document is to walk you through getting set up with the Kube-vip Kubernetes Load Balancer for EKS Anywhere.
+We recommend using Kube-Vip cloud controller to expose your services as service-type Load Balancer.
+Detailed information about Kube-Vip can be found [here](https://kube-vip.io/).
 
-<!-- body -->
-
-We currently recommend using Kube-Vip Kubernetes Service-type Load Balancer. Previously designed to support control-plane resiliency, it has since been expanded to provide load-balancing for applications and services within a Kubernetes cluster. Detailed information about Kube-Vip can be found [here](https://kube-vip.io/).
+There are two ways Kube-Vip can manage virtual IP addresses on your network.
+Please see the following guides for ARP or BGP mode depending on your on-prem networking preferences.
 
 ## Setting up Kube-Vip for Service-type Load Balancer
 

@@ -4,7 +4,7 @@ linkTitle: "Add an external load balancer"
 weight: 30
 date: 2017-01-05
 description: >
-  How to deploy an external load balancer to expose a workload running in EKS Anywhere
+  How to deploy a load balancer controller to expose a workload running in EKS Anywhere
 ---
 
 <!-- overview -->

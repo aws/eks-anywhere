@@ -1,23 +1,26 @@
 ---
-title: "Alternative: Metal LB Service-type Load Balancer"
+title: "Alternative: MetalLB Service-type Load Balancer"
 linkTitle: "MetalLB Service-type Load Balancer Setup"
 weight: 30
 date: 2017-01-05
 description: >
-  How to set up Metal LB for Service-type Load Balancer
+  How to set up MetalLB for Service-type Load Balancer
 ---
 
 <!-- overview -->
 
-The purpose of this document is to walk you through getting set up with MetalLB Kubernetes Load Balancer for your cluster. This is suggested as an alternative and is not the recommended choice for EKS Anywhere. [Kube-vip]({{< ref "/docs/tasks/workload/loadbalance/kubevip" >}}) is our current recommendation.
+The purpose of this document is to walk you through getting set up with MetalLB Kubernetes Load Balancer for your cluster.
+This is suggested as an alternative if your networking requirements do not allow you to use [Kube-vip]({{< ref "/docs/tasks/workload/loadbalance/kubevip" >}}).
 
 <!-- body -->
 
-MetalLB is a native Kubernetes load balancing solution for bare-metal Kubernetes clusters. Detailed information about MetalLB can be found [here](https://metallb.universe.tf/).
+MetalLB is a native Kubernetes load balancing solution for bare-metal Kubernetes clusters.
+Detailed information about MetalLB can be found [here](https://metallb.universe.tf/).
 
 ### Prerequisites
 
-You will need Helm installed on your system as this is the easiest way to deploy MetalLB. Helm can be installed from [here](https://helm.sh/docs/intro/install/).
+You will need Helm installed on your system as this is the easiest way to deploy MetalLB.
+Helm can be installed from [here](https://helm.sh/docs/intro/install/).
 MetalLB installation is described [here](https://metallb.universe.tf/installation/)
 
 ### Steps
@@ -36,7 +39,9 @@ MetalLB installation is described [here](https://metallb.universe.tf/installatio
     helm repo add metallb https://metallb.github.io/metallb
     ```
 
-3. Create an override file to specify LB IP range. LB-IP-RANGE can be a CIDR block like 198.18.210.0/24 or range like 198.18.210.0-198.18.210.10
+3. Create an override file to specify LB IP range
+
+    LB-IP-RANGE can be a CIDR block like 198.18.210.0/24 or range like 198.18.210.0-198.18.210.10
 
     ```bash
     cat << 'EOF' >> values.yaml
@@ -61,16 +66,16 @@ MetalLB installation is described [here](https://metallb.universe.tf/installatio
     kubectl apply -f https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml
     ```
 
-6. Expose the hello-eks-a service
+6. Expose the hello-eks-a deployment
 
     ```bash
-    kubectl expose deployment hello-eks-a --port=80 --type=LoadBalancer --name=hello-eks-a
+    kubectl expose deployment hello-eks-a --port=80 --type=LoadBalancer --name=hello-eks-a-lb
     ```
 
 7. Get the load balancer external IP
 
     ```
-    EXTERNAL_IP=$(kubectl get svc nginx -o jsonpath='{.spec.externalIP}')
+    EXTERNAL_IP=$(kubectl get svc hello-eks-a-lb -o jsonpath='{.spec.externalIP}')
     ```
 
 8. Hit the external ip

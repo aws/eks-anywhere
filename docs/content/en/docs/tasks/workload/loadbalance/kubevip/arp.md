@@ -9,7 +9,8 @@ description: >
 
 <!-- overview -->
 
-In ARP mode, kube-vip will perform leader election and assign the Virtul IP to the leader. This node will inherit the VIP and become the load-balancing leader within the cluster.
+In ARP mode, kube-vip will perform leader election and assign the Virtul IP to the leader.
+This node will inherit the VIP and become the load-balancing leader within the cluster.
 
 <!-- body -->
 
@@ -22,7 +23,8 @@ In ARP mode, kube-vip will perform leader election and assign the Virtul IP to t
     kubectl apply -f - -n kube-system
     ```
 
-2. Create a configMap to specify the IP range for load balancer. You can use either a CIDR block or an IP range
+2. Create a configMap to specify the IP range for load balancer.
+You can use either a CIDR block or an IP range
 
     ```bash
     CIDR=192.168.0.0/24 # Use your CIDR range here
@@ -46,7 +48,9 @@ In ARP mode, kube-vip will perform leader election and assign the Virtul IP to t
     kubectl apply -f https://kube-vip.io/manifests/rbac.yaml
     ```
 
-5. Create the kube-vip daemonset. An example manifest has been included at the end of this document which you can use in place of this step.
+5. Create the kube-vip daemonset
+
+    An example manifest has been included at the end of this document which you can use in place of this step.
 
     ```bash
     alias kube-vip="docker run --network host --rm plndr/kube-vip:v0.3.5"
@@ -62,13 +66,14 @@ In ARP mode, kube-vip will perform leader election and assign the Virtul IP to t
 7. Expose the hello-eks-a service
 
     ```bash
-    kubectl expose deployment hello-eks-a --port=80 --type=LoadBalancer --name=hello-eks-a
+    kubectl expose deployment hello-eks-a --port=80 --type=LoadBalancer --name=hello-eks-a-lb
     ```
 
-8. Describe the service to get the IP. The external IP will be the one in CIDR range specified in step 4
+8. Describe the service to get the IP.
+The external IP will be the one in CIDR range specified in step 4
 
     ```bash
-    EXTERNAL_IP=$(kubectl get svc hello-eks-a -o jsonpath='{.spec.externalIP}')
+    EXTERNAL_IP=$(kubectl get svc hello-eks-a-lb -o jsonpath='{.spec.externalIP}')
     ```
 
 9. Ensure the load balancer is working by curl'ing the IP you got in step 8
@@ -80,7 +85,7 @@ In ARP mode, kube-vip will perform leader election and assign the Virtul IP to t
 You should see something like this in the output
 
 ```html
-   ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
+   ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡
 
    Thank you for using
 
@@ -103,7 +108,7 @@ You should see something like this in the output
    For more information check out
    https://anywhere.eks.amazonaws.com
 
-   ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
+⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡
 
    ```
 

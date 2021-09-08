@@ -9,13 +9,15 @@ description: >
 
 <!-- overview -->
 
-In BGP mode, kube-vip will assign the Virtual IP to all running Pods. All nodes, therefore, will advertise the VIP address.
+In BGP mode, kube-vip will assign the Virtual IP to all running Pods.
+All nodes, therefore, will advertise the VIP address.
 
 <!-- body -->
 
 ## Setting up Kube-Vip for Service-type Load Balancer in BGP mode
 
-1. Create a configMap to specify the IP range for load balancer. You can use either a CIDR block or an IP range
+1. Create a configMap to specify the IP range for load balancer.
+You can use either a CIDR block or an IP range
 
     ```bash
     CIDR=192.168.0.0/24 # Use your CIDR range here
@@ -55,7 +57,7 @@ In BGP mode, kube-vip will assign the Virtual IP to all running Pods. All nodes,
     
     Explanation of the options provided above to kube-vip for manifest generation:
 
-    ```html
+    ```
 	--interface — This interface needs to be set to the loopback in order to suppress ARP responses from worker nodes that get the LoadBalancer VIP assigned
 	--localAS — Local Autonomous System ID
 	--sourceIF — source interface on the worker node which will be used to communicate BGP with the switch
@@ -69,13 +71,13 @@ In BGP mode, kube-vip will assign the Virtual IP to all running Pods. All nodes,
 
     ```bash
     kube-vip manifest daemonset \
-    --interface $INTERFACE \
-    --localAS 65200 \
-    --sourceIF eth0 \
-    --services \
-    --inCluster \
-    --bgp \
-    --bgppeers 10.69.20.2:65000::false,10.69.20.3:65000::false
+        --interface $INTERFACE \
+        --localAS 65200 \
+        --sourceIF eth0 \
+        --services \
+        --inCluster \
+        --bgp \
+        --bgppeers 10.69.20.2:65000::false,10.69.20.3:65000::false
     ```
 
     Below is the manifest generated with these example values.
@@ -170,13 +172,13 @@ In BGP mode, kube-vip will assign the Virtual IP to all running Pods. All nodes,
 8. Expose the hello-eks-a service
 
     ```bash
-    kubectl expose deployment hello-eks-a --port=80 --type=LoadBalancer --name=hello-eks-a
+    kubectl expose deployment hello-eks-a --port=80 --type=LoadBalancer --name=hello-eks-a-lb
     ```
 
 9. Describe the service to get the IP. The external IP will be the one in CIDR range specified in step 4
 
     ```bash
-    EXTERNAL_IP=$(kubectl get svc hello-eks-a -o jsonpath='{.spec.externalIP}')
+    EXTERNAL_IP=$(kubectl get svc hello-eks-a-lb -o jsonpath='{.spec.externalIP}')
     ```
 
 10. Ensure the load balancer is working by curl'ing the IP you got in step 8
@@ -188,7 +190,7 @@ In BGP mode, kube-vip will assign the Virtual IP to all running Pods. All nodes,
 You should see something like this in the output
 
 ```html
-   ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
+   ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
 
    Thank you for using
 
@@ -211,6 +213,6 @@ You should see something like this in the output
    For more information check out
    https://anywhere.eks.amazonaws.com
 
-   ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
+   ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
 
    ```
