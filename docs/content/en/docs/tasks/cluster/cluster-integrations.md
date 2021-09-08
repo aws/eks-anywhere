@@ -25,4 +25,8 @@ Below is a list of suggested third-party tools your consideration.
 | Etcd backup and restore       | [Velero](https://velero.io/)                                    |
 | Storage                       | Default storage class, any compatible CSI |
 
+<<<<<<< HEAD
 * Third-party integrations are not supported by AWS.
+=======
+* Third-party integrations are not supported by Amazon.
+>>>>>>> ff9c666 (Changed note at bottom of table)
