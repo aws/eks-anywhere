@@ -16,7 +16,7 @@ Below is a list of suggested third-party tools your consideration.
 | Ingress controller            | [Emissary-ingress](https://www.getambassador.io/products/api-gateway/) (previously Ambassador)          |
 | Service type load balancer    | [KubeVip]({{< relref "../workload/loadbalance.md#current-recommendation-kube-vip" >}}) (recommended) or [Metal LB]({{< relref "../workload/loadbalance.md#alternatives" >}})|
 | Local container repository    | [Harbor](https://goharbor.io/)                                    |
-| Monitoring                    | [Prometheus](https://sysdig.com/products/monitor/prometheus-monitoring/)+[Grafana](https://grafana.com/)+[FluentBit](https://fluentbit.io/kubernetes/), [Datadog](https://www.datadoghq.com/blog/monitoring-kubernetes-with-datadog/), or [NewRelic](https://newrelic.com/platform/kubernetes/monitoring-guide)  |
+| Monitoring                    | [Prometheus](https://sysdig.com/products/monitor/prometheus-monitoring/)+[Grafana](https://grafana.com/)+[FluentBit](https://fluentbit.io/kubernetes/) or [Datadog](https://www.datadoghq.com/blog/monitoring-kubernetes-with-datadog/) |
 | Log analytics                 | [Splunk](https://www.splunk.com/en_us/blog/platform/introducing-the-splunk-operator-for-kubernetes.html)                                    |
 | Secret management             | [Hashi Vault](https://www.vaultproject.io/docs/platform/k8s)                               |
 | Policy agent                  | [Open Policy Agent](https://www.openpolicyagent.org/docs/latest/kubernetes-introduction/)                                       |
