@@ -44,6 +44,7 @@ type Client interface {
 	GetContents(ctx context.Context, owner, repo, path string, opt *goGithub.RepositoryContentGetOptions) (
 		fileContent *goGithub.RepositoryContent, directoryContent []*goGithub.RepositoryContent, resp *goGithub.Response, err error,
 	)
+	DeleteRepo(ctx context.Context, owner, repo string) (*goGithub.Response, error)
 }
 
 type githubClient struct {
@@ -74,6 +75,10 @@ func (ggc *githubClient) Organization(ctx context.Context, org string) (*goGithu
 
 func (ggc *githubClient) GetContents(ctx context.Context, owner, repo, path string, opt *goGithub.RepositoryContentGetOptions) (fileContent *goGithub.RepositoryContent, directoryContent []*goGithub.RepositoryContent, resp *goGithub.Response, err error) {
 	return ggc.client.Repositories.GetContents(ctx, owner, repo, path, opt)
+}
+
+func (ggc *githubClient) DeleteRepo(ctx context.Context, owner, repo string) (*goGithub.Response, error) {
+	return ggc.client.Repositories.Delete(ctx, owner, repo)
 }
 
 // CreateRepo creates an empty Github Repository. The repository must be initialized locally or
@@ -193,6 +198,18 @@ func (g *GoGithub) PathExists(ctx context.Context, owner, repo, branch, path str
 	}
 
 	return true, nil
+}
+
+// DeleteRepo deletes a Github repository.
+func (g *GoGithub) DeleteRepo(ctx context.Context, opts git.DeleteRepoOpts) error {
+	r := opts.Repository
+	o := opts.Owner
+	logger.V(3).Info("Deleting Github repository", "name", r, "owner", o)
+	_, err := g.Client.DeleteRepo(ctx, o, r)
+	if err != nil {
+		return fmt.Errorf("error when deleting repository %s: %v", r, err)
+	}
+	return nil
 }
 
 func newClient(ctx context.Context, opts Options) Client {
