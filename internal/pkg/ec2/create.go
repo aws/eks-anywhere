@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 
@@ -17,7 +17,8 @@ func CreateInstance(session *session.Session, amiId, key, tag, instanceProfileNa
 	r := retrier.New(180*time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
 		// EC2 Request token bucket has a refill rate of 2 request tokens
 		// per second, so 10 seconds wait per retry should be sufficient
-		if request.IsErrorThrottle(err) && totalRetries < 50 {
+		if isThrottleError(err) && totalRetries < 50 {
+			fmt.Println("Throttled, retrying")
 			return true, 10 * time.Second
 		}
 		return false, 0
@@ -28,7 +29,6 @@ func CreateInstance(session *session.Session, amiId, key, tag, instanceProfileNa
 
 	err := r.Retry(func() error {
 		var err error
-		logger.V(2).Info("Creating instance", "name", name)
 		result, err = service.RunInstances(&ec2.RunInstancesInput{
 			ImageId:      aws.String(amiId),
 			InstanceType: aws.String("t3.2xlarge"),
@@ -62,11 +62,8 @@ func CreateInstance(session *session.Session, amiId, key, tag, instanceProfileNa
 				},
 			},
 		})
-		if err != nil {
-			return fmt.Errorf("error creating instance: %v", err)
-		}
 
-		return nil
+		return err
 	})
 	if err != nil {
 		return "", fmt.Errorf("retries exhausted when trying to create instances: %v", err)
@@ -85,4 +82,14 @@ func CreateInstance(session *session.Session, amiId, key, tag, instanceProfileNa
 	logger.V(2).Info("Instance is running")
 
 	return *result.Instances[0].InstanceId, nil
+}
+
+func isThrottleError(err error) bool {
+	if aerr, ok := err.(awserr.Error); ok {
+		if aerr.Code() == "RequestLimitExceeded" {
+			return true
+		}
+	}
+
+	return false
 }
