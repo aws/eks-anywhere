@@ -43,7 +43,7 @@ phases:
       -n ${INTEGRATION_TEST_SUBNET_ID}
       -m 40
       -r 'Test'
-      -v 4
+      -v 5
       --skip 'TestDockerKubernetes119Flux,TestDockerKubernetes119ThreeReplicasFlux,TestVSphereKubernetes119Flux,TestVSphereKubernetes119ThreeReplicasFlux,TestDockerKubernetes118Flux,TestDockerKubernetes12OFlux,TestDockerKubernetes121Flux,TestVSphereKubernetes118Flux,TestVSphereKubernetes120Flux,TestVSphereKubernetes121Flux,TestDockerKubernetes119GitopsOptionsFlux,TestVSphereKubernetes119GitopsOptionsFlux,TestVSphereKubernetes120UbuntuTo121WithFluxUpgrade,TestVSphereKubernetes120BottlerocketTo121WithFluxUpgrade'
   post_build:
     commands:
