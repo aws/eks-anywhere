@@ -33,7 +33,7 @@ EKS Anywhere only works on computers with x86 and amd64 process architecture.
 It currently will not work on computers with Apple Silicon or Arm based processors.
 {{% /alert %}}
 
-You can install `eksctl` and `eksctl-anywhere` with [homebrew](http://homebrew.sh/).
+You can install `eksctl` and `eksctl-anywhere` with [homebrew](http://brew.sh/).
 This package will also install `kubectl` and the `aws-iam-authenticator` which will be helpful to test EKS clusters.
 
 ```bash
