@@ -64,7 +64,7 @@ If you installed `eksctl-anywhere` via homebrew you can upgrade the binary with
 
 ```bash
 brew update
-brew upgrade eksctl-anywhere
+brew upgrade eks-anywhere
 ```
 
 If you installed `eksctl-anywhere` manually you should follow the installation steps to download the latest release.
