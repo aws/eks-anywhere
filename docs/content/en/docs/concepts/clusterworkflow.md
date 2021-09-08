@@ -88,11 +88,11 @@ The following diagram illustrates what happens when you start the cluster creati
 
 #### 1. Generate an EKS Anywhere config file
 
-When you run `eksctl anywhere generate clusterconfig`, the two pieces of information you provide are the name of the cluster (*<cluster_name>*) and the type of provider (`-p vsphere`, in this example).
-Then you can direct the yaml cluster config output into a file (`> `*<cluster_name>*`.yaml`). For example: 
+When you run `eksctl anywhere generate clusterconfig`, the two pieces of information you provide are the name of the cluster ($CLUSTER_NAME) and the type of provider (`-p vsphere`, in this example).
+Then you can direct the yaml cluster config output into a file (`> $CLUSTER_NAME.yaml`). For example: 
 
 ```
-eksctl anywhere generate clusterconfig <cluster-name> -p vpshere > <cluster-name>.yaml
+eksctl anywhere generate clusterconfig $CLUSTER_NAME -p vpshere > $CLUSTER_NAME.yaml
 ```
 
 The provider is important because the type of cluster config created is based on the provider.
@@ -119,7 +119,7 @@ See supported cluster properties, related to [GitOps]({{< relref "../tasks/clust
 
 #### 3. Launch the cluster creation
 
-Once you have modified the cluster configuration file, use `eksctl anywhere cluster create -f `*<name>*`.yaml` as described in the [production environment]({{< relref "../getting-started/production-environment" >}}) section to start the cluster creation process.
+Once you have modified the cluster configuration file, use `eksctl anywhere cluster create -f $CLUSTER_NAME.yaml` as described in the [production environment]({{< relref "../getting-started/production-environment" >}}) section to start the cluster creation process.
 To see details on the cluster creation process, you can increase the verbosity (`-v=9` provides maximum verbosity).
 
 #### 4. Authenticate and create bootstrap cluster
@@ -337,7 +337,7 @@ In the workload cluster itself, the operating system on each node is provided fr
 Note that it is not recommended that you add software or change the configuration of these systems once they are running in the cluster.
 In fact, Bottlerocket contains limited writeable areas and does not include a software package management system.
 
-If you need to modify an operating system, you can [rebuild an Ubuntu OVA]({{< relref "../reference/artifacts/ovas.md#building-your-own-ubuntu-ova" >}}) to use with EKS Anywhere.
+If you need to modify an operating system, you can [rebuild an Ubuntu OVA]({{< relref "../reference/artifacts/#building-your-own-ubuntu-ova" >}}) to use with EKS Anywhere.
 In other words, all operating system changes should be done before the OVA is added to your EKS Anywhere cluster.
 
 ### Authentication
