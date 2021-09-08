@@ -11,9 +11,11 @@ The EKS Anywhere cluster creation process makes it easy to bring up a cluster in
 The EKS Anywhere cluster versions match the same Kubernetes distribution versions that are used in the AWS EKS cloud service.
 
 Each EKS Anywhere cluster is built from a cluster specification file, with the structure of the configuration file based on the target provider for the cluster.
-Currently, VMware vSphere is the recommended provider for supported EKS Anywhere clusters. So, vSphere is the example provider we step through here.
+Currently, VMware vSphere is the recommended provider for supported EKS Anywhere clusters.
+So, vSphere is the example provider we step through here.
 
-This document provides an in-depth description of the process of creating an EKS Anywhere cluster. It starts by describing the components to put in place before creating the cluster.
+This document provides an in-depth description of the process of creating an EKS Anywhere cluster.
+It starts by describing the components to put in place before creating the cluster.
 Then it shows you what happens at each step of the process.
 After that, the document describes the attributes of the resulting cluster.
 
@@ -29,7 +31,7 @@ Then you also need to prepare the provider, in this case a vCenter environment, 
 The Administrative machine is needed to provide:
 
 * A place to run the commands to create and manage the workload cluster.
-* A  Docker container runtime to run a temporary, local bootstrap cluster that creates the resulting workload cluster.
+* A Docker container runtime to run a temporary, local bootstrap cluster that creates the resulting workload cluster.
 * A place to hold the `kubeconfig` file needed to perform administrative actions using `kubectl`.
 (The `kubeconfig` file is stored in the root of the folder created during cluster creation.)
 
@@ -259,7 +261,8 @@ With CAPI running on the workload cluster, CAPI objects for the workload cluster
 Moving cluster management from bootstrap to workload cluster
 ```
 
-At this point, the cluster creation process will add Kubernetes CRDs and other addons that are specific to EKS Anywhere. That configuration is applied directly to the cluster:
+At this point, the cluster creation process will add Kubernetes CRDs and other addons that are specific to EKS Anywhere.
+That configuration is applied directly to the cluster:
 
 ```
 Installing EKS-A custom components (CRD and controller) on workload cluster
@@ -305,7 +308,8 @@ See [Add integrations]({{< relref "../tasks/cluster/cluster-integrations" >}}) f
 
 ### Networking
 
-Networking features of your EKS Anywhere cluster start with how virtual machines in the EKS-A cluster in vSphere are set up. The current state of networking on the vSphere node level include the following:
+Networking features of your EKS Anywhere cluster start with how virtual machines in the EKS-A cluster in vSphere are set up.
+The current state of networking on the vSphere node level include the following:
 
 * **DHCP**: EKS Anywhere requires that a DHCP server be available to the control plane and worker nodes in vSphere for them to obtain their IP addresses.
 There is currently no support for static IP addresses or multinetwork clusters.
@@ -331,7 +335,7 @@ The project documents the use of [Emissary-ingress]({{< relref "../tasks/workloa
 ### Operating systems
 
 The Ubuntu or Mac operating system representing the Administrative machine can continue to use the binaries to manage the EKS anywhere cluster.
-You may need to update those binaries (`kubectl`, `eksctl anywhere`, and others) from time to time.
+You may need to [update those binaries]({{< relref "/docs/getting-started/install/#upgrade-eksctl-anywhere" >}}) (`kubectl`, `eksctl anywhere`, and others) from time to time.
 
 In the workload cluster itself, the operating system on each node is provided from either Bottlerocket or Ubuntu OVAs.
 Note that it is not recommended that you add software or change the configuration of these systems once they are running in the cluster.
