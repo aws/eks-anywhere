@@ -1,6 +1,6 @@
 ---
-title: "Kube-vip BGP Mode"
-linkTitle: "Kube-vip BGP Mode"
+title: "Kube-Vip BGP Mode"
+linkTitle: "Kube-Vip BGP Mode"
 weight: 30
 date: 2017-01-05
 description: >
@@ -29,30 +29,30 @@ You can use either a CIDR block or an IP range
     kubectl create configmap --namespace kube-system kubevip --from-literal range-global=${IP_START}-${IP_END}
     ```
 
-3. Deploy kubevip-cloud-provider 
+2. Deploy kubevip-cloud-provider 
 
     ```bash
     kubectl apply -f https://kube-vip.io/manifests/controller.yaml
     ```
 
-4. Create ClusterRoles and RoleBindings for kube-vip daemonset
+3. Create ClusterRoles and RoleBindings for kube-vip daemonset
 
     ```bash
     kubectl apply -f https://kube-vip.io/manifests/rbac.yaml
     ```
 
-5. Create the kube-vip daemonset. 
+4. Create the kube-vip daemonset
 
     ```bash
     alias kube-vip="docker run --network host --rm plndr/kube-vip:latest"
     kube-vip manifest daemonset \
-    	--interface lo \
-   	--localAS <AS#> \
-    	--sourceIF <src interface> \
-    	--services \
-    	--inCluster \
-    	--bgp \
-    	--bgppeers <bgp-peer1>:<peerAS>::<bgp-multiphop-true-false>,<bgp-peer2>:<peerAS>::<bgp-multihop-true-false> | kubectl apply -f -
+        --interface lo \
+        --localAS <AS#> \
+        --sourceIF <src interface> \
+        --services \
+        --inCluster \
+        --bgp \
+        --bgppeers <bgp-peer1>:<peerAS>::<bgp-multiphop-true-false>,<bgp-peer2>:<peerAS>::<bgp-multihop-true-false> | kubectl apply -f -
     ``` 
     
     Explanation of the options provided above to kube-vip for manifest generation:
@@ -156,32 +156,32 @@ You can use either a CIDR block or an IP range
       numberMisscheduled: 0
       numberReady: 0
    ```
-6. Manually add the following to the manifest file as shown in the example above
+5. Manually add the following to the manifest file as shown in the example above
 
    ```yaml
    - name: bgp_routerinterface
      value: eth0
    ```
 
-7. Deploy the [Hello EKS Anywhere]({{< ref "/docs/tasks/workload/test-app" >}}) test application.
+6. Deploy the [Hello EKS Anywhere]({{< ref "/docs/tasks/workload/test-app" >}}) test application.
 
     ```bash
     kubectl apply -f https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml
     ```
 
-8. Expose the hello-eks-a service
+7. Expose the hello-eks-a service
 
     ```bash
     kubectl expose deployment hello-eks-a --port=80 --type=LoadBalancer --name=hello-eks-a-lb
     ```
 
-9. Describe the service to get the IP. The external IP will be the one in CIDR range specified in step 4
+8. Describe the service to get the IP. The external IP will be the one in CIDR range specified in step 4
 
     ```bash
     EXTERNAL_IP=$(kubectl get svc hello-eks-a-lb -o jsonpath='{.spec.externalIP}')
     ```
 
-10. Ensure the load balancer is working by curl'ing the IP you got in step 8
+9. Ensure the load balancer is working by curl'ing the IP you got in step 8
 
     ```bash
     curl ${EXTERNAL_IP}
@@ -189,7 +189,7 @@ You can use either a CIDR block or an IP range
  
 You should see something like this in the output
 
-```html
+```
    ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
 
    Thank you for using

@@ -1,6 +1,6 @@
 ---
-title: "Kube-vip ARP Mode"
-linkTitle: "Kube-vip ARP Mode"
+title: "Kube-Vip ARP Mode"
+linkTitle: "Kube-Vip ARP Mode"
 weight: 30
 date: 2017-01-05
 description: >
@@ -84,7 +84,7 @@ The external IP will be the one in CIDR range specified in step 4
  
 You should see something like this in the output
 
-```html
+```
    ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡
 
    Thank you for using

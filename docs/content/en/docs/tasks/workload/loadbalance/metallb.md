@@ -10,7 +10,7 @@ description: >
 <!-- overview -->
 
 The purpose of this document is to walk you through getting set up with MetalLB Kubernetes Load Balancer for your cluster.
-This is suggested as an alternative if your networking requirements do not allow you to use [Kube-vip]({{< ref "/docs/tasks/workload/loadbalance/kubevip" >}}).
+This is suggested as an alternative if your networking requirements do not allow you to use [Kube-Vip]({{< ref "/docs/tasks/workload/loadbalance/kubevip" >}}).
 
 <!-- body -->
 
