@@ -1,5 +1,5 @@
 ---
-title: "Proxy configuration reference"
+title: "Proxy configuration"
 linkTitle: "Proxy"
 weight: 90
 description: >

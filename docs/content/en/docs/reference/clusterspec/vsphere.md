@@ -1,5 +1,5 @@
 ---
-title: "vSphere configuration reference"
+title: "vSphere configuration"
 linkTitle: "vSphere"
 weight: 10
 description: >
