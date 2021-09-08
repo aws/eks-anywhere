@@ -3,6 +3,10 @@ title: Install EKS Anywhere
 weight: 10
 ---
 
+EKS Anywhere will create and manage Kubernetes clusters on multiple providers.
+Currently we support creating development clusters locally with Docker and production clusters using VMware vSphere.
+Other deployment targets will be added in the future, including bare metal support in 2022.
+
 Creating an EKS Anywhere cluster begins with setting up an Administrative machine where you will run Docker and add some binaries.
 From there, you create the cluster for your chosen provider.
 See [Create cluster workflow]({{< relref "/docs/concepts/clusterworkflow" >}}) for an overview of the cluster creation process.
