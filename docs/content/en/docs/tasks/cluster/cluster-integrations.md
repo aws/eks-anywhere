@@ -3,7 +3,7 @@ title: "Add integrations to cluster"
 linkTitle: "Add integrations to cluster"
 weight: 11
 description: >
-  How to add integrations to an EKS Anywhere cluster
+  How to add integrations to an EKS Anywhere cluster *
 ---
 
 EKS Anywhere offers AWS support for certain third-party vendor components,
@@ -24,3 +24,5 @@ Below is a list of suggested third-party tools your consideration.
 | Cost management               | [KubeCost](https://www.kubecost.com/)                                  |
 | Etcd backup and restore       | [Velero](https://velero.io/)                                    |
 | Storage                       | Default storage class, any compatible CSI |
+
+* Third-party integrations are not supported by AWS.

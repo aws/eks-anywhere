@@ -1,5 +1,5 @@
 ---
-title: "GitOpsConfig reference"
+title: "GitOpsConfig configuration"
 linkTitle: "GitOps"
 weight: 80
 description: >
