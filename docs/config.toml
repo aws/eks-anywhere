@@ -94,6 +94,7 @@ copyright = "Amazon.com, Inc. or its affilliates."
 
 # First one is picked as the Twitter card image if not set on page.
 # images = ["images/project-illustration.png"]
+images = ['https://anywhere.eks.amazonaws.com/images/social-feature.png']
 
 # Menu title if your navbar has a versions selector to access old versions of your site.
 # This menu appears only if you have at least one [params.versions] set.
