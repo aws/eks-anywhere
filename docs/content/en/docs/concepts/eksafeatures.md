@@ -23,20 +23,31 @@ To learn more about Amazon EKS, see [Amazon Elastic Kubernetes Service](https://
 
 | Feature                       | Amazon EKS Anywhere                  | Amazon EKS                      |
 |-------------------------------|--------------------------------------|---------------------------------|
-| Control plane management      | Managed by customer                  | Managed by AWS                  |
-| Control plane location        | Customer's datacenter                | AWS cloud                       |
-| Supported Operating Systems   | Ubuntu: 20.04, BottleRocket          | Linux x86, ARM, and Windows Server operating system distributions |
-| Cluster Updates               | CLI (Flux supported rolling update for data plane, Manual update for control plane) | Managed in-place update process for control plane and data plane |
-| Networking and Security       | Cilium CNI                           | Amazon VPC CNI, Other compatible 3rd-party CNI plugins |
-| Console                       | Connect to EKS console using EKS Connector (Public Preview) | EKS Console |
-| GitOps                        | Flux controller                      | Flux controller                 |
-| Deployment Types              | EKS Anywhere clusters on VMware vSphere     | Amazon EC2, AWS Fargate         |
-| Hardware (Server, Network Equipment, Storage, etc.) | Managed by customer     | Managed by AWS          |
-| Load Balancer                 | [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)  | Elastic Load Balancing including Application Load Balancer (ALB), Network Load Balancer (NLB), and Classic Load Balancer |
-| Support                       | AWS Support (EKS Anywhere Subscription required) | AWS Support   |
-| Pricing                       | Free to download, Annual subscription for AWS Support  | Hourly pricing per cluster |
-| Serverless                    | Not supported                         | Amazon EKS on AWS Fargate      |
+| **Control plane** |||
+| K8s control plane management      | Managed by customer                  | Managed by AWS                  |
+| K8s control plane location        | Customer's datacenter                | AWS cloud                       |
+| Cluster updates        | Manual CLI updates for control plane. Flux supported rolling updates for data plane.                | Managed in-place updates for control plane and managed rolling updates for data plane.                       |
+||||
+| **Compute** |||
+| Compute options | VMware vSphere | Amazon EC2, AWS Fargate | 
+| Supported node operating systems   | BottleRocket, Ubuntu          | Amazon Linux 2, Windows Server, Bottlerocket, Ubuntu |
+| Physical hardware (servers, network equipment, storage, etc.) | Managed by customer | Managed by AWS |
+| Serverless | Not supported | Amaon EKS on AWS Fargate |
+||||
+| **Management** | | |
+| Command line interface (CLI)  | `eksctl` (OSS command line tool)        | `eksctl` (OSS command line tool) |
+| Console view for Kubernetes objects | Optional EKS console connection using EKS Connector (public preview) | Native EKS console connection|
+| Infrastructure-as-code        | Cluster manifest, Kubernetes controllers, [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)            | CloudWatch, CloudTrail, [3rd-party solutions](https://aws.amazon.com/eks/partners/) |
 | Logging and monitoring        | [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)            | CloudWatch, CloudTrail, [3rd-party solutions](https://aws.amazon.com/eks/partners/) |
-| Service mesh                  | [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)   | AWS App Mesh, [3rd-party solutions](https://aws.amazon.com/eks/partners/) |
-| Infrastructure-as-Code        | [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)   | AWS CloudFormation, [3rd-party solutions](https://aws.amazon.com/eks/partners/) |
-| Command Line Interface (CLI)  | eksctl (OSS command line tool)        | eksctl (OSS command line tool) |
+| GitOps                        | Flux controller                      | Flux controller                 |
+||||
+| **Functions and tooling** | | |
+| Networking and Security       | Cilium CNI and network policy supported | Amazon VPC CNI supported. Calico supported for network policy. Other compatible [3rd-party CNI plugins](https://docs.aws.amazon.com/eks/latest/userguide/alternate-cni-plugins.html) available.|
+| Load balancer                 | [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)  | Elastic Load Balancing including Application Load Balancer (ALB), and Network Load Balancer (NLB) |
+| Service mesh                  | Community or [3rd-party solutions](https://aws.amazon.com/eks/eks-anywhere/partners/)   | AWS App Mesh, community, or [3rd-party solutions](https://aws.amazon.com/eks/partners/) |
+| Community tools and Helm | Works with compatible community tooling and helm charts. | Works with compatible community tooling and helm charts. |
+||||
+| **Pricing and support** |||
+| Control plane pricing                       | Free to download, paid support subscription option  | Hourly pricing per cluster |
+| AWS Support                       | Additional annual subscription (per cluster) for AWS support | Basic support included. Included in paid AWS support plans (developer, business, and enterprise)  |
+||||
