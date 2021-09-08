@@ -3,10 +3,14 @@ title: Install EKS Anywhere
 weight: 10
 ---
 
+Creating an EKS Anywhere cluster begins with setting up an Administrative machine where you will run Docker and add some binaries.
+From there, you create the cluster for your chosen provider.
+See [Create cluster workflow]({{< relref "/docs/concepts/clusterworkflow" >}}) for an overview of the cluster creation process.
+
 To create an EKS Anywhere cluster you will need [`eksctl`](https://eksctl.io) and the `eksctl-anywhere` plugin.
 This will let you create a cluster in multiple providers for local development or production workloads.
 
-### Local machine prerequisites
+### Administrative machine prerequisites
 
 - Docker 20.x.x
 - Mac OS (10.15) / Ubuntu (20.04.2 LTS)
@@ -16,7 +20,7 @@ This will let you create a cluster in multiple providers for local development o
 
 > **_NOTE:_** If you are using Ubuntu use the [Docker CE](https://docs.docker.com/engine/install/ubuntu/) installation instructions to install Docker and not the Snap installation.
 
-### Install EKS Anywhere
+### Install EKS Anywhere CLI tools
 
 #### Via Homebrew (macOS and Linux)
 
