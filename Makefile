@@ -43,7 +43,7 @@ eks-a-binary: LINKER_FLAGS_ARG := -ldflags "$(ALL_LINKER_FLAGS)"
 eks-a-binary: BUILD_TAGS_ARG := -tags "$(BUILD_TAGS)"
 eks-a-binary: OUTPUT_FILE ?= bin/eksctl-anywhere
 eks-a-binary:
-	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) go build $(BUILD_TAGS_ARG) $(LINKER_FLAGS_ARG) -o $(OUTPUT_FILE) github.com/aws/eks-anywhere/cmd/eks-a
+	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) go build $(BUILD_TAGS_ARG) $(LINKER_FLAGS_ARG) -o $(OUTPUT_FILE) github.com/aws/eks-anywhere/cmd/eksctl-anywhere
 
 .PHONY: eks-a-embed-config
 eks-a-embed-config: ## Build a dev release version of eks-a with embed cluster spec config

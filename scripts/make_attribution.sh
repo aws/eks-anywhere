@@ -49,7 +49,7 @@ function build::attribution::generate(){
     make eks-a-cluster-controller
     build::create_git_tag
     build::fix_licenses
-    build::gather_licenses _output "./cmd/eks-a ./controllers"
+    build::gather_licenses _output "./cmd/eksctl-anywhere ./controllers"
     build::exclude_own
     build::generate_attribution $GOLANG_VERSION
     # Removing temporary override by resetting remote origin URL to original SSH url 
