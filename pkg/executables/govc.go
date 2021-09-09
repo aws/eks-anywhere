@@ -135,7 +135,7 @@ func (g *Govc) ResizeDisk(ctx context.Context, template, diskName string, diskSi
 func (g *Govc) DevicesInfo(ctx context.Context, template string) (interface{}, error) {
 	response, err := g.exec(ctx, "device.info", "-vm", template, "-json")
 	if err != nil {
-		return nil, fmt.Errorf("Error getting template device infomation: %v", err)
+		return nil, fmt.Errorf("Error getting template device information: %v", err)
 	}
 
 	var devicesInfo map[string]interface{}
@@ -258,7 +258,7 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 
 	deployOptsPath, err := g.writer.Write(deployOptsFile, deployOpts, filewriter.PersistentFile)
 	if err != nil {
-		return fmt.Errorf("failed writting deploy options file to disk: %v", err)
+		return fmt.Errorf("failed writing deploy options file to disk: %v", err)
 	}
 
 	params := []string{

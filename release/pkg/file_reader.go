@@ -92,7 +92,7 @@ func getBottlerocketSupportedK8sVersions(r *ReleaseConfig, projectSource string)
 		return nil, errors.Cause(err)
 	}
 
-	for channel, _ := range bottlerocketOvaReleaseMap {
+	for channel := range bottlerocketOvaReleaseMap {
 		bottlerocketSupportedK8sVersions = append(bottlerocketSupportedK8sVersions, channel)
 	}
 
