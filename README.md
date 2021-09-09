@@ -18,6 +18,9 @@ EKS operates an installation of Prow, which is visible at [https://prow.eks.amaz
 Please read our [CONTRIBUTING](CONTRIBUTING.md) guide before making a pull request.
 Refer to our [end to end guide](https://github.com/aws/eks-anywhere/tree/main/test/e2e) to run E2E tests locally.
 
+The dependencies which make up EKS Anywhere are defined and built via the [build-tooling](https://github.com/aws/eks-anywhere-build-tooling) repo.
+To update dependencies please review the Readme for the specific dependency before opening a PR.
+
 ## Security
 
 If you discover a potential security issue in this project, or think you may
