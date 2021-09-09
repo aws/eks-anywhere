@@ -248,7 +248,7 @@ func TestPreflightValidations(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("gitOps is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				s.GitOpsConfig.Spec.Flux.Github.Repository = "new-reposotory"
+				s.GitOpsConfig.Spec.Flux.Github.Repository = "new-repository"
 			},
 		},
 		{

@@ -1,4 +1,7 @@
 ## Amazon EKS Anywhere
+[![Go Report Card](https://goreportcard.com/badge/github.com/aws/eks-anywhere)](https://goreportcard.com/report/github.com/aws/eks-anywhere)
+
+**Conformance test status:** ![BuildStatus](https://codebuild.us-west-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiV2dmeFNqWEJORzUreTdwQzZMc2JaYVZQUDMvaElkNnFwbHdsVkEwV3VlVTJRUDhyRU1DVWtXTTNqMCtSMWU5ZFhJRk03aTR5ZGgxYXBMS0JVcllwMlpRPSIsIml2UGFyYW1ldGVyU3BlYyI6IlBuSWFpMGhBZ2lDbUVGMTYiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=main)
 
 Amazon EKS Anywhere is a new deployment option for Amazon EKS that enables you to easily create and operate Kubernetes clusters on-premises with your own virtual machines.
 It brings a consistent AWS management experience to your data center, building on the strengths of [Amazon EKS Distro](https://github.com/aws/eks-distro), the same distribution of Kubernetes that powers EKS on AWS.
