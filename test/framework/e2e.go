@@ -26,6 +26,7 @@ import (
 const (
 	defaultClusterConfigFile = "cluster.yaml"
 	defaultClusterName       = "eksa-test"
+	JobIdVar                 = "T_JOB_ID"
 )
 
 //go:embed testdata/oidc-roles.yaml
@@ -283,4 +284,8 @@ func (e *E2ETest) clusterConfig() *v1alpha1.Cluster {
 	e.ClusterConfig = c
 
 	return e.ClusterConfig
+}
+
+func (e *E2ETest) getJobIdFromEnv() string {
+	return os.Getenv(JobIdVar)
 }
