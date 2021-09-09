@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"sigs.k8s.io/yaml"
@@ -17,6 +18,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -55,15 +57,24 @@ func WithFlux(opts ...api.GitOpsConfigOpt) E2ETestOpt {
 		for _, opt := range opts {
 			opt(e.GitOpsConfig)
 		}
+		// Adding Job ID suffix to repo name
+		// e2e test jobs have Job Id with a ":", replacing with "-"
+		jobId := strings.Replace(e.getJobIdFromEnv(), ":", "-", -1)
+		withFluxRepositorySuffix(jobId)(e.GitOpsConfig)
+		// Setting GitRepo cleanup since GitOps configured
+		e.T.Cleanup(e.CleanUpGithubRepo)
+	}
+}
+
+func withFluxRepositorySuffix(suffix string) api.GitOpsConfigOpt {
+	return func(c *v1alpha1.GitOpsConfig) {
+		repository := c.Spec.Flux.Github.Repository
+		c.Spec.Flux.Github.Repository = fmt.Sprintf("%s-%s", repository, suffix)
 	}
 }
 
 func (e *E2ETest) ValidateFlux() {
-	c, err := v1alpha1.GetClusterConfig(e.ClusterConfigLocation)
-	if err != nil {
-		e.T.Errorf("Error fetching cluster config from file: %v", err)
-	}
-	e.ClusterConfig = c
+	c := e.clusterConfig()
 
 	writer, err := filewriter.NewWriter(e.cluster().Name)
 	if err != nil {
@@ -98,6 +109,26 @@ func (e *E2ETest) ValidateFlux() {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
 	e.validateGitopsRepoContent(gitOptions)
+}
+
+func (e *E2ETest) CleanUpGithubRepo() {
+	c := e.clusterConfig()
+	writer, err := filewriter.NewWriter(e.cluster().Name)
+	if err != nil {
+		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
+	}
+	ctx := context.Background()
+	owner := e.GitOpsConfig.Spec.Flux.Github.Owner
+	repoName := e.GitOpsConfig.Spec.Flux.Github.Repository
+	gitOptions, err := e.NewGitOptions(ctx, c, e.GitOpsConfig, writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
+	if err != nil {
+		e.T.Errorf("Error configuring git client for e2e test: %v", err)
+	}
+	opts := git.DeleteRepoOpts{Owner: owner, Repository: repoName}
+	err = gitOptions.Git.DeleteRepo(ctx, opts)
+	if err != nil {
+		e.T.Errorf("error while deleting Github repo %s: %v", repoName, err)
+	}
 }
 
 type providerConfig struct {
@@ -255,7 +286,7 @@ func (e *E2ETest) validateWorkerNodeUpdates(ctx context.Context) error {
 }
 
 func (e *E2ETest) machineTemplateName(ctx context.Context) (string, error) {
-	machineTemplateName, err := e.KubectlClient.MachineTemplateName(ctx, e.ClusterConfig.Name, e.cluster().KubeconfigFile)
+	machineTemplateName, err := e.KubectlClient.MachineTemplateName(ctx, e.ClusterConfig.Name, e.cluster().KubeconfigFile, executables.WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return "", err
 	}
@@ -392,7 +423,7 @@ func (e *E2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clusterConf
 		}
 		vsphereWorkerConfig := vsphereMachineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
 		return retrier.Retry(120, time.Second*10, func() error {
-			vsMachineTemplate, err := e.KubectlClient.VsphereWorkerNodesMachineTemplate(ctx, clusterConfig.Name, e.cluster().KubeconfigFile)
+			vsMachineTemplate, err := e.KubectlClient.VsphereWorkerNodesMachineTemplate(ctx, clusterConfig.Name, e.cluster().KubeconfigFile, constants.EksaSystemNamespace)
 			if err != nil {
 				return err
 			}
@@ -552,5 +583,5 @@ func (e *E2ETest) clusterConfigGitPath() string {
 }
 
 func RequiredFluxEnvVars() []string {
-	return requiredEnvVars
+	return fluxRequiredEnvVars
 }

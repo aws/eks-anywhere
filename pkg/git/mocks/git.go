@@ -106,6 +106,20 @@ func (mr *MockProviderMockRecorder) CreateRepo(arg0, arg1 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRepo", reflect.TypeOf((*MockProvider)(nil).CreateRepo), arg0, arg1)
 }
 
+// DeleteRepo mocks base method.
+func (m *MockProvider) DeleteRepo(arg0 context.Context, arg1 git.DeleteRepoOpts) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteRepo", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteRepo indicates an expected call of DeleteRepo.
+func (mr *MockProviderMockRecorder) DeleteRepo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRepo", reflect.TypeOf((*MockProvider)(nil).DeleteRepo), arg0, arg1)
+}
+
 // GetRepo mocks base method.
 func (m *MockProvider) GetRepo(arg0 context.Context) (*git.Repository, error) {
 	m.ctrl.T.Helper()

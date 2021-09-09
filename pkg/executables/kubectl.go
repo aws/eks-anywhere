@@ -239,8 +239,8 @@ func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, cluster *types.Cluste
 	return nil
 }
 
-func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, clusterName string, kubeconfig string) (*vspherev3.VSphereMachineTemplate, error) {
-	machineTemplateName, err := k.MachineTemplateName(ctx, clusterName, kubeconfig)
+func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, clusterName string, kubeconfig string, namespace string) (*vspherev3.VSphereMachineTemplate, error) {
+	machineTemplateName, err := k.MachineTemplateName(ctx, clusterName, kubeconfig, WithNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}
@@ -257,10 +257,10 @@ func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, cluster
 	return machineTemplateSpec, nil
 }
 
-func (k *Kubectl) MachineTemplateName(ctx context.Context, clusterName string, kubeconfig string) (string, error) {
+func (k *Kubectl) MachineTemplateName(ctx context.Context, clusterName string, kubeconfig string, opts ...KubectlOpt) (string, error) {
 	template := "{{.spec.template.spec.infrastructureRef.name}}"
 	params := []string{"get", "MachineDeployment", fmt.Sprintf("%s-md-0", clusterName), "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig}
-
+	applyOpts(&params, opts...)
 	buffer, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return "", err
