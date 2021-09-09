@@ -24,7 +24,7 @@ Upgrades can only happen one minor version at a time (e.g. `1.20` -> `1.21`).
 Control plane and worker nodes will be upgraded simultaneously.
 
 A new VM is created with the new version and then an old VM is removed.
-This happens one at a time until all the control plan components have been upgraded.
+This happens one at a time until all the control plane components have been upgraded.
 
 ### Performing a cluster upgrade
 
@@ -60,7 +60,7 @@ eksctl anywhere upgrade cluster -f cluster.yaml
 
 This will upgrade the cluster specification and apply the changes using the provisioner controllers.
 
-example output
+Example output:
 
 ```
 ✅ control plane ready
