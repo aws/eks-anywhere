@@ -14,7 +14,7 @@ The goal is to make sure that the roles and responsibilities are well-defined an
 In the context of EKS Anywhere, we consider the following roles:
 
 * __Users__ ... everyone using EKS Anywhere, typically willing to provide feedback on EKS Anywhere by proposing features and/or filing issues.
-* __Contributors__ ... everyone contributing code, documentation, examples, testing infra, and participating in feature proposals as well as design discussions.
+* __Contributors__ ... everyone contributing code, documentation, examples, and testing infra or participating in feature proposals and design discussions.
 * __Maintainers__ ... are responsible for engaging with and assisting contributors to iterate on the contributions until it reaches acceptable quality.
 Maintainers can decide whether the contributions can be accepted into the project or rejected.
 

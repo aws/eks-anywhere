@@ -10,19 +10,19 @@ description: >
 Please do not create a public GitHub issue for security problems.**
 
 This guide provides advice about best practices for EKS Anywhere specific security concerns. 
-For a more complete treatment of Kubernetes security generally please refer to the official [Kubernetes documentation on Securing a Cluster](https://kubernetes.io/docs/tasks/administer-cluster/securing-a-cluster/) and the [Amazon EKS Best Practices Guide for Security](https://aws.github.io/aws-eks-best-practices/security/docs/index.html).
+For a more complete treatment of Kubernetes security generally, please refer to the official [Kubernetes documentation on Securing a Cluster](https://kubernetes.io/docs/tasks/administer-cluster/securing-a-cluster/) and the [Amazon EKS Best Practices Guide for Security](https://aws.github.io/aws-eks-best-practices/security/docs/index.html).
 
 ## The Shared Responsibility Model and EKS-A
-AWS Cloud Services follow the [Shared Responsibility Model,](https://aws.amazon.com/compliance/shared-responsibility-model/) where AWS is responsible for security “of” the cloud, while the customer is responsible for security “in” the cloud. 
-However, EKS Anywhere is an open-source tool and the distribution of responsibility differs from that of a managed cloud service like EKS.
+AWS Cloud Services follow the [Shared Responsibility Model](https://aws.amazon.com/compliance/shared-responsibility-model/), where AWS is responsible for security “of” the cloud and the customer is responsible for security “in” the cloud. 
+However, EKS Anywhere is an open-source tool, and the distribution of responsibility differs from that of a managed cloud service like EKS.
 
 ### AWS Responsibilities
 AWS is responsible for building and delivering a secure tool. 
-This tool will provision an initially secure Kubernetes cluster.
+This tool will provision an initially-secure Kubernetes cluster.
 
 AWS is responsible for vetting and securely sourcing the services and tools packaged with EKS Anywhere and the cluster it creates (such as CoreDNS, Cilium, Flux, CAPI, and govc). 
 
-The EKS Anywhere build and delivery infrastructure, or supply chain, is secured to the standard of any AWS service and AWS takes responsibility for the secure and reliable delivery of a quality product which provisions a secure and stable Kubernetes cluster. 
+The EKS Anywhere build and delivery infrastructure, or supply chain, is secured to the standard of any AWS service, and AWS takes responsibility for the secure and reliable delivery of a quality product, which provisions a secure and stable Kubernetes cluster. 
 When the `eksctl anywhere` plugin is executed, EKS Anywhere components are automatically downloaded from AWS.
 `eksctl` will then perform checksum verification on the components to ensure their authenticity.
 
@@ -34,7 +34,7 @@ and ensuring it handles sensitive data and cluster resources securely.
 ### End user responsibilities
 The end user is responsible for the entire EKS Anywhere cluster after it has been provisioned. 
 AWS provides a mechanism to upgrade the cluster in-place, but it is the responsibility of the end user to perform that upgrade using the provided tools.
-End users are responsible for operating their clusters in accordance with [Kubernetes security best practices,](https://kubernetes.io/docs/tasks/administer-cluster/securing-a-cluster/) 
+End users are responsible for operating their clusters in accordance with [Kubernetes security best practices](https://kubernetes.io/docs/tasks/administer-cluster/securing-a-cluster/) 
 and for the ongoing security of the cluster after it has been provisioned. 
 This includes but is not limited to:
 - creation or modification of RBAC roles and bindings
@@ -46,22 +46,22 @@ This includes but is not limited to:
 
 End users are also responsible for:
 
-* The hardware and software which make up the infrastructure layer
+* The hardware and software that make up the infrastructure layer
 (such as vSphere, ESXi, physical servers, and physical network infrastructure).
 
 * The ongoing maintenance of the cluster nodes, including the underlying guest operating systems. 
 Additionally, while EKS Anywhere provides a streamlined process for upgrading a cluster to a new Kubernetes version, it is the responsibility of the user to perform the upgrade as necessary.
 
-* Any applications which run “on” the cluster, including their secure operation, least privilege, and use of well-known and vetted container images.
+* Any applications that run “on” the cluster, including their secure operation, least privilege, and use of well-known and vetted container images.
 
 ## EKS Anywhere Security Best Practices
-This section captures EKS Anywhere specific security best practices.
+This section captures EKS Anywhere-specific security best practices.
 Please read this section carefully and follow any guidance to ensure the ongoing security and reliability of your EKS Anywhere cluster.
 
 ### Critical Namespaces
 
 EKS Anywhere creates and uses resources in several critical namespaces. 
-All of the EKS Anywhere managed namespaces should be treated as sensitive and access should be limited to only the most trusted users and processes. 
+All of the EKS Anywhere-managed namespaces should be treated as sensitive and access should be limited to only the most trusted users and processes. 
 Allowing additional access or modifying the existing RBAC resources could potentially allow a subject to access the namespace and the resources that it contains. 
 This could lead to the exposure of secrets or the failure of your cluster due to modification of critical resources.
 Here are rules you should follow when dealing with critical namespaces:
@@ -75,7 +75,7 @@ For more information about creating limited roles for day-to-day administration 
 
 * **Avoid using the cluster-admin role, as it grants permissions over all namespaces.**
 
-* **No subjects except for the most trusted administrators should be permitted to perform ANY action in the critical namespaces.**
+* **No subjects, except for the most trusted administrators, should be permitted to perform ANY action in the critical namespaces.**
 
 The critical namespaces include:
 
@@ -93,7 +93,7 @@ The critical namespaces include:
 ### Secrets
 
 EKS Anywhere stores sensitive information, like the vSphere credentials and GitHub Personal Access Token, in the cluster as native Kubernetes [secrets](https://kubernetes.io/docs/concepts/configuration/secret/).
-These secret objects are namespaced, for example in the `eksa-system` and `flux-system` namespace, and limiting access to the sensitive namespaces will ensure that these secrets will not be exposed.
+These secret objects are namespaced (for example in the `eksa-system` and `flux-system` namespace), and limiting access to the sensitive namespaces will ensure that these secrets will not be exposed.
 Additionally, limit access to the underlying node. Access to the node could allow access to the secret content.
 
 EKS Anywhere does not currently support encryption-at-rest for Kubernetes secrets.
@@ -106,23 +106,23 @@ EKS Anywhere support for [Key Management Services (KMS)](https://kubernetes.io/d
 
 By default, this `kubeconfig` file uses certificate-based authentication and contains the user certificate data for the administrative user.
 
-**The `kubeconfig` file grants administrative privileges over your cluster to the bearer and the certificate key should be treated as you would any other private key or administrative password.**
+**The `kubeconfig` file grants administrative privileges over your cluster to the bearer, and the certificate key should be treated as you would any other private key or administrative password.**
 
-The EKS Anywhere-generated kubeconfig file should only be used for interacting with the cluster via `eksctl anywhere` commands, such as `upgrade`, and for the most privileged administrative tasks.
+The EKS Anywhere-generated kubeconfig file should only be used for interacting with the cluster via `eksctl anywhere` commands (such as `upgrade`) and for the most privileged administrative tasks.
 For more information about creating limited roles for day-to-day administration and development, please see the [official introduction to Role Based Access Control (RBAC)](https://kubernetes.io/docs/reference/access-authn-authz/rbac/).
 
 ### GitOps
 
-GitOps enabled EKS Anywhere clusters maintain a copy of their cluster configuration in the user provided Git repository.
+GitOps-enabled EKS Anywhere clusters maintain a copy of their cluster configuration in the user-provided Git repository.
 This configuration acts as the source of truth for the cluster.
 Changes made to this configuration will be reflected in the cluster configuration.
 
 AWS recommends that you gate any changes to this repository with mandatory pull request reviews.
-Carefully review pull requests for changes which could impact the availability of the cluster (such as scaling nodes to 0 and deleting the cluster object) or contain secrets.
+Carefully review pull requests for changes that could impact the availability of the cluster (such as scaling nodes to 0 and deleting the cluster object) or contain secrets.
 
 ### GitHub Personal Access Token
 
-Treat the [GitHub PAT](https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token) used with EKS Anywhere as you would any highly privileged secret, as it could potentially be used to make changes to your cluster by modifying the contents of the cluster configuration file through the [GitHub.com](https://github.com/) API.
+Treat the [GitHub PAT](https://docs.github.com/en/github/authenticating-to-github/keeping-your-account-and-data-secure/creating-a-personal-access-token) used with EKS Anywhere as you would any highly privileged secret, as it could potentially be used to make changes to your cluster by modifying the contents of the cluster configuration file through the GitHub API.
 
 * Never commit the PAT to a Git repository
 * Never share the PAT via untrusted channels
@@ -130,11 +130,11 @@ Treat the [GitHub PAT](https://docs.github.com/en/github/authenticating-to-githu
 
 ### Executing EKS Anywhere
 
-Ensure that you execute `eksctl anywhere create cluster` on a trusted workstation in order to protect the values of sensitive environment variables and the EKS Anywhere generated kubeconfig file.
+Ensure that you execute `eksctl anywhere create cluster` on a trusted workstation in order to protect the values of sensitive environment variables and the EKS Anywhere-generated kubeconfig file.
 
 ### SSH Access to Cluster Nodes and ETCD Nodes
 
-EKS Anywhere provides the option to configure an ssh authorized key for access to underlying nodes in a cluster, via `vsphereMachineConfig.Users.sshAuthorizedKeys`.
+EKS Anywhere provides the option to configure an SSH-authorized key for access to underlying nodes in a cluster, via `vsphereMachineConfig.Users.sshAuthorizedKeys`.
 This grants the associated private key the ability to connect to the cluster via `ssh` as the user `capv` with `sudo` permissions.
 The associated private key should be treated as extremely sensitive, as `sudo` access to the cluster and ETCD nodes can permit access to secret object data and potentially confer arbitrary control over the cluster.
 

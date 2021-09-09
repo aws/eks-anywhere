@@ -22,7 +22,7 @@ Options used with multiple commands include:
 * `-h` or `--help` To get help for a command or subcommand
 * `-v int` or `--verbosity int` To set log level verbosity from 0-9
 * `-f `filename` or `--filename filename` To identify the filename containing the cluster config
-* `--force-cleanup` To force deletion of previously created bootstrap cluster
+* `--force-cleanup` To force deletion of previously-created bootstrap cluster
 * `-w string` or `--w-config string` To identify the kubeconfig file when needed to create a support bundle or upgrade a cluster
 
 Other available options and arguments are listed with the command examples that follow.
@@ -35,7 +35,7 @@ Here are some examples.
 
 ### `eksctl anywhere generate clusterconfig`
 
-Using `eksctl anywhere generate clusterconfig` you can generate a cluster configuration
+Using `eksctl anywhere generate clusterconfig`, you can generate a cluster configuration
 for a specific provider (`-p` or `--provider`*provider_name*). Here are examples:
 
 Generate a configuration file to create an EKS Anywhere cluster for a `vsphere` provider:
@@ -50,13 +50,13 @@ Generate a configuration file to create an EKS Anywhere cluster for a Docker pro
 export CLUSTER_NAME=docker01
 eksctl anywhere generate clusterconfig ${CLUSTER_NAME} -p docker > ${CLUSTER_NAME}.yaml
 ```
-Once you have generated the yaml configuration file, edit that file to add configuration information before you use the file to create your cluster.
+Once you have generated the YAML configuration file, edit that file to add configuration information before you use the file to create your cluster.
 See [local](../../getting-started/local-environment) and [production](../../getting-started/production-environment) cluster creation procedures for details.
 
 ### `eksctl anywhere generate support-bundle-config`
 
 If you would like to customize your support bundle, you can generate a support bundle configuration file (`support-bundle-config`),
-edit that file to choose the data you want to gather,
+edit that file to choose the data you want to gather, and
 then gather the selected data into a support bundle (`support-bundle`).
 
 Generate a support bundle config file (then edit that file to select the log data you want to gather):
@@ -114,7 +114,7 @@ See [local](../../getting-started/local-environment) and [production](../../gett
 ## `eksctl anywhere upgrade cluster`
 
 Upgrade an existing EKS Anywhere cluster.
-This example uses maximum verbosity and forces a cleanup of the previously created bootstrap cluster:
+This example uses maximum verbosity and forces a cleanup of the previously-created bootstrap cluster:
 
 ```
 export CLUSTER_NAME=vsphere01
@@ -153,7 +153,7 @@ View general help information using `help`:
 ```
 eksctl anywhere help
 
-Use eksctl anywhere to build your own self-managing cluster on your hardware with the best of Amazon EKS
+Use `eksctl anywhere` to build your own self-managing cluster on your hardware with the best of Amazon EKS.
 
 Usage:
   eksctl anywhere [command]

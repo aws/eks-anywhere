@@ -8,16 +8,14 @@ description: >
 ---
 
 Amazon EKS Anywhere is a new deployment option for Amazon EKS
-that enables you to easily create and operate Kubernetes clusters on-premises.
+that enables you to create and operate Kubernetes clusters on-premises easily.
 EKS Anywhere provides an installable software package for creating and operating Kubernetes clusters on-premises
 and automation tooling for cluster lifecycle support.
 To learn more, see [EKS Anywhere](https://aws.amazon.com/eks/eks-anywhere/).
 
-
 Amazon Elastic Kubernetes Service (Amazon EKS) is a managed Kubernetes service that makes it easy for you to run Kubernetes on the AWS cloud.
 Amazon EKS is certified Kubernetes conformant, so existing applications that run on upstream Kubernetes are compatible with Amazon EKS.
 To learn more about Amazon EKS, see [Amazon Elastic Kubernetes Service](https://aws.amazon.com/eks/).
-
 
 ### Comparing Amazon EKS Anywhere to Amazon EKS
 

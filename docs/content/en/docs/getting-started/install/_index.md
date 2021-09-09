@@ -11,7 +11,7 @@ Creating an EKS Anywhere cluster begins with setting up an Administrative machin
 From there, you create the cluster for your chosen provider.
 See [Create cluster workflow]({{< relref "/docs/concepts/clusterworkflow" >}}) for an overview of the cluster creation process.
 
-To create an EKS Anywhere cluster you will need [`eksctl`](https://eksctl.io) and the `eksctl-anywhere` plugin.
+To create an EKS Anywhere cluster, you will need [`eksctl`](https://eksctl.io) and the `eksctl-anywhere` plugin.
 This will let you create a cluster in multiple providers for local development or production workloads.
 
 ### Administrative machine prerequisites
@@ -22,7 +22,7 @@ This will let you create a cluster in multiple providers for local development o
 - 16GB memory
 - 30GB free disk space
 
-> **_NOTE:_** If you are using Ubuntu use the [Docker CE](https://docs.docker.com/engine/install/ubuntu/) installation instructions to install Docker and not the Snap installation.
+> **_NOTE:_** If you are using Ubuntu, use the [Docker CE](https://docs.docker.com/engine/install/ubuntu/) installation instructions to install Docker and not the Snap installation.
 
 ### Install EKS Anywhere CLI tools
 
@@ -34,7 +34,7 @@ It currently will not work on computers with Apple Silicon or Arm based processo
 {{% /alert %}}
 
 You can install `eksctl` and `eksctl-anywhere` with [homebrew](http://brew.sh/).
-This package will also install `kubectl` and the `aws-iam-authenticator` which will be helpful to test EKS clusters.
+This package will also install `kubectl` and `aws-iam-authenticator`, which will be helpful to test EKS clusters.
 
 ```bash
 brew install aws/tap/eks-anywhere
@@ -64,14 +64,14 @@ sudo mv ./eksctl-anywhere /usr/local/bin/
 
 ### Upgrade eksctl-anywhere
 
-If you installed `eksctl-anywhere` via homebrew you can upgrade the binary with
+If you installed `eksctl-anywhere` via homebrew, you can upgrade the binary with
 
 ```bash
 brew update
 brew upgrade eks-anywhere
 ```
 
-If you installed `eksctl-anywhere` manually you should follow the installation steps to download the latest release.
+If you installed `eksctl-anywhere` manually, you should follow the installation steps to download the latest release.
 
 You can verify your installed version with
 
@@ -81,7 +81,7 @@ eksctl anywhere version
 
 ## Deploy a cluster
 
-Once you have the tools installed you can deploy a local cluster or production cluster in the next steps.
+Once you have the tools installed, you can deploy a local cluster or production cluster in the next steps.
 
 * [Create local cluster](../local-environment/)
 * [Create production cluster](../production-environment/)

@@ -13,4 +13,3 @@ submitting any [issues](https://github.com/aws/eks-anywhere/issues) or
 all the necessary information to respond to your bug report or contribution 
 effectively. If you have a concern with a security vulnerability, please
 review our [reporting a vulnerability policy](https://github.com/aws/eks-anywhere/security/policy).
-
