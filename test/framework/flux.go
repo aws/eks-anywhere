@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -103,7 +102,7 @@ func (e *E2ETest) ValidateFlux() {
 	if err != nil {
 		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
 	}
-	repoName := os.Getenv(gitRepositoryVar)
+	repoName := e.gitRepoName()
 	gitOptions, err := e.NewGitOptions(ctx, c, e.GitOpsConfig, writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
@@ -119,7 +118,7 @@ func (e *E2ETest) CleanUpGithubRepo() {
 	}
 	ctx := context.Background()
 	owner := e.GitOpsConfig.Spec.Flux.Github.Owner
-	repoName := e.GitOpsConfig.Spec.Flux.Github.Repository
+	repoName := e.gitRepoName()
 	gitOptions, err := e.NewGitOptions(ctx, c, e.GitOpsConfig, writer, fmt.Sprintf("%s/%s", e.ClusterName, repoName))
 	if err != nil {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
@@ -203,7 +202,7 @@ func (e *E2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Context) erro
 }
 
 func (e *E2ETest) validateGitopsRepoContent(gitOptions *GitOptions) {
-	repoName := os.Getenv(gitRepositoryVar)
+	repoName := e.gitRepoName()
 	gitFilePath := e.clusterConfigGitPath()
 	localFilePath := filepath.Join(e.ClusterName, repoName, e.clusterConfGitPath())
 	ctx := context.Background()
@@ -212,7 +211,8 @@ func (e *E2ETest) validateGitopsRepoContent(gitOptions *GitOptions) {
 	if err != nil {
 		e.T.Errorf("Error cloning github repo: %v", err)
 	}
-	err = g.Branch("default")
+	branch := e.gitBranch()
+	err = g.Branch(branch)
 	if err != nil {
 		e.T.Errorf("Error checking out branch: %v", err)
 	}
@@ -568,6 +568,14 @@ func (e *E2ETest) writeEKSASpec(c *v1alpha1.Cluster, datacenterConfig providers.
 		return "", err
 	}
 	return clusterConfGitPath, nil
+}
+
+func (e *E2ETest) gitRepoName() string {
+	return e.GitOpsConfig.Spec.Flux.Github.Repository
+}
+
+func (e *E2ETest) gitBranch() string {
+	return e.GitOpsConfig.Spec.Flux.Github.Branch
 }
 
 func (e *E2ETest) clusterConfGitPath() string {
