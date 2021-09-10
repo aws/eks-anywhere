@@ -9,12 +9,14 @@ description: >
 EKS Anywhere offers AWS support for certain third-party vendor components,
 namely Ubuntu TLS, Cilium, and Flux.
 It also provides flexibility for you to integrate with your choice of tools in other areas.
-Below is a list of suggested third-party tools your consideration.
+Below is a list of example third-party tools your consideration.
 
-| Feature                       | Suggest third-party tools                 |
+For a full list of partner integration options, please visit [Amazon EKS Anywhere Partner page](https://aws.amazon.com/eks/eks-anywhere/partners/).
+
+| Feature                       | Example third-party tools                 |
 |-------------------------------|-------------------------------------------|
 | Ingress controller            | [Emissary-ingress](https://www.getambassador.io/products/api-gateway/) (previously Ambassador)          |
-| Service type load balancer    | [KubeVip]({{< relref "../workload/loadbalance/kubevip/_index.md#current-recommendation-kube-vip" >}}) (recommended) or [MetalLB]({{< relref "../workload/loadbalance/metallb.md#alternatives" >}})|
+| Service type load balancer    | [KubeVip]({{< relref "../workload/loadbalance/kubevip/_index.md#current-recommendation-kube-vip" >}}) or [MetalLB]({{< relref "../workload/loadbalance/metallb.md#alternatives" >}})|
 | Local container repository    | [Harbor](https://goharbor.io/)                                    |
 | Monitoring                    | [Prometheus](https://sysdig.com/products/monitor/prometheus-monitoring/), [Grafana](https://grafana.com/), [Datadog](https://www.datadoghq.com/blog/monitoring-kubernetes-with-datadog/), or [NewRelic](https://newrelic.com/platform/kubernetes/monitoring-guide) |
 | Logging                 | [Splunk](https://www.splunk.com/en_us/blog/platform/introducing-the-splunk-operator-for-kubernetes.html) or [Fluentbit](https://fluentbit.io/kubernetes/)                                    |
