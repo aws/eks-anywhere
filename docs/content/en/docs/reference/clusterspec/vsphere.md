@@ -95,10 +95,10 @@ Specific network configuration for your Kubernetes cluster.
 ### clusterNetwork.cni (required)
 CNI plugin to be installed in the cluster. The only supported value at the moment is `cilium`.
 
-### clusterNetwork.pods.cidrBlocks[0] (optional)
+### clusterNetwork.pods.cidrBlocks[0] (required)
 Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR block specification is permitted.
 
-### clusterNetwork.services.cidrBlocks[0] (optional)
+### clusterNetwork.services.cidrBlocks[0] (required)
 Subnet used by services in CIDR notation. Please note that only 1 custom services CIDR block specification is permitted.
 
 ### controlPlaneConfiguration (required)
