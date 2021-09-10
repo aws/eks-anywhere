@@ -17,7 +17,7 @@ Below is a list of suggested third-party tools your consideration.
 | Service type load balancer    | [KubeVip]({{< relref "../workload/loadbalance/kubevip/_index.md#current-recommendation-kube-vip" >}}) (recommended) or [MetalLB]({{< relref "../workload/loadbalance/metallb.md#alternatives" >}})|
 | Local container repository    | [Harbor](https://goharbor.io/)                                    |
 | Monitoring                    | [Prometheus](https://sysdig.com/products/monitor/prometheus-monitoring/), [Grafana](https://grafana.com/), [Datadog](https://www.datadoghq.com/blog/monitoring-kubernetes-with-datadog/), or [NewRelic](https://newrelic.com/platform/kubernetes/monitoring-guide) |
-| Logging                 | [Splunk](https://www.splunk.com/en_us/blog/platform/introducing-the-splunk-operator-for-kubernetes.html) or [Fluntbit](https://fluentbit.io/kubernetes/)                                    |
+| Logging                 | [Splunk](https://www.splunk.com/en_us/blog/platform/introducing-the-splunk-operator-for-kubernetes.html) or [Fluentbit](https://fluentbit.io/kubernetes/)                                    |
 | Secret management             | [Hashi Vault](https://www.vaultproject.io/docs/platform/k8s)                               |
 | Policy agent                  | [Open Policy Agent](https://www.openpolicyagent.org/docs/latest/kubernetes-introduction/)                                       |
 | Service mesh                  | [Linkerd](https://linkerd.io/) or [Istio](https://istio.io/)                         |
