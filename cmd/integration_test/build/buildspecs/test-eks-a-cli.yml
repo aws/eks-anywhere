@@ -46,7 +46,7 @@ phases:
       -n ${INTEGRATION_TEST_SUBNET_ID}
       -m 40
       -r 'Test'
-      -v 5
+      -v 4
   post_build:
     commands:
     - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
