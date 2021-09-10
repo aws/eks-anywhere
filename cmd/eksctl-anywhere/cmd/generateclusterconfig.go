@@ -46,7 +46,7 @@ func preRunGenerateClusterConfig(cmd *cobra.Command, args []string) {
 
 func init() {
 	generateCmd.AddCommand(generateClusterConfigCmd)
-	generateClusterConfigCmd.Flags().StringP("provider", "p", "", "Provider to use")
+	generateClusterConfigCmd.Flags().StringP("provider", "p", "", "Provider to use (vsphere or docker)")
 	err := generateClusterConfigCmd.MarkFlagRequired("provider")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
