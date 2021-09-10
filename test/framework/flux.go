@@ -93,7 +93,7 @@ func (e *E2ETest) ValidateFlux() {
 	}
 
 	if err = e.validateWorkerNodeReplicaUpdates(ctx); err != nil {
-		e.T.Errorf("Error validting scaling of Flux managed cluster: %v", err)
+		e.T.Errorf("Error validating scaling of Flux managed cluster: %v", err)
 	}
 
 	if err = e.validateWorkerNodeMultiConfigUpdates(ctx); err != nil {
