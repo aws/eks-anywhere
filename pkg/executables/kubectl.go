@@ -245,7 +245,7 @@ func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, cluster
 		return nil, err
 	}
 
-	params := []string{"get", "vspheremachinetemplates", machineTemplateName, "-o", "go-template", "--template", "{{.spec.template.spec}}", "-o", "yaml", "--kubeconfig", kubeconfig}
+	params := []string{"get", "vspheremachinetemplates", machineTemplateName, "-o", "go-template", "--template", "{{.spec.template.spec}}", "-o", "yaml", "--kubeconfig", kubeconfig, "--namespace", namespace}
 	buffer, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, err
