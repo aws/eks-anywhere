@@ -70,7 +70,7 @@ func (r *ReleaseConfig) GetKubeRbacProxyImageTagOverride() (ImageTagOverride, er
 	}
 
 	imageTagOverride := ImageTagOverride{
-		Repository: "kube-rbac-proxy",
+		Repository: "brancz/kube-rbac-proxy",
 		ReleaseUri: r.GetReleaseImageURI("kube-rbac-proxy", "brancz/kube-rbac-proxy", tagOptions),
 	}
 
