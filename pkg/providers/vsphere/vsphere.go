@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -1081,6 +1082,18 @@ func BuildTemplateMap(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphere
 	}
 	if k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
 		values["cgroupDriverSystemd"] = true
+	}
+
+	if clusterSpec.Spec.ECRMirror != nil {
+		values["ecrMirrorEndpoint"] = clusterSpec.Spec.ECRMirror.Endpoint
+		if clusterSpec.Spec.ECRMirror.CACert != "" {
+			cert, err := ioutil.ReadFile(clusterSpec.Spec.ECRMirror.CACert)
+			if err != nil {
+				return nil, fmt.Errorf("unable to read file %s: %v", clusterSpec.Spec.ECRMirror.CACert, err)
+			}
+			values["ecrMirrorCert"] = cert
+		}
+
 	}
 
 	if clusterSpec.Spec.ProxyConfiguration != nil {

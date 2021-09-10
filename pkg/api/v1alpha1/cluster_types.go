@@ -34,12 +34,18 @@ type ClusterSpec struct {
 	// +kubebuilder:validation:Optional
 	ExternalEtcdConfiguration *ExternalEtcdConfiguration `json:"externalEtcdConfiguration,omitempty"`
 	ProxyConfiguration        *ProxyConfiguration        `json:"proxyConfiguration,omitempty"`
+	ECRMirror                 *ECRMirror                 `json:"ecrMirror,omitempty"`
 }
 
 type ProxyConfiguration struct {
 	HttpProxy  string   `json:"httpProxy,omitempty"`
 	HttpsProxy string   `json:"httpsProxy,omitempty"`
 	NoProxy    []string `json:"noProxy,omitempty"`
+}
+
+type ECRMirror struct {
+	Endpoint string `json:"endpoint,omitempty"`
+	CACert   string `json:"caCert,omitempty"`
 }
 
 func (n *ProxyConfiguration) Equal(o *ProxyConfiguration) bool {
