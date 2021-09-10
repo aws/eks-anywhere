@@ -370,6 +370,6 @@ func (p *provider) MachineConfigs() []providers.MachineConfig {
 	return nil
 }
 
-func (p *provider) ValidateNewSpec(_ context.Context, _ *types.Cluster) error {
+func (p *provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
 	return nil
 }

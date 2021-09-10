@@ -63,10 +63,12 @@ type ClusterClient interface {
 	GetMachines(ctx context.Context, cluster *types.Cluster) ([]types.Machine, error)
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error)
-	GetEksaVSphereDatacenterConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string) (*v1alpha1.VSphereDatacenterConfig, error)
+	GetEksaVSphereDatacenterConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
 	UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error
 	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
-	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string) (*v1alpha1.VSphereMachineConfig, error)
+	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
+	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
+	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster) error
 	ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster) error
 }
@@ -236,7 +238,7 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 	case v1alpha1.VSphereDatacenterKind:
 		machineConfigMap := make(map[string]*v1alpha1.VSphereMachineConfig)
 
-		existingVdc, err := c.clusterClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile)
+		existingVdc, err := c.clusterClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace)
 		if err != nil {
 			return false, err
 		}
@@ -250,7 +252,7 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 			mc := config.(*v1alpha1.VSphereMachineConfig)
 			machineConfigMap[mc.Name] = mc
 		}
-		existingCpVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile)
+		existingCpVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace)
 		if err != nil {
 			return false, err
 		}
@@ -259,7 +261,7 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 			logger.V(3).Info("New control plane machine config spec is different from the existing spec")
 			return true, nil
 		}
-		existingWnVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile)
+		existingWnVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace)
 		if err != nil {
 			return false, err
 		}
@@ -269,7 +271,7 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 			return true, nil
 		}
 		if cc.Spec.ExternalEtcdConfiguration != nil {
-			existingEtcdVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile)
+			existingEtcdVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace)
 			if err != nil {
 				return false, err
 			}
@@ -629,6 +631,13 @@ func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpe
 
 func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
 	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error {
+	if clusterSpec.Namespace != "" {
+		if err := c.clusterClient.GetNamespace(ctx, cluster.KubeconfigFile, clusterSpec.Namespace); err != nil {
+			if err := c.clusterClient.CreateNamespace(ctx, cluster.KubeconfigFile, clusterSpec.Namespace); err != nil {
+				return err
+			}
+		}
+	}
 	resourcesSpec, err := clustermarshaller.MarshalClusterSpec(clusterSpec, datacenterConfig, machineConfigs)
 	if err != nil {
 		return err
@@ -644,6 +653,7 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 
 func (c *ClusterManager) applyVersionBundle(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
 	clusterSpec.Bundles.Name = clusterSpec.Name
+	clusterSpec.Bundles.Namespace = clusterSpec.Namespace
 	bundleObj, err := yaml.Marshal(clusterSpec.Bundles)
 	if err != nil {
 		return fmt.Errorf("error outputting bundle yaml: %v", err)
@@ -663,7 +673,7 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 	pausedAnnotation := map[string]string{clusterSpec.PausedAnnotation(): "true"}
 	err := c.Retrier.Retry(
 		func() error {
-			return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Spec.DatacenterRef.Name, pausedAnnotation, cluster, "")
+			return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 		},
 	)
 	if err != nil {
@@ -681,7 +691,7 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 		}
 		err := c.Retrier.Retry(
 			func() error {
-				return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, "")
+				return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 			},
 		)
 		if err != nil {
@@ -690,7 +700,7 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 		if clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name != clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name {
 			err := c.Retrier.Retry(
 				func() error {
-					return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, pausedAnnotation, cluster, "")
+					return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 				},
 			)
 			if err != nil {
@@ -702,7 +712,7 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 				// etcd machines have a separate machineGroupRef which hasn't been paused yet, so apply pause annotation
 				err := c.Retrier.Retry(
 					func() error {
-						return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, "")
+						return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 					},
 				)
 				if err != nil {
@@ -714,7 +724,7 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 
 	err = c.Retrier.Retry(
 		func() error {
-			return c.clusterClient.UpdateAnnotationInNamespace(ctx, clusterSpec.ResourceType(), cluster.Name, pausedAnnotation, cluster, "")
+			return c.clusterClient.UpdateAnnotationInNamespace(ctx, clusterSpec.ResourceType(), cluster.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 		},
 	)
 	if err != nil {
@@ -727,7 +737,7 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 	pausedAnnotation := clusterSpec.PausedAnnotation()
 	err := c.Retrier.Retry(
 		func() error {
-			return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Spec.DatacenterRef.Name, pausedAnnotation, cluster, "")
+			return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.DatacenterResourceType(), clusterSpec.Spec.DatacenterRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 		},
 	)
 	if err != nil {
@@ -745,7 +755,7 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 		}
 		err := c.Retrier.Retry(
 			func() error {
-				return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, "")
+				return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 			},
 		)
 		if err != nil {
@@ -754,7 +764,7 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 		if clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name != clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name {
 			err := c.Retrier.Retry(
 				func() error {
-					return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, pausedAnnotation, cluster, "")
+					return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 				},
 			)
 			if err != nil {
@@ -766,7 +776,7 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 				// etcd machines have a separate machineGroupRef which hasn't been resumed yet, so apply pause annotation with false value
 				err := c.Retrier.Retry(
 					func() error {
-						return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, "")
+						return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 					},
 				)
 				if err != nil {
@@ -778,7 +788,7 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 
 	err = c.Retrier.Retry(
 		func() error {
-			return c.clusterClient.RemoveAnnotationInNamespace(ctx, clusterSpec.ResourceType(), cluster.Name, pausedAnnotation, cluster, "")
+			return c.clusterClient.RemoveAnnotationInNamespace(ctx, clusterSpec.ResourceType(), cluster.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 		},
 	)
 	if err != nil {

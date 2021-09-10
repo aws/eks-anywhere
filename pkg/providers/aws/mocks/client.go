@@ -106,18 +106,18 @@ func (m *MockProviderKubectlClient) EXPECT() *MockProviderKubectlClientMockRecor
 }
 
 // GetEksaAWSDatacenterConfig mocks base method.
-func (m *MockProviderKubectlClient) GetEksaAWSDatacenterConfig(arg0 context.Context, arg1, arg2 string) (*v1alpha1.AWSDatacenterConfig, error) {
+func (m *MockProviderKubectlClient) GetEksaAWSDatacenterConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.AWSDatacenterConfig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEksaAWSDatacenterConfig", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetEksaAWSDatacenterConfig", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*v1alpha1.AWSDatacenterConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEksaAWSDatacenterConfig indicates an expected call of GetEksaAWSDatacenterConfig.
-func (mr *MockProviderKubectlClientMockRecorder) GetEksaAWSDatacenterConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockProviderKubectlClientMockRecorder) GetEksaAWSDatacenterConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaAWSDatacenterConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaAWSDatacenterConfig), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaAWSDatacenterConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaAWSDatacenterConfig), arg0, arg1, arg2, arg3)
 }
 
 // GetEksaCluster mocks base method.

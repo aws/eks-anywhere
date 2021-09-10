@@ -260,7 +260,7 @@ func (e *E2ETest) GetEksaVSphereMachineConfigs() []v1alpha1.VSphereMachineConfig
 
 	machineConfigs := make([]v1alpha1.VSphereMachineConfig, 0, len(machineConfigNames))
 	for _, name := range machineConfigNames {
-		m, err := e.KubectlClient.GetEksaVSphereMachineConfig(ctx, name, kubeconfig)
+		m, err := e.KubectlClient.GetEksaVSphereMachineConfig(ctx, name, kubeconfig, clusterConfig.Namespace)
 		if err != nil {
 			e.T.Fatalf("Failed getting VSphereMachineConfig: %v", err)
 		}

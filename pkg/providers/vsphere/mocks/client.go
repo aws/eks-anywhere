@@ -325,33 +325,33 @@ func (mr *MockProviderKubectlClientMockRecorder) GetEksaCluster(arg0, arg1 inter
 }
 
 // GetEksaVSphereDatacenterConfig mocks base method.
-func (m *MockProviderKubectlClient) GetEksaVSphereDatacenterConfig(arg0 context.Context, arg1, arg2 string) (*v1alpha1.VSphereDatacenterConfig, error) {
+func (m *MockProviderKubectlClient) GetEksaVSphereDatacenterConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.VSphereDatacenterConfig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEksaVSphereDatacenterConfig", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetEksaVSphereDatacenterConfig", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*v1alpha1.VSphereDatacenterConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEksaVSphereDatacenterConfig indicates an expected call of GetEksaVSphereDatacenterConfig.
-func (mr *MockProviderKubectlClientMockRecorder) GetEksaVSphereDatacenterConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockProviderKubectlClientMockRecorder) GetEksaVSphereDatacenterConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereDatacenterConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaVSphereDatacenterConfig), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereDatacenterConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaVSphereDatacenterConfig), arg0, arg1, arg2, arg3)
 }
 
 // GetEksaVSphereMachineConfig mocks base method.
-func (m *MockProviderKubectlClient) GetEksaVSphereMachineConfig(arg0 context.Context, arg1, arg2 string) (*v1alpha1.VSphereMachineConfig, error) {
+func (m *MockProviderKubectlClient) GetEksaVSphereMachineConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.VSphereMachineConfig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEksaVSphereMachineConfig", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetEksaVSphereMachineConfig", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*v1alpha1.VSphereMachineConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEksaVSphereMachineConfig indicates an expected call of GetEksaVSphereMachineConfig.
-func (mr *MockProviderKubectlClientMockRecorder) GetEksaVSphereMachineConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockProviderKubectlClientMockRecorder) GetEksaVSphereMachineConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaVSphereMachineConfig), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaVSphereMachineConfig), arg0, arg1, arg2, arg3)
 }
 
 // GetEtcdadmCluster mocks base method.
