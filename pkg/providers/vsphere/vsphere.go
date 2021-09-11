@@ -1084,14 +1084,14 @@ func BuildTemplateMap(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphere
 		values["cgroupDriverSystemd"] = true
 	}
 
-	if clusterSpec.Spec.ECRMirror != nil {
-		values["ecrMirrorEndpoint"] = clusterSpec.Spec.ECRMirror.Endpoint
-		if clusterSpec.Spec.ECRMirror.CACert != "" {
-			cert, err := ioutil.ReadFile(clusterSpec.Spec.ECRMirror.CACert)
+	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
+		values["registryMirrorConfiguration"] = clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
+		if clusterSpec.Spec.RegistryMirrorConfiguration.CACert != "" {
+			cert, err := ioutil.ReadFile(clusterSpec.Spec.RegistryMirrorConfiguration.CACert)
 			if err != nil {
-				return nil, fmt.Errorf("unable to read file %s: %v", clusterSpec.Spec.ECRMirror.CACert, err)
+				return nil, fmt.Errorf("unable to read file %s: %v", clusterSpec.Spec.RegistryMirrorConfiguration.CACert, err)
 			}
-			values["ecrMirrorCert"] = string(cert)
+			values["registryCACert"] = string(cert)
 		}
 	}
 

@@ -32,19 +32,19 @@ type Kind struct {
 // It's used by BootstrapClusterClientOption's to store/change information prior to a command execution
 // It must be cleaned after each execution to prevent side effects from past executions options
 type kindExecConfig struct {
-	env                  map[string]string
-	ConfigFile           string
-	KindImage            string
-	KubernetesRepository string
-	EtcdRepository       string
-	EtcdVersion          string
-	CorednsRepository    string
-	CorednsVersion       string
-	KubernetesVersion    string
-	ECRMirrorEndpoint    string
-	ECRMirrorCACert      string
-	DockerExtraMounts    bool
-	DisableDefaultCNI    bool
+	env                    map[string]string
+	ConfigFile             string
+	KindImage              string
+	KubernetesRepository   string
+	EtcdRepository         string
+	EtcdVersion            string
+	CorednsRepository      string
+	CorednsVersion         string
+	KubernetesVersion      string
+	RegistryMirrorEndpoint string
+	RegistryCACert         string
+	DockerExtraMounts      bool
+	DisableDefaultCNI      bool
 }
 
 func NewKind(executable Executable, writer filewriter.FileWriter) *Kind {
@@ -174,9 +174,9 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) {
 		CorednsVersion:       bundle.KubeDistro.CoreDNS.Tag,
 		env:                  make(map[string]string),
 	}
-	if clusterSpec.Spec.ECRMirror != nil {
-		k.execConfig.ECRMirrorEndpoint = clusterSpec.Cluster.Spec.ECRMirror.Endpoint
-		k.execConfig.ECRMirrorCACert = clusterSpec.Spec.ECRMirror.CACert
+	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
+		k.execConfig.RegistryMirrorEndpoint = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
+		k.execConfig.RegistryCACert = clusterSpec.Spec.RegistryMirrorConfiguration.CACert
 	}
 }
 

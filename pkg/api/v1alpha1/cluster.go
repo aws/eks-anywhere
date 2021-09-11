@@ -245,7 +245,7 @@ func (c *Cluster) ClearPauseAnnotation() {
 
 func (c *Cluster) UseImageMirror(defaultImage string) string {
 	imageUrl, _ := url.Parse("https://" + defaultImage)
-	return c.Spec.ECRMirror.Endpoint + imageUrl.Path
+	return c.Spec.RegistryMirrorConfiguration.Endpoint + imageUrl.Path
 }
 
 func (c *Cluster) IsReconcilePaused() bool {
@@ -365,16 +365,16 @@ func validateProxyData(proxy string) error {
 }
 
 func validateMirrorConfig(clusterConfig *Cluster) error {
-	if clusterConfig.Spec.ECRMirror == nil {
+	if clusterConfig.Spec.RegistryMirrorConfiguration == nil {
 		return nil
 	}
-	if clusterConfig.Spec.ECRMirror.Endpoint == "" {
+	if clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint == "" {
 		return errors.New("no value set for ECRMirror.Endpoint")
 	}
-	if clusterConfig.Spec.ECRMirror.CACert == "" {
+	if clusterConfig.Spec.RegistryMirrorConfiguration.CACert == "" {
 		logger.Info("Warning: no value set for ECRMirror.CACert, TLS verification will be disabled")
-	} else if _, err := ioutil.ReadFile(clusterConfig.Spec.ECRMirror.CACert); err != nil {
-		return fmt.Errorf("error reading the ca cert file %s: %v", clusterConfig.Spec.ECRMirror.CACert, err)
+	} else if _, err := ioutil.ReadFile(clusterConfig.Spec.RegistryMirrorConfiguration.CACert); err != nil {
+		return fmt.Errorf("error reading the ca cert file %s: %v", clusterConfig.Spec.RegistryMirrorConfiguration.CACert, err)
 	}
 	return nil
 }

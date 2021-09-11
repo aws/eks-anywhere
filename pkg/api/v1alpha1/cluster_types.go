@@ -32,9 +32,9 @@ type ClusterSpec struct {
 	OverrideClusterSpecFile       string                         `json:"overrideClusterSpecFile,omitempty"`
 	ClusterNetwork                ClusterNetwork                 `json:"clusterNetwork,omitempty"`
 	// +kubebuilder:validation:Optional
-	ExternalEtcdConfiguration *ExternalEtcdConfiguration `json:"externalEtcdConfiguration,omitempty"`
-	ProxyConfiguration        *ProxyConfiguration        `json:"proxyConfiguration,omitempty"`
-	ECRMirror                 *ECRMirror                 `json:"ecrMirror,omitempty"`
+	ExternalEtcdConfiguration   *ExternalEtcdConfiguration   `json:"externalEtcdConfiguration,omitempty"`
+	ProxyConfiguration          *ProxyConfiguration          `json:"proxyConfiguration,omitempty"`
+	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
 }
 
 type ProxyConfiguration struct {
@@ -43,7 +43,7 @@ type ProxyConfiguration struct {
 	NoProxy    []string `json:"noProxy,omitempty"`
 }
 
-type ECRMirror struct {
+type RegistryMirrorConfiguration struct {
 	Endpoint string `json:"endpoint,omitempty"`
 	CACert   string `json:"caCert,omitempty"`
 }

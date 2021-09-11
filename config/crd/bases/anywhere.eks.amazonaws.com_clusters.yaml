@@ -140,6 +140,13 @@ spec:
                       type: string
                     type: array
                 type: object
+              registryMirrorConfiguration:
+                properties:
+                  caCert:
+                    type: string
+                  endpoint:
+                    type: string
+                type: object
               workerNodeGroupConfigurations:
                 items:
                   properties:
