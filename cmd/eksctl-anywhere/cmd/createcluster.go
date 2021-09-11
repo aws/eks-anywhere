@@ -111,7 +111,6 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 		imageUrl, _ := url.Parse("https://" + image)
 		image = clusterSpec.Cluster.Spec.ECRMirror.Endpoint + imageUrl.Path
 	}
-	fmt.Println(image)
 	executableBuilder, err := executables.NewExecutableBuilder(ctx, image)
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)

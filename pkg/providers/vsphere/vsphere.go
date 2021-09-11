@@ -1093,7 +1093,6 @@ func BuildTemplateMap(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphere
 			}
 			values["ecrMirrorCert"] = cert
 		}
-
 	}
 
 	if clusterSpec.Spec.ProxyConfiguration != nil {

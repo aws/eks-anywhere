@@ -42,7 +42,7 @@ type kindExecConfig struct {
 	CorednsVersion       string
 	KubernetesVersion    string
 	ECRMirrorEndpoint    string
-	ECRMirrorCert        string
+	ECRMirrorCACert      string
 	DockerExtraMounts    bool
 	DisableDefaultCNI    bool
 }
@@ -172,9 +172,11 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) {
 		EtcdVersion:          bundle.KubeDistro.Etcd.Tag,
 		CorednsRepository:    bundle.KubeDistro.CoreDNS.Repository,
 		CorednsVersion:       bundle.KubeDistro.CoreDNS.Tag,
-		ECRMirrorEndpoint:    clusterSpec.Cluster.Spec.ECRMirror.Endpoint,
-		ECRMirrorCert:        clusterSpec.Spec.ECRMirror.CACert,
 		env:                  make(map[string]string),
+	}
+	if clusterSpec.Spec.ECRMirror != nil {
+		k.execConfig.ECRMirrorEndpoint = clusterSpec.Cluster.Spec.ECRMirror.Endpoint
+		k.execConfig.ECRMirrorCACert = clusterSpec.Spec.ECRMirror.CACert
 	}
 }
 
