@@ -406,7 +406,7 @@ func (p *vsphereProvider) validateSSHUsername(machineConfig *v1alpha1.VSphereMac
 	} else {
 		if machineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
 			if machineConfig.Spec.Users[0].Name != bottlerocketDefaultUser {
-				return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket.", machineConfig.Spec.Users[0].Name)
+				return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket", machineConfig.Spec.Users[0].Name)
 			}
 		}
 	}
