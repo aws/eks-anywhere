@@ -281,9 +281,10 @@ spec:
       path: /etc/systemd/system/containerd.service.d/http-proxy.conf
 {{- end }}
 {{- if .ecrMirrorCert }}
-    - content: {{.ecrMirrorCert}}
-    owner: root:root
-    path: "/etc/containerd/certs.d/{{.ECRMirrorEndpoint}}/ca.crt"
+      - content: |
+        {{.ecrMirrorCert}}
+      owner: root:root
+      path: "/etc/containerd/certs.d/{{.ECRMirrorEndpoint}}/ca.crt"
 {{- end }}
 {{- if .ecrMirrorEndpoint }}
     - content: |

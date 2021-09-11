@@ -1091,7 +1091,7 @@ func BuildTemplateMap(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphere
 			if err != nil {
 				return nil, fmt.Errorf("unable to read file %s: %v", clusterSpec.Spec.ECRMirror.CACert, err)
 			}
-			values["ecrMirrorCert"] = cert
+			values["ecrMirrorCert"] = string(cert)
 		}
 	}
 
