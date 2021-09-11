@@ -244,6 +244,9 @@ func (c *Cluster) ClearPauseAnnotation() {
 }
 
 func (c *Cluster) UseImageMirror(defaultImage string) string {
+	if c.Spec.RegistryMirrorConfiguration == nil {
+		return defaultImage
+	}
 	imageUrl, _ := url.Parse("https://" + defaultImage)
 	return c.Spec.RegistryMirrorConfiguration.Endpoint + imageUrl.Path
 }

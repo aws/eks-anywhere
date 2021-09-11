@@ -11,6 +11,7 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -31,23 +32,34 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 	eksClusterName := "test_cluster-eks-a-cluster"
 	kubeConfigFile := "test_cluster.kind.kubeconfig"
 	kindImage := "public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind/node:v1.20.2"
+	registryMirror := "registry-mirror.test"
+	kindImageMirror := "registry-mirror.test/l0g8r8j6/kubernetes-sigs/kind/node:v1.20.2"
+	clusterSpecWithMirror := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Name = clusterName
+		s.VersionsBundle = versionBundle
+		s.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
+			Endpoint: registryMirror,
+		}
+	})
 
 	// Initialize gomock
 	mockCtrl := gomock.NewController(t)
 
 	tests := []struct {
-		name           string
-		wantKubeconfig string
-		env            map[string]string
-		options        []testKindOption
-		wantKindConfig string
+		name               string
+		wantKubeconfig     string
+		env                map[string]string
+		options            []testKindOption
+		wantKindConfig     string
+		registryMirrorTest bool
 	}{
 		{
-			name:           "No options",
-			wantKubeconfig: kubeConfigFile,
-			options:        nil,
-			env:            map[string]string{},
-			wantKindConfig: "testdata/kind_config.yaml",
+			name:               "No options",
+			wantKubeconfig:     kubeConfigFile,
+			options:            nil,
+			env:                map[string]string{},
+			wantKindConfig:     "testdata/kind_config.yaml",
+			registryMirrorTest: false,
 		},
 		{
 			name:           "With env option",
@@ -57,8 +69,9 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 					return k.WithEnv(map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"})
 				},
 			},
-			env:            map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
-			wantKindConfig: "testdata/kind_config.yaml",
+			env:                map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
+			wantKindConfig:     "testdata/kind_config.yaml",
+			registryMirrorTest: false,
 		},
 		{
 			name:           "With docker option",
@@ -68,8 +81,9 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 					return k.WithExtraDockerMounts()
 				},
 			},
-			env:            map[string]string{},
-			wantKindConfig: "testdata/kind_config_docker_mount_networking.yaml",
+			env:                map[string]string{},
+			wantKindConfig:     "testdata/kind_config_docker_mount_networking.yaml",
+			registryMirrorTest: false,
 		},
 		{
 			name:           "With docker option and disable CNI option",
@@ -82,8 +96,9 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 					return k.WithDefaultCNIDisabled()
 				},
 			},
-			env:            map[string]string{},
-			wantKindConfig: "testdata/kind_config_docker_mount.yaml",
+			env:                map[string]string{},
+			wantKindConfig:     "testdata/kind_config_docker_mount.yaml",
+			registryMirrorTest: false,
 		},
 		{
 			name:           "With docker option and env option",
@@ -96,8 +111,9 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 					return k.WithExtraDockerMounts()
 				},
 			},
-			env:            map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
-			wantKindConfig: "testdata/kind_config_docker_mount_networking.yaml",
+			env:                map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
+			wantKindConfig:     "testdata/kind_config_docker_mount_networking.yaml",
+			registryMirrorTest: false,
 		},
 		{
 			name:           "With docker option, env option and disable CNI option",
@@ -113,18 +129,56 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 					return k.WithDefaultCNIDisabled()
 				},
 			},
-			env:            map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
-			wantKindConfig: "testdata/kind_config_docker_mount.yaml",
+			env:                map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
+			wantKindConfig:     "testdata/kind_config_docker_mount.yaml",
+			registryMirrorTest: false,
+		},
+		{
+			name:           "With registry mirror option, no CA cert provided",
+			wantKubeconfig: kubeConfigFile,
+			options: []testKindOption{
+				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
+					return k.WithRegistryMirror(registryMirror, "")
+				},
+			},
+			env:                map[string]string{},
+			wantKindConfig:     "testdata/kind_config_registry_mirror_insecure.yaml",
+			registryMirrorTest: true,
+		},
+		{
+			name:           "With registry mirror option, with CA cert",
+			wantKubeconfig: kubeConfigFile,
+			options: []testKindOption{
+				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
+					return k.WithRegistryMirror(registryMirror, "ca.crt")
+				},
+			},
+			env:                map[string]string{},
+			wantKindConfig:     "testdata/kind_config_registry_mirror_with_ca.yaml",
+			registryMirrorTest: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
+
+			var (
+				spec  *cluster.Spec
+				image string
+			)
+			if tt.registryMirrorTest {
+				spec = clusterSpecWithMirror
+				image = kindImageMirror
+			} else {
+				spec = clusterSpec
+				image = kindImage
+			}
+
 			executable.EXPECT().ExecuteWithEnv(
 				ctx,
 				tt.env,
-				"create", "cluster", "--name", eksClusterName, "--kubeconfig", test.OfType("string"), "--image", kindImage, "--config", test.OfType("string"),
+				"create", "cluster", "--name", eksClusterName, "--kubeconfig", test.OfType("string"), "--image", image, "--config", test.OfType("string"),
 			).Return(bytes.Buffer{}, nil).Times(1).Do(
 				func(ctx context.Context, envs map[string]string, args ...string) (stdout bytes.Buffer, err error) {
 					gotKindConfig := args[9]
@@ -135,7 +189,7 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 			)
 
 			k := executables.NewKind(executable, writer)
-			gotKubeconfig, err := k.CreateBootstrapCluster(ctx, clusterSpec, testOptionsToBootstrapOptions(k, tt.options)...)
+			gotKubeconfig, err := k.CreateBootstrapCluster(ctx, spec, testOptionsToBootstrapOptions(k, tt.options)...)
 			if err != nil {
 				t.Fatalf("CreateBootstrapCluster() error = %v, wantErr %v", err, nil)
 			}

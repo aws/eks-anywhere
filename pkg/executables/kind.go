@@ -152,6 +152,19 @@ func (k *Kind) WithDefaultCNIDisabled() bootstrapper.BootstrapClusterClientOptio
 	}
 }
 
+func (k *Kind) WithRegistryMirror(endpoint string, caCertFile string) bootstrapper.BootstrapClusterClientOption {
+	return func() error {
+		if k.execConfig == nil {
+			return errors.New("kind exec config is not ready")
+		}
+
+		k.execConfig.RegistryMirrorEndpoint = endpoint
+		k.execConfig.RegistryCACert = caCertFile
+
+		return nil
+	}
+}
+
 func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster) error {
 	internalName := getInternalName(cluster.Name)
 	logger.V(4).Info("Deleting kind cluster", "name", internalName)
@@ -165,7 +178,7 @@ func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluste
 func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) {
 	bundle := clusterSpec.VersionsBundle
 	k.execConfig = &kindExecConfig{
-		KindImage:            bundle.EksD.KindNode.VersionedImage(),
+		KindImage:            clusterSpec.UseImageMirror(bundle.EksD.KindNode.VersionedImage()),
 		KubernetesRepository: bundle.KubeDistro.Kubernetes.Repository,
 		KubernetesVersion:    bundle.KubeDistro.Kubernetes.Tag,
 		EtcdRepository:       bundle.KubeDistro.Etcd.Repository,
