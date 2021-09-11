@@ -160,7 +160,7 @@ spec:
         imageRepository: {{.bottlerocketBootstrapRepository}}
         imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
-{{- if and .proxyConfig (eq .format "bottlerocket")}}
+{{- if and .proxyConfig (eq .format "bottlerocket") }}
         proxy:
           httpsProxy: {{.httpsProxy}}
           noProxy: {{ range .noProxy }}
@@ -280,8 +280,9 @@ spec:
       owner: root:root
       path: /etc/systemd/system/containerd.service.d/http-proxy.conf
 {{- end }}
+{{- if (ne .format "bottlerocket") }}
 {{- if .ecrMirrorCert }}
-      - content: |
+    - content: |
         {{.ecrMirrorCert}}
       owner: root:root
       path: "/etc/containerd/certs.d/{{.ECRMirrorEndpoint}}/ca.crt"
@@ -300,6 +301,7 @@ spec:
       owner: root:root
       path: "/etc/containerd/config_append.toml"
 {{- end }}
+{{- end }}
     initConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -315,7 +317,7 @@ spec:
         imageRepository: {{.bottlerocketBootstrapRepository}}
         imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
-{{- if and .proxyConfig (eq .format "bottlerocket")}}
+{{- if and .proxyConfig (eq .format "bottlerocket") }}
       proxy:
         httpsProxy: {{.httpsProxy}}
         noProxy: {{ range .noProxy }}
@@ -328,10 +330,10 @@ spec:
           cloud-provider: external
         name: '{{`{{ ds.meta_data.hostname }}`}}'
     preKubeadmCommands:
-{{- if .ecrMirrorEndpoint }}
+{{- if and .ecrMirrorEndpoint (ne .format bottlerocket) }}
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
 {{- end }}
-{{- if and (or .proxyConfig .ecrMirrorEndpoint) (ne .format "bottlerocket")}}
+{{- if and (or .proxyConfig .ecrMirrorEndpoint) (ne .format "bottlerocket") }}
     - sudo systemctl daemon-reload
     - sudo systemctl restart containerd
 {{- end }}
@@ -367,7 +369,7 @@ spec:
           imageRepository: {{.bottlerocketBootstrapRepository}}
           imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
-{{- if and .proxyConfig (eq .format "bottlerocket")}}
+{{- if and .proxyConfig (eq .format "bottlerocket") }}
         proxy:
           httpsProxy: {{.httpsProxy}}
           noProxy: {{ range .noProxy }}
@@ -382,7 +384,7 @@ spec:
             cgroup-driver: systemd
 {{- end }}
           name: '{{"{{"}} ds.meta_data.hostname {{"}}"}}'
-{{- if and .proxyConfig (ne .format "bottlerocket")}}
+{{- if and .proxyConfig (ne .format "bottlerocket") }}
       files:
       - content: |
           [Service]
@@ -392,8 +394,34 @@ spec:
         owner: root:root
         path: /etc/systemd/system/containerd.service.d/http-proxy.conf
 {{- end }}
+{{- if (ne .format "bottlerocket") }}
+{{- if .ecrMirrorCert }}
+    - content: |
+        {{.ecrMirrorCert}}
+      owner: root:root
+      path: "/etc/containerd/certs.d/{{.ECRMirrorEndpoint}}/ca.crt"
+{{- end }}
+{{- if .ecrMirrorEndpoint }}
+    - content: |
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+            endpoint = ["https://{{.ecrMirrorEndpoint}}"]
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.ecrMirrorEndpoint}}".tls]
+          {{- if not .ecrMirrorCert }}
+            insecure_skip_verify = true
+          {{- else }}
+            ca_file = "/etc/containerd/certs.d/{{.ECRMirrorEndpoint}}/ca.crt"
+          {{- end }}
+      owner: root:root
+      path: "/etc/containerd/config_append.toml"
+{{- end }}
+{{- end }}
       preKubeadmCommands:
-{{- if and .proxyConfig (ne .format "bottlerocket")}}
+{{- if and .ecrMirrorEndpoint (ne .format bottlerocket) }}
+    - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+{{- end }}
+{{- if and (or .proxyConfig .ecrMirrorEndpoint) (ne .format "bottlerocket") }}
+{{- if and .proxyConfig (ne .format "bottlerocket") }}
       - sudo systemctl daemon-reload
       - sudo systemctl restart containerd
 {{- end }}
