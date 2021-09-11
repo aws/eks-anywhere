@@ -26,7 +26,7 @@ containerdConfigPatches:
       [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
         endpoint = ["https://{{.ECRMirrorEndpoint}}"]
       [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.ECRMirrorEndpoint}}".tls]
-{{- if (eq .ECRMirrorCert "") }}
+{{- if (eq .ECRMirrorCACert "") }}
         insecure_skip_verify = true
 {{- else }}
         ca_file = "/etc/containerd/certs.d/{{.ECRMirrorEndpoint}}/ca.crt"
@@ -34,7 +34,7 @@ nodes:
 - role: control-plane
   extraMounts:
     - containerPath: /etc/containerd/certs.d/{{.ECRMirrorEndpoint}}/ca.crt
-      hostPath: {{.ECRMirrorCert}}
+      hostPath: {{.ECRMirrorCACert}}
       readOnly: true
 {{- end }}
 {{- end }}

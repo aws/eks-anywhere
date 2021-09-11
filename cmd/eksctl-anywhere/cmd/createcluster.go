@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/url"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -106,11 +105,7 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 		return fmt.Errorf("unable to write: %v", err)
 	}
 	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
-	image := eksaToolsImage.VersionedImage()
-	if clusterSpec.Cluster.Spec.ECRMirror != nil {
-		imageUrl, _ := url.Parse("https://" + image)
-		image = clusterSpec.Cluster.Spec.ECRMirror.Endpoint + imageUrl.Path
-	}
+	image := clusterSpec.UseImageMirror(eksaToolsImage.VersionedImage())
 	executableBuilder, err := executables.NewExecutableBuilder(ctx, image)
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)

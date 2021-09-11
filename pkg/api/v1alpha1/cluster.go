@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"net/url"
 	_ "regexp"
 	"strconv"
 	"strings"
@@ -240,6 +241,11 @@ func (c *Cluster) ClearPauseAnnotation() {
 	if c.Annotations != nil {
 		delete(c.Annotations, pausedAnnotation)
 	}
+}
+
+func (c *Cluster) UseImageMirror(defaultImage string) string {
+	imageUrl, _ := url.Parse("https://" + defaultImage)
+	return c.Spec.ECRMirror.Endpoint + imageUrl.Path
 }
 
 func (c *Cluster) IsReconcilePaused() bool {
