@@ -44,8 +44,10 @@ type ProxyConfiguration struct {
 }
 
 type RegistryMirrorConfiguration struct {
+	// Endpoint defines the registry mirror to use for pulling image
 	Endpoint string `json:"endpoint,omitempty"`
-	CACert   string `json:"caCert,omitempty"`
+	// CACertSecretName defines the kubernetes secret name that stores the registry mirror CA certificate
+	CACertSecretName string `json:"caCertSecretName,omitempty"`
 }
 
 func (n *ProxyConfiguration) Equal(o *ProxyConfiguration) bool {

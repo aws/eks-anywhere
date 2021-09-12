@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/url"
+	"os"
 	_ "regexp"
 	"strconv"
 	"strings"
@@ -17,8 +18,9 @@ import (
 )
 
 const (
-	ClusterKind   = "Cluster"
-	YamlSeparator = "---"
+	ClusterKind         = "Cluster"
+	YamlSeparator       = "---"
+	RegistryMirrorCAKey = "EKSA_REGISTRY_MIRROR_CA"
 )
 
 // +kubebuilder:object:generate=false
@@ -374,10 +376,12 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint == "" {
 		return errors.New("no value set for ECRMirror.Endpoint")
 	}
-	if clusterConfig.Spec.RegistryMirrorConfiguration.CACert == "" {
-		logger.Info("Warning: no value set for ECRMirror.CACert, TLS verification will be disabled")
-	} else if _, err := ioutil.ReadFile(clusterConfig.Spec.RegistryMirrorConfiguration.CACert); err != nil {
-		return fmt.Errorf("error reading the ca cert file %s: %v", clusterConfig.Spec.RegistryMirrorConfiguration.CACert, err)
+	if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
+		if _, err := ioutil.ReadFile(caCert); err != nil {
+			return fmt.Errorf("error reading the ca cert file %s: %v", caCert, err)
+		}
+	} else {
+		logger.Info(fmt.Sprintf("Warning: %s environment variable is not set, TLS verification will be disabled", RegistryMirrorCAKey))
 	}
 	return nil
 }
