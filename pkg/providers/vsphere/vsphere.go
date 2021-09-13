@@ -32,6 +32,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/internal/templates"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -1066,11 +1067,12 @@ func BuildTemplateMap(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphere
 		"workerSshUsername":                    workerNodeGroupMachineSpec.Users[0].Name,
 		"podCidrs":                             clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                         clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
-		"extraArgs":                            clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).ToPartialYaml(),
+		"apiserverExtraArgs":                   clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).ToPartialYaml(),
 		"format":                               format,
 		"externalEtcdVersion":                  bundle.KubeDistro.EtcdVersion,
 		"etcdImage":                            bundle.KubeDistro.EtcdImage.VersionedImage(),
 		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
+		"auditPolicy":                          common.GetAuditPolicy(),
 	}
 
 	k8sVersion, err := semver.New(bundle.KubeDistro.Kubernetes.Tag)
