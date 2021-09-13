@@ -109,7 +109,7 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 		opt(s)
 	}
 
-	bundles, err := s.getBundles(cliVersion)
+	bundles, err := s.GetBundles(cliVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +207,7 @@ func (s *Spec) getVersionsBundle(clusterConfig *eksav1alpha1.Cluster, bundles *v
 	return nil, fmt.Errorf("kubernetes version %s is not supported by bundles manifest %d", clusterConfig.Spec.KubernetesVersion, bundles.Spec.Number)
 }
 
-func (s *Spec) getBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
+func (s *Spec) GetBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
 	release, err := s.getRelease(cliVersion)
 	if err != nil {
 		return nil, err
@@ -405,7 +405,7 @@ func GetEksdRelease(cliVersion version.Info, clusterConfig *eksav1alpha1.Cluster
 		userAgent:           userAgent("cli", cliVersion.GitVersion),
 	}
 
-	bundles, err := s.getBundles(cliVersion)
+	bundles, err := s.GetBundles(cliVersion)
 	if err != nil {
 		return nil, err
 	}
