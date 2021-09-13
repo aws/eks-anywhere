@@ -46,10 +46,6 @@ func (c *VSphereMachineConfigGenerate) Name() string {
 	return c.ObjectMeta.Name
 }
 
-func (c *VSphereMachineConfigGenerate) Namespace() string {
-	return c.ObjectMeta.Namespace
-}
-
 func GetVSphereMachineConfigs(fileName string) (map[string]*VSphereMachineConfig, error) {
 	configs := make(map[string]*VSphereMachineConfig)
 	content, err := ioutil.ReadFile(fileName)

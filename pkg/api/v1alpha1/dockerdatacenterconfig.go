@@ -32,10 +32,6 @@ func (c *DockerDatacenterConfigGenerate) Name() string {
 	return c.ObjectMeta.Name
 }
 
-func (c *DockerDatacenterConfigGenerate) Namespace() string {
-	return c.ObjectMeta.Namespace
-}
-
 func GetDockerDatacenterConfig(fileName string) (*DockerDatacenterConfig, error) {
 	var clusterConfig DockerDatacenterConfig
 	err := ParseClusterConfig(fileName, &clusterConfig)
