@@ -34,6 +34,12 @@ func WithKubernetesVersion(v v1alpha1.KubernetesVersion) ClusterFiller {
 	}
 }
 
+func WithClusterNamespace(ns string) ClusterFiller {
+	return func(c *v1alpha1.Cluster) {
+		c.Namespace = ns
+	}
+}
+
 func WithControlPlaneCount(r int) ClusterFiller {
 	return func(c *v1alpha1.Cluster) {
 		c.Spec.ControlPlaneConfiguration.Count = r

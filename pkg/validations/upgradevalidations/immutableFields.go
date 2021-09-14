@@ -21,7 +21,9 @@ func ValidateImmutableFields(ctx context.Context, k ValidationsKubectlClient, cl
 	}
 
 	if prevSpec.Namespace != spec.Namespace {
-		return fmt.Errorf("cluster namespace is immutable")
+		if !(prevSpec.Namespace == "default" && spec.Namespace == "") {
+			return fmt.Errorf("cluster namespace is immutable")
+		}
 	}
 
 	oSpec := prevSpec.Spec
