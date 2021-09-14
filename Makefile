@@ -31,6 +31,9 @@ GO_OS:=$(shell go env GOOS)
 
 DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow
 
+.PHONY: default
+default: build lint
+
 .PHONY: build
 build: eks-a eks-a-tool unit-test ## Generate binaries and run unit tests
 
