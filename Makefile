@@ -85,7 +85,9 @@ lint: bin/golangci-lint ## Run golangci-lint
 	bin/golangci-lint run
 
 bin/golangci-lint: ## Download golangci-lint
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.39.0
+bin/golangci-lint: GOLANGCI_LINT_VERSION?=$(shell cat .github/workflows/golangci-lint.yml | sed -n -e 's/^\s*version: //p')
+bin/golangci-lint:
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s $(GOLANGCI_LINT_VERSION)
 
 .PHONY: build-cross-platform
 build-cross-platform: eks-a-cross-platform
