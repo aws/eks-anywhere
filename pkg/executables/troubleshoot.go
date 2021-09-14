@@ -1,7 +1,7 @@
 package executables
 
 const (
-	troulbeshootPath = "support-bundle"
+	troubleshootPath = "support-bundle"
 )
 
 type Troubleshoot struct {
