@@ -443,3 +443,70 @@ func (s *Spec) LoadManifest(manifest v1alpha1.Manifest) (*Manifest, error) {
 func userAgent(eksAComponent, version string) string {
 	return fmt.Sprintf("eks-a-%s/%s", eksAComponent, version)
 }
+
+func (vb *VersionsBundle) SharedImages() []v1alpha1.Image {
+	var images []v1alpha1.Image
+	images = append(images, vb.Bootstrap.Controller)
+	images = append(images, vb.Bootstrap.KubeProxy)
+
+	images = append(images, vb.BottleRocketBootstrap.Bootstrap)
+
+	images = append(images, vb.CertManager.Acmesolver)
+	images = append(images, vb.CertManager.Cainjector)
+	images = append(images, vb.CertManager.Controller)
+	images = append(images, vb.CertManager.Webhook)
+
+	images = append(images, vb.Cilium.Cilium)
+	images = append(images, vb.Cilium.Operator)
+
+	images = append(images, vb.ClusterAPI.Controller)
+	images = append(images, vb.ClusterAPI.KubeProxy)
+
+	images = append(images, vb.ControlPlane.Controller)
+	images = append(images, vb.ControlPlane.KubeProxy)
+
+	images = append(images, vb.EksD.KindNode)
+	images = append(images, vb.Eksa.CliTools)
+
+	images = append(images, vb.Flux.HelmController)
+	images = append(images, vb.Flux.KustomizeController)
+	images = append(images, vb.Flux.NotificationController)
+	images = append(images, vb.Flux.SourceController)
+
+	images = append(images, vb.ExternalEtcdBootstrap.Controller)
+	images = append(images, vb.ExternalEtcdBootstrap.KubeProxy)
+
+	images = append(images, vb.ExternalEtcdController.Controller)
+	images = append(images, vb.ExternalEtcdController.KubeProxy)
+
+	return images
+}
+
+func (vb *VersionsBundle) VsphereImages() []v1alpha1.Image {
+	var images []v1alpha1.Image
+	images = append(images, vb.VSphere.ClusterAPIController)
+	images = append(images, vb.VSphere.Driver)
+	images = append(images, vb.VSphere.KubeProxy)
+	images = append(images, vb.VSphere.KubeVip)
+	images = append(images, vb.VSphere.Manager)
+	images = append(images, vb.VSphere.Syncer)
+
+	return images
+}
+
+func (vb *VersionsBundle) DockerImages() []v1alpha1.Image {
+	var images []v1alpha1.Image
+	images = append(images, vb.Docker.KubeProxy)
+	images = append(images, vb.Docker.Manager)
+
+	return images
+}
+
+func (vb *VersionsBundle) Images() []v1alpha1.Image {
+	var images []v1alpha1.Image
+	images = append(images, vb.SharedImages()...)
+	images = append(images, vb.DockerImages()...)
+	images = append(images, vb.VsphereImages()...)
+
+	return images
+}
