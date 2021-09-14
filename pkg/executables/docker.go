@@ -75,8 +75,7 @@ func (d *Docker) AllocatedMemory(ctx context.Context) (uint64, error) {
 }
 
 func (d *Docker) Pull(ctx context.Context, image string) error {
-	_, err := d.executable.Execute(ctx, "pull", image)
-	if err != nil {
+	if _, err := d.executable.Execute(ctx, "pull", image); err != nil {
 		return err
 	}
 	return nil
@@ -85,8 +84,7 @@ func (d *Docker) Pull(ctx context.Context, image string) error {
 func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) error {
 	li := strings.ReplaceAll(image, defaultRegistry, endpoint)
 	logger.Info("Tagging image", "image", image, "local image", li)
-	_, err := d.executable.Execute(ctx, "tag", image, li)
-	if err != nil {
+	if _, err := d.executable.Execute(ctx, "tag", image, li); err != nil {
 		return err
 	}
 	return nil
@@ -95,8 +93,7 @@ func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) er
 func (d *Docker) PushImage(ctx context.Context, image string, endpoint string) error {
 	li := strings.ReplaceAll(image, defaultRegistry, endpoint)
 	logger.Info("Pushing", "image", li)
-	_, err := d.executable.Execute(ctx, "push", li)
-	if err != nil {
+	if _, err := d.executable.Execute(ctx, "push", li); err != nil {
 		return err
 	}
 	return nil
