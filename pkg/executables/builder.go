@@ -46,6 +46,10 @@ func (b *ExecutableBuilder) BuildFluxExecutable() *Flux {
 	return NewFlux(buildExecutable(fluxPath, b.useDocker, b.image, b.mountDir))
 }
 
+func (b *ExecutableBuilder) BuildTroubleshootExecutable() *Troubleshoot {
+	return NewTroubleshoot(buildExecutable(troulbeshootPath, b.useDocker, b.image, b.mountDir))
+}
+
 func BuildSonobuoyExecutable() *Sonobuoy {
 	return NewSonobuoy(&executable{
 		cli: sonobuoyPath,
