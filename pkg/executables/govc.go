@@ -143,7 +143,7 @@ func (g *Govc) DevicesInfo(ctx context.Context, template string) (interface{}, e
 	if err != nil {
 		return nil, fmt.Errorf("Error unmarshalling devices info: %v", err)
 	}
-	return devicesInfo["Devices"].(interface{}), nil
+	return devicesInfo["Devices"], nil
 }
 
 func (g *Govc) TemplateHasSnapshot(ctx context.Context, template string) (bool, error) {
