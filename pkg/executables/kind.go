@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -21,10 +20,7 @@ const kindPath = "kind"
 //go:embed config/kind.yaml
 var kindConfigTemplate string
 
-const (
-	configFileName      = "kind_tmp.yaml"
-	registryMirrorCAKey = "EKSA_REGISTRY_MIRROR_CA"
-)
+const configFileName = "kind_tmp.yaml"
 
 type Kind struct {
 	writer     filewriter.FileWriter
@@ -193,7 +189,7 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) {
 	}
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
 		k.execConfig.RegistryMirrorEndpoint = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
-		k.execConfig.RegistryCACert, _ = os.LookupEnv(registryMirrorCAKey)
+		k.execConfig.RegistryCACert = clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent
 	}
 }
 

@@ -141,14 +141,15 @@ spec:
                     type: array
                 type: object
               registryMirrorConfiguration:
+                description: RegistryMirrorConfiguration defines the settings for
+                  image registry mirror
                 properties:
-                  caCertSecretName:
-                    description: CACertSecretName defines the kubernetes secret name
-                      that stores the registry mirror CA certificate
+                  caCert:
+                    description: CACert defines the contents registry mirror CA certificate
                     type: string
                   endpoint:
-                    description: Endpoint defines the registry mirror to use for pulling
-                      image
+                    description: Endpoint defines the registry mirror endpoint to
+                      use for pulling images
                     type: string
                 type: object
               workerNodeGroupConfigurations:

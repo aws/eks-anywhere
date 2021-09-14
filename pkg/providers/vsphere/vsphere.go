@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
@@ -48,7 +47,6 @@ const (
 	vSpherePasswordKey       = "VSPHERE_PASSWORD"
 	eksavSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
 	eksavSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
-	registryMirrorCAKey      = "EKSA_REGISTRY_MIRROR_CA"
 	vSphereServerKey         = "VSPHERE_SERVER"
 	govcInsecure             = "GOVC_INSECURE"
 	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
@@ -1087,12 +1085,8 @@ func BuildTemplateMap(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphere
 
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
 		values["registryMirrorConfiguration"] = clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
-		if caCert, set := os.LookupEnv(registryMirrorCAKey); set && len(caCert) > 0 {
-			content, err := ioutil.ReadFile(caCert)
-			if err != nil {
-				return nil, fmt.Errorf("unable to read file %s: %v", caCert, err)
-			}
-			values["registryCACert"] = string(content)
+		if len(clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
+			values["registryCACert"] = clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent
 		}
 	}
 

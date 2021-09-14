@@ -377,9 +377,11 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return errors.New("no value set for ECRMirror.Endpoint")
 	}
 	if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
-		if _, err := ioutil.ReadFile(caCert); err != nil {
+		content, err := ioutil.ReadFile(caCert)
+		if err != nil {
 			return fmt.Errorf("error reading the ca cert file %s: %v", caCert, err)
 		}
+		clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent = string(content)
 	} else {
 		logger.Info(fmt.Sprintf("Warning: %s environment variable is not set, TLS verification will be disabled", RegistryMirrorCAKey))
 	}
