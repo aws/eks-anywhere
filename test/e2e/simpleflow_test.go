@@ -72,7 +72,7 @@ func TestVSphereKubernetes121ThreeReplicasFiveWorkersSimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
-func TestVsphereKubernetes121DifferentNamespaceSimpleFlow(t *testing.T) {
+func TestVSphereKubernetes121DifferentNamespaceSimpleFlow(t *testing.T) {
 	test := framework.NewE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu121(), framework.WithVSphereFillers(api.WithVSphereConfigNamespace(clusterNamespace))),
