@@ -48,7 +48,7 @@ func TestVSphereKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
 	runConformanceFlow(test)
 }
 
-func TestVSphereKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
+func TestVSphereKubernetes121ThreeWorkersConformance(t *testing.T) {
 	test := framework.NewE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu121()),
