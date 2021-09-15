@@ -376,7 +376,7 @@ func TestGovcValidateVCenterSetup(t *testing.T) {
 		Spec: v1alpha1.VSphereDatacenterConfigSpec{
 			Datacenter: "SDDC Datacenter",
 			Network:    "/SDDC Datacenter/network/test network",
-			Server:     "test.com",
+			Server:     "github.com",
 			Insecure:   true,
 		},
 	}
@@ -415,7 +415,7 @@ func TestGovcValidateVCenterSetupMachineConfig(t *testing.T) {
 		Spec: v1alpha1.VSphereDatacenterConfigSpec{
 			Datacenter: "SDDC Datacenter",
 			Network:    "/SDDC Datacenter/network/test network",
-			Server:     "test.com",
+			Server:     "github.com",
 			Insecure:   true,
 		},
 	}

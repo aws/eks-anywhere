@@ -76,11 +76,16 @@ func (gsbo *generateSupportBundleOptions) validateCmdInput() error {
 func (gsbo *generateSupportBundleOptions) generateBundleConfig() (*support.EksaDiagnosticBundle, error) {
 	f := gsbo.fileName
 	if f == "" {
-		return support.NewDefaultBundleConfig(support.NewAnalyzerFactory(), support.NewCollectorFactory()), nil
+		return support.NewDiagnosticBundleDefault(support.NewAnalyzerFactory(), support.NewCollectorFactory()), nil
 	}
 	clusterSpec, err := cluster.NewSpec(f, version.Get())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
-	return support.NewBundleConfig(clusterSpec, support.NewAnalyzerFactory(), support.NewCollectorFactory()), nil
+	opts := support.EksaDiagnosticBundleOpts{
+		AnalyzerFactory:  support.NewAnalyzerFactory(),
+		CollectorFactory: support.NewCollectorFactory(),
+		ClusterSpec:      clusterSpec,
+	}
+	return support.NewDiagnosticBundleFromSpec(opts), nil
 }

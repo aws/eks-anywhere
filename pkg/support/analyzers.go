@@ -3,8 +3,6 @@ package supportbundle
 import (
 	"fmt"
 
-	"github.com/replicatedhq/troubleshoot/pkg/apis/troubleshoot/v1beta2"
-
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
@@ -14,11 +12,11 @@ func NewAnalyzerFactory() *analyzerFactory {
 	return &analyzerFactory{}
 }
 
-func (a *analyzerFactory) DefaultAnalyzers() []*v1beta2.Analyze {
+func (a *analyzerFactory) DefaultAnalyzers() []*Analyze {
 	return append(a.defaultDeploymentAnalyzers(), a.defaultCrdAnalyzers()...)
 }
 
-func (a *analyzerFactory) defaultDeploymentAnalyzers() []*v1beta2.Analyze {
+func (a *analyzerFactory) defaultDeploymentAnalyzers() []*Analyze {
 	d := []eksaDeployment{
 		{
 			Name:             "capv-controller-manager",
@@ -77,7 +75,7 @@ func (a *analyzerFactory) defaultDeploymentAnalyzers() []*v1beta2.Analyze {
 	return a.generateDeploymentAnalyzers(d)
 }
 
-func (a *analyzerFactory) defaultCrdAnalyzers() []*v1beta2.Analyze {
+func (a *analyzerFactory) defaultCrdAnalyzers() []*Analyze {
 	crds := []string{
 		fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group),
 		fmt.Sprintf("bundles.%s", v1alpha1.GroupVersion.Group),
@@ -85,21 +83,21 @@ func (a *analyzerFactory) defaultCrdAnalyzers() []*v1beta2.Analyze {
 	return a.generateCrdAnalyzers(crds)
 }
 
-func (a *analyzerFactory) EksaGitopsAnalyzers() []*v1beta2.Analyze {
+func (a *analyzerFactory) EksaGitopsAnalyzers() []*Analyze {
 	crds := []string{
 		fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group),
 	}
 	return a.generateCrdAnalyzers(crds)
 }
 
-func (a *analyzerFactory) EksaOidcAnalyzers() []*v1beta2.Analyze {
+func (a *analyzerFactory) EksaOidcAnalyzers() []*Analyze {
 	crds := []string{
 		fmt.Sprintf("oidcconfigs.%s", v1alpha1.GroupVersion.Group),
 	}
 	return a.generateCrdAnalyzers(crds)
 }
 
-func (a *analyzerFactory) EksaExternalEtcdAnalyzers() []*v1beta2.Analyze {
+func (a *analyzerFactory) EksaExternalEtcdAnalyzers() []*Analyze {
 	deployments := []eksaDeployment{
 		{
 			Name:             "etcdadm-controller-controller-manager",
@@ -114,7 +112,7 @@ func (a *analyzerFactory) EksaExternalEtcdAnalyzers() []*v1beta2.Analyze {
 	return a.generateDeploymentAnalyzers(deployments)
 }
 
-func (a *analyzerFactory) DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*v1beta2.Analyze {
+func (a *analyzerFactory) DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*Analyze {
 	switch datacenter.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		return a.eksaVsphereAnalyzers()
@@ -125,7 +123,7 @@ func (a *analyzerFactory) DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*
 	}
 }
 
-func (a *analyzerFactory) eksaVsphereAnalyzers() []*v1beta2.Analyze {
+func (a *analyzerFactory) eksaVsphereAnalyzers() []*Analyze {
 	crds := []string{
 		fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group),
 		fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group),
@@ -133,8 +131,8 @@ func (a *analyzerFactory) eksaVsphereAnalyzers() []*v1beta2.Analyze {
 	return a.generateCrdAnalyzers(crds)
 }
 
-func (a *analyzerFactory) eksaDockerAnalyzers() []*v1beta2.Analyze {
-	var analyazers []*v1beta2.Analyze
+func (a *analyzerFactory) eksaDockerAnalyzers() []*Analyze {
+	var analyazers []*Analyze
 
 	crds := []string{
 		fmt.Sprintf("dockerdatacenterconfigs.%s", v1alpha1.GroupVersion.Group),
@@ -158,27 +156,27 @@ type eksaDeployment struct {
 	ExpectedReplicas int
 }
 
-func (a *analyzerFactory) generateDeploymentAnalyzers(deployments []eksaDeployment) []*v1beta2.Analyze {
-	var deploymentAnalyzers []*v1beta2.Analyze
+func (a *analyzerFactory) generateDeploymentAnalyzers(deployments []eksaDeployment) []*Analyze {
+	var deploymentAnalyzers []*Analyze
 	for _, d := range deployments {
 		deploymentAnalyzers = append(deploymentAnalyzers, a.deploymentAnalyzer(d))
 	}
 	return deploymentAnalyzers
 }
 
-func (a *analyzerFactory) deploymentAnalyzer(deployment eksaDeployment) *v1beta2.Analyze {
-	return &v1beta2.Analyze{
-		DeploymentStatus: &v1beta2.DeploymentStatus{
+func (a *analyzerFactory) deploymentAnalyzer(deployment eksaDeployment) *Analyze {
+	return &Analyze{
+		DeploymentStatus: &deploymentStatus{
 			Name:      deployment.Name,
 			Namespace: deployment.Namespace,
-			Outcomes: []*v1beta2.Outcome{
+			Outcomes: []*outcome{
 				{
-					Fail: &v1beta2.SingleOutcome{
+					Fail: &singleOutcome{
 						When:    fmt.Sprintf("< %d", deployment.ExpectedReplicas),
 						Message: fmt.Sprintf("%s is not ready.", deployment.Name),
 					},
 				}, {
-					Pass: &v1beta2.SingleOutcome{
+					Pass: &singleOutcome{
 						Message: fmt.Sprintf("%s is running.", deployment.Name),
 					},
 				},
@@ -187,29 +185,29 @@ func (a *analyzerFactory) deploymentAnalyzer(deployment eksaDeployment) *v1beta2
 	}
 }
 
-func (a *analyzerFactory) generateCrdAnalyzers(crds []string) []*v1beta2.Analyze {
-	var crdAnalyzers []*v1beta2.Analyze
+func (a *analyzerFactory) generateCrdAnalyzers(crds []string) []*Analyze {
+	var crdAnalyzers []*Analyze
 	for _, crd := range crds {
 		crdAnalyzers = append(crdAnalyzers, a.crdAnalyzer(crd))
 	}
 	return crdAnalyzers
 }
 
-func (a *analyzerFactory) crdAnalyzer(crdName string) *v1beta2.Analyze {
-	return &v1beta2.Analyze{
-		CustomResourceDefinition: &v1beta2.CustomResourceDefinition{
-			AnalyzeMeta: v1beta2.AnalyzeMeta{
+func (a *analyzerFactory) crdAnalyzer(crdName string) *Analyze {
+	return &Analyze{
+		CustomResourceDefinition: &customResourceDefinition{
+			analyzeMeta: analyzeMeta{
 				CheckName: crdName,
 			},
-			Outcomes: []*v1beta2.Outcome{
+			Outcomes: []*outcome{
 				{
-					Fail: &v1beta2.SingleOutcome{
+					Fail: &singleOutcome{
 						When:    "< 1",
 						Message: fmt.Sprintf("%s is not present on cluster", crdName),
 					},
 				},
 				{
-					Pass: &v1beta2.SingleOutcome{
+					Pass: &singleOutcome{
 						Message: fmt.Sprintf("%s is present on the cluster", crdName),
 					},
 				},
