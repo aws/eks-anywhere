@@ -212,7 +212,7 @@ conformance:
 
 .PHONY: conformance-tests
 conformance-tests: eks-a-e2e integration-test-binary ## Build e2e conformance tests
-	$(MAKE) e2e-tests-binary E2E_TAG=conformance_e2e
+	$(MAKE) e2e-tests-binary E2E_TAGS=conformance_e2e
 
 .PHONY: eks-a-e2e
 eks-a-e2e:
