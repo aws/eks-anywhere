@@ -382,8 +382,8 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 			return fmt.Errorf("error reading the ca cert file %s: %v", caCert, err)
 		}
 		clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent = string(content)
-	} else {
-		logger.Info(fmt.Sprintf("Warning: %s environment variable is not set, TLS verification will be disabled", RegistryMirrorCAKey))
+	} else if clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent == "" {
+		logger.Info(fmt.Sprintf("Warning: %s environment variable and caCertContent is not set, TLS verification will be disabled", RegistryMirrorCAKey))
 	}
 	return nil
 }

@@ -48,8 +48,8 @@ type RegistryMirrorConfiguration struct {
 	// Endpoint defines the registry mirror endpoint to use for pulling images
 	Endpoint string `json:"endpoint,omitempty"`
 
-	// CACert defines the contents registry mirror CA certificate
-	CACertContent string `json:"caCert,omitempty"`
+	// CACertContent defines the contents registry mirror CA certificate
+	CACertContent string `json:"caCertContent,omitempty"`
 }
 
 func (n *ProxyConfiguration) Equal(o *ProxyConfiguration) bool {

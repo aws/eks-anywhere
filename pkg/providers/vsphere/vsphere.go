@@ -443,6 +443,9 @@ func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSp
 	if !ok {
 		return fmt.Errorf("cannot find VSphereMachineConfig %v for control plane", clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
 	}
+	if clusterSpec.Spec.RegistryMirrorConfiguration != nil && controlPlaneMachineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
+		return errors.New("registry mirror is currently not supported with bottlerocket")
+	}
 	if controlPlaneMachineConfig.Spec.MemoryMiB <= 0 {
 		logger.V(1).Info("VSphereMachineConfig MemoryMiB for control plane is not set or is empty. Defaulting to 8192.")
 		controlPlaneMachineConfig.Spec.MemoryMiB = 8192
