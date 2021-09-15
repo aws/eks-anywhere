@@ -462,21 +462,10 @@ func (c *ClusterManager) waitForDeployments(ctx context.Context, deploymentsByNa
 
 func (c *ClusterManager) GenerateDeploymentFile(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider, isUpgrade bool) (string, error) {
 	fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
-	if !clusterSpec.HasOverrideClusterSpecFile() {
-		if isUpgrade {
-			return provider.GenerateDeploymentFileForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec, fileName)
-		}
-		return provider.GenerateDeploymentFileForCreate(ctx, workloadCluster, clusterSpec, fileName)
+	if isUpgrade {
+		return provider.GenerateDeploymentFileForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec, fileName)
 	}
-	fileContent, err := clusterSpec.ReadOverrideClusterSpecFile()
-	if err != nil {
-		return "", err
-	}
-	writtenFile, err := c.writer.Write(fileName, []byte(fileContent))
-	if err != nil {
-		return "", fmt.Errorf("error creating cluster config file: %v", err)
-	}
-	return writtenFile, nil
+	return provider.GenerateDeploymentFileForCreate(ctx, workloadCluster, clusterSpec, fileName)
 }
 
 func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {

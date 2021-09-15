@@ -16,7 +16,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networking"
 	"github.com/aws/eks-anywhere/pkg/providers/factory"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -95,9 +94,6 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 	clusterSpec, err := cluster.NewSpec(cc.fileName, version.Get())
 	if err != nil {
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
-	}
-	if clusterSpec.HasOverrideClusterSpecFile() {
-		logger.Info("Warning: Override Cluster Spec file is configured. All other values in EKS-A spec will be ignored.")
 	}
 
 	writer, err := filewriter.NewWriter(clusterSpec.Name)

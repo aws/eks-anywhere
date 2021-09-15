@@ -127,8 +127,6 @@ spec:
                 type: array
               kubernetesVersion:
                 type: string
-              overrideClusterSpecFile:
-                type: string
               proxyConfiguration:
                 properties:
                   httpProxy:

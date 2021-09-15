@@ -29,7 +29,6 @@ type ClusterSpec struct {
 	DatacenterRef                 Ref                            `json:"datacenterRef,omitempty"`
 	IdentityProviderRefs          []Ref                          `json:"identityProviderRefs,omitempty"`
 	GitOpsRef                     *Ref                           `json:"gitOpsRef,omitempty"`
-	OverrideClusterSpecFile       string                         `json:"overrideClusterSpecFile,omitempty"`
 	ClusterNetwork                ClusterNetwork                 `json:"clusterNetwork,omitempty"`
 	// +kubebuilder:validation:Optional
 	ExternalEtcdConfiguration *ExternalEtcdConfiguration `json:"externalEtcdConfiguration,omitempty"`
