@@ -1,6 +1,7 @@
 package ec2
 
 import (
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -12,6 +13,17 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
+
+var dockerLogsUserData = `
+#!/bin/bash
+cat <<'EOF' >> /etc/docker/daemon.json
+{
+  "log-driver": "journald",
+  "log-level": "debug"
+}
+EOF
+systemctl restart docker --no-block
+`
 
 func CreateInstance(session *session.Session, amiId, key, tag, instanceProfileName, subnetId, name string) (string, error) {
 	r := retrier.New(180*time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
@@ -61,6 +73,7 @@ func CreateInstance(session *session.Session, amiId, key, tag, instanceProfileNa
 					},
 				},
 			},
+			UserData: aws.String(base64.StdEncoding.EncodeToString([]byte(dockerLogsUserData))),
 		})
 
 		return err
