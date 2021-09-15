@@ -9,7 +9,6 @@ GO_TEST ?= go test
 GIT_VERSION?=$(shell git describe --tag)
 
 RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
-DEV_GIT_VERSION:=v0.0.0-dev
 
 BIN_DIR := bin
 TOOLS_BIN_DIR := hack/tools/bin
@@ -50,11 +49,11 @@ eks-a-binary:
 
 .PHONY: eks-a-embed-config
 eks-a-embed-config: ## Build a dev release version of eks-a with embed cluster spec config
-	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) RELEASE_MANIFEST_URL=embed:///config/releases.yaml BUILD_TAGS='$(BUILD_TAGS) spec_embed_config'
+	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) RELEASE_MANIFEST_URL=embed:///config/releases.yaml BUILD_TAGS='$(BUILD_TAGS) spec_embed_config'
 
 .PHONY: eks-a
 eks-a: ## Build a dev release version of eks-a
-	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION)
+	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION)
 
 .PHONY: eks-a-release
 eks-a-release: ## Generate a release binary
@@ -62,8 +61,8 @@ eks-a-release: ## Generate a release binary
 
 .PHONY: eks-a-cross-platform
 eks-a-cross-platform: ## Generate binaries for Linux and MacOS
-	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/eksctl-anywhere
-	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/eksctl-anywhere
+	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/eksctl-anywhere
+	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/eksctl-anywhere
 
 .PHONY: eks-a-release-cross-platform
 eks-a-release-cross-platform: ## Generate binaries for Linux and MacOS
@@ -214,7 +213,7 @@ eks-a-e2e:
 	if [ "$(CODEBUILD_CI)" = "true" ]; then \
 		if [[ "$(CODEBUILD_BUILD_ID)" =~ "aws-staging-eks-a-build" ]]; then \
 			make eks-a-release-cross-platform GIT_VERSION=$(shell cat release/triggers/eks-a-release/development/RELEASE_VERSION) RELEASE_MANIFEST_URL=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml; \
-			make eks-a-release GIT_VERSION=$(DEV_GIT_VERSION); \
+			make eks-a-release GIT_VERSION=$(GIT_VERSION); \
 		else \
 			make eks-a-cross-platform; \
 			make eks-a; \
@@ -225,7 +224,7 @@ eks-a-e2e:
 
 .PHONY: e2e-tests-binary
 e2e-tests-binary:
-	go test ./test/e2e -c -o bin/e2e.test -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL)"
+	go test ./test/e2e -c -o bin/e2e.test -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL)"
 
 .PHONY: integration-test-binary
 integration-test-binary:
