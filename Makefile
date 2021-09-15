@@ -31,8 +31,11 @@ GO_OS:=$(shell go env GOOS)
 
 DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow
 
+.PHONY: default
+default: build lint
+
 .PHONY: build
-build: eks-a eks-a-tool lint unit-test ## Generate binaries, run go lint and unit tests
+build: eks-a eks-a-tool unit-test ## Generate binaries and run unit tests
 
 .PHONY: release
 release: eks-a-release unit-test ## Generate release binary and run unit tests
@@ -85,7 +88,9 @@ lint: bin/golangci-lint ## Run golangci-lint
 	bin/golangci-lint run
 
 bin/golangci-lint: ## Download golangci-lint
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.39.0
+bin/golangci-lint: GOLANGCI_LINT_VERSION?=$(shell cat .github/workflows/golangci-lint.yml | sed -n -e 's/^\s*version: //p')
+bin/golangci-lint:
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s $(GOLANGCI_LINT_VERSION)
 
 .PHONY: build-cross-platform
 build-cross-platform: eks-a-cross-platform
