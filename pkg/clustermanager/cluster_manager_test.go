@@ -957,9 +957,9 @@ func TestClusterManagerClusterSpecChangedNoChanges(t *testing.T) {
 			Spec: clusterSpec,
 		}, nil,
 	)
-	m.client.EXPECT().GetEksaVSphereDatacenterConfig(ctx, spec.Spec.DatacenterRef.Name, gomock.Any()).Return(datacenterConfig, nil)
-	m.client.EXPECT().GetEksaVSphereMachineConfig(ctx, spec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, gomock.Any()).Return(machineConfig, nil)
-	m.client.EXPECT().GetEksaVSphereMachineConfig(ctx, spec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, gomock.Any()).Return(machineConfig, nil)
+	m.client.EXPECT().GetEksaVSphereDatacenterConfig(ctx, spec.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(datacenterConfig, nil)
+	m.client.EXPECT().GetEksaVSphereMachineConfig(ctx, spec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(machineConfig, nil)
+	m.client.EXPECT().GetEksaVSphereMachineConfig(ctx, spec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(machineConfig, nil)
 	diff, err := c.EKSAClusterSpecChanged(ctx, cl, &spec, datacenterConfig, []providers.MachineConfig{machineConfig})
 	assert.Nil(t, err, "Error should be nil")
 	assert.False(t, diff, "No changes should have been detected")
@@ -1097,7 +1097,7 @@ func TestClusterManagerClusterSpecChangedNoChangesDatacenterSpecChanged(t *testi
 			Spec: clusterSpec,
 		}, nil,
 	)
-	m.client.EXPECT().GetEksaVSphereDatacenterConfig(ctx, spec.Spec.DatacenterRef.Name, gomock.Any()).Return(datacenterConfig, nil)
+	m.client.EXPECT().GetEksaVSphereDatacenterConfig(ctx, spec.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(datacenterConfig, nil)
 	diff, err := c.EKSAClusterSpecChanged(ctx, cl, &spec, &modifiedDatacenterSpec, []providers.MachineConfig{machineConfig})
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, diff, "Changes should have been detected")
@@ -1166,8 +1166,8 @@ func TestClusterManagerClusterSpecChangedNoChangesControlPlaneMachineConfigSpecC
 			Spec: clusterSpec,
 		}, nil,
 	)
-	m.client.EXPECT().GetEksaVSphereDatacenterConfig(ctx, spec.Spec.DatacenterRef.Name, gomock.Any()).Return(datacenterConfig, nil)
-	m.client.EXPECT().GetEksaVSphereMachineConfig(ctx, spec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, gomock.Any()).Return(machineConfig, nil)
+	m.client.EXPECT().GetEksaVSphereDatacenterConfig(ctx, spec.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(datacenterConfig, nil)
+	m.client.EXPECT().GetEksaVSphereMachineConfig(ctx, spec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(machineConfig, nil)
 	diff, err := c.EKSAClusterSpecChanged(ctx, cl, &spec, datacenterConfig, []providers.MachineConfig{&modifiedMachineConfigSpec})
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, diff, "Changes should have been detected")
@@ -1248,9 +1248,9 @@ func TestClusterManagerClusterSpecChangedNoChangesWorkerNodeMachineConfigSpecCha
 			Spec: clusterSpec,
 		}, nil,
 	)
-	m.client.EXPECT().GetEksaVSphereDatacenterConfig(ctx, spec.Spec.DatacenterRef.Name, gomock.Any()).Return(datacenterConfig, nil)
-	m.client.EXPECT().GetEksaVSphereMachineConfig(ctx, spec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, gomock.Any()).Return(controlPlaneMachineConfig, nil)
-	m.client.EXPECT().GetEksaVSphereMachineConfig(ctx, spec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, gomock.Any()).Return(workerNodeMachineConfig, nil)
+	m.client.EXPECT().GetEksaVSphereDatacenterConfig(ctx, spec.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(datacenterConfig, nil)
+	m.client.EXPECT().GetEksaVSphereMachineConfig(ctx, spec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(controlPlaneMachineConfig, nil)
+	m.client.EXPECT().GetEksaVSphereMachineConfig(ctx, spec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(workerNodeMachineConfig, nil)
 	diff, err := c.EKSAClusterSpecChanged(ctx, cl, &spec, datacenterConfig, []providers.MachineConfig{controlPlaneMachineConfig, &modifiedMachineConfigSpec})
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, diff, "Changes should have been detected")
@@ -1349,9 +1349,9 @@ func TestClusterManagerClusterSpecChangedGitOpsDefault(t *testing.T) {
 			},
 		}, nil,
 	)
-	m.client.EXPECT().GetEksaVSphereDatacenterConfig(ctx, spec.Spec.DatacenterRef.Name, gomock.Any()).Return(datacenterConfig, nil)
-	m.client.EXPECT().GetEksaVSphereMachineConfig(ctx, spec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, gomock.Any()).Return(machineConfig, nil)
-	m.client.EXPECT().GetEksaVSphereMachineConfig(ctx, spec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, gomock.Any()).Return(machineConfig, nil)
+	m.client.EXPECT().GetEksaVSphereDatacenterConfig(ctx, spec.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(datacenterConfig, nil)
+	m.client.EXPECT().GetEksaVSphereMachineConfig(ctx, spec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(machineConfig, nil)
+	m.client.EXPECT().GetEksaVSphereMachineConfig(ctx, spec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(machineConfig, nil)
 	diff, err := c.EKSAClusterSpecChanged(ctx, cl, &spec, datacenterConfig, []providers.MachineConfig{machineConfig})
 	assert.Nil(t, err, "Error should be nil")
 	assert.False(t, diff, "No changes should have not been detected")

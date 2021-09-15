@@ -13,6 +13,7 @@ func TestGetAndValidateGitOpsConfig(t *testing.T) {
 		fileName         string
 		refName          string
 		wantGitOpsConfig *GitOpsConfig
+		clusterConfig    *Cluster
 		wantErr          bool
 	}{
 		{
@@ -49,6 +50,15 @@ func TestGetAndValidateGitOpsConfig(t *testing.T) {
 					},
 				},
 			},
+			clusterConfig: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Namespace: "default",
+				},
+			},
 			wantErr: false,
 		},
 		{
@@ -67,7 +77,7 @@ func TestGetAndValidateGitOpsConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			got, err := GetAndValidateGitOpsConfig(tt.fileName, tt.refName)
+			got, err := GetAndValidateGitOpsConfig(tt.fileName, tt.refName, tt.clusterConfig)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("GetAndValidateGitOpsConfig() error = %v, wantErr %v", err, tt.wantErr)
 			}
