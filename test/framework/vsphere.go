@@ -28,6 +28,7 @@ const (
 	vsphereTemplateBR121Var     = "T_VSPHERE_TEMPLATE_BR_1_21"
 	vsphereTlsInsecureVar       = "T_VSPHERE_TLS_INSECURE"
 	vsphereTlsThumbprintVar     = "T_VSPHERE_TLS_THUMBPRINT"
+	vsphereHost                 = "T_VSPHERE_HOST"
 	vsphereUsernameVar          = "EKSA_VSPHERE_USERNAME"
 	vspherePasswordVar          = "EKSA_VSPHERE_PASSWORD"
 	cidrVar                     = "T_VSPHERE_CIDR"
@@ -206,6 +207,11 @@ func RequiredVsphereEnvVars() []string {
 }
 
 func (v *VSphere) generateUniqueIp() string {
+	ip := os.Getenv(vsphereHost)
+	if len(ip) > 0 {
+		logger.V(1).Info("Using configured ip: " + ip)
+		return ip
+	}
 	logger.V(1).Info("Generating unique IP for vsphere control plane")
 	ipgen := networkutils.NewIPGenerator(&networkutils.DefaultNetClient{})
 	ip, err := ipgen.GenerateUniqueIP(os.Getenv(cidrVar))
