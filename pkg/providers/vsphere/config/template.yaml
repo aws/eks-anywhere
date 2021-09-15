@@ -161,11 +161,11 @@ spec:
         imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
 {{- if and .proxyConfig (eq .format "bottlerocket") }}
-        proxy:
-          httpsProxy: {{.httpsProxy}}
-          noProxy: {{ range .noProxy }}
-            - {{ . }}
-          {{- end }}
+      proxy:
+        httpsProxy: {{.httpsProxy}}
+        noProxy: {{ range .noProxy }}
+          - {{ . }}
+        {{- end }}
 {{- end }}
       apiServer:
         extraArgs:
