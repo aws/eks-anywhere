@@ -2,6 +2,7 @@ version: 0.2
 
 env:
   variables:
+    INTEGRATION_TEST_MAX_EC2_COUNT: 45
     T_VSPHERE_CIDR: "198.18.0.0/16"
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
@@ -44,7 +45,7 @@ phases:
       -j ${JOB_ID}
       -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
       -n ${INTEGRATION_TEST_SUBNET_ID}
-      -m 40
+      -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
       -r 'Test'
       -v 4
   post_build:
