@@ -47,7 +47,7 @@ func (b *ExecutableBuilder) BuildFluxExecutable() *Flux {
 }
 
 func (b *ExecutableBuilder) BuildTroubleshootExecutable() *Troubleshoot {
-	return NewTroubleshoot(buildExecutable(troulbeshootPath, b.useDocker, b.image, b.mountDir))
+	return NewTroubleshoot(buildExecutable(troubleshootPath, b.useDocker, b.image, b.mountDir))
 }
 
 func BuildSonobuoyExecutable() *Sonobuoy {
