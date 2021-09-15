@@ -22,6 +22,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -163,9 +164,10 @@ func BuildTemplateMap(clusterSpec *cluster.Spec) map[string]interface{} {
 		"corednsRepository":      bundle.KubeDistro.CoreDNS.Repository,
 		"corednsVersion":         bundle.KubeDistro.CoreDNS.Tag,
 		"kindNodeImage":          bundle.EksD.KindNode.VersionedImage(),
-		"extraArgs":              clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).ToPartialYaml(),
+		"apiserverExtraArgs":     clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).ToPartialYaml(),
 		"externalEtcdVersion":    bundle.KubeDistro.EtcdVersion,
 		"eksaSystemNamespace":    constants.EksaSystemNamespace,
+		"auditPolicy":            common.GetAuditPolicy(),
 	}
 
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
