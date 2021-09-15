@@ -51,3 +51,14 @@ T_GITHUB_USER
 GITHUB_TOKEN
 ```
 The [oidc](https://github.com/aws/eks-anywhere/blob/main/internal/pkg/oidc/server.go) and [e2e](https://github.com/aws/eks-anywhere/blob/main/internal/test/e2e/oidc.go) packages can be used to create a minimal compliant OIDC server in S3 
+
+# Adding new tests
+When adding new tests to run in our postsubmit environment we need to bump up the total number of EC2s we create for the tests.
+
+The value is controlled by the `INTEGRATION_TEST_MAX_EC2_COUNT` env variable in the [test-eks-a-cli.yaml](https://github.com/aws/eks-anywhere/blob/main/cmd/integration_test/build/buildspecs/test-eks-a-cli.yml) buildspec.
+
+```
+env:
+  variables:
+    INTEGRATION_TEST_MAX_EC2_COUNT: <COUNT>
+```
