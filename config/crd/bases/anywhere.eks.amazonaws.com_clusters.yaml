@@ -127,6 +127,10 @@ spec:
                 type: array
               kubernetesVersion:
                 type: string
+              overrideClusterSpecFile:
+                description: 'Deprecated: This field has no function and is going
+                  to be removed in a next release.'
+                type: string
               proxyConfiguration:
                 properties:
                   httpProxy:
