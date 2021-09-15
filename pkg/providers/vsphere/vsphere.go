@@ -1411,12 +1411,6 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 		}
 	}
 
-	if datacenter.Namespace != prevDatacenter.Namespace {
-		if !(prevDatacenter.Namespace == "default" && datacenter.Namespace == "") {
-			return fmt.Errorf("namespace is immutable. Previous value %s, new value %s", prevDatacenter.Namespace, datacenter.Namespace)
-		}
-	}
-
 	if nSpec.Server != oSpec.Server {
 		return fmt.Errorf("spec.server is immutable. Previous value %s, new value %s", oSpec.Server, nSpec.Server)
 	}
@@ -1455,12 +1449,6 @@ func (p *vsphereProvider) validateMachineConfigImmutability(ctx context.Context,
 
 	if newConfig.Spec.StoragePolicyName != prevMachineConfig.Spec.StoragePolicyName {
 		return fmt.Errorf("spec.storagePolicyName is immutable. Previous value %s, new value %s", prevMachineConfig.Spec.StoragePolicyName, newConfig.Spec.StoragePolicyName)
-	}
-
-	if newConfig.Namespace != prevMachineConfig.Namespace {
-		if !(prevMachineConfig.Namespace == "default" && newConfig.Namespace == "") {
-			return fmt.Errorf("namespace is immutable. Previous value %s, new value %s", prevMachineConfig.Namespace, newConfig.Namespace)
-		}
 	}
 
 	if !reflect.DeepEqual(newConfig.Spec.Users, prevMachineConfig.Spec.Users) {
