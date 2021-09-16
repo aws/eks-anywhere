@@ -479,6 +479,13 @@ func (vb *VersionsBundle) SharedImages() []v1alpha1.Image {
 	images = append(images, vb.ExternalEtcdController.Controller)
 	images = append(images, vb.ExternalEtcdController.KubeProxy)
 
+	images = append(images, vb.KubeDistro.EtcdImage)
+	images = append(images, vb.KubeDistro.ExternalAttacher)
+	images = append(images, vb.KubeDistro.ExternalProvisioner)
+	images = append(images, vb.KubeDistro.LivenessProbe)
+	images = append(images, vb.KubeDistro.NodeDriverRegistrar)
+	images = append(images, vb.KubeDistro.Pause)
+
 	return images
 }
 
