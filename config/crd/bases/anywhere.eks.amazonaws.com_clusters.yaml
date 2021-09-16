@@ -128,6 +128,8 @@ spec:
               kubernetesVersion:
                 type: string
               overrideClusterSpecFile:
+                description: 'Deprecated: This field has no function and is going
+                  to be removed in a future release.'
                 type: string
               proxyConfiguration:
                 properties:
@@ -139,6 +141,19 @@ spec:
                     items:
                       type: string
                     type: array
+                type: object
+              registryMirrorConfiguration:
+                description: RegistryMirrorConfiguration defines the settings for
+                  image registry mirror
+                properties:
+                  caCertContent:
+                    description: CACertContent defines the contents registry mirror
+                      CA certificate
+                    type: string
+                  endpoint:
+                    description: Endpoint defines the registry mirror endpoint to
+                      use for pulling images
+                    type: string
                 type: object
               workerNodeGroupConfigurations:
                 items:

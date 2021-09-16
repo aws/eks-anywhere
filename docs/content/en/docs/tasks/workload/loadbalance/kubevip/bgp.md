@@ -37,19 +37,19 @@ You can use either a CIDR block or an IP range
     kubectl create configmap --namespace kube-system kubevip --from-literal range-global=${IP_START}-${IP_END}
     ```
 
-2. Deploy kubevip-cloud-provider 
+1. Deploy kubevip-cloud-provider
 
     ```bash
     kubectl apply -f https://kube-vip.io/manifests/controller.yaml
     ```
 
-3. Create ClusterRoles and RoleBindings for kube-vip daemonset
+1. Create ClusterRoles and RoleBindings for kube-vip daemonset
 
     ```bash
     kubectl apply -f https://kube-vip.io/manifests/rbac.yaml
     ```
 
-4. Create the kube-vip daemonset
+1. Create the kube-vip daemonset
 
     ```bash
     alias kube-vip="docker run --network host --rm plndr/kube-vip:latest"
@@ -164,32 +164,32 @@ You can use either a CIDR block or an IP range
       numberMisscheduled: 0
       numberReady: 0
    ```
-5. Manually add the following to the manifest file as shown in the example above
+1. Manually add the following to the manifest file as shown in the example above
 
    ```yaml
    - name: bgp_routerinterface
      value: eth0
    ```
 
-6. Deploy the [Hello EKS Anywhere]({{< ref "/docs/tasks/workload/test-app" >}}) test application.
+1. Deploy the [Hello EKS Anywhere]({{< ref "/docs/tasks/workload/test-app" >}}) test application.
 
     ```bash
     kubectl apply -f https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml
     ```
 
-7. Expose the hello-eks-a service
+1. Expose the hello-eks-a service
 
     ```bash
     kubectl expose deployment hello-eks-a --port=80 --type=LoadBalancer --name=hello-eks-a-lb
     ```
 
-8. Describe the service to get the IP. The external IP will be the one in CIDR range specified in step 4
+1. Describe the service to get the IP. The external IP will be the one in CIDR range specified in step 4
 
     ```bash
     EXTERNAL_IP=$(kubectl get svc hello-eks-a-lb -o jsonpath='{.spec.externalIP}')
     ```
 
-9. Ensure the load balancer is working by curl'ing the IP you got in step 8
+1. Ensure the load balancer is working by curl'ing the IP you got in step 8
 
     ```bash
     curl ${EXTERNAL_IP}

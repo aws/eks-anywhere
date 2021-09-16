@@ -172,6 +172,17 @@ func WithStoragePolicyName(value string) VSphereFiller {
 	}
 }
 
+func WithVSphereConfigNamespace(ns string) VSphereFiller {
+	return func(config VSphereConfig) {
+		config.datacenterConfig.Namespace = ns
+		config.workerMachineConfig.Namespace = ns
+		config.cpMachineConfig.Namespace = ns
+		if config.etcdMachineConfig != nil {
+			config.etcdMachineConfig.Namespace = ns
+		}
+	}
+}
+
 func WithSSHUsernameAndAuthorizedKey(username string, key string) VSphereFiller {
 	return func(config VSphereConfig) {
 		if len(config.cpMachineConfig.Spec.Users) == 0 {

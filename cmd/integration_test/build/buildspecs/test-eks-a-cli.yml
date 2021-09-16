@@ -2,6 +2,7 @@ version: 0.2
 
 env:
   variables:
+    INTEGRATION_TEST_MAX_EC2_COUNT: 45
     T_VSPHERE_CIDR: "198.18.0.0/16"
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
@@ -25,6 +26,9 @@ env:
     T_VSPHERE_TEMPLATE_BR_1_21: "vsphere_ci_beta_connection:template_br_21"
     T_VSPHERE_TLS_INSECURE: "vsphere_ci_beta_connection:tls_insecure"
     T_VSPHERE_TLS_THUMBPRINT: "vsphere_ci_beta_connection:tls_thumbprint"
+    EKSA_GITHUB_TOKEN: "github-eks-anywhere-flux-bot:github-token"
+    T_GITHUB_USER: "github-eks-anywhere-flux-bot:github-user"
+    T_GIT_REPOSITORY: "github-eks-anywhere-flux-bot:github-repository"
 
 phases:
   pre_build:
@@ -41,10 +45,9 @@ phases:
       -j ${JOB_ID}
       -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
       -n ${INTEGRATION_TEST_SUBNET_ID}
-      -m 40
+      -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
       -r 'Test'
-      -v 5
-      --skip 'TestDockerKubernetes119Flux,TestDockerKubernetes119ThreeReplicasFlux,TestVSphereKubernetes119Flux,TestVSphereKubernetes119ThreeReplicasFlux,TestDockerKubernetes118Flux,TestDockerKubernetes12OFlux,TestDockerKubernetes121Flux,TestVSphereKubernetes118Flux,TestVSphereKubernetes120Flux,TestVSphereKubernetes121Flux,TestDockerKubernetes119GitopsOptionsFlux,TestVSphereKubernetes119GitopsOptionsFlux,TestVSphereKubernetes120UbuntuTo121WithFluxUpgrade,TestVSphereKubernetes120BottlerocketTo121WithFluxUpgrade'
+      -v 4
   post_build:
     commands:
     - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE

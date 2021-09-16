@@ -23,7 +23,7 @@ This node will inherit the VIP and become the load-balancing leader within the c
     kubectl apply -f - -n kube-system
     ```
 
-2. Create a configMap to specify the IP range for load balancer.
+1. Create a configMap to specify the IP range for load balancer.
 You can use either a CIDR block or an IP range
 
     ```bash
@@ -36,19 +36,19 @@ You can use either a CIDR block or an IP range
     kubectl create configmap --namespace kube-system kubevip --from-literal range-global=${IP_START}-${IP_END}
     ```
 
-3. Deploy kubevip-cloud-provider 
+1. Deploy kubevip-cloud-provider
 
     ```bash
     kubectl apply -f https://kube-vip.io/manifests/controller.yaml
     ```
 
-4. Create ClusterRoles and RoleBindings for kube-vip daemonset
+1. Create ClusterRoles and RoleBindings for kube-vip daemonset
 
     ```bash
     kubectl apply -f https://kube-vip.io/manifests/rbac.yaml
     ```
 
-5. Create the kube-vip daemonset
+1. Create the kube-vip daemonset
 
     An example manifest has been included at the end of this document which you can use in place of this step.
 
@@ -57,26 +57,26 @@ You can use either a CIDR block or an IP range
     kube-vip manifest daemonset --services --inCluster --arp --interface eth0 | kubectl apply -f -
     ```   
  
-6. Deploy the [Hello EKS Anywhere]({{< ref "/docs/tasks/workload/test-app" >}}) test application.
+1. Deploy the [Hello EKS Anywhere]({{< ref "/docs/tasks/workload/test-app" >}}) test application.
 
     ```bash
     kubectl apply -f https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml
     ```
 
-7. Expose the hello-eks-a service
+1. Expose the hello-eks-a service
 
     ```bash
     kubectl expose deployment hello-eks-a --port=80 --type=LoadBalancer --name=hello-eks-a-lb
     ```
 
-8. Describe the service to get the IP.
+1. Describe the service to get the IP.
 The external IP will be the one in CIDR range specified in step 4
 
     ```bash
     EXTERNAL_IP=$(kubectl get svc hello-eks-a-lb -o jsonpath='{.spec.externalIP}')
     ```
 
-9. Ensure the load balancer is working by curl'ing the IP you got in step 8
+1. Ensure the load balancer is working by curl'ing the IP you got in step 8
 
     ```bash
     curl ${EXTERNAL_IP}

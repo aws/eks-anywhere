@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
 
 var binaries = []string{cliBinary, e2eBinary, eksctlBinary}
@@ -91,6 +92,9 @@ func (e *E2ESession) setup(regex string) error {
 	if err != nil {
 		return err
 	}
+
+	// Adding JobId to Test Env variables
+	e.testEnvVars[e2etests.JobIdVar] = e.jobId
 
 	return nil
 }

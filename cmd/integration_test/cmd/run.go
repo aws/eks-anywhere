@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/internal/test/e2e"
@@ -39,6 +40,15 @@ var runE2ECmd = &cobra.Command{
 }
 
 var requiredFlags = []string{amiIdFlagName, storageBucketFlagName, jobIdFlagName, instanceProfileFlagName}
+
+func preRunSetup(cmd *cobra.Command, args []string) {
+	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
+		err := viper.BindPFlag(flag.Name, flag)
+		if err != nil {
+			log.Fatalf("Error initializing flags: %v", err)
+		}
+	})
+}
 
 func init() {
 	integrationTestCmd.AddCommand(runE2ECmd)

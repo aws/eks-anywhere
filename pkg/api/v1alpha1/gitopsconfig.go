@@ -8,12 +8,12 @@ import (
 
 const GitOpsConfigKind = "GitOpsConfig"
 
-func GetAndValidateGitOpsConfig(fileName string, refName string) (*GitOpsConfig, error) {
+func GetAndValidateGitOpsConfig(fileName string, refName string, clusterConfig *Cluster) (*GitOpsConfig, error) {
 	config, err := getGitOpsConfig(fileName)
 	if err != nil {
 		return nil, err
 	}
-	err = validateGitOpsConfig(config, refName)
+	err = validateGitOpsConfig(config, refName, clusterConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func getGitOpsConfig(fileName string) (*GitOpsConfig, error) {
 	return &config, nil
 }
 
-func validateGitOpsConfig(config *GitOpsConfig, refName string) error {
+func validateGitOpsConfig(config *GitOpsConfig, refName string, clusterConfig *Cluster) error {
 	if config == nil {
 		return errors.New("gitOpsRef is specified but GitOpsConfig is not specified")
 	}
@@ -37,6 +37,10 @@ func validateGitOpsConfig(config *GitOpsConfig, refName string) error {
 		return fmt.Errorf("GitOpsConfig retrieved with name %s does not match name (%s) specified in "+
 			"gitOpsRef", config.Name, refName)
 	}
+	if config.Namespace != clusterConfig.Namespace {
+		return errors.New("GitOpsConfig and Cluster objects must have the same namespace specified")
+	}
+
 	flux := config.Spec.Flux
 
 	if len(flux.Github.Owner) <= 0 {

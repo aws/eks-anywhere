@@ -27,6 +27,12 @@ func NewGitOpsConfig(name string, opts ...GitOpsConfigOpt) *v1alpha1.GitOpsConfi
 	return config
 }
 
+func WithGitOpsNamespace(ns string) GitOpsConfigOpt {
+	return func(c *v1alpha1.GitOpsConfig) {
+		c.Namespace = ns
+	}
+}
+
 func WithFluxOwner(username string) GitOpsConfigOpt {
 	return func(c *v1alpha1.GitOpsConfig) {
 		c.Spec.Flux.Github.Owner = username

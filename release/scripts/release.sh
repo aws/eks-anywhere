@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright 2020 Amazon.com Inc. or its affiliates. All Rights Reserved.
+# Copyright Amazon.com Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ RELEASE_BUCKET="${3?Specify third argument - release bucket}"
 CDN="${4?Specify fourth argument - cdn}"
 SOURCE_CONTAINER_REGISTRY="${5?Specify fifth argument - source container registry}"
 RELEASE_CONTAINER_REGISTRY="${6?Specify sixth argument - release container registry}"
- 
+
 mkdir -p "${ARTIFACTS_DIR}"
 
 ${BASE_DIRECTORY}/release/bin/eks-anywhere-release release \

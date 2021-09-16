@@ -3,6 +3,7 @@ package framework
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/aws/eks-anywhere/internal/pkg/conformance"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -41,6 +42,10 @@ func (e *E2ETest) RunConformanceTests() {
 		return
 	}
 	e.T.Logf("Conformance Test results:\n %v", results)
+	if hasFailed(results) {
+		e.T.Errorf("Conformance run has failed tests")
+		return
+	}
 }
 
 func (e *E2ETest) getEksdReleaseKubeVersion() (string, error) {
@@ -56,4 +61,12 @@ func (e *E2ETest) getEksdReleaseKubeVersion() (string, error) {
 		return kubeVersion, nil
 	}
 	return "", fmt.Errorf("error getting KubeVersion from EKS-D release spec: value empty")
+}
+
+// Function to parse the conformace test results and look for any failed tests.
+// By default we run 2 plugins so we check for failed tests in twice.
+func hasFailed(results string) bool {
+	failedLog := "Failed: 0"
+	count := strings.Count(results, failedLog)
+	return count != 2
 }
