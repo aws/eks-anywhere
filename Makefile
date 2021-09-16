@@ -9,6 +9,7 @@ GO_TEST ?= go test
 GIT_VERSION?=$(shell git describe --tag)
 
 RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
+PROD_RELEASE_MANIFEST_URL?=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml
 DEV_GIT_VERSION:=v0.0.0-dev
 
 BIN_DIR := bin
@@ -33,6 +34,10 @@ DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow
 
 .PHONY: build
 build: eks-a eks-a-tool lint unit-test ## Generate binaries, run go lint and unit tests
+
+.PHONY: prod-build
+prod-build: ## Build a prod release version of eks-a
+	$(MAKE) eks-a-binary RELEASE_MANIFEST_URL=$(PROD_RELEASE_MANIFEST_URL)
 
 .PHONY: release
 release: eks-a-release unit-test ## Generate release binary and run unit tests
