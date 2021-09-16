@@ -82,18 +82,18 @@ func (d *Docker) Pull(ctx context.Context, image string) error {
 }
 
 func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) error {
-	li := strings.ReplaceAll(image, defaultRegistry, endpoint)
-	logger.Info("Tagging image", "image", image, "local image", li)
-	if _, err := d.executable.Execute(ctx, "tag", image, li); err != nil {
+	localImage := strings.ReplaceAll(image, defaultRegistry, endpoint)
+	logger.Info("Tagging image", "image", image, "local image", localImage)
+	if _, err := d.executable.Execute(ctx, "tag", image, localImage); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (d *Docker) PushImage(ctx context.Context, image string, endpoint string) error {
-	li := strings.ReplaceAll(image, defaultRegistry, endpoint)
-	logger.Info("Pushing", "image", li)
-	if _, err := d.executable.Execute(ctx, "push", li); err != nil {
+	localImage := strings.ReplaceAll(image, defaultRegistry, endpoint)
+	logger.Info("Pushing", "image", localImage)
+	if _, err := d.executable.Execute(ctx, "push", localImage); err != nil {
 		return err
 	}
 	return nil
