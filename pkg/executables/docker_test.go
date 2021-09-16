@@ -39,9 +39,9 @@ func TestDockerPullImage(t *testing.T) {
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
 	executable.EXPECT().Execute(ctx, "pull", image).Return(bytes.Buffer{}, nil)
 	d := executables.NewDocker(executable)
-	err := d.DockerPullImage(ctx, image)
+	err := d.PullImage(ctx, image)
 	if err != nil {
-		t.Fatalf("Docker.DockerPullImage() error = %v, want nil", err)
+		t.Fatalf("Docker.PullImage() error = %v, want nil", err)
 	}
 }
 

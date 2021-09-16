@@ -31,7 +31,7 @@ func (d *Docker) GetDockerLBPort(ctx context.Context, clusterName string) (port 
 	}
 }
 
-func (d *Docker) DockerPullImage(ctx context.Context, image string) error {
+func (d *Docker) PullImage(ctx context.Context, image string) error {
 	logger.V(2).Info("Pulling docker image", "image", image)
 	if _, err := d.executable.Execute(ctx, "pull", image); err != nil {
 		return err
@@ -42,7 +42,7 @@ func (d *Docker) DockerPullImage(ctx context.Context, image string) error {
 
 func (d *Docker) SetUpCLITools(ctx context.Context, image string) error {
 	logger.V(1).Info("Setting up cli docker dependencies")
-	if err := d.DockerPullImage(ctx, image); err != nil {
+	if err := d.PullImage(ctx, image); err != nil {
 		return err
 	} else {
 		return nil
@@ -72,13 +72,6 @@ func (d *Docker) AllocatedMemory(ctx context.Context) (uint64, error) {
 	totalMemory := cmdOutput.String()
 	totalMemory = totalMemory[1 : len(totalMemory)-2]
 	return strconv.ParseUint(totalMemory, 10, 64)
-}
-
-func (d *Docker) Pull(ctx context.Context, image string) error {
-	if _, err := d.executable.Execute(ctx, "pull", image); err != nil {
-		return err
-	}
-	return nil
 }
 
 func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) error {

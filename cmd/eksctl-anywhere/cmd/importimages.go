@@ -68,7 +68,7 @@ func importImages(context context.Context, spec string, endpoint string) error {
 }
 
 func importImage(ctx context.Context, docker *executables.Docker, image string, endpoint string) error {
-	if err := docker.Pull(ctx, image); err != nil {
+	if err := docker.PullImage(ctx, image); err != nil {
 		return err
 	}
 
