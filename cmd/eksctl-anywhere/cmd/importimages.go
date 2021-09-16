@@ -15,8 +15,7 @@ import (
 )
 
 type importImagesOptions struct {
-	fileName         string
-	registryEndpoint string
+	fileName string
 }
 
 var opts = &importImagesOptions{}
@@ -24,14 +23,9 @@ var opts = &importImagesOptions{}
 func init() {
 	rootCmd.AddCommand(importImagesCmd)
 	importImagesCmd.Flags().StringVarP(&opts.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
-	importImagesCmd.Flags().StringVarP(&opts.registryEndpoint, "endpoint", "e", "", "Local registry endpoint (host name and port)")
 	err := importImagesCmd.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking filename flag as required: %v", err)
-	}
-	err = importImagesCmd.MarkFlagRequired("endpoint")
-	if err != nil {
-		log.Fatalf("Error marking endpoint flag as required: %v", err)
 	}
 }
 
@@ -42,19 +36,24 @@ var importImagesCmd = &cobra.Command{
 	PreRunE:      preRunImportImagesCmd,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := importImages(cmd.Context(), opts.fileName, opts.registryEndpoint); err != nil {
+		if err := importImages(cmd.Context(), opts.fileName); err != nil {
 			return err
 		}
 		return nil
 	},
 }
 
-func importImages(context context.Context, spec string, endpoint string) error {
+func importImages(context context.Context, spec string) error {
 	clusterSpec, err := cluster.NewSpec(spec, version.Get())
 	if err != nil {
 		return err
 	}
 	de := executables.BuildDockerExecutable()
+
+	if clusterSpec.Spec.RegistryMirrorConfiguration == nil || clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint == "" {
+		return fmt.Errorf("it is necessary to define a valid endpoint in your spec (registryMirrorConfiguration.endpoint)")
+	}
+	endpoint := clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
 
 	bundle := clusterSpec.VersionsBundle
 

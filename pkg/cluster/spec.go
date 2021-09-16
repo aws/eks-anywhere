@@ -467,6 +467,7 @@ func (vb *VersionsBundle) SharedImages() []v1alpha1.Image {
 
 	images = append(images, vb.EksD.KindNode)
 	images = append(images, vb.Eksa.CliTools)
+	images = append(images, vb.Eksa.ClusterController)
 
 	images = append(images, vb.Flux.HelmController)
 	images = append(images, vb.Flux.KustomizeController)
