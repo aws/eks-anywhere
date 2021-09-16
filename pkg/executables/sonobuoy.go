@@ -31,19 +31,23 @@ func (k *Sonobuoy) Run(ctx context.Context, contextName string, args ...string) 
 		"--wait",
 	}
 	executionArgs = append(executionArgs, args...)
-	_, err := k.executable.Execute(ctx, executionArgs...)
+	output, err := k.executable.Execute(ctx, executionArgs...)
+	command := strings.Join(executionArgs, " ") + "\n"
 	if err != nil {
-		return "", fmt.Errorf("error executing sonobuoy: %v", err)
+		return command, fmt.Errorf("error executing sonobuoy: %v", err)
 	}
+	return command + output.String(), err
+}
 
-	executionArgs = []string{
+func (k *Sonobuoy) GetResults(ctx context.Context, contextName string, args ...string) (string, error) {
+	executionArgs := []string{
 		"--context",
 		contextName,
 		"retrieve",
 		"./results",
 	}
 	var output bytes.Buffer
-	output, err = k.executable.Execute(ctx, executionArgs...)
+	output, err := k.executable.Execute(ctx, executionArgs...)
 	if err != nil {
 		return "", fmt.Errorf("error executing sonobuoy retrieve: %v", err)
 	}
@@ -55,8 +59,9 @@ func (k *Sonobuoy) Run(ctx context.Context, contextName string, args ...string) 
 		outputFile,
 	}
 	output, err = k.executable.Execute(ctx, executionArgs...)
+	command := strings.Join(executionArgs, " ") + "\n"
 	if err != nil {
-		return "", fmt.Errorf("error executing sonobuoy results command: %v", err)
+		return command, fmt.Errorf("error executing sonobuoy results command: %v", err)
 	}
-	return output.String(), err
+	return command + output.String(), err
 }
