@@ -405,7 +405,7 @@ func (p *vsphereProvider) validateSSHUsername(machineConfig *v1alpha1.VSphereMac
 	} else {
 		if machineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
 			if machineConfig.Spec.Users[0].Name != bottlerocketDefaultUser {
-				return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket.", machineConfig.Spec.Users[0].Name)
+				return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket", machineConfig.Spec.Users[0].Name)
 			}
 		}
 	}
@@ -442,6 +442,9 @@ func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSp
 	controlPlaneMachineConfig, ok := p.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
 	if !ok {
 		return fmt.Errorf("cannot find VSphereMachineConfig %v for control plane", clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+	}
+	if clusterSpec.Spec.RegistryMirrorConfiguration != nil && controlPlaneMachineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
+		return errors.New("registry mirror is currently not supported with bottlerocket")
 	}
 	if controlPlaneMachineConfig.Spec.MemoryMiB <= 0 {
 		logger.V(1).Info("VSphereMachineConfig MemoryMiB for control plane is not set or is empty. Defaulting to 8192.")
@@ -1081,6 +1084,13 @@ func BuildTemplateMap(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphere
 	}
 	if k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
 		values["cgroupDriverSystemd"] = true
+	}
+
+	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
+		values["registryMirrorConfiguration"] = clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
+		if len(clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
+			values["registryCACert"] = clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent
+		}
 	}
 
 	if clusterSpec.Spec.ProxyConfiguration != nil {

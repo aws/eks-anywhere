@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"net/url"
+	"os"
 	_ "regexp"
 	"strconv"
 	"strings"
@@ -16,8 +18,9 @@ import (
 )
 
 const (
-	ClusterKind   = "Cluster"
-	YamlSeparator = "---"
+	ClusterKind         = "Cluster"
+	YamlSeparator       = "---"
+	RegistryMirrorCAKey = "EKSA_REGISTRY_MIRROR_CA"
 )
 
 // +kubebuilder:object:generate=false
@@ -155,6 +158,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateEtcdReplicas,
 	validateIdentityProviderRefs,
 	validateProxyConfig,
+	validateMirrorConfig,
 }
 
 func GetClusterConfig(fileName string) (*Cluster, error) {
@@ -241,6 +245,14 @@ func (c *Cluster) ClearPauseAnnotation() {
 	}
 }
 
+func (c *Cluster) UseImageMirror(defaultImage string) string {
+	if c.Spec.RegistryMirrorConfiguration == nil {
+		return defaultImage
+	}
+	imageUrl, _ := url.Parse("https://" + defaultImage)
+	return c.Spec.RegistryMirrorConfiguration.Endpoint + imageUrl.Path
+}
+
 func (c *Cluster) IsReconcilePaused() bool {
 	if s, ok := c.Annotations[pausedAnnotation]; ok {
 		return s == "true"
@@ -249,6 +261,9 @@ func (c *Cluster) IsReconcilePaused() bool {
 }
 
 func validateControlPlaneReplicas(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.ControlPlaneConfiguration.Count <= 0 {
+		return errors.New("control plane node count must be positive")
+	}
 	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		// For unstacked/external etcd, controlplane replicas can be any number including even numbers.
 		return nil
@@ -256,10 +271,6 @@ func validateControlPlaneReplicas(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.ControlPlaneConfiguration.Count%2 == 0 {
 		return errors.New("control plane node count cannot be an even number")
 	}
-	if clusterConfig.Spec.ControlPlaneConfiguration.Count < 0 {
-		return errors.New("control plane node count cannot be a negative number")
-	}
-
 	return nil
 }
 
@@ -303,18 +314,18 @@ func validateNetworking(clusterConfig *Cluster) error {
 		return errors.New("services CIDR block not specified or empty")
 	}
 	if len(clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks) > 1 {
-		return fmt.Errorf("Multiple CIDR blocks for Pods are not yet supported.")
+		return fmt.Errorf("multiple CIDR blocks for Pods are not yet supported")
 	}
 	if len(clusterConfig.Spec.ClusterNetwork.Services.CidrBlocks) > 1 {
-		return fmt.Errorf("Multiple CIDR blocks for Services are not yet supported.")
+		return fmt.Errorf("multiple CIDR blocks for Services are not yet supported")
 	}
 	_, _, err := net.ParseCIDR(clusterConfig.Spec.ClusterNetwork.Pods.CidrBlocks[0])
 	if err != nil {
-		return fmt.Errorf("Invalid CIDR block format for Pods: %s. Please specify a valid CIDR block for pod subnet.", clusterConfig.Spec.ClusterNetwork.Pods)
+		return fmt.Errorf("invalid CIDR block format for Pods: %s. Please specify a valid CIDR block for pod subnet", clusterConfig.Spec.ClusterNetwork.Pods)
 	}
 	_, _, err = net.ParseCIDR(clusterConfig.Spec.ClusterNetwork.Services.CidrBlocks[0])
 	if err != nil {
-		return fmt.Errorf("Invalid CIDR block for Services: %s. Please specify a valid CIDR block for service subnet.", clusterConfig.Spec.ClusterNetwork.Services)
+		return fmt.Errorf("invalid CIDR block for Services: %s. Please specify a valid CIDR block for service subnet", clusterConfig.Spec.ClusterNetwork.Services)
 	}
 	if clusterConfig.Spec.ClusterNetwork.CNI == "" {
 		return errors.New("cni not specified or empty")
@@ -358,6 +369,25 @@ func validateProxyData(proxy string) error {
 	return nil
 }
 
+func validateMirrorConfig(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.RegistryMirrorConfiguration == nil {
+		return nil
+	}
+	if clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint == "" {
+		return errors.New("no value set for ECRMirror.Endpoint")
+	}
+	if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
+		content, err := ioutil.ReadFile(caCert)
+		if err != nil {
+			return fmt.Errorf("error reading the ca cert file %s: %v", caCert, err)
+		}
+		clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent = string(content)
+	} else if clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent == "" {
+		logger.Info(fmt.Sprintf("Warning: %s environment variable and caCertContent is not set, TLS verification will be disabled", RegistryMirrorCAKey))
+	}
+	return nil
+}
+
 func validateIdentityProviderRefs(clusterConfig *Cluster) error {
 	refs := clusterConfig.Spec.IdentityProviderRefs
 	if len(refs) == 0 {
@@ -365,13 +395,13 @@ func validateIdentityProviderRefs(clusterConfig *Cluster) error {
 	}
 	// Only 1 ref of type OIDCConfig is supported as of now
 	if len(refs) > 1 {
-		return errors.New("Multiple identityProviderRefs not supported at this time")
+		return errors.New("multiple identityProviderRefs not supported at this time")
 	}
 	if refs[0].Kind != OIDCConfigKind {
-		return errors.New("Only OIDCConfig Kind is supported at this time")
+		return errors.New("only OIDCConfig Kind is supported at this time")
 	}
 	if refs[0].Name == "" {
-		return errors.New("Specify a valid name for OIDCConfig identityProviderRef")
+		return errors.New("specify a valid name for OIDCConfig identityProviderRef")
 	}
 	return nil
 }

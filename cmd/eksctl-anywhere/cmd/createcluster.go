@@ -105,7 +105,7 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 		return fmt.Errorf("unable to write: %v", err)
 	}
 	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
-	image := eksaToolsImage.VersionedImage()
+	image := clusterSpec.UseImageMirror(eksaToolsImage.VersionedImage())
 	executableBuilder, err := executables.NewExecutableBuilder(ctx, image)
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
