@@ -211,30 +211,6 @@ func TestClusterManagerGenerateDeploymentFileSuccess(t *testing.T) {
 	}
 }
 
-func TestClusterManagerGenerateDeploymentFileOverrideSuccess(t *testing.T) {
-	ctx := context.Background()
-	clusterName := "cluster-name"
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Name = clusterName
-		s.Spec.OverrideClusterSpecFile = "testdata/testOverrideClusterSpec.yaml"
-	})
-
-	workloadCluster := &types.Cluster{Name: clusterName}
-	bootstrapCluster := &types.Cluster{Name: "eks-a-bootstrap"}
-
-	fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
-	fileContent, err := clusterSpec.ReadOverrideClusterSpecFile()
-	if err != nil {
-		t.Errorf("Unable to read test file: %v", err)
-	}
-	c, m := newClusterManager(t)
-	m.writer.EXPECT().Write(fileName, []byte(fileContent)).Return("", nil)
-
-	if _, err := c.GenerateDeploymentFile(ctx, bootstrapCluster, workloadCluster, clusterSpec, m.provider, false); err != nil {
-		t.Errorf("ClusterManager.GenerateDeploymentFile() error = %v, wantErr nil", err)
-	}
-}
-
 func TestClusterManagerCreateWorkloadClusterSuccess(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "cluster-name"
@@ -859,7 +835,7 @@ func TestClusterManagerResumeEKSAControllerReconcileSuccessWithoutMachineConfig(
 func TestClusterManagerInstallCustomComponentsSuccess(t *testing.T) {
 	ctx := context.Background()
 	tt := newTest(t)
-	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "testdata/testOverrideClusterSpec.yaml"
+	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "testdata/testClusterSpec.yaml"
 
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Not(gomock.Nil())).Return(nil)
 
@@ -884,7 +860,7 @@ func TestClusterManagerInstallCustomComponentsErrorReadingManifest(t *testing.T)
 
 func TestClusterManagerInstallCustomComponentsErrorApplying(t *testing.T) {
 	tt := newTest(t)
-	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "testdata/testOverrideClusterSpec.yaml"
+	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "testdata/testClusterSpec.yaml"
 	tt.clusterManager.Retrier = retrier.NewWithMaxRetries(2, 0)
 
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Not(gomock.Nil())).Return(errors.New("error from apply")).Times(2)

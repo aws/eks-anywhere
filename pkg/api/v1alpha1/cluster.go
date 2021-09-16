@@ -220,18 +220,6 @@ func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 	return fmt.Errorf("unable to find kind %v in file", clusterConfig.ExpectedKind())
 }
 
-func (c *Cluster) HasOverrideClusterSpecFile() bool {
-	return c.Spec.OverrideClusterSpecFile != ""
-}
-
-func (c *Cluster) ReadOverrideClusterSpecFile() (string, error) {
-	content, err := ioutil.ReadFile(c.Spec.OverrideClusterSpecFile)
-	if err != nil {
-		return "", fmt.Errorf("unable to read override configuration: %v", err)
-	}
-	return string(content), nil
-}
-
 func (c *Cluster) PauseReconcile() {
 	if c.Annotations == nil {
 		c.Annotations = map[string]string{}
