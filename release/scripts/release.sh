@@ -26,7 +26,7 @@ RELEASE_BUCKET="${3?Specify third argument - release bucket}"
 CDN="${4?Specify fourth argument - cdn}"
 SOURCE_CONTAINER_REGISTRY="${5?Specify fifth argument - source container registry}"
 RELEASE_CONTAINER_REGISTRY="${6?Specify sixth argument - release container registry}"
- 
+
 mkdir -p "${ARTIFACTS_DIR}"
 
 ${BASE_DIRECTORY}/release/bin/eks-anywhere-release release \

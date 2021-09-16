@@ -7,7 +7,7 @@ description: >
   Explanation of the process of creating an EKS Anywhere cluster
 ---
 
-The EKS Anywhere cluster creation process makes it easy to bring up a cluster initially, but also to update configuration settings and to upgrade Kubernetes versions going forward.
+The EKS Anywhere cluster creation process makes it easy not only to bring up a cluster initially, but also to update configuration settings and to upgrade Kubernetes versions going forward.
 The EKS Anywhere cluster versions match the same Kubernetes distribution versions that are used in the AWS EKS cloud service.
 
 Each EKS Anywhere cluster is built from a cluster specification file, with the structure of the configuration file based on the target provider for the cluster.
