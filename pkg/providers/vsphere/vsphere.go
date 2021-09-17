@@ -421,12 +421,6 @@ func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSp
 	if err := os.Setenv(govcInsecure, strconv.FormatBool(p.datacenterConfig.Spec.Insecure)); err != nil {
 		return fmt.Errorf("unable to set %s: %v", govcInsecure, err)
 	}
-	if clusterSpec.Spec.ControlPlaneConfiguration.Count != 3 && clusterSpec.Spec.ControlPlaneConfiguration.Count != 5 && clusterSpec.Spec.ExternalEtcdConfiguration == nil {
-		logger.Info("Warning: The recommended number of control plane nodes is 3 or 5")
-	}
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil && clusterSpec.Spec.ExternalEtcdConfiguration.Count != 3 && clusterSpec.Spec.ExternalEtcdConfiguration.Count != 5 {
-		logger.Info("Warning: The recommended number of etcd machines is 3 or 5")
-	}
 	if len(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
 		return errors.New("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
 	}
