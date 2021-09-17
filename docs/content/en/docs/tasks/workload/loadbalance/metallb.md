@@ -33,13 +33,13 @@ MetalLB installation is described [here](https://metallb.universe.tf/installatio
     kubectl apply -f - -n kube-system
     ```
 
-2. Pull helm repo for metalLB
+1. Pull helm repo for metalLB
 
     ```bash
     helm repo add metallb https://metallb.github.io/metallb
     ```
 
-3. Create an override file to specify LB IP range
+1. Create an override file to specify LB IP range
 
     LB-IP-RANGE can be a CIDR block like 198.18.210.0/24 or range like 198.18.210.0-198.18.210.10
 
@@ -54,31 +54,31 @@ MetalLB installation is described [here](https://metallb.universe.tf/installatio
     EOF
     ```
 
-4. Install metalLB on your cluster
+1. Install metalLB on your cluster
 
     ```bash
     helm install metallb metallb/metallb -f values.yaml
     ```
 
-5. Deploy the [Hello EKS Anywhere]({{< ref "/docs/tasks/workload/test-app" >}}) test application.
+1. Deploy the [Hello EKS Anywhere]({{< ref "/docs/tasks/workload/test-app" >}}) test application.
 
     ```bash
     kubectl apply -f https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml
     ```
 
-6. Expose the hello-eks-a deployment
+1. Expose the hello-eks-a deployment
 
     ```bash
     kubectl expose deployment hello-eks-a --port=80 --type=LoadBalancer --name=hello-eks-a-lb
     ```
 
-7. Get the load balancer external IP
+1. Get the load balancer external IP
 
     ```
     EXTERNAL_IP=$(kubectl get svc hello-eks-a-lb -o jsonpath='{.spec.externalIP}')
     ```
 
-8. Hit the external ip
+1. Hit the external ip
 
     ```bash
     curl ${EXTERNAL_IP}

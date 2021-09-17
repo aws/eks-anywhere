@@ -30,7 +30,7 @@ type Provider interface {
 	DatacenterResourceType() string
 	MachineResourceType() string
 	MachineConfigs() []MachineConfig
-	ValidateNewSpec(ctx context.Context, cluster *types.Cluster) error
+	ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	GenerateMHC() ([]byte, error)
 }
 

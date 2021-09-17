@@ -20,6 +20,7 @@ const (
 	vsphereFolderUpdateVar     = "/SDDC-Datacenter/vm/capv/e2eUpdate"
 	vsphereNetwork2UpdateVar   = "/SDDC-Datacenter/network/sddc-cgw-network-2"
 	vsphereNetwork3UpdateVar   = "/SDDC-Datacenter/network/sddc-cgw-network-3"
+	clusterNamespace           = "test-namespace"
 )
 
 func runSimpleUpgradeFlow(test *framework.E2ETest, updateVersion v1alpha1.KubernetesVersion, opts ...framework.E2ETestOpt) {
@@ -79,6 +80,22 @@ func TestVSphereKubernetes120UbuntuTo121WithFluxUpgrade(t *testing.T) {
 		provider,
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+	)
+	runUpgradeFlowWithFlux(
+		test,
+		v1alpha1.Kube121,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate121Var()),
+	)
+}
+
+func TestVSphereKubernetes120UbuntuTo121DifferentNamespaceWithFluxUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu120(), framework.WithVSphereFillers(api.WithVSphereConfigNamespace(clusterNamespace)))
+	test := framework.NewE2ETest(t,
+		provider,
+		framework.WithFlux(api.WithGitOpsNamespace(clusterNamespace)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
 	)
 	runUpgradeFlowWithFlux(
 		test,
@@ -168,6 +185,22 @@ func TestVSphereKubernetes120BottlerocketTo121WithFluxUpgrade(t *testing.T) {
 		provider,
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+	)
+	runUpgradeFlowWithFlux(
+		test,
+		v1alpha1.Kube121,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate121()),
+	)
+}
+
+func TestVSphereKubernetes120BottlerocketTo121DifferentNamespaceWithFluxUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithBottleRocket120(), framework.WithVSphereFillers(api.WithVSphereConfigNamespace(clusterNamespace)))
+	test := framework.NewE2ETest(t,
+		provider,
+		framework.WithFlux(api.WithGitOpsNamespace(clusterNamespace)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
 	)
 	runUpgradeFlowWithFlux(
 		test,

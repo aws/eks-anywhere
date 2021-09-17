@@ -7,7 +7,7 @@ description: >
   Explanation of the process of creating an EKS Anywhere cluster
 ---
 
-The EKS Anywhere cluster creation process makes it easy to bring up a cluster initially, but also to update configuration settings and to upgrade Kubernetes versions going forward.
+The EKS Anywhere cluster creation process makes it easy not only to bring up a cluster initially, but also to update configuration settings and to upgrade Kubernetes versions going forward.
 The EKS Anywhere cluster versions match the same Kubernetes distribution versions that are used in the AWS EKS cloud service.
 
 Each EKS Anywhere cluster is built from a cluster specification file, with the structure of the configuration file based on the target provider for the cluster.
@@ -48,7 +48,7 @@ EKS Anywhere software is divided into two types of components.
 The CLI interface for managing clusters and the cluster components an controllers used to run workloads and configure clusters.
 The software you need to obtain includes:
 
-* **Command line tools**: Binaries to [install on the administrative machine]]({{< relref "../getting-started/install" >}}), include `eksctl`, `eksctl-anywhere`, `kubectl`, and `aws-iam-authenticator`.
+* **Command line tools**: Binaries to [install on the administrative machine]({{< relref "../getting-started/install" >}}), include `eksctl`, `eksctl-anywhere`, `kubectl`, and `aws-iam-authenticator`.
 * **Cluster components and controllers**: These include [artifacts]({{< relref "../reference/artifacts" >}}) such as OVAs for different operating systems and Kubernetes versions to [Import to vSphere]({{< relref "../reference/vsphere/vsphere-ovas" >}}).
 
 The sites to which the administrative machine and the target workload environment need access are listed in the [Requirements]({{< relref "../reference/vsphere/vsphere-prereq" >}}) section. 
@@ -304,7 +304,7 @@ You can continue to use `eksctl` anywhere to manage your cluster, with EKS Anywh
 With the EKS Anywhere cluster up and running, you might be interested to know how your cluster is set up and what it is composed of.
 The following sections describe different aspects of an EKS Anywhere cluster on a vSphere provider and what you should know about them going forward.
 
-See [Add integrations]({{< relref "../tasks/cluster/cluster-integrations" >}}) for information on recommended third-party tools for adding features to EKS Anywhere.
+See [Add integrations]({{< relref "../tasks/cluster/cluster-integrations" >}}) for information on example third-party tools for adding features to EKS Anywhere.
 
 ### Networking
 
@@ -317,7 +317,7 @@ All control plane and nodes are on the same network.
 * **CAPI endpoint**: A static IP address should have been assigned to the control plane configuration endpoint, to provide access to the Cluster API.
 It should have been set up to not conflict with any other node IP addresses in the cluster.
 This is a specific requirement of CAPI, not EKS Anywhere.
-* **Proxy server**: If a [proxy server]({{< relref "../reference/clusterspec/proxy" >}}) was identified to the EKS Anywhere workload cluster, that server should have interfaces that make it accessible from both the cluster nodes as well as the Internet.
+* **Proxy server**: If a [proxy server]({{< relref "../reference/clusterspec/proxy" >}}) was identified to the EKS Anywhere workload cluster, that server should have inbound access from the cluster nodes and outbound access to the internet.
 
 Networking for the cluster itself has the following attributes:
 
@@ -328,7 +328,7 @@ Refer to the clusterNetwork section of your configuration file to see how the ci
 
 Networking setups for accessing cluster resources on your running EKS Anywhere cluster include the following documented features:
 
-* **Load balancers**: You can add external load balancers to your EKS Anywhere cluster. EKS Anywhere project documents how to configure [KubeVip]({{< relref "../tasks/workload/loadbalance/#current-recommendation-kube-vip" >}}) (recommended) and [MetalLB]]({{< relref "../tasks/workload/loadbalance/#alternatives" >}}).
+* **Load balancers**: You can add external load balancers to your EKS Anywhere cluster. EKS Anywhere project documents how to configure [KubeVip]({{< relref "../tasks/workload/loadbalance/#current-recommendation-kube-vip" >}}) and [MetalLB]({{< relref "../tasks/workload/loadbalance/metallb.md" >}}).
 * **Ingress controller**: You can add a Kubernetes ingress controller to EKS Anywhere.
 The project documents the use of [Emissary-ingress]({{< relref "../tasks/workload/ingress" >}}) ingress controller.
 

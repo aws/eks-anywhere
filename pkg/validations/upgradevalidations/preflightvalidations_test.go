@@ -248,7 +248,7 @@ func TestPreflightValidations(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("gitOps is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				s.GitOpsConfig.Spec.Flux.Github.Repository = "new-reposotory"
+				s.GitOpsConfig.Spec.Flux.Github.Repository = "new-repository"
 			},
 		},
 		{
@@ -581,16 +581,16 @@ func TestPreflightValidations(t *testing.T) {
 			}
 
 			provider.EXPECT().DatacenterConfig().Return(existingProviderSpec).MaxTimes(1)
-			provider.EXPECT().ValidateNewSpec(ctx, workloadCluster).Return(nil).MaxTimes(1)
-			k.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Spec.DatacenterRef.Name, gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
+			provider.EXPECT().ValidateNewSpec(ctx, workloadCluster, clusterSpec).Return(nil).MaxTimes(1)
+			k.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
 			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster).Return(tc.cpResponse)
 			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster).Return(tc.workerResponse)
 			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
 			k.EXPECT().ValidateClustersCRD(ctx, workloadCluster).Return(tc.crdResponse)
 			k.EXPECT().GetClusters(ctx, workloadCluster).Return(tc.getClusterResponse, nil)
 			k.EXPECT().GetEksaCluster(ctx, workloadCluster).Return(existingClusterSpec.Cluster, nil)
-			k.EXPECT().GetEksaGitOpsConfig(ctx, clusterSpec.Spec.GitOpsRef.Name, gomock.Any()).Return(existingClusterSpec.GitOpsConfig, nil).MaxTimes(1)
-			k.EXPECT().GetEksaOIDCConfig(ctx, clusterSpec.Spec.IdentityProviderRefs[0].Name, gomock.Any()).Return(existingClusterSpec.OIDCConfig, nil).MaxTimes(1)
+			k.EXPECT().GetEksaGitOpsConfig(ctx, clusterSpec.Spec.GitOpsRef.Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.GitOpsConfig, nil).MaxTimes(1)
+			k.EXPECT().GetEksaOIDCConfig(ctx, clusterSpec.Spec.IdentityProviderRefs[0].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.OIDCConfig, nil).MaxTimes(1)
 			k.EXPECT().Version(ctx, workloadCluster).Return(versionResponse, nil)
 			upgradeValidations := upgradevalidations.New(opts)
 			err := upgradeValidations.PreflightValidations(ctx)

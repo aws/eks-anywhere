@@ -77,7 +77,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 
 	// If the external object is paused, return without any further processing.
 	if cluster.IsReconcilePaused() {
-		r.Log.Info("eksa reconcilation is paused")
+		r.Log.Info("eksa reconciliation is paused")
 		return ctrl.Result{}, nil
 	}
 

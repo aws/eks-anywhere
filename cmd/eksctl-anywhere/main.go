@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/aws/eks-anywhere/cmd/eks-a/cmd"
+	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd"
 	"github.com/aws/eks-anywhere/pkg/eksctl"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )

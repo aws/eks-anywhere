@@ -4,63 +4,59 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	fluxclient "github.com/aws/eks-anywhere/pkg/clients/flux"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networking"
 	"github.com/aws/eks-anywhere/pkg/providers/factory"
+	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
+	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
-type createClusterOptions struct {
-	fileName    string
-	forceClean  bool
-	skipIpCheck bool
+type upgradeClusterOptions struct {
+	fileName   string
+	wConfig    string
+	forceClean bool
 }
 
-var cc = &createClusterOptions{}
+func (uc *upgradeClusterOptions) kubeConfig(clusterName string) string {
+	if uc.wConfig == "" {
+		return filepath.Join(clusterName, fmt.Sprintf(kubeconfigPattern, clusterName))
+	}
+	return uc.wConfig
+}
 
-var createClusterCmd = &cobra.Command{
+var uc = &upgradeClusterOptions{}
+
+var upgradeClusterCmd = &cobra.Command{
 	Use:          "cluster",
-	Short:        "Create workload cluster",
-	Long:         "This command is used to create workload clusters",
-	PreRunE:      preRunCreateCluster,
+	Short:        "Upgrade workload cluster",
+	Long:         "This command is used to upgrade workload clusters",
+	PreRunE:      preRunUpgradeCluster,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := cc.validate(cmd.Context()); err != nil {
-			return err
-		}
-		if err := cc.createCluster(cmd.Context()); err != nil {
-			return fmt.Errorf("failed to create cluster: %v", err)
+		if err := uc.upgradeCluster(cmd.Context()); err != nil {
+			return fmt.Errorf("failed to upgrade cluster: %v", err)
 		}
 		return nil
 	},
 }
 
-func init() {
-	createCmd.AddCommand(createClusterCmd)
-	createClusterCmd.Flags().StringVarP(&cc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
-	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
-	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
-	err := createClusterCmd.MarkFlagRequired("filename")
-	if err != nil {
-		log.Fatalf("Error marking flag as required: %v", err)
-	}
-}
-
-func preRunCreateCluster(cmd *cobra.Command, args []string) error {
+func preRunUpgradeCluster(cmd *cobra.Command, args []string) error {
 	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 		err := viper.BindPFlag(flag.Name, flag)
 		if err != nil {
@@ -70,46 +66,38 @@ func preRunCreateCluster(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-type clusterManagerClient struct {
-	*executables.Clusterctl
-	*executables.Kubectl
-}
-
-type bootstrapperClient struct {
-	*executables.Kind
-	*executables.Kubectl
-}
-
-func (cc *createClusterOptions) validate(ctx context.Context) error {
-	clusterConfig, err := commonValidation(ctx, cc.fileName)
+func init() {
+	upgradeCmd.AddCommand(upgradeClusterCmd)
+	upgradeClusterCmd.Flags().StringVarP(&uc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
+	upgradeClusterCmd.Flags().StringVarP(&uc.wConfig, "w-config", "w", "", "Kubeconfig file to use when upgrading a workload cluster")
+	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
+	err := upgradeClusterCmd.MarkFlagRequired("filename")
 	if err != nil {
-		return err
+		log.Fatalf("Error marking flag as required: %v", err)
 	}
-	if validations.KubeConfigExists(clusterConfig.Name, clusterConfig.Name, "", kubeconfigPattern) {
-		return fmt.Errorf("old cluster config file exists under %s, please use a different clusterName to proceed", clusterConfig.Name)
-	}
-	return nil
 }
 
-func (cc *createClusterOptions) createCluster(ctx context.Context) error {
-	clusterSpec, err := cluster.NewSpec(cc.fileName, version.Get())
+func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
+	if _, err := uc.commonValidations(ctx); err != nil {
+		return fmt.Errorf("common validations failed due to: %v", err)
+	}
+	clusterSpec, err := cluster.NewSpec(uc.fileName, version.Get())
 	if err != nil {
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
-	}
-	if clusterSpec.HasOverrideClusterSpecFile() {
-		logger.Info("Warning: Override Cluster Spec file is configured. All other values in EKS-A spec will be ignored.")
 	}
 
 	writer, err := filewriter.NewWriter(clusterSpec.Name)
 	if err != nil {
 		return fmt.Errorf("unable to write: %v", err)
 	}
+
 	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
 	image := eksaToolsImage.VersionedImage()
 	executableBuilder, err := executables.NewExecutableBuilder(ctx, image)
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
+
 	clusterawsadm := executableBuilder.BuildClusterAwsAdmExecutable()
 	kind := executableBuilder.BuildKindExecutable(writer)
 	clusterctl := executableBuilder.BuildClusterCtlExecutable(writer)
@@ -125,9 +113,8 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 		VSphereGovcClient:    govc,
 		VSphereKubectlClient: kubectl,
 		Writer:               writer,
-		SkipIpCheck:          cc.skipIpCheck,
 	}
-	provider, err := providerFactory.BuildProvider(cc.fileName, clusterSpec.Cluster)
+	provider, err := providerFactory.BuildProvider(uc.fileName, clusterSpec.Cluster)
 	if err != nil {
 		return err
 	}
@@ -145,8 +132,9 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 
 	gitOpts, err := addonclients.NewGitOptions(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig, writer)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to set up git options: %v", err)
 	}
+
 	addonClient := addonclients.NewFluxAddonClient(
 		&fluxclient.FluxKubectl{
 			Flux:    flux,
@@ -155,16 +143,41 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 		gitOpts,
 	)
 
-	createCluster := workflows.NewCreate(
+	upgradeCluster := workflows.NewUpgrade(
 		bootstrapper,
 		provider,
 		clusterManager,
 		addonClient,
 		writer,
 	)
-	err = createCluster.Run(ctx, clusterSpec, cc.forceClean)
+
+	workloadCluster := &types.Cluster{
+		Name:           clusterSpec.Name,
+		KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
+	}
+
+	validationOpts := &upgradevalidations.UpgradeValidationOpts{
+		Kubectl:         kubectl,
+		Spec:            clusterSpec,
+		WorkloadCluster: workloadCluster,
+		Provider:        provider,
+	}
+	upgradeValidations := upgradevalidations.New(validationOpts)
+
+	err = upgradeCluster.Run(ctx, clusterSpec, workloadCluster, upgradeValidations, uc.forceClean)
 	if err == nil {
 		writer.CleanUpTemp()
 	}
 	return err
+}
+
+func (uc *upgradeClusterOptions) commonValidations(ctx context.Context) (cluster *v1alpha1.Cluster, err error) {
+	clusterConfig, err := commonValidation(ctx, uc.fileName)
+	if err != nil {
+		return nil, err
+	}
+	if !validations.KubeConfigExists(clusterConfig.Name, clusterConfig.Name, uc.wConfig, kubeconfigPattern) {
+		return nil, fmt.Errorf("KubeConfig doesn't exists for cluster %s", clusterConfig.Name)
+	}
+	return clusterConfig, nil
 }

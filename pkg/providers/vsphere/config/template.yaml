@@ -160,22 +160,49 @@ spec:
         imageRepository: {{.bottlerocketBootstrapRepository}}
         imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
-{{- if and .proxyConfig (eq .format "bottlerocket")}}
-        proxy:
-          httpsProxy: {{.httpsProxy}}
-          noProxy: {{ range .noProxy }}
-            - {{ . }}
-          {{- end }}
+{{- if and .proxyConfig (eq .format "bottlerocket") }}
+      proxy:
+        httpsProxy: {{.httpsProxy}}
+        noProxy: {{ range .noProxy }}
+          - {{ . }}
+        {{- end }}
 {{- end }}
       apiServer:
         extraArgs:
           cloud-provider: external
-{{- if .extraArgs }}
-{{ .extraArgs.ToYaml | indent 10 }}
+          audit-policy-file: /etc/kubernetes/audit-policy.yaml
+          audit-log-path: /var/log/kubernetes/api-audit.log
+          audit-log-maxage: "30"
+          audit-log-maxbackup: "10"
+          audit-log-maxsize: "512"
+          profiling: "false"
+{{- if .apiserverExtraArgs }}
+{{ .apiserverExtraArgs.ToYaml | indent 10 }}
 {{- end }}
+        extraVolumes:
+{{- if (eq .format "bottlerocket") }}
+        - hostPath: /var/lib/kubeadm/audit-policy.yaml
+{{- else }}
+        - hostPath: /etc/kubernetes/audit-policy.yaml
+{{- end }}
+          mountPath: /etc/kubernetes/audit-policy.yaml
+          name: audit-policy
+          pathType: File
+          readOnly: true
+        - hostPath: /var/log/kubernetes
+          mountPath: /var/log/kubernetes
+          name: audit-log-dir
+          pathType: DirectoryOrCreate
+          readOnly: false
+        - hostPath: /var/log/kubernetes/api-audit.log
+          mountPath: /var/log/kubernetes/api-audit.log
+          name: audit-log
+          pathType: FileOrCreate
+          readOnly: false
       controllerManager:
         extraArgs:
           cloud-provider: external
+          profiling: "false"
 {{- if (eq .format "bottlerocket") }}
         extraVolumes:
         - hostPath: /var/lib/kubeadm/controller-manager.conf
@@ -183,7 +210,11 @@ spec:
           name: kubeconfig
           pathType: File
           readOnly: true
+{{- end }}
       scheduler:
+        extraArgs:
+          profiling: "false"
+{{- if (eq .format "bottlerocket") }}
         extraVolumes:
         - hostPath: /var/lib/kubeadm/scheduler.conf
           mountPath: /etc/kubernetes/scheduler.conf
@@ -240,6 +271,10 @@ spec:
         status: {}
       owner: root:root
       path: /etc/kubernetes/manifests/kube-vip.yaml
+    - content: |
+{{ .auditPolicy | indent 8 }}
+      owner: root:root
+      path: /etc/kubernetes/audit-policy.yaml
 {{- if and .proxyConfig (ne .format "bottlerocket")}}
     - content: |
         [Service]
@@ -248,6 +283,28 @@ spec:
         Environment="NO_PROXY={{ stringsJoin .noProxy "," }}"
       owner: root:root
       path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+{{- end }}
+{{- if (ne .format "bottlerocket") }}
+{{- if .registryCACert }}
+    - content: |
+{{ .registryCACert | indent 8 }}
+      owner: root:root
+      path: "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+{{- end }}
+{{- if .registryMirrorConfiguration }}
+    - content: |
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+            endpoint = ["https://{{.registryMirrorConfiguration}}"]
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorConfiguration}}".tls]
+          {{- if not .registryCACert }}
+            insecure_skip_verify = true
+          {{- else }}
+            ca_file = "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+          {{- end }}
+      owner: root:root
+      path: "/etc/containerd/config_append.toml"
+{{- end }}
 {{- end }}
     initConfiguration:
       nodeRegistration:
@@ -264,7 +321,7 @@ spec:
         imageRepository: {{.bottlerocketBootstrapRepository}}
         imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
-{{- if and .proxyConfig (eq .format "bottlerocket")}}
+{{- if and .proxyConfig (eq .format "bottlerocket") }}
       proxy:
         httpsProxy: {{.httpsProxy}}
         noProxy: {{ range .noProxy }}
@@ -277,7 +334,10 @@ spec:
           cloud-provider: external
         name: '{{`{{ ds.meta_data.hostname }}`}}'
     preKubeadmCommands:
-{{- if and .proxyConfig (ne .format "bottlerocket")}}
+{{- if and .registryMirrorConfiguration (ne .format "bottlerocket") }}
+    - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+{{- end }}
+{{- if and (or .proxyConfig .registryMirrorConfiguration) (ne .format "bottlerocket") }}
     - sudo systemctl daemon-reload
     - sudo systemctl restart containerd
 {{- end }}
@@ -313,7 +373,7 @@ spec:
           imageRepository: {{.bottlerocketBootstrapRepository}}
           imageTag: {{.bottlerocketBootstrapVersion}}
 {{- end }}
-{{- if and .proxyConfig (eq .format "bottlerocket")}}
+{{- if and .proxyConfig (eq .format "bottlerocket") }}
         proxy:
           httpsProxy: {{.httpsProxy}}
           noProxy: {{ range .noProxy }}
@@ -328,8 +388,10 @@ spec:
             cgroup-driver: systemd
 {{- end }}
           name: '{{"{{"}} ds.meta_data.hostname {{"}}"}}'
-{{- if and .proxyConfig (ne .format "bottlerocket")}}
+{{- if and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorConfiguration) }}
       files:
+{{- end }}
+{{- if and .proxyConfig (ne .format "bottlerocket") }}
       - content: |
           [Service]
           Environment="HTTP_PROXY={{.httpProxy}}"
@@ -338,8 +400,33 @@ spec:
         owner: root:root
         path: /etc/systemd/system/containerd.service.d/http-proxy.conf
 {{- end }}
+{{- if (ne .format "bottlerocket") }}
+{{- if .registryCACert }}
+      - content: |
+{{ .registryCACert | indent 10 }}
+        owner: root:root
+        path: "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+{{- end }}
+{{- if .registryMirrorConfiguration }}
+      - content: |
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+              endpoint = ["https://{{.registryMirrorConfiguration}}"]
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorConfiguration}}".tls]
+            {{- if not .registryCACert }}
+              insecure_skip_verify = true
+            {{- else }}
+              ca_file = "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+            {{- end }}
+        owner: root:root
+        path: "/etc/containerd/config_append.toml"
+{{- end }}
+{{- end }}
       preKubeadmCommands:
-{{- if and .proxyConfig (ne .format "bottlerocket")}}
+{{- if and .registryMirrorConfiguration (ne .format "bottlerocket") }}
+      - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+{{- end }}
+{{- if and (or .proxyConfig .registryMirrorConfiguration) (ne .format "bottlerocket") }}
       - sudo systemctl daemon-reload
       - sudo systemctl restart containerd
 {{- end }}

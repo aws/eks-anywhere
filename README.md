@@ -1,4 +1,7 @@
 ## Amazon EKS Anywhere
+[![Go Report Card](https://goreportcard.com/badge/github.com/aws/eks-anywhere)](https://goreportcard.com/report/github.com/aws/eks-anywhere)
+
+**Conformance test status:** ![BuildStatus](https://codebuild.us-west-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiV2dmeFNqWEJORzUreTdwQzZMc2JaYVZQUDMvaElkNnFwbHdsVkEwV3VlVTJRUDhyRU1DVWtXTTNqMCtSMWU5ZFhJRk03aTR5ZGgxYXBMS0JVcllwMlpRPSIsIml2UGFyYW1ldGVyU3BlYyI6IlBuSWFpMGhBZ2lDbUVGMTYiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=main)
 
 Amazon EKS Anywhere is a new deployment option for Amazon EKS that enables you to easily create and operate Kubernetes clusters on-premises with your own virtual machines.
 It brings a consistent AWS management experience to your data center, building on the strengths of [Amazon EKS Distro](https://github.com/aws/eks-distro), the same distribution of Kubernetes that powers EKS on AWS.
@@ -14,6 +17,9 @@ The EKS Anywhere is tested using
 EKS operates an installation of Prow, which is visible at [https://prow.eks.amazonaws.com/](https://prow.eks.amazonaws.com/).
 Please read our [CONTRIBUTING](CONTRIBUTING.md) guide before making a pull request.
 Refer to our [end to end guide](https://github.com/aws/eks-anywhere/tree/main/test/e2e) to run E2E tests locally.
+
+The dependencies which make up EKS Anywhere are defined and built via the [build-tooling](https://github.com/aws/eks-anywhere-build-tooling) repo.
+To update dependencies please review the Readme for the specific dependency before opening a PR.
 
 ## Security
 

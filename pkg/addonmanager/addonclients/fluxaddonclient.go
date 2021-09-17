@@ -324,7 +324,7 @@ func (f *FluxAddonClient) CleanupGitRepo(ctx context.Context, clusterSpec *clust
 func (f *FluxAddonClient) pushToRemoteRepo(ctx context.Context, path, msg string) error {
 	err := f.gitOpts.Git.Commit(msg)
 	if err != nil {
-		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when commiting %s to git:  %v", path, err)}
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when committing %s to git:  %v", path, err)}
 	}
 
 	err = f.retrier.Retry(func() error {

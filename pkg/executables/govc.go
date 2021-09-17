@@ -127,7 +127,7 @@ func (g *Govc) LibraryElementExists(ctx context.Context, library string) (bool, 
 func (g *Govc) ResizeDisk(ctx context.Context, template, diskName string, diskSizeInGB int) error {
 	_, err := g.exec(ctx, "vm.disk.change", "-vm", template, "-disk.name", diskName, "-size", strconv.Itoa(diskSizeInGB)+"G")
 	if err != nil {
-		return fmt.Errorf("Failed to resize disk %s: %v", diskName, err)
+		return fmt.Errorf("failed to resize disk %s: %v", diskName, err)
 	}
 	return nil
 }
@@ -135,15 +135,15 @@ func (g *Govc) ResizeDisk(ctx context.Context, template, diskName string, diskSi
 func (g *Govc) DevicesInfo(ctx context.Context, template string) (interface{}, error) {
 	response, err := g.exec(ctx, "device.info", "-vm", template, "-json")
 	if err != nil {
-		return nil, fmt.Errorf("Error getting template device infomation: %v", err)
+		return nil, fmt.Errorf("error getting template device information: %v", err)
 	}
 
 	var devicesInfo map[string]interface{}
 	err = yaml.Unmarshal(response.Bytes(), &devicesInfo)
 	if err != nil {
-		return nil, fmt.Errorf("Error unmarshalling devices info: %v", err)
+		return nil, fmt.Errorf("error unmarshalling devices info: %v", err)
 	}
-	return devicesInfo["Devices"].(interface{}), nil
+	return devicesInfo["Devices"], nil
 }
 
 func (g *Govc) TemplateHasSnapshot(ctx context.Context, template string) (bool, error) {
@@ -222,7 +222,7 @@ func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templ
 				logger.V(4).Info("Resizing disk 2 of template to 20G")
 				err := g.ResizeDisk(ctx, templateName, diskName, 20)
 				if err != nil {
-					return fmt.Errorf("Error resizing disk 2 to 20G: %v", err)
+					return fmt.Errorf("error resizing disk 2 to 20G: %v", err)
 				}
 				break
 			}
@@ -258,7 +258,7 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 
 	deployOptsPath, err := g.writer.Write(deployOptsFile, deployOpts, filewriter.PersistentFile)
 	if err != nil {
-		return fmt.Errorf("failed writting deploy options file to disk: %v", err)
+		return fmt.Errorf("failed writing deploy options file to disk: %v", err)
 	}
 
 	params := []string{

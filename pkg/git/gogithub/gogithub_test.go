@@ -230,6 +230,88 @@ func TestGoGithubGetRepo(t *testing.T) {
 	}
 }
 
+func TestGoGithubDeleteRepoSuccess(t *testing.T) {
+	type fields struct {
+		opts gogithub.Options
+	}
+
+	tests := []struct {
+		name    string
+		fields  fields
+		args    git.DeleteRepoOpts
+		wantErr error
+	}{
+		{
+			name: "github repo deleted successfully",
+			args: git.DeleteRepoOpts{
+				Owner:      "owner1",
+				Repository: "repo1",
+			},
+			wantErr: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			mockCtrl := gomock.NewController(t)
+			client := mockGoGithub.NewMockClient(mockCtrl)
+
+			client.EXPECT().DeleteRepo(ctx, tt.args.Owner, tt.args.Repository).Return(nil, tt.wantErr)
+
+			g := &gogithub.GoGithub{
+				Opts:   tt.fields.opts,
+				Client: client,
+			}
+			err := g.DeleteRepo(ctx, tt.args)
+			if err != tt.wantErr {
+				t.Errorf("DeleteRepo() got error: %v want error: %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestGoGithubDeleteRepoFail(t *testing.T) {
+	type fields struct {
+		opts gogithub.Options
+	}
+
+	tests := []struct {
+		name     string
+		fields   fields
+		args     git.DeleteRepoOpts
+		wantErr  error
+		throwErr error
+	}{
+		{
+			name: "github repo delete fail",
+			args: git.DeleteRepoOpts{
+				Owner:      "owner1",
+				Repository: "repo1",
+			},
+			wantErr:  fmt.Errorf("error when deleting repository repo1: github client threw error"),
+			throwErr: fmt.Errorf("github client threw error"),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			mockCtrl := gomock.NewController(t)
+			client := mockGoGithub.NewMockClient(mockCtrl)
+
+			client.EXPECT().DeleteRepo(ctx, tt.args.Owner, tt.args.Repository).Return(nil, tt.throwErr)
+
+			g := &gogithub.GoGithub{
+				Opts:   tt.fields.opts,
+				Client: client,
+			}
+			err := g.DeleteRepo(ctx, tt.args)
+			if !reflect.DeepEqual(err, tt.wantErr) {
+				t.Errorf("DeleteRepo() got error: %v want error: %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestGoGithub_CheckAccessTokenPermissions(t *testing.T) {
 	type fields struct {
 		opts gogithub.Options

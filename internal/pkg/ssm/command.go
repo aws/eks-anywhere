@@ -52,8 +52,8 @@ func Run(session *session.Session, instanceId string, command string, opts ...Co
 	}
 	var result *ssm.SendCommandOutput
 	r := retrier.New(180*time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
-		if request.IsErrorThrottle(err) && totalRetries < 50 {
-			return true, 10 * time.Second
+		if request.IsErrorThrottle(err) && totalRetries < 60 {
+			return true, 60 * time.Second
 		}
 		return false, 0
 	}))
@@ -62,7 +62,7 @@ func Run(session *session.Session, instanceId string, command string, opts ...Co
 		logger.V(2).Info("Running ssm command", "cmd", command)
 		result, err = service.SendCommand(c)
 		if err != nil {
-			return fmt.Errorf("error sending ssm command: %v", err)
+			return err
 		}
 		return nil
 	})
@@ -99,7 +99,7 @@ func Run(session *session.Session, instanceId string, command string, opts ...Co
 
 	logger.V(2).Info("Waiting for ssm command to finish")
 	var commandOut *ssm.GetCommandInvocationOutput
-	r = retrier.New(180*time.Minute, retrier.WithMaxRetries(2160, 15*time.Second))
+	r = retrier.New(180*time.Minute, retrier.WithMaxRetries(2160, 60*time.Second))
 	err = r.Retry(func() error {
 		var err error
 		commandOut, err = service.GetCommandInvocation(commandIn)
