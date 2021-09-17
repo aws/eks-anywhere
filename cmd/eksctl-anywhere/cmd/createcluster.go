@@ -32,7 +32,7 @@ type createClusterOptions struct {
 var cc = &createClusterOptions{}
 
 var createClusterCmd = &cobra.Command{
-	Use:          "cluster",
+	Use:          "cluster -f <cluster-config-file> [flags]",
 	Short:        "Create workload cluster",
 	Long:         "This command is used to create workload clusters",
 	PreRunE:      preRunCreateCluster,
