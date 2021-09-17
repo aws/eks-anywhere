@@ -12,19 +12,17 @@ import (
 	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	fluxclient "github.com/aws/eks-anywhere/pkg/clients/flux"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/networking"
 	"github.com/aws/eks-anywhere/pkg/providers/factory"
 	"github.com/aws/eks-anywhere/pkg/validations"
-	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
 type createClusterOptions struct {
-	fileName    string
+	clusterOptions
 	forceClean  bool
 	skipIpCheck bool
 }
@@ -53,6 +51,7 @@ func init() {
 	createClusterCmd.Flags().StringVarP(&cc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
+	createClusterCmd.Flags().StringVar(&cc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest")
 	err := createClusterCmd.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -91,9 +90,9 @@ func (cc *createClusterOptions) validate(ctx context.Context) error {
 }
 
 func (cc *createClusterOptions) createCluster(ctx context.Context) error {
-	clusterSpec, err := cluster.NewSpec(cc.fileName, version.Get())
+	clusterSpec, err := newClusterSpec(cc.clusterOptions)
 	if err != nil {
-		return fmt.Errorf("unable to get cluster config from file: %v", err)
+		return err
 	}
 
 	writer, err := filewriter.NewWriter(clusterSpec.Name)

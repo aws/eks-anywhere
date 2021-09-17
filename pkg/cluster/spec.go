@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -33,6 +34,7 @@ type Spec struct {
 	OIDCConfig          *eksav1alpha1.OIDCConfig
 	GitOpsConfig        *eksav1alpha1.GitOpsConfig
 	releasesManifestURL string
+	bundlesManifestURL  string
 	configFS            embed.FS
 	httpClient          *http.Client
 	userAgent           string
@@ -90,6 +92,12 @@ func WithReleasesManifest(manifestURL string) SpecOpt {
 func WithEmbedFS(embedFS embed.FS) SpecOpt {
 	return func(s *Spec) {
 		s.configFS = embedFS
+	}
+}
+
+func WithOverrideBundlesManifest(fileURL string) SpecOpt {
+	return func(s *Spec) {
+		s.bundlesManifestURL = fileURL
 	}
 }
 
@@ -208,19 +216,25 @@ func (s *Spec) getVersionsBundle(clusterConfig *eksav1alpha1.Cluster, bundles *v
 }
 
 func (s *Spec) GetBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
-	release, err := s.getRelease(cliVersion)
-	if err != nil {
-		return nil, err
+	bundlesURL := s.bundlesManifestURL
+	if bundlesURL == "" {
+		release, err := s.getRelease(cliVersion)
+		if err != nil {
+			return nil, err
+		}
+
+		bundlesURL = release.BundleManifestUrl
 	}
 
-	content, err := s.readFile(release.BundleManifestUrl)
+	logger.V(4).Info("Reading bundles manifest", "url", bundlesURL)
+	content, err := s.readFile(bundlesURL)
 	if err != nil {
 		return nil, err
 	}
 
 	bundles := &v1alpha1.Bundles{}
 	if err = yaml.Unmarshal(content, bundles); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal bundles manifest from [%s] to build cluster spec: %v", release.BundleManifestUrl, err)
+		return nil, fmt.Errorf("failed to unmarshal bundles manifest from [%s] to build cluster spec: %v", bundlesURL, err)
 	}
 
 	return bundles, nil
@@ -252,6 +266,7 @@ func (s *Spec) getRelease(cliVersion version.Info) (*v1alpha1.EksARelease, error
 }
 
 func (s *Spec) getReleases(releasesManifest string) (*v1alpha1.Release, error) {
+	logger.V(4).Info("Reading releases manifest", "url", releasesManifestURL)
 	content, err := s.readFile(releasesManifest)
 	if err != nil {
 		return nil, err

@@ -14,7 +14,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	fluxclient "github.com/aws/eks-anywhere/pkg/clients/flux"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -23,12 +22,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
-	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
 type upgradeClusterOptions struct {
-	fileName   string
+	clusterOptions
 	wConfig    string
 	forceClean bool
 }
@@ -71,6 +69,7 @@ func init() {
 	upgradeClusterCmd.Flags().StringVarP(&uc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	upgradeClusterCmd.Flags().StringVarP(&uc.wConfig, "w-config", "w", "", "Kubeconfig file to use when upgrading a workload cluster")
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
+	upgradeClusterCmd.Flags().StringVar(&uc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest")
 	err := upgradeClusterCmd.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -81,9 +80,9 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	if _, err := uc.commonValidations(ctx); err != nil {
 		return fmt.Errorf("common validations failed due to: %v", err)
 	}
-	clusterSpec, err := cluster.NewSpec(uc.fileName, version.Get())
+	clusterSpec, err := newClusterSpec(uc.clusterOptions)
 	if err != nil {
-		return fmt.Errorf("unable to get cluster config from file: %v", err)
+		return err
 	}
 
 	writer, err := filewriter.NewWriter(clusterSpec.Name)
