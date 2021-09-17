@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	troulbeshootPath          = "support-bundle"
+	troubleshootPath          = "support-bundle"
 	supportBundleArchiveRegex = `support-bundle-([0-9]+(-[0-9]+)+)T([0-9]+(_[0-9]+)+)\.tar\.gz`
 )
 
