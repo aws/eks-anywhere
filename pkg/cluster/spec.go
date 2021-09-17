@@ -109,7 +109,7 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 		opt(s)
 	}
 
-	bundles, err := s.getBundles(cliVersion)
+	bundles, err := s.GetBundles(cliVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +207,7 @@ func (s *Spec) getVersionsBundle(clusterConfig *eksav1alpha1.Cluster, bundles *v
 	return nil, fmt.Errorf("kubernetes version %s is not supported by bundles manifest %d", clusterConfig.Spec.KubernetesVersion, bundles.Spec.Number)
 }
 
-func (s *Spec) getBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
+func (s *Spec) GetBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
 	release, err := s.getRelease(cliVersion)
 	if err != nil {
 		return nil, err
@@ -405,7 +405,7 @@ func GetEksdRelease(cliVersion version.Info, clusterConfig *eksav1alpha1.Cluster
 		userAgent:           userAgent("cli", cliVersion.GitVersion),
 	}
 
-	bundles, err := s.getBundles(cliVersion)
+	bundles, err := s.GetBundles(cliVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -442,4 +442,79 @@ func (s *Spec) LoadManifest(manifest v1alpha1.Manifest) (*Manifest, error) {
 
 func userAgent(eksAComponent, version string) string {
 	return fmt.Sprintf("eks-a-%s/%s", eksAComponent, version)
+}
+
+func (vb *VersionsBundle) SharedImages() []v1alpha1.Image {
+	var images []v1alpha1.Image
+	images = append(images, vb.Bootstrap.Controller)
+	images = append(images, vb.Bootstrap.KubeProxy)
+
+	images = append(images, vb.BottleRocketBootstrap.Bootstrap)
+
+	images = append(images, vb.CertManager.Acmesolver)
+	images = append(images, vb.CertManager.Cainjector)
+	images = append(images, vb.CertManager.Controller)
+	images = append(images, vb.CertManager.Webhook)
+
+	images = append(images, vb.Cilium.Cilium)
+	images = append(images, vb.Cilium.Operator)
+
+	images = append(images, vb.ClusterAPI.Controller)
+	images = append(images, vb.ClusterAPI.KubeProxy)
+
+	images = append(images, vb.ControlPlane.Controller)
+	images = append(images, vb.ControlPlane.KubeProxy)
+
+	images = append(images, vb.EksD.KindNode)
+	images = append(images, vb.Eksa.CliTools)
+	images = append(images, vb.Eksa.ClusterController)
+
+	images = append(images, vb.Flux.HelmController)
+	images = append(images, vb.Flux.KustomizeController)
+	images = append(images, vb.Flux.NotificationController)
+	images = append(images, vb.Flux.SourceController)
+
+	images = append(images, vb.ExternalEtcdBootstrap.Controller)
+	images = append(images, vb.ExternalEtcdBootstrap.KubeProxy)
+
+	images = append(images, vb.ExternalEtcdController.Controller)
+	images = append(images, vb.ExternalEtcdController.KubeProxy)
+
+	images = append(images, vb.KubeDistro.EtcdImage)
+	images = append(images, vb.KubeDistro.ExternalAttacher)
+	images = append(images, vb.KubeDistro.ExternalProvisioner)
+	images = append(images, vb.KubeDistro.LivenessProbe)
+	images = append(images, vb.KubeDistro.NodeDriverRegistrar)
+	images = append(images, vb.KubeDistro.Pause)
+
+	return images
+}
+
+func (vb *VersionsBundle) VsphereImages() []v1alpha1.Image {
+	var images []v1alpha1.Image
+	images = append(images, vb.VSphere.ClusterAPIController)
+	images = append(images, vb.VSphere.Driver)
+	images = append(images, vb.VSphere.KubeProxy)
+	images = append(images, vb.VSphere.KubeVip)
+	images = append(images, vb.VSphere.Manager)
+	images = append(images, vb.VSphere.Syncer)
+
+	return images
+}
+
+func (vb *VersionsBundle) DockerImages() []v1alpha1.Image {
+	var images []v1alpha1.Image
+	images = append(images, vb.Docker.KubeProxy)
+	images = append(images, vb.Docker.Manager)
+
+	return images
+}
+
+func (vb *VersionsBundle) Images() []v1alpha1.Image {
+	var images []v1alpha1.Image
+	images = append(images, vb.SharedImages()...)
+	images = append(images, vb.DockerImages()...)
+	images = append(images, vb.VsphereImages()...)
+
+	return images
 }

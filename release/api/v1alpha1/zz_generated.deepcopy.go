@@ -321,6 +321,7 @@ func (in *EksDRelease) DeepCopy() *EksDRelease {
 func (in *EksaBundle) DeepCopyInto(out *EksaBundle) {
 	*out = *in
 	in.CliTools.DeepCopyInto(&out.CliTools)
+	in.ClusterController.DeepCopyInto(&out.ClusterController)
 	out.Components = in.Components
 }
 
