@@ -67,17 +67,21 @@ func NewDiagnosticBundleFromSpec(opts EksaDiagnosticBundleOpts) (*EksaDiagnostic
 		kubeconfig:       opts.Kubeconfig,
 		writer:           opts.Writer,
 	}
-	err := b.WriteBundleConfig()
-	if err != nil {
-		return nil, fmt.Errorf("error writing bundle config: %v", err)
-	}
-	return b.
+
+	b = b.
 		WithGitOpsConfig(opts.ClusterSpec.GitOpsConfig).
 		WithOidcConfig(opts.ClusterSpec.OIDCConfig).
 		WithExternalEtcd(opts.ClusterSpec.Spec.ExternalEtcdConfiguration).
 		WithDatacenterConfig(opts.ClusterSpec.Spec.DatacenterRef).
 		WithDefaultAnalyzers().
-		WithDefaultCollectors(), nil
+		WithDefaultCollectors()
+
+	err := b.WriteBundleConfig()
+	if err != nil {
+		return nil, fmt.Errorf("error writing bundle config: %v", err)
+	}
+
+	return b, nil
 }
 
 func NewDiagnosticBundleDefault(af AnalyzerFactory, cf CollectorFactory) *EksaDiagnosticBundle {
