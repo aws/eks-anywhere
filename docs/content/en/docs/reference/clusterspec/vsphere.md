@@ -111,8 +111,11 @@ Number of control plane nodes
 Refers to the Kubernetes object with vsphere specific configuration for your nodes. See `VSphereMachineConfig Fields` below.
 
 ### controlPlaneConfiguration.endpoint.host (required)
-A unique IP you want to use for the control plane VM in your EKS Anywhere cluster. Choose an IP in your networks
+A unique IP you want to use for the control plane VM in your EKS Anywhere cluster. Choose an IP in your network
 range that does not conflict with other VMs.
+
+>**_NOTE:_** This IP should be outside the network DHCP range as it is a floating IP that gets assigned to one of
+the control plane nodes for kube-apiserver loadbalancing.
 
 ### workerNodeGroupsConfiguration (required)
 This takes in a list of node groups that you can define for your workers. Please note that at this time only 1 node group is permitted.
