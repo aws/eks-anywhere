@@ -87,5 +87,5 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig() (*support.EksaD
 		CollectorFactory: support.NewCollectorFactory(),
 		ClusterSpec:      clusterSpec,
 	}
-	return support.NewDiagnosticBundleFromSpec(opts), nil
+	return support.NewDiagnosticBundleFromSpec(opts)
 }

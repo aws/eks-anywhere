@@ -43,18 +43,12 @@ type EksaDiagnosticBundle struct {
 
 func NewDiagnosticBundle(opts EksaDiagnosticBundleOpts) (*EksaDiagnosticBundle, error) {
 	if opts.BundlePath == "" && opts.ClusterSpec != nil {
-		// user did not provide any bundle-config to the support-bundle command, generate one using the default collectors & analyzers
-		bundle := NewDiagnosticBundleFromSpec(opts)
-		err := bundle.WriteBundleConfig()
-		if err != nil {
-			return nil, err
-		}
-		return bundle, nil
+		return NewDiagnosticBundleFromSpec(opts)
 	}
 	return NewDiagnosticBundleCustom(opts), nil
 }
 
-func NewDiagnosticBundleFromSpec(opts EksaDiagnosticBundleOpts) *EksaDiagnosticBundle {
+func NewDiagnosticBundleFromSpec(opts EksaDiagnosticBundleOpts) (*EksaDiagnosticBundle, error) {
 	b := &EksaDiagnosticBundle{
 		bundle: &supportBundle{
 			TypeMeta: metav1.TypeMeta{
@@ -73,13 +67,17 @@ func NewDiagnosticBundleFromSpec(opts EksaDiagnosticBundleOpts) *EksaDiagnosticB
 		kubeconfig:       opts.Kubeconfig,
 		writer:           opts.Writer,
 	}
+	err := b.WriteBundleConfig()
+	if err != nil {
+		return nil, fmt.Errorf("error writing bundle config: %v", err)
+	}
 	return b.
 		WithGitOpsConfig(opts.ClusterSpec.GitOpsConfig).
 		WithOidcConfig(opts.ClusterSpec.OIDCConfig).
 		WithExternalEtcd(opts.ClusterSpec.Spec.ExternalEtcdConfiguration).
 		WithDatacenterConfig(opts.ClusterSpec.Spec.DatacenterRef).
 		WithDefaultAnalyzers().
-		WithDefaultCollectors()
+		WithDefaultCollectors(), nil
 }
 
 func NewDiagnosticBundleDefault(af AnalyzerFactory, cf CollectorFactory) *EksaDiagnosticBundle {
