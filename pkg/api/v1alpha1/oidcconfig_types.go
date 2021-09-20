@@ -125,6 +125,19 @@ func (c *OIDCConfig) ExpectedKind() string {
 	return OIDCConfigKind
 }
 
+func (c *OIDCConfig) ConvertConfigToConfigGenerateStruct() *OIDCConfigGenerate {
+	config := &OIDCConfigGenerate{
+		TypeMeta: c.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        c.Name,
+			Annotations: c.Annotations,
+			Namespace:   c.Namespace,
+		},
+		Spec: c.Spec,
+	}
+	return config
+}
+
 func init() {
 	SchemeBuilder.Register(&OIDCConfig{}, &OIDCConfigList{})
 }

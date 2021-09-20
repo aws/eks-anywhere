@@ -38,6 +38,7 @@ type DatacenterConfig interface {
 	Kind() string
 	PauseReconcile()
 	ClearPauseAnnotation()
+	// ConvertConfigToConfigGenerateStruct() *DatacenterConfig
 }
 
 type BuildMapOption func(map[string]interface{})

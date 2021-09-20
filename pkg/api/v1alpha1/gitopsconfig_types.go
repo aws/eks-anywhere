@@ -85,6 +85,20 @@ func (c *GitOpsConfig) ExpectedKind() string {
 	return GitOpsConfigKind
 }
 
+func (c *GitOpsConfig) ConvertConfigToConfigGenerateStruct() *GitOpsConfigGenerate {
+	config := &GitOpsConfigGenerate{
+		TypeMeta: c.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        c.Name,
+			Annotations: c.Annotations,
+			Namespace:   c.Namespace,
+		},
+		Spec: c.Spec,
+	}
+
+	return config
+}
+
 func init() {
 	SchemeBuilder.Register(&GitOpsConfig{}, &GitOpsConfigList{})
 }
