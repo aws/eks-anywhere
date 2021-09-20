@@ -19,6 +19,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
+const supportWriterDir = "support"
+
 type createSupportBundleOptions struct {
 	fileName     string
 	wConfig      string
@@ -101,7 +103,8 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 	}
 	troubleshoot := executableBuilder.BuildTroubleshootExecutable()
 
-	writer, err := filewriter.NewWriter(clusterSpec.Name)
+	writerDir := fmt.Sprintf("%s/%s", clusterSpec.Name, supportWriterDir)
+	writer, err := filewriter.NewWriter(writerDir)
 	if err != nil {
 		return fmt.Errorf("unable to write: %v", err)
 	}
