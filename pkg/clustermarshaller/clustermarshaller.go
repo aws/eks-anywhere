@@ -5,7 +5,6 @@ import (
 
 	"sigs.k8s.io/yaml"
 
-	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -60,46 +59,4 @@ func WriteClusterConfig(clusterSpec *cluster.Spec, datacenterConfig providers.Da
 	}
 
 	return nil
-}
-
-func copyToGitOpsConfigGenerateStruct(gitopsConfig *eksav1alpha1.GitOpsConfig) *eksav1alpha1.GitOpsConfigGenerate {
-	config := &eksav1alpha1.GitOpsConfigGenerate{
-		TypeMeta: gitopsConfig.TypeMeta,
-		ObjectMeta: eksav1alpha1.ObjectMeta{
-			Name:        gitopsConfig.Name,
-			Annotations: gitopsConfig.Annotations,
-			Namespace:   gitopsConfig.Namespace,
-		},
-		Spec: gitopsConfig.Spec,
-	}
-
-	return config
-}
-
-func copyToOIDCConfigGenerateStruct(oidcConfig *eksav1alpha1.OIDCConfig) *eksav1alpha1.OIDCConfigGenerate {
-	config := &eksav1alpha1.OIDCConfigGenerate{
-		TypeMeta: oidcConfig.TypeMeta,
-		ObjectMeta: eksav1alpha1.ObjectMeta{
-			Name:        oidcConfig.Name,
-			Annotations: oidcConfig.Annotations,
-			Namespace:   oidcConfig.Namespace,
-		},
-		Spec: oidcConfig.Spec,
-	}
-
-	return config
-}
-
-func copyToClusterGenerateStruct(cluster *eksav1alpha1.Cluster) *eksav1alpha1.ClusterGenerate {
-	config := &eksav1alpha1.ClusterGenerate{
-		TypeMeta: cluster.TypeMeta,
-		ObjectMeta: eksav1alpha1.ObjectMeta{
-			Name:        cluster.Name,
-			Annotations: cluster.Annotations,
-			Namespace:   cluster.Namespace,
-		},
-		Spec: cluster.Spec,
-	}
-
-	return config
 }
