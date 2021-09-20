@@ -1,25 +1,21 @@
 package supportbundle
 
-import (
-	"github.com/replicatedhq/troubleshoot/pkg/apis/troubleshoot/v1beta2"
-)
-
 type collectorFactory struct{}
 
 func NewCollectorFactory() *collectorFactory {
 	return &collectorFactory{}
 }
 
-func (c *collectorFactory) DefaultCollectors() []*v1beta2.Collect {
-	return []*v1beta2.Collect{
+func (c *collectorFactory) DefaultCollectors() []*Collect {
+	return []*Collect{
 		{
-			ClusterInfo: &v1beta2.ClusterInfo{},
+			ClusterInfo: &clusterInfo{},
 		},
 		{
-			ClusterResources: &v1beta2.ClusterResources{},
+			ClusterResources: &clusterResources{},
 		},
 		{
-			Secret: &v1beta2.Secret{
+			Secret: &secret{
 				Namespace:    "eksa-system",
 				SecretName:   "eksa-license",
 				IncludeValue: true,
@@ -27,79 +23,79 @@ func (c *collectorFactory) DefaultCollectors() []*v1beta2.Collect {
 			},
 		},
 		{
-			Logs: &v1beta2.Logs{
+			Logs: &logs{
 				Namespace: "capd-system",
 				Name:      "logs/capd-system",
 			},
 		},
 		{
-			Logs: &v1beta2.Logs{
+			Logs: &logs{
 				Namespace: "capi-kubeadm-bootstrap-system",
 				Name:      "logs/capi-kubeadm-bootstrap-system",
 			},
 		},
 		{
-			Logs: &v1beta2.Logs{
+			Logs: &logs{
 				Namespace: "capi-kubeadm-control-plane-system",
 				Name:      "logs/capi-kubeadm-control-plane-system",
 			},
 		},
 		{
-			Logs: &v1beta2.Logs{
+			Logs: &logs{
 				Namespace: "capi-system",
 				Name:      "logs/capi-system",
 			},
 		},
 		{
-			Logs: &v1beta2.Logs{
+			Logs: &logs{
 				Namespace: "capi-webhook-system",
 				Name:      "logs/capi-webhook-system",
 			},
 		},
 		{
-			Logs: &v1beta2.Logs{
+			Logs: &logs{
 				Namespace: "cert-manager",
 				Name:      "logs/cert-manager",
 			},
 		},
 		{
-			Logs: &v1beta2.Logs{
+			Logs: &logs{
 				Namespace: "eksa-system",
 				Name:      "logs/eksa-system",
 			},
 		},
 		{
-			Logs: &v1beta2.Logs{
+			Logs: &logs{
 				Namespace: "default",
 				Name:      "logs/default",
 			},
 		},
 		{
-			Logs: &v1beta2.Logs{
+			Logs: &logs{
 				Namespace: "etcdadm-bootstrap-provider-system",
 				Name:      "logs/etcdadm-bootstrap-provider-system",
 			},
 		},
 		{
-			Logs: &v1beta2.Logs{
+			Logs: &logs{
 				Namespace: "etcdadm-controller-system",
 				Name:      "logs/etcdadm-controller-system",
 			},
 		},
 		{
-			Logs: &v1beta2.Logs{
+			Logs: &logs{
 				Namespace: "kube-node-lease",
 				Name:      "logs/kube-node-lease",
 			},
 		},
 		{
-			Logs: &v1beta2.Logs{
+			Logs: &logs{
 				Namespace: "kube-public",
 				Name:      "logs/kube-public",
 			},
 		},
 		{
-			Logs: &v1beta2.Logs{
+			Logs: &logs{
 				Namespace: "kube-system",
 				Name:      "logs/kube-system",
 			},

@@ -4,13 +4,13 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/replicatedhq/troubleshoot/pkg/apis/troubleshoot/v1beta2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	support "github.com/aws/eks-anywhere/pkg/support"
-	"github.com/aws/eks-anywhere/pkg/support/interfaces/mocks"
+	supportMocks "github.com/aws/eks-anywhere/pkg/support/interfaces/mocks"
 )
 
 func TestParseTimeOptions(t *testing.T) {
@@ -75,51 +75,6 @@ func TestParseTimeOptions(t *testing.T) {
 	}
 }
 
-func TestParseBundleFromDoc(t *testing.T) {
-	type args struct {
-		bundleConfig string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		{
-			name: "Good bundle config",
-			args: args{
-				bundleConfig: "testdata/support-bundle-test1.yaml",
-			},
-			wantErr: false,
-		},
-		{
-			name: "Wrong bundle config",
-			args: args{
-				bundleConfig: "testdata/support-bundle-test2.yaml",
-			},
-			wantErr: true,
-		},
-	}
-
-	spec := &cluster.Spec{
-		Cluster: &eksav1alpha1.Cluster{
-			TypeMeta:   metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{},
-			Spec:       eksav1alpha1.ClusterSpec{},
-			Status:     eksav1alpha1.ClusterStatus{},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, err := support.ParseBundleFromDoc(spec, tt.args.bundleConfig)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ParseBundleFromDoc() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-		})
-	}
-}
-
 func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 	spec := &cluster.Spec{
 		Cluster: &eksav1alpha1.Cluster{
@@ -152,7 +107,17 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
 
-		_ = support.NewBundleConfig(spec, a, c)
+		w := givenWriter(t)
+		w.EXPECT().Write(gomock.Any(), gomock.Any())
+
+		opts := support.EksaDiagnosticBundleOpts{
+			AnalyzerFactory:  a,
+			CollectorFactory: c,
+			ClusterSpec:      spec,
+			Writer:           w,
+		}
+
+		_, _ = support.NewDiagnosticBundleFromSpec(opts)
 	})
 }
 
@@ -184,10 +149,20 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
 		a.EXPECT().DefaultAnalyzers().Return(nil)
 
+		w := givenWriter(t)
+		w.EXPECT().Write(gomock.Any(), gomock.Any())
+
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
 
-		_ = support.NewBundleConfig(spec, a, c)
+		opts := support.EksaDiagnosticBundleOpts{
+			AnalyzerFactory:  a,
+			CollectorFactory: c,
+			ClusterSpec:      spec,
+			Writer:           w,
+		}
+
+		_, _ = support.NewDiagnosticBundleFromSpec(opts)
 	})
 }
 
@@ -219,10 +194,20 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
 		a.EXPECT().DefaultAnalyzers().Return(nil)
 
+		w := givenWriter(t)
+		w.EXPECT().Write(gomock.Any(), gomock.Any())
+
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
 
-		_ = support.NewBundleConfig(spec, a, c)
+		opts := support.EksaDiagnosticBundleOpts{
+			AnalyzerFactory:  a,
+			CollectorFactory: c,
+			ClusterSpec:      spec,
+			Writer:           w,
+		}
+
+		_, _ = support.NewDiagnosticBundleFromSpec(opts)
 	})
 }
 
@@ -234,32 +219,34 @@ func TestGenerateDefaultBundle(t *testing.T) {
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
 
-		_ = support.NewDefaultBundleConfig(a, c)
+		_ = support.NewDiagnosticBundleDefault(a, c)
 	})
 }
 
 func TestGenerateCustomBundle(t *testing.T) {
-	bundle := &v1beta2.SupportBundle{
-		TypeMeta:   metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{},
-		Spec:       v1beta2.SupportBundleSpec{},
-		Status:     v1beta2.SupportBundleStatus{},
-	}
-
 	t.Run(t.Name(), func(t *testing.T) {
-		a := givenMockAnalyzerFactory(t)
-		c := givenMockCollectorsFactory(t)
-
-		_ = support.NewCustomBundleConfig(bundle, a, c)
+		_ = support.NewDiagnosticBundleCustom(getOpts(t))
 	})
 }
 
-func givenMockAnalyzerFactory(t *testing.T) *mocks.MockAnalyzerFactory {
+func givenMockAnalyzerFactory(t *testing.T) *supportMocks.MockAnalyzerFactory {
 	ctrl := gomock.NewController(t)
-	return mocks.NewMockAnalyzerFactory(ctrl)
+	return supportMocks.NewMockAnalyzerFactory(ctrl)
 }
 
-func givenMockCollectorsFactory(t *testing.T) *mocks.MockCollectorFactory {
+func givenMockCollectorsFactory(t *testing.T) *supportMocks.MockCollectorFactory {
 	ctrl := gomock.NewController(t)
-	return mocks.NewMockCollectorFactory(ctrl)
+	return supportMocks.NewMockCollectorFactory(ctrl)
+}
+
+func getOpts(t *testing.T) support.EksaDiagnosticBundleOpts {
+	return support.EksaDiagnosticBundleOpts{
+		AnalyzerFactory:  givenMockAnalyzerFactory(t),
+		CollectorFactory: givenMockCollectorsFactory(t),
+	}
+}
+
+func givenWriter(t *testing.T) *mocks.MockFileWriter {
+	ctrl := gomock.NewController(t)
+	return mocks.NewMockFileWriter(ctrl)
 }

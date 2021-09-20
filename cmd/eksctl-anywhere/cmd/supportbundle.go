@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -13,7 +12,8 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	support "github.com/aws/eks-anywhere/pkg/support"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -46,7 +46,7 @@ var supportbundleCmd = &cobra.Command{
 		if err := csbo.validate(cmd.Context()); err != nil {
 			return err
 		}
-		if err := csbo.createBundle(csbo.since, csbo.sinceTime, csbo.bundleConfig); err != nil {
+		if err := csbo.createBundle(cmd.Context(), csbo.since, csbo.sinceTime, csbo.bundleConfig); err != nil {
 			return fmt.Errorf("failed to create support bundle: %v", err)
 		}
 		return nil
@@ -87,15 +87,24 @@ func preRunSupportBundle(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (csbo *createSupportBundleOptions) createBundle(since, sinceTime, bundleConfig string) error {
+func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since, sinceTime, bundleConfig string) error {
 	clusterSpec, err := cluster.NewSpec(csbo.fileName, version.Get())
 	if err != nil {
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
-	os.Setenv("KUBECONFIG", csbo.kubeConfig(clusterSpec.Name))
-	supportBundle, err := support.ParseBundleFromDoc(clusterSpec, bundleConfig)
+
+	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
+	image := eksaToolsImage.VersionedImage()
+	executableBuilder, err := executables.NewExecutableBuilder(ctx, image)
 	if err != nil {
-		return fmt.Errorf("failed to parse collector: %v", err)
+		return fmt.Errorf("unable to initialize executables: %v", err)
+	}
+	troubleshoot := executableBuilder.BuildTroubleshootExecutable()
+
+	writerDir := fmt.Sprintf(clusterSpec.Name)
+	writer, err := filewriter.NewWriter(writerDir)
+	if err != nil {
+		return fmt.Errorf("unable to write: %v", err)
 	}
 
 	var sinceTimeValue *time.Time
@@ -104,17 +113,25 @@ func (csbo *createSupportBundleOptions) createBundle(since, sinceTime, bundleCon
 		return fmt.Errorf("failed parse since time: %v", err)
 	}
 
-	archivePath, err := supportBundle.CollectBundleFromSpec(sinceTimeValue)
-	if err != nil {
-		return fmt.Errorf("run collectors: %v", err)
+	opts := support.EksaDiagnosticBundleOpts{
+		AnalyzerFactory:  support.NewAnalyzerFactory(),
+		BundlePath:       bundleConfig,
+		CollectorFactory: support.NewCollectorFactory(),
+		Client:           troubleshoot,
+		ClusterSpec:      clusterSpec,
+		Kubeconfig:       csbo.kubeConfig(clusterSpec.Name),
+		Writer:           writer,
 	}
 
-	logger.Info("\r \033[36mAnalyzing support bundle\033[m")
-	err = supportBundle.AnalyzeBundle(archivePath)
+	supportBundle, err := support.NewDiagnosticBundle(opts)
 	if err != nil {
-		return fmt.Errorf("there is an error when analyzing: %v", err)
+		return fmt.Errorf("failed to parse collector: %v", err)
 	}
 
-	logger.Info("a support bundle has been created in the current directory:", "path", archivePath)
+	err = supportBundle.CollectAndAnalyze(ctx, sinceTimeValue)
+	if err != nil {
+		return fmt.Errorf("error while collecting and analyzing bundle: %v", err)
+	}
+
 	return nil
 }
