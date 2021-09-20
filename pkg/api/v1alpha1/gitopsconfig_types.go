@@ -49,6 +49,15 @@ type GitOpsConfig struct {
 	Status GitOpsConfigStatus `json:"status,omitempty"`
 }
 
+// +kubebuilder:object:generate=false
+// Same as GitOpsConfig except stripped down for generation of yaml file while writing to github repo when flux is enabled
+type GitOpsConfigGenerate struct {
+	metav1.TypeMeta `json:",inline"`
+	ObjectMeta      `json:"metadata,omitempty"`
+
+	Spec GitOpsConfigSpec `json:"spec,omitempty"`
+}
+
 func (e *GitOpsConfigSpec) Equal(n *GitOpsConfigSpec) bool {
 	if e == n {
 		return true
