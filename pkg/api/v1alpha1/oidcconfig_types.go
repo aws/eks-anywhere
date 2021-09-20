@@ -99,6 +99,15 @@ type OIDCConfig struct {
 	Status OIDCConfigStatus `json:"status,omitempty"`
 }
 
+// +kubebuilder:object:generate=false
+// Same as OIDCConfig except stripped down for generation of yaml file while writing to github repo when flux is enabled
+type OIDCConfigGenerate struct {
+	metav1.TypeMeta `json:",inline"`
+	ObjectMeta      `json:"metadata,omitempty"`
+
+	Spec OIDCConfigSpec `json:"spec,omitempty"`
+}
+
 //+kubebuilder:object:root=true
 
 // OIDCConfigList contains a list of OIDCConfig
