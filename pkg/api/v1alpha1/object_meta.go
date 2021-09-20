@@ -7,6 +7,6 @@ package v1alpha1
 // as needed.
 type ObjectMeta struct {
 	Name        string            `json:"name,omitempty"`
-	Namespace   string            `namespace:"name,omitempty"`
+	Namespace   string            `json:"namespace,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
 }
