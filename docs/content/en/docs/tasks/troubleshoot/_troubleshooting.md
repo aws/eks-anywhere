@@ -115,6 +115,12 @@ If you don't have any other docker containers running you may want to run `docke
 You may want to restart Docker.
 To restart Docker on Ubuntu `sudo systemctl restart docker`.
 
+### Issues detected with selected template
+```
+Issues detected with selected template. Details: - -1:-1:VALUE_ILLEGAL: No supported hardware versions among [vmx-15]; supported: [vmx-04, vmx-07, vmx-08, vmx-09, vmx-10, vmx-11, vmx-12, vmx-13].
+```
+Our upstream dependency on CAPV makes it a requirement that you use vSphere 6.7 update 3 or newer.
+
 ### Waiting for cert-manager to be available... Error: timed out waiting for the condition
 ```
 Failed to create cluster {"error": "error initializing capi resources in cluster: error executing init: Fetching providers\nInstalling cert-manager Version=\"v1.1.0\"\nWaiting for cert-manager to be available...\nError: timed out waiting for the condition\n"}
