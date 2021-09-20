@@ -125,34 +125,36 @@ func (mr *MockProviderMockRecorder) EnvMap() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnvMap", reflect.TypeOf((*MockProvider)(nil).EnvMap))
 }
 
-// GenerateDeploymentFileForCreate mocks base method.
-func (m *MockProvider) GenerateDeploymentFileForCreate(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 string) (string, error) {
+// GenerateClusterApiSpecForCreate mocks base method.
+func (m *MockProvider) GenerateClusterApiSpecForCreate(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) ([]byte, []byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateDeploymentFileForCreate", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "GenerateClusterApiSpecForCreate", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].([]byte)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
-// GenerateDeploymentFileForCreate indicates an expected call of GenerateDeploymentFileForCreate.
-func (mr *MockProviderMockRecorder) GenerateDeploymentFileForCreate(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+// GenerateClusterApiSpecForCreate indicates an expected call of GenerateClusterApiSpecForCreate.
+func (mr *MockProviderMockRecorder) GenerateClusterApiSpecForCreate(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateDeploymentFileForCreate", reflect.TypeOf((*MockProvider)(nil).GenerateDeploymentFileForCreate), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateClusterApiSpecForCreate", reflect.TypeOf((*MockProvider)(nil).GenerateClusterApiSpecForCreate), arg0, arg1, arg2)
 }
 
-// GenerateDeploymentFileForUpgrade mocks base method.
-func (m *MockProvider) GenerateDeploymentFileForUpgrade(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec, arg4 string) (string, error) {
+// GenerateClusterApiSpecForUpgrade mocks base method.
+func (m *MockProvider) GenerateClusterApiSpecForUpgrade(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec) ([]byte, []byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateDeploymentFileForUpgrade", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "GenerateClusterApiSpecForUpgrade", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].([]byte)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
-// GenerateDeploymentFileForUpgrade indicates an expected call of GenerateDeploymentFileForUpgrade.
-func (mr *MockProviderMockRecorder) GenerateDeploymentFileForUpgrade(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+// GenerateClusterApiSpecForUpgrade indicates an expected call of GenerateClusterApiSpecForUpgrade.
+func (mr *MockProviderMockRecorder) GenerateClusterApiSpecForUpgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateDeploymentFileForUpgrade", reflect.TypeOf((*MockProvider)(nil).GenerateDeploymentFileForUpgrade), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateClusterApiSpecForUpgrade", reflect.TypeOf((*MockProvider)(nil).GenerateClusterApiSpecForUpgrade), arg0, arg1, arg2, arg3)
 }
 
 // GenerateMHC mocks base method.
