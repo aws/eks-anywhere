@@ -19,7 +19,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
@@ -33,8 +32,11 @@ const (
 	githubTokenEnvVar = "GITHUB_TOKEN"
 )
 
-//go:embed config/template.yaml
-var defaultClusterConfig string
+//go:embed config/template-cp.yaml
+var defaultClusterApiConfigCP string
+
+//go:embed config/template-md.yaml
+var defaultClusterApiConfigMD string
 
 var eksaDockerResourceType = fmt.Sprintf("dockerdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 
@@ -44,7 +46,6 @@ type ProviderClient interface {
 
 type provider struct {
 	docker                ProviderClient
-	writer                filewriter.FileWriter
 	datacenterConfig      *v1alpha1.DockerDatacenterConfig
 	providerKubectlClient ProviderKubectlClient
 	templateBuilder       *DockerTemplateBuilder
@@ -58,10 +59,9 @@ type ProviderKubectlClient interface {
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 }
 
-func NewProvider(providerConfig *v1alpha1.DockerDatacenterConfig, docker ProviderClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc) providers.Provider {
+func NewProvider(providerConfig *v1alpha1.DockerDatacenterConfig, docker ProviderClient, providerKubectlClient ProviderKubectlClient, now types.NowFunc) providers.Provider {
 	return &provider{
 		docker:                docker,
-		writer:                writer,
 		datacenterConfig:      providerConfig,
 		providerKubectlClient: providerKubectlClient,
 		templateBuilder: &DockerTemplateBuilder{
@@ -136,13 +136,13 @@ func (d *DockerTemplateBuilder) EtcdMachineTemplateName(clusterName string) stri
 	return fmt.Sprintf("%s-etcd-template-%d", clusterName, t)
 }
 
-func (d *DockerTemplateBuilder) GenerateDeploymentFile(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	values := BuildTemplateMap(clusterSpec)
+func (d *DockerTemplateBuilder) GenerateClusterApiSpecCP(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+	values := BuildTemplateMapCP(clusterSpec)
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
 
-	bytes, err := templater.Execute(defaultClusterConfig, values)
+	bytes, err := templater.Execute(defaultClusterApiConfigCP, values)
 	if err != nil {
 		return nil, err
 	}
@@ -150,12 +150,25 @@ func (d *DockerTemplateBuilder) GenerateDeploymentFile(clusterSpec *cluster.Spec
 	return bytes, nil
 }
 
-func BuildTemplateMap(clusterSpec *cluster.Spec) map[string]interface{} {
+func (d *DockerTemplateBuilder) GenerateClusterApiSpecMD(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+	values := BuildTemplateMapMD(clusterSpec)
+	for _, buildOption := range buildOptions {
+		buildOption(values)
+	}
+
+	bytes, err := templater.Execute(defaultClusterApiConfigMD, values)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
+}
+
+func BuildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 
 	values := map[string]interface{}{
 		"clusterName":            clusterSpec.Name,
-		"worker_replicas":        strconv.Itoa(clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count),
 		"control_plane_replicas": strconv.Itoa(clusterSpec.Spec.ControlPlaneConfiguration.Count),
 		"kubernetesRepository":   bundle.KubeDistro.Kubernetes.Repository,
 		"kubernetesVersion":      bundle.KubeDistro.Kubernetes.Tag,
@@ -177,6 +190,19 @@ func BuildTemplateMap(clusterSpec *cluster.Spec) map[string]interface{} {
 	return values
 }
 
+func BuildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
+	bundle := clusterSpec.VersionsBundle
+
+	values := map[string]interface{}{
+		"clusterName":         clusterSpec.Name,
+		"worker_replicas":     strconv.Itoa(clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count),
+		"kubernetesVersion":   bundle.KubeDistro.Kubernetes.Tag,
+		"kindNodeImage":       bundle.EksD.KindNode.VersionedImage(),
+		"eksaSystemNamespace": constants.EksaSystemNamespace,
+	}
+	return values
+}
+
 func NeedsNewControlPlaneTemplate(oldC, newC *v1alpha1.Cluster) bool {
 	return oldC.Spec.KubernetesVersion != newC.Spec.KubernetesVersion
 }
@@ -189,21 +215,21 @@ func NeedsNewEtcdTemplate(oldC, newC *v1alpha1.Cluster) bool {
 	return oldC.Spec.KubernetesVersion != newC.Spec.KubernetesVersion
 }
 
-func (p *provider) generateTemplateValuesForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, error) {
+func (p *provider) generateClusterApiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
 	clusterName := clusterSpec.ObjectMeta.Name
 	var controlPlaneTemplateName, workloadTemplateName, etcdTemplateName string
 	var needsNewEtcdTemplate bool
 
 	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(c, clusterSpec.Cluster)
 	if !needsNewControlPlaneTemplate {
 		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		controlPlaneTemplateName = cp.Spec.InfrastructureTemplate.Name
 	} else {
@@ -214,7 +240,7 @@ func (p *provider) generateTemplateValuesForUpgrade(ctx context.Context, bootstr
 	if !needsNewWorkloadTemplate {
 		md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		workloadTemplateName = md.Spec.Template.Spec.InfrastructureRef.Name
 	} else {
@@ -227,7 +253,7 @@ func (p *provider) generateTemplateValuesForUpgrade(ctx context.Context, bootstr
 		if !needsNewEtcdTemplate {
 			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			etcdTemplateName = etcdadmCluster.Spec.InfrastructureTemplate.Name
 		} else {
@@ -240,61 +266,72 @@ func (p *provider) generateTemplateValuesForUpgrade(ctx context.Context, bootstr
 				executables.WithCluster(bootstrapCluster),
 				executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			etcdTemplateName = p.templateBuilder.EtcdMachineTemplateName(clusterName)
 		}
 	}
 
-	valuesOpt := func(values map[string]interface{}) {
+	cpOpt := func(values map[string]interface{}) {
 		values["needsNewControlPlaneTemplate"] = needsNewControlPlaneTemplate
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
-		values["needsNewWorkloadTemplate"] = needsNewWorkloadTemplate
-		values["workloadTemplateName"] = workloadTemplateName
 		values["needsNewEtcdTemplate"] = needsNewEtcdTemplate
 		values["etcdTemplateName"] = etcdTemplateName
 	}
-	return p.templateBuilder.GenerateDeploymentFile(clusterSpec, valuesOpt)
+	cp, err := p.templateBuilder.GenerateClusterApiSpecCP(clusterSpec, cpOpt)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	mdOpt := func(values map[string]interface{}) {
+		values["needsNewWorkloadTemplate"] = needsNewWorkloadTemplate
+		values["workloadTemplateName"] = workloadTemplateName
+	}
+	md, err := p.templateBuilder.GenerateClusterApiSpecMD(clusterSpec, mdOpt)
+	if err != nil {
+		return nil, nil, err
+	}
+	return cp, md, nil
 }
 
-func (p *provider) generateTemplateValuesForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, error) {
+func (p *provider) generateClusterApiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
 	clusterName := clusterSpec.ObjectMeta.Name
 
-	valuesOpt := func(values map[string]interface{}) {
+	cpOpt := func(values map[string]interface{}) {
 		values["needsNewControlPlaneTemplate"] = true
-		values["needsNewWorkloadTemplate"] = true
 		values["needsNewEtcdTemplate"] = clusterSpec.Spec.ExternalEtcdConfiguration != nil
 		values["controlPlaneTemplateName"] = p.templateBuilder.CPMachineTemplateName(clusterName)
-		values["workloadTemplateName"] = p.templateBuilder.WorkerMachineTemplateName(clusterName)
 		values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
 	}
-	return p.templateBuilder.GenerateDeploymentFile(clusterSpec, valuesOpt)
+	cp, err := p.templateBuilder.GenerateClusterApiSpecCP(clusterSpec, cpOpt)
+	if err != nil {
+		return nil, nil, err
+	}
+	mdOpt := func(values map[string]interface{}) {
+		values["needsNewWorkloadTemplate"] = true
+		values["workloadTemplateName"] = p.templateBuilder.WorkerMachineTemplateName(clusterName)
+	}
+	md, err := p.templateBuilder.GenerateClusterApiSpecMD(clusterSpec, mdOpt)
+	if err != nil {
+		return nil, nil, err
+	}
+	return cp, md, nil
 }
 
-func (p *provider) generateDeploymentFile(ctx context.Context, fileName string, content []byte) (string, error) {
-	t := templater.New(p.writer)
-	writtenFile, err := t.WriteBytesToFile(content, fileName)
+func (p *provider) GenerateClusterApiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+	cp, md, err := p.generateClusterApiSpecForCreate(ctx, cluster, clusterSpec)
 	if err != nil {
-		return "", fmt.Errorf("error creating cluster config file: %v", err)
+		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
 	}
-
-	return writtenFile, nil
+	return cp, md, nil
 }
 
-func (p *provider) GenerateDeploymentFileForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, fileName string) (string, error) {
-	content, err := p.generateTemplateValuesForCreate(ctx, cluster, clusterSpec)
+func (p *provider) GenerateClusterApiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+	cp, md, err := p.generateClusterApiSpecForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec)
 	if err != nil {
-		return "", fmt.Errorf("error generating template values for cluster config file: %v", err)
+		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
 	}
-	return p.generateDeploymentFile(ctx, fileName, content)
-}
-
-func (p *provider) GenerateDeploymentFileForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, fileName string) (string, error) {
-	content, err := p.generateTemplateValuesForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec)
-	if err != nil {
-		return "", fmt.Errorf("error generating template values for cluster config file: %v", err)
-	}
-	return p.generateDeploymentFile(ctx, fileName, content)
+	return cp, md, nil
 }
 
 func (p *provider) GenerateStorageClass() []byte {
