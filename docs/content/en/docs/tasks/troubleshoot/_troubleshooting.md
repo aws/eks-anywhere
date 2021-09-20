@@ -120,6 +120,7 @@ To restart Docker on Ubuntu `sudo systemctl restart docker`.
 Issues detected with selected template. Details: - -1:-1:VALUE_ILLEGAL: No supported hardware versions among [vmx-15]; supported: [vmx-04, vmx-07, vmx-08, vmx-09, vmx-10, vmx-11, vmx-12, vmx-13].
 ```
 Our upstream dependency on CAPV makes it a requirement that you use vSphere 6.7 update 3 or newer.
+Make sure your ESXi hosts are also up to date.
 
 ### Waiting for cert-manager to be available... Error: timed out waiting for the condition
 ```
