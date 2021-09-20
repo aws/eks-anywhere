@@ -1,7 +1,6 @@
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
-  creationTimestamp: null
   name: fluxAddonTestCluster
 spec:
   clusterNetwork:
@@ -13,7 +12,6 @@ spec:
     kind: GitOpsConfig
     name: test-gitops
   kubernetesVersion: "1.19"
-status: {}
 
 ---
 kind: VSphereDatacenterConfig
@@ -47,7 +45,6 @@ status: {}
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: GitOpsConfig
 metadata:
-  creationTimestamp: null
   name: test-gitops
   namespace: default
 spec:
@@ -59,6 +56,5 @@ spec:
       owner: mFowler
       personal: true
       repository: testRepo
-status: {}
 
 ---

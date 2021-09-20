@@ -166,7 +166,7 @@ func (r *ReleaseConfig) renameArtifacts(sourceClients *SourceClients, artifacts 
 					}
 
 					updatedManifestFileContents := compiledRegex.ReplaceAllString(string(manifestFileContents), imageTagOverride.ReleaseUri)
-					err = ioutil.WriteFile(newArtifactFile, []byte(updatedManifestFileContents), 0644)
+					err = ioutil.WriteFile(newArtifactFile, []byte(updatedManifestFileContents), 0o644)
 					if err != nil {
 						return errors.Cause(err)
 					}
