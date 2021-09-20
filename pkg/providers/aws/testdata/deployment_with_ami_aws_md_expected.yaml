@@ -1,0 +1,53 @@
+apiVersion: cluster.x-k8s.io/v1alpha3
+kind: MachineDeployment
+metadata:
+  name: test-cluster-md-0
+  namespace: default
+spec:
+  clusterName: test-cluster
+  replicas: 3
+  selector:
+    matchLabels: null
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+          kind: KubeadmConfigTemplate
+          name: test-cluster-md-0
+      clusterName: test-cluster
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+        kind: AWSMachineTemplate
+        name: test-cluster-worker-node-template-1234567890000
+      version: v1.19.6-eks-1-19-2
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: AWSMachineTemplate
+metadata:
+  name: test-cluster-worker-node-template-1234567890000
+  namespace: default
+spec:
+  template:
+    spec:
+      iamInstanceProfile: test-cluster-nodes.cluster-api-provider-aws.sigs.k8s.io
+      instanceType: t3.medium
+      sshKeyName: default
+      ami:
+        id: anotherAMIID
+      rootVolume:
+        size: 32
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+kind: KubeadmConfigTemplate
+metadata:
+  name: test-cluster-md-0
+  namespace: default
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            cloud-provider: aws
+          name: '{{ ds.meta_data.local_hostname }}'

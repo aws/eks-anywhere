@@ -30,8 +30,11 @@ const (
 	defaultAWSRegion = "us-west-2"
 )
 
-//go:embed config/template.yaml
-var defaultClusterConfig string
+//go:embed config/template-cp.yaml
+var defaultClusterApiConfigCP string
+
+//go:embed config/template-md.yaml
+var defaultClusterApiConfigMD string
 
 var requiredEnvVars = []string{
 	"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION",
@@ -168,13 +171,13 @@ func (a *AwsTemplateBuilder) CPMachineTemplateName(clusterName string) string {
 	return fmt.Sprintf("%s-control-plane-template-%d", clusterName, t)
 }
 
-func (a *AwsTemplateBuilder) GenerateDeploymentFile(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	values := BuildTemplateMap(clusterSpec, *a.awsSpec)
+func (a *AwsTemplateBuilder) GenerateClusterApiSpecCP(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+	values := BuildTemplateMapCP(clusterSpec, *a.awsSpec)
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
 
-	bytes, err := templater.Execute(defaultClusterConfig, values)
+	bytes, err := templater.Execute(defaultClusterApiConfigCP, values)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +185,21 @@ func (a *AwsTemplateBuilder) GenerateDeploymentFile(clusterSpec *cluster.Spec, b
 	return bytes, nil
 }
 
-func BuildTemplateMap(clusterSpec *cluster.Spec, awsSpec v1alpha1.AWSDatacenterConfigSpec) map[string]interface{} {
+func (a *AwsTemplateBuilder) GenerateClusterApiSpecMD(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+	values := BuildTemplateMapMD(clusterSpec, *a.awsSpec)
+	for _, buildOption := range buildOptions {
+		buildOption(values)
+	}
+
+	bytes, err := templater.Execute(defaultClusterApiConfigMD, values)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
+}
+
+func BuildTemplateMapCP(clusterSpec *cluster.Spec, awsSpec v1alpha1.AWSDatacenterConfigSpec) map[string]interface{} {
 	amiID := awsSpec.AmiID
 	if amiID == "" {
 		amiID = defaultAmiID
@@ -204,10 +221,26 @@ func BuildTemplateMap(clusterSpec *cluster.Spec, awsSpec v1alpha1.AWSDatacenterC
 		"corednsRepository":    bundle.KubeDistro.CoreDNS.Repository,
 		"corednsVersion":       bundle.KubeDistro.CoreDNS.Tag,
 		"controlPlaneReplicas": strconv.Itoa(clusterSpec.Spec.ControlPlaneConfiguration.Count),
-		"workerNodeReplicas":   strconv.Itoa(clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count),
 		"region":               region,
 		"amiID":                amiID,
 		"extraArgs":            clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).ToPartialYaml(),
+	}
+	return values
+}
+
+func BuildTemplateMapMD(clusterSpec *cluster.Spec, awsSpec v1alpha1.AWSDatacenterConfigSpec) map[string]interface{} {
+	amiID := awsSpec.AmiID
+	if amiID == "" {
+		amiID = defaultAmiID
+	}
+
+	bundle := clusterSpec.VersionsBundle
+
+	values := map[string]interface{}{
+		"clusterName":        clusterSpec.ObjectMeta.Name,
+		"kubernetesVersion":  bundle.KubeDistro.Kubernetes.Tag,
+		"workerNodeReplicas": strconv.Itoa(clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count),
+		"amiID":              amiID,
 	}
 	return values
 }
@@ -232,25 +265,25 @@ func NeedsNewWorkloadTemplate(oldC, newC *v1alpha1.Cluster, oldAc, newAc *v1alph
 	return false
 }
 
-func (p *provider) generateTemplateValuesForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, error) {
+func (p *provider) generateClusterApiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
 	clusterName := clusterSpec.ObjectMeta.Name
 	var controlPlaneTemplateName string
 	var workloadTemplateName string
 
 	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	ac, err := p.providerKubectlClient.GetEksaAWSDatacenterConfig(ctx, p.datacenterConfig.Name, workloadCluster.KubeconfigFile, clusterSpec.Namespace)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(c, clusterSpec.Cluster, ac, p.datacenterConfig)
 	if !needsNewControlPlaneTemplate {
 		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, executables.WithCluster(bootstrapCluster))
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		controlPlaneTemplateName = cp.Spec.InfrastructureTemplate.Name
 	} else {
@@ -261,58 +294,69 @@ func (p *provider) generateTemplateValuesForUpgrade(ctx context.Context, bootstr
 	if !needsNewWorkloadTemplate {
 		md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, executables.WithCluster(bootstrapCluster))
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		workloadTemplateName = md.Spec.Template.Spec.InfrastructureRef.Name
 	} else {
 		workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName)
 	}
 
-	valuesOpt := func(values map[string]interface{}) {
+	cpOpt := func(values map[string]interface{}) {
 		values["needsNewControlPlaneTemplate"] = needsNewControlPlaneTemplate
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
+	}
+	cp, err := p.templateBuilder.GenerateClusterApiSpecCP(clusterSpec, cpOpt)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	mdOpt := func(values map[string]interface{}) {
 		values["needsNewWorkloadTemplate"] = needsNewWorkloadTemplate
 		values["workloadTemplateName"] = workloadTemplateName
 	}
-	return p.templateBuilder.GenerateDeploymentFile(clusterSpec, valuesOpt)
+	md, err := p.templateBuilder.GenerateClusterApiSpecMD(clusterSpec, mdOpt)
+	if err != nil {
+		return nil, nil, err
+	}
+	return cp, md, nil
 }
 
-func (p *provider) generateTemplateValuesForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, error) {
+func (p *provider) generateClusterApiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
 	clusterName := clusterSpec.ObjectMeta.Name
 
-	valuesOpt := func(values map[string]interface{}) {
+	cpOpt := func(values map[string]interface{}) {
 		values["needsNewControlPlaneTemplate"] = true
-		values["needsNewWorkloadTemplate"] = true
 		values["controlPlaneTemplateName"] = p.templateBuilder.CPMachineTemplateName(clusterName)
+	}
+	cp, err := p.templateBuilder.GenerateClusterApiSpecCP(clusterSpec, cpOpt)
+	if err != nil {
+		return nil, nil, err
+	}
+	mdOpt := func(values map[string]interface{}) {
+		values["needsNewWorkloadTemplate"] = true
 		values["workloadTemplateName"] = p.templateBuilder.WorkerMachineTemplateName(clusterName)
 	}
-	return p.templateBuilder.GenerateDeploymentFile(clusterSpec, valuesOpt)
+	md, err := p.templateBuilder.GenerateClusterApiSpecMD(clusterSpec, mdOpt)
+	if err != nil {
+		return nil, nil, err
+	}
+	return cp, md, nil
 }
 
-func (p *provider) generateDeploymentFile(ctx context.Context, fileName string, content []byte) (string, error) {
-	t := templater.New(p.writer)
-	writtenFile, err := t.WriteBytesToFile(content, fileName)
+func (p *provider) GenerateClusterApiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+	cp, md, err := p.generateClusterApiSpecForCreate(ctx, cluster, clusterSpec)
 	if err != nil {
-		return "", fmt.Errorf("error creating cluster config file: %v", err)
+		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
 	}
-
-	return writtenFile, nil
+	return cp, md, nil
 }
 
-func (p *provider) GenerateDeploymentFileForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, fileName string) (string, error) {
-	content, err := p.generateTemplateValuesForCreate(ctx, cluster, clusterSpec)
+func (p *provider) GenerateClusterApiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+	cp, md, err := p.generateClusterApiSpecForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec)
 	if err != nil {
-		return "", fmt.Errorf("error generating template values for cluster config file: %v", err)
+		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
 	}
-	return p.generateDeploymentFile(ctx, fileName, content)
-}
-
-func (p *provider) GenerateDeploymentFileForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, fileName string) (string, error) {
-	content, err := p.generateTemplateValuesForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec)
-	if err != nil {
-		return "", fmt.Errorf("error generating template values for cluster config file: %v", err)
-	}
-	return p.generateDeploymentFile(ctx, fileName, content)
+	return cp, md, nil
 }
 
 func (p *provider) GenerateStorageClass() []byte {
