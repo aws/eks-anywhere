@@ -147,7 +147,7 @@ func (e *EksaDiagnosticBundle) WriteBundleConfig() error {
 	}
 	timestamp := time.Now().Format(time.RFC3339)
 	filename := fmt.Sprintf(generatedBundleNameFormat, e.clusterSpec.Name, timestamp)
-	e.bundlePath, err = e.writer.Write(filename, bundleYaml)
+	e.bundlePath, err = e.writer.Write(filename, bundleYaml, filewriter.PersistentFile)
 	logger.V(3).Info("bundle config written", "path", e.bundlePath)
 	if err != nil {
 		return err
