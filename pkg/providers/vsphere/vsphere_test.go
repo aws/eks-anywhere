@@ -246,26 +246,18 @@ func TestNewProvider(t *testing.T) {
 	}
 }
 
-func TestProviderGenerateDeploymentFileUpgradeCmdUpdateMachineTemplate(t *testing.T) {
+func TestProviderGenerateClusterApiSpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 	tests := []struct {
-		testName           string
-		clusterconfigFile  string
-		wantDeploymentFile string
+		testName          string
+		clusterconfigFile string
+		wantCPFile        string
+		wantMDFile        string
 	}{
 		{
-			testName:           "minimal",
-			clusterconfigFile:  "cluster_minimal.yaml",
-			wantDeploymentFile: "testdata/expected_results_minimal.yaml",
-		},
-		{
-			testName:           "with minimal oidc",
-			clusterconfigFile:  "cluster_minimal_oidc.yaml",
-			wantDeploymentFile: "testdata/expected_results_minimal_oidc.yaml",
-		},
-		{
-			testName:           "with full oidc",
-			clusterconfigFile:  "cluster_full_oidc.yaml",
-			wantDeploymentFile: "testdata/expected_results_full_oidc.yaml",
+			testName:          "minimal",
+			clusterconfigFile: "cluster_minimal.yaml",
+			wantCPFile:        "testdata/expected_results_minimal_cp.yaml",
+			wantMDFile:        "testdata/expected_results_minimal_md.yaml",
 		},
 	}
 	for _, tt := range tests {
@@ -307,29 +299,95 @@ func TestProviderGenerateDeploymentFileUpgradeCmdUpdateMachineTemplate(t *testin
 				t.Fatalf("failed to setup and validate: %v", err)
 			}
 
-			fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
-			writtenFile, err := provider.GenerateDeploymentFileForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, fileName)
+			cp, md, err := provider.GenerateClusterApiSpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec)
 			if err != nil {
-				t.Fatalf("failed to generate deployment file: %v", err)
+				t.Fatalf("failed to generate cluster api spec contents: %v", err)
 			}
-			if fileName == "" {
-				t.Fatalf("empty fileName returned by GenerateDeploymentFile")
-			}
-			test.AssertFilesEquals(t, writtenFile, tt.wantDeploymentFile)
+
+			test.AssertContentToFile(t, string(cp), tt.wantCPFile)
+			test.AssertContentToFile(t, string(md), tt.wantMDFile)
 		})
 	}
 }
 
-func TestProviderGenerateDeploymentFileUpgradeCmdUpdateMachineTemplateExternalEtcd(t *testing.T) {
+func TestProviderGenerateClusterApiSpecForUpgradeOIDC(t *testing.T) {
 	tests := []struct {
-		testName           string
-		clusterconfigFile  string
-		wantDeploymentFile string
+		testName          string
+		clusterconfigFile string
+		wantCPFile        string
 	}{
 		{
-			testName:           "main",
-			clusterconfigFile:  testClusterConfigMainFilename,
-			wantDeploymentFile: "testdata/expected_results_main.yaml",
+			testName:          "with minimal oidc",
+			clusterconfigFile: "cluster_minimal_oidc.yaml",
+			wantCPFile:        "testdata/expected_results_minimal_oidc_cp.yaml",
+		},
+		{
+			testName:          "with full oidc",
+			clusterconfigFile: "cluster_full_oidc.yaml",
+			wantCPFile:        "testdata/expected_results_full_oidc_cp.yaml",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			var tctx testContext
+			tctx.SaveContext()
+			defer tctx.RestoreContext()
+			ctx := context.Background()
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+			cluster := &types.Cluster{
+				Name: "test",
+			}
+			bootstrapCluster := &types.Cluster{
+				Name: "bootstrap-test",
+			}
+			clusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
+			vsphereDatacenter := &v1alpha1.VSphereDatacenterConfig{
+				Spec: v1alpha1.VSphereDatacenterConfigSpec{},
+			}
+			vsphereMachineConfig := &v1alpha1.VSphereMachineConfig{
+				Spec: v1alpha1.VSphereMachineConfigSpec{},
+			}
+
+			kubectl.EXPECT().GetEksaCluster(ctx, cluster).Return(clusterSpec.Cluster, nil)
+			kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereDatacenter, nil)
+			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereMachineConfig, nil)
+			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereMachineConfig, nil)
+			datacenterConfig := givenDatacenterConfig(t, tt.clusterconfigFile)
+			machineConfigs := givenMachineConfigs(t, tt.clusterconfigFile)
+			_, writer := test.NewWriter(t)
+			provider := NewProviderCustomNet(datacenterConfig, machineConfigs, clusterSpec.Cluster, NewDummyProviderGovcClient(), kubectl, writer, &DummyNetClient{}, test.FakeNow, false)
+			if provider == nil {
+				t.Fatalf("provider object is nil")
+			}
+
+			err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+			if err != nil {
+				t.Fatalf("failed to setup and validate: %v", err)
+			}
+
+			cp, _, err := provider.GenerateClusterApiSpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec)
+			if err != nil {
+				t.Fatalf("failed to generate cluster api spec contents: %v", err)
+			}
+
+			test.AssertContentToFile(t, string(cp), tt.wantCPFile)
+		})
+	}
+}
+
+func TestProviderGenerateClusterApiSpecForUpgradeUpdateMachineTemplateExternalEtcd(t *testing.T) {
+	tests := []struct {
+		testName          string
+		clusterconfigFile string
+		wantCPFile        string
+		wantMDFile        string
+	}{
+		{
+			testName:          "main",
+			clusterconfigFile: testClusterConfigMainFilename,
+			wantCPFile:        "testdata/expected_results_main_cp.yaml",
+			wantMDFile:        "testdata/expected_results_main_md.yaml",
 		},
 	}
 	for _, tt := range tests {
@@ -373,71 +431,18 @@ func TestProviderGenerateDeploymentFileUpgradeCmdUpdateMachineTemplateExternalEt
 				t.Fatalf("failed to setup and validate: %v", err)
 			}
 
-			fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
-			writtenFile, err := provider.GenerateDeploymentFileForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, fileName)
+			cp, md, err := provider.GenerateClusterApiSpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec)
 			if err != nil {
-				t.Fatalf("failed to generate deployment file: %v", err)
+				t.Fatalf("failed to generate cluster api spec contents: %v", err)
 			}
-			if fileName == "" {
-				t.Fatalf("empty fileName returned by GenerateDeploymentFile")
-			}
-			test.AssertFilesEquals(t, writtenFile, tt.wantDeploymentFile)
+
+			test.AssertContentToFile(t, string(cp), tt.wantCPFile)
+			test.AssertContentToFile(t, string(md), tt.wantMDFile)
 		})
 	}
 }
 
-func TestProviderGenerateDeploymentFileCreateCmdSystemdCgroupForK8sVersion(t *testing.T) {
-	tests := []struct {
-		testName           string
-		clusterconfigFile  string
-		wantDeploymentFile string
-	}{
-		{
-			testName:           "main",
-			clusterconfigFile:  "cluster_main_121.yaml",
-			wantDeploymentFile: "testdata/expected_results_121.yaml",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.testName, func(t *testing.T) {
-			mockCtrl := gomock.NewController(t)
-			var tctx testContext
-			tctx.SaveContext()
-			defer tctx.RestoreContext()
-			ctx := context.Background()
-			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-			cluster := &types.Cluster{
-				Name: "test",
-			}
-			clusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
-
-			datacenterConfig := givenDatacenterConfig(t, tt.clusterconfigFile)
-			machineConfigs := givenMachineConfigs(t, tt.clusterconfigFile)
-			_, writer := test.NewWriter(t)
-			provider := NewProviderCustomNet(datacenterConfig, machineConfigs, clusterSpec.Cluster, NewDummyProviderGovcClient(), kubectl, writer, &DummyNetClient{}, test.FakeNow, false)
-			if provider == nil {
-				t.Fatalf("provider object is nil")
-			}
-
-			err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-			if err != nil {
-				t.Fatalf("failed to setup and validate: %v", err)
-			}
-
-			fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
-			writtenFile, err := provider.GenerateDeploymentFileForCreate(context.Background(), cluster, clusterSpec, fileName)
-			if err != nil {
-				t.Fatalf("failed to generate deployment file: %v", err)
-			}
-			if fileName == "" {
-				t.Fatalf("empty fileName returned by GenerateDeploymentFile")
-			}
-			test.AssertFilesEquals(t, writtenFile, tt.wantDeploymentFile)
-		})
-	}
-}
-
-func TestProviderGenerateDeploymentFileUpgradeCmdNotUpdateMachineTemplate(t *testing.T) {
+func TestProviderGenerateClusterApiSpecForUpgradeNotUpdateMachineTemplate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	var tctx testContext
 	tctx.SaveContext()
@@ -452,14 +457,14 @@ func TestProviderGenerateDeploymentFileUpgradeCmdNotUpdateMachineTemplate(t *tes
 	}
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 
-	cp := &kubeadmnv1alpha3.KubeadmControlPlane{
+	oldCP := &kubeadmnv1alpha3.KubeadmControlPlane{
 		Spec: kubeadmnv1alpha3.KubeadmControlPlaneSpec{
 			InfrastructureTemplate: v1.ObjectReference{
 				Name: "test-control-plane-template-original",
 			},
 		},
 	}
-	md := &v1alpha3.MachineDeployment{
+	oldMD := &v1alpha3.MachineDeployment{
 		Spec: v1alpha3.MachineDeploymentSpec{
 			Template: v1alpha3.MachineTemplateSpec{
 				Spec: v1alpha3.MachineSpec{
@@ -499,21 +504,19 @@ func TestProviderGenerateDeploymentFileUpgradeCmdNotUpdateMachineTemplate(t *tes
 	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, controlPlaneMachineConfigName, cluster.KubeconfigFile, clusterSpec.Namespace).Return(machineConfigs[controlPlaneMachineConfigName], nil)
 	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, workerNodeMachineConfigName, cluster.KubeconfigFile, clusterSpec.Namespace).Return(machineConfigs[workerNodeMachineConfigName], nil)
 	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, etcdMachineConfigName, cluster.KubeconfigFile, clusterSpec.Namespace).Return(machineConfigs[etcdMachineConfigName], nil)
-	kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(cp, nil)
-	kubectl.EXPECT().GetMachineDeployment(ctx, cluster, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(md, nil)
+	kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldCP, nil)
+	kubectl.EXPECT().GetMachineDeployment(ctx, cluster, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldMD, nil)
 	kubectl.EXPECT().GetEtcdadmCluster(ctx, cluster, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(etcdadmCluster, nil)
-	fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
-	writtenFile, err := provider.GenerateDeploymentFileForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, fileName)
+	cp, md, err := provider.GenerateClusterApiSpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec)
 	if err != nil {
-		t.Fatalf("failed to generate deployment file: %v", err)
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
-	if fileName == "" {
-		t.Fatalf("empty fileName returned by GenerateDeploymentFile")
-	}
-	test.AssertFilesEquals(t, writtenFile, "testdata/expected_results_main_no_machinetemplate_update.yaml")
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_no_machinetemplate_update_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_no_machinetemplate_update_md.yaml")
 }
 
-func TestProviderGenerateDeploymentFileCreateCmd(t *testing.T) {
+func TestProviderGenerateClusterApiSpecForCreate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	var tctx testContext
 	tctx.SaveContext()
@@ -538,15 +541,12 @@ func TestProviderGenerateDeploymentFileCreateCmd(t *testing.T) {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
 
-	fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
-	writtenFile, err := provider.GenerateDeploymentFileForCreate(context.Background(), cluster, clusterSpec, fileName)
+	cp, md, err := provider.GenerateClusterApiSpecForCreate(context.Background(), cluster, clusterSpec)
 	if err != nil {
-		t.Fatalf("failed to generate deployment file: %v", err)
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
-	if fileName == "" {
-		t.Fatalf("empty fileName returned by GenerateDeploymentFile")
-	}
-	test.AssertFilesEquals(t, writtenFile, "testdata/expected_results_main.yaml")
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md.yaml")
 }
 
 func TestProviderGenerateStorageClass(t *testing.T) {
@@ -558,7 +558,7 @@ func TestProviderGenerateStorageClass(t *testing.T) {
 	}
 }
 
-func TestProviderGenerateDeploymentFileForCreateWithBottlerocketAndExternalEtcd(t *testing.T) {
+func TestProviderGenerateClusterApiSpecForCreateWithBottlerocketAndExternalEtcd(t *testing.T) {
 	clusterSpecManifest := "cluster_bottlerocket_external_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
@@ -577,16 +577,13 @@ func TestProviderGenerateDeploymentFileForCreateWithBottlerocketAndExternalEtcd(
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
 
-	fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
-	writtenFile, err := provider.GenerateDeploymentFileForCreate(context.Background(), cluster, clusterSpec, fileName)
+	cp, md, err := provider.GenerateClusterApiSpecForCreate(context.Background(), cluster, clusterSpec)
 	if err != nil {
-		t.Fatalf("failed to generate deployment file: %v", err)
-	}
-	if fileName == "" {
-		t.Fatalf("empty fileName returned by GenerateDeploymentFile")
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 
-	test.AssertFilesEquals(t, writtenFile, "testdata/expected_results_bottlerocket_external_etcd.yaml")
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_bottlerocket_external_etcd_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_bottlerocket_external_etcd_md.yaml")
 }
 
 func TestProviderGenerateDeploymentFileWithMirrorConfig(t *testing.T) {
@@ -608,16 +605,13 @@ func TestProviderGenerateDeploymentFileWithMirrorConfig(t *testing.T) {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
 
-	fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
-	writtenFile, err := provider.GenerateDeploymentFileForCreate(context.Background(), cluster, clusterSpec, fileName)
+	cp, md, err := provider.GenerateClusterApiSpecForCreate(context.Background(), cluster, clusterSpec)
 	if err != nil {
-		t.Fatalf("failed to generate deployment file: %v", err)
-	}
-	if fileName == "" {
-		t.Fatalf("empty fileName returned by GenerateDeploymentFile")
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 
-	test.AssertFilesEquals(t, writtenFile, "testdata/expected_results_mirror_config.yaml")
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_mirror_config_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_mirror_config_md.yaml")
 }
 
 func TestUpdateKubeConfig(t *testing.T) {
