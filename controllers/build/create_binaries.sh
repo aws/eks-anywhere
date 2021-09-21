@@ -26,10 +26,10 @@ IMAGE_TAG="${4?Specify seventh argument - ecr image tag}"
 BIN_ROOT="_output/bin"
 BIN_PATH=$BIN_ROOT/$BINARY_NAME
 
-MAKE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
-source "${MAKE_ROOT}/../scripts/common.sh"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+source "$REPO_ROOT/scripts/common.sh"
 
-KUSTOMIZE_BIN="${MAKE_ROOT}/_output/kustomize-bin"
+KUSTOMIZE_BIN="${REPO_ROOT}/_output/kustomize-bin"
 
 function build::install::kustomize(){
   curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
@@ -41,7 +41,7 @@ function build::eks-anywhere-cluster-controller::create_binaries(){
   platform=${1}
   OS="$(cut -d '/' -f1 <<< ${platform})"
   ARCH="$(cut -d '/' -f2 <<< ${platform})"
-  CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH make build-cluster-controller
+  CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH make build-cluster-controller-binaries
   mkdir -p ../${BIN_PATH}/${OS}-${ARCH}/
   mv bin/* ../${BIN_PATH}/${OS}-${ARCH}/
 }
@@ -68,7 +68,7 @@ function build::eks-anywhere-cluster-controller::manifests(){
 }
 
 function build::eks-anywhere-cluster-controller::binaries(){
-  cd "${MAKE_ROOT}/.."
+  cd $REPO_ROOT
   mkdir -p $BIN_PATH
   mkdir -p $KUSTOMIZE_BIN
   build::install::kustomize
@@ -76,7 +76,7 @@ function build::eks-anywhere-cluster-controller::binaries(){
   go mod vendor
   build::eks-anywhere-cluster-controller::create_binaries "linux/amd64"
   build::eks-anywhere-cluster-controller::manifests
-  build::gather_licenses $MAKE_ROOT/_output "./controllers"
+  build::gather_licenses $REPO_ROOT/_output "./controllers"
 }
 
 build::eks-anywhere-cluster-controller::binaries

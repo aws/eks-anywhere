@@ -26,8 +26,8 @@ BIN_ROOT="_output/bin"
 LICENSES_PATH="_output/LICENSES"
 MANIFESTS_PATH="_output/manifests"
 
-MAKE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
-source "${MAKE_ROOT}/../scripts/common.sh"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
+source "$REPO_ROOT/scripts/common.sh"
 
 function build::eks-anywhere-cluster-controller::create_tarball() {
   platform=${1}
