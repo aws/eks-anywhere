@@ -28,7 +28,7 @@ func (r *ReleaseConfig) GetDiagnosticCollectorAssets() ([]Artifact, error) {
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
-	name := "eks-anywhere-cli-tools"
+	name := "eks-anywhere-diagnostic-collector"
 
 	var sourceRepoName string
 	var releaseRepoName string
