@@ -251,14 +251,14 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return fmt.Errorf("error applying capi control plane spec: %v", err)
 	}
 
+	var externalEtcdTopology bool
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
-		logger.V(3).Info("Waiting for external etcd to be ready")
-		err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWaitStr, workloadCluster.Name)
-		if err != nil {
+		logger.V(3).Info("Waiting for external etcd to be ready after upgrade")
+		if err := c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWaitStr, workloadCluster.Name); err != nil {
 			return fmt.Errorf("error waiting for external etcd for workload cluster to be ready: %v", err)
 		}
+		externalEtcdTopology = true
 		logger.V(3).Info("External etcd is ready")
-		// the condition external etcd ready if true indicates that all etcd machines are ready and the etcd cluster is ready to accept requests
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready")
@@ -267,18 +267,9 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return fmt.Errorf("error waiting for workload cluster control plane to be ready: %v", err)
 	}
 
-	logger.V(3).Info("Waiting for controlplane and worker machines to be ready")
+	logger.V(3).Info("Waiting for controlplane machines to be ready")
 	if err = c.waitForNodesReady(ctx, managementCluster, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
 		return err
-	}
-
-	var externalEtcdTopology bool
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
-		logger.V(3).Info("Waiting for external etcd to be ready after upgrade")
-		if err := c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWaitStr, workloadCluster.Name); err != nil {
-			return fmt.Errorf("error waiting for workload cluster etcd to be ready: %v", err)
-		}
-		externalEtcdTopology = true
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready after upgrade")
