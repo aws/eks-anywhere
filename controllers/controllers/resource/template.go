@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
+	"github.com/aws/eks-anywhere/pkg/templater"
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -71,10 +72,15 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 }
 
 func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) ([]*unstructured.Unstructured, error) {
-	content, err := builder.GenerateDeploymentFile(clusterSpec, buildOptions...)
+	cp, err := builder.GenerateClusterApiSpecCP(clusterSpec, buildOptions...)
 	if err != nil {
 		return nil, err
 	}
+	md, err := builder.GenerateClusterApiSpecMD(clusterSpec, buildOptions...)
+	if err != nil {
+		return nil, err
+	}
+	content := templater.AppendYamlResources(cp, md)
 	var resources []*unstructured.Unstructured
 	templates := strings.Split(string(content), "---")
 	for _, template := range templates {
