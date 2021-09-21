@@ -168,6 +168,8 @@ func BuildTemplateMap(clusterSpec *cluster.Spec) map[string]interface{} {
 		"externalEtcdVersion":    bundle.KubeDistro.EtcdVersion,
 		"eksaSystemNamespace":    constants.EksaSystemNamespace,
 		"auditPolicy":            common.GetAuditPolicy(),
+		"podCidrs":               clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
+		"serviceCidrs":           clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
 	}
 
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
