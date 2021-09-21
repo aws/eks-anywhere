@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	troulbeshootApiVersion    = "troubleshoot.sh/v1beta2"
+	troubleshootApiVersion    = "troubleshoot.sh/v1beta2"
 	generatedBundleNameFormat = "%s-%s-bundle.yaml"
 )
 
@@ -53,7 +53,7 @@ func NewDiagnosticBundleFromSpec(opts EksaDiagnosticBundleOpts) (*EksaDiagnostic
 		bundle: &supportBundle{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "SupportBundle",
-				APIVersion: troulbeshootApiVersion,
+				APIVersion: troubleshootApiVersion,
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: fmt.Sprintf("%sBundle", opts.ClusterSpec.Name),
@@ -89,7 +89,7 @@ func NewDiagnosticBundleDefault(af AnalyzerFactory, cf CollectorFactory) *EksaDi
 		bundle: &supportBundle{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "SupportBundle",
-				APIVersion: troulbeshootApiVersion,
+				APIVersion: troubleshootApiVersion,
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "defaultBundle",
@@ -115,7 +115,7 @@ func NewDiagnosticBundleCustom(opts EksaDiagnosticBundleOpts) *EksaDiagnosticBun
 func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeValue *time.Time) error {
 	archivePath, err := e.client.Collect(ctx, e.bundlePath, sinceTimeValue, e.kubeconfig)
 	if err != nil {
-		return fmt.Errorf("failed to Collect and Analyze support bundle: %v", err)
+		return fmt.Errorf("failed to Collect support bundle: %v", err)
 	}
 
 	analysis, err := e.client.Analyze(ctx, e.bundlePath, archivePath)
@@ -150,10 +150,10 @@ func (e *EksaDiagnosticBundle) WriteBundleConfig() error {
 	timestamp := time.Now().Format(time.RFC3339)
 	filename := fmt.Sprintf(generatedBundleNameFormat, e.clusterSpec.Name, timestamp)
 	e.bundlePath, err = e.writer.Write(filename, bundleYaml)
-	logger.V(3).Info("bundle config written", "path", e.bundlePath)
 	if err != nil {
 		return err
 	}
+	logger.V(3).Info("bundle config written", "path", e.bundlePath)
 	return nil
 }
 
