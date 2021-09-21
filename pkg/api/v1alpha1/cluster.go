@@ -167,7 +167,9 @@ func GetClusterConfig(fileName string) (*Cluster, error) {
 	if err != nil {
 		return clusterConfig, err
 	}
-
+	if err := updateRegistryMirrorCA(clusterConfig); err != nil {
+		return clusterConfig, err
+	}
 	return clusterConfig, nil
 }
 
@@ -176,6 +178,7 @@ func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
 	if err != nil {
 		return clusterConfig, err
 	}
+
 	return GetClusterConfig(fileName)
 }
 
@@ -370,13 +373,27 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return errors.New("no value set for ECRMirror.Endpoint")
 	}
 	if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
+		_, err := ioutil.ReadFile(caCert)
+		if err != nil {
+			return fmt.Errorf("error reading the ca cert file %s: %v", caCert, err)
+		}
+	} else if clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent == "" {
+		logger.Info(fmt.Sprintf("Warning: %s environment variable and caCertContent is not set, TLS verification will be disabled", RegistryMirrorCAKey))
+	}
+	return nil
+}
+
+func updateRegistryMirrorCA(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.RegistryMirrorConfiguration == nil {
+		return nil
+	}
+	if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
 		content, err := ioutil.ReadFile(caCert)
 		if err != nil {
 			return fmt.Errorf("error reading the ca cert file %s: %v", caCert, err)
 		}
+		logger.V(4).Info(fmt.Sprintf("%s is set, using %s as ca cert for registry", RegistryMirrorCAKey, caCert))
 		clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent = string(content)
-	} else if clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent == "" {
-		logger.Info(fmt.Sprintf("Warning: %s environment variable and caCertContent is not set, TLS verification will be disabled", RegistryMirrorCAKey))
 	}
 	return nil
 }

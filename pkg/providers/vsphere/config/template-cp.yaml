@@ -136,6 +136,14 @@ spec:
           - {{ . }}
         {{- end }}
 {{- end }}
+{{- if and .registryMirrorConfiguration (eq .format "bottlerocket") }}
+      registryMirror:
+        endpoint: {{.registryMirrorConfiguration}}
+        {{- if .registryCACert }}
+        caCert: |
+{{ .registryCACert | indent 10 }}
+        {{- end }}
+{{- end }}
       apiServer:
         extraArgs:
           cloud-provider: external
@@ -295,6 +303,14 @@ spec:
         httpsProxy: {{.httpsProxy}}
         noProxy: {{ range .noProxy }}
         - {{ . }}
+        {{- end }}
+{{- end }}
+{{- if and .registryMirrorConfiguration (eq .format "bottlerocket") }}
+      registryMirror:
+        endpoint: {{.registryMirrorConfiguration}}
+        {{- if .registryCACert }}
+        caCert: |
+{{ .registryCACert | indent 10 }}
         {{- end }}
 {{- end }}
       nodeRegistration:

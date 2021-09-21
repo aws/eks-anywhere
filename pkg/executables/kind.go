@@ -55,7 +55,10 @@ func NewKind(executable Executable, writer filewriter.FileWriter) *Kind {
 }
 
 func (k *Kind) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...bootstrapper.BootstrapClusterClientOption) (kubeconfig string, err error) {
-	k.setupExecConfig(clusterSpec)
+	err = k.setupExecConfig(clusterSpec)
+	if err != nil {
+		return "", err
+	}
 	defer k.cleanExecConfig()
 
 	err = processOpts(opts)
@@ -175,7 +178,7 @@ func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluste
 	return err
 }
 
-func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) {
+func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 	bundle := clusterSpec.VersionsBundle
 	k.execConfig = &kindExecConfig{
 		KindImage:            clusterSpec.UseImageMirror(bundle.EksD.KindNode.VersionedImage()),
@@ -189,8 +192,15 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) {
 	}
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
 		k.execConfig.RegistryMirrorEndpoint = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
-		k.execConfig.RegistryCACert = clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent
+		if clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent != "" {
+			path, err := k.writer.Write("ca.crt", []byte(clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent))
+			if err != nil {
+				return errors.New("error writing the registry certification file")
+			}
+			k.execConfig.RegistryCACert = path
+		}
 	}
+	return nil
 }
 
 func (k *Kind) cleanExecConfig() {
