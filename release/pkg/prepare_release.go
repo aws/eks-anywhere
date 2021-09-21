@@ -15,10 +15,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecrpublic"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/go-git/go-git/v5"
 	"github.com/pkg/errors"
 )
+
+type EksAReleases []anywherev1alpha1.EksARelease
 
 func (r *ReleaseConfig) SetRepoHeads() error {
 	// Get the repos from env var
@@ -425,4 +428,17 @@ func UpdateImageDigests(releaseClients *ReleaseClients, r *ReleaseConfig, eksArt
 	}
 
 	return imageDigests, nil
+}
+
+func (releases EksAReleases) AppendOrUpdateRelease(r anywherev1alpha1.EksARelease) EksAReleases {
+	for i, release := range releases {
+		if release.Version == r.Version {
+			releases[i] = r
+			fmt.Println("Updating existing release in releases manifest")
+			return releases
+		}
+	}
+	releases = append(releases, r)
+	fmt.Println("Adding new release to releases manifest")
+	return releases
 }
