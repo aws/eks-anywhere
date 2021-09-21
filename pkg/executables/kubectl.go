@@ -114,6 +114,18 @@ func (k *Kubectl) ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Clu
 	return nil
 }
 
+func (k *Kubectl) ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error {
+	params := []string{"apply", "-f", "-", "--namespace", namespace}
+	if cluster.KubeconfigFile != "" {
+		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
+	}
+	_, err := k.executable.ExecuteWithStdin(ctx, data, params...)
+	if err != nil {
+		return fmt.Errorf("error executing apply: %v", err)
+	}
+	return nil
+}
+
 func (k *Kubectl) ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error {
 	params := []string{"apply", "-f", "-", "--force"}
 	if cluster.KubeconfigFile != "" {

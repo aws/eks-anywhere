@@ -71,6 +71,30 @@ func TestKubectlApplyKubeSpecFromBytesError(t *testing.T) {
 	}
 }
 
+func TestKubectlApplyKubeSpecFromBytesWithNamespaceSuccess(t *testing.T) {
+	var data []byte
+	var namespace string
+
+	k, ctx, cluster, e := newKubectl(t)
+	expectedParam := []string{"apply", "-f", "-", "--namespace", namespace, "--kubeconfig", cluster.KubeconfigFile}
+	e.EXPECT().ExecuteWithStdin(ctx, data, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
+	if err := k.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, data, namespace); err != nil {
+		t.Errorf("Kubectl.ApplyKubeSpecFromBytesWithNamespace() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlApplyKubeSpecFromBytesWithNamespaceError(t *testing.T) {
+	var data []byte
+	var namespace string
+
+	k, ctx, cluster, e := newKubectl(t)
+	expectedParam := []string{"apply", "-f", "-", "--namespace", namespace, "--kubeconfig", cluster.KubeconfigFile}
+	e.EXPECT().ExecuteWithStdin(ctx, data, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
+	if err := k.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, data, namespace); err == nil {
+		t.Errorf("Kubectl.ApplyKubeSpecFromBytes() error = nil, want not nil")
+	}
+}
+
 func TestKubectlCreateNamespaceSuccess(t *testing.T) {
 	var kubeconfig, namespace string
 
