@@ -36,7 +36,14 @@ func (e *E2ETest) RunConformanceTests() {
 	kubeConformanceImageTagged := fmt.Sprintf("%s:%s", kubeConformanceImage, kubeVersion)
 	args := []string{"--kube-conformance-image", kubeConformanceImageTagged}
 	e.T.Logf("Running k8s conformance tests with Image: %s", kubeConformanceImageTagged)
-	results, err := conformance.RunTests(ctx, contextName, args...)
+	output, err := conformance.RunTests(ctx, contextName, args...)
+	if err != nil {
+		e.T.Errorf("Error running k8s conformance tests: %v", err)
+		return
+	}
+	e.T.Logf("Conformance Test run:\n %v", output)
+
+	results, err := conformance.GetResults(ctx, contextName, args...)
 	if err != nil {
 		e.T.Errorf("Error running k8s conformance tests: %v", err)
 		return

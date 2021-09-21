@@ -142,6 +142,23 @@ func TestNewSpecValid(t *testing.T) {
 		t.Fatalf("NewSpec() error = %v, want err nil", err)
 	}
 
+	validateSpecFromSimpleBundle(t, gotSpec)
+}
+
+func TestNewSpecWithBundlesOverrideValid(t *testing.T) {
+	v := version.Info{GitVersion: "v0.0.1"}
+	gotSpec, err := cluster.NewSpec("testdata/cluster_1_19.yaml", v,
+		cluster.WithReleasesManifest("testdata/invalid_release_version.yaml"),
+		cluster.WithOverrideBundlesManifest("testdata/simple_bundle.yaml"),
+	)
+	if err != nil {
+		t.Fatalf("NewSpec() error = %v, want err nil", err)
+	}
+
+	validateSpecFromSimpleBundle(t, gotSpec)
+}
+
+func validateSpecFromSimpleBundle(t *testing.T, gotSpec *cluster.Spec) {
 	validateVersionedRepo(t, gotSpec.VersionsBundle.KubeDistro.Kubernetes, "public.ecr.aws/eks-distro/kubernetes", "v1.19.8-eks-1-19-4")
 	validateVersionedRepo(t, gotSpec.VersionsBundle.KubeDistro.CoreDNS, "public.ecr.aws/eks-distro/coredns", "v1.8.0-eks-1-19-4")
 	validateVersionedRepo(t, gotSpec.VersionsBundle.KubeDistro.Etcd, "public.ecr.aws/eks-distro/etcd-io", "v3.4.14-eks-1-19-4")

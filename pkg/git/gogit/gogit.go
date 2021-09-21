@@ -369,20 +369,21 @@ func (g *GoGit) SetTokenAuth(token string, username string) {
 }
 
 func (g *GoGit) pullIfRemoteExists(r *gogit.Repository, w *gogit.Worktree, branchName string, localBranchRef plumbing.ReferenceName) error {
-	remoteExists, err := g.remoteBranchExists(r, localBranchRef)
-	if err != nil {
-		return fmt.Errorf("error checking if remote branch exists %s: %v", branchName, err)
-	}
-	if remoteExists {
-		err = g.Retrier.Retry(func() error {
+	err := g.Retrier.Retry(func() error {
+		remoteExists, err := g.remoteBranchExists(r, localBranchRef)
+		if err != nil {
+			return fmt.Errorf("error checking if remote branch exists %s: %v", branchName, err)
+		}
+
+		if remoteExists {
 			err = g.Client.PullWithContext(context.Background(), w, g.Opts.Auth, localBranchRef)
 			if err != nil && !errors.Is(err, gogit.NoErrAlreadyUpToDate) && !errors.Is(err, gogit.ErrRemoteNotFound) {
 				return fmt.Errorf("error pulling from remote when checking out existing branch %s: %v", branchName, err)
 			}
-			return nil
-		})
-	}
-	return nil
+		}
+		return nil
+	})
+	return err
 }
 
 func (g *GoGit) remoteBranchExists(r *gogit.Repository, localBranchRef plumbing.ReferenceName) (bool, error) {

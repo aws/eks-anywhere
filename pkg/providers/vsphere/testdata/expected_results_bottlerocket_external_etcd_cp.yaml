@@ -128,7 +128,7 @@ spec:
           oidc-username-claim: username-claim
           oidc-username-prefix: username-prefix1
         extraVolumes:
-        - hostPath: /etc/kubernetes/audit-policy.yaml
+        - hostPath: /var/lib/kubeadm/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
           name: audit-policy
           pathType: File

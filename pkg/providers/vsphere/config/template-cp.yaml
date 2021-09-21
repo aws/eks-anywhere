@@ -151,7 +151,11 @@ spec:
 {{ .apiserverExtraArgs.ToYaml | indent 10 }}
 {{- end }}
         extraVolumes:
+{{- if (eq .format "bottlerocket") }}
+        - hostPath: /var/lib/kubeadm/audit-policy.yaml
+{{- else }}
         - hostPath: /etc/kubernetes/audit-policy.yaml
+{{- end }}
           mountPath: /etc/kubernetes/audit-policy.yaml
           name: audit-policy
           pathType: File
