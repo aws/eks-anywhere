@@ -42,8 +42,8 @@ function build::eks-anywhere-cluster-controller::create_binaries(){
   OS="$(cut -d '/' -f1 <<< ${platform})"
   ARCH="$(cut -d '/' -f2 <<< ${platform})"
   CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH make build-cluster-controller-binaries
-  mkdir -p ../${BIN_PATH}/${OS}-${ARCH}/
-  mv bin/* ../${BIN_PATH}/${OS}-${ARCH}/
+  mkdir -p ${BIN_PATH}/${OS}-${ARCH}/
+  mv bin/* ${BIN_PATH}/${OS}-${ARCH}/
 }
 
 function build::eks-anywhere-cluster-controller::manifests(){
