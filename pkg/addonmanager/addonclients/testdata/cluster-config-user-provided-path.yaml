@@ -16,7 +16,6 @@ spec:
 ---
 kind: VSphereDatacenterConfig
 metadata:
-  creationTimestamp: null
   name: fluxAddonTestCluster
 spec:
   datacenter: SDDC-Datacenter
@@ -24,12 +23,10 @@ spec:
   network: ""
   server: ""
   thumbprint: ""
-status: {}
 
 ---
 kind: VSphereMachineConfig
 metadata:
-  creationTimestamp: null
   name: fluxAddonTestCluster
 spec:
   datastore: ""
@@ -39,7 +36,6 @@ spec:
   osFamily: ""
   resourcePool: ""
   template: /SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6
-status: {}
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

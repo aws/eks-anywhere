@@ -1371,7 +1371,7 @@ func (p *vsphereProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *ty
 }
 
 func (p *vsphereProvider) DatacenterConfig() providers.DatacenterConfig {
-	return p.datacenterConfig
+	return p.datacenterConfig.ConvertConfigToConfigGenerateStruct()
 }
 
 func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
@@ -1379,15 +1379,15 @@ func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	workerMachineName := p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
-	configs = append(configs, p.machineConfigs[controlPlaneMachineName])
+	configs = append(configs, p.machineConfigs[controlPlaneMachineName].ConvertConfigToConfigGenerateStruct())
 	if workerMachineName != controlPlaneMachineName {
-		configs = append(configs, p.machineConfigs[workerMachineName])
+		configs = append(configs, p.machineConfigs[workerMachineName].ConvertConfigToConfigGenerateStruct())
 	}
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
 		if etcdMachineName != controlPlaneMachineName && etcdMachineName != workerMachineName {
-			configs = append(configs, p.machineConfigs[etcdMachineName])
+			configs = append(configs, p.machineConfigs[etcdMachineName].ConvertConfigToConfigGenerateStruct())
 		}
 	}
 	return configs
@@ -1405,7 +1405,7 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 	}
 
 	datacenterConfig := p.DatacenterConfig()
-	datacenter := datacenterConfig.(*v1alpha1.VSphereDatacenterConfig)
+	datacenter := datacenterConfig.(*v1alpha1.VSphereDatacenterConfigGenerate)
 
 	oSpec := prevDatacenter.Spec
 	nSpec := datacenter.Spec
