@@ -13,6 +13,15 @@ type Machine struct {
 	Status   MachineStatus   `json:"status"`
 }
 
+func (m *Machine) HasLabels(labels []string) bool {
+	for _, label := range labels {
+		if _, ok := m.Metadata.Labels[label]; ok {
+			return true
+		}
+	}
+	return false
+}
+
 type MachineStatus struct {
 	NodeRef    *ResourceRef `json:"nodeRef,omitempty"`
 	Conditions Conditions

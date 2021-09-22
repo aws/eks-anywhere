@@ -107,7 +107,8 @@ func WithWaitForMachines(machineBackoff, machineMaxWait, machinesMinWait time.Du
 
 func (c *ClusterManager) MoveCapi(ctx context.Context, from, to *types.Cluster, checkers ...types.NodeReadyChecker) error {
 	logger.V(3).Info("Waiting for management machines to be ready before move")
-	if err := c.waitForNodesReady(ctx, from, checkers...); err != nil {
+	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
+	if err := c.waitForNodesReady(ctx, from, labels, checkers...); err != nil {
 		return err
 	}
 
@@ -123,7 +124,7 @@ func (c *ClusterManager) MoveCapi(ctx context.Context, from, to *types.Cluster, 
 	}
 
 	logger.V(3).Info("Waiting for machines to be ready after move")
-	if err = c.waitForNodesReady(ctx, to, checkers...); err != nil {
+	if err = c.waitForNodesReady(ctx, to, labels, checkers...); err != nil {
 		return err
 	}
 
@@ -195,7 +196,8 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 	}
 
 	logger.V(3).Info("Waiting for controlplane and worker machines to be ready")
-	if err = c.waitForNodesReady(ctx, managementCluster, types.WithNodeRef()); err != nil {
+	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
+	if err = c.waitForNodesReady(ctx, managementCluster, labels, types.WithNodeRef()); err != nil {
 		return nil, err
 	}
 
@@ -267,8 +269,8 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return fmt.Errorf("error waiting for workload cluster control plane to be ready: %v", err)
 	}
 
-	logger.V(3).Info("Waiting for controlplane machines to be ready")
-	if err = c.waitForNodesReady(ctx, managementCluster, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
+	logger.V(3).Info("Waiting for control plane machines to be ready")
+	if err = c.waitForNodesReady(ctx, managementCluster, []string{clusterv1.MachineControlPlaneLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
 		return err
 	}
 
@@ -297,6 +299,11 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	err = c.waitForMachineDeploymentReplicasReady(ctx, managementCluster, clusterSpec)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster machinedeployment replicas to be ready: %v", err)
+	}
+
+	logger.V(3).Info("Waiting for machine deployment machines to be ready")
+	if err = c.waitForNodesReady(ctx, managementCluster, []string{clusterv1.MachineDeploymentLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
+		return err
 	}
 
 	logger.V(3).Info("Waiting for workload cluster capi components to be ready after upgrade")
@@ -544,7 +551,7 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 	return nil
 }
 
-func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluster *types.Cluster, checkers ...types.NodeReadyChecker) error {
+func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluster *types.Cluster, labels []string, checkers ...types.NodeReadyChecker) error {
 	readyNodes, totalNodes := 0, 0
 	policy := func(_ int, _ error) (bool, time.Duration) {
 		return true, c.machineBackoff * time.Duration(totalNodes-readyNodes)
@@ -552,7 +559,7 @@ func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluste
 
 	areNodesReady := func() error {
 		var err error
-		readyNodes, totalNodes, err = c.countNodesReady(ctx, managementCluster, checkers...)
+		readyNodes, totalNodes, err = c.countNodesReady(ctx, managementCluster, labels, checkers...)
 		if err != nil {
 			return err
 		}
@@ -584,17 +591,21 @@ func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluste
 	return nil
 }
 
-func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster *types.Cluster, checkers ...types.NodeReadyChecker) (ready, total int, err error) {
+func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster *types.Cluster, labels []string, checkers ...types.NodeReadyChecker) (ready, total int, err error) {
 	machines, err := c.clusterClient.GetMachines(ctx, managementCluster)
 	if err != nil {
 		return 0, 0, fmt.Errorf("error getting machines resources from management cluster: %v", err)
 	}
 
-	ready = 0
-	var controlPlaneNodesCount, workerNodesCount int
 	for _, m := range machines {
 		// Extracted from cluster-api: NodeRef is considered a better signal than InfrastructureReady,
 		// because it ensures the node in the workload cluster is up and running.
+		if !m.HasLabels(labels) {
+			continue
+		}
+
+		total += 1
+
 		passed := true
 		for _, checker := range checkers {
 			if !checker(m.Status) {
@@ -605,15 +616,7 @@ func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster 
 		if passed {
 			ready += 1
 		}
-
-		if _, ok := m.Metadata.Labels[clusterv1.MachineControlPlaneLabelName]; ok {
-			controlPlaneNodesCount++
-		}
-		if _, ok := m.Metadata.Labels[clusterv1.MachineDeploymentLabelName]; ok {
-			workerNodesCount++
-		}
 	}
-	total = controlPlaneNodesCount + workerNodesCount
 	return ready, total, nil
 }
 
