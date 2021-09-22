@@ -1,6 +1,8 @@
 package supportbundle
 
 import (
+	"time"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
@@ -141,13 +143,12 @@ func (c *collectorFactory) ubuntuHostCollectors() []*Collect {
 			},
 		},
 		{
-			Exec: &exec{
-				Name:          "KubeletLogs",
-				Namespace:     constants.EksaSystemNamespace,
-				ContainerName: c.DiagnosticCollectorImage,
-				Command:       []string{"journalctl"},
-				Args:          []string{"-u", "kubelet"},
-				Timeout:       "20",
+			CopyFromHost: &copyFromHost{
+				Name:      "Syslog",
+				Namespace: constants.EksaSystemNamespace,
+				Image:     c.DiagnosticCollectorImage,
+				HostPath:  "/var/log/syslog",
+				Timeout:   time.Minute.String(),
 			},
 		},
 	}
