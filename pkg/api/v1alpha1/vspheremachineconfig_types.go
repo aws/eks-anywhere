@@ -87,6 +87,20 @@ type VSphereMachineConfigGenerate struct {
 	Spec VSphereMachineConfigSpec `json:"spec,omitempty"`
 }
 
+func (c *VSphereMachineConfig) ConvertConfigToConfigGenerateStruct() *VSphereMachineConfigGenerate {
+	config := &VSphereMachineConfigGenerate{
+		TypeMeta: c.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        c.Name,
+			Annotations: c.Annotations,
+			Namespace:   c.Namespace,
+		},
+		Spec: c.Spec,
+	}
+
+	return config
+}
+
 //+kubebuilder:object:root=true
 
 // VSphereMachineConfigList contains a list of VSphereMachineConfig
