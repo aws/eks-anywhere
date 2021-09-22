@@ -344,6 +344,13 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 				r.ReleaseVersion,
 				r.BundleNumber,
 			)
+		} else if name == "eks-anywhere-diagnostic-collector" {
+			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%d",
+				r.SourceContainerRegistry,
+				repoName,
+				r.ReleaseVersion,
+				r.BundleNumber,
+			)
 		} else if name == "kind-node" {
 			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-%s-eks-a-%d",
 				r.SourceContainerRegistry,
@@ -392,6 +399,21 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 			semVer,
 		)
 	} else if name == "eks-anywhere-cluster-controller" {
+		if r.DevRelease {
+			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a-%s",
+				r.ReleaseContainerRegistry,
+				repoName,
+				semVer,
+			)
+		} else {
+			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%s",
+				r.ReleaseContainerRegistry,
+				repoName,
+				r.ReleaseVersion,
+				semVer,
+			)
+		}
+	} else if name == "eks-anywhere-diagnostic-collector" {
 		if r.DevRelease {
 			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a-%s",
 				r.ReleaseContainerRegistry,
