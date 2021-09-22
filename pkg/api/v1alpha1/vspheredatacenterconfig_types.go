@@ -61,6 +61,20 @@ func (v *VSphereDatacenterConfig) ClearPauseAnnotation() {
 	}
 }
 
+func (v *VSphereDatacenterConfig) ConvertConfigToConfigGenerateStruct() *VSphereDatacenterConfigGenerate {
+	config := &VSphereDatacenterConfigGenerate{
+		TypeMeta: v.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        v.Name,
+			Annotations: v.Annotations,
+			Namespace:   v.Namespace,
+		},
+		Spec: v.Spec,
+	}
+
+	return config
+}
+
 // +kubebuilder:object:generate=false
 
 // Same as VSphereDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig
@@ -69,6 +83,19 @@ type VSphereDatacenterConfigGenerate struct {
 	ObjectMeta      `json:"metadata,omitempty"`
 
 	Spec VSphereDatacenterConfigSpec `json:"spec,omitempty"`
+}
+
+func (v *VSphereDatacenterConfigGenerate) PauseReconcile() {
+	if v.Annotations == nil {
+		v.Annotations = map[string]string{}
+	}
+	v.Annotations[pausedAnnotation] = "true"
+}
+
+func (v *VSphereDatacenterConfigGenerate) ClearPauseAnnotation() {
+	if v.Annotations != nil {
+		delete(v.Annotations, pausedAnnotation)
+	}
 }
 
 //+kubebuilder:object:root=true
