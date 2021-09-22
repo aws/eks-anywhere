@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"regexp"
-	"strconv"
 	"time"
 
 	etcdv1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
@@ -169,7 +168,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 
 	values := map[string]interface{}{
 		"clusterName":            clusterSpec.Name,
-		"control_plane_replicas": strconv.Itoa(clusterSpec.Spec.ControlPlaneConfiguration.Count),
+		"control_plane_replicas": clusterSpec.Spec.ControlPlaneConfiguration.Count,
 		"kubernetesRepository":   bundle.KubeDistro.Kubernetes.Repository,
 		"kubernetesVersion":      bundle.KubeDistro.Kubernetes.Tag,
 		"etcdRepository":         bundle.KubeDistro.Etcd.Repository,
@@ -195,7 +194,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 
 	values := map[string]interface{}{
 		"clusterName":         clusterSpec.Name,
-		"worker_replicas":     strconv.Itoa(clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count),
+		"worker_replicas":     clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count,
 		"kubernetesVersion":   bundle.KubeDistro.Kubernetes.Tag,
 		"kindNodeImage":       bundle.EksD.KindNode.VersionedImage(),
 		"eksaSystemNamespace": constants.EksaSystemNamespace,

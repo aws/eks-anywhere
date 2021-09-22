@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"fmt"
 	"os"
-	"strconv"
 	"time"
 
 	"sigs.k8s.io/cluster-api/api/v1alpha3"
@@ -220,7 +219,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, awsSpec v1alpha1.AWSDatacente
 		"etcdVersion":          bundle.KubeDistro.Etcd.Tag,
 		"corednsRepository":    bundle.KubeDistro.CoreDNS.Repository,
 		"corednsVersion":       bundle.KubeDistro.CoreDNS.Tag,
-		"controlPlaneReplicas": strconv.Itoa(clusterSpec.Spec.ControlPlaneConfiguration.Count),
+		"controlPlaneReplicas": clusterSpec.Spec.ControlPlaneConfiguration.Count,
 		"region":               region,
 		"amiID":                amiID,
 		"extraArgs":            clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).ToPartialYaml(),
@@ -239,7 +238,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, awsSpec v1alpha1.AWSDatacente
 	values := map[string]interface{}{
 		"clusterName":        clusterSpec.ObjectMeta.Name,
 		"kubernetesVersion":  bundle.KubeDistro.Kubernetes.Tag,
-		"workerNodeReplicas": strconv.Itoa(clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count),
+		"workerNodeReplicas": clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count,
 		"amiID":              amiID,
 	}
 	return values

@@ -1033,7 +1033,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	values := map[string]interface{}{
 		"clusterName":                          clusterSpec.ObjectMeta.Name,
 		"controlPlaneEndpointIp":               clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
-		"controlPlaneReplicas":                 strconv.Itoa(clusterSpec.Spec.ControlPlaneConfiguration.Count),
+		"controlPlaneReplicas":                 clusterSpec.Spec.ControlPlaneConfiguration.Count,
 		"kubernetesRepository":                 bundle.KubeDistro.Kubernetes.Repository,
 		"kubernetesVersion":                    bundle.KubeDistro.Kubernetes.Tag,
 		"etcdRepository":                       bundle.KubeDistro.Etcd.Repository,
@@ -1058,9 +1058,9 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"vsphereServer":                        datacenterSpec.Server,
 		"controlPlaneVsphereStoragePolicyName": controlPlaneMachineSpec.StoragePolicyName,
 		"vsphereTemplate":                      controlPlaneMachineSpec.Template,
-		"controlPlaneVMsMemoryMiB":             strconv.Itoa(controlPlaneMachineSpec.MemoryMiB),
-		"controlPlaneVMsNumCPUs":               strconv.Itoa(controlPlaneMachineSpec.NumCPUs),
-		"controlPlaneDiskGiB":                  strconv.Itoa(controlPlaneMachineSpec.DiskGiB),
+		"controlPlaneVMsMemoryMiB":             controlPlaneMachineSpec.MemoryMiB,
+		"controlPlaneVMsNumCPUs":               controlPlaneMachineSpec.NumCPUs,
+		"controlPlaneDiskGiB":                  controlPlaneMachineSpec.DiskGiB,
 		"controlPlaneSshUsername":              controlPlaneMachineSpec.Users[0].Name,
 		"podCidrs":                             clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                         clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
@@ -1081,7 +1081,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 
 	if clusterSpec.Spec.ProxyConfiguration != nil {
 		values["proxyConfig"] = true
-		var noProxyList []string
+		noProxyList := make([]string, 4)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks...)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks...)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
@@ -1112,7 +1112,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
 	}
 
-	if strings.EqualFold(string(controlPlaneMachineSpec.OSFamily), string(v1alpha1.Bottlerocket)) {
+	if controlPlaneMachineSpec.OSFamily == v1alpha1.Bottlerocket {
 		values["format"] = string(v1alpha1.Bottlerocket)
 		values["pauseRepository"] = bundle.KubeDistro.Pause.Image()
 		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
@@ -1138,10 +1138,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"vsphereServer":                  datacenterSpec.Server,
 		"workerVsphereStoragePolicyName": workerNodeGroupMachineSpec.StoragePolicyName,
 		"vsphereTemplate":                workerNodeGroupMachineSpec.Template,
-		"workerReplicas":                 strconv.Itoa(clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count),
-		"workloadVMsMemoryMiB":           strconv.Itoa(workerNodeGroupMachineSpec.MemoryMiB),
-		"workloadVMsNumCPUs":             strconv.Itoa(workerNodeGroupMachineSpec.NumCPUs),
-		"workloadDiskGiB":                strconv.Itoa(workerNodeGroupMachineSpec.DiskGiB),
+		"workerReplicas":                 clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count,
+		"workloadVMsMemoryMiB":           workerNodeGroupMachineSpec.MemoryMiB,
+		"workloadVMsNumCPUs":             workerNodeGroupMachineSpec.NumCPUs,
+		"workloadDiskGiB":                workerNodeGroupMachineSpec.DiskGiB,
 		"workerSshUsername":              workerNodeGroupMachineSpec.Users[0].Name,
 		"format":                         format,
 		"eksaSystemNamespace":            constants.EksaSystemNamespace,
@@ -1156,7 +1156,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 
 	if clusterSpec.Spec.ProxyConfiguration != nil {
 		values["proxyConfig"] = true
-		var noProxyList []string
+		noProxyList := make([]string, 4)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks...)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks...)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
@@ -1174,7 +1174,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		values["noProxy"] = noProxyList
 	}
 
-	if strings.EqualFold(string(workerNodeGroupMachineSpec.OSFamily), string(v1alpha1.Bottlerocket)) {
+	if workerNodeGroupMachineSpec.OSFamily == v1alpha1.Bottlerocket {
 		values["format"] = string(v1alpha1.Bottlerocket)
 		values["pauseRepository"] = bundle.KubeDistro.Pause.Image()
 		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
