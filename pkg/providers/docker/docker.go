@@ -33,10 +33,10 @@ const (
 )
 
 //go:embed config/template-cp.yaml
-var defaultClusterApiConfigCP string
+var defaultCapiConfigCP string
 
 //go:embed config/template-md.yaml
-var defaultClusterApiConfigMD string
+var defaultCapiConfigMD string
 
 var eksaDockerResourceType = fmt.Sprintf("dockerdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 
@@ -136,13 +136,13 @@ func (d *DockerTemplateBuilder) EtcdMachineTemplateName(clusterName string) stri
 	return fmt.Sprintf("%s-etcd-template-%d", clusterName, t)
 }
 
-func (d *DockerTemplateBuilder) GenerateClusterApiSpecCP(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	values := BuildTemplateMapCP(clusterSpec)
+func (d *DockerTemplateBuilder) GenerateCapiSpecCP(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+	values := buildTemplateMapCP(clusterSpec)
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
 
-	bytes, err := templater.Execute(defaultClusterApiConfigCP, values)
+	bytes, err := templater.Execute(defaultCapiConfigCP, values)
 	if err != nil {
 		return nil, err
 	}
@@ -150,13 +150,13 @@ func (d *DockerTemplateBuilder) GenerateClusterApiSpecCP(clusterSpec *cluster.Sp
 	return bytes, nil
 }
 
-func (d *DockerTemplateBuilder) GenerateClusterApiSpecMD(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	values := BuildTemplateMapMD(clusterSpec)
+func (d *DockerTemplateBuilder) GenerateCapiSpecMD(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+	values := buildTemplateMapMD(clusterSpec)
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
 
-	bytes, err := templater.Execute(defaultClusterApiConfigMD, values)
+	bytes, err := templater.Execute(defaultCapiConfigMD, values)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +164,7 @@ func (d *DockerTemplateBuilder) GenerateClusterApiSpecMD(clusterSpec *cluster.Sp
 	return bytes, nil
 }
 
-func BuildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
+func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 
 	values := map[string]interface{}{
@@ -190,7 +190,7 @@ func BuildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	return values
 }
 
-func BuildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 
 	values := map[string]interface{}{
@@ -215,7 +215,7 @@ func NeedsNewEtcdTemplate(oldC, newC *v1alpha1.Cluster) bool {
 	return oldC.Spec.KubernetesVersion != newC.Spec.KubernetesVersion
 }
 
-func (p *provider) generateClusterApiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+func (p *provider) generateCapiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
 	clusterName := clusterSpec.ObjectMeta.Name
 	var controlPlaneTemplateName, workloadTemplateName, etcdTemplateName string
 	var needsNewEtcdTemplate bool
@@ -278,7 +278,7 @@ func (p *provider) generateClusterApiSpecForUpgrade(ctx context.Context, bootstr
 		values["needsNewEtcdTemplate"] = needsNewEtcdTemplate
 		values["etcdTemplateName"] = etcdTemplateName
 	}
-	cp, err := p.templateBuilder.GenerateClusterApiSpecCP(clusterSpec, cpOpt)
+	cp, err := p.templateBuilder.GenerateCapiSpecCP(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -287,14 +287,14 @@ func (p *provider) generateClusterApiSpecForUpgrade(ctx context.Context, bootstr
 		values["needsNewWorkloadTemplate"] = needsNewWorkloadTemplate
 		values["workloadTemplateName"] = workloadTemplateName
 	}
-	md, err := p.templateBuilder.GenerateClusterApiSpecMD(clusterSpec, mdOpt)
+	md, err := p.templateBuilder.GenerateCapiSpecMD(clusterSpec, mdOpt)
 	if err != nil {
 		return nil, nil, err
 	}
 	return cp, md, nil
 }
 
-func (p *provider) generateClusterApiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+func (p *provider) generateCapiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
 	clusterName := clusterSpec.ObjectMeta.Name
 
 	cpOpt := func(values map[string]interface{}) {
@@ -303,7 +303,7 @@ func (p *provider) generateClusterApiSpecForCreate(ctx context.Context, cluster 
 		values["controlPlaneTemplateName"] = p.templateBuilder.CPMachineTemplateName(clusterName)
 		values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
 	}
-	cp, err := p.templateBuilder.GenerateClusterApiSpecCP(clusterSpec, cpOpt)
+	cp, err := p.templateBuilder.GenerateCapiSpecCP(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -311,23 +311,23 @@ func (p *provider) generateClusterApiSpecForCreate(ctx context.Context, cluster 
 		values["needsNewWorkloadTemplate"] = true
 		values["workloadTemplateName"] = p.templateBuilder.WorkerMachineTemplateName(clusterName)
 	}
-	md, err := p.templateBuilder.GenerateClusterApiSpecMD(clusterSpec, mdOpt)
+	md, err := p.templateBuilder.GenerateCapiSpecMD(clusterSpec, mdOpt)
 	if err != nil {
 		return nil, nil, err
 	}
 	return cp, md, nil
 }
 
-func (p *provider) GenerateClusterApiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
-	cp, md, err := p.generateClusterApiSpecForCreate(ctx, cluster, clusterSpec)
+func (p *provider) GenerateCapiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+	cp, md, err := p.generateCapiSpecForCreate(ctx, cluster, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
 	}
 	return cp, md, nil
 }
 
-func (p *provider) GenerateClusterApiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
-	cp, md, err := p.generateClusterApiSpecForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec)
+func (p *provider) GenerateCapiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+	cp, md, err := p.generateCapiSpecForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
 	}

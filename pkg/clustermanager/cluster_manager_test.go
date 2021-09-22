@@ -207,7 +207,7 @@ func TestClusterManagerCreateWorkloadClusterSuccess(t *testing.T) {
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateClusterApiSpecForCreate(ctx, cluster, clusterSpec)
+	m.provider.EXPECT().GenerateCapiSpecForCreate(ctx, cluster, clusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	m.client.EXPECT().GetMachines(ctx, cluster).Return([]types.Machine{}, nil)
@@ -237,7 +237,7 @@ func TestClusterManagerCreateWorkloadClusterWithExternalEtcdSuccess(t *testing.T
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateClusterApiSpecForCreate(ctx, cluster, clusterSpec)
+	m.provider.EXPECT().GenerateCapiSpecForCreate(ctx, cluster, clusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForManagedExternalEtcdReady(ctx, cluster, "60m", clusterName)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
@@ -275,7 +275,7 @@ func TestClusterManagerCreateWorkloadClusterSuccessWithExtraObjects(t *testing.T
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateClusterApiSpecForCreate(ctx, cluster, clusterSpec)
+	m.provider.EXPECT().GenerateCapiSpecForCreate(ctx, cluster, clusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	m.client.EXPECT().GetMachines(ctx, cluster).Return([]types.Machine{}, nil)
@@ -318,7 +318,7 @@ func TestClusterManagerCreateWorkloadClusterErrorApplyingExtraObjects(t *testing
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateClusterApiSpecForCreate(ctx, cluster, clusterSpec)
+	m.provider.EXPECT().GenerateCapiSpecForCreate(ctx, cluster, clusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	m.client.EXPECT().GetMachines(ctx, cluster).Return([]types.Machine{}, nil)
@@ -348,7 +348,7 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesTimeout(t *testing.T)
 	}
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 50*time.Microsecond, 100*time.Microsecond))
-	m.provider.EXPECT().GenerateClusterApiSpecForCreate(ctx, cluster, clusterSpec)
+	m.provider.EXPECT().GenerateCapiSpecForCreate(ctx, cluster, clusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	// Fail once
@@ -383,7 +383,7 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesSuccessAfterRetries(t
 	}
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 1*time.Minute, 2*time.Minute))
-	m.provider.EXPECT().GenerateClusterApiSpecForCreate(ctx, cluster, clusterSpec)
+	m.provider.EXPECT().GenerateCapiSpecForCreate(ctx, cluster, clusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	// Fail a bunch of times
@@ -442,7 +442,7 @@ func TestClusterManagerUpgradeWorkloadClusterSuccess(t *testing.T) {
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateClusterApiSpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
+	m.provider.EXPECT().GenerateCapiSpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace).Times(2)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", clusterName).MaxTimes(2)
 	m.client.EXPECT().GetMachines(ctx, mCluster).Return([]types.Machine{}, nil)
@@ -475,7 +475,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForMachinesTimeout(t *testing.T
 	}
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 50*time.Microsecond, 100*time.Microsecond))
-	m.provider.EXPECT().GenerateClusterApiSpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
+	m.provider.EXPECT().GenerateCapiSpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", clusterName)
 	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
@@ -522,7 +522,7 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesFailedWithUnhealthyNo
 	}
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 50*time.Microsecond, 100*time.Microsecond))
-	m.provider.EXPECT().GenerateClusterApiSpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
+	m.provider.EXPECT().GenerateCapiSpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", clusterName).MaxTimes(5)
 	m.client.EXPECT().WaitForDeployment(ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
@@ -553,7 +553,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForCapiTimeout(t *testing.T) {
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateClusterApiSpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
+	m.provider.EXPECT().GenerateCapiSpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace).Times(2)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", clusterName).MaxTimes(2)
 	m.client.EXPECT().GetMachines(ctx, mCluster).Return([]types.Machine{}, nil)

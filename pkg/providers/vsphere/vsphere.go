@@ -61,7 +61,7 @@ const (
 )
 
 //go:embed config/template-cp.yaml
-var defaultClusterApiConfigCP string
+var defaultCapiConfigCP string
 
 //go:embed config/template-md.yaml
 var defaultClusterConfigMD string
@@ -992,18 +992,18 @@ func (vs *VsphereTemplateBuilder) EtcdMachineTemplateName(clusterName string) st
 	return fmt.Sprintf("%s-etcd-template-%d", clusterName, t)
 }
 
-func (vs *VsphereTemplateBuilder) GenerateClusterApiSpecCP(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+func (vs *VsphereTemplateBuilder) GenerateCapiSpecCP(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	var etcdMachineSpec v1alpha1.VSphereMachineConfigSpec
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *vs.etcdMachineSpec
 	}
-	values := BuildTemplateMapCP(clusterSpec, *vs.datacenterSpec, *vs.controlPlaneMachineSpec, etcdMachineSpec)
+	values := buildTemplateMapCP(clusterSpec, *vs.datacenterSpec, *vs.controlPlaneMachineSpec, etcdMachineSpec)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
 
-	bytes, err := templater.Execute(defaultClusterApiConfigCP, values)
+	bytes, err := templater.Execute(defaultCapiConfigCP, values)
 	if err != nil {
 		return nil, err
 	}
@@ -1011,8 +1011,8 @@ func (vs *VsphereTemplateBuilder) GenerateClusterApiSpecCP(clusterSpec *cluster.
 	return bytes, nil
 }
 
-func (vs *VsphereTemplateBuilder) GenerateClusterApiSpecMD(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	values := BuildTemplateMapMD(clusterSpec, *vs.datacenterSpec, *vs.workerNodeGroupMachineSpec)
+func (vs *VsphereTemplateBuilder) GenerateCapiSpecMD(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+	values := buildTemplateMapMD(clusterSpec, *vs.datacenterSpec, *vs.workerNodeGroupMachineSpec)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -1026,7 +1026,7 @@ func (vs *VsphereTemplateBuilder) GenerateClusterApiSpecMD(clusterSpec *cluster.
 	return bytes, nil
 }
 
-func BuildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphereDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.VSphereMachineConfigSpec) map[string]interface{} {
+func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphereDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.VSphereMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
@@ -1126,7 +1126,7 @@ func BuildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	return values
 }
 
-func BuildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphereDatacenterConfigSpec, workerNodeGroupMachineSpec v1alpha1.VSphereMachineConfigSpec) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphereDatacenterConfigSpec, workerNodeGroupMachineSpec v1alpha1.VSphereMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
@@ -1193,7 +1193,7 @@ func BuildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	return values
 }
 
-func (p *vsphereProvider) generateClusterApiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+func (p *vsphereProvider) generateCapiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
 	clusterName := clusterSpec.ObjectMeta.Name
 	var controlPlaneTemplateName, workloadTemplateName, etcdTemplateName string
 	var needsNewEtcdTemplate bool
@@ -1276,7 +1276,7 @@ func (p *vsphereProvider) generateClusterApiSpecForUpgrade(ctx context.Context, 
 		values["needsNewEtcdTemplate"] = needsNewEtcdTemplate
 		values["etcdTemplateName"] = etcdTemplateName
 	}
-	cp, err := p.templateBuilder.GenerateClusterApiSpecCP(clusterSpec, cpOpt)
+	cp, err := p.templateBuilder.GenerateCapiSpecCP(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1286,14 +1286,14 @@ func (p *vsphereProvider) generateClusterApiSpecForUpgrade(ctx context.Context, 
 		values["workloadTemplateName"] = workloadTemplateName
 		values["vsphereWorkerSshAuthorizedKey"] = p.workerSshAuthKey
 	}
-	md, err := p.templateBuilder.GenerateClusterApiSpecMD(clusterSpec, mdOpt)
+	md, err := p.templateBuilder.GenerateCapiSpecMD(clusterSpec, mdOpt)
 	if err != nil {
 		return nil, nil, err
 	}
 	return cp, md, nil
 }
 
-func (p *vsphereProvider) generateClusterApiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+func (p *vsphereProvider) generateCapiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
 	clusterName := clusterSpec.ObjectMeta.Name
 
 	cpOpt := func(values map[string]interface{}) {
@@ -1304,7 +1304,7 @@ func (p *vsphereProvider) generateClusterApiSpecForCreate(ctx context.Context, c
 		values["needsNewEtcdTemplate"] = clusterSpec.Spec.ExternalEtcdConfiguration != nil
 		values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
 	}
-	cp, err := p.templateBuilder.GenerateClusterApiSpecCP(clusterSpec, cpOpt)
+	cp, err := p.templateBuilder.GenerateCapiSpecCP(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1313,23 +1313,23 @@ func (p *vsphereProvider) generateClusterApiSpecForCreate(ctx context.Context, c
 		values["workloadTemplateName"] = p.templateBuilder.WorkerMachineTemplateName(clusterName)
 		values["vsphereWorkerSshAuthorizedKey"] = p.workerSshAuthKey
 	}
-	md, err := p.templateBuilder.GenerateClusterApiSpecMD(clusterSpec, mdOpt)
+	md, err := p.templateBuilder.GenerateCapiSpecMD(clusterSpec, mdOpt)
 	if err != nil {
 		return nil, nil, err
 	}
 	return cp, md, nil
 }
 
-func (p *vsphereProvider) GenerateClusterApiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
-	cp, md, err := p.generateClusterApiSpecForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec)
+func (p *vsphereProvider) GenerateCapiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+	cp, md, err := p.generateCapiSpecForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
 	}
 	return cp, md, nil
 }
 
-func (p *vsphereProvider) GenerateClusterApiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
-	cp, md, err := p.generateClusterApiSpecForCreate(ctx, cluster, clusterSpec)
+func (p *vsphereProvider) GenerateCapiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+	cp, md, err := p.generateCapiSpecForCreate(ctx, cluster, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
 	}

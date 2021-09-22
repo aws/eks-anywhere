@@ -147,7 +147,7 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		Name: managementCluster.Name,
 	}
 
-	cpContent, mdContent, err := provider.GenerateClusterApiSpecForCreate(ctx, workloadCluster, clusterSpec)
+	cpContent, mdContent, err := provider.GenerateCapiSpecForCreate(ctx, workloadCluster, clusterSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error generating capi spec: %v", err)
 	}
@@ -233,7 +233,7 @@ func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, c
 }
 
 func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
-	cpContent, mdContent, err := provider.GenerateClusterApiSpecForUpgrade(ctx, managementCluster, workloadCluster, clusterSpec)
+	cpContent, mdContent, err := provider.GenerateCapiSpecForUpgrade(ctx, managementCluster, workloadCluster, clusterSpec)
 	if err != nil {
 		return fmt.Errorf("error generating capi spec: %v", err)
 	}
