@@ -1,55 +1,67 @@
 apiVersion: cluster.x-k8s.io/v1alpha3
 kind: Cluster
 metadata:
-  name: fluxAddonTestCluster
+  name: test-cluster
   namespace: eksa-system
 spec:
   clusterNetwork:
     pods:
-      cidrBlocks: [192.168.0.0/16]
+      cidrBlocks: [10.10.0.0/24 10.128.0.0/12]
     serviceDomain: cluster.local
     services:
-      cidrBlocks: [10.128.0.0/12]
+      cidrBlocks: [192.168.0.0/16 10.10.0.0/16]
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
     kind: KubeadmControlPlane
-    name: fluxAddonTestCluster
+    name: test-cluster
     namespace: eksa-system
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: DockerCluster
-    name: fluxAddonTestCluster
+    name: test-cluster
     namespace: eksa-system
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: DockerCluster
 metadata:
-  name: fluxAddonTestCluster
+  name: test-cluster
   namespace: eksa-system
 ---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: DockerMachineTemplate
+metadata:
+  name: test-cluster-control-plane-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      extraMounts:
+      - containerPath: /var/run/docker.sock
+        hostPath: /var/run/docker.sock
+      customImage: public.ecr.aws/eks-distro/kubernetes-sigs/kind/node:v1.18.16-eks-1-18-4-216edda697a37f8bf16651af6c23b7e2bb7ef42f-62681885fe3a97ee4f2b110cc277e084e71230fa
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
 metadata:
-  name: fluxAddonTestCluster
+  name: test-cluster
   namespace: eksa-system
 spec:
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: DockerMachineTemplate
-    name: test-control-plane-template-original
+    name: test-cluster-control-plane-template-1234567890000
     namespace: eksa-system
   kubeadmConfigSpec:
     clusterConfiguration:
-      imageRepository: 
+      imageRepository: public.ecr.aws/eks-distro/kubernetes
       etcd:
         local:
-          imageRepository: 
-          imageTag: 
+          imageRepository: public.ecr.aws/eks-distro/etcd-io
+          imageTag: v3.4.14-eks-1-19-2
       dns:
         type: CoreDNS
-        imageRepository: 
-        imageTag: 
+        imageRepository: public.ecr.aws/eks-distro/coredns
+        imageTag: v1.8.0-eks-1-19-2
       apiServer:
         certSANs:
         - localhost
@@ -255,14 +267,26 @@ spec:
         kubeletExtraArgs:
           cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
-  replicas: 0
-  version: 
+  replicas: 3
+  version: v1.19.6-eks-1-19-2
 ---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: DockerMachineTemplate
+metadata:
+  name: test-cluster-worker-node-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      extraMounts:
+      - containerPath: /var/run/docker.sock
+        hostPath: /var/run/docker.sock
+      customImage: public.ecr.aws/eks-distro/kubernetes-sigs/kind/node:v1.18.16-eks-1-18-4-216edda697a37f8bf16651af6c23b7e2bb7ef42f-62681885fe3a97ee4f2b110cc277e084e71230fa
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
 kind: KubeadmConfigTemplate
 metadata:
-  name: fluxAddonTestCluster-md-0
+  name: test-cluster-md-0
   namespace: eksa-system
 spec:
   template:
@@ -277,11 +301,11 @@ spec:
 apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachineDeployment
 metadata:
-  name: fluxAddonTestCluster-md-0
+  name: test-cluster-md-0
   namespace: eksa-system
 spec:
-  clusterName: fluxAddonTestCluster
-  replicas: 0
+  clusterName: test-cluster
+  replicas: 3
   selector:
     matchLabels: null
   template:
@@ -290,12 +314,12 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
           kind: KubeadmConfigTemplate
-          name: fluxAddonTestCluster-md-0
+          name: test-cluster-md-0
           namespace: eksa-system
-      clusterName: fluxAddonTestCluster
+      clusterName: test-cluster
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
         kind: DockerMachineTemplate
-        name: test-worker-node-template-original
+        name: test-cluster-worker-node-template-1234567890000
         namespace: eksa-system
-      version: 
+      version: v1.19.6-eks-1-19-2
