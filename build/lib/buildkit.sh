@@ -17,7 +17,7 @@ BUILD_LIB_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/" && pwd -P)"
 
 if [ -f "/buildkit.sh" ] && ! buildctl debug workers > /dev/null 2>&1; then
     # on the builder base this helper file exists to run buildkitd
-    # in prow buildkitd is run as a seperate container so it will be running already
+    # in prow buildkitd is run as a separate container so it will be running already
     # in codebuild its run directly on the instance so we want to use this helper
     /buildkit.sh "$@"
 else
