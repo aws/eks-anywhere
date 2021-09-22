@@ -9,6 +9,7 @@ type Collect struct {
 	ClusterResources *clusterResources `json:"clusterResources,omitempty"`
 	Secret           *secret           `json:"secret,omitempty"`
 	Logs             *logs             `json:"logs,omitempty"`
+	CopyFromHost     *copyFromHost     `json:"copyFromHost,omitempty"`
 }
 
 type clusterResources struct {
@@ -40,6 +41,24 @@ type logs struct {
 	Namespace      string     `json:"namespace,omitempty"`
 	ContainerNames []string   `json:"containerNames,omitempty"`
 	Limits         *logLimits `json:"limits,omitempty"`
+}
+
+type copyFromHost struct {
+	collectorMeta   `json:",inline"`
+	Name            string            `json:"name,omitempty"`
+	Namespace       string            `json:"namespace"`
+	Image           string            `json:"image"`
+	ImagePullPolicy string            `json:"imagePullPolicy,omitempty"`
+	ImagePullSecret *imagePullSecrets `json:"imagePullSecret,omitempty"`
+	Timeout         string            `json:"timeout,omitempty"`
+	HostPath        string            `json:"hostPath"`
+	ExtractArchive  bool              `json:"extractArchive,omitempty"`
+}
+
+type imagePullSecrets struct {
+	Name       string            `json:"name,omitempty"`
+	Data       map[string]string `json:"data,omitempty"`
+	SecretType string            `json:"type,omitempty"`
 }
 
 type collectorMeta struct {

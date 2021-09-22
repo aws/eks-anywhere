@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -10,6 +12,9 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/providers/factory"
 	support "github.com/aws/eks-anywhere/pkg/support"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -31,7 +36,7 @@ var generateBundleConfigCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("command input validation failed: %v", err)
 		}
-		bundle, err := gsbo.generateBundleConfig()
+		bundle, err := gsbo.generateBundleConfig(cmd.Context())
 		if err != nil {
 			return fmt.Errorf("failed to generate bunlde config: %v", err)
 		}
@@ -73,19 +78,62 @@ func (gsbo *generateSupportBundleOptions) validateCmdInput() error {
 	return nil
 }
 
-func (gsbo *generateSupportBundleOptions) generateBundleConfig() (*support.EksaDiagnosticBundle, error) {
+func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Context) (*support.EksaDiagnosticBundle, error) {
 	f := gsbo.fileName
 	if f == "" {
-		return support.NewDiagnosticBundleDefault(support.NewAnalyzerFactory(), support.NewCollectorFactory()), nil
+		return support.NewDiagnosticBundleDefault(support.NewAnalyzerFactory(), support.NewCollectorFactory("")), nil
 	}
+
 	clusterSpec, err := cluster.NewSpec(f, version.Get())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
-	opts := support.EksaDiagnosticBundleOpts{
-		AnalyzerFactory:  support.NewAnalyzerFactory(),
-		CollectorFactory: support.NewCollectorFactory(),
-		ClusterSpec:      clusterSpec,
+
+	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
+	image := eksaToolsImage.VersionedImage()
+	executableBuilder, err := executables.NewExecutableBuilder(ctx, image)
+	if err != nil {
+		return nil, fmt.Errorf("unable to initialize executables: %v", err)
 	}
-	return support.NewDiagnosticBundleFromSpec(opts)
+
+	writerDir := fmt.Sprintf(clusterSpec.Name)
+	writer, err := filewriter.NewWriter(writerDir)
+	if err != nil {
+		return nil, fmt.Errorf("unable to write: %v", err)
+	}
+
+	clusterawsadm := executableBuilder.BuildClusterAwsAdmExecutable()
+	kubectl := executableBuilder.BuildKubectlExecutable()
+	govc := executableBuilder.BuildGovcExecutable(writer)
+	docker := executables.BuildDockerExecutable()
+
+	providerFactory := &factory.ProviderFactory{
+		AwsClient:            clusterawsadm,
+		DockerClient:         docker,
+		DockerKubectlClient:  kubectl,
+		VSphereGovcClient:    govc,
+		VSphereKubectlClient: kubectl,
+		Writer:               writer,
+		SkipIpCheck:          cc.skipIpCheck,
+	}
+	provider, err := providerFactory.BuildProvider(cc.fileName, clusterSpec.Cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	collectorImage := clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage()
+	af := support.NewAnalyzerFactory()
+	cf := support.NewCollectorFactory(collectorImage)
+	opts := support.EksaDiagnosticBundleOpts{
+		AnalyzerFactory:  af,
+		CollectorFactory: cf,
+	}
+	return support.NewDiagnosticBundleFromSpec(clusterSpec, provider, gsbo.kubeConfig(clusterSpec.Name), opts)
+}
+
+func (gsbo *generateSupportBundleOptions) kubeConfig(clusterName string) string {
+	if csbo.wConfig == "" {
+		return filepath.Join(clusterName, fmt.Sprintf(kubeconfigPattern, clusterName))
+	}
+	return csbo.wConfig
 }

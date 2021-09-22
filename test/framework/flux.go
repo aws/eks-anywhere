@@ -231,9 +231,9 @@ func (e *E2ETest) validateGitopsRepoContent(gitOptions *GitOptions) {
 
 func (e *E2ETest) convertVSphereMachineConfigs(cpName, workerName string, vsphereMachineConfigs map[string]*v1alpha1.VSphereMachineConfig) []providers.MachineConfig {
 	var configs []providers.MachineConfig
-	configs = append(configs, *vsphereMachineConfigs[cpName])
+	configs = append(configs, vsphereMachineConfigs[cpName])
 	if workerName != cpName {
-		configs = append(configs, *vsphereMachineConfigs[workerName])
+		configs = append(configs, vsphereMachineConfigs[workerName])
 	}
 	return configs
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/providers/factory"
 	support "github.com/aws/eks-anywhere/pkg/support"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -107,23 +108,43 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 		return fmt.Errorf("unable to write: %v", err)
 	}
 
+	clusterawsadm := executableBuilder.BuildClusterAwsAdmExecutable()
+	kubectl := executableBuilder.BuildKubectlExecutable()
+	govc := executableBuilder.BuildGovcExecutable(writer)
+	docker := executables.BuildDockerExecutable()
+
+	providerFactory := &factory.ProviderFactory{
+		AwsClient:            clusterawsadm,
+		DockerClient:         docker,
+		DockerKubectlClient:  kubectl,
+		VSphereGovcClient:    govc,
+		VSphereKubectlClient: kubectl,
+		Writer:               writer,
+		SkipIpCheck:          cc.skipIpCheck,
+	}
+	provider, err := providerFactory.BuildProvider(cc.fileName, clusterSpec.Cluster)
+	if err != nil {
+		return err
+	}
+
 	var sinceTimeValue *time.Time
 	sinceTimeValue, err = support.ParseTimeOptions(since, sinceTime)
 	if err != nil {
 		return fmt.Errorf("failed parse since time: %v", err)
 	}
 
+	collectorImage := clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage()
+	cf := support.NewCollectorFactory(collectorImage)
+	af := support.NewAnalyzerFactory()
+
 	opts := support.EksaDiagnosticBundleOpts{
-		AnalyzerFactory:  support.NewAnalyzerFactory(),
-		BundlePath:       bundleConfig,
-		CollectorFactory: support.NewCollectorFactory(),
+		AnalyzerFactory:  af,
+		CollectorFactory: cf,
 		Client:           troubleshoot,
-		ClusterSpec:      clusterSpec,
-		Kubeconfig:       csbo.kubeConfig(clusterSpec.Name),
 		Writer:           writer,
 	}
 
-	supportBundle, err := support.NewDiagnosticBundle(opts)
+	supportBundle, err := support.NewDiagnosticBundle(clusterSpec, provider, csbo.kubeConfig(clusterSpec.Name), bundleConfig, opts)
 	if err != nil {
 		return fmt.Errorf("failed to parse collector: %v", err)
 	}

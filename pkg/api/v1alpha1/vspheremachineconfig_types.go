@@ -49,6 +49,10 @@ func (c *VSphereMachineConfig) IsEtcd() bool {
 	return false
 }
 
+func (c *VSphereMachineConfig) OSFamily() OSFamily {
+	return c.Spec.OSFamily
+}
+
 type OSFamily string
 
 const (
