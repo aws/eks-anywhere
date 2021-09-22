@@ -13,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/providers"
 )
 
 const (
@@ -23,30 +22,33 @@ const (
 
 type EksaDiagnosticBundleOpts struct {
 	AnalyzerFactory  AnalyzerFactory
-	Client           BundleClient
+	BundlePath       string
 	CollectorFactory CollectorFactory
+	Client           BundleClient
+	ClusterSpec      *cluster.Spec
+	Kubeconfig       string
 	Writer           filewriter.FileWriter
 }
 
 type EksaDiagnosticBundle struct {
 	bundle           *supportBundle
 	bundlePath       string
-	client           BundleClient
-	collectorFactory CollectorFactory
 	clusterSpec      *cluster.Spec
 	analyzerFactory  AnalyzerFactory
+	collectorFactory CollectorFactory
+	client           BundleClient
 	kubeconfig       string
 	writer           filewriter.FileWriter
 }
 
-func NewDiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig string, bundlePath string, opts EksaDiagnosticBundleOpts) (*EksaDiagnosticBundle, error) {
-	if bundlePath == "" && spec != nil {
-		return NewDiagnosticBundleFromSpec(spec, provider, kubeconfig, opts)
+func NewDiagnosticBundle(opts EksaDiagnosticBundleOpts) (*EksaDiagnosticBundle, error) {
+	if opts.BundlePath == "" && opts.ClusterSpec != nil {
+		return NewDiagnosticBundleFromSpec(opts)
 	}
-	return NewDiagnosticBundleCustom(kubeconfig, bundlePath, opts), nil
+	return NewDiagnosticBundleCustom(opts), nil
 }
 
-func NewDiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider, kubeconfig string, opts EksaDiagnosticBundleOpts) (*EksaDiagnosticBundle, error) {
+func NewDiagnosticBundleFromSpec(opts EksaDiagnosticBundleOpts) (*EksaDiagnosticBundle, error) {
 	b := &EksaDiagnosticBundle{
 		bundle: &supportBundle{
 			TypeMeta: metav1.TypeMeta{
@@ -54,29 +56,23 @@ func NewDiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider
 				APIVersion: troulbeshootApiVersion,
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("%sBundle", spec.Name),
+				Name: fmt.Sprintf("%sBundle", opts.ClusterSpec.Name),
 			},
 			Spec: supportBundleSpec{},
 		},
 		analyzerFactory:  opts.AnalyzerFactory,
 		collectorFactory: opts.CollectorFactory,
 		client:           opts.Client,
-		clusterSpec:      spec,
-		kubeconfig:       kubeconfig,
+		clusterSpec:      opts.ClusterSpec,
+		kubeconfig:       opts.Kubeconfig,
 		writer:           opts.Writer,
 	}
 
-	osFamiliesSet := map[v1alpha1.OSFamily]bool{}
-	for _, config := range provider.MachineConfigs() {
-		osFamiliesSet[config.OSFamily()] = true
-	}
-
 	b = b.
-		WithGitOpsConfig(spec.GitOpsConfig).
-		WithOidcConfig(spec.OIDCConfig).
-		WithExternalEtcd(spec.Spec.ExternalEtcdConfiguration).
-		WithDatacenterConfig(spec.Spec.DatacenterRef).
-		WithOSFamilies(osFamiliesSet).
+		WithGitOpsConfig(opts.ClusterSpec.GitOpsConfig).
+		WithOidcConfig(opts.ClusterSpec.OIDCConfig).
+		WithExternalEtcd(opts.ClusterSpec.Spec.ExternalEtcdConfiguration).
+		WithDatacenterConfig(opts.ClusterSpec.Spec.DatacenterRef).
 		WithDefaultAnalyzers().
 		WithDefaultCollectors()
 
@@ -106,13 +102,13 @@ func NewDiagnosticBundleDefault(af AnalyzerFactory, cf CollectorFactory) *EksaDi
 	return b.WithDefaultAnalyzers().WithDefaultCollectors()
 }
 
-func NewDiagnosticBundleCustom(kubeconfig string, bundlePath string, opts EksaDiagnosticBundleOpts) *EksaDiagnosticBundle {
+func NewDiagnosticBundleCustom(opts EksaDiagnosticBundleOpts) *EksaDiagnosticBundle {
 	return &EksaDiagnosticBundle{
-		bundlePath:       bundlePath,
+		bundlePath:       opts.BundlePath,
 		analyzerFactory:  opts.AnalyzerFactory,
 		collectorFactory: opts.CollectorFactory,
 		client:           opts.Client,
-		kubeconfig:       kubeconfig,
+		kubeconfig:       opts.Kubeconfig,
 	}
 }
 
@@ -194,11 +190,6 @@ func (e *EksaDiagnosticBundle) WithGitOpsConfig(config *v1alpha1.GitOpsConfig) *
 	if config != nil {
 		e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.EksaGitopsAnalyzers()...)
 	}
-	return e
-}
-
-func (e *EksaDiagnosticBundle) WithOSFamilies(osFamilies map[v1alpha1.OSFamily]bool) *EksaDiagnosticBundle {
-	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.EksaHostCollectors(osFamilies)...)
 	return e
 }
 

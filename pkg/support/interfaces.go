@@ -33,5 +33,4 @@ type AnalyzerFactory interface {
 
 type CollectorFactory interface {
 	DefaultCollectors() []*Collect
-	EksaHostCollectors(osFamilies map[v1alpha1.OSFamily]bool) []*Collect
 }
