@@ -1261,11 +1261,9 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 	}
 
 	cpOpt := func(values map[string]interface{}) {
-		values["needsNewControlPlaneTemplate"] = needsNewControlPlaneTemplate
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
 		values["vsphereControlPlaneSshAuthorizedKey"] = p.controlPlaneSshAuthKey
 		values["vsphereEtcdSshAuthorizedKey"] = p.etcdSshAuthKey
-		values["needsNewEtcdTemplate"] = needsNewEtcdTemplate
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
@@ -1274,7 +1272,6 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 	}
 
 	mdOpt := func(values map[string]interface{}) {
-		values["needsNewWorkloadTemplate"] = needsNewWorkloadTemplate
 		values["workloadTemplateName"] = workloadTemplateName
 		values["vsphereWorkerSshAuthorizedKey"] = p.workerSshAuthKey
 	}
@@ -1289,11 +1286,9 @@ func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster
 	clusterName := clusterSpec.ObjectMeta.Name
 
 	cpOpt := func(values map[string]interface{}) {
-		values["needsNewControlPlaneTemplate"] = true
 		values["controlPlaneTemplateName"] = p.templateBuilder.CPMachineTemplateName(clusterName)
 		values["vsphereControlPlaneSshAuthorizedKey"] = p.controlPlaneSshAuthKey
 		values["vsphereEtcdSshAuthorizedKey"] = p.etcdSshAuthKey
-		values["needsNewEtcdTemplate"] = clusterSpec.Spec.ExternalEtcdConfiguration != nil
 		values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
@@ -1301,7 +1296,6 @@ func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster
 		return nil, nil, err
 	}
 	mdOpt := func(values map[string]interface{}) {
-		values["needsNewWorkloadTemplate"] = true
 		values["workloadTemplateName"] = p.templateBuilder.WorkerMachineTemplateName(clusterName)
 		values["vsphereWorkerSshAuthorizedKey"] = p.workerSshAuthKey
 	}

@@ -113,7 +113,6 @@ spec:
         name: {{.workloadTemplateName}}
       version: {{.kubernetesVersion}}
 ---
-{{- if .needsNewWorkloadTemplate }}
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereMachineTemplate
 metadata:
@@ -140,4 +139,3 @@ spec:
 {{- end }}
       template: {{.vsphereTemplate}}
       thumbprint: '{{.thumbprint}}'
-{{- end }}

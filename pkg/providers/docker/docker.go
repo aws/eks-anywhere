@@ -272,9 +272,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 	}
 
 	cpOpt := func(values map[string]interface{}) {
-		values["needsNewControlPlaneTemplate"] = needsNewControlPlaneTemplate
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
-		values["needsNewEtcdTemplate"] = needsNewEtcdTemplate
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
@@ -283,7 +281,6 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 	}
 
 	mdOpt := func(values map[string]interface{}) {
-		values["needsNewWorkloadTemplate"] = needsNewWorkloadTemplate
 		values["workloadTemplateName"] = workloadTemplateName
 	}
 	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, mdOpt)
@@ -297,8 +294,6 @@ func (p *provider) generateCAPISpecForCreate(ctx context.Context, cluster *types
 	clusterName := clusterSpec.ObjectMeta.Name
 
 	cpOpt := func(values map[string]interface{}) {
-		values["needsNewControlPlaneTemplate"] = true
-		values["needsNewEtcdTemplate"] = clusterSpec.Spec.ExternalEtcdConfiguration != nil
 		values["controlPlaneTemplateName"] = p.templateBuilder.CPMachineTemplateName(clusterName)
 		values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
 	}
@@ -307,7 +302,6 @@ func (p *provider) generateCAPISpecForCreate(ctx context.Context, cluster *types
 		return nil, nil, err
 	}
 	mdOpt := func(values map[string]interface{}) {
-		values["needsNewWorkloadTemplate"] = true
 		values["workloadTemplateName"] = p.templateBuilder.WorkerMachineTemplateName(clusterName)
 	}
 	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, mdOpt)

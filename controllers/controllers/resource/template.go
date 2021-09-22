@@ -60,13 +60,10 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		vmcSpec.Spec.Users[0].SshAuthorizedKeys = []string{""}
 	}
 	valuesOpt := func(values map[string]interface{}) {
-		values["needsNewControlPlaneTemplate"] = false // not supported in flux
 		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.InfrastructureTemplate.Name
-		values["needsNewWorkloadTemplate"] = updateWorkloadTemplate
 		values["workloadTemplateName"] = workloadTemplateName
 		values["clusterName"] = clusterName
 		values["vsphereWorkerSshAuthorizedKey"] = vmcSpec.Spec.Users[0].SshAuthorizedKeys[0]
-		values["needsNewEtcdTemplate"] = false
 	}
 	return generateTemplateResources(templateBuilder, clusterSpec, valuesOpt)
 }
@@ -107,11 +104,8 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 	}
 	valuesOpt := func(values map[string]interface{}) {
 		values["clusterName"] = clusterSpec.ObjectMeta.Name
-		values["needsNewControlPlaneTemplate"] = false
 		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.InfrastructureTemplate.Name
-		values["needsNewWorkloadTemplate"] = false
 		values["workloadTemplateName"] = mcDeployment.Spec.Template.Spec.InfrastructureRef.Name
-		values["needsNewEtcdTemplate"] = false
 	}
 	return generateTemplateResources(templateBuilder, clusterSpec, valuesOpt)
 }

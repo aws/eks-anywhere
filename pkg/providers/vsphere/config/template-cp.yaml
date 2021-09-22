@@ -59,7 +59,6 @@ spec:
   server: {{.vsphereServer}}
   thumbprint: '{{.thumbprint}}'
 ---
-{{- if .needsNewControlPlaneTemplate }}
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereMachineTemplate
 metadata:
@@ -86,7 +85,6 @@ spec:
 {{- end }}
       template: {{.vsphereTemplate}}
       thumbprint: '{{.thumbprint}}'
-{{- end }}
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
@@ -391,7 +389,6 @@ spec:
     kind: VSphereMachineTemplate
     name: {{.etcdTemplateName}}
 ---
-{{- if .needsNewEtcdTemplate }}
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereMachineTemplate
 metadata:
@@ -419,7 +416,6 @@ spec:
       template: {{.vsphereTemplate}}
       thumbprint: '{{.thumbprint}}'
 ---
-{{- end }}
 {{- end }}
 apiVersion: v1
 kind: Secret

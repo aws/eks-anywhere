@@ -57,6 +57,30 @@ spec:
   server: vsphere_server
   thumbprint: 'ABCDEFG'
 ---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: VSphereMachineTemplate
+metadata:
+  name: test-control-plane-template-original
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      cloneMode: linkedClone
+      datacenter: SDDC-Datacenter
+      datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
+      diskGiB: 25
+      folder: '/SDDC-Datacenter/vm'
+      memoryMiB: 8192
+      network:
+        devices:
+        - dhcp4: true
+          networkName: /SDDC-Datacenter/network/sddc-cgw-network-1
+      numCPUs: 2
+      resourcePool: '*/Resources'
+      server: vsphere_server
+      storagePolicyName: "vSAN Default Storage Policy"
+      template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
+      thumbprint: 'ABCDEFG'
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
@@ -402,6 +426,31 @@ spec:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: VSphereMachineTemplate
     name: test-etcd-template-original
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: VSphereMachineTemplate
+metadata:
+  name: test-etcd-template-original
+  namespace: 'eksa-system'
+spec:
+  template:
+    spec:
+      cloneMode: linkedClone
+      datacenter: SDDC-Datacenter
+      datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
+      diskGiB: 25
+      folder: '/SDDC-Datacenter/vm'
+      memoryMiB: 8192
+      network:
+        devices:
+          - dhcp4: true
+            networkName: /SDDC-Datacenter/network/sddc-cgw-network-1
+      numCPUs: 3
+      resourcePool: '*/Resources'
+      server: vsphere_server
+      storagePolicyName: "vSAN Default Storage Policy"
+      template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
+      thumbprint: 'ABCDEFG'
 ---
 apiVersion: v1
 kind: Secret
