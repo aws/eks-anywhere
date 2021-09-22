@@ -184,7 +184,7 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 	s.eksdRelease = eksd
 	for _, identityProvider := range s.Cluster.Spec.IdentityProviderRefs {
 		if identityProvider.Kind == eksav1alpha1.OIDCConfigKind {
-			oidcConfig, err := eksav1alpha1.GetAndValidateOIDCConfig(clusterConfigPath, identityProvider.Name)
+			oidcConfig, err := eksav1alpha1.GetAndValidateOIDCConfig(clusterConfigPath, identityProvider.Name, clusterConfig)
 			if err != nil {
 				return nil, err
 			}

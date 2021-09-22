@@ -109,6 +109,9 @@ spec:
       containers:
       - name: aws-iam-authenticator
         image: {{.image}}
+        env:
+        - name: AWS_REGION
+          value: "us-east-1"
         args:
         - server
         - --backend-mode={{.backendMode}}
@@ -143,7 +146,7 @@ spec:
       initContainers:
       - name: chown
         image: busybox
-        command: ['sh', '-c', 'chown 10000:10000 /var/aws-iam-authenticator; chown 10000:10000 /etc/kubernetes/aws-iam-authenticator']
+        command: ['sh', '-c', 'chown -R 10000 /var/aws-iam-authenticator; chown -R 10000 /etc/kubernetes/aws-iam-authenticator']
         volumeMounts:
         - name: state
           mountPath: /var/aws-iam-authenticator/
@@ -156,10 +159,10 @@ spec:
           name: aws-iam-authenticator
       - name: output
         hostPath:
-          path: /etc/kubernetes/aws-iam-authenticator/
+          path: /var/lib/kubeadm/aws-iam-authenticator/
       - name: state
         hostPath:
-          path: /var/aws-iam-authenticator/
+          path: /var/lib/kubeadm/aws-iam-authenticator/pki/
 
 ---
 apiVersion: v1
