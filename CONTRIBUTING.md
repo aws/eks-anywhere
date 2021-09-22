@@ -10,12 +10,10 @@ information to effectively respond to your bug report or contribution.
 
 ### Pull Requests
 
-Make sure to keep Pull Requests small and functional to make them easier to review and look up in commit history.
-* This repository uses "Squash and Commit" to keep our log clean and easy to find based on PR
-* Easier to understand each PR functionally
-* Easier to revert changes based on PR
+Make sure to keep Pull Requests small and functional to make them easier to review, understand, and look up in commit history.
+This repository uses "Squash and Commit" to keep our history clean and make it easier to revert changes based on PR.
 
-Adding the appropriate docs/Changelog changes and unit/e2e tests as part of a feature is the responsibility of the
+Adding the appropriate documentation,unit tests and e2e tests as part of a feature is the responsibility of the
 feature owner, whether it is done in the same Pull Request or not.
 
 Pull Requests should follow the "subject: message" format, where the subject describes what part of the code is being
@@ -25,7 +23,7 @@ Refer to the [template](https://github.com/aws/eks-anywhere/blob/main/.github/PU
 
 ### Design Docs
 
-A contributor brings forward a design through a PR to allow for revisions and discussions on the repository.
+A contributor proposes a design with a PR on the repository to allow for revisions and discussions.
 If a design needs to be discussed before formulating a document for it, make use of GitHub Discussions to
 involve the community on the discussion.
 
@@ -42,7 +40,7 @@ Categories:
 
 ### GitHub Issues
 
-Used to file bugs, work items, and feature requests with actionable items/issues (Please refer to the "Reporting Bugs/Feature Requests" section below for more information).
+GitHub Issues are used to file bugs, work items, and feature requests with actionable items/issues (Please refer to the "Reporting Bugs/Feature Requests" section below for more information).
 
 Labels:
 * "\<area\>" - area of project that issue is related to (create, upgrade, flux, test, etc.)
@@ -57,7 +55,7 @@ Refer to the [template](https://github.com/aws/eks-anywhere/tree/main/.github/IS
 
 ### GitHub Milestones
 
-Used to plan work that is currently being tracked.
+GitHub Milestones are used to plan work that is currently being tracked.
 
 * next: changes for next release
 * next+1: won't make next release but the following
