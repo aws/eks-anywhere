@@ -208,6 +208,7 @@ func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) 
 		"kindnetd":                     r.GetKindnetdAssets,
 		"etcdadm":                      r.GetEtcdadmAssets,
 		"cri-tools":                    r.GetCriToolsAssets,
+		"diagnostic-collector":         r.GetDiagnosticCollectorAssets,
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
