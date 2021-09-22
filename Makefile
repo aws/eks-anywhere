@@ -6,7 +6,6 @@ export INTEGRATION_TEST_SUBNET_ID?=integration_test_subnet_id
 export INTEGRATION_TEST_INSTANCE_TAG?=integration_test_instance_tag
 export JOB_ID?=${PROW_JOB_ID}
 GO_TEST ?= go test
-BUILD_LIB?=build/lib
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
 GOLANG_VERSION?="1.16"
@@ -25,6 +24,9 @@ KUSTOMIZE_VERSION := 4.2.0
 
 KUBEBUILDER := $(TOOLS_BIN_DIR)/kubebuilder
 KUBEBUILDER_VERSION := v3.1.0
+
+BUILD_LIB := build/lib
+BUILDKIT := $(BUILD_LIB)/buildkit.sh
 
 CONTROLLER_GEN_BIN := controller-gen
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)
@@ -158,7 +160,7 @@ cluster-controller-tarballs:  cluster-controller-binaries
 
 .PHONY: cluster-controller-local-images
 cluster-controller-local-images: cluster-controller-binaries
-	$(BUILD_LIB)/buildkit.sh \
+	$(BUILDKIT) \
 		build \
 		--frontend dockerfile.v0 \
 		--opt platform=linux/amd64 \
@@ -169,7 +171,7 @@ cluster-controller-local-images: cluster-controller-binaries
 
 .PHONY: cluster-controller-images
 cluster-controller-images: cluster-controller-binaries
-	$(BUILD_LIB)/buildkit.sh \
+	$(BUILDKIT) \
 		build \
 		--frontend dockerfile.v0 \
 		--opt platform=linux/amd64 \
