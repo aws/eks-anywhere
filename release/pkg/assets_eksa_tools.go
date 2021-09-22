@@ -107,7 +107,7 @@ func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev
 		CliTools:            bundleImageArtifacts["eks-anywhere-cli-tools"],
 		Components:          bundleManifestArtifacts["eksa-components.yaml"],
 		ClusterController:   bundleImageArtifacts["eks-anywhere-cluster-controller"],
-		DiagnosticCollector: bundleImageArtifacts["eksa-diagnostic-collector"],
+		DiagnosticCollector: bundleImageArtifacts["eks-anywhere-diagnostic-collector"],
 	}
 
 	return bundle, nil
