@@ -68,7 +68,6 @@ function build::eks-anywhere-cluster-controller::manifests(){
 }
 
 function build::eks-anywhere-cluster-controller::binaries(){
-  cd $REPO_ROOT
   mkdir -p $BIN_PATH
   mkdir -p $KUSTOMIZE_BIN
   build::install::kustomize
