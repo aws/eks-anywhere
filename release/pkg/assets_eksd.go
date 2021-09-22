@@ -41,7 +41,7 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 			sourceS3Key = fmt.Sprintf("%s.ova", osName)
 			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/image-builder/%s/latest", eksDReleaseChannel)
 		} else {
-			sourceS3Key = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%d-%s.ova",
+			sourceS3Key = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%s-%s.ova",
 				osName,
 				kubeVer,
 				eksDReleaseChannel,
@@ -49,7 +49,7 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 				r.BundleNumber,
 				arch,
 			)
-			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/ova/%s", r.BundleNumber, eksDReleaseChannel)
+			sourceS3Prefix = fmt.Sprintf("releases/bundles/%s/artifacts/ova/%s", r.BundleNumber, eksDReleaseChannel)
 		}
 
 		if r.DevRelease {
@@ -68,7 +68,7 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 				eksDReleaseNumber,
 			)
 		} else {
-			releaseName = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%d-%s.ova",
+			releaseName = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%s-%s.ova",
 				osName,
 				kubeVer,
 				eksDReleaseChannel,
@@ -76,7 +76,7 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 				r.BundleNumber,
 				arch,
 			)
-			releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/ova/%s", r.BundleNumber, eksDReleaseChannel)
+			releaseS3Path = fmt.Sprintf("releases/bundles/%s/artifacts/ova/%s", r.BundleNumber, eksDReleaseChannel)
 		}
 
 		cdnURI, err := r.GetURI(filepath.Join(releaseS3Path, releaseName))

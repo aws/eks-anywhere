@@ -81,13 +81,13 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		sourceS3Prefix = "projects/aws/eks-anywhere/latest/manifests/cluster-controller"
 	} else {
-		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/eks-anywhere-cluster-controller/manifests/%s", r.BundleNumber, gitTag)
+		sourceS3Prefix = fmt.Sprintf("releases/bundles/%s/artifacts/eks-anywhere-cluster-controller/manifests/%s", r.BundleNumber, gitTag)
 	}
 
 	if r.DevRelease {
 		releaseS3Path = fmt.Sprintf("artifacts/%s/eks-anywhere/manifests/cluster-controller/%s", r.DevReleaseUriVersion, gitTag)
 	} else {
-		releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/eks-anywhere-cluster-controller/manifests/%s", r.BundleNumber, gitTag)
+		releaseS3Path = fmt.Sprintf("releases/bundles/%s/artifacts/eks-anywhere-cluster-controller/manifests/%s", r.BundleNumber, gitTag)
 	}
 
 	cdnURI, err := r.GetURI(filepath.Join(releaseS3Path, manifest))

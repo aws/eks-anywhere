@@ -21,7 +21,7 @@ import (
 // BundlesSpec defines the desired state of Bundles
 type BundlesSpec struct {
 	// Monotonically increasing release number
-	Number          int              `json:"number"`
+	Number          string           `json:"number"`
 	CliMinVersion   string           `json:"cliMinVersion"`
 	CliMaxVersion   string           `json:"cliMaxVersion"`
 	VersionsBundles []VersionsBundle `json:"versionsBundles"`

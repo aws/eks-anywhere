@@ -212,7 +212,7 @@ func (s *Spec) getVersionsBundle(clusterConfig *eksav1alpha1.Cluster, bundles *v
 			return &versionsBundle, nil
 		}
 	}
-	return nil, fmt.Errorf("kubernetes version %s is not supported by bundles manifest %d", clusterConfig.Spec.KubernetesVersion, bundles.Spec.Number)
+	return nil, fmt.Errorf("kubernetes version %s is not supported by bundles manifest %s", clusterConfig.Spec.KubernetesVersion, bundles.Spec.Number)
 }
 
 func (s *Spec) GetBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {

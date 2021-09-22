@@ -4,9 +4,10 @@ AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output tex
 AWS_REGION=us-west-2
 
 RELEASE_ENVIRONMENT?=development
-RELEASE_VERSION?=$(shell cat triggers/eks-a-release/$(RELEASE_ENVIRONMENT)/RELEASE_VERSION)
+RELEASE_VERSION?=$(shell git show --name-only --pretty=format:'' | sed -n 1p | grep -oe "v\d\+\.\d\+\.\d\+")
+BUNDLE_MANIFEST_VERSION?=$(shell cat triggers/eks-a-release/$(RELEASE_VERSION)/$(RELEASE_ENVIRONMENT)/BUNDLE_MANIFEST_VERSION)
+RELEASE_NUMBER?=$(shell cat triggers/eks-a-release/$(RELEASE_VERSION)/$(RELEASE_ENVIRONMENT)/RELEASE_NUMBER)
 BUNDLE_NUMBER?=$(shell cat triggers/bundle-release/$(RELEASE_ENVIRONMENT)/BUNDLE_NUMBER)
-RELEASE_NUMBER?=$(shell cat triggers/eks-a-release/$(RELEASE_ENVIRONMENT)/RELEASE_NUMBER)
 CLI_MIN_VERSION?=$(shell cat triggers/bundle-release/$(RELEASE_ENVIRONMENT)/CLI_MIN_VERSION)
 CLI_MAX_VERSION?=$(shell cat triggers/bundle-release/$(RELEASE_ENVIRONMENT)/CLI_MAX_VERSION)
 SOURCE_BUCKET?=my-source-bucket
@@ -93,7 +94,7 @@ bundle-release: build ## Perform EKS-A versioned bundles release
 	scripts/bundle-release.sh $(REPO_ROOT)/artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(CLI_MIN_VERSION) $(CLI_MAX_VERSION) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(RELEASE_ENVIRONMENT)
 
 eks-a-release: build ## Perform EKS-A CLI release
-	scripts/eks-a-release.sh $(RELEASE_VERSION) $(REPO_ROOT)/artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(RELEASE_NUMBER) $(RELEASE_ENVIRONMENT)
+	scripts/eks-a-release.sh $(RELEASE_VERSION) $(REPO_ROOT)/artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_MANIFEST_VERSION) $(RELEASE_NUMBER) $(RELEASE_ENVIRONMENT)
 
 ##@ Deployment
 

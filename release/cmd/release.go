@@ -46,7 +46,8 @@ var releaseCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO validation on these flags
 		releaseVersion := viper.GetString("release-version")
-		bundleNumber := viper.GetInt("bundle-number")
+		bundleNumber := viper.GetString("bundle-number")
+		bundleManifestVersion := viper.GetString("bundle-manifest-version")
 		cliMinVersion := viper.GetString("min-version")
 		cliMaxVersion := viper.GetString("max-version")
 		releaseNumber := viper.GetInt("release-number")
@@ -84,6 +85,7 @@ var releaseCmd = &cobra.Command{
 			ReleaseContainerRegistry: releaseContainerRegistry,
 			CDN:                      cdn,
 			BundleNumber:             bundleNumber,
+			BundleManifestVersion:    bundleManifestVersion,
 			ReleaseNumber:            releaseNumber,
 			ReleaseVersion:           releaseVersion,
 			ReleaseDate:              releaseTime,
@@ -185,7 +187,7 @@ var releaseCmd = &cobra.Command{
 
 			bundleReleaseManifestKey := bundleReleaseManifestFile
 			if !devRelease {
-				bundleReleaseManifestKey = fmt.Sprintf("/releases/bundles/%d/manifest.yaml", releaseConfig.BundleNumber)
+				bundleReleaseManifestKey = fmt.Sprintf("/releases/bundles/%s/manifest.yaml", releaseConfig.BundleNumber)
 			}
 			err = pkg.UploadFileToS3(bundleReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(bundleReleaseManifestKey), releaseClients.S3.Uploader)
 			if err != nil {
@@ -303,7 +305,8 @@ func init() {
 	rootCmd.AddCommand(releaseCmd)
 
 	releaseCmd.Flags().String("release-version", "vDev", "The version of eks-a")
-	releaseCmd.Flags().Int("bundle-number", 1, "The bundle version number")
+	releaseCmd.Flags().String("bundle-number", "1", "The bundle version corresponding to a bundle release")
+	releaseCmd.Flags().String("bundle-manifest-version", "1", "The bundle manifest version that is referenced by an eks-a-release")
 	releaseCmd.Flags().String("min-version", "v0.0.0", "The minimum version of eks-a supported by dependency bundles")
 	releaseCmd.Flags().String("max-version", "v0.0.0", "The maximum version of eks-a supported by dependency bundles")
 	releaseCmd.Flags().Int("release-number", 1, "The release-number to create")
