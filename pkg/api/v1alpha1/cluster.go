@@ -19,7 +19,7 @@ import (
 
 const (
 	ClusterKind         = "Cluster"
-	YamlSeparator       = "---"
+	YamlSeparator       = "\n---\n"
 	RegistryMirrorCAKey = "EKSA_REGISTRY_MIRROR_CA"
 )
 
