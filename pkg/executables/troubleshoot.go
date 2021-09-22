@@ -34,7 +34,7 @@ func (t *Troubleshoot) Collect(ctx context.Context, bundlePath string, sinceTime
 	if err != nil {
 		return "", fmt.Errorf("error when executing support-bundle: %v", err)
 	}
-	archivePath, err = parseArchivePathFromCollectOutput(output.String())
+	archivePath, err = parseCollectOutput(output.String())
 	if err != nil {
 		return "", fmt.Errorf("error when parsing support-bundle output: %v", err)
 	}
@@ -55,7 +55,7 @@ func (t *Troubleshoot) Analyze(ctx context.Context, bundleSpecPath string, archi
 	return analysisOutput, err
 }
 
-func parseArchivePathFromCollectOutput(tsLogs string) (archivePath string, err error) {
+func parseCollectOutput(tsLogs string) (archivePath string, err error) {
 	r, err := regexp.Compile(supportBundleArchiveRegex)
 	if err != nil {
 		return "", fmt.Errorf("error parsing support-bundle output: %v", err)

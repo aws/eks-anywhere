@@ -1,9 +1,18 @@
 package supportbundle
 
-type collectorFactory struct{}
+import (
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
+)
 
-func NewCollectorFactory() *collectorFactory {
-	return &collectorFactory{}
+type collectorFactory struct {
+	DiagnosticCollectorImage string
+}
+
+func NewCollectorFactory(diagnosticCollectorImage string) *collectorFactory {
+	return &collectorFactory{
+		DiagnosticCollectorImage: diagnosticCollectorImage,
+	}
 }
 
 func (c *collectorFactory) DefaultCollectors() []*Collect {
@@ -98,6 +107,47 @@ func (c *collectorFactory) DefaultCollectors() []*Collect {
 			Logs: &logs{
 				Namespace: "kube-system",
 				Name:      "logs/kube-system",
+			},
+		},
+	}
+}
+
+func (c *collectorFactory) EksaHostCollectors(osFamilies map[v1alpha1.OSFamily]bool) []*Collect {
+	for family := range osFamilies {
+		switch family {
+		case v1alpha1.Ubuntu:
+			return c.ubuntuHostCollectors()
+		}
+	}
+	return nil
+}
+
+func (c *collectorFactory) ubuntuHostCollectors() []*Collect {
+	return []*Collect{
+		{
+			CopyFromHost: &copyFromHost{
+				Name:      "CloudInitLog",
+				Namespace: constants.EksaSystemNamespace,
+				Image:     c.DiagnosticCollectorImage,
+				HostPath:  "/var/log/cloud-init.log",
+			},
+		},
+		{
+			CopyFromHost: &copyFromHost{
+				Name:      "CloudInitOutputLog",
+				Namespace: constants.EksaSystemNamespace,
+				Image:     c.DiagnosticCollectorImage,
+				HostPath:  "/var/log/cloud-init-output.log",
+			},
+		},
+		{
+			Exec: &exec{
+				Name:          "KubeletLogs",
+				Namespace:     constants.EksaSystemNamespace,
+				ContainerName: c.DiagnosticCollectorImage,
+				Command:       []string{"journalctl"},
+				Args:          []string{"-u", "kubelet"},
+				Timeout:       "20",
 			},
 		},
 	}

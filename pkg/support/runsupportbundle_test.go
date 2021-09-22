@@ -9,6 +9,8 @@ import (
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter/mocks"
+	"github.com/aws/eks-anywhere/pkg/providers"
+	providerMocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	support "github.com/aws/eks-anywhere/pkg/support"
 	supportMocks "github.com/aws/eks-anywhere/pkg/support/interfaces/mocks"
 )
@@ -99,6 +101,9 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 	}
 
 	t.Run(t.Name(), func(t *testing.T) {
+		p := givenProvider(t)
+		p.EXPECT().MachineConfigs().Return(machineConfigs())
+
 		a := givenMockAnalyzerFactory(t)
 		a.EXPECT().EksaExternalEtcdAnalyzers().Return(nil)
 		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
@@ -106,6 +111,7 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
+		c.EXPECT().EksaHostCollectors(gomock.Any()).Return(nil)
 
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any())
@@ -113,11 +119,10 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 		opts := support.EksaDiagnosticBundleOpts{
 			AnalyzerFactory:  a,
 			CollectorFactory: c,
-			ClusterSpec:      spec,
 			Writer:           w,
 		}
 
-		_, _ = support.NewDiagnosticBundleFromSpec(opts)
+		_, _ = support.NewDiagnosticBundleFromSpec(spec, p, "", opts)
 	})
 }
 
@@ -144,6 +149,9 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 	}
 
 	t.Run(t.Name(), func(t *testing.T) {
+		p := givenProvider(t)
+		p.EXPECT().MachineConfigs().Return(machineConfigs())
+
 		a := givenMockAnalyzerFactory(t)
 		a.EXPECT().EksaOidcAnalyzers().Return(nil)
 		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
@@ -154,15 +162,15 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
+		c.EXPECT().EksaHostCollectors(gomock.Any()).Return(nil)
 
 		opts := support.EksaDiagnosticBundleOpts{
 			AnalyzerFactory:  a,
 			CollectorFactory: c,
-			ClusterSpec:      spec,
 			Writer:           w,
 		}
 
-		_, _ = support.NewDiagnosticBundleFromSpec(opts)
+		_, _ = support.NewDiagnosticBundleFromSpec(spec, p, "", opts)
 	})
 }
 
@@ -189,6 +197,9 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 	}
 
 	t.Run(t.Name(), func(t *testing.T) {
+		p := givenProvider(t)
+		p.EXPECT().MachineConfigs().Return(machineConfigs())
+
 		a := givenMockAnalyzerFactory(t)
 		a.EXPECT().EksaGitopsAnalyzers().Return(nil)
 		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
@@ -199,15 +210,15 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
+		c.EXPECT().EksaHostCollectors(gomock.Any()).Return(nil)
 
 		opts := support.EksaDiagnosticBundleOpts{
 			AnalyzerFactory:  a,
 			CollectorFactory: c,
-			ClusterSpec:      spec,
 			Writer:           w,
 		}
 
-		_, _ = support.NewDiagnosticBundleFromSpec(opts)
+		_, _ = support.NewDiagnosticBundleFromSpec(spec, p, "", opts)
 	})
 }
 
@@ -225,7 +236,7 @@ func TestGenerateDefaultBundle(t *testing.T) {
 
 func TestGenerateCustomBundle(t *testing.T) {
 	t.Run(t.Name(), func(t *testing.T) {
-		_ = support.NewDiagnosticBundleCustom(getOpts(t))
+		_ = support.NewDiagnosticBundleCustom("", "", getOpts(t))
 	})
 }
 
@@ -249,4 +260,14 @@ func getOpts(t *testing.T) support.EksaDiagnosticBundleOpts {
 func givenWriter(t *testing.T) *mocks.MockFileWriter {
 	ctrl := gomock.NewController(t)
 	return mocks.NewMockFileWriter(ctrl)
+}
+
+func givenProvider(t *testing.T) *providerMocks.MockProvider {
+	ctrl := gomock.NewController(t)
+	return providerMocks.NewMockProvider(ctrl)
+}
+
+func machineConfigs() []providers.MachineConfig {
+	var m []providers.MachineConfig
+	return m
 }

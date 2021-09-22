@@ -318,3 +318,17 @@ func (mr *MockCollectorFactoryMockRecorder) DefaultCollectors() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DefaultCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).DefaultCollectors))
 }
+
+// EksaHostCollectors mocks base method.
+func (m *MockCollectorFactory) EksaHostCollectors(osFamilies map[v1alpha1.OSFamily]bool) []*supportbundle.Collect {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EksaHostCollectors", osFamilies)
+	ret0, _ := ret[0].([]*supportbundle.Collect)
+	return ret0
+}
+
+// EksaHostCollectors indicates an expected call of EksaHostCollectors.
+func (mr *MockCollectorFactoryMockRecorder) EksaHostCollectors(osFamilies interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EksaHostCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).EksaHostCollectors), osFamilies)
+}
