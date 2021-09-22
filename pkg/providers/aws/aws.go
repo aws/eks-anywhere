@@ -31,10 +31,10 @@ const (
 )
 
 //go:embed config/template-cp.yaml
-var defaultCapiConfigCP string
+var defaultCAPIConfigCP string
 
 //go:embed config/template-md.yaml
-var defaultCapiConfigMD string
+var defaultCAPIConfigMD string
 
 var requiredEnvVars = []string{
 	"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION",
@@ -171,13 +171,13 @@ func (a *AwsTemplateBuilder) CPMachineTemplateName(clusterName string) string {
 	return fmt.Sprintf("%s-control-plane-template-%d", clusterName, t)
 }
 
-func (a *AwsTemplateBuilder) GenerateCapiSpecCP(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+func (a *AwsTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	values := buildTemplateMapCP(clusterSpec, *a.awsSpec)
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
 
-	bytes, err := templater.Execute(defaultCapiConfigCP, values)
+	bytes, err := templater.Execute(defaultCAPIConfigCP, values)
 	if err != nil {
 		return nil, err
 	}
@@ -185,13 +185,13 @@ func (a *AwsTemplateBuilder) GenerateCapiSpecCP(clusterSpec *cluster.Spec, build
 	return bytes, nil
 }
 
-func (a *AwsTemplateBuilder) GenerateCapiSpecMD(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+func (a *AwsTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	values := buildTemplateMapMD(clusterSpec, *a.awsSpec)
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
 
-	bytes, err := templater.Execute(defaultCapiConfigMD, values)
+	bytes, err := templater.Execute(defaultCAPIConfigMD, values)
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +265,7 @@ func NeedsNewWorkloadTemplate(oldC, newC *v1alpha1.Cluster, oldAc, newAc *v1alph
 	return false
 }
 
-func (p *provider) generateCapiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.ObjectMeta.Name
 	var controlPlaneTemplateName string
 	var workloadTemplateName string
@@ -305,7 +305,7 @@ func (p *provider) generateCapiSpecForUpgrade(ctx context.Context, bootstrapClus
 		values["needsNewControlPlaneTemplate"] = needsNewControlPlaneTemplate
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
 	}
-	cp, err := p.templateBuilder.GenerateCapiSpecCP(clusterSpec, cpOpt)
+	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -314,21 +314,21 @@ func (p *provider) generateCapiSpecForUpgrade(ctx context.Context, bootstrapClus
 		values["needsNewWorkloadTemplate"] = needsNewWorkloadTemplate
 		values["workloadTemplateName"] = workloadTemplateName
 	}
-	md, err := p.templateBuilder.GenerateCapiSpecMD(clusterSpec, mdOpt)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, mdOpt)
 	if err != nil {
 		return nil, nil, err
 	}
-	return cp, md, nil
+	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *provider) generateCapiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+func (p *provider) generateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.ObjectMeta.Name
 
 	cpOpt := func(values map[string]interface{}) {
 		values["needsNewControlPlaneTemplate"] = true
 		values["controlPlaneTemplateName"] = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}
-	cp, err := p.templateBuilder.GenerateCapiSpecCP(clusterSpec, cpOpt)
+	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -336,27 +336,27 @@ func (p *provider) generateCapiSpecForCreate(ctx context.Context, cluster *types
 		values["needsNewWorkloadTemplate"] = true
 		values["workloadTemplateName"] = p.templateBuilder.WorkerMachineTemplateName(clusterName)
 	}
-	md, err := p.templateBuilder.GenerateCapiSpecMD(clusterSpec, mdOpt)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, mdOpt)
 	if err != nil {
 		return nil, nil, err
 	}
-	return cp, md, nil
+	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *provider) GenerateCapiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
-	cp, md, err := p.generateCapiSpecForCreate(ctx, cluster, clusterSpec)
+func (p *provider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
 	}
-	return cp, md, nil
+	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *provider) GenerateCapiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
-	cp, md, err := p.generateCapiSpecForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec)
+func (p *provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
 	}
-	return cp, md, nil
+	return controlPlaneSpec, workersSpec, nil
 }
 
 func (p *provider) GenerateStorageClass() []byte {

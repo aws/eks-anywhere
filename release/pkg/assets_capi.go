@@ -23,9 +23,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-// GetCapiAssets returns the eks-a artifacts for cluster-api
-func (r *ReleaseConfig) GetCapiAssets() ([]Artifact, error) {
-	gitTag, err := r.getCapiGitTag()
+// GetCAPIAssets returns the eks-a artifacts for cluster-api
+func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
+	gitTag, err := r.getCAPIGitTag()
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -123,11 +123,11 @@ func (r *ReleaseConfig) GetCapiAssets() ([]Artifact, error) {
 
 func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) (anywherev1alpha1.CoreClusterAPI, error) {
 	coreClusterAPIBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"cluster-api": r.GetCapiAssets,
+		"cluster-api": r.GetCAPIAssets,
 		"kube-proxy":  r.GetKubeRbacProxyAssets,
 	}
 
-	version, err := r.getCapiGitTag()
+	version, err := r.getCAPIGitTag()
 	if err != nil {
 		return anywherev1alpha1.CoreClusterAPI{}, errors.Wrapf(err, "Error getting git tag for cluster-api")
 	}
@@ -187,11 +187,11 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 
 func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string) (anywherev1alpha1.KubeadmBootstrapBundle, error) {
 	kubeadmBootstrapBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"cluster-api": r.GetCapiAssets,
+		"cluster-api": r.GetCAPIAssets,
 		"kube-proxy":  r.GetKubeRbacProxyAssets,
 	}
 
-	version, err := r.getCapiGitTag()
+	version, err := r.getCAPIGitTag()
 	if err != nil {
 		return anywherev1alpha1.KubeadmBootstrapBundle{}, errors.Wrapf(err, "Error getting git tag for cluster-api")
 	}
@@ -251,11 +251,11 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 
 func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]string) (anywherev1alpha1.KubeadmControlPlaneBundle, error) {
 	kubeadmControlPlaneBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"cluster-api": r.GetCapiAssets,
+		"cluster-api": r.GetCAPIAssets,
 		"kube-proxy":  r.GetKubeRbacProxyAssets,
 	}
 
-	version, err := r.getCapiGitTag()
+	version, err := r.getCAPIGitTag()
 	if err != nil {
 		return anywherev1alpha1.KubeadmControlPlaneBundle{}, errors.Wrapf(err, "Error getting git tag for cluster-api")
 	}
@@ -313,7 +313,7 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 	return bundle, nil
 }
 
-func (r *ReleaseConfig) getCapiGitTag() (string, error) {
+func (r *ReleaseConfig) getCAPIGitTag() (string, error) {
 	projectSource := "projects/kubernetes-sigs/cluster-api"
 	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
 	gitTag, err := readFile(tagFile)

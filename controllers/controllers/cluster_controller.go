@@ -34,12 +34,12 @@ func NewClusterReconciler(client client.Client, log logr.Logger, scheme *runtime
 		Scheme: scheme,
 		reconcilers: []resource.Reconciler{
 			resource.NewClusterReconciler(
-				resource.NewCapiResourceFetcher(client, log),
-				resource.NewCapiResourceUpdater(client, log),
+				resource.NewCAPIResourceFetcher(client, log),
+				resource.NewCAPIResourceUpdater(client, log),
 				time.Now,
 				log),
 		},
-		resourceFetcher: resource.NewCapiResourceFetcher(client, log),
+		resourceFetcher: resource.NewCAPIResourceFetcher(client, log),
 	}
 }
 

@@ -246,7 +246,7 @@ func TestNewProvider(t *testing.T) {
 	}
 }
 
-func TestProviderGenerateCapiSpecForUpgradeUpdateMachineTemplate(t *testing.T) {
+func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 	tests := []struct {
 		testName          string
 		clusterconfigFile string
@@ -299,7 +299,7 @@ func TestProviderGenerateCapiSpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 				t.Fatalf("failed to setup and validate: %v", err)
 			}
 
-			cp, md, err := provider.GenerateCapiSpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec)
+			cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec)
 			if err != nil {
 				t.Fatalf("failed to generate cluster api spec contents: %v", err)
 			}
@@ -310,7 +310,7 @@ func TestProviderGenerateCapiSpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 	}
 }
 
-func TestProviderGenerateCapiSpecForUpgradeOIDC(t *testing.T) {
+func TestProviderGenerateCAPISpecForUpgradeOIDC(t *testing.T) {
 	tests := []struct {
 		testName          string
 		clusterconfigFile string
@@ -366,7 +366,7 @@ func TestProviderGenerateCapiSpecForUpgradeOIDC(t *testing.T) {
 				t.Fatalf("failed to setup and validate: %v", err)
 			}
 
-			cp, _, err := provider.GenerateCapiSpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec)
+			cp, _, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec)
 			if err != nil {
 				t.Fatalf("failed to generate cluster api spec contents: %v", err)
 			}
@@ -376,7 +376,7 @@ func TestProviderGenerateCapiSpecForUpgradeOIDC(t *testing.T) {
 	}
 }
 
-func TestProviderGenerateCapiSpecForUpgradeUpdateMachineTemplateExternalEtcd(t *testing.T) {
+func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *testing.T) {
 	tests := []struct {
 		testName          string
 		clusterconfigFile string
@@ -431,7 +431,7 @@ func TestProviderGenerateCapiSpecForUpgradeUpdateMachineTemplateExternalEtcd(t *
 				t.Fatalf("failed to setup and validate: %v", err)
 			}
 
-			cp, md, err := provider.GenerateCapiSpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec)
+			cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec)
 			if err != nil {
 				t.Fatalf("failed to generate cluster api spec contents: %v", err)
 			}
@@ -442,7 +442,7 @@ func TestProviderGenerateCapiSpecForUpgradeUpdateMachineTemplateExternalEtcd(t *
 	}
 }
 
-func TestProviderGenerateCapiSpecForUpgradeNotUpdateMachineTemplate(t *testing.T) {
+func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	var tctx testContext
 	tctx.SaveContext()
@@ -507,7 +507,7 @@ func TestProviderGenerateCapiSpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 	kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldCP, nil)
 	kubectl.EXPECT().GetMachineDeployment(ctx, cluster, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldMD, nil)
 	kubectl.EXPECT().GetEtcdadmCluster(ctx, cluster, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(etcdadmCluster, nil)
-	cp, md, err := provider.GenerateCapiSpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec)
+	cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec)
 	if err != nil {
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
@@ -516,7 +516,7 @@ func TestProviderGenerateCapiSpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_no_machinetemplate_update_md.yaml")
 }
 
-func TestProviderGenerateCapiSpecForCreate(t *testing.T) {
+func TestProviderGenerateCAPISpecForCreate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	var tctx testContext
 	tctx.SaveContext()
@@ -541,7 +541,7 @@ func TestProviderGenerateCapiSpecForCreate(t *testing.T) {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
 
-	cp, md, err := provider.GenerateCapiSpecForCreate(context.Background(), cluster, clusterSpec)
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
 	if err != nil {
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
@@ -558,7 +558,7 @@ func TestProviderGenerateStorageClass(t *testing.T) {
 	}
 }
 
-func TestProviderGenerateCapiSpecForCreateWithBottlerocketAndExternalEtcd(t *testing.T) {
+func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *testing.T) {
 	clusterSpecManifest := "cluster_bottlerocket_external_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
@@ -577,7 +577,7 @@ func TestProviderGenerateCapiSpecForCreateWithBottlerocketAndExternalEtcd(t *tes
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
 
-	cp, md, err := provider.GenerateCapiSpecForCreate(context.Background(), cluster, clusterSpec)
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
 	if err != nil {
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
@@ -605,7 +605,7 @@ func TestProviderGenerateDeploymentFileWithMirrorConfig(t *testing.T) {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
 
-	cp, md, err := provider.GenerateCapiSpecForCreate(context.Background(), cluster, clusterSpec)
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
 	if err != nil {
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}

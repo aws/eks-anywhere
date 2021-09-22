@@ -72,11 +72,11 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 }
 
 func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) ([]*unstructured.Unstructured, error) {
-	cp, err := builder.GenerateCapiSpecCP(clusterSpec, buildOptions...)
+	cp, err := builder.GenerateCAPISpecControlPlane(clusterSpec, buildOptions...)
 	if err != nil {
 		return nil, err
 	}
-	md, err := builder.GenerateCapiSpecMD(clusterSpec, buildOptions...)
+	md, err := builder.GenerateCAPISpecWorkers(clusterSpec, buildOptions...)
 	if err != nil {
 		return nil, err
 	}

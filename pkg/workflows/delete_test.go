@@ -66,7 +66,7 @@ func (c *deleteTestSetup) expectCreateBootstrap() {
 			c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
 		).Return(c.bootstrapCluster, nil),
 
-		c.clusterManager.EXPECT().InstallCapi(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider),
+		c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider),
 	)
 }
 
@@ -96,7 +96,7 @@ func (c *deleteTestSetup) expectCleanupGitRepo() {
 
 func (c *deleteTestSetup) expectMoveManagement() {
 	gomock.InOrder(
-		c.clusterManager.EXPECT().MoveCapi(
+		c.clusterManager.EXPECT().MoveCAPI(
 			c.ctx, c.workloadCluster, c.bootstrapCluster, gomock.Any(),
 		),
 	)

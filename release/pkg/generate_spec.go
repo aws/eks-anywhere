@@ -191,7 +191,7 @@ func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) 
 	artifactsTable := map[string][]Artifact{}
 	eksAArtifactsFuncs := map[string]func() ([]Artifact, error){
 		"eks-a-tools":                  r.GetEksAToolsAssets,
-		"cluster-api":                  r.GetCapiAssets,
+		"cluster-api":                  r.GetCAPIAssets,
 		"cluster-api-provider-aws":     r.GetCapaAssets,
 		"cluster-api-provider-docker":  r.GetDockerAssets,
 		"cluster-api-provider-vsphere": r.GetCapvAssets,

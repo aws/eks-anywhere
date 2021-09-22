@@ -16,7 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-func TestProviderGenerateCapiSpecForUpgradeSuccess(t *testing.T) {
+func TestProviderGenerateCAPISpecForUpgradeSuccess(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
 	tests := []struct {
@@ -132,9 +132,9 @@ func TestProviderGenerateCapiSpecForUpgradeSuccess(t *testing.T) {
 			}
 			kubectl.EXPECT().GetEksaCluster(ctx, cluster).Return(oriCluster, nil)
 			kubectl.EXPECT().GetEksaAWSDatacenterConfig(ctx, tt.providerConfig.Name, cluster.KubeconfigFile, tt.clusterSpec.Namespace).Return(&tt.providerConfig, nil)
-			cp, md, err := p.GenerateCapiSpecForUpgrade(ctx, bootstrapCluster, cluster, tt.clusterSpec)
+			cp, md, err := p.GenerateCAPISpecForUpgrade(ctx, bootstrapCluster, cluster, tt.clusterSpec)
 			if err != nil {
-				t.Fatalf("provider.GenerateCapiSpecForUpgrade() error = %v, wantErr nil", err)
+				t.Fatalf("provider.GenerateCAPISpecForUpgrade() error = %v, wantErr nil", err)
 			}
 
 			test.AssertContentToFile(t, string(cp), tt.wantCPFile)

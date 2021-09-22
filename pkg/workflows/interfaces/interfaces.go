@@ -16,11 +16,11 @@ type Bootstrapper interface {
 }
 
 type ClusterManager interface {
-	MoveCapi(ctx context.Context, from, to *types.Cluster, checkers ...types.NodeReadyChecker) error
+	MoveCAPI(ctx context.Context, from, to *types.Cluster, checkers ...types.NodeReadyChecker) error
 	CreateWorkloadCluster(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) (*types.Cluster, error)
 	UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error
-	InstallCapi(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
+	InstallCAPI(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
 	InstallNetworking(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	InstallStorageClass(ctx context.Context, cluster *types.Cluster, provider providers.Provider) error
 	SaveLogs(ctx context.Context, cluster *types.Cluster) error

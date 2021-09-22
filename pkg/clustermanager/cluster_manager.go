@@ -31,7 +31,7 @@ const (
 	machineMaxWait    = 10 * time.Minute
 	machineBackoff    = 1 * time.Second
 	machinesMinWait   = 30 * time.Minute
-	moveCapiWait      = 5 * time.Minute
+	moveCAPIWait      = 5 * time.Minute
 	logDir            = "logs"
 	ctrlPlaneWaitStr  = "60m"
 	etcdWaitStr       = "60m"
@@ -105,7 +105,7 @@ func WithWaitForMachines(machineBackoff, machineMaxWait, machinesMinWait time.Du
 	}
 }
 
-func (c *ClusterManager) MoveCapi(ctx context.Context, from, to *types.Cluster, checkers ...types.NodeReadyChecker) error {
+func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, checkers ...types.NodeReadyChecker) error {
 	logger.V(3).Info("Waiting for management machines to be ready before move")
 	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
 	if err := c.waitForNodesReady(ctx, from, labels, checkers...); err != nil {
@@ -118,7 +118,7 @@ func (c *ClusterManager) MoveCapi(ctx context.Context, from, to *types.Cluster, 
 	}
 
 	logger.V(3).Info("Waiting for control planes to be ready after move")
-	err = c.waitForAllControlPlanes(ctx, to, moveCapiWait)
+	err = c.waitForAllControlPlanes(ctx, to, moveCAPIWait)
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func (c *ClusterManager) MoveCapi(ctx context.Context, from, to *types.Cluster, 
 	return nil
 }
 
-func (c *ClusterManager) writeCapiSpecFile(clusterName string, content []byte) error {
+func (c *ClusterManager) writeCAPISpecFile(clusterName string, content []byte) error {
 	fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterName)
 	if _, err := c.writer.Write(fileName, content); err != nil {
 		return fmt.Errorf("error writing capi spec file: %v", err)
@@ -148,14 +148,14 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		Name: managementCluster.Name,
 	}
 
-	cpContent, mdContent, err := provider.GenerateCapiSpecForCreate(ctx, workloadCluster, clusterSpec)
+	cpContent, mdContent, err := provider.GenerateCAPISpecForCreate(ctx, workloadCluster, clusterSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error generating capi spec: %v", err)
 	}
 
 	content := templater.AppendYamlResources(cpContent, mdContent)
 
-	if err = c.writeCapiSpecFile(clusterSpec.ObjectMeta.Name, content); err != nil {
+	if err = c.writeCAPISpecFile(clusterSpec.ObjectMeta.Name, content); err != nil {
 		return nil, err
 	}
 
@@ -235,12 +235,12 @@ func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, c
 }
 
 func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
-	cpContent, mdContent, err := provider.GenerateCapiSpecForUpgrade(ctx, managementCluster, workloadCluster, clusterSpec)
+	cpContent, mdContent, err := provider.GenerateCAPISpecForUpgrade(ctx, managementCluster, workloadCluster, clusterSpec)
 	if err != nil {
 		return fmt.Errorf("error generating capi spec: %v", err)
 	}
 
-	if err = c.writeCapiSpecFile(clusterSpec.ObjectMeta.Name, templater.AppendYamlResources(cpContent, mdContent)); err != nil {
+	if err = c.writeCAPISpecFile(clusterSpec.ObjectMeta.Name, templater.AppendYamlResources(cpContent, mdContent)); err != nil {
 		return err
 	}
 
@@ -307,7 +307,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for workload cluster capi components to be ready after upgrade")
-	err = c.waitForCapi(ctx, workloadCluster, provider, externalEtcdTopology)
+	err = c.waitForCAPI(ctx, workloadCluster, provider, externalEtcdTopology)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster capi components to be ready: %v", err)
 	}
@@ -387,17 +387,17 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 	return false, nil
 }
 
-func (c *ClusterManager) InstallCapi(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {
+func (c *ClusterManager) InstallCAPI(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {
 	err := c.clusterClient.InitInfrastructure(ctx, clusterSpec, cluster, provider)
 	if err != nil {
 		return fmt.Errorf("error initializing capi resources in cluster: %v", err)
 	}
 
-	return c.waitForCapi(ctx, cluster, provider, clusterSpec.Spec.ExternalEtcdConfiguration != nil)
+	return c.waitForCAPI(ctx, cluster, provider, clusterSpec.Spec.ExternalEtcdConfiguration != nil)
 }
 
-func (c *ClusterManager) waitForCapi(ctx context.Context, cluster *types.Cluster, provider providers.Provider, externalEtcdTopology bool) error {
-	err := c.waitForDeployments(ctx, internal.CapiDeployments, cluster)
+func (c *ClusterManager) waitForCAPI(ctx context.Context, cluster *types.Cluster, provider providers.Provider, externalEtcdTopology bool) error {
+	err := c.waitForDeployments(ctx, internal.CAPIDeployments, cluster)
 	if err != nil {
 		return err
 	}

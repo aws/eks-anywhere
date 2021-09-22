@@ -15,8 +15,8 @@ type Provider interface {
 	SetupAndValidateDeleteCluster(ctx context.Context) error
 	SetupAndValidateUpgradeCluster(ctx context.Context, clusterSpec *cluster.Spec) error
 	UpdateSecrets(ctx context.Context, cluster *types.Cluster) error
-	GenerateCapiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error)
-	GenerateCapiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error)
+	GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
+	GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
 	GenerateStorageClass() []byte
 	BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error
 	CleanupProviderInfrastructure(ctx context.Context) error
@@ -43,8 +43,8 @@ type DatacenterConfig interface {
 type BuildMapOption func(map[string]interface{})
 
 type TemplateBuilder interface {
-	GenerateCapiSpecCP(clusterSpec *cluster.Spec, buildOptions ...BuildMapOption) (content []byte, err error)
-	GenerateCapiSpecMD(clusterSpec *cluster.Spec, buildOptions ...BuildMapOption) (content []byte, err error)
+	GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...BuildMapOption) (content []byte, err error)
+	GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, buildOptions ...BuildMapOption) (content []byte, err error)
 	WorkerMachineTemplateName(clusterName string) string
 	CPMachineTemplateName(clusterName string) string
 }

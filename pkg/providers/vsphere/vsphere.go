@@ -61,7 +61,7 @@ const (
 )
 
 //go:embed config/template-cp.yaml
-var defaultCapiConfigCP string
+var defaultCAPIConfigCP string
 
 //go:embed config/template-md.yaml
 var defaultClusterConfigMD string
@@ -992,7 +992,7 @@ func (vs *VsphereTemplateBuilder) EtcdMachineTemplateName(clusterName string) st
 	return fmt.Sprintf("%s-etcd-template-%d", clusterName, t)
 }
 
-func (vs *VsphereTemplateBuilder) GenerateCapiSpecCP(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+func (vs *VsphereTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	var etcdMachineSpec v1alpha1.VSphereMachineConfigSpec
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *vs.etcdMachineSpec
@@ -1003,7 +1003,7 @@ func (vs *VsphereTemplateBuilder) GenerateCapiSpecCP(clusterSpec *cluster.Spec, 
 		buildOption(values)
 	}
 
-	bytes, err := templater.Execute(defaultCapiConfigCP, values)
+	bytes, err := templater.Execute(defaultCAPIConfigCP, values)
 	if err != nil {
 		return nil, err
 	}
@@ -1011,7 +1011,7 @@ func (vs *VsphereTemplateBuilder) GenerateCapiSpecCP(clusterSpec *cluster.Spec, 
 	return bytes, nil
 }
 
-func (vs *VsphereTemplateBuilder) GenerateCapiSpecMD(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	values := buildTemplateMapMD(clusterSpec, *vs.datacenterSpec, *vs.workerNodeGroupMachineSpec)
 
 	for _, buildOption := range buildOptions {
@@ -1030,10 +1030,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
-	/*
-	 * These values are for testing only. This data should probably be pulled from a configuration file
-	 * and I'm not sure how we'd handle secrets in a safe way for that.
-	 */
 	values := map[string]interface{}{
 		"clusterName":                          clusterSpec.ObjectMeta.Name,
 		"controlPlaneEndpointIp":               clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -1130,10 +1126,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
-	/*
-	 * These values are for testing only. This data should probably be pulled from a configuration file
-	 * and I'm not sure how we'd handle secrets in a safe way for that.
-	 */
 	values := map[string]interface{}{
 		"clusterName":                    clusterSpec.ObjectMeta.Name,
 		"kubernetesVersion":              bundle.KubeDistro.Kubernetes.Tag,
@@ -1193,7 +1185,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	return values
 }
 
-func (p *vsphereProvider) generateCapiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.ObjectMeta.Name
 	var controlPlaneTemplateName, workloadTemplateName, etcdTemplateName string
 	var needsNewEtcdTemplate bool
@@ -1276,7 +1268,7 @@ func (p *vsphereProvider) generateCapiSpecForUpgrade(ctx context.Context, bootst
 		values["needsNewEtcdTemplate"] = needsNewEtcdTemplate
 		values["etcdTemplateName"] = etcdTemplateName
 	}
-	cp, err := p.templateBuilder.GenerateCapiSpecCP(clusterSpec, cpOpt)
+	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1286,14 +1278,14 @@ func (p *vsphereProvider) generateCapiSpecForUpgrade(ctx context.Context, bootst
 		values["workloadTemplateName"] = workloadTemplateName
 		values["vsphereWorkerSshAuthorizedKey"] = p.workerSshAuthKey
 	}
-	md, err := p.templateBuilder.GenerateCapiSpecMD(clusterSpec, mdOpt)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, mdOpt)
 	if err != nil {
 		return nil, nil, err
 	}
-	return cp, md, nil
+	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *vsphereProvider) generateCapiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
+func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.ObjectMeta.Name
 
 	cpOpt := func(values map[string]interface{}) {
@@ -1304,7 +1296,7 @@ func (p *vsphereProvider) generateCapiSpecForCreate(ctx context.Context, cluster
 		values["needsNewEtcdTemplate"] = clusterSpec.Spec.ExternalEtcdConfiguration != nil
 		values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
 	}
-	cp, err := p.templateBuilder.GenerateCapiSpecCP(clusterSpec, cpOpt)
+	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1313,27 +1305,27 @@ func (p *vsphereProvider) generateCapiSpecForCreate(ctx context.Context, cluster
 		values["workloadTemplateName"] = p.templateBuilder.WorkerMachineTemplateName(clusterName)
 		values["vsphereWorkerSshAuthorizedKey"] = p.workerSshAuthKey
 	}
-	md, err := p.templateBuilder.GenerateCapiSpecMD(clusterSpec, mdOpt)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, mdOpt)
 	if err != nil {
 		return nil, nil, err
 	}
-	return cp, md, nil
+	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *vsphereProvider) GenerateCapiSpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
-	cp, md, err := p.generateCapiSpecForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec)
+func (p *vsphereProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
 	}
-	return cp, md, nil
+	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *vsphereProvider) GenerateCapiSpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) ([]byte, []byte, error) {
-	cp, md, err := p.generateCapiSpecForCreate(ctx, cluster, clusterSpec)
+func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
 	}
-	return cp, md, nil
+	return controlPlaneSpec, workersSpec, nil
 }
 
 func (p *vsphereProvider) GenerateStorageClass() []byte {

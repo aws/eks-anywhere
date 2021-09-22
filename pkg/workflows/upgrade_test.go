@@ -88,7 +88,7 @@ func (c *upgradeTestSetup) expectCreateBootstrap() {
 			c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
 		).Return(c.bootstrapCluster, nil),
 
-		c.clusterManager.EXPECT().InstallCapi(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider),
+		c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider),
 	)
 }
 
@@ -122,7 +122,7 @@ func (c *upgradeTestSetup) expectUpgradeWorkloadToReturn(err error) {
 
 func (c *upgradeTestSetup) expectMoveManagementToBootstrap() {
 	gomock.InOrder(
-		c.clusterManager.EXPECT().MoveCapi(
+		c.clusterManager.EXPECT().MoveCAPI(
 			c.ctx, c.workloadCluster, c.bootstrapCluster, gomock.Any(), gomock.Any(),
 		),
 	)
@@ -130,7 +130,7 @@ func (c *upgradeTestSetup) expectMoveManagementToBootstrap() {
 
 func (c *upgradeTestSetup) expectMoveManagementToWorkload() {
 	gomock.InOrder(
-		c.clusterManager.EXPECT().MoveCapi(
+		c.clusterManager.EXPECT().MoveCAPI(
 			c.ctx, c.bootstrapCluster, c.workloadCluster, gomock.Any(), gomock.Any(),
 		),
 	)
@@ -242,7 +242,7 @@ func (c *upgradeTestSetup) expectPauseGitOpsKustomizationNotToBeCalled() {
 func (c *upgradeTestSetup) expectCreateBootstrapNotToBeCalled() {
 	c.provider.EXPECT().BootstrapClusterOpts().Times(0)
 	c.bootstrapper.EXPECT().CreateBootstrapCluster(c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil())).Times(0)
-	c.clusterManager.EXPECT().InstallCapi(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider).Times(0)
+	c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider).Times(0)
 }
 
 func (c *upgradeTestSetup) expectPreflightValidationsToPass() {

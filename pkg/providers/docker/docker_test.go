@@ -172,9 +172,9 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				},
 			}
 			kubectl.EXPECT().GetEksaCluster(ctx, cluster).Return(oriCluster, nil)
-			cpContent, mdContent, err := p.GenerateCapiSpecForUpgrade(ctx, bootstrapCluster, cluster, tt.clusterSpec)
+			cpContent, mdContent, err := p.GenerateCAPISpecForUpgrade(ctx, bootstrapCluster, cluster, tt.clusterSpec)
 			if err != nil {
-				t.Fatalf("provider.GenerateCapiSpecForUpgrade() error = %v, wantErr nil", err)
+				t.Fatalf("provider.GenerateCAPISpecForUpgrade() error = %v, wantErr nil", err)
 			}
 			test.AssertContentToFile(t, string(cpContent), tt.wantCPFile)
 			test.AssertContentToFile(t, string(mdContent), tt.wantMDFile)
@@ -219,9 +219,9 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 	kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(cp, nil)
 	kubectl.EXPECT().GetMachineDeployment(ctx, cluster, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(md, nil)
 
-	cpContent, mdContent, err := p.GenerateCapiSpecForUpgrade(ctx, bootstrapCluster, cluster, clusterSpec)
+	cpContent, mdContent, err := p.GenerateCAPISpecForUpgrade(ctx, bootstrapCluster, cluster, clusterSpec)
 	if err != nil {
-		t.Fatalf("provider.GenerateCapiSpecForUpgrade() error = %v, wantErr nil", err)
+		t.Fatalf("provider.GenerateCAPISpecForUpgrade() error = %v, wantErr nil", err)
 	}
 
 	test.AssertContentToFile(t, string(cpContent), "testdata/no_machinetemplate_update_cp_expected.yaml")

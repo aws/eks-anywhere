@@ -24,7 +24,7 @@ type capiResourceUpdater struct {
 	Log    logr.Logger
 }
 
-func NewCapiResourceUpdater(client client.Client, log logr.Logger) *capiResourceUpdater {
+func NewCAPIResourceUpdater(client client.Client, log logr.Logger) *capiResourceUpdater {
 	return &capiResourceUpdater{
 		client: client,
 		Log:    log,
