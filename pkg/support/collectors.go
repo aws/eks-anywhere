@@ -115,13 +115,12 @@ func (c *collectorFactory) DefaultCollectors() []*Collect {
 }
 
 func (c *collectorFactory) EksaHostCollectors(osFamilies map[v1alpha1.OSFamily]bool) []*Collect {
-	for family := range osFamilies {
-		switch family {
-		case v1alpha1.Ubuntu:
-			return c.ubuntuHostCollectors()
-		}
+	var collectors []*Collect
+	_, ok := osFamilies[v1alpha1.Ubuntu]
+	if ok {
+		collectors = append(collectors, c.ubuntuHostCollectors()...)
 	}
-	return nil
+	return collectors
 }
 
 func (c *collectorFactory) ubuntuHostCollectors() []*Collect {
