@@ -33,7 +33,7 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 	}
 
 	gitVersion := strings.Split(out, "-")
-	gitTag, err := readFile(gitVersion[0])
+	gitTag := gitVersion[0]
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
