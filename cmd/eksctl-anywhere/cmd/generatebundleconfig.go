@@ -81,7 +81,7 @@ func (gsbo *generateSupportBundleOptions) validateCmdInput() error {
 func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Context) (*support.EksaDiagnosticBundle, error) {
 	f := gsbo.fileName
 	if f == "" {
-		return support.NewDiagnosticBundleDefault(support.NewAnalyzerFactory(), support.NewCollectorFactory("")), nil
+		return support.NewDiagnosticBundleDefault(support.NewAnalyzerFactory(), support.NewDefaultCollectorFactory()), nil
 	}
 
 	clusterSpec, err := cluster.NewSpec(f, version.Get())

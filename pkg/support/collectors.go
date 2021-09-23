@@ -17,6 +17,10 @@ func NewCollectorFactory(diagnosticCollectorImage string) *collectorFactory {
 	}
 }
 
+func NewDefaultCollectorFactory() *collectorFactory {
+	return &collectorFactory{}
+}
+
 func (c *collectorFactory) DefaultCollectors() []*Collect {
 	return []*Collect{
 		{
