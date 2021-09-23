@@ -126,6 +126,7 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 	opts := support.EksaDiagnosticBundleOpts{
 		AnalyzerFactory:  af,
 		CollectorFactory: cf,
+		Writer:           writer,
 	}
 	return support.NewDiagnosticBundleFromSpec(clusterSpec, provider, gsbo.kubeConfig(clusterSpec.Name), opts)
 }
