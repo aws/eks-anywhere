@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/providers"
 )
 
 type collectorFactory struct {
@@ -118,13 +119,30 @@ func (c *collectorFactory) DefaultCollectors() []*Collect {
 	}
 }
 
-func (c *collectorFactory) EksaHostCollectors(osFamilies map[v1alpha1.OSFamily]bool) []*Collect {
+func (c *collectorFactory) EksaHostCollectors(machineConfigs []providers.MachineConfig) []*Collect {
 	var collectors []*Collect
-	_, ok := osFamilies[v1alpha1.Ubuntu]
-	if ok {
-		collectors = append(collectors, c.ubuntuHostCollectors()...)
+	collectorsMap := c.getCollectorsMap()
+
+	// we don't want to duplicate the collectors if multiple machine configs have the same OS family
+	OSFamiliesSeen := map[v1alpha1.OSFamily]bool{}
+	for _, config := range machineConfigs {
+		if _, seen := OSFamiliesSeen[config.OSFamily()]; !seen {
+			collectors = append(collectors, collectorsMap[config.OSFamily()]...)
+			OSFamiliesSeen[config.OSFamily()] = true
+		}
 	}
 	return collectors
+}
+
+func (c *collectorFactory) getCollectorsMap() map[v1alpha1.OSFamily][]*Collect {
+	return map[v1alpha1.OSFamily][]*Collect{
+		v1alpha1.Ubuntu:       c.ubuntuHostCollectors(),
+		v1alpha1.Bottlerocket: c.modelRocketHostCollectors(),
+	}
+}
+
+func (c *collectorFactory) modelRocketHostCollectors() []*Collect {
+	return []*Collect{}
 }
 
 func (c *collectorFactory) ubuntuHostCollectors() []*Collect {

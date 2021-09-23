@@ -66,17 +66,12 @@ func NewDiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider
 		writer:           opts.Writer,
 	}
 
-	osFamiliesSet := map[v1alpha1.OSFamily]bool{}
-	for _, config := range provider.MachineConfigs() {
-		osFamiliesSet[config.OSFamily()] = true
-	}
-
 	b = b.
 		WithGitOpsConfig(spec.GitOpsConfig).
 		WithOidcConfig(spec.OIDCConfig).
 		WithExternalEtcd(spec.Spec.ExternalEtcdConfiguration).
 		WithDatacenterConfig(spec.Spec.DatacenterRef).
-		WithOSFamilies(osFamiliesSet).
+		WithMachineConfigs(provider.MachineConfigs()).
 		WithDefaultAnalyzers().
 		WithDefaultCollectors()
 
@@ -197,8 +192,8 @@ func (e *EksaDiagnosticBundle) WithGitOpsConfig(config *v1alpha1.GitOpsConfig) *
 	return e
 }
 
-func (e *EksaDiagnosticBundle) WithOSFamilies(osFamilies map[v1alpha1.OSFamily]bool) *EksaDiagnosticBundle {
-	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.EksaHostCollectors(osFamilies)...)
+func (e *EksaDiagnosticBundle) WithMachineConfigs(configs []providers.MachineConfig) *EksaDiagnosticBundle {
+	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.EksaHostCollectors(configs)...)
 	return e
 }
 
