@@ -13,7 +13,7 @@ type Machine struct {
 	Status   MachineStatus   `json:"status"`
 }
 
-func (m *Machine) HasLabels(labels []string) bool {
+func (m *Machine) HasAnyLabel(labels []string) bool {
 	for _, label := range labels {
 		if _, ok := m.Metadata.Labels[label]; ok {
 			return true

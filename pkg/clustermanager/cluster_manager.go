@@ -600,7 +600,7 @@ func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster 
 	for _, m := range machines {
 		// Extracted from cluster-api: NodeRef is considered a better signal than InfrastructureReady,
 		// because it ensures the node in the workload cluster is up and running.
-		if !m.HasLabels(labels) {
+		if !m.HasAnyLabel(labels) {
 			continue
 		}
 

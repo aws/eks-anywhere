@@ -1081,7 +1081,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 
 	if clusterSpec.Spec.ProxyConfiguration != nil {
 		values["proxyConfig"] = true
-		noProxyList := make([]string, 0, 4)
+		capacity := len(clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks) +
+			len(clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks) +
+			len(clusterSpec.Spec.ProxyConfiguration.NoProxy) + 4
+		noProxyList := make([]string, 0, capacity)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks...)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks...)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
@@ -1156,7 +1159,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 
 	if clusterSpec.Spec.ProxyConfiguration != nil {
 		values["proxyConfig"] = true
-		noProxyList := make([]string, 0, 4)
+		capacity := len(clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks) +
+			len(clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks) +
+			len(clusterSpec.Spec.ProxyConfiguration.NoProxy) + 4
+		noProxyList := make([]string, 0, capacity)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks...)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks...)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
