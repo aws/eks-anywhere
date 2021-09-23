@@ -8,7 +8,7 @@ export JOB_ID?=${PROW_JOB_ID}
 GO_TEST ?= go test
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
-GIT_TAG?=$(shell cut -d '-' -f1 <<< $(git describe --tag))
+GIT_TAG?=$(shell git describe --tag | cut -d'-' -f1)
 GOLANG_VERSION?="1.16"
 
 RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
@@ -382,4 +382,4 @@ e2e-cleanup-postsubmit:
 
 .PHONY: run-controller # Run eksa controller from local repo with tilt
 run-controller:
-	tilt up --file controllers/Tiltfile	
+	tilt up --file controllers/Tiltfile
