@@ -8,6 +8,7 @@ export JOB_ID?=${PROW_JOB_ID}
 GO_TEST ?= go test
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
+GIT_TAG?=$(shell cut -d '-' -f1 <<< $(git describe --tag))
 GOLANG_VERSION?="1.16"
 
 RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
@@ -47,7 +48,7 @@ CLUSTER_CONTROLLER_BASE_TAG?=$(shell cat controllers/EKS_DISTRO_MINIMAL_BASE_TAG
 CLUSTER_CONTROLLER_BASE_IMAGE?=$(BASE_REPO)/$(CLUSTER_CONTROLLER_BASE_IMAGE_NAME):$(CLUSTER_CONTROLLER_BASE_TAG)
 
 IMAGE_REPO=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
-IMAGE_TAG?=$(GIT_VERSION)-$(shell git rev-parse HEAD)
+IMAGE_TAG?=$(GIT_TAG)-$(shell git rev-parse HEAD)
 CLUSTER_CONTROLLER_IMAGE_NAME=eks-anywhere-cluster-controller
 CLUSTER_CONTROLLER_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):$(IMAGE_TAG)
 CLUSTER_CONTROLLER_LATEST_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):latest
@@ -156,7 +157,7 @@ cluster-controller-binaries:
 
 .PHONY: cluster-controller-tarballs
 cluster-controller-tarballs:  cluster-controller-binaries
-	controllers/build/create_tarballs.sh $(BINARY_NAME) $(GIT_VERSION) $(TAR_PATH)
+	controllers/build/create_tarballs.sh $(BINARY_NAME) $(GIT_TAG) $(TAR_PATH)
 
 .PHONY: cluster-controller-local-images
 cluster-controller-local-images: cluster-controller-binaries
