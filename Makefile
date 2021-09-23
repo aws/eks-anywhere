@@ -6,10 +6,16 @@ export INTEGRATION_TEST_SUBNET_ID?=integration_test_subnet_id
 export INTEGRATION_TEST_INSTANCE_TAG?=integration_test_instance_tag
 export JOB_ID?=${PROW_JOB_ID}
 GO_TEST ?= go test
+ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
+GIT_TAG?=$(shell git describe --tag | cut -d'-' -f1)
+GOLANG_VERSION?="1.16"
 
 RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
 DEV_GIT_VERSION:=v0.0.0-dev
+
+AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output text)
+AWS_REGION=us-west-2
 
 BIN_DIR := bin
 TOOLS_BIN_DIR := hack/tools/bin
@@ -20,8 +26,32 @@ KUSTOMIZE_VERSION := 4.2.0
 KUBEBUILDER := $(TOOLS_BIN_DIR)/kubebuilder
 KUBEBUILDER_VERSION := v3.1.0
 
+BUILD_LIB := build/lib
+BUILDKIT := $(BUILD_LIB)/buildkit.sh
+
 CONTROLLER_GEN_BIN := controller-gen
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)
+
+BINARY_NAME=eks-anywhere-cluster-controller
+ifdef CODEBUILD_SRC_DIR
+	TAR_PATH?=$(CODEBUILD_SRC_DIR)/$(PROJECT_PATH)/$(CODEBUILD_BUILD_NUMBER)-$(CODEBUILD_RESOLVED_SOURCE_VERSION)/artifacts
+else
+	TAR_PATH?="_output/tar"
+endif
+
+GOPROXY_DNS?=https://proxy.golang.org
+export GOPROXY=$(GOPROXY_DNS)
+
+BASE_REPO?=public.ecr.aws/eks-distro-build-tooling
+CLUSTER_CONTROLLER_BASE_IMAGE_NAME?=eks-distro-minimal-base
+CLUSTER_CONTROLLER_BASE_TAG?=$(shell cat controllers/EKS_DISTRO_MINIMAL_BASE_TAG_FILE)
+CLUSTER_CONTROLLER_BASE_IMAGE?=$(BASE_REPO)/$(CLUSTER_CONTROLLER_BASE_IMAGE_NAME):$(CLUSTER_CONTROLLER_BASE_TAG)
+
+IMAGE_REPO=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
+IMAGE_TAG?=$(GIT_TAG)-$(shell git rev-parse HEAD)
+CLUSTER_CONTROLLER_IMAGE_NAME=eks-anywhere-cluster-controller
+CLUSTER_CONTROLLER_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):$(IMAGE_TAG)
+CLUSTER_CONTROLLER_LATEST_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):latest
 
 # This removes the compile dependency on C libraries from github.com/containers/storage which is imported by github.com/replicatedhq/troubleshoot
 BUILD_TAGS := exclude_graphdriver_btrfs exclude_graphdriver_devicemapper
@@ -110,9 +140,51 @@ copy-license-cluster-controller: SHELL := /bin/bash
 copy-license-cluster-controller:
 	source scripts/attribution_helpers.sh && build::fix_licenses
 
-# Build target invoked by build-tooling repo script
+.PHONY: build-cluster-controller-binaries
+build-cluster-controller-binaries: eks-a-cluster-controller copy-license-cluster-controller
+
 .PHONY: build-cluster-controller
-build-cluster-controller: eks-a-cluster-controller copy-license-cluster-controller
+build-cluster-controller: cluster-controller-local-images cluster-controller-tarballs
+
+.PHONY: release-cluster-controller
+release-cluster-controller: cluster-controller-images cluster-controller-tarballs
+
+.PHONY: release-upload-cluster-controller
+release-upload-cluster-controller: release-cluster-controller upload-artifacts
+
+.PHONY: upload-artifacts
+upload-artifacts:
+	controllers/build/upload_artifacts.sh $(TAR_PATH) $(ARTIFACTS_BUCKET) $(PROJECT_PATH) $(CODEBUILD_BUILD_NUMBER) $(CODEBUILD_RESOLVED_SOURCE_VERSION)
+
+.PHONY: cluster-controller-binaries
+cluster-controller-binaries:
+	controllers/build/create_binaries.sh $(GOLANG_VERSION) $(BINARY_NAME) $(IMAGE_REPO) $(IMAGE_TAG)
+
+.PHONY: cluster-controller-tarballs
+cluster-controller-tarballs:  cluster-controller-binaries
+	controllers/build/create_tarballs.sh $(BINARY_NAME) $(GIT_TAG) $(TAR_PATH)
+
+.PHONY: cluster-controller-local-images
+cluster-controller-local-images: cluster-controller-binaries
+	$(BUILDKIT) \
+		build \
+		--frontend dockerfile.v0 \
+		--opt platform=linux/amd64 \
+		--opt build-arg:BASE_IMAGE=$(CLUSTER_CONTROLLER_BASE_IMAGE) \
+		--local dockerfile=./controllers/docker/linux/eks-anywhere-cluster-controller \
+		--local context=. \
+		--output type=oci,oci-mediatypes=true,\"name=$(CLUSTER_CONTROLLER_IMAGE),$(CLUSTER_CONTROLLER_LATEST_IMAGE)\",dest=/tmp/eks-anywhere-cluster-controller.tar
+
+.PHONY: cluster-controller-images
+cluster-controller-images: cluster-controller-binaries
+	$(BUILDKIT) \
+		build \
+		--frontend dockerfile.v0 \
+		--opt platform=linux/amd64 \
+		--opt build-arg:BASE_IMAGE=$(CLUSTER_CONTROLLER_BASE_IMAGE) \
+		--local dockerfile=./controllers/docker/linux/eks-anywhere-cluster-controller \
+		--local context=. \
+		--output type=image,oci-mediatypes=true,\"name=$(CLUSTER_CONTROLLER_IMAGE),$(CLUSTER_CONTROLLER_LATEST_IMAGE)\",push=true
 
 .PHONY: generate-attribution
 generate-attribution: GOLANG_VERSION ?= "1.16"
@@ -293,4 +365,4 @@ release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) ## Builds the 
 
 .PHONY: run-controller # Run eksa controller from local repo with tilt
 run-controller:
-	tilt up --file controllers/Tiltfile	
+	tilt up --file controllers/Tiltfile
