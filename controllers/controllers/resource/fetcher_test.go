@@ -178,7 +178,7 @@ func TestMapMachineTemplateToVSphereWorkerMachineConfigSpec(t *testing.T) {
 	}
 }
 
-func TestCapiResourceFetcherFetchCluster(t *testing.T) {
+func TestCAPIResourceFetcherFetchCluster(t *testing.T) {
 	type fields struct {
 		client client.Reader
 	}
@@ -303,7 +303,7 @@ func TestCapiResourceFetcherFetchCluster(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := resource.NewCapiResourceFetcher(tt.fields.client, log.NullLogger{})
+			r := resource.NewCAPIResourceFetcher(tt.fields.client, log.NullLogger{})
 			got, err := r.FetchCluster(context.Background(), tt.args.objectKey)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FetchCluster() error = %v, wantErr %v", err, tt.wantErr)

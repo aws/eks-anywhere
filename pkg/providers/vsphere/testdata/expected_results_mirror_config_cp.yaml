@@ -10,7 +10,7 @@ spec:
     pods:
       cidrBlocks: [192.168.0.0/16]
     services:
-      cidrBlocks: [10.96.0.0/16]
+      cidrBlocks: [10.96.0.0/12]
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
     kind: KubeadmControlPlane
@@ -19,6 +19,10 @@ spec:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: VSphereCluster
     name: test
+  managedExternalEtcdRef:
+    apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
+    kind: EtcdadmCluster
+    name: test-etcd
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereCluster
@@ -36,7 +40,7 @@ spec:
       name: /SDDC-Datacenter/network/sddc-cgw-network-1
     providerConfig:
       cloud:
-        controllerImage: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+        controllerImage: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.21.0-eks-d-1-21-eks-a-v0.0.0-dev-build.158
     virtualCenter:
       vsphere_server:
         datacenters: SDDC-Datacenter
@@ -78,31 +82,6 @@ spec:
       template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
       thumbprint: 'ABCDEFG'
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-kind: VSphereMachineTemplate
-metadata:
-  name: test-worker-node-template-1234567890000
-  namespace: eksa-system
-spec:
-  template:
-    spec:
-      cloneMode: linkedClone
-      datacenter: SDDC-Datacenter
-      datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
-      diskGiB: 25
-      folder: '/SDDC-Datacenter/vm'
-      memoryMiB: 8192
-      network:
-        devices:
-        - dhcp4: true
-          networkName: /SDDC-Datacenter/network/sddc-cgw-network-1
-      numCPUs: 2
-      resourcePool: '*/Resources'
-      server: vsphere_server
-      storagePolicyName: "vSAN Default Storage Policy"
-      template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
-      thumbprint: 'ABCDEFG'
----
 apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
 metadata:
@@ -117,13 +96,15 @@ spec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
       etcd:
-        local:
-          imageRepository: public.ecr.aws/eks-distro/etcd-io
-          imageTag: v3.4.14-eks-1-19-4
+        external:
+          endpoints: []
+          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
+          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
+          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
       dns:
         type: CoreDNS
         imageRepository: public.ecr.aws/eks-distro/coredns
-        imageTag: v1.8.0-eks-1-19-4
+        imageTag: v1.8.3-eks-1-21-4
       apiServer:
         extraArgs:
           cloud-provider: external
@@ -133,13 +114,6 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           profiling: "false"
-          oidc-client-id: my-client-id
-          oidc-groups-claim: claim1
-          oidc-groups-prefix: prefix-for-groups
-          oidc-issuer-url: https://mydomain.com/issuer
-          oidc-required-claim: sub=test
-          oidc-username-claim: username-claim
-          oidc-username-prefix: username-prefix1
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -190,7 +164,7 @@ spec:
               value: "10"
             - name: vip_retryperiod
               value: "2"
-            image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+            image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
             imagePullPolicy: IfNotPresent
             name: kube-vip
             resources: {}
@@ -369,6 +343,14 @@ spec:
           - "RequestReceived"
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
+    - content: |
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+            endpoint = ["https://1.2.3.4"]
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4".tls]
+            insecure_skip_verify = true
+      owner: root:root
+      path: "/etc/containerd/config_append.toml"
     initConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -382,6 +364,9 @@ spec:
           cloud-provider: external
         name: '{{ ds.meta_data.hostname }}'
     preKubeadmCommands:
+    - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+    - sudo systemctl daemon-reload
+    - sudo systemctl restart containerd
     - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
@@ -395,63 +380,7 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     format: cloud-config
   replicas: 3
-  version: v1.19.8-eks-1-19-4
----
-apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-kind: KubeadmConfigTemplate
-metadata:
-  name: test-md-0
-  namespace: eksa-system
-spec:
-  template:
-    spec:
-      joinConfiguration:
-        nodeRegistration:
-          criSocket: /var/run/containerd/containerd.sock
-          kubeletExtraArgs:
-            cloud-provider: external
-          name: '{{ ds.meta_data.hostname }}'
-      preKubeadmCommands:
-      - hostname "{{ ds.meta_data.hostname }}"
-      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
-      - echo "127.0.0.1   localhost" >>/etc/hosts
-      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
-      - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
-      users:
-      - name: capv
-        sshAuthorizedKeys:
-        - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
-        sudo: ALL=(ALL) NOPASSWD:ALL
-      format: cloud-config
----
-apiVersion: cluster.x-k8s.io/v1alpha3
-kind: MachineDeployment
-metadata:
-  labels:
-    cluster.x-k8s.io/cluster-name: test
-  name: test-md-0
-  namespace: eksa-system
-spec:
-  clusterName: test
-  replicas: 3
-  selector:
-    matchLabels: {}
-  template:
-    metadata:
-      labels:
-        cluster.x-k8s.io/cluster-name: test
-    spec:
-      bootstrap:
-        configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-          kind: KubeadmConfigTemplate
-          name: test-md-0
-      clusterName: test
-      infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-        kind: VSphereMachineTemplate
-        name: test-worker-node-template-1234567890000
-      version: v1.19.8-eks-1-19-4
+  version: v1.21.2-eks-1-21-4
 ---
 apiVersion: addons.cluster.x-k8s.io/v1alpha3
 kind: ClusterResourceSet
@@ -479,6 +408,60 @@ spec:
     name: vsphere-csi-node
   - kind: ConfigMap
     name: vsphere-csi-controller
+---
+kind: EtcdadmCluster
+apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
+metadata:
+  name: test-etcd
+  namespace: eksa-system
+spec:
+  replicas: 3
+  etcdadmConfigSpec:
+    etcdadmBuiltin: true
+    format: cloud-config
+    cloudInitConfig:
+      version: 3.4.16
+      installDir: "/usr/bin"
+    preEtcdadmCommands:
+      - hostname "{{ ds.meta_data.hostname }}"
+      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+      - echo "127.0.0.1   localhost" >>/etc/hosts
+      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
+      - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+    users:
+      - name: capv
+        sshAuthorizedKeys:
+          - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
+        sudo: ALL=(ALL) NOPASSWD:ALL
+  infrastructureTemplate:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    kind: VSphereMachineTemplate
+    name: test-etcd-template-1234567890000
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: VSphereMachineTemplate
+metadata:
+  name: test-etcd-template-1234567890000
+  namespace: 'eksa-system'
+spec:
+  template:
+    spec:
+      cloneMode: linkedClone
+      datacenter: SDDC-Datacenter
+      datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
+      diskGiB: 25
+      folder: '/SDDC-Datacenter/vm'
+      memoryMiB: 8192
+      network:
+        devices:
+          - dhcp4: true
+            networkName: /SDDC-Datacenter/network/sddc-cgw-network-1
+      numCPUs: 3
+      resourcePool: '*/Resources'
+      server: vsphere_server
+      storagePolicyName: "vSAN Default Storage Policy"
+      template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
+      thumbprint: 'ABCDEFG'
 ---
 apiVersion: v1
 kind: Secret
@@ -668,7 +651,7 @@ data:
               value: /csi/csi.sock
             - name: DRIVER_REG_SOCK_PATH
               value: /var/lib/kubelet/plugins/csi.vsphere.vmware.com/csi.sock
-            image: public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar:v2.1.0-eks-1-19-4
+            image: public.ecr.aws/eks-distro/kubernetes-csi/node-driver-registrar:v2.1.0-eks-1-21-4
             lifecycle:
               preStop:
                 exec:
@@ -702,7 +685,7 @@ data:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-            image: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b
+            image: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-eks-a-v0.0.0-dev-build.158
             livenessProbe:
               failureThreshold: 3
               httpGet:
@@ -735,7 +718,7 @@ data:
               name: device-dir
           - args:
             - --csi-address=/csi/csi.sock
-            image: public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe:v2.2.0-eks-1-19-4
+            image: public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe:v2.2.0-eks-1-21-4
             name: liveness-probe
             resources: {}
             volumeMounts:
@@ -801,7 +784,7 @@ data:
             env:
             - name: ADDRESS
               value: /csi/csi.sock
-            image: public.ecr.aws/eks-distro/kubernetes-csi/external-attacher:v3.1.0-eks-1-19-4
+            image: public.ecr.aws/eks-distro/kubernetes-csi/external-attacher:v3.1.0-eks-1-21-4
             name: csi-attacher
             resources: {}
             volumeMounts:
@@ -818,7 +801,7 @@ data:
               value: PRODUCTION
             - name: X_CSI_LOG_LEVEL
               value: INFO
-            image: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b
+            image: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/driver:v2.2.0-eks-a-v0.0.0-dev-build.158
             livenessProbe:
               failureThreshold: 3
               httpGet:
@@ -844,7 +827,7 @@ data:
             env:
             - name: ADDRESS
               value: /var/lib/csi/sockets/pluginproxy/csi.sock
-            image: public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe:v2.2.0-eks-1-19-4
+            image: public.ecr.aws/eks-distro/kubernetes-csi/livenessprobe:v2.2.0-eks-1-21-4
             name: liveness-probe
             resources: {}
             volumeMounts:
@@ -859,7 +842,7 @@ data:
               value: PRODUCTION
             - name: VSPHERE_CSI_CONFIG
               value: /etc/cloud/csi-vsphere.conf
-            image: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b
+            image: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-eks-a-v0.0.0-dev-build.158
             name: vsphere-syncer
             resources: {}
             volumeMounts:
@@ -875,7 +858,7 @@ data:
             env:
             - name: ADDRESS
               value: /csi/csi.sock
-            image: public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner:v2.1.1-eks-1-19-4
+            image: public.ecr.aws/eks-distro/kubernetes-csi/external-provisioner:v2.1.1-eks-1-21-4
             name: csi-provisioner
             resources: {}
             volumeMounts:

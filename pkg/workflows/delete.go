@@ -57,7 +57,7 @@ type setupAndValidate struct{}
 
 type createManagementCluster struct{}
 
-type installCapi struct{}
+type installCAPI struct{}
 
 type moveClusterManagement struct{}
 
@@ -99,16 +99,16 @@ func (s *createManagementCluster) Run(ctx context.Context, commandContext *task.
 	}
 	commandContext.BootstrapCluster = bootstrapCluster
 
-	return &installCapi{}
+	return &installCAPI{}
 }
 
 func (s *createManagementCluster) Name() string {
 	return "management-cluster-init"
 }
 
-func (s *installCapi) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+func (s *installCAPI) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Installing cluster-api providers on management cluster")
-	err := commandContext.ClusterManager.InstallCapi(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster, commandContext.Provider)
+	err := commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return &deleteManagementCluster{}
@@ -116,13 +116,13 @@ func (s *installCapi) Run(ctx context.Context, commandContext *task.CommandConte
 	return &moveClusterManagement{}
 }
 
-func (s *installCapi) Name() string {
+func (s *installCAPI) Name() string {
 	return "install-capi"
 }
 
 func (s *moveClusterManagement) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Moving cluster management from workload cluster")
-	err := commandContext.ClusterManager.MoveCapi(ctx, commandContext.WorkloadCluster, commandContext.BootstrapCluster, types.WithNodeRef())
+	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.WorkloadCluster, commandContext.BootstrapCluster, types.WithNodeRef())
 	if err != nil {
 		commandContext.SetError(err)
 		return nil

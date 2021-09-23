@@ -40,7 +40,7 @@ type capiResourceFetcher struct {
 	log    logr.Logger
 }
 
-func NewCapiResourceFetcher(client client.Reader, Log logr.Logger) *capiResourceFetcher {
+func NewCAPIResourceFetcher(client client.Reader, Log logr.Logger) *capiResourceFetcher {
 	return &capiResourceFetcher{
 		client: client,
 		log:    Log,

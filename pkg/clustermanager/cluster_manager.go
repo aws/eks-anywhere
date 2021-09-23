@@ -21,6 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
+	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -30,7 +31,7 @@ const (
 	machineMaxWait    = 10 * time.Minute
 	machineBackoff    = 1 * time.Second
 	machinesMinWait   = 30 * time.Minute
-	moveCapiWait      = 5 * time.Minute
+	moveCAPIWait      = 5 * time.Minute
 	logDir            = "logs"
 	ctrlPlaneWaitStr  = "60m"
 	etcdWaitStr       = "60m"
@@ -49,9 +50,8 @@ type ClusterManager struct {
 
 type ClusterClient interface {
 	MoveManagement(ctx context.Context, org, target *types.Cluster) error
-	ApplyKubeSpec(ctx context.Context, cluster *types.Cluster, kubeSpecFile string) error
-	ApplyKubeSpecWithNamespace(ctx context.Context, cluster *types.Cluster, kubeSpecFile string, namespace string) error
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
+	ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error
 	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
 	WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
@@ -105,9 +105,10 @@ func WithWaitForMachines(machineBackoff, machineMaxWait, machinesMinWait time.Du
 	}
 }
 
-func (c *ClusterManager) MoveCapi(ctx context.Context, from, to *types.Cluster, checkers ...types.NodeReadyChecker) error {
+func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, checkers ...types.NodeReadyChecker) error {
 	logger.V(3).Info("Waiting for management machines to be ready before move")
-	if err := c.waitForNodesReady(ctx, from, checkers...); err != nil {
+	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
+	if err := c.waitForNodesReady(ctx, from, labels, checkers...); err != nil {
 		return err
 	}
 
@@ -117,16 +118,24 @@ func (c *ClusterManager) MoveCapi(ctx context.Context, from, to *types.Cluster, 
 	}
 
 	logger.V(3).Info("Waiting for control planes to be ready after move")
-	err = c.waitForAllControlPlanes(ctx, to, moveCapiWait)
+	err = c.waitForAllControlPlanes(ctx, to, moveCAPIWait)
 	if err != nil {
 		return err
 	}
 
 	logger.V(3).Info("Waiting for machines to be ready after move")
-	if err = c.waitForNodesReady(ctx, to, checkers...); err != nil {
+	if err = c.waitForNodesReady(ctx, to, labels, checkers...); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func (c *ClusterManager) writeCAPISpecFile(clusterName string, content []byte) error {
+	fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterName)
+	if _, err := c.writer.Write(fileName, content); err != nil {
+		return fmt.Errorf("error writing capi spec file: %v", err)
+	}
 	return nil
 }
 
@@ -139,11 +148,60 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		Name: managementCluster.Name,
 	}
 
-	if err := c.applyCluster(ctx, managementCluster, workloadCluster, clusterSpec, provider, false, types.WithNodeRef()); err != nil {
+	cpContent, mdContent, err := provider.GenerateCAPISpecForCreate(ctx, workloadCluster, clusterSpec)
+	if err != nil {
+		return nil, fmt.Errorf("error generating capi spec: %v", err)
+	}
+
+	content := templater.AppendYamlResources(cpContent, mdContent)
+
+	if err = c.writeCAPISpecFile(clusterSpec.ObjectMeta.Name, content); err != nil {
 		return nil, err
 	}
 
-	err := cluster.ApplyExtraObjects(ctx, c.clusterClient, workloadCluster, clusterSpec)
+	err = c.Retrier.Retry(
+		func() error {
+			return c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, content, constants.EksaSystemNamespace)
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error applying capi spec: %v", err)
+	}
+
+	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+		logger.V(3).Info("Waiting for external etcd to be ready")
+		err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWaitStr, workloadCluster.Name)
+		if err != nil {
+			return nil, fmt.Errorf("error waiting for external etcd for workload cluster to be ready: %v", err)
+		}
+		logger.V(3).Info("External etcd is ready")
+		// the condition external etcd ready if true indicates that all etcd machines are ready and the etcd cluster is ready to accept requests
+	}
+
+	logger.V(3).Info("Waiting for control plane to be ready")
+	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, workloadCluster.Name)
+	if err != nil {
+		return nil, fmt.Errorf("error waiting for workload cluster control plane to be ready: %v", err)
+	}
+
+	err = c.Retrier.Retry(
+		func() error {
+			workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
+			return err
+		},
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("error generating workload kubeconfig: %v", err)
+	}
+
+	logger.V(3).Info("Waiting for controlplane and worker machines to be ready")
+	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
+	if err = c.waitForNodesReady(ctx, managementCluster, labels, types.WithNodeRef()); err != nil {
+		return nil, err
+	}
+
+	err = cluster.ApplyExtraObjects(ctx, c.clusterClient, workloadCluster, clusterSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error applying extra resources to workload cluster: %v", err)
 	}
@@ -177,21 +235,47 @@ func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, c
 }
 
 func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
-	if err := c.applyCluster(ctx, managementCluster, workloadCluster, clusterSpec, provider, true, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
+	cpContent, mdContent, err := provider.GenerateCAPISpecForUpgrade(ctx, managementCluster, workloadCluster, clusterSpec)
+	if err != nil {
+		return fmt.Errorf("error generating capi spec: %v", err)
+	}
+
+	if err = c.writeCAPISpecFile(clusterSpec.ObjectMeta.Name, templater.AppendYamlResources(cpContent, mdContent)); err != nil {
 		return err
+	}
+
+	err = c.Retrier.Retry(
+		func() error {
+			return c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, cpContent, constants.EksaSystemNamespace)
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error applying capi control plane spec: %v", err)
 	}
 
 	var externalEtcdTopology bool
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		logger.V(3).Info("Waiting for external etcd to be ready after upgrade")
 		if err := c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWaitStr, workloadCluster.Name); err != nil {
-			return fmt.Errorf("error waiting for workload cluster etcd to be ready: %v", err)
+			return fmt.Errorf("error waiting for external etcd for workload cluster to be ready: %v", err)
 		}
 		externalEtcdTopology = true
+		logger.V(3).Info("External etcd is ready")
+	}
+
+	logger.V(3).Info("Waiting for control plane to be ready")
+	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, workloadCluster.Name)
+	if err != nil {
+		return fmt.Errorf("error waiting for workload cluster control plane to be ready: %v", err)
+	}
+
+	logger.V(3).Info("Waiting for control plane machines to be ready")
+	if err = c.waitForNodesReady(ctx, managementCluster, []string{clusterv1.MachineControlPlaneLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
+		return err
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready after upgrade")
-	err := c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, workloadCluster.Name)
+	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, workloadCluster.Name)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster control plane to be ready: %v", err)
 	}
@@ -202,14 +286,28 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return fmt.Errorf("error waiting for workload cluster control plane replicas to be ready: %v", err)
 	}
 
+	err = c.Retrier.Retry(
+		func() error {
+			return c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, mdContent, constants.EksaSystemNamespace)
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error applying capi machine deployment spec: %v", err)
+	}
+
 	logger.V(3).Info("Waiting for workload cluster machine deployment replicas to be ready after upgrade")
 	err = c.waitForMachineDeploymentReplicasReady(ctx, managementCluster, clusterSpec)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster machinedeployment replicas to be ready: %v", err)
 	}
 
+	logger.V(3).Info("Waiting for machine deployment machines to be ready")
+	if err = c.waitForNodesReady(ctx, managementCluster, []string{clusterv1.MachineDeploymentLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
+		return err
+	}
+
 	logger.V(3).Info("Waiting for workload cluster capi components to be ready after upgrade")
-	err = c.waitForCapi(ctx, workloadCluster, provider, externalEtcdTopology)
+	err = c.waitForCAPI(ctx, workloadCluster, provider, externalEtcdTopology)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster capi components to be ready: %v", err)
 	}
@@ -289,68 +387,17 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 	return false, nil
 }
 
-func (c *ClusterManager) applyCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider, isUpgrade bool, checkers ...types.NodeReadyChecker) error {
-	clusterSpecFile, err := c.GenerateDeploymentFile(ctx, managementCluster, workloadCluster, clusterSpec, provider, isUpgrade)
-	if err != nil {
-		return fmt.Errorf("error generating workload spec: %v", err)
-	}
-
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecWithNamespace(ctx, managementCluster, clusterSpecFile, constants.EksaSystemNamespace)
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("error applying workload spec: %v", err)
-	}
-
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
-		logger.V(3).Info("Waiting for external etcd to be ready")
-		err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWaitStr, workloadCluster.Name)
-		if err != nil {
-			return fmt.Errorf("error waiting for external etcd for workload cluster to be ready: %v", err)
-		}
-		logger.V(3).Info("External etcd is ready")
-		// the condition external etcd ready if true indicates that all etcd machines are ready and the etcd cluster is ready to accept requests
-	}
-
-	logger.V(3).Info("Waiting for control plane to be ready")
-	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, workloadCluster.Name)
-	if err != nil {
-		return fmt.Errorf("error waiting for workload cluster control plane to be ready: %v", err)
-	}
-
-	if !isUpgrade {
-		err = c.Retrier.Retry(
-			func() error {
-				workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
-				return err
-			},
-		)
-
-		if err != nil {
-			return fmt.Errorf("error generating workload kubeconfig: %v", err)
-		}
-	}
-
-	logger.V(3).Info("Waiting for controlplane and worker machines to be ready")
-	if err = c.waitForNodesReady(ctx, managementCluster, checkers...); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *ClusterManager) InstallCapi(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {
+func (c *ClusterManager) InstallCAPI(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {
 	err := c.clusterClient.InitInfrastructure(ctx, clusterSpec, cluster, provider)
 	if err != nil {
 		return fmt.Errorf("error initializing capi resources in cluster: %v", err)
 	}
 
-	return c.waitForCapi(ctx, cluster, provider, clusterSpec.Spec.ExternalEtcdConfiguration != nil)
+	return c.waitForCAPI(ctx, cluster, provider, clusterSpec.Spec.ExternalEtcdConfiguration != nil)
 }
 
-func (c *ClusterManager) waitForCapi(ctx context.Context, cluster *types.Cluster, provider providers.Provider, externalEtcdTopology bool) error {
-	err := c.waitForDeployments(ctx, internal.CapiDeployments, cluster)
+func (c *ClusterManager) waitForCAPI(ctx context.Context, cluster *types.Cluster, provider providers.Provider, externalEtcdTopology bool) error {
+	err := c.waitForDeployments(ctx, internal.CAPIDeployments, cluster)
 	if err != nil {
 		return err
 	}
@@ -460,14 +507,6 @@ func (c *ClusterManager) waitForDeployments(ctx context.Context, deploymentsByNa
 	return nil
 }
 
-func (c *ClusterManager) GenerateDeploymentFile(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider, isUpgrade bool) (string, error) {
-	fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
-	if isUpgrade {
-		return provider.GenerateDeploymentFileForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec, fileName)
-	}
-	return provider.GenerateDeploymentFileForCreate(ctx, workloadCluster, clusterSpec, fileName)
-}
-
 func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	isCpReady := func() error {
 		return c.clusterClient.ValidateControlPlaneNodes(ctx, managementCluster)
@@ -512,7 +551,7 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 	return nil
 }
 
-func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluster *types.Cluster, checkers ...types.NodeReadyChecker) error {
+func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluster *types.Cluster, labels []string, checkers ...types.NodeReadyChecker) error {
 	readyNodes, totalNodes := 0, 0
 	policy := func(_ int, _ error) (bool, time.Duration) {
 		return true, c.machineBackoff * time.Duration(totalNodes-readyNodes)
@@ -520,7 +559,7 @@ func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluste
 
 	areNodesReady := func() error {
 		var err error
-		readyNodes, totalNodes, err = c.countNodesReady(ctx, managementCluster, checkers...)
+		readyNodes, totalNodes, err = c.countNodesReady(ctx, managementCluster, labels, checkers...)
 		if err != nil {
 			return err
 		}
@@ -552,17 +591,21 @@ func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluste
 	return nil
 }
 
-func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster *types.Cluster, checkers ...types.NodeReadyChecker) (ready, total int, err error) {
+func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster *types.Cluster, labels []string, checkers ...types.NodeReadyChecker) (ready, total int, err error) {
 	machines, err := c.clusterClient.GetMachines(ctx, managementCluster)
 	if err != nil {
 		return 0, 0, fmt.Errorf("error getting machines resources from management cluster: %v", err)
 	}
 
-	ready = 0
-	var controlPlaneNodesCount, workerNodesCount int
 	for _, m := range machines {
 		// Extracted from cluster-api: NodeRef is considered a better signal than InfrastructureReady,
 		// because it ensures the node in the workload cluster is up and running.
+		if !m.HasAnyLabel(labels) {
+			continue
+		}
+
+		total += 1
+
 		passed := true
 		for _, checker := range checkers {
 			if !checker(m.Status) {
@@ -573,15 +616,7 @@ func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster 
 		if passed {
 			ready += 1
 		}
-
-		if _, ok := m.Metadata.Labels[clusterv1.MachineControlPlaneLabelName]; ok {
-			controlPlaneNodesCount++
-		}
-		if _, ok := m.Metadata.Labels[clusterv1.MachineDeploymentLabelName]; ok {
-			workerNodesCount++
-		}
 	}
-	total = controlPlaneNodesCount + workerNodesCount
 	return ready, total, nil
 }
 

@@ -24,7 +24,7 @@ import (
 
 // GetDockerAssets returns the eks-a artifacts for CAPD
 func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
-	gitTag, err := r.getCapiGitTag()
+	gitTag, err := r.getCAPIGitTag()
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -106,7 +106,7 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 		"kube-proxy":                  r.GetKubeRbacProxyAssets,
 	}
 
-	version, err := r.getCapiGitTag()
+	version, err := r.getCAPIGitTag()
 	if err != nil {
 		return anywherev1alpha1.DockerBundle{}, errors.Wrapf(err, "Error getting git tag for cluster-api")
 	}

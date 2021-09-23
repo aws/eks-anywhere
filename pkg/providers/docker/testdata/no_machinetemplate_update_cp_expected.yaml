@@ -27,6 +27,18 @@ metadata:
   name: fluxAddonTestCluster
   namespace: eksa-system
 ---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: DockerMachineTemplate
+metadata:
+  name: test-control-plane-template-original
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      extraMounts:
+      - containerPath: /var/run/docker.sock
+        hostPath: /var/run/docker.sock
+      customImage: 
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
@@ -257,45 +269,3 @@ spec:
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
   replicas: 0
   version: 
----
----
-apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-kind: KubeadmConfigTemplate
-metadata:
-  name: fluxAddonTestCluster-md-0
-  namespace: eksa-system
-spec:
-  template:
-    spec:
-      joinConfiguration:
-        nodeRegistration:
-          criSocket: /var/run/containerd/containerd.sock
-          kubeletExtraArgs:
-            cgroup-driver: cgroupfs
-            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
----
-apiVersion: cluster.x-k8s.io/v1alpha3
-kind: MachineDeployment
-metadata:
-  name: fluxAddonTestCluster-md-0
-  namespace: eksa-system
-spec:
-  clusterName: fluxAddonTestCluster
-  replicas: 0
-  selector:
-    matchLabels: null
-  template:
-    spec:
-      bootstrap:
-        configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
-          kind: KubeadmConfigTemplate
-          name: fluxAddonTestCluster-md-0
-          namespace: eksa-system
-      clusterName: fluxAddonTestCluster
-      infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-        kind: DockerMachineTemplate
-        name: test-worker-node-template-original
-        namespace: eksa-system
-      version: 
