@@ -107,7 +107,7 @@ $(KUSTOMIZE): $(TOOLS_BIN_DIR)
 	cd $(TOOLS_BIN_DIR) && curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | sh -s $(KUSTOMIZE_VERSION)
 
 $(KUBEBUILDER): $(TOOLS_BIN_DIR)
-	cd $(TOOLS_BIN_DIR) && curl -L -o kubebuilder https://go.kubebuilder.io/dl/$(KUBEBUILDER_VERSION)/$(GO_OS)/$(GO_ARCH)
+	cd $(TOOLS_BIN_DIR) && curl -L -o kubebuilder https://github.com/kubernetes-sigs/kubebuilder/releases/download/$(KUBEBUILDER_VERSION)/kubebuilder_$(GO_OS)_$(GO_ARCH)
 	chmod +x $(KUBEBUILDER)
 
 $(CONTROLLER_GEN): $(TOOLS_BIN_DIR)
