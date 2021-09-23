@@ -48,4 +48,6 @@ type TemplateBuilder interface {
 	CPMachineTemplateName(clusterName string) string
 }
 
-type MachineConfig interface{}
+type MachineConfig interface {
+	OSFamily() v1alpha1.OSFamily
+}
