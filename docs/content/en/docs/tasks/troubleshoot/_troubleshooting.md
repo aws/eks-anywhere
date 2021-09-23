@@ -151,6 +151,19 @@ kubectl get machines
 If all the machines are in `Provisioning` phase, this is most likely the issue.
 To resolve the issue, set `insecure` to `false` and `thumbprint` to the TLS thumbprint of your vCenter server in the cluster yaml and try again.
 
+```
+"msg"="discovered IP address"
+```
+The aforementioned log message can also appear with an address value of the controlplane in either of the ${CLUSTER_NAME}/logs/capv-controller-manager.log file
+or the capv-controller-manager pod log which can be extracted with the follwoing command,
+```bash
+export KUBECONFIG=${PWD}/${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconfig
+kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager
+```
+Make sure you are choosing an ip in your network range that does not conflict with other VMs.
+https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/vsphere/#controlplaneconfigurationendpointhost-required
+
+
 ### The connection to the server localhost:8080 was refused 
 ```
 Performing provider setup and validations

@@ -58,7 +58,7 @@ phases:
       "eks-a-cli"
       $CODEBUILD_BUILD_NUMBER
       $GIT_HASH
-    # - >
-    #   ./bin/test e2e cleanup vsphere
-    #   -n eksa-test
-    #   -v 4
+    - >
+      ./bin/test e2e cleanup vsphere
+      -n eksa-test
+      -v 4

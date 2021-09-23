@@ -435,3 +435,17 @@ func NewMockMachineConfig(ctrl *gomock.Controller) *MockMachineConfig {
 func (m *MockMachineConfig) EXPECT() *MockMachineConfigMockRecorder {
 	return m.recorder
 }
+
+// OSFamily mocks base method.
+func (m *MockMachineConfig) OSFamily() v1alpha1.OSFamily {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OSFamily")
+	ret0, _ := ret[0].(v1alpha1.OSFamily)
+	return ret0
+}
+
+// OSFamily indicates an expected call of OSFamily.
+func (mr *MockMachineConfigMockRecorder) OSFamily() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OSFamily", reflect.TypeOf((*MockMachineConfig)(nil).OSFamily))
+}
