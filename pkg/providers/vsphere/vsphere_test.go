@@ -586,6 +586,37 @@ func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *tes
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_bottlerocket_external_etcd_md.yaml")
 }
 
+func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorConfig(t *testing.T) {
+	clusterSpecManifest := "cluster_bottlerocket_mirror_config.yaml"
+	mockCtrl := gomock.NewController(t)
+	setupContext(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	_, writer := test.NewWriter(t)
+	govc := NewDummyProviderGovcClient()
+	govc.osTag = bottlerocketOSTag
+	provider := NewProviderCustomNet(datacenterConfig, machineConfigs, clusterSpec.Cluster, govc, kubectl, writer, &DummyNetClient{}, test.FakeNow, false)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
+	writtenFile, err := provider.GenerateDeploymentFileForCreate(context.Background(), cluster, clusterSpec, fileName)
+	if err != nil {
+		t.Fatalf("failed to generate deployment file: %v", err)
+	}
+	if fileName == "" {
+		t.Fatalf("empty fileName returned by GenerateDeploymentFile")
+	}
+
+	test.AssertFilesEquals(t, writtenFile, "testdata/expected_results_bottlerocket_mirror_config.yaml")
+}
+
 func TestProviderGenerateDeploymentFileWithMirrorConfig(t *testing.T) {
 	clusterSpecManifest := "cluster_mirror_config.yaml"
 	mockCtrl := gomock.NewController(t)
