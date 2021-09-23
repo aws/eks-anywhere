@@ -1,8 +1,24 @@
 package supportbundle
 
-type collectorFactory struct{}
+import (
+	"time"
 
-func NewCollectorFactory() *collectorFactory {
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/providers"
+)
+
+type collectorFactory struct {
+	DiagnosticCollectorImage string
+}
+
+func NewCollectorFactory(diagnosticCollectorImage string) *collectorFactory {
+	return &collectorFactory{
+		DiagnosticCollectorImage: diagnosticCollectorImage,
+	}
+}
+
+func NewDefaultCollectorFactory() *collectorFactory {
 	return &collectorFactory{}
 }
 
@@ -98,6 +114,62 @@ func (c *collectorFactory) DefaultCollectors() []*Collect {
 			Logs: &logs{
 				Namespace: "kube-system",
 				Name:      "logs/kube-system",
+			},
+		},
+	}
+}
+
+func (c *collectorFactory) EksaHostCollectors(machineConfigs []providers.MachineConfig) []*Collect {
+	var collectors []*Collect
+	collectorsMap := c.getCollectorsMap()
+
+	// we don't want to duplicate the collectors if multiple machine configs have the same OS family
+	osFamiliesSeen := map[v1alpha1.OSFamily]bool{}
+	for _, config := range machineConfigs {
+		if _, seen := osFamiliesSeen[config.OSFamily()]; !seen {
+			collectors = append(collectors, collectorsMap[config.OSFamily()]...)
+			osFamiliesSeen[config.OSFamily()] = true
+		}
+	}
+	return collectors
+}
+
+func (c *collectorFactory) getCollectorsMap() map[v1alpha1.OSFamily][]*Collect {
+	return map[v1alpha1.OSFamily][]*Collect{
+		v1alpha1.Ubuntu:       c.ubuntuHostCollectors(),
+		v1alpha1.Bottlerocket: c.modelRocketHostCollectors(),
+	}
+}
+
+func (c *collectorFactory) modelRocketHostCollectors() []*Collect {
+	return []*Collect{}
+}
+
+func (c *collectorFactory) ubuntuHostCollectors() []*Collect {
+	return []*Collect{
+		{
+			CopyFromHost: &copyFromHost{
+				Name:      "CloudInitLog",
+				Namespace: constants.EksaSystemNamespace,
+				Image:     c.DiagnosticCollectorImage,
+				HostPath:  "/var/log/cloud-init.log",
+			},
+		},
+		{
+			CopyFromHost: &copyFromHost{
+				Name:      "CloudInitOutputLog",
+				Namespace: constants.EksaSystemNamespace,
+				Image:     c.DiagnosticCollectorImage,
+				HostPath:  "/var/log/cloud-init-output.log",
+			},
+		},
+		{
+			CopyFromHost: &copyFromHost{
+				Name:      "Syslog",
+				Namespace: constants.EksaSystemNamespace,
+				Image:     c.DiagnosticCollectorImage,
+				HostPath:  "/var/log/syslog",
+				Timeout:   time.Minute.String(),
 			},
 		},
 	}

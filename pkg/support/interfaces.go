@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/providers"
 )
 
 type BundleClient interface {
@@ -33,4 +34,5 @@ type AnalyzerFactory interface {
 
 type CollectorFactory interface {
 	DefaultCollectors() []*Collect
+	EksaHostCollectors(configs []providers.MachineConfig) []*Collect
 }
