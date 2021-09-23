@@ -97,6 +97,8 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Name = "test-cluster"
 				s.Spec.KubernetesVersion = "1.19"
+				s.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+				s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
 				s.Spec.ControlPlaneConfiguration.Count = 3
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
@@ -105,10 +107,26 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 			wantMDFile: "testdata/valid_deployment_md_expected.yaml",
 		},
 		{
+			testName: "valid config with cidrs",
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Name = "test-cluster"
+				s.Spec.KubernetesVersion = "1.19"
+				s.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"10.10.0.0/24", "10.128.0.0/12"}
+				s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"192.168.0.0/16", "10.10.0.0/16"}
+				s.Spec.ControlPlaneConfiguration.Count = 3
+				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+				s.VersionsBundle = versionsBundle
+			}),
+			wantCPFile: "testdata/valid_deployment_custom_cidrs_cp_expected.yaml",
+			wantMDFile: "testdata/valid_deployment_custom_cidrs_md_expected.yaml",
+		},
+		{
 			testName: "with minimal oidc",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Name = "test-cluster"
 				s.Spec.KubernetesVersion = "1.19"
+				s.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+				s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
 				s.Spec.ControlPlaneConfiguration.Count = 3
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
@@ -128,6 +146,8 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Name = "test-cluster"
 				s.Spec.KubernetesVersion = "1.19"
+				s.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+				s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
 				s.Spec.ControlPlaneConfiguration.Count = 3
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
@@ -188,6 +208,8 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 	client := dockerMocks.NewMockProviderClient(mockCtrl)
 	kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
 	clusterSpec := test.NewClusterSpec()
+	clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+	clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
 	p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
 	cluster := &types.Cluster{
 		Name: "test",

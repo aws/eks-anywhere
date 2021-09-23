@@ -267,6 +267,20 @@ func (c *Cluster) EtcdAnnotation() string {
 	return etcdAnnotation
 }
 
+func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
+	config := &ClusterGenerate{
+		TypeMeta: c.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        c.Name,
+			Annotations: c.Annotations,
+			Namespace:   c.Namespace,
+		},
+		Spec: c.Spec,
+	}
+
+	return config
+}
+
 // +kubebuilder:object:root=true
 // ClusterList contains a list of Cluster
 type ClusterList struct {
