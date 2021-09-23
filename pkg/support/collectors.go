@@ -124,11 +124,11 @@ func (c *collectorFactory) EksaHostCollectors(machineConfigs []providers.Machine
 	collectorsMap := c.getCollectorsMap()
 
 	// we don't want to duplicate the collectors if multiple machine configs have the same OS family
-	OSFamiliesSeen := map[v1alpha1.OSFamily]bool{}
+	osFamiliesSeen := map[v1alpha1.OSFamily]bool{}
 	for _, config := range machineConfigs {
-		if _, seen := OSFamiliesSeen[config.OSFamily()]; !seen {
+		if _, seen := osFamiliesSeen[config.OSFamily()]; !seen {
 			collectors = append(collectors, collectorsMap[config.OSFamily()]...)
-			OSFamiliesSeen[config.OSFamily()] = true
+			osFamiliesSeen[config.OSFamily()] = true
 		}
 	}
 	return collectors
