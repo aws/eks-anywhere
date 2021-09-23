@@ -11,6 +11,7 @@ import (
 
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	executables "github.com/aws/eks-anywhere/pkg/executables"
+	providers "github.com/aws/eks-anywhere/pkg/providers"
 	supportbundle "github.com/aws/eks-anywhere/pkg/support"
 	gomock "github.com/golang/mock/gomock"
 )
@@ -320,15 +321,15 @@ func (mr *MockCollectorFactoryMockRecorder) DefaultCollectors() *gomock.Call {
 }
 
 // EksaHostCollectors mocks base method.
-func (m *MockCollectorFactory) EksaHostCollectors(osFamilies map[v1alpha1.OSFamily]bool) []*supportbundle.Collect {
+func (m *MockCollectorFactory) EksaHostCollectors(configs []providers.MachineConfig) []*supportbundle.Collect {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EksaHostCollectors", osFamilies)
+	ret := m.ctrl.Call(m, "EksaHostCollectors", configs)
 	ret0, _ := ret[0].([]*supportbundle.Collect)
 	return ret0
 }
 
 // EksaHostCollectors indicates an expected call of EksaHostCollectors.
-func (mr *MockCollectorFactoryMockRecorder) EksaHostCollectors(osFamilies interface{}) *gomock.Call {
+func (mr *MockCollectorFactoryMockRecorder) EksaHostCollectors(configs interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EksaHostCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).EksaHostCollectors), osFamilies)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EksaHostCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).EksaHostCollectors), configs)
 }
