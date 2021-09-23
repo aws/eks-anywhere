@@ -1081,7 +1081,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 
 	if clusterSpec.Spec.ProxyConfiguration != nil {
 		values["proxyConfig"] = true
-		noProxyList := make([]string, 4)
+		noProxyList := make([]string, 0, 4)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks...)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks...)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
@@ -1156,7 +1156,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 
 	if clusterSpec.Spec.ProxyConfiguration != nil {
 		values["proxyConfig"] = true
-		noProxyList := make([]string, 4)
+		noProxyList := make([]string, 0, 4)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks...)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks...)
 		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
@@ -1271,11 +1271,11 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		return nil, nil, err
 	}
 
-	mdOpt := func(values map[string]interface{}) {
+	workersOpt := func(values map[string]interface{}) {
 		values["workloadTemplateName"] = workloadTemplateName
 		values["vsphereWorkerSshAuthorizedKey"] = p.workerSshAuthKey
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, mdOpt)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workersOpt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1295,11 +1295,11 @@ func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster
 	if err != nil {
 		return nil, nil, err
 	}
-	mdOpt := func(values map[string]interface{}) {
+	workersOpt := func(values map[string]interface{}) {
 		values["workloadTemplateName"] = p.templateBuilder.WorkerMachineTemplateName(clusterName)
 		values["vsphereWorkerSshAuthorizedKey"] = p.workerSshAuthKey
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, mdOpt)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workersOpt)
 	if err != nil {
 		return nil, nil, err
 	}

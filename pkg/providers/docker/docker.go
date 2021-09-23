@@ -282,10 +282,10 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		return nil, nil, err
 	}
 
-	mdOpt := func(values map[string]interface{}) {
+	workersOpts := func(values map[string]interface{}) {
 		values["workloadTemplateName"] = workloadTemplateName
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, mdOpt)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workersOpts)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -303,10 +303,10 @@ func (p *provider) generateCAPISpecForCreate(ctx context.Context, cluster *types
 	if err != nil {
 		return nil, nil, err
 	}
-	mdOpt := func(values map[string]interface{}) {
+	workersOpts := func(values map[string]interface{}) {
 		values["workloadTemplateName"] = p.templateBuilder.WorkerMachineTemplateName(clusterName)
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, mdOpt)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workersOpts)
 	if err != nil {
 		return nil, nil, err
 	}
