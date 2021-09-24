@@ -93,7 +93,7 @@ The critical namespaces include:
 ### Secrets
 
 EKS Anywhere stores sensitive information, like the vSphere credentials and GitHub Personal Access Token, in the cluster as native Kubernetes [secrets](https://kubernetes.io/docs/concepts/configuration/secret/).
-These secret objects are namespaced (for example in the `eksa-system` and `flux-system` namespace), and limiting access to the sensitive namespaces will ensure that these secrets will not be exposed.
+These secret objects are namespaced (for example, in the `eksa-system` and `flux-system` namespace), and limiting access to the sensitive namespaces will ensure that these secrets will not be exposed.
 Additionally, limit access to the underlying node. Access to the node could allow access to the secret content.
 
 EKS Anywhere does not currently support encryption-at-rest for Kubernetes secrets.
