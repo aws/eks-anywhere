@@ -59,6 +59,7 @@ type GithubProviderClient interface {
 	GetAccessTokenPermissions(accessToken string) (string, error)
 	CheckAccessTokenPermissions(checkPATPermission string, allPermissionScopes string) error
 	PathExists(ctx context.Context, owner, repo, branch, path string) (bool, error)
+	DeleteRepo(ctx context.Context, opts git.DeleteRepoOpts) error
 }
 
 func New(gitProviderClient GitProviderClient, githubProviderClient GithubProviderClient, opts Options, auth git.TokenAuth) (git.Provider, error) {
@@ -196,6 +197,10 @@ func (g *githubProvider) RepoUrl() string {
 
 func (g *githubProvider) PathExists(ctx context.Context, owner, repo, branch, path string) (bool, error) {
 	return g.githubProviderClient.PathExists(ctx, owner, repo, branch, path)
+}
+
+func (g *githubProvider) DeleteRepo(ctx context.Context, opts git.DeleteRepoOpts) error {
+	return g.githubProviderClient.DeleteRepo(ctx, opts)
 }
 
 type GitProviderNotFoundError struct {

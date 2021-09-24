@@ -34,12 +34,12 @@ func NewClusterReconciler(client client.Client, log logr.Logger, scheme *runtime
 		Scheme: scheme,
 		reconcilers: []resource.Reconciler{
 			resource.NewClusterReconciler(
-				resource.NewCapiResourceFetcher(client, log),
-				resource.NewCapiResourceUpdater(client, log),
+				resource.NewCAPIResourceFetcher(client, log),
+				resource.NewCAPIResourceUpdater(client, log),
 				time.Now,
 				log),
 		},
-		resourceFetcher: resource.NewCapiResourceFetcher(client, log),
+		resourceFetcher: resource.NewCAPIResourceFetcher(client, log),
 	}
 }
 
@@ -77,7 +77,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 
 	// If the external object is paused, return without any further processing.
 	if cluster.IsReconcilePaused() {
-		r.Log.Info("eksa reconcilation is paused")
+		r.Log.Info("eksa reconciliation is paused")
 		return ctrl.Result{}, nil
 	}
 

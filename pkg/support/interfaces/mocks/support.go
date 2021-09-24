@@ -5,13 +5,69 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
+	time "time"
 
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	executables "github.com/aws/eks-anywhere/pkg/executables"
+	providers "github.com/aws/eks-anywhere/pkg/providers"
 	supportbundle "github.com/aws/eks-anywhere/pkg/support"
 	gomock "github.com/golang/mock/gomock"
-	v1beta2 "github.com/replicatedhq/troubleshoot/pkg/apis/troubleshoot/v1beta2"
 )
+
+// MockBundleClient is a mock of BundleClient interface.
+type MockBundleClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockBundleClientMockRecorder
+}
+
+// MockBundleClientMockRecorder is the mock recorder for MockBundleClient.
+type MockBundleClientMockRecorder struct {
+	mock *MockBundleClient
+}
+
+// NewMockBundleClient creates a new mock instance.
+func NewMockBundleClient(ctrl *gomock.Controller) *MockBundleClient {
+	mock := &MockBundleClient{ctrl: ctrl}
+	mock.recorder = &MockBundleClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockBundleClient) EXPECT() *MockBundleClientMockRecorder {
+	return m.recorder
+}
+
+// Analyze mocks base method.
+func (m *MockBundleClient) Analyze(ctx context.Context, bundleSpecPath, archivePath string) ([]*executables.SupportBundleAnalysis, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Analyze", ctx, bundleSpecPath, archivePath)
+	ret0, _ := ret[0].([]*executables.SupportBundleAnalysis)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Analyze indicates an expected call of Analyze.
+func (mr *MockBundleClientMockRecorder) Analyze(ctx, bundleSpecPath, archivePath interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Analyze", reflect.TypeOf((*MockBundleClient)(nil).Analyze), ctx, bundleSpecPath, archivePath)
+}
+
+// Collect mocks base method.
+func (m *MockBundleClient) Collect(ctx context.Context, bundlePath string, sinceTime *time.Time, kubeconfig string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Collect", ctx, bundlePath, sinceTime, kubeconfig)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Collect indicates an expected call of Collect.
+func (mr *MockBundleClientMockRecorder) Collect(ctx, bundlePath, sinceTime, kubeconfig interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Collect", reflect.TypeOf((*MockBundleClient)(nil).Collect), ctx, bundlePath, sinceTime, kubeconfig)
+}
 
 // MockDiagnosticBundle is a mock of DiagnosticBundle interface.
 type MockDiagnosticBundle struct {
@@ -158,10 +214,10 @@ func (m *MockAnalyzerFactory) EXPECT() *MockAnalyzerFactoryMockRecorder {
 }
 
 // DataCenterConfigAnalyzers mocks base method.
-func (m *MockAnalyzerFactory) DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*v1beta2.Analyze {
+func (m *MockAnalyzerFactory) DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*supportbundle.Analyze {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DataCenterConfigAnalyzers", datacenter)
-	ret0, _ := ret[0].([]*v1beta2.Analyze)
+	ret0, _ := ret[0].([]*supportbundle.Analyze)
 	return ret0
 }
 
@@ -172,10 +228,10 @@ func (mr *MockAnalyzerFactoryMockRecorder) DataCenterConfigAnalyzers(datacenter 
 }
 
 // DefaultAnalyzers mocks base method.
-func (m *MockAnalyzerFactory) DefaultAnalyzers() []*v1beta2.Analyze {
+func (m *MockAnalyzerFactory) DefaultAnalyzers() []*supportbundle.Analyze {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DefaultAnalyzers")
-	ret0, _ := ret[0].([]*v1beta2.Analyze)
+	ret0, _ := ret[0].([]*supportbundle.Analyze)
 	return ret0
 }
 
@@ -186,10 +242,10 @@ func (mr *MockAnalyzerFactoryMockRecorder) DefaultAnalyzers() *gomock.Call {
 }
 
 // EksaExternalEtcdAnalyzers mocks base method.
-func (m *MockAnalyzerFactory) EksaExternalEtcdAnalyzers() []*v1beta2.Analyze {
+func (m *MockAnalyzerFactory) EksaExternalEtcdAnalyzers() []*supportbundle.Analyze {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EksaExternalEtcdAnalyzers")
-	ret0, _ := ret[0].([]*v1beta2.Analyze)
+	ret0, _ := ret[0].([]*supportbundle.Analyze)
 	return ret0
 }
 
@@ -200,10 +256,10 @@ func (mr *MockAnalyzerFactoryMockRecorder) EksaExternalEtcdAnalyzers() *gomock.C
 }
 
 // EksaGitopsAnalyzers mocks base method.
-func (m *MockAnalyzerFactory) EksaGitopsAnalyzers() []*v1beta2.Analyze {
+func (m *MockAnalyzerFactory) EksaGitopsAnalyzers() []*supportbundle.Analyze {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EksaGitopsAnalyzers")
-	ret0, _ := ret[0].([]*v1beta2.Analyze)
+	ret0, _ := ret[0].([]*supportbundle.Analyze)
 	return ret0
 }
 
@@ -214,10 +270,10 @@ func (mr *MockAnalyzerFactoryMockRecorder) EksaGitopsAnalyzers() *gomock.Call {
 }
 
 // EksaOidcAnalyzers mocks base method.
-func (m *MockAnalyzerFactory) EksaOidcAnalyzers() []*v1beta2.Analyze {
+func (m *MockAnalyzerFactory) EksaOidcAnalyzers() []*supportbundle.Analyze {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EksaOidcAnalyzers")
-	ret0, _ := ret[0].([]*v1beta2.Analyze)
+	ret0, _ := ret[0].([]*supportbundle.Analyze)
 	return ret0
 }
 
@@ -251,10 +307,10 @@ func (m *MockCollectorFactory) EXPECT() *MockCollectorFactoryMockRecorder {
 }
 
 // DefaultCollectors mocks base method.
-func (m *MockCollectorFactory) DefaultCollectors() []*v1beta2.Collect {
+func (m *MockCollectorFactory) DefaultCollectors() []*supportbundle.Collect {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DefaultCollectors")
-	ret0, _ := ret[0].([]*v1beta2.Collect)
+	ret0, _ := ret[0].([]*supportbundle.Collect)
 	return ret0
 }
 
@@ -262,4 +318,18 @@ func (m *MockCollectorFactory) DefaultCollectors() []*v1beta2.Collect {
 func (mr *MockCollectorFactoryMockRecorder) DefaultCollectors() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DefaultCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).DefaultCollectors))
+}
+
+// EksaHostCollectors mocks base method.
+func (m *MockCollectorFactory) EksaHostCollectors(configs []providers.MachineConfig) []*supportbundle.Collect {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EksaHostCollectors", configs)
+	ret0, _ := ret[0].([]*supportbundle.Collect)
+	return ret0
+}
+
+// EksaHostCollectors indicates an expected call of EksaHostCollectors.
+func (mr *MockCollectorFactoryMockRecorder) EksaHostCollectors(configs interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EksaHostCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).EksaHostCollectors), configs)
 }

@@ -17,6 +17,7 @@ Once the workload cluster is created, the cluster management resources are moved
 
 Once your workload cluster is created, a KUBECONFIG file is stored on your admin machine with RBAC admin permissions for the workload cluster.
 You’ll be able to use that file with `kubectl` to set up and deploy workloads.
+For a detailed description, see [Cluster creation workflow]({{< relref "../concepts/clusterworkflow/" >}}).
 Here’s a diagram that explains the process visually.
 
 ![EKS Anywhere create cluster overview](/images/eks-a_create_cluster.png)

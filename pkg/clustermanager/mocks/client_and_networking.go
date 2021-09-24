@@ -39,20 +39,6 @@ func (m *MockClusterClient) EXPECT() *MockClusterClientMockRecorder {
 	return m.recorder
 }
 
-// ApplyKubeSpec mocks base method.
-func (m *MockClusterClient) ApplyKubeSpec(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ApplyKubeSpec", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ApplyKubeSpec indicates an expected call of ApplyKubeSpec.
-func (mr *MockClusterClientMockRecorder) ApplyKubeSpec(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpec", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpec), arg0, arg1, arg2)
-}
-
 // ApplyKubeSpecFromBytes mocks base method.
 func (m *MockClusterClient) ApplyKubeSpecFromBytes(arg0 context.Context, arg1 *types.Cluster, arg2 []byte) error {
 	m.ctrl.T.Helper()
@@ -81,18 +67,32 @@ func (mr *MockClusterClientMockRecorder) ApplyKubeSpecFromBytesForce(arg0, arg1,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesForce", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpecFromBytesForce), arg0, arg1, arg2)
 }
 
-// ApplyKubeSpecWithNamespace mocks base method.
-func (m *MockClusterClient) ApplyKubeSpecWithNamespace(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+// ApplyKubeSpecFromBytesWithNamespace mocks base method.
+func (m *MockClusterClient) ApplyKubeSpecFromBytesWithNamespace(arg0 context.Context, arg1 *types.Cluster, arg2 []byte, arg3 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ApplyKubeSpecWithNamespace", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "ApplyKubeSpecFromBytesWithNamespace", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// ApplyKubeSpecWithNamespace indicates an expected call of ApplyKubeSpecWithNamespace.
-func (mr *MockClusterClientMockRecorder) ApplyKubeSpecWithNamespace(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+// ApplyKubeSpecFromBytesWithNamespace indicates an expected call of ApplyKubeSpecFromBytesWithNamespace.
+func (mr *MockClusterClientMockRecorder) ApplyKubeSpecFromBytesWithNamespace(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecWithNamespace", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpecWithNamespace), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesWithNamespace", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpecFromBytesWithNamespace), arg0, arg1, arg2, arg3)
+}
+
+// CreateNamespace mocks base method.
+func (m *MockClusterClient) CreateNamespace(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateNamespace", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateNamespace indicates an expected call of CreateNamespace.
+func (mr *MockClusterClientMockRecorder) CreateNamespace(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespace", reflect.TypeOf((*MockClusterClient)(nil).CreateNamespace), arg0, arg1, arg2)
 }
 
 // DeleteCluster mocks base method.
@@ -140,33 +140,33 @@ func (mr *MockClusterClientMockRecorder) GetEksaCluster(arg0, arg1 interface{}) 
 }
 
 // GetEksaVSphereDatacenterConfig mocks base method.
-func (m *MockClusterClient) GetEksaVSphereDatacenterConfig(arg0 context.Context, arg1, arg2 string) (*v1alpha1.VSphereDatacenterConfig, error) {
+func (m *MockClusterClient) GetEksaVSphereDatacenterConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.VSphereDatacenterConfig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEksaVSphereDatacenterConfig", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetEksaVSphereDatacenterConfig", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*v1alpha1.VSphereDatacenterConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEksaVSphereDatacenterConfig indicates an expected call of GetEksaVSphereDatacenterConfig.
-func (mr *MockClusterClientMockRecorder) GetEksaVSphereDatacenterConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockClusterClientMockRecorder) GetEksaVSphereDatacenterConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereDatacenterConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaVSphereDatacenterConfig), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereDatacenterConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaVSphereDatacenterConfig), arg0, arg1, arg2, arg3)
 }
 
 // GetEksaVSphereMachineConfig mocks base method.
-func (m *MockClusterClient) GetEksaVSphereMachineConfig(arg0 context.Context, arg1, arg2 string) (*v1alpha1.VSphereMachineConfig, error) {
+func (m *MockClusterClient) GetEksaVSphereMachineConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.VSphereMachineConfig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEksaVSphereMachineConfig", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetEksaVSphereMachineConfig", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*v1alpha1.VSphereMachineConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEksaVSphereMachineConfig indicates an expected call of GetEksaVSphereMachineConfig.
-func (mr *MockClusterClientMockRecorder) GetEksaVSphereMachineConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockClusterClientMockRecorder) GetEksaVSphereMachineConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereMachineConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaVSphereMachineConfig), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereMachineConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaVSphereMachineConfig), arg0, arg1, arg2, arg3)
 }
 
 // GetMachines mocks base method.
@@ -182,6 +182,20 @@ func (m *MockClusterClient) GetMachines(arg0 context.Context, arg1 *types.Cluste
 func (mr *MockClusterClientMockRecorder) GetMachines(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachines", reflect.TypeOf((*MockClusterClient)(nil).GetMachines), arg0, arg1)
+}
+
+// GetNamespace mocks base method.
+func (m *MockClusterClient) GetNamespace(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNamespace", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GetNamespace indicates an expected call of GetNamespace.
+func (mr *MockClusterClientMockRecorder) GetNamespace(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNamespace", reflect.TypeOf((*MockClusterClient)(nil).GetNamespace), arg0, arg1, arg2)
 }
 
 // GetWorkloadKubeconfig mocks base method.

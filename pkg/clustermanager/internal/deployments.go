@@ -3,7 +3,7 @@ package internal
 import "github.com/aws/eks-anywhere/pkg/types"
 
 // map where key = namespace and value is a capi deployment
-var CapiDeployments = map[string][]string{
+var CAPIDeployments = map[string][]string{
 	"capi-kubeadm-bootstrap-system":     {"capi-kubeadm-bootstrap-controller-manager"},
 	"capi-kubeadm-control-plane-system": {"capi-kubeadm-control-plane-controller-manager"},
 	"capi-system":                       {"capi-controller-manager"},

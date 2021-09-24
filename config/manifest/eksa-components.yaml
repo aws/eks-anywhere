@@ -1732,6 +1732,8 @@ spec:
               kubernetesVersion:
                 type: string
               overrideClusterSpecFile:
+                description: 'Deprecated: This field has no function and is going
+                  to be removed in a future release.'
                 type: string
               proxyConfiguration:
                 properties:

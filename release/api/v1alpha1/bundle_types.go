@@ -192,8 +192,10 @@ type FluxBundle struct {
 }
 
 type EksaBundle struct {
-	CliTools   Image    `json:"cliTools"`
-	Components Manifest `json:"components"`
+	CliTools            Image    `json:"cliTools"`
+	ClusterController   Image    `json:"clusterController"`
+	DiagnosticCollector Image    `json:"diagnosticCollector"`
+	Components          Manifest `json:"components"`
 }
 
 type EtcdadmBootstrapBundle struct {

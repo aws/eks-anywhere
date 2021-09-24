@@ -20,6 +20,12 @@ func ValidateImmutableFields(ctx context.Context, k ValidationsKubectlClient, cl
 		return fmt.Errorf("cluster name is immutable")
 	}
 
+	if prevSpec.Namespace != spec.Namespace {
+		if !(prevSpec.Namespace == "default" && spec.Namespace == "") {
+			return fmt.Errorf("cluster namespace is immutable")
+		}
+	}
+
 	oSpec := prevSpec.Spec
 	nSpec := spec.Spec
 
@@ -32,7 +38,7 @@ func ValidateImmutableFields(ctx context.Context, k ValidationsKubectlClient, cl
 	}
 
 	if nSpec.GitOpsRef != nil {
-		prevGitOps, err := k.GetEksaGitOpsConfig(ctx, nSpec.GitOpsRef.Name, cluster.KubeconfigFile)
+		prevGitOps, err := k.GetEksaGitOpsConfig(ctx, nSpec.GitOpsRef.Name, cluster.KubeconfigFile, spec.Namespace)
 		if err != nil {
 			return err
 		}
@@ -69,7 +75,7 @@ func ValidateImmutableFields(ctx context.Context, k ValidationsKubectlClient, cl
 	if len(nSpec.IdentityProviderRefs) > 0 {
 		// if it got here, it means we already validated for IdentityProviderRefs to ensure it only has one and is
 		// of type OIDCConfig
-		prevOIDC, err := k.GetEksaOIDCConfig(ctx, nSpec.IdentityProviderRefs[0].Name, cluster.KubeconfigFile)
+		prevOIDC, err := k.GetEksaOIDCConfig(ctx, nSpec.IdentityProviderRefs[0].Name, cluster.KubeconfigFile, spec.Namespace)
 		if err != nil {
 			return err
 		}
@@ -78,5 +84,5 @@ func ValidateImmutableFields(ctx context.Context, k ValidationsKubectlClient, cl
 		}
 	}
 
-	return provider.ValidateNewSpec(ctx, cluster)
+	return provider.ValidateNewSpec(ctx, cluster, spec)
 }

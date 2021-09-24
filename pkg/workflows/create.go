@@ -96,7 +96,7 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 	commandContext.BootstrapCluster = bootstrapCluster
 
 	logger.Info("Installing cluster-api providers on bootstrap cluster")
-	err = commandContext.ClusterManager.InstallCapi(ctx, commandContext.ClusterSpec, bootstrapCluster, commandContext.Provider)
+	err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, bootstrapCluster, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return &DeleteKindClusterTask{}
@@ -190,7 +190,7 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	}
 
 	logger.Info("Installing cluster-api providers on workload cluster")
-	err = commandContext.ClusterManager.InstallCapi(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
+	err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
@@ -214,7 +214,7 @@ func (s *CreateWorkloadClusterTask) Name() string {
 
 func (s *MoveClusterManagementTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Moving cluster management from bootstrap to workload cluster")
-	err := commandContext.ClusterManager.MoveCapi(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, types.WithNodeRef())
+	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, types.WithNodeRef())
 	if err != nil {
 		commandContext.SetError(err)
 		return nil

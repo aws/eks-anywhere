@@ -12,7 +12,8 @@ import (
 )
 
 func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) ([]byte, error) {
-	clusterObj, err := yaml.Marshal(clusterSpec.Cluster)
+	convertedClusterGenerateConfig := clusterSpec.ConvertConfigToConfigGenerateStruct()
+	clusterObj, err := yaml.Marshal(convertedClusterGenerateConfig)
 	if err != nil {
 		return nil, fmt.Errorf("error outputting cluster yaml: %v", err)
 	}
@@ -29,14 +30,16 @@ func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.Da
 		resources = append(resources, mObj)
 	}
 	if clusterSpec.GitOpsConfig != nil {
-		gitopsObj, err := yaml.Marshal(clusterSpec.GitOpsConfig)
+		convertedGitOpsGenerateConfig := clusterSpec.GitOpsConfig.ConvertConfigToConfigGenerateStruct()
+		gitopsObj, err := yaml.Marshal(convertedGitOpsGenerateConfig)
 		if err != nil {
 			return nil, fmt.Errorf("error outputting gitops config yaml: %v", err)
 		}
 		resources = append(resources, gitopsObj)
 	}
 	if clusterSpec.OIDCConfig != nil {
-		oidcObj, err := yaml.Marshal(clusterSpec.OIDCConfig)
+		convertedOIDCGenerateConfig := clusterSpec.OIDCConfig.ConvertConfigToConfigGenerateStruct()
+		oidcObj, err := yaml.Marshal(convertedOIDCGenerateConfig)
 		if err != nil {
 			return nil, fmt.Errorf("error outputting oidc config yaml: %v", err)
 		}

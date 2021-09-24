@@ -15,10 +15,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecrpublic"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/go-git/go-git/v5"
 	"github.com/pkg/errors"
 )
+
+type EksAReleases []anywherev1alpha1.EksARelease
 
 func (r *ReleaseConfig) SetRepoHeads() error {
 	// Get the repos from env var
@@ -159,14 +162,14 @@ func (r *ReleaseConfig) renameArtifacts(sourceClients *SourceClients, artifacts 
 					if err != nil {
 						return errors.Cause(err)
 					}
-					regex := fmt.Sprintf("public.ecr.aws.*%s.*", imageTagOverride.Repository)
+					regex := fmt.Sprintf("%s/%s.*", r.SourceContainerRegistry, imageTagOverride.Repository)
 					compiledRegex, err := regexp.Compile(regex)
 					if err != nil {
 						return errors.Cause(err)
 					}
 
 					updatedManifestFileContents := compiledRegex.ReplaceAllString(string(manifestFileContents), imageTagOverride.ReleaseUri)
-					err = ioutil.WriteFile(newArtifactFile, []byte(updatedManifestFileContents), 0644)
+					err = ioutil.WriteFile(newArtifactFile, []byte(updatedManifestFileContents), 0o644)
 					if err != nil {
 						return errors.Cause(err)
 					}
@@ -425,4 +428,17 @@ func UpdateImageDigests(releaseClients *ReleaseClients, r *ReleaseConfig, eksArt
 	}
 
 	return imageDigests, nil
+}
+
+func (releases EksAReleases) AppendOrUpdateRelease(r anywherev1alpha1.EksARelease) EksAReleases {
+	for i, release := range releases {
+		if release.Version == r.Version {
+			releases[i] = r
+			fmt.Println("Updating existing release in releases manifest")
+			return releases
+		}
+	}
+	releases = append(releases, r)
+	fmt.Println("Adding new release to releases manifest")
+	return releases
 }

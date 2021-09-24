@@ -95,7 +95,8 @@ func TestGetAndValidateOIDCConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			got, err := GetAndValidateOIDCConfig(tt.fileName, tt.refName)
+			c := &Cluster{}
+			got, err := GetAndValidateOIDCConfig(tt.fileName, tt.refName, c)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("GetAndValidateOIDCConfig() error = %v, wantErr %v", err, tt.wantErr)
 			}

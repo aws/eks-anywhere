@@ -18,9 +18,9 @@ type ValidationsKubectlClient interface {
 	Version(ctx context.Context, cluster *types.Cluster) (*executables.VersionResponse, error)
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error)
-	GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string) (*v1alpha1.GitOpsConfig, error)
-	GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, kubeconfigFile string) (*v1alpha1.OIDCConfig, error)
-	GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string) (*v1alpha1.VSphereDatacenterConfig, error)
+	GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error)
+	GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.OIDCConfig, error)
+	GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
 }
 
 func New(opts *UpgradeValidationOpts) *UpgradeValidations {

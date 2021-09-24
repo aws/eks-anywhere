@@ -1,10 +1,18 @@
 package supportbundle
 
 import (
-	"github.com/replicatedhq/troubleshoot/pkg/apis/troubleshoot/v1beta2"
+	"context"
+	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/providers"
 )
+
+type BundleClient interface {
+	Collect(ctx context.Context, bundlePath string, sinceTime *time.Time, kubeconfig string) (archivePath string, err error)
+	Analyze(ctx context.Context, bundleSpecPath string, archivePath string) ([]*executables.SupportBundleAnalysis, error)
+}
 
 type DiagnosticBundle interface {
 	PrintBundleConfig() error
@@ -17,13 +25,14 @@ type DiagnosticBundle interface {
 }
 
 type AnalyzerFactory interface {
-	DefaultAnalyzers() []*v1beta2.Analyze
-	EksaGitopsAnalyzers() []*v1beta2.Analyze
-	EksaOidcAnalyzers() []*v1beta2.Analyze
-	EksaExternalEtcdAnalyzers() []*v1beta2.Analyze
-	DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*v1beta2.Analyze
+	DefaultAnalyzers() []*Analyze
+	EksaGitopsAnalyzers() []*Analyze
+	EksaOidcAnalyzers() []*Analyze
+	EksaExternalEtcdAnalyzers() []*Analyze
+	DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*Analyze
 }
 
 type CollectorFactory interface {
-	DefaultCollectors() []*v1beta2.Collect
+	DefaultCollectors() []*Collect
+	EksaHostCollectors(configs []providers.MachineConfig) []*Collect
 }

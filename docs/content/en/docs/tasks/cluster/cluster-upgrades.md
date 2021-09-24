@@ -21,10 +21,10 @@ You are advised to upgrade your clusters in development environments first and v
 
 Cluster upgrades are performed in place using a rolling process (similar to Kubernetes Deployments).
 Upgrades can only happen one minor version at a time (e.g. `1.20` -> `1.21`).
-Control plane and worker nodes will be upgraded simultaneously.
+Control plane components will be upgraded before worker nodes.
 
 A new VM is created with the new version and then an old VM is removed.
-This happens one at a time until all the control plan components have been upgraded.
+This happens one at a time until all the control plane components have been upgraded.
 
 ### Performing a cluster upgrade
 

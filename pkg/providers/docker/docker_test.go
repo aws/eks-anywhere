@@ -68,11 +68,10 @@ clusters:
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, writer := test.NewWriter(t)
 			client := dockerMocks.NewMockProviderClient(mockCtrl)
 			client.EXPECT().GetDockerLBPort(gomock.Any(), tt.args.clusterName).Return("4332", nil)
 			kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
-			p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, writer, test.FakeNow)
+			p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
 
 			if err := p.UpdateKubeConfig(tt.args.content, tt.args.clusterName); (err != nil) != tt.wantErr {
 				t.Errorf("UpdateKubeConfig() error = %v, wantErr %v", err, tt.wantErr)
@@ -88,26 +87,46 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 	mockCtrl := gomock.NewController(t)
 
 	tests := []struct {
-		testName     string
-		clusterSpec  *cluster.Spec
-		wantFileName string
+		testName    string
+		clusterSpec *cluster.Spec
+		wantCPFile  string
+		wantMDFile  string
 	}{
 		{
 			testName: "valid config",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Name = "test-cluster"
 				s.Spec.KubernetesVersion = "1.19"
+				s.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+				s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
 				s.Spec.ControlPlaneConfiguration.Count = 3
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
 			}),
-			wantFileName: "testdata/valid_deployment_expected.yaml",
+			wantCPFile: "testdata/valid_deployment_cp_expected.yaml",
+			wantMDFile: "testdata/valid_deployment_md_expected.yaml",
+		},
+		{
+			testName: "valid config with cidrs",
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Name = "test-cluster"
+				s.Spec.KubernetesVersion = "1.19"
+				s.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"10.10.0.0/24", "10.128.0.0/12"}
+				s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"192.168.0.0/16", "10.10.0.0/16"}
+				s.Spec.ControlPlaneConfiguration.Count = 3
+				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+				s.VersionsBundle = versionsBundle
+			}),
+			wantCPFile: "testdata/valid_deployment_custom_cidrs_cp_expected.yaml",
+			wantMDFile: "testdata/valid_deployment_custom_cidrs_md_expected.yaml",
 		},
 		{
 			testName: "with minimal oidc",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Name = "test-cluster"
 				s.Spec.KubernetesVersion = "1.19"
+				s.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+				s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
 				s.Spec.ControlPlaneConfiguration.Count = 3
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
@@ -119,13 +138,16 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 					},
 				}
 			}),
-			wantFileName: "testdata/capd_valid_minimal_oidc_expected.yaml",
+			wantCPFile: "testdata/capd_valid_minimal_oidc_cp_expected.yaml",
+			wantMDFile: "testdata/capd_valid_minimal_oidc_md_expected.yaml",
 		},
 		{
 			testName: "with full oidc",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Name = "test-cluster"
 				s.Spec.KubernetesVersion = "1.19"
+				s.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+				s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
 				s.Spec.ControlPlaneConfiguration.Count = 3
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
@@ -147,17 +169,17 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 					},
 				}
 			}),
-			wantFileName: "testdata/capd_valid_full_oidc_expected.yaml",
+			wantCPFile: "testdata/capd_valid_full_oidc_cp_expected.yaml",
+			wantMDFile: "testdata/capd_valid_full_oidc_md_expected.yaml",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			_, writer := test.NewWriter(t)
 			ctx := context.Background()
 			client := dockerMocks.NewMockProviderClient(mockCtrl)
 			kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
-			p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, writer, test.FakeNow)
+			p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
 			cluster := &types.Cluster{
 				Name: "test",
 			}
@@ -170,12 +192,12 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				},
 			}
 			kubectl.EXPECT().GetEksaCluster(ctx, cluster).Return(oriCluster, nil)
-			got, err := p.GenerateDeploymentFileForUpgrade(ctx, bootstrapCluster, cluster, tt.clusterSpec, "cluster.yaml")
+			cpContent, mdContent, err := p.GenerateCAPISpecForUpgrade(ctx, bootstrapCluster, cluster, tt.clusterSpec)
 			if err != nil {
-				t.Fatalf("provider.GenerateDeploymentFileForUpgrade() error = %v, wantErr nil", err)
+				t.Fatalf("provider.GenerateCAPISpecForUpgrade() error = %v, wantErr nil", err)
 			}
-
-			test.AssertFilesEquals(t, got, tt.wantFileName)
+			test.AssertContentToFile(t, string(cpContent), tt.wantCPFile)
+			test.AssertContentToFile(t, string(mdContent), tt.wantMDFile)
 		})
 	}
 }
@@ -183,11 +205,12 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
-	_, writer := test.NewWriter(t)
 	client := dockerMocks.NewMockProviderClient(mockCtrl)
 	kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
 	clusterSpec := test.NewClusterSpec()
-	p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, writer, test.FakeNow)
+	clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+	clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
+	p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
 	cluster := &types.Cluster{
 		Name: "test",
 	}
@@ -218,12 +241,13 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 	kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(cp, nil)
 	kubectl.EXPECT().GetMachineDeployment(ctx, cluster, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(md, nil)
 
-	got, err := p.GenerateDeploymentFileForUpgrade(ctx, bootstrapCluster, cluster, clusterSpec, "cluster.yaml")
+	cpContent, mdContent, err := p.GenerateCAPISpecForUpgrade(ctx, bootstrapCluster, cluster, clusterSpec)
 	if err != nil {
-		t.Fatalf("provider.GenerateDeploymentFileForUpgrade() error = %v, wantErr nil", err)
+		t.Fatalf("provider.GenerateCAPISpecForUpgrade() error = %v, wantErr nil", err)
 	}
 
-	test.AssertFilesEquals(t, got, "testdata/no_machinetemplate_update_expected.yaml")
+	test.AssertContentToFile(t, string(cpContent), "testdata/no_machinetemplate_update_cp_expected.yaml")
+	test.AssertContentToFile(t, string(mdContent), "testdata/no_machinetemplate_update_md_expected.yaml")
 }
 
 func TestSetupAndValidateClusterWithEndpoint(t *testing.T) {
@@ -234,8 +258,7 @@ func TestSetupAndValidateClusterWithEndpoint(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	client := dockerMocks.NewMockProviderClient(mockCtrl)
 	kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
-	_, writer := test.NewWriter(t)
-	p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, writer, test.FakeNow)
+	p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
 	ctx := context.Background()
 	err := p.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	wantErr := fmt.Errorf("specifying endpoint host configuration in Cluster is not supported")
@@ -263,10 +286,9 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			_, writer := test.NewWriter(t)
 			client := dockerMocks.NewMockProviderClient(mockCtrl)
 			kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
-			p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, writer, test.FakeNow)
+			p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
 
 			infraBundle := p.GetInfrastructureBundle(tt.clusterSpec)
 			if infraBundle == nil {

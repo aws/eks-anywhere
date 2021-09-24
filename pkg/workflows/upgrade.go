@@ -71,7 +71,7 @@ type pauseEksaAndFluxReconcile struct{}
 
 type createBootstrapClusterTask struct{}
 
-type installCapiTask struct{}
+type installCAPITask struct{}
 
 type moveManagementToBootstrapTask struct{}
 
@@ -197,16 +197,16 @@ func (s *createBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 		return &deleteBootstrapClusterTask{}
 	}
 
-	return &installCapiTask{}
+	return &installCAPITask{}
 }
 
 func (s *createBootstrapClusterTask) Name() string {
 	return "bootstrap-cluster-init"
 }
 
-func (s *installCapiTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+func (s *installCAPITask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Installing cluster-api providers on bootstrap cluster")
-	err := commandContext.ClusterManager.InstallCapi(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster, commandContext.Provider)
+	err := commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return &deleteBootstrapClusterTask{}
@@ -214,13 +214,13 @@ func (s *installCapiTask) Run(ctx context.Context, commandContext *task.CommandC
 	return &moveManagementToBootstrapTask{}
 }
 
-func (s *installCapiTask) Name() string {
+func (s *installCAPITask) Name() string {
 	return "install-capi"
 }
 
 func (s *moveManagementToBootstrapTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Moving cluster management from workload to bootstrap cluster")
-	err := commandContext.ClusterManager.MoveCapi(ctx, commandContext.WorkloadCluster, commandContext.BootstrapCluster, types.WithNodeRef(), types.WithNodeHealthy())
+	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.WorkloadCluster, commandContext.BootstrapCluster, types.WithNodeRef(), types.WithNodeHealthy())
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
@@ -249,7 +249,7 @@ func (s *upgradeWorkloadClusterTask) Name() string {
 
 func (s *moveManagementToWorkloadTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Moving cluster management from bootstrap to workload cluster")
-	err := commandContext.ClusterManager.MoveCapi(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, types.WithNodeRef(), types.WithNodeHealthy())
+	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, types.WithNodeRef(), types.WithNodeHealthy())
 	if err != nil {
 		commandContext.SetError(err)
 		return nil

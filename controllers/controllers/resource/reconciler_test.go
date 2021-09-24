@@ -3,6 +3,7 @@ package resource_test
 import (
 	"context"
 	_ "embed"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -123,11 +124,13 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 					assert.Equal(t, false, dryRun, "Expected dryRun didn't match")
 					switch template.GetKind() {
 					case "VSphereMachineTemplate":
-						expectedMachineTemplate := &unstructured.Unstructured{}
-						if err := yaml.Unmarshal([]byte(vsphereMachineTemplateFile), expectedMachineTemplate); err != nil {
-							t.Errorf("unmarshal failed: %v", err)
+						if strings.Contains(template.GetName(), "worker-node") {
+							expectedMachineTemplate := &unstructured.Unstructured{}
+							if err := yaml.Unmarshal([]byte(vsphereMachineTemplateFile), expectedMachineTemplate); err != nil {
+								t.Errorf("unmarshal failed: %v", err)
+							}
+							assert.Equal(t, expectedMachineTemplate, template, "values", expectedMachineTemplate, template)
 						}
-						assert.Equal(t, expectedMachineTemplate, template, "values", expectedMachineTemplate, template)
 					case "MachineDeployment":
 						expectedMCDeployment := &unstructured.Unstructured{}
 						if err := yaml.Unmarshal([]byte(expectedMachineDeploymentFile), expectedMCDeployment); err != nil {

@@ -227,6 +227,20 @@ func (mr *MockGithubProviderClientMockRecorder) CreateRepo(arg0, arg1 interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRepo", reflect.TypeOf((*MockGithubProviderClient)(nil).CreateRepo), arg0, arg1)
 }
 
+// DeleteRepo mocks base method.
+func (m *MockGithubProviderClient) DeleteRepo(arg0 context.Context, arg1 git.DeleteRepoOpts) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteRepo", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteRepo indicates an expected call of DeleteRepo.
+func (mr *MockGithubProviderClientMockRecorder) DeleteRepo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteRepo", reflect.TypeOf((*MockGithubProviderClient)(nil).DeleteRepo), arg0, arg1)
+}
+
 // GetAccessTokenPermissions mocks base method.
 func (m *MockGithubProviderClient) GetAccessTokenPermissions(arg0 string) (string, error) {
 	m.ctrl.T.Helper()

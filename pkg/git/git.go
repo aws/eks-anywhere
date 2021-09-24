@@ -19,6 +19,7 @@ type Provider interface {
 	Branch(name string) error
 	GetRepo(ctx context.Context) (repo *Repository, err error)
 	CreateRepo(ctx context.Context, opts CreateRepoOpts) (repo *Repository, err error)
+	DeleteRepo(ctx context.Context, opts DeleteRepoOpts) error
 	Validate(ctx context.Context) error
 	PathExists(ctx context.Context, owner, repo, branch, path string) (bool, error)
 }
@@ -32,6 +33,11 @@ type CreateRepoOpts struct {
 }
 
 type GetRepoOpts struct {
+	Owner      string
+	Repository string
+}
+
+type DeleteRepoOpts struct {
 	Owner      string
 	Repository string
 }

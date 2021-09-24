@@ -40,7 +40,7 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 		if err != nil {
 			return nil, fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFileName, err)
 		}
-		return docker.NewProvider(datacenterConfig, p.DockerClient, p.DockerKubectlClient, p.Writer, time.Now), nil
+		return docker.NewProvider(datacenterConfig, p.DockerClient, p.DockerKubectlClient, time.Now), nil
 	}
 	return nil, errors.New("valid providers include: " + docker.ProviderName + ", " + vsphere.ProviderName)
 }

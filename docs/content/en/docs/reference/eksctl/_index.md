@@ -2,6 +2,8 @@
 title: "eksctl anywhere CLI reference"
 linkTitle: "eksctl command"
 weight: 12
+description: >
+  Details on the options and parameters for eksctl anywhere CLI
 ---
 
 The `eksctl` CLI, with the EKS Anywhere plugin added, lets you create and manage EKS Anywhere clusters.

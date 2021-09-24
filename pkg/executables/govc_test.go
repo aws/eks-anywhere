@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -372,11 +375,12 @@ func TestDeployTemplateFromLibraryErrorMarkAsTemplate(t *testing.T) {
 
 func TestGovcValidateVCenterSetup(t *testing.T) {
 	ctx := context.Background()
+	ts := newHTTPSServer(t)
 	providerConfig := v1alpha1.VSphereDatacenterConfig{
 		Spec: v1alpha1.VSphereDatacenterConfigSpec{
 			Datacenter: "SDDC Datacenter",
 			Network:    "/SDDC Datacenter/network/test network",
-			Server:     "test.com",
+			Server:     strings.TrimPrefix(ts.URL, "https://"),
 			Insecure:   true,
 		},
 	}
@@ -411,11 +415,12 @@ func TestGovcValidateVCenterSetup(t *testing.T) {
 
 func TestGovcValidateVCenterSetupMachineConfig(t *testing.T) {
 	ctx := context.Background()
+	ts := newHTTPSServer(t)
 	datacenterConfig := v1alpha1.VSphereDatacenterConfig{
 		Spec: v1alpha1.VSphereDatacenterConfigSpec{
 			Datacenter: "SDDC Datacenter",
 			Network:    "/SDDC Datacenter/network/test network",
-			Server:     "test.com",
+			Server:     strings.TrimPrefix(ts.URL, "https://"),
 			Insecure:   true,
 		},
 	}
@@ -456,6 +461,16 @@ func TestGovcValidateVCenterSetupMachineConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Govc.ValidateVCenterSetup() error: %v", err)
 	}
+}
+
+func newHTTPSServer(t *testing.T) *httptest.Server {
+	ts := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := w.Write([]byte("ready")); err != nil {
+			t.Errorf("Failed writing response to http request: %s", err)
+		}
+	}))
+	t.Cleanup(func() { ts.Close() })
+	return ts
 }
 
 func TestGovcCleanupVms(t *testing.T) {

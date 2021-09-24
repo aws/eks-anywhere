@@ -81,7 +81,7 @@ func (c *createTestSetup) expectCreateBootstrap() {
 			c.ctx, c.clusterSpec, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
 		).Return(c.bootstrapCluster, nil),
 
-		c.clusterManager.EXPECT().InstallCapi(c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider),
+		c.clusterManager.EXPECT().InstallCAPI(c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider),
 
 		c.provider.EXPECT().BootstrapSetup(c.ctx, c.clusterSpec.Cluster, c.bootstrapCluster),
 	)
@@ -99,14 +99,14 @@ func (c *createTestSetup) expectCreateWorkload() {
 		c.clusterManager.EXPECT().InstallStorageClass(
 			c.ctx, c.workloadCluster, c.provider,
 		),
-		c.clusterManager.EXPECT().InstallCapi(
+		c.clusterManager.EXPECT().InstallCAPI(
 			c.ctx, c.clusterSpec, c.workloadCluster, c.provider,
 		),
 	)
 }
 
 func (c *createTestSetup) expectMoveManagement() {
-	c.clusterManager.EXPECT().MoveCapi(
+	c.clusterManager.EXPECT().MoveCAPI(
 		c.ctx, c.bootstrapCluster, c.workloadCluster, gomock.Any(),
 	)
 }

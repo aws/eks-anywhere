@@ -262,7 +262,8 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			release.Spec.Releases = append(release.Spec.Releases, eksARelease)
+			currentReleases := pkg.EksAReleases(release.Spec.Releases)
+			release.Spec.Releases = currentReleases.AppendOrUpdateRelease(eksARelease)
 
 			output, err := yaml.Marshal(release)
 			if err != nil {

@@ -125,34 +125,36 @@ func (mr *MockProviderMockRecorder) EnvMap() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnvMap", reflect.TypeOf((*MockProvider)(nil).EnvMap))
 }
 
-// GenerateDeploymentFileForCreate mocks base method.
-func (m *MockProvider) GenerateDeploymentFileForCreate(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 string) (string, error) {
+// GenerateCAPISpecForCreate mocks base method.
+func (m *MockProvider) GenerateCAPISpecForCreate(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) ([]byte, []byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateDeploymentFileForCreate", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "GenerateCAPISpecForCreate", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].([]byte)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
-// GenerateDeploymentFileForCreate indicates an expected call of GenerateDeploymentFileForCreate.
-func (mr *MockProviderMockRecorder) GenerateDeploymentFileForCreate(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+// GenerateCAPISpecForCreate indicates an expected call of GenerateCAPISpecForCreate.
+func (mr *MockProviderMockRecorder) GenerateCAPISpecForCreate(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateDeploymentFileForCreate", reflect.TypeOf((*MockProvider)(nil).GenerateDeploymentFileForCreate), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateCAPISpecForCreate", reflect.TypeOf((*MockProvider)(nil).GenerateCAPISpecForCreate), arg0, arg1, arg2)
 }
 
-// GenerateDeploymentFileForUpgrade mocks base method.
-func (m *MockProvider) GenerateDeploymentFileForUpgrade(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec, arg4 string) (string, error) {
+// GenerateCAPISpecForUpgrade mocks base method.
+func (m *MockProvider) GenerateCAPISpecForUpgrade(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec) ([]byte, []byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateDeploymentFileForUpgrade", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "GenerateCAPISpecForUpgrade", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].([]byte)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
-// GenerateDeploymentFileForUpgrade indicates an expected call of GenerateDeploymentFileForUpgrade.
-func (mr *MockProviderMockRecorder) GenerateDeploymentFileForUpgrade(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+// GenerateCAPISpecForUpgrade indicates an expected call of GenerateCAPISpecForUpgrade.
+func (mr *MockProviderMockRecorder) GenerateCAPISpecForUpgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateDeploymentFileForUpgrade", reflect.TypeOf((*MockProvider)(nil).GenerateDeploymentFileForUpgrade), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateCAPISpecForUpgrade", reflect.TypeOf((*MockProvider)(nil).GenerateCAPISpecForUpgrade), arg0, arg1, arg2, arg3)
 }
 
 // GenerateMHC mocks base method.
@@ -325,17 +327,17 @@ func (mr *MockProviderMockRecorder) UpdateSecrets(arg0, arg1 interface{}) *gomoc
 }
 
 // ValidateNewSpec mocks base method.
-func (m *MockProvider) ValidateNewSpec(arg0 context.Context, arg1 *types.Cluster) error {
+func (m *MockProvider) ValidateNewSpec(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateNewSpec", arg0, arg1)
+	ret := m.ctrl.Call(m, "ValidateNewSpec", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ValidateNewSpec indicates an expected call of ValidateNewSpec.
-func (mr *MockProviderMockRecorder) ValidateNewSpec(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockProviderMockRecorder) ValidateNewSpec(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateNewSpec", reflect.TypeOf((*MockProvider)(nil).ValidateNewSpec), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateNewSpec", reflect.TypeOf((*MockProvider)(nil).ValidateNewSpec), arg0, arg1, arg2)
 }
 
 // Version mocks base method.
@@ -434,4 +436,18 @@ func NewMockMachineConfig(ctrl *gomock.Controller) *MockMachineConfig {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockMachineConfig) EXPECT() *MockMachineConfigMockRecorder {
 	return m.recorder
+}
+
+// OSFamily mocks base method.
+func (m *MockMachineConfig) OSFamily() v1alpha1.OSFamily {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OSFamily")
+	ret0, _ := ret[0].(v1alpha1.OSFamily)
+	return ret0
+}
+
+// OSFamily indicates an expected call of OSFamily.
+func (mr *MockMachineConfigMockRecorder) OSFamily() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OSFamily", reflect.TypeOf((*MockMachineConfig)(nil).OSFamily))
 }

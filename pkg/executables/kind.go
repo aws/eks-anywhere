@@ -32,17 +32,19 @@ type Kind struct {
 // It's used by BootstrapClusterClientOption's to store/change information prior to a command execution
 // It must be cleaned after each execution to prevent side effects from past executions options
 type kindExecConfig struct {
-	env                  map[string]string
-	ConfigFile           string
-	KindImage            string
-	KubernetesRepository string
-	EtcdRepository       string
-	EtcdVersion          string
-	CorednsRepository    string
-	CorednsVersion       string
-	KubernetesVersion    string
-	DockerExtraMounts    bool
-	DisableDefaultCNI    bool
+	env                    map[string]string
+	ConfigFile             string
+	KindImage              string
+	KubernetesRepository   string
+	EtcdRepository         string
+	EtcdVersion            string
+	CorednsRepository      string
+	CorednsVersion         string
+	KubernetesVersion      string
+	RegistryMirrorEndpoint string
+	RegistryCACert         string
+	DockerExtraMounts      bool
+	DisableDefaultCNI      bool
 }
 
 func NewKind(executable Executable, writer filewriter.FileWriter) *Kind {
@@ -53,7 +55,10 @@ func NewKind(executable Executable, writer filewriter.FileWriter) *Kind {
 }
 
 func (k *Kind) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.Spec, opts ...bootstrapper.BootstrapClusterClientOption) (kubeconfig string, err error) {
-	k.setupExecConfig(clusterSpec)
+	err = k.setupExecConfig(clusterSpec)
+	if err != nil {
+		return "", err
+	}
 	defer k.cleanExecConfig()
 
 	err = processOpts(opts)
@@ -150,6 +155,19 @@ func (k *Kind) WithDefaultCNIDisabled() bootstrapper.BootstrapClusterClientOptio
 	}
 }
 
+func (k *Kind) WithRegistryMirror(endpoint string, caCertFile string) bootstrapper.BootstrapClusterClientOption {
+	return func() error {
+		if k.execConfig == nil {
+			return errors.New("kind exec config is not ready")
+		}
+
+		k.execConfig.RegistryMirrorEndpoint = endpoint
+		k.execConfig.RegistryCACert = caCertFile
+
+		return nil
+	}
+}
+
 func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster) error {
 	internalName := getInternalName(cluster.Name)
 	logger.V(4).Info("Deleting kind cluster", "name", internalName)
@@ -160,10 +178,10 @@ func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluste
 	return err
 }
 
-func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) {
+func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 	bundle := clusterSpec.VersionsBundle
 	k.execConfig = &kindExecConfig{
-		KindImage:            bundle.EksD.KindNode.VersionedImage(),
+		KindImage:            clusterSpec.UseImageMirror(bundle.EksD.KindNode.VersionedImage()),
 		KubernetesRepository: bundle.KubeDistro.Kubernetes.Repository,
 		KubernetesVersion:    bundle.KubeDistro.Kubernetes.Tag,
 		EtcdRepository:       bundle.KubeDistro.Etcd.Repository,
@@ -172,6 +190,17 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) {
 		CorednsVersion:       bundle.KubeDistro.CoreDNS.Tag,
 		env:                  make(map[string]string),
 	}
+	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
+		k.execConfig.RegistryMirrorEndpoint = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
+		if clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent != "" {
+			path, err := k.writer.Write("ca.crt", []byte(clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent))
+			if err != nil {
+				return errors.New("error writing the registry certification file")
+			}
+			k.execConfig.RegistryCACert = path
+		}
+	}
+	return nil
 }
 
 func (k *Kind) cleanExecConfig() {

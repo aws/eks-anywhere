@@ -64,8 +64,9 @@ func (r *ReleaseConfig) GetEksAToolsAssets() ([]Artifact, error) {
 
 func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev1alpha1.EksaBundle, error) {
 	eksABundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"eks-a-tools":        r.GetEksAToolsAssets,
-		"cluster-controller": r.GetClusterControllerAssets,
+		"eks-a-tools":           r.GetEksAToolsAssets,
+		"cluster-controller":    r.GetClusterControllerAssets,
+		"diagnostic-collector:": r.GetDiagnosticCollectorAssets,
 	}
 
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
@@ -103,8 +104,10 @@ func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev
 	}
 
 	bundle := anywherev1alpha1.EksaBundle{
-		CliTools:   bundleImageArtifacts["eks-anywhere-cli-tools"],
-		Components: bundleManifestArtifacts["eksa-components.yaml"],
+		CliTools:            bundleImageArtifacts["eks-anywhere-cli-tools"],
+		Components:          bundleManifestArtifacts["eksa-components.yaml"],
+		ClusterController:   bundleImageArtifacts["eks-anywhere-cluster-controller"],
+		DiagnosticCollector: bundleImageArtifacts["eks-anywhere-diagnostic-collector"],
 	}
 
 	return bundle, nil

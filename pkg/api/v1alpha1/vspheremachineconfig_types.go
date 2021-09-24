@@ -49,6 +49,10 @@ func (c *VSphereMachineConfig) IsEtcd() bool {
 	return false
 }
 
+func (c *VSphereMachineConfig) OSFamily() OSFamily {
+	return c.Spec.OSFamily
+}
+
 type OSFamily string
 
 const (
@@ -85,6 +89,24 @@ type VSphereMachineConfigGenerate struct {
 	ObjectMeta      `json:"metadata,omitempty"`
 
 	Spec VSphereMachineConfigSpec `json:"spec,omitempty"`
+}
+
+func (c *VSphereMachineConfigGenerate) OSFamily() OSFamily {
+	return c.Spec.OSFamily
+}
+
+func (c *VSphereMachineConfig) ConvertConfigToConfigGenerateStruct() *VSphereMachineConfigGenerate {
+	config := &VSphereMachineConfigGenerate{
+		TypeMeta: c.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        c.Name,
+			Annotations: c.Annotations,
+			Namespace:   c.Namespace,
+		},
+		Spec: c.Spec,
+	}
+
+	return config
 }
 
 //+kubebuilder:object:root=true

@@ -29,17 +29,28 @@ type ClusterSpec struct {
 	DatacenterRef                 Ref                            `json:"datacenterRef,omitempty"`
 	IdentityProviderRefs          []Ref                          `json:"identityProviderRefs,omitempty"`
 	GitOpsRef                     *Ref                           `json:"gitOpsRef,omitempty"`
-	OverrideClusterSpecFile       string                         `json:"overrideClusterSpecFile,omitempty"`
-	ClusterNetwork                ClusterNetwork                 `json:"clusterNetwork,omitempty"`
+	// Deprecated: This field has no function and is going to be removed in a future release.
+	OverrideClusterSpecFile string         `json:"overrideClusterSpecFile,omitempty"`
+	ClusterNetwork          ClusterNetwork `json:"clusterNetwork,omitempty"`
 	// +kubebuilder:validation:Optional
-	ExternalEtcdConfiguration *ExternalEtcdConfiguration `json:"externalEtcdConfiguration,omitempty"`
-	ProxyConfiguration        *ProxyConfiguration        `json:"proxyConfiguration,omitempty"`
+	ExternalEtcdConfiguration   *ExternalEtcdConfiguration   `json:"externalEtcdConfiguration,omitempty"`
+	ProxyConfiguration          *ProxyConfiguration          `json:"proxyConfiguration,omitempty"`
+	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
 }
 
 type ProxyConfiguration struct {
 	HttpProxy  string   `json:"httpProxy,omitempty"`
 	HttpsProxy string   `json:"httpsProxy,omitempty"`
 	NoProxy    []string `json:"noProxy,omitempty"`
+}
+
+// RegistryMirrorConfiguration defines the settings for image registry mirror
+type RegistryMirrorConfiguration struct {
+	// Endpoint defines the registry mirror endpoint to use for pulling images
+	Endpoint string `json:"endpoint,omitempty"`
+
+	// CACertContent defines the contents registry mirror CA certificate
+	CACertContent string `json:"caCertContent,omitempty"`
 }
 
 func (n *ProxyConfiguration) Equal(o *ProxyConfiguration) bool {
@@ -254,6 +265,20 @@ func (c *Cluster) ResourceType() string {
 
 func (c *Cluster) EtcdAnnotation() string {
 	return etcdAnnotation
+}
+
+func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
+	config := &ClusterGenerate{
+		TypeMeta: c.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        c.Name,
+			Annotations: c.Annotations,
+			Namespace:   c.Namespace,
+		},
+		Spec: c.Spec,
+	}
+
+	return config
 }
 
 // +kubebuilder:object:root=true

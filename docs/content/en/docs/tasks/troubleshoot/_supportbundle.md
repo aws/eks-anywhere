@@ -19,7 +19,10 @@ collecting relevant information, archiving it locally, and performing analysis o
 
 `eksctl anywhere generate support-bundle-config` will generate a support bundle config YAML file for you to customize.
 
-### Collecting a support bundle and running analyzers
+Do not add personally identifiable information (PII) or other confidential or sensitive information to your support bundle.
+If you provide the support bundle to get support from AWS, it will be accessible to other AWS services, including AWS Support.
+
+### Collecting a Support Bundle and running analyzers
 ```
 eksctl anywhere generate support-bundle
 ```

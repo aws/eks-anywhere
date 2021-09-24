@@ -40,7 +40,7 @@ type capiResourceFetcher struct {
 	log    logr.Logger
 }
 
-func NewCapiResourceFetcher(client client.Reader, Log logr.Logger) *capiResourceFetcher {
+func NewCAPIResourceFetcher(client client.Reader, Log logr.Logger) *capiResourceFetcher {
 	return &capiResourceFetcher{
 		client: client,
 		log:    Log,
@@ -134,6 +134,11 @@ func (r *capiResourceFetcher) fetchClusterForRef(ctx context.Context, refId type
 				}
 			}
 			if c.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name == refId.Name {
+				if _, err := r.clusterByName(ctx, constants.EksaSystemNamespace, c.Name); err == nil { // further validates a capi cluster exists
+					return &c, nil
+				}
+			}
+			if c.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name == refId.Name {
 				if _, err := r.clusterByName(ctx, constants.EksaSystemNamespace, c.Name); err == nil { // further validates a capi cluster exists
 					return &c, nil
 				}
