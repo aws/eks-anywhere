@@ -15,8 +15,8 @@ import (
 
 const (
 	destinationFile = "sonobuoy"
-	sonobuoyDarwin  = "https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.50.0/sonobuoy_0.50.0_darwin_amd64.tar.gz"
-	sonobuoyLinux   = "https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.50.0/sonobuoy_0.50.0_linux_386.tar.gz"
+	sonobuoyDarwin  = "https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.53.2/sonobuoy_0.53.2_darwin_amd64.tar.gz"
+	sonobuoyLinux   = "https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.53.2/sonobuoy_0.53.2_linux_amd64.tar.gz"
 )
 
 func Download() error {
