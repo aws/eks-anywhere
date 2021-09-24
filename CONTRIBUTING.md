@@ -13,7 +13,7 @@ information to effectively respond to your bug report or contribution.
 Make sure to keep Pull Requests small and functional to make them easier to review, understand, and look up in commit history.
 This repository uses "Squash and Commit" to keep our history clean and make it easier to revert changes based on PR.
 
-Adding the appropriate documentation, unit tests, and e2e tests as part of a feature is the responsibility of the
+Adding the appropriate documentation,unit tests and e2e tests as part of a feature is the responsibility of the
 feature owner, whether it is done in the same Pull Request or not.
 
 Pull Requests should follow the "subject: message" format, where the subject describes what part of the code is being
@@ -59,7 +59,7 @@ GitHub Milestones are used to plan work that is currently being tracked.
 
 * next: changes for next release
 * next+1: won't make next release but the following
-* techdebt: used to keep track of tech debt items, separate ongoing effort from release action items
+* techdebt: used to keep track of techdebt items, separate ongoing effort from release action items
 * oncall: used to keep track of issues needing active follow-up
 * backlog: items that don't have a home in the others
 
@@ -74,7 +74,7 @@ link to other issues.
 We welcome you to use the GitHub issue tracker to report bugs or suggest features that have actionable items/issues
 (as opposed to introducing a feature request on GitHub Discussions).
 
-When filing an issue, please check open or recently closed issues to make sure somebody else hasn't already
+When filing an issue, please check existing open, or recently closed, issues to make sure somebody else hasn't already
 reported the issue. Please try to include as much information as you can. Details like these are incredibly useful:
 
 * A reproducible test case or series of steps
@@ -98,22 +98,22 @@ To send us a pull request, please:
 5. Send us a pull request, answering any default questions in the pull request interface.
 6. Pay attention to any automated CI failures reported in the pull request, and stay involved in the conversation.
 
-GitHub provides additional documentation on [forking a repository](https://help.github.com/articles/fork-a-repo/) and
+GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and
 [creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
 
 
 ## Finding contributions to work on
-Looking at the existing issues is a great way to find something to contribute on. As our projects use the default GitHub issue labels (enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any 'help wanted' issues is a great place to start.
+Looking at the existing issues is a great way to find something to contribute on. As our projects, by default, use the default GitHub issue labels (enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any 'help wanted' issues is a great place to start.
 
 
 ## Code of Conduct
 This project has adopted the [Amazon Open Source Code of Conduct](https://aws.github.io/code-of-conduct).
-For more information, see the [Code of Conduct FAQ](https://aws.github.io/code-of-conduct-faq) or contact
+For more information see the [Code of Conduct FAQ](https://aws.github.io/code-of-conduct-faq) or contact
 opensource-codeofconduct@amazon.com with any additional questions or comments.
 
 
 ## Security issue notifications
-If you discover a potential security issue in this project, we ask that you notify AWS/Amazon Security via our [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/). Please do **not** create a public GitHub issue.
+If you discover a potential security issue in this project we ask that you notify AWS/Amazon Security via our [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/). Please do **not** create a public github issue.
 
 
 ## Licensing

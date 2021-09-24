@@ -28,17 +28,17 @@ spec:
 * __Type__: object
 
 ### __httpProxy__ (required)
-* __Description__: HTTP proxy to use to connect to the Internet; must be in the format IP:port.
+* __Description__: HTTP proxy to use to connect to the internet; must be in the format IP:port
 * __Type__: string
 * __Example__: ```httpProxy: 192.168.0.1:3218```
 
 ### __httpsProxy__ (required)
-* __Description__: HTTPS proxy to use to connect to the Internet; must be in the format IP:port.
+* __Description__: HTTPS proxy to use to connect to the internet; must be in the format IP:port
 * __Type__: string
 * __Example__: ```httpsProxy: 192.168.0.1:3218```
 
 ### __noProxy__ (optional)
-* __Description__: list of endpoints that should not be routed through the proxy; can be an IP, cidr block, or a domain name.
+* __Description__: list of endpoints that should not be routed through the proxy; can be an IP, cidr block, or a domain name
 * __Type__: list of strings
 * __Example__
 ```yaml

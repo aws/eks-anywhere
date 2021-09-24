@@ -8,7 +8,7 @@ description: >
 
 
 ## OIDC support (optional)
-EKS Anywhere can create clusters that support API server OIDC authentication.
+EKS Anywhere can create clusters that support api server OIDC authentication.
 In order to add OIDC support, you need to configure your cluster by updating the configuration file before creating the cluster.
 This is a generic template with detailed descriptions below for reference:
 ```yaml
@@ -39,36 +39,36 @@ spec:
     usernamePrefix: ""
 ```
 ### identityProviderRefs (Under Cluster)
-List of identity providers you want configured for the cluster.
+List of identity providers you want configured for the Cluster.
 Right now, only 1 provider of type `OIDCConfig` is supported.
 This would include a reference to the `OIDCConfig` object with the configuration below.
 
 ### clientId (required)
-* Description: Client ID for the OpenID Connect client.
+* Description: ClientId defines the client ID for the OpenID Connect client
 * Type: string
 ### groupsClaim (optional)
-* Description: Name of a custom OpenID Connect claim for specifying user groups.
+* Description: GroupsClaim defines the name of a custom OpenID Connect claim for specifying user groups
 * Type: string
 ### groupsPrefix (optional)
-* Description: String to be prefixed to all groups to prevent conflicts with other authentication strategies.
+* Description: GroupsPrefix defines a string to be prefixed to all groups to prevent conflicts with other authentication strategies
 * Type: string
 ### issuerUrl (required)
-* Description: URL of the OpenID issuer. Only HTTPS scheme will be accepted.
+* Description: IssuerUrl defines the URL of the OpenID issuer, only HTTPS scheme will be accepted
 * Type: string
 ### requiredClaims (optional)
 List of RequiredClaim objects listed below. 
 Only one is supported at this time.
 
 ### requiredClaims[0] (optional)
-* Description: A key=value pair that describes a required claim in the ID Token.
+* Description: RequiredClaim defines a key=value pair that describes a required claim in the ID Token
   * claim
     * type: string
   * value
     * type: string
 * Type: object
 ### usernameClaim (optional)
-* Description: OpenID claim to use as the username.
-Note that claims other than the default ('sub') are not guaranteed to be unique and immutable.
+* Description: UsernameClaim defines the OpenID claim to use as the user name.
+Note that claims other than the default ('sub') is not guaranteed to be unique and immutable
 * Type: string
 ### usernamePrefix (optional)
 * Description: UsernamePrefix defines a string to be prefixed to all usernames.

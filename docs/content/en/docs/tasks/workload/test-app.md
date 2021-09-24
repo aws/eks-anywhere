@@ -19,7 +19,6 @@ To see the new pod running in your cluster, type:
 ```bash
 kubectl get pods -l app=hello-eks-a
 ```
-
 Example output:
 ```
 NAME                                     READY   STATUS    RESTARTS   AGE
@@ -32,7 +31,7 @@ To check the logs of the container to make sure it started successfully, type:
 kubectl logs -l app=hello-eks-a
 ```
 
-There is also a default webpage being served from the container.
+There is also a default web page being served from the container.
 You can forward the deployment port to your local machine with
 
 ```bash
@@ -44,7 +43,6 @@ Now you should be able to open your browser or use `curl` to [http://localhost:8
 ```bash
 curl localhost:8000
 ```
-
 Example output:
 
 ```

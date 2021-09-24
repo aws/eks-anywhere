@@ -50,3 +50,4 @@ The permissions needed by the EKS Anywhere vSphere user are just short of full a
 ## Resource Pool
 
 * Assign a virtual machine to resource pool
+
