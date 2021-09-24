@@ -37,11 +37,11 @@ If you provide a support bundle configuration file using the `--bundle-config` f
 
 ```
 Flags:
-      --bundle-config string   Bundle config file to use when generating support bundle
+      --bundle-config string   Bundle Config file to use when generating support bundle
   -f, --filename string        Filename that contains EKS-A cluster configuration
-  -h, --help                  Help for support-bundle
-      --since string          Collect pod logs in the latest duration like 5s, 2m, or 3h.
-      --since-time string     Collect pod logs after a specific datetime(RFC3339) like 2021-06-28T15:04:05Z
+  -h, --help                   help for support-bundle
+      --since string           Collect pod logs in the latest duration like 5s, 2m, or 3h.
+      --since-time string      Collect pod logs after a specific datetime(RFC3339) like 2021-06-28T15:04:05Z
   -w, --w-config string        Kubeconfig file to use when creating support bundle for a workload cluster
 ```
 
