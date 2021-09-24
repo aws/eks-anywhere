@@ -22,6 +22,14 @@ spec:
             - {{ . }}
           {{- end }}
 {{- end }}
+{{- if and .registryMirrorConfiguration (eq .format "bottlerocket") }}
+        registryMirror:
+          endpoint: {{.registryMirrorConfiguration}}
+          {{- if .registryCACert }}
+          caCert: |
+{{ .registryCACert | indent 12 }}
+          {{- end }}
+{{- end }}
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
           kubeletExtraArgs:
