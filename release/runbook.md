@@ -4,7 +4,7 @@ EKS Anywhere releases are of two variants: the versioned bundle release and the 
 
 ### Versioned Bundles Release
 
-The versioned bundles are comprised of version-tagged bundles of EKS-A/EKS-D components. This includes the list of container images/manifests from EKS-A, as well as EKS-D dependent artifacts such as OVAs and kinD images. These image and S3 URIs will be embedded into a bundles manifest that the CLI will use to fetch the images and manifests that it needs to pull when creating a cluster. The bundles release manifest URI will be referenced in the EKS-A CLI release manifest, so that customers will know what version bundle each release version of the CLI will be supporting.
+The versioned bundles are comprised of version-tagged bundles of EKS Anywhere and EKS Distro components. This includes the list of container images/manifests from EKS Anywhere, as well as EKS Distro-dependent artifacts such as OVAs and kinD images. These image and S3 URIs will be embedded into a bundles manifest that the CLI will use to fetch the images and manifests that it needs to pull when creating a cluster. The bundles release manifest URI will be referenced in the EKS Anywhere CLI release manifest, so that customers will know what version bundle each release version of the CLI will be supporting.
 
 ### EKS-A CLI release
 
