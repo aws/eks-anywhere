@@ -38,7 +38,7 @@ Currently, you can manage a subset of cluster properties with GitOps:
 - `VSphereMachineConfig.template`
 
 Any other changes to the cluster configuration in the Git repository will be ignored.
-If an immutable immutable field is changed in Git repsitory, there are two ways to find the error message:
+If an immutable field is changed in Git repository, there are two ways to find the error message:
 1. If a notification webhook is set up, check the error message in notification channel.
 2. Check the Flux Kustomization Controller log: `kubectl logs -f -n flux-system kustomize-controller-******` for error message containing text similar to `Invalid value: 1: field is immutable`.
 
@@ -53,7 +53,7 @@ In order to use GitOps to manage cluster scaling, you need a couple of things:
 
 ### Create a GitHub Personal Access Token
 
-[Create a Personal Access Token (PAT)](https://github.com/settings/tokens/new) to access your provided github repository.
+[Create a Personal Access Token (PAT)](https://github.com/settings/tokens/new) to access your provided GitHub repository.
 It must be scoped for all `repo` permissions.
 
 >**_NOTE:_** GitOps configuration only works with hosted github.com and will not work on self-hosted GitHub Enterprise instances.
@@ -101,7 +101,7 @@ metadata:
   name: mynewgitopscluster
 spec:
 ... # collapsed cluster spec fields
-# Below added for gitops support
+# Below added for GitOps support
   gitOpsRef:
     kind: GitOpsConfig
     name: my-cluster-name
@@ -123,7 +123,7 @@ spec:
 Generate your cluster configuration and add the GitOps configuration.
 For a full spec reference see the [Cluster Spec reference]({{< relref "../../reference/clusterspec/gitops" >}}).
 
->**_NOTE:_** After your cluster is created the cluster configuration will automatically be commited to your git repo.
+>**_NOTE:_** After your cluster is created the cluster configuration will automatically be committed to your Git repo.
 
 1. Create an EKS Anywhere cluster with GitOps enabled.
 
@@ -136,7 +136,7 @@ For a full spec reference see the [Cluster Spec reference]({{< relref "../../ref
 
 After your cluster is created you can test the GitOps controller by modifying the cluster specification.
 
-1. Clone your git repo and modify the cluster specification.
+1. Clone your Git repo and modify the cluster specification.
    The default path for the cluster file is:
 
     ```
@@ -145,7 +145,7 @@ After your cluster is created you can test the GitOps controller by modifying th
 
 1. Modify the `workerNodeGroupsConfigurations[0].count` field with your desired changes.
 
-1. Commit the file to your git repository
+1. Commit the file to your Git repository
 
     ```bash
     git add eksa-cluster.yaml
@@ -159,4 +159,3 @@ After your cluster is created you can test the GitOps controller by modifying th
     ```bash
     kubectl get nodes 
     ```
-   

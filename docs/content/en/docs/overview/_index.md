@@ -7,7 +7,7 @@ description: >
 ---
 
 EKS Anywhere uses the `eksctl` executable to create a Kubernetes cluster in your environment.
-Currently it allows you to create and delete clusters in a vSphere environment.
+Currently, it allows you to create and delete clusters in a vSphere environment.
 You can run cluster create and delete commands from an Ubuntu or Mac administrative machine.
 
 To create a cluster, you need to create a specification file that includes all of your vSphere details and information about your EKS cluster.

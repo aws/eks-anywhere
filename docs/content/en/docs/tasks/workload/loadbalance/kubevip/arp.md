@@ -9,7 +9,7 @@ description: >
 
 <!-- overview -->
 
-In ARP mode, kube-vip will perform leader election and assign the Virtul IP to the leader.
+In ARP mode, kube-vip will perform leader election and assign the virtual IP to the leader.
 This node will inherit the VIP and become the load-balancing leader within the cluster.
 
 <!-- body -->
@@ -112,7 +112,7 @@ You should see something like this in the output
 
    ```
 
-Here is an example manifest for kube-vip from step 5. Also available [here](https://raw.githubusercontent.com/kube-vip/kube-vip/f0f0ec3bc953d4b42c78f1b35ba944804a9e31aa/example/deploy/0.3.5.yaml)
+Here is an example manifest for kube-vip from step 5, which is also available [here](https://raw.githubusercontent.com/kube-vip/kube-vip/f0f0ec3bc953d4b42c78f1b35ba944804a9e31aa/example/deploy/0.3.5.yaml)
 
 ```yaml
 apiVersion: apps/v1

@@ -112,7 +112,7 @@ environment variables to run `govc`: GOVC_USERNAME, GOVC_PASSWORD and GOVC_URL.
 1. Name the tag *os:ubuntu* or *os:bottlerocket*.
    ![Import ova wizard](/images/ss12.jpg)
 
-#### Tag to indicate eksd release
+#### Tag to indicate EKS-D release
 1. Select the template that was newly created in the steps above and navigate to *Summary* -> *Tags*.
    ![Import ova wizard](/images/ss10.jpg)
 1. Click *Assign* -> *Add Tag* to create a new tag and attach it.

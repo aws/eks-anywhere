@@ -44,8 +44,8 @@ See the [Install EKS Anywhere]({{< relref "../getting-started/install" >}}) guid
 
 To obtain EKS Anywhere software, you need Internet access to the repositories holding that software.
 EKS Anywhere does not currently support the use of private registries and repositories for the software that EKS Anywhere needs to draw on during cluster creation at this time.
-EKS Anywhere software is divided into two types of components.
-The CLI interface for managing clusters and the cluster components an controllers used to run workloads and configure clusters.
+EKS Anywhere software is divided into two types of components: 
+the CLI for managing clusters and the cluster components and controllers used to run workloads and configure clusters.
 The software you need to obtain includes:
 
 * **Command line tools**: Binaries to [install on the administrative machine]({{< relref "../getting-started/install" >}}), include `eksctl`, `eksctl-anywhere`, `kubectl`, and `aws-iam-authenticator`.
@@ -67,7 +67,7 @@ However, instead of using CAPI directly with the `clusterctl` command to manage 
 
 As for other providers, the EKS Anywhere project documents the [Cluster API Provider Docker (CAPD)](https://github.com/kubernetes-sigs/cluster-api/tree/master/test/infrastructure/docker), but doesn’t support it for production use.
 Expect other providers to be supported for EKS Anywhere in the future.
-If you are interested in EKS Anywhere supporting a different provider, feel free to create an [an issue on Github](https://github.com/aws/eks-anywhere/issues) for consideration.
+If you are interested in EKS Anywhere supporting a different provider, feel free to create an [an issue on GitHub](https://github.com/aws/eks-anywhere/issues) for consideration.
 
 With your Administrative machine in place, to prepare the vSphere provider for EKS Anywhere you need to make sure your vSphere environment meets the EKS Anywhere [requirements]({{< relref "../reference/vsphere/vsphere-prereq" >}}) and that [permissions]({{< relref "../reference/vsphere/vsphere-prereq" >}}) set up properly.
 If you don’t want to use the default OVA images, you can [import the OVAs]({{< relref "../reference/vsphere/vsphere-ovas" >}}) representing the operating systems and Kubernetes releases you want.
@@ -83,7 +83,7 @@ Once you understand this process, you can use the following documentation to cre
 
 ### Starting the process
 
-To start, the `eksctl anywhere` command is used to generate a cluster config file, which you can then modify and use to create the cluster.
+To start, the `eksctl anywhere` command is used to generate a cluster config file, which you can then modify and used to create the cluster.
 The following diagram illustrates what happens when you start the cluster creation process:
 
 ![Start creating EKS Anywhere cluster](/images/eksa-start.png)
@@ -91,7 +91,7 @@ The following diagram illustrates what happens when you start the cluster creati
 #### 1. Generate an EKS Anywhere config file
 
 When you run `eksctl anywhere generate clusterconfig`, the two pieces of information you provide are the name of the cluster ($CLUSTER_NAME) and the type of provider (`-p vsphere`, in this example).
-Then you can direct the yaml cluster config output into a file (`> $CLUSTER_NAME.yaml`). For example: 
+Then, you can direct the yaml cluster config output into a file (`> $CLUSTER_NAME.yaml`). For example: 
 
 ```
 eksctl anywhere generate clusterconfig $CLUSTER_NAME -p vpshere > $CLUSTER_NAME.yaml
@@ -249,7 +249,7 @@ Next, the default storage class is installed on the workload cluster:
 Installing storage class on workload cluster
 ```
 
-After that, the CAPI providers are configured on the workload cluster, in preparation for the workload cluster to take over responsibilities for running the components needed to manage the itself.
+After that, the CAPI providers are configured on the workload cluster, in preparation for the workload cluster to take over responsibilities for running the components needed to manage itself.
 
 ```
 Installing cluster-api providers on workload cluster
@@ -282,7 +282,7 @@ The cluster configuration is saved:
 Writing cluster config file
 ```
 
-With the workload cluster up, and the CAPI service running on the workload cluster, the bootstrap cluster is no longer needed and is deleted:
+With the workload cluster up and the CAPI service running on the workload cluster, the bootstrap cluster is no longer needed and is deleted:
 
 ![Delete EKS Anywhere bootstrap cluster](/images/eksa-delete.png)
 
@@ -314,16 +314,16 @@ The current state of networking on the vSphere node level include the following:
 * **DHCP**: EKS Anywhere requires that a DHCP server be available to the control plane and worker nodes in vSphere for them to obtain their IP addresses.
 There is currently no support for static IP addresses or multinetwork clusters.
 All control plane and nodes are on the same network. 
-* **CAPI endpoint**: A static IP address should have been assigned to the control plane configuration endpoint, to provide access to the Cluster API.
+* **CAPI endpoint**: A static IP address should have been assigned to the control plane configuration endpoint to provide access to the Cluster API.
 It should have been set up to not conflict with any other node IP addresses in the cluster.
 This is a specific requirement of CAPI, not EKS Anywhere.
-* **Proxy server**: If a [proxy server]({{< relref "../reference/clusterspec/proxy" >}}) was identified to the EKS Anywhere workload cluster, that server should have inbound access from the cluster nodes and outbound access to the internet.
+* **Proxy server**: If a [proxy server]({{< relref "../reference/clusterspec/proxy" >}}) was identified to the EKS Anywhere workload cluster, that server should have inbound access from the cluster nodes and outbound access to the Internet.
 
 Networking for the cluster itself has the following attributes:
 
 * **Cilium CNI**: The [Cilium](https://cilium.io/) Kubernetes CNI is used to provide networking between components of the control plane and data plane components.
 No other CNI plugins, including Cilium Enterprise, is supported at this time.
-* **Pod/Service IP ranges**: Separate IP address blocks were assigned from the [configuration file]({{< relref "../reference/clusterspec/vsphere" >}}) during cluster creation for the Pods network and Services network managed by Cilium.
+* **Pod/Service IP ranges**: Separate IP address blocks were assigned from the [configuration file]({{< relref "../reference/clusterspec/vsphere" >}}) during cluster creation for the pods network and services network managed by Cilium.
 Refer to the clusterNetwork section of your configuration file to see how the cidrBlocks for pods and services were set.
 
 Networking setups for accessing cluster resources on your running EKS Anywhere cluster include the following documented features:
@@ -350,7 +350,7 @@ Supported authentication types are listed in the [AuthN / AuthZ]({{< relref "../
 
 ### Storage
 
-The amount of storage assigned to each virtual machine is 25GiB, by default.
+By default, the amount of storage assigned to each virtual machine is 25GiB.
 It could be different in your case if you had changed the [diskGiB]({{< relref "../reference/clusterspec/vsphere/#diskgib" >}}) field in the EKS Anywhere config.
 As for application storage, EKS Anywhere configures a default storage class and supports adding compatible Container Storage Interface (CSI) drivers to a running workload cluster.
 See [Kubernetes Storage](https://kubernetes.io/docs/concepts/storage/) for details.
