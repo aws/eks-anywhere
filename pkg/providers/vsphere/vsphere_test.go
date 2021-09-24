@@ -605,16 +605,13 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorConfig(t *testin
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
 
-	fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
-	writtenFile, err := provider.GenerateDeploymentFileForCreate(context.Background(), cluster, clusterSpec, fileName)
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
 	if err != nil {
-		t.Fatalf("failed to generate deployment file: %v", err)
-	}
-	if fileName == "" {
-		t.Fatalf("empty fileName returned by GenerateDeploymentFile")
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 
-	test.AssertFilesEquals(t, writtenFile, "testdata/expected_results_bottlerocket_mirror_config.yaml")
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_bottlerocket_mirror_config_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_bottlerocket_mirror_config_md.yaml")
 }
 
 func TestProviderGenerateDeploymentFileWithMirrorConfig(t *testing.T) {
