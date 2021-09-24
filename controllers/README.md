@@ -13,11 +13,11 @@ Example
 ./hack/kubebuilder.sh create webhook --group anywhere --version v1alpha1 --programmatic-validation --kind WhateverKind
 ```
 
-## Run controller from local repo source with tilt
-When using tilt, any changes to the YAML files in `config` or `go` code in `pkg/api` and `controllers` will automatically rebuild and update your resources in the cluster.
+## Run controller from local repo source with Tilt
+When using Tilt, any changes to the YAML files in `config` or `go` code in `pkg/api` and `controllers` will automatically rebuild and update your resources in the cluster.
 
-Note: the folder `config/tilt` is ignored. This folder is supposed to contain tilt-exclusive kustomize files and is not intended for manual changes (in order to keep the tilt environment as close as possible to the real one, its patches should be minimum). If you make changes to this folder, you will need to restart tilt.
-### Setup tilt config
+Note: the folder `config/tilt` is ignored. This folder is supposed to contain Tilt-exclusive kustomize files and is not intended for manual changes (in order to keep the Tilt environment as close as possible to the real one, its patches should be minimum). If you make changes to this folder, you will need to restart Tilt.
+### Setup Tilt config
 Create a `tilt-settings.json` file in this folder
 ```json
 {
@@ -25,19 +25,19 @@ Create a `tilt-settings.json` file in this folder
   "allowed_contexts": ["yyyyyy@zzzzz"]
 }
 ```
-* `default_registry`: your own registry where you want to push the controller images built by tilt. If using ECR, you will need to create the repository in advance (repo name is `cluster-controller`, same as the var `IMG` in the Tiltfile). You will need to be authenticated and have permissions to push images. Example for ECR:
+* `default_registry`: your own registry where you want to push the controller images built by Tilt. If using ECR, you will need to create the repository in advance (repo name is `cluster-controller`, same as the var `IMG` in the Tiltfile). You will need to be authenticated and have permissions to push images. Example for ECR:
 ```sh
 aws ecr-public get-login-password --region ${REGION} | docker login --username AWS --password-stdin public.ecr.aws/${REGISTRY_ALIAS}
 ```
-* `allowed_contexts`: list of the kube context of your cluster. By default, tilt won't interact with "nonlocal" clusters and any EKS-A cluster, including the Docker ones, are recognized as nonlocal
-### Point tilt to your cluster
+* `allowed_contexts`: list of the kube context of your cluster. By default, Tilt won't interact with "nonlocal" clusters and any EKS-A cluster, including the Docker ones, are recognized as nonlocal
+### Point Tilt to your cluster
 Tilt uses whatever cluster `kubectl` is configured to use. The easiest option here is to set `KUBECONFIG` envar pointing to your EKS-A kubeconfig file:
 
 ```sh
 export KUBECONFIG=${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
 ```
 
-### Start tilt
+### Start Tilt
 ```sh
 make run-controller
 ```
