@@ -18,7 +18,7 @@ With the serve container running, you can now edit the documentation in your Git
 ## Production site
 
 The production website is hosted on Amplify.
-To deploy the docs to a personal amplify app, you need to first create an app with a branch.
+To deploy the docs to a personal Amplify app, you need to first create an app with a branch.
 Export your `${AWS_PROFILE}`, `${AMPLIFY_APP_ID}`, and `${AMPLIFY_APP_BRANCH}` (default: main).
 
 Then run
