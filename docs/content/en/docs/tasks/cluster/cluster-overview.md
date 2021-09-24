@@ -9,7 +9,7 @@ description: >
 ---
 
 The content in this page will describe the tools and interfaces available to an administrator after an EKS Anywhere cluster is up and running.
-It will also describe the administrative actions done:
+It will also describe which administrative actions done:
 
 * Directly in Kubernetes itself (such as adding nodes with `kubectl`)
 * Through the EKS Anywhere API (such as deleting a cluster with `eksctl`).

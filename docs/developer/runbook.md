@@ -7,6 +7,6 @@
     * docs/contents/releases/$(cat release/RELEASE)/announcement.txt
     * docs/contents/index.md
     * README
-1. **Tag Repository**: Hopefully, this step can be automated, but for now, tag the repository:
+1. **Tag Repository**: Hopefully, this step can be automated, but for now tag the repository:
     * `git tag -a $(cat release/RELEASE) -m $(cat release/RELEASE)`
     * `git push upstream $(cat release/RELEASE)`

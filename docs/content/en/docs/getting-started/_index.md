@@ -25,8 +25,8 @@ When you install EKS Anywhere, choose an installation type based on: ease of mai
 
 ## Install EKS Anywhere
 
-To create an EKS Anywhere cluster, you'll need to download the command line tool that is used to create and manage a cluster.
-You can install it using the [installation guide]({{< relref "install" >}}).
+To create an EKS Anywhere cluster you'll need to download the command line tool that is used to create and manage a cluster.
+You can install it using the [installation guide]({{< relref "install" >}})
 
 ## Local environment
 
@@ -35,5 +35,5 @@ See [EKS Anywhere local environment]({{< relref "local-environment" >}}).
 
 ## Production environment
 
-When evaluating a solution for a production environment,
+When evaluating a solution for a production environment
 consider deploying EKS Anywhere on [vSphere]({{< relref "production-environment" >}}).
