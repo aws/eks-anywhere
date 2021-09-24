@@ -56,7 +56,7 @@ This would include a reference to the `OIDCConfig` object with the configuration
 * Description: URL of the OpenID issuer. Only HTTPS scheme will be accepted.
 * Type: string
 ### requiredClaims (optional)
-List of requiredClaim objects listed below. 
+List of RequiredClaim objects listed below. 
 Only one is supported at this time.
 
 ### requiredClaims[0] (optional)
