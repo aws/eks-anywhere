@@ -20,7 +20,7 @@ features.
 
 When filing an issue, please check
 [open](https://github.com/aws/eks-anywhere/issues) or
-[recently-closed](https://github.com/aws/eks-anywhere/issues?q=is%3Aissue+is%3Aclosed)
+[recently closed](https://github.com/aws/eks-anywhere/issues?q=is%3Aissue+is%3Aclosed)
 issues to make sure somebody else hasn't already reported the issue. Please
 try to include as much information as you can. Details like these are
 incredibly useful:
@@ -35,7 +35,7 @@ Contributions via pull requests are much appreciated. Before sending us a
 pull request, please ensure that:
 
 1. You are working against the latest source on the *main* branch.
-2. You check open and recently-merged pull requests to make sure
+2. You check open and recently merged pull requests to make sure
 someone else hasn't addressed the problem already.
 3. You open an issue to discuss any significant work - we would hate for your
 time to be wasted.

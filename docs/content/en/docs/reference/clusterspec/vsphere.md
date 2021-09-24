@@ -144,7 +144,7 @@ The vSphere datacenter to deploy the EKS Anywhere cluster on. for example, `SDDC
 The VM network to deploy your EKS Anywhere cluster on.
 
 ### server (required)
-The vCenter server fully-qualified domain name or IP address. If the server IP is used, the `thumbprint` must be set
+The vCenter server fully qualified domain name or IP address. If the server IP is used, the `thumbprint` must be set
 or `insecure` must be set to true.
 
 ### insecure (optional)

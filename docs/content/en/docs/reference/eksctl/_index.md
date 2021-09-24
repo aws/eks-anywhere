@@ -22,7 +22,7 @@ Options used with multiple commands include:
 * `-h` or `--help` To get help for a command or subcommand
 * `-v int` or `--verbosity int` To set log level verbosity from 0-9
 * `-f `filename` or `--filename filename` To identify the filename containing the cluster config
-* `--force-cleanup` To force deletion of previously-created bootstrap cluster
+* `--force-cleanup` To force deletion of previously created bootstrap cluster
 * `-w string` or `--w-config string` To identify the kubeconfig file when needed to create a support bundle or upgrade a cluster
 
 Other available options and arguments are listed with the command examples that follow.
@@ -114,7 +114,7 @@ See [local](../../getting-started/local-environment) and [production](../../gett
 ## `eksctl anywhere upgrade cluster`
 
 Upgrade an existing EKS Anywhere cluster.
-This example uses maximum verbosity and forces a cleanup of the previously-created bootstrap cluster:
+This example uses maximum verbosity and forces a cleanup of the previously created bootstrap cluster:
 
 ```
 export CLUSTER_NAME=vsphere01

@@ -44,7 +44,7 @@ spec:
 
 ### Flux Configuration Spec Details
 ### __github__ (required)
-* __Description__: `github` is the only currently-supported Git provider.
+* __Description__: `github` is the only currently supported Git provider.
   This defines your GitHub configuration to be used by EKS Anywhere and Flux.
 * __Type__: object
 

@@ -135,7 +135,7 @@ govc tags.category.create -t VirtualMachine os
 govc tags.create -c os os:bottlerocket
 govc tags.create -c os os:ubuntu
 ```
-1. Attach newly-created tags to the template.
+1. Attach newly created tags to the template.
 
 ```
 govc tags.attach os:bottlerocket <Template Path>
@@ -156,7 +156,7 @@ govc tags.category.create -t VirtualMachine eksdRelease
 ```
 govc tags.create -c eksdRelease eksdRelease:kubernetes-1-20-eks-2
 ```
-3. Attach newly-created tag to the template.
+3. Attach newly created tag to the template.
 ```
 govc tags.attach eksdRelease:kubernetes-1-20-eks-2 <Template Path>
 ```

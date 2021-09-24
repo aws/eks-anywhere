@@ -1,4 +1,4 @@
-# EKS-A controller
+# EKS-Anywhere controller
 
 ## Install kubebuilder
 ```sh

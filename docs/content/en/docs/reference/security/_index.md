@@ -18,7 +18,7 @@ However, EKS Anywhere is an open-source tool, and the distribution of responsibi
 
 ### AWS Responsibilities
 AWS is responsible for building and delivering a secure tool. 
-This tool will provision an initially-secure Kubernetes cluster.
+This tool will provision an initially secure Kubernetes cluster.
 
 AWS is responsible for vetting and securely sourcing the services and tools packaged with EKS Anywhere and the cluster it creates (such as CoreDNS, Cilium, Flux, CAPI, and govc). 
 
