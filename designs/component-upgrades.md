@@ -1,11 +1,11 @@
-# EKS-A components upgrade
+# EKS Anywhere components upgrade
 
 
 ## Introduction
 
-**Problem:** customers are only able to upgrade the cluster components that are part of the kubernetes distribution. Any other core component of EKS-A remains untouched from the cluster creation.
+**Problem:** customers are only able to upgrade the cluster components that are part of the kubernetes distribution. Any other core component of EKS Anywhere remains untouched from the cluster creation.
 
-This stops customers from enjoying the latest features and bug fixes from eks-a and any of its core components as well as from being able to get security patches.
+This stops customers from enjoying the latest features and bug fixes from EKS Anywhere and any of its core components as well as from being able to get security patches.
 
 ### Tenets
 
@@ -13,9 +13,9 @@ This stops customers from enjoying the latest features and bug fixes from eks-a 
 
 ### Goals and objectives
 
-As an eks-a customer:
+As an EKS Anywhere customer:
 
-* I want to able to enjoy the latest eks-a features and bug fixes
+* I want to able to enjoy the latest EKS Anywhere features and bug fixes
 * I want to keep my cluster up to date with security patches
 * I don’t want to need to stay informed about latest versions, security patches or compatibility between components
 
@@ -23,13 +23,13 @@ As an eks-a customer:
 
 **In scope**
 
-* Upgrade core eks-a components to latest versions available for an specific cli version
+* Upgrade core EKS Anywhere components to latest versions available for an specific cli version
     * Core CAPI
     * CAPI providers
     * Cert-manager
     * Etcdadm CAPI provider
     * CNIs (cilium)
-    * EKS-A controller and CRDs
+    * EKS Anywhere controller and CRDs
     * Flux
 
 **Not in scope**
@@ -46,14 +46,14 @@ As an eks-a customer:
 
 ## Overview of solution
 
-**Upgrade all eks-a components to the versions declared in the latest bundles manifest when running the `upgrade cluster` command.**
+**Upgrade all EKS Anywhere components to the versions declared in the latest bundles manifest when running the `upgrade cluster` command.**
 
 ## Solution details
 
 Since we already have:
 
 * An interface that customers use to upgrade clusters (`upgrade cluster` command)
-* An declarative list of all eks-a components at their latest available versions that have been tested together (bundles manifest)
+* An declarative list of all EKS Anywhere components at their latest available versions that have been tested together (bundles manifest)
 
 It seems like the simplest solution is to take advantage of both.
 
@@ -75,7 +75,7 @@ This also facilitates CAPI API version upgrades, since updating its components (
 
 All the CAPI providers objects in the bundles manifest already contain a `version` field. Unfortunately it only reflects the original upstream version that component was built from. We should add the build metadata information to that semver, like `v0.4.2+build-2`. This will allow us to detect new builds as well as preserve the original upstream version, which is important in order to verify API version changes. We might need to trim the build metadata info when interacting with `clusterctl`, I haven’t tested if it’s supported yet.
 
-We will need to add such field to all the other components (Flux, eks-a controllers and crds, cilium...) that don’t have it yet.
+We will need to add such field to all the other components (Flux, EKS Anywhere controllers and crds, cilium...) that don’t have it yet.
 
 ### CAPI
 
@@ -83,7 +83,7 @@ All the CAPI providers, components and cert-manager can be updated with `cluster
 
 Even if there is CAPI API version change, the process is the same. The providers will take care of converting the objects in the cluster to the new API version. The only requirement is that all the installed providers need to be upgraded to a version that supports the new API version.
 
-### EKS-A controller and CRDs
+### EKS Anywhere controller and CRDs
 
 Both the controller and CRDs can be upgraded by just applying the new components manifest with kubectl. This should work fine for both new versions and new builds of the same version.
 
@@ -136,7 +136,7 @@ There are not backwards breaking changes. However, the expected behavior of the 
 
 We should include a section about how to “get the latest version of components” or something similar.
 
-In the `upgrade cluster` command documentation we should document that we will always upgrade internal eks-a components to the latest available version, even when the Kubernetes version remains unchanged.
+In the `upgrade cluster` command documentation we should document that we will always upgrade internal EKS Anywhere components to the latest available version, even when the Kubernetes version remains unchanged.
 
 ## Testing
 
