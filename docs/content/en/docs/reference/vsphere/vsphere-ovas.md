@@ -36,7 +36,7 @@ A list of OVAs for this release can be found on the [artifacts page]({{< relref 
 1. Select a folder where you want to deploy your OVF package (most of our OVF templates are under SDDC-Datacenter
    directory), and click on *Next*. You cannot have an OVF template with the same name in one directory. For workload
    VM templates, leave the Kubernetes version in the template name for reference. A workload VM template will
-   support at least one prior Kubernetes minor versions.
+   support at least one prior Kubernetes minor version.
    ![Import ova wizard](/images/ss3.jpg)
 1. Select any compute resource to run (from cluster-1, 10.2.34.5, etc.) the deployed VM, and click on *Next*
    ![Import ova wizard](/images/ss4.jpg)
