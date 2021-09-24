@@ -23,7 +23,7 @@ This solution includes the following steps at a high level:
 
 1. Finally, configure your pods by using the service account created in the previous step and assume the IAM role.
 
-The key pair solution above requires you to set up and maintain your key hosting (e.g., key rotation).
+The key pair solution above requires you to set up and maintain your key hosting (for example, key rotation).
 A solution that is currently in development will allow your IAM role credentials to be securely injected to the EKS Anywhere cluster and assumed by the pods without any key pair.
 
 ### Does EKS Anywhere support OIDC (including Azure AD and AD FS)?
