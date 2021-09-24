@@ -16,8 +16,8 @@ description: >
 The tenets of the EKS Anywhere project are:
 
 - **Simple**: Make using a Kubernetes distribution simple and boring (reliable and secure).
-- **Opinionated Modularity**: Provide opinionated defaults about the best components to include with Kubernetes, but give customers the ability to swap them out
-- **Open**: Provide open source tooling backed, validated and maintained by Amazon
+- **Opinionated Modularity**: Provide opinionated defaults about the best components to include with Kubernetes but give customers the ability to swap them out.
+- **Open**: Provide open-source tooling that is backed, validated, and maintained by Amazon.
 - **Ubiquitous**: Enable customers and partners to integrate a Kubernetes distribution in the most common tooling.
-- **Stand Alone**: Provided for use anywhere without AWS dependencies
-- **Better with AWS**: Enable AWS customers to easily adopt additional AWS services
+- **Stand Alone**: Provided for use anywhere without AWS dependencies.
+- **Better with AWS**: Enable AWS customers to adopt additional AWS services easily.

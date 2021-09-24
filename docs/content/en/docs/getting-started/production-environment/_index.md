@@ -51,8 +51,8 @@ An EKS Anywhere deployment will also require the availability of certain
 
 1. Set Credential Environment Variables
 
-   Before you create a cluster, you will need to set and export these environment variables for your vSphere user
-   name and password. Make sure you use single quotes around the values so that your shell does not interpret the values:
+   Before you create a cluster, you will need to set and export these environment variables for your vSphere username
+   and password. Make sure you use single quotes around the values so that your shell does not interpret the values:
    
    ```bash
    export EKSA_VSPHERE_USERNAME='billy'

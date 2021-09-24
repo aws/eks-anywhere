@@ -13,8 +13,8 @@ EKS Anywhere then performs the upgrade, modifying your cluster to match the upda
 
 ### Minor Version Upgrades
 
-Kubernetes has minor releases [three times per year](https://kubernetes.io/releases/release/) and EKS Distro follows a similar cadence.
-EKS Anywhere will add support for new EKS Distro releases as they are released, and you are advised to upgrade your cluster when possible.
+Kubernetes has minor releases [three times per year](https://kubernetes.io/releases/release/), and EKS Distro follows a similar cadence.
+EKS Anywhere will add support for new EKS Distro releases as they are come out, and you are advised to upgrade your cluster when possible.
 
 Cluster upgrades are not handled automatically and require administrator action to modify the cluster specification and perform an upgrade.
 You are advised to upgrade your clusters in development environments first and verify your workloads and controllers are compatible with the new version.
@@ -28,9 +28,9 @@ This happens one at a time until all the control plane components have been upgr
 
 ### Performing a cluster upgrade
 
-To perform a cluster upgrade you need to modify your cluster specification `kubernetesVersion` field to the desired version.
+To perform a cluster upgrade, you need to modify your cluster specification `kubernetesVersion` field to the desired version.
 
-As an example, to upgrade a cluster with version 1.20 to 1.21 you would change your spec
+As an example, to upgrade a cluster with version 1.20 to 1.21, you would change your spec
 
 ```
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -50,9 +50,9 @@ spec:
       ...
 ```
 
->**_NOTE:_** If you have a custom machine image for your nodes you may also need to update your `vsphereMachineConfig` with a new `template`.
+>**_NOTE:_** If you have a custom machine image for your nodes, you may also need to update your `vsphereMachineConfig` with a new `template`.
 
-and then you will run the command
+and then run the command
 
 ```
 eksctl anywhere upgrade cluster -f cluster.yaml
@@ -115,7 +115,7 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 
 ### Troubleshooting
 
-If you attempt to upgrade a cluster more than 1 minor release you will receive the following error.
+If you attempt to upgrade a cluster more than 1 minor release, you will receive the following error:
 
 ```
 ✅ validate immutable fields
@@ -123,4 +123,4 @@ If you attempt to upgrade a cluster more than 1 minor release you will receive t
 Error: failed to upgrade cluster: validations failed
 ```
 
-For more errors you can see the [troubleshooting section]({{< relref "../troubleshoot" >}}).
+For more errors, you can see the [troubleshooting section]({{< relref "../troubleshoot" >}}).

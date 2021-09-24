@@ -15,15 +15,15 @@ and follow the [special instructions for DIY Kubernetes](https://github.com/aws/
 to enable AWS authentication.
 This solution includes the following steps at a high level:
 
-1. Create a key pair for signing, and host your public key somewhere (e.g. S3).
+1. Create a key pair for signing, and host your public key somewhere (e.g., S3).
 
-1. Configure your EKS Anywhere Kubernetes API server so it can issue and mount projected service account tokens in pods.
+1. Configure your EKS Anywhere Kubernetes API server, so it can issue and mount projected service account tokens in pods.
 
 1. Create an IAM role defining access to the target AWS services and annotate a service account with said IAM role.
 
 1. Finally, configure your pods by using the service account created in the previous step and assume the IAM role.
 
-The key pair solution above requires you to set up and maintain your key hosting (e.g. key rotation).
+The key pair solution above requires you to set up and maintain your key hosting (for example, key rotation).
 A solution that is currently in development will allow your IAM role credentials to be securely injected to the EKS Anywhere cluster and assumed by the pods without any key pair.
 
 ### Does EKS Anywhere support OIDC (including Azure AD and AD FS)?
@@ -80,6 +80,6 @@ See EKS Anywhere [vSphere prerequisite]({{< relref "../vsphere" >}}) documentati
 
 ### Do you support multi-cluster operations?
 
-You can perform cluster life cycle and configuration management at scale through GitOps-based tools.
-EKS Anywhere offers git-driven cluster management through the integrated Flux Controller.
+You can perform cluster lifecycle and configuration management at scale through GitOps-based tools.
+EKS Anywhere offers Git-driven cluster management through the integrated Flux Controller.
 See [Manage cluster with GitOps]({{< relref "../../tasks/cluster/cluster-flux.md" >}}) documentation for details.

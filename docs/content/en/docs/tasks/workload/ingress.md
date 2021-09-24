@@ -13,14 +13,12 @@ A production-quality Kubernetes cluster requires planning and preparation for va
 
 <!-- body -->
 
-
 The purpose of this document is to walk you through getting set up with a recommended Kubernetes Ingress Controller for EKS Anywhere.
 Ingress Controller is essential in order to have routing rules that decide how external users access services running in a Kubernetes cluster. It enables efficient distribution of incoming network traffic among multiple backend services.
 
-
 ## Current Recommendation: Emissary-ingress 
 
-We currently recommend using Emissary-ingress Kubernetes Ingress Controller by Ambassador. Emissary-ingress allows you to route and secure traffic to your cluster with an Open Source Kubernetes-native API Gateway. Detailed information about Emissary-ingress can be found [here](https://www.getambassador.io/docs/emissary/).
+We currently recommend using Emissary-ingress Kubernetes Ingress Controller by Ambassador. Emissary-ingress allows you to route and secure traffic to your cluster with an open-source, Kubernetes-native API Gateway. Detailed information about Emissary-ingress can be found [here](https://www.getambassador.io/docs/emissary/).
 
 ## Setting up Emissary-ingress for Ingress Controller
 
@@ -29,10 +27,10 @@ We currently recommend using Emissary-ingress Kubernetes Ingress Controller by A
     kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
     ```
 
-2. Set up kube-vip service type: Load Balancer in your cluster by following the instructions [here]({{< ref "/docs/tasks/workload/loadbalance#setting-up-kube-vip-for-service-type-load-balancer" >}}).
-Alternatively, you can set up MetalLB Load Balancer by following the instructions [here]({{< ref "/docs/tasks/workload/loadbalance#alternatives" >}})
+2. Set up Kube-Vip service type: LoadBalancer in your cluster by following the instructions [here]({{< ref "/docs/tasks/workload/loadbalance#setting-up-kube-vip-for-service-type-load-balancer" >}}).
+Alternatively, you can set up MetalLB by following the instructions [here]({{< ref "/docs/tasks/workload/loadbalance#alternatives" >}}).
 
-3. Install Ambassador CRDs and ClusterRoles and RoleBindings
+3. Install Ambassador CRDs, ClusterRoles, and RoleBindings.
 
     ```bash
     kubectl apply -f "https://www.getambassador.io/yaml/ambassador/ambassador-crds.yaml"
@@ -86,11 +84,11 @@ Alternatively, you can set up MetalLB Load Balancer by following the instruction
     curl -Lk http://$EMISSARY_LB_ENDPOINT/backend/
     ```   
 
-   NOTE: URL base path will need to match what is specified in the prefix exactly, including the trailing '/'
+   NOTE: URL base path will need to match what is specified in the prefix exactly, including the trailing '/'.
  
 
 
-   You should see something like this in the output
+   You should see something like this in the output:
 
    ```
    ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢

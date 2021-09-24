@@ -40,5 +40,4 @@ supportbundletestcluster-md-0-55bb5ccd-zrh97   Ready    <none>                 4
 supportbundletestcluster-mdrwf                 Ready    control-plane,master   5m   v1.20.7-eks-1-20-6
 ```
 
-
-To test a workload in your cluster you can try deploying the [hello-eks-anywhere]({{< relref "../workload/test-app" >}}).
+To test a workload in your cluster, you can try deploying the [hello-eks-anywhere]({{< relref "../workload/test-app" >}}).

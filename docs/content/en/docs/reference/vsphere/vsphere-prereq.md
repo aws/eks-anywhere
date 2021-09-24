@@ -12,8 +12,8 @@ To run EKS Anywhere, you will need:
 * Capacity to deploy 6-10VMs
 * DHCP service running in vSphere environment in the primary VM network for your workload cluster
 * One network in vSphere to use for the cluster. This network must have inbound access into vCenter
-* A OVA imported into vSphere and converted into template for the workload VMs
-* User credentials to [create vms and attach networks, etc]({{< relref "user-permissions.md" >}})
+* An OVA imported into vSphere and converted into template for the workload VMs
+* User credentials to [create VMs, attach networks, etc]({{< relref "user-permissions.md" >}})
 
 Each VM will require:
 
