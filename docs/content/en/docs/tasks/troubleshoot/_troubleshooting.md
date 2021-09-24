@@ -124,7 +124,7 @@ To restart Docker on Ubuntu, use `sudo systemctl restart docker`.
 Issues detected with selected template. Details: - -1:-1:VALUE_ILLEGAL: No supported hardware versions among [vmx-15]; supported: [vmx-04, vmx-07, vmx-08, vmx-09, vmx-10, vmx-11, vmx-12, vmx-13].
 ```
 Our upstream dependency on CAPV makes it a requirement that you use vSphere 6.7 update 3 or newer.
-Make sure your ESXi hosts are also up to date.
+Make sure your ESXi hosts are also up-to-date.
 
 ### Waiting for cert-manager to be available... Error: timed out waiting for the condition
 ```
@@ -158,8 +158,8 @@ To resolve the issue, set `insecure` to `false` and `thumbprint` to the TLS thum
 ```
 "msg"="discovered IP address"
 ```
-The aforementioned log message can also appear with an address value of the controlplane in either of the ${CLUSTER_NAME}/logs/capv-controller-manager.log file
-or the capv-controller-manager pod log which can be extracted with the follwoing command,
+The aforementioned log message can also appear with an address value of the control plane in either of the ${CLUSTER_NAME}/logs/capv-controller-manager.log file
+or the capv-controller-manager pod log which can be extracted with the following command,
 ```bash
 export KUBECONFIG=${PWD}/${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconfig
 kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager
@@ -186,7 +186,7 @@ kubectl get nodes -A —kubeconfig=<kubeconfig>
 kubectl get logs <podname> -n <namespace> --kubeconfig=<kubeconfig>
 ....
 ```
-Capv troubleshooting guide: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/master/docs/troubleshooting.md#debugging-issues
+CAPV troubleshooting guide: https://github.com/kubernetes-sigs/cluster-api-provider-vsphere/blob/master/docs/troubleshooting.md#debugging-issues
 
 ### Workload VM is created on vSphere but can not power on
 A similar issue is the VM does power on but does not show any logs on the console and does not have any IPs assigned.

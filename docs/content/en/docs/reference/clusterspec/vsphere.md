@@ -114,7 +114,7 @@ Refers to the Kubernetes object with vSphere-specific configuration for your nod
 A unique IP you want to use for the control plane VM in your EKS Anywhere cluster. Choose an IP in your network
 range that does not conflict with other VMs.
 
->**_NOTE:_** This IP should be outside the network DHCP range as it is a floating IP that gets assigned to one of
+>**_NOTE:_** This IP should be outside the network DHCP range, as it is a floating IP that gets assigned to one of
 the control plane nodes for kube-apiserver loadbalancing.
 
 ### workerNodeGroupsConfiguration (required)

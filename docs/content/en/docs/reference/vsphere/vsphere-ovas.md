@@ -120,7 +120,7 @@ environment variables to run `govc`: GOVC_USERNAME, GOVC_PASSWORD and GOVC_URL.
 1. Name the tag *eksdRelease:{EKS-D release for the selected ova}* (for example, *eksdRelease:kubernetes-1-20-eks-5* for the 1.20 OVA). You can find the rest of the EKS-D releases in the previous [section](#import-an-ovaovf-template-to-vsphere). If it's the first time you add an `eksdRelease` tag, you would need to create the category first. Click on "Create New Category", and name it `eksdRelease`.
    ![Import ova wizard](/images/ss13.png)
 
-### Using govc
+### Using GOVC
 
 #### Tag to indicate OS family
 

@@ -13,7 +13,7 @@ information to effectively respond to your bug report or contribution.
 Make sure to keep Pull Requests small and functional to make them easier to review, understand, and look up in commit history.
 This repository uses "Squash and Commit" to keep our history clean and make it easier to revert changes based on PR.
 
-Adding the appropriate documentation,unit tests and e2e tests as part of a feature is the responsibility of the
+Adding the appropriate documentation, unit tests, and e2e tests as part of a feature is the responsibility of the
 feature owner, whether it is done in the same Pull Request or not.
 
 Pull Requests should follow the "subject: message" format, where the subject describes what part of the code is being
@@ -59,7 +59,7 @@ GitHub Milestones are used to plan work that is currently being tracked.
 
 * next: changes for next release
 * next+1: won't make next release but the following
-* techdebt: used to keep track of techdebt items, separate ongoing effort from release action items
+* techdebt: used to keep track of tech debt items, separate ongoing effort from release action items
 * oncall: used to keep track of issues needing active follow-up
 * backlog: items that don't have a home in the others
 

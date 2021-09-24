@@ -65,11 +65,11 @@ The first supported EKS Anywhere provider, VMware vSphere, is implemented based 
 Like Cluster API, EKS Anywhere runs a [kind](https://kind.sigs.k8s.io/) cluster on the local Administrative machine to act as a bootstrap cluster.
 However, instead of using CAPI directly with the `clusterctl` command to manage the workload cluster, you use the `eksctl anywhere` command which abstracts that process for you, including calling `clusterctl` under the covers.
 
-As for other providers, the EKS Anywhere project documents the [Cluster API Provider Docker (CAPD)](https://github.com/kubernetes-sigs/cluster-api/tree/master/test/infrastructure/docker), but doesn’t support it for production use.
+As for other providers, the EKS Anywhere project documents the [Cluster API Provider Docker (CAPD)](https://github.com/kubernetes-sigs/cluster-api/tree/master/test/infrastructure/docker) but doesn't support it for production use.
 Expect other providers to be supported for EKS Anywhere in the future.
-If you are interested in EKS Anywhere supporting a different provider, feel free to create an [an issue on GitHub](https://github.com/aws/eks-anywhere/issues) for consideration.
+If you are interested in EKS Anywhere supporting a different provider, feel free to create an [issue on GitHub](https://github.com/aws/eks-anywhere/issues) for consideration.
 
-With your Administrative machine in place, to prepare the vSphere provider for EKS Anywhere you need to make sure your vSphere environment meets the EKS Anywhere [requirements]({{< relref "../reference/vsphere/vsphere-prereq" >}}) and that [permissions]({{< relref "../reference/vsphere/vsphere-prereq" >}}) set up properly.
+With your Administrative machine in place and to prepare the vSphere provider for EKS Anywhere, you need to make sure your vSphere environment meets the EKS Anywhere [requirements]({{< relref "../reference/vsphere/vsphere-prereq" >}}) and that [permissions]({{< relref "../reference/vsphere/vsphere-prereq" >}}) set up properly.
 If you don’t want to use the default OVA images, you can [import the OVAs]({{< relref "../reference/vsphere/vsphere-ovas" >}}) representing the operating systems and Kubernetes releases you want.
 
 ## Creating a cluster
@@ -183,7 +183,7 @@ This includes pulling the kind node image, preparing the node, writing the confi
 Creating new bootstrap cluster
 ```
 
-After this point the bootstrap cluster is installed, but not yet fully configured.
+After this point, the bootstrap cluster is installed but not yet fully configured.
 
 ### Continuing cluster creation
 
@@ -206,7 +206,7 @@ Add Cilium as the CNI plugin to use for networking between the cluster services 
 
 #### 4. Add storage
 
-Add the default storage class to the cluster
+Add the default storage class to the cluster.
 
 #### 5. Add CAPI to workload cluster
 
@@ -322,7 +322,7 @@ This is a specific requirement of CAPI, not EKS Anywhere.
 Networking for the cluster itself has the following attributes:
 
 * **Cilium CNI**: The [Cilium](https://cilium.io/) Kubernetes CNI is used to provide networking between components of the control plane and data plane components.
-No other CNI plugins, including Cilium Enterprise, is supported at this time.
+No other CNI plugins, including Cilium Enterprise, are supported at this time.
 * **Pod/Service IP ranges**: Separate IP address blocks were assigned from the [configuration file]({{< relref "../reference/clusterspec/vsphere" >}}) during cluster creation for the pods network and services network managed by Cilium.
 Refer to the clusterNetwork section of your configuration file to see how the cidrBlocks for pods and services were set.
 
