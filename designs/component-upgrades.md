@@ -67,7 +67,7 @@ The cli needs the ability to detect both component version changes as well as ne
 
 ### Order of execution
 
-Components should be **upgraded** **before the new Kubernetes version is rolled out** (if needed). It’s more common for an old component to have problems with a new Kubernetes version than vice-versa. There might be case by case exceptions. Right now there are no exceptions, at least with the current set of core components.
+Components should be **upgraded before the new Kubernetes version is rolled out** (if needed). It is more common for an old component to be incompatible with a new Kubernetes version than vice-versa. There might be case by case exceptions. Right now there are no exceptions, at least with the current set of core components.
 
 This also facilitates CAPI API version upgrades, since updating its components (CRDs and controllers) will also update the current objects in the cluster (through conversion webhooks). This allows us to only maintain only one API version of provider templates, since these are only reapplied when rolling out the new Kubernetes version.
 
