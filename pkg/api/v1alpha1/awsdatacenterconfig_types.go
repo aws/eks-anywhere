@@ -51,6 +51,20 @@ func (a *AWSDatacenterConfig) ClearPauseAnnotation() {
 	}
 }
 
+func (a *AWSDatacenterConfig) ConvertConfigToConfigGenerateStruct() *AWSDatacenterConfigGenerate {
+	config := &AWSDatacenterConfigGenerate{
+		TypeMeta: a.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        a.Name,
+			Annotations: a.Annotations,
+			Namespace:   a.Namespace,
+		},
+		Spec: a.Spec,
+	}
+
+	return config
+}
+
 // +kubebuilder:object:generate=false
 
 // Same as AWSDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig

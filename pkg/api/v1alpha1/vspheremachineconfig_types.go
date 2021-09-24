@@ -91,6 +91,10 @@ type VSphereMachineConfigGenerate struct {
 	Spec VSphereMachineConfigSpec `json:"spec,omitempty"`
 }
 
+func (c *VSphereMachineConfigGenerate) OSFamily() OSFamily {
+	return c.Spec.OSFamily
+}
+
 func (c *VSphereMachineConfig) ConvertConfigToConfigGenerateStruct() *VSphereMachineConfigGenerate {
 	config := &VSphereMachineConfigGenerate{
 		TypeMeta: c.TypeMeta,

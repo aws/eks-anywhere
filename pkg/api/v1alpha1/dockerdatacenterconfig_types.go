@@ -49,6 +49,20 @@ func (d *DockerDatacenterConfig) ClearPauseAnnotation() {
 	}
 }
 
+func (d *DockerDatacenterConfig) ConvertConfigToConfigGenerateStruct() *DockerDatacenterConfigGenerate {
+	config := &DockerDatacenterConfigGenerate{
+		TypeMeta: d.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        d.Name,
+			Annotations: d.Annotations,
+			Namespace:   d.Namespace,
+		},
+		Spec: d.Spec,
+	}
+
+	return config
+}
+
 // +kubebuilder:object:generate=false
 
 // Same as DockerDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig
