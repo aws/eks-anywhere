@@ -94,7 +94,7 @@ Provisioning
 * Assign network to VM
 
 ### Steps to build an OVA
-1. Spin up a builder-base Docker container and exec into it. Please use the most recent tag for the image on its repository [here](https://gallery.ecr.aws/eks-distro-build-tooling/builder-base).
+1. Spin up a builder-base Docker container and `exec` into it. Please use the most recent tag for the image on its repository [here](https://gallery.ecr.aws/eks-distro-build-tooling/builder-base).
 ```
 docker exec -it public.ecr.aws/eks-distro-build-tooling/builder-base:930624e251df041349f3d3089c983fcf394f1c60 bash
 ```
