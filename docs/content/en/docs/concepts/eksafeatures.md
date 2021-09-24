@@ -28,7 +28,7 @@ To learn more about Amazon EKS, see [Amazon Elastic Kubernetes Service](https://
 ||||
 | **Compute** |||
 | Compute options | VMware vSphere | Amazon EC2, AWS Fargate | 
-| Supported node operating systems   | BottleRocket, Ubuntu          | Amazon Linux 2, Windows Server, Bottlerocket, Ubuntu |
+| Supported node operating systems   | Bottlerocket, Ubuntu          | Amazon Linux 2, Windows Server, Bottlerocket, Ubuntu |
 | Physical hardware (servers, network equipment, storage, etc.) | Managed by customer | Managed by AWS |
 | Serverless | Not supported | Amazon EKS on AWS Fargate |
 ||||
