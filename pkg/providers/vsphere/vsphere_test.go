@@ -26,6 +26,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -2138,4 +2139,56 @@ func TestValidateNewSpecMachineConfigSshAuthKeysImmutable(t *testing.T) {
 
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
 	assert.Error(t, err, "SSH Authorized Keys should be immutable")
+}
+
+func TestGetMHCSuccess(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+
+	provider := givenProvider(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1alpha3
+kind: MachineHealthCheck
+metadata:
+  name: test-node-unhealthy-5m
+  namespace: %s
+spec:
+  clusterName: test
+  maxUnhealthy: 40%%
+  nodeStartupTimeout: 10m
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/deployment-name: "test-md-0"
+  unhealthyConditions:
+    - type: Ready
+      status: Unknown
+      timeout: 300s
+    - type: Ready
+      status: "False"
+      timeout: 300s
+---
+apiVersion: cluster.x-k8s.io/v1alpha3
+kind: MachineHealthCheck
+metadata:
+  name: test-kcp-unhealthy-5m
+  namespace: %s
+spec:
+  clusterName: test
+  maxUnhealthy: 100%%
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/control-plane: ""
+  unhealthyConditions:
+    - type: Ready
+      status: Unknown
+      timeout: 300s
+    - type: Ready
+      status: "False"
+      timeout: 300s
+`, constants.EksaSystemNamespace, constants.EksaSystemNamespace)
+
+	mch, err := provider.GenerateMHC()
+	assert.NoError(t, err, "Expected successful execution of GenerateMHC() but got an error", "error", err)
+	assert.Equal(t, string(mch), mhcTemplate, "generated MachineHealthCheck is different from the expected one")
 }
