@@ -18,7 +18,7 @@ Ingress Controller is essential in order to have routing rules that decide how e
 
 ## Current Recommendation: Emissary-ingress 
 
-We currently recommend using Emissary-ingress Kubernetes Ingress Controller by Ambassador. Emissary-ingress allows you to route and secure traffic to your cluster with an open source, Kubernetes-native API Gateway. Detailed information about Emissary-ingress can be found [here](https://www.getambassador.io/docs/emissary/).
+We currently recommend using Emissary-ingress Kubernetes Ingress Controller by Ambassador. Emissary-ingress allows you to route and secure traffic to your cluster with an open-source, Kubernetes-native API Gateway. Detailed information about Emissary-ingress can be found [here](https://www.getambassador.io/docs/emissary/).
 
 ## Setting up Emissary-ingress for Ingress Controller
 
