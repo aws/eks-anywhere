@@ -26,6 +26,7 @@ As an eks-a customer:
 * Upgrade core eks-a components to latest versions available for an specific cli version
     * Core CAPI
     * CAPI providers
+    * Cert-manager
     * Etcdadm CAPI provider
     * CNIs (cilium)
     * EKS-A controller and CRDs
@@ -77,7 +78,7 @@ We will need to add such field to all the other components (Flux, eks-a controll
 
 ### CAPI
 
-All CAPI providers can be updated with `clusterctl`. This works both with version bumps and new builds of the same version. We just need to create the proper overrides layer, configure the images in the clusterctl config file and pass specific versions for every provider to the `upgrade apply` command.
+All the CAPI providers, components and cert-manager can be updated with `clusterctl`. This works both with version bumps and new builds of the same version. We just need to create the proper overrides layer, configure the images in the clusterctl config file and pass specific versions for every provider to the `upgrade apply` command.
 
 Even if there is  CAPI api version change, the process is the same. The providers will take care of converting the objects in the cluster to the new api version. The only requirement is that all the installed providers need to be upgraded to a version that supports the new api version.
 
