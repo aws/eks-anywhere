@@ -30,7 +30,7 @@ We currently recommend using Emissary-ingress Kubernetes Ingress Controller by A
 2. Set up Kube-Vip service type: LoadBalancer in your cluster by following the instructions [here]({{< ref "/docs/tasks/workload/loadbalance#setting-up-kube-vip-for-service-type-load-balancer" >}}).
 Alternatively, you can set up MetalLB by following the instructions [here]({{< ref "/docs/tasks/workload/loadbalance#alternatives" >}}).
 
-3. Install Ambassador CRDs and ClusterRoles and RoleBindings.
+3. Install Ambassador CRDs, ClusterRoles, and RoleBindings.
 
     ```bash
     kubectl apply -f "https://www.getambassador.io/yaml/ambassador/ambassador-crds.yaml"
