@@ -2152,7 +2152,7 @@ func TestGetMHCSuccess(t *testing.T) {
 kind: MachineHealthCheck
 metadata:
   name: test-node-unhealthy-5m
-  namespace: %s
+  namespace: %[1]s
 spec:
   clusterName: test
   maxUnhealthy: 40%%
@@ -2172,7 +2172,7 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachineHealthCheck
 metadata:
   name: test-kcp-unhealthy-5m
-  namespace: %s
+  namespace: %[1]s
 spec:
   clusterName: test
   maxUnhealthy: 100%%
@@ -2186,7 +2186,7 @@ spec:
     - type: Ready
       status: "False"
       timeout: 300s
-`, constants.EksaSystemNamespace, constants.EksaSystemNamespace)
+`, constants.EksaSystemNamespace)
 
 	mch, err := provider.GenerateMHC()
 	assert.NoError(t, err, "Expected successful execution of GenerateMHC() but got an error", "error", err)
