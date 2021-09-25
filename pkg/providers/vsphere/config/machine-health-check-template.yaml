@@ -2,6 +2,7 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachineHealthCheck
 metadata:
   name: {{.clusterName}}-node-unhealthy-5m
+  namespace: {{.eksaSystemNamespace}}
 spec:
   clusterName: {{.clusterName}}
   maxUnhealthy: 40%
@@ -21,6 +22,7 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachineHealthCheck
 metadata:
   name: {{.clusterName}}-kcp-unhealthy-5m
+  namespace: {{.eksaSystemNamespace}}
 spec:
   clusterName: {{.clusterName}}
   maxUnhealthy: 100%
