@@ -39,7 +39,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster
 
 	logger.V(1).Info("Starting CAPI upgrades")
 	if err := u.capiClient.Upgrade(ctx, managementCluster, provider, newSpec, capiChangeDiff); err != nil {
-		return nil, fmt.Errorf("failed upgrading ClusterAPI from bundles %d to bundles %d: %v", currentSpec.Bundles.Spec.Number, newSpec.Bundles.Spec.Number, err)
+		return nil, fmt.Errorf("failed upgrading ClusterAPI from bundles %ss to bundles %s: %v", currentSpec.Bundles.Spec.Number, newSpec.Bundles.Spec.Number, err)
 	}
 
 	return capiChangeDiff.toChangeDiff(), nil

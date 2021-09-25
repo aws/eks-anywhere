@@ -74,13 +74,13 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
 			sourceS3Prefix = fmt.Sprintf("projects/mrajashree/etcdadm-bootstrap-provider/%s/manifests/bootstrap-etcdadm-bootstrap/%s", latestPath, gitTag)
 		} else {
-			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/%s", r.BundleNumber, gitTag)
+			sourceS3Prefix = fmt.Sprintf("releases/bundles/%s/artifacts/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/%s", r.BundleNumber, gitTag)
 		}
 
 		if r.DevRelease {
 			releaseS3Path = fmt.Sprintf("artifacts/%s/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/%s", r.DevReleaseUriVersion, gitTag)
 		} else {
-			releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/%s", r.BundleNumber, gitTag)
+			releaseS3Path = fmt.Sprintf("releases/bundles/%s/artifacts/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/%s", r.BundleNumber, gitTag)
 		}
 
 		cdnURI, err := r.GetURI(filepath.Join(releaseS3Path, manifest))

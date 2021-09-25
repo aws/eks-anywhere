@@ -251,7 +251,7 @@ func (s *Spec) getVersionsBundle(clusterConfig *eksav1alpha1.Cluster, bundles *v
 			return &versionsBundle, nil
 		}
 	}
-	return nil, fmt.Errorf("kubernetes version %s is not supported by bundles manifest %d", clusterConfig.Spec.KubernetesVersion, bundles.Spec.Number)
+	return nil, fmt.Errorf("kubernetes version %s is not supported by bundles manifest %s", clusterConfig.Spec.KubernetesVersion, bundles.Spec.Number)
 }
 
 func (s *Spec) GetBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
@@ -327,15 +327,15 @@ func (s *Spec) readFile(uri string) ([]byte, error) {
 
 	switch url.Scheme {
 	case httpsScheme:
-		return s.readHttpFile(uri)
+		return s.ReadHttpFile(uri)
 	case embedScheme:
-		return s.readEmbedFile(url)
+		return s.ReadEmbedFile(url)
 	default:
-		return readLocalFile(uri)
+		return ReadLocalFile(uri)
 	}
 }
 
-func (s *Spec) readHttpFile(uri string) ([]byte, error) {
+func (s *Spec) ReadHttpFile(uri string) ([]byte, error) {
 	request, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed creating http GET request for downloading file: %v", err)
@@ -356,7 +356,7 @@ func (s *Spec) readHttpFile(uri string) ([]byte, error) {
 	return data, nil
 }
 
-func (s *Spec) readEmbedFile(url *url.URL) ([]byte, error) {
+func (s *Spec) ReadEmbedFile(url *url.URL) ([]byte, error) {
 	data, err := s.configFS.ReadFile(strings.TrimPrefix(url.Path, "/"))
 	if err != nil {
 		return nil, fmt.Errorf("failed reading embed file [%s] for cluster spec: %v", url.Path, err)
@@ -365,7 +365,7 @@ func (s *Spec) readEmbedFile(url *url.URL) ([]byte, error) {
 	return data, nil
 }
 
-func readLocalFile(filename string) ([]byte, error) {
+func ReadLocalFile(filename string) ([]byte, error) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed reading local file [%s] for cluster spec: %v", filename, err)

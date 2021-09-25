@@ -30,7 +30,8 @@ import (
 type ReleaseConfig struct {
 	ReleaseVersion                 string
 	DevReleaseUriVersion           string
-	BundleNumber                   int
+	BundleNumber                   string
+	BundleManifestVersion          string
 	CliMinVersion                  string
 	CliMaxVersion                  string
 	CliRepoSource                  string
@@ -341,7 +342,7 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 		}
 	} else if r.ReleaseEnvironment == "production" {
 		if name == "bottlerocket-bootstrap" {
-			sourceImageUri = fmt.Sprintf("%s/%s:v%s-%s-eks-a-%d",
+			sourceImageUri = fmt.Sprintf("%s/%s:v%s-%s-eks-a-%s",
 				r.SourceContainerRegistry,
 				repoName,
 				tagOptions["eksDReleaseChannel"],
@@ -349,7 +350,7 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 				r.BundleNumber,
 			)
 		} else if name == "cloud-provider-vsphere" {
-			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-eks-a-%d",
+			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-eks-a-%s",
 				r.SourceContainerRegistry,
 				repoName,
 				tagOptions["gitTag"],
@@ -357,21 +358,21 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 				r.BundleNumber,
 			)
 		} else if name == "eks-anywhere-cluster-controller" {
-			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%d",
+			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%s",
 				r.SourceContainerRegistry,
 				repoName,
 				r.ReleaseVersion,
 				r.BundleNumber,
 			)
 		} else if name == "eks-anywhere-diagnostic-collector" {
-			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%d",
+			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%s",
 				r.SourceContainerRegistry,
 				repoName,
 				r.ReleaseVersion,
 				r.BundleNumber,
 			)
 		} else if name == "kind-node" {
-			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-%s-eks-a-%d",
+			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-%s-eks-a-%s",
 				r.SourceContainerRegistry,
 				repoName,
 				tagOptions["kubeVersion"],
@@ -380,7 +381,7 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 				r.BundleNumber,
 			)
 		} else {
-			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%d",
+			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%s",
 				r.SourceContainerRegistry,
 				repoName,
 				tagOptions["gitTag"],
@@ -398,7 +399,7 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 	if r.DevRelease {
 		semVer = r.DevReleaseUriVersion
 	} else {
-		semVer = fmt.Sprintf("%d", r.BundleNumber)
+		semVer = r.BundleNumber
 	}
 
 	if name == "bottlerocket-bootstrap" {

@@ -83,13 +83,13 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 			if r.DevRelease || r.ReleaseEnvironment == "development" {
 				sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api/%s/manifests/%s/%s", latestPath, component, gitTag)
 			} else {
-				sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cluster-api/manifests/%s/%s", r.BundleNumber, component, gitTag)
+				sourceS3Prefix = fmt.Sprintf("releases/bundles/%s/artifacts/cluster-api/manifests/%s/%s", r.BundleNumber, component, gitTag)
 			}
 
 			if r.DevRelease {
 				releaseS3Path = fmt.Sprintf("artifacts/%s/cluster-api/manifests/%s/%s", r.DevReleaseUriVersion, component, gitTag)
 			} else {
-				releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/cluster-api/manifests/%s/%s", r.BundleNumber, component, gitTag)
+				releaseS3Path = fmt.Sprintf("releases/bundles/%s/artifacts/cluster-api/manifests/%s/%s", r.BundleNumber, component, gitTag)
 			}
 
 			cdnURI, err := r.GetURI(filepath.Join(releaseS3Path, manifest))

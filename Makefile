@@ -288,7 +288,7 @@ conformance-tests: eks-a-e2e integration-test-binary ## Build e2e conformance te
 eks-a-e2e:
 	if [ "$(CODEBUILD_CI)" = "true" ]; then \
 		if [[ "$(CODEBUILD_BUILD_ID)" =~ "aws-staging-eks-a-build" ]]; then \
-			make eks-a-release-cross-platform GIT_VERSION=$(shell cat release/triggers/eks-a-release/development/RELEASE_VERSION) RELEASE_MANIFEST_URL=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml; \
+			make eks-a-release-cross-platform GIT_VERSION=$(shell git show --name-only --pretty=format:'' | sed -n 1p | grep -oe "v\d\+\.\d\+\.\d\+") RELEASE_MANIFEST_URL=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml; \
 			make eks-a-release GIT_VERSION=$(DEV_GIT_VERSION); \
 		else \
 			make check-eksa-components-override; \

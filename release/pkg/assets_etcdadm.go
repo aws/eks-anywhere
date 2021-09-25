@@ -43,7 +43,7 @@ func (r *ReleaseConfig) GetEtcdadmAssets() ([]Artifact, error) {
 		sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/etcdadm/%s", latestPath)
 	} else {
 		sourceS3Key = fmt.Sprintf("etcdadm-%s-%s.tar.gz", os, arch)
-		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/etcdadm/%s", r.BundleNumber, gitTag)
+		sourceS3Prefix = fmt.Sprintf("releases/bundles/%s/artifacts/etcdadm/%s", r.BundleNumber, gitTag)
 	}
 
 	if r.DevRelease {
@@ -51,7 +51,7 @@ func (r *ReleaseConfig) GetEtcdadmAssets() ([]Artifact, error) {
 		releaseS3Path = fmt.Sprintf("artifacts/%s/etcdadm/%s", r.DevReleaseUriVersion, gitTag)
 	} else {
 		releaseName = fmt.Sprintf("etcdadm-%s-%s.tar.gz", os, arch)
-		releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/etcdadm/%s", r.BundleNumber, gitTag)
+		releaseS3Path = fmt.Sprintf("releases/bundles/%s/artifacts/etcdadm/%s", r.BundleNumber, gitTag)
 	}
 
 	cdnURI, err := r.GetURI(filepath.Join(releaseS3Path, releaseName))

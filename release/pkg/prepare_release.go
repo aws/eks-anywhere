@@ -59,7 +59,7 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 	}
 	fmt.Println(out)
 
-	if r.DevRelease && r.BranchName != "main" {
+	if r.BranchName != "main" {
 		fmt.Printf("Checking out build-tooling repo at branch %s", r.BranchName)
 		cmd = exec.Command("git", "-C", r.BuildRepoSource, "checkout", r.BranchName)
 		out, err = execCommand(cmd)
@@ -68,6 +68,26 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 		}
 		fmt.Println(out)
 	}
+
+	if !r.DevRelease {
+		cmd = exec.Command("git", "-C", r.CliRepoSource, "tag")
+		out, err = execCommand(cmd)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		tags := strings.Split(strings.TrimRight(out, "\n"), "\n")
+		if existsInList(r.ReleaseVersion, tags) {
+			fmt.Printf("Checking out CLI repo at tag %s", r.BranchName)
+			cmd = exec.Command("git", "-C", r.CliRepoSource, "checkout", r.ReleaseVersion)
+			out, err = execCommand(cmd)
+			if err != nil {
+				return errors.Cause(err)
+			}
+			fmt.Println(out)
+		}
+	}
+
 	// Set HEADs of the repos
 	r.CliRepoHead, err = GetHead(r.CliRepoSource)
 	if err != nil {

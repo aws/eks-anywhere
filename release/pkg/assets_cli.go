@@ -93,7 +93,7 @@ func (r *ReleaseConfig) GetEksARelease() (anywherev1alpha1.EksARelease, error) {
 		if r.DevRelease {
 			bundleManifestUrl = fmt.Sprintf("%s/bundle-release.yaml", r.CDN)
 		} else {
-			bundleManifestUrl = fmt.Sprintf("%s/releases/bundles/%d/manifest.yaml", r.CDN, r.BundleNumber)
+			bundleManifestUrl = fmt.Sprintf("%s/releases/bundles/%s/manifest.yaml", r.CDN, r.BundleNumber)
 		}
 
 		bundleArchiveArtifact := anywherev1alpha1.Archive{

@@ -27,7 +27,7 @@ ARTIFACTS_DIR="${2?Specify second argument - artifacts path}"
 SOURCE_BUCKET="${3?Specify third argument - source bucket}"
 RELEASE_BUCKET="${4?Specify fourth argument - release bucket}"
 CDN="${5?Specify fifth argument - cdn}"
-BUNDLE_NUMBER="${6?Specify sixth argument - Bundle number}"
+BUNDLE_MANIFEST_VERSION="${6?Specify sixth argument - Bundle number}"
 RELEASE_NUMBER="${7?Specify seventh argument - Release number}"
 RELEASE_ENVIRONMENT="${8?Specify eighth argument - Release environment}"
 
@@ -37,7 +37,7 @@ mkdir -p "${ARTIFACTS_DIR}"
 
 ${BASE_DIRECTORY}/release/bin/eks-anywhere-release release \
     --release-version "${RELEASE_VERSION}" \
-    --bundle-number "${BUNDLE_NUMBER}" \
+    --bundle-manifest-version "${BUNDLE_MANIFEST_VERSION}" \
 	--release-number "${RELEASE_NUMBER}" \
 	--artifact-dir "${ARTIFACTS_DIR}" \
 	--source-bucket "${SOURCE_BUCKET}" \

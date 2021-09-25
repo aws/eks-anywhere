@@ -42,7 +42,7 @@ spec:
                 type: string
               number:
                 description: Monotonically increasing release number
-                type: integer
+                type: string
               versionsBundles:
                 items:
                   properties:

@@ -43,7 +43,7 @@ func (r *ReleaseConfig) GetCriToolsAssets() ([]Artifact, error) {
 		sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cri-tools/%s", latestPath)
 	} else {
 		sourceS3Key = fmt.Sprintf("cri-tools-%s-%s.tar.gz", os, arch)
-		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cri-tools/%s", r.BundleNumber, gitTag)
+		sourceS3Prefix = fmt.Sprintf("releases/bundles/%s/artifacts/cri-tools/%s", r.BundleNumber, gitTag)
 	}
 
 	if r.DevRelease {
@@ -51,7 +51,7 @@ func (r *ReleaseConfig) GetCriToolsAssets() ([]Artifact, error) {
 		releaseS3Path = fmt.Sprintf("artifacts/%s/cri-tools/%s", r.DevReleaseUriVersion, gitTag)
 	} else {
 		releaseName = fmt.Sprintf("cri-tools-%s-%s.tar.gz", os, arch)
-		releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/cri-tools/%s", r.BundleNumber, gitTag)
+		releaseS3Path = fmt.Sprintf("releases/bundles/%s/artifacts/cri-tools/%s", r.BundleNumber, gitTag)
 	}
 
 	cdnURI, err := r.GetURI(filepath.Join(releaseS3Path, releaseName))

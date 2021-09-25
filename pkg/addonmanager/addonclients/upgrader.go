@@ -33,7 +33,7 @@ func (f *FluxAddonClient) Upgrade(ctx context.Context, managementCluster *types.
 
 	logger.V(1).Info("Starting Flux upgrades")
 	if err := f.upgradeFilesAndCommit(ctx, newSpec); err != nil {
-		return nil, fmt.Errorf("failed upgrading Flux from bundles %d to bundles %d: %v", currentSpec.Bundles.Spec.Number, newSpec.Bundles.Spec.Number, err)
+		return nil, fmt.Errorf("failed upgrading Flux from bundles %s to bundles %s: %v", currentSpec.Bundles.Spec.Number, newSpec.Bundles.Spec.Number, err)
 	}
 	if err := f.flux.BootstrapToolkitsComponents(ctx, managementCluster, newSpec.GitOpsConfig); err != nil {
 		return nil, fmt.Errorf("failed upgrading Flux components: %v", err)

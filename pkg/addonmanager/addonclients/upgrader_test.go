@@ -25,7 +25,7 @@ type upgraderTest struct {
 
 func newUpgraderTest(t *testing.T) *upgraderTest {
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Bundles.Spec.Number = 1
+		s.Bundles.Spec.Number = "1"
 		s.VersionsBundle.Flux.Version = "v0.1.0"
 	})
 

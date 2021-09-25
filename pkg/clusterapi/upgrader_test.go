@@ -34,7 +34,7 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 	capiClient := mocks.NewMockCAPIClient(ctrl)
 
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Bundles.Spec.Number = 1
+		s.Bundles.Spec.Number = "1"
 		s.VersionsBundle.ClusterAPI.Version = "v0.1.0"
 		s.VersionsBundle.ControlPlane.Version = "v0.1.0"
 		s.VersionsBundle.Bootstrap.Version = "v0.1.0"
