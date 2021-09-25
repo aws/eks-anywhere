@@ -36,7 +36,7 @@ server: serve
 container-build: submodule ## Build a container image for the preview of the website
 	docker build -t $(CONTAINER_IMAGE) .
 
-container-serve: ## Boot the development server using container. Run `make container-image` before this.
+container-serve: ## Boot the development server using container. Run `make container-build` before this.
 	$(CONTAINER_RUN) --mount type=tmpfs,destination=/tmp,tmpfs-mode=01777 \
 		--workdir /src/docs \
 		-p 1313:1313 $(CONTAINER_IMAGE) server \
