@@ -22,6 +22,7 @@ const (
 	regexFlagName           = "regex"
 	maxInstancesFlagName    = "max-instances"
 	skipFlagName            = "skip"
+	bundlesOverrideFlagName = "bundles-override"
 )
 
 var runE2ECmd = &cobra.Command{
@@ -60,6 +61,7 @@ func init() {
 	runE2ECmd.Flags().StringP(regexFlagName, "r", "", "Run only those tests and examples matching the regular expression. Equivalent to go test -run")
 	runE2ECmd.Flags().IntP(maxInstancesFlagName, "m", 1, "Run tests in parallel with multiple EC2 instances")
 	runE2ECmd.Flags().StringSlice(skipFlagName, nil, "List of tests to skip")
+	runE2ECmd.Flags().Bool(bundlesOverrideFlagName, false, "Flag to indicate if the tests should run with a bundles override")
 
 	for _, flag := range requiredFlags {
 		if err := runE2ECmd.MarkFlagRequired(flag); err != nil {
@@ -77,6 +79,7 @@ func runE2E(ctx context.Context) error {
 	testRegex := viper.GetString(regexFlagName)
 	maxInstances := viper.GetInt(maxInstancesFlagName)
 	testsToSkip := viper.GetStringSlice(skipFlagName)
+	bundlesOverride := viper.GetBool(bundlesOverrideFlagName)
 
 	runConf := e2e.ParallelRunConf{
 		MaxInstances:        maxInstances,
@@ -87,6 +90,7 @@ func runE2E(ctx context.Context) error {
 		SubnetId:            subnetId,
 		Regex:               testRegex,
 		TestsToSkip:         testsToSkip,
+		BundlesOverride:     bundlesOverride,
 	}
 
 	err := e2e.RunTestsInParallel(runConf)
