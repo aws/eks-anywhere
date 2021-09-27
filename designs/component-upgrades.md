@@ -3,9 +3,9 @@
 
 ## Introduction
 
-**Problem:** customers are only able to upgrade the cluster components that are part of the kubernetes distribution. Any other core component of EKS Anywhere remains untouched from the cluster creation.
+**Problem:** users are only able to upgrade the cluster components that are part of the kubernetes distribution. Any other core component of EKS Anywhere remains untouched from the cluster creation.
 
-This stops customers from enjoying the latest features and bug fixes from EKS Anywhere and any of its core components as well as from being able to get security patches.
+This stops users from enjoying the latest features and bug fixes from EKS Anywhere and any of its core components as well as from being able to get security patches.
 
 ### Tenets
 
@@ -13,7 +13,7 @@ This stops customers from enjoying the latest features and bug fixes from EKS An
 
 ### Goals and objectives
 
-As an EKS Anywhere customer:
+As an EKS Anywhere user:
 
 * I want to able to enjoy the latest EKS Anywhere features and bug fixes
 * I want to keep my cluster up to date with security patches
@@ -36,7 +36,7 @@ As an EKS Anywhere customer:
 
 * Install/upgrade add-ons
 * Upgrade cli
-* Upgrades to customer defined component versions
+* Upgrades to user defined component versions
 
 **Future scope**
 
@@ -52,14 +52,14 @@ As an EKS Anywhere customer:
 
 Since we already have:
 
-* An interface that customers use to upgrade clusters (`upgrade cluster` command)
+* An interface that users use to upgrade clusters (`upgrade cluster` command)
 * A declarative list of all EKS Anywhere components at their latest available versions that have been tested together (bundles manifest)
 
 It seems like the simplest solution is to take advantage of both.
 
-This solution fits very well with both the goal of a customer experience as simple as possible and the concept of the versions bundle (a group of versioned components that work well together):
+This solution fits very well with both the goal of a user experience as simple as possible and the concept of the versions bundle (a group of versioned components that work well together):
 
-* We don’t introduce more concepts/commands. Customers just have to use the same command they are already used to. The syntax stays the same and there is no need to define what needs to be upgraded and to what version.
+* We don’t introduce more concepts/commands. Users just have to use the same command they are already used to. The syntax stays the same and there is no need to define what needs to be upgraded and to what version.
 The cli takes care of this transparently.
 * Components bundled together are always upgraded together. This reduces our testing matrix considerably, since there is no room for version miss-alignments.
 
@@ -126,7 +126,7 @@ As mentioned in the [CAPI](#capi) section, we don’t need any extra process to 
 * Update all provider templates in the cli to generate `v1alpha4` CAPI specs
 * Build compatible versions of dependencies like `clusterctl` and cert-manager
 
-## Customer experience
+## User experience
 
 ### Behavior change
 
