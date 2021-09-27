@@ -60,8 +60,12 @@ It seems like the simplest solution is to take advantage of both.
 This solution fits very well with both the goal of a user experience as simple as possible and the concept of the versions bundle (a group of versioned components that work well together):
 
 * We don’t introduce more concepts/commands. Users just have to use the same command they are already used to. The syntax stays the same and there is no need to define what needs to be upgraded and to what version.
+Moreover, users don't ever have to worry about the individual versions and dependencies between them.
 The cli takes care of this transparently.
 * Components bundled together are always upgraded together. This reduces our testing matrix considerably, since there is no room for version miss-alignments.
+
+This is also very similar to how EKS handles upgrades, taking care of bundling and versioning for the user.
+Here it has to be manually triggered (for now, due to management cluster limitations), as opposed to being automated.
 
 The cli needs the ability to detect both component version changes as well as new builds of the same versioned component (such as a new container build due to a patch in a dependency like AL2). The process to upgrade some components could be different for these two scenarios.
 
