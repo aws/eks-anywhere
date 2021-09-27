@@ -9,13 +9,13 @@ import (
 
 const (
 	httpProxyVar  = "T_HTTP_PROXY"
-	httspProxyVar = "T_HTTPS_PROXY"
+	httpsProxyVar = "T_HTTPS_PROXY"
 	noProxyVar    = "T_NO_PROXY"
 )
 
 var proxyRequiredEnvVars = []string{
 	httpProxyVar,
-	httspProxyVar,
+	httpsProxyVar,
 	noProxyVar,
 }
 
@@ -23,9 +23,9 @@ func WithProxy() E2ETestOpt {
 	return func(e *E2ETest) {
 		checkRequiredEnvVars(e.T, proxyRequiredEnvVars)
 		httpProxy := os.Getenv(httpProxyVar)
-		httpsProxy := os.Getenv(httpProxyVar)
+		httpsProxy := os.Getenv(httpsProxyVar)
 		noProxies := os.Getenv(noProxyVar)
-		noProxy := []string{}
+		var noProxy []string
 		for _, data := range strings.Split(noProxies, ",") {
 			noProxy = append(noProxy, strings.TrimSpace(data))
 		}
