@@ -105,16 +105,17 @@ spec:
       # `aws-iam-authenticator server` has three volumes
       # - config (mounted from the ConfigMap at /etc/aws-iam-authenticator/config.yaml)
       # - state (persisted TLS certificate and keys, mounted from the host)
-      # - output (output kubeconfig to plug into your apiserver configuration, mounted from the host)
+      # - kubeconfig (kubeconfig to plug into your apiserver configuration, mounted from the host)
       containers:
       - name: aws-iam-authenticator
         image: {{.image}}
         env:
         - name: AWS_REGION
-          value: "us-east-1"
+          value: {{.awsRegion}}
         args:
         - server
         - --backend-mode={{.backendMode}}
+        - --partition={{.partition}}
         - --config=/etc/aws-iam-authenticator/config.yaml
         - --state-dir=/var/aws-iam-authenticator
         - --generate-kubeconfig=/etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
@@ -137,32 +138,40 @@ spec:
         volumeMounts:
         - name: config
           mountPath: /etc/aws-iam-authenticator/
-        - name: state
-          mountPath: /var/aws-iam-authenticator/
-        - name: output
-          mountPath: /etc/kubernetes/aws-iam-authenticator/
+        - name: cert
+          mountPath: /var/aws-iam-authenticator/cert.pem
+        - name: key
+          mountPath: /var/aws-iam-authenticator/key.pem
+        - name: kubeconfig
+          mountPath: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
 
       # init container to set permissions for the mount paths
       initContainers:
       - name: chown
         image: busybox
-        command: ['sh', '-c', 'chown -R 10000 /var/aws-iam-authenticator; chown -R 10000 /etc/kubernetes/aws-iam-authenticator']
+        command: ['sh', '-c', 'chown -R 10000:10000 /var/aws-iam-authenticator; chown 10000:10000 /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml; chmod -R 0640 /var/aws-iam-authenticator; chmod 0640 /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml']
         volumeMounts:
         - name: state
           mountPath: /var/aws-iam-authenticator/
-        - name: output
-          mountPath: /etc/kubernetes/aws-iam-authenticator/
+        - name: kubeconfig
+          mountPath: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
 
       volumes:
       - name: config
         configMap:
           name: aws-iam-authenticator
-      - name: output
+      - name: kubeconfig
         hostPath:
-          path: /var/lib/kubeadm/aws-iam-authenticator/
+          path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
       - name: state
         hostPath:
           path: /var/lib/kubeadm/aws-iam-authenticator/pki/
+      - name: cert
+        hostPath:
+          path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
+      - name: key
+        hostPath:
+          path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
 
 ---
 apiVersion: v1
@@ -175,6 +184,20 @@ metadata:
 data:
   config.yaml: |
     clusterID: {{.clusterID}}
-{{- if (ne .config "")}}
-{{ .config | indent 4 }}
-{{- end}}      
+
+---
+# EKS-Style ConfigMap: roles and users can be mapped in the same way as supported on EKS.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapRoles: |
+{{- if (ne .mapRoles "")}}
+{{ .mapRoles | indent 4 }}
+{{- end}}
+  mapUsers: |
+{{- if (ne .mapUsers "")}}
+{{ .mapUsers | indent 4 }}
+{{- end}}

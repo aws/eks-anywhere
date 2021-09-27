@@ -2,7 +2,6 @@ package v1alpha1
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
@@ -42,14 +41,23 @@ func validateAWSIamConfig(config *AWSIamConfig, refName string) error {
 		return fmt.Errorf("AWSIamConfig retrieved with name %v does not match name (%v) specified in "+
 			"identityProviderRefs", config.Name, refName)
 	}
+	if config.Spec.AWSRegion == "" {
+		return fmt.Errorf("AWSIamConfig AWSRegion is a required field")
+	}
 	if config.Spec.ClusterID == "" {
 		return fmt.Errorf("AWSIamConfig ClusterID is a required field")
 	}
-	if config.Spec.BackendMode == "" {
+	if len(config.Spec.BackendMode) == 0 {
 		return fmt.Errorf("AWSIamConfig BackendMode is a required field")
 	}
-	if strings.Contains(config.Spec.BackendMode, "MountedFile") && config.Spec.Data == "" {
-		logger.Info("Warning: AWS IAM Authenticator MountedFile data is empty. Please be aware this will prevent aws-iam-authenticator from mapping IAM roles to users/groups on the cluster with MountedFile backend")
+	for _, backendMode := range config.Spec.BackendMode {
+		if backendMode == "EKSConfigMap" && config.Spec.MapRoles == "" && config.Spec.MapUsers == "" {
+			logger.Info("Warning: AWS IAM Authenticator mapRoles and mapUsers specification is empty. Please be aware this will prevent aws-iam-authenticator from mapping IAM roles to users/groups on the cluster with backendMode EKSConfigMap")
+		}
+	}
+	if config.Spec.Partition == "" {
+		config.Spec.Partition = "aws"
+		logger.V(1).Info("AWSIamConfig Partition is empty. Using default partition 'aws'")
 	}
 	return nil
 }

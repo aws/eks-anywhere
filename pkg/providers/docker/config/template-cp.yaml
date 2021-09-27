@@ -108,12 +108,14 @@ spec:
           pathType: FileOrCreate
           readOnly: false
 {{- if .awsIamAuth}}
-        - hostPath: /etc/kubernetes/aws-iam-authenticator/
+        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
           mountPath: /etc/kubernetes/aws-iam-authenticator/
           name: authconfig
-        - hostPath: /var/aws-iam-authenticator/
+          readOnly: false
+        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
           mountPath: /var/aws-iam-authenticator/
           name: awsiamcert
+          readOnly: false
 {{- end}}
       controllerManager:
         extraArgs:
@@ -146,20 +148,23 @@ spec:
           context:
             cluster: aws-iam-authenticator
             user: apiserver
-      owner: 10000:10000
-      path: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
+      permissions: "0640"
+      owner: root:root
+      path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
     - contentFrom:
         secret:
           name: aws-iam-authenticator-ca
           key: cert.pem
-      owner: 10000:10000
-      path: /var/aws-iam-authenticator/cert.pem
+      permissions: "0640"
+      owner: root:root
+      path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
     - contentFrom:
         secret:
           name: aws-iam-authenticator-ca
           key: key.pem
-      owner: 10000:10000
-      path: /var/aws-iam-authenticator/key.pem
+      permissions: "0640"
+      owner: root:root
+      path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
 {{- end}}
     initConfiguration:
       nodeRegistration:

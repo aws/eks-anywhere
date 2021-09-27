@@ -7,15 +7,25 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 // AWSIamConfigSpec defines the desired state of AWSIamConfig
 type AWSIamConfigSpec struct {
-	// BackendMode defines multiple backends for aws-iam-authenticator server in a comma separated string.
-	// The server searches for mappings in order.
-	BackendMode string `json:"backendMode,omitempty"`
-	// ClusterID is a unique-per-cluster identifier for aws-iam-authenticator server.
+	// AWSRegion defines a region in an AWS partition
+	AWSRegion string `json:"awsRegion,omitempty"`
+	// BackendMode defines multiple backends for aws-iam-authenticator server
+	// The server searches for mappings in order
+	BackendMode []string `json:"backendMode,omitempty"`
+	// ClusterID is a unique-per-cluster identifier for aws-iam-authenticator server
 	ClusterID string `json:"clusterID,omitempty"`
-	// Data defines the configuration when using MountedFile BackendMode.
-	// Each key must match AWS IAM Authenticator MountedFile configuration.
+	// MapRoles defines IAM role to a username and set of groups mapping using EKSConfigMap BackendMode
+	// Each key must match AWS EKS Style ConfigMap mapRoles
 	// +kubebuilder:validation:Optional
-	Data string `json:"data,omitempty"`
+	MapRoles string `json:"mapRoles,omitempty"`
+	// MapUsers defines IAM user to a username and set of groups mapping using EKSConfigMap BackendMode
+	// Each key must match AWS EKS Style ConfigMap mapUsers
+	// +kubebuilder:validation:Optional
+	MapUsers string `json:"mapUsers,omitempty"`
+	// Partition defines the AWS partition on which the IAM roles exist
+	// +kubebuilder:default:=aws
+	// +kubebuilder:validation:Optional
+	Partition string `json:"partition,omitempty"`
 }
 
 // AWSIamConfigStatus defines the observed state of AWSIamConfig
