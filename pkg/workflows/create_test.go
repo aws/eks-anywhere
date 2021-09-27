@@ -83,8 +83,6 @@ func (c *createTestSetup) expectCreateBootstrap() {
 
 		c.clusterManager.EXPECT().InstallCAPI(c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider),
 
-		// c.clusterManager.EXPECT().CreateAwsIamAuthCaSecret(c.ctx, c.bootstrapCluster),
-
 		c.provider.EXPECT().BootstrapSetup(c.ctx, c.clusterSpec.Cluster, c.bootstrapCluster),
 	)
 }
@@ -98,11 +96,6 @@ func (c *createTestSetup) expectCreateWorkload() {
 		c.clusterManager.EXPECT().InstallNetworking(
 			c.ctx, c.workloadCluster, c.clusterSpec,
 		),
-
-		// c.clusterManager.EXPECT().InstallAwsIamAuth(
-		// 	c.ctx, c.workloadCluster, c.clusterSpec,
-		// ),
-
 		c.clusterManager.EXPECT().InstallStorageClass(
 			c.ctx, c.workloadCluster, c.provider,
 		),

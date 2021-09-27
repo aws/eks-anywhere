@@ -209,6 +209,12 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 			commandContext.SetError(err)
 			return nil
 		}
+		logger.V(1).Info("Generating aws-iam-authenticator kubeconfig")
+		err = commandContext.ClusterManager.GenerateAwsIamAuthKubeconfig(ctx, commandContext.BootstrapCluster, workloadCluster, commandContext.ClusterSpec)
+		if err != nil {
+			commandContext.SetError(err)
+			return nil
+		}
 	}
 
 	logger.Info("Installing storage class on workload cluster")

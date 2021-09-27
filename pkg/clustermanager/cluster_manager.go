@@ -76,6 +76,8 @@ type ClusterClient interface {
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
 	ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
 	GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error)
+	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
+	GetClusterCATlsCert(ctx context.Context, cluster *types.Cluster) (string, error)
 }
 
 type Networking interface {
@@ -85,6 +87,7 @@ type Networking interface {
 type AwsIamAuth interface {
 	GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
 	GenerateCertKeyPairSecret() ([]byte, error)
+	GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, serverUrl, tlsCert string) ([]byte, error)
 }
 
 type ClusterManagerOpt func(*ClusterManager)
@@ -532,6 +535,27 @@ func (c *ClusterManager) CreateAwsIamAuthCaSecret(ctx context.Context, cluster *
 	)
 	if err != nil {
 		return fmt.Errorf("error applying aws-iam-authenticator ca secret: %v", err)
+	}
+	return nil
+}
+
+func (c *ClusterManager) GenerateAwsIamAuthKubeconfig(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	fileName := fmt.Sprintf("%s-aws.kubeconfig", workloadCluster.Name)
+	serverUrl, err := c.clusterClient.GetApiServerUrl(ctx, workloadCluster)
+	if err != nil {
+		return fmt.Errorf("error generating aws-iam-authenticator kubeconfig: %v", err)
+	}
+	tlsCert, err := c.clusterClient.GetClusterCATlsCert(ctx, managementCluster)
+	if err != nil {
+		return fmt.Errorf("error generating aws-iam-authenticator kubeconfig: %v", err)
+	}
+	awsIamAuthKubeconfigContent, err := c.awsIamAuth.GenerateAwsIamAuthKubeconfig(clusterSpec, serverUrl, tlsCert)
+	if err != nil {
+		return fmt.Errorf("error generating aws-iam-authenticator kubeconfig: %v", err)
+	}
+	writtenFile, err := c.writer.Write(fileName, awsIamAuthKubeconfigContent, filewriter.PersistentFile, filewriter.Permission0600)
+	if err != nil {
+		return fmt.Errorf("error writing  aws-iam-authenticator kubeconfig to %s: %v", writtenFile, err)
 	}
 	return nil
 }

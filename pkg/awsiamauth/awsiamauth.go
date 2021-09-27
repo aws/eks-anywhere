@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
+	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -17,6 +18,9 @@ var awsIamAuthTemplate []byte
 //go:embed config/aws-iam-authenticator-ca-secret.yaml
 var awsIamAuthCaSecretTemplate []byte
 
+//go:embed config/aws-iam-authenticator-kubeconfig.yaml
+var awsIamAuthKubeconfigTemplate []byte
+
 type AwsIamAuth struct {
 	certgen crypto.CertificateGenerator
 }
@@ -28,9 +32,12 @@ func NewAwsIamAuth(certgen crypto.CertificateGenerator) *AwsIamAuth {
 func (a *AwsIamAuth) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error) {
 	data := map[string]string{
 		"image":       clusterSpec.VersionsBundle.KubeDistro.AwsIamAuthIamge.VersionedImage(),
+		"awsRegion":   clusterSpec.AWSIamConfig.Spec.AWSRegion,
 		"clusterID":   clusterSpec.AWSIamConfig.Spec.ClusterID,
-		"backendMode": clusterSpec.AWSIamConfig.Spec.BackendMode,
-		"config":      clusterSpec.AWSIamConfig.Spec.Data,
+		"backendMode": strings.Join(clusterSpec.AWSIamConfig.Spec.BackendMode, ","),
+		"mapRoles":    clusterSpec.AWSIamConfig.Spec.MapRoles,
+		"mapUsers":    clusterSpec.AWSIamConfig.Spec.MapUsers,
+		"partition":   clusterSpec.AWSIamConfig.Spec.Partition,
 	}
 	awsIamAuthManifest, err := templater.Execute(string(awsIamAuthTemplate), data)
 	if err != nil {
@@ -54,4 +61,18 @@ func (a *AwsIamAuth) GenerateCertKeyPairSecret() ([]byte, error) {
 		return nil, fmt.Errorf("error generating aws-iam-authenticator cert key pair secret: %v", err)
 	}
 	return awsIamAuthCaSecret, nil
+}
+
+func (a *AwsIamAuth) GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, serverUrl, tlsCert string) ([]byte, error) {
+	data := map[string]string{
+		"clusterName": clusterSpec.Cluster.Name,
+		"server":      serverUrl,
+		"cert":        tlsCert,
+		"clusterID":   clusterSpec.AWSIamConfig.Spec.ClusterID,
+	}
+	awsIamAuthKubeconfig, err := templater.Execute(string(awsIamAuthKubeconfigTemplate), data)
+	if err != nil {
+		return nil, fmt.Errorf("error generating aws-iam-authenticator kubeconfig content: %v", err)
+	}
+	return awsIamAuthKubeconfig, nil
 }

@@ -1124,6 +1124,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketBootstrap.Bootstrap.Image()
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
 	}
+
+	if clusterSpec.AWSIamConfig != nil {
+		values["awsIamAuth"] = true
+	}
+
 	return values
 }
 
@@ -1187,10 +1192,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
 		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketBootstrap.Bootstrap.Image()
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
-	}
-
-	if clusterSpec.AWSIamConfig != nil {
-		values["awsIamAuth"] = true
 	}
 
 	return values

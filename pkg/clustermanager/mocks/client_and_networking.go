@@ -119,10 +119,40 @@ func (m *MockClusterClient) GetBundles(arg0 context.Context, arg1, arg2, arg3 st
 	return ret0, ret1
 }
 
+// GetApiServerUrl mocks base method.
+func (m *MockClusterClient) GetApiServerUrl(arg0 context.Context, arg1 *types.Cluster) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetApiServerUrl", arg0, arg1)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
 // GetBundles indicates an expected call of GetBundles.
 func (mr *MockClusterClientMockRecorder) GetBundles(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBundles", reflect.TypeOf((*MockClusterClient)(nil).GetBundles), arg0, arg1, arg2, arg3)
+}
+
+// GetApiServerUrl indicates an expected call of GetApiServerUrl.
+func (mr *MockClusterClientMockRecorder) GetApiServerUrl(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApiServerUrl", reflect.TypeOf((*MockClusterClient)(nil).GetApiServerUrl), arg0, arg1)
+}
+
+// GetClusterCATlsCert mocks base method.
+func (m *MockClusterClient) GetClusterCATlsCert(arg0 context.Context, arg1 *types.Cluster) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetClusterCATlsCert", arg0, arg1)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetClusterCATlsCert indicates an expected call of GetClusterCATlsCert.
+func (mr *MockClusterClientMockRecorder) GetClusterCATlsCert(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterCATlsCert", reflect.TypeOf((*MockClusterClient)(nil).GetClusterCATlsCert), arg0, arg1)
 }
 
 // GetClusters mocks base method.
@@ -442,6 +472,21 @@ func NewMockAwsIamAuth(ctrl *gomock.Controller) *MockAwsIamAuth {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockAwsIamAuth) EXPECT() *MockAwsIamAuthMockRecorder {
 	return m.recorder
+}
+
+// GenerateAwsIamAuthKubeconfig mocks base method.
+func (m *MockAwsIamAuth) GenerateAwsIamAuthKubeconfig(arg0 *cluster.Spec, arg1, arg2 string) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateAwsIamAuthKubeconfig", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateAwsIamAuthKubeconfig indicates an expected call of GenerateAwsIamAuthKubeconfig.
+func (mr *MockAwsIamAuthMockRecorder) GenerateAwsIamAuthKubeconfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateAwsIamAuthKubeconfig", reflect.TypeOf((*MockAwsIamAuth)(nil).GenerateAwsIamAuthKubeconfig), arg0, arg1, arg2)
 }
 
 // GenerateCertKeyPairSecret mocks base method.

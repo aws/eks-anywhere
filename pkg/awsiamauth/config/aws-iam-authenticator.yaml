@@ -102,9 +102,9 @@ spec:
       - key: CriticalAddonsOnly
         operator: Exists
 
-      # `aws-iam-authenticator server` has three volumes
+      # `aws-iam-authenticator server` has four volumes
       # - config (mounted from the ConfigMap at /etc/aws-iam-authenticator/config.yaml)
-      # - state (persisted TLS certificate and keys, mounted from the host)
+      # - cert, key (persisted TLS certificate and key, mounted from the host)
       # - kubeconfig (kubeconfig to plug into your apiserver configuration, mounted from the host)
       containers:
       - name: aws-iam-authenticator
@@ -149,10 +149,12 @@ spec:
       initContainers:
       - name: chown
         image: busybox
-        command: ['sh', '-c', 'chown -R 10000:10000 /var/aws-iam-authenticator; chown 10000:10000 /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml; chmod -R 0640 /var/aws-iam-authenticator; chmod 0640 /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml']
+        command: ['sh', '-c', 'chown 10000:10000 /var/aws-iam-authenticator/cert.pem; chown 10000:10000 /var/aws-iam-authenticator/key.pem; chown 10000:10000 /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml']
         volumeMounts:
-        - name: state
-          mountPath: /var/aws-iam-authenticator/
+        - name: cert
+          mountPath: /var/aws-iam-authenticator/cert.pem
+        - name: key
+          mountPath: /var/aws-iam-authenticator/key.pem
         - name: kubeconfig
           mountPath: /etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml
 
@@ -163,9 +165,6 @@ spec:
       - name: kubeconfig
         hostPath:
           path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
-      - name: state
-        hostPath:
-          path: /var/lib/kubeadm/aws-iam-authenticator/pki/
       - name: cert
         hostPath:
           path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
