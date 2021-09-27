@@ -34,6 +34,8 @@ env:
     T_HTTP_PROXY: "proxy-config-data:httpProxy"
     T_HTTPS_PROXY: "proxy-config-data:httpsProxy"
     T_NO_PROXY: "proxy-config-data:noProxy"
+    T_REGISTRY_MIRROR_ENDPOINT: "harbor-registry-data:endpoint"
+    T_REGISTRY_MIRROR_CA_CERT: "harbor-registry-data:caCert"
 
 phases:
   pre_build:
