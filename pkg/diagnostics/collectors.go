@@ -9,21 +9,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 )
 
-const (
-	capdSystem                       = "capd-system"
-	capiKubeadmBootstrapSystem       = "capi-kubeadm-bootstrap-system"
-	capiKubeadmControlPlaneSystem    = "capi-kubeadm-control-plane-system"
-	capiSystem                       = "capi-system"
-	capiWebhookSystem                = "capi-webhook-system"
-	certManager                      = "cert-manager"
-	cefaultNamespace                 = "default"
-	etcdAdminBootstrapProviderSystem = "etcdadm-bootstrap-provider-system"
-	etcdAdminControllerSystem        = "etcdadm-controller-system"
-	kubeNodeLease                    = "kube-node-lease"
-	kubePublic                       = "kube-public"
-	kubeSystem                       = "kube-system"
-)
-
 type collectorFactory struct {
 	DiagnosticCollectorImage string
 }
@@ -56,38 +41,38 @@ func (c *collectorFactory) DefaultCollectors() []*Collect {
 		},
 		{
 			Logs: &logs{
-				Namespace: capdSystem,
-				Name:      logpath(capdSystem),
+				Namespace: constants.CapdSystemNamespace,
+				Name:      logpath(constants.CapdSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: capiKubeadmBootstrapSystem,
-				Name:      logpath(capiKubeadmBootstrapSystem),
+				Namespace: constants.CapiKubeadmBootstrapSystemNamespace,
+				Name:      logpath(constants.CapiKubeadmBootstrapSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: capiKubeadmControlPlaneSystem,
-				Name:      logpath(capiKubeadmControlPlaneSystem),
+				Namespace: constants.CapiKubeadmControlPlaneSystemNamespace,
+				Name:      logpath(constants.CapiKubeadmControlPlaneSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: capiSystem,
-				Name:      logpath(capiSystem),
+				Namespace: constants.CapiSystemNamespace,
+				Name:      logpath(constants.CapiSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: capiWebhookSystem,
-				Name:      logpath(capiWebhookSystem),
+				Namespace: constants.CapiWebhookSystemNamespace,
+				Name:      logpath(constants.CapiWebhookSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: certManager,
-				Name:      logpath(certManager),
+				Namespace: constants.CertManagerNamespace,
+				Name:      logpath(constants.CertManagerNamespace),
 			},
 		},
 		{
@@ -98,38 +83,38 @@ func (c *collectorFactory) DefaultCollectors() []*Collect {
 		},
 		{
 			Logs: &logs{
-				Namespace: cefaultNamespace,
-				Name:      logpath(cefaultNamespace),
+				Namespace: constants.DefaultNamespace,
+				Name:      logpath(constants.DefaultNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: etcdAdminBootstrapProviderSystem,
-				Name:      logpath(etcdAdminBootstrapProviderSystem),
+				Namespace: constants.EtcdAdminBootstrapProviderSystemNamespace,
+				Name:      logpath(constants.EtcdAdminBootstrapProviderSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: etcdAdminControllerSystem,
-				Name:      logpath(etcdAdminControllerSystem),
+				Namespace: constants.EtcdAdminControllerSystemNamespace,
+				Name:      logpath(constants.EtcdAdminControllerSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: kubeNodeLease,
-				Name:      logpath(kubeNodeLease),
+				Namespace: constants.KubeNodeLeaseNamespace,
+				Name:      logpath(constants.KubeNodeLeaseNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: kubePublic,
-				Name:      logpath(kubePublic),
+				Namespace: constants.KubePublicNamespace,
+				Name:      logpath(constants.KubePublicNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: kubeSystem,
-				Name:      logpath(kubeSystem),
+				Namespace: constants.KubeSystemNamespace,
+				Name:      logpath(constants.KubeSystemNamespace),
 			},
 		},
 	}

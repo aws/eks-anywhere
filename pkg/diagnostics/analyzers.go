@@ -5,6 +5,7 @@ import (
 	"path"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 const (
@@ -25,55 +26,55 @@ func (a *analyzerFactory) defaultDeploymentAnalyzers() []*Analyze {
 	d := []eksaDeployment{
 		{
 			Name:             "capv-controller-manager",
-			Namespace:        "capi-webhook-system",
+			Namespace:        constants.CapiWebhookSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capv-controller-manager",
-			Namespace:        "capv-system",
+			Namespace:        constants.CapvSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "coredns",
-			Namespace:        "kube-system",
+			Namespace:        constants.KubeSystemNamespace,
 			ExpectedReplicas: 2,
 		}, {
 			Name:             "cert-manager-webhook",
-			Namespace:        "cert-manager",
+			Namespace:        constants.CertManagerNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "cert-manager-cainjector",
-			Namespace:        "cert-manager",
+			Namespace:        constants.CertManagerNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "cert-manager",
-			Namespace:        "cert-manager",
+			Namespace:        constants.CertManagerNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capi-kubeadm-control-plane-controller-manager",
-			Namespace:        "capi-webhook-system",
+			Namespace:        constants.CapiWebhookSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capi-kubeadm-bootstrap-controller-manager",
-			Namespace:        "capi-webhook-system",
+			Namespace:        constants.CapiWebhookSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capi-controller-manager",
-			Namespace:        "capi-webhook-system",
+			Namespace:        constants.CapiWebhookSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capi-controller-manager",
-			Namespace:        "capi-system",
+			Namespace:        constants.CapiSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capi-kubeadm-control-plane-controller-manager",
-			Namespace:        "capi-kubeadm-control-plane-system",
+			Namespace:        constants.CapiKubeadmControlPlaneSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capi-kubeadm-control-plane-controller-manager",
-			Namespace:        "capi-kubeadm-control-plane-system",
+			Namespace:        constants.CapiKubeadmControlPlaneSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capi-kubeadm-bootstrap-controller-manager",
-			Namespace:        "capi-kubeadm-bootstrap-system",
+			Namespace:        constants.CapiKubeadmBootstrapSystemNamespace,
 			ExpectedReplicas: 1,
 		},
 	}
@@ -106,11 +107,11 @@ func (a *analyzerFactory) EksaExternalEtcdAnalyzers() []*Analyze {
 	deployments := []eksaDeployment{
 		{
 			Name:             "etcdadm-controller-controller-manager",
-			Namespace:        "etcdadm-controller-system",
+			Namespace:        constants.EtcdAdminControllerSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "etcdadm-bootstrap-provider-controller-manager",
-			Namespace:        "etcdadm-bootstrap-provider-system",
+			Namespace:        constants.EtcdAdminBootstrapProviderSystemNamespace,
 			ExpectedReplicas: 1,
 		},
 	}
@@ -146,7 +147,7 @@ func (a *analyzerFactory) eksaDockerAnalyzers() []*Analyze {
 	deployments := []eksaDeployment{
 		{
 			Name:             "local-path-provisioner",
-			Namespace:        "local-path-storage",
+			Namespace:        constants.LocalPathStorageNamespace,
 			ExpectedReplicas: 1,
 		},
 	}
@@ -175,21 +176,21 @@ func (a *analyzerFactory) EksaLogTextAnalyzers(collectors []*Collect) []*Analyze
 // the key of the analyzers map is the namespace name, and the value are the associated log text analyzers.
 func (a *analyzerFactory) namespaceLogTextAnalyzersMap() map[string][]*Analyze {
 	logTextAnalyzers := map[string][]*Analyze{}
-	logTextAnalyzers[capiKubeadmControlPlaneSystem] = a.capiKubeadmControlPlaneSystemLogAnalyzers()
+	logTextAnalyzers[constants.CapiKubeadmControlPlaneSystemNamespace] = a.capiKubeadmControlPlaneSystemLogAnalyzers()
 	return logTextAnalyzers
 }
 
 func (a *analyzerFactory) capiKubeadmControlPlaneSystemLogAnalyzers() []*Analyze {
 	capiCpManagerPod := "capi-kubeadm-control-plane-controller-manager-*"
 	capiCpManagerContainerLogFile := path.Join(capiCpManagerPod, "manager.log")
-	fullManagerPodLogPath := path.Join(logpath(capiKubeadmControlPlaneSystem), capiCpManagerContainerLogFile)
+	fullManagerPodLogPath := path.Join(logpath(constants.CapiKubeadmControlPlaneSystemNamespace), capiCpManagerContainerLogFile)
 	return []*Analyze{
 		{
 			TextAnalyze: &textAnalyze{
 				analyzeMeta: analyzeMeta{
 					CheckName: fmt.Sprintf("%s: API server pod missing. Log: %s", logAnalysisAnalyzerPrefix, fullManagerPodLogPath),
 				},
-				CollectorName: capiKubeadmControlPlaneSystem,
+				CollectorName: constants.CapiKubeadmControlPlaneSystemNamespace,
 				FileName:      capiCpManagerContainerLogFile,
 				RegexPattern:  `machine (.*?) reports APIServerPodHealthy condition is false \(Error, Pod kube-apiserver-(.*?) is missing\)`,
 				Outcomes: []*outcome{
