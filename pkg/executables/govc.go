@@ -13,12 +13,14 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -45,20 +47,24 @@ var deployOpts []byte
 type FolderType string
 
 const (
-	datastore FolderType = "datastore"
-	network   FolderType = "network"
-	vm        FolderType = "vm"
+	datastore     FolderType = "datastore"
+	network       FolderType = "network"
+	vm            FolderType = "vm"
+	maxRetries               = 5
+	backOffPeriod            = 5 * time.Second
 )
 
 type Govc struct {
 	writer     filewriter.FileWriter
 	executable Executable
+	retrier    *retrier.Retrier
 }
 
 func NewGovc(executable Executable, writer filewriter.FileWriter) *Govc {
 	return &Govc{
 		writer:     writer,
 		executable: executable,
+		retrier:    retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 	}
 }
 
@@ -193,11 +199,14 @@ func (g *Govc) GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1a
 }
 
 func (g *Govc) CreateLibrary(ctx context.Context, datastore, library string) error {
-	if _, err := g.exec(ctx, "library.create", "-ds", datastore, library); err != nil {
-		return fmt.Errorf("error creating library %s: %v", library, err)
-	}
+	err := g.retrier.Retry(func() error {
+		if _, err := g.exec(ctx, "library.create", "-ds", datastore, library); err != nil {
+			return fmt.Errorf("error creating library %s: %v", library, err)
+		}
+		return nil
+	})
 
-	return nil
+	return err
 }
 
 func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string, resizeDisk2 bool) error {
@@ -424,11 +433,13 @@ func (g *Govc) ValidateVCenterSetup(ctx context.Context, datacenterConfig *v1alp
 	logger.MarkPass("Connected to server")
 
 	params := []string{"about", "-k"}
-	_, err = g.executable.ExecuteWithEnv(ctx, envMap, params...)
-	if err != nil {
-		return fmt.Errorf("vSphere authentication failed: %v", err)
-	}
-
+	err = g.retrier.Retry(func() error {
+		_, err = g.executable.ExecuteWithEnv(ctx, envMap, params...)
+		if err != nil {
+			return fmt.Errorf("vSphere authentication failed: %v", err)
+		}
+		return nil
+	})
 	logger.MarkPass("Authenticated to vSphere")
 
 	// hack to test if thumbprint is required or not
@@ -469,10 +480,13 @@ func (g *Govc) ValidateVCenterSetup(ctx context.Context, datacenterConfig *v1alp
 	}
 
 	params = []string{"datacenter.info", datacenterConfig.Spec.Datacenter}
-	_, err = g.executable.ExecuteWithEnv(ctx, envMap, params...)
-	if err != nil {
-		return fmt.Errorf("failed to get datacenter: %v", err)
-	}
+	err = g.retrier.Retry(func() error {
+		_, err = g.executable.ExecuteWithEnv(ctx, envMap, params...)
+		if err != nil {
+			return fmt.Errorf("failed to get datacenter: %v", err)
+		}
+		return nil
+	})
 	logger.MarkPass("Datacenter validated")
 
 	datacenterConfig.Spec.Network, err = prependPath(network, datacenterConfig.Spec.Network, datacenterConfig.Spec.Datacenter)
@@ -480,10 +494,13 @@ func (g *Govc) ValidateVCenterSetup(ctx context.Context, datacenterConfig *v1alp
 		return err
 	}
 	params = []string{"find", "-maxdepth=1", filepath.Dir(datacenterConfig.Spec.Network), "-type", "n", "-name", filepath.Base(datacenterConfig.Spec.Network)}
-	network, _ := g.executable.ExecuteWithEnv(ctx, envMap, params...)
-	if network.String() == "" {
-		return fmt.Errorf("network '%s' not found", filepath.Base(datacenterConfig.Spec.Network))
-	}
+	err = g.retrier.Retry(func() error {
+		network, _ := g.executable.ExecuteWithEnv(ctx, envMap, params...)
+		if network.String() == "" {
+			return fmt.Errorf("network '%s' not found", filepath.Base(datacenterConfig.Spec.Network))
+		}
+		return nil
+	})
 	logger.MarkPass("Network validated")
 
 	return nil
@@ -499,17 +516,20 @@ func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenter
 		return err
 	}
 	params := []string{"datastore.info", machineConfig.Spec.Datastore}
-	_, err = g.executable.ExecuteWithEnv(ctx, envMap, params...)
-	if err != nil {
-		datastorePath := filepath.Dir(machineConfig.Spec.Datastore)
-		isValidDatastorePath := g.isValidPath(ctx, envMap, datastorePath)
-		if isValidDatastorePath {
-			leafDir := filepath.Base(machineConfig.Spec.Datastore)
-			return fmt.Errorf("valid path, but '%s' is not a datastore", leafDir)
-		} else {
-			return fmt.Errorf("failed to get datastore: %v", err)
+	err = g.retrier.Retry(func() error {
+		_, err = g.executable.ExecuteWithEnv(ctx, envMap, params...)
+		if err != nil {
+			datastorePath := filepath.Dir(machineConfig.Spec.Datastore)
+			isValidDatastorePath := g.isValidPath(ctx, envMap, datastorePath)
+			if isValidDatastorePath {
+				leafDir := filepath.Base(machineConfig.Spec.Datastore)
+				return fmt.Errorf("valid path, but '%s' is not a datastore", leafDir)
+			} else {
+				return fmt.Errorf("failed to get datastore: %v", err)
+			}
 		}
-	}
+		return nil
+	})
 	logger.MarkPass("Datastore validated")
 
 	if len(machineConfig.Spec.Folder) > 0 {
@@ -518,29 +538,36 @@ func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenter
 			return err
 		}
 		params = []string{"folder.info", machineConfig.Spec.Folder}
-		_, err := g.executable.ExecuteWithEnv(ctx, envMap, params...)
-		if err != nil {
-			err = g.createFolder(ctx, envMap, machineConfig)
+		err = g.retrier.Retry(func() error {
+			_, err := g.executable.ExecuteWithEnv(ctx, envMap, params...)
 			if err != nil {
-				currPath := "/" + datacenterConfig.Spec.Datacenter + "/"
-				dirs := strings.Split(machineConfig.Spec.Folder, "/")
-				for _, dir := range dirs[2:] {
-					currPath += dir + "/"
-					if !g.isValidPath(ctx, envMap, currPath) {
-						return fmt.Errorf("%s is an invalid intermediate directory", currPath)
+				err = g.createFolder(ctx, envMap, machineConfig)
+				if err != nil {
+					currPath := "/" + datacenterConfig.Spec.Datacenter + "/"
+					dirs := strings.Split(machineConfig.Spec.Folder, "/")
+					for _, dir := range dirs[2:] {
+						currPath += dir + "/"
+						if !g.isValidPath(ctx, envMap, currPath) {
+							return fmt.Errorf("%s is an invalid intermediate directory", currPath)
+						}
 					}
+					return err
 				}
-				return err
 			}
-		}
+			return nil
+		})
 		logger.MarkPass("Folder validated")
 	}
 
+	var poolInfoResponse bytes.Buffer
 	params = []string{"find", "-json", "/" + datacenterConfig.Spec.Datacenter, "-type", "p", "-name", filepath.Base(machineConfig.Spec.ResourcePool)}
-	poolInfoResponse, err := g.executable.ExecuteWithEnv(ctx, envMap, params...)
-	if err != nil {
-		return fmt.Errorf("error getting resource pool: %v", err)
-	}
+	err = g.retrier.Retry(func() error {
+		poolInfoResponse, err = g.executable.ExecuteWithEnv(ctx, envMap, params...)
+		if err != nil {
+			return fmt.Errorf("error getting resource pool: %v", err)
+		}
+		return nil
+	})
 
 	poolInfoJson := poolInfoResponse.String()
 	poolInfoJson = strings.TrimSuffix(poolInfoJson, "\n")
@@ -591,11 +618,14 @@ func prependPath(folderType FolderType, folderPath string, datacenter string) (s
 
 func (g *Govc) createFolder(ctx context.Context, envMap map[string]string, machineConfig *v1alpha1.VSphereMachineConfig) error {
 	params := []string{"folder.create", machineConfig.Spec.Folder}
-	_, err := g.executable.ExecuteWithEnv(ctx, envMap, params...)
-	if err != nil {
-		return fmt.Errorf("error creating folder: %v", err)
-	}
-	return nil
+	err := g.retrier.Retry(func() error {
+		_, err := g.executable.ExecuteWithEnv(ctx, envMap, params...)
+		if err != nil {
+			return fmt.Errorf("error creating folder: %v", err)
+		}
+		return nil
+	})
+	return err
 }
 
 func (g *Govc) isValidPath(ctx context.Context, envMap map[string]string, path string) bool {
