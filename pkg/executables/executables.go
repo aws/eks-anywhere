@@ -94,7 +94,6 @@ func (e *linuxDockerExecutable) buildCommand(envs map[string]string, cli string,
 		envVars = append(envVars, "-e", fmt.Sprintf("%s=%s", k, v))
 	}
 	containerName := containerNamePrefix + cli + "_" + time.Now().Format("2006-01-0215.04.05.000000")
-	// fmt.Printf("Build command Container Name : %v \n", containerName)
 
 	dockerCommands := []string{
 		"run", "--name", containerName, "-i", "--network", "host", "-v", fmt.Sprintf("%s:%s", directory, directory),
@@ -105,7 +104,6 @@ func (e *linuxDockerExecutable) buildCommand(envs map[string]string, cli string,
 	dockerCommands = append(dockerCommands, "--entrypoint", cli, e.image)
 	dockerCommands = append(dockerCommands, args...)
 
-	// fmt.Printf("Build command dockerCommands %v \n", dockerCommands)
 	return dockerCommands, containerName, nil
 }
 
