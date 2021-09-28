@@ -19,7 +19,8 @@ func runProxyConfigFlow(test *framework.E2ETest) {
 func TestVSphereKubernetes121UbuntuProxyConfig(t *testing.T) {
 	test := framework.NewE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu121(), framework.WithPrivateNetwork()),
+		framework.NewVSphere(t, framework.WithUbuntu121(),
+		framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithControlPlaneCount(2)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(3)),
@@ -32,7 +33,8 @@ func TestVSphereKubernetes121UbuntuProxyConfig(t *testing.T) {
 func TestVSphereKubernetes121BottlerocketProxyConfig(t *testing.T) {
 	test := framework.NewE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithBottleRocket121(), framework.WithPrivateNetwork()),
+		framework.NewVSphere(t, framework.WithBottleRocket121(),
+		framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		// enable external etcd when proxyconfig for etcd is fixed
