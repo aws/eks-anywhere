@@ -16,6 +16,7 @@ const (
 	vsphereDatastoreVar         = "T_VSPHERE_DATASTORE"
 	vsphereFolderVar            = "T_VSPHERE_FOLDER"
 	vsphereNetworkVar           = "T_VSPHERE_NETWORK"
+	vspherePrivateNetworkVar    = "T_VSPHERE_PRIVATE_NETWORK"
 	vsphereResourcePoolVar      = "T_VSPHERE_RESOURCE_POOL"
 	vsphereServerVar            = "T_VSPHERE_SERVER"
 	vsphereSshAuthorizedKeyVar  = "T_VSPHERE_SSH_AUTHORIZED_KEY"
@@ -32,6 +33,7 @@ const (
 	vsphereUsernameVar          = "EKSA_VSPHERE_USERNAME"
 	vspherePasswordVar          = "EKSA_VSPHERE_PASSWORD"
 	cidrVar                     = "T_VSPHERE_CIDR"
+	privateNetworkCidrVar       = "T_VSPHERE_PRIVATE_NETWORK_CIDR"
 	govcUrlVar                  = "GOVC_URL"
 )
 
@@ -40,6 +42,7 @@ var requiredEnvVars = []string{
 	vsphereDatastoreVar,
 	vsphereFolderVar,
 	vsphereNetworkVar,
+	vspherePrivateNetworkVar,
 	vsphereResourcePoolVar,
 	vsphereServerVar,
 	vsphereSshAuthorizedKeyVar,
@@ -54,12 +57,14 @@ var requiredEnvVars = []string{
 	vsphereUsernameVar,
 	vspherePasswordVar,
 	cidrVar,
+	privateNetworkCidrVar,
 	govcUrlVar,
 }
 
 type VSphere struct {
 	t          *testing.T
 	fillers    []api.VSphereFiller
+	cidr       string
 	GovcClient *executables.Govc
 }
 
@@ -88,7 +93,6 @@ func UpdateBottlerocketTemplate121() api.VSphereFiller {
 func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 	checkRequiredEnvVars(t, requiredEnvVars)
 	c := buildGovc(t)
-
 	v := &VSphere{
 		t:          t,
 		GovcClient: c,
@@ -107,6 +111,7 @@ func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 		},
 	}
 
+	v.cidr = os.Getenv(cidrVar)
 	for _, opt := range opts {
 		opt(v)
 	}
@@ -168,6 +173,15 @@ func WithBottleRocket121() VSphereOpt {
 	}
 }
 
+func WithPrivateNetwork() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithStringFromEnvVar(vspherePrivateNetworkVar, api.WithNetwork),
+		)
+		v.cidr = os.Getenv(privateNetworkCidrVar)
+	}
+}
+
 func WithVSphereFillers(fillers ...api.VSphereFiller) VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers, fillers...)
@@ -214,7 +228,7 @@ func (v *VSphere) generateUniqueIp() string {
 	}
 	logger.V(1).Info("Generating unique IP for vsphere control plane")
 	ipgen := networkutils.NewIPGenerator(&networkutils.DefaultNetClient{})
-	ip, err := ipgen.GenerateUniqueIP(os.Getenv(cidrVar))
+	ip, err := ipgen.GenerateUniqueIP(v.cidr)
 	if err != nil {
 		v.t.Fatalf("Error getting unique IP for vsphere: %v", err)
 	}

@@ -47,6 +47,7 @@ type E2ETest struct {
 	GitWriter             filewriter.FileWriter
 	OIDCConfig            *v1alpha1.OIDCConfig
 	GitOpsConfig          *v1alpha1.GitOpsConfig
+	ProxyConfig           *v1alpha1.ProxyConfiguration
 }
 
 type E2ETestOpt func(e *E2ETest)
