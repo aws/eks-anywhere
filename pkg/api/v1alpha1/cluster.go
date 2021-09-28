@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -372,16 +373,26 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint == "" {
 		return errors.New("no value set for ECRMirror.Endpoint")
 	}
-	if clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent == "" {
+	certContent := clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent
+	if certContent == "" {
 		if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
-			_, err := ioutil.ReadFile(caCert)
+			certBuffer, err := ioutil.ReadFile(caCert)
 			if err != nil {
 				return fmt.Errorf("error reading the cert file %s: %v", caCert, err)
 			}
+			certContent = string(certBuffer)
 		} else {
 			logger.Info("Warning: caCertContent is not set, TLS verification will be disabled")
 		}
 	}
+
+	if certContent != "" {
+		err := crypto.NewTlsValidator().ValidateCert(certContent, clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
