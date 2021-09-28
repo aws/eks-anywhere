@@ -300,6 +300,25 @@ func TestCAPIResourceFetcherFetchCluster(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "fetch cluster from VSphereMachineConfigKind, external etcd field empty",
+			fields: fields{
+				client: &stubbedReader{
+					clusterName: "testCluster",
+					kind:        anywherev1.VSphereMachineConfigKind,
+					cluster: anywherev1.Cluster{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "testCluster",
+						},
+						Spec: anywherev1.ClusterSpec{},
+					},
+				},
+			},
+			args: args{
+				objectKey: types.NamespacedName{Name: "testVSphereMachineConfig", Namespace: "default"},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
