@@ -513,7 +513,7 @@ func TestCreateLibrarySuccess(t *testing.T) {
 	ctx := context.Background()
 
 	g, executable, env := setup(t)
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.create", "-ds", datastore, templateLibrary).Return(*bytes.NewBufferString("testing"), nil)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.create", "-ds", datastore, templateLibrary).Return(*bytes.NewBufferString("testing"), nil).MaxTimes(5)
 
 	err := g.CreateLibrary(ctx, datastore, templateLibrary)
 	if err != nil {
@@ -526,7 +526,7 @@ func TestCreateLibraryError(t *testing.T) {
 	ctx := context.Background()
 
 	g, executable, env := setup(t)
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.create", "-ds", datastore, templateLibrary).Return(bytes.Buffer{}, errors.New("error from execute with env"))
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.create", "-ds", datastore, templateLibrary).Return(bytes.Buffer{}, errors.New("error from execute with env")).MaxTimes(5)
 
 	err := g.CreateLibrary(ctx, datastore, templateLibrary)
 	if err == nil {

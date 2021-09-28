@@ -199,11 +199,14 @@ func (g *Govc) GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1a
 }
 
 func (g *Govc) CreateLibrary(ctx context.Context, datastore, library string) error {
-	if _, err := g.exec(ctx, "library.create", "-ds", datastore, library); err != nil {
-		return fmt.Errorf("error creating library %s: %v", library, err)
-	}
+	err := g.retrier.Retry(func() error {
+		if _, err := g.exec(ctx, "library.create", "-ds", datastore, library); err != nil {
+			return fmt.Errorf("error creating library %s: %v", library, err)
+		}
+		return nil
+	})
 
-	return nil
+	return err
 }
 
 func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string, resizeDisk2 bool) error {
