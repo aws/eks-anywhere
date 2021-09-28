@@ -2,8 +2,13 @@ package diagnostics
 
 import (
 	"fmt"
+	"path"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+)
+
+const (
+	logAnalysisAnalyzerPrefix = "log analysis:"
 )
 
 type analyzerFactory struct{}
@@ -148,6 +153,62 @@ func (a *analyzerFactory) eksaDockerAnalyzers() []*Analyze {
 
 	analyazers = append(analyazers, a.generateCrdAnalyzers(crds)...)
 	return append(analyazers, a.generateDeploymentAnalyzers(deployments)...)
+}
+
+// EksaLogTextAnalyzers given a slice of Collectors will check which namespaced log collectors are present
+// and return the log analyzers associated with the namespace in the namespaceLogTextAnalyzersMap
+func (a *analyzerFactory) EksaLogTextAnalyzers(collectors []*Collect) []*Analyze {
+	var analyzers []*Analyze
+	analyzersMap := a.namespaceLogTextAnalyzersMap()
+	for _, collector := range collectors {
+		if collector.Logs != nil {
+			analyzer, ok := analyzersMap[collector.Logs.Namespace]
+			if ok {
+				analyzers = append(analyzers, analyzer...)
+			}
+		}
+	}
+	return analyzers
+}
+
+// namespaceLogTextAnalyzersMap is used to associated log text analyzers with the logs collected from a specific namespace.
+// the key of the analyzers map is the namespace name, and the value are the associated log text analyzers.
+func (a *analyzerFactory) namespaceLogTextAnalyzersMap() map[string][]*Analyze {
+	logTextAnalyzers := map[string][]*Analyze{}
+	logTextAnalyzers[capiKubeadmControlPlaneSystem] = a.capiKubeadmControlPlaneSystemLogAnalyzers()
+	return logTextAnalyzers
+}
+
+func (a *analyzerFactory) capiKubeadmControlPlaneSystemLogAnalyzers() []*Analyze {
+	capiCpManagerPod := "capi-kubeadm-control-plane-controller-manager-*"
+	capiCpManagerContainerLogFile := path.Join(capiCpManagerPod, "manager.log")
+	fullManagerPodLogPath := path.Join(logpath(capiKubeadmControlPlaneSystem), capiCpManagerContainerLogFile)
+	return []*Analyze{
+		{
+			TextAnalyze: &textAnalyze{
+				analyzeMeta: analyzeMeta{
+					CheckName: fmt.Sprintf("%s: API server pod missing. Log: %s", logAnalysisAnalyzerPrefix, fullManagerPodLogPath),
+				},
+				CollectorName: capiKubeadmControlPlaneSystem,
+				FileName:      capiCpManagerContainerLogFile,
+				RegexPattern:  `machine (.*?) reports APIServerPodHealthy condition is false \(Error, Pod kube-apiserver-(.*?) is missing\)`,
+				Outcomes: []*outcome{
+					{
+						Fail: &singleOutcome{
+							When:    "true",
+							Message: fmt.Sprintf("Node failed to launch correctly; API server pod is missing. See %s", fullManagerPodLogPath),
+						},
+					},
+					{
+						Pass: &singleOutcome{
+							When:    "false",
+							Message: "API server pods launched correctly",
+						},
+					},
+				},
+			},
+		},
+	}
 }
 
 type eksaDeployment struct {

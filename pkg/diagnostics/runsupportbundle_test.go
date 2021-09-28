@@ -108,6 +108,7 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 		a.EXPECT().EksaExternalEtcdAnalyzers().Return(nil)
 		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
 		a.EXPECT().DefaultAnalyzers().Return(nil)
+		a.EXPECT().EksaLogTextAnalyzers(gomock.Any()).Return(nil)
 
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
@@ -156,6 +157,7 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 		a.EXPECT().EksaOidcAnalyzers().Return(nil)
 		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
 		a.EXPECT().DefaultAnalyzers().Return(nil)
+		a.EXPECT().EksaLogTextAnalyzers(gomock.Any()).Return(nil)
 
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any())
@@ -204,6 +206,7 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 		a.EXPECT().EksaGitopsAnalyzers().Return(nil)
 		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
 		a.EXPECT().DefaultAnalyzers().Return(nil)
+		a.EXPECT().EksaLogTextAnalyzers(gomock.Any()).Return(nil)
 
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any())

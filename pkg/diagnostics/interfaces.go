@@ -27,6 +27,7 @@ type DiagnosticBundle interface {
 type AnalyzerFactory interface {
 	DefaultAnalyzers() []*Analyze
 	EksaGitopsAnalyzers() []*Analyze
+	EksaLogTextAnalyzers(collectors []*Collect) []*Analyze
 	EksaOidcAnalyzers() []*Analyze
 	EksaExternalEtcdAnalyzers() []*Analyze
 	DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*Analyze

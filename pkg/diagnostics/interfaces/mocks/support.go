@@ -269,6 +269,20 @@ func (mr *MockAnalyzerFactoryMockRecorder) EksaGitopsAnalyzers() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EksaGitopsAnalyzers", reflect.TypeOf((*MockAnalyzerFactory)(nil).EksaGitopsAnalyzers))
 }
 
+// EksaLogTextAnalyzers mocks base method.
+func (m *MockAnalyzerFactory) EksaLogTextAnalyzers(collectors []*supportbundle.Collect) []*supportbundle.Analyze {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EksaLogTextAnalyzers", collectors)
+	ret0, _ := ret[0].([]*supportbundle.Analyze)
+	return ret0
+}
+
+// EksaLogTextAnalyzers indicates an expected call of EksaLogTextAnalyzers.
+func (mr *MockAnalyzerFactoryMockRecorder) EksaLogTextAnalyzers(collectors interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EksaLogTextAnalyzers", reflect.TypeOf((*MockAnalyzerFactory)(nil).EksaLogTextAnalyzers), collectors)
+}
+
 // EksaOidcAnalyzers mocks base method.
 func (m *MockAnalyzerFactory) EksaOidcAnalyzers() []*diagnostics.Analyze {
 	m.ctrl.T.Helper()

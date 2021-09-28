@@ -73,7 +73,8 @@ func NewDiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider
 		WithDatacenterConfig(spec.Spec.DatacenterRef).
 		WithMachineConfigs(provider.MachineConfigs()).
 		WithDefaultAnalyzers().
-		WithDefaultCollectors()
+		WithDefaultCollectors().
+		WithLogTextAnalyzers()
 
 	err := b.WriteBundleConfig()
 	if err != nil {
@@ -194,6 +195,11 @@ func (e *EksaDiagnosticBundle) WithGitOpsConfig(config *v1alpha1.GitOpsConfig) *
 
 func (e *EksaDiagnosticBundle) WithMachineConfigs(configs []providers.MachineConfig) *EksaDiagnosticBundle {
 	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.EksaHostCollectors(configs)...)
+	return e
+}
+
+func (e *EksaDiagnosticBundle) WithLogTextAnalyzers() *EksaDiagnosticBundle {
+	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.EksaLogTextAnalyzers(e.bundle.Spec.Collectors)...)
 	return e
 }
 
