@@ -97,6 +97,14 @@ func NewExecutableBuilder(ctx context.Context, image string) (*ExecutableBuilder
 	}, nil
 }
 
+func NewLocalExecutableBuilder() *ExecutableBuilder {
+	return &ExecutableBuilder{
+		useDocker: false,
+		image:     "",
+		mountDir:  "",
+	}
+}
+
 func setupDockerDependencies(ctx context.Context, image string) error {
 	if err := BuildDockerExecutable().SetUpCLITools(ctx, image); err != nil {
 		return fmt.Errorf("failed to setup eks-a dependencies: %v", err)
