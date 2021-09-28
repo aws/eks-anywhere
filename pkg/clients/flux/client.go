@@ -1,4 +1,4 @@
-package fluxclient
+package flux
 
 import (
 	"context"
