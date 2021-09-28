@@ -7,8 +7,8 @@ phases:
 
   build:
     commands:
-      - make release-cluster-controller -C $PROJECT_PATH
+      - make release-cluster-controller
 
   post_build:
     commands:
-      - make upload-artifacts -C $PROJECT_PATH
+      - make upload-artifacts
