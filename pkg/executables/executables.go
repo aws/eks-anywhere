@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -68,7 +69,7 @@ func (e *linuxDockerExecutable) Execute(ctx context.Context, args ...string) (by
 	if command, containerName, err := e.buildCommand(map[string]string{}, e.cli, args...); err != nil {
 		return stdout, err
 	} else {
-		defer executeCleanup(ctx, containerName)
+		defer e.executeCleanup(ctx, containerName)
 		return execute(ctx, "docker", nil, command...)
 	}
 }
@@ -78,7 +79,7 @@ func (e *linuxDockerExecutable) ExecuteWithStdin(ctx context.Context, in []byte,
 	if command, containerName, err := e.buildCommand(map[string]string{}, e.cli, args...); err != nil {
 		return stdout, err
 	} else {
-		defer executeCleanup(ctx, containerName)
+		defer e.executeCleanup(ctx, containerName)
 		return execute(ctx, "docker", in, command...)
 	}
 }
@@ -93,8 +94,7 @@ func (e *linuxDockerExecutable) buildCommand(envs map[string]string, cli string,
 	for k, v := range envs {
 		envVars = append(envVars, "-e", fmt.Sprintf("%s=%s", k, v))
 	}
-	containerName := containerNamePrefix + cli + "_" + time.Now().Format("2006-01-0215.04.05.000000")
-
+	containerName := containerNamePrefix + cli + "_" + strconv.FormatInt(time.Now().UnixNano(), 10)
 	dockerCommands := []string{
 		"run", "--name", containerName, "-i", "--network", "host", "-v", fmt.Sprintf("%s:%s", directory, directory),
 		"-w", directory, "-v", "/var/run/docker.sock:/var/run/docker.sock",
@@ -112,7 +112,7 @@ func (e *linuxDockerExecutable) ExecuteWithEnv(ctx context.Context, envs map[str
 	if command, containerName, err := e.buildCommand(envs, e.cli, args...); err != nil {
 		return stdout, err
 	} else {
-		defer executeCleanup(ctx, containerName)
+		defer e.executeCleanup(ctx, containerName)
 		return execute(ctx, "docker", nil, command...)
 	}
 }
@@ -179,7 +179,7 @@ func execute(ctx context.Context, cli string, in []byte, args ...string) (bytes.
 	return stdout, nil
 }
 
-func executeCleanup(ctx context.Context, containerName string) {
+func (e *linuxDockerExecutable) executeCleanup(ctx context.Context, containerName string) {
 	dockerCommands := []string{
 		"rm", "-f", "-v", containerName,
 	}
@@ -188,6 +188,6 @@ func executeCleanup(ctx context.Context, containerName string) {
 
 	err := cmd.Run()
 	if err != nil {
-		logger.V(6).Error(err, "error cleaning up docker containers")
+		logger.V(0).Error(err, "error cleaning up docker container %v", containerName)
 	}
 }
