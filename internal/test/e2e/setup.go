@@ -106,7 +106,7 @@ func (e *E2ESession) setup(regex string) error {
 	// Adding JobId to Test Env variables
 	e.testEnvVars[e2etests.JobIdVar] = e.jobId
 	e.testEnvVars[e2etests.BundlesOverrideVar] = strconv.FormatBool(e.bundlesOverride)
-
+	e.testEnvVars[e2etests.ClusterNameVar] = instanceId
 	return nil
 }
 

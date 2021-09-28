@@ -27,7 +27,7 @@ const (
 	defaultClusterConfigFile         = "cluster.yaml"
 	defaultBundleReleaseManifestFile = "bin/local-bundle-release.yaml"
 	defaultClusterName               = "eksa-test"
-	clusterNameVar                   = "T_CLUSTER_NAME"
+	ClusterNameVar                   = "T_CLUSTER_NAME"
 	JobIdVar                         = "T_JOB_ID"
 	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
 )
@@ -305,7 +305,7 @@ func (e *E2ETest) getJobIdFromEnv() string {
 }
 
 func getClusterName() string {
-	value := os.Getenv(clusterNameVar)
+	value := os.Getenv(ClusterNameVar)
 	if len(value) == 0 {
 		return defaultClusterName
 	}
