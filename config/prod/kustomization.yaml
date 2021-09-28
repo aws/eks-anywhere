@@ -6,7 +6,7 @@ resources:
 images:
 - name: controller
   newName: public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller
-  newTag: aebda61a1f141b2857b3f4375e39d4590c40ada8-05d36a07f78af1c16d04dbbaba22013c64e25bd0
+  newTag: v0.0.0-eks-a-v0.0.0-dev-build.251
 - name: gcr.io/kubebuilder/kube-rbac-proxy
   newName: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy
-  newTag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+  newTag: v0.8.0-eks-a-v0.0.0-dev-build.251
