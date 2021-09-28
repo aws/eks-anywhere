@@ -26,6 +26,7 @@ import (
 const (
 	defaultClusterConfigFile = "cluster.yaml"
 	defaultClusterName       = "eksa-test"
+	clusterNameVar           = "T_CLUSTER_NAME"
 	JobIdVar                 = "T_JOB_ID"
 )
 
@@ -55,7 +56,7 @@ func NewE2ETest(t *testing.T, provider Provider, opts ...E2ETestOpt) *E2ETest {
 		T:                     t,
 		Provider:              provider,
 		ClusterConfigLocation: defaultClusterConfigFile,
-		ClusterName:           defaultClusterName,
+		ClusterName:           getClusterName(),
 		clusterFillers:        make([]api.ClusterFiller, 0),
 		KubectlClient:         buildKubectl(t),
 	}
@@ -288,4 +289,12 @@ func (e *E2ETest) clusterConfig() *v1alpha1.Cluster {
 
 func (e *E2ETest) getJobIdFromEnv() string {
 	return os.Getenv(JobIdVar)
+}
+
+func getClusterName() string {
+	value := os.Getenv(clusterNameVar)
+	if len(value) == 0 {
+		return defaultClusterName
+	}
+	return value
 }

@@ -1331,7 +1331,8 @@ func (p *vsphereProvider) GenerateStorageClass() []byte {
 
 func (p *vsphereProvider) GenerateMHC() ([]byte, error) {
 	data := map[string]string{
-		"clusterName": p.clusterConfig.Name,
+		"clusterName":         p.clusterConfig.Name,
+		"eksaSystemNamespace": constants.EksaSystemNamespace,
 	}
 	mhc, err := templater.Execute(string(mhcTemplate), data)
 	if err != nil {
