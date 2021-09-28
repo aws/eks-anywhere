@@ -9,14 +9,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
-	"github.com/aws/eks-anywhere/pkg/bootstrapper"
-	fluxclient "github.com/aws/eks-anywhere/pkg/clients/flux"
-	"github.com/aws/eks-anywhere/pkg/clustermanager"
-	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/networking"
-	"github.com/aws/eks-anywhere/pkg/providers/factory"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
@@ -68,16 +61,6 @@ func preRunCreateCluster(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-type clusterManagerClient struct {
-	*executables.Clusterctl
-	*executables.Kubectl
-}
-
-type bootstrapperClient struct {
-	*executables.Kind
-	*executables.Kubectl
-}
-
 func (cc *createClusterOptions) validate(ctx context.Context) error {
 	clusterConfig, err := commonValidation(ctx, cc.fileName)
 	if err != nil {
@@ -95,71 +78,27 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 		return err
 	}
 
-	writer, err := filewriter.NewWriter(clusterSpec.Name)
-	if err != nil {
-		return fmt.Errorf("unable to write: %v", err)
-	}
-	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
-	image := clusterSpec.UseImageMirror(eksaToolsImage.VersionedImage())
-	executableBuilder, err := executables.NewExecutableBuilder(ctx, image)
-	if err != nil {
-		return fmt.Errorf("unable to initialize executables: %v", err)
-	}
-	clusterawsadm := executableBuilder.BuildClusterAwsAdmExecutable()
-	kind := executableBuilder.BuildKindExecutable(writer)
-	clusterctl := executableBuilder.BuildClusterCtlExecutable(writer)
-	kubectl := executableBuilder.BuildKubectlExecutable()
-	govc := executableBuilder.BuildGovcExecutable(writer)
-	docker := executables.BuildDockerExecutable()
-	flux := executableBuilder.BuildFluxExecutable()
-
-	providerFactory := &factory.ProviderFactory{
-		AwsClient:            clusterawsadm,
-		DockerClient:         docker,
-		DockerKubectlClient:  kubectl,
-		VSphereGovcClient:    govc,
-		VSphereKubectlClient: kubectl,
-		Writer:               writer,
-		SkipIpCheck:          cc.skipIpCheck,
-	}
-	provider, err := providerFactory.BuildProvider(cc.fileName, clusterSpec.Cluster)
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).
+		WithBootstrapper().
+		WithClusterManager().
+		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck).
+		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
+		WithWriter().
+		Build()
 	if err != nil {
 		return err
 	}
-
-	bootstrapper := bootstrapper.New(&bootstrapperClient{kind, kubectl})
-
-	clusterManager := clustermanager.New(
-		&clusterManagerClient{
-			clusterctl,
-			kubectl,
-		},
-		networking.NewCilium(),
-		writer,
-	)
-
-	gitOpts, err := addonclients.NewGitOptions(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig, writer)
-	if err != nil {
-		return err
-	}
-	addonClient := addonclients.NewFluxAddonClient(
-		&fluxclient.FluxKubectl{
-			Flux:    flux,
-			Kubectl: kubectl,
-		},
-		gitOpts,
-	)
 
 	createCluster := workflows.NewCreate(
-		bootstrapper,
-		provider,
-		clusterManager,
-		addonClient,
-		writer,
+		deps.Bootstrapper,
+		deps.Provider,
+		deps.ClusterManager,
+		deps.FluxAddonClient,
+		deps.Writer,
 	)
 	err = createCluster.Run(ctx, clusterSpec, cc.forceClean)
 	if err == nil {
-		writer.CleanUpTemp()
+		deps.Writer.CleanUpTemp()
 	}
 	return err
 }
