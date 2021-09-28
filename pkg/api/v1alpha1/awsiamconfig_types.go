@@ -28,6 +28,40 @@ type AWSIamConfigSpec struct {
 	Partition string `json:"partition,omitempty"`
 }
 
+func (e *AWSIamConfigSpec) Equal(n *AWSIamConfigSpec) bool {
+	if e == n {
+		return true
+	}
+	if e == nil || n == nil {
+		return false
+	}
+	if e.AWSRegion != n.AWSRegion {
+		return false
+	}
+	if e.ClusterID != n.ClusterID {
+		return false
+	}
+	if e.MapRoles != n.MapRoles {
+		return false
+	}
+	if e.MapUsers != n.MapUsers {
+		return false
+	}
+	return BackendModeSliceEqual(e.BackendMode, n.BackendMode)
+}
+
+func BackendModeSliceEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i, v := range a {
+		if v != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // AWSIamConfigStatus defines the observed state of AWSIamConfig
 type AWSIamConfigStatus struct{}
 
@@ -43,6 +77,24 @@ type AWSIamConfig struct {
 	Status AWSIamConfigStatus `json:"status,omitempty"`
 }
 
+// +kubebuilder:object:generate=false
+// Same as AWSIamConfig except stripped down for generation of yaml file while writing to github repo when flux is enabled
+type AWSIamConfigGenerate struct {
+	metav1.TypeMeta `json:",inline"`
+	ObjectMeta      `json:"metadata,omitempty"`
+
+	Spec AWSIamConfigSpec `json:"spec,omitempty"`
+}
+
+//+kubebuilder:object:root=true
+
+// AWSIamConfigList contains a list of AWSIamConfig
+type AWSIamConfigList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []AWSIamConfig `json:"items"`
+}
+
 func (c *AWSIamConfig) Kind() string {
 	return c.TypeMeta.Kind
 }
@@ -51,6 +103,20 @@ func (c *AWSIamConfig) ExpectedKind() string {
 	return AWSIamConfigKind
 }
 
+func (c *AWSIamConfig) ConvertConfigToConfigGenerateStruct() *AWSIamConfigGenerate {
+	config := &AWSIamConfigGenerate{
+		TypeMeta: c.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        c.Name,
+			Annotations: c.Annotations,
+			Namespace:   c.Namespace,
+		},
+		Spec: c.Spec,
+	}
+
+	return config
+}
+
 func init() {
-	SchemeBuilder.Register(&AWSIamConfig{})
+	SchemeBuilder.Register(&AWSIamConfig{}, &AWSIamConfigList{})
 }
