@@ -184,10 +184,11 @@ func (e *linuxDockerExecutable) executeCleanup(ctx context.Context, containerNam
 		"rm", "-f", "-v", containerName,
 	}
 	cmd := exec.CommandContext(ctx, "docker", dockerCommands...)
-	logger.V(6).Info("Executing clean up command", "cmd", cmd)
+	infoCommand := "cleaning up container " + containerName
+	logger.V(6).Info(infoCommand, "cmd", cmd)
 
 	err := cmd.Run()
 	if err != nil {
-		logger.V(0).Error(err, "error cleaning up docker container %v", containerName)
+		logger.V(0).Error(err, "error cleaning up docker container")
 	}
 }
