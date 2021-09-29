@@ -13,7 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
-	support "github.com/aws/eks-anywhere/pkg/support"
+	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -76,10 +76,10 @@ func (gsbo *generateSupportBundleOptions) validateCmdInput() error {
 	return nil
 }
 
-func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Context) (*support.EksaDiagnosticBundle, error) {
+func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Context) (*diagnostics.EksaDiagnosticBundle, error) {
 	f := gsbo.fileName
 	if f == "" {
-		return support.NewDiagnosticBundleDefault(support.NewAnalyzerFactory(), support.NewDefaultCollectorFactory()), nil
+		return diagnostics.NewDiagnosticBundleDefault(diagnostics.NewAnalyzerFactory(), diagnostics.NewDefaultCollectorFactory()), nil
 	}
 
 	clusterSpec, err := cluster.NewSpec(f, version.Get())
@@ -97,12 +97,12 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 		return nil, err
 	}
 
-	opts := support.EksaDiagnosticBundleOpts{
+	opts := diagnostics.EksaDiagnosticBundleOpts{
 		AnalyzerFactory:  deps.AnalyzerFactory,
 		CollectorFactory: deps.CollectorFactory,
 		Writer:           deps.Writer,
 	}
-	return support.NewDiagnosticBundleFromSpec(clusterSpec, deps.Provider, gsbo.kubeConfig(clusterSpec.Name), opts)
+	return diagnostics.NewDiagnosticBundleFromSpec(clusterSpec, deps.Provider, gsbo.kubeConfig(clusterSpec.Name), opts)
 }
 
 func (gsbo *generateSupportBundleOptions) kubeConfig(clusterName string) string {

@@ -13,7 +13,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
-	support "github.com/aws/eks-anywhere/pkg/support"
+	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -103,20 +103,20 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 		return err
 	}
 
-	opts := support.EksaDiagnosticBundleOpts{
+	opts := diagnostics.EksaDiagnosticBundleOpts{
 		AnalyzerFactory:  deps.AnalyzerFactory,
 		CollectorFactory: deps.CollectorFactory,
 		Client:           deps.Troubleshoot,
 		Writer:           deps.Writer,
 	}
 
-	supportBundle, err := support.NewDiagnosticBundle(clusterSpec, deps.Provider, csbo.kubeConfig(clusterSpec.Name), bundleConfig, opts)
+	supportBundle, err := diagnostics.NewDiagnosticBundle(clusterSpec, deps.Provider, csbo.kubeConfig(clusterSpec.Name), bundleConfig, opts)
 	if err != nil {
 		return fmt.Errorf("failed to parse collector: %v", err)
 	}
 
 	var sinceTimeValue *time.Time
-	sinceTimeValue, err = support.ParseTimeOptions(since, sinceTime)
+	sinceTimeValue, err = diagnostics.ParseTimeOptions(since, sinceTime)
 	if err != nil {
 		return fmt.Errorf("failed parse since time: %v", err)
 	}
