@@ -12,6 +12,7 @@ GIT_TAG?=$(shell git describe --tag | cut -d'-' -f1)
 GOLANG_VERSION?="1.16"
 
 RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
+BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml
 DEV_GIT_VERSION:=v0.0.0-dev
 
 AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output text)
@@ -293,10 +294,12 @@ eks-a-e2e:
 			make eks-a-release-cross-platform GIT_VERSION=$(shell cat release/triggers/eks-a-release/development/RELEASE_VERSION) RELEASE_MANIFEST_URL=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml; \
 			make eks-a-release GIT_VERSION=$(DEV_GIT_VERSION); \
 		else \
+			make check-eksa-components-override; \
 			make eks-a-cross-platform; \
 			make eks-a; \
 		fi \
 	else \
+		make check-eksa-components-override; \
 		make eks-a; \
 	fi
 
@@ -307,6 +310,10 @@ e2e-tests-binary:
 .PHONY: integration-test-binary
 integration-test-binary:
 	go build -o bin/test github.com/aws/eks-anywhere/cmd/integration_test
+
+.PHONY: check-eksa-components-override
+check-eksa-components-override:
+	scripts/eksa_components_override.sh $(BUNDLE_MANIFEST_URL)
 
 .PHONY: help
 help:  ## Display this help
@@ -359,6 +366,7 @@ docker-pull-prerequisites:
 
 ## TODO update release folder
 RELEASE_DIR := config/manifest
+RELEASE_MANIFEST_TARGET ?= eksa-components.yaml
 
 $(RELEASE_DIR):
 	mkdir -p $(RELEASE_DIR)/
@@ -366,7 +374,7 @@ $(RELEASE_DIR):
 .PHONY: release-manifests
 release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) ## Builds the manifests to publish with a release
 	# Build core-components.
-	$(KUSTOMIZE) build config/prod > $(RELEASE_DIR)/eksa-components.yaml
+	$(KUSTOMIZE) build config/prod > $(RELEASE_DIR)/$(RELEASE_MANIFEST_TARGET)
 
 .PHONY: run-controller # Run eksa controller from local repo with tilt
 run-controller:
