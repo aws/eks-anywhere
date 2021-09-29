@@ -81,7 +81,7 @@ func (r *capiResourceFetcher) fetchClusterKind(ctx context.Context, objectKey ty
 }
 
 func (r *capiResourceFetcher) FetchCluster(ctx context.Context, objectKey types.NamespacedName) (*anywherev1.Cluster, error) {
-	r.log.Info("looking up cluster", "objectKey", objectKey)
+	r.log.Info("looking up resource", "objectKey", objectKey)
 	kind, err := r.fetchClusterKind(ctx, objectKey)
 	if err != nil {
 		return nil, err
