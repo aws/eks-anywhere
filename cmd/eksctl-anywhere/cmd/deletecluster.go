@@ -10,14 +10,8 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
-	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/clustermanager"
-	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/networking"
-	"github.com/aws/eks-anywhere/pkg/providers/factory"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -101,61 +95,22 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
 
-	writer, err := filewriter.NewWriter(clusterSpec.Name)
-	if err != nil {
-		return fmt.Errorf("unable to write: %v", err)
-	}
-
-	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
-	image := eksaToolsImage.VersionedImage()
-	executableBuilder, err := executables.NewExecutableBuilder(ctx, image)
-	if err != nil {
-		return fmt.Errorf("unable initialize executables: %v", err)
-	}
-
-	clusterawsadm := executableBuilder.BuildClusterAwsAdmExecutable()
-	kind := executableBuilder.BuildKindExecutable(writer)
-	clusterctl := executableBuilder.BuildClusterCtlExecutable(writer)
-	kubectl := executableBuilder.BuildKubectlExecutable()
-	govc := executableBuilder.BuildGovcExecutable(writer)
-	docker := executables.BuildDockerExecutable()
-
-	providerFactory := &factory.ProviderFactory{
-		AwsClient:            clusterawsadm,
-		DockerClient:         docker,
-		DockerKubectlClient:  kubectl,
-		VSphereGovcClient:    govc,
-		VSphereKubectlClient: kubectl,
-		Writer:               writer,
-	}
-	provider, err := providerFactory.BuildProvider(dc.fileName, clusterSpec.Cluster)
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).
+		WithBootstrapper().
+		WithClusterManager().
+		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck).
+		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
+		WithWriter().
+		Build()
 	if err != nil {
 		return err
 	}
 
-	bootstrapper := bootstrapper.New(&bootstrapperClient{kind, kubectl})
-
-	clusterManager := clustermanager.New(
-		&clusterManagerClient{
-			clusterctl,
-			kubectl,
-		},
-		networking.NewCilium(),
-		writer,
-	)
-
-	gitOpts, err := addonclients.NewGitOptions(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig, writer)
-	if err != nil {
-		return fmt.Errorf("failed to set up git options: %v", err)
-	}
-
-	addonClient := addonclients.NewFluxAddonClient(nil, gitOpts)
-
 	deleteCluster := workflows.NewDelete(
-		bootstrapper,
-		provider,
-		clusterManager,
-		addonClient,
+		deps.Bootstrapper,
+		deps.Provider,
+		deps.ClusterManager,
+		deps.FluxAddonClient,
 	)
 
 	// Initialize Workload cluster type
@@ -165,7 +120,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	}
 	err = deleteCluster.Run(ctx, workloadCluster, clusterSpec, viper.GetBool("force-cleanup"))
 	if err == nil {
-		writer.CleanUp()
+		deps.Writer.CleanUp()
 	}
 	return err
 }
