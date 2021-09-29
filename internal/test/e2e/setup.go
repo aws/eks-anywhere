@@ -93,6 +93,11 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
+	err = e.setupProxyEnv(regex)
+	if err != nil {
+		return err
+	}
+
 	// Adding JobId to Test Env variables
 	e.testEnvVars[e2etests.JobIdVar] = e.jobId
 
