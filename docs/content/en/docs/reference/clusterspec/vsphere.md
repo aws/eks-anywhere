@@ -115,7 +115,8 @@ A unique IP you want to use for the control plane VM in your EKS Anywhere cluste
 range that does not conflict with other VMs.
 
 >**_NOTE:_** This IP should be outside the network DHCP range as it is a floating IP that gets assigned to one of
-the control plane nodes for kube-apiserver loadbalancing.
+the control plane nodes for kube-apiserver loadbalancing. Suggestions on how to ensure this IP does not cause issues during cluster 
+creation process are [here]({{< relref "../vsphere/vsphere-prereq/#:~:text=Below%20are%20some,existent%20mac%20address." >}})
 
 ### workerNodeGroupsConfiguration (required)
 This takes in a list of node groups that you can define for your workers. Please note that at this time only 1 node group is permitted.
