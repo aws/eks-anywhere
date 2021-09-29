@@ -130,6 +130,15 @@ func (g *Govc) LibraryElementExists(ctx context.Context, library string) (bool, 
 	return response.Len() > 0, nil
 }
 
+func (g *Govc) DeleteLibraryElement(ctx context.Context, element string) error {
+	_, err := g.exec(ctx, "library.rm", element)
+	if err != nil {
+		return fmt.Errorf("govc failed deleting library item: %v", err)
+	}
+
+	return nil
+}
+
 func (g *Govc) ResizeDisk(ctx context.Context, template, diskName string, diskSizeInGB int) error {
 	_, err := g.exec(ctx, "vm.disk.change", "-vm", template, "-disk.name", diskName, "-size", strconv.Itoa(diskSizeInGB)+"G")
 	if err != nil {

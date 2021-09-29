@@ -91,6 +91,20 @@ func (mr *MockGovcClientMockRecorder) CreateTag(ctx, tag, category interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTag", reflect.TypeOf((*MockGovcClient)(nil).CreateTag), ctx, tag, category)
 }
 
+// DeleteLibraryElement mocks base method.
+func (m *MockGovcClient) DeleteLibraryElement(ctx context.Context, library string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteLibraryElement", ctx, library)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteLibraryElement indicates an expected call of DeleteLibraryElement.
+func (mr *MockGovcClientMockRecorder) DeleteLibraryElement(ctx, library interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteLibraryElement", reflect.TypeOf((*MockGovcClient)(nil).DeleteLibraryElement), ctx, library)
+}
+
 // DeployTemplateFromLibrary mocks base method.
 func (m *MockGovcClient) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string, resizeDisk2 bool) error {
 	m.ctrl.T.Helper()

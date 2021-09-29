@@ -269,6 +269,32 @@ func TestLibraryElementExistsError(t *testing.T) {
 	}
 }
 
+func TestDeleteLibraryElementSuccess(t *testing.T) {
+	ctx := context.Background()
+	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
+
+	g, executable, env := setup(t)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.rm", libraryElement).Return(*bytes.NewBufferString("testing"), nil)
+
+	err := g.DeleteLibraryElement(ctx, libraryElement)
+	if err != nil {
+		t.Fatalf("Govc.DeleteLibraryElement() err = %v, want err nil", err)
+	}
+}
+
+func TestDeleteLibraryElementError(t *testing.T) {
+	ctx := context.Background()
+	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
+
+	g, executable, env := setup(t)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.rm", libraryElement).Return(bytes.Buffer{}, errors.New("error from execute with env"))
+
+	err := g.DeleteLibraryElement(ctx, libraryElement)
+	if err == nil {
+		t.Fatal("Govc.DeleteLibraryElement() err = nil, want err not nil")
+	}
+}
+
 func TestGovcTemplateHasSnapshot(t *testing.T) {
 	_, writer := test.NewWriter(t)
 	template := "/SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6"
