@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -822,14 +823,99 @@ func TestParseClusterConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "Bad cluster config parse",
+			name: "Invalid data type",
 			args: args{
 				fileName:      "testdata/not_parseable_cluster.yaml",
 				clusterConfig: &Cluster{},
 			},
-			wantErr: true,
-			matchError: fmt.Errorf("unable to unmarshall content from file due to: error unmarshaling JSON:" +
-				" while decoding JSON: json: cannot unmarshal string into Go struct field WorkerNodeGroupConfiguration.spec.workerNodeGroupConfigurations.count of type int"),
+			wantErr:    true,
+			matchError: fmt.Errorf("cannot unmarshal string into Go struct field WorkerNodeGroupConfiguration.spec.workerNodeGroupConfigurations.count of type int"),
+		},
+		{
+			name: "Incorrect indentation",
+			args: args{
+				fileName:      "testdata/incorrect_indentation.yaml",
+				clusterConfig: &Cluster{},
+			},
+			wantErr:    true,
+			matchError: fmt.Errorf("error converting YAML to JSON: yaml: line 12: did not find expected key"),
+		},
+		{
+			name: "Invalid key",
+			args: args{
+				fileName:      "testdata/invalid_key.yaml",
+				clusterConfig: &Cluster{},
+			},
+			wantErr:    true,
+			matchError: fmt.Errorf("error unmarshaling JSON: while decoding JSON: json: unknown field \"registryMirro rConfiguration\""),
+		},
+		{
+			name: "Invalid yaml",
+			args: args{
+				fileName:      "testdata/invalid_format.yaml",
+				clusterConfig: &Cluster{},
+			},
+			wantErr:    true,
+			matchError: fmt.Errorf("error converting YAML to JSON: yaml: did not find expected node content"),
+		},
+		{
+			name: "Invalid spec field",
+			args: args{
+				fileName:      "testdata/invalid_spec_field.yaml",
+				clusterConfig: &Cluster{},
+			},
+			wantErr:    true,
+			matchError: fmt.Errorf("error unmarshaling JSON: while decoding JSON: json: unknown field \"invalidField\""),
+		},
+		{
+			name: "Cluster definition at the end",
+			args: args{
+				fileName:      "testdata/cluster_definition_at_the_end.yaml",
+				clusterConfig: &Cluster{},
+			},
+			wantErr: false,
+			wantCluster: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube119,
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Count: 3,
+						Endpoint: &Endpoint{
+							Host: "test-ip",
+						},
+						MachineGroupRef: &Ref{
+							Kind: VSphereMachineConfigKind,
+							Name: "eksa-unit-test",
+						},
+					},
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Count: 3,
+						MachineGroupRef: &Ref{
+							Kind: VSphereMachineConfigKind,
+							Name: "eksa-unit-test",
+						},
+					}},
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+						Name: "eksa-unit-test",
+					},
+					ClusterNetwork: ClusterNetwork{
+						CNI: Cilium,
+						Pods: Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+					},
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -841,8 +927,8 @@ func TestParseClusterConfig(t *testing.T) {
 			if !tt.wantErr && !reflect.DeepEqual(tt.args.clusterConfig, tt.wantCluster) {
 				t.Fatalf("GetClusterConfig() = %#v, want %#v", tt.args.clusterConfig, tt.wantCluster)
 			}
-			if tt.wantErr && tt.matchError.Error() != err.Error() {
-				t.Errorf("ParseClusterConfig() error = %v, wantErr %v", err, tt.wantErr)
+			if tt.wantErr && !strings.Contains(err.Error(), tt.matchError.Error()) {
+				t.Errorf("ParseClusterConfig() error = %v, wantErr %v err %v", err, tt.wantErr, tt.matchError)
 			}
 		})
 	}

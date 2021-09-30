@@ -209,18 +209,18 @@ func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 	if err != nil {
 		return fmt.Errorf("unable to read file due to: %v", err)
 	}
+
 	for _, c := range strings.Split(string(content), YamlSeparator) {
-		if err = yaml.UnmarshalStrict([]byte(c), clusterConfig); err == nil {
-			if clusterConfig.Kind() == clusterConfig.ExpectedKind() {
-				return nil
-			}
+		if err = yaml.Unmarshal([]byte(c), clusterConfig); err != nil {
+			return fmt.Errorf("unable to parse %s\nyaml: %s\n %v", fileName, c, err)
 		}
-		_ = yaml.Unmarshal([]byte(c), clusterConfig) // this is to check if there is a bad spec in the file
+
 		if clusterConfig.Kind() == clusterConfig.ExpectedKind() {
-			return fmt.Errorf("unable to unmarshall content from file due to: %v", err)
+			return yaml.UnmarshalStrict([]byte(c), clusterConfig)
 		}
 	}
-	return fmt.Errorf("unable to find kind %v in file", clusterConfig.ExpectedKind())
+
+	return fmt.Errorf("cluster spec file %s is invalid or does not contain a %s definition(kind: %[2]s)", fileName, clusterConfig.ExpectedKind())
 }
 
 func (c *Cluster) PauseReconcile() {
