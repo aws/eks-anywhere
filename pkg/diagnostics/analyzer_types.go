@@ -1,4 +1,4 @@
-package supportbundle
+package diagnostics
 
 type Analyze struct {
 	CustomResourceDefinition *customResourceDefinition `json:"customResourceDefinition,omitempty"`

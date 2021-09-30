@@ -1,4 +1,4 @@
-package supportbundle
+package diagnostics
 
 import (
 	"context"

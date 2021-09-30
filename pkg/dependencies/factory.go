@@ -10,12 +10,12 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clients/flux"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
+	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/networking"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/factory"
-	supportbundle "github.com/aws/eks-anywhere/pkg/support"
 )
 
 type Dependencies struct {
@@ -33,8 +33,8 @@ type Dependencies struct {
 	ClusterManager   *clustermanager.ClusterManager
 	Bootstrapper     *bootstrapper.Bootstrapper
 	FluxAddonClient  *addonclients.FluxAddonClient
-	AnalyzerFactory  supportbundle.AnalyzerFactory
-	CollectorFactory supportbundle.CollectorFactory
+	AnalyzerFactory  diagnostics.AnalyzerFactory
+	CollectorFactory diagnostics.CollectorFactory
 }
 
 func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
@@ -361,7 +361,7 @@ func (f *Factory) WithAnalyzerFactory() *Factory {
 			return nil
 		}
 
-		f.dependencies.AnalyzerFactory = supportbundle.NewAnalyzerFactory()
+		f.dependencies.AnalyzerFactory = diagnostics.NewAnalyzerFactory()
 		return nil
 	})
 
@@ -383,7 +383,7 @@ func (f *Factory) WithCollectorFactory() *Factory {
 			return errors.New("diagnostic collector image is required to build CollectorFactory")
 		}
 
-		f.dependencies.CollectorFactory = supportbundle.NewCollectorFactory(f.diagnosticCollectorImage)
+		f.dependencies.CollectorFactory = diagnostics.NewCollectorFactory(f.diagnosticCollectorImage)
 		return nil
 	})
 
