@@ -24,10 +24,12 @@ import (
 )
 
 const (
-	defaultClusterConfigFile = "cluster.yaml"
-	defaultClusterName       = "eksa-test"
-	clusterNameVar           = "T_CLUSTER_NAME"
-	JobIdVar                 = "T_JOB_ID"
+	defaultClusterConfigFile         = "cluster.yaml"
+	defaultBundleReleaseManifestFile = "bin/local-bundle-release.yaml"
+	defaultClusterName               = "eksa-test"
+	clusterNameVar                   = "T_CLUSTER_NAME"
+	JobIdVar                         = "T_JOB_ID"
+	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
 )
 
 //go:embed testdata/oidc-roles.yaml
@@ -106,7 +108,12 @@ func (e *E2ETest) GenerateClusterConfig() {
 }
 
 func (e *E2ETest) CreateCluster() {
-	e.RunEKSA("anywhere", "create", "cluster", "-f", e.ClusterConfigLocation, "-v", "4")
+	createClusterArgs := []string{"anywhere", "create", "cluster", "-f", e.ClusterConfigLocation, "-v", "4"}
+	if getBundlesOverride() == "true" {
+		createClusterArgs = append(createClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
+	}
+
+	e.RunEKSA(createClusterArgs...)
 	e.cleanup(func() {
 		os.RemoveAll(e.ClusterName)
 	})
@@ -149,7 +156,12 @@ func (e *E2ETest) UpgradeCluster(opts ...E2ETestOpt) {
 		opt(e)
 	}
 	e.buildClusterConfigFile()
-	e.RunEKSA("anywhere", "upgrade", "cluster", "-f", e.ClusterConfigLocation, "-v", "4")
+
+	upgradeClusterArgs := []string{"anywhere", "upgrade", "cluster", "-f", e.ClusterConfigLocation, "-v", "4"}
+	if getBundlesOverride() == "true" {
+		upgradeClusterArgs = append(upgradeClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
+	}
+	e.RunEKSA(upgradeClusterArgs...)
 }
 
 func (e *E2ETest) buildClusterConfigFile() {
@@ -298,4 +310,8 @@ func getClusterName() string {
 		return defaultClusterName
 	}
 	return value
+}
+
+func getBundlesOverride() string {
+	return os.Getenv(BundlesOverrideVar)
 }

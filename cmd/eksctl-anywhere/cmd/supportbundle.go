@@ -12,10 +12,8 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/providers/factory"
-	support "github.com/aws/eks-anywhere/pkg/support"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -94,58 +92,33 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
 
-	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
-	image := eksaToolsImage.VersionedImage()
-	executableBuilder, err := executables.NewExecutableBuilder(ctx, image)
-	if err != nil {
-		return fmt.Errorf("unable to initialize executables: %v", err)
-	}
-	troubleshoot := executableBuilder.BuildTroubleshootExecutable()
-
-	writerDir := fmt.Sprintf(clusterSpec.Name)
-	writer, err := filewriter.NewWriter(writerDir)
-	if err != nil {
-		return fmt.Errorf("unable to write: %v", err)
-	}
-
-	clusterawsadm := executableBuilder.BuildClusterAwsAdmExecutable()
-	kubectl := executableBuilder.BuildKubectlExecutable()
-	govc := executableBuilder.BuildGovcExecutable(writer)
-	docker := executables.BuildDockerExecutable()
-
-	providerFactory := &factory.ProviderFactory{
-		AwsClient:            clusterawsadm,
-		DockerClient:         docker,
-		DockerKubectlClient:  kubectl,
-		VSphereGovcClient:    govc,
-		VSphereKubectlClient: kubectl,
-		Writer:               writer,
-	}
-	provider, err := providerFactory.BuildProvider(csbo.fileName, clusterSpec.Cluster)
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).
+		WithProvider(csbo.fileName, clusterSpec.Cluster, cc.skipIpCheck).
+		WithAnalyzerFactory().
+		WithCollectorFactory().
+		WithWriter().
+		WithTroubleshoot().
+		Build()
 	if err != nil {
 		return err
 	}
 
-	var sinceTimeValue *time.Time
-	sinceTimeValue, err = support.ParseTimeOptions(since, sinceTime)
-	if err != nil {
-		return fmt.Errorf("failed parse since time: %v", err)
+	opts := diagnostics.EksaDiagnosticBundleOpts{
+		AnalyzerFactory:  deps.AnalyzerFactory,
+		CollectorFactory: deps.CollectorFactory,
+		Client:           deps.Troubleshoot,
+		Writer:           deps.Writer,
 	}
 
-	collectorImage := clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage()
-	cf := support.NewCollectorFactory(collectorImage)
-	af := support.NewAnalyzerFactory()
-
-	opts := support.EksaDiagnosticBundleOpts{
-		AnalyzerFactory:  af,
-		CollectorFactory: cf,
-		Client:           troubleshoot,
-		Writer:           writer,
-	}
-
-	supportBundle, err := support.NewDiagnosticBundle(clusterSpec, provider, csbo.kubeConfig(clusterSpec.Name), bundleConfig, opts)
+	supportBundle, err := diagnostics.NewDiagnosticBundle(clusterSpec, deps.Provider, csbo.kubeConfig(clusterSpec.Name), bundleConfig, opts)
 	if err != nil {
 		return fmt.Errorf("failed to parse collector: %v", err)
+	}
+
+	var sinceTimeValue *time.Time
+	sinceTimeValue, err = diagnostics.ParseTimeOptions(since, sinceTime)
+	if err != nil {
+		return fmt.Errorf("failed parse since time: %v", err)
 	}
 
 	err = supportBundle.CollectAndAnalyze(ctx, sinceTimeValue)
