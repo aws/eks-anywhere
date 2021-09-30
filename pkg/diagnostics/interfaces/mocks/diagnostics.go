@@ -270,10 +270,10 @@ func (mr *MockAnalyzerFactoryMockRecorder) EksaGitopsAnalyzers() *gomock.Call {
 }
 
 // EksaLogTextAnalyzers mocks base method.
-func (m *MockAnalyzerFactory) EksaLogTextAnalyzers(collectors []*supportbundle.Collect) []*supportbundle.Analyze {
+func (m *MockAnalyzerFactory) EksaLogTextAnalyzers(collectors []*diagnostics.Collect) []*diagnostics.Analyze {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EksaLogTextAnalyzers", collectors)
-	ret0, _ := ret[0].([]*supportbundle.Analyze)
+	ret0, _ := ret[0].([]*diagnostics.Analyze)
 	return ret0
 }
 
