@@ -69,6 +69,15 @@ func (k *Kubectl) CreateNamespace(ctx context.Context, kubeconfig string, namesp
 	return nil
 }
 
+func (k *Kubectl) DeleteNamespace(ctx context.Context, kubeconfig string, namespace string) error {
+	params := []string{"delete", "namespace", namespace, "--kubeconfig", kubeconfig}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error creating namespace %v: %v", namespace, err)
+	}
+	return nil
+}
+
 func (k *Kubectl) LoadSecret(ctx context.Context, secretObject string, secretObjectType string, secretObjectName string, kubeConfFile string) error {
 	params := []string{"create", "secret", "generic", secretObjectName, "--type", secretObjectType, "--from-literal", secretObject, "--kubeconfig", kubeConfFile, "--namespace", constants.EksaSystemNamespace}
 	_, err := k.executable.Execute(ctx, params...)
@@ -134,6 +143,18 @@ func (k *Kubectl) ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *type
 	_, err := k.executable.ExecuteWithStdin(ctx, data, params...)
 	if err != nil {
 		return fmt.Errorf("error executing apply --force: %v", err)
+	}
+	return nil
+}
+
+func (k *Kubectl) DeleteKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error {
+	params := []string{"delete", "-f", "-"}
+	if cluster.KubeconfigFile != "" {
+		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
+	}
+	_, err := k.executable.ExecuteWithStdin(ctx, data, params...)
+	if err != nil {
+		return fmt.Errorf("error executing apply: %v", err)
 	}
 	return nil
 }

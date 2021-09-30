@@ -11,20 +11,30 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/retrier"
+	"github.com/aws/eks-anywhere/pkg/types"
 )
+
+//go:embed config/diagnostic-collector-rbac.yaml
+var diagnosticCollectorRbac []byte
 
 const (
 	troubleshootApiVersion    = "troubleshoot.sh/v1beta2"
 	generatedBundleNameFormat = "%s-%s-bundle.yaml"
+	maxRetries                = 5
+	backOffPeriod             = 5 * time.Second
 )
 
 type EksaDiagnosticBundleOpts struct {
 	AnalyzerFactory  AnalyzerFactory
 	Client           BundleClient
 	CollectorFactory CollectorFactory
+	Kubectl          *executables.Kubectl
 	Writer           filewriter.FileWriter
 }
 
@@ -36,6 +46,8 @@ type EksaDiagnosticBundle struct {
 	clusterSpec      *cluster.Spec
 	analyzerFactory  AnalyzerFactory
 	kubeconfig       string
+	kubectl          *executables.Kubectl
+	retrier          *retrier.Retrier
 	writer           filewriter.FileWriter
 }
 
@@ -63,6 +75,8 @@ func NewDiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider
 		client:           opts.Client,
 		clusterSpec:      spec,
 		kubeconfig:       kubeconfig,
+		kubectl:          opts.Kubectl,
+		retrier:          retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 		writer:           opts.Writer,
 	}
 
@@ -109,10 +123,14 @@ func NewDiagnosticBundleCustom(kubeconfig string, bundlePath string, opts EksaDi
 		collectorFactory: opts.CollectorFactory,
 		client:           opts.Client,
 		kubeconfig:       kubeconfig,
+		kubectl:          opts.Kubectl,
+		retrier:          retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
 	}
 }
 
 func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeValue *time.Time) error {
+	e.createDiagnosticNamespace(ctx)
+
 	archivePath, err := e.client.Collect(ctx, e.bundlePath, sinceTimeValue, e.kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to Collect support bundle: %v", err)
@@ -128,8 +146,10 @@ func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeV
 		return fmt.Errorf("error while analyzing bundle: %v", err)
 	}
 
-	logger.Info("Support bundle archive created", "archivePath", archivePath)
 	fmt.Println(string(yamlAnalysis))
+	logger.Info("Support bundle archive created", "archivePath", archivePath)
+
+	e.deleteDiagnosticNamespace(ctx)
 	return nil
 }
 
@@ -201,6 +221,62 @@ func (e *EksaDiagnosticBundle) WithMachineConfigs(configs []providers.MachineCon
 func (e *EksaDiagnosticBundle) WithLogTextAnalyzers() *EksaDiagnosticBundle {
 	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.EksaLogTextAnalyzers(e.bundle.Spec.Collectors)...)
 	return e
+}
+
+// createDiagnosticNamespace attempts to create the namespace eksa-diagnostics and associated RBAC objects.
+// collector pods, for example host log collectors or run command collectors, will be launched in this namespace with the default service account.
+// this method intentionally does not return an error
+// a cluster in need of diagnosis may be unable to create new API objects and we should not stop our collection/analysis just because the namespace fails to create
+func (e *EksaDiagnosticBundle) createDiagnosticNamespace(ctx context.Context) {
+	targetCluster := &types.Cluster{
+		KubeconfigFile: e.kubeconfig,
+	}
+
+	err := e.retrier.Retry(
+		func() error {
+			logger.V(1).Info("creating temporary namespace for diagnostic collector", "namespace", constants.EksaDiagnosticsNamespace)
+			return e.kubectl.CreateNamespace(ctx, e.kubeconfig, constants.EksaDiagnosticsNamespace)
+		},
+	)
+	if err != nil {
+		logger.Info("WARNING: failed to create eksa-diagnostics namespace. Some collectors may fail to run.", "err", err)
+	}
+
+	err = e.retrier.Retry(
+		func() error {
+			logger.V(1).Info("creating temporary ClusterRole and RoleBinding for diagnostic collector")
+			return e.kubectl.ApplyKubeSpecFromBytes(ctx, targetCluster, diagnosticCollectorRbac)
+		},
+	)
+	if err != nil {
+		logger.Info("WARNING: failed to create roles for eksa-diagnostic-collector. Some collectors may fail to run.", "err", err)
+	}
+}
+
+func (e *EksaDiagnosticBundle) deleteDiagnosticNamespace(ctx context.Context) {
+	targetCluster := &types.Cluster{
+		KubeconfigFile: e.kubeconfig,
+	}
+
+	err := e.retrier.Retry(
+		func() error {
+			logger.V(1).Info("cleaning up temporary roles for diagnostic collectors")
+			return e.kubectl.DeleteKubeSpecFromBytes(ctx, targetCluster, diagnosticCollectorRbac)
+		},
+	)
+	if err != nil {
+		logger.Info("WARNING: failed to clean up roles for eksa-diagnostics.", "err", err)
+	}
+
+	err = e.retrier.Retry(
+		func() error {
+			logger.V(1).Info("cleaning up temporary namespace  for diagnostic collectors", "namespace", constants.EksaDiagnosticsNamespace)
+			return e.kubectl.DeleteNamespace(ctx, e.kubeconfig, constants.EksaDiagnosticsNamespace)
+		},
+	)
+	if err != nil {
+		logger.Info("WARNING: failed to clean up eksa-diagnostics namespace.", "err", err, "namespace", constants.EksaDiagnosticsNamespace)
+	}
 }
 
 func ParseTimeOptions(since string, sinceTime string) (*time.Time, error) {

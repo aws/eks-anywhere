@@ -11,6 +11,7 @@ type Collect struct {
 	Logs             *logs             `json:"logs,omitempty"`
 	CopyFromHost     *copyFromHost     `json:"copyFromHost,omitempty"`
 	Exec             *exec             `json:"exec,omitempty"`
+	Run              *run              `json:"run,omitempty"`
 }
 
 type clusterResources struct {
@@ -65,6 +66,18 @@ type exec struct {
 	Command       []string `json:"command,omitempty"`
 	Args          []string `json:"args,omitempty"`
 	Timeout       string   `json:"timeout,omitempty"`
+}
+
+type run struct {
+	collectorMeta   `json:",inline"`
+	Name            string            `json:"name,omitempty"`
+	Namespace       string            `json:"namespace"`
+	Image           string            `json:"image"`
+	Command         []string          `json:"command,omitempty"`
+	Args            []string          `json:"args,omitempty"`
+	Timeout         string            `json:"timeout,omitempty"`
+	ImagePullPolicy string            `json:"imagePullPolicy,omitempty"`
+	ImagePullSecret *imagePullSecrets `json:"imagePullSecret,omitempty"`
 }
 
 type imagePullSecrets struct {
