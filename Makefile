@@ -40,9 +40,6 @@ else
 	TAR_PATH?="_output/tar"
 endif
 
-GOPROXY_DNS?=https://proxy.golang.org
-export GOPROXY=$(GOPROXY_DNS)
-
 BASE_REPO?=public.ecr.aws/eks-distro-build-tooling
 CLUSTER_CONTROLLER_BASE_IMAGE_NAME?=eks-distro-minimal-base
 CLUSTER_CONTROLLER_BASE_TAG?=$(shell cat controllers/EKS_DISTRO_MINIMAL_BASE_TAG_FILE)
