@@ -338,6 +338,8 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
+                        version:
+                          type: string
                         webhook:
                           properties:
                             arch:
@@ -439,6 +441,8 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
+                        version:
+                          type: string
                       required:
                       - cilium
                       - manifest
@@ -1049,6 +1053,8 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
+                        version:
+                          type: string
                       required:
                       - cliTools
                       - clusterController
@@ -1335,6 +1341,8 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
+                        version:
+                          type: string
                       required:
                       - helmController
                       - kustomizeController
