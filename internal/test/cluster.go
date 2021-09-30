@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -54,6 +55,20 @@ func NewFullClusterSpec(t *testing.T, clusterConfigFile string) *cluster.Spec {
 	}
 
 	return s
+}
+
+func Bundles(t *testing.T) *releasev1alpha1.Bundles {
+	content, err := configFS.ReadFile("testdata/bundles.yaml")
+	if err != nil {
+		t.Fatalf("Failed to read embed bundles manifest: %s", err)
+	}
+
+	bundles := &releasev1alpha1.Bundles{}
+	if err = yaml.Unmarshal(content, bundles); err != nil {
+		t.Fatalf("Failed to unmarshal bundles manifest: %s", err)
+	}
+
+	return bundles
 }
 
 func SetTag(image *releasev1alpha1.Image, tag string) {
