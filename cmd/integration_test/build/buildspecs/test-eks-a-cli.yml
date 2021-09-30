@@ -71,5 +71,5 @@ phases:
       $GIT_HASH
     - >
       ./bin/test e2e cleanup vsphere
-      -n eksa-test
+      -n i-
       -v 4
