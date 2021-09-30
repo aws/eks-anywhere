@@ -47,6 +47,9 @@ func (e *AWSIamConfigSpec) Equal(n *AWSIamConfigSpec) bool {
 	if e.MapUsers != n.MapUsers {
 		return false
 	}
+	if e.Partition != n.Partition {
+		return false
+	}
 	return BackendModeSliceEqual(e.BackendMode, n.BackendMode)
 }
 
