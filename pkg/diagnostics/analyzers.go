@@ -2,8 +2,14 @@ package diagnostics
 
 import (
 	"fmt"
+	"path"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
+)
+
+const (
+	logAnalysisAnalyzerPrefix = "log analysis:"
 )
 
 type analyzerFactory struct{}
@@ -20,55 +26,55 @@ func (a *analyzerFactory) defaultDeploymentAnalyzers() []*Analyze {
 	d := []eksaDeployment{
 		{
 			Name:             "capv-controller-manager",
-			Namespace:        "capi-webhook-system",
+			Namespace:        constants.CapiWebhookSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capv-controller-manager",
-			Namespace:        "capv-system",
+			Namespace:        constants.CapvSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "coredns",
-			Namespace:        "kube-system",
+			Namespace:        constants.KubeSystemNamespace,
 			ExpectedReplicas: 2,
 		}, {
 			Name:             "cert-manager-webhook",
-			Namespace:        "cert-manager",
+			Namespace:        constants.CertManagerNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "cert-manager-cainjector",
-			Namespace:        "cert-manager",
+			Namespace:        constants.CertManagerNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "cert-manager",
-			Namespace:        "cert-manager",
+			Namespace:        constants.CertManagerNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capi-kubeadm-control-plane-controller-manager",
-			Namespace:        "capi-webhook-system",
+			Namespace:        constants.CapiWebhookSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capi-kubeadm-bootstrap-controller-manager",
-			Namespace:        "capi-webhook-system",
+			Namespace:        constants.CapiWebhookSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capi-controller-manager",
-			Namespace:        "capi-webhook-system",
+			Namespace:        constants.CapiWebhookSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capi-controller-manager",
-			Namespace:        "capi-system",
+			Namespace:        constants.CapiSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capi-kubeadm-control-plane-controller-manager",
-			Namespace:        "capi-kubeadm-control-plane-system",
+			Namespace:        constants.CapiKubeadmControlPlaneSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capi-kubeadm-control-plane-controller-manager",
-			Namespace:        "capi-kubeadm-control-plane-system",
+			Namespace:        constants.CapiKubeadmControlPlaneSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capi-kubeadm-bootstrap-controller-manager",
-			Namespace:        "capi-kubeadm-bootstrap-system",
+			Namespace:        constants.CapiKubeadmBootstrapSystemNamespace,
 			ExpectedReplicas: 1,
 		},
 	}
@@ -101,11 +107,11 @@ func (a *analyzerFactory) EksaExternalEtcdAnalyzers() []*Analyze {
 	deployments := []eksaDeployment{
 		{
 			Name:             "etcdadm-controller-controller-manager",
-			Namespace:        "etcdadm-controller-system",
+			Namespace:        constants.EtcdAdminControllerSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "etcdadm-bootstrap-provider-controller-manager",
-			Namespace:        "etcdadm-bootstrap-provider-system",
+			Namespace:        constants.EtcdAdminBootstrapProviderSystemNamespace,
 			ExpectedReplicas: 1,
 		},
 	}
@@ -141,13 +147,69 @@ func (a *analyzerFactory) eksaDockerAnalyzers() []*Analyze {
 	deployments := []eksaDeployment{
 		{
 			Name:             "local-path-provisioner",
-			Namespace:        "local-path-storage",
+			Namespace:        constants.LocalPathStorageNamespace,
 			ExpectedReplicas: 1,
 		},
 	}
 
 	analyazers = append(analyazers, a.generateCrdAnalyzers(crds)...)
 	return append(analyazers, a.generateDeploymentAnalyzers(deployments)...)
+}
+
+// EksaLogTextAnalyzers given a slice of Collectors will check which namespaced log collectors are present
+// and return the log analyzers associated with the namespace in the namespaceLogTextAnalyzersMap
+func (a *analyzerFactory) EksaLogTextAnalyzers(collectors []*Collect) []*Analyze {
+	var analyzers []*Analyze
+	analyzersMap := a.namespaceLogTextAnalyzersMap()
+	for _, collector := range collectors {
+		if collector.Logs != nil {
+			analyzer, ok := analyzersMap[collector.Logs.Namespace]
+			if ok {
+				analyzers = append(analyzers, analyzer...)
+			}
+		}
+	}
+	return analyzers
+}
+
+// namespaceLogTextAnalyzersMap is used to associated log text analyzers with the logs collected from a specific namespace.
+// the key of the analyzers map is the namespace name, and the value are the associated log text analyzers.
+func (a *analyzerFactory) namespaceLogTextAnalyzersMap() map[string][]*Analyze {
+	return map[string][]*Analyze{
+		constants.CapiKubeadmControlPlaneSystemNamespace: a.capiKubeadmControlPlaneSystemLogAnalyzers(),
+	}
+}
+
+func (a *analyzerFactory) capiKubeadmControlPlaneSystemLogAnalyzers() []*Analyze {
+	capiCpManagerPod := "capi-kubeadm-control-plane-controller-manager-*"
+	capiCpManagerContainerLogFile := path.Join(capiCpManagerPod, "manager.log")
+	fullManagerPodLogPath := path.Join(logpath(constants.CapiKubeadmControlPlaneSystemNamespace), capiCpManagerContainerLogFile)
+	return []*Analyze{
+		{
+			TextAnalyze: &textAnalyze{
+				analyzeMeta: analyzeMeta{
+					CheckName: fmt.Sprintf("%s: API server pod missing. Log: %s", logAnalysisAnalyzerPrefix, fullManagerPodLogPath),
+				},
+				CollectorName: constants.CapiKubeadmControlPlaneSystemNamespace,
+				FileName:      capiCpManagerContainerLogFile,
+				RegexPattern:  `machine (.*?) reports APIServerPodHealthy condition is false \(Error, Pod kube-apiserver-(.*?) is missing\)`,
+				Outcomes: []*outcome{
+					{
+						Fail: &singleOutcome{
+							When:    "true",
+							Message: fmt.Sprintf("Node failed to launch correctly; API server pod is missing. See %s", fullManagerPodLogPath),
+						},
+					},
+					{
+						Pass: &singleOutcome{
+							When:    "false",
+							Message: "API server pods launched correctly",
+						},
+					},
+				},
+			},
+		},
+	}
 }
 
 type eksaDeployment struct {

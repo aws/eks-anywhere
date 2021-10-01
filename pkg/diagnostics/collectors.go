@@ -1,6 +1,7 @@
 package diagnostics
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -40,80 +41,80 @@ func (c *collectorFactory) DefaultCollectors() []*Collect {
 		},
 		{
 			Logs: &logs{
-				Namespace: "capd-system",
-				Name:      "logs/capd-system",
+				Namespace: constants.CapdSystemNamespace,
+				Name:      logpath(constants.CapdSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: "capi-kubeadm-bootstrap-system",
-				Name:      "logs/capi-kubeadm-bootstrap-system",
+				Namespace: constants.CapiKubeadmBootstrapSystemNamespace,
+				Name:      logpath(constants.CapiKubeadmBootstrapSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: "capi-kubeadm-control-plane-system",
-				Name:      "logs/capi-kubeadm-control-plane-system",
+				Namespace: constants.CapiKubeadmControlPlaneSystemNamespace,
+				Name:      logpath(constants.CapiKubeadmControlPlaneSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: "capi-system",
-				Name:      "logs/capi-system",
+				Namespace: constants.CapiSystemNamespace,
+				Name:      logpath(constants.CapiSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: "capi-webhook-system",
-				Name:      "logs/capi-webhook-system",
+				Namespace: constants.CapiWebhookSystemNamespace,
+				Name:      logpath(constants.CapiWebhookSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: "cert-manager",
-				Name:      "logs/cert-manager",
+				Namespace: constants.CertManagerNamespace,
+				Name:      logpath(constants.CertManagerNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: "eksa-system",
-				Name:      "logs/eksa-system",
+				Namespace: constants.EksaSystemNamespace,
+				Name:      logpath(constants.EksaSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: "default",
-				Name:      "logs/default",
+				Namespace: constants.DefaultNamespace,
+				Name:      logpath(constants.DefaultNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: "etcdadm-bootstrap-provider-system",
-				Name:      "logs/etcdadm-bootstrap-provider-system",
+				Namespace: constants.EtcdAdminBootstrapProviderSystemNamespace,
+				Name:      logpath(constants.EtcdAdminBootstrapProviderSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: "etcdadm-controller-system",
-				Name:      "logs/etcdadm-controller-system",
+				Namespace: constants.EtcdAdminControllerSystemNamespace,
+				Name:      logpath(constants.EtcdAdminControllerSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: "kube-node-lease",
-				Name:      "logs/kube-node-lease",
+				Namespace: constants.KubeNodeLeaseNamespace,
+				Name:      logpath(constants.KubeNodeLeaseNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: "kube-public",
-				Name:      "logs/kube-public",
+				Namespace: constants.KubePublicNamespace,
+				Name:      logpath(constants.KubePublicNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: "kube-system",
-				Name:      "logs/kube-system",
+				Namespace: constants.KubeSystemNamespace,
+				Name:      logpath(constants.KubeSystemNamespace),
 			},
 		},
 	}
@@ -173,4 +174,8 @@ func (c *collectorFactory) ubuntuHostCollectors() []*Collect {
 			},
 		},
 	}
+}
+
+func logpath(namespace string) string {
+	return fmt.Sprintf("logs/%s", namespace)
 }

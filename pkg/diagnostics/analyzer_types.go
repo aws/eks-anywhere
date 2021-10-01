@@ -5,6 +5,7 @@ type Analyze struct {
 	Secret                   *analyzeSecret            `json:"secret,omitempty"`
 	ImagePullSecret          *imagePullSecret          `json:"imagePullSecret,omitempty"`
 	DeploymentStatus         *deploymentStatus         `json:"deploymentStatus,omitempty"`
+	TextAnalyze              *textAnalyze              `json:"textAnalyze,omitempty"`
 }
 
 type customResourceDefinition struct {
@@ -32,6 +33,15 @@ type deploymentStatus struct {
 	Outcomes    []*outcome `json:"outcomes"`
 	Namespace   string     `json:"namespace"`
 	Name        string     `json:"name"`
+}
+
+type textAnalyze struct {
+	analyzeMeta   `json:",inline"`
+	CollectorName string     `json:"collectorName,omitempty"`
+	FileName      string     `json:"fileName,omitempty"`
+	RegexPattern  string     `json:"regex,omitempty"`
+	RegexGroups   string     `json:"regexGroups,omitempty"`
+	Outcomes      []*outcome `json:"outcomes"`
 }
 
 type analyzeMeta struct {
