@@ -206,13 +206,13 @@ func (c *collectorFactory) generateCrdCollectors(crds []string) []*Collect {
 func (c *collectorFactory) crdCollector(crdType string) *Collect {
 	command := []string{"kubectl"}
 	args := []string{"get", crdType, "-o", "json", "--all-namespaces"}
-	collectorName := crdPath(crdType)
+	collectorPath := crdPath(crdType)
 	return &Collect{
 		Run: &run{
 			collectorMeta: collectorMeta{
 				CollectorName: crdType,
 			},
-			Name:      collectorName,
+			Name:      collectorPath,
 			Namespace: constants.EksaDiagnosticsNamespace,
 			Image:     c.DiagnosticCollectorImage,
 			Command:   command,
