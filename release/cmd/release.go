@@ -75,20 +75,21 @@ var releaseCmd = &cobra.Command{
 		}
 
 		releaseConfig := &pkg.ReleaseConfig{
-			CliRepoSource:            cliRepoDir,
-			BuildRepoSource:          buildRepoDir,
-			ArtifactDir:              artifactDir,
-			SourceBucket:             sourceBucket,
-			ReleaseBucket:            releaseBucket,
-			SourceContainerRegistry:  sourceContainerRegistry,
-			ReleaseContainerRegistry: releaseContainerRegistry,
-			CDN:                      cdn,
-			BundleNumber:             bundleNumber,
-			ReleaseNumber:            releaseNumber,
-			ReleaseVersion:           releaseVersion,
-			ReleaseDate:              releaseTime,
-			DevRelease:               devRelease,
-			ReleaseEnvironment:       releaseEnvironment,
+			CliRepoSource:                  cliRepoDir,
+			BuildRepoSource:                buildRepoDir,
+			ArtifactDir:                    artifactDir,
+			SourceBucket:                   sourceBucket,
+			ReleaseBucket:                  releaseBucket,
+			SourceContainerRegistry:        sourceContainerRegistry,
+			ReleaseContainerRegistry:       releaseContainerRegistry,
+			CDN:                            cdn,
+			BundleNumber:                   bundleNumber,
+			ReleaseNumber:                  releaseNumber,
+			ReleaseVersion:                 releaseVersion,
+			ReleaseDate:                    releaseTime,
+			DevRelease:                     devRelease,
+			ReleaseEnvironment:             releaseEnvironment,
+			GenerateComponentBundleVersion: pkg.GetBuildComponentVersionFunc(devRelease),
 		}
 
 		err := releaseConfig.SetRepoHeads()
