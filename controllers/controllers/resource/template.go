@@ -26,9 +26,9 @@ type VsphereTemplate struct {
 	now anywhereTypes.NowFunc
 }
 
-func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdcSpec anywherev1.VSphereDatacenterConfig, vmcSpec anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
-	// passing the same vspheremachineconfig for worker and cp as control plane updates are prohibited in controller
-	templateBuilder := vsphere.NewVsphereTemplateBuilder(&vdcSpec.Spec, &vmcSpec.Spec, &vmcSpec.Spec, &vmcSpec.Spec, r.now)
+func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdcSpec anywherev1.VSphereDatacenterConfig, cpVmcSpec, workerVmcSpec, etcdVmcSpec anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
+	// control plane and etcd updates are prohibited in controller so those specs should not change
+	templateBuilder := vsphere.NewVsphereTemplateBuilder(&vdcSpec.Spec, &cpVmcSpec.Spec, &workerVmcSpec.Spec, &etcdVmcSpec.Spec, r.now)
 	clusterName := clusterSpec.ObjectMeta.Name
 	kubeadmControlPlane, err := r.ControlPlane(ctx, eksaCluster)
 	if err != nil {
@@ -43,7 +43,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		return nil, err
 	}
 	var workloadTemplateName string
-	updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdcSpec, &vdcSpec, oldVmcSpec, &vmcSpec)
+	updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdcSpec, &vdcSpec, oldVmcSpec, &workerVmcSpec)
 	if updateWorkloadTemplate {
 		workloadTemplateName = templateBuilder.WorkerMachineTemplateName(clusterName)
 	} else {
@@ -53,17 +53,17 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		}
 		workloadTemplateName = mcDeployment.Spec.Template.Spec.InfrastructureRef.Name
 	}
-	if len(vmcSpec.Spec.Users) <= 0 {
-		vmcSpec.Spec.Users = []anywherev1.UserConfiguration{{}}
+	if len(workerVmcSpec.Spec.Users) <= 0 {
+		workerVmcSpec.Spec.Users = []anywherev1.UserConfiguration{{}}
 	}
-	if len(vmcSpec.Spec.Users[0].SshAuthorizedKeys) <= 0 {
-		vmcSpec.Spec.Users[0].SshAuthorizedKeys = []string{""}
+	if len(workerVmcSpec.Spec.Users[0].SshAuthorizedKeys) <= 0 {
+		workerVmcSpec.Spec.Users[0].SshAuthorizedKeys = []string{""}
 	}
 	valuesOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.InfrastructureTemplate.Name
 		values["workloadTemplateName"] = workloadTemplateName
 		values["clusterName"] = clusterName
-		values["vsphereWorkerSshAuthorizedKey"] = vmcSpec.Spec.Users[0].SshAuthorizedKeys[0]
+		values["vsphereWorkerSshAuthorizedKey"] = workerVmcSpec.Spec.Users[0].SshAuthorizedKeys[0]
 	}
 	return generateTemplateResources(templateBuilder, clusterSpec, valuesOpt)
 }
