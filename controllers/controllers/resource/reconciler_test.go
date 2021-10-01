@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	etcdv1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -27,6 +28,9 @@ import (
 
 //go:embed testdata/kubeadmcontrolplane.yaml
 var kubeadmcontrolplaneFile string
+
+//go:embed testdata/etcdadmcluster.yaml
+var etcdadmclusterFile string
 
 //go:embed testdata/vsphereMachineTemplate.yaml
 var vsphereMachineTemplateFile string
@@ -139,7 +143,13 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 					t.Errorf("unmarshal failed: %v", err)
 				}
 
+				etcdadmCluster := &etcdv1alpha3.EtcdadmCluster{}
+				if err := yaml.Unmarshal([]byte(etcdadmclusterFile), etcdadmCluster); err != nil {
+					t.Errorf("unmarshal failed: %v", err)
+				}
+
 				fetcher.EXPECT().ControlPlane(ctx, gomock.Any()).Return(kubeAdmControlPlane, nil)
+				fetcher.EXPECT().Etcd(ctx, gomock.Any()).Return(etcdadmCluster, nil)
 				fetcher.EXPECT().ExistingVSphereDatacenterConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereDatacenterConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))

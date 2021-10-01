@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	etcdv1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
@@ -27,12 +28,19 @@ type VsphereTemplate struct {
 }
 
 func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdcSpec anywherev1.VSphereDatacenterConfig, cpVmcSpec, workerVmcSpec, etcdVmcSpec anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
+	var etcdadmCluster *etcdv1alpha3.EtcdadmCluster
 	// control plane and etcd updates are prohibited in controller so those specs should not change
 	templateBuilder := vsphere.NewVsphereTemplateBuilder(&vdcSpec.Spec, &cpVmcSpec.Spec, &workerVmcSpec.Spec, &etcdVmcSpec.Spec, r.now)
 	clusterName := clusterSpec.ObjectMeta.Name
 	kubeadmControlPlane, err := r.ControlPlane(ctx, eksaCluster)
 	if err != nil {
 		return nil, err
+	}
+	if eksaCluster.Spec.ExternalEtcdConfiguration != nil {
+		etcdadmCluster, err = r.Etcd(ctx, eksaCluster)
+		if err != nil {
+			return nil, err
+		}
 	}
 	oldVdcSpec, err := r.ExistingVSphereDatacenterConfig(ctx, eksaCluster)
 	if err != nil {
@@ -62,6 +70,9 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 	valuesOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.InfrastructureTemplate.Name
 		values["workloadTemplateName"] = workloadTemplateName
+		if etcdadmCluster != nil {
+			values["etcdTemplateName"] = etcdadmCluster.Spec.InfrastructureTemplate.Name
+		}
 		values["clusterName"] = clusterName
 		values["vsphereWorkerSshAuthorizedKey"] = workerVmcSpec.Spec.Users[0].SshAuthorizedKeys[0]
 	}
