@@ -91,18 +91,19 @@ func (mr *MockGovcClientMockRecorder) CreateTag(ctx, tag, category interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTag", reflect.TypeOf((*MockGovcClient)(nil).CreateTag), ctx, tag, category)
 }
 
-// DeleteLibraryElement mocks base method.
-func (m *MockGovcClient) DeleteLibraryElement(ctx context.Context, library string) error {
+// DeleteOVAIfInvalid mocks base method.
+func (m *MockGovcClient) DeleteOVAIfInvalid(ctx context.Context, element string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteLibraryElement", ctx, library)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "DeleteOVAIfInvalid", ctx, element)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// DeleteLibraryElement indicates an expected call of DeleteLibraryElement.
-func (mr *MockGovcClientMockRecorder) DeleteLibraryElement(ctx, library interface{}) *gomock.Call {
+// DeleteOVAIfInvalid indicates an expected call of DeleteOVAIfInvalid.
+func (mr *MockGovcClientMockRecorder) DeleteOVAIfInvalid(ctx, element interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteLibraryElement", reflect.TypeOf((*MockGovcClient)(nil).DeleteLibraryElement), ctx, library)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOVAIfInvalid", reflect.TypeOf((*MockGovcClient)(nil).DeleteOVAIfInvalid), ctx, element)
 }
 
 // DeployTemplateFromLibrary mocks base method.

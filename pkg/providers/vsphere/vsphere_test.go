@@ -85,8 +85,8 @@ func (pc *DummyProviderGovcClient) LibraryElementExists(ctx context.Context, lib
 	return true, nil
 }
 
-func (pc *DummyProviderGovcClient) DeleteLibraryElement(ctx context.Context, element string) error {
-	return nil
+func (pc *DummyProviderGovcClient) DeleteOVAIfInvalid(ctx context.Context, element string) (bool, error) {
+	return false, nil
 }
 
 func (pc *DummyProviderGovcClient) CreateLibrary(ctx context.Context, datastore, library string) error {

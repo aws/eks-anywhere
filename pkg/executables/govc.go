@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"sigs.k8s.io/yaml"
 
@@ -130,13 +131,40 @@ func (g *Govc) LibraryElementExists(ctx context.Context, library string) (bool, 
 	return response.Len() > 0, nil
 }
 
-func (g *Govc) DeleteLibraryElement(ctx context.Context, element string) error {
+func (g *Govc) deleteLibraryElement(ctx context.Context, element string) error {
 	_, err := g.exec(ctx, "library.rm", element)
 	if err != nil {
 		return fmt.Errorf("govc failed deleting library item: %v", err)
 	}
 
 	return nil
+}
+
+func (g *Govc) DeleteOVAIfInvalid(ctx context.Context, element string) (bool, error) {
+	response, err := g.exec(ctx, "library.info", element)
+	if err != nil {
+		return false, fmt.Errorf("govc failed getting library information: %v", err)
+	}
+
+	prefix := "Size: "
+	scanner := bufio.NewScanner(strings.NewReader(response.String()))
+	for scanner.Scan() {
+		s := strings.TrimSpace(scanner.Text())
+		if strings.HasPrefix(s, prefix) {
+			sizeUnit := strings.Trim(s, prefix)
+			size := strings.TrimRightFunc(sizeUnit, func(r rune) bool {
+				return !unicode.IsNumber(r)
+			})
+			if size == "0" {
+				if err = g.deleteLibraryElement(ctx, element); err != nil {
+					return false, fmt.Errorf("failed to delete old template in library: %v", err)
+				}
+				return true, nil
+			}
+			break
+		}
+	}
+	return false, nil
 }
 
 func (g *Govc) ResizeDisk(ctx context.Context, template, diskName string, diskSizeInGB int) error {
@@ -208,14 +236,10 @@ func (g *Govc) GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1a
 }
 
 func (g *Govc) CreateLibrary(ctx context.Context, datastore, library string) error {
-	err := g.retrier.Retry(func() error {
-		if _, err := g.exec(ctx, "library.create", "-ds", datastore, library); err != nil {
-			return fmt.Errorf("error creating library %s: %v", library, err)
-		}
-		return nil
-	})
-
-	return err
+	if _, err := g.exec(ctx, "library.create", "-ds", datastore, library); err != nil {
+		return fmt.Errorf("error creating library %s: %v", library, err)
+	}
+	return nil
 }
 
 func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string, resizeDisk2 bool) error {

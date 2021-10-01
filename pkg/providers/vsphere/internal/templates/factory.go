@@ -25,7 +25,7 @@ type GovcClient interface {
 	SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error)
 	ImportTemplate(ctx context.Context, library, ovaURL, name string) error
 	LibraryElementExists(ctx context.Context, library string) (bool, error)
-	DeleteLibraryElement(ctx context.Context, library string) error
+	DeleteOVAIfInvalid(ctx context.Context, element string) (bool, error)
 	ListTags(ctx context.Context) ([]string, error)
 	CreateTag(ctx context.Context, tag, category string) error
 	AddTag(ctx context.Context, path, tag string) error
@@ -113,16 +113,19 @@ func (f *Factory) importOVAIfMissing(ctx context.Context, templateName, ovaURL s
 		return fmt.Errorf("failed to validate template in library for new template: %v", err)
 	}
 
+	deletedFromLibrary := false
 	if templateExistsInLibrary {
-		err = f.client.DeleteLibraryElement(ctx, filepath.Join(f.templateLibrary, templateName))
+		deletedFromLibrary, err = f.client.DeleteOVAIfInvalid(ctx, filepath.Join(f.templateLibrary, templateName))
 		if err != nil {
-			return fmt.Errorf("failed to delete old template in library: %v", err)
+			return fmt.Errorf("failed to validate ova in library: %v", err)
 		}
 	}
 
-	logger.V(2).Info("Importing template from ova url", "ova", ovaURL)
-	if err = f.client.ImportTemplate(ctx, f.templateLibrary, ovaURL, templateName); err != nil {
-		return fmt.Errorf("failed importing template into library: %v", err)
+	if deletedFromLibrary || !templateExistsInLibrary {
+		logger.V(2).Info("Importing template from ova url", "ova", ovaURL)
+		if err = f.client.ImportTemplate(ctx, f.templateLibrary, ovaURL, templateName); err != nil {
+			return fmt.Errorf("failed importing template into library: %v", err)
+		}
 	}
 
 	return nil

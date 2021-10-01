@@ -269,27 +269,27 @@ func TestLibraryElementExistsError(t *testing.T) {
 	}
 }
 
-func TestDeleteLibraryElementSuccess(t *testing.T) {
+func TestDeleteOVAIfInvalidSuccess(t *testing.T) {
 	ctx := context.Background()
 	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
 
 	g, executable, env := setup(t)
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.rm", libraryElement).Return(*bytes.NewBufferString("testing"), nil)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.info", libraryElement).Return(*bytes.NewBufferString(""), nil)
 
-	err := g.DeleteLibraryElement(ctx, libraryElement)
+	_, err := g.DeleteOVAIfInvalid(ctx, libraryElement)
 	if err != nil {
 		t.Fatalf("Govc.DeleteLibraryElement() err = %v, want err nil", err)
 	}
 }
 
-func TestDeleteLibraryElementError(t *testing.T) {
+func TestDeleteOVAIfInvalidError(t *testing.T) {
 	ctx := context.Background()
 	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
 
 	g, executable, env := setup(t)
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.rm", libraryElement).Return(bytes.Buffer{}, errors.New("error from execute with env"))
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.info", libraryElement).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
-	err := g.DeleteLibraryElement(ctx, libraryElement)
+	_, err := g.DeleteOVAIfInvalid(ctx, libraryElement)
 	if err == nil {
 		t.Fatal("Govc.DeleteLibraryElement() err = nil, want err not nil")
 	}
@@ -539,7 +539,7 @@ func TestCreateLibrarySuccess(t *testing.T) {
 	ctx := context.Background()
 
 	g, executable, env := setup(t)
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.create", "-ds", datastore, templateLibrary).Return(*bytes.NewBufferString("testing"), nil).MaxTimes(5)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.create", "-ds", datastore, templateLibrary).Return(*bytes.NewBufferString("testing"), nil)
 
 	err := g.CreateLibrary(ctx, datastore, templateLibrary)
 	if err != nil {
@@ -552,7 +552,7 @@ func TestCreateLibraryError(t *testing.T) {
 	ctx := context.Background()
 
 	g, executable, env := setup(t)
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.create", "-ds", datastore, templateLibrary).Return(bytes.Buffer{}, errors.New("error from execute with env")).MaxTimes(5)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.create", "-ds", datastore, templateLibrary).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
 	err := g.CreateLibrary(ctx, datastore, templateLibrary)
 	if err == nil {
