@@ -36,4 +36,4 @@ Each VM will require:
 
 The administrative machine and the target workload environment will need network access to:
 
-{{% content "domains.md" %}}
+{{% content "./domains.md" %}}

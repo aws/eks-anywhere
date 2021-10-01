@@ -215,7 +215,7 @@ Ensure that you have DHCP running and run the create command again.
 If there are any IPv4 IPs assigned, check if one of the VMs have the controlPlane IP specified in `Cluster.spec.controlPlaneConfiguration.endpoint.host` in the clusterconfig yaml.
 If this IP is not present on any control plane VM, make sure the `network` has access to the following endpoints:
 
-{{% content "domains.md" %}}
+{{% content "../../reference/vsphere/domains.md" %}}
 
 If no VMs are created, check the `capi-controller-manager`, `capv-controller-manager` and `capi-kubeadm-control-plane-controller-manager` logs using the commands mentioned in [Generic cluster unavailable](#problem-generic-cluster-unavailable) section.
 
