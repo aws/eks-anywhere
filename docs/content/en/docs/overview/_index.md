@@ -28,4 +28,4 @@ The delete process is similar to the create process.
 
 
 Next steps:
-* [Getting Started](/docs/getting-started/)
+* [Getting Started]({{< relref "../getting-started/" >}})

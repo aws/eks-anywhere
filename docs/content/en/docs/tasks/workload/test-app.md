@@ -72,4 +72,4 @@ https://anywhere.eks.amazonaws.com
 ⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢⬡⬢
 ```
 
-If you would like to expose your applications with an external load balancer or an ingress controller, you can follow the steps in [Adding an external load balancer]({{< ref "/docs/tasks/workload/loadbalance" >}}).
+If you would like to expose your applications with an external load balancer or an ingress controller, you can follow the steps in [Adding an external load balancer]({{< relref "./loadbalance" >}}).
