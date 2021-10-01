@@ -203,9 +203,9 @@ func (r *capiResourceFetcher) VSphereMachineTemplate(ctx context.Context, cs *an
 	return vsphereMachineTemplate, nil
 }
 
-func (r *capiResourceFetcher) clusterBundle(ctx context.Context, cs *anywherev1.Cluster) (*releasev1alpha1.Bundles, error) {
+func (r *capiResourceFetcher) bundles(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
 	clusterBundle := &releasev1alpha1.Bundles{}
-	err := r.FetchObjectByName(ctx, cs.Name, cs.Namespace, clusterBundle)
+	err := r.FetchObjectByName(ctx, name, namespace, clusterBundle)
 	if err != nil {
 		return nil, err
 	}
@@ -229,15 +229,7 @@ func (r *capiResourceFetcher) ControlPlane(ctx context.Context, cs *anywherev1.C
 }
 
 func (r *capiResourceFetcher) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error) {
-	bundle, err := r.clusterBundle(ctx, cs)
-	if err != nil {
-		return nil, err
-	}
-	spec, err := cluster.BuildSpecFromBundles(cs, bundle)
-	if err != nil {
-		return nil, err
-	}
-	return spec, nil
+	return cluster.BuildSpecForCluster(ctx, cs, r.bundles)
 }
 
 func (r *capiResourceFetcher) ExistingVSphereDatacenterConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereDatacenterConfig, error) {

@@ -3,12 +3,14 @@ package executables_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/version"
 	"sigs.k8s.io/cluster-api/api/v1alpha3"
 
@@ -26,6 +28,41 @@ const (
 )
 
 var capiClustersResourceType = fmt.Sprintf("clusters.%s", v1alpha3.GroupVersion.Group)
+
+func newKubectl(t *testing.T) (*executables.Kubectl, context.Context, *types.Cluster, *mockexecutables.MockExecutable) {
+	kubeconfigFile := "c.kubeconfig"
+	cluster := &types.Cluster{
+		KubeconfigFile: kubeconfigFile,
+		Name:           "test-cluster",
+	}
+
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+
+	return executables.NewKubectl(executable), ctx, cluster, executable
+}
+
+type kubectlTest struct {
+	*WithT
+	k         *executables.Kubectl
+	ctx       context.Context
+	cluster   *types.Cluster
+	e         *mockexecutables.MockExecutable
+	namespace string
+}
+
+func newKubectlTest(t *testing.T) *kubectlTest {
+	k, ctx, cluster, e := newKubectl(t)
+	return &kubectlTest{
+		k:         k,
+		ctx:       ctx,
+		cluster:   cluster,
+		e:         e,
+		WithT:     NewWithT(t),
+		namespace: "namespace",
+	}
+}
 
 func TestKubectlApplyKubeSpecSuccess(t *testing.T) {
 	spec := "specfile"
@@ -662,20 +699,6 @@ func TestKubectlGetEKSAClusters(t *testing.T) {
 	}
 }
 
-func newKubectl(t *testing.T) (*executables.Kubectl, context.Context, *types.Cluster, *mockexecutables.MockExecutable) {
-	kubeconfigFile := "c.kubeconfig"
-	cluster := &types.Cluster{
-		KubeconfigFile: kubeconfigFile,
-		Name:           "test-cluster",
-	}
-
-	ctx := context.Background()
-	ctrl := gomock.NewController(t)
-	executable := mockexecutables.NewMockExecutable(ctrl)
-
-	return executables.NewKubectl(executable), ctx, cluster, executable
-}
-
 func TestKubectlGetGetApiServerUrlSuccess(t *testing.T) {
 	wantUrl := "https://127.0.0.1:37479"
 	k, ctx, cluster, e := newKubectl(t)
@@ -1128,4 +1151,23 @@ func TestKubectlRemoveAnnotationInNamespace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Kubectl.RemoveAnnotationInNamespace() error = %v, want nil", err)
 	}
+}
+
+func TestKubectlGetBundles(t *testing.T) {
+	tt := newKubectlTest(t)
+	wantBundles := test.Bundles(t)
+	bundleName := "Bundle-name"
+	bundlesJson, err := json.Marshal(wantBundles)
+	if err != nil {
+		t.Fatalf("Failed marshalling Bundles: %s", err)
+	}
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"get", "bundles.anywhere.eks.amazonaws.com", bundleName, "-o", "json", "--kubeconfig", tt.cluster.KubeconfigFile, "--namespace", tt.namespace,
+	).Return(*bytes.NewBuffer(bundlesJson), nil)
+
+	gotBundles, err := tt.k.GetBundles(tt.ctx, tt.cluster.KubeconfigFile, bundleName, tt.namespace)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(gotBundles).To(Equal(wantBundles))
 }
