@@ -165,6 +165,10 @@ func (e *E2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Context) erro
 		}
 		cpName := e.ClusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 		workerName := e.ClusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+		etcdName := ""
+		if e.ClusterConfig.Spec.ExternalEtcdConfiguration != nil {
+			etcdName = e.ClusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		}
 		vsphereMachineConfigs[workerName].Spec.DiskGiB = vsphereMachineConfigs[workerName].Spec.DiskGiB + 10
 		vsphereMachineConfigs[workerName].Spec.MemoryMiB = 10196
 		vsphereMachineConfigs[workerName].Spec.NumCPUs = 1
@@ -178,7 +182,7 @@ func (e *E2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Context) erro
 
 		providerConfig := providerConfig{
 			datacenterConfig: vsphereClusterConfig,
-			machineConfigs:   e.convertVSphereMachineConfigs(cpName, workerName, vsphereMachineConfigs),
+			machineConfigs:   e.convertVSphereMachineConfigs(cpName, workerName, etcdName, vsphereMachineConfigs),
 		}
 		_, err = e.updateEKSASpecInGit(clusterConfig, providerConfig)
 		if err != nil {
@@ -229,13 +233,16 @@ func (e *E2ETest) validateGitopsRepoContent(gitOptions *GitOptions) {
 	}
 }
 
-func (e *E2ETest) convertVSphereMachineConfigs(cpName, workerName string, vsphereMachineConfigs map[string]*v1alpha1.VSphereMachineConfig) []providers.MachineConfig {
+func (e *E2ETest) convertVSphereMachineConfigs(cpName, workerName, etcdName string, vsphereMachineConfigs map[string]*v1alpha1.VSphereMachineConfig) []providers.MachineConfig {
 	var configs []providers.MachineConfig
 	if vsphereMachineConfigs[cpName] != nil {
 		configs = append(configs, vsphereMachineConfigs[cpName])
 	}
 	if workerName != cpName && vsphereMachineConfigs[workerName] != nil {
 		configs = append(configs, vsphereMachineConfigs[workerName])
+	}
+	if etcdName != "" && etcdName != cpName && etcdName != workerName && vsphereMachineConfigs[etcdName] != nil {
+		configs = append(configs, vsphereMachineConfigs[etcdName])
 	}
 	return configs
 }
@@ -380,9 +387,14 @@ func (e *E2ETest) providerConfig(clusterConfGitPath string) (*providerConfig, er
 			return nil, err
 		}
 		providerConfig.datacenterConfig = datacenterConfig
+		etcdName := ""
+		if e.ClusterConfig.Spec.ExternalEtcdConfiguration != nil {
+			etcdName = e.ClusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		}
 		providerConfig.machineConfigs = e.convertVSphereMachineConfigs(
 			e.ClusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name,
 			e.ClusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name,
+			etcdName,
 			machineConfigs)
 	case v1alpha1.DockerDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetDockerDatacenterConfig(clusterConfGitPath)
