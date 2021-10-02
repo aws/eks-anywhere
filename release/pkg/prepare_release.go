@@ -18,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -37,28 +38,50 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 		return errors.Cause(err)
 	}
 
-	// Clone cli repository
-	// TODO: replace these exec calls with go-git sdk calls using PlainClone
-	fmt.Println("Cloning cli repository")
+	// Clone the CLI repository
+	fmt.Println("Cloning CLI repository")
 	parentSourceDir := filepath.Join(homeDir, "eks-a-source")
 	r.CliRepoSource = filepath.Join(parentSourceDir, "eks-a-cli")
-	cmd := exec.Command("git", "clone", cliRepoUrl, r.CliRepoSource)
-	out, err := execCommand(cmd)
+	err = os.MkdirAll(r.CliRepoSource, 0o755)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	fmt.Println(out)
+	_, err = git.PlainClone(r.CliRepoSource, false, &git.CloneOptions{
+		Progress: os.Stdout,
+		URL:      cliRepoUrl,
+	})
+	if err != nil {
+		return errors.Cause(err)
+	}
 
-	// Clone the build repository
-	fmt.Println("Cloning build repository")
+	// Clone the build-tooling repository
+	fmt.Println("Cloning build-tooling repository")
 	r.BuildRepoSource = filepath.Join(parentSourceDir, "eks-a-build")
-	cmd = exec.Command("git", "clone", buildRepoUrl, r.BuildRepoSource)
-	out, err = execCommand(cmd)
+	err = os.MkdirAll(r.BuildRepoSource, 0o755)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	fmt.Println(out)
+	buildRepoCloned, err := git.PlainClone(r.BuildRepoSource, false, &git.CloneOptions{
+		Progress: os.Stdout,
+		URL:      buildRepoUrl,
+	})
+	if err != nil {
+		return errors.Cause(err)
+	}
 
+	if r.DevRelease && r.BranchName != "main" {
+		fmt.Println("Getting working tree for build-tooling repo")
+		buildRepoTree, err := buildRepoCloned.Worktree()
+		if err != nil {
+			return errors.Cause(err)
+		}
+		err = buildRepoTree.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.ReferenceName("refs/heads/" + r.BranchName),
+		})
+		if err != nil {
+			return errors.Cause(err)
+		}
+	}
 	// Set HEADs of the repos
 	r.CliRepoHead, err = GetHead(r.CliRepoSource)
 	if err != nil {
@@ -507,4 +530,12 @@ func IsImageNotFoundError(err error) bool {
 	regex := "manifest for .* not found: manifest unknown: Requested image not found"
 	compiledRegex := regexp.MustCompile(regex)
 	return compiledRegex.MatchString(err.Error())
+}
+
+func (r *ReleaseConfig) getLatestUploadDestination() string {
+	if r.BranchName == "main" {
+		return "latest"
+	} else {
+		return r.BranchName
+	}
 }

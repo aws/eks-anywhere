@@ -39,6 +39,7 @@ type ReleaseConfig struct {
 	CliRepoHead                    string
 	BuildRepoSource                string
 	BuildRepoHead                  string
+	BranchName                     string
 	ArtifactDir                    string
 	SourceBucket                   string
 	ReleaseBucket                  string
@@ -302,31 +303,36 @@ func (r *ReleaseConfig) GetURI(path string) (string, error) {
 func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[string]string) string {
 	var sourceImageUri string
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
+		latestTag := r.getLatestUploadDestination()
 		if name == "bottlerocket-bootstrap" {
-			sourceImageUri = fmt.Sprintf("%s/%s:v%s-%s-latest",
+			sourceImageUri = fmt.Sprintf("%s/%s:v%s-%s-%s",
 				r.SourceContainerRegistry,
 				repoName,
 				tagOptions["eksDReleaseChannel"],
 				tagOptions["eksDReleaseNumber"],
+				latestTag,
 			)
 		} else if name == "cloud-provider-vsphere" {
-			sourceImageUri = fmt.Sprintf("%s/%s:%s-latest",
+			sourceImageUri = fmt.Sprintf("%s/%s:%s-%s",
 				r.SourceContainerRegistry,
 				repoName,
 				tagOptions["gitTag"],
+				latestTag,
 			)
 		} else if name == "kind-node" {
-			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-%s-%s-latest",
+			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-%s-%s-%s",
 				r.SourceContainerRegistry,
 				repoName,
 				tagOptions["kubeVersion"],
 				tagOptions["eksDReleaseChannel"],
 				tagOptions["eksDReleaseNumber"],
+				latestTag,
 			)
 		} else {
-			sourceImageUri = fmt.Sprintf("%s/%s:latest",
+			sourceImageUri = fmt.Sprintf("%s/%s:%s",
 				r.SourceContainerRegistry,
 				repoName,
+				latestTag,
 			)
 		}
 	} else if r.ReleaseEnvironment == "production" {
