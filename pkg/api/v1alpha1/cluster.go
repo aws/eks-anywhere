@@ -220,7 +220,7 @@ func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 		}
 	}
 
-	return fmt.Errorf("cluster spec file %s is invalid or does not contain a %s definition(kind: %[2]s)", fileName, clusterConfig.ExpectedKind())
+	return fmt.Errorf("cluster spec file %s is invalid or does not contain kind %s", fileName, clusterConfig.ExpectedKind())
 }
 
 func (c *Cluster) PauseReconcile() {
