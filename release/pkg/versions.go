@@ -49,7 +49,7 @@ func newVersioner(pathToProject string) *versioner {
 }
 
 func (v *versioner) buildMetadata() (string, error) {
-	cmd := exec.Command("git", "-C", v.pathToProject, "rev-parse", "--short", "HEAD")
+	cmd := exec.Command("git", "log", "--pretty=format:%h", "-n1", v.pathToProject)
 	out, err := execCommand(cmd)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed executing git rev-parse to get build metadata in [%s]", v.pathToProject)
