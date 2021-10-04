@@ -59,7 +59,13 @@ func importImages(context context.Context, spec string) error {
 
 	for _, image := range bundle.Images() {
 		if err := importImage(context, de, image.URI, endpoint); err != nil {
-			return fmt.Errorf("error importig image %s: %v", image.URI, err)
+			return fmt.Errorf("error importing image %s: %v", image.URI, err)
+		}
+	}
+	kubeDistroImages := clusterSpec.KubeDistroImages()
+	for _, image := range kubeDistroImages {
+		if err := importImage(context, de, image.URI, endpoint); err != nil {
+			return fmt.Errorf("error importing image %s: %v", image.URI, err)
 		}
 	}
 
