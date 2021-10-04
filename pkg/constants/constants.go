@@ -9,6 +9,7 @@ const (
 	CapiSystemNamespace                       = "capi-system"
 	CapiWebhookSystemNamespace                = "capi-webhook-system"
 	CapvSystemNamespace                       = "capv-system"
+	CapaSystemNamespace                       = "capa-system"
 	CertManagerNamespace                      = "cert-manager"
 	DefaultNamespace                          = "default"
 	EtcdAdminBootstrapProviderSystemNamespace = "etcdadm-bootstrap-provider-system"
@@ -17,4 +18,8 @@ const (
 	KubePublicNamespace                       = "kube-public"
 	KubeSystemNamespace                       = "kube-system"
 	LocalPathStorageNamespace                 = "local-path-storage"
+
+	VSphereProviderName = "vsphere"
+	DockerProviderName  = "docker"
+	AWSProviderName     = "aws"
 )

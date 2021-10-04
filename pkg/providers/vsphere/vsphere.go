@@ -40,7 +40,6 @@ import (
 )
 
 const (
-	ProviderName             = "vsphere"
 	eksaLicense              = "EKSA_LICENSE"
 	vSphereUsernameKey       = "VSPHERE_USERNAME"
 	vSpherePasswordKey       = "VSPHERE_PASSWORD"
@@ -229,7 +228,7 @@ func (p *vsphereProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapCluste
 }
 
 func (p *vsphereProvider) Name() string {
-	return ProviderName
+	return constants.VSphereProviderName
 }
 
 func (p *vsphereProvider) DatacenterResourceType() string {
