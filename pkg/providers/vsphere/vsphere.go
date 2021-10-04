@@ -78,6 +78,11 @@ var mhcTemplate []byte
 var (
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
+	noProxyDefaults                   = []string{
+		"localhost",
+		"127.0.0.1",
+		".svc",
+	}
 )
 
 var requiredEnvs = []string{vSphereUsernameKey, vSpherePasswordKey, expClusterResourceSetKey}
@@ -1087,9 +1092,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
+		noProxyList = append(noProxyList, noProxyDefaults...)
 		noProxyList = append(noProxyList,
-			"localhost",
-			"127.0.0.1",
 			datacenterSpec.Server,
 			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		)
@@ -1165,9 +1169,8 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
+		noProxyList = append(noProxyList, noProxyDefaults...)
 		noProxyList = append(noProxyList,
-			"localhost",
-			"127.0.0.1",
 			datacenterSpec.Server,
 			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		)
