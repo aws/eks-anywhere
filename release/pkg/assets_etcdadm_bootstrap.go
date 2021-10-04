@@ -107,7 +107,9 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapBundle(imageDigests map[string]string
 		"kube-proxy":                 r.GetKubeRbacProxyAssets,
 	}
 
-	version, err := r.getEtcdadmBootstrapProviderGitTag()
+	version, err := r.GenerateComponentBundleVersion(
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/mrajashree/etcdadm-bootstrap-provider")),
+	)
 	if err != nil {
 		return anywherev1alpha1.EtcdadmBootstrapBundle{}, errors.Wrapf(err, "Error getting git tag for etcdadm-bootstrap-provider")
 	}

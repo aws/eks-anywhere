@@ -73,14 +73,25 @@ func (v *versioner) patchVersion() (string, error) {
 
 type versionerWithGITTAG struct {
 	versioner
+	folderWithGITTAG string
 }
 
 func newVersionerWithGITTAG(pathToProject string) *versionerWithGITTAG {
-	return &versionerWithGITTAG{versioner{pathToProject: pathToProject}}
+	return &versionerWithGITTAG{
+		folderWithGITTAG: pathToProject,
+		versioner:        versioner{pathToProject: pathToProject},
+	}
+}
+
+func newMultiProjectVersionerWithGITTAG(pathToRootFolder, pathToMainProject string) *versionerWithGITTAG {
+	return &versionerWithGITTAG{
+		folderWithGITTAG: pathToMainProject,
+		versioner:        versioner{pathToProject: pathToRootFolder},
+	}
 }
 
 func (v *versionerWithGITTAG) patchVersion() (string, error) {
-	tagFile := filepath.Join(v.pathToProject, "GIT_TAG")
+	tagFile := filepath.Join(v.folderWithGITTAG, "GIT_TAG")
 	gitTag, err := readFile(tagFile)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed reading GIT_TAG file for [%s]", v.pathToProject)

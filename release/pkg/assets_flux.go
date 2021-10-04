@@ -74,7 +74,18 @@ func (r *ReleaseConfig) GetFluxBundle(imageDigests map[string]string) (anywherev
 		bundleArtifacts[imageArtifact.AssetName] = bundleArtifact
 	}
 
+	version, err := r.GenerateComponentBundleVersion(
+		newMultiProjectVersionerWithGITTAG(
+			filepath.Join(r.BuildRepoSource, "projects/fluxcd"),
+			filepath.Join(r.BuildRepoSource, "projects/fluxcd/flux2"),
+		),
+	)
+	if err != nil {
+		return anywherev1alpha1.FluxBundle{}, errors.Wrap(err, "failed generating version for flux bundle")
+	}
+
 	bundle := anywherev1alpha1.FluxBundle{
+		Version:                version,
 		SourceController:       bundleArtifacts["source-controller"],
 		KustomizeController:    bundleArtifacts["kustomize-controller"],
 		HelmController:         bundleArtifacts["helm-controller"],
