@@ -54,7 +54,7 @@ type ReleaseConfig struct {
 type generateComponentBundleVersion func(projectVersioner) (string, error)
 
 type projectVersioner interface {
-	pacthVersion() (string, error)
+	patchVersion() (string, error)
 	buildMetadata() (string, error)
 }
 

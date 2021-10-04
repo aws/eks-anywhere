@@ -18,7 +18,7 @@ func GetBuildComponentVersionFunc(isDevRelease bool) generateComponentBundleVers
 }
 
 func buildComponentVersionForDev(versioner projectVersioner) (string, error) {
-	patchVersion, err := versioner.pacthVersion()
+	patchVersion, err := versioner.patchVersion()
 	if err != nil {
 		return "", err
 	}
@@ -32,7 +32,7 @@ func buildComponentVersionForDev(versioner projectVersioner) (string, error) {
 }
 
 func buildComponentVersionForProd(versioner projectVersioner) (string, error) {
-	patchVersion, err := versioner.pacthVersion()
+	patchVersion, err := versioner.patchVersion()
 	if err != nil {
 		return "", err
 	}
@@ -58,7 +58,7 @@ func (v *versioner) buildMetadata() (string, error) {
 	return out, nil
 }
 
-func (v *versioner) pacthVersion() (string, error) {
+func (v *versioner) patchVersion() (string, error) {
 	cmd := exec.Command("git", "-C", v.pathToProject, "describe", "--tag")
 	out, err := execCommand(cmd)
 	if err != nil {
@@ -79,7 +79,7 @@ func newVersionerWithGITTAG(pathToProject string) *versionerWithGITTAG {
 	return &versionerWithGITTAG{versioner{pathToProject: pathToProject}}
 }
 
-func (v *versionerWithGITTAG) pacthVersion() (string, error) {
+func (v *versionerWithGITTAG) patchVersion() (string, error) {
 	tagFile := filepath.Join(v.pathToProject, "GIT_TAG")
 	gitTag, err := readFile(tagFile)
 	if err != nil {
