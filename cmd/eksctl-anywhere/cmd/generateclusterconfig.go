@@ -11,8 +11,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/providers/docker"
-	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -59,7 +58,7 @@ func generateClusterConfig(clusterName string) error {
 	var machineGroupYaml [][]byte
 	var clusterConfigOpts []v1alpha1.ClusterGenerateOpt
 	switch strings.ToLower(viper.GetString("provider")) {
-	case docker.ProviderName:
+	case constants.DockerProviderName:
 		datacenterConfig := v1alpha1.NewDockerDatacenterConfigGenerate(clusterName)
 		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))
 		clusterConfigOpts = append(clusterConfigOpts,
@@ -72,7 +71,7 @@ func generateClusterConfig(clusterName string) error {
 			return fmt.Errorf("error outputting yaml: %v", err)
 		}
 		datacenterYaml = dcyaml
-	case vsphere.ProviderName:
+	case constants.VSphereProviderName:
 		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithClusterEndpoint())
 		datacenterConfig := v1alpha1.NewVSphereDatacenterConfigGenerate(clusterName)
 		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))

@@ -27,7 +27,6 @@ import (
 )
 
 const (
-	ProviderName      = "docker"
 	githubTokenEnvVar = "GITHUB_TOKEN"
 )
 
@@ -78,7 +77,7 @@ func (p *provider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.C
 }
 
 func (p *provider) Name() string {
-	return ProviderName
+	return constants.DockerProviderName
 }
 
 func (p *provider) DatacenterResourceType() string {
