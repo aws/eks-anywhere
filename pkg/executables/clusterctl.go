@@ -309,11 +309,11 @@ func (c *Clusterctl) Upgrade(ctx context.Context, managementCluster *types.Clust
 	}
 
 	if changeDiff.ControlPlane != nil {
-		upgradeCommand = append(upgradeCommand, "--control-plane", fmt.Sprintf("capi-kubeadm-control-plane-system/kubeadm:%s", changeDiff.ControlPlane.NewVersion))
+		upgradeCommand = append(upgradeCommand, "--control-plane", fmt.Sprintf("%s/kubeadm:%s", constants.CapiKubeadmControlPlaneSystemNamespace, changeDiff.ControlPlane.NewVersion))
 	}
 
 	if changeDiff.Core != nil {
-		upgradeCommand = append(upgradeCommand, "--core", fmt.Sprintf("capi-system/cluster-api:%s", changeDiff.Core.NewVersion))
+		upgradeCommand = append(upgradeCommand, "--core", fmt.Sprintf("%s/cluster-api:%s", constants.CapiSystemNamespace, changeDiff.Core.NewVersion))
 	}
 
 	if changeDiff.InfrastructureProvider != nil {
