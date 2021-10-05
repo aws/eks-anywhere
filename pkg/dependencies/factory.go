@@ -118,7 +118,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 }
 
 func (f *Factory) WithProviderFactory() *Factory {
-	f.WithClusterAwsCli().WithDocker().WithKubectl().WithGovc().WithWriter()
+	f.WithDocker().WithKubectl().WithGovc().WithWriter()
 
 	f.buildSteps = append(f.buildSteps, func() error {
 		if f.providerFactory != nil {
@@ -126,7 +126,6 @@ func (f *Factory) WithProviderFactory() *Factory {
 		}
 
 		f.providerFactory = &factory.ProviderFactory{
-			AwsClient:            f.dependencies.ClusterAwsCli,
 			DockerClient:         f.dependencies.DockerClient,
 			DockerKubectlClient:  f.dependencies.Kubectl,
 			VSphereGovcClient:    f.dependencies.Govc,

@@ -10,7 +10,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	mockswriter "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
-	clientProviders "github.com/aws/eks-anywhere/pkg/providers/aws/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	dockerMocks "github.com/aws/eks-anywhere/pkg/providers/docker/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/factory"
@@ -91,7 +90,6 @@ func TestProviderFactoryBuildProvider(t *testing.T) {
 			g := NewWithT(t)
 			mockCtrl := gomock.NewController(t)
 			p := &factory.ProviderFactory{
-				AwsClient:            clientProviders.NewMockProviderClient(mockCtrl),
 				DockerClient:         dockerMocks.NewMockProviderClient(mockCtrl),
 				VSphereGovcClient:    vsphereMocks.NewMockProviderGovcClient(mockCtrl),
 				VSphereKubectlClient: vsphereMocks.NewMockProviderKubectlClient(mockCtrl),
