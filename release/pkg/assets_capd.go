@@ -106,7 +106,9 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 		"kube-proxy":                  r.GetKubeRbacProxyAssets,
 	}
 
-	version, err := r.getCAPIGitTag()
+	version, err := r.GenerateComponentBundleVersion(
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
+	)
 	if err != nil {
 		return anywherev1alpha1.DockerBundle{}, errors.Wrapf(err, "Error getting git tag for cluster-api")
 	}
