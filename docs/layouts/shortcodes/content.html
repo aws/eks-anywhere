@@ -1,2 +1,2 @@
 {{$file := .Get 0}}
-{{ with .Site.GetPage $file }}{{ .Content | markdownify }}{{ end }}
+{{ with .Page.GetPage $file }}{{ .Content | markdownify }}{{ end }}

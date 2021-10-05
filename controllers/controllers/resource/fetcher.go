@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
+	etcdv1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -32,6 +33,7 @@ type ResourceFetcher interface {
 	ExistingVSphereDatacenterConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereDatacenterConfig, error)
 	ExistingVSphereWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
 	ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*kubeadmnv1alpha3.KubeadmControlPlane, error)
+	Etcd(ctx context.Context, cs *anywherev1.Cluster) (*etcdv1alpha3.EtcdadmCluster, error)
 	FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error)
 }
 
@@ -203,9 +205,9 @@ func (r *capiResourceFetcher) VSphereMachineTemplate(ctx context.Context, cs *an
 	return vsphereMachineTemplate, nil
 }
 
-func (r *capiResourceFetcher) clusterBundle(ctx context.Context, cs *anywherev1.Cluster) (*releasev1alpha1.Bundles, error) {
+func (r *capiResourceFetcher) bundles(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
 	clusterBundle := &releasev1alpha1.Bundles{}
-	err := r.FetchObjectByName(ctx, cs.Name, cs.Namespace, clusterBundle)
+	err := r.FetchObjectByName(ctx, name, namespace, clusterBundle)
 	if err != nil {
 		return nil, err
 	}
@@ -228,16 +230,18 @@ func (r *capiResourceFetcher) ControlPlane(ctx context.Context, cs *anywherev1.C
 	return cp, nil
 }
 
+func (r *capiResourceFetcher) Etcd(ctx context.Context, cs *anywherev1.Cluster) (*etcdv1alpha3.EtcdadmCluster, error) {
+	// The managedExternalEtcdRef is not available in cluster-api yet so appending "-etcd" to cluster name for now
+	etcdadmCluster := &etcdv1alpha3.EtcdadmCluster{}
+	err := r.FetchObjectByName(ctx, cs.Name+"-etcd", constants.EksaSystemNamespace, etcdadmCluster)
+	if err != nil {
+		return nil, err
+	}
+	return etcdadmCluster, nil
+}
+
 func (r *capiResourceFetcher) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error) {
-	bundle, err := r.clusterBundle(ctx, cs)
-	if err != nil {
-		return nil, err
-	}
-	spec, err := cluster.BuildSpecFromBundles(cs, bundle)
-	if err != nil {
-		return nil, err
-	}
-	return spec, nil
+	return cluster.BuildSpecForCluster(ctx, cs, r.bundles)
 }
 
 func (r *capiResourceFetcher) ExistingVSphereDatacenterConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereDatacenterConfig, error) {

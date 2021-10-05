@@ -22,7 +22,7 @@ EKS Anywhere supports the following operating system families
 * Bottlerocket (default)
 * Ubuntu
 
-A list of OVAs for this release can be found on the [artifacts page]({{< relref "artifacts" >}}).
+A list of OVAs for this release can be found on the [artifacts page]({{< relref "../artifacts" >}}).
 
 ## Using vCenter Web User Interface
 

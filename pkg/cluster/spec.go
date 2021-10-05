@@ -335,6 +335,18 @@ func readLocalFile(filename string) ([]byte, error) {
 	return data, nil
 }
 
+func (s *Spec) KubeDistroImages() []v1alpha1.Image {
+	images := []v1alpha1.Image{}
+	for _, component := range s.eksdRelease.Status.Components {
+		for _, asset := range component.Assets {
+			if asset.Image != nil {
+				images = append(images, v1alpha1.Image{URI: asset.Image.URI})
+			}
+		}
+	}
+	return images
+}
+
 func buildKubeDistro(eksd *eksdv1alpha1.Release) (*KubeDistro, error) {
 	kubeDistro := &KubeDistro{}
 	assets := make(map[string]*eksdv1alpha1.AssetImage)

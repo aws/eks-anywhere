@@ -76,7 +76,7 @@ If you have an existing repo you can set that as your repository name in the con
 If you specify a repo in your `GitOpsConfig` which does not exist EKS Anywhere will create it for you.
 If you would like to create a new repo you can [click here](https://github.new) to create a new repo.
 
-If your repository contains multiple cluster specification files, store them in subfolders and specify the [configuration path](/docs/reference/clusterspec/gitops/#__clusterconfigpath__-optional) in your cluster specification.
+If your repository contains multiple cluster specification files, store them in subfolders and specify the [configuration path]({{< relref "../../reference/clusterspec/gitops/#__clusterconfigpath__-optional" >}}) in your cluster specification.
 
 Example repository structure:
 ```

@@ -11,11 +11,12 @@ import (
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	gomock "github.com/golang/mock/gomock"
+	v1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	types "k8s.io/apimachinery/pkg/types"
-	v1alpha3 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
-	v1alpha30 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	v1alpha31 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	v1alpha30 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
+	v1alpha31 "sigs.k8s.io/cluster-api/api/v1alpha3"
+	v1alpha32 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -43,10 +44,10 @@ func (m *MockResourceFetcher) EXPECT() *MockResourceFetcherMockRecorder {
 }
 
 // ControlPlane mocks base method.
-func (m *MockResourceFetcher) ControlPlane(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha31.KubeadmControlPlane, error) {
+func (m *MockResourceFetcher) ControlPlane(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha32.KubeadmControlPlane, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ControlPlane", arg0, arg1)
-	ret0, _ := ret[0].(*v1alpha31.KubeadmControlPlane)
+	ret0, _ := ret[0].(*v1alpha32.KubeadmControlPlane)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -55,6 +56,21 @@ func (m *MockResourceFetcher) ControlPlane(arg0 context.Context, arg1 *v1alpha1.
 func (mr *MockResourceFetcherMockRecorder) ControlPlane(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ControlPlane", reflect.TypeOf((*MockResourceFetcher)(nil).ControlPlane), arg0, arg1)
+}
+
+// Etcd mocks base method.
+func (m *MockResourceFetcher) Etcd(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha3.EtcdadmCluster, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Etcd", arg0, arg1)
+	ret0, _ := ret[0].(*v1alpha3.EtcdadmCluster)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Etcd indicates an expected call of Etcd.
+func (mr *MockResourceFetcherMockRecorder) Etcd(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Etcd", reflect.TypeOf((*MockResourceFetcher)(nil).Etcd), arg0, arg1)
 }
 
 // ExistingVSphereDatacenterConfig mocks base method.
@@ -161,10 +177,10 @@ func (mr *MockResourceFetcherMockRecorder) FetchObjectByName(arg0, arg1, arg2, a
 }
 
 // MachineDeployment mocks base method.
-func (m *MockResourceFetcher) MachineDeployment(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha30.MachineDeployment, error) {
+func (m *MockResourceFetcher) MachineDeployment(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha31.MachineDeployment, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "MachineDeployment", arg0, arg1)
-	ret0, _ := ret[0].(*v1alpha30.MachineDeployment)
+	ret0, _ := ret[0].(*v1alpha31.MachineDeployment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -176,10 +192,10 @@ func (mr *MockResourceFetcherMockRecorder) MachineDeployment(arg0, arg1 interfac
 }
 
 // VSphereMachineTemplate mocks base method.
-func (m *MockResourceFetcher) VSphereMachineTemplate(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha3.VSphereMachineTemplate, error) {
+func (m *MockResourceFetcher) VSphereMachineTemplate(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha30.VSphereMachineTemplate, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "VSphereMachineTemplate", arg0, arg1)
-	ret0, _ := ret[0].(*v1alpha3.VSphereMachineTemplate)
+	ret0, _ := ret[0].(*v1alpha30.VSphereMachineTemplate)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
