@@ -423,6 +423,7 @@ func UpdateImageDigests(releaseClients *ReleaseClients, r *ReleaseConfig, eksArt
 				imageDigest := describeImagesOutput.ImageDetails[0].ImageDigest
 
 				imageDigests[artifact.Image.ReleaseImageURI] = *imageDigest
+				fmt.Printf("Image digest for %s  -  %s\n", artifact.Image.ReleaseImageURI, *imageDigest)
 			}
 		}
 	}

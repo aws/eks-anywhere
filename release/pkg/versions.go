@@ -49,7 +49,7 @@ func newVersioner(pathToProject string) *versioner {
 }
 
 func (v *versioner) buildMetadata() (string, error) {
-	cmd := exec.Command("git", "log", "--pretty=format:%h", "-n1", v.pathToProject)
+	cmd := exec.Command("git", "-C", v.pathToProject, "log", "--pretty=format:%h", "-n1", v.pathToProject)
 	out, err := execCommand(cmd)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed executing git log to get build metadata in [%s]", v.pathToProject)
