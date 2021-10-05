@@ -8,13 +8,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
-	"github.com/aws/eks-anywhere/pkg/providers/aws"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
 type ProviderFactory struct {
-	AwsClient            aws.ProviderClient
 	DockerClient         docker.ProviderClient
 	DockerKubectlClient  docker.ProviderKubectlClient
 	VSphereGovcClient    vsphere.ProviderGovcClient
