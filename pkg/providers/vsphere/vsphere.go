@@ -104,7 +104,8 @@ type vsphereProvider struct {
 type ProviderGovcClient interface {
 	SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error)
 	LibraryElementExists(ctx context.Context, library string) (bool, error)
-	DeleteOVAIfInvalid(ctx context.Context, element string) (bool, error)
+	GetLibraryElementContentVersion(ctx context.Context, element string) (interface{}, error)
+	DeleteLibraryElement(ctx context.Context, element string) error
 	TemplateHasSnapshot(ctx context.Context, template string) (bool, error)
 	GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1alpha1.VSphereMachineConfig) (float64, error)
 	ValidateVCenterSetup(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, selfSigned *bool) error

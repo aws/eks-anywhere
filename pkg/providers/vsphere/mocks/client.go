@@ -97,19 +97,18 @@ func (mr *MockProviderGovcClientMockRecorder) CreateTag(arg0, arg1, arg2 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTag", reflect.TypeOf((*MockProviderGovcClient)(nil).CreateTag), arg0, arg1, arg2)
 }
 
-// DeleteOVAIfInvalid mocks base method.
-func (m *MockProviderGovcClient) DeleteOVAIfInvalid(arg0 context.Context, arg1 string) (bool, error) {
+// DeleteLibraryElement mocks base method.
+func (m *MockProviderGovcClient) DeleteLibraryElement(arg0 context.Context, arg1 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteOVAIfInvalid", arg0, arg1)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "DeleteLibraryElement", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// DeleteOVAIfInvalid indicates an expected call of DeleteOVAIfInvalid.
-func (mr *MockProviderGovcClientMockRecorder) DeleteOVAIfInvalid(arg0, arg1 interface{}) *gomock.Call {
+// DeleteLibraryElement indicates an expected call of DeleteLibraryElement.
+func (mr *MockProviderGovcClientMockRecorder) DeleteLibraryElement(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOVAIfInvalid", reflect.TypeOf((*MockProviderGovcClient)(nil).DeleteOVAIfInvalid), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteLibraryElement", reflect.TypeOf((*MockProviderGovcClient)(nil).DeleteLibraryElement), arg0, arg1)
 }
 
 // DeployTemplateFromLibrary mocks base method.
@@ -124,6 +123,21 @@ func (m *MockProviderGovcClient) DeployTemplateFromLibrary(arg0 context.Context,
 func (mr *MockProviderGovcClientMockRecorder) DeployTemplateFromLibrary(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployTemplateFromLibrary", reflect.TypeOf((*MockProviderGovcClient)(nil).DeployTemplateFromLibrary), arg0, arg1, arg2, arg3, arg4, arg5)
+}
+
+// GetLibraryElementContentVersion mocks base method.
+func (m *MockProviderGovcClient) GetLibraryElementContentVersion(arg0 context.Context, arg1 string) (interface{}, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLibraryElementContentVersion", arg0, arg1)
+	ret0, _ := ret[0].(interface{})
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLibraryElementContentVersion indicates an expected call of GetLibraryElementContentVersion.
+func (mr *MockProviderGovcClientMockRecorder) GetLibraryElementContentVersion(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLibraryElementContentVersion", reflect.TypeOf((*MockProviderGovcClient)(nil).GetLibraryElementContentVersion), arg0, arg1)
 }
 
 // GetTags mocks base method.

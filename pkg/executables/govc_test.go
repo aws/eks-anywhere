@@ -269,27 +269,58 @@ func TestLibraryElementExistsError(t *testing.T) {
 	}
 }
 
-func TestDeleteOVAIfInvalidSuccess(t *testing.T) {
+func TestGetLibraryElementContentVersionSuccess(t *testing.T) {
+	ctx := context.Background()
+	response := `[
+		{
+			"content_version": "1"
+		},
+	]`
+	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
+
+	g, executable, env := setup(t)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.info", "-json", libraryElement).Return(*bytes.NewBufferString(response), nil)
+
+	_, err := g.GetLibraryElementContentVersion(ctx, libraryElement)
+	if err != nil {
+		t.Fatalf("Govc.GetLibraryElementContentVersion() err = %v, want err nil", err)
+	}
+}
+
+func TestGetLibraryElementContentVersionError(t *testing.T) {
 	ctx := context.Background()
 	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
 
 	g, executable, env := setup(t)
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.info", libraryElement).Return(*bytes.NewBufferString(""), nil)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.info", "-json", libraryElement).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
-	_, err := g.DeleteOVAIfInvalid(ctx, libraryElement)
+	_, err := g.GetLibraryElementContentVersion(ctx, libraryElement)
+	if err == nil {
+		t.Fatal("Govc.GetLibraryElementContentVersion() err = nil, want err not nil")
+	}
+}
+
+func TestDeleteLibraryElementSuccess(t *testing.T) {
+	ctx := context.Background()
+	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
+
+	g, executable, env := setup(t)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.rm", libraryElement).Return(*bytes.NewBufferString(""), nil)
+
+	err := g.DeleteLibraryElement(ctx, libraryElement)
 	if err != nil {
 		t.Fatalf("Govc.DeleteLibraryElement() err = %v, want err nil", err)
 	}
 }
 
-func TestDeleteOVAIfInvalidError(t *testing.T) {
+func TestDeleteLibraryElementError(t *testing.T) {
 	ctx := context.Background()
 	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
 
 	g, executable, env := setup(t)
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.info", libraryElement).Return(bytes.Buffer{}, errors.New("error from execute with env"))
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.rm", libraryElement).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
-	_, err := g.DeleteOVAIfInvalid(ctx, libraryElement)
+	err := g.DeleteLibraryElement(ctx, libraryElement)
 	if err == nil {
 		t.Fatal("Govc.DeleteLibraryElement() err = nil, want err not nil")
 	}
