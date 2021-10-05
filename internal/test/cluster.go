@@ -33,6 +33,7 @@ func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
 			VersionsBundle: &releasev1alpha1.VersionsBundle{},
 			KubeDistro:     &cluster.KubeDistro{},
 		},
+		Bundles: &releasev1alpha1.Bundles{},
 	}
 
 	for _, opt := range opts {
