@@ -295,7 +295,7 @@ var providerNamespaces = map[string]string{
 	kubeadmBootstrapProviderName:  constants.CapiKubeadmBootstrapSystemNamespace,
 }
 
-func (c *Clusterctl) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, newSpec *cluster.Spec, changeReport *clusterapi.CAPIChangeReport) error {
+func (c *Clusterctl) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, newSpec *cluster.Spec, changeDiff *clusterapi.CAPIChangeDiff) error {
 	clusterctlConfig, err := c.buildConfig(newSpec, managementCluster.Name, provider)
 	if err != nil {
 		return err
@@ -308,20 +308,20 @@ func (c *Clusterctl) Upgrade(ctx context.Context, managementCluster *types.Clust
 		"--kubeconfig", managementCluster.KubeconfigFile,
 	}
 
-	if changeReport.ControlPlane != nil {
-		upgradeCommand = append(upgradeCommand, "--control-plane", fmt.Sprintf("capi-kubeadm-control-plane-system/kubeadm:%s", changeReport.ControlPlane.NewVersion))
+	if changeDiff.ControlPlane != nil {
+		upgradeCommand = append(upgradeCommand, "--control-plane", fmt.Sprintf("capi-kubeadm-control-plane-system/kubeadm:%s", changeDiff.ControlPlane.NewVersion))
 	}
 
-	if changeReport.Core != nil {
-		upgradeCommand = append(upgradeCommand, "--core", fmt.Sprintf("capi-system/cluster-api:%s", changeReport.Core.NewVersion))
+	if changeDiff.Core != nil {
+		upgradeCommand = append(upgradeCommand, "--core", fmt.Sprintf("capi-system/cluster-api:%s", changeDiff.Core.NewVersion))
 	}
 
-	if changeReport.InfrastructureProvider != nil {
-		newInfraProvider := fmt.Sprintf("%s/%s:%s", providerNamespaces[changeReport.InfrastructureProvider.ComponentName], changeReport.InfrastructureProvider.ComponentName, changeReport.InfrastructureProvider.NewVersion)
+	if changeDiff.InfrastructureProvider != nil {
+		newInfraProvider := fmt.Sprintf("%s/%s:%s", providerNamespaces[changeDiff.InfrastructureProvider.ComponentName], changeDiff.InfrastructureProvider.ComponentName, changeDiff.InfrastructureProvider.NewVersion)
 		upgradeCommand = append(upgradeCommand, "--infrastructure", newInfraProvider)
 	}
 
-	for _, bootstrapProvider := range changeReport.BootstrapProviders {
+	for _, bootstrapProvider := range changeDiff.BootstrapProviders {
 		newBootstrapProvider := fmt.Sprintf("%s/%s:%s", providerNamespaces[bootstrapProvider.ComponentName], bootstrapProvider.ComponentName, bootstrapProvider.NewVersion)
 		upgradeCommand = append(upgradeCommand, "--bootstrap", newBootstrapProvider)
 	}

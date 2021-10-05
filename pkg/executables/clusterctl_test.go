@@ -375,20 +375,20 @@ func TestClusterctlMoveManagement(t *testing.T) {
 func TestClusterctlUpgradeAllProvidersSucess(t *testing.T) {
 	tt := newClusterctlTest(t)
 
-	changeReport := &clusterapi.CAPIChangeReport{
-		Core: &types.ComponentChangeReport{
+	changeDiff := &clusterapi.CAPIChangeDiff{
+		Core: &types.ComponentChangeDiff{
 			ComponentName: "cluster-api",
 			NewVersion:    "v0.3.19",
 		},
-		ControlPlane: &types.ComponentChangeReport{
+		ControlPlane: &types.ComponentChangeDiff{
 			ComponentName: "kubeadm",
 			NewVersion:    "v0.3.19",
 		},
-		InfrastructureProvider: &types.ComponentChangeReport{
+		InfrastructureProvider: &types.ComponentChangeDiff{
 			ComponentName: "vsphere",
 			NewVersion:    "v0.4.1",
 		},
-		BootstrapProviders: []types.ComponentChangeReport{
+		BootstrapProviders: []types.ComponentChangeDiff{
 			{
 				ComponentName: "kubeadm",
 				NewVersion:    "v0.3.19",
@@ -418,14 +418,14 @@ func TestClusterctlUpgradeAllProvidersSucess(t *testing.T) {
 		"--bootstrap", "etcdadm-controller-system/etcdadm-controller:v0.1.0",
 	)
 
-	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeReport)).To(Succeed())
+	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeDiff)).To(Succeed())
 }
 
 func TestClusterctlUpgradeInfrastructureProvidersSucess(t *testing.T) {
 	tt := newClusterctlTest(t)
 
-	changeReport := &clusterapi.CAPIChangeReport{
-		InfrastructureProvider: &types.ComponentChangeReport{
+	changeDiff := &clusterapi.CAPIChangeDiff{
+		InfrastructureProvider: &types.ComponentChangeDiff{
 			ComponentName: "vsphere",
 			NewVersion:    "v0.4.1",
 		},
@@ -440,14 +440,14 @@ func TestClusterctlUpgradeInfrastructureProvidersSucess(t *testing.T) {
 		"--infrastructure", "capv-system/vsphere:v0.4.1",
 	)
 
-	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeReport)).To(Succeed())
+	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeDiff)).To(Succeed())
 }
 
 func TestClusterctlUpgradeInfrastructureProvidersError(t *testing.T) {
 	tt := newClusterctlTest(t)
 
-	changeReport := &clusterapi.CAPIChangeReport{
-		InfrastructureProvider: &types.ComponentChangeReport{
+	changeDiff := &clusterapi.CAPIChangeDiff{
+		InfrastructureProvider: &types.ComponentChangeDiff{
 			ComponentName: "vsphere",
 			NewVersion:    "v0.4.1",
 		},
@@ -462,7 +462,7 @@ func TestClusterctlUpgradeInfrastructureProvidersError(t *testing.T) {
 		"--infrastructure", "capv-system/vsphere:v0.4.1",
 	).Return(bytes.Buffer{}, errors.New("error in exec"))
 
-	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeReport)).NotTo(Succeed())
+	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeDiff)).NotTo(Succeed())
 }
 
 var clusterSpec = test.NewClusterSpec(func(s *cluster.Spec) {

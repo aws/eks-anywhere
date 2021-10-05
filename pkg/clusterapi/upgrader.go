@@ -13,36 +13,36 @@ type Upgrader struct {
 }
 
 type capiClient interface {
-	Upgrade(ctx context.Context, managementCluster *types.Cluster, newSpec *cluster.Spec, changeReport *CAPIChangeReport) error
+	Upgrade(ctx context.Context, managementCluster *types.Cluster, newSpec *cluster.Spec, changeDiff *CAPIChangeDiff) error
 }
 
 func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) error {
-	changeReport := u.capiChangeReport(currentSpec, newSpec)
-	if changeReport == nil {
+	changeDiff := u.capiChangeDiff(currentSpec, newSpec)
+	if changeDiff == nil {
 		return nil
 	}
 
-	if err := u.capiClient.Upgrade(ctx, managementCluster, newSpec, changeReport); err != nil {
+	if err := u.capiClient.Upgrade(ctx, managementCluster, newSpec, changeDiff); err != nil {
 		return fmt.Errorf("failed upgrading ClusterAPI from bundles %d to bundles %d: %v", currentSpec.Bundles.Spec.Number, newSpec.Bundles.Spec.Number, err)
 	}
 
 	return nil
 }
 
-type CAPIChangeReport struct {
-	Core                   *types.ComponentChangeReport
-	ControlPlane           *types.ComponentChangeReport
-	BootstrapProviders     []types.ComponentChangeReport
-	InfrastructureProvider *types.ComponentChangeReport
+type CAPIChangeDiff struct {
+	Core                   *types.ComponentChangeDiff
+	ControlPlane           *types.ComponentChangeDiff
+	BootstrapProviders     []types.ComponentChangeDiff
+	InfrastructureProvider *types.ComponentChangeDiff
 }
 
-func (u *Upgrader) capiChangeReport(currentSpec, newSpec *cluster.Spec) *CAPIChangeReport {
+func (u *Upgrader) capiChangeDiff(currentSpec, newSpec *cluster.Spec) *CAPIChangeDiff {
 	// TODO: check version changes for all providers
 	return nil
 }
 
-func (u *Upgrader) ChangeReport(currentSpec, newSpec *cluster.Spec) *types.ChangeReport {
-	u.capiChangeReport(currentSpec, newSpec)
-	// TODO: convert from capiChangeReport to generic changeReport
+func (u *Upgrader) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
+	u.capiChangeDiff(currentSpec, newSpec)
+	// TODO: convert from capiChangeDiff to generic changeDiff
 	return nil
 }

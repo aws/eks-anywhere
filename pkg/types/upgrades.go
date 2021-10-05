@@ -1,10 +1,10 @@
 package types
 
-type ChangeReport struct {
-	ComponentReports []ComponentChangeReport
+type ChangeDiff struct {
+	ComponentReports []ComponentChangeDiff
 }
 
-type ComponentChangeReport struct {
+type ComponentChangeDiff struct {
 	ComponentName string
 	OldVersion    string
 	NewVersion    string
