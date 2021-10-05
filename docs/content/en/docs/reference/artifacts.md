@@ -44,21 +44,21 @@ OS Family - `os:bottlerocket`
 
 EKS-D Release
 
-1.21 - `eksdRelease:kubernetes-1-21-eks-4`
+1.21 - `eksdRelease:kubernetes-1-21-eks-5`
 
-1.20 - `eksdRelease:kubernetes-1-20-eks-6`
+1.20 - `eksdRelease:kubernetes-1-20-eks-7`
 
 ## Ubuntu with Kubernetes 1.21
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/1/artifacts/ova/1-21/ubuntu-v1.21.2-eks-d-1-21-4-eks-a-1-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/2/artifacts/ova/1-21/ubuntu-v1.21.2-eks-d-1-21-5-eks-a-2-amd64.ova
 * `os:ubuntu`
-* `eksdRelease:kubernetes-1-21-eks-4`
+* `eksdRelease:kubernetes-1-21-eks-5`
 
 ## Ubuntu with Kubernetes 1.20
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/1/artifacts/ova/1-20/ubuntu-v1.20.7-eks-d-1-20-6-eks-a-1-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/2/artifacts/ova/1-20/ubuntu-v1.20.7-eks-d-1-20-7-eks-a-2-amd64.ova
 * `os:ubuntu`
-* `eksdRelease:kubernetes-1-20-eks-6`
+* `eksdRelease:kubernetes-1-20-eks-7`
 
 ## Building your own Ubuntu OVA
 The EKS Anywhere project OVA building process leverages upstream [image-builder repository.](https://github.com/kubernetes-sigs/image-builder)
