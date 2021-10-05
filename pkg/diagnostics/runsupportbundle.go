@@ -113,11 +113,13 @@ func NewDiagnosticBundleCustom(kubeconfig string, bundlePath string, opts EksaDi
 }
 
 func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeValue *time.Time) error {
+	logger.Info("collecting support bundle, this can take a while", "bundle", e.bundlePath, "since", sinceTimeValue, "kubeconfig", e.kubeconfig)
 	archivePath, err := e.client.Collect(ctx, e.bundlePath, sinceTimeValue, e.kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to Collect support bundle: %v", err)
 	}
 
+	logger.Info("analyzing support bundle", "bundle", e.bundlePath, "archive", archivePath)
 	analysis, err := e.client.Analyze(ctx, e.bundlePath, archivePath)
 	if err != nil {
 		return fmt.Errorf("error when analyzing bundle: %v", err)
