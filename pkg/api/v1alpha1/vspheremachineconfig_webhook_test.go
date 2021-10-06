@@ -20,14 +20,14 @@ func TestCPVSphereMachineValidateUpdateTemplateImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkersVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
+func TestWorkersVSphereMachineValidateUpdateTemplateImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.Spec.Template = "oldTemplate"
 	c := vOld.DeepCopy()
 
 	c.Spec.Template = "newTemplate"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
 func TestVSphereMachineValidateUpdateOSFamilyImmutable(t *testing.T) {
