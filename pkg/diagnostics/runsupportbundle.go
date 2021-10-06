@@ -129,7 +129,7 @@ func NewDiagnosticBundleCustom(kubeconfig string, bundlePath string, opts EksaDi
 }
 
 func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeValue *time.Time) error {
-	e.createDiagnosticNamespace(ctx)
+	e.createDiagnosticNamespaceAndRoles(ctx)
 
 	logger.Info("collecting support bundle, this can take a while", "bundle", e.bundlePath, "since", sinceTimeValue, "kubeconfig", e.kubeconfig)
 	archivePath, err := e.client.Collect(ctx, e.bundlePath, sinceTimeValue, e.kubeconfig)
@@ -151,7 +151,7 @@ func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeV
 	fmt.Println(string(yamlAnalysis))
 	logger.Info("Support bundle archive created", "archivePath", archivePath)
 
-	e.deleteDiagnosticNamespace(ctx)
+	e.deleteDiagnosticNamespaceAndRoles(ctx)
 	return nil
 }
 
@@ -255,7 +255,7 @@ func (e *EksaDiagnosticBundle) createDiagnosticNamespaceAndRoles(ctx context.Con
 	}
 }
 
-func (e *EksaDiagnosticBundle) deleteDiagnosticNamespace(ctx context.Context) {
+func (e *EksaDiagnosticBundle) deleteDiagnosticNamespaceAndRoles(ctx context.Context) {
 	targetCluster := &types.Cluster{
 		KubeconfigFile: e.kubeconfig,
 	}
