@@ -84,6 +84,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck).
 		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
 		WithWriter().
+		WithCapiUpgrader().
 		WithKubectl().
 		Build()
 	if err != nil {
@@ -93,6 +94,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	upgradeCluster := workflows.NewUpgrade(
 		deps.Bootstrapper,
 		deps.Provider,
+		deps.CapiUpgrader,
 		deps.ClusterManager,
 		deps.FluxAddonClient,
 		deps.Writer,
