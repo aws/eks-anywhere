@@ -32,6 +32,7 @@ type Provider interface {
 	MachineConfigs() []MachineConfig
 	ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	GenerateMHC() ([]byte, error)
+	ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff
 }
 
 type DatacenterConfig interface {

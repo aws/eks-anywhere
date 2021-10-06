@@ -1542,3 +1542,15 @@ func (p *vsphereProvider) secretContentsChanged(ctx context.Context, workloadClu
 	}
 	return false, nil
 }
+
+func (p *vsphereProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
+	if currentSpec.VersionsBundle.VSphere.Version == newSpec.VersionsBundle.VSphere.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.VSphereProviderName,
+		NewVersion:    newSpec.VersionsBundle.VSphere.Version,
+		OldVersion:    currentSpec.VersionsBundle.VSphere.Version,
+	}
+}

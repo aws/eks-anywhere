@@ -406,3 +406,15 @@ func (p *provider) MachineConfigs() []providers.MachineConfig {
 func (p *provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
 	return nil
 }
+
+func (p *provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
+	if currentSpec.VersionsBundle.Docker.Version == newSpec.VersionsBundle.Docker.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.DockerProviderName,
+		NewVersion:    newSpec.VersionsBundle.Docker.Version,
+		OldVersion:    currentSpec.VersionsBundle.Docker.Version,
+	}
+}

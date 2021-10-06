@@ -43,6 +43,25 @@ type Spec struct {
 	Bundles             *v1alpha1.Bundles
 }
 
+func (s *Spec) DeepCopy() *Spec {
+	return &Spec{
+		Cluster:             s.Cluster.DeepCopy(),
+		OIDCConfig:          s.OIDCConfig.DeepCopy(),
+		GitOpsConfig:        s.GitOpsConfig.DeepCopy(),
+		releasesManifestURL: s.releasesManifestURL,
+		bundlesManifestURL:  s.bundlesManifestURL,
+		configFS:            s.configFS,
+		httpClient:          s.httpClient,
+		userAgent:           s.userAgent,
+		VersionsBundle: &VersionsBundle{
+			VersionsBundle: s.VersionsBundle.VersionsBundle.DeepCopy(),
+			KubeDistro:     s.VersionsBundle.KubeDistro.deepCopy(),
+		},
+		eksdRelease: s.eksdRelease.DeepCopy(),
+		Bundles:     s.Bundles.DeepCopy(),
+	}
+}
+
 func (cs *Spec) SetDefaultGitOps() {
 	if cs != nil && cs.GitOpsConfig != nil {
 		c := &cs.GitOpsConfig.Spec.Flux
@@ -75,6 +94,11 @@ type KubeDistro struct {
 	Pause               v1alpha1.Image
 	EtcdImage           v1alpha1.Image
 	EtcdVersion         string
+}
+
+func (k *KubeDistro) deepCopy() *KubeDistro {
+	k2 := *k
+	return &k2
 }
 
 type VersionedRepository struct {
