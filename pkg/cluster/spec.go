@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -191,11 +192,13 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 			}
 			s.OIDCConfig = oidcConfig
 		case eksav1alpha1.AWSIamConfigKind:
-			awsIamConfig, err := eksav1alpha1.GetAndValidateAWSIamConfig(clusterConfigPath, identityProvider.Name)
-			if err != nil {
-				return nil, err
+			if features.IsActive(features.AwsIamAuthenticator()) {
+				awsIamConfig, err := eksav1alpha1.GetAndValidateAWSIamConfig(clusterConfigPath, identityProvider.Name)
+				if err != nil {
+					return nil, err
+				}
+				s.AWSIamConfig = awsIamConfig
 			}
-			s.AWSIamConfig = awsIamConfig
 		}
 	}
 
