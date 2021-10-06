@@ -15,14 +15,14 @@ import (
 type certificategenerator struct{}
 
 type CertificateGenerator interface {
-	GenerateSelfSignCertKeyPair() ([]byte, []byte, error)
+	GenerateIamAuthSelfSignCertKeyPair() ([]byte, []byte, error)
 }
 
 func NewCertificateGenerator() CertificateGenerator {
 	return &certificategenerator{}
 }
 
-func (cg *certificategenerator) GenerateSelfSignCertKeyPair() ([]byte, []byte, error) {
+func (cg *certificategenerator) GenerateIamAuthSelfSignCertKeyPair() ([]byte, []byte, error) {
 	bitSize := 2048
 
 	privateKey, err := cg.generatePrivateKey(bitSize)
@@ -36,7 +36,8 @@ func (cg *certificategenerator) GenerateSelfSignCertKeyPair() ([]byte, []byte, e
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate serial number for self sign cert: %v", err)
 	}
-	certBytes, err := cg.generateCertificate(serialNumber, privateKey, notBefore, notAfter)
+	template := cg.generateAwsIamAuthCertTemplate(serialNumber, notBefore, notAfter)
+	certBytes, err := cg.generateSelfSignCertificate(template, privateKey)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to generate certificate for self sign cert: %v", err)
 	}
@@ -80,7 +81,7 @@ func (cg *certificategenerator) generateCertSerialNumber() (*big.Int, error) {
 	return serialNumber, nil
 }
 
-func (cg *certificategenerator) generateCertificate(serialNumber *big.Int, privateKey *rsa.PrivateKey, notBefore, notAfter time.Time) ([]byte, error) {
+func (cg *certificategenerator) generateAwsIamAuthCertTemplate(serialNumber *big.Int, notBefore, notAfter time.Time) x509.Certificate {
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
@@ -95,6 +96,10 @@ func (cg *certificategenerator) generateCertificate(serialNumber *big.Int, priva
 		IPAddresses:           []net.IP{net.ParseIP("127.0.0.1")},
 		DNSNames:              []string{"localhost"},
 	}
+	return template
+}
+
+func (cg *certificategenerator) generateSelfSignCertificate(template x509.Certificate, privateKey *rsa.PrivateKey) ([]byte, error) {
 	certBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
 	if err != nil {
 		return nil, err

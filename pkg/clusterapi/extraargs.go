@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
@@ -40,6 +41,7 @@ func AwsIamAuthExtraArgs(awsiam *v1alpha1.AWSIamConfig) ExtraArgs {
 
 func (e ExtraArgs) AddIfNotEmpty(k, v string) {
 	if v != "" {
+		logger.V(5).Info("Adding extraArgs", k, v)
 		e[k] = v
 	}
 }

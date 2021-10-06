@@ -13,13 +13,13 @@ import (
 )
 
 //go:embed config/aws-iam-authenticator.yaml
-var awsIamAuthTemplate []byte
+var awsIamAuthTemplate string
 
 //go:embed config/aws-iam-authenticator-ca-secret.yaml
-var awsIamAuthCaSecretTemplate []byte
+var awsIamAuthCaSecretTemplate string
 
 //go:embed config/aws-iam-authenticator-kubeconfig.yaml
-var awsIamAuthKubeconfigTemplate []byte
+var awsIamAuthKubeconfigTemplate string
 
 type AwsIamAuth struct {
 	certgen crypto.CertificateGenerator
@@ -39,7 +39,7 @@ func (a *AwsIamAuth) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
 		"mapUsers":    clusterSpec.AWSIamConfig.Spec.MapUsers,
 		"partition":   clusterSpec.AWSIamConfig.Spec.Partition,
 	}
-	awsIamAuthManifest, err := templater.Execute(string(awsIamAuthTemplate), data)
+	awsIamAuthManifest, err := templater.Execute(awsIamAuthTemplate, data)
 	if err != nil {
 		return nil, fmt.Errorf("error generating aws-iam-authenticator manifest: %v", err)
 	}
@@ -47,7 +47,7 @@ func (a *AwsIamAuth) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
 }
 
 func (a *AwsIamAuth) GenerateCertKeyPairSecret() ([]byte, error) {
-	certPemBytes, keyPemBytes, err := a.certgen.GenerateSelfSignCertKeyPair()
+	certPemBytes, keyPemBytes, err := a.certgen.GenerateIamAuthSelfSignCertKeyPair()
 	if err != nil {
 		return nil, fmt.Errorf("error generating aws-iam-authenticator cert key pair secret: %v", err)
 	}
@@ -56,7 +56,7 @@ func (a *AwsIamAuth) GenerateCertKeyPairSecret() ([]byte, error) {
 		"certPemBytes": base64.StdEncoding.EncodeToString(certPemBytes),
 		"keyPemBytes":  base64.StdEncoding.EncodeToString(keyPemBytes),
 	}
-	awsIamAuthCaSecret, err := templater.Execute(string(awsIamAuthCaSecretTemplate), data)
+	awsIamAuthCaSecret, err := templater.Execute(awsIamAuthCaSecretTemplate, data)
 	if err != nil {
 		return nil, fmt.Errorf("error generating aws-iam-authenticator cert key pair secret: %v", err)
 	}
@@ -70,7 +70,7 @@ func (a *AwsIamAuth) GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, ser
 		"cert":        tlsCert,
 		"clusterID":   clusterSpec.AWSIamConfig.Spec.ClusterID,
 	}
-	awsIamAuthKubeconfig, err := templater.Execute(string(awsIamAuthKubeconfigTemplate), data)
+	awsIamAuthKubeconfig, err := templater.Execute(awsIamAuthKubeconfigTemplate, data)
 	if err != nil {
 		return nil, fmt.Errorf("error generating aws-iam-authenticator kubeconfig content: %v", err)
 	}

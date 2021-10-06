@@ -141,18 +141,18 @@ func (mr *MockClusterClientMockRecorder) GetApiServerUrl(arg0, arg1 interface{})
 }
 
 // GetClusterCATlsCert mocks base method.
-func (m *MockClusterClient) GetClusterCATlsCert(arg0 context.Context, arg1 *types.Cluster) (string, error) {
+func (m *MockClusterClient) GetClusterCATlsCert(arg0 context.Context, arg1 *types.Cluster, arg2 string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetClusterCATlsCert", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetClusterCATlsCert", arg0, arg1, arg2)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetClusterCATlsCert indicates an expected call of GetClusterCATlsCert.
-func (mr *MockClusterClientMockRecorder) GetClusterCATlsCert(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockClusterClientMockRecorder) GetClusterCATlsCert(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterCATlsCert", reflect.TypeOf((*MockClusterClient)(nil).GetClusterCATlsCert), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterCATlsCert", reflect.TypeOf((*MockClusterClient)(nil).GetClusterCATlsCert), arg0, arg1, arg2)
 }
 
 // GetClusters mocks base method.

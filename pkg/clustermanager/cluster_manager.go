@@ -77,7 +77,7 @@ type ClusterClient interface {
 	ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
 	GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error)
 	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
-	GetClusterCATlsCert(ctx context.Context, cluster *types.Cluster) (string, error)
+	GetClusterCATlsCert(ctx context.Context, cluster *types.Cluster, namespace string) (string, error)
 }
 
 type Networking interface {
@@ -507,18 +507,25 @@ func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, workloa
 	return nil
 }
 
-func (c *ClusterManager) InstallAwsIamAuth(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+// InstallAwsIamAuth applies the aws-iam-authenticator manifest based on cluster spec inputs.
+// Generates a kubeconfig for interacting with the cluster with aws-iam-authenticator client.
+func (c *ClusterManager) InstallAwsIamAuth(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	awsIamAuthManifest, err := c.awsIamAuth.GenerateManifest(clusterSpec)
 	if err != nil {
 		return fmt.Errorf("error generating aws-iam-authenticator manifest: %v", err)
 	}
 	err = c.Retrier.Retry(
 		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, awsIamAuthManifest)
+			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, workloadCluster, awsIamAuthManifest)
 		},
 	)
 	if err != nil {
 		return fmt.Errorf("error applying aws-iam-authenticator manifest: %v", err)
+	}
+	logger.V(3).Info("Generating aws-iam-authenticator kubeconfig")
+	err = c.generateAwsIamAuthKubeconfig(ctx, managementCluster, workloadCluster, clusterSpec)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -539,13 +546,13 @@ func (c *ClusterManager) CreateAwsIamAuthCaSecret(ctx context.Context, cluster *
 	return nil
 }
 
-func (c *ClusterManager) GenerateAwsIamAuthKubeconfig(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error {
+func (c *ClusterManager) generateAwsIamAuthKubeconfig(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	fileName := fmt.Sprintf("%s-aws.kubeconfig", workloadCluster.Name)
 	serverUrl, err := c.clusterClient.GetApiServerUrl(ctx, workloadCluster)
 	if err != nil {
 		return fmt.Errorf("error generating aws-iam-authenticator kubeconfig: %v", err)
 	}
-	tlsCert, err := c.clusterClient.GetClusterCATlsCert(ctx, managementCluster)
+	tlsCert, err := c.clusterClient.GetClusterCATlsCert(ctx, managementCluster, constants.EksaSystemNamespace)
 	if err != nil {
 		return fmt.Errorf("error generating aws-iam-authenticator kubeconfig: %v", err)
 	}
@@ -555,7 +562,7 @@ func (c *ClusterManager) GenerateAwsIamAuthKubeconfig(ctx context.Context, manag
 	}
 	writtenFile, err := c.writer.Write(fileName, awsIamAuthKubeconfigContent, filewriter.PersistentFile, filewriter.Permission0600)
 	if err != nil {
-		return fmt.Errorf("error writing  aws-iam-authenticator kubeconfig to %s: %v", writtenFile, err)
+		return fmt.Errorf("error writing aws-iam-authenticator kubeconfig to %s: %v", writtenFile, err)
 	}
 	return nil
 }
