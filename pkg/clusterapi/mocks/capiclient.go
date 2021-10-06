@@ -10,6 +10,7 @@ import (
 
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	clusterapi "github.com/aws/eks-anywhere/pkg/clusterapi"
+	providers "github.com/aws/eks-anywhere/pkg/providers"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
 )
@@ -38,15 +39,15 @@ func (m *MockCAPIClient) EXPECT() *MockCAPIClientMockRecorder {
 }
 
 // Upgrade mocks base method.
-func (m *MockCAPIClient) Upgrade(ctx context.Context, managementCluster *types.Cluster, newSpec *cluster.Spec, changeDiff *clusterapi.CAPIChangeDiff) error {
+func (m *MockCAPIClient) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, newSpec *cluster.Spec, changeDiff *clusterapi.CAPIChangeDiff) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upgrade", ctx, managementCluster, newSpec, changeDiff)
+	ret := m.ctrl.Call(m, "Upgrade", ctx, managementCluster, provider, newSpec, changeDiff)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Upgrade indicates an expected call of Upgrade.
-func (mr *MockCAPIClientMockRecorder) Upgrade(ctx, managementCluster, newSpec, changeDiff interface{}) *gomock.Call {
+func (mr *MockCAPIClientMockRecorder) Upgrade(ctx, managementCluster, provider, newSpec, changeDiff interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockCAPIClient)(nil).Upgrade), ctx, managementCluster, newSpec, changeDiff)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockCAPIClient)(nil).Upgrade), ctx, managementCluster, provider, newSpec, changeDiff)
 }

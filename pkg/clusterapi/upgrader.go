@@ -14,7 +14,7 @@ type Upgrader struct {
 }
 
 type CAPIClient interface {
-	Upgrade(ctx context.Context, managementCluster *types.Cluster, newSpec *cluster.Spec, changeDiff *CAPIChangeDiff) error
+	Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, newSpec *cluster.Spec, changeDiff *CAPIChangeDiff) error
 }
 
 func NewUpgrader(client CAPIClient) *Upgrader {
@@ -29,7 +29,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster
 		return nil
 	}
 
-	if err := u.capiClient.Upgrade(ctx, managementCluster, newSpec, changeDiff); err != nil {
+	if err := u.capiClient.Upgrade(ctx, managementCluster, provider, newSpec, changeDiff); err != nil {
 		return fmt.Errorf("failed upgrading ClusterAPI from bundles %d to bundles %d: %v", currentSpec.Bundles.Spec.Number, newSpec.Bundles.Spec.Number, err)
 	}
 
