@@ -373,6 +373,16 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint == "" {
 		return errors.New("no value set for ECRMirror.Endpoint")
 	}
+
+	tlsValidator := crypto.NewTlsValidator(clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent, clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint)
+	selfSigned, err := tlsValidator.HasSelfSignedCert()
+	if err != nil {
+		return fmt.Errorf("error validating registy mirror endpoint: %v", err)
+	}
+	if selfSigned {
+		logger.V(1).Info(fmt.Sprintf("Warning: registry mirror endpoint %s is using self-signed certs", clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint))
+	}
+
 	certContent := clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent
 	if certContent == "" {
 		if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
@@ -381,15 +391,15 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 				return fmt.Errorf("error reading the cert file %s: %v", caCert, err)
 			}
 			certContent = string(certBuffer)
-		} else {
-			logger.Info("Warning: caCertContent is not set, TLS verification will be disabled")
+		} else if selfSigned {
+			return fmt.Errorf("registry %s is using self-signed certs, please provide the certificate using caCertContent field", clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint)
 		}
 	}
 
 	if certContent != "" {
-		err := crypto.NewTlsValidator().ValidateCert(certContent, clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint)
+		err := tlsValidator.ValidateCert()
 		if err != nil {
-			return err
+			return fmt.Errorf("error validating the registry certificate: %v", err)
 		}
 	}
 
