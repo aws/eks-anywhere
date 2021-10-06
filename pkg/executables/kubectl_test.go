@@ -119,7 +119,7 @@ func TestKubectlDeleteKubeSpecFromBytesSuccess(t *testing.T) {
 	}
 }
 
-func TestKubectlApplyDeleteSpecFromBytesError(t *testing.T) {
+func TestKubectlDeleteSpecFromBytesError(t *testing.T) {
 	var data []byte
 
 	k, ctx, cluster, e := newKubectl(t)
