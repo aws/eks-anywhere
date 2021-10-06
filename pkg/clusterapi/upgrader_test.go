@@ -75,7 +75,7 @@ func TestUpgraderUpgradeProviderChanges(t *testing.T) {
 		InfrastructureProvider: tt.providerChangeDiff,
 	}
 	tt.provider.EXPECT().ChangeDiff(tt.currentSpec, tt.newSpec).Return(tt.providerChangeDiff)
-	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.newSpec, changeDiff)
+	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
 
 	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(Succeed())
 }
@@ -91,7 +91,7 @@ func TestUpgraderUpgradeCoreChanges(t *testing.T) {
 		},
 	}
 	tt.provider.EXPECT().ChangeDiff(tt.currentSpec, tt.newSpec).Return(nil)
-	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.newSpec, changeDiff)
+	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
 
 	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(Succeed())
 }
@@ -124,7 +124,7 @@ func TestUpgraderUpgradeEverythingChangesStackedEtcd(t *testing.T) {
 		InfrastructureProvider: tt.providerChangeDiff,
 	}
 	tt.provider.EXPECT().ChangeDiff(tt.currentSpec, tt.newSpec).Return(tt.providerChangeDiff)
-	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.newSpec, changeDiff)
+	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
 
 	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(Succeed())
 }
@@ -168,7 +168,7 @@ func TestUpgraderUpgradeEverythingChangesExternalEtcd(t *testing.T) {
 		InfrastructureProvider: tt.providerChangeDiff,
 	}
 	tt.provider.EXPECT().ChangeDiff(tt.currentSpec, tt.newSpec).Return(tt.providerChangeDiff)
-	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.newSpec, changeDiff)
+	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
 
 	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(Succeed())
 }
@@ -179,7 +179,7 @@ func TestUpgraderUpgradeCAPIClientError(t *testing.T) {
 		InfrastructureProvider: tt.providerChangeDiff,
 	}
 	tt.provider.EXPECT().ChangeDiff(tt.currentSpec, tt.newSpec).Return(tt.providerChangeDiff)
-	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.newSpec, changeDiff).Return(errors.New("error from client"))
+	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff).Return(errors.New("error from client"))
 
 	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).NotTo(Succeed())
 }
