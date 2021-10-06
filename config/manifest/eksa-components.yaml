@@ -127,6 +127,10 @@ spec:
                 description: Partition defines the AWS partition on which the IAM
                   roles exist
                 type: string
+            required:
+            - awsRegion
+            - backendMode
+            - clusterID
             type: object
           status:
             description: AWSIamConfigStatus defines the observed state of AWSIamConfig

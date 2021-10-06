@@ -444,7 +444,7 @@ func validateIdentityProviderRefs(clusterConfig *Cluster) error {
 	}
 	for _, ref := range refs {
 		if ref.Kind != OIDCConfigKind && ref.Kind != AWSIamConfigKind {
-			return fmt.Errorf("kind: %s is not supported", ref.Kind)
+			return fmt.Errorf("kind: %s for identityProviderRef is not supported", ref.Kind)
 		}
 		if ref.Name == "" {
 			return errors.New("specify a valid name for identityProviderRef")

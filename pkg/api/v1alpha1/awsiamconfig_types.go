@@ -8,12 +8,12 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 // AWSIamConfigSpec defines the desired state of AWSIamConfig
 type AWSIamConfigSpec struct {
 	// AWSRegion defines a region in an AWS partition
-	AWSRegion string `json:"awsRegion,omitempty"`
+	AWSRegion string `json:"awsRegion"`
 	// BackendMode defines multiple backends for aws-iam-authenticator server
 	// The server searches for mappings in order
-	BackendMode []string `json:"backendMode,omitempty"`
+	BackendMode []string `json:"backendMode"`
 	// ClusterID is a unique-per-cluster identifier for aws-iam-authenticator server
-	ClusterID string `json:"clusterID,omitempty"`
+	ClusterID string `json:"clusterID"`
 	// MapRoles defines IAM role to a username and set of groups mapping using EKSConfigMap BackendMode
 	// Each key must match AWS EKS Style ConfigMap mapRoles
 	// +kubebuilder:validation:Optional

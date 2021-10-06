@@ -183,14 +183,14 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 	}
 	s.eksdRelease = eksd
 	for _, identityProvider := range s.Cluster.Spec.IdentityProviderRefs {
-		if identityProvider.Kind == eksav1alpha1.OIDCConfigKind {
+		switch identityProvider.Kind {
+		case eksav1alpha1.OIDCConfigKind:
 			oidcConfig, err := eksav1alpha1.GetAndValidateOIDCConfig(clusterConfigPath, identityProvider.Name, clusterConfig)
 			if err != nil {
 				return nil, err
 			}
 			s.OIDCConfig = oidcConfig
-		}
-		if identityProvider.Kind == eksav1alpha1.AWSIamConfigKind {
+		case eksav1alpha1.AWSIamConfigKind:
 			awsIamConfig, err := eksav1alpha1.GetAndValidateAWSIamConfig(clusterConfigPath, identityProvider.Name)
 			if err != nil {
 				return nil, err

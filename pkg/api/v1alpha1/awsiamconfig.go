@@ -6,7 +6,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
-const AWSIamConfigKind = "AWSIamConfig"
+const (
+	AWSIamConfigKind = "AWSIamConfig"
+	eksConfigMap     = "EKSConfigMap"
+	mountedFile      = "MountedFile"
+)
 
 func GetAndValidateAWSIamConfig(fileName string, refName string) (*AWSIamConfig, error) {
 	config, err := getAWSIamConfig(fileName)
@@ -51,8 +55,11 @@ func validateAWSIamConfig(config *AWSIamConfig, refName string) error {
 		return fmt.Errorf("AWSIamConfig BackendMode is a required field")
 	}
 	for _, backendMode := range config.Spec.BackendMode {
-		if backendMode == "EKSConfigMap" && config.Spec.MapRoles == "" && config.Spec.MapUsers == "" {
+		if backendMode == eksConfigMap && config.Spec.MapRoles == "" && config.Spec.MapUsers == "" {
 			logger.Info("Warning: AWS IAM Authenticator mapRoles and mapUsers specification is empty. Please be aware this will prevent aws-iam-authenticator from mapping IAM roles to users/groups on the cluster with backendMode EKSConfigMap")
+		}
+		if backendMode == mountedFile {
+			return fmt.Errorf("AWSIamConfig BackendMode does not support %s backend", mountedFile)
 		}
 	}
 	if config.Spec.Partition == "" {
