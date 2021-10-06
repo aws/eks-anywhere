@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/onsi/gomega"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1326,6 +1328,7 @@ func TestClusterManagerClusterSpecChangedGitOpsDefault(t *testing.T) {
 }
 
 type testSetup struct {
+	*WithT
 	clusterManager *clustermanager.ClusterManager
 	mocks          *mocks
 	ctx            context.Context
@@ -1338,10 +1341,11 @@ func newTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) *testSetup 
 	c, m := newClusterManager(t, opts...)
 	clusterName := "cluster-name"
 	return &testSetup{
+		WithT:          NewWithT(t),
 		clusterManager: c,
 		mocks:          m,
 		ctx:            context.Background(),
-		clusterSpec:    test.NewClusterSpec(),
+		clusterSpec: test.NewClusterSpec(),
 		cluster: &types.Cluster{
 			Name: clusterName,
 		},
@@ -1368,4 +1372,23 @@ func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (
 	c := clustermanager.New(m.client, m.networking, m.writer, opts...)
 
 	return c, m
+}
+
+func TestClusterManagerGetCurrentClusterSpecGetClusterError(t *testing.T) {
+	tt := newTest(t)
+
+	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster).Return(nil, errors.New("error from client"))
+
+	_, err := tt.clusterManager.GetCurrentClusterSpec(tt.ctx, tt.cluster)
+	tt.Expect(err).ToNot(BeNil())
+}
+
+func TestClusterManagerGetCurrentClusterSpecGetBundlesError(t *testing.T) {
+	tt := newTest(t)
+
+	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster).Return(tt.clusterSpec.Cluster, nil)
+	tt.mocks.client.EXPECT().GetBundles(tt.ctx, tt.cluster.KubeconfigFile, tt.clusterSpec.Cluster.Name, "").Return(nil, errors.New("error from client"))
+
+	_, err := tt.clusterManager.GetCurrentClusterSpec(tt.ctx, tt.cluster)
+	tt.Expect(err).ToNot(BeNil())
 }
