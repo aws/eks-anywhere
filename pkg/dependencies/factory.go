@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/flux"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -35,6 +36,7 @@ type Dependencies struct {
 	FluxAddonClient  *addonclients.FluxAddonClient
 	AnalyzerFactory  diagnostics.AnalyzerFactory
 	CollectorFactory diagnostics.CollectorFactory
+	CapiUpgrader     *clusterapi.Upgrader
 }
 
 func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
@@ -383,6 +385,21 @@ func (f *Factory) WithCollectorFactory() *Factory {
 		}
 
 		f.dependencies.CollectorFactory = diagnostics.NewCollectorFactory(f.diagnosticCollectorImage)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithCapiUpgrader() *Factory {
+	f.WithClusterctl()
+
+	f.buildSteps = append(f.buildSteps, func() error {
+		if f.dependencies.CapiUpgrader != nil {
+			return nil
+		}
+
+		f.dependencies.CapiUpgrader = clusterapi.NewUpgrader(f.dependencies.Clusterctl)
 		return nil
 	})
 
