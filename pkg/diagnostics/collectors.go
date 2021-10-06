@@ -63,11 +63,11 @@ func (c *collectorFactory) EksaHostCollectors(machineConfigs []providers.Machine
 func (c *collectorFactory) getCollectorsMap() map[v1alpha1.OSFamily][]*Collect {
 	return map[v1alpha1.OSFamily][]*Collect{
 		v1alpha1.Ubuntu:       c.ubuntuHostCollectors(),
-		v1alpha1.Bottlerocket: c.modelRocketHostCollectors(),
+		v1alpha1.Bottlerocket: c.bottleRocketHostCollectors(),
 	}
 }
 
-func (c *collectorFactory) modelRocketHostCollectors() []*Collect {
+func (c *collectorFactory) bottleRocketHostCollectors() []*Collect {
 	return []*Collect{}
 }
 
