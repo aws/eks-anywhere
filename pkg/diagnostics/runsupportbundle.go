@@ -234,9 +234,9 @@ func (e *EksaDiagnosticBundle) createDiagnosticNamespace(ctx context.Context) {
 		KubeconfigFile: e.kubeconfig,
 	}
 
+	logger.V(1).Info("creating temporary namespace for diagnostic collector", "namespace", constants.EksaDiagnosticsNamespace)
 	err := e.retrier.Retry(
 		func() error {
-			logger.V(1).Info("creating temporary namespace for diagnostic collector", "namespace", constants.EksaDiagnosticsNamespace)
 			return e.kubectl.CreateNamespace(ctx, e.kubeconfig, constants.EksaDiagnosticsNamespace)
 		},
 	)
@@ -244,9 +244,9 @@ func (e *EksaDiagnosticBundle) createDiagnosticNamespace(ctx context.Context) {
 		logger.Info("WARNING: failed to create eksa-diagnostics namespace. Some collectors may fail to run.", "err", err)
 	}
 
+	logger.V(1).Info("creating temporary ClusterRole and RoleBinding for diagnostic collector")
 	err = e.retrier.Retry(
 		func() error {
-			logger.V(1).Info("creating temporary ClusterRole and RoleBinding for diagnostic collector")
 			return e.kubectl.ApplyKubeSpecFromBytes(ctx, targetCluster, diagnosticCollectorRbac)
 		},
 	)
@@ -260,9 +260,9 @@ func (e *EksaDiagnosticBundle) deleteDiagnosticNamespace(ctx context.Context) {
 		KubeconfigFile: e.kubeconfig,
 	}
 
+	logger.V(1).Info("cleaning up temporary roles for diagnostic collectors")
 	err := e.retrier.Retry(
 		func() error {
-			logger.V(1).Info("cleaning up temporary roles for diagnostic collectors")
 			return e.kubectl.DeleteKubeSpecFromBytes(ctx, targetCluster, diagnosticCollectorRbac)
 		},
 	)
@@ -270,9 +270,9 @@ func (e *EksaDiagnosticBundle) deleteDiagnosticNamespace(ctx context.Context) {
 		logger.Info("WARNING: failed to clean up roles for eksa-diagnostics.", "err", err)
 	}
 
+	logger.V(1).Info("cleaning up temporary namespace  for diagnostic collectors", "namespace", constants.EksaDiagnosticsNamespace)
 	err = e.retrier.Retry(
 		func() error {
-			logger.V(1).Info("cleaning up temporary namespace  for diagnostic collectors", "namespace", constants.EksaDiagnosticsNamespace)
 			return e.kubectl.DeleteNamespace(ctx, e.kubeconfig, constants.EksaDiagnosticsNamespace)
 		},
 	)
