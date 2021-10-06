@@ -36,6 +36,8 @@ type ClusterSpec struct {
 	ExternalEtcdConfiguration   *ExternalEtcdConfiguration   `json:"externalEtcdConfiguration,omitempty"`
 	ProxyConfiguration          *ProxyConfiguration          `json:"proxyConfiguration,omitempty"`
 	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
+	// +kubebuilder:validation:Optional
+	Management *bool `json:"management,omitempty"`
 }
 
 type ProxyConfiguration struct {

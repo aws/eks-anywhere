@@ -12,6 +12,7 @@ spec:
     kind: GitOpsConfig
     name: test-gitops
   kubernetesVersion: "1.19"
+  management: true
 
 ---
 kind: VSphereDatacenterConfig
