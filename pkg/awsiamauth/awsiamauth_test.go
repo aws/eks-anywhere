@@ -89,7 +89,8 @@ func givenClusterSpec() *cluster.Spec {
 				BackendMode: []string{"mode1", "mode2"},
 				ClusterID:   "test-cluster",
 				Partition:   "test",
-			}}
+			},
+		}
 	})
 	return clusterSpec
 }

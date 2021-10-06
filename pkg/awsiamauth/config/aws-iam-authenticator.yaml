@@ -1,6 +1,6 @@
 ---
 kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: aws-iam-authenticator
 rules:
@@ -51,11 +51,10 @@ metadata:
   namespace: kube-system
 
 ---
-kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: aws-iam-authenticator
-  namespace: kube-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -192,11 +191,11 @@ metadata:
   name: aws-auth
   namespace: kube-system
 data:
-  mapRoles: |
 {{- if (ne .mapRoles "")}}
+  mapRoles: |
 {{ .mapRoles | indent 4 }}
 {{- end}}
-  mapUsers: |
 {{- if (ne .mapUsers "")}}
+  mapUsers: |
 {{ .mapUsers | indent 4 }}
 {{- end}}
