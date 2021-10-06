@@ -131,7 +131,7 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
 	)
 	if err != nil {
-		return anywherev1alpha1.CoreClusterAPI{}, errors.Wrapf(err, "Error getting git tag for cluster-api")
+		return anywherev1alpha1.CoreClusterAPI{}, errors.Wrapf(err, "Error getting version for cluster-api")
 	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
@@ -197,7 +197,7 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
 	)
 	if err != nil {
-		return anywherev1alpha1.KubeadmBootstrapBundle{}, errors.Wrapf(err, "Error getting git tag for cluster-api")
+		return anywherev1alpha1.KubeadmBootstrapBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")
 	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
@@ -263,7 +263,7 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
 	)
 	if err != nil {
-		return anywherev1alpha1.KubeadmControlPlaneBundle{}, errors.Wrapf(err, "error getting version for cluster-api")
+		return anywherev1alpha1.KubeadmControlPlaneBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")
 	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}

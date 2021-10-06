@@ -125,7 +125,7 @@ func (r *ReleaseConfig) GetAwsBundle(imageDigests map[string]string) (anywherev1
 		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api-provider-aws")),
 	)
 	if err != nil {
-		return anywherev1alpha1.AwsBundle{}, errors.Wrapf(err, "Error getting Git tag for cluster-api-provider-aws")
+		return anywherev1alpha1.AwsBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-aws")
 	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
