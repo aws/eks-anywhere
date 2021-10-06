@@ -176,3 +176,72 @@ func TestExtraArgsToPartialYaml(t *testing.T) {
 		})
 	}
 }
+
+func TestAwsIamAuthExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName string
+		awsiam   *v1alpha1.AWSIamConfig
+		want     clusterapi.ExtraArgs
+	}{
+		{
+			testName: "no aws iam",
+			awsiam:   nil,
+			want:     clusterapi.ExtraArgs{},
+		},
+		{
+			testName: "with aws iam config",
+			awsiam:   &v1alpha1.AWSIamConfig{},
+			want: clusterapi.ExtraArgs{
+				"authentication-token-webhook-config-file": "/etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.AwsIamAuthExtraArgs(tt.awsiam); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("AwsIamAuthExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestAppend(t *testing.T) {
+	tests := []struct {
+		testName string
+		e        clusterapi.ExtraArgs
+		a        clusterapi.ExtraArgs
+		want     clusterapi.ExtraArgs
+	}{
+		{
+			testName: "initially empty",
+			e:        clusterapi.ExtraArgs{},
+			a: clusterapi.ExtraArgs{
+				"key1": "value1",
+			},
+			want: clusterapi.ExtraArgs{
+				"key1": "value1",
+			},
+		},
+		{
+			testName: "initially not empty",
+			e: clusterapi.ExtraArgs{
+				"key1": "value1",
+			},
+			a: clusterapi.ExtraArgs{
+				"key2": "value2",
+			},
+			want: clusterapi.ExtraArgs{
+				"key1": "value1",
+				"key2": "value2",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := tt.e.Append(tt.a); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ExtraArgs.Append() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
