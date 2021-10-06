@@ -45,7 +45,7 @@ type CAPIChangeDiff struct {
 
 func (u *Upgrader) capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider providers.Provider) *CAPIChangeDiff {
 	changeDiff := &CAPIChangeDiff{}
-	somethingChanged := false
+	componentChanged := false
 
 	if currentSpec.VersionsBundle.ClusterAPI.Version != newSpec.VersionsBundle.ClusterAPI.Version {
 		changeDiff.Core = &types.ComponentChangeDiff{
@@ -53,7 +53,7 @@ func (u *Upgrader) capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider p
 			NewVersion:    newSpec.VersionsBundle.ClusterAPI.Version,
 			OldVersion:    currentSpec.VersionsBundle.ClusterAPI.Version,
 		}
-		somethingChanged = true
+		componentChanged = true
 	}
 
 	if currentSpec.VersionsBundle.ControlPlane.Version != newSpec.VersionsBundle.ControlPlane.Version {
@@ -62,7 +62,7 @@ func (u *Upgrader) capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider p
 			NewVersion:    newSpec.VersionsBundle.ControlPlane.Version,
 			OldVersion:    currentSpec.VersionsBundle.ControlPlane.Version,
 		}
-		somethingChanged = true
+		componentChanged = true
 	}
 
 	if currentSpec.VersionsBundle.Bootstrap.Version != newSpec.VersionsBundle.Bootstrap.Version {
@@ -73,7 +73,7 @@ func (u *Upgrader) capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider p
 				OldVersion:    currentSpec.VersionsBundle.Bootstrap.Version,
 			},
 		)
-		somethingChanged = true
+		componentChanged = true
 	}
 
 	if newSpec.Spec.ExternalEtcdConfiguration != nil {
@@ -85,7 +85,7 @@ func (u *Upgrader) capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider p
 					OldVersion:    currentSpec.VersionsBundle.ExternalEtcdBootstrap.Version,
 				},
 			)
-			somethingChanged = true
+			componentChanged = true
 		}
 
 		if currentSpec.VersionsBundle.ExternalEtcdController.Version != newSpec.VersionsBundle.ExternalEtcdController.Version {
@@ -96,16 +96,16 @@ func (u *Upgrader) capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider p
 					OldVersion:    currentSpec.VersionsBundle.ExternalEtcdController.Version,
 				},
 			)
-			somethingChanged = true
+			componentChanged = true
 		}
 	}
 
 	if providerChangeDiff := provider.ChangeDiff(currentSpec, newSpec); providerChangeDiff != nil {
 		changeDiff.InfrastructureProvider = providerChangeDiff
-		somethingChanged = true
+		componentChanged = true
 	}
 
-	if !somethingChanged {
+	if !componentChanged {
 		return nil
 	}
 
