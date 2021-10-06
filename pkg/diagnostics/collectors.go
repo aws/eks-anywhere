@@ -24,7 +24,7 @@ func NewDefaultCollectorFactory() *collectorFactory {
 }
 
 func (c *collectorFactory) DefaultCollectors() []*Collect {
-	return []*Collect{
+	collectors := []*Collect{
 		{
 			ClusterInfo: &clusterInfo{},
 		},
@@ -39,6 +39,70 @@ func (c *collectorFactory) DefaultCollectors() []*Collect {
 				Key:          "license",
 			},
 		},
+	}
+	collectors = append(collectors, c.defaultLogCollectors()...)
+	collectors = append(collectors, c.defaultCrdCollectors()...)
+	return collectors
+}
+
+func (c *collectorFactory) EksaHostCollectors(machineConfigs []providers.MachineConfig) []*Collect {
+	var collectors []*Collect
+	collectorsMap := c.getCollectorsMap()
+
+	// we don't want to duplicate the collectors if multiple machine configs have the same OS family
+	osFamiliesSeen := map[v1alpha1.OSFamily]bool{}
+	for _, config := range machineConfigs {
+		if _, seen := osFamiliesSeen[config.OSFamily()]; !seen {
+			collectors = append(collectors, collectorsMap[config.OSFamily()]...)
+			osFamiliesSeen[config.OSFamily()] = true
+		}
+	}
+	return collectors
+}
+
+func (c *collectorFactory) getCollectorsMap() map[v1alpha1.OSFamily][]*Collect {
+	return map[v1alpha1.OSFamily][]*Collect{
+		v1alpha1.Ubuntu:       c.ubuntuHostCollectors(),
+		v1alpha1.Bottlerocket: c.bottleRocketHostCollectors(),
+	}
+}
+
+func (c *collectorFactory) bottleRocketHostCollectors() []*Collect {
+	return []*Collect{}
+}
+
+func (c *collectorFactory) ubuntuHostCollectors() []*Collect {
+	return []*Collect{
+		{
+			CopyFromHost: &copyFromHost{
+				Name:      hostlogPath("cloud-init"),
+				Namespace: constants.EksaDiagnosticsNamespace,
+				Image:     c.DiagnosticCollectorImage,
+				HostPath:  "/var/log/cloud-init.log",
+			},
+		},
+		{
+			CopyFromHost: &copyFromHost{
+				Name:      hostlogPath("cloud-init-output"),
+				Namespace: constants.EksaDiagnosticsNamespace,
+				Image:     c.DiagnosticCollectorImage,
+				HostPath:  "/var/log/cloud-init-output.log",
+			},
+		},
+		{
+			CopyFromHost: &copyFromHost{
+				Name:      hostlogPath("syslog"),
+				Namespace: constants.EksaDiagnosticsNamespace,
+				Image:     c.DiagnosticCollectorImage,
+				HostPath:  "/var/log/syslog",
+				Timeout:   time.Minute.String(),
+			},
+		},
+	}
+}
+
+func (c *collectorFactory) defaultLogCollectors() []*Collect {
+	return []*Collect{
 		{
 			Logs: &logs{
 				Namespace: constants.CapdSystemNamespace,
@@ -120,62 +184,51 @@ func (c *collectorFactory) DefaultCollectors() []*Collect {
 	}
 }
 
-func (c *collectorFactory) EksaHostCollectors(machineConfigs []providers.MachineConfig) []*Collect {
-	var collectors []*Collect
-	collectorsMap := c.getCollectorsMap()
-
-	// we don't want to duplicate the collectors if multiple machine configs have the same OS family
-	osFamiliesSeen := map[v1alpha1.OSFamily]bool{}
-	for _, config := range machineConfigs {
-		if _, seen := osFamiliesSeen[config.OSFamily()]; !seen {
-			collectors = append(collectors, collectorsMap[config.OSFamily()]...)
-			osFamiliesSeen[config.OSFamily()] = true
-		}
+func (c *collectorFactory) defaultCrdCollectors() []*Collect {
+	defaultCrds := []string{
+		"clusters.anywhere.eks.amazonaws.com",
+		"bundles.anywhere.eks.amazonaws.com",
+		"clusters.cluster.x-k8s.io",
+		"machinedeployments.cluster.x-k8s.io",
+		"machines.cluster.x-k8s.io",
 	}
-	return collectors
+	return c.generateCrdCollectors(defaultCrds)
 }
 
-func (c *collectorFactory) getCollectorsMap() map[v1alpha1.OSFamily][]*Collect {
-	return map[v1alpha1.OSFamily][]*Collect{
-		v1alpha1.Ubuntu:       c.ubuntuHostCollectors(),
-		v1alpha1.Bottlerocket: c.modelRocketHostCollectors(),
+func (c *collectorFactory) generateCrdCollectors(crds []string) []*Collect {
+	var crdCollectors []*Collect
+	for _, d := range crds {
+		crdCollectors = append(crdCollectors, c.crdCollector(d))
 	}
+	return crdCollectors
 }
 
-func (c *collectorFactory) modelRocketHostCollectors() []*Collect {
-	return []*Collect{}
-}
-
-func (c *collectorFactory) ubuntuHostCollectors() []*Collect {
-	return []*Collect{
-		{
-			CopyFromHost: &copyFromHost{
-				Name:      "CloudInitLog",
-				Namespace: constants.EksaSystemNamespace,
-				Image:     c.DiagnosticCollectorImage,
-				HostPath:  "/var/log/cloud-init.log",
+func (c *collectorFactory) crdCollector(crdType string) *Collect {
+	command := []string{"kubectl"}
+	args := []string{"get", crdType, "-o", "json", "--all-namespaces"}
+	collectorPath := crdPath(crdType)
+	return &Collect{
+		Run: &run{
+			collectorMeta: collectorMeta{
+				CollectorName: crdType,
 			},
-		},
-		{
-			CopyFromHost: &copyFromHost{
-				Name:      "CloudInitOutputLog",
-				Namespace: constants.EksaSystemNamespace,
-				Image:     c.DiagnosticCollectorImage,
-				HostPath:  "/var/log/cloud-init-output.log",
-			},
-		},
-		{
-			CopyFromHost: &copyFromHost{
-				Name:      "Syslog",
-				Namespace: constants.EksaSystemNamespace,
-				Image:     c.DiagnosticCollectorImage,
-				HostPath:  "/var/log/syslog",
-				Timeout:   time.Minute.String(),
-			},
+			Name:      collectorPath,
+			Namespace: constants.EksaDiagnosticsNamespace,
+			Image:     c.DiagnosticCollectorImage,
+			Command:   command,
+			Args:      args,
 		},
 	}
 }
 
 func logpath(namespace string) string {
 	return fmt.Sprintf("logs/%s", namespace)
+}
+
+func hostlogPath(logType string) string {
+	return fmt.Sprintf("hostLogs/%s", logType)
+}
+
+func crdPath(crdType string) string {
+	return fmt.Sprintf("crds/%s", crdType)
 }

@@ -108,6 +108,28 @@ func TestKubectlApplyKubeSpecFromBytesError(t *testing.T) {
 	}
 }
 
+func TestKubectlDeleteKubeSpecFromBytesSuccess(t *testing.T) {
+	var data []byte
+
+	k, ctx, cluster, e := newKubectl(t)
+	expectedParam := []string{"delete", "-f", "-", "--kubeconfig", cluster.KubeconfigFile}
+	e.EXPECT().ExecuteWithStdin(ctx, data, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
+	if err := k.DeleteKubeSpecFromBytes(ctx, cluster, data); err != nil {
+		t.Errorf("Kubectl.DeleteKubeSpecFromBytes() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlDeleteSpecFromBytesError(t *testing.T) {
+	var data []byte
+
+	k, ctx, cluster, e := newKubectl(t)
+	expectedParam := []string{"delete", "-f", "-", "--kubeconfig", cluster.KubeconfigFile}
+	e.EXPECT().ExecuteWithStdin(ctx, data, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
+	if err := k.DeleteKubeSpecFromBytes(ctx, cluster, data); err == nil {
+		t.Errorf("Kubectl.DeleteKubeSpecFromBytes() error = nil, want not nil")
+	}
+}
+
 func TestKubectlApplyKubeSpecFromBytesWithNamespaceSuccess(t *testing.T) {
 	var data []byte
 	var namespace string
@@ -151,6 +173,28 @@ func TestKubectlCreateNamespaceError(t *testing.T) {
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
 	if err := k.CreateNamespace(ctx, kubeconfig, namespace); err == nil {
 		t.Errorf("Kubectl.CreateNamespace() error = nil, want not nil")
+	}
+}
+
+func TestKubectlDeleteNamespaceSuccess(t *testing.T) {
+	var kubeconfig, namespace string
+
+	k, ctx, _, e := newKubectl(t)
+	expectedParam := []string{"delete", "namespace", namespace, "--kubeconfig", kubeconfig}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
+	if err := k.DeleteNamespace(ctx, kubeconfig, namespace); err != nil {
+		t.Errorf("Kubectl.DeleteNamespace() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlDeleteNamespaceError(t *testing.T) {
+	var kubeconfig, namespace string
+
+	k, ctx, _, e := newKubectl(t)
+	expectedParam := []string{"delete", "namespace", namespace, "--kubeconfig", kubeconfig}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
+	if err := k.DeleteNamespace(ctx, kubeconfig, namespace); err == nil {
+		t.Errorf("Kubectl.DeleteNamespace() error = nil, want not nil")
 	}
 }
 

@@ -94,6 +94,7 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).
 		WithProvider(csbo.fileName, clusterSpec.Cluster, cc.skipIpCheck).
+		WithKubectl().
 		WithAnalyzerFactory().
 		WithCollectorFactory().
 		WithWriter().
@@ -108,6 +109,7 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 		CollectorFactory: deps.CollectorFactory,
 		Client:           deps.Troubleshoot,
 		Writer:           deps.Writer,
+		Kubectl:          deps.Kubectl,
 	}
 
 	supportBundle, err := diagnostics.NewDiagnosticBundle(clusterSpec, deps.Provider, csbo.kubeConfig(clusterSpec.Name), bundleConfig, opts)
