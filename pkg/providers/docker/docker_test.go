@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/cluster-api/api/v1alpha3"
@@ -16,11 +17,31 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	dockerMocks "github.com/aws/eks-anywhere/pkg/providers/docker/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
+
+type dockerTest struct {
+	*WithT
+	dockerClient *dockerMocks.MockProviderClient
+	kubectl      *dockerMocks.MockProviderKubectlClient
+	provider     providers.Provider
+}
+
+func newTest(t *testing.T) *dockerTest {
+	ctrl := gomock.NewController(t)
+	client := dockerMocks.NewMockProviderClient(ctrl)
+	kubectl := dockerMocks.NewMockProviderKubectlClient(ctrl)
+	return &dockerTest{
+		WithT:        NewWithT(t),
+		dockerClient: client,
+		kubectl:      kubectl,
+		provider:     docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow),
+	}
+}
 
 func TestProviderUpdateKubeConfig(t *testing.T) {
 	input := []byte(`
@@ -349,4 +370,28 @@ var versionsBundle = &cluster.VersionsBundle{
 			},
 		},
 	},
+}
+
+func TestChangeDiffNoChange(t *testing.T) {
+	tt := newTest(t)
+	clusterSpec := test.NewClusterSpec()
+	assert.Nil(t, tt.provider.ChangeDiff(clusterSpec, clusterSpec))
+}
+
+func TestChangeDiffWithChange(t *testing.T) {
+	tt := newTest(t)
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.VersionsBundle.Docker.Version = "v0.3.18"
+	})
+	newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.VersionsBundle.Docker.Version = "v0.3.19"
+	})
+
+	wantDiff := &types.ComponentChangeDiff{
+		ComponentName: "docker",
+		NewVersion:    "v0.3.19",
+		OldVersion:    "v0.3.18",
+	}
+
+	tt.Expect(tt.provider.ChangeDiff(clusterSpec, newClusterSpec)).To(Equal(wantDiff))
 }
