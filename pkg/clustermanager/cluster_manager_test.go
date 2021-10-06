@@ -8,9 +8,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/gomega"
-
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
@@ -1345,7 +1344,7 @@ func newTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) *testSetup 
 		clusterManager: c,
 		mocks:          m,
 		ctx:            context.Background(),
-		clusterSpec: test.NewClusterSpec(),
+		clusterSpec:    test.NewClusterSpec(),
 		cluster: &types.Cluster{
 			Name: clusterName,
 		},
