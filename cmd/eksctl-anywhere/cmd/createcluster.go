@@ -16,8 +16,9 @@ import (
 
 type createClusterOptions struct {
 	clusterOptions
-	forceClean  bool
-	skipIpCheck bool
+	forceClean           bool
+	skipIpCheck          bool
+	managementKubeconfig string
 }
 
 var cc = &createClusterOptions{}
@@ -45,6 +46,7 @@ func init() {
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
 	createClusterCmd.Flags().StringVar(&cc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
+	createClusterCmd.Flags().StringVar(&cc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
 	err := createClusterCmd.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -96,7 +98,7 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 		deps.FluxAddonClient,
 		deps.Writer,
 	)
-	err = createCluster.Run(ctx, clusterSpec, cc.forceClean)
+	err = createCluster.Run(ctx, clusterSpec, cc.forceClean, cc.managementKubeconfig)
 	if err == nil {
 		deps.Writer.CleanUpTemp()
 	}
