@@ -117,13 +117,14 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any())
 
-		opts := diagnostics.EksaDiagnosticBundleOpts{
+		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
 			AnalyzerFactory:  a,
 			CollectorFactory: c,
 			Writer:           w,
 		}
 
-		_, _ = diagnostics.NewDiagnosticBundleFromSpec(spec, p, "", opts)
+		f := diagnostics.NewFactory(opts)
+		_, _ = f.NewDiagnosticBundleFromSpec(spec, p, "")
 	})
 }
 
@@ -166,13 +167,14 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 		c.EXPECT().DefaultCollectors().Return(nil)
 		c.EXPECT().EksaHostCollectors(gomock.Any()).Return(nil)
 
-		opts := diagnostics.EksaDiagnosticBundleOpts{
+		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
 			AnalyzerFactory:  a,
 			CollectorFactory: c,
 			Writer:           w,
 		}
 
-		_, _ = diagnostics.NewDiagnosticBundleFromSpec(spec, p, "", opts)
+		f := diagnostics.NewFactory(opts)
+		_, _ = f.NewDiagnosticBundleFromSpec(spec, p, "")
 	})
 }
 
@@ -215,13 +217,14 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 		c.EXPECT().DefaultCollectors().Return(nil)
 		c.EXPECT().EksaHostCollectors(gomock.Any()).Return(nil)
 
-		opts := diagnostics.EksaDiagnosticBundleOpts{
+		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
 			AnalyzerFactory:  a,
 			CollectorFactory: c,
 			Writer:           w,
 		}
 
-		_, _ = diagnostics.NewDiagnosticBundleFromSpec(spec, p, "", opts)
+		f := diagnostics.NewFactory(opts)
+		_, _ = f.NewDiagnosticBundleFromSpec(spec, p, "")
 	})
 }
 
@@ -233,13 +236,23 @@ func TestGenerateDefaultBundle(t *testing.T) {
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
 
-		_ = diagnostics.NewDiagnosticBundleDefault(a, c)
+		w := givenWriter(t)
+
+		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
+			AnalyzerFactory:  a,
+			CollectorFactory: c,
+			Writer:           w,
+		}
+
+		f := diagnostics.NewFactory(opts)
+		_ = f.NewDiagnosticBundleDefault()
 	})
 }
 
 func TestGenerateCustomBundle(t *testing.T) {
 	t.Run(t.Name(), func(t *testing.T) {
-		_ = diagnostics.NewDiagnosticBundleCustom("", "", getOpts(t))
+		f := diagnostics.NewFactory(getOpts(t))
+		_ = f.NewDiagnosticBundleCustom("", "")
 	})
 }
 
@@ -253,8 +266,8 @@ func givenMockCollectorsFactory(t *testing.T) *supportMocks.MockCollectorFactory
 	return supportMocks.NewMockCollectorFactory(ctrl)
 }
 
-func getOpts(t *testing.T) diagnostics.EksaDiagnosticBundleOpts {
-	return diagnostics.EksaDiagnosticBundleOpts{
+func getOpts(t *testing.T) diagnostics.EksaDiagnosticBundleFactoryOpts {
+	return diagnostics.EksaDiagnosticBundleFactoryOpts{
 		AnalyzerFactory:  givenMockAnalyzerFactory(t),
 		CollectorFactory: givenMockCollectorsFactory(t),
 	}

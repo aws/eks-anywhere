@@ -2,11 +2,9 @@ package diagnostics
 
 import (
 	"context"
-	_ "embed"
 	"fmt"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -20,24 +18,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-//go:embed config/diagnostic-collector-rbac.yaml
-var diagnosticCollectorRbac []byte
-
-const (
-	troubleshootApiVersion    = "troubleshoot.sh/v1beta2"
-	generatedBundleNameFormat = "%s-%s-bundle.yaml"
-	maxRetries                = 5
-	backOffPeriod             = 5 * time.Second
-)
-
-type EksaDiagnosticBundleOpts struct {
-	AnalyzerFactory  AnalyzerFactory
-	Client           BundleClient
-	CollectorFactory CollectorFactory
-	Kubectl          *executables.Kubectl
-	Writer           filewriter.FileWriter
-}
-
 type EksaDiagnosticBundle struct {
 	bundle           *supportBundle
 	bundlePath       string
@@ -49,83 +29,6 @@ type EksaDiagnosticBundle struct {
 	kubectl          *executables.Kubectl
 	retrier          *retrier.Retrier
 	writer           filewriter.FileWriter
-}
-
-func NewDiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig string, bundlePath string, opts EksaDiagnosticBundleOpts) (*EksaDiagnosticBundle, error) {
-	if bundlePath == "" && spec != nil {
-		return NewDiagnosticBundleFromSpec(spec, provider, kubeconfig, opts)
-	}
-	return NewDiagnosticBundleCustom(kubeconfig, bundlePath, opts), nil
-}
-
-func NewDiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider, kubeconfig string, opts EksaDiagnosticBundleOpts) (*EksaDiagnosticBundle, error) {
-	b := &EksaDiagnosticBundle{
-		bundle: &supportBundle{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "SupportBundle",
-				APIVersion: troubleshootApiVersion,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("%sBundle", spec.Name),
-			},
-			Spec: supportBundleSpec{},
-		},
-		analyzerFactory:  opts.AnalyzerFactory,
-		collectorFactory: opts.CollectorFactory,
-		client:           opts.Client,
-		clusterSpec:      spec,
-		kubeconfig:       kubeconfig,
-		kubectl:          opts.Kubectl,
-		retrier:          retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
-		writer:           opts.Writer,
-	}
-
-	b = b.
-		WithGitOpsConfig(spec.GitOpsConfig).
-		WithOidcConfig(spec.OIDCConfig).
-		WithExternalEtcd(spec.Spec.ExternalEtcdConfiguration).
-		WithDatacenterConfig(spec.Spec.DatacenterRef).
-		WithMachineConfigs(provider.MachineConfigs()).
-		WithDefaultAnalyzers().
-		WithDefaultCollectors().
-		WithLogTextAnalyzers()
-
-	err := b.WriteBundleConfig()
-	if err != nil {
-		return nil, fmt.Errorf("error writing bundle config: %v", err)
-	}
-
-	return b, nil
-}
-
-func NewDiagnosticBundleDefault(af AnalyzerFactory, cf CollectorFactory) *EksaDiagnosticBundle {
-	b := &EksaDiagnosticBundle{
-		bundle: &supportBundle{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "SupportBundle",
-				APIVersion: troubleshootApiVersion,
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "defaultBundle",
-			},
-			Spec: supportBundleSpec{},
-		},
-		analyzerFactory:  af,
-		collectorFactory: cf,
-	}
-	return b.WithDefaultAnalyzers().WithDefaultCollectors()
-}
-
-func NewDiagnosticBundleCustom(kubeconfig string, bundlePath string, opts EksaDiagnosticBundleOpts) *EksaDiagnosticBundle {
-	return &EksaDiagnosticBundle{
-		bundlePath:       bundlePath,
-		analyzerFactory:  opts.AnalyzerFactory,
-		collectorFactory: opts.CollectorFactory,
-		client:           opts.Client,
-		kubeconfig:       kubeconfig,
-		kubectl:          opts.Kubectl,
-		retrier:          retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
-	}
 }
 
 func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeValue *time.Time) error {

@@ -53,7 +53,7 @@ func TestDockerVersion(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
-	executable.EXPECT().Execute(ctx, "version", "--format", "{{.Client.Version}}").Return(*bytes.NewBufferString(version), nil)
+	executable.EXPECT().Execute(ctx, "version", "--format", "{{.client.Version}}").Return(*bytes.NewBufferString(version), nil)
 	d := executables.NewDocker(executable)
 	v, err := d.Version(ctx)
 	if err != nil {
