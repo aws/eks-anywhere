@@ -1,5 +1,5 @@
 ---
-title: "OIDC reference"
+title: "OIDC configuration"
 linkTitle: "OIDC"
 weight: 30
 description: >

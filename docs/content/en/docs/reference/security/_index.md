@@ -141,3 +141,11 @@ The associated private key should be treated as extremely sensitive, as `sudo` a
 ### VMWare OVAs
 
 Only download OVAs for cluster nodes from official sources, and do not allow untrusted users or processes to modify the templates used by EKS Anywhere for provisioning nodes.
+
+### Benchmark tests for cluster hardening
+
+EKS Anywhere creates clusters with server hardening configurations out of the box, via the use of security flags and opinionated default templates. You can verify the security posture of your EKS Anywhere cluster by using a tool called [`kube-bench`](https://github.com/aquasecurity/kube-bench), that checks whether Kubernetes is deployed securely.
+
+`kube-bench` runs checks documented in the [CIS Benchmark for Kubernetes](https://www.cisecurity.org/benchmark/kubernetes/), such as, pod specification file permissions, disabling insecure arguments, and so on.
+
+Refer to the [EKS Anywhwere CIS Self-Assessment Guide]({{< relref "./kube-bench.md" >}}) for more information on how to evaluate the security configurations of your EKS Anywhere cluster.

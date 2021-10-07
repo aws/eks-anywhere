@@ -3,10 +3,18 @@ title: Install EKS Anywhere
 weight: 10
 ---
 
+EKS Anywhere will create and manage Kubernetes clusters on multiple providers.
+Currently we support creating development clusters locally with Docker and production clusters using VMware vSphere.
+Other deployment targets will be added in the future, including bare metal support in 2022.
+
+Creating an EKS Anywhere cluster begins with setting up an Administrative machine where you will run Docker and add some binaries.
+From there, you create the cluster for your chosen provider.
+See [Create cluster workflow]({{< relref "../../concepts/clusterworkflow" >}}) for an overview of the cluster creation process.
+
 To create an EKS Anywhere cluster you will need [`eksctl`](https://eksctl.io) and the `eksctl-anywhere` plugin.
 This will let you create a cluster in multiple providers for local development or production workloads.
 
-### Local machine prerequisites
+### Administrative machine prerequisites
 
 - Docker 20.x.x
 - Mac OS (10.15) / Ubuntu (20.04.2 LTS)
@@ -16,7 +24,7 @@ This will let you create a cluster in multiple providers for local development o
 
 > **_NOTE:_** If you are using Ubuntu use the [Docker CE](https://docs.docker.com/engine/install/ubuntu/) installation instructions to install Docker and not the Snap installation.
 
-### Install EKS Anywhere
+### Install EKS Anywhere CLI tools
 
 #### Via Homebrew (macOS and Linux)
 
@@ -25,7 +33,7 @@ EKS Anywhere only works on computers with x86 and amd64 process architecture.
 It currently will not work on computers with Apple Silicon or Arm based processors.
 {{% /alert %}}
 
-You can install `eksctl` and `eksctl-anywhere` with [homebrew](http://homebrew.sh/).
+You can install `eksctl` and `eksctl-anywhere` with [homebrew](http://brew.sh/).
 This package will also install `kubectl` and the `aws-iam-authenticator` which will be helpful to test EKS clusters.
 
 ```bash
@@ -60,7 +68,7 @@ If you installed `eksctl-anywhere` via homebrew you can upgrade the binary with
 
 ```bash
 brew update
-brew upgrade eksctl-anywhere
+brew upgrade eks-anywhere
 ```
 
 If you installed `eksctl-anywhere` manually you should follow the installation steps to download the latest release.

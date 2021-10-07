@@ -1,5 +1,5 @@
 ---
-title: "etcd configuration reference"
+title: "etcd configuration"
 linkTitle: "etcd"
 weight: 20
 description: >

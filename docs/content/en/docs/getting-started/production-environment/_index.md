@@ -12,7 +12,7 @@ EKS Anywhere allows you to provision and manage Amazon EKS on your own infrastru
 EKS Anywhere needs to be run on an administrative machine that has certain [machine
 requirements]({{< relref "../install" >}}).
 An EKS Anywhere deployment will also require the availability of certain
-[resources from your VMware vSphere deployment]({{< relref "/docs/reference/vsphere/vsphere-prereq/_index.md" >}}).
+[resources from your VMware vSphere deployment]({{< relref "../../reference/vsphere/vsphere-prereq/_index.md" >}}).
 
 ## Steps
 
@@ -25,20 +25,25 @@ An EKS Anywhere deployment will also require the availability of certain
    ```
 
     A production grade EKS Anywhere cluster should be made with at least three control plane nodes and three worker nodes
-    for high availability and rolling upgrades.:
+    for high availability and rolling upgrades:
     ```
       controlPlaneConfiguration:
-        count: 3
+        count: 2
         endpoint:
-          host: 198.18.100.79
+          host: "192.168.0.20"
         machineGroupRef:
           kind: VSphereMachineConfig
           name: prod-control-plane
-      workerNodeGroupConfigurations:
-      - count: 3
+      externalEtcdConfiguration:
+        count: 3
         machineGroupRef:
           kind: VSphereMachineConfig
-          name: prod-data-plane
+          name: prod-etcd
+      workerNodeGroupConfigurations:
+        - count: 2
+          machineGroupRef:
+            kind: VSphereMachineConfig
+            name: prod-data-plane
     ```
 
     Further information about the values in the `eksa-cluster.yaml` can be found in the [cluster specification
