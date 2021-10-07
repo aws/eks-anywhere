@@ -9,6 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/features"
@@ -29,7 +30,7 @@ type upgradeTestSetup struct {
 	writer           *writermocks.MockFileWriter
 	validator        *mocks.MockValidator
 	capiUpgrader     *mocks.MockCAPIUpgrader
-	datacenterConfig *providermocks.MockDatacenterConfig
+	datacenterConfig providers.DatacenterConfig
 	machineConfigs   []providers.MachineConfig
 	workflow         *workflows.Upgrade
 	ctx              context.Context
@@ -51,9 +52,9 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	provider := providermocks.NewMockProvider(mockCtrl)
 	writer := writermocks.NewMockFileWriter(mockCtrl)
 	validator := mocks.NewMockValidator(mockCtrl)
-	datacenterConfig := providermocks.NewMockDatacenterConfig(mockCtrl)
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	capiUpgrader := mocks.NewMockCAPIUpgrader(mockCtrl)
-	machineConfigs := []providers.MachineConfig{providermocks.NewMockMachineConfig(mockCtrl)}
+	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	workflow := workflows.NewUpgrade(bootstrapper, provider, capiUpgrader, clusterManager, addonManager, writer)
 
 	return &upgradeTestSetup{

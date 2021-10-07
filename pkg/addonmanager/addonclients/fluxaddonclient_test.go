@@ -1003,12 +1003,12 @@ func (tt *fluxTest) setupFlux() (owner, repo, path string) {
 	return owner, repo, path
 }
 
-func datacenterConfig() *v1alpha1.VSphereDatacenterConfigGenerate {
-	return &v1alpha1.VSphereDatacenterConfigGenerate{
+func datacenterConfig() *v1alpha1.VSphereDatacenterConfig {
+	return &v1alpha1.VSphereDatacenterConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind: v1alpha1.VSphereDatacenterKind,
 		},
-		ObjectMeta: v1alpha1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "fluxAddonTestCluster",
 		},
 		Spec: v1alpha1.VSphereDatacenterConfigSpec{
@@ -1017,12 +1017,12 @@ func datacenterConfig() *v1alpha1.VSphereDatacenterConfigGenerate {
 	}
 }
 
-func machineConfig() *v1alpha1.VSphereMachineConfigGenerate {
-	return &v1alpha1.VSphereMachineConfigGenerate{
+func machineConfig() *v1alpha1.VSphereMachineConfig {
+	return &v1alpha1.VSphereMachineConfig{
 		TypeMeta: metav1.TypeMeta{
 			Kind: v1alpha1.VSphereMachineConfigKind,
 		},
-		ObjectMeta: v1alpha1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "fluxAddonTestCluster",
 		},
 		Spec: v1alpha1.VSphereMachineConfigSpec{

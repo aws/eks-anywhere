@@ -5,6 +5,7 @@ import (
 
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -12,39 +13,33 @@ import (
 )
 
 func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) ([]byte, error) {
-	convertedClusterGenerateConfig := clusterSpec.ConvertConfigToConfigGenerateStruct()
-	clusterObj, err := yaml.Marshal(convertedClusterGenerateConfig)
-	if err != nil {
-		return nil, fmt.Errorf("error outputting cluster yaml: %v", err)
+	marshallables := make([]v1alpha1.Marshallable, 0, 4+len(machineConfigs))
+	marshallables = append(marshallables,
+		clusterSpec.Cluster.ConvertConfigToConfigGenerateStruct(),
+		datacenterConfig.Marshallable(),
+	)
+
+	for _, machineConfig := range machineConfigs {
+		marshallables = append(marshallables, machineConfig.Marshallable())
 	}
-	datacenterObj, err := yaml.Marshal(datacenterConfig)
-	if err != nil {
-		return nil, fmt.Errorf("error outputting datacenter yaml: %v", err)
-	}
-	resources := [][]byte{clusterObj, datacenterObj}
-	for _, m := range machineConfigs {
-		mObj, err := yaml.Marshal(m)
-		if err != nil {
-			return nil, fmt.Errorf("error outputting machine yaml: %v", err)
-		}
-		resources = append(resources, mObj)
-	}
+
 	if clusterSpec.GitOpsConfig != nil {
-		convertedGitOpsGenerateConfig := clusterSpec.GitOpsConfig.ConvertConfigToConfigGenerateStruct()
-		gitopsObj, err := yaml.Marshal(convertedGitOpsGenerateConfig)
-		if err != nil {
-			return nil, fmt.Errorf("error outputting gitops config yaml: %v", err)
-		}
-		resources = append(resources, gitopsObj)
+		marshallables = append(marshallables, clusterSpec.GitOpsConfig.ConvertConfigToConfigGenerateStruct())
 	}
+
 	if clusterSpec.OIDCConfig != nil {
-		convertedOIDCGenerateConfig := clusterSpec.OIDCConfig.ConvertConfigToConfigGenerateStruct()
-		oidcObj, err := yaml.Marshal(convertedOIDCGenerateConfig)
-		if err != nil {
-			return nil, fmt.Errorf("error outputting oidc config yaml: %v", err)
-		}
-		resources = append(resources, oidcObj)
+		marshallables = append(marshallables, clusterSpec.OIDCConfig.ConvertConfigToConfigGenerateStruct())
 	}
+
+	resources := make([][]byte, 0, len(marshallables))
+	for _, marshallable := range marshallables {
+		resource, err := yaml.Marshal(marshallable)
+		if err != nil {
+			return nil, fmt.Errorf("failed marshalling resource for cluster spec: %v", err)
+		}
+		resources = append(resources, resource)
+	}
+
 	return templater.AppendYamlResources(resources...), nil
 }
 

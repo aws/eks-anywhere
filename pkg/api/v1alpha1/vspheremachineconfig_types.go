@@ -81,20 +81,6 @@ type VSphereMachineConfig struct {
 	Status VSphereMachineConfigStatus `json:"status,omitempty"`
 }
 
-// +kubebuilder:object:generate=false
-
-// Same as VSphereMachineConfig except stripped down for generation of yaml file during generate clusterconfig
-type VSphereMachineConfigGenerate struct {
-	metav1.TypeMeta `json:",inline"`
-	ObjectMeta      `json:"metadata,omitempty"`
-
-	Spec VSphereMachineConfigSpec `json:"spec,omitempty"`
-}
-
-func (c *VSphereMachineConfigGenerate) OSFamily() OSFamily {
-	return c.Spec.OSFamily
-}
-
 func (c *VSphereMachineConfig) ConvertConfigToConfigGenerateStruct() *VSphereMachineConfigGenerate {
 	config := &VSphereMachineConfigGenerate{
 		TypeMeta: c.TypeMeta,
@@ -107,6 +93,20 @@ func (c *VSphereMachineConfig) ConvertConfigToConfigGenerateStruct() *VSphereMac
 	}
 
 	return config
+}
+
+func (c *VSphereMachineConfig) Marshallable() Marshallable {
+	return c.ConvertConfigToConfigGenerateStruct()
+}
+
+// +kubebuilder:object:generate=false
+
+// Same as VSphereMachineConfig except stripped down for generation of yaml file during generate clusterconfig
+type VSphereMachineConfigGenerate struct {
+	metav1.TypeMeta `json:",inline"`
+	ObjectMeta      `json:"metadata,omitempty"`
+
+	Spec VSphereMachineConfigSpec `json:"spec,omitempty"`
 }
 
 //+kubebuilder:object:root=true
