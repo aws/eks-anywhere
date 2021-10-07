@@ -1432,7 +1432,7 @@ func (p *vsphereProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *ty
 }
 
 func (p *vsphereProvider) DatacenterConfig() providers.DatacenterConfig {
-	return p.datacenterConfig.ConvertConfigToConfigGenerateStruct()
+	return p.datacenterConfig
 }
 
 func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
@@ -1440,15 +1440,15 @@ func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	workerMachineName := p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
-	configs = append(configs, p.machineConfigs[controlPlaneMachineName].ConvertConfigToConfigGenerateStruct())
+	configs = append(configs, p.machineConfigs[controlPlaneMachineName])
 	if workerMachineName != controlPlaneMachineName {
-		configs = append(configs, p.machineConfigs[workerMachineName].ConvertConfigToConfigGenerateStruct())
+		configs = append(configs, p.machineConfigs[workerMachineName])
 	}
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
 		if etcdMachineName != controlPlaneMachineName && etcdMachineName != workerMachineName {
-			configs = append(configs, p.machineConfigs[etcdMachineName].ConvertConfigToConfigGenerateStruct())
+			configs = append(configs, p.machineConfigs[etcdMachineName])
 		}
 	}
 	return configs
@@ -1465,8 +1465,7 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 		return err
 	}
 
-	datacenterConfig := p.DatacenterConfig()
-	datacenter := datacenterConfig.(*v1alpha1.VSphereDatacenterConfigGenerate)
+	datacenter := p.datacenterConfig
 
 	oSpec := prevDatacenter.Spec
 	nSpec := datacenter.Spec

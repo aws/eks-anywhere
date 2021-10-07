@@ -39,6 +39,7 @@ type DatacenterConfig interface {
 	Kind() string
 	PauseReconcile()
 	ClearPauseAnnotation()
+	Marshallable() v1alpha1.Marshallable
 }
 
 type BuildMapOption func(map[string]interface{})
@@ -52,4 +53,5 @@ type TemplateBuilder interface {
 
 type MachineConfig interface {
 	OSFamily() v1alpha1.OSFamily
+	Marshallable() v1alpha1.Marshallable
 }
