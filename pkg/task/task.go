@@ -26,6 +26,7 @@ type CommandContext struct {
 	AddonManager     interfaces.AddonManager
 	Validations      interfaces.Validator
 	Writer           filewriter.FileWriter
+	CAPIUpgrader     interfaces.CAPIUpgrader
 	ClusterSpec      *cluster.Spec
 	BootstrapCluster *types.Cluster
 	WorkloadCluster  *types.Cluster

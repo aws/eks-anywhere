@@ -3,6 +3,7 @@ package workflows_test
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -10,6 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/features"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -26,6 +28,7 @@ type upgradeTestSetup struct {
 	provider         *providermocks.MockProvider
 	writer           *writermocks.MockFileWriter
 	validator        *mocks.MockValidator
+	capiUpgrader     *mocks.MockCAPIUpgrader
 	datacenterConfig *providermocks.MockDatacenterConfig
 	machineConfigs   []providers.MachineConfig
 	workflow         *workflows.Upgrade
@@ -37,6 +40,10 @@ type upgradeTestSetup struct {
 }
 
 func newUpgradeTest(t *testing.T) *upgradeTestSetup {
+	os.Setenv(features.ComponentsUpgradesEnvVar, "true")
+	t.Cleanup(func() {
+		os.Unsetenv(features.ComponentsUpgradesEnvVar)
+	})
 	mockCtrl := gomock.NewController(t)
 	bootstrapper := mocks.NewMockBootstrapper(mockCtrl)
 	clusterManager := mocks.NewMockClusterManager(mockCtrl)
@@ -45,8 +52,9 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	writer := writermocks.NewMockFileWriter(mockCtrl)
 	validator := mocks.NewMockValidator(mockCtrl)
 	datacenterConfig := providermocks.NewMockDatacenterConfig(mockCtrl)
+	capiUpgrader := mocks.NewMockCAPIUpgrader(mockCtrl)
 	machineConfigs := []providers.MachineConfig{providermocks.NewMockMachineConfig(mockCtrl)}
-	workflow := workflows.NewUpgrade(bootstrapper, provider, clusterManager, addonManager, writer)
+	workflow := workflows.NewUpgrade(bootstrapper, provider, capiUpgrader, clusterManager, addonManager, writer)
 
 	return &upgradeTestSetup{
 		t:                t,
@@ -56,6 +64,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		provider:         provider,
 		writer:           writer,
 		validator:        validator,
+		capiUpgrader:     capiUpgrader,
 		datacenterConfig: datacenterConfig,
 		machineConfigs:   machineConfigs,
 		workflow:         workflow,
@@ -74,6 +83,14 @@ func (c *upgradeTestSetup) expectSetup() {
 func (c *upgradeTestSetup) expectUpdateSecrets() {
 	gomock.InOrder(
 		c.provider.EXPECT().UpdateSecrets(c.ctx, c.workloadCluster).Return(nil),
+	)
+}
+
+func (c *upgradeTestSetup) expectUpgradeCoreComponents() {
+	currentSpec := &cluster.Spec{}
+	gomock.InOrder(
+		c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, c.workloadCluster).Return(currentSpec, nil),
+		c.capiUpgrader.EXPECT().Upgrade(c.ctx, c.workloadCluster, c.provider, currentSpec, c.clusterSpec),
 	)
 }
 
@@ -254,6 +271,7 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets()
+	test.expectUpgradeCoreComponents()
 	test.expectVerifyClusterSpecNoChanges()
 	test.expectPauseEKSAControllerReconcileNotToBeCalled()
 	test.expectPauseGitOpsKustomizationNotToBeCalled()
@@ -270,6 +288,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets()
+	test.expectUpgradeCoreComponents()
 	test.expectVerifyClusterSpecChanged()
 	test.expectPauseEKSAControllerReconcile()
 	test.expectPauseGitOpsKustomization()
@@ -298,6 +317,7 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets()
+	test.expectUpgradeCoreComponents()
 	test.expectVerifyClusterSpecChanged()
 	test.expectPauseEKSAControllerReconcile()
 	test.expectPauseGitOpsKustomization()

@@ -23,6 +23,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
@@ -71,6 +72,7 @@ type ClusterClient interface {
 	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster) error
 	ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster) error
+	GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error)
 }
 
 type Networking interface {
@@ -834,4 +836,19 @@ func (c *ClusterManager) applyResource(ctx context.Context, cluster *types.Clust
 		return fmt.Errorf("error applying eks-a spec: %v", err)
 	}
 	return nil
+}
+
+func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.Cluster) (*cluster.Spec, error) {
+	eksaCluster, err := c.clusterClient.GetEksaCluster(ctx, clus)
+	if err != nil {
+		return nil, fmt.Errorf("failed getting EKS-A cluster to build current cluster Spec: %v", err)
+	}
+
+	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus))
+}
+
+func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {
+	return func(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
+		return c.clusterClient.GetBundles(ctx, cluster.KubeconfigFile, name, namespace)
+	}
 }

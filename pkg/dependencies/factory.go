@@ -36,7 +36,7 @@ type Dependencies struct {
 	FluxAddonClient  *addonclients.FluxAddonClient
 	AnalyzerFactory  diagnostics.AnalyzerFactory
 	CollectorFactory diagnostics.CollectorFactory
-	CapiUpgrader     *clusterapi.Upgrader
+	CAPIUpgrader     *clusterapi.Upgrader
 }
 
 func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
@@ -391,15 +391,15 @@ func (f *Factory) WithCollectorFactory() *Factory {
 	return f
 }
 
-func (f *Factory) WithCapiUpgrader() *Factory {
+func (f *Factory) WithCAPIUpgrader() *Factory {
 	f.WithClusterctl()
 
 	f.buildSteps = append(f.buildSteps, func() error {
-		if f.dependencies.CapiUpgrader != nil {
+		if f.dependencies.CAPIUpgrader != nil {
 			return nil
 		}
 
-		f.dependencies.CapiUpgrader = clusterapi.NewUpgrader(f.dependencies.Clusterctl)
+		f.dependencies.CAPIUpgrader = clusterapi.NewUpgrader(f.dependencies.Clusterctl)
 		return nil
 	})
 
