@@ -213,6 +213,15 @@ func (c *upgradeTestSetup) expectForceReconcileGitRepo() {
 	)
 }
 
+func (c *upgradeTestSetup) expectUpgradeFluxComponents() {
+	currentSpec := &cluster.Spec{}
+	gomock.InOrder(
+		c.addonManager.EXPECT().Upgrade(
+			c.ctx, currentSpec, c.clusterSpec,
+		),
+	)
+}
+
 func (c *upgradeTestSetup) expectResumeGitOpsKustomization() {
 	gomock.InOrder(
 		c.addonManager.EXPECT().ResumeGitOpsKustomization(
@@ -272,6 +281,7 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets()
 	test.expectUpgradeCoreComponents()
+	test.expectUpgradeFluxComponents()
 	test.expectVerifyClusterSpecNoChanges()
 	test.expectPauseEKSAControllerReconcileNotToBeCalled()
 	test.expectPauseGitOpsKustomizationNotToBeCalled()
@@ -289,6 +299,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets()
 	test.expectUpgradeCoreComponents()
+	test.expectUpgradeFluxComponents()
 	test.expectVerifyClusterSpecChanged()
 	test.expectPauseEKSAControllerReconcile()
 	test.expectPauseGitOpsKustomization()
@@ -318,6 +329,7 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets()
 	test.expectUpgradeCoreComponents()
+	test.expectUpgradeFluxComponents()
 	test.expectVerifyClusterSpecChanged()
 	test.expectPauseEKSAControllerReconcile()
 	test.expectPauseGitOpsKustomization()

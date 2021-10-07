@@ -163,6 +163,10 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 		return nil
 	}
 
+	if err := commandContext.AddonManager.Upgrade(ctx, currentSpec, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return nil
+	}
 	// TODO: Add Upgrade calls for FluxAddonManager and eks-a cluster controller and CRDs
 
 	return &upgradeNeeded{}
