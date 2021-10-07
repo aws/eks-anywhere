@@ -42,6 +42,9 @@ func TestVSphereKubernetes120OIDC(t *testing.T) {
 		framework.NewVSphere(t, framework.WithUbuntu120()),
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runOIDCFlow(test)
 }
@@ -52,6 +55,9 @@ func TestVSphereKubernetes121OIDC(t *testing.T) {
 		framework.NewVSphere(t, framework.WithUbuntu121()),
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runOIDCFlow(test)
 }
