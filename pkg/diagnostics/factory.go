@@ -3,7 +3,6 @@ package diagnostics
 import (
 	_ "embed"
 	"fmt"
-	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -12,16 +11,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
-)
-
-//go:embed config/diagnostic-collector-rbac.yaml
-var diagnosticCollectorRbac []byte
-
-const (
-	troubleshootApiVersion    = "troubleshoot.sh/v1beta2"
-	generatedBundleNameFormat = "%s-%s-bundle.yaml"
-	maxRetries                = 5
-	backOffPeriod             = 5 * time.Second
 )
 
 type EksaDiagnosticBundleFactoryOpts struct {

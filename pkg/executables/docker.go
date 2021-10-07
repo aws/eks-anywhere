@@ -50,7 +50,7 @@ func (d *Docker) SetUpCLITools(ctx context.Context, image string) error {
 }
 
 func (d *Docker) Version(ctx context.Context) (int, error) {
-	cmdOutput, err := d.executable.Execute(ctx, "version", "--format", "{{.client.Version}}")
+	cmdOutput, err := d.executable.Execute(ctx, "version", "--format", "{{.Client.Version}}")
 	if err != nil {
 		return 0, fmt.Errorf("please check if docker is installed and running %v", err)
 	}
