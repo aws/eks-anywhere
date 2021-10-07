@@ -41,6 +41,9 @@ type upgradeTestSetup struct {
 
 func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	os.Setenv(features.ComponentsUpgradesEnvVar, "true")
+	t.Cleanup(func() {
+		os.Unsetenv(features.ComponentsUpgradesEnvVar)
+	})
 	mockCtrl := gomock.NewController(t)
 	bootstrapper := mocks.NewMockBootstrapper(mockCtrl)
 	clusterManager := mocks.NewMockClusterManager(mockCtrl)
