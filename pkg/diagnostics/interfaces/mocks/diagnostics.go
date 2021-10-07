@@ -123,17 +123,17 @@ func (mr *MockDiagnosticBundleFactoryMockRecorder) NewDiagnosticBundleCustom(kub
 }
 
 // NewDiagnosticBundleDefault mocks base method.
-func (m *MockDiagnosticBundleFactory) NewDiagnosticBundleDefault(af diagnostics.AnalyzerFactory, cf diagnostics.CollectorFactory) *diagnostics.EksaDiagnosticBundle {
+func (m *MockDiagnosticBundleFactory) NewDiagnosticBundleDefault() *diagnostics.EksaDiagnosticBundle {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewDiagnosticBundleDefault", af, cf)
+	ret := m.ctrl.Call(m, "NewDiagnosticBundleDefault")
 	ret0, _ := ret[0].(*diagnostics.EksaDiagnosticBundle)
 	return ret0
 }
 
 // NewDiagnosticBundleDefault indicates an expected call of NewDiagnosticBundleDefault.
-func (mr *MockDiagnosticBundleFactoryMockRecorder) NewDiagnosticBundleDefault(af, cf interface{}) *gomock.Call {
+func (mr *MockDiagnosticBundleFactoryMockRecorder) NewDiagnosticBundleDefault() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewDiagnosticBundleDefault", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).NewDiagnosticBundleDefault), af, cf)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewDiagnosticBundleDefault", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).NewDiagnosticBundleDefault))
 }
 
 // NewDiagnosticBundleFromSpec mocks base method.
