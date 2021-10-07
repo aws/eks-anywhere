@@ -60,7 +60,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithAnalyzerFactory().
 		WithCollectorFactory().
 		WithTroubleshoot().
-		WithCapiUpgrader().
+		WithCAPIUpgrader().
 		Build()
 
 	tt.Expect(err).To(BeNil())
@@ -72,5 +72,5 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.AnalyzerFactory).NotTo(BeNil())
 	tt.Expect(deps.CollectorFactory).NotTo(BeNil())
 	tt.Expect(deps.Troubleshoot).NotTo(BeNil())
-	tt.Expect(deps.CapiUpgrader).NotTo(BeNil())
+	tt.Expect(deps.CAPIUpgrader).NotTo(BeNil())
 }
