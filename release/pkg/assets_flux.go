@@ -36,10 +36,7 @@ func (r *ReleaseConfig) GetFluxAssets() ([]Artifact, error) {
 			return nil, errors.Cause(err)
 		}
 
-		repoName := fmt.Sprintf("fluxcd/%s", project)
-		tagOptions := map[string]string{
-			"gitTag": gitTag,
-		}
+		repoName, tagOptions := r.getFluxImageAttributes(project, gitTag)
 
 		imageArtifact := &ImageArtifact{
 			AssetName:       project,
@@ -167,17 +164,24 @@ func (r *ReleaseConfig) getFluxControllerTagOverrides(projects []string) ([]Imag
 			return nil, errors.Cause(err)
 		}
 
-		tagOptions := map[string]string{
-			"gitTag": gitTag,
-		}
+		repoName, tagOptions := r.getFluxImageAttributes(project, gitTag)
 
 		imageTagOverride := ImageTagOverride{
-			Repository: fmt.Sprintf("fluxcd/%s", project),
-			ReleaseUri: r.GetReleaseImageURI(project, "fluxcd/%s", tagOptions),
+			Repository: repoName,
+			ReleaseUri: r.GetReleaseImageURI(project, repoName, tagOptions),
 		}
 
 		imageTagOverrides = append(imageTagOverrides, imageTagOverride)
 	}
 
 	return imageTagOverrides, nil
+}
+
+func (r *ReleaseConfig) getFluxImageAttributes(project, gitTag string) (string, map[string]string) {
+	repoName := fmt.Sprintf("fluxcd/%s", project)
+	tagOptions := map[string]string{
+		"gitTag": gitTag,
+	}
+
+	return repoName, tagOptions
 }
