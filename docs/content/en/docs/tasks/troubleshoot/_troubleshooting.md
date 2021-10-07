@@ -115,6 +115,13 @@ If you don't have any other docker containers running you may want to run `docke
 You may want to restart Docker.
 To restart Docker on Ubuntu `sudo systemctl restart docker`.
 
+### Issues detected with selected template
+```
+Issues detected with selected template. Details: - -1:-1:VALUE_ILLEGAL: No supported hardware versions among [vmx-15]; supported: [vmx-04, vmx-07, vmx-08, vmx-09, vmx-10, vmx-11, vmx-12, vmx-13].
+```
+Our upstream dependency on CAPV makes it a requirement that you use vSphere 6.7 update 3 or newer.
+Make sure your ESXi hosts are also up to date.
+
 ### Waiting for cert-manager to be available... Error: timed out waiting for the condition
 ```
 Failed to create cluster {"error": "error initializing capi resources in cluster: error executing init: Fetching providers\nInstalling cert-manager Version=\"v1.1.0\"\nWaiting for cert-manager to be available...\nError: timed out waiting for the condition\n"}
@@ -143,6 +150,19 @@ kubectl get machines
 ```
 If all the machines are in `Provisioning` phase, this is most likely the issue.
 To resolve the issue, set `insecure` to `false` and `thumbprint` to the TLS thumbprint of your vCenter server in the cluster yaml and try again.
+
+```
+"msg"="discovered IP address"
+```
+The aforementioned log message can also appear with an address value of the controlplane in either of the ${CLUSTER_NAME}/logs/capv-controller-manager.log file
+or the capv-controller-manager pod log which can be extracted with the follwoing command,
+```bash
+export KUBECONFIG=${PWD}/${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconfig
+kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager
+```
+Make sure you are choosing an ip in your network range that does not conflict with other VMs.
+https://anywhere.eks.amazonaws.com/docs/reference/clusterspec/vsphere/#controlplaneconfigurationendpointhost-required
+
 
 ### The connection to the server localhost:8080 was refused 
 ```
@@ -195,7 +215,7 @@ Ensure that you have DHCP running and run the create command again.
 If there are any IPv4 IPs assigned, check if one of the VMs have the controlPlane IP specified in `Cluster.spec.controlPlaneConfiguration.endpoint.host` in the clusterconfig yaml.
 If this IP is not present on any control plane VM, make sure the `network` has access to the following endpoints:
 
-{{% content "domains.md" %}}
+{{% content "../../reference/vsphere/domains.md" %}}
 
 If no VMs are created, check the `capi-controller-manager`, `capv-controller-manager` and `capi-kubeadm-control-plane-controller-manager` logs using the commands mentioned in [Generic cluster unavailable](#problem-generic-cluster-unavailable) section.
 

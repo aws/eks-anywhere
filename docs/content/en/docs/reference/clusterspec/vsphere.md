@@ -1,5 +1,5 @@
 ---
-title: "vSphere configuration reference"
+title: "vSphere configuration"
 linkTitle: "vSphere"
 weight: 10
 description: >
@@ -84,6 +84,7 @@ The following additional optional configuration can also be included.
 * [OIDC]({{< relref "oidc.md" >}})
 * [etcd]({{< relref "etcd.md" >}})
 * [proxy]({{< relref "proxy.md" >}})
+* [gitops]({{< relref "gitops.md" >}})
 
 ### name (required)
 Name of your cluster `my-cluster-name` in this example
@@ -94,10 +95,10 @@ Specific network configuration for your Kubernetes cluster.
 ### clusterNetwork.cni (required)
 CNI plugin to be installed in the cluster. The only supported value at the moment is `cilium`.
 
-### clusterNetwork.pods.cidrBlocks[0] (optional)
+### clusterNetwork.pods.cidrBlocks[0] (required)
 Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR block specification is permitted.
 
-### clusterNetwork.services.cidrBlocks[0] (optional)
+### clusterNetwork.services.cidrBlocks[0] (required)
 Subnet used by services in CIDR notation. Please note that only 1 custom services CIDR block specification is permitted.
 
 ### controlPlaneConfiguration (required)
@@ -110,8 +111,12 @@ Number of control plane nodes
 Refers to the Kubernetes object with vsphere specific configuration for your nodes. See `VSphereMachineConfig Fields` below.
 
 ### controlPlaneConfiguration.endpoint.host (required)
-A unique IP you want to use for the control plane VM in your EKS Anywhere cluster. Choose an IP in your networks
+A unique IP you want to use for the control plane VM in your EKS Anywhere cluster. Choose an IP in your network
 range that does not conflict with other VMs.
+
+>**_NOTE:_** This IP should be outside the network DHCP range as it is a floating IP that gets assigned to one of
+the control plane nodes for kube-apiserver loadbalancing. Suggestions on how to ensure this IP does not cause issues during cluster 
+creation process are [here]({{< relref "../vsphere/vsphere-prereq/#:~:text=Below%20are%20some,existent%20mac%20address." >}})
 
 ### workerNodeGroupsConfiguration (required)
 This takes in a list of node groups that you can define for your workers. Please note that at this time only 1 node group is permitted.

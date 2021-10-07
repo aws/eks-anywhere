@@ -9,18 +9,31 @@ description: >
 To run EKS Anywhere, you will need:
 
 * A vSphere 7+ environment running vCenter
-* Capacity to deploy 8-10VMs
+* Capacity to deploy 6-10VMs
 * DHCP service running in vSphere environment in the primary VM network for your workload cluster
 * One network in vSphere to use for the cluster. This network must have inbound access into vCenter
 * A OVA imported into vSphere and converted into template for the workload VMs
 * User credentials to [create vms and attach networks, etc]({{< relref "user-permissions.md" >}})
+* One IP address routable from cluster but excluded from DHCP offering
 
-A minimum workload cluster will require 6 to 10 VMs and each VM will require:
+  This IP address is to be used as the [Control Plane Endpoint IP or kube-vip VIP address]({{< relref "../clusterspec/vsphere/#controlplaneconfigurationendpointhost-required" >}})
 
-* 2 vCPU
+  Below are some suggestions to ensure that this IP address is never handed out by your DHCP server. 
+ 
+  You may need to contact your network engineer.
+      
+   *  Pick an IP address reachable from cluster subnet which is excluded from DHCP range OR
+   *  Alter DHCP ranges to leave out an IP address(s) at the top and/or the bottom of the range OR
+   *  Create an IP reservation for this IP on your DHCP server. This is usually accomplished by adding 
+a dummy mapping of this IP address to a non-existent mac address.
+
+
+Each VM will require:
+
+* 2 vCPUs
 * 8GB RAM
-* 20GB Disk
+* 25GB Disk
 
 The administrative machine and the target workload environment will need network access to:
 
-{{% content "domains.md" %}}
+{{% content "./domains.md" %}}
