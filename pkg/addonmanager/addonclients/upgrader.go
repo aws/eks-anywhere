@@ -29,34 +29,27 @@ func (f *FluxAddonClient) Upgrade(ctx context.Context, currentSpec *cluster.Spec
 	return nil
 }
 
-type FluxChangeDiff struct {
-	Flux *types.ComponentChangeDiff
-}
-
-func (f *FluxAddonClient) fluxChangeDiff(currentSpec, newSpec *cluster.Spec) *FluxChangeDiff {
-	changeDiff := &FluxChangeDiff{}
+func (f *FluxAddonClient) fluxChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
 	if currentSpec.VersionsBundle.Flux.Version != newSpec.VersionsBundle.Flux.Version {
-		changeDiff.Flux = &types.ComponentChangeDiff{
+		changeDiff := &types.ComponentChangeDiff{
 			ComponentName: "flux",
 			NewVersion:    newSpec.VersionsBundle.ClusterAPI.Version,
 			OldVersion:    currentSpec.VersionsBundle.ClusterAPI.Version,
 		}
-		logger.V(1).Info("Flux change diff", "oldVersion", changeDiff.Flux.OldVersion, "newVersion", changeDiff.Flux.NewVersion)
+		logger.V(1).Info("Flux change diff", "oldVersion", changeDiff.OldVersion, "newVersion", changeDiff.NewVersion)
 		return changeDiff
 	}
 	return nil
 }
 
-func (f *FluxAddonClient) upgradeFilesAndCommit(ctx context.Context, newSpec *cluster.Spec, changeDiff *FluxChangeDiff) error {
+func (f *FluxAddonClient) upgradeFilesAndCommit(ctx context.Context, newSpec *cluster.Spec, changeDiff *types.ComponentChangeDiff) error {
 	fc := &fluxForCluster{
 		FluxAddonClient: f,
 		clusterSpec:     newSpec,
 	}
 
-	if changeDiff.Flux != nil {
-		if err := fc.commitFluxUpgradeFilesToGit(ctx); err != nil {
-			return err
-		}
+	if err := fc.commitFluxUpgradeFilesToGit(ctx); err != nil {
+		return err
 	}
 
 	return nil
