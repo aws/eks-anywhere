@@ -17,8 +17,6 @@ spec:
           [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
             [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
               endpoint = ["https://1.2.3.4"]
-            [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4".tls]
-              insecure_skip_verify = true
         owner: root:root
         path: "/etc/containerd/config_append.toml"
       preKubeadmCommands:
