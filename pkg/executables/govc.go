@@ -134,20 +134,20 @@ type libElement struct {
 	ContentVersion string `json:"content_version"`
 }
 
-func (g *Govc) GetLibraryElementContentVersion(ctx context.Context, element string) (interface{}, error) {
+func (g *Govc) GetLibraryElementContentVersion(ctx context.Context, element string) (string, error) {
 	response, err := g.exec(ctx, "library.info", "-json", element)
 	if err != nil {
-		return nil, fmt.Errorf("govc failed getting library element info: %v", err)
+		return "", fmt.Errorf("govc failed getting library element info: %v", err)
 	}
 	elementInfoJson := response.String()
 	if elementInfoJson == "null" {
-		return nil, nil
+		return "-1", nil
 	}
 
 	elementInfo := make([]libElement, 0)
 	err = yaml.Unmarshal([]byte(elementInfoJson), &elementInfo)
 	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling library element info: %v", err)
+		return "", fmt.Errorf("error unmarshalling library element info: %v", err)
 	}
 	return elementInfo[0].ContentVersion, nil
 }

@@ -120,10 +120,10 @@ func (mr *MockGovcClientMockRecorder) DeployTemplateFromLibrary(ctx, templateDir
 }
 
 // GetLibraryElementContentVersion mocks base method.
-func (m *MockGovcClient) GetLibraryElementContentVersion(ctx context.Context, element string) (interface{}, error) {
+func (m *MockGovcClient) GetLibraryElementContentVersion(ctx context.Context, element string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLibraryElementContentVersion", ctx, element)
-	ret0, _ := ret[0].(interface{})
+	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
