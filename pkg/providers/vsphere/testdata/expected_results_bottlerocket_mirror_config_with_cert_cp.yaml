@@ -79,7 +79,7 @@ spec:
       resourcePool: '*/Resources'
       server: vsphere_server
       storagePolicyName: "vSAN Default Storage Policy"
-      template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
+      template: /SDDC-Datacenter/vm/Templates/bottlerocket-1804-kube-v1.19.6
       thumbprint: 'ABCDEFG'
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
@@ -98,13 +98,39 @@ spec:
       etcd:
         external:
           endpoints: []
-          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
-          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
-          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
+          caFile: "/var/lib/kubeadm/pki/etcd/ca.crt"
+          certFile: "/var/lib/kubeadm/pki/server-etcd-client.crt"
+          keyFile: "/var/lib/kubeadm/pki/apiserver-etcd-client.key"
       dns:
         type: CoreDNS
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.3-eks-1-21-4
+      pause:
+        imageRepository: public.ecr.aws/eks-distro/kubernetes/pause
+        imageTag: v1.21.2-eks-1-21-4
+      bottlerocketBootstrap:
+        imageRepository: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap
+        imageTag: v1-21-4-eks-a-v0.0.0-dev-build.158
+      registryMirror:
+        endpoint: 1.2.3.4
+        caCert: |
+          -----BEGIN CERTIFICATE-----
+          MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
+          BAMTCnRlc3QubG9jYWwwHhcNMjEwOTIzMjAxOTEyWhcNMzEwOTIxMjAxOTEyWjAV
+          MRMwEQYDVQQDEwp0ZXN0LmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+          CgKCAQEAwDHozKwX0kAGICTaV1XoMdJ+t+8LQsAGmzIKYhrSh+WdEcx/xc1SDJcp
+          EBFeUmVuFwI5DYX2BTvJ0AApSBuViNZn669yn1dBV7PHM27NV37/dDCFkjiqBtax
+          lOXchrL6IoZirmMgMnI/PfASdI/PCR75DNCIQFGZbwWAbEBxxLHgWPEFJ5TWP6fD
+          2s95gbc9gykI09ta/H5ITKCd3EVtiAlcQ86Ax9EZRmvJYGw5NFmPnJ0X/OmXmLXx
+          o0ggkjHTeyG8sZQpDTs6oQrX/XLfLOvrJi3suiiJXz0pNAXZoFaLu8Z0Ci+EoquM
+          cFh4NhfSAD5BJADxwf7iv7KXCWtQTwIDAQABoxkwFzAVBgNVHREEDjAMggp0ZXN0
+          LmxvY2FsMA0GCSqGSIb3DQEBBQUAA4IBAQBr4qDklaG/ZLcrkc0PBo9ylj3rtt1M
+          ar1nv+Nv8zXByTsYs9muEQYBKpzvk9SJZ4OfYVcx6qETbG7z7kdgZtDktQULw5fQ
+          hsiy0flLv+JkdD4M30rtjhDIiuNH2ew6+2JB80QaSznW7Z3Fd18BmDaE1qqLYQFX
+          iCau7fRD2aQyVluuJ0OeDOuk33jY3Vn3gyKGfnjPAnb4DxCg7v1IeazGSVK18urL
+          zkYl4nSFENRLV5sL/wox2ohjMLff2lv6gyqkMFrLNSeHSQLGu8diat4UVDk8MMza
+          9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
+          -----END CERTIFICATE-----
       apiServer:
         extraArgs:
           cloud-provider: external
@@ -115,7 +141,7 @@ spec:
           audit-log-maxsize: "512"
           profiling: "false"
         extraVolumes:
-        - hostPath: /etc/kubernetes/audit-policy.yaml
+        - hostPath: /var/lib/kubeadm/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
           name: audit-policy
           pathType: File
@@ -134,9 +160,22 @@ spec:
         extraArgs:
           cloud-provider: external
           profiling: "false"
+        extraVolumes:
+        - hostPath: /var/lib/kubeadm/controller-manager.conf
+          mountPath: /etc/kubernetes/controller-manager.conf
+          name: kubeconfig
+          pathType: File
+          readOnly: true
       scheduler:
         extraArgs:
           profiling: "false"
+        extraVolumes:
+        - hostPath: /var/lib/kubeadm/scheduler.conf
+          mountPath: /etc/kubernetes/scheduler.conf
+          name: kubeconfig
+          pathType: File
+          readOnly: true
+      certificatesDir: /var/lib/kubeadm/pki
     files:
     - content: |
         apiVersion: v1
@@ -343,12 +382,6 @@ spec:
           - "RequestReceived"
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
-    - content: |
-        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-            endpoint = ["https://1.2.3.4"]
-      owner: root:root
-      path: "/etc/containerd/config_append.toml"
     initConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -356,15 +389,38 @@ spec:
           cloud-provider: external
         name: '{{ ds.meta_data.hostname }}'
     joinConfiguration:
+      pause:
+        imageRepository: public.ecr.aws/eks-distro/kubernetes/pause
+        imageTag: v1.21.2-eks-1-21-4
+      bottlerocketBootstrap:
+        imageRepository: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap
+        imageTag: v1-21-4-eks-a-v0.0.0-dev-build.158
+      registryMirror:
+        endpoint: 1.2.3.4
+        caCert: |
+          -----BEGIN CERTIFICATE-----
+          MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
+          BAMTCnRlc3QubG9jYWwwHhcNMjEwOTIzMjAxOTEyWhcNMzEwOTIxMjAxOTEyWjAV
+          MRMwEQYDVQQDEwp0ZXN0LmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+          CgKCAQEAwDHozKwX0kAGICTaV1XoMdJ+t+8LQsAGmzIKYhrSh+WdEcx/xc1SDJcp
+          EBFeUmVuFwI5DYX2BTvJ0AApSBuViNZn669yn1dBV7PHM27NV37/dDCFkjiqBtax
+          lOXchrL6IoZirmMgMnI/PfASdI/PCR75DNCIQFGZbwWAbEBxxLHgWPEFJ5TWP6fD
+          2s95gbc9gykI09ta/H5ITKCd3EVtiAlcQ86Ax9EZRmvJYGw5NFmPnJ0X/OmXmLXx
+          o0ggkjHTeyG8sZQpDTs6oQrX/XLfLOvrJi3suiiJXz0pNAXZoFaLu8Z0Ci+EoquM
+          cFh4NhfSAD5BJADxwf7iv7KXCWtQTwIDAQABoxkwFzAVBgNVHREEDjAMggp0ZXN0
+          LmxvY2FsMA0GCSqGSIb3DQEBBQUAA4IBAQBr4qDklaG/ZLcrkc0PBo9ylj3rtt1M
+          ar1nv+Nv8zXByTsYs9muEQYBKpzvk9SJZ4OfYVcx6qETbG7z7kdgZtDktQULw5fQ
+          hsiy0flLv+JkdD4M30rtjhDIiuNH2ew6+2JB80QaSznW7Z3Fd18BmDaE1qqLYQFX
+          iCau7fRD2aQyVluuJ0OeDOuk33jY3Vn3gyKGfnjPAnb4DxCg7v1IeazGSVK18urL
+          zkYl4nSFENRLV5sL/wox2ohjMLff2lv6gyqkMFrLNSeHSQLGu8diat4UVDk8MMza
+          9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
+          -----END CERTIFICATE-----
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
         name: '{{ ds.meta_data.hostname }}'
     preKubeadmCommands:
-    - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
-    - sudo systemctl daemon-reload
-    - sudo systemctl restart containerd
     - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
@@ -372,11 +428,11 @@ spec:
     - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
     useExperimentalRetryJoin: true
     users:
-    - name: capv
+    - name: ec2-user
       sshAuthorizedKeys:
       - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
       sudo: ALL=(ALL) NOPASSWD:ALL
-    format: cloud-config
+    format: bottlerocket
   replicas: 3
   version: v1.21.2-eks-1-21-4
 ---
@@ -416,23 +472,36 @@ spec:
   replicas: 3
   etcdadmConfigSpec:
     etcdadmBuiltin: true
-    format: cloud-config
-    cloudInitConfig:
-      version: 3.4.16
-      installDir: "/usr/bin"
-    preEtcdadmCommands:
-      - hostname "{{ ds.meta_data.hostname }}"
-      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
-      - echo "127.0.0.1   localhost" >>/etc/hosts
-      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
-      - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+    format: bottlerocket
+    bottlerocketConfig:
+      etcdImage: public.ecr.aws/eks-distro/etcd-io/etcd:v3.4.16-eks-1-21-4
+      bootstrapImage: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap:v1-21-4-eks-a-v0.0.0-dev-build.158
+      pauseImage: public.ecr.aws/eks-distro/kubernetes/pause:v1.21.2-eks-1-21-4
     users:
-      - name: capv
+      - name: ec2-user
         sshAuthorizedKeys:
           - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
         sudo: ALL=(ALL) NOPASSWD:ALL
     registryMirror:
       endpoint: 1.2.3.4
+      caCert: |
+        -----BEGIN CERTIFICATE-----
+        MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
+        BAMTCnRlc3QubG9jYWwwHhcNMjEwOTIzMjAxOTEyWhcNMzEwOTIxMjAxOTEyWjAV
+        MRMwEQYDVQQDEwp0ZXN0LmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+        CgKCAQEAwDHozKwX0kAGICTaV1XoMdJ+t+8LQsAGmzIKYhrSh+WdEcx/xc1SDJcp
+        EBFeUmVuFwI5DYX2BTvJ0AApSBuViNZn669yn1dBV7PHM27NV37/dDCFkjiqBtax
+        lOXchrL6IoZirmMgMnI/PfASdI/PCR75DNCIQFGZbwWAbEBxxLHgWPEFJ5TWP6fD
+        2s95gbc9gykI09ta/H5ITKCd3EVtiAlcQ86Ax9EZRmvJYGw5NFmPnJ0X/OmXmLXx
+        o0ggkjHTeyG8sZQpDTs6oQrX/XLfLOvrJi3suiiJXz0pNAXZoFaLu8Z0Ci+EoquM
+        cFh4NhfSAD5BJADxwf7iv7KXCWtQTwIDAQABoxkwFzAVBgNVHREEDjAMggp0ZXN0
+        LmxvY2FsMA0GCSqGSIb3DQEBBQUAA4IBAQBr4qDklaG/ZLcrkc0PBo9ylj3rtt1M
+        ar1nv+Nv8zXByTsYs9muEQYBKpzvk9SJZ4OfYVcx6qETbG7z7kdgZtDktQULw5fQ
+        hsiy0flLv+JkdD4M30rtjhDIiuNH2ew6+2JB80QaSznW7Z3Fd18BmDaE1qqLYQFX
+        iCau7fRD2aQyVluuJ0OeDOuk33jY3Vn3gyKGfnjPAnb4DxCg7v1IeazGSVK18urL
+        zkYl4nSFENRLV5sL/wox2ohjMLff2lv6gyqkMFrLNSeHSQLGu8diat4UVDk8MMza
+        9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
+        -----END CERTIFICATE-----
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: VSphereMachineTemplate
@@ -460,7 +529,7 @@ spec:
       resourcePool: '*/Resources'
       server: vsphere_server
       storagePolicyName: "vSAN Default Storage Policy"
-      template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
+      template: /SDDC-Datacenter/vm/Templates/bottlerocket-1804-kube-v1.19.6
       thumbprint: 'ABCDEFG'
 ---
 apiVersion: v1
