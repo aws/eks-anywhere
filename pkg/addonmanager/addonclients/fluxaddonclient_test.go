@@ -30,54 +30,58 @@ const (
 	defaultEksaClusterConfigFileName     = "eksa-cluster.yaml"
 	defaultFluxPatchesFileName           = "gotk-patches.yaml"
 	defaultFluxSyncFileName              = "gotk-sync.yaml"
+	defaultFluxComponentsFileName        = "gotk-components.yaml"
 )
 
 func TestFluxAddonClientInstallGitOpsPrexistingRepo(t *testing.T) {
 	tests := []struct {
-		testName                      string
-		cluster                       *types.Cluster
-		clusterConfig                 *v1alpha1.Cluster
-		fluxpath                      string
-		expectedClusterConfigGitPath  string
-		expectedEksaSystemDirPath     string
-		expectedEksaConfigFileName    string
-		expectedKustomizationFileName string
-		expectedConfigFileContents    string
-		expectedFluxSystemDirPath     string
-		expectedFluxPatchesFileName   string
-		expectedFluxSyncFileName      string
+		testName                       string
+		cluster                        *types.Cluster
+		clusterConfig                  *v1alpha1.Cluster
+		fluxpath                       string
+		expectedClusterConfigGitPath   string
+		expectedEksaSystemDirPath      string
+		expectedEksaConfigFileName     string
+		expectedKustomizationFileName  string
+		expectedConfigFileContents     string
+		expectedFluxSystemDirPath      string
+		expectedFluxPatchesFileName    string
+		expectedFluxSyncFileName       string
+		expectedFluxComponentsFileName string
 	}{
 		{
 			testName: "with default config path",
 			cluster: &types.Cluster{
 				Name: "fluxAddonTestCluster",
 			},
-			clusterConfig:                 v1alpha1.NewCluster("fluxAddonTestCluster"),
-			fluxpath:                      "",
-			expectedClusterConfigGitPath:  "clusters/fluxAddonTestCluster",
-			expectedEksaSystemDirPath:     "clusters/fluxAddonTestCluster/eksa-system",
-			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
-			expectedKustomizationFileName: defaultKustomizationManifestFileName,
-			expectedConfigFileContents:    "./testdata/cluster-config-default-path.yaml",
-			expectedFluxSystemDirPath:     "clusters/fluxAddonTestCluster/flux-system",
-			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
-			expectedFluxSyncFileName:      defaultFluxSyncFileName,
+			clusterConfig:                  v1alpha1.NewCluster("fluxAddonTestCluster"),
+			fluxpath:                       "",
+			expectedClusterConfigGitPath:   "clusters/fluxAddonTestCluster",
+			expectedEksaSystemDirPath:      "clusters/fluxAddonTestCluster/eksa-system",
+			expectedEksaConfigFileName:     defaultEksaClusterConfigFileName,
+			expectedKustomizationFileName:  defaultKustomizationManifestFileName,
+			expectedConfigFileContents:     "./testdata/cluster-config-default-path.yaml",
+			expectedFluxSystemDirPath:      "clusters/fluxAddonTestCluster/flux-system",
+			expectedFluxPatchesFileName:    defaultFluxPatchesFileName,
+			expectedFluxSyncFileName:       defaultFluxSyncFileName,
+			expectedFluxComponentsFileName: defaultFluxComponentsFileName,
 		},
 		{
 			testName: "with user provided config path",
 			cluster: &types.Cluster{
 				Name: "fluxAddonTestCluster",
 			},
-			clusterConfig:                 v1alpha1.NewCluster("fluxAddonTestCluster"),
-			fluxpath:                      "user/provided/path",
-			expectedClusterConfigGitPath:  "user/provided/path",
-			expectedEksaSystemDirPath:     "user/provided/path/eksa-system",
-			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
-			expectedKustomizationFileName: defaultKustomizationManifestFileName,
-			expectedConfigFileContents:    "./testdata/cluster-config-user-provided-path.yaml",
-			expectedFluxSystemDirPath:     "user/provided/path/flux-system",
-			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
-			expectedFluxSyncFileName:      defaultFluxSyncFileName,
+			clusterConfig:                  v1alpha1.NewCluster("fluxAddonTestCluster"),
+			fluxpath:                       "user/provided/path",
+			expectedClusterConfigGitPath:   "user/provided/path",
+			expectedEksaSystemDirPath:      "user/provided/path/eksa-system",
+			expectedEksaConfigFileName:     defaultEksaClusterConfigFileName,
+			expectedKustomizationFileName:  defaultKustomizationManifestFileName,
+			expectedConfigFileContents:     "./testdata/cluster-config-user-provided-path.yaml",
+			expectedFluxSystemDirPath:      "user/provided/path/flux-system",
+			expectedFluxPatchesFileName:    defaultFluxPatchesFileName,
+			expectedFluxSyncFileName:       defaultFluxSyncFileName,
+			expectedFluxComponentsFileName: defaultFluxComponentsFileName,
 		},
 	}
 
@@ -124,6 +128,9 @@ func TestFluxAddonClientInstallGitOpsPrexistingRepo(t *testing.T) {
 					},
 					NotificationController: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/fluxcd/notification-controller:v0.13.0-d82011942ec8a447ba89a70ff9a84bf7b9579492",
+					},
+					Components: releasev1alpha1.Manifest{
+						URI: "testdata/gotk-components.yaml",
 					},
 				}
 				s.GitOpsConfig = &gitOpsConfig
@@ -161,51 +168,54 @@ func TestFluxAddonClientInstallGitOpsPrexistingRepo(t *testing.T) {
 
 func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 	tests := []struct {
-		testName                      string
-		cluster                       *types.Cluster
-		clusterConfig                 *v1alpha1.Cluster
-		fluxpath                      string
-		expectedClusterConfigGitPath  string
-		expectedEksaSystemDirPath     string
-		expectedEksaConfigFileName    string
-		expectedKustomizationFileName string
-		expectedConfigFileContents    string
-		expectedFluxSystemDirPath     string
-		expectedFluxPatchesFileName   string
-		expectedFluxSyncFileName      string
-		expectedRepoUrl               string
+		testName                       string
+		cluster                        *types.Cluster
+		clusterConfig                  *v1alpha1.Cluster
+		fluxpath                       string
+		expectedClusterConfigGitPath   string
+		expectedEksaSystemDirPath      string
+		expectedEksaConfigFileName     string
+		expectedKustomizationFileName  string
+		expectedConfigFileContents     string
+		expectedFluxSystemDirPath      string
+		expectedFluxPatchesFileName    string
+		expectedFluxSyncFileName       string
+		expectedFluxComponentsFileName string
+		expectedRepoUrl                string
 	}{
 		{
 			testName: "with default config path",
 			cluster: &types.Cluster{
 				Name: "fluxAddonTestCluster",
 			},
-			clusterConfig:                 v1alpha1.NewCluster("fluxAddonTestCluster"),
-			fluxpath:                      "",
-			expectedClusterConfigGitPath:  "clusters/fluxAddonTestCluster",
-			expectedEksaSystemDirPath:     "clusters/fluxAddonTestCluster/eksa-system",
-			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
-			expectedKustomizationFileName: defaultKustomizationManifestFileName,
-			expectedConfigFileContents:    "./testdata/cluster-config-default-path.yaml",
-			expectedFluxSystemDirPath:     "clusters/fluxAddonTestCluster/flux-system",
-			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
-			expectedFluxSyncFileName:      defaultFluxSyncFileName,
+			clusterConfig:                  v1alpha1.NewCluster("fluxAddonTestCluster"),
+			fluxpath:                       "",
+			expectedClusterConfigGitPath:   "clusters/fluxAddonTestCluster",
+			expectedEksaSystemDirPath:      "clusters/fluxAddonTestCluster/eksa-system",
+			expectedEksaConfigFileName:     defaultEksaClusterConfigFileName,
+			expectedKustomizationFileName:  defaultKustomizationManifestFileName,
+			expectedConfigFileContents:     "./testdata/cluster-config-default-path.yaml",
+			expectedFluxSystemDirPath:      "clusters/fluxAddonTestCluster/flux-system",
+			expectedFluxPatchesFileName:    defaultFluxPatchesFileName,
+			expectedFluxSyncFileName:       defaultFluxSyncFileName,
+			expectedFluxComponentsFileName: defaultFluxComponentsFileName,
 		},
 		{
 			testName: "with user provided config path",
 			cluster: &types.Cluster{
 				Name: "fluxAddonTestCluster",
 			},
-			clusterConfig:                 v1alpha1.NewCluster("fluxAddonTestCluster"),
-			fluxpath:                      "user/provided/path",
-			expectedClusterConfigGitPath:  "user/provided/path",
-			expectedEksaSystemDirPath:     "user/provided/path/eksa-system",
-			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
-			expectedKustomizationFileName: defaultKustomizationManifestFileName,
-			expectedConfigFileContents:    "./testdata/cluster-config-user-provided-path.yaml",
-			expectedFluxSystemDirPath:     "user/provided/path/flux-system",
-			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
-			expectedFluxSyncFileName:      defaultFluxSyncFileName,
+			clusterConfig:                  v1alpha1.NewCluster("fluxAddonTestCluster"),
+			fluxpath:                       "user/provided/path",
+			expectedClusterConfigGitPath:   "user/provided/path",
+			expectedEksaSystemDirPath:      "user/provided/path/eksa-system",
+			expectedEksaConfigFileName:     defaultEksaClusterConfigFileName,
+			expectedKustomizationFileName:  defaultKustomizationManifestFileName,
+			expectedConfigFileContents:     "./testdata/cluster-config-user-provided-path.yaml",
+			expectedFluxSystemDirPath:      "user/provided/path/flux-system",
+			expectedFluxPatchesFileName:    defaultFluxPatchesFileName,
+			expectedFluxSyncFileName:       defaultFluxSyncFileName,
+			expectedFluxComponentsFileName: defaultFluxComponentsFileName,
 		},
 	}
 
@@ -252,6 +262,9 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 					},
 					NotificationController: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/fluxcd/notification-controller:v0.13.0-d82011942ec8a447ba89a70ff9a84bf7b9579492",
+					},
+					Components: releasev1alpha1.Manifest{
+						URI: "testdata/gotk-components.yaml",
 					},
 				}
 				s.GitOpsConfig = &gitOpsConfig
@@ -304,34 +317,36 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 
 func TestFluxAddonClientInstallGitOpsToolkitsBareRepo(t *testing.T) {
 	tests := []struct {
-		testName                      string
-		cluster                       *types.Cluster
-		clusterConfig                 *v1alpha1.Cluster
-		fluxpath                      string
-		expectedClusterConfigGitPath  string
-		expectedEksaSystemDirPath     string
-		expectedEksaConfigFileName    string
-		expectedKustomizationFileName string
-		expectedConfigFileContents    string
-		expectedFluxSystemDirPath     string
-		expectedFluxPatchesFileName   string
-		expectedFluxSyncFileName      string
+		testName                       string
+		cluster                        *types.Cluster
+		clusterConfig                  *v1alpha1.Cluster
+		fluxpath                       string
+		expectedClusterConfigGitPath   string
+		expectedEksaSystemDirPath      string
+		expectedEksaConfigFileName     string
+		expectedKustomizationFileName  string
+		expectedConfigFileContents     string
+		expectedFluxSystemDirPath      string
+		expectedFluxPatchesFileName    string
+		expectedFluxSyncFileName       string
+		expectedFluxComponentsFileName string
 	}{
 		{
 			testName: "with default config path",
 			cluster: &types.Cluster{
 				Name: "fluxAddonTestCluster",
 			},
-			clusterConfig:                 v1alpha1.NewCluster("fluxAddonTestCluster"),
-			fluxpath:                      "",
-			expectedClusterConfigGitPath:  "clusters/fluxAddonTestCluster",
-			expectedEksaSystemDirPath:     "clusters/fluxAddonTestCluster/eksa-system",
-			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
-			expectedKustomizationFileName: defaultKustomizationManifestFileName,
-			expectedConfigFileContents:    "./testdata/cluster-config-default-path.yaml",
-			expectedFluxSystemDirPath:     "clusters/fluxAddonTestCluster/flux-system",
-			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
-			expectedFluxSyncFileName:      defaultFluxSyncFileName,
+			clusterConfig:                  v1alpha1.NewCluster("fluxAddonTestCluster"),
+			fluxpath:                       "",
+			expectedClusterConfigGitPath:   "clusters/fluxAddonTestCluster",
+			expectedEksaSystemDirPath:      "clusters/fluxAddonTestCluster/eksa-system",
+			expectedEksaConfigFileName:     defaultEksaClusterConfigFileName,
+			expectedKustomizationFileName:  defaultKustomizationManifestFileName,
+			expectedConfigFileContents:     "./testdata/cluster-config-default-path.yaml",
+			expectedFluxSystemDirPath:      "clusters/fluxAddonTestCluster/flux-system",
+			expectedFluxPatchesFileName:    defaultFluxPatchesFileName,
+			expectedFluxSyncFileName:       defaultFluxSyncFileName,
+			expectedFluxComponentsFileName: defaultFluxComponentsFileName,
 		},
 	}
 
@@ -371,6 +386,9 @@ func TestFluxAddonClientInstallGitOpsToolkitsBareRepo(t *testing.T) {
 					},
 					NotificationController: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/fluxcd/notification-controller:v0.13.0-d82011942ec8a447ba89a70ff9a84bf7b9579492",
+					},
+					Components: releasev1alpha1.Manifest{
+						URI: "testdata/gotk-components.yaml",
 					},
 				}
 				s.GitOpsConfig = &gitOpsConfig
