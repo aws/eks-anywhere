@@ -353,7 +353,17 @@ func validateProxyConfig(clusterConfig *Cluster) error {
 }
 
 func validateProxyData(proxy string) error {
-	ip, port, err := net.SplitHostPort(proxy)
+	var proxyHost string
+	if strings.HasPrefix(proxy, "http") {
+		u, err := url.ParseRequestURI(proxy)
+		if err != nil {
+			return fmt.Errorf("proxy %s is invalid, please provide a valid URI", proxy)
+		}
+		proxyHost = u.Host
+	} else {
+		proxyHost = proxy
+	}
+	ip, port, err := net.SplitHostPort(proxyHost)
 	if err != nil {
 		return fmt.Errorf("proxy %s is invalid, please provide a valid proxy in the format proxy_ip:port", proxy)
 	}
@@ -361,7 +371,7 @@ func validateProxyData(proxy string) error {
 		return fmt.Errorf("proxy ip %s is invalid, please provide a valid proxy ip", ip)
 	}
 	if p, err := strconv.Atoi(port); err != nil || p < 1 || p > 65535 {
-		return fmt.Errorf("proxy port %s is invalid, please provide a valid proxy ip", port)
+		return fmt.Errorf("proxy port %s is invalid, please provide a valid proxy port", port)
 	}
 	return nil
 }
