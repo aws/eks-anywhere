@@ -44,6 +44,10 @@ func (f *FluxAddonClient) upgradeFilesAndCommit(ctx context.Context, newSpec *cl
 		clusterSpec:     newSpec,
 	}
 
+	if err := fc.syncGitRepo(ctx); err != nil {
+		return err
+	}
+
 	if err := fc.commitFluxUpgradeFilesToGit(ctx); err != nil {
 		return err
 	}
