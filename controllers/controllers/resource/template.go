@@ -41,7 +41,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 	if err != nil {
 		return nil, err
 	}
-	oldEtcdVmc, err := r.ExistingVSphereControlPlaneMachineConfig(ctx, eksaCluster)
+	oldEtcdVmc, err := r.ExistingVSphereEtcdMachineConfig(ctx, eksaCluster)
 	if err != nil {
 		return nil, err
 	}

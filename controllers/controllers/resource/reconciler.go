@@ -38,6 +38,7 @@ func NewClusterReconciler(resourceFetcher ResourceFetcher, resourceUpdater Resou
 		ResourceUpdater: resourceUpdater,
 		vsphereTemplate: VsphereTemplate{
 			ResourceFetcher: resourceFetcher,
+			ResourceUpdater: resourceUpdater,
 			now:             now,
 		},
 		dockerTemplate: DockerTemplate{
