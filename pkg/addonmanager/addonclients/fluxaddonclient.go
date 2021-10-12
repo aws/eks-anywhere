@@ -30,9 +30,6 @@ var eksaKustomizeContent string
 //go:embed manifests/flux-system/kustomization.yaml
 var fluxKustomizeContent string
 
-//go:embed manifests/flux-system/gotk-sync.yaml
-var fluxSyncContent string
-
 //go:embed manifests/flux-system/gotk-patches.yaml
 var fluxPatchContent string
 
@@ -44,7 +41,6 @@ const (
 	eksaSystemDirName      = "eksa-system"
 	kustomizeFileName      = "kustomization.yaml"
 	clusterConfigFileName  = "eksa-cluster.yaml"
-	fluxSyncFileName       = "gotk-sync.yaml"
 	fluxPatchFileName      = "gotk-patches.yaml"
 	fluxComponentsFileName = "gotk-components.yaml"
 
@@ -155,11 +151,16 @@ func (f *FluxAddonClient) InstallGitOps(ctx context.Context, cluster *types.Clus
 		machineConfigs:   machineConfigs,
 	}
 
-	if err := fc.commitFluxAndClusterConfigToGit(ctx); err != nil {
+	if err := fc.setupRepository(ctx); err != nil {
 		return err
 	}
 
-	err := f.retrier.Retry(func() error {
+	err := fc.validateLocalConfigPathDoesNotExist()
+	if err != nil {
+		return &ConfigVersionControlFailedError{Err: err}
+	}
+
+	err = f.retrier.Retry(func() error {
 		return fc.flux.BootstrapToolkitsComponents(ctx, cluster, clusterSpec.GitOpsConfig)
 	})
 	if err != nil {
@@ -179,6 +180,10 @@ func (f *FluxAddonClient) InstallGitOps(ctx context.Context, cluster *types.Clus
 	if err != nil {
 		logger.Error(err, "error when pulling from remote repository after Flux Bootstrap; ensure local repository is up-to-date with remote (git pull)",
 			"remote", defaultRemote, "branch", clusterSpec.GitOpsConfig.Spec.Flux.Github.Branch)
+	}
+
+	if err := fc.commitFluxAndClusterConfigToGit(ctx); err != nil {
+		return err
 	}
 	return nil
 }
@@ -353,17 +358,8 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 	config := fc.clusterSpec.GitOpsConfig
 	repository := config.Spec.Flux.Github.Repository
 
-	if err := fc.setupRepository(ctx); err != nil {
-		return err
-	}
-
-	err := fc.validateLocalConfigPathDoesNotExist()
-	if err != nil {
-		return &ConfigVersionControlFailedError{Err: err}
-	}
-
 	logger.V(3).Info("Generating eks-a cluster manifest files...")
-	err = fc.writeEksaSystemFiles()
+	err := fc.writeEksaSystemFiles()
 	if err != nil {
 		return &ConfigVersionControlFailedError{Err: err}
 	}
@@ -489,11 +485,6 @@ func (fc *fluxForCluster) writeFluxSystemFiles() (err error) {
 		return err
 	}
 
-	logger.V(3).Info("Generating flux-system sync file...")
-	if err = fc.generateFluxSyncFile(t); err != nil {
-		return err
-	}
-
 	logger.V(3).Info("Generating flux-system patch file...")
 	if err = fc.generateFluxPatchFile(t); err != nil {
 		return err
@@ -513,13 +504,6 @@ func (fc *fluxForCluster) generateFluxKustomizeFile(t *templater.Templater) erro
 	}
 	if filePath, err := t.WriteToFile(fluxKustomizeContent, values, kustomizeFileName, filewriter.PersistentFile); err != nil {
 		return fmt.Errorf("error creating flux-system kustomization manifest file into %s: %v", filePath, err)
-	}
-	return nil
-}
-
-func (f *FluxAddonClient) generateFluxSyncFile(t *templater.Templater) error {
-	if filePath, err := t.WriteToFile(fluxSyncContent, nil, fluxSyncFileName, filewriter.PersistentFile); err != nil {
-		return fmt.Errorf("error creating flux-system sync manifest file into %s: %v", filePath, err)
 	}
 	return nil
 }
@@ -547,7 +531,7 @@ func (fc *fluxForCluster) generateFluxComponentsFile(t *templater.Templater) err
 		return fmt.Errorf("failed loading manifest for flux-system components: %v", err)
 	}
 
-	if filePath, err := t.WriteToFile(componentsManifest.Filename, componentsManifest.Content, fluxComponentsFileName, filewriter.PersistentFile); err != nil {
+	if filePath, err := t.WriteBytesToFile(componentsManifest.Content, fluxComponentsFileName, filewriter.PersistentFile); err != nil {
 		return fmt.Errorf("error creating flux-system components manifest file into %s: %v", filePath, err)
 	}
 	return nil

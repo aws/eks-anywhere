@@ -29,7 +29,6 @@ const (
 	defaultKustomizationManifestFileName = "kustomization.yaml"
 	defaultEksaClusterConfigFileName     = "eksa-cluster.yaml"
 	defaultFluxPatchesFileName           = "gotk-patches.yaml"
-	defaultFluxSyncFileName              = "gotk-sync.yaml"
 	defaultFluxComponentsFileName        = "gotk-components.yaml"
 )
 
@@ -46,7 +45,6 @@ func TestFluxAddonClientInstallGitOpsPrexistingRepo(t *testing.T) {
 		expectedConfigFileContents     string
 		expectedFluxSystemDirPath      string
 		expectedFluxPatchesFileName    string
-		expectedFluxSyncFileName       string
 		expectedFluxComponentsFileName string
 	}{
 		{
@@ -63,7 +61,6 @@ func TestFluxAddonClientInstallGitOpsPrexistingRepo(t *testing.T) {
 			expectedConfigFileContents:     "./testdata/cluster-config-default-path.yaml",
 			expectedFluxSystemDirPath:      "clusters/fluxAddonTestCluster/flux-system",
 			expectedFluxPatchesFileName:    defaultFluxPatchesFileName,
-			expectedFluxSyncFileName:       defaultFluxSyncFileName,
 			expectedFluxComponentsFileName: defaultFluxComponentsFileName,
 		},
 		{
@@ -80,7 +77,6 @@ func TestFluxAddonClientInstallGitOpsPrexistingRepo(t *testing.T) {
 			expectedConfigFileContents:     "./testdata/cluster-config-user-provided-path.yaml",
 			expectedFluxSystemDirPath:      "user/provided/path/flux-system",
 			expectedFluxPatchesFileName:    defaultFluxPatchesFileName,
-			expectedFluxSyncFileName:       defaultFluxSyncFileName,
 			expectedFluxComponentsFileName: defaultFluxComponentsFileName,
 		},
 	}
@@ -159,9 +155,6 @@ func TestFluxAddonClientInstallGitOpsPrexistingRepo(t *testing.T) {
 
 			expectedFluxPatchesPath := path.Join(writePath, tt.expectedFluxSystemDirPath, tt.expectedFluxPatchesFileName)
 			test.AssertFilesEquals(t, expectedFluxPatchesPath, "./testdata/gotk-patches.yaml")
-
-			expectedFluxSyncPath := path.Join(writePath, tt.expectedFluxSystemDirPath, tt.expectedFluxSyncFileName)
-			test.AssertFilesEquals(t, expectedFluxSyncPath, "./testdata/gotk-sync.yaml")
 		})
 	}
 }
@@ -179,7 +172,6 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 		expectedConfigFileContents     string
 		expectedFluxSystemDirPath      string
 		expectedFluxPatchesFileName    string
-		expectedFluxSyncFileName       string
 		expectedFluxComponentsFileName string
 		expectedRepoUrl                string
 	}{
@@ -197,7 +189,6 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 			expectedConfigFileContents:     "./testdata/cluster-config-default-path.yaml",
 			expectedFluxSystemDirPath:      "clusters/fluxAddonTestCluster/flux-system",
 			expectedFluxPatchesFileName:    defaultFluxPatchesFileName,
-			expectedFluxSyncFileName:       defaultFluxSyncFileName,
 			expectedFluxComponentsFileName: defaultFluxComponentsFileName,
 		},
 		{
@@ -214,7 +205,6 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 			expectedConfigFileContents:     "./testdata/cluster-config-user-provided-path.yaml",
 			expectedFluxSystemDirPath:      "user/provided/path/flux-system",
 			expectedFluxPatchesFileName:    defaultFluxPatchesFileName,
-			expectedFluxSyncFileName:       defaultFluxSyncFileName,
 			expectedFluxComponentsFileName: defaultFluxComponentsFileName,
 		},
 	}
@@ -308,9 +298,6 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 
 			expectedFluxPatchesPath := path.Join(writePath, tt.expectedFluxSystemDirPath, tt.expectedFluxPatchesFileName)
 			test.AssertFilesEquals(t, expectedFluxPatchesPath, "./testdata/gotk-patches.yaml")
-
-			expectedFluxSyncPath := path.Join(writePath, tt.expectedFluxSystemDirPath, tt.expectedFluxSyncFileName)
-			test.AssertFilesEquals(t, expectedFluxSyncPath, "./testdata/gotk-sync.yaml")
 		})
 	}
 }
@@ -328,7 +315,6 @@ func TestFluxAddonClientInstallGitOpsToolkitsBareRepo(t *testing.T) {
 		expectedConfigFileContents     string
 		expectedFluxSystemDirPath      string
 		expectedFluxPatchesFileName    string
-		expectedFluxSyncFileName       string
 		expectedFluxComponentsFileName string
 	}{
 		{
@@ -345,7 +331,6 @@ func TestFluxAddonClientInstallGitOpsToolkitsBareRepo(t *testing.T) {
 			expectedConfigFileContents:     "./testdata/cluster-config-default-path.yaml",
 			expectedFluxSystemDirPath:      "clusters/fluxAddonTestCluster/flux-system",
 			expectedFluxPatchesFileName:    defaultFluxPatchesFileName,
-			expectedFluxSyncFileName:       defaultFluxSyncFileName,
 			expectedFluxComponentsFileName: defaultFluxComponentsFileName,
 		},
 	}
@@ -425,9 +410,6 @@ func TestFluxAddonClientInstallGitOpsToolkitsBareRepo(t *testing.T) {
 
 			expectedFluxPatchesPath := path.Join(writePath, tt.expectedFluxSystemDirPath, tt.expectedFluxPatchesFileName)
 			test.AssertFilesEquals(t, expectedFluxPatchesPath, "./testdata/gotk-patches.yaml")
-
-			expectedFluxSyncPath := path.Join(writePath, tt.expectedFluxSystemDirPath, tt.expectedFluxSyncFileName)
-			test.AssertFilesEquals(t, expectedFluxSyncPath, "./testdata/gotk-sync.yaml")
 		})
 	}
 }
