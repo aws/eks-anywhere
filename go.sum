@@ -123,6 +123,8 @@ github.com/aws/aws-sdk-go v1.38.40 h1:VVqBFV24tGgXR11tFXPjmR+0ItbnUepbuQjdmhgu3U
 github.com/aws/aws-sdk-go v1.38.40/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2zKMmprdro=
 github.com/aws/aws-sdk-go-v2 v0.18.0/go.mod h1:JWVYvqSMppoMJC0x5wdwiImzgXTI9FuZwxzkQq9wy+g=
 github.com/aws/aws-sdk-go-v2 v1.5.0/go.mod h1:tI4KhsR5VkzlUa2DZAdwx7wCAYGwkZZ1H31PYrBFx1w=
+github.com/aws/eks-anywhere/release v0.0.0-20211011214359-19fd868e8345 h1:1/rcDeWrxp6fQkgxjJwPkvgtknfrv/+nVUyUl494R3o=
+github.com/aws/eks-anywhere/release v0.0.0-20211011214359-19fd868e8345/go.mod h1:LGgWgHLzXiplTBOv15Ifho8+PHQJdf7bcnvnYBkXink=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20210810165539-7d41d9b36b74 h1:ejX98p7x/70w8F4Y3I4Va4UyP4b28iofwWfRawUiXZE=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20210810165539-7d41d9b36b74/go.mod h1:zS4jJCwuah31QqzRtwe0fVaj8UtjZDaC9MjaveZGmI0=
 github.com/aws/smithy-go v1.4.0/go.mod h1:SObp3lf9smib00L/v3U2eAKG8FyQ7iLrJnQiAmR5n+E=
