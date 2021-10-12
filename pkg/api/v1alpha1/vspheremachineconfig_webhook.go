@@ -91,11 +91,16 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 		)
 	}
 
+	if !isMgmt {
+		vspheremachineconfiglog.Info("Machine config is associated with workload cluster")
+		return allErrs
+	}
+
 	if !old.IsControlPlane() && !old.IsEtcd() {
 		vspheremachineconfiglog.Info("Machine config is not associated with control plane or etcd")
 		return allErrs
 	}
-	vspheremachineconfiglog.Info("Machine config is associated with control plane or etcd")
+	vspheremachineconfiglog.Info("Machine config is associated with management cluster's control plane or etcd")
 
 	if old.Spec.Datastore != new.Spec.Datastore {
 		allErrs = append(

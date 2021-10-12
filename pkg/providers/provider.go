@@ -49,6 +49,7 @@ type TemplateBuilder interface {
 	GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, buildOptions ...BuildMapOption) (content []byte, err error)
 	WorkerMachineTemplateName(clusterName string) string
 	CPMachineTemplateName(clusterName string) string
+	EtcdMachineTemplateName(clusterName string) string
 }
 
 type MachineConfig interface {

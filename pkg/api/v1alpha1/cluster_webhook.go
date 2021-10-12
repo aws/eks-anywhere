@@ -25,6 +25,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
+const isMgmt = true
+
 // log is for logging in this package.
 var clusterlog = logf.Log.WithName("cluster-resource")
 
@@ -75,35 +77,22 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 
 	var allErrs field.ErrorList
 
-	if old.Spec.KubernetesVersion != new.Spec.KubernetesVersion {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "kubernetesVersion"), new.Spec.KubernetesVersion, "field is immutable"),
-		)
-	}
-
-	if old.Spec.ControlPlaneConfiguration.Count != new.Spec.ControlPlaneConfiguration.Count {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "ControlPlaneConfiguration.count"), new.Spec.ControlPlaneConfiguration.Count, "field is immutable"))
-	}
-
 	if !new.Spec.ControlPlaneConfiguration.Endpoint.Equal(old.Spec.ControlPlaneConfiguration.Endpoint) {
 		allErrs = append(
 			allErrs,
 			field.Invalid(field.NewPath("spec", "ControlPlaneConfiguration.endpoint"), new.Spec.ControlPlaneConfiguration.Endpoint, "field is immutable"))
 	}
 
-	if !new.Spec.DatacenterRef.Equal(&old.Spec.DatacenterRef) {
+	if !new.Spec.ClusterNetwork.Equal(&old.Spec.ClusterNetwork) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "datacenterRef"), new.Spec.DatacenterRef, "field is immutable"))
+			field.Invalid(field.NewPath("spec", "ClusterNetwork"), new.Spec.ClusterNetwork, "field is immutable"))
 	}
 
-	if !new.Spec.ControlPlaneConfiguration.MachineGroupRef.Equal(old.Spec.ControlPlaneConfiguration.MachineGroupRef) {
+	if !new.Spec.ProxyConfiguration.Equal(old.Spec.ProxyConfiguration) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "ControlPlaneConfiguration.machineGroupRef"), new.Spec.ControlPlaneConfiguration.MachineGroupRef, "field is immutable"))
+			field.Invalid(field.NewPath("spec", "ProxyConfiguration"), new.Spec.ProxyConfiguration, "field is immutable"))
 	}
 
 	if new.Spec.ExternalEtcdConfiguration != nil && old.Spec.ExternalEtcdConfiguration == nil {
@@ -121,18 +110,6 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		}
 	}
 
-	if !new.Spec.ClusterNetwork.Equal(&old.Spec.ClusterNetwork) {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "ClusterNetwork"), new.Spec.ClusterNetwork, "field is immutable"))
-	}
-
-	if !new.Spec.ProxyConfiguration.Equal(old.Spec.ProxyConfiguration) {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "ProxyConfiguration"), new.Spec.ProxyConfiguration, "field is immutable"))
-	}
-
 	if !new.Spec.GitOpsRef.Equal(old.Spec.GitOpsRef) {
 		allErrs = append(
 			allErrs,
@@ -143,6 +120,38 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		allErrs = append(
 			allErrs,
 			field.Invalid(field.NewPath("spec", "IdentityProviderRefs"), new.Spec.IdentityProviderRefs, "field is immutable"))
+	}
+
+	if !isMgmt {
+		clusterlog.Info("Cluster config is associated with workload cluster")
+		return allErrs
+	}
+
+	clusterlog.Info("Cluster config is associated with management cluster")
+
+	if old.Spec.KubernetesVersion != new.Spec.KubernetesVersion {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "kubernetesVersion"), new.Spec.KubernetesVersion, "field is immutable"),
+		)
+	}
+
+	if old.Spec.ControlPlaneConfiguration.Count != new.Spec.ControlPlaneConfiguration.Count {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "ControlPlaneConfiguration.count"), new.Spec.ControlPlaneConfiguration.Count, "field is immutable"))
+	}
+
+	if !new.Spec.DatacenterRef.Equal(&old.Spec.DatacenterRef) {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "datacenterRef"), new.Spec.DatacenterRef, "field is immutable"))
+	}
+
+	if !new.Spec.ControlPlaneConfiguration.MachineGroupRef.Equal(old.Spec.ControlPlaneConfiguration.MachineGroupRef) {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "ControlPlaneConfiguration.machineGroupRef"), new.Spec.ControlPlaneConfiguration.MachineGroupRef, "field is immutable"))
 	}
 
 	return allErrs

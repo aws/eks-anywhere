@@ -166,7 +166,7 @@ func TestMapMachineTemplateToVSphereWorkerMachineConfigSpec(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := resource.MapMachineTemplateToVSphereWorkerMachineConfigSpec(tt.args.vsMachineTemplate)
+			got, err := resource.MapMachineTemplateToVSphereMachineConfigSpec(tt.args.vsMachineTemplate)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MapMachineTemplateToVSphereWorkerMachineConfigSpec() error = %v, wantErr %v", err, tt.wantErr)
 				return

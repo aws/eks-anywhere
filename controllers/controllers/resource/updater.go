@@ -17,6 +17,7 @@ type ResourceUpdater interface {
 	ApplyTemplate(ctx context.Context, template *unstructured.Unstructured, values map[string]interface{}, dryRun bool) error
 	ForceApplyTemplate(ctx context.Context, template *unstructured.Unstructured, dryRun bool) error
 	ApplyUpdatedTemplate(ctx context.Context, template *unstructured.Unstructured, dryRun bool) error
+	ApplyPatch(ctx context.Context, obj client.Object, dryRun bool) error
 }
 
 type capiResourceUpdater struct {
@@ -31,7 +32,7 @@ func NewCAPIResourceUpdater(client client.Client, log logr.Logger) *capiResource
 	}
 }
 
-func (u *capiResourceUpdater) applyPatch(ctx context.Context, obj client.Object, dryRun bool) error {
+func (u *capiResourceUpdater) ApplyPatch(ctx context.Context, obj client.Object, dryRun bool) error {
 	dryRunStage := []string{}
 	if dryRun {
 		dryRunStage = []string{"All"}
@@ -89,7 +90,7 @@ func (u *capiResourceUpdater) ApplyTemplate(ctx context.Context, template *unstr
 		return err
 	}
 	u.Log.Info("Applying patch", "object", template.GetName(), "kind", template.GetKind(), "values", values)
-	err = u.applyPatch(ctx, template, dryRun)
+	err = u.ApplyPatch(ctx, template, dryRun)
 	if err != nil {
 		return err
 	}
