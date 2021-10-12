@@ -29,11 +29,7 @@ func (r *ReleaseConfig) GetKubeRbacProxyAssets() ([]Artifact, error) {
 		return nil, errors.Cause(err)
 	}
 
-	name := "kube-rbac-proxy"
-	repoName := fmt.Sprintf("brancz/%s", name)
-	tagOptions := map[string]string{
-		"gitTag": gitTag,
-	}
+	name, repoName, tagOptions := r.getKubeRbacProxyImageAttributes(gitTag)
 
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
@@ -59,19 +55,27 @@ func (r *ReleaseConfig) getKubeRbacProxyGitTag() (string, error) {
 	return gitTag, nil
 }
 
+func (r *ReleaseConfig) getKubeRbacProxyImageAttributes(gitTag string) (string, string, map[string]string) {
+	name := "kube-rbac-proxy"
+	repoName := fmt.Sprintf("brancz/%s", name)
+	tagOptions := map[string]string{
+		"gitTag": gitTag,
+	}
+
+	return name, repoName, tagOptions
+}
+
 func (r *ReleaseConfig) GetKubeRbacProxyImageTagOverride() (ImageTagOverride, error) {
 	gitTag, err := r.getKubeRbacProxyGitTag()
 	if err != nil {
 		return ImageTagOverride{}, errors.Cause(err)
 	}
 
-	tagOptions := map[string]string{
-		"gitTag": gitTag,
-	}
+	name, repoName, tagOptions := r.getKubeRbacProxyImageAttributes(gitTag)
 
 	imageTagOverride := ImageTagOverride{
-		Repository: "brancz/kube-rbac-proxy",
-		ReleaseUri: r.GetReleaseImageURI("kube-rbac-proxy", "brancz/kube-rbac-proxy", tagOptions),
+		Repository: repoName,
+		ReleaseUri: r.GetReleaseImageURI(name, repoName, tagOptions),
 	}
 
 	return imageTagOverride, nil

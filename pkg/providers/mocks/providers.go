@@ -68,6 +68,20 @@ func (mr *MockProviderMockRecorder) BootstrapSetup(arg0, arg1, arg2 interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BootstrapSetup", reflect.TypeOf((*MockProvider)(nil).BootstrapSetup), arg0, arg1, arg2)
 }
 
+// ChangeDiff mocks base method.
+func (m *MockProvider) ChangeDiff(arg0, arg1 *cluster.Spec) *types.ComponentChangeDiff {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ChangeDiff", arg0, arg1)
+	ret0, _ := ret[0].(*types.ComponentChangeDiff)
+	return ret0
+}
+
+// ChangeDiff indicates an expected call of ChangeDiff.
+func (mr *MockProviderMockRecorder) ChangeDiff(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeDiff", reflect.TypeOf((*MockProvider)(nil).ChangeDiff), arg0, arg1)
+}
+
 // CleanupProviderInfrastructure mocks base method.
 func (m *MockProvider) CleanupProviderInfrastructure(arg0 context.Context) error {
 	m.ctrl.T.Helper()
@@ -403,6 +417,20 @@ func (mr *MockDatacenterConfigMockRecorder) Kind() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Kind", reflect.TypeOf((*MockDatacenterConfig)(nil).Kind))
 }
 
+// Marshallable mocks base method.
+func (m *MockDatacenterConfig) Marshallable() v1alpha1.Marshallable {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Marshallable")
+	ret0, _ := ret[0].(v1alpha1.Marshallable)
+	return ret0
+}
+
+// Marshallable indicates an expected call of Marshallable.
+func (mr *MockDatacenterConfigMockRecorder) Marshallable() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Marshallable", reflect.TypeOf((*MockDatacenterConfig)(nil).Marshallable))
+}
+
 // PauseReconcile mocks base method.
 func (m *MockDatacenterConfig) PauseReconcile() {
 	m.ctrl.T.Helper()
@@ -436,6 +464,20 @@ func NewMockMachineConfig(ctrl *gomock.Controller) *MockMachineConfig {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockMachineConfig) EXPECT() *MockMachineConfigMockRecorder {
 	return m.recorder
+}
+
+// Marshallable mocks base method.
+func (m *MockMachineConfig) Marshallable() v1alpha1.Marshallable {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Marshallable")
+	ret0, _ := ret[0].(v1alpha1.Marshallable)
+	return ret0
+}
+
+// Marshallable indicates an expected call of Marshallable.
+func (mr *MockMachineConfigMockRecorder) Marshallable() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Marshallable", reflect.TypeOf((*MockMachineConfig)(nil).Marshallable))
 }
 
 // OSFamily mocks base method.

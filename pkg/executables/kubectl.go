@@ -23,6 +23,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const (
@@ -37,6 +38,7 @@ var (
 	eksaGitOpsResourceType            = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaOIDCResourceType              = fmt.Sprintf("oidcconfigs.%s", v1alpha1.GroupVersion.Group)
 	etcdadmClustersResourceType       = fmt.Sprintf("etcdadmclusters.%s", etcdv1alpha3.GroupVersion.Group)
+	bundlesResourceType               = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
 )
 
 type Kubectl struct {
@@ -62,6 +64,15 @@ func (k *Kubectl) GetNamespace(ctx context.Context, kubeconfig string, namespace
 
 func (k *Kubectl) CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error {
 	params := []string{"create", "namespace", namespace, "--kubeconfig", kubeconfig}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error creating namespace %v: %v", namespace, err)
+	}
+	return nil
+}
+
+func (k *Kubectl) DeleteNamespace(ctx context.Context, kubeconfig string, namespace string) error {
+	params := []string{"delete", "namespace", namespace, "--kubeconfig", kubeconfig}
 	_, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error creating namespace %v: %v", namespace, err)
@@ -134,6 +145,18 @@ func (k *Kubectl) ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *type
 	_, err := k.executable.ExecuteWithStdin(ctx, data, params...)
 	if err != nil {
 		return fmt.Errorf("error executing apply --force: %v", err)
+	}
+	return nil
+}
+
+func (k *Kubectl) DeleteKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error {
+	params := []string{"delete", "-f", "-"}
+	if cluster.KubeconfigFile != "" {
+		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
+	}
+	_, err := k.executable.ExecuteWithStdin(ctx, data, params...)
+	if err != nil {
+		return fmt.Errorf("error executing apply: %v", err)
 	}
 	return nil
 }
@@ -734,4 +757,20 @@ func (k *Kubectl) ValidateNodesVersion(ctx context.Context, kubeconfig string, k
 		}
 	}
 	return nil
+}
+
+func (k *Kubectl) GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error) {
+	params := []string{"get", bundlesResourceType, name, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting Bundles with kubectl: %v", err)
+	}
+
+	response := &releasev1alpha1.Bundles{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing Bundles response: %v", err)
+	}
+
+	return response, nil
 }

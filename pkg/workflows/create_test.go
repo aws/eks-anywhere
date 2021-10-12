@@ -7,6 +7,7 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
@@ -24,7 +25,7 @@ type createTestSetup struct {
 	addonManager     *mocks.MockAddonManager
 	provider         *providermocks.MockProvider
 	writer           *writermocks.MockFileWriter
-	datacenterConfig *providermocks.MockDatacenterConfig
+	datacenterConfig providers.DatacenterConfig
 	machineConfigs   []providers.MachineConfig
 	workflow         *workflows.Create
 	ctx              context.Context
@@ -41,8 +42,8 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	addonManager := mocks.NewMockAddonManager(mockCtrl)
 	provider := providermocks.NewMockProvider(mockCtrl)
 	writer := writermocks.NewMockFileWriter(mockCtrl)
-	datacenterConfig := providermocks.NewMockDatacenterConfig(mockCtrl)
-	machineConfigs := []providers.MachineConfig{providermocks.NewMockMachineConfig(mockCtrl)}
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
+	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	workflow := workflows.NewCreate(bootstrapper, provider, clusterManager, addonManager, writer)
 
 	return &createTestSetup{
@@ -66,7 +67,6 @@ func (c *createTestSetup) expectSetup() {
 	c.provider.EXPECT().SetupAndValidateCreateCluster(c.ctx, c.clusterSpec)
 	c.provider.EXPECT().Name()
 	c.addonManager.EXPECT().Validations(c.ctx, c.clusterSpec)
-	c.datacenterConfig.EXPECT().Kind().Return("SUP").AnyTimes()
 }
 
 func (c *createTestSetup) expectCreateBootstrap() {
@@ -119,8 +119,6 @@ func (c *createTestSetup) expectInstallEksaComponents() {
 		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
 
 		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
-
-		c.datacenterConfig.EXPECT().PauseReconcile(),
 
 		c.clusterManager.EXPECT().CreateEKSAResources(
 			c.ctx, c.workloadCluster, c.clusterSpec, c.datacenterConfig, c.machineConfigs,

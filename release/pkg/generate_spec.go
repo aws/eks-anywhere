@@ -29,25 +29,33 @@ var imageBuilderProjectSource = "projects/kubernetes-sigs/image-builder"
 
 // ReleaseConfig contains metadata fields for a release
 type ReleaseConfig struct {
-	ReleaseVersion           string
-	DevReleaseUriVersion     string
-	BundleNumber             int
-	CliMinVersion            string
-	CliMaxVersion            string
-	CliRepoSource            string
-	CliRepoHead              string
-	BuildRepoSource          string
-	BuildRepoHead            string
-	ArtifactDir              string
-	SourceBucket             string
-	ReleaseBucket            string
-	SourceContainerRegistry  string
-	ReleaseContainerRegistry string
-	CDN                      string
-	ReleaseNumber            int
-	ReleaseDate              time.Time
-	DevRelease               bool
-	ReleaseEnvironment       string
+	ReleaseVersion                 string
+	DevReleaseUriVersion           string
+	BundleNumber                   int
+	CliMinVersion                  string
+	CliMaxVersion                  string
+	CliRepoSource                  string
+	CliRepoHead                    string
+	BuildRepoSource                string
+	BuildRepoHead                  string
+	ArtifactDir                    string
+	SourceBucket                   string
+	ReleaseBucket                  string
+	SourceContainerRegistry        string
+	ReleaseContainerRegistry       string
+	CDN                            string
+	ReleaseNumber                  int
+	ReleaseDate                    time.Time
+	DevRelease                     bool
+	ReleaseEnvironment             string
+	GenerateComponentBundleVersion generateComponentBundleVersion
+}
+
+type generateComponentBundleVersion func(projectVersioner) (string, error)
+
+type projectVersioner interface {
+	patchVersion() (string, error)
+	buildMetadata() (string, error)
 }
 
 // GetArtifactsData will get asset information for each component

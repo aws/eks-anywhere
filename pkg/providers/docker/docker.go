@@ -27,7 +27,6 @@ import (
 )
 
 const (
-	ProviderName      = "docker"
 	githubTokenEnvVar = "GITHUB_TOKEN"
 )
 
@@ -78,7 +77,7 @@ func (p *provider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.C
 }
 
 func (p *provider) Name() string {
-	return ProviderName
+	return constants.DockerProviderName
 }
 
 func (p *provider) DatacenterResourceType() string {
@@ -406,4 +405,16 @@ func (p *provider) MachineConfigs() []providers.MachineConfig {
 
 func (p *provider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
 	return nil
+}
+
+func (p *provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
+	if currentSpec.VersionsBundle.Docker.Version == newSpec.VersionsBundle.Docker.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.DockerProviderName,
+		NewVersion:    newSpec.VersionsBundle.Docker.Version,
+		OldVersion:    currentSpec.VersionsBundle.Docker.Version,
+	}
 }

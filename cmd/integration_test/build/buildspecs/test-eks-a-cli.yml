@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    INTEGRATION_TEST_MAX_EC2_COUNT: 45
+    INTEGRATION_TEST_MAX_EC2_COUNT: 47
     T_VSPHERE_CIDR: "198.18.0.0/16"
     T_VSPHERE_PRIVATE_NETWORK_CIDR: "10.1.0.0/24"
   secrets-manager:
@@ -43,6 +43,11 @@ phases:
   build:
     commands:
     - export JOB_ID=$CODEBUILD_BUILD_ID
+    - BUNDLES_OVERRIDE=false
+    - |
+      if [ -f ./bin/local-bundle-release.yaml ]; then
+        BUNDLES_OVERRIDE=true
+      fi
     - > 
       ./bin/test e2e run
       -a ${INTEGRATION_TEST_AL2_AMI_ID}
@@ -53,6 +58,7 @@ phases:
       -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
       -r 'Test'
       -v 4
+      --bundles-override=${BUNDLES_OVERRIDE}
   post_build:
     commands:
     - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
@@ -65,5 +71,5 @@ phases:
       $GIT_HASH
     - >
       ./bin/test e2e cleanup vsphere
-      -n eksa-test
+      -n i-
       -v 4

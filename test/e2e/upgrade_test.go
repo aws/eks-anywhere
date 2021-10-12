@@ -80,6 +80,9 @@ func TestVSphereKubernetes120UbuntuTo121WithFluxUpgrade(t *testing.T) {
 		provider,
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runUpgradeFlowWithFlux(
 		test,
@@ -96,6 +99,9 @@ func TestVSphereKubernetes120UbuntuTo121DifferentNamespaceWithFluxUpgrade(t *tes
 		framework.WithFlux(api.WithGitOpsNamespace(clusterNamespace)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runUpgradeFlowWithFlux(
 		test,
@@ -185,6 +191,9 @@ func TestVSphereKubernetes120BottlerocketTo121WithFluxUpgrade(t *testing.T) {
 		provider,
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runUpgradeFlowWithFlux(
 		test,
@@ -201,6 +210,9 @@ func TestVSphereKubernetes120BottlerocketTo121DifferentNamespaceWithFluxUpgrade(
 		framework.WithFlux(api.WithGitOpsNamespace(clusterNamespace)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runUpgradeFlowWithFlux(
 		test,
@@ -239,5 +251,56 @@ func TestVSphereKubernetes120BottlerocketWorkerNodeUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube120,
 		framework.WithClusterUpgrade(api.WithWorkerNodeCount(5)),
+	)
+}
+
+func TestDockerKubernetes120To121StackedEtcdUpgrade(t *testing.T) {
+	provider := framework.NewDocker(t)
+	test := framework.NewE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube121,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
+	)
+}
+
+func TestVSphereKubernetes120UbuntuTo121StackedEtcdUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu120())
+	test := framework.NewE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube121,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate121Var()),
+	)
+}
+
+func TestVSphereKubernetes120BottlerocketTo121StackedEtcdUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithBottleRocket120())
+	test := framework.NewE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube121,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate121()),
 	)
 }

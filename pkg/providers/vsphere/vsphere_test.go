@@ -2214,3 +2214,27 @@ spec:
 	assert.NoError(t, err, "Expected successful execution of GenerateMHC() but got an error", "error", err)
 	assert.Equal(t, string(mch), mhcTemplate, "generated MachineHealthCheck is different from the expected one")
 }
+
+func TestChangeDiffNoChange(t *testing.T) {
+	provider := givenProvider(t)
+	clusterSpec := givenEmptyClusterSpec()
+	assert.Nil(t, provider.ChangeDiff(clusterSpec, clusterSpec))
+}
+
+func TestChangeDiffWithChange(t *testing.T) {
+	provider := givenProvider(t)
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.VersionsBundle.VSphere.Version = "v0.3.18"
+	})
+	newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.VersionsBundle.VSphere.Version = "v0.3.19"
+	})
+
+	wantDiff := &types.ComponentChangeDiff{
+		ComponentName: "vsphere",
+		NewVersion:    "v0.3.19",
+		OldVersion:    "v0.3.18",
+	}
+
+	assert.Equal(t, wantDiff, provider.ChangeDiff(clusterSpec, newClusterSpec))
+}

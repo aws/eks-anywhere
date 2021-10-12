@@ -163,7 +163,7 @@ You can use either a CIDR block or an IP range
      value: eth0
    ```
 
-1. Deploy the [Hello EKS Anywhere]({{< ref "/docs/tasks/workload/test-app" >}}) test application.
+1. Deploy the [Hello EKS Anywhere]({{< relref "../../test-app" >}}) test application.
 
     ```bash
     kubectl apply -f https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml

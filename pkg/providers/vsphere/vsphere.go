@@ -40,7 +40,6 @@ import (
 )
 
 const (
-	ProviderName             = "vsphere"
 	eksaLicense              = "EKSA_LICENSE"
 	vSphereUsernameKey       = "VSPHERE_USERNAME"
 	vSpherePasswordKey       = "VSPHERE_PASSWORD"
@@ -78,6 +77,11 @@ var mhcTemplate []byte
 var (
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
+	noProxyDefaults                   = []string{
+		"localhost",
+		"127.0.0.1",
+		".svc",
+	}
 )
 
 var requiredEnvs = []string{vSphereUsernameKey, vSpherePasswordKey, expClusterResourceSetKey}
@@ -224,7 +228,7 @@ func (p *vsphereProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapCluste
 }
 
 func (p *vsphereProvider) Name() string {
-	return ProviderName
+	return constants.VSphereProviderName
 }
 
 func (p *vsphereProvider) DatacenterResourceType() string {
@@ -1087,9 +1091,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
+		noProxyList = append(noProxyList, noProxyDefaults...)
 		noProxyList = append(noProxyList,
-			"localhost",
-			"127.0.0.1",
 			datacenterSpec.Server,
 			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		)
@@ -1165,9 +1168,8 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
+		noProxyList = append(noProxyList, noProxyDefaults...)
 		noProxyList = append(noProxyList,
-			"localhost",
-			"127.0.0.1",
 			datacenterSpec.Server,
 			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		)
@@ -1430,7 +1432,7 @@ func (p *vsphereProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *ty
 }
 
 func (p *vsphereProvider) DatacenterConfig() providers.DatacenterConfig {
-	return p.datacenterConfig.ConvertConfigToConfigGenerateStruct()
+	return p.datacenterConfig
 }
 
 func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
@@ -1438,15 +1440,15 @@ func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	workerMachineName := p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
-	configs = append(configs, p.machineConfigs[controlPlaneMachineName].ConvertConfigToConfigGenerateStruct())
+	configs = append(configs, p.machineConfigs[controlPlaneMachineName])
 	if workerMachineName != controlPlaneMachineName {
-		configs = append(configs, p.machineConfigs[workerMachineName].ConvertConfigToConfigGenerateStruct())
+		configs = append(configs, p.machineConfigs[workerMachineName])
 	}
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
 		if etcdMachineName != controlPlaneMachineName && etcdMachineName != workerMachineName {
-			configs = append(configs, p.machineConfigs[etcdMachineName].ConvertConfigToConfigGenerateStruct())
+			configs = append(configs, p.machineConfigs[etcdMachineName])
 		}
 	}
 	return configs
@@ -1463,8 +1465,7 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 		return err
 	}
 
-	datacenterConfig := p.DatacenterConfig()
-	datacenter := datacenterConfig.(*v1alpha1.VSphereDatacenterConfigGenerate)
+	datacenter := p.datacenterConfig
 
 	oSpec := prevDatacenter.Spec
 	nSpec := datacenter.Spec
@@ -1539,4 +1540,16 @@ func (p *vsphereProvider) secretContentsChanged(ctx context.Context, workloadClu
 		return true, nil
 	}
 	return false, nil
+}
+
+func (p *vsphereProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
+	if currentSpec.VersionsBundle.VSphere.Version == newSpec.VersionsBundle.VSphere.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.VSphereProviderName,
+		NewVersion:    newSpec.VersionsBundle.VSphere.Version,
+		OldVersion:    currentSpec.VersionsBundle.VSphere.Version,
+	}
 }

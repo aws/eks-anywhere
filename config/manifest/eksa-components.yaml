@@ -401,6 +401,8 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
+                        version:
+                          type: string
                         webhook:
                           properties:
                             arch:
@@ -502,6 +504,8 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
+                        version:
+                          type: string
                       required:
                       - cilium
                       - manifest
@@ -1048,15 +1052,77 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
+                        clusterController:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
                         components:
                           properties:
                             uri:
                               description: URI points to the manifest yaml file
                               type: string
                           type: object
+                        diagnosticCollector:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
+                        version:
+                          type: string
                       required:
                       - cliTools
+                      - clusterController
                       - components
+                      - diagnosticCollector
                       type: object
                     etcdadmBootstrap:
                       properties:
@@ -1338,6 +1404,8 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
+                        version:
+                          type: string
                       required:
                       - helmController
                       - kustomizeController
@@ -1745,6 +1813,19 @@ spec:
                     items:
                       type: string
                     type: array
+                type: object
+              registryMirrorConfiguration:
+                description: RegistryMirrorConfiguration defines the settings for
+                  image registry mirror
+                properties:
+                  caCertContent:
+                    description: CACertContent defines the contents registry mirror
+                      CA certificate
+                    type: string
+                  endpoint:
+                    description: Endpoint defines the registry mirror endpoint to
+                      use for pulling images
+                    type: string
                 type: object
               workerNodeGroupConfigurations:
                 items:

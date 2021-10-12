@@ -43,6 +43,25 @@ type Spec struct {
 	Bundles             *v1alpha1.Bundles
 }
 
+func (s *Spec) DeepCopy() *Spec {
+	return &Spec{
+		Cluster:             s.Cluster.DeepCopy(),
+		OIDCConfig:          s.OIDCConfig.DeepCopy(),
+		GitOpsConfig:        s.GitOpsConfig.DeepCopy(),
+		releasesManifestURL: s.releasesManifestURL,
+		bundlesManifestURL:  s.bundlesManifestURL,
+		configFS:            s.configFS,
+		httpClient:          s.httpClient,
+		userAgent:           s.userAgent,
+		VersionsBundle: &VersionsBundle{
+			VersionsBundle: s.VersionsBundle.VersionsBundle.DeepCopy(),
+			KubeDistro:     s.VersionsBundle.KubeDistro.deepCopy(),
+		},
+		eksdRelease: s.eksdRelease.DeepCopy(),
+		Bundles:     s.Bundles.DeepCopy(),
+	}
+}
+
 func (cs *Spec) SetDefaultGitOps() {
 	if cs != nil && cs.GitOpsConfig != nil {
 		c := &cs.GitOpsConfig.Spec.Flux
@@ -75,6 +94,11 @@ type KubeDistro struct {
 	Pause               v1alpha1.Image
 	EtcdImage           v1alpha1.Image
 	EtcdVersion         string
+}
+
+func (k *KubeDistro) deepCopy() *KubeDistro {
+	k2 := *k
+	return &k2
 }
 
 type VersionedRepository struct {
@@ -333,6 +357,18 @@ func readLocalFile(filename string) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func (s *Spec) KubeDistroImages() []v1alpha1.Image {
+	images := []v1alpha1.Image{}
+	for _, component := range s.eksdRelease.Status.Components {
+		for _, asset := range component.Assets {
+			if asset.Image != nil {
+				images = append(images, v1alpha1.Image{URI: asset.Image.URI})
+			}
+		}
+	}
+	return images
 }
 
 func buildKubeDistro(eksd *eksdv1alpha1.Release) (*KubeDistro, error) {

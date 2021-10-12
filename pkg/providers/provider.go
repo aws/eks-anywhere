@@ -32,12 +32,14 @@ type Provider interface {
 	MachineConfigs() []MachineConfig
 	ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	GenerateMHC() ([]byte, error)
+	ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff
 }
 
 type DatacenterConfig interface {
 	Kind() string
 	PauseReconcile()
 	ClearPauseAnnotation()
+	Marshallable() v1alpha1.Marshallable
 }
 
 type BuildMapOption func(map[string]interface{})
@@ -51,4 +53,5 @@ type TemplateBuilder interface {
 
 type MachineConfig interface {
 	OSFamily() v1alpha1.OSFamily
+	Marshallable() v1alpha1.Marshallable
 }

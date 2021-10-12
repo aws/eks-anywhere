@@ -1,5 +1,0 @@
-apiVersion: bootstrap.aws.infrastructure.cluster.x-k8s.io/v1alpha1
-kind: AWSIAMConfiguration
-spec:
-  namePrefix: {{.clusterName}}-
-  stackName: eks-a-{{.clusterName}}-cluster-api-provider-distro-eks-amazonaws-com

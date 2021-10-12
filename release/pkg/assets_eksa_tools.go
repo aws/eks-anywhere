@@ -103,7 +103,13 @@ func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev
 		}
 	}
 
+	version, err := r.GenerateComponentBundleVersion(newVersioner(r.CliRepoSource))
+	if err != nil {
+		return anywherev1alpha1.EksaBundle{}, errors.Wrapf(err, "failed generating version for eksa bundle")
+	}
+
 	bundle := anywherev1alpha1.EksaBundle{
+		Version:             version,
 		CliTools:            bundleImageArtifacts["eks-anywhere-cli-tools"],
 		Components:          bundleManifestArtifacts["eksa-components.yaml"],
 		ClusterController:   bundleImageArtifacts["eks-anywhere-cluster-controller"],

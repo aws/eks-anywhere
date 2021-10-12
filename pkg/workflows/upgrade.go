@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -21,9 +22,10 @@ type Upgrade struct {
 	clusterManager interfaces.ClusterManager
 	addonManager   interfaces.AddonManager
 	writer         filewriter.FileWriter
+	capiUpgrader   interfaces.CAPIUpgrader
 }
 
-func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
+func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provider, capiUpgrader interfaces.CAPIUpgrader,
 	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter) *Upgrade {
 	return &Upgrade{
 		bootstrapper:   bootstrapper,
@@ -31,6 +33,7 @@ func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provide
 		clusterManager: clusterManager,
 		addonManager:   addonManager,
 		writer:         writer,
+		capiUpgrader:   capiUpgrader,
 	}
 }
 
@@ -53,6 +56,7 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, workloadCl
 		Validations:     validator,
 		Rollback:        true,
 		Writer:          c.writer,
+		CAPIUpgrader:    c.capiUpgrader,
 	}
 	err := task.NewTaskRunner(&setupAndValidateTasks{}).RunTask(ctx, commandContext)
 	if err != nil {
@@ -64,6 +68,8 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, workloadCl
 type setupAndValidateTasks struct{}
 
 type updateSecrets struct{}
+
+type upgradeCoreComponents struct{}
 
 type upgradeNeeded struct{}
 
@@ -132,11 +138,38 @@ func (s *updateSecrets) Run(ctx context.Context, commandContext *task.CommandCon
 		commandContext.SetError(err)
 		return nil
 	}
-	return &upgradeNeeded{}
+	return &upgradeCoreComponents{}
 }
 
 func (s *updateSecrets) Name() string {
 	return "update-secrets"
+}
+
+func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if !features.IsActive(features.ComponentsUpgrade()) {
+		logger.V(4).Info("Core components upgrade feature is disabled, skipping")
+		return &upgradeNeeded{}
+	}
+
+	logger.Info("Upgrading core components")
+	currentSpec, err := commandContext.ClusterManager.GetCurrentClusterSpec(ctx, commandContext.WorkloadCluster)
+	if err != nil {
+		commandContext.SetError(err)
+		return nil
+	}
+
+	if err := commandContext.CAPIUpgrader.Upgrade(ctx, commandContext.WorkloadCluster, commandContext.Provider, currentSpec, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return nil
+	}
+
+	// TODO: Add Upgrade calls for FluxAddonManager and eks-a cluster controller and CRDs
+
+	return &upgradeNeeded{}
+}
+
+func (s *upgradeCoreComponents) Name() string {
+	return "upgrade-core-components"
 }
 
 func (s *upgradeNeeded) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {

@@ -12,10 +12,8 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/providers/factory"
-	support "github.com/aws/eks-anywhere/pkg/support"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -78,10 +76,10 @@ func (gsbo *generateSupportBundleOptions) validateCmdInput() error {
 	return nil
 }
 
-func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Context) (*support.EksaDiagnosticBundle, error) {
+func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Context) (*diagnostics.EksaDiagnosticBundle, error) {
 	f := gsbo.fileName
 	if f == "" {
-		return support.NewDiagnosticBundleDefault(support.NewAnalyzerFactory(), support.NewDefaultCollectorFactory()), nil
+		return diagnostics.NewDiagnosticBundleDefault(diagnostics.NewAnalyzerFactory(), diagnostics.NewDefaultCollectorFactory()), nil
 	}
 
 	clusterSpec, err := cluster.NewSpec(f, version.Get())
@@ -89,46 +87,22 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
 
-	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
-	image := eksaToolsImage.VersionedImage()
-	executableBuilder, err := executables.NewExecutableBuilder(ctx, image)
-	if err != nil {
-		return nil, fmt.Errorf("unable to initialize executables: %v", err)
-	}
-
-	writerDir := fmt.Sprintf(clusterSpec.Name)
-	writer, err := filewriter.NewWriter(writerDir)
-	if err != nil {
-		return nil, fmt.Errorf("unable to write: %v", err)
-	}
-
-	clusterawsadm := executableBuilder.BuildClusterAwsAdmExecutable()
-	kubectl := executableBuilder.BuildKubectlExecutable()
-	govc := executableBuilder.BuildGovcExecutable(writer)
-	docker := executables.BuildDockerExecutable()
-
-	providerFactory := &factory.ProviderFactory{
-		AwsClient:            clusterawsadm,
-		DockerClient:         docker,
-		DockerKubectlClient:  kubectl,
-		VSphereGovcClient:    govc,
-		VSphereKubectlClient: kubectl,
-		Writer:               writer,
-	}
-	provider, err := providerFactory.BuildProvider(gsbo.fileName, clusterSpec.Cluster)
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).
+		WithProvider(f, clusterSpec.Cluster, cc.skipIpCheck).
+		WithAnalyzerFactory().
+		WithCollectorFactory().
+		WithWriter().
+		Build()
 	if err != nil {
 		return nil, err
 	}
 
-	collectorImage := clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage()
-	af := support.NewAnalyzerFactory()
-	cf := support.NewCollectorFactory(collectorImage)
-	opts := support.EksaDiagnosticBundleOpts{
-		AnalyzerFactory:  af,
-		CollectorFactory: cf,
-		Writer:           writer,
+	opts := diagnostics.EksaDiagnosticBundleOpts{
+		AnalyzerFactory:  deps.AnalyzerFactory,
+		CollectorFactory: deps.CollectorFactory,
+		Writer:           deps.Writer,
 	}
-	return support.NewDiagnosticBundleFromSpec(clusterSpec, provider, gsbo.kubeConfig(clusterSpec.Name), opts)
+	return diagnostics.NewDiagnosticBundleFromSpec(clusterSpec, deps.Provider, gsbo.kubeConfig(clusterSpec.Name), opts)
 }
 
 func (gsbo *generateSupportBundleOptions) kubeConfig(clusterName string) string {

@@ -57,6 +57,9 @@ func TestVSphereKubernetes120Flux(t *testing.T) {
 		framework.NewVSphere(t, framework.WithUbuntu120()),
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runFluxFlow(test)
 }
@@ -66,6 +69,9 @@ func TestVSphereKubernetes121Flux(t *testing.T) {
 		framework.NewVSphere(t, framework.WithUbuntu121()),
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runFluxFlow(test)
 }
@@ -75,6 +81,9 @@ func TestVSphereKubernetes120BottleRocketFlux(t *testing.T) {
 		framework.NewVSphere(t, framework.WithBottleRocket120()),
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runFluxFlow(test)
 }
@@ -84,6 +93,9 @@ func TestVSphereKubernetes121BottleRocketFlux(t *testing.T) {
 		framework.NewVSphere(t, framework.WithBottleRocket121()),
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runFluxFlow(test)
 }
@@ -118,6 +130,7 @@ func TestVSphereKubernetes121GitopsOptionsFlux(t *testing.T) {
 	test := framework.NewE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithFlux(

@@ -57,19 +57,31 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 	switch cs.Spec.DatacenterRef.Kind {
 	case anywherev1.VSphereDatacenterKind:
 		vdc := &anywherev1.VSphereDatacenterConfig{}
-		vmc := &anywherev1.VSphereMachineConfig{}
+		cpVmc := &anywherev1.VSphereMachineConfig{}
+		etcdVmc := &anywherev1.VSphereMachineConfig{}
+		workerVmc := &anywherev1.VSphereMachineConfig{}
 		err := cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.DatacenterRef.Name}, vdc)
+		if err != nil {
+			return err
+		}
+		err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.ControlPlaneConfiguration.MachineGroupRef.Name}, cpVmc)
 		if err != nil {
 			return err
 		}
 		if len(cs.Spec.WorkerNodeGroupConfigurations) != 1 {
 			return fmt.Errorf("expects WorkerNodeGroupConfigurations's length to be 1, but found %d", len(cs.Spec.WorkerNodeGroupConfigurations))
 		}
-		err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name}, vmc)
+		err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name}, workerVmc)
 		if err != nil {
 			return err
 		}
-		resources, err := cor.vsphereTemplate.TemplateResources(ctx, cs, spec, *vdc, *vmc)
+		if cs.Spec.ExternalEtcdConfiguration != nil {
+			err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name}, etcdVmc)
+			if err != nil {
+				return err
+			}
+		}
+		resources, err := cor.vsphereTemplate.TemplateResources(ctx, cs, spec, *vdc, *cpVmc, *workerVmc, *etcdVmc)
 		if err != nil {
 			return err
 		}

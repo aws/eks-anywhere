@@ -35,3 +35,7 @@ func WithProxy() E2ETestOpt {
 		)
 	}
 }
+
+func RequiredProxyEnvVars() []string {
+	return proxyRequiredEnvVars
+}

@@ -10,7 +10,7 @@ description: >
 <!-- overview -->
 
 The purpose of this document is to walk you through getting set up with MetalLB Kubernetes Load Balancer for your cluster.
-This is suggested as an alternative if your networking requirements do not allow you to use [Kube-Vip]({{< ref "/docs/tasks/workload/loadbalance/kubevip" >}}).
+This is suggested as an alternative if your networking requirements do not allow you to use [Kube-Vip]({{< relref "./kubevip" >}}).
 
 <!-- body -->
 
@@ -60,7 +60,7 @@ MetalLB installation is described [here](https://metallb.universe.tf/installatio
     helm install metallb metallb/metallb -f values.yaml
     ```
 
-1. Deploy the [Hello EKS Anywhere]({{< ref "/docs/tasks/workload/test-app" >}}) test application.
+1. Deploy the [Hello EKS Anywhere]({{< relref "../test-app" >}}) test application.
 
     ```bash
     kubectl apply -f https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml

@@ -11,6 +11,7 @@ import (
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -20,9 +21,12 @@ import (
 )
 
 const (
-	clusterCtlPath       = "clusterctl"
-	clusterctlConfigFile = "clusterctl_tmp.yaml"
-	capiPrefix           = "/generated/overrides"
+	clusterCtlPath                = "clusterctl"
+	clusterctlConfigFile          = "clusterctl_tmp.yaml"
+	capiPrefix                    = "/generated/overrides"
+	etcdadmBootstrapProviderName  = "etcdadm-bootstrap"
+	etcdadmControllerProviderName = "etcdadm-controller"
+	kubeadmBootstrapProviderName  = "kubeadm"
 )
 
 //go:embed config/clusterctl.yaml
@@ -274,10 +278,57 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 
 	return &clusterctlConfiguration{
 		configFile:               filePath,
-		bootstrapVersion:         fmt.Sprintf("kubeadm:%s", bundle.Bootstrap.Version),
+		bootstrapVersion:         fmt.Sprintf("%s:%s", kubeadmBootstrapProviderName, bundle.Bootstrap.Version),
 		controlPlaneVersion:      fmt.Sprintf("kubeadm:%s", bundle.ControlPlane.Version),
 		coreVersion:              fmt.Sprintf("cluster-api:%s", bundle.ClusterAPI.Version),
-		etcdadmBootstrapVersion:  fmt.Sprintf("etcdadm-bootstrap:%s", bundle.ExternalEtcdBootstrap.Version),
-		etcdadmControllerVersion: fmt.Sprintf("etcdadm-controller:%s", bundle.ExternalEtcdController.Version),
+		etcdadmBootstrapVersion:  fmt.Sprintf("%s:%s", etcdadmBootstrapProviderName, bundle.ExternalEtcdBootstrap.Version),
+		etcdadmControllerVersion: fmt.Sprintf("%s:%s", etcdadmControllerProviderName, bundle.ExternalEtcdController.Version),
 	}, nil
+}
+
+var providerNamespaces = map[string]string{
+	constants.VSphereProviderName: constants.CapvSystemNamespace,
+	constants.DockerProviderName:  constants.CapdSystemNamespace,
+	constants.AWSProviderName:     constants.CapaSystemNamespace,
+	etcdadmBootstrapProviderName:  constants.EtcdAdminBootstrapProviderSystemNamespace,
+	etcdadmControllerProviderName: constants.EtcdAdminControllerSystemNamespace,
+	kubeadmBootstrapProviderName:  constants.CapiKubeadmBootstrapSystemNamespace,
+}
+
+func (c *Clusterctl) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, newSpec *cluster.Spec, changeDiff *clusterapi.CAPIChangeDiff) error {
+	clusterctlConfig, err := c.buildConfig(newSpec, managementCluster.Name, provider)
+	if err != nil {
+		return err
+	}
+
+	upgradeCommand := []string{
+		"upgrade", "apply",
+		"--config", clusterctlConfig.configFile,
+		"--management-group", "capi-system/cluster-api",
+		"--kubeconfig", managementCluster.KubeconfigFile,
+	}
+
+	if changeDiff.ControlPlane != nil {
+		upgradeCommand = append(upgradeCommand, "--control-plane", fmt.Sprintf("%s/kubeadm:%s", constants.CapiKubeadmControlPlaneSystemNamespace, changeDiff.ControlPlane.NewVersion))
+	}
+
+	if changeDiff.Core != nil {
+		upgradeCommand = append(upgradeCommand, "--core", fmt.Sprintf("%s/cluster-api:%s", constants.CapiSystemNamespace, changeDiff.Core.NewVersion))
+	}
+
+	if changeDiff.InfrastructureProvider != nil {
+		newInfraProvider := fmt.Sprintf("%s/%s:%s", providerNamespaces[changeDiff.InfrastructureProvider.ComponentName], changeDiff.InfrastructureProvider.ComponentName, changeDiff.InfrastructureProvider.NewVersion)
+		upgradeCommand = append(upgradeCommand, "--infrastructure", newInfraProvider)
+	}
+
+	for _, bootstrapProvider := range changeDiff.BootstrapProviders {
+		newBootstrapProvider := fmt.Sprintf("%s/%s:%s", providerNamespaces[bootstrapProvider.ComponentName], bootstrapProvider.ComponentName, bootstrapProvider.NewVersion)
+		upgradeCommand = append(upgradeCommand, "--bootstrap", newBootstrapProvider)
+	}
+
+	if _, err := c.executable.Execute(ctx, upgradeCommand...); err != nil {
+		return fmt.Errorf("failed running upgrade apply with clusterctl: %v", err)
+	}
+
+	return nil
 }

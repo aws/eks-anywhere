@@ -12,6 +12,7 @@ GIT_TAG?=$(shell git describe --tag | cut -d'-' -f1)
 GOLANG_VERSION?="1.16"
 
 RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
+BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml
 DEV_GIT_VERSION:=v0.0.0-dev
 
 AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output text)
@@ -38,9 +39,6 @@ ifdef CODEBUILD_SRC_DIR
 else
 	TAR_PATH?="_output/tar"
 endif
-
-GOPROXY_DNS?=https://proxy.golang.org
-export GOPROXY=$(GOPROXY_DNS)
 
 BASE_REPO?=public.ecr.aws/eks-distro-build-tooling
 CLUSTER_CONTROLLER_BASE_IMAGE_NAME?=eks-distro-minimal-base
@@ -104,7 +102,7 @@ $(TOOLS_BIN_DIR):
 	mkdir -p $(TOOLS_BIN_DIR)
 
 $(KUSTOMIZE): $(TOOLS_BIN_DIR)
-	cd $(TOOLS_BIN_DIR) && curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | sh -s $(KUSTOMIZE_VERSION)
+	cd $(TOOLS_BIN_DIR) && curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash -s $(KUSTOMIZE_VERSION)
 
 $(KUBEBUILDER): $(TOOLS_BIN_DIR)
 	cd $(TOOLS_BIN_DIR) && curl -L -o kubebuilder https://github.com/kubernetes-sigs/kubebuilder/releases/download/$(KUBEBUILDER_VERSION)/kubebuilder_$(GO_OS)_$(GO_ARCH)
@@ -244,7 +242,6 @@ mocks: ## Generate mocks
 	go get github.com/golang/mock/mockgen@v1.5.0
 	${GOPATH}/bin/mockgen -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
 	${GOPATH}/bin/mockgen -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable
-	${GOPATH}/bin/mockgen -destination=pkg/providers/aws/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/aws" ProviderClient,ProviderKubectlClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere" ProviderGovcClient,ProviderKubectlClient
 	${GOPATH}/bin/mockgen -destination=pkg/filewriter/mocks/filewriter.go -package=mocks "github.com/aws/eks-anywhere/pkg/filewriter" FileWriter
@@ -253,7 +250,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/task/mocks/task.go -package=mocks "github.com/aws/eks-anywhere/pkg/task" Task
 	${GOPATH}/bin/mockgen -destination=pkg/bootstrapper/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/bootstrapper" ClusterClient
 	${GOPATH}/bin/mockgen -destination=pkg/cluster/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/cluster" ClusterClient
-	${GOPATH}/bin/mockgen -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,AddonManager,Validator
+	${GOPATH}/bin/mockgen -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,AddonManager,Validator,CAPIUpgrader
 	${GOPATH}/bin/mockgen -destination=pkg/git/providers/github/mocks/github.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/providers/github" GitProviderClient,GithubProviderClient
 	${GOPATH}/bin/mockgen -destination=pkg/git/mocks/git.go -package=mocks "github.com/aws/eks-anywhere/pkg/git" Provider
 	${GOPATH}/bin/mockgen -destination=pkg/git/gogithub/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gogithub" Client
@@ -263,7 +260,8 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/internal/templates/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/templates/factory.go" GovcClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/internal/tags/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/tags/factory.go" GovcClient
 	${GOPATH}/bin/mockgen -destination=pkg/validations/upgradevalidations/mocks/upgradevalidations.go -package=mocks -source "pkg/validations/upgradevalidations/upgradevalidations.go" ValidationsKubectlClient
-	${GOPATH}/bin/mockgen -destination=pkg/support/interfaces/mocks/support.go -package=mocks -source "pkg/support/interfaces.go" DiagnosticBundle,AnalyzerFactory,CollectorFactory
+	${GOPATH}/bin/mockgen -destination=pkg/diagnostics/interfaces/mocks/diagnostics.go -package=mocks -source "pkg/diagnostics/interfaces.go" DiagnosticBundle,AnalyzerFactory,CollectorFactory
+	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/capiclient.go -package=mocks -source "pkg/clusterapi/upgrader.go" CAPIClient
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
@@ -293,10 +291,12 @@ eks-a-e2e:
 			make eks-a-release-cross-platform GIT_VERSION=$(shell cat release/triggers/eks-a-release/development/RELEASE_VERSION) RELEASE_MANIFEST_URL=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml; \
 			make eks-a-release GIT_VERSION=$(DEV_GIT_VERSION); \
 		else \
+			make check-eksa-components-override; \
 			make eks-a-cross-platform; \
 			make eks-a; \
 		fi \
 	else \
+		make check-eksa-components-override; \
 		make eks-a; \
 	fi
 
@@ -307,6 +307,10 @@ e2e-tests-binary:
 .PHONY: integration-test-binary
 integration-test-binary:
 	go build -o bin/test github.com/aws/eks-anywhere/cmd/integration_test
+
+.PHONY: check-eksa-components-override
+check-eksa-components-override:
+	scripts/eksa_components_override.sh $(BUNDLE_MANIFEST_URL)
 
 .PHONY: help
 help:  ## Display this help
@@ -359,6 +363,7 @@ docker-pull-prerequisites:
 
 ## TODO update release folder
 RELEASE_DIR := config/manifest
+RELEASE_MANIFEST_TARGET ?= eksa-components.yaml
 
 $(RELEASE_DIR):
 	mkdir -p $(RELEASE_DIR)/
@@ -366,7 +371,7 @@ $(RELEASE_DIR):
 .PHONY: release-manifests
 release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) ## Builds the manifests to publish with a release
 	# Build core-components.
-	$(KUSTOMIZE) build config/prod > $(RELEASE_DIR)/eksa-components.yaml
+	$(KUSTOMIZE) build config/prod > $(RELEASE_DIR)/$(RELEASE_MANIFEST_TARGET)
 
 .PHONY: run-controller # Run eksa controller from local repo with tilt
 run-controller:
