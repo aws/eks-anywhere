@@ -409,7 +409,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						},
 					},
 					ProxyConfiguration: &ProxyConfiguration{
-						HttpProxy:  "0.0.0.0:1",
+						HttpProxy:  "http://0.0.0.0:1",
 						HttpsProxy: "0.0.0.0:1",
 						NoProxy:    []string{"localhost"},
 					},

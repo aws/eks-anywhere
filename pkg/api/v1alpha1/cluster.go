@@ -29,6 +29,7 @@ type ClusterGenerateOpt func(config *ClusterGenerate)
 
 // Used for generating yaml for generate clusterconfig command
 func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *ClusterGenerate {
+	isManagement := true
 	config := &ClusterGenerate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       ClusterKind,
@@ -39,6 +40,7 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 		},
 		Spec: ClusterSpec{
 			KubernetesVersion: Kube121,
+			Management:        &isManagement,
 			ClusterNetwork: ClusterNetwork{
 				Pods: Pods{
 					CidrBlocks: []string{"192.168.0.0/16"},
@@ -134,6 +136,7 @@ func WithEtcdMachineGroupRef(ref ProviderRefAccessor) ClusterGenerateOpt {
 }
 
 func NewCluster(clusterName string) *Cluster {
+	isManagement := true
 	c := &Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       ClusterKind,
@@ -144,6 +147,7 @@ func NewCluster(clusterName string) *Cluster {
 		},
 		Spec: ClusterSpec{
 			KubernetesVersion: Kube119,
+			Management:        &isManagement,
 		},
 		Status: ClusterStatus{},
 	}
@@ -353,7 +357,17 @@ func validateProxyConfig(clusterConfig *Cluster) error {
 }
 
 func validateProxyData(proxy string) error {
-	ip, port, err := net.SplitHostPort(proxy)
+	var proxyHost string
+	if strings.HasPrefix(proxy, "http") {
+		u, err := url.ParseRequestURI(proxy)
+		if err != nil {
+			return fmt.Errorf("proxy %s is invalid, please provide a valid URI", proxy)
+		}
+		proxyHost = u.Host
+	} else {
+		proxyHost = proxy
+	}
+	ip, port, err := net.SplitHostPort(proxyHost)
 	if err != nil {
 		return fmt.Errorf("proxy %s is invalid, please provide a valid proxy in the format proxy_ip:port", proxy)
 	}
@@ -361,7 +375,7 @@ func validateProxyData(proxy string) error {
 		return fmt.Errorf("proxy ip %s is invalid, please provide a valid proxy ip", ip)
 	}
 	if p, err := strconv.Atoi(port); err != nil || p < 1 || p > 65535 {
-		return fmt.Errorf("proxy port %s is invalid, please provide a valid proxy ip", port)
+		return fmt.Errorf("proxy port %s is invalid, please provide a valid proxy port", port)
 	}
 	return nil
 }
