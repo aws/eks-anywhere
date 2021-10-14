@@ -49,13 +49,13 @@ func (c *VSphereMachineConfig) IsEtcd() bool {
 	return false
 }
 
-func (c *VSphereMachineConfig) SetManagement() {
-	c.Annotations[managementAnnotation] = "true"
+func (c *VSphereMachineConfig) SetManagement(clusterName string) {
+	c.Annotations[managementAnnotation] = clusterName
 }
 
 func (c *VSphereMachineConfig) IsManagement() bool {
 	if s, ok := c.Annotations[managementAnnotation]; ok {
-		return s == "true"
+		return s != ""
 	}
 	return false
 }

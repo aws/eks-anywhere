@@ -132,7 +132,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 			field.Invalid(field.NewPath("spec", "IdentityProviderRefs"), new.Spec.IdentityProviderRefs, "field is immutable"))
 	}
 
-	if old.Spec.Management == nil || !*old.Spec.Management {
+	if old.Spec.Management != nil && !*old.Spec.Management {
 		clusterlog.Info("Cluster config is associated with workload cluster")
 		return allErrs
 	}

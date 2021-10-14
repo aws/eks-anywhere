@@ -44,7 +44,7 @@ func TestManagementClusterValidateUpdateKubernetesVersionImmutable(t *testing.T)
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
-func TestWorkloadClusterValidateUpdateKubernetesVersionImmutable(t *testing.T) {
+func TestManagementNilClusterValidateUpdateKubernetesVersionImmutable(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			KubernetesVersion:         v1alpha1.Kube119,
@@ -52,6 +52,24 @@ func TestWorkloadClusterValidateUpdateKubernetesVersionImmutable(t *testing.T) {
 			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
 				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
 			},
+		},
+	}
+	c := cOld.DeepCopy()
+	c.Spec.KubernetesVersion = v1alpha1.Kube120
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
+func TestWorkloadClusterValidateUpdateKubernetesVersionSuccess(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			KubernetesVersion:         v1alpha1.Kube119,
+			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{Count: 3},
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
+			},
+			Management: boolPointer(false),
 		},
 	}
 	c := cOld.DeepCopy()
@@ -91,6 +109,7 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationEqual(t *testing.
 				Endpoint:        &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
 				MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"},
 			},
+			Management: boolPointer(false),
 		},
 	}
 	c := cOld.DeepCopy()
@@ -200,6 +219,7 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationMachineGroupRef(t
 			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
 				MachineGroupRef: &v1alpha1.Ref{Name: "test1", Kind: "MachineConfig"},
 			},
+			Management: boolPointer(false),
 		},
 	}
 	c := cOld.DeepCopy()
@@ -229,12 +249,13 @@ func TestManagementClusterValidateUpdateControlPlaneConfigurationOldMachineGroup
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
-func TestWorkloadClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRefNilImmutable(t *testing.T) {
+func TestWorkloadClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRefNilSuccess(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
 				MachineGroupRef: nil,
 			},
+			Management: boolPointer(false),
 		},
 	}
 	c := cOld.DeepCopy()
@@ -264,12 +285,13 @@ func TestManagementClusterValidateUpdateControlPlaneConfigurationNewMachineGroup
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
-func TestWorkloadClusterValidateUpdateControlPlaneConfigurationNewMachineGroupRefNilImmutable(t *testing.T) {
+func TestWorkloadClusterValidateUpdateControlPlaneConfigurationNewMachineGroupRefNilSuccess(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
 				MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"},
 			},
+			Management: boolPointer(false),
 		},
 	}
 	c := cOld.DeepCopy()
