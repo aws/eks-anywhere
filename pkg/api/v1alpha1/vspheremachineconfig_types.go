@@ -49,6 +49,17 @@ func (c *VSphereMachineConfig) IsEtcd() bool {
 	return false
 }
 
+func (c *VSphereMachineConfig) SetManagement() {
+	c.Annotations[managementAnnotation] = "true"
+}
+
+func (c *VSphereMachineConfig) IsManagement() bool {
+	if s, ok := c.Annotations[managementAnnotation]; ok {
+		return s == "true"
+	}
+	return false
+}
+
 func (c *VSphereMachineConfig) OSFamily() OSFamily {
 	return c.Spec.OSFamily
 }

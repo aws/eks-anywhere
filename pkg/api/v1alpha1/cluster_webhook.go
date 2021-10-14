@@ -25,8 +25,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
-const isMgmt = true
-
 // log is for logging in this package.
 var clusterlog = logf.Log.WithName("cluster-resource")
 
@@ -77,10 +75,22 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 
 	var allErrs field.ErrorList
 
+	if new.Spec.Management != old.Spec.Management && *new.Spec.Management != *old.Spec.Management {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "Management"), new.Spec.Management, "field is immutable"))
+	}
+
 	if !new.Spec.ControlPlaneConfiguration.Endpoint.Equal(old.Spec.ControlPlaneConfiguration.Endpoint) {
 		allErrs = append(
 			allErrs,
 			field.Invalid(field.NewPath("spec", "ControlPlaneConfiguration.endpoint"), new.Spec.ControlPlaneConfiguration.Endpoint, "field is immutable"))
+	}
+
+	if !new.Spec.DatacenterRef.Equal(&old.Spec.DatacenterRef) {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "datacenterRef"), new.Spec.DatacenterRef, "field is immutable"))
 	}
 
 	if !new.Spec.ClusterNetwork.Equal(&old.Spec.ClusterNetwork) {
@@ -122,7 +132,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 			field.Invalid(field.NewPath("spec", "IdentityProviderRefs"), new.Spec.IdentityProviderRefs, "field is immutable"))
 	}
 
-	if !isMgmt {
+	if old.Spec.Management == nil || !*old.Spec.Management {
 		clusterlog.Info("Cluster config is associated with workload cluster")
 		return allErrs
 	}
@@ -140,12 +150,6 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		allErrs = append(
 			allErrs,
 			field.Invalid(field.NewPath("spec", "ControlPlaneConfiguration.count"), new.Spec.ControlPlaneConfiguration.Count, "field is immutable"))
-	}
-
-	if !new.Spec.DatacenterRef.Equal(&old.Spec.DatacenterRef) {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "datacenterRef"), new.Spec.DatacenterRef, "field is immutable"))
 	}
 
 	if !new.Spec.ControlPlaneConfiguration.MachineGroupRef.Equal(old.Spec.ControlPlaneConfiguration.MachineGroupRef) {

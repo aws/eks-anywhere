@@ -91,7 +91,7 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 		)
 	}
 
-	if !isMgmt {
+	if !old.IsManagement() {
 		vspheremachineconfiglog.Info("Machine config is associated with workload cluster")
 		return allErrs
 	}
