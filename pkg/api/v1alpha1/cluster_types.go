@@ -20,7 +20,7 @@ const (
 
 	// managementAnnotation is an annotation that can be applied to EKS-A management
 	// cluster object
-	managementAnnotation = "anywhere.eks.amazonaws.com/management"
+	managementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
