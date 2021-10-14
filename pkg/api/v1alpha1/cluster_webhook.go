@@ -68,6 +68,22 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 }
 
+func managementEqual(n, o *bool) bool {
+	if n == o {
+		return true
+	}
+	if n == nil && *o {
+		return true
+	}
+	if o == nil && *n {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return *n == *o
+}
+
 func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 	if old.IsReconcilePaused() {
 		return nil
@@ -75,7 +91,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 
 	var allErrs field.ErrorList
 
-	if new.Spec.Management != old.Spec.Management && *new.Spec.Management != *old.Spec.Management {
+	if !managementEqual(new.Spec.Management, old.Spec.Management) {
 		allErrs = append(
 			allErrs,
 			field.Invalid(field.NewPath("spec", "Management"), new.Spec.Management, "field is immutable"))

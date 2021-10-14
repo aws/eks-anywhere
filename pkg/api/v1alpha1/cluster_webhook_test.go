@@ -13,7 +13,7 @@ func boolPointer(b bool) *bool {
 	return &b
 }
 
-func TestClusterValidateUpdateManagementImmutable(t *testing.T) {
+func TestClusterValidateUpdateManagementValueImmutable(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			Management: boolPointer(true),
@@ -24,6 +24,38 @@ func TestClusterValidateUpdateManagementImmutable(t *testing.T) {
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
+func TestClusterValidateUpdateManagementOldNilNewTrueSuccess(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{},
+	}
+	c := cOld.DeepCopy()
+	c.Spec.Management = boolPointer(true)
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
+func TestClusterValidateUpdateManagementOldNilNewFalseImmutable(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{},
+	}
+	c := cOld.DeepCopy()
+	c.Spec.Management = boolPointer(false)
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
+func TestClusterValidateUpdateManagementBothNilImmutable(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{},
+	}
+	c := cOld.DeepCopy()
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
 func TestManagementClusterValidateUpdateKubernetesVersionImmutable(t *testing.T) {
