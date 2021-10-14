@@ -63,13 +63,6 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 
 	var allErrs field.ErrorList
 
-	if old.Spec.Template != new.Spec.Template {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "template"), new.Spec.Template, "field is immutable"),
-		)
-	}
-
 	if old.Spec.OSFamily != new.Spec.OSFamily {
 		allErrs = append(
 			allErrs,
@@ -101,6 +94,13 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 		return allErrs
 	}
 	vspheremachineconfiglog.Info("Machine config is associated with management cluster's control plane or etcd")
+
+	if old.Spec.Template != new.Spec.Template {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "template"), new.Spec.Template, "field is immutable"),
+		)
+	}
 
 	if old.Spec.Datastore != new.Spec.Datastore {
 		allErrs = append(

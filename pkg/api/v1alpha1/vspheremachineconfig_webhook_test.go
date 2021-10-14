@@ -21,7 +21,7 @@ func TestManagementCPVSphereMachineValidateUpdateTemplateImmutable(t *testing.T)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkloadCPVSphereMachineValidateUpdateTemplateImmutable(t *testing.T) {
+func TestWorkloadCPVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Template = "oldTemplate"
@@ -29,10 +29,10 @@ func TestWorkloadCPVSphereMachineValidateUpdateTemplateImmutable(t *testing.T) {
 
 	c.Spec.Template = "newTemplate"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestManagementWorkersVSphereMachineValidateUpdateTemplateImmutable(t *testing.T) {
+func TestManagementWorkersVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.Spec.Template = "oldTemplate"
 	vOld.SetManagement()
@@ -40,17 +40,17 @@ func TestManagementWorkersVSphereMachineValidateUpdateTemplateImmutable(t *testi
 
 	c.Spec.Template = "newTemplate"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestWorkloadWorkersVSphereMachineValidateUpdateTemplateImmutable(t *testing.T) {
+func TestWorkloadWorkersVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.Spec.Template = "oldTemplate"
 	c := vOld.DeepCopy()
 
 	c.Spec.Template = "newTemplate"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
 func TestVSphereMachineValidateUpdateOSFamilyImmutable(t *testing.T) {
