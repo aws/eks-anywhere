@@ -84,16 +84,18 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 		)
 	}
 
-	if !old.IsManagement() {
-		vspheremachineconfiglog.Info("Machine config is associated with workload cluster")
+	// TODO: enable etcd machine upgrade after controller supports control plane then workers order upgrade.
+	if !old.IsManagement() && !old.IsEtcd() {
+		vspheremachineconfiglog.Info("Machine config is associated with workload cluster's control plane or worker nodes")
 		return allErrs
 	}
 
-	if !old.IsControlPlane() && !old.IsEtcd() {
-		vspheremachineconfiglog.Info("Machine config is not associated with control plane or etcd")
+	if old.IsManagement() && !old.IsEtcd() && !old.IsControlPlane() {
+		vspheremachineconfiglog.Info("Machine config is associated with management cluster's worker nodes")
 		return allErrs
 	}
-	vspheremachineconfiglog.Info("Machine config is associated with management cluster's control plane or etcd")
+
+	vspheremachineconfiglog.Info("Machine config is associated with management cluster's control plane or etcd, or workload cluster's etcd")
 
 	if old.Spec.Template != new.Spec.Template {
 		allErrs = append(

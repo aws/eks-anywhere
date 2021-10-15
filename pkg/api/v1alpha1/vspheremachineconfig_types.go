@@ -42,6 +42,10 @@ func (c *VSphereMachineConfig) IsControlPlane() bool {
 	return false
 }
 
+func (c *VSphereMachineConfig) SetEtcd() {
+	c.Annotations[etcdAnnotation] = "true"
+}
+
 func (c *VSphereMachineConfig) IsEtcd() bool {
 	if s, ok := c.Annotations[etcdAnnotation]; ok {
 		return s == "true"
