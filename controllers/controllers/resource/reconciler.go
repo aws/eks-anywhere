@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -14,8 +13,6 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
 )
-
-var excludeReconcilation = map[string]bool{"kubeadmcontrolplane": true, "etcdadmcluster": true}
 
 type Reconciler interface {
 	Reconcile(ctx context.Context, objectKey types.NamespacedName, dryRun bool) error
@@ -36,6 +33,7 @@ func NewClusterReconciler(resourceFetcher ResourceFetcher, resourceUpdater Resou
 		ResourceUpdater: resourceUpdater,
 		vsphereTemplate: VsphereTemplate{
 			ResourceFetcher: resourceFetcher,
+			ResourceUpdater: resourceUpdater,
 			now:             now,
 		},
 		dockerTemplate: DockerTemplate{
@@ -101,10 +99,6 @@ func (cor *clusterReconciler) applyTemplates(ctx context.Context, resources []*u
 	for _, resource := range resources {
 		kind := resource.GetKind()
 		name := resource.GetName()
-		if skipReconciliation(resource.GetKind()) {
-			cor.Log.Info("skipping object", "kind", kind, "name", name, "dryRun", dryRun)
-			continue
-		}
 		cor.Log.Info("applying object", "kind", kind, "name", name, "dryRun", dryRun)
 		fetch, err := cor.Fetch(ctx, resource.GetName(), resource.GetNamespace(), resource.GetKind(), resource.GetAPIVersion())
 		if err == nil {
@@ -123,11 +117,4 @@ func (cor *clusterReconciler) applyTemplates(ctx context.Context, resources []*u
 		return err
 	}
 	return nil
-}
-
-func skipReconciliation(kind string) bool {
-	if _, ok := excludeReconcilation[strings.ToLower(kind)]; ok {
-		return true
-	}
-	return false
 }

@@ -17,6 +17,10 @@ const (
 
 	// etcdAnnotation can be applied to EKS-A machineconfig CR for etcd, to prevent controller from making changes to it
 	etcdAnnotation = "anywhere.eks.amazonaws.com/etcd"
+
+	// managementAnnotation is an annotation that can be applied to EKS-A management
+	// cluster object
+	managementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
