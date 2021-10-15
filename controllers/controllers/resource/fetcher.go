@@ -289,7 +289,7 @@ func (r *capiResourceFetcher) ExistingVSphereControlPlaneMachineConfig(ctx conte
 }
 
 func (r *capiResourceFetcher) ExistingVSphereEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error) {
-	vsMachineTemplate, err := r.VSphereControlPlaneMachineTemplate(ctx, cs)
+	vsMachineTemplate, err := r.VSphereEtcdMachineTemplate(ctx, cs)
 	if err != nil {
 		return nil, err
 	}
