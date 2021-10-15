@@ -69,19 +69,15 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 }
 
 func managementEqual(n, o *bool) bool {
-	if n == o {
-		return true
+	var p, c bool
+	if n == nil || *n {
+		c = true
 	}
-	if n == nil && *o {
-		return true
+
+	if o == nil || *o {
+		p = true
 	}
-	if o == nil && *n {
-		return true
-	}
-	if n == nil || o == nil {
-		return false
-	}
-	return *n == *o
+	return p == c
 }
 
 func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
