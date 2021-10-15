@@ -583,7 +583,11 @@ func TestKubectlGetMachines(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			fileContent := test.ReadFile(t, tt.jsonResponseFile)
 			k, ctx, cluster, e := newKubectl(t)
-			e.EXPECT().Execute(ctx, []string{"get", "machines", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}).Return(*bytes.NewBufferString(fileContent), nil)
+			e.EXPECT().Execute(ctx, []string{
+				"get", "machines", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
+				"--selector=cluster.x-k8s.io/cluster-name=" + cluster.Name,
+				"--namespace", constants.EksaSystemNamespace,
+			}).Return(*bytes.NewBufferString(fileContent), nil)
 
 			gotMachines, err := k.GetMachines(ctx, cluster)
 			if err != nil {
