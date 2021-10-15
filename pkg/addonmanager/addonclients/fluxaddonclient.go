@@ -369,14 +369,15 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 		return &ConfigVersionControlFailedError{Err: err}
 	}
 
-	if fc.clusterSpec.Spec.Management == nil || !*fc.clusterSpec.Spec.Management {
-		logger.V(3).Info("Skipping flux custom manifest files")
-	} else {
+	if fc.clusterSpec.Spec.Management == nil || *fc.clusterSpec.Spec.Management {
 		logger.V(3).Info("Generating flux custom manifest files...")
 		err = fc.writeFluxSystemFiles()
 		if err != nil {
 			return &ConfigVersionControlFailedError{Err: err}
 		}
+
+	} else {
+		logger.V(3).Info("Skipping flux custom manifest files")
 	}
 	p := path.Dir(config.Spec.Flux.Github.ClusterConfigPath)
 	err = fc.gitOpts.Git.Add(p)
