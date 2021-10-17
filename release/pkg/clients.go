@@ -399,8 +399,7 @@ func ReadHttpFile(uri string) ([]byte, error) {
 	return data, nil
 }
 
-func ExistsInS3(releaseClients *ReleaseClients, bucket string, key string) (bool, error) {
-	s3Client := releaseClients.S3.Client
+func ExistsInS3(s3Client *s3.S3, bucket string, key string) (bool, error) {
 	_, err := s3Client.HeadObject(&s3.HeadObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
