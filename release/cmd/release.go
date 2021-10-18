@@ -215,7 +215,7 @@ var releaseCmd = &cobra.Command{
 			}
 			eksAReleaseManifestUrl := fmt.Sprintf("%s%s", releaseConfig.CDN, eksAReleaseManifestKey)
 
-			exists, err := pkg.ExistsInS3(releaseClients, releaseConfig.ReleaseBucket, eksAReleaseManifestKey)
+			exists, err := pkg.ExistsInS3(releaseClients.S3.Client, releaseConfig.ReleaseBucket, eksAReleaseManifestKey)
 			if err != nil {
 				fmt.Printf("Error checking if release manifest exists in S3: %v", err)
 				os.Exit(1)
