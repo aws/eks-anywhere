@@ -19,9 +19,10 @@ import (
 )
 
 type deleteClusterOptions struct {
-	fileName     string
-	wConfig      string
-	forceCleanup bool
+	fileName             string
+	wConfig              string
+	forceCleanup         bool
+	managementKubeconfig string
 }
 
 func (dc *deleteClusterOptions) kubeConfig(clusterName string) string {
@@ -65,6 +66,7 @@ func init() {
 	deleteClusterCmd.Flags().StringVarP(&dc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration, required if <cluster-name> is not provided")
 	deleteClusterCmd.Flags().StringVarP(&dc.wConfig, "w-config", "w", "", "Kubeconfig file to use when deleting a workload cluster")
 	deleteClusterCmd.Flags().BoolVar(&dc.forceCleanup, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
+	deleteClusterCmd.Flags().StringVar(&dc.managementKubeconfig, "kubeconfig", "", "kubeconfig file pointing to a management cluster")
 }
 
 func (dc *deleteClusterOptions) validate(ctx context.Context, args []string) error {
@@ -118,7 +120,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		Name:           clusterSpec.Name,
 		KubeconfigFile: dc.kubeConfig(clusterSpec.Name),
 	}
-	err = deleteCluster.Run(ctx, workloadCluster, clusterSpec, viper.GetBool("force-cleanup"))
+	err = deleteCluster.Run(ctx, workloadCluster, clusterSpec, dc.forceCleanup, dc.managementKubeconfig)
 	if err == nil {
 		deps.Writer.CleanUp()
 	}
