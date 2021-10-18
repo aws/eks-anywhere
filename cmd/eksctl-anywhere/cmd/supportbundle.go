@@ -94,25 +94,13 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).
 		WithProvider(csbo.fileName, clusterSpec.Cluster, cc.skipIpCheck).
-		WithKubectl().
-		WithAnalyzerFactory().
-		WithCollectorFactory().
-		WithWriter().
-		WithTroubleshoot().
+		WithDiagnosticBundleFactory().
 		Build()
 	if err != nil {
 		return err
 	}
 
-	opts := diagnostics.EksaDiagnosticBundleOpts{
-		AnalyzerFactory:  deps.AnalyzerFactory,
-		CollectorFactory: deps.CollectorFactory,
-		Client:           deps.Troubleshoot,
-		Writer:           deps.Writer,
-		Kubectl:          deps.Kubectl,
-	}
-
-	supportBundle, err := diagnostics.NewDiagnosticBundle(clusterSpec, deps.Provider, csbo.kubeConfig(clusterSpec.Name), bundleConfig, opts)
+	supportBundle, err := deps.DignosticCollectorFactory.NewDiagnosticBundle(clusterSpec, deps.Provider, csbo.kubeConfig(clusterSpec.Name), bundleConfig)
 	if err != nil {
 		return fmt.Errorf("failed to parse collector: %v", err)
 	}
