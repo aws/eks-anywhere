@@ -421,6 +421,20 @@ func (mr *MockAddonManagerMockRecorder) UpdateGitEksaSpec(arg0, arg1, arg2, arg3
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGitEksaSpec", reflect.TypeOf((*MockAddonManager)(nil).UpdateGitEksaSpec), arg0, arg1, arg2, arg3)
 }
 
+// Upgrade mocks base method.
+func (m *MockAddonManager) Upgrade(arg0 context.Context, arg1, arg2 *cluster.Spec) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Upgrade indicates an expected call of Upgrade.
+func (mr *MockAddonManagerMockRecorder) Upgrade(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockAddonManager)(nil).Upgrade), arg0, arg1, arg2)
+}
+
 // Validations mocks base method.
 func (m *MockAddonManager) Validations(arg0 context.Context, arg1 *cluster.Spec) []validations.Validation {
 	m.ctrl.T.Helper()
