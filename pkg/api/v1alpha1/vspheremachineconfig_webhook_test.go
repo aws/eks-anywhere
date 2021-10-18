@@ -9,10 +9,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
-func TestCPVSphereMachineValidateUpdateTemplateImmutable(t *testing.T) {
+func TestManagementCPVSphereMachineValidateUpdateTemplateImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Template = "oldTemplate"
+	vOld.SetManagement("test-cluster")
 	c := vOld.DeepCopy()
 
 	c.Spec.Template = "newTemplate"
@@ -20,8 +21,53 @@ func TestCPVSphereMachineValidateUpdateTemplateImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkersVSphereMachineValidateUpdateTemplateImmutable(t *testing.T) {
+func TestWorkloadCPVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.Template = "oldTemplate"
+	c := vOld.DeepCopy()
+
+	c.Spec.Template = "newTemplate"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestManagementWorkersVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.Spec.Template = "oldTemplate"
+	vOld.SetManagement("test-cluster")
+	c := vOld.DeepCopy()
+
+	c.Spec.Template = "newTemplate"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestWorkloadWorkersVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.Spec.Template = "oldTemplate"
+	c := vOld.DeepCopy()
+
+	c.Spec.Template = "newTemplate"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestManagementEtcdVSphereMachineValidateUpdateTemplateImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetEtcd()
+	vOld.Spec.Template = "oldTemplate"
+	vOld.SetManagement("test-cluster")
+	c := vOld.DeepCopy()
+
+	c.Spec.Template = "newTemplate"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestWorkloadEtcdVSphereMachineValidateUpdateTemplateImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetEtcd()
 	vOld.Spec.Template = "oldTemplate"
 	c := vOld.DeepCopy()
 
@@ -40,9 +86,10 @@ func TestVSphereMachineValidateUpdateOSFamilyImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCPVSphereMachineValidateUpdateMemoryMiBImmutable(t *testing.T) {
+func TestManagementCPVSphereMachineValidateUpdateMemoryMiBImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
+	vOld.SetManagement("test-cluster")
 	vOld.Spec.MemoryMiB = 2
 	c := vOld.DeepCopy()
 
@@ -51,7 +98,29 @@ func TestCPVSphereMachineValidateUpdateMemoryMiBImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkersVSphereMachineValidateUpdateMemoryMiBSuccess(t *testing.T) {
+func TestWorkloadCPVSphereMachineValidateUpdateMemoryMiBSuccess(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.MemoryMiB = 2
+	c := vOld.DeepCopy()
+
+	c.Spec.MemoryMiB = 2000000
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestManagementWorkersVSphereMachineValidateUpdateMemoryMiBSuccess(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.Spec.MemoryMiB = 2
+	vOld.SetManagement("test-cluster")
+	c := vOld.DeepCopy()
+
+	c.Spec.MemoryMiB = 2000000
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestWorkloadWorkersVSphereMachineValidateUpdateMemoryMiBSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.Spec.MemoryMiB = 2
 	c := vOld.DeepCopy()
@@ -61,10 +130,35 @@ func TestWorkersVSphereMachineValidateUpdateMemoryMiBSuccess(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestCPVSphereMachineValidateUpdateNumCPUsImmutable(t *testing.T) {
+func TestManagementEtcdVSphereMachineValidateUpdateMemoryMiBImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetManagement("test-cluster")
+	vOld.SetEtcd()
+	vOld.Spec.MemoryMiB = 2
+
+	c := vOld.DeepCopy()
+
+	c.Spec.MemoryMiB = 2000000
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestWorkloadEtcdVSphereMachineValidateUpdateMemoryMiBImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetEtcd()
+	vOld.Spec.MemoryMiB = 2
+	c := vOld.DeepCopy()
+
+	c.Spec.MemoryMiB = 2000000
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestManagementCPVSphereMachineValidateUpdateNumCPUsImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.NumCPUs = 1
+	vOld.SetManagement("test-cluster")
 	c := vOld.DeepCopy()
 
 	c.Spec.NumCPUs = 16
@@ -72,7 +166,29 @@ func TestCPVSphereMachineValidateUpdateNumCPUsImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkersVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.T) {
+func TestWorkloadCPVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.NumCPUs = 1
+	c := vOld.DeepCopy()
+
+	c.Spec.NumCPUs = 16
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestManagementWorkersVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.Spec.NumCPUs = 1
+	vOld.SetManagement("test-cluster")
+	c := vOld.DeepCopy()
+
+	c.Spec.NumCPUs = 16
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestWorkloadWorkersVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.Spec.NumCPUs = 1
 	c := vOld.DeepCopy()
@@ -82,9 +198,33 @@ func TestWorkersVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestCPVSphereMachineValidateUpdateDiskGiBImmutable(t *testing.T) {
+func TestManagementEtcdVSphereMachineValidateUpdateNumCPUsImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetManagement("test-cluster")
+	vOld.SetEtcd()
+	vOld.Spec.NumCPUs = 1
+	c := vOld.DeepCopy()
+
+	c.Spec.NumCPUs = 16
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestWorkloadEtcdVSphereMachineValidateUpdateNumCPUsImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetEtcd()
+	vOld.Spec.NumCPUs = 1
+	c := vOld.DeepCopy()
+
+	c.Spec.NumCPUs = 16
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestManagementCPVSphereMachineValidateUpdateDiskGiBImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
+	vOld.SetManagement("test-cluster")
 	vOld.Spec.DiskGiB = 1
 	c := vOld.DeepCopy()
 
@@ -93,7 +233,29 @@ func TestCPVSphereMachineValidateUpdateDiskGiBImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkersVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T) {
+func TestWorkloadCPVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.DiskGiB = 1
+	c := vOld.DeepCopy()
+
+	c.Spec.DiskGiB = 160
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestManagementWorkersVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.Spec.DiskGiB = 1
+	vOld.SetManagement("test-cluster")
+	c := vOld.DeepCopy()
+
+	c.Spec.DiskGiB = 160
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestWorkloadWorkersVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.Spec.DiskGiB = 1
 	c := vOld.DeepCopy()
@@ -103,7 +265,44 @@ func TestWorkersVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestVSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
+func TestManagementEtcdVSphereMachineValidateUpdateDiskGiBImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetManagement("test-cluster")
+	vOld.SetEtcd()
+	vOld.Spec.DiskGiB = 1
+
+	c := vOld.DeepCopy()
+
+	c.Spec.DiskGiB = 160
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestWorkloadEtcdVSphereMachineValidateUpdateDiskGiBImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetEtcd()
+	vOld.Spec.DiskGiB = 1
+	c := vOld.DeepCopy()
+
+	c.Spec.DiskGiB = 160
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestManagementSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetControlPlane()
+	vOld.SetManagement("test-cluster")
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	vOld.Spec.Users[0].SshAuthorizedKeys = []string{"rsa-blahdeblahbalh"}
+	c := vOld.DeepCopy()
+
+	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestWorkloadVSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
@@ -115,7 +314,19 @@ func TestVSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
+func TestManagementVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetControlPlane()
+	vOld.SetManagement("test-cluster")
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	c := vOld.DeepCopy()
+
+	c.Spec.Users[0].Name = "Andy"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestWorkloadVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
@@ -161,9 +372,10 @@ func TestVSphereMachineValidateUpdateSuccess(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestCPVSphereMachineValidateUpdateDatastoreImmutable(t *testing.T) {
+func TestManagementCPVSphereMachineValidateUpdateDatastoreImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
+	vOld.SetManagement("test-cluster")
 	vOld.Spec.Datastore = "OldDataStore"
 	c := vOld.DeepCopy()
 
@@ -172,7 +384,52 @@ func TestCPVSphereMachineValidateUpdateDatastoreImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkersVSphereMachineValidateUpdateDatastoreSuccess(t *testing.T) {
+func TestWorkloadCPVSphereMachineValidateUpdateDatastoreSuccess(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.Datastore = "OldDataStore"
+	c := vOld.DeepCopy()
+
+	c.Spec.Datastore = "NewDataStore"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestManagementEtcdVSphereMachineValidateUpdateDatastoreImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetEtcd()
+	vOld.SetManagement("test-cluster")
+	vOld.Spec.Datastore = "OldDataStore"
+	c := vOld.DeepCopy()
+
+	c.Spec.Datastore = "NewDataStore"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestWorkloadEtcdVSphereMachineValidateUpdateDatastoreImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetEtcd()
+	vOld.Spec.Datastore = "OldDataStore"
+	c := vOld.DeepCopy()
+
+	c.Spec.Datastore = "NewDataStore"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestManagementWorkersVSphereMachineValidateUpdateDatastoreSuccess(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetManagement("test-cluster")
+	vOld.Spec.Datastore = "OldDataStore"
+	c := vOld.DeepCopy()
+
+	c.Spec.Datastore = "NewDataStore"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestWorkloadWorkersVSphereMachineValidateUpdateDatastoreSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.Spec.Datastore = "OldDataStore"
 	c := vOld.DeepCopy()
@@ -182,9 +439,10 @@ func TestWorkersVSphereMachineValidateUpdateDatastoreSuccess(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestCPVSphereMachineValidateUpdateFolderImmutable(t *testing.T) {
+func TestManagementCPVSphereMachineValidateUpdateFolderImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
+	vOld.SetManagement("test-cluster")
 	vOld.Spec.Folder = "/dev/null"
 	c := vOld.DeepCopy()
 
@@ -193,7 +451,52 @@ func TestCPVSphereMachineValidateUpdateFolderImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkersVSphereMachineValidateUpdateFolderSuccess(t *testing.T) {
+func TestWorkloadCPVSphereMachineValidateUpdateFolderSuccess(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.Folder = "/dev/null"
+	c := vOld.DeepCopy()
+
+	c.Spec.Folder = "/tmp"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestManagementEtcdVSphereMachineValidateUpdateFolderImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetEtcd()
+	vOld.SetManagement("test-cluster")
+	vOld.Spec.Folder = "/dev/null"
+	c := vOld.DeepCopy()
+
+	c.Spec.Folder = "/tmp"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestWorkloadEtcdVSphereMachineValidateUpdateFolderImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetEtcd()
+	vOld.Spec.Folder = "/dev/null"
+	c := vOld.DeepCopy()
+
+	c.Spec.Folder = "/tmp"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestManagementWorkersVSphereMachineValidateUpdateFolderSuccess(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetManagement("test-cluster")
+	vOld.Spec.Folder = "/dev/null"
+	c := vOld.DeepCopy()
+
+	c.Spec.Folder = "/tmp"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestWorkloadWorkersVSphereMachineValidateUpdateFolderSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.Spec.Folder = "/dev/null"
 	c := vOld.DeepCopy()
@@ -203,9 +506,10 @@ func TestWorkersVSphereMachineValidateUpdateFolderSuccess(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestCPVSphereMachineValidateUpdateResourcePoolImmutable(t *testing.T) {
+func TestManagementCPVSphereMachineValidateUpdateResourcePoolImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
+	vOld.SetManagement("test-cluster")
 	vOld.Spec.ResourcePool = "AbovegroundPool"
 	c := vOld.DeepCopy()
 
@@ -214,7 +518,52 @@ func TestCPVSphereMachineValidateUpdateResourcePoolImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkersVSphereMachineValidateUpdateResourcePoolSuccess(t *testing.T) {
+func TestWorkloadCPVSphereMachineValidateUpdateResourcePoolSuccess(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.ResourcePool = "AbovegroundPool"
+	c := vOld.DeepCopy()
+
+	c.Spec.ResourcePool = "IngroundPool"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestManagementEtcdVSphereMachineValidateUpdateResourcePoolImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetEtcd()
+	vOld.SetManagement("test-cluster")
+	vOld.Spec.ResourcePool = "AbovegroundPool"
+	c := vOld.DeepCopy()
+
+	c.Spec.ResourcePool = "IngroundPool"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestWorkloadEtcdVSphereMachineValidateUpdateResourcePoolImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetEtcd()
+	vOld.Spec.ResourcePool = "AbovegroundPool"
+	c := vOld.DeepCopy()
+
+	c.Spec.ResourcePool = "IngroundPool"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestManagementWorkersVSphereMachineValidateUpdateResourcePoolSuccess(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetManagement("test-cluster")
+	vOld.Spec.ResourcePool = "AbovegroundPool"
+	c := vOld.DeepCopy()
+
+	c.Spec.ResourcePool = "IngroundPool"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestWorkloadWorkersVSphereMachineValidateUpdateResourcePoolSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.Spec.ResourcePool = "AbovegroundPool"
 	c := vOld.DeepCopy()

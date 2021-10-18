@@ -35,4 +35,7 @@ require (
 // exclude un-required transitive dependency from cluster-api-provider-vsphere v0.7.8
 exclude sigs.k8s.io/cluster-api v0.3.14
 
-replace github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.0-rc95
+replace (
+	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.0.0
+	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.0-rc95
+)

@@ -25,12 +25,14 @@ import (
 
 type ResourceFetcher interface {
 	MachineDeployment(ctx context.Context, cs *anywherev1.Cluster) (*clusterv1.MachineDeployment, error)
-	VSphereMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*vspherev3.VSphereMachineTemplate, error)
+	VSphereWorkerMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*vspherev3.VSphereMachineTemplate, error)
 	FetchObject(ctx context.Context, objectKey types.NamespacedName, obj client.Object) error
 	FetchObjectByName(ctx context.Context, name string, namespace string, obj client.Object) error
 	Fetch(ctx context.Context, name string, namespace string, kind string, apiVersion string) (*unstructured.Unstructured, error)
 	FetchCluster(ctx context.Context, objectKey types.NamespacedName) (*anywherev1.Cluster, error)
 	ExistingVSphereDatacenterConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereDatacenterConfig, error)
+	ExistingVSphereControlPlaneMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
+	ExistingVSphereEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
 	ExistingVSphereWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
 	ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*kubeadmnv1alpha3.KubeadmControlPlane, error)
 	Etcd(ctx context.Context, cs *anywherev1.Cluster) (*etcdv1alpha3.EtcdadmCluster, error)
@@ -192,13 +194,39 @@ func (r *capiResourceFetcher) Fetch(ctx context.Context, name string, namespace 
 	return us, nil
 }
 
-func (r *capiResourceFetcher) VSphereMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*vspherev3.VSphereMachineTemplate, error) {
+func (r *capiResourceFetcher) VSphereWorkerMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*vspherev3.VSphereMachineTemplate, error) {
 	md, err := r.MachineDeployment(ctx, cs)
 	if err != nil {
 		return nil, err
 	}
 	vsphereMachineTemplate := &vspherev3.VSphereMachineTemplate{}
 	err = r.FetchObjectByName(ctx, md.Spec.Template.Spec.InfrastructureRef.Name, constants.EksaSystemNamespace, vsphereMachineTemplate)
+	if err != nil {
+		return nil, err
+	}
+	return vsphereMachineTemplate, nil
+}
+
+func (r *capiResourceFetcher) VSphereControlPlaneMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*vspherev3.VSphereMachineTemplate, error) {
+	cp, err := r.ControlPlane(ctx, cs)
+	if err != nil {
+		return nil, err
+	}
+	vsphereMachineTemplate := &vspherev3.VSphereMachineTemplate{}
+	err = r.FetchObjectByName(ctx, cp.Spec.InfrastructureTemplate.Name, constants.EksaSystemNamespace, vsphereMachineTemplate)
+	if err != nil {
+		return nil, err
+	}
+	return vsphereMachineTemplate, nil
+}
+
+func (r *capiResourceFetcher) VSphereEtcdMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*vspherev3.VSphereMachineTemplate, error) {
+	etcd, err := r.Etcd(ctx, cs)
+	if err != nil {
+		return nil, err
+	}
+	vsphereMachineTemplate := &vspherev3.VSphereMachineTemplate{}
+	err = r.FetchObjectByName(ctx, etcd.Spec.InfrastructureTemplate.Name, constants.EksaSystemNamespace, vsphereMachineTemplate)
 	if err != nil {
 		return nil, err
 	}
@@ -245,19 +273,35 @@ func (r *capiResourceFetcher) FetchAppliedSpec(ctx context.Context, cs *anywhere
 }
 
 func (r *capiResourceFetcher) ExistingVSphereDatacenterConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereDatacenterConfig, error) {
-	vsMachineTemplate, err := r.VSphereMachineTemplate(ctx, cs)
+	vsMachineTemplate, err := r.VSphereWorkerMachineTemplate(ctx, cs)
 	if err != nil {
 		return nil, err
 	}
 	return MapMachineTemplateToVSphereDatacenterConfigSpec(vsMachineTemplate)
 }
 
-func (r *capiResourceFetcher) ExistingVSphereWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error) {
-	vsMachineTemplate, err := r.VSphereMachineTemplate(ctx, cs)
+func (r *capiResourceFetcher) ExistingVSphereControlPlaneMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error) {
+	vsMachineTemplate, err := r.VSphereControlPlaneMachineTemplate(ctx, cs)
 	if err != nil {
 		return nil, err
 	}
-	return MapMachineTemplateToVSphereWorkerMachineConfigSpec(vsMachineTemplate)
+	return MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate)
+}
+
+func (r *capiResourceFetcher) ExistingVSphereEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error) {
+	vsMachineTemplate, err := r.VSphereEtcdMachineTemplate(ctx, cs)
+	if err != nil {
+		return nil, err
+	}
+	return MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate)
+}
+
+func (r *capiResourceFetcher) ExistingVSphereWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error) {
+	vsMachineTemplate, err := r.VSphereWorkerMachineTemplate(ctx, cs)
+	if err != nil {
+		return nil, err
+	}
+	return MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate)
 }
 
 func MapMachineTemplateToVSphereDatacenterConfigSpec(vsMachineTemplate *vspherev3.VSphereMachineTemplate) (*anywherev1.VSphereDatacenterConfig, error) {
@@ -274,7 +318,7 @@ func MapMachineTemplateToVSphereDatacenterConfigSpec(vsMachineTemplate *vspherev
 	return vsSpec, nil
 }
 
-func MapMachineTemplateToVSphereWorkerMachineConfigSpec(vsMachineTemplate *vspherev3.VSphereMachineTemplate) (*anywherev1.VSphereMachineConfig, error) {
+func MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate *vspherev3.VSphereMachineTemplate) (*anywherev1.VSphereMachineConfig, error) {
 	vsSpec := &anywherev1.VSphereMachineConfig{}
 	vsSpec.Spec.MemoryMiB = int(vsMachineTemplate.Spec.Template.Spec.MemoryMiB)
 	vsSpec.Spec.DiskGiB = int(vsMachineTemplate.Spec.Template.Spec.DiskGiB)
@@ -285,5 +329,6 @@ func MapMachineTemplateToVSphereWorkerMachineConfigSpec(vsMachineTemplate *vsphe
 	vsSpec.Spec.Folder = vsMachineTemplate.Spec.Template.Spec.Folder
 	vsSpec.Spec.StoragePolicyName = vsMachineTemplate.Spec.Template.Spec.StoragePolicyName
 
+	// TODO: OSFamily, Users
 	return vsSpec, nil
 }

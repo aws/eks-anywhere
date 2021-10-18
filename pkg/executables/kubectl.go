@@ -359,7 +359,11 @@ type machinesResponse struct {
 }
 
 func (k *Kubectl) GetMachines(ctx context.Context, cluster *types.Cluster) ([]types.Machine, error) {
-	params := []string{"get", "machines", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}
+	params := []string{
+		"get", "machines", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
+		"--selector=cluster.x-k8s.io/cluster-name=" + cluster.Name,
+		"--namespace", constants.EksaSystemNamespace,
+	}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting machines: %v", err)

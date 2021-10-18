@@ -92,13 +92,13 @@ func (g *Govc) SearchTemplate(ctx context.Context, datacenter string, machineCon
 	templateJson := templateResponse.String()
 	templateJson = strings.TrimSuffix(templateJson, "\n")
 	if templateJson == "null" || templateJson == "" {
-		logger.V(2).Info("Template not found", "ova", filepath.Base(machineConfig.Spec.Template))
+		logger.V(2).Info(fmt.Sprintf("Template not found: %s", machineConfig.Spec.Template))
 		return "", nil
 	}
 
 	templateInfo := make([]string, 0)
 	if err = json.Unmarshal([]byte(templateJson), &templateInfo); err != nil {
-		logger.V(2).Info("failed unmarshalling govc response: %s, %v", templateJson, err)
+		logger.V(2).Info(fmt.Sprintf("Failed unmarshalling govc response: %s, %v", templateJson, err))
 		return "", nil
 	}
 
@@ -114,7 +114,7 @@ func (g *Govc) SearchTemplate(ctx context.Context, datacenter string, machineCon
 		}
 	}
 	if !bTemplateFound {
-		logger.V(2).Info("template '%s' not found", machineConfig.Spec.Template)
+		logger.V(2).Info(fmt.Sprintf("Template '%s' not found", machineConfig.Spec.Template))
 		return "", nil
 	}
 

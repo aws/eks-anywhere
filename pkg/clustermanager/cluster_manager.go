@@ -147,7 +147,8 @@ func (c *ClusterManager) writeCAPISpecFile(clusterName string, content []byte) e
 // It returns a struct of type Cluster containing the name and the kubeconfig of the cluster.
 func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) (*types.Cluster, error) {
 	workloadCluster := &types.Cluster{
-		Name: managementCluster.Name,
+		Name:         managementCluster.Name,
+		ExistingMgnt: managementCluster.ExistingMgnt,
 	}
 
 	cpContent, mdContent, err := provider.GenerateCAPISpecForCreate(ctx, workloadCluster, clusterSpec)

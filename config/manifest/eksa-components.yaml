@@ -1799,6 +1799,8 @@ spec:
                 type: array
               kubernetesVersion:
                 type: string
+              management:
+                type: boolean
               overrideClusterSpecFile:
                 description: 'Deprecated: This field has no function and is going
                   to be removed in a future release.'
