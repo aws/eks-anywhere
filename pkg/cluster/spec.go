@@ -191,10 +191,6 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 }
 
 func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundles, opts ...SpecOpt) (*Spec, error) {
-	err := eksav1alpha1.ValidateClusterConfigContent(cluster)
-	if err != nil {
-		return nil, err
-	}
 	s := &Spec{
 		releasesManifestURL: releasesManifestURL,
 		configFS:            configFS,
