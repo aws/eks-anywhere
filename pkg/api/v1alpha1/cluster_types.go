@@ -273,6 +273,14 @@ func (c *Cluster) EtcdAnnotation() string {
 	return etcdAnnotation
 }
 
+func (s *Cluster) SetManagedBy(managementClusterName string) {
+	if s.Annotations == nil {
+		s.Annotations = map[string]string{}
+	}
+
+	s.Annotations[ManagementAnnotation] = managementClusterName
+}
+
 func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
 	config := &ClusterGenerate{
 		TypeMeta: c.TypeMeta,

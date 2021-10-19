@@ -32,7 +32,6 @@ type ClusterManager interface {
 	InstallMachineHealthChecks(ctx context.Context, workloadCluster *types.Cluster, provider providers.Provider) error
 	GetCurrentClusterSpec(ctx context.Context, cluster *types.Cluster) (*cluster.Spec, error)
 	LoadManagement(kubeconfig string) (*types.Cluster, error)
-	AddAnnotations(spec *cluster.Spec, name string)
 }
 
 type AddonManager interface {

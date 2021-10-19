@@ -875,13 +875,6 @@ func (c *ClusterManager) LoadManagement(kubeconfig string) (*types.Cluster, erro
 	}, nil
 }
 
-func (c *ClusterManager) AddAnnotations(cluster *cluster.Spec, managementName string) {
-	if cluster.Annotations == nil {
-		cluster.Annotations = map[string]string{}
-	}
-	cluster.Annotations[v1alpha1.ManagementAnnotation] = managementName
-}
-
 func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {
 	return func(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
 		return c.clusterClient.GetBundles(ctx, cluster.KubeconfigFile, name, namespace)

@@ -59,9 +59,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, forceCleanu
 		}
 		mgmtCluster = false
 		commandContext.BootstrapCluster = managementCluster
-
-		commandContext.ClusterManager.AddAnnotations(commandContext.ClusterSpec, managementCluster.Name)
-
+		commandContext.ClusterSpec.SetManagedBy(managementCluster.Name)
 	}
 	commandContext.ClusterSpec.Spec.Management = &mgmtCluster
 
