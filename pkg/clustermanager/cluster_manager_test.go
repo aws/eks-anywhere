@@ -21,6 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	mocksmanager "github.com/aws/eks-anywhere/pkg/clustermanager/mocks"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	mocksdiagnostics "github.com/aws/eks-anywhere/pkg/diagnostics/interfaces/mocks"
 	mockswriter "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	mocksprovider "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -1351,23 +1352,41 @@ func newTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) *testSetup 
 	}
 }
 
+<<<<<<< HEAD
 type clusterManagerMocks struct {
 	writer     *mockswriter.MockFileWriter
 	networking *mocksmanager.MockNetworking
 	client     *mocksmanager.MockClusterClient
 	provider   *mocksprovider.MockProvider
+=======
+type mocks struct {
+	writer             *mockswriter.MockFileWriter
+	networking         *mocksmanager.MockNetworking
+	client             *mocksmanager.MockClusterClient
+	provider           *mocksprovider.MockProvider
+	diagnosticsFactory *mocksdiagnostics.MockDiagnosticBundleFactory
+>>>>>>> c37e1cb (add diagnosticBundleFactory to the clusterManager)
 }
 
 func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (*clustermanager.ClusterManager, *clusterManagerMocks) {
 	mockCtrl := gomock.NewController(t)
+<<<<<<< HEAD
 	m := &clusterManagerMocks{
 		writer:     mockswriter.NewMockFileWriter(mockCtrl),
 		networking: mocksmanager.NewMockNetworking(mockCtrl),
 		client:     mocksmanager.NewMockClusterClient(mockCtrl),
 		provider:   mocksprovider.NewMockProvider(mockCtrl),
+=======
+	m := &mocks{
+		writer:             mockswriter.NewMockFileWriter(mockCtrl),
+		networking:         mocksmanager.NewMockNetworking(mockCtrl),
+		client:             mocksmanager.NewMockClusterClient(mockCtrl),
+		provider:           mocksprovider.NewMockProvider(mockCtrl),
+		diagnosticsFactory: mocksdiagnostics.NewMockDiagnosticBundleFactory(mockCtrl),
+>>>>>>> c37e1cb (add diagnosticBundleFactory to the clusterManager)
 	}
 
-	c := clustermanager.New(m.client, m.networking, m.writer, opts...)
+	c := clustermanager.New(m.client, m.networking, m.writer, m.diagnosticsFactory, opts...)
 
 	return c, m
 }

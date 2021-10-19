@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -40,6 +41,36 @@ type EksaDiagnosticBundle struct {
 	kubectl          *executables.Kubectl
 	retrier          *retrier.Retrier
 	writer           filewriter.FileWriter
+}
+
+func newDiagnosticBundleBootstrapCluster(af AnalyzerFactory, cf CollectorFactory, client BundleClient,
+	kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter) (*EksaDiagnosticBundle, error) {
+	b := &EksaDiagnosticBundle{
+		bundle: &supportBundle{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "SupportBundle",
+				APIVersion: troubleshootApiVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "BootstrapClusterBundle",
+			},
+			Spec: supportBundleSpec{},
+		},
+		analyzerFactory:  af,
+		collectorFactory: cf,
+		client:           client,
+		kubectl:          kubectl,
+		kubeconfig:       kubeconfig,
+		retrier:          retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		writer:           writer,
+	}
+
+	err := b.WriteBundleConfig()
+	if err != nil {
+		return nil, fmt.Errorf("error writing bundle config: %v", err)
+	}
+
+	return b, nil
 }
 
 func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeValue *time.Time) error {

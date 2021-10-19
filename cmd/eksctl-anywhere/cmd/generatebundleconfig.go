@@ -76,11 +76,11 @@ func (gsbo *generateSupportBundleOptions) validateCmdInput() error {
 	return nil
 }
 
-func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Context) (*diagnostics.EksaDiagnosticBundle, error) {
+func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Context) (diagnostics.DiagnosticBundle, error) {
 	f := gsbo.fileName
 	if f == "" {
 		factory := diagnostics.NewFactory(diagnostics.EksaDiagnosticBundleFactoryOpts{})
-		return factory.NewDiagnosticBundleDefault(), nil
+		return factory.DiagnosticBundleDefault(), nil
 	}
 
 	clusterSpec, err := cluster.NewSpec(f, version.Get())
@@ -96,7 +96,7 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 		return nil, err
 	}
 
-	return deps.DignosticCollectorFactory.NewDiagnosticBundleFromSpec(clusterSpec, deps.Provider, gsbo.kubeConfig(clusterSpec.Name))
+	return deps.DignosticCollectorFactory.DiagnosticBundleFromSpec(clusterSpec, deps.Provider, gsbo.kubeConfig(clusterSpec.Name))
 }
 
 func (gsbo *generateSupportBundleOptions) kubeConfig(clusterName string) string {

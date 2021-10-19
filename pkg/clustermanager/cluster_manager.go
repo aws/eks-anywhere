@@ -18,6 +18,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -45,6 +46,7 @@ type ClusterManager struct {
 	clusterClient   *retrierClient
 	writer          filewriter.FileWriter
 	networking      Networking
+	diagnosticsFac  diagnostics.DiagnosticBundleFactory
 	Retrier         *retrier.Retrier
 	machineMaxWait  time.Duration
 	machineBackoff  time.Duration
@@ -84,7 +86,7 @@ type Networking interface {
 
 type ClusterManagerOpt func(*ClusterManager)
 
-func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, opts ...ClusterManagerOpt) *ClusterManager {
+func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, opts ...ClusterManagerOpt) *ClusterManager {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
@@ -93,6 +95,7 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 		writer:          writer,
 		networking:      networking,
 		Retrier:         retrier,
+		diagnosticsFac:  diagnosticBundleFactory,
 		machineMaxWait:  machineMaxWait,
 		machineBackoff:  machineBackoff,
 		machinesMinWait: machinesMinWait,

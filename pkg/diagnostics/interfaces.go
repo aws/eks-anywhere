@@ -16,20 +16,25 @@ type BundleClient interface {
 }
 
 type DiagnosticBundleFactory interface {
-	NewDiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig string, bundlePath string) (*EksaDiagnosticBundle, error)
-	NewDiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (*EksaDiagnosticBundle, error)
-	NewDiagnosticBundleDefault() *EksaDiagnosticBundle
-	NewDiagnosticBundleCustom(kubeconfig string, bundlePath string) *EksaDiagnosticBundle
+	DiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig string, bundlePath string) (DiagnosticBundle, error)
+	DiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (DiagnosticBundle, error)
+	DiagnosticBundleBootstrapCluster(kubeconfig string) (DiagnosticBundle, error)
+	DiagnosticBundleDefault() DiagnosticBundle
+	DiagnosticBundleCustom(kubeconfig string, bundlePath string) DiagnosticBundle
 }
 
 type DiagnosticBundle interface {
 	PrintBundleConfig() error
+	WriteBundleConfig() error
+	CollectAndAnalyze(ctx context.Context, sinceTimeValue *time.Time) error
 	WithDefaultAnalyzers() *EksaDiagnosticBundle
 	WithDefaultCollectors() *EksaDiagnosticBundle
 	WithDatacenterConfig(config v1alpha1.Ref) *EksaDiagnosticBundle
 	WithOidcConfig(config *v1alpha1.OIDCConfig) *EksaDiagnosticBundle
 	WithExternalEtcd(config *v1alpha1.ExternalEtcdConfiguration) *EksaDiagnosticBundle
 	WithGitOpsConfig(config *v1alpha1.GitOpsConfig) *EksaDiagnosticBundle
+	WithMachineConfigs(configs []providers.MachineConfig) *EksaDiagnosticBundle
+	WithLogTextAnalyzers() *EksaDiagnosticBundle
 }
 
 type AnalyzerFactory interface {

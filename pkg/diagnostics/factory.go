@@ -39,14 +39,19 @@ func NewFactory(opts EksaDiagnosticBundleFactoryOpts) *eksaDiagnosticBundleFacto
 	}
 }
 
-func (f *eksaDiagnosticBundleFactory) NewDiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig string, bundlePath string) (*EksaDiagnosticBundle, error) {
+func (f *eksaDiagnosticBundleFactory) DiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig string, bundlePath string) (DiagnosticBundle, error) {
 	if bundlePath == "" && spec != nil {
-		return f.NewDiagnosticBundleFromSpec(spec, provider, kubeconfig)
+		b, err := f.DiagnosticBundleFromSpec(spec, provider, kubeconfig)
+		return b, err
 	}
-	return f.NewDiagnosticBundleCustom(kubeconfig, bundlePath), nil
+	return f.DiagnosticBundleCustom(kubeconfig, bundlePath), nil
 }
 
-func (f *eksaDiagnosticBundleFactory) NewDiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (*EksaDiagnosticBundle, error) {
+func (f *eksaDiagnosticBundleFactory) DiagnosticBundleBootstrapCluster(kubeconfig string) (DiagnosticBundle, error) {
+	return newDiagnosticBundleBootstrapCluster(f.analyzerFactory, f.collectorFactory, f.client, f.kubectl, kubeconfig, f.writer)
+}
+
+func (f *eksaDiagnosticBundleFactory) DiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (DiagnosticBundle, error) {
 	b := &EksaDiagnosticBundle{
 		bundle: &supportBundle{
 			TypeMeta: metav1.TypeMeta{
@@ -86,7 +91,7 @@ func (f *eksaDiagnosticBundleFactory) NewDiagnosticBundleFromSpec(spec *cluster.
 	return b, nil
 }
 
-func (f *eksaDiagnosticBundleFactory) NewDiagnosticBundleDefault() *EksaDiagnosticBundle {
+func (f *eksaDiagnosticBundleFactory) DiagnosticBundleDefault() DiagnosticBundle {
 	b := &EksaDiagnosticBundle{
 		bundle: &supportBundle{
 			TypeMeta: metav1.TypeMeta{
@@ -104,7 +109,7 @@ func (f *eksaDiagnosticBundleFactory) NewDiagnosticBundleDefault() *EksaDiagnost
 	return b.WithDefaultAnalyzers().WithDefaultCollectors()
 }
 
-func (f *eksaDiagnosticBundleFactory) NewDiagnosticBundleCustom(kubeconfig string, bundlePath string) *EksaDiagnosticBundle {
+func (f *eksaDiagnosticBundleFactory) DiagnosticBundleCustom(kubeconfig string, bundlePath string) DiagnosticBundle {
 	return &EksaDiagnosticBundle{
 		bundlePath:       bundlePath,
 		analyzerFactory:  f.analyzerFactory,

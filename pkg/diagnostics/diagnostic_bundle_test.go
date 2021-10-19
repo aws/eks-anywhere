@@ -124,7 +124,7 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		_, _ = f.NewDiagnosticBundleFromSpec(spec, p, "")
+		_, _ = f.DiagnosticBundleFromSpec(spec, p, "")
 	})
 }
 
@@ -174,7 +174,7 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		_, _ = f.NewDiagnosticBundleFromSpec(spec, p, "")
+		_, _ = f.DiagnosticBundleFromSpec(spec, p, "")
 	})
 }
 
@@ -224,7 +224,7 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		_, _ = f.NewDiagnosticBundleFromSpec(spec, p, "")
+		_, _ = f.DiagnosticBundleFromSpec(spec, p, "")
 	})
 }
 
@@ -245,14 +245,14 @@ func TestGenerateDefaultBundle(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		_ = f.NewDiagnosticBundleDefault()
+		_ = f.DiagnosticBundleDefault()
 	})
 }
 
 func TestGenerateCustomBundle(t *testing.T) {
 	t.Run(t.Name(), func(t *testing.T) {
 		f := diagnostics.NewFactory(getOpts(t))
-		_ = f.NewDiagnosticBundleCustom("", "")
+		_ = f.DiagnosticBundleCustom("", "")
 	})
 }
 

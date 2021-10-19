@@ -100,7 +100,7 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 		return err
 	}
 
-	supportBundle, err := deps.DignosticCollectorFactory.NewDiagnosticBundle(clusterSpec, deps.Provider, csbo.kubeConfig(clusterSpec.Name), bundleConfig)
+	supportBundle, err := deps.DignosticCollectorFactory.DiagnosticBundle(clusterSpec, deps.Provider, csbo.kubeConfig(clusterSpec.Name), bundleConfig)
 	if err != nil {
 		return fmt.Errorf("failed to parse collector: %v", err)
 	}
