@@ -158,7 +158,7 @@ func (f *FluxAddonClient) InstallGitOps(ctx context.Context, cluster *types.Clus
 		return err
 	}
 
-	if !cluster.ExistingMgnt {
+	if !cluster.ExistingManagement {
 		err := f.retrier.Retry(func() error {
 			return fc.flux.BootstrapToolkitsComponents(ctx, cluster, clusterSpec.GitOpsConfig)
 		})

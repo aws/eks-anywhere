@@ -205,7 +205,7 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		return nil
 	}
 
-	if !commandContext.BootstrapCluster.ExistingMgnt {
+	if !commandContext.BootstrapCluster.ExistingManagement {
 		logger.Info("Installing cluster-api providers on workload cluster")
 		err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
 		if err != nil {
@@ -231,7 +231,7 @@ func (s *CreateWorkloadClusterTask) Name() string {
 // MoveClusterManagementTask implementation
 
 func (s *MoveClusterManagementTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if commandContext.BootstrapCluster.ExistingMgnt {
+	if commandContext.BootstrapCluster.ExistingManagement {
 		return &InstallEksaComponentsTask{}
 	}
 	logger.Info("Moving cluster management from bootstrap to workload cluster")
@@ -251,7 +251,7 @@ func (s *MoveClusterManagementTask) Name() string {
 // InstallEksaComponentsTask implementation
 
 func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if !commandContext.BootstrapCluster.ExistingMgnt {
+	if !commandContext.BootstrapCluster.ExistingManagement {
 		logger.Info("Installing EKS-A custom components (CRD and controller) on workload cluster")
 		err := commandContext.ClusterManager.InstallCustomComponents(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster)
 		if err != nil {
@@ -269,7 +269,7 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 	datacenterConfig.PauseReconcile()
 
 	targetCluster := commandContext.WorkloadCluster
-	if commandContext.BootstrapCluster.ExistingMgnt {
+	if commandContext.BootstrapCluster.ExistingManagement {
 		targetCluster = commandContext.BootstrapCluster
 	}
 	err := commandContext.ClusterManager.CreateEKSAResources(ctx, targetCluster, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
@@ -322,7 +322,7 @@ func (s *WriteClusterConfigTask) Name() string {
 // DeleteBootstrapClusterTask implementation
 
 func (s *DeleteBootstrapClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if !commandContext.BootstrapCluster.ExistingMgnt {
+	if !commandContext.BootstrapCluster.ExistingManagement {
 		logger.Info("Deleting bootstrap cluster")
 		err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, false)
 		if err != nil {

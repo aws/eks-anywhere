@@ -148,8 +148,8 @@ func (c *ClusterManager) writeCAPISpecFile(clusterName string, content []byte) e
 // It returns a struct of type Cluster containing the name and the kubeconfig of the cluster.
 func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) (*types.Cluster, error) {
 	workloadCluster := &types.Cluster{
-		Name:         managementCluster.Name,
-		ExistingMgnt: managementCluster.ExistingMgnt,
+		Name:               managementCluster.Name,
+		ExistingManagement: managementCluster.ExistingManagement,
 	}
 
 	cpContent, mdContent, err := provider.GenerateCAPISpecForCreate(ctx, workloadCluster, clusterSpec)
@@ -869,9 +869,9 @@ func (c *ClusterManager) LoadManagement(kubeconfig string) (*types.Cluster, erro
 		return nil, fmt.Errorf("error parsing kubeconfig file: %v", err)
 	}
 	return &types.Cluster{
-		Name:           kc.Clusters[0].Name,
-		KubeconfigFile: kubeconfig,
-		ExistingMgnt:   true,
+		Name:               kc.Clusters[0].Name,
+		KubeconfigFile:     kubeconfig,
+		ExistingManagement: true,
 	}, nil
 }
 

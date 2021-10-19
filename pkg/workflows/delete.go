@@ -49,9 +49,9 @@ func (c *Delete) Run(ctx context.Context, workloadCluster *types.Cluster, cluste
 
 	if kubeconfig != "" {
 		commandContext.BootstrapCluster = &types.Cluster{
-			Name:           clusterSpec.Name,
-			KubeconfigFile: kubeconfig,
-			ExistingMgnt:   true,
+			Name:               clusterSpec.Name,
+			KubeconfigFile:     kubeconfig,
+			ExistingManagement: true,
 		}
 	}
 
@@ -93,7 +93,7 @@ func (s *setupAndValidate) Name() string {
 }
 
 func (s *createManagementCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if commandContext.BootstrapCluster != nil && commandContext.BootstrapCluster.ExistingMgnt {
+	if commandContext.BootstrapCluster != nil && commandContext.BootstrapCluster.ExistingManagement {
 		return &deleteWorkloadCluster{}
 	}
 	logger.Info("Creating management cluster")
@@ -177,7 +177,7 @@ func (s *cleanupGitRepo) Name() string {
 }
 
 func (s *deleteManagementCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if commandContext.BootstrapCluster != nil && !commandContext.BootstrapCluster.ExistingMgnt {
+	if commandContext.BootstrapCluster != nil && !commandContext.BootstrapCluster.ExistingManagement {
 		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, false); err != nil {
 			commandContext.SetError(err)
 		}
