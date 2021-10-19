@@ -1440,9 +1440,19 @@ func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	workerMachineName := p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
+	if p.clusterConfig.Annotations != nil && p.clusterConfig.Annotations[v1alpha1.ManagementAnnotation] != "" {
+		p.machineConfigs[controlPlaneMachineName].Annotations[v1alpha1.ManagementAnnotation] = p.clusterConfig.Annotations[v1alpha1.ManagementAnnotation]
+	}
+
 	configs = append(configs, p.machineConfigs[controlPlaneMachineName])
 	if workerMachineName != controlPlaneMachineName {
 		configs = append(configs, p.machineConfigs[workerMachineName])
+		if p.clusterConfig.Annotations != nil && p.clusterConfig.Annotations[v1alpha1.ManagementAnnotation] != "" {
+			if p.machineConfigs[workerMachineName].Annotations == nil {
+				p.machineConfigs[workerMachineName].Annotations = map[string]string{}
+			}
+			p.machineConfigs[workerMachineName].Annotations[v1alpha1.ManagementAnnotation] = p.clusterConfig.Annotations[v1alpha1.ManagementAnnotation]
+		}
 	}
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name

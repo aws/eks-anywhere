@@ -53,12 +53,15 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, forceCleanu
 	}
 	mgmtCluster := true
 	if kubeconfig != "" {
-		commandContext.BootstrapCluster = &types.Cluster{
-			Name:           clusterSpec.Name,
-			KubeconfigFile: kubeconfig,
-			ExistingMgnt:   true,
+		managementCluster, err := commandContext.ClusterManager.LoadManagement(kubeconfig)
+		if err != nil {
+			return err
 		}
 		mgmtCluster = false
+		commandContext.BootstrapCluster = managementCluster
+
+		commandContext.ClusterManager.AddAnnotations(commandContext.ClusterSpec, managementCluster.Name)
+
 	}
 	commandContext.ClusterSpec.Spec.Management = &mgmtCluster
 
