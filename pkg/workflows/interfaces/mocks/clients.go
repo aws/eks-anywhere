@@ -96,18 +96,6 @@ func (m *MockClusterManager) EXPECT() *MockClusterManagerMockRecorder {
 	return m.recorder
 }
 
-// AddAnnotations mocks base method.
-func (m *MockClusterManager) AddAnnotations(arg0 *cluster.Spec, arg1 string) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddAnnotations", arg0, arg1)
-}
-
-// AddAnnotations indicates an expected call of AddAnnotations.
-func (mr *MockClusterManagerMockRecorder) AddAnnotations(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAnnotations", reflect.TypeOf((*MockClusterManager)(nil).AddAnnotations), arg0, arg1)
-}
-
 // CreateEKSAResources mocks base method.
 func (m *MockClusterManager) CreateEKSAResources(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.DatacenterConfig, arg4 []providers.MachineConfig) error {
 	m.ctrl.T.Helper()
