@@ -372,3 +372,72 @@ func TestFluxResumeKustomization(t *testing.T) {
 		})
 	}
 }
+
+func TestFluxReconcile(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+
+	var tctx testFluxContext
+	tctx.SaveContext()
+	defer tctx.RestoreContext()
+
+	tests := []struct {
+		testName     string
+		cluster      *types.Cluster
+		fluxConfig   v1alpha1.Flux
+		wantExecArgs []interface{}
+	}{
+		{
+			testName:   "minimum args",
+			cluster:    &types.Cluster{},
+			fluxConfig: v1alpha1.Flux{},
+			wantExecArgs: []interface{}{
+				"reconcile", "source", "git", "flux-system",
+			},
+		},
+		{
+			testName: "with kubeconfig",
+			cluster: &types.Cluster{
+				KubeconfigFile: "f.kubeconfig",
+			},
+			fluxConfig: v1alpha1.Flux{},
+			wantExecArgs: []interface{}{
+				"reconcile", "source", "git", "flux-system", "--kubeconfig", "f.kubeconfig",
+			},
+		},
+		{
+			testName: "with custom namespace",
+			cluster:  &types.Cluster{},
+			fluxConfig: v1alpha1.Flux{
+				Github: v1alpha1.Github{
+
+					FluxSystemNamespace: "custom-ns",
+				},
+			},
+			wantExecArgs: []interface{}{
+				"reconcile", "source", "git", "custom-ns", "--namespace", "custom-ns",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			ctx := context.Background()
+			executable := mockexecutables.NewMockExecutable(mockCtrl)
+			gitOpsConfig := v1alpha1.GitOpsConfig{
+				Spec: v1alpha1.GitOpsConfigSpec{
+					Flux: tt.fluxConfig,
+				},
+			}
+
+			executable.EXPECT().Execute(
+				ctx,
+				tt.wantExecArgs...,
+			).Return(bytes.Buffer{}, nil)
+
+			f := executables.NewFlux(executable)
+			if err := f.Reconcile(ctx, tt.cluster, &gitOpsConfig); err != nil {
+				t.Errorf("flux.Reconcile() error = %v, want nil", err)
+			}
+		})
+	}
+}
