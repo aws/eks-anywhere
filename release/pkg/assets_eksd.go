@@ -19,8 +19,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/pkg/errors"
+
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // GetEksDChannelAssets returns the eks-d artifacts including OVAs and kind node image

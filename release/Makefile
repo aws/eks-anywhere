@@ -81,6 +81,15 @@ test: manifests generate fmt vet ## Run tests.
 build: fmt vet ## Build release binary.
 	go build -o bin/eks-anywhere-release main.go
 
+.PHONY: lint
+lint: bin/golangci-lint ## Run golangci-lint
+	bin/golangci-lint run
+
+bin/golangci-lint: ## Download golangci-lint
+bin/golangci-lint: GOLANGCI_LINT_VERSION?=$(shell cat $(REPO_ROOT)/.github/workflows/golangci-lint.yml | sed -n -e 's/^\s*version: //p')
+bin/golangci-lint:
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s $(GOLANGCI_LINT_VERSION)
+
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 

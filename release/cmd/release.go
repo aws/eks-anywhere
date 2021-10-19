@@ -22,13 +22,13 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/eks-anywhere/release/pkg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/aws/eks-anywhere/release/pkg"
 )
 
 var (
@@ -41,7 +41,11 @@ var releaseCmd = &cobra.Command{
 	Use:   "release",
 	Short: "Cut an eks-anywhere release",
 	PreRun: func(cmd *cobra.Command, args []string) {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			fmt.Printf("Error initializing flags: %v\n", err)
+			os.Exit(1)
+		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO validation on these flags

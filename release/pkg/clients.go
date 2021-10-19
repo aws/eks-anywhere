@@ -21,8 +21,6 @@ import (
 	"net/http"
 	"strings"
 
-	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -30,6 +28,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecrpublic"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
