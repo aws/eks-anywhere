@@ -333,6 +333,17 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		logger.V(3).Info("Existing cluster and new cluster spec differ")
 		return true, nil
 	}
+
+	currentClusterSpec, err := c.buildSpecForCluster(ctx, cluster, cc)
+	if err != nil {
+		return false, err
+	}
+
+	if currentClusterSpec.VersionsBundle.EksD.Name != clusterSpec.VersionsBundle.EksD.Name {
+		logger.V(3).Info("New eks-d release detected")
+		return true, nil
+	}
+
 	logger.V(3).Info("Clusters are the same, checking provider spec")
 	// compare provider spec
 	switch cc.Spec.DatacenterRef.Kind {
@@ -845,6 +856,10 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 		return nil, fmt.Errorf("failed getting EKS-A cluster to build current cluster Spec: %v", err)
 	}
 
+	return c.buildSpecForCluster(ctx, clus, eksaCluster)
+}
+
+func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
 	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus))
 }
 
