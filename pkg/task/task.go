@@ -20,7 +20,6 @@ type Task interface {
 
 // Command context maintains the mutable and shared entities
 type CommandContext struct {
-	context.Context
 	Bootstrapper     interfaces.Bootstrapper
 	Provider         providers.Provider
 	ClusterManager   interfaces.ClusterManager
