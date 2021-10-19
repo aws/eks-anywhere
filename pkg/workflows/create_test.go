@@ -265,6 +265,11 @@ func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
 	test.expectInstallMHC()
 
 	err := test.run(managementKubeconfig)
+
+	if test.clusterSpec.Spec.Management == nil || *test.clusterSpec.Spec.Management {
+		t.Fatalf("Error setting management flag, expected Spec.management %v got %t", false, *test.clusterSpec.Spec.Management)
+	}
+
 	if err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
 	}
