@@ -18,9 +18,9 @@ const (
 	// etcdAnnotation can be applied to EKS-A machineconfig CR for etcd, to prevent controller from making changes to it
 	etcdAnnotation = "anywhere.eks.amazonaws.com/etcd"
 
-	// ManagementAnnotation points to the name of a management cluster
+	// managementAnnotation points to the name of a management cluster
 	// cluster object
-	ManagementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
+	managementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -278,7 +278,7 @@ func (s *Cluster) SetManagedBy(managementClusterName string) {
 		s.Annotations = map[string]string{}
 	}
 
-	s.Annotations[ManagementAnnotation] = managementClusterName
+	s.Annotations[managementAnnotation] = managementClusterName
 }
 
 func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
@@ -293,6 +293,14 @@ func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
 	}
 
 	return config
+}
+
+func (c *Cluster) IsManaged() bool {
+	return c.Annotations[managementAnnotation] != ""
+}
+
+func (c *Cluster) ManagedBy() string {
+	return c.Annotations[managementAnnotation]
 }
 
 // +kubebuilder:object:root=true

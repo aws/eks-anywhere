@@ -57,11 +57,11 @@ func (c *VSphereMachineConfig) SetManagement(clusterName string) {
 	if c.Annotations == nil {
 		c.Annotations = map[string]string{}
 	}
-	c.Annotations[ManagementAnnotation] = clusterName
+	c.Annotations[managementAnnotation] = clusterName
 }
 
 func (c *VSphereMachineConfig) IsManagement() bool {
-	if s, ok := c.Annotations[ManagementAnnotation]; ok {
+	if s, ok := c.Annotations[managementAnnotation]; ok {
 		return s != ""
 	}
 	return false
