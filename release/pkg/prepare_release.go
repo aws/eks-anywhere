@@ -16,10 +16,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecrpublic"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/go-git/go-git/v5"
 	"github.com/pkg/errors"
+
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type EksAReleases []anywherev1alpha1.EksARelease
@@ -199,12 +200,19 @@ func downloadArtifacts(sourceClients *SourceClients, r *ReleaseConfig, eksArtifa
 	s3Downloader := sourceClients.S3.Downloader
 	s3Client := sourceClients.S3.Client
 	ecrAuthConfig := sourceClients.Docker.AuthConfig
+	// Retrier for downloading source S3 objects. This retrier has a max timeout of 60 minutes. It
+	// checks whether the error occured during download is an ObjectNotFound error and retries the
+	// download operation for a maximum of 60 retries, with a wait time of 30 seconds per retry.
 	s3Retrier := NewRetrier(60*time.Minute, WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
 		if IsObjectNotPresentError(err) && totalRetries < 60 {
 			return true, 30 * time.Second
 		}
 		return false, 0
 	}))
+
+	// Retrier for downloading source ECR images. This retrier has a max timeout of 60 minutes. It
+	// checks whether the error occured during download is an ImageNotFound error and retries the
+	// download operation for a maximum of 60 retries, with a wait time of 30 seconds per retry.
 	ecrRetrier := NewRetrier(60*time.Minute, WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
 		if IsImageNotFoundError(err) && totalRetries < 60 {
 			return true, 30 * time.Second
@@ -221,8 +229,7 @@ func downloadArtifacts(sourceClients *SourceClients, r *ReleaseConfig, eksArtifa
 			if artifact.Archive != nil {
 				objectKey := fmt.Sprintf("%s/%s", artifact.Archive.SourceS3Prefix, artifact.Archive.SourceS3Key)
 				err := s3Retrier.Retry(func() error {
-					var err error
-					_, err = s3Client.HeadObject(&s3.HeadObjectInput{
+					_, err := s3Client.HeadObject(&s3.HeadObjectInput{
 						Bucket: aws.String(r.SourceBucket),
 						Key:    aws.String(objectKey),
 					})
@@ -235,31 +242,31 @@ func downloadArtifacts(sourceClients *SourceClients, r *ReleaseConfig, eksArtifa
 					return fmt.Errorf("retries exhausted waiting for archive to be uploaded to source location: %v", err)
 				}
 
-				objectName := filepath.Base(objectKey)
-				objectKeyPtr := aws.String(objectKey)
-				file := filepath.Join(artifact.Archive.ArtifactPath, objectName)
-				if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+				err = downloadFileFromS3(artifact.Archive.ArtifactPath, "Archive", r.SourceBucket, objectKey, s3Downloader)
+				if err != nil {
 					return errors.Cause(err)
 				}
 
-				fd, err := os.Create(file)
-				if err != nil {
-					return errors.Cause(err)
+				// Download checksum files for the archive
+				checksumExtensions := []string{
+					".sha256",
+					".sha512",
 				}
-				defer fd.Close()
-				fmt.Printf("Archive - %s\n", objectKey)
-				_, err = s3Downloader.Download(fd, &s3.GetObjectInput{Bucket: &r.SourceBucket, Key: objectKeyPtr})
-				if err != nil {
-					return errors.Cause(err)
+				for _, extension := range checksumExtensions {
+					objectShasumFileKey := fmt.Sprintf("%s%s", objectKey, extension)
+					err = downloadFileFromS3(artifact.Archive.ArtifactPath, "Checksum file", r.SourceBucket, objectShasumFileKey, s3Downloader)
+					if err != nil {
+						return errors.Cause(err)
+					}
 				}
+
 			}
 
 			// Check if there is a manifest to be downloaded
 			if artifact.Manifest != nil {
 				objectKey := fmt.Sprintf("%s/%s", artifact.Manifest.SourceS3Prefix, artifact.Manifest.SourceS3Key)
 				err := s3Retrier.Retry(func() error {
-					var err error
-					_, err = s3Client.HeadObject(&s3.HeadObjectInput{
+					_, err := s3Client.HeadObject(&s3.HeadObjectInput{
 						Bucket: aws.String(r.SourceBucket),
 						Key:    aws.String(objectKey),
 					})
@@ -272,35 +279,20 @@ func downloadArtifacts(sourceClients *SourceClients, r *ReleaseConfig, eksArtifa
 					return fmt.Errorf("retries exhausted waiting for manifest to be uploaded to source location: %v", err)
 				}
 
-				objectName := filepath.Base(objectKey)
-				objKeyPtr := aws.String(objectKey)
-				file := filepath.Join(artifact.Manifest.ArtifactPath, objectName)
-				if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
-					return errors.Cause(err)
-				}
-
-				fd, err := os.Create(file)
-				if err != nil {
-					return errors.Cause(err)
-				}
-				defer fd.Close()
-				fmt.Printf("Manifest - %s\n", objectKey)
-				_, err = s3Downloader.Download(fd, &s3.GetObjectInput{Bucket: &r.SourceBucket, Key: objKeyPtr})
+				err = downloadFileFromS3(artifact.Manifest.ArtifactPath, "Manifest", r.SourceBucket, objectKey, s3Downloader)
 				if err != nil {
 					return errors.Cause(err)
 				}
 			}
 
-			// Check if there is image to be pulled to local
+			// Check if there is an image to be pulled locally
 			if artifact.Image != nil {
 				fmt.Printf("Image - %s\n", artifact.Image.SourceImageURI)
 				// TODO: replace background context with proper timeouts
 				err := ecrRetrier.Retry(func() error {
-					var err error
-					err = dockerClient.PullImage(docker.PullImageOptions{
-						Repository:   artifact.Image.SourceImageURI,
-						Context:      context.Background(),
-						OutputStream: os.Stdout,
+					err := dockerClient.PullImage(docker.PullImageOptions{
+						Repository: artifact.Image.SourceImageURI,
+						Context:    context.Background(),
 					}, *ecrAuthConfig)
 					if err != nil {
 						return err
@@ -374,7 +366,32 @@ func UploadArtifacts(releaseClients *ReleaseClients, r *ReleaseConfig, eksArtifa
 	return nil
 }
 
-// UploadFileToS3 uploads the file to s3 with ACL public-read
+// downloadFileFromS3 downloads a file from S3 and writes it to a local destination
+func downloadFileFromS3(artifactPath, artifactType, bucketName, key string, s3Downloader *s3manager.Downloader) error {
+	objectName := filepath.Base(key)
+	fileName := filepath.Join(artifactPath, objectName)
+	if err := os.MkdirAll(filepath.Dir(fileName), 0o755); err != nil {
+		return errors.Cause(err)
+	}
+
+	fd, err := os.Create(fileName)
+	if err != nil {
+		return errors.Cause(err)
+	}
+	defer fd.Close()
+	fmt.Printf("%s - %s\n", artifactType, key)
+	_, err = s3Downloader.Download(fd, &s3.GetObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return errors.Cause(err)
+	}
+
+	return nil
+}
+
+// UploadFileToS3 uploads the file to S3 with ACL public-read
 func UploadFileToS3(filePath string, bucketName, key *string, s3Uploader *s3manager.Uploader) error {
 	f, err := os.Open(filePath)
 	if err != nil {
@@ -489,8 +506,5 @@ func IsObjectNotPresentError(err error) bool {
 func IsImageNotFoundError(err error) bool {
 	regex := "manifest for .* not found: manifest unknown: Requested image not found"
 	compiledRegex := regexp.MustCompile(regex)
-	if compiledRegex.MatchString(err.Error()) {
-		return true
-	}
-	return false
+	return compiledRegex.MatchString(err.Error())
 }

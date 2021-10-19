@@ -17,8 +17,9 @@ package pkg
 import (
 	"fmt"
 
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/pkg/errors"
+
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // GetBottlerocketBootstrapAssets returns the eks-a artifacts for Bottlerocket bootstrap container
