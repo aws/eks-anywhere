@@ -117,6 +117,6 @@ Convert VM to template
 govc vm.markastemplate $VM
 ```
 
-Tag the template appropriately as described [here]({{< ref "/docs/reference/vsphere/vsphere-ovas#important-additional-steps-to-tag-the-ova" >}})
+Tag the template appropriately as described [here]({{< relref "./vsphere-ovas#important-additional-steps-to-tag-the-ova" >}})
 
 Use this customized template to create/upgrade EKS Anywhere clusters

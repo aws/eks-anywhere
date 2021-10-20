@@ -13,7 +13,6 @@ require (
 	github.com/google/go-github/v35 v35.2.0
 	github.com/mrajashree/etcdadm-controller v0.1.1-0.20210807012710-3e2035176ab8
 	github.com/onsi/gomega v1.14.0
-	github.com/replicatedhq/troubleshoot v0.10.24
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
@@ -37,6 +36,8 @@ require (
 exclude sigs.k8s.io/cluster-api v0.3.14
 
 // TODO: Once the repo is public, remove this so we use a versioned module
-replace github.com/aws/eks-anywhere/release => ./release
-
-replace github.com/manifoldco/promptui => github.com/nguyer/promptui v0.8.1-0.20210517132806-70ccd4709797
+replace (
+	github.com/aws/eks-anywhere/release => ./release
+	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.0.0
+	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.0-rc95
+)

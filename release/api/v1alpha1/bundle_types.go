@@ -117,10 +117,11 @@ type BottlerocketBootstrapBundle struct {
 }
 
 type CertManagerBundle struct {
-	Acmesolver Image `json:"acmesolver"`
-	Cainjector Image `json:"cainjector"`
-	Controller Image `json:"controller"`
-	Webhook    Image `json:"webhook"`
+	Version    string `json:"version,omitempty"`
+	Acmesolver Image  `json:"acmesolver"`
+	Cainjector Image  `json:"cainjector"`
+	Controller Image  `json:"controller"`
+	Webhook    Image  `json:"webhook"`
 }
 
 type CoreClusterAPI struct {
@@ -179,21 +180,27 @@ type DockerBundle struct {
 }
 
 type CiliumBundle struct {
+	Version  string   `json:"version,omitempty"`
 	Cilium   Image    `json:"cilium"`
 	Operator Image    `json:"operator"`
 	Manifest Manifest `json:"manifest"`
 }
 
 type FluxBundle struct {
-	SourceController       Image `json:"sourceController"`
-	KustomizeController    Image `json:"kustomizeController"`
-	HelmController         Image `json:"helmController"`
-	NotificationController Image `json:"notificationController"`
+	Version                string   `json:"version,omitempty"`
+	SourceController       Image    `json:"sourceController"`
+	KustomizeController    Image    `json:"kustomizeController"`
+	HelmController         Image    `json:"helmController"`
+	NotificationController Image    `json:"notificationController"`
+	Components             Manifest `json:"components"`
 }
 
 type EksaBundle struct {
-	CliTools   Image    `json:"cliTools"`
-	Components Manifest `json:"components"`
+	Version             string   `json:"version,omitempty"`
+	CliTools            Image    `json:"cliTools"`
+	ClusterController   Image    `json:"clusterController"`
+	DiagnosticCollector Image    `json:"diagnosticCollector"`
+	Components          Manifest `json:"components"`
 }
 
 type EtcdadmBootstrapBundle struct {

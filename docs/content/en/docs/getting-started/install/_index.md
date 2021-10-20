@@ -9,7 +9,7 @@ Other deployment targets will be added in the future, including bare metal suppo
 
 Creating an EKS Anywhere cluster begins with setting up an Administrative machine where you will run Docker and add some binaries.
 From there, you create the cluster for your chosen provider.
-See [Create cluster workflow]({{< relref "/docs/concepts/clusterworkflow" >}}) for an overview of the cluster creation process.
+See [Create cluster workflow]({{< relref "../../concepts/clusterworkflow" >}}) for an overview of the cluster creation process.
 
 To create an EKS Anywhere cluster you will need [`eksctl`](https://eksctl.io) and the `eksctl-anywhere` plugin.
 This will let you create a cluster in multiple providers for local development or production workloads.

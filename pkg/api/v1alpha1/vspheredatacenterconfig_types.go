@@ -61,6 +61,24 @@ func (v *VSphereDatacenterConfig) ClearPauseAnnotation() {
 	}
 }
 
+func (v *VSphereDatacenterConfig) ConvertConfigToConfigGenerateStruct() *VSphereDatacenterConfigGenerate {
+	config := &VSphereDatacenterConfigGenerate{
+		TypeMeta: v.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        v.Name,
+			Annotations: v.Annotations,
+			Namespace:   v.Namespace,
+		},
+		Spec: v.Spec,
+	}
+
+	return config
+}
+
+func (v *VSphereDatacenterConfig) Marshallable() Marshallable {
+	return v.ConvertConfigToConfigGenerateStruct()
+}
+
 // +kubebuilder:object:generate=false
 
 // Same as VSphereDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig

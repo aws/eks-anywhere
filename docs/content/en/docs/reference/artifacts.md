@@ -23,7 +23,7 @@ CARGO_NET_GIT_FETCH_WITH_CLI=true cargo install --force tuftool
 3. Download the root role tuftool will use to download the OVA
 ```
 curl -O "https://cache.bottlerocket.aws/root.json"
-sha512sum -c <<<"90393204232a1ad6b0a45528b1f7df1a3e37493b1e05b1c149f081849a292c8dafb4ea5f7ee17bcc664e35f66e37e4cfa4aae9de7a2a28aa31ae6ac3d9bea4d5  root.json"
+sha512sum -c <<<"e9b1ea5f9b4f95c9b55edada4238bf00b12845aa98bdd2d3edb63ff82a03ada19444546337ec6d6806cbf329027cf49f7fde31f54d551c5e02acbed7efe75785  root.json"
 ```
 4. Export the desired Kubernetes Version. EKS Anywhere currently supports 1.21 and 1.20
 ```
@@ -44,21 +44,21 @@ OS Family - `os:bottlerocket`
 
 EKS-D Release
 
-1.21 - `eksdRelease:kubernetes-1-21-eks-4`
+1.21 - `eksdRelease:kubernetes-1-21-eks-5`
 
-1.20 - `eksdRelease:kubernetes-1-20-eks-6`
+1.20 - `eksdRelease:kubernetes-1-20-eks-7`
 
 ## Ubuntu with Kubernetes 1.21
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/1/artifacts/ova/1-21/ubuntu-v1.21.2-eks-d-1-21-4-eks-a-1-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/2/artifacts/ova/1-21/ubuntu-v1.21.2-eks-d-1-21-5-eks-a-2-amd64.ova
 * `os:ubuntu`
-* `eksdRelease:kubernetes-1-21-eks-4`
+* `eksdRelease:kubernetes-1-21-eks-5`
 
 ## Ubuntu with Kubernetes 1.20
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/1/artifacts/ova/1-20/ubuntu-v1.20.7-eks-d-1-20-6-eks-a-1-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/2/artifacts/ova/1-20/ubuntu-v1.20.7-eks-d-1-20-7-eks-a-2-amd64.ova
 * `os:ubuntu`
-* `eksdRelease:kubernetes-1-20-eks-6`
+* `eksdRelease:kubernetes-1-20-eks-7`
 
 ## Building your own Ubuntu OVA
 The EKS Anywhere project OVA building process leverages upstream [image-builder repository.](https://github.com/kubernetes-sigs/image-builder)
@@ -106,7 +106,7 @@ Provisioning
 ### Steps to build an OVA
 1. Spin up a builder-base docker container and exec into it. Please use the most recent tag for the image on its repository [here](https://gallery.ecr.aws/eks-distro-build-tooling/builder-base)
 ```
-docker exec -it public.ecr.aws/eks-distro-build-tooling/builder-base:930624e251df041349f3d3089c983fcf394f1c60 bash
+docker exec -it public.ecr.aws/eks-distro-build-tooling/builder-base:latest bash
 ```
 2. Clone the [eks-anywhere-build-tooling repo.](https://github.com/aws/eks-anywhere-build-tooling)
 ```

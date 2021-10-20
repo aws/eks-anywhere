@@ -14,6 +14,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -33,12 +34,32 @@ type Spec struct {
 	OIDCConfig          *eksav1alpha1.OIDCConfig
 	GitOpsConfig        *eksav1alpha1.GitOpsConfig
 	releasesManifestURL string
+	bundlesManifestURL  string
 	configFS            embed.FS
 	httpClient          *http.Client
 	userAgent           string
 	VersionsBundle      *VersionsBundle
 	eksdRelease         *eksdv1alpha1.Release
 	Bundles             *v1alpha1.Bundles
+}
+
+func (s *Spec) DeepCopy() *Spec {
+	return &Spec{
+		Cluster:             s.Cluster.DeepCopy(),
+		OIDCConfig:          s.OIDCConfig.DeepCopy(),
+		GitOpsConfig:        s.GitOpsConfig.DeepCopy(),
+		releasesManifestURL: s.releasesManifestURL,
+		bundlesManifestURL:  s.bundlesManifestURL,
+		configFS:            s.configFS,
+		httpClient:          s.httpClient,
+		userAgent:           s.userAgent,
+		VersionsBundle: &VersionsBundle{
+			VersionsBundle: s.VersionsBundle.VersionsBundle.DeepCopy(),
+			KubeDistro:     s.VersionsBundle.KubeDistro.deepCopy(),
+		},
+		eksdRelease: s.eksdRelease.DeepCopy(),
+		Bundles:     s.Bundles.DeepCopy(),
+	}
 }
 
 func (cs *Spec) SetDefaultGitOps() {
@@ -75,6 +96,11 @@ type KubeDistro struct {
 	EtcdVersion         string
 }
 
+func (k *KubeDistro) deepCopy() *KubeDistro {
+	k2 := *k
+	return &k2
+}
+
 type VersionedRepository struct {
 	Repository, Tag string
 }
@@ -90,6 +116,12 @@ func WithReleasesManifest(manifestURL string) SpecOpt {
 func WithEmbedFS(embedFS embed.FS) SpecOpt {
 	return func(s *Spec) {
 		s.configFS = embedFS
+	}
+}
+
+func WithOverrideBundlesManifest(fileURL string) SpecOpt {
+	return func(s *Spec) {
+		s.bundlesManifestURL = fileURL
 	}
 }
 
@@ -109,7 +141,7 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 		opt(s)
 	}
 
-	bundles, err := s.getBundles(cliVersion)
+	bundles, err := s.GetBundles(cliVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -207,20 +239,26 @@ func (s *Spec) getVersionsBundle(clusterConfig *eksav1alpha1.Cluster, bundles *v
 	return nil, fmt.Errorf("kubernetes version %s is not supported by bundles manifest %d", clusterConfig.Spec.KubernetesVersion, bundles.Spec.Number)
 }
 
-func (s *Spec) getBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
-	release, err := s.getRelease(cliVersion)
-	if err != nil {
-		return nil, err
+func (s *Spec) GetBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
+	bundlesURL := s.bundlesManifestURL
+	if bundlesURL == "" {
+		release, err := s.getRelease(cliVersion)
+		if err != nil {
+			return nil, err
+		}
+
+		bundlesURL = release.BundleManifestUrl
 	}
 
-	content, err := s.readFile(release.BundleManifestUrl)
+	logger.V(4).Info("Reading bundles manifest", "url", bundlesURL)
+	content, err := s.readFile(bundlesURL)
 	if err != nil {
 		return nil, err
 	}
 
 	bundles := &v1alpha1.Bundles{}
 	if err = yaml.Unmarshal(content, bundles); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal bundles manifest from [%s] to build cluster spec: %v", release.BundleManifestUrl, err)
+		return nil, fmt.Errorf("failed to unmarshal bundles manifest from [%s] to build cluster spec: %v", bundlesURL, err)
 	}
 
 	return bundles, nil
@@ -252,6 +290,7 @@ func (s *Spec) getRelease(cliVersion version.Info) (*v1alpha1.EksARelease, error
 }
 
 func (s *Spec) getReleases(releasesManifest string) (*v1alpha1.Release, error) {
+	logger.V(4).Info("Reading releases manifest", "url", releasesManifestURL)
 	content, err := s.readFile(releasesManifest)
 	if err != nil {
 		return nil, err
@@ -318,6 +357,18 @@ func readLocalFile(filename string) ([]byte, error) {
 	}
 
 	return data, nil
+}
+
+func (s *Spec) KubeDistroImages() []v1alpha1.Image {
+	images := []v1alpha1.Image{}
+	for _, component := range s.eksdRelease.Status.Components {
+		for _, asset := range component.Assets {
+			if asset.Image != nil {
+				images = append(images, v1alpha1.Image{URI: asset.Image.URI})
+			}
+		}
+	}
+	return images
 }
 
 func buildKubeDistro(eksd *eksdv1alpha1.Release) (*KubeDistro, error) {
@@ -405,7 +456,7 @@ func GetEksdRelease(cliVersion version.Info, clusterConfig *eksav1alpha1.Cluster
 		userAgent:           userAgent("cli", cliVersion.GitVersion),
 	}
 
-	bundles, err := s.getBundles(cliVersion)
+	bundles, err := s.GetBundles(cliVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -442,4 +493,79 @@ func (s *Spec) LoadManifest(manifest v1alpha1.Manifest) (*Manifest, error) {
 
 func userAgent(eksAComponent, version string) string {
 	return fmt.Sprintf("eks-a-%s/%s", eksAComponent, version)
+}
+
+func (vb *VersionsBundle) SharedImages() []v1alpha1.Image {
+	var images []v1alpha1.Image
+	images = append(images, vb.Bootstrap.Controller)
+	images = append(images, vb.Bootstrap.KubeProxy)
+
+	images = append(images, vb.BottleRocketBootstrap.Bootstrap)
+
+	images = append(images, vb.CertManager.Acmesolver)
+	images = append(images, vb.CertManager.Cainjector)
+	images = append(images, vb.CertManager.Controller)
+	images = append(images, vb.CertManager.Webhook)
+
+	images = append(images, vb.Cilium.Cilium)
+	images = append(images, vb.Cilium.Operator)
+
+	images = append(images, vb.ClusterAPI.Controller)
+	images = append(images, vb.ClusterAPI.KubeProxy)
+
+	images = append(images, vb.ControlPlane.Controller)
+	images = append(images, vb.ControlPlane.KubeProxy)
+
+	images = append(images, vb.EksD.KindNode)
+	images = append(images, vb.Eksa.CliTools)
+	images = append(images, vb.Eksa.ClusterController)
+
+	images = append(images, vb.Flux.HelmController)
+	images = append(images, vb.Flux.KustomizeController)
+	images = append(images, vb.Flux.NotificationController)
+	images = append(images, vb.Flux.SourceController)
+
+	images = append(images, vb.ExternalEtcdBootstrap.Controller)
+	images = append(images, vb.ExternalEtcdBootstrap.KubeProxy)
+
+	images = append(images, vb.ExternalEtcdController.Controller)
+	images = append(images, vb.ExternalEtcdController.KubeProxy)
+
+	images = append(images, vb.KubeDistro.EtcdImage)
+	images = append(images, vb.KubeDistro.ExternalAttacher)
+	images = append(images, vb.KubeDistro.ExternalProvisioner)
+	images = append(images, vb.KubeDistro.LivenessProbe)
+	images = append(images, vb.KubeDistro.NodeDriverRegistrar)
+	images = append(images, vb.KubeDistro.Pause)
+
+	return images
+}
+
+func (vb *VersionsBundle) VsphereImages() []v1alpha1.Image {
+	var images []v1alpha1.Image
+	images = append(images, vb.VSphere.ClusterAPIController)
+	images = append(images, vb.VSphere.Driver)
+	images = append(images, vb.VSphere.KubeProxy)
+	images = append(images, vb.VSphere.KubeVip)
+	images = append(images, vb.VSphere.Manager)
+	images = append(images, vb.VSphere.Syncer)
+
+	return images
+}
+
+func (vb *VersionsBundle) DockerImages() []v1alpha1.Image {
+	var images []v1alpha1.Image
+	images = append(images, vb.Docker.KubeProxy)
+	images = append(images, vb.Docker.Manager)
+
+	return images
+}
+
+func (vb *VersionsBundle) Images() []v1alpha1.Image {
+	var images []v1alpha1.Image
+	images = append(images, vb.SharedImages()...)
+	images = append(images, vb.DockerImages()...)
+	images = append(images, vb.VsphereImages()...)
+
+	return images
 }

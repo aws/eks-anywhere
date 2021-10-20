@@ -42,11 +42,33 @@ func (c *VSphereMachineConfig) IsControlPlane() bool {
 	return false
 }
 
+func (c *VSphereMachineConfig) SetEtcd() {
+	c.Annotations[etcdAnnotation] = "true"
+}
+
 func (c *VSphereMachineConfig) IsEtcd() bool {
 	if s, ok := c.Annotations[etcdAnnotation]; ok {
 		return s == "true"
 	}
 	return false
+}
+
+func (c *VSphereMachineConfig) SetManagement(clusterName string) {
+	if c.Annotations == nil {
+		c.Annotations = map[string]string{}
+	}
+	c.Annotations[managementAnnotation] = clusterName
+}
+
+func (c *VSphereMachineConfig) IsManagement() bool {
+	if s, ok := c.Annotations[managementAnnotation]; ok {
+		return s != ""
+	}
+	return false
+}
+
+func (c *VSphereMachineConfig) OSFamily() OSFamily {
+	return c.Spec.OSFamily
 }
 
 type OSFamily string
@@ -75,6 +97,24 @@ type VSphereMachineConfig struct {
 
 	Spec   VSphereMachineConfigSpec   `json:"spec,omitempty"`
 	Status VSphereMachineConfigStatus `json:"status,omitempty"`
+}
+
+func (c *VSphereMachineConfig) ConvertConfigToConfigGenerateStruct() *VSphereMachineConfigGenerate {
+	config := &VSphereMachineConfigGenerate{
+		TypeMeta: c.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        c.Name,
+			Annotations: c.Annotations,
+			Namespace:   c.Namespace,
+		},
+		Spec: c.Spec,
+	}
+
+	return config
+}
+
+func (c *VSphereMachineConfig) Marshallable() Marshallable {
+	return c.ConvertConfigToConfigGenerateStruct()
 }
 
 // +kubebuilder:object:generate=false

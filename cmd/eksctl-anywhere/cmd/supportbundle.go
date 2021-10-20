@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"time"
 
@@ -13,8 +12,8 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/logger"
-	support "github.com/aws/eks-anywhere/pkg/support"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -46,7 +45,7 @@ var supportbundleCmd = &cobra.Command{
 		if err := csbo.validate(cmd.Context()); err != nil {
 			return err
 		}
-		if err := csbo.createBundle(csbo.since, csbo.sinceTime, csbo.bundleConfig); err != nil {
+		if err := csbo.createBundle(cmd.Context(), csbo.since, csbo.sinceTime, csbo.bundleConfig); err != nil {
 			return fmt.Errorf("failed to create support bundle: %v", err)
 		}
 		return nil
@@ -87,34 +86,35 @@ func preRunSupportBundle(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (csbo *createSupportBundleOptions) createBundle(since, sinceTime, bundleConfig string) error {
+func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since, sinceTime, bundleConfig string) error {
 	clusterSpec, err := cluster.NewSpec(csbo.fileName, version.Get())
 	if err != nil {
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
-	os.Setenv("KUBECONFIG", csbo.kubeConfig(clusterSpec.Name))
-	supportBundle, err := support.ParseBundleFromDoc(clusterSpec, bundleConfig)
+
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).
+		WithProvider(csbo.fileName, clusterSpec.Cluster, cc.skipIpCheck).
+		WithDiagnosticBundleFactory().
+		Build()
+	if err != nil {
+		return err
+	}
+
+	supportBundle, err := deps.DignosticCollectorFactory.NewDiagnosticBundle(clusterSpec, deps.Provider, csbo.kubeConfig(clusterSpec.Name), bundleConfig)
 	if err != nil {
 		return fmt.Errorf("failed to parse collector: %v", err)
 	}
 
 	var sinceTimeValue *time.Time
-	sinceTimeValue, err = support.ParseTimeOptions(since, sinceTime)
+	sinceTimeValue, err = diagnostics.ParseTimeOptions(since, sinceTime)
 	if err != nil {
 		return fmt.Errorf("failed parse since time: %v", err)
 	}
 
-	archivePath, err := supportBundle.CollectBundleFromSpec(sinceTimeValue)
+	err = supportBundle.CollectAndAnalyze(ctx, sinceTimeValue)
 	if err != nil {
-		return fmt.Errorf("run collectors: %v", err)
+		return fmt.Errorf("error while collecting and analyzing bundle: %v", err)
 	}
 
-	logger.Info("\r \033[36mAnalyzing support bundle\033[m")
-	err = supportBundle.AnalyzeBundle(archivePath)
-	if err != nil {
-		return fmt.Errorf("there is an error when analyzing: %v", err)
-	}
-
-	logger.Info("a support bundle has been created in the current directory:", "path", archivePath)
 	return nil
 }

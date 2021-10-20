@@ -52,6 +52,15 @@ GITHUB_TOKEN
 ```
 The [oidc](https://github.com/aws/eks-anywhere/blob/main/internal/pkg/oidc/server.go) and [e2e](https://github.com/aws/eks-anywhere/blob/main/internal/test/e2e/oidc.go) packages can be used to create a minimal compliant OIDC server in S3 
 
+# Proxy test requisites
+The following env variables need to be set:
+
+```sh
+T_HTTP_PROXY
+T_HTTPS_PROXY
+T_NO_PROXY
+```
+
 # Adding new tests
 When adding new tests to run in our postsubmit environment we need to bump up the total number of EC2s we create for the tests.
 

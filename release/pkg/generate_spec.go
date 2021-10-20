@@ -21,33 +21,42 @@ import (
 	"strings"
 	"time"
 
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/pkg/errors"
+
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 var imageBuilderProjectSource = "projects/kubernetes-sigs/image-builder"
 
 // ReleaseConfig contains metadata fields for a release
 type ReleaseConfig struct {
-	ReleaseVersion           string
-	DevReleaseUriVersion     string
-	BundleNumber             int
-	CliMinVersion            string
-	CliMaxVersion            string
-	CliRepoSource            string
-	CliRepoHead              string
-	BuildRepoSource          string
-	BuildRepoHead            string
-	ArtifactDir              string
-	SourceBucket             string
-	ReleaseBucket            string
-	SourceContainerRegistry  string
-	ReleaseContainerRegistry string
-	CDN                      string
-	ReleaseNumber            int
-	ReleaseDate              time.Time
-	DevRelease               bool
-	ReleaseEnvironment       string
+	ReleaseVersion                 string
+	DevReleaseUriVersion           string
+	BundleNumber                   int
+	CliMinVersion                  string
+	CliMaxVersion                  string
+	CliRepoSource                  string
+	CliRepoHead                    string
+	BuildRepoSource                string
+	BuildRepoHead                  string
+	ArtifactDir                    string
+	SourceBucket                   string
+	ReleaseBucket                  string
+	SourceContainerRegistry        string
+	ReleaseContainerRegistry       string
+	CDN                            string
+	ReleaseNumber                  int
+	ReleaseDate                    time.Time
+	DevRelease                     bool
+	ReleaseEnvironment             string
+	GenerateComponentBundleVersion generateComponentBundleVersion
+}
+
+type generateComponentBundleVersion func(projectVersioner) (string, error)
+
+type projectVersioner interface {
+	patchVersion() (string, error)
+	buildMetadata() (string, error)
 }
 
 // GetArtifactsData will get asset information for each component
@@ -191,7 +200,7 @@ func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) 
 	artifactsTable := map[string][]Artifact{}
 	eksAArtifactsFuncs := map[string]func() ([]Artifact, error){
 		"eks-a-tools":                  r.GetEksAToolsAssets,
-		"cluster-api":                  r.GetCapiAssets,
+		"cluster-api":                  r.GetCAPIAssets,
 		"cluster-api-provider-aws":     r.GetCapaAssets,
 		"cluster-api-provider-docker":  r.GetDockerAssets,
 		"cluster-api-provider-vsphere": r.GetCapvAssets,
@@ -208,6 +217,7 @@ func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) 
 		"kindnetd":                     r.GetKindnetdAssets,
 		"etcdadm":                      r.GetEtcdadmAssets,
 		"cri-tools":                    r.GetCriToolsAssets,
+		"diagnostic-collector":         r.GetDiagnosticCollectorAssets,
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
@@ -343,6 +353,13 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 				r.ReleaseVersion,
 				r.BundleNumber,
 			)
+		} else if name == "eks-anywhere-diagnostic-collector" {
+			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%d",
+				r.SourceContainerRegistry,
+				repoName,
+				r.ReleaseVersion,
+				r.BundleNumber,
+			)
 		} else if name == "kind-node" {
 			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-%s-eks-a-%d",
 				r.SourceContainerRegistry,
@@ -391,6 +408,21 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 			semVer,
 		)
 	} else if name == "eks-anywhere-cluster-controller" {
+		if r.DevRelease {
+			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a-%s",
+				r.ReleaseContainerRegistry,
+				repoName,
+				semVer,
+			)
+		} else {
+			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%s",
+				r.ReleaseContainerRegistry,
+				repoName,
+				r.ReleaseVersion,
+				semVer,
+			)
+		}
+	} else if name == "eks-anywhere-diagnostic-collector" {
 		if r.DevRelease {
 			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a-%s",
 				r.ReleaseContainerRegistry,

@@ -63,13 +63,6 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 
 	var allErrs field.ErrorList
 
-	if old.Spec.Template != new.Spec.Template {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "template"), new.Spec.Template, "field is immutable"),
-		)
-	}
-
 	if old.Spec.OSFamily != new.Spec.OSFamily {
 		allErrs = append(
 			allErrs,
@@ -88,6 +81,26 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 		allErrs = append(
 			allErrs,
 			field.Invalid(field.NewPath("spec", "storagepolicyname"), new.Spec.StoragePolicyName, "field is immutable"),
+		)
+	}
+
+	// TODO: enable etcd machine upgrade after controller supports control plane then workers order upgrade.
+	if !old.IsManagement() && !old.IsEtcd() {
+		vspheremachineconfiglog.Info("Machine config is associated with workload cluster's control plane or worker nodes")
+		return allErrs
+	}
+
+	if old.IsManagement() && !old.IsEtcd() && !old.IsControlPlane() {
+		vspheremachineconfiglog.Info("Machine config is associated with management cluster's worker nodes")
+		return allErrs
+	}
+
+	vspheremachineconfiglog.Info("Machine config is associated with management cluster's control plane or etcd, or workload cluster's etcd")
+
+	if old.Spec.Template != new.Spec.Template {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "template"), new.Spec.Template, "field is immutable"),
 		)
 	}
 
@@ -111,12 +124,6 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 			field.Invalid(field.NewPath("spec", "resourcePool"), new.Spec.ResourcePool, "field is immutable"),
 		)
 	}
-
-	if !old.IsControlPlane() && !old.IsEtcd() {
-		vspheremachineconfiglog.Info("Machine config is not associated with control plane or etcd")
-		return allErrs
-	}
-	vspheremachineconfiglog.Info("Machine config is associated with control plane or etcd")
 
 	if old.Spec.MemoryMiB != new.Spec.MemoryMiB {
 		allErrs = append(

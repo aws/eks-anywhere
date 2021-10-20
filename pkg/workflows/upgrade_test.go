@@ -3,13 +3,16 @@ package workflows_test
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/features"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -26,7 +29,8 @@ type upgradeTestSetup struct {
 	provider         *providermocks.MockProvider
 	writer           *writermocks.MockFileWriter
 	validator        *mocks.MockValidator
-	datacenterConfig *providermocks.MockDatacenterConfig
+	capiUpgrader     *mocks.MockCAPIUpgrader
+	datacenterConfig providers.DatacenterConfig
 	machineConfigs   []providers.MachineConfig
 	workflow         *workflows.Upgrade
 	ctx              context.Context
@@ -37,6 +41,10 @@ type upgradeTestSetup struct {
 }
 
 func newUpgradeTest(t *testing.T) *upgradeTestSetup {
+	os.Setenv(features.ComponentsUpgradesEnvVar, "true")
+	t.Cleanup(func() {
+		os.Unsetenv(features.ComponentsUpgradesEnvVar)
+	})
 	mockCtrl := gomock.NewController(t)
 	bootstrapper := mocks.NewMockBootstrapper(mockCtrl)
 	clusterManager := mocks.NewMockClusterManager(mockCtrl)
@@ -44,9 +52,10 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	provider := providermocks.NewMockProvider(mockCtrl)
 	writer := writermocks.NewMockFileWriter(mockCtrl)
 	validator := mocks.NewMockValidator(mockCtrl)
-	datacenterConfig := providermocks.NewMockDatacenterConfig(mockCtrl)
-	machineConfigs := []providers.MachineConfig{providermocks.NewMockMachineConfig(mockCtrl)}
-	workflow := workflows.NewUpgrade(bootstrapper, provider, clusterManager, addonManager, writer)
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
+	capiUpgrader := mocks.NewMockCAPIUpgrader(mockCtrl)
+	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
+	workflow := workflows.NewUpgrade(bootstrapper, provider, capiUpgrader, clusterManager, addonManager, writer)
 
 	return &upgradeTestSetup{
 		t:                t,
@@ -56,6 +65,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		provider:         provider,
 		writer:           writer,
 		validator:        validator,
+		capiUpgrader:     capiUpgrader,
 		datacenterConfig: datacenterConfig,
 		machineConfigs:   machineConfigs,
 		workflow:         workflow,
@@ -77,6 +87,14 @@ func (c *upgradeTestSetup) expectUpdateSecrets() {
 	)
 }
 
+func (c *upgradeTestSetup) expectUpgradeCoreComponents() {
+	currentSpec := &cluster.Spec{}
+	gomock.InOrder(
+		c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, c.workloadCluster).Return(currentSpec, nil),
+		c.capiUpgrader.EXPECT().Upgrade(c.ctx, c.workloadCluster, c.provider, currentSpec, c.clusterSpec),
+	)
+}
+
 func (c *upgradeTestSetup) expectCreateBootstrap() {
 	opts := []bootstrapper.BootstrapClusterOption{
 		bootstrapper.WithDefaultCNIDisabled(), bootstrapper.WithExtraDockerMounts(),
@@ -88,7 +106,7 @@ func (c *upgradeTestSetup) expectCreateBootstrap() {
 			c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
 		).Return(c.bootstrapCluster, nil),
 
-		c.clusterManager.EXPECT().InstallCapi(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider),
+		c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider),
 	)
 }
 
@@ -122,7 +140,7 @@ func (c *upgradeTestSetup) expectUpgradeWorkloadToReturn(err error) {
 
 func (c *upgradeTestSetup) expectMoveManagementToBootstrap() {
 	gomock.InOrder(
-		c.clusterManager.EXPECT().MoveCapi(
+		c.clusterManager.EXPECT().MoveCAPI(
 			c.ctx, c.workloadCluster, c.bootstrapCluster, gomock.Any(), gomock.Any(),
 		),
 	)
@@ -130,7 +148,7 @@ func (c *upgradeTestSetup) expectMoveManagementToBootstrap() {
 
 func (c *upgradeTestSetup) expectMoveManagementToWorkload() {
 	gomock.InOrder(
-		c.clusterManager.EXPECT().MoveCapi(
+		c.clusterManager.EXPECT().MoveCAPI(
 			c.ctx, c.bootstrapCluster, c.workloadCluster, gomock.Any(), gomock.Any(),
 		),
 	)
@@ -242,7 +260,7 @@ func (c *upgradeTestSetup) expectPauseGitOpsKustomizationNotToBeCalled() {
 func (c *upgradeTestSetup) expectCreateBootstrapNotToBeCalled() {
 	c.provider.EXPECT().BootstrapClusterOpts().Times(0)
 	c.bootstrapper.EXPECT().CreateBootstrapCluster(c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil())).Times(0)
-	c.clusterManager.EXPECT().InstallCapi(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider).Times(0)
+	c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider).Times(0)
 }
 
 func (c *upgradeTestSetup) expectPreflightValidationsToPass() {
@@ -254,6 +272,7 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets()
+	test.expectUpgradeCoreComponents()
 	test.expectVerifyClusterSpecNoChanges()
 	test.expectPauseEKSAControllerReconcileNotToBeCalled()
 	test.expectPauseGitOpsKustomizationNotToBeCalled()
@@ -270,6 +289,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets()
+	test.expectUpgradeCoreComponents()
 	test.expectVerifyClusterSpecChanged()
 	test.expectPauseEKSAControllerReconcile()
 	test.expectPauseGitOpsKustomization()
@@ -298,6 +318,7 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets()
+	test.expectUpgradeCoreComponents()
 	test.expectVerifyClusterSpecChanged()
 	test.expectPauseEKSAControllerReconcile()
 	test.expectPauseGitOpsKustomization()

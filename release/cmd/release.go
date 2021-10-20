@@ -22,13 +22,13 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/eks-anywhere/release/pkg"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/aws/eks-anywhere/release/pkg"
 )
 
 var (
@@ -41,7 +41,11 @@ var releaseCmd = &cobra.Command{
 	Use:   "release",
 	Short: "Cut an eks-anywhere release",
 	PreRun: func(cmd *cobra.Command, args []string) {
-		viper.BindPFlags(cmd.Flags())
+		err := viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			fmt.Printf("Error initializing flags: %v\n", err)
+			os.Exit(1)
+		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		// TODO validation on these flags
@@ -75,20 +79,21 @@ var releaseCmd = &cobra.Command{
 		}
 
 		releaseConfig := &pkg.ReleaseConfig{
-			CliRepoSource:            cliRepoDir,
-			BuildRepoSource:          buildRepoDir,
-			ArtifactDir:              artifactDir,
-			SourceBucket:             sourceBucket,
-			ReleaseBucket:            releaseBucket,
-			SourceContainerRegistry:  sourceContainerRegistry,
-			ReleaseContainerRegistry: releaseContainerRegistry,
-			CDN:                      cdn,
-			BundleNumber:             bundleNumber,
-			ReleaseNumber:            releaseNumber,
-			ReleaseVersion:           releaseVersion,
-			ReleaseDate:              releaseTime,
-			DevRelease:               devRelease,
-			ReleaseEnvironment:       releaseEnvironment,
+			CliRepoSource:                  cliRepoDir,
+			BuildRepoSource:                buildRepoDir,
+			ArtifactDir:                    artifactDir,
+			SourceBucket:                   sourceBucket,
+			ReleaseBucket:                  releaseBucket,
+			SourceContainerRegistry:        sourceContainerRegistry,
+			ReleaseContainerRegistry:       releaseContainerRegistry,
+			CDN:                            cdn,
+			BundleNumber:                   bundleNumber,
+			ReleaseNumber:                  releaseNumber,
+			ReleaseVersion:                 releaseVersion,
+			ReleaseDate:                    releaseTime,
+			DevRelease:                     devRelease,
+			ReleaseEnvironment:             releaseEnvironment,
+			GenerateComponentBundleVersion: pkg.GetBuildComponentVersionFunc(devRelease),
 		}
 
 		err := releaseConfig.SetRepoHeads()
@@ -214,7 +219,7 @@ var releaseCmd = &cobra.Command{
 			}
 			eksAReleaseManifestUrl := fmt.Sprintf("%s%s", releaseConfig.CDN, eksAReleaseManifestKey)
 
-			exists, err := pkg.ExistsInS3(releaseClients, releaseConfig.ReleaseBucket, eksAReleaseManifestKey)
+			exists, err := pkg.ExistsInS3(releaseClients.S3.Client, releaseConfig.ReleaseBucket, eksAReleaseManifestKey)
 			if err != nil {
 				fmt.Printf("Error checking if release manifest exists in S3: %v", err)
 				os.Exit(1)
@@ -262,7 +267,8 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			release.Spec.Releases = append(release.Spec.Releases, eksARelease)
+			currentReleases := pkg.EksAReleases(release.Spec.Releases)
+			release.Spec.Releases = currentReleases.AppendOrUpdateRelease(eksARelease)
 
 			output, err := yaml.Marshal(release)
 			if err != nil {

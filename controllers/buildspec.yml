@@ -1,0 +1,14 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - ./scripts/setup.sh
+
+  build:
+    commands:
+      - make release-cluster-controller
+
+  post_build:
+    commands:
+      - make upload-artifacts

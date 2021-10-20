@@ -16,16 +16,24 @@ package pkg
 
 import (
 	"fmt"
+	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 )
 
 // GetClusterControllerAssets returns the artifacts for eks-a cluster controller
 func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
-	projectSource := "projects/aws/eks-anywhere"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
+	// Get git tag
+	cmd := exec.Command("git", "-C", r.CliRepoSource, "describe", "--tag")
+	out, err := execCommand(cmd)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+
+	gitVersion := strings.Split(out, "-")
+	gitTag := gitVersion[0]
 	if err != nil {
 		return nil, errors.Cause(err)
 	}

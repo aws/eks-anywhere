@@ -1,0 +1,8 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: eksa-unit-test
+spec:
+  registryMirro rConfiguration:
+    endpoint: "198.18.34.118"
+---

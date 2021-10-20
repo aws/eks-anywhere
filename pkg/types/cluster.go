@@ -5,6 +5,7 @@ import "github.com/aws/eks-anywhere/release/api/v1alpha1"
 type Cluster struct {
 	Name           string
 	KubeconfigFile string
+	ExistingMgnt   bool
 }
 
 type InfrastructureBundle struct {

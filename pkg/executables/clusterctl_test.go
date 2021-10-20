@@ -9,19 +9,55 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	specv1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	mockswriter "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	mockproviders "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
+
+type clusterctlTest struct {
+	*WithT
+	ctx        context.Context
+	cluster    *types.Cluster
+	clusterctl *executables.Clusterctl
+	e          *mockexecutables.MockExecutable
+	provider   *mockproviders.MockProvider
+	writer     filewriter.FileWriter
+}
+
+func newClusterctlTest(t *testing.T) *clusterctlTest {
+	ctrl := gomock.NewController(t)
+	_, writer := test.NewWriter(t)
+	e := mockexecutables.NewMockExecutable(ctrl)
+
+	return &clusterctlTest{
+		WithT: NewWithT(t),
+		ctx:   context.Background(),
+		cluster: &types.Cluster{
+			Name:           "cluster-name",
+			KubeconfigFile: "config/c.kubeconfig",
+		},
+		e:          e,
+		provider:   mockproviders.NewMockProvider(ctrl),
+		clusterctl: executables.NewClusterctl(e, writer),
+		writer:     writer,
+	}
+}
+
+func (ct *clusterctlTest) expectBuildOverrideLayer() {
+	ct.provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
+}
 
 func TestClusterctlInitInfrastructure(t *testing.T) {
 	_, writer := test.NewWriter(t)
@@ -334,6 +370,99 @@ func TestClusterctlMoveManagement(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestClusterctlUpgradeAllProvidersSucess(t *testing.T) {
+	tt := newClusterctlTest(t)
+
+	changeDiff := &clusterapi.CAPIChangeDiff{
+		Core: &types.ComponentChangeDiff{
+			ComponentName: "cluster-api",
+			NewVersion:    "v0.3.19",
+		},
+		ControlPlane: &types.ComponentChangeDiff{
+			ComponentName: "kubeadm",
+			NewVersion:    "v0.3.19",
+		},
+		InfrastructureProvider: &types.ComponentChangeDiff{
+			ComponentName: "vsphere",
+			NewVersion:    "v0.4.1",
+		},
+		BootstrapProviders: []types.ComponentChangeDiff{
+			{
+				ComponentName: "kubeadm",
+				NewVersion:    "v0.3.19",
+			},
+			{
+				ComponentName: "etcdadm-bootstrap",
+				NewVersion:    "v0.1.0",
+			},
+			{
+				ComponentName: "etcdadm-controller",
+				NewVersion:    "v0.1.0",
+			},
+		},
+	}
+
+	tt.expectBuildOverrideLayer()
+	tt.e.EXPECT().Execute(tt.ctx,
+		"upgrade", "apply",
+		"--config", test.OfType("string"),
+		"--management-group", "capi-system/cluster-api",
+		"--kubeconfig", tt.cluster.KubeconfigFile,
+		"--control-plane", "capi-kubeadm-control-plane-system/kubeadm:v0.3.19",
+		"--core", "capi-system/cluster-api:v0.3.19",
+		"--infrastructure", "capv-system/vsphere:v0.4.1",
+		"--bootstrap", "capi-kubeadm-bootstrap-system/kubeadm:v0.3.19",
+		"--bootstrap", "etcdadm-bootstrap-provider-system/etcdadm-bootstrap:v0.1.0",
+		"--bootstrap", "etcdadm-controller-system/etcdadm-controller:v0.1.0",
+	)
+
+	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeDiff)).To(Succeed())
+}
+
+func TestClusterctlUpgradeInfrastructureProvidersSucess(t *testing.T) {
+	tt := newClusterctlTest(t)
+
+	changeDiff := &clusterapi.CAPIChangeDiff{
+		InfrastructureProvider: &types.ComponentChangeDiff{
+			ComponentName: "vsphere",
+			NewVersion:    "v0.4.1",
+		},
+	}
+
+	tt.expectBuildOverrideLayer()
+	tt.e.EXPECT().Execute(tt.ctx,
+		"upgrade", "apply",
+		"--config", test.OfType("string"),
+		"--management-group", "capi-system/cluster-api",
+		"--kubeconfig", tt.cluster.KubeconfigFile,
+		"--infrastructure", "capv-system/vsphere:v0.4.1",
+	)
+
+	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeDiff)).To(Succeed())
+}
+
+func TestClusterctlUpgradeInfrastructureProvidersError(t *testing.T) {
+	tt := newClusterctlTest(t)
+
+	changeDiff := &clusterapi.CAPIChangeDiff{
+		InfrastructureProvider: &types.ComponentChangeDiff{
+			ComponentName: "vsphere",
+			NewVersion:    "v0.4.1",
+		},
+	}
+
+	tt.expectBuildOverrideLayer()
+	tt.e.EXPECT().Execute(tt.ctx,
+		"upgrade", "apply",
+		"--config", test.OfType("string"),
+		"--management-group", "capi-system/cluster-api",
+		"--kubeconfig", tt.cluster.KubeconfigFile,
+		"--infrastructure", "capv-system/vsphere:v0.4.1",
+	).Return(bytes.Buffer{}, errors.New("error in exec"))
+
+	tt.Expect(tt.clusterctl.Upgrade(tt.ctx, tt.cluster, tt.provider, clusterSpec, changeDiff)).NotTo(Succeed())
 }
 
 var clusterSpec = test.NewClusterSpec(func(s *cluster.Spec) {

@@ -19,6 +19,7 @@ type ParallelRunConf struct {
 	SubnetId            string
 	Regex               string
 	TestsToSkip         []string
+	BundlesOverride     bool
 }
 
 type instanceTestsResults struct {
@@ -77,10 +78,11 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 
 type instanceRunConf struct {
 	amiId, instanceProfileName, storageBucket, jobId, subnetId, regex string
+	bundlesOverride                                                   bool
 }
 
 func RunTests(conf instanceRunConf) error {
-	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.jobId, conf.subnetId)
+	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.jobId, conf.subnetId, conf.bundlesOverride)
 	if err != nil {
 		return err
 	}
@@ -156,6 +158,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 				jobId:               fmt.Sprintf("%s-%d", conf.JobId, len(runConfs)),
 				subnetId:            conf.SubnetId,
 				regex:               strings.Join(testsInCurrentInstance, "|"),
+				bundlesOverride:     conf.BundlesOverride,
 			})
 
 			testsInCurrentInstance = make([]string, 0, testPerInstance)

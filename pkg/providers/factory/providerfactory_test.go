@@ -9,12 +9,10 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	mockswriter "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
-	clientProviders "github.com/aws/eks-anywhere/pkg/providers/aws/mocks"
-	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	dockerMocks "github.com/aws/eks-anywhere/pkg/providers/docker/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/factory"
-	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	vsphereMocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -54,7 +52,7 @@ func TestProviderFactoryBuildProvider(t *testing.T) {
 				clusterConfigFileName: "testdata/cluster_vsphere.yaml",
 			},
 			want: providerMatch{
-				kind:    vsphere.ProviderName,
+				kind:    constants.VSphereProviderName,
 				version: "v0.7.8",
 			},
 		},
@@ -69,7 +67,7 @@ func TestProviderFactoryBuildProvider(t *testing.T) {
 				clusterConfigFileName: "testdata/cluster_docker.yaml",
 			},
 			want: providerMatch{
-				kind:    docker.ProviderName,
+				kind:    constants.DockerProviderName,
 				version: "v0.3.19",
 			},
 		},
@@ -83,7 +81,7 @@ func TestProviderFactoryBuildProvider(t *testing.T) {
 				}},
 				clusterConfigFileName: "testdata/cluster_aws.yaml",
 			},
-			wantErr: fmt.Errorf("valid providers include: %s, %s", docker.ProviderName, vsphere.ProviderName),
+			wantErr: fmt.Errorf("valid providers include: %s, %s", constants.DockerProviderName, constants.VSphereProviderName),
 		},
 	}
 	for _, tt := range tests {
@@ -91,13 +89,12 @@ func TestProviderFactoryBuildProvider(t *testing.T) {
 			g := NewWithT(t)
 			mockCtrl := gomock.NewController(t)
 			p := &factory.ProviderFactory{
-				AwsClient:            clientProviders.NewMockProviderClient(mockCtrl),
 				DockerClient:         dockerMocks.NewMockProviderClient(mockCtrl),
 				VSphereGovcClient:    vsphereMocks.NewMockProviderGovcClient(mockCtrl),
 				VSphereKubectlClient: vsphereMocks.NewMockProviderKubectlClient(mockCtrl),
 				Writer:               mockswriter.NewMockFileWriter(mockCtrl),
 			}
-			got, err := p.BuildProvider(tt.args.clusterConfigFileName, tt.args.clusterConfig)
+			got, err := p.BuildProvider(tt.args.clusterConfigFileName, tt.args.clusterConfig, false)
 			if err == nil {
 				if got.Name() != tt.want.kind || got.Version(clusterSpec) != tt.want.version {
 					t.Errorf("BuildProvider() got = %v, want %v", got, tt.want)

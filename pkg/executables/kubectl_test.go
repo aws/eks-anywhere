@@ -3,12 +3,14 @@ package executables_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/version"
 	"sigs.k8s.io/cluster-api/api/v1alpha3"
 
@@ -26,6 +28,41 @@ const (
 )
 
 var capiClustersResourceType = fmt.Sprintf("clusters.%s", v1alpha3.GroupVersion.Group)
+
+func newKubectl(t *testing.T) (*executables.Kubectl, context.Context, *types.Cluster, *mockexecutables.MockExecutable) {
+	kubeconfigFile := "c.kubeconfig"
+	cluster := &types.Cluster{
+		KubeconfigFile: kubeconfigFile,
+		Name:           "test-cluster",
+	}
+
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+
+	return executables.NewKubectl(executable), ctx, cluster, executable
+}
+
+type kubectlTest struct {
+	*WithT
+	k         *executables.Kubectl
+	ctx       context.Context
+	cluster   *types.Cluster
+	e         *mockexecutables.MockExecutable
+	namespace string
+}
+
+func newKubectlTest(t *testing.T) *kubectlTest {
+	k, ctx, cluster, e := newKubectl(t)
+	return &kubectlTest{
+		k:         k,
+		ctx:       ctx,
+		cluster:   cluster,
+		e:         e,
+		WithT:     NewWithT(t),
+		namespace: "namespace",
+	}
+}
 
 func TestKubectlApplyKubeSpecSuccess(t *testing.T) {
 	spec := "specfile"
@@ -71,6 +108,52 @@ func TestKubectlApplyKubeSpecFromBytesError(t *testing.T) {
 	}
 }
 
+func TestKubectlDeleteKubeSpecFromBytesSuccess(t *testing.T) {
+	var data []byte
+
+	k, ctx, cluster, e := newKubectl(t)
+	expectedParam := []string{"delete", "-f", "-", "--kubeconfig", cluster.KubeconfigFile}
+	e.EXPECT().ExecuteWithStdin(ctx, data, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
+	if err := k.DeleteKubeSpecFromBytes(ctx, cluster, data); err != nil {
+		t.Errorf("Kubectl.DeleteKubeSpecFromBytes() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlDeleteSpecFromBytesError(t *testing.T) {
+	var data []byte
+
+	k, ctx, cluster, e := newKubectl(t)
+	expectedParam := []string{"delete", "-f", "-", "--kubeconfig", cluster.KubeconfigFile}
+	e.EXPECT().ExecuteWithStdin(ctx, data, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
+	if err := k.DeleteKubeSpecFromBytes(ctx, cluster, data); err == nil {
+		t.Errorf("Kubectl.DeleteKubeSpecFromBytes() error = nil, want not nil")
+	}
+}
+
+func TestKubectlApplyKubeSpecFromBytesWithNamespaceSuccess(t *testing.T) {
+	var data []byte
+	var namespace string
+
+	k, ctx, cluster, e := newKubectl(t)
+	expectedParam := []string{"apply", "-f", "-", "--namespace", namespace, "--kubeconfig", cluster.KubeconfigFile}
+	e.EXPECT().ExecuteWithStdin(ctx, data, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
+	if err := k.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, data, namespace); err != nil {
+		t.Errorf("Kubectl.ApplyKubeSpecFromBytesWithNamespace() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlApplyKubeSpecFromBytesWithNamespaceError(t *testing.T) {
+	var data []byte
+	var namespace string
+
+	k, ctx, cluster, e := newKubectl(t)
+	expectedParam := []string{"apply", "-f", "-", "--namespace", namespace, "--kubeconfig", cluster.KubeconfigFile}
+	e.EXPECT().ExecuteWithStdin(ctx, data, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
+	if err := k.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, data, namespace); err == nil {
+		t.Errorf("Kubectl.ApplyKubeSpecFromBytes() error = nil, want not nil")
+	}
+}
+
 func TestKubectlCreateNamespaceSuccess(t *testing.T) {
 	var kubeconfig, namespace string
 
@@ -90,6 +173,28 @@ func TestKubectlCreateNamespaceError(t *testing.T) {
 	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
 	if err := k.CreateNamespace(ctx, kubeconfig, namespace); err == nil {
 		t.Errorf("Kubectl.CreateNamespace() error = nil, want not nil")
+	}
+}
+
+func TestKubectlDeleteNamespaceSuccess(t *testing.T) {
+	var kubeconfig, namespace string
+
+	k, ctx, _, e := newKubectl(t)
+	expectedParam := []string{"delete", "namespace", namespace, "--kubeconfig", kubeconfig}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
+	if err := k.DeleteNamespace(ctx, kubeconfig, namespace); err != nil {
+		t.Errorf("Kubectl.DeleteNamespace() error = %v, want nil", err)
+	}
+}
+
+func TestKubectlDeleteNamespaceError(t *testing.T) {
+	var kubeconfig, namespace string
+
+	k, ctx, _, e := newKubectl(t)
+	expectedParam := []string{"delete", "namespace", namespace, "--kubeconfig", kubeconfig}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, errors.New("error from execute"))
+	if err := k.DeleteNamespace(ctx, kubeconfig, namespace); err == nil {
+		t.Errorf("Kubectl.DeleteNamespace() error = nil, want not nil")
 	}
 }
 
@@ -478,7 +583,11 @@ func TestKubectlGetMachines(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			fileContent := test.ReadFile(t, tt.jsonResponseFile)
 			k, ctx, cluster, e := newKubectl(t)
-			e.EXPECT().Execute(ctx, []string{"get", "machines", "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}).Return(*bytes.NewBufferString(fileContent), nil)
+			e.EXPECT().Execute(ctx, []string{
+				"get", "machines", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
+				"--selector=cluster.x-k8s.io/cluster-name=" + cluster.Name,
+				"--namespace", constants.EksaSystemNamespace,
+			}).Return(*bytes.NewBufferString(fileContent), nil)
 
 			gotMachines, err := k.GetMachines(ctx, cluster)
 			if err != nil {
@@ -636,20 +745,6 @@ func TestKubectlGetEKSAClusters(t *testing.T) {
 			}
 		})
 	}
-}
-
-func newKubectl(t *testing.T) (*executables.Kubectl, context.Context, *types.Cluster, *mockexecutables.MockExecutable) {
-	kubeconfigFile := "c.kubeconfig"
-	cluster := &types.Cluster{
-		KubeconfigFile: kubeconfigFile,
-		Name:           "test-cluster",
-	}
-
-	ctx := context.Background()
-	ctrl := gomock.NewController(t)
-	executable := mockexecutables.NewMockExecutable(ctrl)
-
-	return executables.NewKubectl(executable), ctx, cluster, executable
 }
 
 func TestKubectlGetGetApiServerUrlSuccess(t *testing.T) {
@@ -1104,4 +1199,23 @@ func TestKubectlRemoveAnnotationInNamespace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Kubectl.RemoveAnnotationInNamespace() error = %v, want nil", err)
 	}
+}
+
+func TestKubectlGetBundles(t *testing.T) {
+	tt := newKubectlTest(t)
+	wantBundles := test.Bundles(t)
+	bundleName := "Bundle-name"
+	bundlesJson, err := json.Marshal(wantBundles)
+	if err != nil {
+		t.Fatalf("Failed marshalling Bundles: %s", err)
+	}
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"get", "bundles.anywhere.eks.amazonaws.com", bundleName, "-o", "json", "--kubeconfig", tt.cluster.KubeconfigFile, "--namespace", tt.namespace,
+	).Return(*bytes.NewBuffer(bundlesJson), nil)
+
+	gotBundles, err := tt.k.GetBundles(tt.ctx, tt.cluster.KubeconfigFile, bundleName, tt.namespace)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(gotBundles).To(Equal(wantBundles))
 }

@@ -13,6 +13,7 @@ import (
 	filewriter "github.com/aws/eks-anywhere/pkg/filewriter"
 	providers "github.com/aws/eks-anywhere/pkg/providers"
 	types "github.com/aws/eks-anywhere/pkg/types"
+	v1alpha10 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -37,20 +38,6 @@ func NewMockClusterClient(ctrl *gomock.Controller) *MockClusterClient {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockClusterClient) EXPECT() *MockClusterClientMockRecorder {
 	return m.recorder
-}
-
-// ApplyKubeSpec mocks base method.
-func (m *MockClusterClient) ApplyKubeSpec(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ApplyKubeSpec", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ApplyKubeSpec indicates an expected call of ApplyKubeSpec.
-func (mr *MockClusterClientMockRecorder) ApplyKubeSpec(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpec", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpec), arg0, arg1, arg2)
 }
 
 // ApplyKubeSpecFromBytes mocks base method.
@@ -81,18 +68,18 @@ func (mr *MockClusterClientMockRecorder) ApplyKubeSpecFromBytesForce(arg0, arg1,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesForce", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpecFromBytesForce), arg0, arg1, arg2)
 }
 
-// ApplyKubeSpecWithNamespace mocks base method.
-func (m *MockClusterClient) ApplyKubeSpecWithNamespace(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+// ApplyKubeSpecFromBytesWithNamespace mocks base method.
+func (m *MockClusterClient) ApplyKubeSpecFromBytesWithNamespace(arg0 context.Context, arg1 *types.Cluster, arg2 []byte, arg3 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ApplyKubeSpecWithNamespace", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "ApplyKubeSpecFromBytesWithNamespace", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// ApplyKubeSpecWithNamespace indicates an expected call of ApplyKubeSpecWithNamespace.
-func (mr *MockClusterClientMockRecorder) ApplyKubeSpecWithNamespace(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+// ApplyKubeSpecFromBytesWithNamespace indicates an expected call of ApplyKubeSpecFromBytesWithNamespace.
+func (mr *MockClusterClientMockRecorder) ApplyKubeSpecFromBytesWithNamespace(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecWithNamespace", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpecWithNamespace), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesWithNamespace", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpecFromBytesWithNamespace), arg0, arg1, arg2, arg3)
 }
 
 // CreateNamespace mocks base method.
@@ -121,6 +108,21 @@ func (m *MockClusterClient) DeleteCluster(arg0 context.Context, arg1, arg2 *type
 func (mr *MockClusterClientMockRecorder) DeleteCluster(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCluster", reflect.TypeOf((*MockClusterClient)(nil).DeleteCluster), arg0, arg1, arg2)
+}
+
+// GetBundles mocks base method.
+func (m *MockClusterClient) GetBundles(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha10.Bundles, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBundles", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha10.Bundles)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBundles indicates an expected call of GetBundles.
+func (mr *MockClusterClientMockRecorder) GetBundles(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBundles", reflect.TypeOf((*MockClusterClient)(nil).GetBundles), arg0, arg1, arg2, arg3)
 }
 
 // GetClusters mocks base method.

@@ -14,6 +14,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
+var initE2EDirCommand = "mkdir -p /home/e2e/bin && cd /home/e2e"
+
 func WaitForSSMReady(session *session.Session, instanceId string) error {
 	err := retrier.Retry(10, 20*time.Second, func() error {
 		return Run(session, instanceId, "ls")
@@ -44,7 +46,7 @@ func Run(session *session.Session, instanceId string, command string, opts ...Co
 	c := &ssm.SendCommandInput{
 		DocumentName: aws.String("AWS-RunShellScript"),
 		InstanceIds:  []*string{aws.String(instanceId)},
-		Parameters:   map[string][]*string{"commands": {aws.String(command)}, "executionTimeout": {aws.String("10800")}},
+		Parameters:   map[string][]*string{"commands": {aws.String(initE2EDirCommand), aws.String(command)}, "executionTimeout": {aws.String("10800")}},
 	}
 
 	for _, opt := range opts {

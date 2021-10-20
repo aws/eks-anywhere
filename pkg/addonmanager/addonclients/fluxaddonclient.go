@@ -158,26 +158,28 @@ func (f *FluxAddonClient) InstallGitOps(ctx context.Context, cluster *types.Clus
 		return err
 	}
 
-	err := f.retrier.Retry(func() error {
-		return fc.flux.BootstrapToolkitsComponents(ctx, cluster, clusterSpec.GitOpsConfig)
-	})
-	if err != nil {
-		uninstallErr := f.uninstallGitOpsToolkits(ctx, cluster, clusterSpec)
-		if uninstallErr != nil {
-			logger.Info("Could not uninstall flux components", "error", uninstallErr)
+	if !cluster.ExistingMgnt {
+		err := f.retrier.Retry(func() error {
+			return fc.flux.BootstrapToolkitsComponents(ctx, cluster, clusterSpec.GitOpsConfig)
+		})
+		if err != nil {
+			uninstallErr := f.uninstallGitOpsToolkits(ctx, cluster, clusterSpec)
+			if uninstallErr != nil {
+				logger.Info("Could not uninstall flux components", "error", uninstallErr)
+			}
+			return err
 		}
-		return err
 	}
 
 	logger.V(3).Info("pulling from remote after Flux Bootstrap to ensure configuration files in local git repository are in sync",
 		"remote", defaultRemote, "branch", clusterSpec.GitOpsConfig.Spec.Flux.Github.Branch)
 
-	err = f.retrier.Retry(func() error {
+	err := f.retrier.Retry(func() error {
 		return f.gitOpts.Git.Pull(ctx, clusterSpec.GitOpsConfig.Spec.Flux.Github.Branch)
 	})
 	if err != nil {
 		logger.Error(err, "error when pulling from remote repository after Flux Bootstrap; ensure local repository is up-to-date with remote (git pull)",
-			"remote", defaultRemote, "branch", clusterSpec.GitOpsConfig.Spec.Flux.Github.Branch)
+			"remote", defaultRemote, "branch", clusterSpec.GitOpsConfig.Spec.Flux.Github.Branch, "error", err)
 	}
 	return nil
 }
@@ -367,12 +369,16 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 		return &ConfigVersionControlFailedError{Err: err}
 	}
 
-	logger.V(3).Info("Generating flux custom manifest files...")
-	err = fc.writeFluxSystemFiles()
-	if err != nil {
-		return &ConfigVersionControlFailedError{Err: err}
-	}
+	if fc.clusterSpec.Spec.Management == nil || *fc.clusterSpec.Spec.Management {
+		logger.V(3).Info("Generating flux custom manifest files...")
+		err = fc.writeFluxSystemFiles()
+		if err != nil {
+			return &ConfigVersionControlFailedError{Err: err}
+		}
 
+	} else {
+		logger.V(3).Info("Skipping flux custom manifest files")
+	}
 	p := path.Dir(config.Spec.Flux.Github.ClusterConfigPath)
 	err = fc.gitOpts.Git.Add(p)
 	if err != nil {

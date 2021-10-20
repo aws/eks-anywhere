@@ -14,12 +14,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 const (
 	ClusterKind         = "Cluster"
-	YamlSeparator       = "---"
+	YamlSeparator       = "\n---\n"
 	RegistryMirrorCAKey = "EKSA_REGISTRY_MIRROR_CA"
 )
 
@@ -28,6 +29,7 @@ type ClusterGenerateOpt func(config *ClusterGenerate)
 
 // Used for generating yaml for generate clusterconfig command
 func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *ClusterGenerate {
+	isManagement := true
 	config := &ClusterGenerate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       ClusterKind,
@@ -38,6 +40,7 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 		},
 		Spec: ClusterSpec{
 			KubernetesVersion: Kube121,
+			Management:        &isManagement,
 			ClusterNetwork: ClusterNetwork{
 				Pods: Pods{
 					CidrBlocks: []string{"192.168.0.0/16"},
@@ -133,6 +136,7 @@ func WithEtcdMachineGroupRef(ref ProviderRefAccessor) ClusterGenerateOpt {
 }
 
 func NewCluster(clusterName string) *Cluster {
+	isManagement := true
 	c := &Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       ClusterKind,
@@ -143,6 +147,7 @@ func NewCluster(clusterName string) *Cluster {
 		},
 		Spec: ClusterSpec{
 			KubernetesVersion: Kube119,
+			Management:        &isManagement,
 		},
 		Status: ClusterStatus{},
 	}
@@ -167,7 +172,9 @@ func GetClusterConfig(fileName string) (*Cluster, error) {
 	if err != nil {
 		return clusterConfig, err
 	}
-
+	if err := updateRegistryMirrorCA(clusterConfig); err != nil {
+		return clusterConfig, err
+	}
 	return clusterConfig, nil
 }
 
@@ -176,6 +183,7 @@ func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
 	if err != nil {
 		return clusterConfig, err
 	}
+
 	return GetClusterConfig(fileName)
 }
 
@@ -206,18 +214,18 @@ func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 	if err != nil {
 		return fmt.Errorf("unable to read file due to: %v", err)
 	}
+
 	for _, c := range strings.Split(string(content), YamlSeparator) {
-		if err = yaml.UnmarshalStrict([]byte(c), clusterConfig); err == nil {
-			if clusterConfig.Kind() == clusterConfig.ExpectedKind() {
-				return nil
-			}
+		if err = yaml.Unmarshal([]byte(c), clusterConfig); err != nil {
+			return fmt.Errorf("unable to parse %s\nyaml: %s\n %v", fileName, c, err)
 		}
-		_ = yaml.Unmarshal([]byte(c), clusterConfig) // this is to check if there is a bad spec in the file
+
 		if clusterConfig.Kind() == clusterConfig.ExpectedKind() {
-			return fmt.Errorf("unable to unmarshall content from file due to: %v", err)
+			return yaml.UnmarshalStrict([]byte(c), clusterConfig)
 		}
 	}
-	return fmt.Errorf("unable to find kind %v in file", clusterConfig.ExpectedKind())
+
+	return fmt.Errorf("cluster spec file %s is invalid or does not contain kind %s", fileName, clusterConfig.ExpectedKind())
 }
 
 func (c *Cluster) PauseReconcile() {
@@ -258,6 +266,11 @@ func validateControlPlaneReplicas(clusterConfig *Cluster) error {
 	}
 	if clusterConfig.Spec.ControlPlaneConfiguration.Count%2 == 0 {
 		return errors.New("control plane node count cannot be an even number")
+	}
+	if clusterConfig.Spec.ControlPlaneConfiguration.Count != 3 && clusterConfig.Spec.ControlPlaneConfiguration.Count != 5 {
+		if clusterConfig.Spec.DatacenterRef.Kind != DockerDatacenterKind {
+			logger.Info("Warning: The recommended number of control plane nodes is 3 or 5")
+		}
 	}
 	return nil
 }
@@ -344,7 +357,17 @@ func validateProxyConfig(clusterConfig *Cluster) error {
 }
 
 func validateProxyData(proxy string) error {
-	ip, port, err := net.SplitHostPort(proxy)
+	var proxyHost string
+	if strings.HasPrefix(proxy, "http") {
+		u, err := url.ParseRequestURI(proxy)
+		if err != nil {
+			return fmt.Errorf("proxy %s is invalid, please provide a valid URI", proxy)
+		}
+		proxyHost = u.Host
+	} else {
+		proxyHost = proxy
+	}
+	ip, port, err := net.SplitHostPort(proxyHost)
 	if err != nil {
 		return fmt.Errorf("proxy %s is invalid, please provide a valid proxy in the format proxy_ip:port", proxy)
 	}
@@ -352,7 +375,7 @@ func validateProxyData(proxy string) error {
 		return fmt.Errorf("proxy ip %s is invalid, please provide a valid proxy ip", ip)
 	}
 	if p, err := strconv.Atoi(port); err != nil || p < 1 || p > 65535 {
-		return fmt.Errorf("proxy port %s is invalid, please provide a valid proxy ip", port)
+		return fmt.Errorf("proxy port %s is invalid, please provide a valid proxy port", port)
 	}
 	return nil
 }
@@ -364,14 +387,52 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint == "" {
 		return errors.New("no value set for ECRMirror.Endpoint")
 	}
-	if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
-		content, err := ioutil.ReadFile(caCert)
-		if err != nil {
-			return fmt.Errorf("error reading the ca cert file %s: %v", caCert, err)
+
+	tlsValidator := crypto.NewTlsValidator(clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent, clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint)
+	selfSigned, err := tlsValidator.HasSelfSignedCert()
+	if err != nil {
+		return fmt.Errorf("error validating registy mirror endpoint: %v", err)
+	}
+	if selfSigned {
+		logger.V(1).Info(fmt.Sprintf("Warning: registry mirror endpoint %s is using self-signed certs", clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint))
+	}
+
+	certContent := clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent
+	if certContent == "" {
+		if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
+			certBuffer, err := ioutil.ReadFile(caCert)
+			if err != nil {
+				return fmt.Errorf("error reading the cert file %s: %v", caCert, err)
+			}
+			certContent = string(certBuffer)
+		} else if selfSigned {
+			return fmt.Errorf("registry %s is using self-signed certs, please provide the certificate using caCertContent field", clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint)
 		}
-		clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent = string(content)
-	} else if clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent == "" {
-		logger.Info(fmt.Sprintf("Warning: %s environment variable and caCertContent is not set, TLS verification will be disabled", RegistryMirrorCAKey))
+	}
+
+	if certContent != "" {
+		err := tlsValidator.ValidateCert()
+		if err != nil {
+			return fmt.Errorf("error validating the registry certificate: %v", err)
+		}
+	}
+
+	return nil
+}
+
+func updateRegistryMirrorCA(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.RegistryMirrorConfiguration == nil {
+		return nil
+	}
+	if clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent == "" {
+		if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
+			content, err := ioutil.ReadFile(caCert)
+			if err != nil {
+				return fmt.Errorf("error reading the cert file %s: %v", caCert, err)
+			}
+			logger.V(4).Info(fmt.Sprintf("%s is set, using %s as ca cert for registry", RegistryMirrorCAKey, caCert))
+			clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent = string(content)
+		}
 	}
 	return nil
 }

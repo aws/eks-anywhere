@@ -6,24 +6,22 @@ import (
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
-	"github.com/aws/eks-anywhere/pkg/providers/aws"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
 type ProviderFactory struct {
-	AwsClient            aws.ProviderClient
 	DockerClient         docker.ProviderClient
 	DockerKubectlClient  docker.ProviderKubectlClient
 	VSphereGovcClient    vsphere.ProviderGovcClient
 	VSphereKubectlClient vsphere.ProviderKubectlClient
 	Writer               filewriter.FileWriter
-	SkipIpCheck          bool
 }
 
-func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterConfig *v1alpha1.Cluster) (providers.Provider, error) {
+func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool) (providers.Provider, error) {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetVSphereDatacenterConfig(clusterConfigFileName)
@@ -34,13 +32,13 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 		if err != nil {
 			return nil, fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFileName, err)
 		}
-		return vsphere.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.VSphereGovcClient, p.VSphereKubectlClient, p.Writer, time.Now, p.SkipIpCheck), nil
+		return vsphere.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.VSphereGovcClient, p.VSphereKubectlClient, p.Writer, time.Now, skipIpCheck), nil
 	case v1alpha1.DockerDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetDockerDatacenterConfig(clusterConfigFileName)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFileName, err)
 		}
-		return docker.NewProvider(datacenterConfig, p.DockerClient, p.DockerKubectlClient, p.Writer, time.Now), nil
+		return docker.NewProvider(datacenterConfig, p.DockerClient, p.DockerKubectlClient, time.Now), nil
 	}
-	return nil, errors.New("valid providers include: " + docker.ProviderName + ", " + vsphere.ProviderName)
+	return nil, errors.New("valid providers include: " + constants.DockerProviderName + ", " + constants.VSphereProviderName)
 }

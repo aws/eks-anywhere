@@ -39,7 +39,7 @@ func (r *ReleaseConfig) GetCriToolsAssets() ([]Artifact, error) {
 
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		sourceS3Key = fmt.Sprintf("cri-tools-%s-%s-%s.tar.gz", os, arch, gitTag)
-		sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cri-tools/latest")
+		sourceS3Prefix = "projects/kubernetes-sigs/cri-tools/latest"
 	} else {
 		sourceS3Key = fmt.Sprintf("cri-tools-%s-%s.tar.gz", os, arch)
 		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cri-tools/%s", r.BundleNumber, gitTag)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	etcdv1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
+	"github.com/aws/eks-anywhere/pkg/templater"
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -22,27 +24,46 @@ type DockerTemplate struct {
 
 type VsphereTemplate struct {
 	ResourceFetcher
+	ResourceUpdater
 	now anywhereTypes.NowFunc
 }
 
-func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdcSpec anywherev1.VSphereDatacenterConfig, vmcSpec anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
-	// passing the same vspheremachineconfig for worker and cp as control plane updates are prohibited in controller
-	templateBuilder := vsphere.NewVsphereTemplateBuilder(&vdcSpec.Spec, &vmcSpec.Spec, &vmcSpec.Spec, &vmcSpec.Spec, r.now)
+func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdc anywherev1.VSphereDatacenterConfig, cpVmc, workerVmc, etcdVmc anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
+	// control plane and etcd updates are prohibited in controller so those specs should not change
+	templateBuilder := vsphere.NewVsphereTemplateBuilder(&vdc.Spec, &cpVmc.Spec, &workerVmc.Spec, &etcdVmc.Spec, r.now)
 	clusterName := clusterSpec.ObjectMeta.Name
-	kubeadmControlPlane, err := r.ControlPlane(ctx, eksaCluster)
+
+	oldVdc, err := r.ExistingVSphereDatacenterConfig(ctx, eksaCluster)
 	if err != nil {
 		return nil, err
 	}
-	oldVdcSpec, err := r.ExistingVSphereDatacenterConfig(ctx, eksaCluster)
+	oldCpVmc, err := r.ExistingVSphereControlPlaneMachineConfig(ctx, eksaCluster)
 	if err != nil {
 		return nil, err
 	}
-	oldVmcSpec, err := r.ExistingVSphereWorkerMachineConfig(ctx, eksaCluster)
+	oldEtcdVmc, err := r.ExistingVSphereEtcdMachineConfig(ctx, eksaCluster)
 	if err != nil {
 		return nil, err
 	}
+	oldWorkerVmc, err := r.ExistingVSphereWorkerMachineConfig(ctx, eksaCluster)
+	if err != nil {
+		return nil, err
+	}
+
+	var controlPlaneTemplateName string
+	updateControlPlaneTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, oldCpVmc, &cpVmc)
+	if updateControlPlaneTemplate {
+		controlPlaneTemplateName = templateBuilder.CPMachineTemplateName(clusterName)
+	} else {
+		cp, err := r.ControlPlane(ctx, eksaCluster)
+		if err != nil {
+			return nil, err
+		}
+		controlPlaneTemplateName = cp.Spec.InfrastructureTemplate.Name
+	}
+
 	var workloadTemplateName string
-	updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdcSpec, &vdcSpec, oldVmcSpec, &vmcSpec)
+	updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, oldWorkerVmc, &workerVmc)
 	if updateWorkloadTemplate {
 		workloadTemplateName = templateBuilder.WorkerMachineTemplateName(clusterName)
 	} else {
@@ -52,29 +73,50 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		}
 		workloadTemplateName = mcDeployment.Spec.Template.Spec.InfrastructureRef.Name
 	}
-	if len(vmcSpec.Spec.Users) <= 0 {
-		vmcSpec.Spec.Users = []anywherev1.UserConfiguration{{}}
+
+	var etcdTemplateName string
+	if eksaCluster.Spec.ExternalEtcdConfiguration != nil {
+		updateEtcdTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, oldEtcdVmc, &etcdVmc)
+		etcd, err := r.Etcd(ctx, eksaCluster)
+		if err != nil {
+			return nil, err
+		}
+		if updateEtcdTemplate {
+			etcd.SetAnnotations(map[string]string{etcdv1alpha3.UpgradeInProgressAnnotation: "true"})
+			if err := r.ApplyPatch(ctx, etcd, false); err != nil {
+				return nil, err
+			}
+			etcdTemplateName = templateBuilder.EtcdMachineTemplateName(clusterName)
+		} else {
+			etcdTemplateName = etcd.Spec.InfrastructureTemplate.Name
+		}
 	}
-	if len(vmcSpec.Spec.Users[0].SshAuthorizedKeys) <= 0 {
-		vmcSpec.Spec.Users[0].SshAuthorizedKeys = []string{""}
+
+	cpOpt := func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = controlPlaneTemplateName
+		values["vsphereControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpVmc)
+		values["vsphereEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdVmc)
+		values["etcdTemplateName"] = etcdTemplateName
 	}
-	valuesOpt := func(values map[string]interface{}) {
-		values["needsNewControlPlaneTemplate"] = false // not supported in flux
-		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.InfrastructureTemplate.Name
-		values["needsNewWorkloadTemplate"] = updateWorkloadTemplate
+
+	workersOpt := func(values map[string]interface{}) {
 		values["workloadTemplateName"] = workloadTemplateName
-		values["clusterName"] = clusterName
-		values["vsphereWorkerSshAuthorizedKey"] = vmcSpec.Spec.Users[0].SshAuthorizedKeys[0]
-		values["needsNewEtcdTemplate"] = false
+		values["vsphereWorkerSshAuthorizedKey"] = sshAuthorizedKey(workerVmc)
 	}
-	return generateTemplateResources(templateBuilder, clusterSpec, valuesOpt)
+
+	return generateTemplateResources(templateBuilder, clusterSpec, cpOpt, workersOpt)
 }
 
-func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) ([]*unstructured.Unstructured, error) {
-	content, err := builder.GenerateDeploymentFile(clusterSpec, buildOptions...)
+func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *cluster.Spec, cpOpt, workersOpt providers.BuildMapOption) ([]*unstructured.Unstructured, error) {
+	cp, err := builder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, err
 	}
+	md, err := builder.GenerateCAPISpecWorkers(clusterSpec, workersOpt)
+	if err != nil {
+		return nil, err
+	}
+	content := templater.AppendYamlResources(cp, md)
 	var resources []*unstructured.Unstructured
 	templates := strings.Split(string(content), "---")
 	for _, template := range templates {
@@ -99,13 +141,18 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 	if err != nil {
 		return nil, err
 	}
-	valuesOpt := func(values map[string]interface{}) {
-		values["clusterName"] = clusterSpec.ObjectMeta.Name
-		values["needsNewControlPlaneTemplate"] = false
+	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.InfrastructureTemplate.Name
-		values["needsNewWorkloadTemplate"] = false
-		values["workloadTemplateName"] = mcDeployment.Spec.Template.Spec.InfrastructureRef.Name
-		values["needsNewEtcdTemplate"] = false
 	}
-	return generateTemplateResources(templateBuilder, clusterSpec, valuesOpt)
+	workersOpt := func(values map[string]interface{}) {
+		values["workloadTemplateName"] = mcDeployment.Spec.Template.Spec.InfrastructureRef.Name
+	}
+	return generateTemplateResources(templateBuilder, clusterSpec, cpOpt, workersOpt)
+}
+
+func sshAuthorizedKey(vmc anywherev1.VSphereMachineConfig) string {
+	if len(vmc.Spec.Users) <= 0 || len(vmc.Spec.Users[0].SshAuthorizedKeys) <= 0 {
+		return ""
+	}
+	return vmc.Spec.Users[0].SshAuthorizedKeys[0]
 }

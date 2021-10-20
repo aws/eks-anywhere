@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+set -x
+
 if [ "$AWS_ROLE_ARN" == "" ]; then
     echo "Empty AWS_ROLE_ARN, this script must be run in a postsubmit pod with IAM Roles for Service Accounts"
     exit 1
@@ -41,9 +43,15 @@ export AWS_SDK_LOAD_CONFIG=true
 export AWS_CONFIG_FILE=$(pwd)/config_file
 export AWS_PROFILE=e2e-docker-test
 unset AWS_ROLE_ARN AWS_WEB_IDENTITY_TOKEN_FILE
+
+BUNDLES_OVERRIDE=false
+if [ -f "$REPO_ROOT/bin/local-bundle-release.yaml" ]; then
+    BUNDLES_OVERRIDE=true
+fi
 $REPO_ROOT/bin/test e2e run \
     -a ${INTEGRATION_TEST_AL2_AMI_ID} \
     -s ${INTEGRATION_TEST_STORAGE_BUCKET} \
     -j ${JOB_ID} \
     -i ${INTEGRATION_TEST_INSTANCE_PROFILE} \
-    -r ${TEST_REGEX}
+    -r ${TEST_REGEX} \
+    --bundles-override=${BUNDLES_OVERRIDE}

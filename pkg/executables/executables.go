@@ -8,12 +8,17 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
-const redactMask = "*****"
+const (
+	redactMask          = "*****"
+	containerNamePrefix = "eksa_"
+)
 
 var redactedEnvKeys = []string{vSphereUsernameKey, vSpherePasswordKey}
 
@@ -61,47 +66,53 @@ func (e *linuxDockerExecutable) workingDirectory() (string, error) {
 
 func (e *linuxDockerExecutable) Execute(ctx context.Context, args ...string) (bytes.Buffer, error) {
 	var stdout bytes.Buffer
-	if command, err := e.buildCommand(map[string]string{}, e.cli, args...); err != nil {
+	if command, containerName, err := e.buildCommand(map[string]string{}, e.cli, args...); err != nil {
 		return stdout, err
 	} else {
+		defer e.executeCleanup(ctx, containerName)
 		return execute(ctx, "docker", nil, command...)
 	}
 }
 
 func (e *linuxDockerExecutable) ExecuteWithStdin(ctx context.Context, in []byte, args ...string) (bytes.Buffer, error) {
 	var stdout bytes.Buffer
-	if command, err := e.buildCommand(map[string]string{}, e.cli, args...); err != nil {
+	if command, containerName, err := e.buildCommand(map[string]string{}, e.cli, args...); err != nil {
 		return stdout, err
 	} else {
+		defer e.executeCleanup(ctx, containerName)
 		return execute(ctx, "docker", in, command...)
 	}
 }
 
-func (e *linuxDockerExecutable) buildCommand(envs map[string]string, cli string, args ...string) ([]string, error) {
+func (e *linuxDockerExecutable) buildCommand(envs map[string]string, cli string, args ...string) ([]string, string, error) {
 	directory, err := e.workingDirectory()
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	var envVars []string
 	for k, v := range envs {
 		envVars = append(envVars, "-e", fmt.Sprintf("%s=%s", k, v))
 	}
+	containerName := containerNamePrefix + cli + "_" + strconv.FormatInt(time.Now().UnixNano(), 10)
 	dockerCommands := []string{
-		"run", "-i", "--network", "host", "-v", fmt.Sprintf("%s:%s", directory, directory),
+		"run", "--name", containerName, "-i", "--network", "host", "-v", fmt.Sprintf("%s:%s", directory, directory),
 		"-w", directory, "-v", "/var/run/docker.sock:/var/run/docker.sock",
 	}
+
 	dockerCommands = append(dockerCommands, envVars...)
 	dockerCommands = append(dockerCommands, "--entrypoint", cli, e.image)
 	dockerCommands = append(dockerCommands, args...)
-	return dockerCommands, nil
+
+	return dockerCommands, containerName, nil
 }
 
 func (e *linuxDockerExecutable) ExecuteWithEnv(ctx context.Context, envs map[string]string, args ...string) (bytes.Buffer, error) {
 	var stdout bytes.Buffer
-	if command, err := e.buildCommand(envs, e.cli, args...); err != nil {
+	if command, containerName, err := e.buildCommand(envs, e.cli, args...); err != nil {
 		return stdout, err
 	} else {
+		defer e.executeCleanup(ctx, containerName)
 		return execute(ctx, "docker", nil, command...)
 	}
 }
@@ -166,4 +177,18 @@ func execute(ctx context.Context, cli string, in []byte, args ...string) (bytes.
 		logger.V(8).Info(cli, "stderr", stderr.String())
 	}
 	return stdout, nil
+}
+
+func (e *linuxDockerExecutable) executeCleanup(ctx context.Context, containerName string) {
+	dockerCommands := []string{
+		"rm", "-f", "-v", containerName,
+	}
+	cmd := exec.CommandContext(ctx, "docker", dockerCommands...)
+	infoMessage := "cleaning up container " + containerName
+	logger.V(6).Info(infoMessage, "cmd", cmd)
+
+	err := cmd.Run()
+	if err != nil {
+		logger.V(1).Error(err, "error cleaning up docker container", "container", containerName)
+	}
 }

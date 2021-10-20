@@ -18,8 +18,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/pkg/errors"
+
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // GetCiliumAssets returns the eks-a artifacts for Cilium
@@ -117,6 +118,7 @@ func (r *ReleaseConfig) GetCiliumBundle(imageDigests map[string]string) (anywher
 	}
 
 	bundle := anywherev1alpha1.CiliumBundle{
+		Version:  ciliumGitTag,
 		Cilium:   bundleImageArtifacts["cilium"],
 		Operator: bundleImageArtifacts["operator-generic"],
 		Manifest: bundleManifestArtifacts["cilium.yaml"],

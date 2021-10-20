@@ -28,7 +28,7 @@ spec:
       cidrBlocks:
         - 10.96.0.0/12
   proxyConfiguration:
-    httpProxy: 0.0.0.0:1
+    httpProxy: http://0.0.0.0:1
     httpsProxy: 0.0.0.0:1
     noProxy:
       - localhost

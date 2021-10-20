@@ -17,6 +17,10 @@ const (
 
 	// etcdAnnotation can be applied to EKS-A machineconfig CR for etcd, to prevent controller from making changes to it
 	etcdAnnotation = "anywhere.eks.amazonaws.com/etcd"
+
+	// managementAnnotation points to the name of a management cluster
+	// cluster object
+	managementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -36,6 +40,8 @@ type ClusterSpec struct {
 	ExternalEtcdConfiguration   *ExternalEtcdConfiguration   `json:"externalEtcdConfiguration,omitempty"`
 	ProxyConfiguration          *ProxyConfiguration          `json:"proxyConfiguration,omitempty"`
 	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
+	// +kubebuilder:validation:Optional
+	Management *bool `json:"management,omitempty"`
 }
 
 type ProxyConfiguration struct {
@@ -265,6 +271,36 @@ func (c *Cluster) ResourceType() string {
 
 func (c *Cluster) EtcdAnnotation() string {
 	return etcdAnnotation
+}
+
+func (s *Cluster) SetManagedBy(managementClusterName string) {
+	if s.Annotations == nil {
+		s.Annotations = map[string]string{}
+	}
+
+	s.Annotations[managementAnnotation] = managementClusterName
+}
+
+func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
+	config := &ClusterGenerate{
+		TypeMeta: c.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        c.Name,
+			Annotations: c.Annotations,
+			Namespace:   c.Namespace,
+		},
+		Spec: c.Spec,
+	}
+
+	return config
+}
+
+func (c *Cluster) IsManaged() bool {
+	return c.Annotations[managementAnnotation] != ""
+}
+
+func (c *Cluster) ManagedBy() string {
+	return c.Annotations[managementAnnotation]
 }
 
 // +kubebuilder:object:root=true

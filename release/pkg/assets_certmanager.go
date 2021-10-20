@@ -18,8 +18,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/pkg/errors"
+
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // GetCertManagerAssets returns the eks-a artifacts for certmanager
@@ -64,6 +65,12 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 		return anywherev1alpha1.CertManagerBundle{}, errors.Cause(err)
 	}
 
+	version, err := r.GenerateComponentBundleVersion(
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/jetstack/cert-manager")),
+	)
+	if err != nil {
+		return anywherev1alpha1.CertManagerBundle{}, errors.Wrapf(err, "Error getting version for cert-manager")
+	}
 	bundleArtifacts := map[string]anywherev1alpha1.Image{}
 
 	for _, artifact := range artifacts {
@@ -81,6 +88,7 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 	}
 
 	bundle := anywherev1alpha1.CertManagerBundle{
+		Version:    version,
 		Acmesolver: bundleArtifacts["cert-manager-acmesolver"],
 		Cainjector: bundleArtifacts["cert-manager-cainjector"],
 		Controller: bundleArtifacts["cert-manager-controller"],

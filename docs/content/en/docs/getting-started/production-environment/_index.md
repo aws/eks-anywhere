@@ -12,7 +12,7 @@ EKS Anywhere allows you to provision and manage Amazon EKS on your own infrastru
 EKS Anywhere needs to be run on an administrative machine that has certain [machine
 requirements]({{< relref "../install" >}}).
 An EKS Anywhere deployment will also require the availability of certain
-[resources from your VMware vSphere deployment]({{< relref "/docs/reference/vsphere/vsphere-prereq/_index.md" >}}).
+[resources from your VMware vSphere deployment]({{< relref "../../reference/vsphere/vsphere-prereq/_index.md" >}}).
 
 ## Steps
 

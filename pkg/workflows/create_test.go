@@ -7,6 +7,7 @@ import (
 	"github.com/golang/mock/gomock"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
@@ -24,7 +25,7 @@ type createTestSetup struct {
 	addonManager     *mocks.MockAddonManager
 	provider         *providermocks.MockProvider
 	writer           *writermocks.MockFileWriter
-	datacenterConfig *providermocks.MockDatacenterConfig
+	datacenterConfig providers.DatacenterConfig
 	machineConfigs   []providers.MachineConfig
 	workflow         *workflows.Create
 	ctx              context.Context
@@ -41,8 +42,8 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	addonManager := mocks.NewMockAddonManager(mockCtrl)
 	provider := providermocks.NewMockProvider(mockCtrl)
 	writer := writermocks.NewMockFileWriter(mockCtrl)
-	datacenterConfig := providermocks.NewMockDatacenterConfig(mockCtrl)
-	machineConfigs := []providers.MachineConfig{providermocks.NewMockMachineConfig(mockCtrl)}
+	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
+	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	workflow := workflows.NewCreate(bootstrapper, provider, clusterManager, addonManager, writer)
 
 	return &createTestSetup{
@@ -66,7 +67,6 @@ func (c *createTestSetup) expectSetup() {
 	c.provider.EXPECT().SetupAndValidateCreateCluster(c.ctx, c.clusterSpec)
 	c.provider.EXPECT().Name()
 	c.addonManager.EXPECT().Validations(c.ctx, c.clusterSpec)
-	c.datacenterConfig.EXPECT().Kind().Return("SUP").AnyTimes()
 }
 
 func (c *createTestSetup) expectCreateBootstrap() {
@@ -81,7 +81,7 @@ func (c *createTestSetup) expectCreateBootstrap() {
 			c.ctx, c.clusterSpec, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
 		).Return(c.bootstrapCluster, nil),
 
-		c.clusterManager.EXPECT().InstallCapi(c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider),
+		c.clusterManager.EXPECT().InstallCAPI(c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider),
 
 		c.provider.EXPECT().BootstrapSetup(c.ctx, c.clusterSpec.Cluster, c.bootstrapCluster),
 	)
@@ -99,16 +99,40 @@ func (c *createTestSetup) expectCreateWorkload() {
 		c.clusterManager.EXPECT().InstallStorageClass(
 			c.ctx, c.workloadCluster, c.provider,
 		),
-		c.clusterManager.EXPECT().InstallCapi(
+		c.clusterManager.EXPECT().InstallCAPI(
 			c.ctx, c.clusterSpec, c.workloadCluster, c.provider,
 		),
 	)
 }
 
+func (c *createTestSetup) expectCreateWorkloadSkipCAPI() {
+	gomock.InOrder(
+		c.clusterManager.EXPECT().CreateWorkloadCluster(
+			c.ctx, c.bootstrapCluster, c.clusterSpec, c.provider,
+		).Return(c.workloadCluster, nil),
+
+		c.clusterManager.EXPECT().InstallNetworking(
+			c.ctx, c.workloadCluster, c.clusterSpec,
+		),
+		c.clusterManager.EXPECT().InstallStorageClass(
+			c.ctx, c.workloadCluster, c.provider,
+		),
+	)
+	c.clusterManager.EXPECT().InstallCAPI(
+		c.ctx, c.clusterSpec, c.workloadCluster, c.provider,
+	).Times(0)
+}
+
 func (c *createTestSetup) expectMoveManagement() {
-	c.clusterManager.EXPECT().MoveCapi(
+	c.clusterManager.EXPECT().MoveCAPI(
 		c.ctx, c.bootstrapCluster, c.workloadCluster, gomock.Any(),
 	)
+}
+
+func (c *createTestSetup) skipMoveManagement() {
+	c.clusterManager.EXPECT().MoveCAPI(
+		c.ctx, c.bootstrapCluster, c.workloadCluster, gomock.Any(),
+	).Times(0)
 }
 
 func (c *createTestSetup) expectInstallEksaComponents() {
@@ -120,13 +144,28 @@ func (c *createTestSetup) expectInstallEksaComponents() {
 
 		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
 
-		c.datacenterConfig.EXPECT().PauseReconcile(),
-
 		c.clusterManager.EXPECT().CreateEKSAResources(
 			c.ctx, c.workloadCluster, c.clusterSpec, c.datacenterConfig, c.machineConfigs,
 		),
 
 		c.clusterManager.EXPECT().ResumeEKSAControllerReconcile(c.ctx, c.workloadCluster, c.clusterSpec, c.provider),
+	)
+}
+
+func (c *createTestSetup) skipInstallEksaComponents() {
+	gomock.InOrder(
+		c.clusterManager.EXPECT().InstallCustomComponents(
+			c.ctx, c.clusterSpec, c.workloadCluster).Times(0),
+
+		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
+
+		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
+
+		c.clusterManager.EXPECT().CreateEKSAResources(
+			c.ctx, c.bootstrapCluster, c.clusterSpec, c.datacenterConfig, c.machineConfigs,
+		),
+
+		c.clusterManager.EXPECT().ResumeEKSAControllerReconcile(c.ctx, c.bootstrapCluster, c.clusterSpec, c.provider),
 	)
 }
 
@@ -152,6 +191,10 @@ func (c *createTestSetup) expectDeleteBootstrap() {
 	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any())
 }
 
+func (c *createTestSetup) expectNotDeleteBootstrap() {
+	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any()).Times(0)
+}
+
 func (c *createTestSetup) expectInstallMHC() {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().InstallMachineHealthChecks(
@@ -160,12 +203,21 @@ func (c *createTestSetup) expectInstallMHC() {
 	)
 }
 
-func (c *createTestSetup) run() error {
-	return c.workflow.Run(c.ctx, c.clusterSpec, c.forceCleanup)
+func (c *createTestSetup) expectLoadManagementCluster(kconfig string, name string) {
+	c.clusterManager.EXPECT().LoadManagement(kconfig).Return(&types.Cluster{
+		Name:           name,
+		KubeconfigFile: kconfig,
+		ExistingMgnt:   true,
+	}, nil)
+}
+
+func (c *createTestSetup) run(kubeconfig string) error {
+	return c.workflow.Run(c.ctx, c.clusterSpec, c.forceCleanup, kubeconfig)
 }
 
 func TestCreateRunSuccess(t *testing.T) {
 	test := newCreateTest(t)
+
 	test.expectSetup()
 	test.expectCreateBootstrap()
 	test.expectCreateWorkload()
@@ -176,7 +228,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
 
-	err := test.run()
+	err := test.run("")
 	if err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
 	}
@@ -196,7 +248,36 @@ func TestCreateRunSuccessForceCleanup(t *testing.T) {
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
 
-	err := test.run()
+	err := test.run("")
+	if err != nil {
+		t.Fatalf("Create.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
+	managementKubeconfig := "test.kubeconfig"
+	test := newCreateTest(t)
+
+	test.bootstrapCluster.ExistingMgnt = true
+	test.bootstrapCluster.KubeconfigFile = managementKubeconfig
+	test.bootstrapCluster.Name = "cluster-name"
+
+	test.expectSetup()
+	// test.expectCreateBootstrap()
+	test.expectCreateWorkloadSkipCAPI()
+	test.skipMoveManagement()
+	test.skipInstallEksaComponents()
+	test.expectInstallAddonManager()
+	test.expectWriteClusterConfig()
+	test.expectNotDeleteBootstrap()
+	test.expectInstallMHC()
+	test.expectLoadManagementCluster(managementKubeconfig, test.bootstrapCluster.Name)
+	err := test.run(managementKubeconfig)
+
+	if test.clusterSpec.Spec.Management == nil || *test.clusterSpec.Spec.Management {
+		t.Fatalf("Error setting management flag, expected Spec.management %v got %t", false, *test.clusterSpec.Spec.Management)
+	}
+
 	if err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
 	}

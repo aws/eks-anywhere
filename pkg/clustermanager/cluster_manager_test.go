@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
@@ -124,14 +125,14 @@ func TestClusterManagerInstallStorageClassClientError(t *testing.T) {
 	}
 }
 
-func TestClusterManagerCapiWaitForDeploymentStackedEtcd(t *testing.T) {
+func TestClusterManagerCAPIWaitForDeploymentStackedEtcd(t *testing.T) {
 	ctx := context.Background()
 	clusterObj := &types.Cluster{}
 	c, m := newClusterManager(t)
 	clusterSpecStackedEtcd := test.NewClusterSpec()
 
 	m.client.EXPECT().InitInfrastructure(ctx, clusterSpecStackedEtcd, clusterObj, m.provider)
-	for namespace, deployments := range internal.CapiDeployments {
+	for namespace, deployments := range internal.CAPIDeployments {
 		for _, deployment := range deployments {
 			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)
 		}
@@ -143,12 +144,12 @@ func TestClusterManagerCapiWaitForDeploymentStackedEtcd(t *testing.T) {
 			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)
 		}
 	}
-	if err := c.InstallCapi(ctx, clusterSpecStackedEtcd, clusterObj, m.provider); err != nil {
-		t.Errorf("ClusterManager.InstallCapi() error = %v, wantErr nil", err)
+	if err := c.InstallCAPI(ctx, clusterSpecStackedEtcd, clusterObj, m.provider); err != nil {
+		t.Errorf("ClusterManager.InstallCAPI() error = %v, wantErr nil", err)
 	}
 }
 
-func TestClusterManagerCapiWaitForDeploymentExternalEtcd(t *testing.T) {
+func TestClusterManagerCAPIWaitForDeploymentExternalEtcd(t *testing.T) {
 	ctx := context.Background()
 	clusterObj := &types.Cluster{}
 	c, m := newClusterManager(t)
@@ -156,7 +157,7 @@ func TestClusterManagerCapiWaitForDeploymentExternalEtcd(t *testing.T) {
 		s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 1}
 	})
 	m.client.EXPECT().InitInfrastructure(ctx, clusterSpecExternalEtcd, clusterObj, m.provider)
-	for namespace, deployments := range internal.CapiDeployments {
+	for namespace, deployments := range internal.CAPIDeployments {
 		for _, deployment := range deployments {
 			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)
 		}
@@ -173,8 +174,8 @@ func TestClusterManagerCapiWaitForDeploymentExternalEtcd(t *testing.T) {
 			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)
 		}
 	}
-	if err := c.InstallCapi(ctx, clusterSpecExternalEtcd, clusterObj, m.provider); err != nil {
-		t.Errorf("ClusterManager.InstallCapi() error = %v, wantErr nil", err)
+	if err := c.InstallCAPI(ctx, clusterSpecExternalEtcd, clusterObj, m.provider); err != nil {
+		t.Errorf("ClusterManager.InstallCAPI() error = %v, wantErr nil", err)
 	}
 }
 
@@ -193,24 +194,6 @@ func TestClusterManagerSaveLogsSuccess(t *testing.T) {
 	}
 }
 
-func TestClusterManagerGenerateDeploymentFileSuccess(t *testing.T) {
-	ctx := context.Background()
-	clusterName := "cluster-name"
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Name = clusterName
-	})
-
-	workloadCluster := &types.Cluster{Name: clusterName}
-	bootstrapCluster := &types.Cluster{Name: "eks-a-bootstrap"}
-	c, m := newClusterManager(t)
-	fileName := fmt.Sprintf("%s-eks-a-cluster.yaml", clusterSpec.ObjectMeta.Name)
-	m.provider.EXPECT().GenerateDeploymentFileForCreate(ctx, workloadCluster, clusterSpec, fileName).Times(1).Return("", nil)
-
-	if _, err := c.GenerateDeploymentFile(ctx, bootstrapCluster, workloadCluster, clusterSpec, m.provider, false); err != nil {
-		t.Errorf("ClusterManager.GenerateDeploymentFile() error = %v, wantErr nil", err)
-	}
-}
-
 func TestClusterManagerCreateWorkloadClusterSuccess(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "cluster-name"
@@ -225,14 +208,15 @@ func TestClusterManagerCreateWorkloadClusterSuccess(t *testing.T) {
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateDeploymentFileForCreate(ctx, cluster, clusterSpec, "cluster-name-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, cluster, test.OfType("string"), constants.EksaSystemNamespace)
+	m.provider.EXPECT().GenerateCAPISpecForCreate(ctx, cluster, clusterSpec)
+	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	m.client.EXPECT().GetMachines(ctx, cluster).Return([]types.Machine{}, nil)
 	kubeconfig := []byte("content")
 	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, cluster).Return(kubeconfig, nil)
 	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
 	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 
 	if _, err := c.CreateWorkloadCluster(ctx, cluster, clusterSpec, m.provider); err != nil {
 		t.Errorf("ClusterManager.CreateWorkloadCluster() error = %v, wantErr nil", err)
@@ -254,8 +238,8 @@ func TestClusterManagerCreateWorkloadClusterWithExternalEtcdSuccess(t *testing.T
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateDeploymentFileForCreate(ctx, cluster, clusterSpec, "cluster-name-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, cluster, test.OfType("string"), constants.EksaSystemNamespace)
+	m.provider.EXPECT().GenerateCAPISpecForCreate(ctx, cluster, clusterSpec)
+	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForManagedExternalEtcdReady(ctx, cluster, "60m", clusterName)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	m.client.EXPECT().GetMachines(ctx, cluster).Return([]types.Machine{}, nil)
@@ -263,6 +247,7 @@ func TestClusterManagerCreateWorkloadClusterWithExternalEtcdSuccess(t *testing.T
 	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, cluster).Return(kubeconfig, nil)
 	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
 	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 
 	if _, err := c.CreateWorkloadCluster(ctx, cluster, clusterSpec, m.provider); err != nil {
 		t.Errorf("ClusterManager.CreateWorkloadCluster() error = %v, wantErr nil", err)
@@ -291,14 +276,15 @@ func TestClusterManagerCreateWorkloadClusterSuccessWithExtraObjects(t *testing.T
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateDeploymentFileForCreate(ctx, cluster, clusterSpec, "cluster-name-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, cluster, test.OfType("string"), constants.EksaSystemNamespace)
+	m.provider.EXPECT().GenerateCAPISpecForCreate(ctx, cluster, clusterSpec)
+	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	m.client.EXPECT().GetMachines(ctx, cluster).Return([]types.Machine{}, nil)
 	kubeconfig := []byte("content")
 	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, cluster).Return(kubeconfig, nil)
 	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
 	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil())).Return(wantKubeconfigFile, nil)
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil())).Return(wantKubeconfigFile, nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, wantCluster, gomock.Any())
 
 	got, err := c.CreateWorkloadCluster(ctx, cluster, clusterSpec, m.provider)
@@ -333,14 +319,15 @@ func TestClusterManagerCreateWorkloadClusterErrorApplyingExtraObjects(t *testing
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateDeploymentFileForCreate(ctx, cluster, clusterSpec, "cluster-name-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, cluster, test.OfType("string"), constants.EksaSystemNamespace)
+	m.provider.EXPECT().GenerateCAPISpecForCreate(ctx, cluster, clusterSpec)
+	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	m.client.EXPECT().GetMachines(ctx, cluster).Return([]types.Machine{}, nil)
 	kubeconfig := []byte("content")
 	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, cluster).Return(kubeconfig, nil)
 	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
 	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil())).Return(wantKubeconfigFile, nil)
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil())).Return(wantKubeconfigFile, nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, wantCluster, gomock.Any()).Return(errors.New("error applying"))
 
 	if _, err := c.CreateWorkloadCluster(ctx, cluster, clusterSpec, m.provider); err == nil {
@@ -362,8 +349,8 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesTimeout(t *testing.T)
 	}
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 50*time.Microsecond, 100*time.Microsecond))
-	m.provider.EXPECT().GenerateDeploymentFileForCreate(ctx, cluster, clusterSpec, "cluster-name-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, cluster, test.OfType("string"), constants.EksaSystemNamespace)
+	m.provider.EXPECT().GenerateCAPISpecForCreate(ctx, cluster, clusterSpec)
+	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	// Fail once
 	m.client.EXPECT().GetMachines(ctx, cluster).Times(1).Return(nil, errors.New("error get machines"))
@@ -375,6 +362,7 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesTimeout(t *testing.T)
 	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, cluster).Return(kubeconfig, nil)
 	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
 	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 
 	if _, err := c.CreateWorkloadCluster(ctx, cluster, clusterSpec, m.provider); err == nil {
 		t.Error("ClusterManager.CreateWorkloadCluster() error = nil, wantErr not nil")
@@ -396,8 +384,8 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesSuccessAfterRetries(t
 	}
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 1*time.Minute, 2*time.Minute))
-	m.provider.EXPECT().GenerateDeploymentFileForCreate(ctx, cluster, clusterSpec, "cluster-name-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, cluster, test.OfType("string"), constants.EksaSystemNamespace)
+	m.provider.EXPECT().GenerateCAPISpecForCreate(ctx, cluster, clusterSpec)
+	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, cluster, "60m", clusterName)
 	// Fail a bunch of times
 	m.client.EXPECT().GetMachines(ctx, cluster).Times(retries-5).Return(nil, errors.New("error get machines"))
@@ -430,6 +418,7 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesSuccessAfterRetries(t
 	m.client.EXPECT().GetWorkloadKubeconfig(ctx, clusterName, cluster).Return(kubeconfig, nil)
 	m.provider.EXPECT().UpdateKubeConfig(&kubeconfig, clusterName)
 	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.kubeconfig", gomock.Any(), gomock.Not(gomock.Nil()))
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 
 	if _, err := c.CreateWorkloadCluster(ctx, cluster, clusterSpec, m.provider); err != nil {
 		t.Errorf("ClusterManager.CreateWorkloadCluster() error = %v, wantErr nil", err)
@@ -454,14 +443,15 @@ func TestClusterManagerUpgradeWorkloadClusterSuccess(t *testing.T) {
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateDeploymentFileForUpgrade(ctx, mCluster, wCluster, wClusterSpec, "test-cluster-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, mCluster, test.OfType("string"), constants.EksaSystemNamespace)
+	m.provider.EXPECT().GenerateCAPISpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
+	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace).Times(2)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", clusterName).MaxTimes(2)
-	m.client.EXPECT().GetMachines(ctx, mCluster).Return([]types.Machine{}, nil)
+	m.client.EXPECT().GetMachines(ctx, mCluster).Return([]types.Machine{}, nil).Times(2)
 	m.client.EXPECT().WaitForDeployment(ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
 	m.client.EXPECT().ValidateControlPlaneNodes(ctx, mCluster).Return(nil)
 	m.client.EXPECT().ValidateWorkerNodes(ctx, mCluster).Return(nil)
 	m.provider.EXPECT().GetDeployments()
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 
 	if err := c.UpgradeCluster(ctx, mCluster, wCluster, wClusterSpec, m.provider); err != nil {
 		t.Errorf("ClusterManager.UpgradeCluster() error = %v, wantErr nil", err)
@@ -486,9 +476,10 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForMachinesTimeout(t *testing.T
 	}
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 50*time.Microsecond, 100*time.Microsecond))
-	m.provider.EXPECT().GenerateDeploymentFileForUpgrade(ctx, mCluster, wCluster, wClusterSpec, "test-cluster-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, mCluster, test.OfType("string"), constants.EksaSystemNamespace)
+	m.provider.EXPECT().GenerateCAPISpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
+	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", clusterName)
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 	// Fail once
 	m.client.EXPECT().GetMachines(ctx, mCluster).Times(1).Return(nil, errors.New("error get machines"))
 	// Return a machine with no nodeRef the rest of the retries
@@ -532,10 +523,11 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesFailedWithUnhealthyNo
 	}
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 50*time.Microsecond, 100*time.Microsecond))
-	m.provider.EXPECT().GenerateDeploymentFileForUpgrade(ctx, mCluster, wCluster, wClusterSpec, "test-cluster-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, mCluster, test.OfType("string"), constants.EksaSystemNamespace)
+	m.provider.EXPECT().GenerateCAPISpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
+	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", clusterName).MaxTimes(5)
 	m.client.EXPECT().WaitForDeployment(ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 	// Return a machine with no nodeRef the rest of the retries
 	m.client.EXPECT().GetMachines(ctx, mCluster).MinTimes(1).Return(machines, nil)
 
@@ -544,7 +536,7 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesFailedWithUnhealthyNo
 	}
 }
 
-func TestClusterManagerUpgradeWorkloadClusterWaitForCapiTimeout(t *testing.T) {
+func TestClusterManagerUpgradeWorkloadClusterWaitForCAPITimeout(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "test-cluster"
 	mCluster := &types.Cluster{
@@ -562,20 +554,21 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForCapiTimeout(t *testing.T) {
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateDeploymentFileForUpgrade(ctx, mCluster, wCluster, wClusterSpec, "test-cluster-eks-a-cluster.yaml")
-	m.client.EXPECT().ApplyKubeSpecWithNamespace(ctx, mCluster, test.OfType("string"), constants.EksaSystemNamespace)
+	m.provider.EXPECT().GenerateCAPISpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
+	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace).Times(2)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", clusterName).MaxTimes(2)
-	m.client.EXPECT().GetMachines(ctx, mCluster).Return([]types.Machine{}, nil)
+	m.client.EXPECT().GetMachines(ctx, mCluster).Return([]types.Machine{}, nil).Times(2)
 	m.client.EXPECT().WaitForDeployment(ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).Return(errors.New("time out"))
 	m.client.EXPECT().ValidateControlPlaneNodes(ctx, mCluster).Return(nil)
 	m.client.EXPECT().ValidateWorkerNodes(ctx, mCluster).Return(nil)
+	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 
 	if err := c.UpgradeCluster(ctx, mCluster, wCluster, wClusterSpec, m.provider); err == nil {
 		t.Error("ClusterManager.UpgradeCluster() error = nil, wantErr not nil")
 	}
 }
 
-func TestClusterManagerMoveCapiSuccess(t *testing.T) {
+func TestClusterManagerMoveCAPISuccess(t *testing.T) {
 	from := &types.Cluster{
 		Name: "from-cluster",
 	}
@@ -593,12 +586,12 @@ func TestClusterManagerMoveCapiSuccess(t *testing.T) {
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "5m0s", capiClusterName)
 	m.client.EXPECT().GetMachines(ctx, to)
 
-	if err := c.MoveCapi(ctx, from, to); err != nil {
-		t.Errorf("ClusterManager.MoveCapi() error = %v, wantErr nil", err)
+	if err := c.MoveCAPI(ctx, from, to); err != nil {
+		t.Errorf("ClusterManager.MoveCAPI() error = %v, wantErr nil", err)
 	}
 }
 
-func TestClusterManagerMoveCapiErrorMove(t *testing.T) {
+func TestClusterManagerMoveCAPIErrorMove(t *testing.T) {
 	from := &types.Cluster{
 		Name: "from-cluster",
 	}
@@ -611,12 +604,12 @@ func TestClusterManagerMoveCapiErrorMove(t *testing.T) {
 	m.client.EXPECT().GetMachines(ctx, from)
 	m.client.EXPECT().MoveManagement(ctx, from, to).Return(errors.New("error moving"))
 
-	if err := c.MoveCapi(ctx, from, to); err == nil {
-		t.Error("ClusterManager.MoveCapi() error = nil, wantErr not nil")
+	if err := c.MoveCAPI(ctx, from, to); err == nil {
+		t.Error("ClusterManager.MoveCAPI() error = nil, wantErr not nil")
 	}
 }
 
-func TestClusterManagerMoveCapiErrorGetClusters(t *testing.T) {
+func TestClusterManagerMoveCAPIErrorGetClusters(t *testing.T) {
 	from := &types.Cluster{
 		Name: "from-cluster",
 	}
@@ -630,12 +623,12 @@ func TestClusterManagerMoveCapiErrorGetClusters(t *testing.T) {
 	m.client.EXPECT().MoveManagement(ctx, from, to)
 	m.client.EXPECT().GetClusters(ctx, to).Return(nil, errors.New("error getting clusters"))
 
-	if err := c.MoveCapi(ctx, from, to); err == nil {
-		t.Error("ClusterManager.MoveCapi() error = nil, wantErr not nil")
+	if err := c.MoveCAPI(ctx, from, to); err == nil {
+		t.Error("ClusterManager.MoveCAPI() error = nil, wantErr not nil")
 	}
 }
 
-func TestClusterManagerMoveCapiErrorWaitForControlPlane(t *testing.T) {
+func TestClusterManagerMoveCAPIErrorWaitForControlPlane(t *testing.T) {
 	from := &types.Cluster{
 		Name: "from-cluster",
 	}
@@ -652,12 +645,12 @@ func TestClusterManagerMoveCapiErrorWaitForControlPlane(t *testing.T) {
 	m.client.EXPECT().GetClusters(ctx, to).Return(clusters, nil)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "5m0s", capiClusterName).Return(errors.New("error waiting for control plane"))
 
-	if err := c.MoveCapi(ctx, from, to); err == nil {
-		t.Error("ClusterManager.MoveCapi() error = nil, wantErr not nil")
+	if err := c.MoveCAPI(ctx, from, to); err == nil {
+		t.Error("ClusterManager.MoveCAPI() error = nil, wantErr not nil")
 	}
 }
 
-func TestClusterManagerMoveCapiErrorGetMachines(t *testing.T) {
+func TestClusterManagerMoveCAPIErrorGetMachines(t *testing.T) {
 	from := &types.Cluster{
 		Name: "from-cluster",
 	}
@@ -672,8 +665,8 @@ func TestClusterManagerMoveCapiErrorGetMachines(t *testing.T) {
 	m.client.EXPECT().GetClusters(ctx, to)
 	m.client.EXPECT().GetMachines(ctx, to).Return(nil, errors.New("error getting machines")).AnyTimes()
 
-	if err := c.MoveCapi(ctx, from, to); err == nil {
-		t.Error("ClusterManager.MoveCapi() error = nil, wantErr not nil")
+	if err := c.MoveCAPI(ctx, from, to); err == nil {
+		t.Error("ClusterManager.MoveCAPI() error = nil, wantErr not nil")
 	}
 }
 
@@ -1334,6 +1327,7 @@ func TestClusterManagerClusterSpecChangedGitOpsDefault(t *testing.T) {
 }
 
 type testSetup struct {
+	*WithT
 	clusterManager *clustermanager.ClusterManager
 	mocks          *mocks
 	ctx            context.Context
@@ -1346,6 +1340,7 @@ func newTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) *testSetup 
 	c, m := newClusterManager(t, opts...)
 	clusterName := "cluster-name"
 	return &testSetup{
+		WithT:          NewWithT(t),
 		clusterManager: c,
 		mocks:          m,
 		ctx:            context.Background(),
@@ -1376,4 +1371,23 @@ func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (
 	c := clustermanager.New(m.client, m.networking, m.writer, opts...)
 
 	return c, m
+}
+
+func TestClusterManagerGetCurrentClusterSpecGetClusterError(t *testing.T) {
+	tt := newTest(t)
+
+	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster).Return(nil, errors.New("error from client"))
+
+	_, err := tt.clusterManager.GetCurrentClusterSpec(tt.ctx, tt.cluster)
+	tt.Expect(err).ToNot(BeNil())
+}
+
+func TestClusterManagerGetCurrentClusterSpecGetBundlesError(t *testing.T) {
+	tt := newTest(t)
+
+	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster).Return(tt.clusterSpec.Cluster, nil)
+	tt.mocks.client.EXPECT().GetBundles(tt.ctx, tt.cluster.KubeconfigFile, tt.clusterSpec.Cluster.Name, "").Return(nil, errors.New("error from client"))
+
+	_, err := tt.clusterManager.GetCurrentClusterSpec(tt.ctx, tt.cluster)
+	tt.Expect(err).ToNot(BeNil())
 }

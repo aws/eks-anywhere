@@ -166,7 +166,7 @@ func TestMapMachineTemplateToVSphereWorkerMachineConfigSpec(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := resource.MapMachineTemplateToVSphereWorkerMachineConfigSpec(tt.args.vsMachineTemplate)
+			got, err := resource.MapMachineTemplateToVSphereMachineConfigSpec(tt.args.vsMachineTemplate)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("MapMachineTemplateToVSphereWorkerMachineConfigSpec() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -178,7 +178,7 @@ func TestMapMachineTemplateToVSphereWorkerMachineConfigSpec(t *testing.T) {
 	}
 }
 
-func TestCapiResourceFetcherFetchCluster(t *testing.T) {
+func TestCAPIResourceFetcherFetchCluster(t *testing.T) {
 	type fields struct {
 		client client.Reader
 	}
@@ -300,10 +300,29 @@ func TestCapiResourceFetcherFetchCluster(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "fetch cluster from VSphereMachineConfigKind, external etcd field empty",
+			fields: fields{
+				client: &stubbedReader{
+					clusterName: "testCluster",
+					kind:        anywherev1.VSphereMachineConfigKind,
+					cluster: anywherev1.Cluster{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "testCluster",
+						},
+						Spec: anywherev1.ClusterSpec{},
+					},
+				},
+			},
+			args: args{
+				objectKey: types.NamespacedName{Name: "testVSphereMachineConfig", Namespace: "default"},
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := resource.NewCapiResourceFetcher(tt.fields.client, log.NullLogger{})
+			r := resource.NewCAPIResourceFetcher(tt.fields.client, log.NullLogger{})
 			got, err := r.FetchCluster(context.Background(), tt.args.objectKey)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FetchCluster() error = %v, wantErr %v", err, tt.wantErr)

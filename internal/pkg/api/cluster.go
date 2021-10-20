@@ -100,3 +100,24 @@ func WithStackedEtcdTopology() ClusterFiller {
 		c.Spec.ExternalEtcdConfiguration = nil
 	}
 }
+
+func WithProxyConfig(httpProxy, httpsProxy string, noProxy []string) ClusterFiller {
+	return func(c *v1alpha1.Cluster) {
+		if c.Spec.ProxyConfiguration == nil {
+			c.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{}
+		}
+		c.Spec.ProxyConfiguration.HttpProxy = httpProxy
+		c.Spec.ProxyConfiguration.HttpsProxy = httpProxy
+		c.Spec.ProxyConfiguration.NoProxy = noProxy
+	}
+}
+
+func WithRegistryMirror(endpoint, caCert string) ClusterFiller {
+	return func(c *v1alpha1.Cluster) {
+		if c.Spec.RegistryMirrorConfiguration == nil {
+			c.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{}
+		}
+		c.Spec.RegistryMirrorConfiguration.Endpoint = endpoint
+		c.Spec.RegistryMirrorConfiguration.CACertContent = caCert
+	}
+}

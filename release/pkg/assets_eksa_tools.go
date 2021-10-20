@@ -18,8 +18,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/pkg/errors"
+
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // GetEksAToolsAssets returns the eks-a artifacts for eks-a-tools image
@@ -64,8 +65,9 @@ func (r *ReleaseConfig) GetEksAToolsAssets() ([]Artifact, error) {
 
 func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev1alpha1.EksaBundle, error) {
 	eksABundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"eks-a-tools":        r.GetEksAToolsAssets,
-		"cluster-controller": r.GetClusterControllerAssets,
+		"eks-a-tools":           r.GetEksAToolsAssets,
+		"cluster-controller":    r.GetClusterControllerAssets,
+		"diagnostic-collector:": r.GetDiagnosticCollectorAssets,
 	}
 
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
@@ -102,9 +104,17 @@ func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev
 		}
 	}
 
+	version, err := r.GenerateComponentBundleVersion(newVersioner(r.CliRepoSource))
+	if err != nil {
+		return anywherev1alpha1.EksaBundle{}, errors.Wrapf(err, "failed generating version for eksa bundle")
+	}
+
 	bundle := anywherev1alpha1.EksaBundle{
-		CliTools:   bundleImageArtifacts["eks-anywhere-cli-tools"],
-		Components: bundleManifestArtifacts["eksa-components.yaml"],
+		Version:             version,
+		CliTools:            bundleImageArtifacts["eks-anywhere-cli-tools"],
+		Components:          bundleManifestArtifacts["eksa-components.yaml"],
+		ClusterController:   bundleImageArtifacts["eks-anywhere-cluster-controller"],
+		DiagnosticCollector: bundleImageArtifacts["eks-anywhere-diagnostic-collector"],
 	}
 
 	return bundle, nil

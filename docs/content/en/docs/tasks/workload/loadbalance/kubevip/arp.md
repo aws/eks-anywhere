@@ -57,7 +57,7 @@ You can use either a CIDR block or an IP range
     kube-vip manifest daemonset --services --inCluster --arp --interface eth0 | kubectl apply -f -
     ```   
  
-1. Deploy the [Hello EKS Anywhere]({{< ref "/docs/tasks/workload/test-app" >}}) test application.
+1. Deploy the [Hello EKS Anywhere]({{< relref "../../test-app" >}}) test application.
 
     ```bash
     kubectl apply -f https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml

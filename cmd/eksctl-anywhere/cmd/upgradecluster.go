@@ -10,25 +10,16 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/bootstrapper"
-	fluxclient "github.com/aws/eks-anywhere/pkg/clients/flux"
-	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/clustermanager"
-	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/networking"
-	"github.com/aws/eks-anywhere/pkg/providers/factory"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
-	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
 type upgradeClusterOptions struct {
-	fileName   string
+	clusterOptions
 	wConfig    string
 	forceClean bool
 }
@@ -71,6 +62,7 @@ func init() {
 	upgradeClusterCmd.Flags().StringVarP(&uc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	upgradeClusterCmd.Flags().StringVarP(&uc.wConfig, "w-config", "w", "", "Kubeconfig file to use when upgrading a workload cluster")
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
+	upgradeClusterCmd.Flags().StringVar(&uc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	err := upgradeClusterCmd.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -81,74 +73,31 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	if _, err := uc.commonValidations(ctx); err != nil {
 		return fmt.Errorf("common validations failed due to: %v", err)
 	}
-	clusterSpec, err := cluster.NewSpec(uc.fileName, version.Get())
-	if err != nil {
-		return fmt.Errorf("unable to get cluster config from file: %v", err)
-	}
-
-	writer, err := filewriter.NewWriter(clusterSpec.Name)
-	if err != nil {
-		return fmt.Errorf("unable to write: %v", err)
-	}
-
-	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
-	image := eksaToolsImage.VersionedImage()
-	executableBuilder, err := executables.NewExecutableBuilder(ctx, image)
-	if err != nil {
-		return fmt.Errorf("unable to initialize executables: %v", err)
-	}
-
-	clusterawsadm := executableBuilder.BuildClusterAwsAdmExecutable()
-	kind := executableBuilder.BuildKindExecutable(writer)
-	clusterctl := executableBuilder.BuildClusterCtlExecutable(writer)
-	kubectl := executableBuilder.BuildKubectlExecutable()
-	govc := executableBuilder.BuildGovcExecutable(writer)
-	docker := executables.BuildDockerExecutable()
-	flux := executableBuilder.BuildFluxExecutable()
-
-	providerFactory := &factory.ProviderFactory{
-		AwsClient:            clusterawsadm,
-		DockerClient:         docker,
-		DockerKubectlClient:  kubectl,
-		VSphereGovcClient:    govc,
-		VSphereKubectlClient: kubectl,
-		Writer:               writer,
-	}
-	provider, err := providerFactory.BuildProvider(uc.fileName, clusterSpec.Cluster)
+	clusterSpec, err := newClusterSpec(uc.clusterOptions)
 	if err != nil {
 		return err
 	}
 
-	bootstrapper := bootstrapper.New(&bootstrapperClient{kind, kubectl})
-
-	clusterManager := clustermanager.New(
-		&clusterManagerClient{
-			clusterctl,
-			kubectl,
-		},
-		networking.NewCilium(),
-		writer,
-	)
-
-	gitOpts, err := addonclients.NewGitOptions(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig, writer)
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).
+		WithBootstrapper().
+		WithClusterManager().
+		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck).
+		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
+		WithWriter().
+		WithCAPIUpgrader().
+		WithKubectl().
+		Build()
 	if err != nil {
-		return fmt.Errorf("failed to set up git options: %v", err)
+		return err
 	}
 
-	addonClient := addonclients.NewFluxAddonClient(
-		&fluxclient.FluxKubectl{
-			Flux:    flux,
-			Kubectl: kubectl,
-		},
-		gitOpts,
-	)
-
 	upgradeCluster := workflows.NewUpgrade(
-		bootstrapper,
-		provider,
-		clusterManager,
-		addonClient,
-		writer,
+		deps.Bootstrapper,
+		deps.Provider,
+		deps.CAPIUpgrader,
+		deps.ClusterManager,
+		deps.FluxAddonClient,
+		deps.Writer,
 	)
 
 	workloadCluster := &types.Cluster{
@@ -157,16 +106,16 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	}
 
 	validationOpts := &upgradevalidations.UpgradeValidationOpts{
-		Kubectl:         kubectl,
+		Kubectl:         deps.Kubectl,
 		Spec:            clusterSpec,
 		WorkloadCluster: workloadCluster,
-		Provider:        provider,
+		Provider:        deps.Provider,
 	}
 	upgradeValidations := upgradevalidations.New(validationOpts)
 
 	err = upgradeCluster.Run(ctx, clusterSpec, workloadCluster, upgradeValidations, uc.forceClean)
 	if err == nil {
-		writer.CleanUpTemp()
+		deps.Writer.CleanUpTemp()
 	}
 	return err
 }

@@ -21,8 +21,6 @@ import (
 	"net/http"
 	"strings"
 
-	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -30,6 +28,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecrpublic"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
@@ -399,8 +398,7 @@ func ReadHttpFile(uri string) ([]byte, error) {
 	return data, nil
 }
 
-func ExistsInS3(releaseClients *ReleaseClients, bucket string, key string) (bool, error) {
-	s3Client := releaseClients.S3.Client
+func ExistsInS3(s3Client *s3.S3, bucket string, key string) (bool, error) {
 	_, err := s3Client.HeadObject(&s3.HeadObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),

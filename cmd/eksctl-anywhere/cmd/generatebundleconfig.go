@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -10,7 +12,8 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	support "github.com/aws/eks-anywhere/pkg/support"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -31,7 +34,7 @@ var generateBundleConfigCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("command input validation failed: %v", err)
 		}
-		bundle, err := gsbo.generateBundleConfig()
+		bundle, err := gsbo.generateBundleConfig(cmd.Context())
 		if err != nil {
 			return fmt.Errorf("failed to generate bunlde config: %v", err)
 		}
@@ -73,14 +76,32 @@ func (gsbo *generateSupportBundleOptions) validateCmdInput() error {
 	return nil
 }
 
-func (gsbo *generateSupportBundleOptions) generateBundleConfig() (*support.EksaDiagnosticBundle, error) {
+func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Context) (*diagnostics.EksaDiagnosticBundle, error) {
 	f := gsbo.fileName
 	if f == "" {
-		return support.NewDefaultBundleConfig(support.NewAnalyzerFactory(), support.NewCollectorFactory()), nil
+		factory := diagnostics.NewFactory(diagnostics.EksaDiagnosticBundleFactoryOpts{})
+		return factory.NewDiagnosticBundleDefault(), nil
 	}
+
 	clusterSpec, err := cluster.NewSpec(f, version.Get())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
-	return support.NewBundleConfig(clusterSpec, support.NewAnalyzerFactory(), support.NewCollectorFactory()), nil
+
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).
+		WithProvider(f, clusterSpec.Cluster, cc.skipIpCheck).
+		WithDiagnosticBundleFactory().
+		Build()
+	if err != nil {
+		return nil, err
+	}
+
+	return deps.DignosticCollectorFactory.NewDiagnosticBundleFromSpec(clusterSpec, deps.Provider, gsbo.kubeConfig(clusterSpec.Name))
+}
+
+func (gsbo *generateSupportBundleOptions) kubeConfig(clusterName string) string {
+	if csbo.wConfig == "" {
+		return filepath.Join(clusterName, fmt.Sprintf(kubeconfigPattern, clusterName))
+	}
+	return csbo.wConfig
 }
