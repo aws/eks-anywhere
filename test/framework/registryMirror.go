@@ -37,3 +37,7 @@ func WithRegistryMirrorEndpointAndCert() E2ETestOpt {
 		}
 	}
 }
+
+func RequiredRegistryMirrorEnvVars() []string {
+	return registryMirrorRequiredEnvVars
+}
