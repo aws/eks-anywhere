@@ -638,8 +638,8 @@ func (k *Kubectl) RemoveAnnotationInNamespace(ctx context.Context, resourceType,
 	return k.RemoveAnnotation(ctx, resourceType, objectName, key, WithCluster(cluster), WithNamespace(namespace))
 }
 
-func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error) {
-	params := []string{"get", "clusters", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + cluster.Name}
+func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error) {
+	params := []string{"get", "clusters", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + clusterName}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa cluster: %v", err)

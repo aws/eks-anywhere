@@ -53,18 +53,18 @@ func (mr *MockValidationsKubectlClientMockRecorder) GetClusters(ctx, cluster int
 }
 
 // GetEksaCluster mocks base method.
-func (m *MockValidationsKubectlClient) GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error) {
+func (m *MockValidationsKubectlClient) GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEksaCluster", ctx, cluster)
+	ret := m.ctrl.Call(m, "GetEksaCluster", ctx, cluster, clusterName)
 	ret0, _ := ret[0].(*v1alpha1.Cluster)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEksaCluster indicates an expected call of GetEksaCluster.
-func (mr *MockValidationsKubectlClientMockRecorder) GetEksaCluster(ctx, cluster interface{}) *gomock.Call {
+func (mr *MockValidationsKubectlClientMockRecorder) GetEksaCluster(ctx, cluster, clusterName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockValidationsKubectlClient)(nil).GetEksaCluster), ctx, cluster)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockValidationsKubectlClient)(nil).GetEksaCluster), ctx, cluster, clusterName)
 }
 
 // GetEksaGitOpsConfig mocks base method.

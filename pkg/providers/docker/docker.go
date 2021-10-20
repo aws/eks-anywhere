@@ -50,7 +50,7 @@ type provider struct {
 }
 
 type ProviderKubectlClient interface {
-	GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error)
+	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error)
 	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*v1alpha3.MachineDeployment, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error)
@@ -220,7 +220,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 	var controlPlaneTemplateName, workloadTemplateName, etcdTemplateName string
 	var needsNewEtcdTemplate bool
 
-	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster)
+	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, clusterSpec.Name)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -7,8 +7,13 @@ import (
 
 	"sigs.k8s.io/cluster-api/api/v1alpha3"
 
+	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
+
+func (u *UpgradeValidations) SetWorkloadCluster(cluster *types.Cluster) {
+	u.Opts.WorkloadCluster = cluster
+}
 
 func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err error) {
 	k := u.Opts.Kubectl

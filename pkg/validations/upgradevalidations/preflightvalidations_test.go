@@ -588,7 +588,7 @@ func TestPreflightValidations(t *testing.T) {
 			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
 			k.EXPECT().ValidateClustersCRD(ctx, workloadCluster).Return(tc.crdResponse)
 			k.EXPECT().GetClusters(ctx, workloadCluster).Return(tc.getClusterResponse, nil)
-			k.EXPECT().GetEksaCluster(ctx, workloadCluster).Return(existingClusterSpec.Cluster, nil)
+			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Name).Return(existingClusterSpec.Cluster, nil)
 			k.EXPECT().GetEksaGitOpsConfig(ctx, clusterSpec.Spec.GitOpsRef.Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.GitOpsConfig, nil).MaxTimes(1)
 			k.EXPECT().GetEksaOIDCConfig(ctx, clusterSpec.Spec.IdentityProviderRefs[0].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.OIDCConfig, nil).MaxTimes(1)
 			k.EXPECT().Version(ctx, workloadCluster).Return(versionResponse, nil)

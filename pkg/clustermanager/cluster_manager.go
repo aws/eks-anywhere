@@ -64,7 +64,7 @@ type ClusterClient interface {
 	SaveLog(ctx context.Context, cluster *types.Cluster, deployment *types.Deployment, fileName string, writer filewriter.FileWriter) error
 	GetMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]types.Machine, error)
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
-	GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error)
+	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
 	UpdateEnvironmentVariablesInNamespace(ctx context.Context, resourceType, resourceName string, envMap map[string]string, cluster *types.Cluster, namespace string) error
 	UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error
@@ -285,7 +285,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for control plane machines to be ready")
-	if err = c.waitForNodesReady(ctx, managementCluster, workloadCluster.Name, []string{clusterv1.MachineControlPlaneLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
+	if err = c.waitForNodesReady(ctx, managementCluster, clusterSpec.Name, []string{clusterv1.MachineControlPlaneLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
 		return err
 	}
 
@@ -317,7 +317,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for machine deployment machines to be ready")
-	if err = c.waitForNodesReady(ctx, managementCluster, workloadCluster.Name, []string{clusterv1.MachineDeploymentLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
+	if err = c.waitForNodesReady(ctx, managementCluster, clusterSpec.Name, []string{clusterv1.MachineDeploymentLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
 		return err
 	}
 
@@ -336,7 +336,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 }
 
 func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
-	cc, err := c.clusterClient.GetEksaCluster(ctx, cluster)
+	cc, err := c.clusterClient.GetEksaCluster(ctx, cluster, newClusterSpec.Name)
 	if err != nil {
 		return false, err
 	}
@@ -750,7 +750,7 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 
 	err = c.Retrier.Retry(
 		func() error {
-			return c.clusterClient.UpdateAnnotationInNamespace(ctx, clusterSpec.ResourceType(), cluster.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
+			return c.clusterClient.UpdateAnnotationInNamespace(ctx, clusterSpec.ResourceType(), clusterSpec.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 		},
 	)
 	if err != nil {
@@ -814,7 +814,7 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 
 	err = c.Retrier.Retry(
 		func() error {
-			return c.clusterClient.RemoveAnnotationInNamespace(ctx, clusterSpec.ResourceType(), cluster.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
+			return c.clusterClient.RemoveAnnotationInNamespace(ctx, clusterSpec.ResourceType(), clusterSpec.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 		},
 	)
 	if err != nil {
@@ -838,8 +838,8 @@ func (c *ClusterManager) applyResource(ctx context.Context, cluster *types.Clust
 	return nil
 }
 
-func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.Cluster) (*cluster.Spec, error) {
-	eksaCluster, err := c.clusterClient.GetEksaCluster(ctx, clus)
+func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.Cluster, clusterName string) (*cluster.Spec, error) {
+	eksaCluster, err := c.clusterClient.GetEksaCluster(ctx, clus, clusterName)
 	if err != nil {
 		return nil, fmt.Errorf("failed getting EKS-A cluster to build current cluster Spec: %v", err)
 	}

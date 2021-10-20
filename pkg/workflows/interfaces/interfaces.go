@@ -31,7 +31,7 @@ type ClusterManager interface {
 	ResumeEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error)
 	InstallMachineHealthChecks(ctx context.Context, workloadCluster *types.Cluster, provider providers.Provider) error
-	GetCurrentClusterSpec(ctx context.Context, cluster *types.Cluster) (*cluster.Spec, error)
+	GetCurrentClusterSpec(ctx context.Context, cluster *types.Cluster, clusterName string) (*cluster.Spec, error)
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 }
 
@@ -48,6 +48,7 @@ type AddonManager interface {
 
 type Validator interface {
 	PreflightValidations(ctx context.Context) error
+	SetWorkloadCluster(cluser *types.Cluster)
 }
 
 type CAPIUpgrader interface {

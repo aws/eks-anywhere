@@ -339,18 +339,18 @@ func (mr *MockProviderKubectlClientMockRecorder) CreateNamespace(arg0, arg1, arg
 }
 
 // GetEksaCluster mocks base method.
-func (m *MockProviderKubectlClient) GetEksaCluster(arg0 context.Context, arg1 *types.Cluster) (*v1alpha1.Cluster, error) {
+func (m *MockProviderKubectlClient) GetEksaCluster(arg0 context.Context, arg1 *types.Cluster, arg2 string) (*v1alpha1.Cluster, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEksaCluster", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetEksaCluster", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*v1alpha1.Cluster)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEksaCluster indicates an expected call of GetEksaCluster.
-func (mr *MockProviderKubectlClientMockRecorder) GetEksaCluster(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockProviderKubectlClientMockRecorder) GetEksaCluster(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaCluster), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCluster", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEksaCluster), arg0, arg1, arg2)
 }
 
 // GetEksaVSphereDatacenterConfig mocks base method.
