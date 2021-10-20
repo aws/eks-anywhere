@@ -1456,6 +1456,7 @@ func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
 		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
 		if etcdMachineName != controlPlaneMachineName && etcdMachineName != workerMachineName {
 			configs = append(configs, p.machineConfigs[etcdMachineName])
+			p.machineConfigs[etcdMachineName].SetManagement(p.clusterConfig.ManagedBy())
 		}
 	}
 	return configs
