@@ -54,6 +54,9 @@ func (c *VSphereMachineConfig) IsEtcd() bool {
 }
 
 func (c *VSphereMachineConfig) SetManagement(clusterName string) {
+	if c.Annotations == nil {
+		c.Annotations = map[string]string{}
+	}
 	c.Annotations[managementAnnotation] = clusterName
 }
 

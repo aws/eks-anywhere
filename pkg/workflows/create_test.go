@@ -203,6 +203,14 @@ func (c *createTestSetup) expectInstallMHC() {
 	)
 }
 
+func (c *createTestSetup) expectLoadManagementCluster(kconfig string, name string) {
+	c.clusterManager.EXPECT().LoadManagement(kconfig).Return(&types.Cluster{
+		Name:           name,
+		KubeconfigFile: kconfig,
+		ExistingMgnt:   true,
+	}, nil)
+}
+
 func (c *createTestSetup) run(kubeconfig string) error {
 	return c.workflow.Run(c.ctx, c.clusterSpec, c.forceCleanup, kubeconfig)
 }
@@ -263,7 +271,7 @@ func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
 	test.expectWriteClusterConfig()
 	test.expectNotDeleteBootstrap()
 	test.expectInstallMHC()
-
+	test.expectLoadManagementCluster(managementKubeconfig, test.bootstrapCluster.Name)
 	err := test.run(managementKubeconfig)
 
 	if test.clusterSpec.Spec.Management == nil || *test.clusterSpec.Spec.Management {
