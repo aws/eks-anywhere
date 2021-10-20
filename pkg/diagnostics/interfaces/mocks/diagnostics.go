@@ -330,17 +330,17 @@ func (mr *MockDiagnosticBundleMockRecorder) WithOidcConfig(config interface{}) *
 }
 
 // WriteBundleConfig mocks base method.
-func (m *MockDiagnosticBundle) WriteBundleConfig() error {
+func (m *MockDiagnosticBundle) WriteBundleConfig(clusterName string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WriteBundleConfig")
+	ret := m.ctrl.Call(m, "WriteBundleConfig", clusterName)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // WriteBundleConfig indicates an expected call of WriteBundleConfig.
-func (mr *MockDiagnosticBundleMockRecorder) WriteBundleConfig() *gomock.Call {
+func (mr *MockDiagnosticBundleMockRecorder) WriteBundleConfig(clusterName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteBundleConfig", reflect.TypeOf((*MockDiagnosticBundle)(nil).WriteBundleConfig))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteBundleConfig", reflect.TypeOf((*MockDiagnosticBundle)(nil).WriteBundleConfig), clusterName)
 }
 
 // MockAnalyzerFactory is a mock of AnalyzerFactory interface.
