@@ -78,13 +78,15 @@ func newDiagnosticBundleBootstrapCluster(af AnalyzerFactory, cf CollectorFactory
 func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeValue *time.Time) error {
 	e.createDiagnosticNamespaceAndRoles(ctx)
 
-	logger.Info("collecting support bundle, this can take a while", "bundle", e.bundlePath, "since", sinceTimeValue, "kubeconfig", e.kubeconfig)
+	logger.Info("Collecting support bundle from cluster, this can take a while ⏳", "bundle", e.bundlePath, "since", sinceTimeValue, "kubeconfig", e.kubeconfig)
 	archivePath, err := e.client.Collect(ctx, e.bundlePath, sinceTimeValue, e.kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to Collect support bundle: %v", err)
 	}
 
-	logger.Info("analyzing support bundle", "bundle", e.bundlePath, "archive", archivePath)
+	logger.Info("Support bundle archive created", "archivePath", archivePath)
+
+	logger.Info("Analyzing support bundle", "bundle", e.bundlePath, "archive", archivePath)
 	analysis, err := e.client.Analyze(ctx, e.bundlePath, archivePath)
 	if err != nil {
 		return fmt.Errorf("error when analyzing bundle: %v", err)
@@ -96,7 +98,6 @@ func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeV
 	}
 
 	fmt.Println(string(yamlAnalysis))
-	logger.Info("Support bundle archive created", "archivePath", archivePath)
 
 	e.deleteDiagnosticNamespaceAndRoles(ctx)
 	return nil
