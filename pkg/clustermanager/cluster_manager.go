@@ -488,6 +488,10 @@ func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, workloa
 }
 
 func (c *ClusterManager) SaveLogs(ctx context.Context, cluster *types.Cluster) error {
+	if cluster == nil {
+		return nil
+	}
+
 	bundle, err := c.diagnosticsFac.DiagnosticBundleBootstrapCluster(cluster.KubeconfigFile)
 	if err != nil {
 		logger.V(5).Info("Error generating support bundle for bootstrap cluster", "error", err)
