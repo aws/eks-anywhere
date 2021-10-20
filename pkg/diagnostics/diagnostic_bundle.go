@@ -65,6 +65,8 @@ func newDiagnosticBundleBootstrapCluster(af AnalyzerFactory, cf CollectorFactory
 		writer:           writer,
 	}
 
+	b.WithDefaultCollectors().WithDefaultAnalyzers()
+
 	err := b.WriteBundleConfig("BootstrapCluster")
 	if err != nil {
 		return nil, fmt.Errorf("error writing bundle config: %v", err)
