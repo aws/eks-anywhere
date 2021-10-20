@@ -25,10 +25,10 @@ func (f *FluxAddonClient) Upgrade(ctx context.Context, managementCluster *types.
 	if err := f.upgradeFilesAndCommit(ctx, newSpec); err != nil {
 		return fmt.Errorf("failed upgrading Flux from bundles %d to bundles %d: %v", currentSpec.Bundles.Spec.Number, newSpec.Bundles.Spec.Number, err)
 	}
-	if err := f.flux.BootstrapToolkitsComponents(ctx, managementCluster, currentSpec.GitOpsConfig); err != nil {
+	if err := f.flux.BootstrapToolkitsComponents(ctx, managementCluster, newSpec.GitOpsConfig); err != nil {
 		return fmt.Errorf("failed upgrading Flux components: %v", err)
 	}
-	if err := f.flux.Reconcile(ctx, managementCluster, currentSpec.GitOpsConfig); err != nil {
+	if err := f.flux.Reconcile(ctx, managementCluster, newSpec.GitOpsConfig); err != nil {
 		return fmt.Errorf("failed reconciling Flux components: %v", err)
 	}
 
