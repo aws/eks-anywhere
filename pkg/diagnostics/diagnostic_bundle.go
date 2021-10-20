@@ -65,7 +65,7 @@ func newDiagnosticBundleBootstrapCluster(af AnalyzerFactory, cf CollectorFactory
 		writer:           writer,
 	}
 
-	err := b.WriteBundleConfig()
+	err := b.WriteBundleConfig("BootstrapCluster")
 	if err != nil {
 		return nil, fmt.Errorf("error writing bundle config: %v", err)
 	}
@@ -109,13 +109,13 @@ func (e *EksaDiagnosticBundle) PrintBundleConfig() error {
 	return nil
 }
 
-func (e *EksaDiagnosticBundle) WriteBundleConfig() error {
+func (e *EksaDiagnosticBundle) WriteBundleConfig(clusterName string) error {
 	bundleYaml, err := yaml.Marshal(e.bundle)
 	if err != nil {
 		return fmt.Errorf("error outputing yaml: %v", err)
 	}
 	timestamp := time.Now().Format(time.RFC3339)
-	filename := fmt.Sprintf(generatedBundleNameFormat, e.clusterSpec.Name, timestamp)
+	filename := fmt.Sprintf(generatedBundleNameFormat, clusterName, timestamp)
 	e.bundlePath, err = e.writer.Write(filename, bundleYaml)
 	if err != nil {
 		return err

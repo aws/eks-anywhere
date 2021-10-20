@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"reflect"
-	"sync"
 	"time"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
@@ -35,7 +34,6 @@ const (
 	machineBackoff    = 1 * time.Second
 	machinesMinWait   = 30 * time.Minute
 	moveCAPIWait      = 5 * time.Minute
-	logDir            = "logs"
 	ctrlPlaneWaitStr  = "60m"
 	etcdWaitStr       = "60m"
 	deploymentWaitStr = "30m"
@@ -490,27 +488,23 @@ func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, workloa
 }
 
 func (c *ClusterManager) SaveLogs(ctx context.Context, cluster *types.Cluster) error {
-	if c == nil || cluster == nil {
+	bundle, err := c.diagnosticsFac.DiagnosticBundleBootstrapCluster(cluster.KubeconfigFile)
+	if err != nil {
+		logger.V(5).Info("Error generating support bundle for bootstrap cluster", "error", err)
 		return nil
 	}
-	var wg sync.WaitGroup
-	wg.Add(len(internal.ClusterDeployments))
 
-	w, err := c.writer.WithDir(logDir)
+	var sinceTimeValue *time.Time
+	sinceTimeValue, err = diagnostics.ParseTimeOptions("1h", "")
 	if err != nil {
-		return err
+		logger.V(5).Info("Error parsing time options for support bundle generation", "error", err)
+		return nil
 	}
-	for fileName, deployment := range internal.ClusterDeployments {
-		go func(dep *types.Deployment, f string) {
-			// Ignoring error for now
-			defer wg.Done()
-			err := c.clusterClient.SaveLog(ctx, cluster, dep, f, w)
-			if err != nil {
-				logger.V(5).Info("Error saving logs", "error", err)
-			}
-		}(deployment, fileName)
+
+	err = bundle.CollectAndAnalyze(ctx, sinceTimeValue)
+	if err != nil {
+		logger.V(5).Info("Error collecting and saving logs", "error", err)
 	}
-	wg.Wait()
 	return nil
 }
 

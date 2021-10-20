@@ -182,13 +182,12 @@ func TestClusterManagerCAPIWaitForDeploymentExternalEtcd(t *testing.T) {
 
 func TestClusterManagerSaveLogsSuccess(t *testing.T) {
 	ctx := context.Background()
-	cluster := &types.Cluster{Name: "cluster-name"}
+	cluster := &types.Cluster{Name: "cluster-name", KubeconfigFile: "test"}
 
 	c, m := newClusterManager(t)
-	m.writer.EXPECT().WithDir(gomock.Any()).Return(m.writer, nil)
-	for file, logCmd := range internal.ClusterDeployments {
-		m.client.EXPECT().SaveLog(ctx, cluster, logCmd, file, m.writer).Times(1).Return(nil)
-	}
+	b := m.diagnosticsBundle
+	b.EXPECT().CollectAndAnalyze(ctx, gomock.AssignableToTypeOf(&time.Time{}))
+	m.diagnosticsFactory.EXPECT().DiagnosticBundleBootstrapCluster(cluster.KubeconfigFile).Return(b, nil)
 
 	if err := c.SaveLogs(ctx, cluster); err != nil {
 		t.Errorf("ClusterManager.SaveLogs() error = %v, wantErr nil", err)
@@ -1352,38 +1351,24 @@ func newTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) *testSetup 
 	}
 }
 
-<<<<<<< HEAD
 type clusterManagerMocks struct {
 	writer     *mockswriter.MockFileWriter
 	networking *mocksmanager.MockNetworking
 	client     *mocksmanager.MockClusterClient
 	provider   *mocksprovider.MockProvider
-=======
-type mocks struct {
-	writer             *mockswriter.MockFileWriter
-	networking         *mocksmanager.MockNetworking
-	client             *mocksmanager.MockClusterClient
-	provider           *mocksprovider.MockProvider
+	diagnosticsBundle  *mocksdiagnostics.MockDiagnosticBundle
 	diagnosticsFactory *mocksdiagnostics.MockDiagnosticBundleFactory
->>>>>>> c37e1cb (add diagnosticBundleFactory to the clusterManager)
 }
 
 func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (*clustermanager.ClusterManager, *clusterManagerMocks) {
 	mockCtrl := gomock.NewController(t)
-<<<<<<< HEAD
 	m := &clusterManagerMocks{
-		writer:     mockswriter.NewMockFileWriter(mockCtrl),
-		networking: mocksmanager.NewMockNetworking(mockCtrl),
-		client:     mocksmanager.NewMockClusterClient(mockCtrl),
-		provider:   mocksprovider.NewMockProvider(mockCtrl),
-=======
-	m := &mocks{
 		writer:             mockswriter.NewMockFileWriter(mockCtrl),
 		networking:         mocksmanager.NewMockNetworking(mockCtrl),
 		client:             mocksmanager.NewMockClusterClient(mockCtrl),
 		provider:           mocksprovider.NewMockProvider(mockCtrl),
 		diagnosticsFactory: mocksdiagnostics.NewMockDiagnosticBundleFactory(mockCtrl),
->>>>>>> c37e1cb (add diagnosticBundleFactory to the clusterManager)
+		diagnosticsBundle:  mocksdiagnostics.NewMockDiagnosticBundle(mockCtrl),
 	}
 
 	c := clustermanager.New(m.client, m.networking, m.writer, m.diagnosticsFactory, opts...)

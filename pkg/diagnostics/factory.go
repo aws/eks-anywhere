@@ -83,7 +83,7 @@ func (f *eksaDiagnosticBundleFactory) DiagnosticBundleFromSpec(spec *cluster.Spe
 		WithDefaultCollectors().
 		WithLogTextAnalyzers()
 
-	err := b.WriteBundleConfig()
+	err := b.WriteBundleConfig(b.clusterSpec.Name)
 	if err != nil {
 		return nil, fmt.Errorf("error writing bundle config: %v", err)
 	}
