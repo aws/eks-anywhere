@@ -1954,6 +1954,7 @@ func TestValidateNewSpecSuccess(t *testing.T) {
 	}
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
+		s.Cluster = clusterConfig
 	})
 	c := &types.Cluster{}
 
@@ -1995,6 +1996,7 @@ func TestValidateNewSpecMutableFields(t *testing.T) {
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
+		s.Cluster = clusterConfig
 	})
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any()).Return(clusterConfig, nil)
@@ -2023,6 +2025,7 @@ func TestValidateNewSpecDatacenterImmutable(t *testing.T) {
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
+		s.Cluster = clusterConfig
 	})
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any()).Return(clusterConfig, nil)
@@ -2033,6 +2036,30 @@ func TestValidateNewSpecDatacenterImmutable(t *testing.T) {
 
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
 	assert.Error(t, err, "Datacenter should be immutable")
+}
+
+func TestValidateNewSpecMachineConfigNotFound(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
+
+	provider := givenProvider(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	newProviderConfig.Spec.Datacenter = "new-" + newProviderConfig.Spec.Datacenter
+
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Namespace = "test-namespace"
+		s.Cluster = clusterConfig.DeepCopy()
+		s.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "missing-machine-group"
+	})
+
+	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any()).Return(clusterConfig, nil)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
+
+	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
+	assert.Errorf(t, err, "can't find machine config missing-machine-group in vsphere provider machine configs")
 }
 
 func TestValidateNewSpecServerImmutable(t *testing.T) {
@@ -2050,6 +2077,7 @@ func TestValidateNewSpecServerImmutable(t *testing.T) {
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
+		s.Cluster = clusterConfig
 	})
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any()).Return(clusterConfig, nil)
@@ -2078,6 +2106,7 @@ func TestValidateNewSpecStoragePolicyNameImmutableControlPlane(t *testing.T) {
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
+		s.Cluster = clusterConfig
 	})
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any()).Return(clusterConfig, nil)
@@ -2104,6 +2133,7 @@ func TestValidateNewSpecStoragePolicyNameImmutableWorker(t *testing.T) {
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
+		s.Cluster = clusterConfig
 	})
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any()).Return(clusterConfig, nil)
@@ -2129,6 +2159,7 @@ func TestValidateNewSpecTLSInsecureImmutable(t *testing.T) {
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
+		s.Cluster = clusterConfig
 	})
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any()).Return(clusterConfig, nil)
@@ -2155,6 +2186,7 @@ func TestValidateNewSpecTLSThumbprintImmutable(t *testing.T) {
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
+		s.Cluster = clusterConfig
 	})
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any()).Return(clusterConfig, nil)
@@ -2181,6 +2213,7 @@ func TestValidateNewSpecMachineConfigSshUsersImmutable(t *testing.T) {
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
+		s.Cluster = clusterConfig
 	})
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any()).Return(clusterConfig, nil)
@@ -2208,6 +2241,7 @@ func TestValidateNewSpecMachineConfigSshAuthKeysImmutable(t *testing.T) {
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
+		s.Cluster = clusterConfig
 	})
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any()).Return(clusterConfig, nil)
