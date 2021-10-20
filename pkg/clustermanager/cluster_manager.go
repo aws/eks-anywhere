@@ -849,12 +849,12 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus))
 }
 
-type KubeConfigCluster struct {
+type kubeConfigCluster struct {
 	Name string `json:"name"`
 }
 
-type KubeConfigYAML struct {
-	Clusters []*KubeConfigCluster `json:"clusters"`
+type kubeConfigYAML struct {
+	Clusters []*kubeConfigCluster `json:"clusters"`
 }
 
 func (c *ClusterManager) LoadManagement(kubeconfig string) (*types.Cluster, error) {
@@ -862,8 +862,8 @@ func (c *ClusterManager) LoadManagement(kubeconfig string) (*types.Cluster, erro
 	if err != nil {
 		return nil, err
 	}
-	kc := &KubeConfigYAML{}
-	kc.Clusters = []*KubeConfigCluster{}
+	kc := &kubeConfigYAML{}
+	kc.Clusters = []*kubeConfigCluster{}
 	err = yaml.Unmarshal(kubeConfigBytes, &kc)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing kubeconfig file: %v", err)
