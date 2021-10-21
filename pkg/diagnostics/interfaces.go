@@ -25,7 +25,9 @@ type DiagnosticBundleFactory interface {
 
 type DiagnosticBundle interface {
 	PrintBundleConfig() error
-	WriteBundleConfig(clusterName string) error
+	WriteBundleConfig() error
+	PrintAnalysis() error
+	WriteAnalysis() (path string, err error)
 	CollectAndAnalyze(ctx context.Context, sinceTimeValue *time.Time) error
 	WithDefaultAnalyzers() *EksaDiagnosticBundle
 	WithDefaultCollectors() *EksaDiagnosticBundle

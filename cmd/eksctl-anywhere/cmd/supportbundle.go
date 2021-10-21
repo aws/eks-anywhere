@@ -116,5 +116,10 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 		return fmt.Errorf("error while collecting and analyzing bundle: %v", err)
 	}
 
+	err = supportBundle.PrintAnalysis()
+	if err != nil {
+		return fmt.Errorf("error when printing analysis")
+	}
+
 	return nil
 }

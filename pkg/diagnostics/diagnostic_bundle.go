@@ -42,6 +42,7 @@ type EksaDiagnosticBundle struct {
 	kubectl          *executables.Kubectl
 	retrier          *retrier.Retrier
 	writer           filewriter.FileWriter
+	analysis         []*executables.SupportBundleAnalysis
 }
 
 func newDiagnosticBundleBootstrapCluster(af AnalyzerFactory, cf CollectorFactory, client BundleClient,
@@ -53,7 +54,7 @@ func newDiagnosticBundleBootstrapCluster(af AnalyzerFactory, cf CollectorFactory
 				APIVersion: troubleshootApiVersion,
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "bootstrapcluster",
+				Name: "bootstrap-cluster",
 			},
 			Spec: supportBundleSpec{},
 		},
@@ -68,7 +69,7 @@ func newDiagnosticBundleBootstrapCluster(af AnalyzerFactory, cf CollectorFactory
 
 	b.WithDefaultCollectors().WithDefaultAnalyzers()
 
-	err := b.WriteBundleConfig("BootstrapCluster")
+	err := b.WriteBundleConfig()
 	if err != nil {
 		return nil, fmt.Errorf("error writing bundle config: %v", err)
 	}
@@ -93,14 +94,9 @@ func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeV
 	if err != nil {
 		return fmt.Errorf("error when analyzing bundle: %v", err)
 	}
+	e.analysis = analysis
 
-	yamlAnalysis, err := yaml.Marshal(analysis)
-	if err != nil {
-		return fmt.Errorf("error while analyzing bundle: %v", err)
-	}
-
-	logger.V(4).Info(string(yamlAnalysis))
-	analysisPath, err := e.WriteAnalysis(e.clusterName(), yamlAnalysis)
+	analysisPath, err := e.WriteAnalysis()
 	if err != nil {
 		return err
 	}
@@ -119,13 +115,13 @@ func (e *EksaDiagnosticBundle) PrintBundleConfig() error {
 	return nil
 }
 
-func (e *EksaDiagnosticBundle) WriteBundleConfig(clusterName string) error {
+func (e *EksaDiagnosticBundle) WriteBundleConfig() error {
 	bundleYaml, err := yaml.Marshal(e.bundle)
 	if err != nil {
 		return fmt.Errorf("error outputing yaml: %v", err)
 	}
 	timestamp := time.Now().Format(time.RFC3339)
-	filename := fmt.Sprintf(generatedBundleNameFormat, clusterName, timestamp)
+	filename := fmt.Sprintf(generatedBundleNameFormat, e.clusterName(), timestamp)
 	e.bundlePath, err = e.writer.Write(filename, bundleYaml)
 	if err != nil {
 		return err
@@ -134,10 +130,31 @@ func (e *EksaDiagnosticBundle) WriteBundleConfig(clusterName string) error {
 	return nil
 }
 
-func (e *EksaDiagnosticBundle) WriteAnalysis(clusterName string, analysis []byte) (path string, err error) {
+func (e *EksaDiagnosticBundle) PrintAnalysis() error {
+	if e.analysis == nil {
+		return nil
+	}
+	analysis, err := yaml.Marshal(e.analysis)
+	if err != nil {
+		return fmt.Errorf("error outputing yaml: %v", err)
+	}
+	fmt.Println(string(analysis))
+	return nil
+}
+
+func (e *EksaDiagnosticBundle) WriteAnalysis() (path string, err error) {
+	if e.analysis == nil {
+		return "", nil
+	}
+
+	yamlAnalysis, err := yaml.Marshal(e.analysis)
+	if err != nil {
+		return "", fmt.Errorf("error while writing analysis: %v", err)
+	}
+
 	timestamp := time.Now().Format(time.RFC3339)
-	filename := fmt.Sprintf(generatedAnalysisNameFormat, clusterName, timestamp)
-	analysisPath, err := e.writer.Write(filename, analysis)
+	filename := fmt.Sprintf(generatedAnalysisNameFormat, e.clusterName(), timestamp)
+	analysisPath, err := e.writer.Write(filename, yamlAnalysis)
 	if err != nil {
 		return "", err
 	}
@@ -192,10 +209,7 @@ func (e *EksaDiagnosticBundle) WithLogTextAnalyzers() *EksaDiagnosticBundle {
 }
 
 func (e *EksaDiagnosticBundle) clusterName() string {
-	if e.clusterSpec == nil {
-		return "cluster"
-	}
-	return e.clusterSpec.ClusterName
+	return e.bundle.Name
 }
 
 // createDiagnosticNamespace attempts to create the namespace eksa-diagnostics and associated RBAC objects.

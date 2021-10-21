@@ -203,6 +203,20 @@ func (mr *MockDiagnosticBundleMockRecorder) CollectAndAnalyze(ctx, sinceTimeValu
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CollectAndAnalyze", reflect.TypeOf((*MockDiagnosticBundle)(nil).CollectAndAnalyze), ctx, sinceTimeValue)
 }
 
+// PrintAnalysis mocks base method.
+func (m *MockDiagnosticBundle) PrintAnalysis() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PrintAnalysis")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PrintAnalysis indicates an expected call of PrintAnalysis.
+func (mr *MockDiagnosticBundleMockRecorder) PrintAnalysis() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PrintAnalysis", reflect.TypeOf((*MockDiagnosticBundle)(nil).PrintAnalysis))
+}
+
 // PrintBundleConfig mocks base method.
 func (m *MockDiagnosticBundle) PrintBundleConfig() error {
 	m.ctrl.T.Helper()
@@ -329,18 +343,33 @@ func (mr *MockDiagnosticBundleMockRecorder) WithOidcConfig(config interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithOidcConfig", reflect.TypeOf((*MockDiagnosticBundle)(nil).WithOidcConfig), config)
 }
 
-// WriteBundleConfig mocks base method.
-func (m *MockDiagnosticBundle) WriteBundleConfig(clusterName string) error {
+// WriteAnalysis mocks base method.
+func (m *MockDiagnosticBundle) WriteAnalysis() (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WriteBundleConfig", clusterName)
+	ret := m.ctrl.Call(m, "WriteAnalysis")
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WriteAnalysis indicates an expected call of WriteAnalysis.
+func (mr *MockDiagnosticBundleMockRecorder) WriteAnalysis() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteAnalysis", reflect.TypeOf((*MockDiagnosticBundle)(nil).WriteAnalysis))
+}
+
+// WriteBundleConfig mocks base method.
+func (m *MockDiagnosticBundle) WriteBundleConfig() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WriteBundleConfig")
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // WriteBundleConfig indicates an expected call of WriteBundleConfig.
-func (mr *MockDiagnosticBundleMockRecorder) WriteBundleConfig(clusterName interface{}) *gomock.Call {
+func (mr *MockDiagnosticBundleMockRecorder) WriteBundleConfig() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteBundleConfig", reflect.TypeOf((*MockDiagnosticBundle)(nil).WriteBundleConfig), clusterName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteBundleConfig", reflect.TypeOf((*MockDiagnosticBundle)(nil).WriteBundleConfig))
 }
 
 // MockAnalyzerFactory is a mock of AnalyzerFactory interface.

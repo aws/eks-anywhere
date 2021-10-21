@@ -59,7 +59,7 @@ func (f *eksaDiagnosticBundleFactory) DiagnosticBundleFromSpec(spec *cluster.Spe
 				APIVersion: troubleshootApiVersion,
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: fmt.Sprintf("%sBundle", spec.Name),
+				Name: spec.Name,
 			},
 			Spec: supportBundleSpec{},
 		},
@@ -83,7 +83,7 @@ func (f *eksaDiagnosticBundleFactory) DiagnosticBundleFromSpec(spec *cluster.Spe
 		WithDefaultCollectors().
 		WithLogTextAnalyzers()
 
-	err := b.WriteBundleConfig(b.clusterSpec.Name)
+	err := b.WriteBundleConfig()
 	if err != nil {
 		return nil, fmt.Errorf("error writing bundle config: %v", err)
 	}
