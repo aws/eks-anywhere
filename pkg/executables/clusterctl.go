@@ -334,7 +334,12 @@ func (c *Clusterctl) Upgrade(ctx context.Context, managementCluster *types.Clust
 		upgradeCommand = append(upgradeCommand, "--bootstrap", newBootstrapProvider)
 	}
 
-	if _, err := c.executable.Execute(ctx, upgradeCommand...); err != nil {
+	providerEnvMap, err := provider.EnvMap()
+	if err != nil {
+		return fmt.Errorf("failed generating provider env map for clusterctl upgrade: %v", err)
+	}
+
+	if _, err = c.executable.ExecuteWithEnv(ctx, providerEnvMap, upgradeCommand...); err != nil {
 		return fmt.Errorf("failed running upgrade apply with clusterctl: %v", err)
 	}
 
