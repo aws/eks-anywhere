@@ -141,8 +141,19 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 	if err != nil {
 		return nil, err
 	}
+
+	var etcdTemplateName string
+	if eksaCluster.Spec.ExternalEtcdConfiguration != nil {
+		etcd, err := r.Etcd(ctx, eksaCluster)
+		if err != nil {
+			return nil, err
+		}
+		etcdTemplateName = etcd.Spec.InfrastructureTemplate.Name
+	}
+
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.InfrastructureTemplate.Name
+		values["etcdTemplateName"] = etcdTemplateName
 	}
 	workersOpt := func(values map[string]interface{}) {
 		values["workloadTemplateName"] = mcDeployment.Spec.Template.Spec.InfrastructureRef.Name
