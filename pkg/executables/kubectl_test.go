@@ -589,7 +589,7 @@ func TestKubectlGetMachines(t *testing.T) {
 				"--namespace", constants.EksaSystemNamespace,
 			}).Return(*bytes.NewBufferString(fileContent), nil)
 
-			gotMachines, err := k.GetMachines(ctx, cluster)
+			gotMachines, err := k.GetMachines(ctx, cluster, cluster.Name)
 			if err != nil {
 				t.Fatalf("Kubectl.GetMachines() error = %v, want nil", err)
 			}

@@ -255,10 +255,10 @@ func (mr *MockClusterManagerMockRecorder) LoadManagement(arg0 interface{}) *gomo
 }
 
 // MoveCAPI mocks base method.
-func (m *MockClusterManager) MoveCAPI(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 ...types.NodeReadyChecker) error {
+func (m *MockClusterManager) MoveCAPI(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 string, arg4 ...types.NodeReadyChecker) error {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{arg0, arg1, arg2}
-	for _, a := range arg3 {
+	varargs := []interface{}{arg0, arg1, arg2, arg3}
+	for _, a := range arg4 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "MoveCAPI", varargs...)
@@ -267,9 +267,9 @@ func (m *MockClusterManager) MoveCAPI(arg0 context.Context, arg1, arg2 *types.Cl
 }
 
 // MoveCAPI indicates an expected call of MoveCAPI.
-func (mr *MockClusterManagerMockRecorder) MoveCAPI(arg0, arg1, arg2 interface{}, arg3 ...interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) MoveCAPI(arg0, arg1, arg2, arg3 interface{}, arg4 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{arg0, arg1, arg2}, arg3...)
+	varargs := append([]interface{}{arg0, arg1, arg2, arg3}, arg4...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveCAPI", reflect.TypeOf((*MockClusterManager)(nil).MoveCAPI), varargs...)
 }
 

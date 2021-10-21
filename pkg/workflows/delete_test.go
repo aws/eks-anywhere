@@ -97,7 +97,7 @@ func (c *deleteTestSetup) expectCleanupGitRepo() {
 func (c *deleteTestSetup) expectMoveManagement() {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().MoveCAPI(
-			c.ctx, c.workloadCluster, c.bootstrapCluster, gomock.Any(),
+			c.ctx, c.workloadCluster, c.bootstrapCluster, c.workloadCluster.Name, gomock.Any(),
 		),
 	)
 }
