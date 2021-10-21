@@ -852,9 +852,8 @@ func TestClusterManagerInstallCustomComponentsErrorReadingManifest(t *testing.T)
 }
 
 func TestClusterManagerInstallCustomComponentsErrorApplying(t *testing.T) {
-	tt := newTest(t)
+	tt := newTest(t, clustermanager.WithRetrier(retrier.NewWithMaxRetries(2, 0)))
 	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "testdata/testClusterSpec.yaml"
-	tt.clusterManager.Retrier = retrier.NewWithMaxRetries(2, 0)
 
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Not(gomock.Nil())).Return(errors.New("error from apply")).Times(2)
 
