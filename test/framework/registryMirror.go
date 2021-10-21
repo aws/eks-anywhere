@@ -12,18 +12,7 @@ const (
 	RegistryCACertVar   = "T_REGISTRY_MIRROR_CA_CERT"
 )
 
-var registryMirrorRequiredEnvVars = []string{RegistryEndpointVar}
-
-func WithRegistryMirrorEndpoint() E2ETestOpt {
-	return func(e *E2ETest) {
-		checkRequiredEnvVars(e.T, registryMirrorRequiredEnvVars)
-		registryEndpoint := os.Getenv(RegistryEndpointVar)
-
-		e.clusterFillers = append(e.clusterFillers,
-			api.WithRegistryMirror(registryEndpoint, ""),
-		)
-	}
-}
+var registryMirrorRequiredEnvVars = []string{RegistryEndpointVar, RegistryCACertVar}
 
 func WithRegistryMirrorEndpointAndCert() E2ETestOpt {
 	return func(e *E2ETest) {
