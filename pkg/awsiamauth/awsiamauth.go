@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"strings"
 
+	"sigs.k8s.io/yaml"
+
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
@@ -22,28 +25,50 @@ var awsIamAuthCaSecretTemplate string
 var awsIamAuthKubeconfigTemplate string
 
 type AwsIamAuth struct {
-	certgen crypto.CertificateGenerator
+	certgen         crypto.CertificateGenerator
+	templateBuilder *AwsIamAuthTemplateBuilder
 }
 
 func NewAwsIamAuth(certgen crypto.CertificateGenerator) *AwsIamAuth {
-	return &AwsIamAuth{certgen: certgen}
+	return &AwsIamAuth{
+		certgen:         certgen,
+		templateBuilder: &AwsIamAuthTemplateBuilder{},
+	}
 }
 
-func (a *AwsIamAuth) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error) {
+type AwsIamAuthTemplateBuilder struct{}
+
+func NewAwsIamAuthTemplateBuilder() *AwsIamAuthTemplateBuilder {
+	return &AwsIamAuthTemplateBuilder{}
+}
+
+func (a *AwsIamAuthTemplateBuilder) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error) {
 	data := map[string]string{
 		"image":       clusterSpec.VersionsBundle.KubeDistro.AwsIamAuthIamge.VersionedImage(),
 		"awsRegion":   clusterSpec.AWSIamConfig.Spec.AWSRegion,
 		"clusterID":   clusterSpec.AWSIamConfig.Spec.ClusterID,
 		"backendMode": strings.Join(clusterSpec.AWSIamConfig.Spec.BackendMode, ","),
-		"mapRoles":    clusterSpec.AWSIamConfig.Spec.MapRoles,
-		"mapUsers":    clusterSpec.AWSIamConfig.Spec.MapUsers,
 		"partition":   clusterSpec.AWSIamConfig.Spec.Partition,
 	}
+	mapRoles, err := a.mapRolesToYaml(clusterSpec.AWSIamConfig.Spec.MapRoles)
+	if err != nil {
+		return nil, fmt.Errorf("error generating aws-iam-authenticator manifest: %v", err)
+	}
+	data["mapRoles"] = mapRoles
+	mapUsers, err := a.mapUsersToYaml(clusterSpec.AWSIamConfig.Spec.MapUsers)
+	if err != nil {
+		return nil, fmt.Errorf("error generating aws-iam-authenticator manifest: %v", err)
+	}
+	data["mapUsers"] = mapUsers
 	awsIamAuthManifest, err := templater.Execute(awsIamAuthTemplate, data)
 	if err != nil {
 		return nil, fmt.Errorf("error generating aws-iam-authenticator manifest: %v", err)
 	}
 	return awsIamAuthManifest, nil
+}
+
+func (a *AwsIamAuth) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error) {
+	return a.templateBuilder.GenerateManifest(clusterSpec)
 }
 
 func (a *AwsIamAuth) GenerateCertKeyPairSecret() ([]byte, error) {
@@ -75,4 +100,32 @@ func (a *AwsIamAuth) GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, ser
 		return nil, fmt.Errorf("error generating aws-iam-authenticator kubeconfig content: %v", err)
 	}
 	return awsIamAuthKubeconfig, nil
+}
+
+func (a *AwsIamAuthTemplateBuilder) mapRolesToYaml(m []v1alpha1.MapRoles) (string, error) {
+	if len(m) == 0 {
+		return "", nil
+	}
+	b, err := yaml.Marshal(m)
+	if err != nil {
+		return "", fmt.Errorf("error marshalling AWSIamConfig MapRoles: %v", err)
+	}
+	s := string(b)
+	s = strings.TrimSuffix(s, "\n")
+
+	return s, nil
+}
+
+func (a *AwsIamAuthTemplateBuilder) mapUsersToYaml(m []v1alpha1.MapUsers) (string, error) {
+	if len(m) == 0 {
+		return "", nil
+	}
+	b, err := yaml.Marshal(m)
+	if err != nil {
+		return "", fmt.Errorf("error marshalling AWSIamConfig MapUsers: %v", err)
+	}
+	s := string(b)
+	s = strings.TrimSuffix(s, "\n")
+
+	return s, nil
 }

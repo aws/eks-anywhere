@@ -88,7 +88,21 @@ func givenClusterSpec() *cluster.Spec {
 				AWSRegion:   "test-region",
 				BackendMode: []string{"mode1", "mode2"},
 				ClusterID:   "test-cluster",
-				Partition:   "test",
+				MapRoles: []v1alpha1.MapRoles{
+					{
+						RoleARN:  "test-role-arn",
+						Username: "test",
+						Groups:   []string{"group1", "group2"},
+					},
+				},
+				MapUsers: []v1alpha1.MapUsers{
+					{
+						UserARN:  "test-user-arn",
+						Username: "test",
+						Groups:   []string{"group1", "group2"},
+					},
+				},
+				Partition: "test",
 			},
 		}
 	})
