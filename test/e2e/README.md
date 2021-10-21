@@ -61,6 +61,14 @@ T_HTTPS_PROXY
 T_NO_PROXY
 ```
 
+# Registry test requisites
+The following env variables need to be set:
+
+```sh
+T_REGISTRY_MIRROR_ENDPOINT
+T_REGISTRY_MIRROR_CA_CERT
+```
+
 # Adding new tests
 When adding new tests to run in our postsubmit environment we need to bump up the total number of EC2s we create for the tests.
 
