@@ -238,7 +238,7 @@ func (c *upgradeTestSetup) expectVerifyClusterSpecChanged() {
 
 func (c *upgradeTestSetup) expectSaveLogs() {
 	gomock.InOrder(
-		c.clusterManager.EXPECT().SaveLogs(c.ctx, c.bootstrapCluster).Return(nil),
+		c.clusterManager.EXPECT().SaveLogsBootstrapCluster(c.ctx, c.bootstrapCluster).Return(nil),
 	)
 }
 

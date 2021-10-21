@@ -23,7 +23,8 @@ type ClusterManager interface {
 	InstallCAPI(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
 	InstallNetworking(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	InstallStorageClass(ctx context.Context, cluster *types.Cluster, provider providers.Provider) error
-	SaveLogs(ctx context.Context, cluster *types.Cluster) error
+	SaveLogsBootstrapCluster(ctx context.Context, cluster *types.Cluster) error
+	SaveLogsWorkloadCluster(ctx context.Context, provider providers.Provider, spec *cluster.Spec, cluster *types.Cluster) error
 	InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
 	CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error
 	PauseEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error

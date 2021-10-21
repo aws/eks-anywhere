@@ -182,15 +182,35 @@ func TestClusterManagerCAPIWaitForDeploymentExternalEtcd(t *testing.T) {
 
 func TestClusterManagerSaveLogsSuccess(t *testing.T) {
 	ctx := context.Background()
-	cluster := &types.Cluster{Name: "cluster-name", KubeconfigFile: "test"}
+	clusterName := "cluster-name"
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Name = clusterName
+		s.Spec.ControlPlaneConfiguration.Count = 3
+		s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+	})
+
+	bootstrapCluster := &types.Cluster{
+		Name:           "bootstrap",
+		KubeconfigFile: "bootstrap.kubeconfig",
+	}
+
+	workloadCluster := &types.Cluster{
+		Name:           "workload",
+		KubeconfigFile: "workload.kubeconfig",
+	}
 
 	c, m := newClusterManager(t)
 	b := m.diagnosticsBundle
-	b.EXPECT().CollectAndAnalyze(ctx, gomock.AssignableToTypeOf(&time.Time{}))
-	m.diagnosticsFactory.EXPECT().DiagnosticBundleBootstrapCluster(cluster.KubeconfigFile).Return(b, nil)
+	b.EXPECT().CollectAndAnalyze(ctx, gomock.AssignableToTypeOf(&time.Time{})).Times(2)
+	m.diagnosticsFactory.EXPECT().DiagnosticBundleBootstrapCluster(bootstrapCluster.KubeconfigFile).Return(b, nil)
+	m.diagnosticsFactory.EXPECT().DiagnosticBundleFromSpec(clusterSpec, m.provider, workloadCluster.KubeconfigFile).Return(b, nil)
 
-	if err := c.SaveLogs(ctx, cluster); err != nil {
-		t.Errorf("ClusterManager.SaveLogs() error = %v, wantErr nil", err)
+	if err := c.SaveLogsBootstrapCluster(ctx, bootstrapCluster); err != nil {
+		t.Errorf("ClusterManager.SaveLogsBootstrapCluster() error = %v, wantErr nil", err)
+	}
+
+	if err := c.SaveLogsWorkloadCluster(ctx, m.provider, clusterSpec, workloadCluster); err != nil {
+		t.Errorf("ClusterManager.SaveLogsWorkloadCluster() error = %v, wantErr nil", err)
 	}
 }
 

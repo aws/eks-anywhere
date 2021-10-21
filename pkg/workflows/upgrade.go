@@ -60,7 +60,7 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, workloadCl
 	}
 	err := task.NewTaskRunner(&setupAndValidateTasks{}).RunTask(ctx, commandContext)
 	if err != nil {
-		_ = commandContext.ClusterManager.SaveLogs(ctx, commandContext.BootstrapCluster)
+		_ = commandContext.ClusterManager.SaveLogsBootstrapCluster(ctx, commandContext.BootstrapCluster)
 	}
 	return err
 }

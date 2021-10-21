@@ -53,7 +53,7 @@ func newDiagnosticBundleBootstrapCluster(af AnalyzerFactory, cf CollectorFactory
 				APIVersion: troubleshootApiVersion,
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "BootstrapClusterBundle",
+				Name: "bootstrapcluster",
 			},
 			Spec: supportBundleSpec{},
 		},
@@ -79,7 +79,8 @@ func newDiagnosticBundleBootstrapCluster(af AnalyzerFactory, cf CollectorFactory
 func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeValue *time.Time) error {
 	e.createDiagnosticNamespaceAndRoles(ctx)
 
-	logger.Info("Collecting support bundle from cluster, this can take a while ⏳", "bundle", e.bundlePath, "since", sinceTimeValue, "kubeconfig", e.kubeconfig)
+	collectionMsg := fmt.Sprintf("Collecting support bundle from cluster %s, this can take a while ⏳", e.clusterName())
+	logger.Info(collectionMsg, "bundle", e.bundlePath, "since", sinceTimeValue, "kubeconfig", e.kubeconfig)
 	archivePath, err := e.client.Collect(ctx, e.bundlePath, sinceTimeValue, e.kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to Collect support bundle: %v", err)
@@ -98,7 +99,7 @@ func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeV
 		return fmt.Errorf("error while analyzing bundle: %v", err)
 	}
 
-	fmt.Println(string(yamlAnalysis))
+	logger.V(4).Info(string(yamlAnalysis))
 	analysisPath, err := e.WriteAnalysis(e.clusterName(), yamlAnalysis)
 	if err != nil {
 		return err
