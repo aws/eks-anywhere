@@ -85,6 +85,14 @@ func (pc *DummyProviderGovcClient) LibraryElementExists(ctx context.Context, lib
 	return true, nil
 }
 
+func (pc *DummyProviderGovcClient) GetLibraryElementContentVersion(ctx context.Context, element string) (string, error) {
+	return "", nil
+}
+
+func (pc *DummyProviderGovcClient) DeleteLibraryElement(ctx context.Context, element string) error {
+	return nil
+}
+
 func (pc *DummyProviderGovcClient) CreateLibrary(ctx context.Context, datastore, library string) error {
 	return nil
 }

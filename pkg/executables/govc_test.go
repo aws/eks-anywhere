@@ -269,6 +269,63 @@ func TestLibraryElementExistsError(t *testing.T) {
 	}
 }
 
+func TestGetLibraryElementContentVersionSuccess(t *testing.T) {
+	ctx := context.Background()
+	response := `[
+		{
+			"content_version": "1"
+		},
+	]`
+	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
+
+	g, executable, env := setup(t)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.info", "-json", libraryElement).Return(*bytes.NewBufferString(response), nil)
+
+	_, err := g.GetLibraryElementContentVersion(ctx, libraryElement)
+	if err != nil {
+		t.Fatalf("Govc.GetLibraryElementContentVersion() err = %v, want err nil", err)
+	}
+}
+
+func TestGetLibraryElementContentVersionError(t *testing.T) {
+	ctx := context.Background()
+	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
+
+	g, executable, env := setup(t)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.info", "-json", libraryElement).Return(bytes.Buffer{}, errors.New("error from execute with env"))
+
+	_, err := g.GetLibraryElementContentVersion(ctx, libraryElement)
+	if err == nil {
+		t.Fatal("Govc.GetLibraryElementContentVersion() err = nil, want err not nil")
+	}
+}
+
+func TestDeleteLibraryElementSuccess(t *testing.T) {
+	ctx := context.Background()
+	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
+
+	g, executable, env := setup(t)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.rm", libraryElement).Return(*bytes.NewBufferString(""), nil)
+
+	err := g.DeleteLibraryElement(ctx, libraryElement)
+	if err != nil {
+		t.Fatalf("Govc.DeleteLibraryElement() err = %v, want err nil", err)
+	}
+}
+
+func TestDeleteLibraryElementError(t *testing.T) {
+	ctx := context.Background()
+	libraryElement := "/eks-a-templates/ubuntu-2004-kube-v1.19.6"
+
+	g, executable, env := setup(t)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.rm", libraryElement).Return(bytes.Buffer{}, errors.New("error from execute with env"))
+
+	err := g.DeleteLibraryElement(ctx, libraryElement)
+	if err == nil {
+		t.Fatal("Govc.DeleteLibraryElement() err = nil, want err not nil")
+	}
+}
+
 func TestGovcTemplateHasSnapshot(t *testing.T) {
 	_, writer := test.NewWriter(t)
 	template := "/SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6"
@@ -513,7 +570,7 @@ func TestCreateLibrarySuccess(t *testing.T) {
 	ctx := context.Background()
 
 	g, executable, env := setup(t)
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.create", "-ds", datastore, templateLibrary).Return(*bytes.NewBufferString("testing"), nil).MaxTimes(5)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.create", "-ds", datastore, templateLibrary).Return(*bytes.NewBufferString("testing"), nil)
 
 	err := g.CreateLibrary(ctx, datastore, templateLibrary)
 	if err != nil {
@@ -526,7 +583,7 @@ func TestCreateLibraryError(t *testing.T) {
 	ctx := context.Background()
 
 	g, executable, env := setup(t)
-	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.create", "-ds", datastore, templateLibrary).Return(bytes.Buffer{}, errors.New("error from execute with env")).MaxTimes(5)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "library.create", "-ds", datastore, templateLibrary).Return(bytes.Buffer{}, errors.New("error from execute with env"))
 
 	err := g.CreateLibrary(ctx, datastore, templateLibrary)
 	if err == nil {

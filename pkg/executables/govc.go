@@ -130,6 +130,41 @@ func (g *Govc) LibraryElementExists(ctx context.Context, library string) (bool, 
 	return response.Len() > 0, nil
 }
 
+type libElement struct {
+	ContentVersion string `json:"content_version"`
+}
+
+func (g *Govc) GetLibraryElementContentVersion(ctx context.Context, element string) (string, error) {
+	response, err := g.exec(ctx, "library.info", "-json", element)
+	if err != nil {
+		return "", fmt.Errorf("govc failed getting library element info: %v", err)
+	}
+	elementInfoJson := response.String()
+	if elementInfoJson == "null" {
+		return "-1", nil
+	}
+
+	elementInfo := make([]libElement, 0)
+	err = yaml.Unmarshal([]byte(elementInfoJson), &elementInfo)
+	if err != nil {
+		return "", fmt.Errorf("error unmarshalling library element info: %v", err)
+	}
+
+	if len(elementInfo) == 0 {
+		return "", fmt.Errorf("govc failed to return element info for library element %v", element)
+	}
+	return elementInfo[0].ContentVersion, nil
+}
+
+func (g *Govc) DeleteLibraryElement(ctx context.Context, element string) error {
+	_, err := g.exec(ctx, "library.rm", element)
+	if err != nil {
+		return fmt.Errorf("govc failed deleting library item: %v", err)
+	}
+
+	return nil
+}
+
 func (g *Govc) ResizeDisk(ctx context.Context, template, diskName string, diskSizeInGB int) error {
 	_, err := g.exec(ctx, "vm.disk.change", "-vm", template, "-disk.name", diskName, "-size", strconv.Itoa(diskSizeInGB)+"G")
 	if err != nil {
@@ -199,14 +234,10 @@ func (g *Govc) GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1a
 }
 
 func (g *Govc) CreateLibrary(ctx context.Context, datastore, library string) error {
-	err := g.retrier.Retry(func() error {
-		if _, err := g.exec(ctx, "library.create", "-ds", datastore, library); err != nil {
-			return fmt.Errorf("error creating library %s: %v", library, err)
-		}
-		return nil
-	})
-
-	return err
+	if _, err := g.exec(ctx, "library.create", "-ds", datastore, library); err != nil {
+		return fmt.Errorf("error creating library %s: %v", library, err)
+	}
+	return nil
 }
 
 func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string, resizeDisk2 bool) error {
