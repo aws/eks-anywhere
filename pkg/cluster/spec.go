@@ -193,11 +193,13 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 			s.OIDCConfig = oidcConfig
 		case eksav1alpha1.AWSIamConfigKind:
 			if features.IsActive(features.AwsIamAuthenticator()) {
-				awsIamConfig, err := eksav1alpha1.GetAndValidateAWSIamConfig(clusterConfigPath, identityProvider.Name)
+				awsIamConfig, err := eksav1alpha1.GetAndValidateAWSIamConfig(clusterConfigPath, identityProvider.Name, clusterConfig)
 				if err != nil {
 					return nil, err
 				}
 				s.AWSIamConfig = awsIamConfig
+			} else {
+				return nil, fmt.Errorf("unsupported kind: %s", eksav1alpha1.AWSIamConfigKind)
 			}
 		}
 	}

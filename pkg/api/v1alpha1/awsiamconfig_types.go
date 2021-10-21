@@ -13,19 +13,30 @@ type AWSIamConfigSpec struct {
 	// The server searches for mappings in order
 	BackendMode []string `json:"backendMode"`
 	// ClusterID is a unique-per-cluster identifier for aws-iam-authenticator server
-	ClusterID string `json:"clusterID"`
-	// MapRoles defines IAM role to a username and set of groups mapping using EKSConfigMap BackendMode
-	// Each key must match AWS EKS Style ConfigMap mapRoles
 	// +kubebuilder:validation:Optional
-	MapRoles string `json:"mapRoles,omitempty"`
-	// MapUsers defines IAM user to a username and set of groups mapping using EKSConfigMap BackendMode
-	// Each key must match AWS EKS Style ConfigMap mapUsers
+	ClusterID string `json:"clusterID,omitempty"`
 	// +kubebuilder:validation:Optional
-	MapUsers string `json:"mapUsers,omitempty"`
+	MapRoles []MapRoles `json:"mapRoles,omitempty"`
+	// +kubebuilder:validation:Optional
+	MapUsers []MapUsers `json:"mapUsers,omitempty"`
 	// Partition defines the AWS partition on which the IAM roles exist
 	// +kubebuilder:default:=aws
 	// +kubebuilder:validation:Optional
 	Partition string `json:"partition,omitempty"`
+}
+
+// MapRoles defines IAM role to a username and set of groups mapping using EKSConfigMap BackendMode
+type MapRoles struct {
+	RoleARN  string   `json:"roleARN"`
+	Username string   `json:"username"`
+	Groups   []string `json:"groups,omitempty"`
+}
+
+// MapUsers defines IAM role to a username and set of groups mapping using EKSConfigMap BackendMode
+type MapUsers struct {
+	UserARN  string   `json:"userARN"`
+	Username string   `json:"username"`
+	Groups   []string `json:"groups,omitempty"`
 }
 
 func (e *AWSIamConfigSpec) Equal(n *AWSIamConfigSpec) bool {
@@ -39,12 +50,6 @@ func (e *AWSIamConfigSpec) Equal(n *AWSIamConfigSpec) bool {
 		return false
 	}
 	if e.ClusterID != n.ClusterID {
-		return false
-	}
-	if e.MapRoles != n.MapRoles {
-		return false
-	}
-	if e.MapUsers != n.MapUsers {
 		return false
 	}
 	if e.Partition != n.Partition {

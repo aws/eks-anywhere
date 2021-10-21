@@ -8,6 +8,7 @@ import (
 )
 
 func TestGetAndValidateAWSIamConfig(t *testing.T) {
+	c := &Cluster{}
 	tests := []struct {
 		testName         string
 		fileName         string
@@ -45,7 +46,7 @@ func TestGetAndValidateAWSIamConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			got, err := GetAndValidateAWSIamConfig(tt.fileName, tt.refName)
+			got, err := GetAndValidateAWSIamConfig(tt.fileName, tt.refName, c)
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("GetAndValidateAWSIamConfig() error = %v\nwantErr %v", err, tt.wantErr)
 			}
