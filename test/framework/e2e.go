@@ -50,7 +50,6 @@ type E2ETest struct {
 	OIDCConfig            *v1alpha1.OIDCConfig
 	GitOpsConfig          *v1alpha1.GitOpsConfig
 	ProxyConfig           *v1alpha1.ProxyConfiguration
-	RegistryMirrorConfig  *v1alpha1.RegistryMirrorConfiguration
 }
 
 type E2ETestOpt func(e *E2ETest)

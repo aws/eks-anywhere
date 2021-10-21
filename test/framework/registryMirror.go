@@ -8,16 +8,16 @@ import (
 )
 
 const (
-	registryEndpointVar = "T_REGISTRY_MIRROR_ENDPOINT"
-	registryCACertVar   = "T_REGISTRY_MIRROR_CA_CERT"
+	RegistryEndpointVar = "T_REGISTRY_MIRROR_ENDPOINT"
+	RegistryCACertVar   = "T_REGISTRY_MIRROR_CA_CERT"
 )
 
-var registryMirrorRequiredEnvVars = []string{registryEndpointVar}
+var registryMirrorRequiredEnvVars = []string{RegistryEndpointVar}
 
 func WithRegistryMirrorEndpoint() E2ETestOpt {
 	return func(e *E2ETest) {
 		checkRequiredEnvVars(e.T, registryMirrorRequiredEnvVars)
-		registryEndpoint := os.Getenv(registryEndpointVar)
+		registryEndpoint := os.Getenv(RegistryEndpointVar)
 
 		e.clusterFillers = append(e.clusterFillers,
 			api.WithRegistryMirror(registryEndpoint, ""),
@@ -27,9 +27,9 @@ func WithRegistryMirrorEndpoint() E2ETestOpt {
 
 func WithRegistryMirrorEndpointAndCert() E2ETestOpt {
 	return func(e *E2ETest) {
-		checkRequiredEnvVars(e.T, append(registryMirrorRequiredEnvVars, registryCACertVar))
-		registryEndpoint := os.Getenv(registryEndpointVar)
-		registryCACert, err := base64.StdEncoding.DecodeString(os.Getenv(registryCACertVar))
+		checkRequiredEnvVars(e.T, append(registryMirrorRequiredEnvVars, RegistryCACertVar))
+		registryEndpoint := os.Getenv(RegistryEndpointVar)
+		registryCACert, err := base64.StdEncoding.DecodeString(os.Getenv(RegistryCACertVar))
 		if err == nil {
 			e.clusterFillers = append(e.clusterFillers,
 				api.WithRegistryMirror(registryEndpoint, string(registryCACert)),
