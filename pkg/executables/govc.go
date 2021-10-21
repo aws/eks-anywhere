@@ -149,6 +149,10 @@ func (g *Govc) GetLibraryElementContentVersion(ctx context.Context, element stri
 	if err != nil {
 		return "", fmt.Errorf("error unmarshalling library element info: %v", err)
 	}
+
+	if len(elementInfo) == 0 {
+		return "", fmt.Errorf("govc failed to return element info for library element %v", element)
+	}
 	return elementInfo[0].ContentVersion, nil
 }
 
