@@ -11,7 +11,7 @@ type client struct {
 	ClusterClient
 }
 
-func newClient(clusterClient ClusterClient) *client {
+func NewClient(clusterClient ClusterClient) *client {
 	return &client{ClusterClient: clusterClient}
 }
 

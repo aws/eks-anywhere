@@ -92,6 +92,7 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents() {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, c.workloadCluster).Return(currentSpec, nil),
 		c.capiUpgrader.EXPECT().Upgrade(c.ctx, c.workloadCluster, c.provider, currentSpec, c.clusterSpec),
+		c.clusterManager.EXPECT().Upgrade(c.ctx, c.workloadCluster, currentSpec, c.clusterSpec),
 	)
 }
 

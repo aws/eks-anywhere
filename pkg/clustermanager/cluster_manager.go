@@ -41,6 +41,7 @@ const (
 )
 
 type ClusterManager struct {
+	*Upgrader
 	clusterClient   *retrierClient
 	writer          filewriter.FileWriter
 	networking      Networking
@@ -85,8 +86,10 @@ type ClusterManagerOpt func(*ClusterManager)
 
 func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, opts ...ClusterManagerOpt) *ClusterManager {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
+	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
-		clusterClient:   newRetrierClient(newClient(clusterClient), retrier),
+		Upgrader:        NewUpgrader(retrierClient),
+		clusterClient:   retrierClient,
 		writer:          writer,
 		networking:      networking,
 		Retrier:         retrier,
