@@ -111,7 +111,7 @@ func (c *deleteTestSetup) expectCleanupProvider() {
 
 func (c *deleteTestSetup) run() error {
 	// ctx context.Context, workloadCluster *types.Cluster, forceCleanup bool
-	return c.workflow.Run(c.ctx, c.workloadCluster, c.clusterSpec, c.forceCleanup)
+	return c.workflow.Run(c.ctx, c.workloadCluster, c.clusterSpec, c.forceCleanup, "")
 }
 
 func TestDeleteRunSuccess(t *testing.T) {

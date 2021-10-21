@@ -205,9 +205,9 @@ func (c *createTestSetup) expectInstallMHC() {
 
 func (c *createTestSetup) expectLoadManagementCluster(kconfig string, name string) {
 	c.clusterManager.EXPECT().LoadManagement(kconfig).Return(&types.Cluster{
-		Name:           name,
-		KubeconfigFile: kconfig,
-		ExistingMgnt:   true,
+		Name:               name,
+		KubeconfigFile:     kconfig,
+		ExistingManagement: true,
 	}, nil)
 }
 
@@ -258,7 +258,7 @@ func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
 	managementKubeconfig := "test.kubeconfig"
 	test := newCreateTest(t)
 
-	test.bootstrapCluster.ExistingMgnt = true
+	test.bootstrapCluster.ExistingManagement = true
 	test.bootstrapCluster.KubeconfigFile = managementKubeconfig
 	test.bootstrapCluster.Name = "cluster-name"
 
