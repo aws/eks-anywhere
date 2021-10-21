@@ -139,10 +139,9 @@ func (f *Flux) Reconcile(ctx context.Context, cluster *types.Cluster, gitOpsConf
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
 	}
 
-	_, err := f.executable.Execute(ctx, params...)
-	if err != nil {
+	if _, err := f.executable.Execute(ctx, params...); err != nil {
 		return fmt.Errorf("error executing flux reconcile: %v", err)
 	}
 
-	return err
+	return nil
 }
