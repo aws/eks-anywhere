@@ -24,10 +24,11 @@ import (
 var diagnosticCollectorRbac []byte
 
 const (
-	troubleshootApiVersion    = "troubleshoot.sh/v1beta2"
-	generatedBundleNameFormat = "%s-%s-bundle.yaml"
-	maxRetries                = 5
-	backOffPeriod             = 5 * time.Second
+	troubleshootApiVersion      = "troubleshoot.sh/v1beta2"
+	generatedBundleNameFormat   = "%s-%s-bundle.yaml"
+	generatedAnalysisNameFormat = "%s-%s-analysis.yaml"
+	maxRetries                  = 5
+	backOffPeriod               = 5 * time.Second
 )
 
 type EksaDiagnosticBundle struct {
@@ -98,6 +99,11 @@ func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeV
 	}
 
 	fmt.Println(string(yamlAnalysis))
+	analysisPath, err := e.WriteAnalysis(e.clusterName(), yamlAnalysis)
+	if err != nil {
+		return err
+	}
+	logger.Info("Analysis output generated", "path", analysisPath)
 
 	e.deleteDiagnosticNamespaceAndRoles(ctx)
 	return nil
@@ -125,6 +131,17 @@ func (e *EksaDiagnosticBundle) WriteBundleConfig(clusterName string) error {
 	}
 	logger.V(3).Info("bundle config written", "path", e.bundlePath)
 	return nil
+}
+
+func (e *EksaDiagnosticBundle) WriteAnalysis(clusterName string, analysis []byte) (path string, err error) {
+	timestamp := time.Now().Format(time.RFC3339)
+	filename := fmt.Sprintf(generatedAnalysisNameFormat, clusterName, timestamp)
+	analysisPath, err := e.writer.Write(filename, analysis)
+	if err != nil {
+		return "", err
+	}
+	e.bundlePath = analysisPath
+	return analysisPath, nil
 }
 
 func (e *EksaDiagnosticBundle) WithDefaultCollectors() *EksaDiagnosticBundle {
@@ -171,6 +188,13 @@ func (e *EksaDiagnosticBundle) WithMachineConfigs(configs []providers.MachineCon
 func (e *EksaDiagnosticBundle) WithLogTextAnalyzers() *EksaDiagnosticBundle {
 	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.EksaLogTextAnalyzers(e.bundle.Spec.Collectors)...)
 	return e
+}
+
+func (e *EksaDiagnosticBundle) clusterName() string {
+	if e.clusterSpec == nil {
+		return "cluster"
+	}
+	return e.clusterSpec.ClusterName
 }
 
 // createDiagnosticNamespace attempts to create the namespace eksa-diagnostics and associated RBAC objects.
