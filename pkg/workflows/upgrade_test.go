@@ -95,6 +95,11 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents() {
 	)
 }
 
+func (c *upgradeTestSetup) expectUpgradeFluxComponents() {
+	currentSpec := &cluster.Spec{}
+	c.addonManager.EXPECT().Upgrade(c.ctx, c.workloadCluster, currentSpec, c.clusterSpec)
+}
+
 func (c *upgradeTestSetup) expectCreateBootstrap() {
 	opts := []bootstrapper.BootstrapClusterOption{
 		bootstrapper.WithDefaultCNIDisabled(), bootstrapper.WithExtraDockerMounts(),
@@ -273,6 +278,7 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets()
 	test.expectUpgradeCoreComponents()
+	test.expectUpgradeFluxComponents()
 	test.expectVerifyClusterSpecNoChanges()
 	test.expectPauseEKSAControllerReconcileNotToBeCalled()
 	test.expectPauseGitOpsKustomizationNotToBeCalled()
@@ -290,6 +296,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets()
 	test.expectUpgradeCoreComponents()
+	test.expectUpgradeFluxComponents()
 	test.expectVerifyClusterSpecChanged()
 	test.expectPauseEKSAControllerReconcile()
 	test.expectPauseGitOpsKustomization()
@@ -319,6 +326,7 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets()
 	test.expectUpgradeCoreComponents()
+	test.expectUpgradeFluxComponents()
 	test.expectVerifyClusterSpecChanged()
 	test.expectPauseEKSAControllerReconcile()
 	test.expectPauseGitOpsKustomization()

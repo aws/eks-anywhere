@@ -124,3 +124,24 @@ func (f *Flux) ResumeKustomization(ctx context.Context, cluster *types.Cluster, 
 
 	return err
 }
+
+func (f *Flux) Reconcile(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error {
+	c := gitOpsConfig.Spec.Flux.Github
+	params := []string{"reconcile", "source", "git"}
+
+	if c.FluxSystemNamespace != "" {
+		params = append(params, c.FluxSystemNamespace, "--namespace", c.FluxSystemNamespace)
+	} else {
+		params = append(params, "flux-system")
+	}
+
+	if cluster.KubeconfigFile != "" {
+		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
+	}
+
+	if _, err := f.executable.Execute(ctx, params...); err != nil {
+		return fmt.Errorf("error executing flux reconcile: %v", err)
+	}
+
+	return nil
+}
