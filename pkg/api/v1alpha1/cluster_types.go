@@ -281,6 +281,42 @@ func (s *Cluster) SetManagedBy(managementClusterName string) {
 	s.Annotations[managementAnnotation] = managementClusterName
 }
 
+func (c *Cluster) MachineConfigRefs() []Ref {
+	machineConfigRefMap := make(refSet, 1)
+
+	machineConfigRefMap.add(*c.Spec.ControlPlaneConfiguration.MachineGroupRef)
+
+	for _, m := range c.Spec.WorkerNodeGroupConfigurations {
+		machineConfigRefMap.add(*m.MachineGroupRef)
+	}
+
+	if c.Spec.ExternalEtcdConfiguration != nil {
+		machineConfigRefMap.add(*c.Spec.ExternalEtcdConfiguration.MachineGroupRef)
+	}
+
+	return machineConfigRefMap.toSlice()
+}
+
+type refSet map[Ref]struct{}
+
+func (r refSet) add(ref Ref) bool {
+	if _, present := r[ref]; !present {
+		r[ref] = struct{}{}
+		return true
+	} else {
+		return false
+	}
+}
+
+func (r refSet) toSlice() []Ref {
+	refs := make([]Ref, 0, len(r))
+	for ref := range r {
+		refs = append(refs, ref)
+	}
+
+	return refs
+}
+
 func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
 	config := &ClusterGenerate{
 		TypeMeta: c.TypeMeta,

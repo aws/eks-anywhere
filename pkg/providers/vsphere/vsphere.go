@@ -1480,8 +1480,13 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 	oSpec := prevDatacenter.Spec
 	nSpec := datacenter.Spec
 
-	for _, machineConfig := range p.machineConfigs {
-		err := p.validateMachineConfigImmutability(ctx, cluster, machineConfig, clusterSpec)
+	for _, machineConfigRef := range clusterSpec.MachineConfigRefs() {
+		machineConfig, ok := p.machineConfigs[machineConfigRef.Name]
+		if !ok {
+			return fmt.Errorf("cannot find machine config %s in vsphere provider machine configs", machineConfigRef.Name)
+		}
+
+		err = p.validateMachineConfigImmutability(ctx, cluster, machineConfig, clusterSpec)
 		if err != nil {
 			return err
 		}
