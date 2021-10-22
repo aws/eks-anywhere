@@ -157,6 +157,9 @@ func (e *E2ESession) downloadRequiredFileInInstance(file string) error {
 }
 
 func (e *E2ESession) uploadLogFilesFromInstance(testName string) {
+	if !e.ifLogsExist() {
+		return
+	}
 	logger.V(1).Info("Uploading log files to s3 bucket")
 	testNameFolder := testName + e.instanceId
 	command := fmt.Sprintf("aws s3 cp /home/e2e/%s/logs s3://%s/logs/%s --recursive", e.instanceId, e.storageBucket, testNameFolder)
@@ -180,4 +183,12 @@ func (e *E2ESession) downloadRequiredFilesInInstance() error {
 	}
 
 	return nil
+}
+
+func (e *E2ESession) ifLogsExist() bool {
+	logsFolder := "/home/e2e/" + e.instanceId + "/logs/"
+
+	command := fmt.Sprintf("stat %s", logsFolder)
+	err := ssm.Run(e.session, e.instanceId, command)
+	return err == nil
 }
