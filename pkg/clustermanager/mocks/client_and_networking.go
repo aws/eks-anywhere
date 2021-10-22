@@ -141,10 +141,10 @@ func (mr *MockClusterClientMockRecorder) GetBundles(arg0, arg1, arg2, arg3 inter
 }
 
 // GetClusterCATlsCert mocks base method.
-func (m *MockClusterClient) GetClusterCATlsCert(arg0 context.Context, arg1 *types.Cluster, arg2 string) (string, error) {
+func (m *MockClusterClient) GetClusterCATlsCert(arg0 context.Context, arg1 *types.Cluster, arg2 string) ([]byte, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClusterCATlsCert", arg0, arg1, arg2)
-	ret0, _ := ret[0].(string)
+	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

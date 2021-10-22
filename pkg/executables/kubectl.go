@@ -419,15 +419,15 @@ func (k *Kubectl) GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (
 	return stdOut.String(), nil
 }
 
-func (k *Kubectl) GetClusterCATlsCert(ctx context.Context, cluster *types.Cluster, namespace string) (string, error) {
+func (k *Kubectl) GetClusterCATlsCert(ctx context.Context, cluster *types.Cluster, namespace string) ([]byte, error) {
 	secretName := fmt.Sprintf("%s-ca", cluster.Name)
 	params := []string{"get", "secret", secretName, "--kubeconfig", cluster.KubeconfigFile, "-o", `jsonpath={.data.tls\.crt}`, "--namespace", namespace}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
-		return "", fmt.Errorf("error getting cluster ca tls cert: %v", err)
+		return nil, fmt.Errorf("error getting cluster ca tls cert: %v", err)
 	}
 
-	return stdOut.String(), nil
+	return stdOut.Bytes(), nil
 }
 
 func (k *Kubectl) Version(ctx context.Context, cluster *types.Cluster) (*VersionResponse, error) {
