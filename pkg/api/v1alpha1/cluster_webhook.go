@@ -68,18 +68,6 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 	return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 }
 
-func managementEqual(n, o *bool) bool {
-	var p, c bool
-	if n == nil || *n {
-		c = true
-	}
-
-	if o == nil || *o {
-		p = true
-	}
-	return p == c
-}
-
 func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 	if old.IsReconcilePaused() {
 		return nil
@@ -87,7 +75,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 
 	var allErrs field.ErrorList
 
-	if !managementEqual(new.Spec.Management, old.Spec.Management) {
+	if !old.ManagementClusterEqual(new) {
 		allErrs = append(
 			allErrs,
 			field.Invalid(field.NewPath("spec", "Management"), new.Spec.Management, "field is immutable"))
@@ -144,7 +132,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 			field.Invalid(field.NewPath("spec", "IdentityProviderRefs"), new.Spec.IdentityProviderRefs, "field is immutable"))
 	}
 
-	if old.Spec.Management != nil && !*old.Spec.Management {
+	if !old.IsSelfManaged() {
 		clusterlog.Info("Cluster config is associated with workload cluster")
 		return allErrs
 	}

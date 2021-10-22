@@ -274,8 +274,8 @@ func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
 	test.expectLoadManagementCluster(managementKubeconfig, test.bootstrapCluster.Name)
 	err := test.run(managementKubeconfig)
 
-	if test.clusterSpec.Spec.Management == nil || *test.clusterSpec.Spec.Management {
-		t.Fatalf("Error setting management flag, expected Spec.management %v got %t", false, *test.clusterSpec.Spec.Management)
+	if test.clusterSpec.IsSelfManaged() {
+		t.Fatal("Error setting management, expected cluster to not be self-managed")
 	}
 
 	if err != nil {
