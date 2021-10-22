@@ -29,18 +29,16 @@ type ClusterGenerateOpt func(config *ClusterGenerate)
 
 // Used for generating yaml for generate clusterconfig command
 func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *ClusterGenerate {
-	isManagement := true
-	config := &ClusterGenerate{
+	clusterConfig := &Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       ClusterKind,
 			APIVersion: SchemeBuilder.GroupVersion.String(),
 		},
-		ObjectMeta: ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterName,
 		},
 		Spec: ClusterSpec{
 			KubernetesVersion: Kube121,
-			Management:        &isManagement,
 			ClusterNetwork: ClusterNetwork{
 				Pods: Pods{
 					CidrBlocks: []string{"192.168.0.0/16"},
@@ -52,6 +50,9 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 			},
 		},
 	}
+	clusterConfig.SetSelfManaged()
+	config := clusterConfig.ConvertConfigToConfigGenerateStruct()
+
 	for _, opt := range opts {
 		opt(config)
 	}
@@ -136,7 +137,6 @@ func WithEtcdMachineGroupRef(ref ProviderRefAccessor) ClusterGenerateOpt {
 }
 
 func NewCluster(clusterName string) *Cluster {
-	isManagement := true
 	c := &Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       ClusterKind,
@@ -147,10 +147,10 @@ func NewCluster(clusterName string) *Cluster {
 		},
 		Spec: ClusterSpec{
 			KubernetesVersion: Kube119,
-			Management:        &isManagement,
 		},
 		Status: ClusterStatus{},
 	}
+	c.SetSelfManaged()
 
 	return c
 }

@@ -51,17 +51,17 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, forceCleanu
 		Rollback:       false,
 		Writer:         c.writer,
 	}
-	mgmtCluster := true
+
 	if kubeconfig != "" {
 		managementCluster, err := commandContext.ClusterManager.LoadManagement(kubeconfig)
 		if err != nil {
 			return err
 		}
-		mgmtCluster = false
 		commandContext.BootstrapCluster = managementCluster
 		commandContext.ClusterSpec.SetManagedBy(managementCluster.Name)
+	} else {
+		commandContext.ClusterSpec.SetSelfManaged()
 	}
-	commandContext.ClusterSpec.Spec.Management = &mgmtCluster
 
 	err := task.NewTaskRunner(&SetAndValidateTask{}).RunTask(ctx, commandContext)
 	if err != nil {

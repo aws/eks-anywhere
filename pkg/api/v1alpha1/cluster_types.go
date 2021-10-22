@@ -273,12 +273,27 @@ func (c *Cluster) EtcdAnnotation() string {
 	return etcdAnnotation
 }
 
+func (s *Cluster) IsSelfManaged() bool {
+	return s.Spec.Management == nil || *s.Spec.Management
+}
+
 func (s *Cluster) SetManagedBy(managementClusterName string) {
 	if s.Annotations == nil {
 		s.Annotations = map[string]string{}
 	}
 
 	s.Annotations[managementAnnotation] = managementClusterName
+	f := false
+	s.Spec.Management = &f
+}
+
+func (s *Cluster) SetSelfManaged() {
+	t := true
+	s.Spec.Management = &t
+}
+
+func (s *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
+	return s.IsSelfManaged() == s2.IsSelfManaged()
 }
 
 func (c *Cluster) MachineConfigRefs() []Ref {

@@ -369,7 +369,7 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 		return &ConfigVersionControlFailedError{Err: err}
 	}
 
-	if fc.clusterSpec.Spec.Management == nil || *fc.clusterSpec.Spec.Management {
+	if fc.clusterSpec.IsSelfManaged() {
 		logger.V(3).Info("Generating flux custom manifest files...")
 		err = fc.writeFluxSystemFiles()
 		if err != nil {
