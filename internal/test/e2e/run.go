@@ -115,6 +115,7 @@ func (e *E2ESession) runTests(regex string) error {
 		command,
 	)
 	if err != nil {
+		e.uploadLogFilesFromInstance(regex)
 		return fmt.Errorf("error running e2e tests on instance %s: %v", e.instanceId, err)
 	}
 
