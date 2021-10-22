@@ -62,6 +62,13 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 	}
 }
 
+func TestUpgraderUpgradeNoSelfManaged(t *testing.T) {
+	tt := newUpgraderTest(t)
+	tt.newSpec.Cluster.SetManagedBy("management-cluster")
+
+	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(Succeed())
+}
+
 func TestUpgraderUpgradeNoChanges(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.provider.EXPECT().ChangeDiff(tt.currentSpec, tt.newSpec).Return(nil)

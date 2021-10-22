@@ -15,6 +15,11 @@ const upgradeFluxconfigCommitMessage = "Upgrade commit of flux configuration; ge
 
 func (f *FluxAddonClient) Upgrade(ctx context.Context, managementCluster *types.Cluster, currentSpec *cluster.Spec, newSpec *cluster.Spec) error {
 	logger.V(1).Info("Checking for Flux upgrades")
+	if !newSpec.Cluster.IsSelfManaged() {
+		logger.V(1).Info("Skipping Flux upgrades, not a self-managed cluster")
+		return nil
+	}
+
 	changeDiff := f.fluxChangeDiff(currentSpec, newSpec)
 	if !changeDiff {
 		logger.V(1).Info("Nothing to upgrade for Flux")
