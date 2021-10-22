@@ -51,6 +51,14 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 	}
 }
 
+func TestFluxUpgradeNoSelfManaged(t *testing.T) {
+	tt := newUpgraderTest(t)
+	f, _, _ := newAddonClient(t)
+	tt.newSpec.Cluster.SetManagedBy("management-cluster")
+
+	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Succeed())
+}
+
 func TestFluxUpgradeNoChanges(t *testing.T) {
 	tt := newUpgraderTest(t)
 	f, _, _ := newAddonClient(t)
