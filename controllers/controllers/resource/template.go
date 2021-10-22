@@ -41,10 +41,6 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 	if err != nil {
 		return nil, err
 	}
-	oldEtcdVmc, err := r.ExistingVSphereEtcdMachineConfig(ctx, eksaCluster)
-	if err != nil {
-		return nil, err
-	}
 	oldWorkerVmc, err := r.ExistingVSphereWorkerMachineConfig(ctx, eksaCluster)
 	if err != nil {
 		return nil, err
@@ -76,6 +72,10 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 
 	var etcdTemplateName string
 	if eksaCluster.Spec.ExternalEtcdConfiguration != nil {
+		oldEtcdVmc, err := r.ExistingVSphereEtcdMachineConfig(ctx, eksaCluster)
+		if err != nil {
+			return nil, err
+		}
 		updateEtcdTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, oldEtcdVmc, &etcdVmc)
 		etcd, err := r.Etcd(ctx, eksaCluster)
 		if err != nil {
