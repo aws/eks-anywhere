@@ -125,7 +125,7 @@ func (c *createTestSetup) expectCreateWorkloadSkipCAPI() {
 
 func (c *createTestSetup) expectMoveManagement() {
 	c.clusterManager.EXPECT().MoveCAPI(
-		c.ctx, c.bootstrapCluster, c.workloadCluster, gomock.Any(),
+		c.ctx, c.bootstrapCluster, c.workloadCluster, c.workloadCluster.Name, gomock.Any(),
 	)
 }
 

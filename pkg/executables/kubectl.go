@@ -358,10 +358,10 @@ type machinesResponse struct {
 	Items []types.Machine `json:"items,omitempty"`
 }
 
-func (k *Kubectl) GetMachines(ctx context.Context, cluster *types.Cluster) ([]types.Machine, error) {
+func (k *Kubectl) GetMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]types.Machine, error) {
 	params := []string{
 		"get", "machines", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
-		"--selector=cluster.x-k8s.io/cluster-name=" + cluster.Name,
+		"--selector=cluster.x-k8s.io/cluster-name=" + clusterName,
 		"--namespace", constants.EksaSystemNamespace,
 	}
 	stdOut, err := k.executable.Execute(ctx, params...)

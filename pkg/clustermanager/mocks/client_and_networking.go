@@ -186,18 +186,18 @@ func (mr *MockClusterClientMockRecorder) GetEksaVSphereMachineConfig(arg0, arg1,
 }
 
 // GetMachines mocks base method.
-func (m *MockClusterClient) GetMachines(arg0 context.Context, arg1 *types.Cluster) ([]types.Machine, error) {
+func (m *MockClusterClient) GetMachines(arg0 context.Context, arg1 *types.Cluster, arg2 string) ([]types.Machine, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMachines", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetMachines", arg0, arg1, arg2)
 	ret0, _ := ret[0].([]types.Machine)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetMachines indicates an expected call of GetMachines.
-func (mr *MockClusterClientMockRecorder) GetMachines(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockClusterClientMockRecorder) GetMachines(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachines", reflect.TypeOf((*MockClusterClient)(nil).GetMachines), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachines", reflect.TypeOf((*MockClusterClient)(nil).GetMachines), arg0, arg1, arg2)
 }
 
 // GetNamespace mocks base method.

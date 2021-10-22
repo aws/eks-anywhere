@@ -235,7 +235,7 @@ func (s *MoveClusterManagementTask) Run(ctx context.Context, commandContext *tas
 		return &InstallEksaComponentsTask{}
 	}
 	logger.Info("Moving cluster management from bootstrap to workload cluster")
-	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, types.WithNodeRef())
+	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.WorkloadCluster.Name, types.WithNodeRef())
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
