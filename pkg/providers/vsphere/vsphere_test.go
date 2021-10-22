@@ -2053,6 +2053,8 @@ func TestValidateNewSpecMachineConfigNotFound(t *testing.T) {
 		s.Namespace = "test-namespace"
 		s.Cluster = clusterConfig.DeepCopy()
 		s.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "missing-machine-group"
+		s.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name = "missing-machine-group"
+		s.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "missing-machine-group"
 	})
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any()).Return(clusterConfig, nil)

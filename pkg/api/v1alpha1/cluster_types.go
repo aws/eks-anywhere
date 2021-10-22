@@ -282,22 +282,39 @@ func (s *Cluster) SetManagedBy(managementClusterName string) {
 }
 
 func (c *Cluster) MachineConfigRefs() []Ref {
-	size := 1 + len(c.Spec.WorkerNodeGroupConfigurations)
-	if c.Spec.ExternalEtcdConfiguration != nil {
-		size++
-	}
+	machineConfigRefMap := make(refSet, 1)
 
-	machineConfigRefs := make([]Ref, 0, size)
-	machineConfigRefs = append(machineConfigRefs, *c.Spec.ControlPlaneConfiguration.MachineGroupRef)
+	machineConfigRefMap.add(*c.Spec.ControlPlaneConfiguration.MachineGroupRef)
+
 	for _, m := range c.Spec.WorkerNodeGroupConfigurations {
-		machineConfigRefs = append(machineConfigRefs, *m.MachineGroupRef)
+		machineConfigRefMap.add(*m.MachineGroupRef)
 	}
 
 	if c.Spec.ExternalEtcdConfiguration != nil {
-		machineConfigRefs = append(machineConfigRefs, *c.Spec.ExternalEtcdConfiguration.MachineGroupRef)
+		machineConfigRefMap.add(*c.Spec.ExternalEtcdConfiguration.MachineGroupRef)
 	}
 
-	return machineConfigRefs
+	return machineConfigRefMap.toSlice()
+}
+
+type refSet map[Ref]struct{}
+
+func (r refSet) add(ref Ref) bool {
+	if _, present := r[ref]; !present {
+		r[ref] = struct{}{}
+		return true
+	} else {
+		return false
+	}
+}
+
+func (r refSet) toSlice() []Ref {
+	refs := make([]Ref, 0, len(r))
+	for ref := range r {
+		refs = append(refs, ref)
+	}
+
+	return refs
 }
 
 func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {

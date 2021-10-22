@@ -35,6 +35,13 @@ func TestClusterMachineConfigRefs(t *testing.T) {
 						Name: "eksa-unit-test-2",
 					},
 				},
+				{
+					Count: 5,
+					MachineGroupRef: &v1alpha1.Ref{
+						Kind: v1alpha1.VSphereMachineConfigKind,
+						Name: "eksa-unit-test", // This tests duplicates
+					},
+				},
 			},
 			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{
 				MachineGroupRef: &v1alpha1.Ref{
