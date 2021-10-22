@@ -98,7 +98,7 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 		deps.FluxAddonClient,
 		deps.Writer,
 	)
-	err = createCluster.Run(ctx, clusterSpec, cc.forceClean, cc.managementKubeconfig)
+	err = createCluster.Run(ctx, clusterSpec, cc.forceClean)
 	if err == nil {
 		deps.Writer.CleanUpTemp()
 	}

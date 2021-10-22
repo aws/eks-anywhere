@@ -16,6 +16,7 @@ import (
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/semver"
+	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -41,6 +42,7 @@ type Spec struct {
 	VersionsBundle      *VersionsBundle
 	eksdRelease         *eksdv1alpha1.Release
 	Bundles             *v1alpha1.Bundles
+	ManagementCluster   *types.Cluster
 }
 
 func (s *Spec) DeepCopy() *Spec {
@@ -66,7 +68,11 @@ func (cs *Spec) SetDefaultGitOps() {
 	if cs != nil && cs.GitOpsConfig != nil {
 		c := &cs.GitOpsConfig.Spec.Flux
 		if len(c.Github.ClusterConfigPath) == 0 {
-			c.Github.ClusterConfigPath = path.Join("clusters", cs.Name)
+			if cs.Cluster.IsSelfManaged() {
+				c.Github.ClusterConfigPath = path.Join("clusters", cs.Name, cs.Name)
+			} else {
+				c.Github.ClusterConfigPath = path.Join("clusters", cs.Cluster.ManagedBy(), cs.Name)
+			}
 		}
 		if len(c.Github.FluxSystemNamespace) == 0 {
 			c.Github.FluxSystemNamespace = FluxDefaultNamespace
@@ -122,6 +128,12 @@ func WithEmbedFS(embedFS embed.FS) SpecOpt {
 func WithOverrideBundlesManifest(fileURL string) SpecOpt {
 	return func(s *Spec) {
 		s.bundlesManifestURL = fileURL
+	}
+}
+
+func WithManagementCluster(cluster *types.Cluster) SpecOpt {
+	return func(s *Spec) {
+		s.ManagementCluster = cluster
 	}
 }
 
@@ -185,6 +197,13 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 		}
 		s.GitOpsConfig = gitOpsConfig
 	}
+
+	if s.ManagementCluster != nil {
+		s.SetManagedBy(s.ManagementCluster.Name)
+	} else {
+		s.SetSelfManaged()
+	}
+
 	s.SetDefaultGitOps()
 
 	return s, nil
