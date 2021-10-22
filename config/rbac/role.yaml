@@ -9,7 +9,7 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
-  - awsiamconfigs
+  - addonawsiamconfigs
   - bundles
   - clusters
   - dockerdatacenterconfigs
@@ -26,7 +26,7 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
-  - awsiamconfigs/finalizers
+  - addonawsiamconfigs/finalizers
   - bundles/finalizers
   - clusters/finalizers
   - dockerdatacenterconfigs/finalizers
@@ -37,7 +37,7 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
-  - awsiamconfigs/status
+  - addonawsiamconfigs/status
   - bundles/status
   - clusters/status
   - dockerdatacenterconfigs/status

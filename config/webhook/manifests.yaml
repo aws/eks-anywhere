@@ -13,9 +13,9 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-awsiamconfig
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-addonawsiamconfig
   failurePolicy: Fail
-  name: validation.awsiamconfig.anywhere.amazonaws.com
+  name: validation.addonawsiamconfig.anywhere.amazonaws.com
   rules:
   - apiGroups:
     - anywhere.eks.amazonaws.com
@@ -25,7 +25,7 @@ webhooks:
     - CREATE
     - UPDATE
     resources:
-    - awsiamconfigs
+    - addonawsiamconfigs
   sideEffects: None
 - admissionReviewVersions:
   - v1

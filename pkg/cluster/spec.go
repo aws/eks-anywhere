@@ -34,7 +34,7 @@ var releasesManifestURL string
 type Spec struct {
 	*eksav1alpha1.Cluster
 	OIDCConfig          *eksav1alpha1.OIDCConfig
-	AWSIamConfig        *eksav1alpha1.AWSIamConfig
+	AddOnAWSIamConfig   *eksav1alpha1.AddOnAWSIamConfig
 	GitOpsConfig        *eksav1alpha1.GitOpsConfig
 	releasesManifestURL string
 	bundlesManifestURL  string
@@ -191,15 +191,15 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 				return nil, err
 			}
 			s.OIDCConfig = oidcConfig
-		case eksav1alpha1.AWSIamConfigKind:
+		case eksav1alpha1.AddOnAWSIamConfigKind:
 			if features.IsActive(features.AwsIamAuthenticator()) {
-				awsIamConfig, err := eksav1alpha1.GetAndValidateAWSIamConfig(clusterConfigPath, identityProvider.Name, clusterConfig)
+				addOnAwsIamConfig, err := eksav1alpha1.GetAndValidateAddOnAWSIamConfig(clusterConfigPath, identityProvider.Name, clusterConfig)
 				if err != nil {
 					return nil, err
 				}
-				s.AWSIamConfig = awsIamConfig
+				s.AddOnAWSIamConfig = addOnAwsIamConfig
 			} else {
-				return nil, fmt.Errorf("unsupported kind: %s", eksav1alpha1.AWSIamConfigKind)
+				return nil, fmt.Errorf("unsupported kind: %s", eksav1alpha1.AddOnAWSIamConfigKind)
 			}
 		}
 	}

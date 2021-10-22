@@ -37,7 +37,7 @@ var (
 	eksaAwsResourceType               = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaGitOpsResourceType            = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaOIDCResourceType              = fmt.Sprintf("oidcconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaAwsIamResourceType            = fmt.Sprintf("awsiamconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaAwsIamResourceType            = fmt.Sprintf("addonawsiamconfigs.%s", v1alpha1.GroupVersion.Group)
 	etcdadmClustersResourceType       = fmt.Sprintf("etcdadmclusters.%s", etcdv1alpha3.GroupVersion.Group)
 	bundlesResourceType               = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
 )
@@ -700,17 +700,17 @@ func (k *Kubectl) GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, 
 	return response, nil
 }
 
-func (k *Kubectl) GetEksaAWSIamConfig(ctx context.Context, awsIamConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.AWSIamConfig, error) {
+func (k *Kubectl) GetEksaAddOnAWSIamConfig(ctx context.Context, awsIamConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.AddOnAWSIamConfig, error) {
 	params := []string{"get", eksaAwsIamResourceType, awsIamConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
-		return nil, fmt.Errorf("error getting eksa AWSIamConfig: %v", err)
+		return nil, fmt.Errorf("error getting eksa AddOnAWSIamConfig: %v", err)
 	}
 
-	response := &v1alpha1.AWSIamConfig{}
+	response := &v1alpha1.AddOnAWSIamConfig{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing AWSIamConfig response: %v", err)
+		return nil, fmt.Errorf("error parsing AddOnAWSIamConfig response: %v", err)
 	}
 
 	return response, nil

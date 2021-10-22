@@ -443,7 +443,7 @@ func validateIdentityProviderRefs(clusterConfig *Cluster) error {
 		return nil
 	}
 	for _, ref := range refs {
-		if ref.Kind != OIDCConfigKind && ref.Kind != AWSIamConfigKind {
+		if ref.Kind != OIDCConfigKind && ref.Kind != AddOnAWSIamConfigKind {
 			return fmt.Errorf("kind: %s for identityProviderRef is not supported", ref.Kind)
 		}
 		if ref.Name == "" {

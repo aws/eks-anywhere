@@ -9,8 +9,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
-func TestValidateUpdateAWSIamConfigAWSRegion(t *testing.T) {
-	aiOld := awsIamConfig()
+func TestValidateUpdateAddOnAWSIamConfigAWSRegion(t *testing.T) {
+	aiOld := addOnAwsIamConfig()
 	aiOld.Spec.AWSRegion = "oldRegion"
 	aiNew := aiOld.DeepCopy()
 
@@ -19,8 +19,8 @@ func TestValidateUpdateAWSIamConfigAWSRegion(t *testing.T) {
 	g.Expect(aiNew.ValidateUpdate(&aiOld)).NotTo(Succeed())
 }
 
-func TestValidateUpdateAWSIamConfigClusterID(t *testing.T) {
-	aiOld := awsIamConfig()
+func TestValidateUpdateAddOnAWSIamConfigClusterID(t *testing.T) {
+	aiOld := addOnAwsIamConfig()
 	aiOld.Spec.ClusterID = "oldClusterID"
 	aiNew := aiOld.DeepCopy()
 
@@ -29,8 +29,8 @@ func TestValidateUpdateAWSIamConfigClusterID(t *testing.T) {
 	g.Expect(aiNew.ValidateUpdate(&aiOld)).NotTo(Succeed())
 }
 
-func TestValidateUpdateAWSIamConfigPartition(t *testing.T) {
-	aiOld := awsIamConfig()
+func TestValidateUpdateAddOnAWSIamConfigPartition(t *testing.T) {
+	aiOld := addOnAwsIamConfig()
 	aiOld.Spec.Partition = "oldPartition"
 	aiNew := aiOld.DeepCopy()
 
@@ -39,8 +39,8 @@ func TestValidateUpdateAWSIamConfigPartition(t *testing.T) {
 	g.Expect(aiNew.ValidateUpdate(&aiOld)).NotTo(Succeed())
 }
 
-func TestValidateUpdateAWSIamConfigBackendMode(t *testing.T) {
-	aiOld := awsIamConfig()
+func TestValidateUpdateAddOnAWSIamConfigBackendMode(t *testing.T) {
+	aiOld := addOnAwsIamConfig()
 	aiOld.Spec.BackendMode = []string{"mode1", "mode2"}
 	aiNew := aiOld.DeepCopy()
 
@@ -49,11 +49,11 @@ func TestValidateUpdateAWSIamConfigBackendMode(t *testing.T) {
 	g.Expect(aiNew.ValidateUpdate(&aiOld)).NotTo(Succeed())
 }
 
-func awsIamConfig() v1alpha1.AWSIamConfig {
-	return v1alpha1.AWSIamConfig{
+func addOnAwsIamConfig() v1alpha1.AddOnAWSIamConfig {
+	return v1alpha1.AddOnAWSIamConfig{
 		TypeMeta:   metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string, 1)},
-		Spec:       v1alpha1.AWSIamConfigSpec{},
-		Status:     v1alpha1.AWSIamConfigStatus{},
+		Spec:       v1alpha1.AddOnAWSIamConfigSpec{},
+		Status:     v1alpha1.AddOnAWSIamConfigStatus{},
 	}
 }

@@ -29,7 +29,7 @@ func OIDCToExtraArgs(oidc *v1alpha1.OIDCConfig) ExtraArgs {
 	return args
 }
 
-func AwsIamAuthExtraArgs(awsiam *v1alpha1.AWSIamConfig) ExtraArgs {
+func AwsIamAuthExtraArgs(awsiam *v1alpha1.AddOnAWSIamConfig) ExtraArgs {
 	args := ExtraArgs{}
 	if awsiam == nil {
 		return args

@@ -113,7 +113,7 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 		return &DeleteKindClusterTask{}
 	}
 
-	if commandContext.ClusterSpec.AWSIamConfig != nil {
+	if commandContext.ClusterSpec.AddOnAWSIamConfig != nil {
 		logger.Info("Creating aws-iam-authenticator certificate and key pair secret on bootstrap cluster")
 		err = commandContext.ClusterManager.CreateAwsIamAuthCaSecret(ctx, bootstrapCluster)
 		if err != nil {
@@ -202,7 +202,7 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		return nil
 	}
 
-	if commandContext.ClusterSpec.AWSIamConfig != nil {
+	if commandContext.ClusterSpec.AddOnAWSIamConfig != nil {
 		logger.Info("Installing aws-iam-authenticator on workload cluster")
 		err = commandContext.ClusterManager.InstallAwsIamAuth(ctx, commandContext.BootstrapCluster, workloadCluster, commandContext.ClusterSpec)
 		if err != nil {
