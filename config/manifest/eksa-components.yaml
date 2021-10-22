@@ -113,15 +113,41 @@ spec:
                   server
                 type: string
               mapRoles:
-                description: MapRoles defines IAM role to a username and set of groups
-                  mapping using EKSConfigMap BackendMode Each key must match AWS EKS
-                  Style ConfigMap mapRoles
-                type: string
+                items:
+                  description: MapRoles defines IAM role to a username and set of
+                    groups mapping using EKSConfigMap BackendMode
+                  properties:
+                    groups:
+                      items:
+                        type: string
+                      type: array
+                    roleARN:
+                      type: string
+                    username:
+                      type: string
+                  required:
+                  - roleARN
+                  - username
+                  type: object
+                type: array
               mapUsers:
-                description: MapUsers defines IAM user to a username and set of groups
-                  mapping using EKSConfigMap BackendMode Each key must match AWS EKS
-                  Style ConfigMap mapUsers
-                type: string
+                items:
+                  description: MapUsers defines IAM role to a username and set of
+                    groups mapping using EKSConfigMap BackendMode
+                  properties:
+                    groups:
+                      items:
+                        type: string
+                      type: array
+                    userARN:
+                      type: string
+                    username:
+                      type: string
+                  required:
+                  - userARN
+                  - username
+                  type: object
+                type: array
               partition:
                 default: aws
                 description: Partition defines the AWS partition on which the IAM
@@ -130,7 +156,6 @@ spec:
             required:
             - awsRegion
             - backendMode
-            - clusterID
             type: object
           status:
             description: AWSIamConfigStatus defines the observed state of AWSIamConfig
@@ -1406,6 +1431,12 @@ spec:
                       type: object
                     flux:
                       properties:
+                        components:
+                          properties:
+                            uri:
+                              description: URI points to the manifest yaml file
+                              type: string
+                          type: object
                         helmController:
                           properties:
                             arch:
@@ -1525,6 +1556,7 @@ spec:
                         version:
                           type: string
                       required:
+                      - components
                       - helmController
                       - kustomizeController
                       - notificationController
@@ -2429,6 +2461,7 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
+  - awsiamconfigs
   - bundles
   - clusters
   - dockerdatacenterconfigs
@@ -2445,6 +2478,7 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
+  - awsiamconfigs/finalizers
   - bundles/finalizers
   - clusters/finalizers
   - dockerdatacenterconfigs/finalizers
@@ -2455,6 +2489,7 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
+  - awsiamconfigs/status
   - bundles/status
   - clusters/status
   - dockerdatacenterconfigs/status
@@ -2464,6 +2499,13 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - oidcconfigs
+  verbs:
+  - get
+  - list
 - apiGroups:
   - cluster.x-k8s.io
   resources:

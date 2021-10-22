@@ -37,6 +37,8 @@ type ResourceFetcher interface {
 	ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*kubeadmnv1alpha3.KubeadmControlPlane, error)
 	Etcd(ctx context.Context, cs *anywherev1.Cluster) (*etcdv1alpha3.EtcdadmCluster, error)
 	FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error)
+	AWSIamConfig(ctx context.Context, ref *anywherev1.Ref) (*anywherev1.AWSIamConfig, error)
+	OIDCConfig(ctx context.Context, ref *anywherev1.Ref) (*anywherev1.OIDCConfig, error)
 }
 
 type capiResourceFetcher struct {
@@ -68,7 +70,7 @@ func (r *capiResourceFetcher) FetchObject(ctx context.Context, objectKey types.N
 }
 
 func (r *capiResourceFetcher) fetchClusterKind(ctx context.Context, objectKey types.NamespacedName) (string, error) {
-	supportedKinds := []string{anywherev1.ClusterKind, anywherev1.VSphereDatacenterKind, anywherev1.DockerDatacenterKind, anywherev1.VSphereMachineConfigKind}
+	supportedKinds := []string{anywherev1.ClusterKind, anywherev1.VSphereDatacenterKind, anywherev1.DockerDatacenterKind, anywherev1.VSphereMachineConfigKind, anywherev1.AWSIamConfigKind}
 	for _, kind := range supportedKinds {
 		obj := &unstructured.Unstructured{}
 		obj.SetKind(kind)
@@ -145,6 +147,15 @@ func (r *capiResourceFetcher) fetchClusterForRef(ctx context.Context, refId type
 			if c.Spec.ExternalEtcdConfiguration != nil && c.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name == refId.Name {
 				if _, err := r.clusterByName(ctx, constants.EksaSystemNamespace, c.Name); err == nil { // further validates a capi cluster exists
 					return &c, nil
+				}
+			}
+		}
+		if kind == anywherev1.AWSIamConfigKind {
+			for _, indentityProviderRef := range c.Spec.IdentityProviderRefs {
+				if indentityProviderRef.Name == refId.Name {
+					if _, err := r.clusterByName(ctx, constants.EksaSystemNamespace, c.Name); err == nil { // further validates a capi cluster exists
+						return &c, nil
+					}
 				}
 			}
 		}
@@ -266,6 +277,24 @@ func (r *capiResourceFetcher) Etcd(ctx context.Context, cs *anywherev1.Cluster) 
 		return nil, err
 	}
 	return etcdadmCluster, nil
+}
+
+func (r *capiResourceFetcher) AWSIamConfig(ctx context.Context, ref *anywherev1.Ref) (*anywherev1.AWSIamConfig, error) {
+	awsIamConfig := &anywherev1.AWSIamConfig{}
+	err := r.FetchObjectByName(ctx, ref.Name, constants.DefaultNamespace, awsIamConfig)
+	if err != nil {
+		return nil, err
+	}
+	return awsIamConfig, nil
+}
+
+func (r *capiResourceFetcher) OIDCConfig(ctx context.Context, ref *anywherev1.Ref) (*anywherev1.OIDCConfig, error) {
+	oidcConfig := &anywherev1.OIDCConfig{}
+	err := r.FetchObjectByName(ctx, ref.Name, constants.DefaultNamespace, oidcConfig)
+	if err != nil {
+		return nil, err
+	}
+	return oidcConfig, nil
 }
 
 func (r *capiResourceFetcher) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error) {

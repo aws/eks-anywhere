@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -22,8 +23,9 @@ type clusterReconciler struct {
 	Log logr.Logger
 	ResourceFetcher
 	ResourceUpdater
-	vsphereTemplate VsphereTemplate
-	dockerTemplate  DockerTemplate
+	vsphereTemplate      VsphereTemplate
+	dockerTemplate       DockerTemplate
+	awsIamConfigTemplate AWSIamConfigTemplate
 }
 
 func NewClusterReconciler(resourceFetcher ResourceFetcher, resourceUpdater ResourceUpdater, now anywhereTypes.NowFunc, log logr.Logger) *clusterReconciler {
@@ -40,10 +42,14 @@ func NewClusterReconciler(resourceFetcher ResourceFetcher, resourceUpdater Resou
 			ResourceFetcher: resourceFetcher,
 			now:             now,
 		},
+		awsIamConfigTemplate: AWSIamConfigTemplate{
+			ResourceFetcher: resourceFetcher,
+		},
 	}
 }
 
 func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.NamespacedName, dryRun bool) error {
+	var resources []*unstructured.Unstructured
 	cs, err := cor.FetchCluster(ctx, objectKey)
 	if err != nil {
 		return err
@@ -52,6 +58,11 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 	if err != nil {
 		return err
 	}
+	err = cor.fetchIdentityProviderRefs(ctx, spec)
+	if err != nil {
+		return err
+	}
+
 	switch cs.Spec.DatacenterRef.Kind {
 	case anywherev1.VSphereDatacenterKind:
 		vdc := &anywherev1.VSphereDatacenterConfig{}
@@ -79,20 +90,33 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 				return err
 			}
 		}
-		resources, err := cor.vsphereTemplate.TemplateResources(ctx, cs, spec, *vdc, *cpVmc, *workerVmc, *etcdVmc)
+		r, err := cor.vsphereTemplate.TemplateResources(ctx, cs, spec, *vdc, *cpVmc, *workerVmc, *etcdVmc)
 		if err != nil {
 			return err
 		}
-		return cor.applyTemplates(ctx, resources, dryRun)
+		resources = append(resources, r...)
 	case anywherev1.DockerDatacenterKind:
-		resources, err := cor.dockerTemplate.TemplateResources(ctx, cs, spec)
+		r, err := cor.dockerTemplate.TemplateResources(ctx, cs, spec)
 		if err != nil {
 			return err
 		}
-		return cor.applyTemplates(ctx, resources, dryRun)
+		resources = append(resources, r...)
 	default:
 		return fmt.Errorf("unsupport Provider %s", cs.Spec.DatacenterRef.Kind)
 	}
+
+	// Reconcling IdentityProviders
+	for _, identityProvider := range cs.Spec.IdentityProviderRefs {
+		switch identityProvider.Kind {
+		case anywherev1.AWSIamConfigKind:
+			r, err := cor.awsIamConfigTemplate.TemplateResources(ctx, spec)
+			if err != nil {
+				return err
+			}
+			resources = append(resources, r...)
+		}
+	}
+	return cor.applyTemplates(ctx, resources, dryRun)
 }
 
 func (cor *clusterReconciler) applyTemplates(ctx context.Context, resources []*unstructured.Unstructured, dryRun bool) error {
@@ -115,6 +139,26 @@ func (cor *clusterReconciler) applyTemplates(ctx context.Context, resources []*u
 			continue
 		}
 		return err
+	}
+	return nil
+}
+
+func (cor *clusterReconciler) fetchIdentityProviderRefs(ctx context.Context, cs *cluster.Spec) error {
+	for _, identityProvider := range cs.Spec.IdentityProviderRefs {
+		switch identityProvider.Kind {
+		case anywherev1.AWSIamConfigKind:
+			awsIamConfig, err := cor.AWSIamConfig(ctx, &identityProvider)
+			if err != nil {
+				return err
+			}
+			cs.AWSIamConfig = awsIamConfig
+		case anywherev1.OIDCConfigKind:
+			oidcConfig, err := cor.OIDCConfig(ctx, &identityProvider)
+			if err != nil {
+				return err
+			}
+			cs.OIDCConfig = oidcConfig
+		}
 	}
 	return nil
 }
