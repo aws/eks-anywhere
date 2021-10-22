@@ -16,9 +16,8 @@ import (
 
 type createClusterOptions struct {
 	clusterOptions
-	forceClean           bool
-	skipIpCheck          bool
-	managementKubeconfig string
+	forceClean  bool
+	skipIpCheck bool
 }
 
 var cc = &createClusterOptions{}
