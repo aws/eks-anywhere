@@ -156,6 +156,19 @@ func (e *E2ESession) downloadRequiredFileInInstance(file string) error {
 	return nil
 }
 
+func (e *E2ESession) uploadLogFilesFromInstance(testName string) {
+	logger.V(1).Info("Uploading log files to s3 bucket")
+
+	testNameFolder := testName + e.instanceId
+	command := fmt.Sprintf("aws s3 cp /home/e2e/%s/logs s3://%s/%s --recursive", e.instanceId, e.storageBucket, testNameFolder)
+
+	err := ssm.Run(e.session, e.instanceId, command)
+	if err != nil {
+		logger.Error(err, "error uploading log files from instance")
+	}
+	logger.V(1).Info("Successfully uploaded log files to S3")
+}
+
 func (e *E2ESession) downloadRequiredFilesInInstance() error {
 	if e.bundlesOverride {
 		requiredFiles = append(requiredFiles, bundlesReleaseManifestFile, eksAComponentsManifestFile)
