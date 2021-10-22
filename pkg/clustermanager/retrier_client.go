@@ -49,7 +49,7 @@ func (c *retrierClient) installCustomComponents(ctx context.Context, clusterSpec
 		}
 		err = c.Retrier.Retry(
 			func() error {
-				return c.SetEnvsInDeployment(ctx, cluster, "eksa-controller-manager", "eksa-system", envMap)
+				return c.UpdateEnvironmentVariablesInNamespace(ctx, "deployment", "eksa-controller-manager", envMap, cluster, "eksa-system")
 			},
 		)
 		if err != nil {
