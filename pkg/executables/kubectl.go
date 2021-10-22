@@ -431,6 +431,18 @@ func (k *Kubectl) Version(ctx context.Context, cluster *types.Cluster) (*Version
 	return response, nil
 }
 
+func (k *Kubectl) SetEnvsInDeployment(ctx context.Context, cluster *types.Cluster, deploymentName string, namespace string, envMap map[string]string) error {
+	params := []string{"set", "env", "deployment", deploymentName, "-n", namespace, "--kubeconfig", cluster.KubeconfigFile}
+	for key, value := range envMap {
+		params = append(params, fmt.Sprintf("%s=%s", key, value))
+	}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error setting the environment variables in the deployment %s: %v", deploymentName, err)
+	}
+	return nil
+}
+
 type KubectlOpt func(*[]string)
 
 func WithToken(t string) KubectlOpt {

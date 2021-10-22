@@ -74,6 +74,7 @@ type ClusterClient interface {
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster) error
 	ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster) error
 	GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error)
+	SetEnvsInDeployment(ctx context.Context, cluster *types.Cluster, deploymentName string, namespace string, envMap map[string]string) error
 }
 
 type Networking interface {
