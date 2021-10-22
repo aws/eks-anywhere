@@ -69,9 +69,10 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
 	for _, manifest := range manifestList {
 		var sourceS3Prefix string
 		var releaseS3Path string
+		latestPath := r.getLatestUploadDestination()
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
-			sourceS3Prefix = fmt.Sprintf("projects/mrajashree/etcdadm-bootstrap-provider/latest/manifests/bootstrap-etcdadm-bootstrap/%s", gitTag)
+			sourceS3Prefix = fmt.Sprintf("projects/mrajashree/etcdadm-bootstrap-provider/%s/manifests/bootstrap-etcdadm-bootstrap/%s", latestPath, gitTag)
 		} else {
 			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/%s", r.BundleNumber, gitTag)
 		}

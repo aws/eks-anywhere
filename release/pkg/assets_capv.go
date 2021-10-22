@@ -67,9 +67,10 @@ func (r *ReleaseConfig) GetCapvAssets() ([]Artifact, error) {
 	for _, manifest := range manifestList {
 		var sourceS3Prefix string
 		var releaseS3Path string
+		latestPath := r.getLatestUploadDestination()
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
-			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api-provider-vsphere/latest/manifests/infrastructure-vsphere/%s", gitTag)
+			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api-provider-vsphere/%s/manifests/infrastructure-vsphere/%s", latestPath, gitTag)
 		} else {
 			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/%s", r.BundleNumber, gitTag)
 		}

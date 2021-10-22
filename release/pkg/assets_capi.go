@@ -78,9 +78,10 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 			var sourceS3Prefix string
 			var releaseS3Path string
 			var imageTagOverride ImageTagOverride
+			latestPath := r.getLatestUploadDestination()
 
 			if r.DevRelease || r.ReleaseEnvironment == "development" {
-				sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api/latest/manifests/%s/%s", component, gitTag)
+				sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api/%s/manifests/%s/%s", latestPath, component, gitTag)
 			} else {
 				sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cluster-api/manifests/%s/%s", r.BundleNumber, component, gitTag)
 			}

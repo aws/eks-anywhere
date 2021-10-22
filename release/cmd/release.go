@@ -56,6 +56,7 @@ var releaseCmd = &cobra.Command{
 		releaseNumber := viper.GetInt("release-number")
 		cliRepoDir := viper.GetString("cli-repo-source")
 		buildRepoDir := viper.GetString("build-repo-source")
+		branchName := viper.GetString("branch-name")
 		artifactDir := viper.GetString("artifact-dir")
 		sourceBucket := viper.GetString("source-bucket")
 		releaseBucket := viper.GetString("release-bucket")
@@ -81,6 +82,7 @@ var releaseCmd = &cobra.Command{
 		releaseConfig := &pkg.ReleaseConfig{
 			CliRepoSource:                  cliRepoDir,
 			BuildRepoSource:                buildRepoDir,
+			BranchName:                     branchName,
 			ArtifactDir:                    artifactDir,
 			SourceBucket:                   sourceBucket,
 			ReleaseBucket:                  releaseBucket,
@@ -188,8 +190,13 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			bundleReleaseManifestKey := bundleReleaseManifestFile
-			if !devRelease {
+			var bundleReleaseManifestKey string
+			if devRelease {
+				bundleReleaseManifestKey = bundleReleaseManifestFile
+				if releaseConfig.BranchName != "main" {
+					bundleReleaseManifestKey = fmt.Sprintf("/%s/%s", releaseConfig.BranchName, bundleReleaseManifestFile)
+				}
+			} else {
 				bundleReleaseManifestKey = fmt.Sprintf("/releases/bundles/%d/manifest.yaml", releaseConfig.BundleNumber)
 			}
 			err = pkg.UploadFileToS3(bundleReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(bundleReleaseManifestKey), releaseClients.S3.Uploader)
@@ -197,15 +204,6 @@ var releaseCmd = &cobra.Command{
 				fmt.Printf("Error uploading bundle manifest to release bucket: %+v", err)
 				os.Exit(1)
 			}
-
-			if devRelease {
-				err = releaseConfig.PutEksAReleaseVersion(releaseClients, releaseVersion)
-				if err != nil {
-					fmt.Printf("Error uploading latest release version to S3: %v\n", err)
-					os.Exit(1)
-				}
-			}
-			fmt.Println("Bundles release successful")
 		}
 
 		if devRelease || !bundleRelease {
@@ -294,10 +292,12 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			err = releaseConfig.PutEksAReleaseVersion(releaseClients, releaseVersion)
-			if err != nil {
-				fmt.Printf("Error uploading latest release version to s3: %v\n", err)
-				os.Exit(1)
+			if devRelease {
+				err = releaseConfig.PutEksAReleaseVersion(releaseClients, releaseVersion)
+				if err != nil {
+					fmt.Printf("Error uploading latest release version to S3: %v\n", err)
+					os.Exit(1)
+				}
 			}
 			fmt.Println("EKS-A release successful")
 		}
@@ -314,6 +314,7 @@ func init() {
 	releaseCmd.Flags().Int("release-number", 1, "The release-number to create")
 	releaseCmd.Flags().String("cli-repo-source", "", "The eks-anywhere-cli source")
 	releaseCmd.Flags().String("build-repo-source", "", "The eks-anywhere-build-tooling source")
+	releaseCmd.Flags().String("branch-name", "main", "The branch name to build bundles from")
 	releaseCmd.Flags().String("artifact-dir", "", "The base directory for artifacts")
 	releaseCmd.Flags().String("cdn", "https://anywhere.eks.amazonaws.com", "The URL base for artifacts")
 	releaseCmd.Flags().String("source-bucket", "eks-a-source-bucket", "The bucket name where the built/staging artifacts are located to download")
