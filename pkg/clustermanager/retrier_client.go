@@ -16,7 +16,7 @@ type retrierClient struct {
 	*retrier.Retrier
 }
 
-func newRetrierClient(client *client, retrier *retrier.Retrier) *retrierClient {
+func NewRetrierClient(client *client, retrier *retrier.Retrier) *retrierClient {
 	return &retrierClient{
 		client:  client,
 		Retrier: retrier,
