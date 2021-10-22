@@ -77,6 +77,77 @@ func newDiagnosticBundleBootstrapCluster(af AnalyzerFactory, cf CollectorFactory
 	return b, nil
 }
 
+func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *cluster.Spec, provider providers.Provider,
+	client BundleClient, kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter) (*EksaDiagnosticBundle, error) {
+	b := &EksaDiagnosticBundle{
+		bundle: &supportBundle{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "SupportBundle",
+				APIVersion: troubleshootApiVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: spec.Name,
+			},
+			Spec: supportBundleSpec{},
+		},
+		analyzerFactory:  af,
+		collectorFactory: cf,
+		client:           client,
+		clusterSpec:      spec,
+		kubeconfig:       kubeconfig,
+		kubectl:          kubectl,
+		retrier:          retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		writer:           writer,
+	}
+
+	b = b.
+		WithGitOpsConfig(spec.GitOpsConfig).
+		WithOidcConfig(spec.OIDCConfig).
+		WithExternalEtcd(spec.Spec.ExternalEtcdConfiguration).
+		WithDatacenterConfig(spec.Spec.DatacenterRef).
+		WithMachineConfigs(provider.MachineConfigs()).
+		WithDefaultAnalyzers().
+		WithDefaultCollectors().
+		WithLogTextAnalyzers()
+
+	err := b.WriteBundleConfig()
+	if err != nil {
+		return nil, fmt.Errorf("error writing bundle config: %v", err)
+	}
+
+	return b, nil
+}
+
+func newDiagnosticBundleDefault(af AnalyzerFactory, cf CollectorFactory) *EksaDiagnosticBundle {
+	b := &EksaDiagnosticBundle{
+		bundle: &supportBundle{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "SupportBundle",
+				APIVersion: troubleshootApiVersion,
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "default",
+			},
+			Spec: supportBundleSpec{},
+		},
+		analyzerFactory:  af,
+		collectorFactory: cf,
+	}
+	return b.WithDefaultAnalyzers().WithDefaultCollectors()
+}
+
+func newDiagnosticBundleCustom(af AnalyzerFactory, cf CollectorFactory, client BundleClient, kubectl *executables.Kubectl, bundlePath string, kubeconfig string) *EksaDiagnosticBundle {
+	return &EksaDiagnosticBundle{
+		bundlePath:       bundlePath,
+		analyzerFactory:  af,
+		collectorFactory: cf,
+		client:           client,
+		kubeconfig:       kubeconfig,
+		kubectl:          kubectl,
+		retrier:          retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+	}
+}
+
 func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeValue *time.Time) error {
 	e.createDiagnosticNamespaceAndRoles(ctx)
 
@@ -87,7 +158,7 @@ func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeV
 		return fmt.Errorf("failed to Collect support bundle: %v", err)
 	}
 
-	logger.Info("Support bundle archive created", "archivePath", archivePath)
+	logger.Info("Support bundle archive created", "path", archivePath)
 
 	logger.Info("Analyzing support bundle", "bundle", e.bundlePath, "archive", archivePath)
 	analysis, err := e.client.Analyze(ctx, e.bundlePath, archivePath)
@@ -208,10 +279,6 @@ func (e *EksaDiagnosticBundle) WithLogTextAnalyzers() *EksaDiagnosticBundle {
 	return e
 }
 
-func (e *EksaDiagnosticBundle) clusterName() string {
-	return e.bundle.Name
-}
-
 // createDiagnosticNamespace attempts to create the namespace eksa-diagnostics and associated RBAC objects.
 // collector pods, for example host log collectors or run command collectors, will be launched in this namespace with the default service account.
 // this method intentionally does not return an error
@@ -289,4 +356,8 @@ func ParseTimeOptions(since string, sinceTime string) (*time.Time, error) {
 		sinceTimeValue = now.Add(0 - duration)
 	}
 	return &sinceTimeValue, nil
+}
+
+func (e *EksaDiagnosticBundle) clusterName() string {
+	return e.bundle.Name
 }

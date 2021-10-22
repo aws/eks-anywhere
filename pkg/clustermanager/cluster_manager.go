@@ -41,14 +41,14 @@ const (
 
 type ClusterManager struct {
 	*Upgrader
-	clusterClient   *retrierClient
-	writer          filewriter.FileWriter
-	networking      Networking
-	diagnosticsFac  diagnostics.DiagnosticBundleFactory
-	Retrier         *retrier.Retrier
-	machineMaxWait  time.Duration
-	machineBackoff  time.Duration
-	machinesMinWait time.Duration
+	clusterClient      *retrierClient
+	writer             filewriter.FileWriter
+	networking         Networking
+	diagnosticsFactory diagnostics.DiagnosticBundleFactory
+	Retrier            *retrier.Retrier
+	machineMaxWait     time.Duration
+	machineBackoff     time.Duration
+	machinesMinWait    time.Duration
 }
 
 type ClusterClient interface {
@@ -88,15 +88,15 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
-		Upgrader:        NewUpgrader(retrierClient),
-		clusterClient:   retrierClient,
-		writer:          writer,
-		networking:      networking,
-		Retrier:         retrier,
-		diagnosticsFac:  diagnosticBundleFactory,
-		machineMaxWait:  machineMaxWait,
-		machineBackoff:  machineBackoff,
-		machinesMinWait: machinesMinWait,
+		Upgrader:           NewUpgrader(retrierClient),
+		clusterClient:      retrierClient,
+		writer:             writer,
+		networking:         networking,
+		Retrier:            retrier,
+		diagnosticsFactory: diagnosticBundleFactory,
+		machineMaxWait:     machineMaxWait,
+		machineBackoff:     machineBackoff,
+		machinesMinWait:    machinesMinWait,
 	}
 
 	for _, o := range opts {
@@ -488,10 +488,15 @@ func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, workloa
 }
 
 func (c *ClusterManager) SaveLogsBootstrapCluster(ctx context.Context, cluster *types.Cluster) error {
-	if cluster == nil || cluster.KubeconfigFile == "" {
+	if cluster == nil {
 		return nil
 	}
-	bundle, err := c.diagnosticsFac.DiagnosticBundleBootstrapCluster(cluster.KubeconfigFile)
+
+	if cluster.KubeconfigFile == "" {
+		return nil
+	}
+
+	bundle, err := c.diagnosticsFactory.DiagnosticBundleBootstrapCluster(cluster.KubeconfigFile)
 	if err != nil {
 		logger.V(5).Info("Error generating support bundle for bootstrap cluster", "error", err)
 		return nil
@@ -512,10 +517,15 @@ func (c *ClusterManager) SaveLogsBootstrapCluster(ctx context.Context, cluster *
 }
 
 func (c *ClusterManager) SaveLogsWorkloadCluster(ctx context.Context, provider providers.Provider, spec *cluster.Spec, cluster *types.Cluster) error {
-	if cluster == nil || cluster.KubeconfigFile == "" {
+	if cluster == nil {
 		return nil
 	}
-	bundle, err := c.diagnosticsFac.DiagnosticBundleFromSpec(spec, provider, cluster.KubeconfigFile)
+
+	if cluster.KubeconfigFile == "" {
+		return nil
+	}
+
+	bundle, err := c.diagnosticsFactory.DiagnosticBundleFromSpec(spec, provider, cluster.KubeconfigFile)
 	if err != nil {
 		logger.V(5).Info("Error generating support bundle for workload cluster", "error", err)
 		return nil

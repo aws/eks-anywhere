@@ -1372,10 +1372,10 @@ func newTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) *testSetup 
 }
 
 type clusterManagerMocks struct {
-	writer     *mockswriter.MockFileWriter
-	networking *mocksmanager.MockNetworking
-	client     *mocksmanager.MockClusterClient
-	provider   *mocksprovider.MockProvider
+	writer             *mockswriter.MockFileWriter
+	networking         *mocksmanager.MockNetworking
+	client             *mocksmanager.MockClusterClient
+	provider           *mocksprovider.MockProvider
 	diagnosticsBundle  *mocksdiagnostics.MockDiagnosticBundle
 	diagnosticsFactory *mocksdiagnostics.MockDiagnosticBundleFactory
 }
