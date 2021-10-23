@@ -107,6 +107,10 @@ func (e *E2ETest) GenerateClusterConfig() {
 	})
 }
 
+func (e *E2ETest) ImportImages() {
+	e.RunEKSA("anywhere", "import-images", "-f", e.ClusterConfigLocation)
+}
+
 func (e *E2ETest) CreateCluster() {
 	createClusterArgs := []string{"anywhere", "create", "cluster", "-f", e.ClusterConfigLocation, "-v", "4"}
 	if getBundlesOverride() == "true" {

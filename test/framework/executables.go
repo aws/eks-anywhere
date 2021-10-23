@@ -30,3 +30,7 @@ func buildGovc(t *testing.T) *executables.Govc {
 	}
 	return executableBuilder(t, ctx).BuildGovcExecutable(tmpWriter)
 }
+
+func buildDocker(t *testing.T) *executables.Docker {
+	return executables.BuildDockerExecutable()
+}

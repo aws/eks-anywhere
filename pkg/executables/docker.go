@@ -91,3 +91,10 @@ func (d *Docker) PushImage(ctx context.Context, image string, endpoint string) e
 	}
 	return nil
 }
+
+func (d *Docker) Login(ctx context.Context, endpoint, username, password string) error {
+	params := []string{"login", endpoint, "--username", username, "--password-stdin"}
+	logger.Info(fmt.Sprintf("Logging in to docker registry %s", endpoint))
+	_, err := d.executable.ExecuteWithStdin(ctx, []byte(password), params...)
+	return err
+}
