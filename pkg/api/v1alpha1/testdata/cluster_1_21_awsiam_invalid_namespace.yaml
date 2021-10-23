@@ -65,6 +65,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: AddOnAWSIamConfig
 metadata:
    name: eksa-unit-test
+   namespace: different-namespace
 spec:
   awsRegion: test-region
   clusterID: eksa-unit-test

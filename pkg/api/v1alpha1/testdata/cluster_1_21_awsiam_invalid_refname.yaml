@@ -64,7 +64,7 @@ spec:
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: AddOnAWSIamConfig
 metadata:
-   name: eksa-unit-test
+   name: eksa-unit-test-wrong-name
 spec:
   awsRegion: test-region
   clusterID: eksa-unit-test

@@ -69,17 +69,4 @@ spec:
   awsRegion: test-region
   clusterID: eksa-unit-test
   backendMode:
-    - mode1
-    - mode2
-  mapRoles:
-    - groups:
-      - group1
-      - group2
-      roleARN: test-role-arn
-      username: test
-  mapUsers:
-    - groups:
-      - group1
-      - group2
-      userARN: test-user-arn
-      username: test
+    - EKSConfigMap

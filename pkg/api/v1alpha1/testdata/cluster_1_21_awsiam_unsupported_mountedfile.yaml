@@ -69,8 +69,7 @@ spec:
   awsRegion: test-region
   clusterID: eksa-unit-test
   backendMode:
-    - mode1
-    - mode2
+    - MountedFile
   mapRoles:
     - groups:
       - group1

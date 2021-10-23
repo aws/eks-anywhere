@@ -75,11 +75,9 @@ spec:
     - groups:
       - group1
       - group2
-      roleARN: test-role-arn
       username: test
   mapUsers:
     - groups:
       - group1
       - group2
-      userARN: test-user-arn
       username: test
