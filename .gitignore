@@ -11,3 +11,7 @@ public.zip
 docs/public
 docs/node_modules
 docs/public.zip
+pkg/executables/cluster-name
+cluster.yaml
+eksa-test
+generated/
