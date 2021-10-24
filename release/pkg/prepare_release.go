@@ -18,7 +18,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -42,45 +41,31 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 	fmt.Println("Cloning CLI repository")
 	parentSourceDir := filepath.Join(homeDir, "eks-a-source")
 	r.CliRepoSource = filepath.Join(parentSourceDir, "eks-a-cli")
-	err = os.MkdirAll(r.CliRepoSource, 0o755)
+	cmd := exec.Command("git", "clone", cliRepoUrl, r.CliRepoSource)
+	out, err := execCommand(cmd)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	_, err = git.PlainClone(r.CliRepoSource, false, &git.CloneOptions{
-		Progress: os.Stdout,
-		URL:      cliRepoUrl,
-	})
-	if err != nil {
-		return errors.Cause(err)
-	}
+	fmt.Println(out)
 
 	// Clone the build-tooling repository
 	fmt.Println("Cloning build-tooling repository")
 	r.BuildRepoSource = filepath.Join(parentSourceDir, "eks-a-build")
-	err = os.MkdirAll(r.BuildRepoSource, 0o755)
+	cmd = exec.Command("git", "clone", buildRepoUrl, r.BuildRepoSource)
+	out, err = execCommand(cmd)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	buildRepoCloned, err := git.PlainClone(r.BuildRepoSource, false, &git.CloneOptions{
-		Progress: os.Stdout,
-		URL:      buildRepoUrl,
-	})
-	if err != nil {
-		return errors.Cause(err)
-	}
+	fmt.Println(out)
 
 	if r.DevRelease && r.BranchName != "main" {
-		fmt.Println("Getting working tree for build-tooling repo")
-		buildRepoTree, err := buildRepoCloned.Worktree()
+		fmt.Printf("Checking out build-tooling repo at branch %s", r.BranchName)
+		cmd = exec.Command("git", "-C", r.BuildRepoSource, "checkout", r.BranchName)
+		out, err = execCommand(cmd)
 		if err != nil {
 			return errors.Cause(err)
 		}
-		err = buildRepoTree.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.ReferenceName("refs/heads/" + r.BranchName),
-		})
-		if err != nil {
-			return errors.Cause(err)
-		}
+		fmt.Println(out)
 	}
 	// Set HEADs of the repos
 	r.CliRepoHead, err = GetHead(r.CliRepoSource)
@@ -88,6 +73,7 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 		return errors.Cause(err)
 	}
 	fmt.Printf("Head of cli repo: %s\n", r.CliRepoHead)
+
 	r.BuildRepoHead, err = GetHead(r.BuildRepoSource)
 	if err != nil {
 		return errors.Cause(err)
