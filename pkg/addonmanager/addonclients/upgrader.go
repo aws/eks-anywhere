@@ -20,6 +20,11 @@ func (f *FluxAddonClient) Upgrade(ctx context.Context, managementCluster *types.
 		return nil
 	}
 
+	if newSpec.GitOpsConfig == nil {
+		logger.V(1).Info("Skipping Flux upgrades, GitOps not enabled")
+		return nil
+	}
+
 	changeDiff := f.fluxChangeDiff(currentSpec, newSpec)
 	if !changeDiff {
 		logger.V(1).Info("Nothing to upgrade for Flux")
