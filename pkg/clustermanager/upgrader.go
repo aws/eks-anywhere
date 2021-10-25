@@ -37,7 +37,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentS
 		return nil, fmt.Errorf("failed upgrading EKS-A components from version %v to version %v: %v", oldVersion, newVersion, err)
 	}
 
-	return componentChangeDiffToChangeDiff(changeDiff), nil
+	return types.NewChangeDiff(changeDiff), nil
 }
 
 func eksaChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
@@ -49,11 +49,5 @@ func eksaChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDi
 		}
 	} else {
 		return nil
-	}
-}
-
-func componentChangeDiffToChangeDiff(componenetChangeDiff *types.ComponentChangeDiff) *types.ChangeDiff {
-	return &types.ChangeDiff{
-		ComponentReports: []types.ComponentChangeDiff{*componenetChangeDiff},
 	}
 }
