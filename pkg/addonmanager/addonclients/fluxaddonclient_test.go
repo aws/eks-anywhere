@@ -35,8 +35,8 @@ const (
 func TestFluxAddonClientInstallGitOpsPrexistingRepo(t *testing.T) {
 	tests := []struct {
 		testName                      string
-		cluster                       *types.Cluster
-		clusterConfig                 *v1alpha1.Cluster
+		clusterName                   string
+		selfManaged                   bool
 		fluxpath                      string
 		expectedClusterConfigGitPath  string
 		expectedEksaSystemDirPath     string
@@ -48,27 +48,37 @@ func TestFluxAddonClientInstallGitOpsPrexistingRepo(t *testing.T) {
 		expectedFluxSyncFileName      string
 	}{
 		{
-			testName: "with default config path",
-			cluster: &types.Cluster{
-				Name: "fluxAddonTestCluster",
-			},
-			clusterConfig:                 v1alpha1.NewCluster("fluxAddonTestCluster"),
+			testName:                      "with default config path - management cluster",
+			clusterName:                   "management-cluster",
+			selfManaged:                   true,
 			fluxpath:                      "",
-			expectedClusterConfigGitPath:  "clusters/fluxAddonTestCluster",
-			expectedEksaSystemDirPath:     "clusters/fluxAddonTestCluster/eksa-system",
+			expectedClusterConfigGitPath:  "clusters/management-cluster/management-cluster",
+			expectedEksaSystemDirPath:     "clusters/management-cluster/management-cluster/eksa-system",
 			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
 			expectedKustomizationFileName: defaultKustomizationManifestFileName,
-			expectedConfigFileContents:    "./testdata/cluster-config-default-path.yaml",
-			expectedFluxSystemDirPath:     "clusters/fluxAddonTestCluster/flux-system",
+			expectedConfigFileContents:    "./testdata/cluster-config-default-path-management.yaml",
+			expectedFluxSystemDirPath:     "clusters/management-cluster/management-cluster/flux-system",
 			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
 			expectedFluxSyncFileName:      defaultFluxSyncFileName,
 		},
 		{
-			testName: "with user provided config path",
-			cluster: &types.Cluster{
-				Name: "fluxAddonTestCluster",
-			},
-			clusterConfig:                 v1alpha1.NewCluster("fluxAddonTestCluster"),
+			testName:                      "with default config path - workload cluster",
+			clusterName:                   "workload-cluster",
+			selfManaged:                   false,
+			fluxpath:                      "",
+			expectedClusterConfigGitPath:  "clusters/management-cluster/workload-cluster",
+			expectedEksaSystemDirPath:     "clusters/management-cluster/workload-cluster/eksa-system",
+			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
+			expectedKustomizationFileName: defaultKustomizationManifestFileName,
+			expectedConfigFileContents:    "./testdata/cluster-config-default-path-workload.yaml",
+			expectedFluxSystemDirPath:     "clusters/management-cluster/workload-cluster/flux-system",
+			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
+			expectedFluxSyncFileName:      defaultFluxSyncFileName,
+		},
+		{
+			testName:                      "with user provided config path",
+			clusterName:                   "management-cluster",
+			selfManaged:                   true,
 			fluxpath:                      "user/provided/path",
 			expectedClusterConfigGitPath:  "user/provided/path",
 			expectedEksaSystemDirPath:     "user/provided/path/eksa-system",
@@ -85,6 +95,10 @@ func TestFluxAddonClientInstallGitOpsPrexistingRepo(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			ctx := context.Background()
 			cluster := &types.Cluster{}
+			clusterConfig := v1alpha1.NewCluster(tt.clusterName)
+			if tt.selfManaged {
+				clusterConfig.SetSelfManaged()
+			}
 
 			fluxConfig := v1alpha1.Flux{
 				Github: v1alpha1.Github{
@@ -106,12 +120,12 @@ func TestFluxAddonClientInstallGitOpsPrexistingRepo(t *testing.T) {
 			gitOpsConfig.TypeMeta.APIVersion = v1alpha1.SchemeBuilder.GroupVersion.String()
 			gitOpsConfig.ObjectMeta.Name = "test-gitops"
 			gitOpsConfig.ObjectMeta.Namespace = "default"
-			tt.clusterConfig.Spec.GitOpsRef = &v1alpha1.Ref{Kind: v1alpha1.GitOpsConfigKind, Name: "test-gitops"}
+			clusterConfig.Spec.GitOpsRef = &v1alpha1.Ref{Kind: v1alpha1.GitOpsConfigKind, Name: "test-gitops"}
 
 			f, m, writePath := newAddonClient(t)
 
 			clusterSpec := test.NewClusterSpec(func(s *c.Spec) {
-				s.Cluster = tt.clusterConfig
+				s.Cluster = clusterConfig
 				s.VersionsBundle.Flux = releasev1alpha1.FluxBundle{
 					SourceController: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/fluxcd/source-controller:v0.12.1-8539f509df046a4f567d2182dde824b957136599",
@@ -178,25 +192,25 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 		{
 			testName: "with default config path",
 			cluster: &types.Cluster{
-				Name: "fluxAddonTestCluster",
+				Name: "management-cluster",
 			},
-			clusterConfig:                 v1alpha1.NewCluster("fluxAddonTestCluster"),
+			clusterConfig:                 v1alpha1.NewCluster("management-cluster"),
 			fluxpath:                      "",
-			expectedClusterConfigGitPath:  "clusters/fluxAddonTestCluster",
-			expectedEksaSystemDirPath:     "clusters/fluxAddonTestCluster/eksa-system",
+			expectedClusterConfigGitPath:  "clusters/management-cluster",
+			expectedEksaSystemDirPath:     "clusters/management-cluster/eksa-system",
 			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
 			expectedKustomizationFileName: defaultKustomizationManifestFileName,
 			expectedConfigFileContents:    "./testdata/cluster-config-default-path.yaml",
-			expectedFluxSystemDirPath:     "clusters/fluxAddonTestCluster/flux-system",
+			expectedFluxSystemDirPath:     "clusters/management-cluster/flux-system",
 			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
 			expectedFluxSyncFileName:      defaultFluxSyncFileName,
 		},
 		{
 			testName: "with user provided config path",
 			cluster: &types.Cluster{
-				Name: "fluxAddonTestCluster",
+				Name: "management-cluster",
 			},
-			clusterConfig:                 v1alpha1.NewCluster("fluxAddonTestCluster"),
+			clusterConfig:                 v1alpha1.NewCluster("management-cluster"),
 			fluxpath:                      "user/provided/path",
 			expectedClusterConfigGitPath:  "user/provided/path",
 			expectedEksaSystemDirPath:     "user/provided/path/eksa-system",
@@ -320,16 +334,16 @@ func TestFluxAddonClientInstallGitOpsToolkitsBareRepo(t *testing.T) {
 		{
 			testName: "with default config path",
 			cluster: &types.Cluster{
-				Name: "fluxAddonTestCluster",
+				Name: "management-cluster",
 			},
-			clusterConfig:                 v1alpha1.NewCluster("fluxAddonTestCluster"),
+			clusterConfig:                 v1alpha1.NewCluster("management-cluster"),
 			fluxpath:                      "",
-			expectedClusterConfigGitPath:  "clusters/fluxAddonTestCluster",
-			expectedEksaSystemDirPath:     "clusters/fluxAddonTestCluster/eksa-system",
+			expectedClusterConfigGitPath:  "clusters/management-cluster",
+			expectedEksaSystemDirPath:     "clusters/management-cluster/eksa-system",
 			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
 			expectedKustomizationFileName: defaultKustomizationManifestFileName,
 			expectedConfigFileContents:    "./testdata/cluster-config-default-path.yaml",
-			expectedFluxSystemDirPath:     "clusters/fluxAddonTestCluster/flux-system",
+			expectedFluxSystemDirPath:     "clusters/management-cluster/flux-system",
 			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
 			expectedFluxSyncFileName:      defaultFluxSyncFileName,
 		},
@@ -471,8 +485,8 @@ func TestFluxAddonClientResumeKustomization(t *testing.T) {
 
 func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoNotExists(t *testing.T) {
 	ctx := context.Background()
-	clusterConfig := v1alpha1.NewCluster("fluxAddonTestCluster")
-	eksaSystemDirPath := "clusters/fluxAddonTestCluster/eksa-system"
+	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	eksaSystemDirPath := "clusters/management-cluster/eksa-system"
 
 	fluxConfig := v1alpha1.Flux{
 		Github: v1alpha1.Github{
@@ -520,8 +534,8 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoNotExists(t *testing.T) {
 func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoExists(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
-	clusterConfig := v1alpha1.NewCluster("fluxAddonTestCluster")
-	eksaSystemDirPath := "clusters/fluxAddonTestCluster/eksa-system"
+	clusterConfig := v1alpha1.NewCluster("management-cluster")
+	eksaSystemDirPath := "clusters/management-cluster/eksa-system"
 
 	fluxConfig := v1alpha1.Flux{
 		Github: v1alpha1.Github{
@@ -681,7 +695,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecErrorAddFile(t *testing.T) {
 	m.git.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: fluxConfig.Github.Repository}, nil)
 	m.git.EXPECT().Clone(ctx).Return(nil)
 	m.git.EXPECT().Branch(fluxConfig.Github.Branch).Return(nil)
-	m.git.EXPECT().Add("clusters/fluxAddonTestCluster/eksa-system").Return(errors.New("failed to add file"))
+	m.git.EXPECT().Add("clusters/management-cluster/eksa-system").Return(errors.New("failed to add file"))
 
 	clusterSpec := test.NewClusterSpec(func(s *c.Spec) {
 		s.GitOpsConfig = &gitOpsConfig
@@ -713,7 +727,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecErrorCommit(t *testing.T) {
 	m.git.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: fluxConfig.Github.Repository}, nil)
 	m.git.EXPECT().Clone(ctx).Return(nil)
 	m.git.EXPECT().Branch(fluxConfig.Github.Branch).Return(nil)
-	m.git.EXPECT().Add("clusters/fluxAddonTestCluster/eksa-system").Return(nil)
+	m.git.EXPECT().Add("clusters/management-cluster/eksa-system").Return(nil)
 	m.git.EXPECT().Commit(test.OfType("string")).Return(errors.New("failed to commit"))
 
 	clusterSpec := test.NewClusterSpec(func(s *c.Spec) {
@@ -747,7 +761,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecErrorPushAfterRetry(t *testing.T) {
 	m.git.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: fluxConfig.Github.Repository}, nil)
 	m.git.EXPECT().Clone(ctx).Return(nil)
 	m.git.EXPECT().Branch(fluxConfig.Github.Branch).Return(nil)
-	m.git.EXPECT().Add("clusters/fluxAddonTestCluster/eksa-system").Return(nil)
+	m.git.EXPECT().Add("clusters/management-cluster/eksa-system").Return(nil)
 	m.git.EXPECT().Commit(test.OfType("string")).Return(nil)
 	m.git.EXPECT().Push(ctx).MaxTimes(2).Return(errors.New("failed to push code"))
 
@@ -825,9 +839,9 @@ func TestFluxAddonClientForceReconcileGitRepo(t *testing.T) {
 func TestFluxAddonClientCleanupGitRepo(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
-	clusterConfig := v1alpha1.NewCluster("fluxAddonTestCluster")
+	clusterConfig := v1alpha1.NewCluster("management-cluster")
 
-	clusterPath := "clusters/fluxAddonTestCluster"
+	clusterPath := "clusters/management-cluster"
 
 	fluxConfig := v1alpha1.Flux{
 		Github: v1alpha1.Github{
@@ -874,7 +888,7 @@ func TestFluxAddonClientCleanupGitRepo(t *testing.T) {
 
 func TestFluxAddonClientCleanupGitRepoSkip(t *testing.T) {
 	ctx := context.Background()
-	clusterConfig := v1alpha1.NewCluster("fluxAddonTestCluster")
+	clusterConfig := v1alpha1.NewCluster("management-cluster")
 
 	fluxConfig := v1alpha1.Flux{
 		Github: v1alpha1.Github{
@@ -967,7 +981,7 @@ func newTest(t *testing.T) *fluxTest {
 	_, w := test.NewWriter(t)
 	gitOptions := &addonclients.GitOptions{Git: gitProvider, Writer: w}
 	f := addonclients.NewFluxAddonClient(flux, gitOptions)
-	clusterConfig := v1alpha1.NewCluster("fluxAddonTestCluster")
+	clusterConfig := v1alpha1.NewCluster("management-cluster")
 	clusterSpec := test.NewClusterSpec(func(s *c.Spec) {
 		s.Cluster = clusterConfig
 	})
@@ -1009,7 +1023,7 @@ func datacenterConfig() *v1alpha1.VSphereDatacenterConfig {
 			Kind: v1alpha1.VSphereDatacenterKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "fluxAddonTestCluster",
+			Name: "management-cluster",
 		},
 		Spec: v1alpha1.VSphereDatacenterConfigSpec{
 			Datacenter: "SDDC-Datacenter",
@@ -1023,7 +1037,7 @@ func machineConfig() *v1alpha1.VSphereMachineConfig {
 			Kind: v1alpha1.VSphereMachineConfigKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "fluxAddonTestCluster",
+			Name: "management-cluster",
 		},
 		Spec: v1alpha1.VSphereMachineConfigSpec{
 			Template: "/SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6",
