@@ -323,13 +323,13 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	return nil
 }
 
-func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
+func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
 	cc, err := c.clusterClient.GetEksaCluster(ctx, cluster)
 	if err != nil {
 		return false, err
 	}
 
-	if !reflect.DeepEqual(cc.Spec, clusterSpec.Spec) {
+	if !reflect.DeepEqual(cc.Spec, newClusterSpec.Spec) {
 		logger.V(3).Info("Existing cluster and new cluster spec differ")
 		return true, nil
 	}
@@ -339,7 +339,7 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		return false, err
 	}
 
-	if currentClusterSpec.VersionsBundle.EksD.Name != clusterSpec.VersionsBundle.EksD.Name {
+	if currentClusterSpec.VersionsBundle.EksD.Name != newClusterSpec.VersionsBundle.EksD.Name {
 		logger.V(3).Info("New eks-d release detected")
 		return true, nil
 	}
@@ -350,7 +350,7 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 	case v1alpha1.VSphereDatacenterKind:
 		machineConfigMap := make(map[string]*v1alpha1.VSphereMachineConfig)
 
-		existingVdc, err := c.clusterClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace)
+		existingVdc, err := c.clusterClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
 		if err != nil {
 			return false, err
 		}
@@ -364,30 +364,30 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 			mc := config.(*v1alpha1.VSphereMachineConfig)
 			machineConfigMap[mc.Name] = mc
 		}
-		existingCpVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace)
+		existingCpVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
 		if err != nil {
 			return false, err
 		}
-		cpVmc := machineConfigMap[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+		cpVmc := machineConfigMap[newClusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
 		if !reflect.DeepEqual(existingCpVmc.Spec, cpVmc.Spec) {
 			logger.V(3).Info("New control plane machine config spec is different from the existing spec")
 			return true, nil
 		}
-		existingWnVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace)
+		existingWnVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
 		if err != nil {
 			return false, err
 		}
-		wnVmc := machineConfigMap[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
+		wnVmc := machineConfigMap[newClusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
 		if !reflect.DeepEqual(existingWnVmc.Spec, wnVmc.Spec) {
 			logger.V(3).Info("New worker node machine config spec is different from the existing spec")
 			return true, nil
 		}
 		if cc.Spec.ExternalEtcdConfiguration != nil {
-			existingEtcdVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace)
+			existingEtcdVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
 			if err != nil {
 				return false, err
 			}
-			etcdVmc := machineConfigMap[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+			etcdVmc := machineConfigMap[newClusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
 			if !reflect.DeepEqual(existingEtcdVmc.Spec, etcdVmc.Spec) {
 				logger.V(3).Info("New etcd machine config spec is different from the existing spec")
 				return true, nil
