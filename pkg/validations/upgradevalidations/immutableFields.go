@@ -83,12 +83,12 @@ func ValidateImmutableFields(ctx context.Context, k ValidationsKubectlClient, cl
 				if !prevOIDC.Spec.Equal(&spec.OIDCConfig.Spec) {
 					return fmt.Errorf("oidc identity provider is immutable")
 				}
-			case v1alpha1.AddOnAWSIamConfigKind:
-				prevAwsIam, err := k.GetEksaAddOnAWSIamConfig(ctx, nIdentityProvider.Name, cluster.KubeconfigFile, spec.Namespace)
+			case v1alpha1.AWSIamConfigKind:
+				prevAwsIam, err := k.GetEksaAWSIamConfig(ctx, nIdentityProvider.Name, cluster.KubeconfigFile, spec.Namespace)
 				if err != nil {
 					return err
 				}
-				if !prevAwsIam.Spec.Equal(&spec.AddOnAWSIamConfig.Spec) {
+				if !prevAwsIam.Spec.Equal(&spec.AWSIamConfig.Spec) {
 					return fmt.Errorf("aws iam identity provider is immutable")
 				}
 			}

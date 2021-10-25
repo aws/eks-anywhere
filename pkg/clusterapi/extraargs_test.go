@@ -180,7 +180,7 @@ func TestExtraArgsToPartialYaml(t *testing.T) {
 func TestAwsIamAuthExtraArgs(t *testing.T) {
 	tests := []struct {
 		testName string
-		awsiam   *v1alpha1.AddOnAWSIamConfig
+		awsiam   *v1alpha1.AWSIamConfig
 		want     clusterapi.ExtraArgs
 	}{
 		{
@@ -190,7 +190,7 @@ func TestAwsIamAuthExtraArgs(t *testing.T) {
 		},
 		{
 			testName: "with aws iam config",
-			awsiam:   &v1alpha1.AddOnAWSIamConfig{},
+			awsiam:   &v1alpha1.AWSIamConfig{},
 			want: clusterapi.ExtraArgs{
 				"authentication-token-webhook-config-file": "/etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml",
 			},

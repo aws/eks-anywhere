@@ -6,20 +6,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.1
   creationTimestamp: null
-  name: addonawsiamconfigs.anywhere.eks.amazonaws.com
+  name: awsiamconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
   names:
-    kind: AddOnAWSIamConfig
-    listKind: AddOnAWSIamConfigList
-    plural: addonawsiamconfigs
-    singular: addonawsiamconfig
+    kind: AWSIamConfig
+    listKind: AWSIamConfigList
+    plural: awsiamconfigs
+    singular: awsiamconfig
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: AddOnAWSIamConfig is the Schema for the addonawsiamconfigs API
+        description: AWSIamConfig is the Schema for the awsiamconfigs API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,7 +34,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: AddOnAWSIamConfigSpec defines the desired state of AddOnAWSIamConfig
+            description: AWSIamConfigSpec defines the desired state of AWSIamConfig
             properties:
               awsRegion:
                 description: AWSRegion defines a region in an AWS partition
@@ -95,7 +95,7 @@ spec:
             - backendMode
             type: object
           status:
-            description: AddOnAWSIamConfigStatus defines the observed state of AddOnAWSIamConfig
+            description: AWSIamConfigStatus defines the observed state of AWSIamConfig
             type: object
         type: object
     served: true

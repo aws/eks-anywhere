@@ -45,17 +45,17 @@ func NewAwsIamAuthTemplateBuilder() *AwsIamAuthTemplateBuilder {
 func (a *AwsIamAuthTemplateBuilder) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error) {
 	data := map[string]string{
 		"image":       clusterSpec.VersionsBundle.KubeDistro.AwsIamAuthIamge.VersionedImage(),
-		"awsRegion":   clusterSpec.AddOnAWSIamConfig.Spec.AWSRegion,
-		"clusterID":   clusterSpec.AddOnAWSIamConfig.Spec.ClusterID,
-		"backendMode": strings.Join(clusterSpec.AddOnAWSIamConfig.Spec.BackendMode, ","),
-		"partition":   clusterSpec.AddOnAWSIamConfig.Spec.Partition,
+		"awsRegion":   clusterSpec.AWSIamConfig.Spec.AWSRegion,
+		"clusterID":   clusterSpec.AWSIamConfig.Spec.ClusterID,
+		"backendMode": strings.Join(clusterSpec.AWSIamConfig.Spec.BackendMode, ","),
+		"partition":   clusterSpec.AWSIamConfig.Spec.Partition,
 	}
-	mapRoles, err := a.mapRolesToYaml(clusterSpec.AddOnAWSIamConfig.Spec.MapRoles)
+	mapRoles, err := a.mapRolesToYaml(clusterSpec.AWSIamConfig.Spec.MapRoles)
 	if err != nil {
 		return nil, fmt.Errorf("error generating aws-iam-authenticator manifest: %v", err)
 	}
 	data["mapRoles"] = mapRoles
-	mapUsers, err := a.mapUsersToYaml(clusterSpec.AddOnAWSIamConfig.Spec.MapUsers)
+	mapUsers, err := a.mapUsersToYaml(clusterSpec.AWSIamConfig.Spec.MapUsers)
 	if err != nil {
 		return nil, fmt.Errorf("error generating aws-iam-authenticator manifest: %v", err)
 	}
@@ -93,7 +93,7 @@ func (a *AwsIamAuth) GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, ser
 		"clusterName": clusterSpec.Cluster.Name,
 		"server":      serverUrl,
 		"cert":        tlsCert,
-		"clusterID":   clusterSpec.AddOnAWSIamConfig.Spec.ClusterID,
+		"clusterID":   clusterSpec.AWSIamConfig.Spec.ClusterID,
 	}
 	awsIamAuthKubeconfig, err := templater.Execute(awsIamAuthKubeconfigTemplate, data)
 	if err != nil {
@@ -108,7 +108,7 @@ func (a *AwsIamAuthTemplateBuilder) mapRolesToYaml(m []v1alpha1.MapRoles) (strin
 	}
 	b, err := yaml.Marshal(m)
 	if err != nil {
-		return "", fmt.Errorf("error marshalling AddOnAWSIamConfig MapRoles: %v", err)
+		return "", fmt.Errorf("error marshalling AWSIamConfig MapRoles: %v", err)
 	}
 	s := string(b)
 	s = strings.TrimSuffix(s, "\n")
@@ -122,7 +122,7 @@ func (a *AwsIamAuthTemplateBuilder) mapUsersToYaml(m []v1alpha1.MapUsers) (strin
 	}
 	b, err := yaml.Marshal(m)
 	if err != nil {
-		return "", fmt.Errorf("error marshalling AddOnAWSIamConfig MapUsers: %v", err)
+		return "", fmt.Errorf("error marshalling AWSIamConfig MapUsers: %v", err)
 	}
 	s := string(b)
 	s = strings.TrimSuffix(s, "\n")

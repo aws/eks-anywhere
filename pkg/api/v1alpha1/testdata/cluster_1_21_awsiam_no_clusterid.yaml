@@ -28,7 +28,7 @@ spec:
       cidrBlocks:
         - 10.96.0.0/12
   identityProviderRefs:
-   - kind: AddOnAWSIamConfig
+   - kind: AWSIamConfig
      name: eksa-unit-test
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -62,7 +62,7 @@ spec:
   insecure: false
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: AddOnAWSIamConfig
+kind: AWSIamConfig
 metadata:
    name: eksa-unit-test
 spec:

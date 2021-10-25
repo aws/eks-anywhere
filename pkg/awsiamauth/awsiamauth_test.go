@@ -83,8 +83,8 @@ func givenClusterSpec() *cluster.Spec {
 		s.VersionsBundle.KubeDistro.AwsIamAuthIamge = bundlev1.Image{
 			URI: "public.ecr.aws/eks-distro/kubernetes-sigs/aws-iam-authenticator:v0.5.2-eks-1-18-11",
 		}
-		s.AddOnAWSIamConfig = &v1alpha1.AddOnAWSIamConfig{
-			Spec: v1alpha1.AddOnAWSIamConfigSpec{
+		s.AWSIamConfig = &v1alpha1.AWSIamConfig{
+			Spec: v1alpha1.AWSIamConfigSpec{
 				AWSRegion:   "test-region",
 				BackendMode: []string{"mode1", "mode2"},
 				ClusterID:   "test-cluster",

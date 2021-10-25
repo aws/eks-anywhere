@@ -30,8 +30,8 @@ func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.Da
 	if clusterSpec.OIDCConfig != nil {
 		marshallables = append(marshallables, clusterSpec.OIDCConfig.ConvertConfigToConfigGenerateStruct())
 	}
-	if clusterSpec.AddOnAWSIamConfig != nil {
-		marshallables = append(marshallables, clusterSpec.AddOnAWSIamConfig.ConvertConfigToConfigGenerateStruct())
+	if clusterSpec.AWSIamConfig != nil {
+		marshallables = append(marshallables, clusterSpec.AWSIamConfig.ConvertConfigToConfigGenerateStruct())
 	}
 
 	resources := make([][]byte, 0, len(marshallables))

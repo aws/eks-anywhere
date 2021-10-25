@@ -52,19 +52,19 @@ func (mr *MockValidationsKubectlClientMockRecorder) GetClusters(ctx, cluster int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusters", reflect.TypeOf((*MockValidationsKubectlClient)(nil).GetClusters), ctx, cluster)
 }
 
-// GetEksaAddOnAWSIamConfig mocks base method.
-func (m *MockValidationsKubectlClient) GetEksaAddOnAWSIamConfig(ctx context.Context, awsIamConfigName, kubeconfigFile, namespace string) (*v1alpha1.AddOnAWSIamConfig, error) {
+// GetEksaAWSIamConfig mocks base method.
+func (m *MockValidationsKubectlClient) GetEksaAWSIamConfig(ctx context.Context, awsIamConfigName, kubeconfigFile, namespace string) (*v1alpha1.AWSIamConfig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEksaAddOnAWSIamConfig", ctx, awsIamConfigName, kubeconfigFile, namespace)
-	ret0, _ := ret[0].(*v1alpha1.AddOnAWSIamConfig)
+	ret := m.ctrl.Call(m, "GetEksaAWSIamConfig", ctx, awsIamConfigName, kubeconfigFile, namespace)
+	ret0, _ := ret[0].(*v1alpha1.AWSIamConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetEksaAddOnAWSIamConfig indicates an expected call of GetEksaAddOnAWSIamConfig.
-func (mr *MockValidationsKubectlClientMockRecorder) GetEksaAddOnAWSIamConfig(ctx, awsIamConfigName, kubeconfigFile, namespace interface{}) *gomock.Call {
+// GetEksaAWSIamConfig indicates an expected call of GetEksaAWSIamConfig.
+func (mr *MockValidationsKubectlClientMockRecorder) GetEksaAWSIamConfig(ctx, awsIamConfigName, kubeconfigFile, namespace interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaAddOnAWSIamConfig", reflect.TypeOf((*MockValidationsKubectlClient)(nil).GetEksaAddOnAWSIamConfig), ctx, awsIamConfigName, kubeconfigFile, namespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaAWSIamConfig", reflect.TypeOf((*MockValidationsKubectlClient)(nil).GetEksaAWSIamConfig), ctx, awsIamConfigName, kubeconfigFile, namespace)
 }
 
 // GetEksaCluster mocks base method.

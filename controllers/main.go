@@ -97,8 +97,8 @@ func main() {
 		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1alpha1.OIDCConfigKind)
 		os.Exit(1)
 	}
-	if err = (&anywherev1alpha1.AddOnAWSIamConfig{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1alpha1.AddOnAWSIamConfigKind)
+	if err = (&anywherev1alpha1.AWSIamConfig{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1alpha1.AWSIamConfigKind)
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
