@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"sigs.k8s.io/yaml"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/types"
 	v1alpha1release "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	"sigs.k8s.io/yaml"
 )
 
 type BundlesFetch func(ctx context.Context, name, namespace string) (*v1alpha1release.Bundles, error)
