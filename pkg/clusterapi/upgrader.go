@@ -24,25 +24,25 @@ func NewUpgrader(client CAPIClient) *Upgrader {
 	}
 }
 
-func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, currentSpec, newSpec *cluster.Spec) error {
+func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
 	logger.V(1).Info("Checking for CAPI upgrades")
 	if !newSpec.Cluster.IsSelfManaged() {
 		logger.V(1).Info("Skipping CAPI upgrades, not a self-managed cluster")
-		return nil
+		return nil, nil
 	}
 
-	changeDiff := u.capiChangeDiff(currentSpec, newSpec, provider)
-	if changeDiff == nil {
+	capiChangeDiff := u.capiChangeDiff(currentSpec, newSpec, provider)
+	if capiChangeDiff == nil {
 		logger.V(1).Info("Nothing to upgrade for CAPI")
-		return nil
+		return nil, nil
 	}
 
 	logger.V(1).Info("Starting CAPI upgrades")
-	if err := u.capiClient.Upgrade(ctx, managementCluster, provider, newSpec, changeDiff); err != nil {
-		return fmt.Errorf("failed upgrading ClusterAPI from bundles %d to bundles %d: %v", currentSpec.Bundles.Spec.Number, newSpec.Bundles.Spec.Number, err)
+	if err := u.capiClient.Upgrade(ctx, managementCluster, provider, newSpec, capiChangeDiff); err != nil {
+		return nil, fmt.Errorf("failed upgrading ClusterAPI from bundles %d to bundles %d: %v", currentSpec.Bundles.Spec.Number, newSpec.Bundles.Spec.Number, err)
 	}
 
-	return nil
+	return capiChangeDiff.toChangeDiff(), nil
 }
 
 type CAPIChangeDiff struct {
@@ -50,6 +50,17 @@ type CAPIChangeDiff struct {
 	ControlPlane           *types.ComponentChangeDiff
 	BootstrapProviders     []types.ComponentChangeDiff
 	InfrastructureProvider *types.ComponentChangeDiff
+}
+
+func (c *CAPIChangeDiff) toChangeDiff() *types.ChangeDiff {
+	r := make([]*types.ComponentChangeDiff, 3+len(c.BootstrapProviders))
+	r = append(r, c.Core, c.ControlPlane, c.InfrastructureProvider)
+	for _, bootstrapChangeDiff := range c.BootstrapProviders {
+		b := bootstrapChangeDiff
+		r = append(r, &b)
+	}
+
+	return types.NewChangeDiff(r...)
 }
 
 func (u *Upgrader) capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider providers.Provider) *CAPIChangeDiff {
