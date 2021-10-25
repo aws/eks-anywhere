@@ -19,26 +19,41 @@ func NewUpgrader(retrier *retrierClient) *Upgrader {
 	}
 }
 
-func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) error {
+func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
 	logger.V(1).Info("Checking for EKS-A components upgrade")
 	if !newSpec.Cluster.IsSelfManaged() {
 		logger.V(1).Info("Skipping EKS-A components upgrade, not a self-managed cluster")
-		return nil
+		return nil, nil
 	}
-	if !u.isUpgradeNeeded(currentSpec, newSpec) {
+	changeDiff := eksaChangeDiff(currentSpec, newSpec)
+	if changeDiff == nil {
 		logger.V(1).Info("Nothing to upgrade for controller and CRDs")
-		return nil
+		return nil, nil
 	}
 	logger.V(1).Info("Starting EKS-A components upgrade")
 	oldVersion := currentSpec.VersionsBundle.Eksa.Version
 	newVersion := newSpec.VersionsBundle.Eksa.Version
 	if err := u.retrier.installCustomComponents(ctx, newSpec, cluster); err != nil {
-		return fmt.Errorf("failed upgrading EKS-A components from version %v to version %v: %v", oldVersion, newVersion, err)
+		return nil, fmt.Errorf("failed upgrading EKS-A components from version %v to version %v: %v", oldVersion, newVersion, err)
 	}
 
-	return nil
+	return componentChangeDiffToChangeDiff(changeDiff), nil
 }
 
-func (u *Upgrader) isUpgradeNeeded(currentSpec, newSpec *cluster.Spec) bool {
-	return currentSpec.VersionsBundle.Eksa.Version != newSpec.VersionsBundle.Eksa.Version
+func eksaChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
+	if currentSpec.VersionsBundle.Eksa.Version != newSpec.VersionsBundle.Eksa.Version {
+		return &types.ComponentChangeDiff{
+			ComponentName: "EKS-A controller and CRDs",
+			NewVersion:    newSpec.VersionsBundle.Eksa.Version,
+			OldVersion:    currentSpec.VersionsBundle.Eksa.Version,
+		}
+	} else {
+		return nil
+	}
+}
+
+func componentChangeDiffToChangeDiff(componenetChangeDiff *types.ComponentChangeDiff) *types.ChangeDiff {
+	return &types.ChangeDiff{
+		ComponentReports: []types.ComponentChangeDiff{*componenetChangeDiff},
+	}
 }

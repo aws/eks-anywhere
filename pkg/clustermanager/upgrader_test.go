@@ -52,13 +52,13 @@ func TestUpgraderUpgradeNoSelfManaged(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.newSpec.Cluster.SetManagedBy("management-cluster")
 
-	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Succeed())
+	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestUpgraderUpgradeNoChanges(t *testing.T) {
 	tt := newUpgraderTest(t)
 
-	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Succeed())
+	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestUpgraderUpgradeSuccess(t *testing.T) {
@@ -69,9 +69,19 @@ func TestUpgraderUpgradeSuccess(t *testing.T) {
 		URI: "testdata/eksa_components.yaml",
 	}
 
+	wantDiff := &types.ChangeDiff{
+		ComponentReports: []types.ComponentChangeDiff{
+			{
+				ComponentName: "EKS-A controller and CRDs",
+				NewVersion:    "v0.2.0",
+				OldVersion:    "v0.1.0",
+			},
+		},
+	}
+
 	tt.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, []byte("test data")).Return(nil)
 	tt.client.EXPECT().WaitForDeployment(tt.ctx, tt.cluster, "30m", "Available", "eksa-controller-manager", "eksa-system")
-	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Succeed())
+	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
 }
 
 func TestUpgraderUpgradeInstallError(t *testing.T) {
@@ -80,5 +90,6 @@ func TestUpgraderUpgradeInstallError(t *testing.T) {
 	tt.newSpec.VersionsBundle.Eksa.Version = "v0.2.0"
 
 	// components file not set so this should return an error in failing to load manifest
-	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).NotTo(Succeed())
+	_, err := tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
+	tt.Expect(err).NotTo(BeNil())
 }
