@@ -27,10 +27,6 @@ import (
 func (r *ReleaseConfig) GetFluxAssets() ([]Artifact, error) {
 	fluxControllerProjects := []string{"source-controller", "kustomize-controller", "helm-controller", "notification-controller"}
 	artifacts := []Artifact{}
-	fluxGitTag, err := r.getFluxGitTag("flux2")
-	if err != nil {
-		return nil, errors.Cause(err)
-	}
 	for _, project := range fluxControllerProjects {
 		gitTag, err := r.getFluxGitTag(project)
 		if err != nil {
@@ -48,45 +44,6 @@ func (r *ReleaseConfig) GetFluxAssets() ([]Artifact, error) {
 		}
 		artifacts = append(artifacts, Artifact{Image: imageArtifact})
 	}
-
-	manifest := "gotk-components.yaml"
-
-	imageTagOverrides, err := r.getFluxControllerTagOverrides(fluxControllerProjects)
-	if err != nil {
-		return nil, errors.Cause(err)
-	}
-
-	var sourceS3Prefix string
-	var releaseS3Path string
-
-	if r.DevRelease || r.ReleaseEnvironment == "development" {
-		sourceS3Prefix = fmt.Sprintf("projects/fluxcd/flux2/latest/manifests/gotk/%s", fluxGitTag)
-	} else {
-		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/flux2/manifests/gotk/%s", r.BundleNumber, fluxGitTag)
-	}
-
-	if r.DevRelease {
-		releaseS3Path = fmt.Sprintf("artifacts/%s/flux2/manifests/gotk/%s", r.DevReleaseUriVersion, fluxGitTag)
-	} else {
-		releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/flux2/manifests/gotk/%s", r.BundleNumber, fluxGitTag)
-	}
-
-	cdnURI, err := r.GetURI(filepath.Join(releaseS3Path, manifest))
-	if err != nil {
-		return nil, errors.Cause(err)
-	}
-
-	manifestArtifact := &ManifestArtifact{
-		SourceS3Key:       manifest,
-		SourceS3Prefix:    sourceS3Prefix,
-		ArtifactPath:      filepath.Join(r.ArtifactDir, "flux-manifests", r.BuildRepoHead),
-		ReleaseName:       manifest,
-		ReleaseS3Path:     releaseS3Path,
-		ReleaseCdnURI:     cdnURI,
-		ImageTagOverrides: imageTagOverrides,
-	}
-	artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
-
 	return artifacts, nil
 }
 
@@ -97,31 +54,19 @@ func (r *ReleaseConfig) GetFluxBundle(imageDigests map[string]string) (anywherev
 	}
 
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
-	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	for _, artifact := range artifacts {
-		if artifact.Image != nil {
-			imageArtifact := artifact.Image
+		imageArtifact := artifact.Image
 
-			bundleImageArtifact := anywherev1alpha1.Image{
-				Name:        imageArtifact.AssetName,
-				Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
-				OS:          imageArtifact.OS,
-				Arch:        imageArtifact.Arch,
-				URI:         imageArtifact.ReleaseImageURI,
-				ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
-			}
-
-			bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+		bundleImageArtifact := anywherev1alpha1.Image{
+			Name:        imageArtifact.AssetName,
+			Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
+			OS:          imageArtifact.OS,
+			Arch:        imageArtifact.Arch,
+			URI:         imageArtifact.ReleaseImageURI,
+			ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 		}
 
-		if artifact.Manifest != nil {
-			manifestArtifact := artifact.Manifest
-			bundleManifestArtifact := anywherev1alpha1.Manifest{
-				URI: manifestArtifact.ReleaseCdnURI,
-			}
-
-			bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
-		}
+		bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 	}
 
 	version, err := r.GenerateComponentBundleVersion(
@@ -140,7 +85,6 @@ func (r *ReleaseConfig) GetFluxBundle(imageDigests map[string]string) (anywherev
 		KustomizeController:    bundleImageArtifacts["kustomize-controller"],
 		HelmController:         bundleImageArtifacts["helm-controller"],
 		NotificationController: bundleImageArtifacts["notification-controller"],
-		Components:             bundleManifestArtifacts["gotk-components.yaml"],
 	}
 
 	return bundle, nil
@@ -155,27 +99,6 @@ func (r *ReleaseConfig) getFluxGitTag(project string) (string, error) {
 	}
 
 	return gitTag, nil
-}
-
-func (r *ReleaseConfig) getFluxControllerTagOverrides(projects []string) ([]ImageTagOverride, error) {
-	imageTagOverrides := []ImageTagOverride{}
-	for _, project := range projects {
-		gitTag, err := r.getFluxGitTag(project)
-		if err != nil {
-			return nil, errors.Cause(err)
-		}
-
-		repoName, tagOptions := r.getFluxImageAttributes(project, gitTag)
-
-		imageTagOverride := ImageTagOverride{
-			Repository: repoName,
-			ReleaseUri: r.GetReleaseImageURI(project, repoName, tagOptions),
-		}
-
-		imageTagOverrides = append(imageTagOverrides, imageTagOverride)
-	}
-
-	return imageTagOverrides, nil
 }
 
 func (r *ReleaseConfig) getFluxImageAttributes(project, gitTag string) (string, map[string]string) {

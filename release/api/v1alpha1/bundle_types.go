@@ -187,12 +187,11 @@ type CiliumBundle struct {
 }
 
 type FluxBundle struct {
-	Version                string   `json:"version,omitempty"`
-	SourceController       Image    `json:"sourceController"`
-	KustomizeController    Image    `json:"kustomizeController"`
-	HelmController         Image    `json:"helmController"`
-	NotificationController Image    `json:"notificationController"`
-	Components             Manifest `json:"components"`
+	Version                string `json:"version,omitempty"`
+	SourceController       Image  `json:"sourceController"`
+	KustomizeController    Image  `json:"kustomizeController"`
+	HelmController         Image  `json:"helmController"`
+	NotificationController Image  `json:"notificationController"`
 }
 
 type EksaBundle struct {
