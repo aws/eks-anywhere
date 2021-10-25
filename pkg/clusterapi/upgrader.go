@@ -53,7 +53,7 @@ type CAPIChangeDiff struct {
 }
 
 func (c *CAPIChangeDiff) toChangeDiff() *types.ChangeDiff {
-	r := make([]*types.ComponentChangeDiff, 3+len(c.BootstrapProviders))
+	r := make([]*types.ComponentChangeDiff, 0, 3+len(c.BootstrapProviders))
 	r = append(r, c.Core, c.ControlPlane, c.InfrastructureProvider)
 	for _, bootstrapChangeDiff := range c.BootstrapProviders {
 		b := bootstrapChangeDiff
