@@ -37,6 +37,7 @@ import (
 type SourceClients struct {
 	Docker *DockerClients
 	S3     *SourceS3Clients
+	ECR    *SourceECRClient
 }
 
 type ReleaseClients struct {
@@ -58,6 +59,11 @@ type SourceS3Clients struct {
 type ReleaseS3Clients struct {
 	Client   *s3.S3
 	Uploader *s3manager.Uploader
+}
+
+type SourceECRClient struct {
+	EcrClient       *ecr.ECR
+	EcrPublicClient *ecrpublic.ECRPublic
 }
 
 type ReleaseECRPublicClient struct {
@@ -120,6 +126,9 @@ func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClien
 		S3: &SourceS3Clients{
 			Client:     s3Client,
 			Downloader: downloader,
+		},
+		ECR: &SourceECRClient{
+			EcrClient: ecrClient,
 		},
 	}
 
@@ -205,6 +214,9 @@ func (r *ReleaseConfig) CreateStagingReleaseClients() (*SourceClients, *ReleaseC
 		S3: &SourceS3Clients{
 			Client:     sourceS3Client,
 			Downloader: downloader,
+		},
+		ECR: &SourceECRClient{
+			EcrClient: ecrClient,
 		},
 	}
 
@@ -292,6 +304,9 @@ func (r *ReleaseConfig) CreateProdReleaseClients() (*SourceClients, *ReleaseClie
 			Client:     sourceS3Client,
 			Downloader: downloader,
 		},
+		ECR: &SourceECRClient{
+			EcrPublicClient: sourceEcrPublicClient,
+		},
 	}
 
 	// Constructing release clients
@@ -312,14 +327,33 @@ func (r *ReleaseConfig) CreateProdReleaseClients() (*SourceClients, *ReleaseClie
 	return sourceClients, releaseClients, nil
 }
 
+func getEcrAuthToken(ecrClient *ecr.ECR) (string, error) {
+	authTokenOutput, err := ecrClient.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+	authToken := *authTokenOutput.AuthorizationData[0].AuthorizationToken
+
+	return authToken, nil
+}
+
+func getEcrPublicAuthToken(ecrPublicClient *ecrpublic.ECRPublic) (string, error) {
+	authTokenOutput, err := ecrPublicClient.GetAuthorizationToken(&ecrpublic.GetAuthorizationTokenInput{})
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+	authToken := *authTokenOutput.AuthorizationData.AuthorizationToken
+
+	return authToken, nil
+}
+
 // Function to retrieve auth configuration to authenticate with ECR registry
 func getEcrAuthConfig(ecrClient *ecr.ECR) (*docker.AuthConfiguration, error) {
 	// Get ECR authorization token
-	authTokenOutput, err := ecrClient.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+	authToken, err := getEcrAuthToken(ecrClient)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
-	authToken := *authTokenOutput.AuthorizationData[0].AuthorizationToken
 
 	// Decode authorization token to get credential pair
 	creds, err := base64.StdEncoding.DecodeString(authToken)
@@ -343,11 +377,10 @@ func getEcrAuthConfig(ecrClient *ecr.ECR) (*docker.AuthConfiguration, error) {
 // Function to retrieve auth configuration to authenticate with ECR Public registry
 func getEcrPublicAuthConfig(ecrPublicClient *ecrpublic.ECRPublic) (*docker.AuthConfiguration, error) {
 	// Get ECR Public authorization token
-	authTokenOutput, err := ecrPublicClient.GetAuthorizationToken(&ecrpublic.GetAuthorizationTokenInput{})
+	authToken, err := getEcrPublicAuthToken(ecrPublicClient)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
-	authToken := *authTokenOutput.AuthorizationData.AuthorizationToken
 
 	// Decode authorization token to get credential pair
 	creds, err := base64.StdEncoding.DecodeString(authToken)
