@@ -96,6 +96,20 @@ func (m *MockClusterManager) EXPECT() *MockClusterManagerMockRecorder {
 	return m.recorder
 }
 
+// ApplyBundles mocks base method.
+func (m *MockClusterManager) ApplyBundles(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ApplyBundles", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ApplyBundles indicates an expected call of ApplyBundles.
+func (mr *MockClusterManagerMockRecorder) ApplyBundles(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyBundles", reflect.TypeOf((*MockClusterManager)(nil).ApplyBundles), arg0, arg1, arg2)
+}
+
 // CreateEKSAResources mocks base method.
 func (m *MockClusterManager) CreateEKSAResources(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.DatacenterConfig, arg4 []providers.MachineConfig) error {
 	m.ctrl.T.Helper()
@@ -316,11 +330,12 @@ func (mr *MockClusterManagerMockRecorder) SaveLogs(arg0, arg1 interface{}) *gomo
 }
 
 // Upgrade mocks base method.
-func (m *MockClusterManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) error {
+func (m *MockClusterManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*types.ChangeDiff)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Upgrade indicates an expected call of Upgrade.
@@ -451,11 +466,12 @@ func (mr *MockAddonManagerMockRecorder) UpdateGitEksaSpec(arg0, arg1, arg2, arg3
 }
 
 // Upgrade mocks base method.
-func (m *MockAddonManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) error {
+func (m *MockAddonManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*types.ChangeDiff)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Upgrade indicates an expected call of Upgrade.
@@ -539,11 +555,12 @@ func (m *MockCAPIUpgrader) EXPECT() *MockCAPIUpgraderMockRecorder {
 }
 
 // Upgrade mocks base method.
-func (m *MockCAPIUpgrader) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2 providers.Provider, arg3, arg4 *cluster.Spec) error {
+func (m *MockCAPIUpgrader) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2 providers.Provider, arg3, arg4 *cluster.Spec) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(*types.ChangeDiff)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Upgrade indicates an expected call of Upgrade.
