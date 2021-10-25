@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -43,15 +44,23 @@ var importImagesCmd = &cobra.Command{
 	},
 }
 
-func importImages(context context.Context, spec string) error {
-	clusterSpec, err := cluster.NewSpec(spec, version.Get())
+func importImages(context context.Context, specFile string) error {
+	clusterSpec, err := cluster.NewSpec(specFile, version.Get())
 	if err != nil {
 		return err
 	}
 	de := executables.BuildDockerExecutable()
 
+	mc, err := v1alpha1.GetVSphereMachineConfigs(specFile)
+	if err != nil {
+		return err
+	}
+	if len(mc) == 0 {
+		return fmt.Errorf("no machine config found in %s", specFile)
+	}
+
 	if clusterSpec.Spec.RegistryMirrorConfiguration == nil || clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint == "" {
-		return fmt.Errorf("it is necessary to define a valid endpoint in your spec (registryMirrorConfiguration.endpoint)")
+		return fmt.Errorf("it is necessary to define a valid endpoint in your spec file (registryMirrorConfiguration.endpoint)")
 	}
 	endpoint := clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
 
@@ -66,6 +75,17 @@ func importImages(context context.Context, spec string) error {
 	for _, image := range kubeDistroImages {
 		if err := importImage(context, de, image.URI, endpoint); err != nil {
 			return fmt.Errorf("error importing image %s: %v", image.URI, err)
+		}
+	}
+
+	// TODO fetch this image dynamically
+	for _, machineConfig := range mc {
+		if machineConfig.Spec.OSFamily == "" || machineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
+			brAdminImageURI := "public.ecr.aws/bottlerocket/bottlerocket-admin:v0.7.2"
+			if err := importImage(context, de, brAdminImageURI, endpoint); err != nil {
+				return fmt.Errorf("error importing image %s: %v", brAdminImageURI, err)
+			}
+			break
 		}
 	}
 
