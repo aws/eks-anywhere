@@ -72,7 +72,7 @@ func TestUpgraderUpgradeSuccess(t *testing.T) {
 	wantDiff := &types.ChangeDiff{
 		ComponentReports: []types.ComponentChangeDiff{
 			{
-				ComponentName: "EKS-A controller and CRDs",
+				ComponentName: "EKS-A",
 				NewVersion:    "v0.2.0",
 				OldVersion:    "v0.1.0",
 			},

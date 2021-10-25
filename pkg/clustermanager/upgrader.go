@@ -43,7 +43,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentS
 func eksaChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
 	if currentSpec.VersionsBundle.Eksa.Version != newSpec.VersionsBundle.Eksa.Version {
 		return &types.ComponentChangeDiff{
-			ComponentName: "EKS-A controller and CRDs",
+			ComponentName: "EKS-A",
 			NewVersion:    newSpec.VersionsBundle.Eksa.Version,
 			OldVersion:    currentSpec.VersionsBundle.Eksa.Version,
 		}
