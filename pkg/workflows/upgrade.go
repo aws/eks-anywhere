@@ -158,19 +158,34 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 		return nil
 	}
 
-	if err := commandContext.CAPIUpgrader.Upgrade(ctx, commandContext.WorkloadCluster, commandContext.Provider, currentSpec, commandContext.ClusterSpec); err != nil {
+	upgradeChangeDiff := types.NewChangeDiff()
+
+	changeDiff, err := commandContext.CAPIUpgrader.Upgrade(ctx, commandContext.WorkloadCluster, commandContext.Provider, currentSpec, commandContext.ClusterSpec)
+	if err != nil {
 		commandContext.SetError(err)
 		return nil
 	}
+	upgradeChangeDiff.Merge(changeDiff)
 
-	if err := commandContext.AddonManager.Upgrade(ctx, commandContext.WorkloadCluster, currentSpec, commandContext.ClusterSpec); err != nil {
+	changeDiff, err = commandContext.AddonManager.Upgrade(ctx, commandContext.WorkloadCluster, currentSpec, commandContext.ClusterSpec)
+	if err != nil {
 		commandContext.SetError(err)
 		return nil
 	}
+	upgradeChangeDiff.Merge(changeDiff)
 
-	if err := commandContext.ClusterManager.Upgrade(ctx, commandContext.WorkloadCluster, currentSpec, commandContext.ClusterSpec); err != nil {
+	changeDiff, err = commandContext.ClusterManager.Upgrade(ctx, commandContext.WorkloadCluster, currentSpec, commandContext.ClusterSpec)
+	if err != nil {
 		commandContext.SetError(err)
 		return nil
+	}
+	upgradeChangeDiff.Merge(changeDiff)
+
+	if upgradeChangeDiff.Changed() {
+		if err = commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster); err != nil {
+			commandContext.SetError(err)
+			return nil
+		}
 	}
 
 	return &upgradeNeeded{}

@@ -663,16 +663,17 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	if err != nil {
 		return err
 	}
-	return c.applyVersionBundle(ctx, clusterSpec, cluster)
+	return c.ApplyBundles(ctx, clusterSpec, cluster)
 }
 
-func (c *ClusterManager) applyVersionBundle(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
 	clusterSpec.Bundles.Name = clusterSpec.Name
 	clusterSpec.Bundles.Namespace = clusterSpec.Namespace
 	bundleObj, err := yaml.Marshal(clusterSpec.Bundles)
 	if err != nil {
 		return fmt.Errorf("error outputting bundle yaml: %v", err)
 	}
+	logger.V(1).Info("Applying Bundles to cluster")
 	err = c.Retrier.Retry(
 		func() error {
 			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, bundleObj)

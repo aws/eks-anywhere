@@ -89,16 +89,28 @@ func (c *upgradeTestSetup) expectUpdateSecrets() {
 
 func (c *upgradeTestSetup) expectUpgradeCoreComponents() {
 	currentSpec := &cluster.Spec{}
+	capiChangeDiff := types.NewChangeDiff(&types.ComponentChangeDiff{
+		ComponentName: "vsphere",
+		OldVersion:    "v0.0.1",
+		NewVersion:    "v0.0.2",
+	})
+	fluxChangeDiff := types.NewChangeDiff(&types.ComponentChangeDiff{
+		ComponentName: "Flux",
+		OldVersion:    "v0.0.1",
+		NewVersion:    "v0.0.2",
+	})
+	eksaChangeDiff := types.NewChangeDiff(&types.ComponentChangeDiff{
+		ComponentName: "eks-a",
+		OldVersion:    "v0.0.1",
+		NewVersion:    "v0.0.2",
+	})
 	gomock.InOrder(
 		c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, c.workloadCluster).Return(currentSpec, nil),
-		c.capiUpgrader.EXPECT().Upgrade(c.ctx, c.workloadCluster, c.provider, currentSpec, c.clusterSpec),
-		c.clusterManager.EXPECT().Upgrade(c.ctx, c.workloadCluster, currentSpec, c.clusterSpec),
+		c.capiUpgrader.EXPECT().Upgrade(c.ctx, c.workloadCluster, c.provider, currentSpec, c.clusterSpec).Return(capiChangeDiff, nil),
+		c.addonManager.EXPECT().Upgrade(c.ctx, c.workloadCluster, currentSpec, c.clusterSpec).Return(fluxChangeDiff, nil),
+		c.clusterManager.EXPECT().Upgrade(c.ctx, c.workloadCluster, currentSpec, c.clusterSpec).Return(eksaChangeDiff, nil),
+		c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.clusterSpec, c.workloadCluster),
 	)
-}
-
-func (c *upgradeTestSetup) expectUpgradeFluxComponents() {
-	currentSpec := &cluster.Spec{}
-	c.addonManager.EXPECT().Upgrade(c.ctx, c.workloadCluster, currentSpec, c.clusterSpec)
 }
 
 func (c *upgradeTestSetup) expectCreateBootstrap() {
@@ -279,7 +291,6 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets()
 	test.expectUpgradeCoreComponents()
-	test.expectUpgradeFluxComponents()
 	test.expectVerifyClusterSpecNoChanges()
 	test.expectPauseEKSAControllerReconcileNotToBeCalled()
 	test.expectPauseGitOpsKustomizationNotToBeCalled()
@@ -297,7 +308,6 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets()
 	test.expectUpgradeCoreComponents()
-	test.expectUpgradeFluxComponents()
 	test.expectVerifyClusterSpecChanged()
 	test.expectPauseEKSAControllerReconcile()
 	test.expectPauseGitOpsKustomization()
@@ -327,7 +337,6 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets()
 	test.expectUpgradeCoreComponents()
-	test.expectUpgradeFluxComponents()
 	test.expectVerifyClusterSpecChanged()
 	test.expectPauseEKSAControllerReconcile()
 	test.expectPauseGitOpsKustomization()

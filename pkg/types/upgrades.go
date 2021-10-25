@@ -22,3 +22,15 @@ func NewChangeDiff(componentReports ...*ComponentChangeDiff) *ChangeDiff {
 		ComponentReports: reports,
 	}
 }
+
+func (c *ChangeDiff) Merge(changeDiffs ...*ChangeDiff) {
+	for _, diff := range changeDiffs {
+		if diff != nil {
+			c.ComponentReports = append(c.ComponentReports, diff.ComponentReports...)
+		}
+	}
+}
+
+func (c *ChangeDiff) Changed() bool {
+	return len(c.ComponentReports) > 0
+}
