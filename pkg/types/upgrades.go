@@ -23,7 +23,7 @@ func NewChangeDiff(componentReports ...*ComponentChangeDiff) *ChangeDiff {
 	}
 }
 
-func (c *ChangeDiff) Merge(changeDiffs ...*ChangeDiff) {
+func (c *ChangeDiff) Append(changeDiffs ...*ChangeDiff) {
 	for _, diff := range changeDiffs {
 		if diff != nil {
 			c.ComponentReports = append(c.ComponentReports, diff.ComponentReports...)

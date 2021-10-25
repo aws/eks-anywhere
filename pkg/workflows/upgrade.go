@@ -165,21 +165,21 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 		commandContext.SetError(err)
 		return nil
 	}
-	upgradeChangeDiff.Merge(changeDiff)
+	upgradeChangeDiff.Append(changeDiff)
 
 	changeDiff, err = commandContext.AddonManager.Upgrade(ctx, commandContext.WorkloadCluster, currentSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
 	}
-	upgradeChangeDiff.Merge(changeDiff)
+	upgradeChangeDiff.Append(changeDiff)
 
 	changeDiff, err = commandContext.ClusterManager.Upgrade(ctx, commandContext.WorkloadCluster, currentSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
 	}
-	upgradeChangeDiff.Merge(changeDiff)
+	upgradeChangeDiff.Append(changeDiff)
 
 	if upgradeChangeDiff.Changed() {
 		if err = commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster); err != nil {
