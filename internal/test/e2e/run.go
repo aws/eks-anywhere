@@ -133,7 +133,7 @@ func (e *E2ESession) commandWithEnvVars(command string) string {
 	fullCommand := make([]string, 0, len(e.testEnvVars)+1)
 
 	for k, v := range e.testEnvVars {
-		fullCommand = append(fullCommand, fmt.Sprintf("export %s=%s", k, v))
+		fullCommand = append(fullCommand, fmt.Sprintf("export %s=\"%s\"", k, v))
 	}
 	fullCommand = append(fullCommand, command)
 
