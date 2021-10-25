@@ -175,8 +175,9 @@ func (e *E2ESession) uploadLogFilesFromInstance(testName string) {
 	err := ssm.Run(e.session, e.instanceId, command)
 	if err != nil {
 		logger.Error(err, "error uploading log files from instance")
+	} else {
+		logger.V(1).Info("Successfully uploaded log files to S3")
 	}
-	logger.V(1).Info("Successfully uploaded log files to S3")
 }
 
 func (e *E2ESession) downloadRequiredFilesInInstance() error {
