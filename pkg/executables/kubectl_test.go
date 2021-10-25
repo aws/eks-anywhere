@@ -1160,6 +1160,24 @@ func TestKubectlValidateClustersCRDNotFound(t *testing.T) {
 	}
 }
 
+func TestKubectlUpdateEnvironmentVariablesInNamespace(t *testing.T) {
+	k, ctx, cluster, e := newKubectl(t)
+	envMap := map[string]string{
+		"key": "val",
+	}
+	e.EXPECT().Execute(ctx, []string{
+		"set", "env", "deployment",
+		"eksa-controller-manager", "key=val",
+		"--kubeconfig", cluster.KubeconfigFile,
+		"--namespace", "eksa-system",
+	})
+
+	err := k.UpdateEnvironmentVariablesInNamespace(ctx, "deployment", "eksa-controller-manager", envMap, cluster, "eksa-system")
+	if err != nil {
+		t.Fatalf("Kubectl.UpdateEnvironmentVariablesInNamespace() error = %v, want nil", err)
+	}
+}
+
 func TestKubectlUpdateAnnotation(t *testing.T) {
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(ctx, []string{

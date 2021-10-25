@@ -21,6 +21,7 @@ const (
 	eksctlBinary               = "eksctl"
 	bundlesReleaseManifestFile = "local-bundle-release.yaml"
 	eksAComponentsManifestFile = "local-eksa-components.yaml"
+	testNameFile               = "e2e-test-name"
 )
 
 type E2ESession struct {
@@ -76,6 +77,11 @@ func (e *E2ESession) setup(regex string) error {
 	err = ssm.WaitForSSMReady(e.session, instanceId)
 	if err != nil {
 		return fmt.Errorf("error waiting for ssm in new instance: %v", err)
+	}
+
+	err = e.createTestNameFile(regex)
+	if err != nil {
+		return err
 	}
 
 	err = e.downloadRequiredFilesInInstance()
@@ -161,6 +167,19 @@ func (e *E2ESession) downloadRequiredFileInInstance(file string) error {
 	return nil
 }
 
+func (e *E2ESession) uploadLogFilesFromInstance(testName string) {
+	logger.V(1).Info("Uploading log files to s3 bucket")
+	testNameFolder := fmt.Sprintf("%s_%s", testName, e.instanceId)
+	command := fmt.Sprintf("aws s3 cp /home/e2e/%s/ s3://%s/generated-artifacts/%s/ --recursive", e.instanceId, e.storageBucket, testNameFolder)
+
+	err := ssm.Run(e.session, e.instanceId, command)
+	if err != nil {
+		logger.Error(err, "error uploading log files from instance")
+	} else {
+		logger.V(1).Info("Successfully uploaded log files to S3")
+	}
+}
+
 func (e *E2ESession) downloadRequiredFilesInInstance() error {
 	if e.bundlesOverride {
 		requiredFiles = append(requiredFiles, bundlesReleaseManifestFile, eksAComponentsManifestFile)
@@ -171,6 +190,17 @@ func (e *E2ESession) downloadRequiredFilesInInstance() error {
 			return err
 		}
 	}
+
+	return nil
+}
+
+func (e *E2ESession) createTestNameFile(testName string) error {
+	command := fmt.Sprintf("echo %s > %s", testName, testNameFile)
+	err := ssm.Run(e.session, e.instanceId, command)
+	if err != nil {
+		return fmt.Errorf("error creating test name file in instance: %v", err)
+	}
+	logger.V(1).Info("Successfully created test name file")
 
 	return nil
 }

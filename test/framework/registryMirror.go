@@ -1,6 +1,7 @@
 package framework
 
 import (
+	"context"
 	"encoding/base64"
 	"os"
 
@@ -9,19 +10,27 @@ import (
 
 const (
 	RegistryEndpointVar = "T_REGISTRY_MIRROR_ENDPOINT"
+	RegistryUsernameVar = "T_REGISTRY_MIRROR_USERNAME"
+	RegistryPasswordVar = "T_REGISTRY_MIRROR_PASSWORD"
 	RegistryCACertVar   = "T_REGISTRY_MIRROR_CA_CERT"
 )
 
-var registryMirrorRequiredEnvVars = []string{RegistryEndpointVar, RegistryCACertVar}
+var registryMirrorRequiredEnvVars = []string{RegistryEndpointVar, RegistryUsernameVar, RegistryPasswordVar, RegistryCACertVar}
 
 func WithRegistryMirrorEndpointAndCert() E2ETestOpt {
 	return func(e *E2ETest) {
-		checkRequiredEnvVars(e.T, append(registryMirrorRequiredEnvVars, RegistryCACertVar))
-		registryEndpoint := os.Getenv(RegistryEndpointVar)
-		registryCACert, err := base64.StdEncoding.DecodeString(os.Getenv(RegistryCACertVar))
+		checkRequiredEnvVars(e.T, registryMirrorRequiredEnvVars)
+		endpoint := os.Getenv(RegistryEndpointVar)
+		username := os.Getenv(RegistryUsernameVar)
+		password := os.Getenv(RegistryPasswordVar)
+		err := buildDocker(e.T).Login(context.Background(), endpoint, username, password)
+		if err != nil {
+			e.T.Fatalf("error logging into docker registry %s: %v", endpoint, err)
+		}
+		certificate, err := base64.StdEncoding.DecodeString(os.Getenv(RegistryCACertVar))
 		if err == nil {
 			e.clusterFillers = append(e.clusterFillers,
-				api.WithRegistryMirror(registryEndpoint, string(registryCACert)),
+				api.WithRegistryMirror(endpoint, string(certificate)),
 			)
 		}
 	}

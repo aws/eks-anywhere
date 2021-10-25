@@ -26,6 +26,11 @@ func NewUpgrader(client CAPIClient) *Upgrader {
 
 func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, currentSpec, newSpec *cluster.Spec) error {
 	logger.V(1).Info("Checking for CAPI upgrades")
+	if !newSpec.Cluster.IsSelfManaged() {
+		logger.V(1).Info("Skipping CAPI upgrades, not a self-managed cluster")
+		return nil
+	}
+
 	changeDiff := u.capiChangeDiff(currentSpec, newSpec, provider)
 	if changeDiff == nil {
 		logger.V(1).Info("Nothing to upgrade for CAPI")

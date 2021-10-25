@@ -115,6 +115,7 @@ func (e *E2ESession) runTests(regex string) error {
 		command,
 	)
 	if err != nil {
+		e.uploadLogFilesFromInstance(regex)
 		return fmt.Errorf("error running e2e tests on instance %s: %v", e.instanceId, err)
 	}
 
@@ -132,7 +133,7 @@ func (e *E2ESession) commandWithEnvVars(command string) string {
 	fullCommand := make([]string, 0, len(e.testEnvVars)+1)
 
 	for k, v := range e.testEnvVars {
-		fullCommand = append(fullCommand, fmt.Sprintf("export %s=%s", k, v))
+		fullCommand = append(fullCommand, fmt.Sprintf("export %s=\"%s\"", k, v))
 	}
 	fullCommand = append(fullCommand, command)
 

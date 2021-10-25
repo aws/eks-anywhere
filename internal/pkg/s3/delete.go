@@ -27,7 +27,7 @@ func CleanUpS3Bucket(session *session.Session, bucket string, maxAge float64) er
 	for _, object := range result.Contents {
 		logger.V(4).Info("s3", "object_name", *(object.Key), "last_modified", *(object.LastModified))
 		lastModifiedTime := time.Since(*(object.LastModified)).Seconds()
-		if lastModifiedTime > maxAge && *(object.Key) != "eksctl/eksctl" {
+		if lastModifiedTime > maxAge && *(object.Key) != "eksctl/eksctl" && *(object.Key) != "generated-artifacts/" {
 			logger.V(4).Info("Adding object for deletion")
 			objectList = append(objectList, object.Key)
 		} else {

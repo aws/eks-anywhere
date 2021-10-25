@@ -37,9 +37,8 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 		return errors.Cause(err)
 	}
 
-	// Clone cli repository
-	// TODO: replace these exec calls with go-git sdk calls using PlainClone
-	fmt.Println("Cloning cli repository")
+	// Clone the CLI repository
+	fmt.Println("Cloning CLI repository")
 	parentSourceDir := filepath.Join(homeDir, "eks-a-source")
 	r.CliRepoSource = filepath.Join(parentSourceDir, "eks-a-cli")
 	cmd := exec.Command("git", "clone", cliRepoUrl, r.CliRepoSource)
@@ -49,8 +48,8 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 	}
 	fmt.Println(out)
 
-	// Clone the build repository
-	fmt.Println("Cloning build repository")
+	// Clone the build-tooling repository
+	fmt.Println("Cloning build-tooling repository")
 	r.BuildRepoSource = filepath.Join(parentSourceDir, "eks-a-build")
 	cmd = exec.Command("git", "clone", buildRepoUrl, r.BuildRepoSource)
 	out, err = execCommand(cmd)
@@ -59,12 +58,22 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 	}
 	fmt.Println(out)
 
+	if r.DevRelease && r.BranchName != "main" {
+		fmt.Printf("Checking out build-tooling repo at branch %s", r.BranchName)
+		cmd = exec.Command("git", "-C", r.BuildRepoSource, "checkout", r.BranchName)
+		out, err = execCommand(cmd)
+		if err != nil {
+			return errors.Cause(err)
+		}
+		fmt.Println(out)
+	}
 	// Set HEADs of the repos
 	r.CliRepoHead, err = GetHead(r.CliRepoSource)
 	if err != nil {
 		return errors.Cause(err)
 	}
 	fmt.Printf("Head of cli repo: %s\n", r.CliRepoHead)
+
 	r.BuildRepoHead, err = GetHead(r.BuildRepoSource)
 	if err != nil {
 		return errors.Cause(err)
@@ -507,4 +516,12 @@ func IsImageNotFoundError(err error) bool {
 	regex := "manifest for .* not found: manifest unknown: Requested image not found"
 	compiledRegex := regexp.MustCompile(regex)
 	return compiledRegex.MatchString(err.Error())
+}
+
+func (r *ReleaseConfig) getLatestUploadDestination() string {
+	if r.BranchName == "main" {
+		return "latest"
+	} else {
+		return r.BranchName
+	}
 }

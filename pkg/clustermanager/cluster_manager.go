@@ -40,6 +40,7 @@ const (
 )
 
 type ClusterManager struct {
+	*Upgrader
 	clusterClient   *retrierClient
 	writer          filewriter.FileWriter
 	networking      Networking
@@ -65,6 +66,7 @@ type ClusterClient interface {
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
+	UpdateEnvironmentVariablesInNamespace(ctx context.Context, resourceType, resourceName string, envMap map[string]string, cluster *types.Cluster, namespace string) error
 	UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error
 	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
@@ -83,8 +85,10 @@ type ClusterManagerOpt func(*ClusterManager)
 
 func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, opts ...ClusterManagerOpt) *ClusterManager {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
+	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
-		clusterClient:   newRetrierClient(newClient(clusterClient), retrier),
+		Upgrader:        NewUpgrader(retrierClient),
+		clusterClient:   retrierClient,
 		writer:          writer,
 		networking:      networking,
 		Retrier:         retrier,

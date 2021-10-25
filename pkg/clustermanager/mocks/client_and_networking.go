@@ -299,6 +299,20 @@ func (mr *MockClusterClientMockRecorder) UpdateAnnotationInNamespace(arg0, arg1,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAnnotationInNamespace", reflect.TypeOf((*MockClusterClient)(nil).UpdateAnnotationInNamespace), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
+// UpdateEnvironmentVariablesInNamespace mocks base method.
+func (m *MockClusterClient) UpdateEnvironmentVariablesInNamespace(arg0 context.Context, arg1, arg2 string, arg3 map[string]string, arg4 *types.Cluster, arg5 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateEnvironmentVariablesInNamespace", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateEnvironmentVariablesInNamespace indicates an expected call of UpdateEnvironmentVariablesInNamespace.
+func (mr *MockClusterClientMockRecorder) UpdateEnvironmentVariablesInNamespace(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEnvironmentVariablesInNamespace", reflect.TypeOf((*MockClusterClient)(nil).UpdateEnvironmentVariablesInNamespace), arg0, arg1, arg2, arg3, arg4, arg5)
+}
+
 // ValidateControlPlaneNodes mocks base method.
 func (m *MockClusterClient) ValidateControlPlaneNodes(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()

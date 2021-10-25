@@ -590,6 +590,23 @@ func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt)
 	return response.Items, nil
 }
 
+func (k *Kubectl) UpdateEnvironmentVariables(ctx context.Context, resourceType, resourceName string, envMap map[string]string, opts ...KubectlOpt) error {
+	params := []string{"set", "env", resourceType, resourceName}
+	for k, v := range envMap {
+		params = append(params, fmt.Sprintf("%s=%s", k, v))
+	}
+	applyOpts(&params, opts...)
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error setting the environment variables in %s %s: %v", resourceType, resourceName, err)
+	}
+	return nil
+}
+
+func (k *Kubectl) UpdateEnvironmentVariablesInNamespace(ctx context.Context, resourceType, resourceName string, envMap map[string]string, cluster *types.Cluster, namespace string) error {
+	return k.UpdateEnvironmentVariables(ctx, resourceType, resourceName, envMap, WithCluster(cluster), WithNamespace(namespace))
+}
+
 func (k *Kubectl) UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...KubectlOpt) error {
 	params := []string{"annotate", resourceType, objectName}
 	for k, v := range annotations {

@@ -168,7 +168,10 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 		return nil
 	}
 
-	// TODO: Add Upgrade calls for eks-a cluster controller and CRDs
+	if err := commandContext.ClusterManager.Upgrade(ctx, commandContext.WorkloadCluster, currentSpec, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return nil
+	}
 
 	return &upgradeNeeded{}
 }
@@ -188,7 +191,7 @@ func (s *upgradeNeeded) Run(ctx context.Context, commandContext *task.CommandCon
 	}
 
 	if !diff {
-		logger.Info("No upgrades needed")
+		logger.Info("No upgrades needed from cluster spec")
 		return nil
 	}
 

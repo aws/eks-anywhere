@@ -1328,7 +1328,7 @@ func TestClusterManagerClusterSpecChangedGitOpsDefault(t *testing.T) {
 type testSetup struct {
 	*WithT
 	clusterManager *clustermanager.ClusterManager
-	mocks          *mocks
+	mocks          *clusterManagerMocks
 	ctx            context.Context
 	clusterSpec    *cluster.Spec
 	cluster        *types.Cluster
@@ -1351,16 +1351,16 @@ func newTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) *testSetup 
 	}
 }
 
-type mocks struct {
+type clusterManagerMocks struct {
 	writer     *mockswriter.MockFileWriter
 	networking *mocksmanager.MockNetworking
 	client     *mocksmanager.MockClusterClient
 	provider   *mocksprovider.MockProvider
 }
 
-func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (*clustermanager.ClusterManager, *mocks) {
+func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (*clustermanager.ClusterManager, *clusterManagerMocks) {
 	mockCtrl := gomock.NewController(t)
-	m := &mocks{
+	m := &clusterManagerMocks{
 		writer:     mockswriter.NewMockFileWriter(mockCtrl),
 		networking: mocksmanager.NewMockNetworking(mockCtrl),
 		client:     mocksmanager.NewMockClusterClient(mockCtrl),
