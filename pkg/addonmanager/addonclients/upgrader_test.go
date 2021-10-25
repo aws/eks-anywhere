@@ -115,3 +115,11 @@ func TestFluxUpgradeError(t *testing.T) {
 
 	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).NotTo(Succeed())
 }
+
+func TestFluxUpgradeNoGitOpsConfig(t *testing.T) {
+	tt := newUpgraderTest(t)
+	f, _, _ := newAddonClient(t)
+	tt.newSpec.GitOpsConfig = nil
+
+	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Succeed())
+}
