@@ -184,7 +184,8 @@ func (e *E2ESession) uploadDiagnosticArchiveFromInstance(testName string) {
 	bundleNameFormat := "support-bundle-*.tar.gz"
 	logger.V(1).Info("Uploading diagnostic bundle to s3 bucket")
 	testNameFolder := fmt.Sprintf("%s_%s", testName, e.instanceId)
-	command := fmt.Sprintf("aws s3 cp /home/e2e/%s s3://%s/generated-artifacts/%s/", bundleNameFormat, e.storageBucket, testNameFolder)
+	command := fmt.Sprintf("aws s3 cp /home/e2e/ s3://%s/generated-artifacts/%s/ --recursive --exclude \"*\" --include \"%s\"",
+		e.storageBucket, testNameFolder, bundleNameFormat)
 
 	err := ssm.Run(e.session, e.instanceId, command)
 	if err != nil {
