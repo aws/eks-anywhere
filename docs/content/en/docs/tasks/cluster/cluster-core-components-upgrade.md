@@ -1,7 +1,7 @@
 ---
 title: "Upgrade core components"
 linkTitle: "Upgrade core components"
-weight: 20
+weight: 25
 date: 2017-01-05
 description: >
 How to upgrade core components in your cluster.
