@@ -1,3 +1,8 @@
+---
+linkTitle: "Changelog"
+weight: 55
+---
+
 # Changelog
 
 ## [Unreleased]
