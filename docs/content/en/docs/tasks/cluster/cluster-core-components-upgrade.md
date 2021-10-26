@@ -4,7 +4,7 @@ linkTitle: "Upgrade core components"
 weight: 25
 date: 2017-01-05
 description: >
-How to upgrade core components in your cluster.
+  How to upgrade core components in your cluster.
 ---
 EKS Anywhere `upgrade` also supports upgrading the following core components:
 
