@@ -1,7 +1,1 @@
-# Changelog
-
-## [Unreleased]
-
-### Removed
-
-- overrideClusterSpecFile field in cluster config
+[Changelog](docs/content/en/docs/community/changelog.md)
