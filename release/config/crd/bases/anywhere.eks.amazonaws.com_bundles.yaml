@@ -1225,12 +1225,6 @@ spec:
                       type: object
                     flux:
                       properties:
-                        components:
-                          properties:
-                            uri:
-                              description: URI points to the manifest yaml file
-                              type: string
-                          type: object
                         helmController:
                           properties:
                             arch:
@@ -1350,7 +1344,6 @@ spec:
                         version:
                           type: string
                       required:
-                      - components
                       - helmController
                       - kustomizeController
                       - notificationController

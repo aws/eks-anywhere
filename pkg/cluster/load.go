@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/aws/eks-anywhere/pkg/types"
 	"sigs.k8s.io/yaml"
+
+	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 type kubeConfigCluster struct {
