@@ -102,20 +102,28 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		deps.Writer,
 	)
 
-	workloadCluster := &types.Cluster{
-		Name:           clusterSpec.Name,
-		KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
+	var cluster *types.Cluster
+	if clusterSpec.ManagementCluster == nil {
+		cluster = &types.Cluster{
+			Name:           clusterSpec.Name,
+			KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
+		}
+	} else {
+		cluster = &types.Cluster{
+			Name:           clusterSpec.ManagementCluster.Name,
+			KubeconfigFile: clusterSpec.ManagementCluster.KubeconfigFile,
+		}
 	}
 
 	validationOpts := &upgradevalidations.UpgradeValidationOpts{
 		Kubectl:         deps.Kubectl,
 		Spec:            clusterSpec,
-		WorkloadCluster: workloadCluster,
+		WorkloadCluster: cluster,
 		Provider:        deps.Provider,
 	}
 	upgradeValidations := upgradevalidations.New(validationOpts)
 
-	err = upgradeCluster.Run(ctx, clusterSpec, workloadCluster, upgradeValidations, uc.forceClean, uc.managementKubeconfig)
+	err = upgradeCluster.Run(ctx, clusterSpec, cluster, upgradeValidations, uc.forceClean, uc.managementKubeconfig)
 	if err == nil {
 		deps.Writer.CleanUpTemp()
 	}

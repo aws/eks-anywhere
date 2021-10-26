@@ -61,7 +61,6 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, workloadCl
 
 	if clusterSpec.ManagementCluster != nil {
 		commandContext.BootstrapCluster = clusterSpec.ManagementCluster
-		validator.SetWorkloadCluster(commandContext.BootstrapCluster)
 	}
 
 	err := task.NewTaskRunner(&setupAndValidateTasks{}).RunTask(ctx, commandContext)

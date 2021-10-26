@@ -306,18 +306,6 @@ func (c *upgradeTestSetup) expectPreflightValidationsToPass() {
 	c.validator.EXPECT().PreflightValidations(c.ctx).Return(nil)
 }
 
-func (c *upgradeTestSetup) expectSetWorkloadCLuster(expectedBootstrap *types.Cluster) {
-	c.validator.EXPECT().SetWorkloadCluster(expectedBootstrap)
-}
-
-func (c *upgradeTestSetup) expectLoadManagementCluster(kconfig string, name string) {
-	//c.clusterManager.EXPECT().LoadManagement(kconfig).Return(&types.Cluster{
-	//	Name:               name,
-	//	KubeconfigFile:     kconfig,
-	//	ExistingManagement: true,
-	//}, nil)
-}
-
 func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test := newUpgradeTest(t)
 	test.expectSetup()
@@ -421,15 +409,8 @@ func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	test.expectUpdateGitEksaSpec()
 	test.expectForceReconcileGitRepo(test.bootstrapCluster)
 	test.expectResumeGitOpsKustomization(test.bootstrapCluster)
-	test.expectLoadManagementCluster("kubeconfig.yaml", "management-cluster")
 	test.expectUpgradeWorkloadToReturn(test.bootstrapCluster, nil)
 
-	expectedBootstrap := &types.Cluster{
-		Name:               "management-cluster",
-		KubeconfigFile:     "kubeconfig.yaml",
-		ExistingManagement: true,
-	}
-	test.expectSetWorkloadCLuster(expectedBootstrap)
 	err := test.run("kubeconfig.yaml")
 	if err != nil {
 		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)

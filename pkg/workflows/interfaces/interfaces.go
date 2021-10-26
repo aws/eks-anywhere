@@ -48,7 +48,6 @@ type AddonManager interface {
 
 type Validator interface {
 	PreflightValidations(ctx context.Context) error
-	SetWorkloadCluster(cluser *types.Cluster)
 }
 
 type CAPIUpgrader interface {
