@@ -45,7 +45,7 @@ type EksaDiagnosticBundle struct {
 	analysis         []*executables.SupportBundleAnalysis
 }
 
-func newDiagnosticBundleBootstrapCluster(af AnalyzerFactory, cf CollectorFactory, client BundleClient,
+func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactory, client BundleClient,
 	kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter) (*EksaDiagnosticBundle, error) {
 	b := &EksaDiagnosticBundle{
 		bundle: &supportBundle{
@@ -151,8 +151,7 @@ func newDiagnosticBundleCustom(af AnalyzerFactory, cf CollectorFactory, client B
 func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeValue *time.Time) error {
 	e.createDiagnosticNamespaceAndRoles(ctx)
 
-	collectionMsg := fmt.Sprintf("Collecting support bundle from cluster %s, this can take a while ⏳", e.clusterName())
-	logger.Info(collectionMsg, "bundle", e.bundlePath, "since", sinceTimeValue, "kubeconfig", e.kubeconfig)
+	logger.Info("⏳ Collecting support bundle from cluster, this can take a while", "cluster", e.clusterName(), "bundle", e.bundlePath, "since", sinceTimeValue, "kubeconfig", e.kubeconfig)
 	archivePath, err := e.client.Collect(ctx, e.bundlePath, sinceTimeValue, e.kubeconfig)
 	if err != nil {
 		return fmt.Errorf("failed to Collect support bundle: %v", err)
@@ -167,7 +166,7 @@ func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeV
 	}
 	e.analysis = analysis
 
-	analysisPath, err := e.WriteAnalysis()
+	analysisPath, err := e.WriteAnalysisToFile()
 	if err != nil {
 		return err
 	}
@@ -213,7 +212,7 @@ func (e *EksaDiagnosticBundle) PrintAnalysis() error {
 	return nil
 }
 
-func (e *EksaDiagnosticBundle) WriteAnalysis() (path string, err error) {
+func (e *EksaDiagnosticBundle) WriteAnalysisToFile() (path string, err error) {
 	if e.analysis == nil {
 		return "", nil
 	}
@@ -335,6 +334,17 @@ func (e *EksaDiagnosticBundle) deleteDiagnosticNamespaceAndRoles(ctx context.Con
 	}
 }
 
+func ParseTimeFromDuration(since string) (*time.Time, error) {
+	var sinceTimeValue time.Time
+	duration, err := time.ParseDuration(since)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse since time: %v", err)
+	}
+	now := time.Now()
+	sinceTimeValue = now.Add(0 - duration)
+	return &sinceTimeValue, nil
+}
+
 func ParseTimeOptions(since string, sinceTime string) (*time.Time, error) {
 	var sinceTimeValue time.Time
 	var err error
@@ -344,18 +354,11 @@ func ParseTimeOptions(since string, sinceTime string) (*time.Time, error) {
 		return nil, fmt.Errorf("at most one of `sinceTime` or `since` could be specified")
 	} else if sinceTime != "" {
 		sinceTimeValue, err = time.Parse(time.RFC3339, sinceTime)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse --since-time option, ensure since-time is RFC3339 formatted. error: %v", err)
-		}
+		return &sinceTimeValue, err
 	} else if since != "" {
-		duration, err := time.ParseDuration(since)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse --since option: %v", err)
-		}
-		now := time.Now()
-		sinceTimeValue = now.Add(0 - duration)
+		return ParseTimeFromDuration(since)
 	}
-	return &sinceTimeValue, nil
+	return nil, nil
 }
 
 func (e *EksaDiagnosticBundle) clusterName() string {

@@ -57,7 +57,7 @@ func (c *Delete) Run(ctx context.Context, workloadCluster *types.Cluster, cluste
 
 	err := task.NewTaskRunner(&setupAndValidate{}).RunTask(ctx, commandContext)
 	if err != nil {
-		_ = commandContext.ClusterManager.SaveLogsBootstrapCluster(ctx, commandContext.BootstrapCluster)
+		_ = commandContext.ClusterManager.SaveLogsManagementCluster(ctx, commandContext.BootstrapCluster)
 	}
 	return err
 }

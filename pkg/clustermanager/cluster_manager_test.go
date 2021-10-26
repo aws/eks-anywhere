@@ -200,13 +200,16 @@ func TestClusterManagerSaveLogsSuccess(t *testing.T) {
 	}
 
 	c, m := newClusterManager(t)
-	b := m.diagnosticsBundle
-	b.EXPECT().CollectAndAnalyze(ctx, gomock.AssignableToTypeOf(&time.Time{})).Times(2)
-	m.diagnosticsFactory.EXPECT().DiagnosticBundleBootstrapCluster(bootstrapCluster.KubeconfigFile).Return(b, nil)
-	m.diagnosticsFactory.EXPECT().DiagnosticBundleFromSpec(clusterSpec, m.provider, workloadCluster.KubeconfigFile).Return(b, nil)
 
-	if err := c.SaveLogsBootstrapCluster(ctx, bootstrapCluster); err != nil {
-		t.Errorf("ClusterManager.SaveLogsBootstrapCluster() error = %v, wantErr nil", err)
+	b := m.diagnosticsBundle
+	m.diagnosticsFactory.EXPECT().DiagnosticBundleManagementCluster(bootstrapCluster.KubeconfigFile).Return(b, nil)
+	b.EXPECT().CollectAndAnalyze(ctx, gomock.AssignableToTypeOf(&time.Time{}))
+
+	m.diagnosticsFactory.EXPECT().DiagnosticBundleFromSpec(clusterSpec, m.provider, workloadCluster.KubeconfigFile).Return(b, nil)
+	b.EXPECT().CollectAndAnalyze(ctx, gomock.AssignableToTypeOf(&time.Time{}))
+
+	if err := c.SaveLogsManagementCluster(ctx, bootstrapCluster); err != nil {
+		t.Errorf("ClusterManager.SaveLogsManagementCluster() error = %v, wantErr nil", err)
 	}
 
 	if err := c.SaveLogsWorkloadCluster(ctx, m.provider, clusterSpec, workloadCluster); err != nil {

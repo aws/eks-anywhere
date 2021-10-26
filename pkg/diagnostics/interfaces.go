@@ -18,7 +18,7 @@ type BundleClient interface {
 type DiagnosticBundleFactory interface {
 	DiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig string, bundlePath string) (DiagnosticBundle, error)
 	DiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (DiagnosticBundle, error)
-	DiagnosticBundleBootstrapCluster(kubeconfig string) (DiagnosticBundle, error)
+	DiagnosticBundleManagementCluster(kubeconfig string) (DiagnosticBundle, error)
 	DiagnosticBundleDefault() DiagnosticBundle
 	DiagnosticBundleCustom(kubeconfig string, bundlePath string) DiagnosticBundle
 }
@@ -27,7 +27,7 @@ type DiagnosticBundle interface {
 	PrintBundleConfig() error
 	WriteBundleConfig() error
 	PrintAnalysis() error
-	WriteAnalysis() (path string, err error)
+	WriteAnalysisToFile() (path string, err error)
 	CollectAndAnalyze(ctx context.Context, sinceTimeValue *time.Time) error
 	WithDefaultAnalyzers() *EksaDiagnosticBundle
 	WithDefaultCollectors() *EksaDiagnosticBundle

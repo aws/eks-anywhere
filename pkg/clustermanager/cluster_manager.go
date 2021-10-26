@@ -487,7 +487,7 @@ func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, workloa
 	return nil
 }
 
-func (c *ClusterManager) SaveLogsBootstrapCluster(ctx context.Context, cluster *types.Cluster) error {
+func (c *ClusterManager) SaveLogsManagementCluster(ctx context.Context, cluster *types.Cluster) error {
 	if cluster == nil {
 		return nil
 	}
@@ -496,24 +496,12 @@ func (c *ClusterManager) SaveLogsBootstrapCluster(ctx context.Context, cluster *
 		return nil
 	}
 
-	bundle, err := c.diagnosticsFactory.DiagnosticBundleBootstrapCluster(cluster.KubeconfigFile)
+	bundle, err := c.diagnosticsFactory.DiagnosticBundleManagementCluster(cluster.KubeconfigFile)
 	if err != nil {
 		logger.V(5).Info("Error generating support bundle for bootstrap cluster", "error", err)
 		return nil
 	}
-
-	var sinceTimeValue *time.Time
-	sinceTimeValue, err = diagnostics.ParseTimeOptions("1h", "")
-	if err != nil {
-		logger.V(5).Info("Error parsing time options for support bundle generation", "error", err)
-		return nil
-	}
-
-	err = bundle.CollectAndAnalyze(ctx, sinceTimeValue)
-	if err != nil {
-		logger.V(5).Info("Error collecting and saving logs", "error", err)
-	}
-	return nil
+	return collectDiagnosticBundle(ctx, bundle)
 }
 
 func (c *ClusterManager) SaveLogsWorkloadCluster(ctx context.Context, provider providers.Provider, spec *cluster.Spec, cluster *types.Cluster) error {
@@ -531,8 +519,13 @@ func (c *ClusterManager) SaveLogsWorkloadCluster(ctx context.Context, provider p
 		return nil
 	}
 
+	return collectDiagnosticBundle(ctx, bundle)
+}
+
+func collectDiagnosticBundle(ctx context.Context, bundle diagnostics.DiagnosticBundle) error {
 	var sinceTimeValue *time.Time
-	sinceTimeValue, err = diagnostics.ParseTimeOptions("1h", "")
+	oneHour := "1h"
+	sinceTimeValue, err := diagnostics.ParseTimeFromDuration(oneHour)
 	if err != nil {
 		logger.V(5).Info("Error parsing time options for support bundle generation", "error", err)
 		return nil
