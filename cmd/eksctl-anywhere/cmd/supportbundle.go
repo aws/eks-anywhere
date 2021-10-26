@@ -100,7 +100,7 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 		return err
 	}
 
-	supportBundle, err := deps.DignosticCollectorFactory.NewDiagnosticBundle(clusterSpec, deps.Provider, csbo.kubeConfig(clusterSpec.Name), bundleConfig)
+	supportBundle, err := deps.DignosticCollectorFactory.DiagnosticBundle(clusterSpec, deps.Provider, csbo.kubeConfig(clusterSpec.Name), bundleConfig)
 	if err != nil {
 		return fmt.Errorf("failed to parse collector: %v", err)
 	}
@@ -114,6 +114,11 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 	err = supportBundle.CollectAndAnalyze(ctx, sinceTimeValue)
 	if err != nil {
 		return fmt.Errorf("error while collecting and analyzing bundle: %v", err)
+	}
+
+	err = supportBundle.PrintAnalysis()
+	if err != nil {
+		return fmt.Errorf("error when printing analysis")
 	}
 
 	return nil

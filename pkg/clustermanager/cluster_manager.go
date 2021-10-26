@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"sync"
 	"time"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
@@ -17,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -33,7 +33,6 @@ const (
 	machineBackoff    = 1 * time.Second
 	machinesMinWait   = 30 * time.Minute
 	moveCAPIWait      = 5 * time.Minute
-	logDir            = "logs"
 	ctrlPlaneWaitStr  = "60m"
 	etcdWaitStr       = "60m"
 	deploymentWaitStr = "30m"
@@ -41,13 +40,14 @@ const (
 
 type ClusterManager struct {
 	*Upgrader
-	clusterClient   *retrierClient
-	writer          filewriter.FileWriter
-	networking      Networking
-	Retrier         *retrier.Retrier
-	machineMaxWait  time.Duration
-	machineBackoff  time.Duration
-	machinesMinWait time.Duration
+	clusterClient      *retrierClient
+	writer             filewriter.FileWriter
+	networking         Networking
+	diagnosticsFactory diagnostics.DiagnosticBundleFactory
+	Retrier            *retrier.Retrier
+	machineMaxWait     time.Duration
+	machineBackoff     time.Duration
+	machinesMinWait    time.Duration
 }
 
 type ClusterClient interface {
@@ -83,18 +83,19 @@ type Networking interface {
 
 type ClusterManagerOpt func(*ClusterManager)
 
-func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, opts ...ClusterManagerOpt) *ClusterManager {
+func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, opts ...ClusterManagerOpt) *ClusterManager {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
-		Upgrader:        NewUpgrader(retrierClient),
-		clusterClient:   retrierClient,
-		writer:          writer,
-		networking:      networking,
-		Retrier:         retrier,
-		machineMaxWait:  machineMaxWait,
-		machineBackoff:  machineBackoff,
-		machinesMinWait: machinesMinWait,
+		Upgrader:           NewUpgrader(retrierClient),
+		clusterClient:      retrierClient,
+		writer:             writer,
+		networking:         networking,
+		Retrier:            retrier,
+		diagnosticsFactory: diagnosticBundleFactory,
+		machineMaxWait:     machineMaxWait,
+		machineBackoff:     machineBackoff,
+		machinesMinWait:    machinesMinWait,
 	}
 
 	for _, o := range opts {
@@ -496,28 +497,54 @@ func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, workloa
 	return nil
 }
 
-func (c *ClusterManager) SaveLogs(ctx context.Context, cluster *types.Cluster) error {
-	if c == nil || cluster == nil {
+func (c *ClusterManager) SaveLogsManagementCluster(ctx context.Context, cluster *types.Cluster) error {
+	if cluster == nil {
 		return nil
 	}
-	var wg sync.WaitGroup
-	wg.Add(len(internal.ClusterDeployments))
 
-	w, err := c.writer.WithDir(logDir)
+	if cluster.KubeconfigFile == "" {
+		return nil
+	}
+
+	bundle, err := c.diagnosticsFactory.DiagnosticBundleManagementCluster(cluster.KubeconfigFile)
 	if err != nil {
-		return err
+		logger.V(5).Info("Error generating support bundle for bootstrap cluster", "error", err)
+		return nil
 	}
-	for fileName, deployment := range internal.ClusterDeployments {
-		go func(dep *types.Deployment, f string) {
-			// Ignoring error for now
-			defer wg.Done()
-			err := c.clusterClient.SaveLog(ctx, cluster, dep, f, w)
-			if err != nil {
-				logger.V(5).Info("Error saving logs", "error", err)
-			}
-		}(deployment, fileName)
+	return collectDiagnosticBundle(ctx, bundle)
+}
+
+func (c *ClusterManager) SaveLogsWorkloadCluster(ctx context.Context, provider providers.Provider, spec *cluster.Spec, cluster *types.Cluster) error {
+	if cluster == nil {
+		return nil
 	}
-	wg.Wait()
+
+	if cluster.KubeconfigFile == "" {
+		return nil
+	}
+
+	bundle, err := c.diagnosticsFactory.DiagnosticBundleFromSpec(spec, provider, cluster.KubeconfigFile)
+	if err != nil {
+		logger.V(5).Info("Error generating support bundle for workload cluster", "error", err)
+		return nil
+	}
+
+	return collectDiagnosticBundle(ctx, bundle)
+}
+
+func collectDiagnosticBundle(ctx context.Context, bundle diagnostics.DiagnosticBundle) error {
+	var sinceTimeValue *time.Time
+	oneHour := "1h"
+	sinceTimeValue, err := diagnostics.ParseTimeFromDuration(oneHour)
+	if err != nil {
+		logger.V(5).Info("Error parsing time options for support bundle generation", "error", err)
+		return nil
+	}
+
+	err = bundle.CollectAndAnalyze(ctx, sinceTimeValue)
+	if err != nil {
+		logger.V(5).Info("Error collecting and saving logs", "error", err)
+	}
 	return nil
 }
 

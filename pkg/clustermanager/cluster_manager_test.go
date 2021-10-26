@@ -21,6 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	mocksmanager "github.com/aws/eks-anywhere/pkg/clustermanager/mocks"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	mocksdiagnostics "github.com/aws/eks-anywhere/pkg/diagnostics/interfaces/mocks"
 	mockswriter "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	mocksprovider "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -181,16 +182,38 @@ func TestClusterManagerCAPIWaitForDeploymentExternalEtcd(t *testing.T) {
 
 func TestClusterManagerSaveLogsSuccess(t *testing.T) {
 	ctx := context.Background()
-	cluster := &types.Cluster{Name: "cluster-name"}
+	clusterName := "cluster-name"
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Name = clusterName
+		s.Spec.ControlPlaneConfiguration.Count = 3
+		s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+	})
 
-	c, m := newClusterManager(t)
-	m.writer.EXPECT().WithDir(gomock.Any()).Return(m.writer, nil)
-	for file, logCmd := range internal.ClusterDeployments {
-		m.client.EXPECT().SaveLog(ctx, cluster, logCmd, file, m.writer).Times(1).Return(nil)
+	bootstrapCluster := &types.Cluster{
+		Name:           "bootstrap",
+		KubeconfigFile: "bootstrap.kubeconfig",
 	}
 
-	if err := c.SaveLogs(ctx, cluster); err != nil {
-		t.Errorf("ClusterManager.SaveLogs() error = %v, wantErr nil", err)
+	workloadCluster := &types.Cluster{
+		Name:           "workload",
+		KubeconfigFile: "workload.kubeconfig",
+	}
+
+	c, m := newClusterManager(t)
+
+	b := m.diagnosticsBundle
+	m.diagnosticsFactory.EXPECT().DiagnosticBundleManagementCluster(bootstrapCluster.KubeconfigFile).Return(b, nil)
+	b.EXPECT().CollectAndAnalyze(ctx, gomock.AssignableToTypeOf(&time.Time{}))
+
+	m.diagnosticsFactory.EXPECT().DiagnosticBundleFromSpec(clusterSpec, m.provider, workloadCluster.KubeconfigFile).Return(b, nil)
+	b.EXPECT().CollectAndAnalyze(ctx, gomock.AssignableToTypeOf(&time.Time{}))
+
+	if err := c.SaveLogsManagementCluster(ctx, bootstrapCluster); err != nil {
+		t.Errorf("ClusterManager.SaveLogsManagementCluster() error = %v, wantErr nil", err)
+	}
+
+	if err := c.SaveLogsWorkloadCluster(ctx, m.provider, clusterSpec, workloadCluster); err != nil {
+		t.Errorf("ClusterManager.SaveLogsWorkloadCluster() error = %v, wantErr nil", err)
 	}
 }
 
@@ -1059,22 +1082,26 @@ func newTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) *testSetup 
 }
 
 type clusterManagerMocks struct {
-	writer     *mockswriter.MockFileWriter
-	networking *mocksmanager.MockNetworking
-	client     *mocksmanager.MockClusterClient
-	provider   *mocksprovider.MockProvider
+	writer             *mockswriter.MockFileWriter
+	networking         *mocksmanager.MockNetworking
+	client             *mocksmanager.MockClusterClient
+	provider           *mocksprovider.MockProvider
+	diagnosticsBundle  *mocksdiagnostics.MockDiagnosticBundle
+	diagnosticsFactory *mocksdiagnostics.MockDiagnosticBundleFactory
 }
 
 func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (*clustermanager.ClusterManager, *clusterManagerMocks) {
 	mockCtrl := gomock.NewController(t)
 	m := &clusterManagerMocks{
-		writer:     mockswriter.NewMockFileWriter(mockCtrl),
-		networking: mocksmanager.NewMockNetworking(mockCtrl),
-		client:     mocksmanager.NewMockClusterClient(mockCtrl),
-		provider:   mocksprovider.NewMockProvider(mockCtrl),
+		writer:             mockswriter.NewMockFileWriter(mockCtrl),
+		networking:         mocksmanager.NewMockNetworking(mockCtrl),
+		client:             mocksmanager.NewMockClusterClient(mockCtrl),
+		provider:           mocksprovider.NewMockProvider(mockCtrl),
+		diagnosticsFactory: mocksdiagnostics.NewMockDiagnosticBundleFactory(mockCtrl),
+		diagnosticsBundle:  mocksdiagnostics.NewMockDiagnosticBundle(mockCtrl),
 	}
 
-	c := clustermanager.New(m.client, m.networking, m.writer, opts...)
+	c := clustermanager.New(m.client, m.networking, m.writer, m.diagnosticsFactory, opts...)
 
 	return c, m
 }

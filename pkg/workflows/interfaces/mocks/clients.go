@@ -300,18 +300,32 @@ func (mr *MockClusterManagerMockRecorder) ResumeEKSAControllerReconcile(arg0, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResumeEKSAControllerReconcile", reflect.TypeOf((*MockClusterManager)(nil).ResumeEKSAControllerReconcile), arg0, arg1, arg2, arg3)
 }
 
-// SaveLogs mocks base method.
-func (m *MockClusterManager) SaveLogs(arg0 context.Context, arg1 *types.Cluster) error {
+// SaveLogsManagementCluster mocks base method.
+func (m *MockClusterManager) SaveLogsManagementCluster(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveLogs", arg0, arg1)
+	ret := m.ctrl.Call(m, "SaveLogsManagementCluster", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SaveLogs indicates an expected call of SaveLogs.
-func (mr *MockClusterManagerMockRecorder) SaveLogs(arg0, arg1 interface{}) *gomock.Call {
+// SaveLogsManagementCluster indicates an expected call of SaveLogsManagementCluster.
+func (mr *MockClusterManagerMockRecorder) SaveLogsManagementCluster(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLogs", reflect.TypeOf((*MockClusterManager)(nil).SaveLogs), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLogsManagementCluster", reflect.TypeOf((*MockClusterManager)(nil).SaveLogsManagementCluster), arg0, arg1)
+}
+
+// SaveLogsWorkloadCluster mocks base method.
+func (m *MockClusterManager) SaveLogsWorkloadCluster(arg0 context.Context, arg1 providers.Provider, arg2 *cluster.Spec, arg3 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SaveLogsWorkloadCluster", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SaveLogsWorkloadCluster indicates an expected call of SaveLogsWorkloadCluster.
+func (mr *MockClusterManagerMockRecorder) SaveLogsWorkloadCluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLogsWorkloadCluster", reflect.TypeOf((*MockClusterManager)(nil).SaveLogsWorkloadCluster), arg0, arg1, arg2, arg3)
 }
 
 // Upgrade mocks base method.

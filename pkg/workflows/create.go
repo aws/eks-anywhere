@@ -58,7 +58,9 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, forceCleanu
 
 	err := task.NewTaskRunner(&SetAndValidateTask{}).RunTask(ctx, commandContext)
 	if err != nil {
-		_ = commandContext.ClusterManager.SaveLogs(ctx, commandContext.BootstrapCluster)
+		logger.Info("Cluster creation encountered an error, collecting diagnostic information")
+		_ = commandContext.ClusterManager.SaveLogsManagementCluster(ctx, commandContext.BootstrapCluster)
+		_ = commandContext.ClusterManager.SaveLogsWorkloadCluster(ctx, c.provider, clusterSpec, commandContext.WorkloadCluster)
 	}
 	return err
 }

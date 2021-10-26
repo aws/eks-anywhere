@@ -2,7 +2,6 @@ package dependencies
 
 import (
 	"context"
-	"errors"
 
 	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -309,7 +308,7 @@ type clusterManagerClient struct {
 }
 
 func (f *Factory) WithClusterManager() *Factory {
-	f.WithClusterctl().WithKubectl().WithNetworking().WithWriter()
+	f.WithClusterctl().WithKubectl().WithNetworking().WithWriter().WithDiagnosticBundleFactory()
 
 	f.buildSteps = append(f.buildSteps, func() error {
 		if f.dependencies.ClusterManager != nil {
@@ -323,6 +322,7 @@ func (f *Factory) WithClusterManager() *Factory {
 			},
 			f.dependencies.Networking,
 			f.dependencies.Writer,
+			f.dependencies.DignosticCollectorFactory,
 		)
 		return nil
 	})
@@ -404,10 +404,10 @@ func (f *Factory) WithCollectorFactory() *Factory {
 		}
 
 		if f.diagnosticCollectorImage == "" {
-			return errors.New("diagnostic collector image is required to build collectorFactory")
+			f.dependencies.CollectorFactory = diagnostics.NewDefaultCollectorFactory()
+		} else {
+			f.dependencies.CollectorFactory = diagnostics.NewCollectorFactory(f.diagnosticCollectorImage)
 		}
-
-		f.dependencies.CollectorFactory = diagnostics.NewCollectorFactory(f.diagnosticCollectorImage)
 		return nil
 	})
 
