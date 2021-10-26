@@ -45,7 +45,8 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			defer wg.Done()
 			r := instanceTestsResults{conf: c}
 
-			if err := RunTests(c); err != nil {
+			r.conf.instanceId, err = RunTests(c)
+			if err != nil {
 				r.err = err
 			}
 
@@ -62,7 +63,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	failedInstances := 0
 	for r := range resultCh {
 		if r.err != nil {
-			logger.Error(r.err, "An e2e instance run has failed", "jobId", r.conf.jobId, "tests", r.conf.regex)
+			logger.Error(r.err, "An e2e instance run has failed", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "tests", r.conf.regex)
 			failedInstances += 1
 		} else {
 			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "tests", r.conf.regex)
@@ -77,27 +78,27 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 }
 
 type instanceRunConf struct {
-	amiId, instanceProfileName, storageBucket, jobId, subnetId, regex string
-	bundlesOverride                                                   bool
+	amiId, instanceProfileName, storageBucket, jobId, subnetId, regex, instanceId string
+	bundlesOverride                                                               bool
 }
 
-func RunTests(conf instanceRunConf) error {
+func RunTests(conf instanceRunConf) (testInstanceID string, err error) {
 	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.jobId, conf.subnetId, conf.bundlesOverride)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = session.setup(conf.regex)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = session.runTests(conf.regex)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return session.instanceId, nil
 }
 
 func (e *E2ESession) runTests(regex string) error {
@@ -115,7 +116,8 @@ func (e *E2ESession) runTests(regex string) error {
 		command,
 	)
 	if err != nil {
-		e.uploadLogFilesFromInstance(regex)
+		e.uploadGeneratedFilesFromInstance(regex)
+		e.uploadDiagnosticArchiveFromInstance(regex)
 		return fmt.Errorf("error running e2e tests on instance %s: %v", e.instanceId, err)
 	}
 
