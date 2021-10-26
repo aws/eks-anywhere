@@ -48,7 +48,7 @@ spec:
   flux:
     github:
       branch: testBranch
-      clusterConfigPath: user/provided/path
+      clusterConfigPath: clusters/management-cluster/management-cluster
       fluxSystemNamespace: flux-system
       owner: mFowler
       personal: true

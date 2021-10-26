@@ -34,7 +34,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 	}
 }
 
-func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, forceCleanup bool, kubeconfig string) error {
+func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, forceCleanup bool) error {
 	if forceCleanup {
 		if err := c.bootstrapper.DeleteBootstrapCluster(ctx, &types.Cluster{
 			Name: clusterSpec.Name,
@@ -52,15 +52,8 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, forceCleanu
 		Writer:         c.writer,
 	}
 
-	if kubeconfig != "" {
-		managementCluster, err := commandContext.ClusterManager.LoadManagement(kubeconfig)
-		if err != nil {
-			return err
-		}
-		commandContext.BootstrapCluster = managementCluster
-		commandContext.ClusterSpec.SetManagedBy(managementCluster.Name)
-	} else {
-		commandContext.ClusterSpec.SetSelfManaged()
+	if clusterSpec.ManagementCluster != nil {
+		commandContext.BootstrapCluster = clusterSpec.ManagementCluster
 	}
 
 	err := task.NewTaskRunner(&SetAndValidateTask{}).RunTask(ctx, commandContext)

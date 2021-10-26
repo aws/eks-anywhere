@@ -203,16 +203,8 @@ func (c *createTestSetup) expectInstallMHC() {
 	)
 }
 
-func (c *createTestSetup) expectLoadManagementCluster(kconfig string, name string) {
-	c.clusterManager.EXPECT().LoadManagement(kconfig).Return(&types.Cluster{
-		Name:               name,
-		KubeconfigFile:     kconfig,
-		ExistingManagement: true,
-	}, nil)
-}
-
-func (c *createTestSetup) run(kubeconfig string) error {
-	return c.workflow.Run(c.ctx, c.clusterSpec, c.forceCleanup, kubeconfig)
+func (c *createTestSetup) run() error {
+	return c.workflow.Run(c.ctx, c.clusterSpec, c.forceCleanup)
 }
 
 func TestCreateRunSuccess(t *testing.T) {
@@ -228,7 +220,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
 
-	err := test.run("")
+	err := test.run()
 	if err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
 	}
@@ -248,7 +240,7 @@ func TestCreateRunSuccessForceCleanup(t *testing.T) {
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
 
-	err := test.run("")
+	err := test.run()
 	if err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
 	}
@@ -262,8 +254,13 @@ func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
 	test.bootstrapCluster.KubeconfigFile = managementKubeconfig
 	test.bootstrapCluster.Name = "cluster-name"
 
+	test.clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               test.bootstrapCluster.Name,
+		KubeconfigFile:     managementKubeconfig,
+		ExistingManagement: true,
+	}
+
 	test.expectSetup()
-	// test.expectCreateBootstrap()
 	test.expectCreateWorkloadSkipCAPI()
 	test.skipMoveManagement()
 	test.skipInstallEksaComponents()
@@ -271,14 +268,8 @@ func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
 	test.expectWriteClusterConfig()
 	test.expectNotDeleteBootstrap()
 	test.expectInstallMHC()
-	test.expectLoadManagementCluster(managementKubeconfig, test.bootstrapCluster.Name)
-	err := test.run(managementKubeconfig)
 
-	if test.clusterSpec.IsSelfManaged() {
-		t.Fatal("Error setting management, expected cluster to not be self-managed")
-	}
-
-	if err != nil {
+	if err := test.run(); err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
 	}
 }

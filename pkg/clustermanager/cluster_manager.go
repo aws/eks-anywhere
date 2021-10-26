@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"reflect"
 	"sync"
 	"time"
@@ -850,32 +849,6 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 
 func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
 	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus))
-}
-
-type kubeConfigCluster struct {
-	Name string `json:"name"`
-}
-
-type kubeConfigYAML struct {
-	Clusters []*kubeConfigCluster `json:"clusters"`
-}
-
-func (c *ClusterManager) LoadManagement(kubeconfig string) (*types.Cluster, error) {
-	kubeConfigBytes, err := ioutil.ReadFile(kubeconfig)
-	if err != nil {
-		return nil, err
-	}
-	kc := &kubeConfigYAML{}
-	kc.Clusters = []*kubeConfigCluster{}
-	err = yaml.Unmarshal(kubeConfigBytes, &kc)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing kubeconfig file: %v", err)
-	}
-	return &types.Cluster{
-		Name:               kc.Clusters[0].Name,
-		KubeconfigFile:     kubeconfig,
-		ExistingManagement: true,
-	}, nil
 }
 
 func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {
