@@ -169,8 +169,8 @@ func (e *E2ESession) downloadRequiredFileInInstance(file string) error {
 
 func (e *E2ESession) uploadGeneratedFilesFromInstance(testName string) {
 	logger.V(1).Info("Uploading log files to s3 bucket")
-	testNameFolder := fmt.Sprintf("%s_%s", testName, e.instanceId)
-	command := fmt.Sprintf("aws s3 cp /home/e2e/%s/ s3://%s/generated-artifacts/%s/ --recursive", e.instanceId, e.storageBucket, testNameFolder)
+	command := fmt.Sprintf("aws s3 cp /home/e2e/%s/ %s/%s/ --recursive",
+		e.instanceId, e.generatedArtifactsBucketPath(), testName)
 
 	err := ssm.Run(e.session, e.instanceId, command)
 	if err != nil {
@@ -183,9 +183,8 @@ func (e *E2ESession) uploadGeneratedFilesFromInstance(testName string) {
 func (e *E2ESession) uploadDiagnosticArchiveFromInstance(testName string) {
 	bundleNameFormat := "support-bundle-*.tar.gz"
 	logger.V(1).Info("Uploading diagnostic bundle to s3 bucket")
-	testNameFolder := fmt.Sprintf("%s_%s", testName, e.instanceId)
-	command := fmt.Sprintf("aws s3 cp /home/e2e/ s3://%s/generated-artifacts/%s/ --recursive --exclude \"*\" --include \"%s\"",
-		e.storageBucket, testNameFolder, bundleNameFormat)
+	command := fmt.Sprintf("aws s3 cp /home/e2e/ %s/%s/ --recursive --exclude \"*\" --include \"%s\"",
+		e.generatedArtifactsBucketPath(), testName, bundleNameFormat)
 
 	err := ssm.Run(e.session, e.instanceId, command)
 	if err != nil {
@@ -193,6 +192,10 @@ func (e *E2ESession) uploadDiagnosticArchiveFromInstance(testName string) {
 	} else {
 		logger.V(1).Info("Successfully uploaded diagnostic bundle files to S3")
 	}
+}
+
+func (e *E2ESession) generatedArtifactsBucketPath() string {
+	return fmt.Sprintf("s3://%s/%s/generated-artifacts", e.storageBucket, e.jobId)
 }
 
 func (e *E2ESession) downloadRequiredFilesInInstance() error {
