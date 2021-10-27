@@ -128,7 +128,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	}
 	upgradeValidations := upgradevalidations.New(validationOpts)
 
-	err = upgradeCluster.Run(ctx, clusterSpec, cluster, upgradeValidations, uc.forceClean, uc.managementKubeconfig)
+	err = upgradeCluster.Run(ctx, clusterSpec, cluster, upgradeValidations, uc.forceClean)
 	if err == nil {
 		deps.Writer.CleanUpTemp()
 	}

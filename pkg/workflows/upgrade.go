@@ -37,7 +37,7 @@ func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provide
 	}
 }
 
-func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, validator interfaces.Validator, forceCleanup bool, kubeconfig string) error {
+func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, validator interfaces.Validator, forceCleanup bool) error {
 	if forceCleanup {
 		if err := c.bootstrapper.DeleteBootstrapCluster(ctx, &types.Cluster{
 			Name: clusterSpec.Name,

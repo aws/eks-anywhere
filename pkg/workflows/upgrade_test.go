@@ -275,9 +275,9 @@ func (c *upgradeTestSetup) expectSaveLogs() {
 	)
 }
 
-func (c *upgradeTestSetup) run(kubeconfig string) error {
+func (c *upgradeTestSetup) run() error {
 	// ctx context.Context, workloadCluster *types.Cluster, forceCleanup bool
-	return c.workflow.Run(c.ctx, c.clusterSpec, c.workloadCluster, c.validator, c.forceCleanup, kubeconfig)
+	return c.workflow.Run(c.ctx, c.clusterSpec, c.workloadCluster, c.validator, c.forceCleanup)
 }
 
 func (c *upgradeTestSetup) expectVerifyClusterSpecNoChanges() {
@@ -317,7 +317,7 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test.expectPauseGitOpsKustomizationNotToBeCalled()
 	test.expectCreateBootstrapNotToBeCalled()
 
-	err := test.run("")
+	err := test.run()
 	if err != nil {
 		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
 	}
@@ -346,7 +346,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectForceReconcileGitRepo(test.workloadCluster)
 	test.expectResumeGitOpsKustomization(test.workloadCluster)
 
-	err := test.run("")
+	err := test.run()
 	if err != nil {
 		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
 	}
@@ -367,7 +367,7 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	test.expectMoveManagementToWorkload()
 	test.expectSaveLogs()
 
-	err := test.run("")
+	err := test.run()
 	if err == nil {
 		t.Fatal("Upgrade.Run() err = nil, want err not nil")
 	}
@@ -411,7 +411,7 @@ func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	test.expectResumeGitOpsKustomization(test.bootstrapCluster)
 	test.expectUpgradeWorkloadToReturn(test.bootstrapCluster, nil)
 
-	err := test.run("kubeconfig.yaml")
+	err := test.run()
 	if err != nil {
 		t.Fatalf("Upgrade.Run() err = %v, want err = nil", err)
 	}
