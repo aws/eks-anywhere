@@ -47,10 +47,10 @@ func (r *Retrier) Retry(fn func() error) error {
 		err = fn()
 		retries += 1
 		if err == nil {
-			fmt.Printf("Retry execution successful with %d retries in duration %v", retries, time.Since(start))
+			fmt.Printf("Retry execution successful with %d retries in duration %v\n", retries, time.Since(start))
 			return nil
 		}
-		fmt.Printf("Error happened during retry after %d retries: %v", retries, err)
+		fmt.Printf("Error happened during retry after %d retries: %v\n", retries, err)
 
 		retry, wait := r.retryPolicy(retries, err)
 		if !retry {
@@ -58,11 +58,11 @@ func (r *Retrier) Retry(fn func() error) error {
 			return err
 		}
 
-		fmt.Printf("Sleeping before next retry: duration - %v", wait)
+		fmt.Printf("Sleeping before next retry: duration - %v\n", wait)
 		time.Sleep(wait)
 	}
 
-	fmt.Printf("Timeout reached after %d retries in duration %v. Returning error: %v", retries, time.Since(start), err)
+	fmt.Printf("Timeout reached after %d retries in duration %v. Returning error: %v\n", retries, time.Since(start), err)
 
 	return err
 }

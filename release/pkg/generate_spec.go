@@ -26,8 +26,6 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-var imageBuilderProjectSource = "projects/kubernetes-sigs/image-builder"
-
 // ReleaseConfig contains metadata fields for a release
 type ReleaseConfig struct {
 	ReleaseVersion                 string
@@ -102,7 +100,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		return nil, errors.Wrapf(err, "Error getting bundle for eks-a tools component")
 	}
 
-	ciliumBundle, err := r.GetCiliumBundle(imageDigests)
+	ciliumBundle, err := r.GetCiliumBundle()
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting bundle for Cilium")
 	}
@@ -122,12 +120,17 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		return nil, errors.Wrapf(err, "Error getting bundle for external Etcdadm controller")
 	}
 
+	bottlerocketAdminBundle, err := r.GetBottlerocketAdminBundle()
+	if err != nil {
+		return nil, errors.Wrapf(err, "Error getting bundle for Bottlerocket admin container")
+	}
+
 	eksDReleaseMap, err := readEksDReleases(r)
 	if err != nil {
 		return nil, err
 	}
 
-	bottlerocketSupportedK8sVersions, err := getBottlerocketSupportedK8sVersions(r, imageBuilderProjectSource)
+	bottlerocketSupportedK8sVersions, err := getBottlerocketSupportedK8sVersions(r)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
 	}
@@ -175,6 +178,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			ExternalEtcdBootstrap:  etcdadmBootstrapBundle,
 			ExternalEtcdController: etcdadmControllerBundle,
 			BottleRocketBootstrap:  bottlerocketBootstrapBundle,
+			BottleRocketAdmin:      bottlerocketAdminBundle,
 		}
 		versionsBundles = append(versionsBundles, versionsBundle)
 	}
@@ -235,7 +239,7 @@ func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) 
 		return nil, err
 	}
 
-	bottlerocketSupportedK8sVersions, err := getBottlerocketSupportedK8sVersions(r, imageBuilderProjectSource)
+	bottlerocketSupportedK8sVersions, err := getBottlerocketSupportedK8sVersions(r)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
 	}
