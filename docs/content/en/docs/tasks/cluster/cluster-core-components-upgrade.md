@@ -13,7 +13,7 @@ EKS Anywhere `upgrade` also supports upgrading the following core components:
 * Cert-manager
 * Etcdadm CAPI provider
 * EKS Anywhere controllers and CRDs
-* Flux
+* GitOps controller (optional)
 
 The latest versions of these core EKS Anywhere components are embedded into a bundles manifest that the CLI uses to fetch the latest versions and image builds needed for each component upgrade.
 
