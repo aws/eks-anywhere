@@ -51,6 +51,8 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 	repo := "gitops-fleet"
 	path := "clusters/cluster-name"
 
+	expectedPath := "clusters"
+
 	tests := []struct {
 		testName     string
 		cluster      *types.Cluster
@@ -70,7 +72,7 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 				},
 			},
 			wantExecArgs: []interface{}{
-				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", path, "--kubeconfig", "f.kubeconfig",
+				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", expectedPath, "--kubeconfig", "f.kubeconfig",
 			},
 		},
 		{
@@ -85,7 +87,7 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 				},
 			},
 			wantExecArgs: []interface{}{
-				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", path, "--personal",
+				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", expectedPath, "--personal",
 			},
 		},
 		{
@@ -100,7 +102,7 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 				},
 			},
 			wantExecArgs: []interface{}{
-				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", path, "--branch", "main",
+				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", expectedPath, "--branch", "main",
 			},
 		},
 		{
@@ -115,7 +117,7 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 				},
 			},
 			wantExecArgs: []interface{}{
-				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", path, "--namespace", "flux-system",
+				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", expectedPath, "--namespace", "flux-system",
 			},
 		},
 		{
@@ -125,7 +127,7 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 				Github: v1alpha1.Github{},
 			},
 			wantExecArgs: []interface{}{
-				"bootstrap", gitProvider, "--repository", "", "--owner", "", "--path", "",
+				"bootstrap", gitProvider, "--repository", "", "--owner", "", "--path", ".",
 			},
 		},
 	}

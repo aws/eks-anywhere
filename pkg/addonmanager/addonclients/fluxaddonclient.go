@@ -475,7 +475,8 @@ func (fc *fluxForCluster) generateEksaKustomizeFile() error {
 
 func (fc *fluxForCluster) initFluxWriter() (filewriter.FileWriter, error) {
 	ns := fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace
-	fluxSystemDir := path.Join(fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath, ns)
+	p := fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath
+	fluxSystemDir := path.Join(path.Dir(p), ns)
 	w, err := fc.gitOpts.Writer.WithDir(fluxSystemDir)
 	if err != nil {
 		err = fmt.Errorf("error creating %s directory: %v", ns, err)
