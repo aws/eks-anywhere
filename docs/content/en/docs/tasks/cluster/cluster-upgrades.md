@@ -8,8 +8,8 @@ description: >
 ---
 EKS Anywhere provides the command `upgrade`, which allows you to `upgrade` various aspects of your EKS Anywhere cluster.
 When you run `eksctl anywhere upgrade cluster -f ./cluster.yaml`, EKS Anywhere runs a set of preflight checks to ensure your cluster is ready to be upgraded.
-EKS Anywhere then performs the upgrade, modifying your cluster to match the updated specification. The upgrade command also upgrades core components of EKS 
-Anywhere and lets the user enjoy the latest features, bug fixes and security patches.
+EKS Anywhere then performs the upgrade, modifying your cluster to match the updated specification. 
+The upgrade command also upgrades core components of EKS Anywhere and lets the user enjoy the latest features, bug fixes and security patches.
 
 
 ### Minor Version Upgrades
@@ -36,12 +36,14 @@ EKS Anywhere `upgrade` also supports upgrading the following core components:
 * Cert-manager
 * Etcdadm CAPI provider
 * EKS Anywhere controllers and CRDs
-* Flux
+* Gitops controller (Flux) - this is an optional component, will be upgraded only if specified
 
 The latest versions of these core EKS Anywhere components are embedded into a bundles manifest that the CLI uses to fetch the latest versions 
-and image builds needed for each component upgrade. The command detects both component version changes and new builds of the same versioned component.
+and image builds needed for each component upgrade. 
+The command detects both component version changes and new builds of the same versioned component.
 If there is a new Kubernetes version that is going to get rolled out, the core components get upgraded before the Kubernetes
-version. Irrespective of a Kubernetes version change, the upgrade command will always upgrade the internal EKS
+version. 
+Irrespective of a Kubernetes version change, the upgrade command will always upgrade the internal EKS
 Anywhere components mentioned above to their latest available versions. These upgrade changes are backwards compatible.
 
 ### Performing a cluster upgrade
