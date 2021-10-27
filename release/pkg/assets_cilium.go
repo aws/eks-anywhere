@@ -70,7 +70,7 @@ func (r *ReleaseConfig) GetCiliumAssets() ([]Artifact, error) {
 	return artifacts, nil
 }
 
-func (r *ReleaseConfig) GetCiliumBundle(imageDigests map[string]string) (anywherev1alpha1.CiliumBundle, error) {
+func (r *ReleaseConfig) GetCiliumBundle() (anywherev1alpha1.CiliumBundle, error) {
 	artifacts, err := r.GetCiliumAssets()
 	if err != nil {
 		return anywherev1alpha1.CiliumBundle{}, errors.Cause(err)
