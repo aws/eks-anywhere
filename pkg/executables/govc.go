@@ -140,6 +140,7 @@ func (g *Govc) GetLibraryElementContentVersion(ctx context.Context, element stri
 		return "", fmt.Errorf("govc failed getting library element info: %v", err)
 	}
 	elementInfoJson := response.String()
+	elementInfoJson = strings.TrimSuffix(elementInfoJson, "\n")
 	if elementInfoJson == "null" {
 		return "-1", nil
 	}
