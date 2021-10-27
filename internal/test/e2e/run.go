@@ -90,12 +90,12 @@ func RunTests(conf instanceRunConf) (testInstanceID string, err error) {
 
 	err = session.setup(conf.regex)
 	if err != nil {
-		return "", err
+		return session.instanceId, err
 	}
 
 	err = session.runTests(conf.regex)
 	if err != nil {
-		return "", err
+		return session.instanceId, err
 	}
 
 	return session.instanceId, nil
