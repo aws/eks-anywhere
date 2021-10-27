@@ -199,7 +199,7 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 				}
 				s.AWSIamConfig = awsIamConfig
 			} else {
-				return nil, fmt.Errorf("unsupported kind: %s", eksav1alpha1.AWSIamConfigKind)
+				return nil, fmt.Errorf("unsupported IdentityProviderRef kind: %s", eksav1alpha1.AWSIamConfigKind)
 			}
 		}
 	}

@@ -66,21 +66,12 @@ func validateAWSIamConfig(config *AWSIamConfig, refName string, clusterConfig *C
 			return fmt.Errorf("AWSIamConfig BackendMode does not support %s backend", mountedFile)
 		}
 	}
-
-	if len(config.Spec.MapRoles) != 0 {
-		err := validateMapRoles(config.Spec.MapRoles)
-		if err != nil {
-			return err
-		}
+	if err := validateMapRoles(config.Spec.MapRoles); err != nil {
+		return err
 	}
-
-	if len(config.Spec.MapUsers) != 0 {
-		err := validateMapUsers(config.Spec.MapUsers)
-		if err != nil {
-			return err
-		}
+	if err := validateMapUsers(config.Spec.MapUsers); err != nil {
+		return err
 	}
-
 	if config.Spec.Partition == "" {
 		config.Spec.Partition = "aws"
 		logger.V(1).Info("AWSIamConfig Partition is empty. Using default partition 'aws'")

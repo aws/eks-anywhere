@@ -55,19 +55,7 @@ func (e *AWSIamConfigSpec) Equal(n *AWSIamConfigSpec) bool {
 	if e.Partition != n.Partition {
 		return false
 	}
-	return BackendModeSliceEqual(e.BackendMode, n.BackendMode)
-}
-
-func BackendModeSliceEqual(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	for i, v := range a {
-		if v != b[i] {
-			return false
-		}
-	}
-	return true
+	return SliceEqual(e.BackendMode, n.BackendMode)
 }
 
 // AWSIamConfigStatus defines the observed state of AWSIamConfig

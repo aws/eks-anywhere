@@ -522,7 +522,6 @@ func (c *ClusterManager) InstallAwsIamAuth(ctx context.Context, managementCluste
 	if err != nil {
 		return fmt.Errorf("error applying aws-iam-authenticator manifest: %v", err)
 	}
-	logger.V(3).Info("Generating aws-iam-authenticator kubeconfig")
 	err = c.generateAwsIamAuthKubeconfig(ctx, managementCluster, workloadCluster, clusterSpec)
 	if err != nil {
 		return err
@@ -564,6 +563,7 @@ func (c *ClusterManager) generateAwsIamAuthKubeconfig(ctx context.Context, manag
 	if err != nil {
 		return fmt.Errorf("error writing aws-iam-authenticator kubeconfig to %s: %v", writtenFile, err)
 	}
+	logger.V(3).Info("Generated aws-iam-authenticator kubeconfig", "kubeconfig", writtenFile)
 	return nil
 }
 
