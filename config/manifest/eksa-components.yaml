@@ -67,6 +67,115 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    controller-gen.kubebuilder.io/version: v0.6.1
+  creationTimestamp: null
+  name: awsiamconfigs.anywhere.eks.amazonaws.com
+spec:
+  group: anywhere.eks.amazonaws.com
+  names:
+    kind: AWSIamConfig
+    listKind: AWSIamConfigList
+    plural: awsiamconfigs
+    singular: awsiamconfig
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: AWSIamConfig is the Schema for the awsiamconfigs API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: AWSIamConfigSpec defines the desired state of AWSIamConfig
+            properties:
+              awsRegion:
+                description: AWSRegion defines a region in an AWS partition
+                type: string
+              backendMode:
+                description: BackendMode defines multiple backends for aws-iam-authenticator
+                  server The server searches for mappings in order
+                items:
+                  type: string
+                type: array
+              clusterID:
+                description: ClusterID is a unique-per-cluster identifier for aws-iam-authenticator
+                  server
+                type: string
+              mapRoles:
+                items:
+                  description: MapRoles defines IAM role to a username and set of
+                    groups mapping using EKSConfigMap BackendMode
+                  properties:
+                    groups:
+                      items:
+                        type: string
+                      type: array
+                    roleARN:
+                      type: string
+                    username:
+                      type: string
+                  required:
+                  - roleARN
+                  - username
+                  type: object
+                type: array
+              mapUsers:
+                items:
+                  description: MapUsers defines IAM role to a username and set of
+                    groups mapping using EKSConfigMap BackendMode
+                  properties:
+                    groups:
+                      items:
+                        type: string
+                      type: array
+                    userARN:
+                      type: string
+                    username:
+                      type: string
+                  required:
+                  - userARN
+                  - username
+                  type: object
+                type: array
+              partition:
+                default: aws
+                description: Partition defines the AWS partition on which the IAM
+                  roles exist
+                type: string
+            required:
+            - awsRegion
+            - backendMode
+            type: object
+          status:
+            description: AWSIamConfigStatus defines the observed state of AWSIamConfig
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
   name: bundles.anywhere.eks.amazonaws.com
@@ -1322,6 +1431,12 @@ spec:
                       type: object
                     flux:
                       properties:
+                        components:
+                          properties:
+                            uri:
+                              description: URI points to the manifest yaml file
+                              type: string
+                          type: object
                         helmController:
                           properties:
                             arch:
@@ -1441,6 +1556,7 @@ spec:
                         version:
                           type: string
                       required:
+                      - components
                       - helmController
                       - kustomizeController
                       - notificationController
@@ -2345,6 +2461,7 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
+  - awsiamconfigs
   - bundles
   - clusters
   - dockerdatacenterconfigs
@@ -2361,6 +2478,7 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
+  - awsiamconfigs/finalizers
   - bundles/finalizers
   - clusters/finalizers
   - dockerdatacenterconfigs/finalizers
@@ -2371,6 +2489,7 @@ rules:
 - apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
+  - awsiamconfigs/status
   - bundles/status
   - clusters/status
   - dockerdatacenterconfigs/status
@@ -2380,6 +2499,13 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - oidcconfigs
+  verbs:
+  - get
+  - list
 - apiGroups:
   - cluster.x-k8s.io
   resources:
@@ -2587,7 +2713,7 @@ spec:
         - --health-probe-bind-address=:8081
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
-        image: public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:aebda61a1f141b2857b3f4375e39d4590c40ada8-05d36a07f78af1c16d04dbbaba22013c64e25bd0
+        image: public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:v0.0.0-eks-a-v0.0.0-dev-build.251
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
@@ -2614,7 +2740,7 @@ spec:
         - --upstream=http://127.0.0.1:8080/
         - --logtostderr=true
         - --v=10
-        image: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+        image: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.251
         name: kube-rbac-proxy
         ports:
         - containerPort: 8443
@@ -2661,6 +2787,27 @@ metadata:
     cert-manager.io/inject-ca-from: eksa-system/eksa-serving-cert
   name: eksa-validating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-awsiamconfig
+  failurePolicy: Fail
+  name: validation.awsiamconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - awsiamconfigs
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   - v1beta1

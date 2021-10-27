@@ -113,6 +113,15 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 		return &DeleteKindClusterTask{}
 	}
 
+	if commandContext.ClusterSpec.AWSIamConfig != nil {
+		logger.Info("Creating aws-iam-authenticator certificate and key pair secret on bootstrap cluster")
+		err = commandContext.ClusterManager.CreateAwsIamAuthCaSecret(ctx, bootstrapCluster)
+		if err != nil {
+			commandContext.SetError(err)
+			return &DeleteKindClusterTask{}
+		}
+	}
+
 	logger.Info("Provider specific setup")
 	err = commandContext.Provider.BootstrapSetup(ctx, commandContext.ClusterSpec.Cluster, bootstrapCluster)
 	if err != nil {
@@ -191,6 +200,15 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
+	}
+
+	if commandContext.ClusterSpec.AWSIamConfig != nil {
+		logger.Info("Installing aws-iam-authenticator on workload cluster")
+		err = commandContext.ClusterManager.InstallAwsIamAuth(ctx, commandContext.BootstrapCluster, workloadCluster, commandContext.ClusterSpec)
+		if err != nil {
+			commandContext.SetError(err)
+			return nil
+		}
 	}
 
 	logger.Info("Installing storage class on workload cluster")

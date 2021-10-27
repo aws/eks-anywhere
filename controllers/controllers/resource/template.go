@@ -9,6 +9,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
@@ -16,6 +17,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/templater"
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
 )
+
+const ConfigMapKind = "ConfigMap"
 
 type DockerTemplate struct {
 	ResourceFetcher
@@ -26,6 +29,10 @@ type VsphereTemplate struct {
 	ResourceFetcher
 	ResourceUpdater
 	now anywhereTypes.NowFunc
+}
+
+type AWSIamConfigTemplate struct {
+	ResourceFetcher
 }
 
 func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdc anywherev1.VSphereDatacenterConfig, cpVmc, workerVmc, etcdVmc anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
@@ -166,4 +173,24 @@ func sshAuthorizedKey(vmc anywherev1.VSphereMachineConfig) string {
 		return ""
 	}
 	return vmc.Spec.Users[0].SshAuthorizedKeys[0]
+}
+
+func (r *AWSIamConfigTemplate) TemplateResources(ctx context.Context, clusterSpec *cluster.Spec) ([]*unstructured.Unstructured, error) {
+	var resources []*unstructured.Unstructured
+	templateBuilder := awsiamauth.NewAwsIamAuthTemplateBuilder()
+	content, err := templateBuilder.GenerateManifest(clusterSpec)
+	if err != nil {
+		return nil, err
+	}
+	templates := strings.Split(string(content), "---")
+	for _, template := range templates {
+		u := &unstructured.Unstructured{}
+		if err := yaml.Unmarshal([]byte(template), u); err != nil {
+			continue
+		}
+		if u.GetKind() == ConfigMapKind {
+			resources = append(resources, u)
+		}
+	}
+	return resources, nil
 }

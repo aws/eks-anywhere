@@ -110,6 +110,20 @@ func (mr *MockClusterManagerMockRecorder) ApplyBundles(arg0, arg1, arg2 interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyBundles", reflect.TypeOf((*MockClusterManager)(nil).ApplyBundles), arg0, arg1, arg2)
 }
 
+// CreateAwsIamAuthCaSecret mocks base method.
+func (m *MockClusterManager) CreateAwsIamAuthCaSecret(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAwsIamAuthCaSecret", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateAwsIamAuthCaSecret indicates an expected call of CreateAwsIamAuthCaSecret.
+func (mr *MockClusterManagerMockRecorder) CreateAwsIamAuthCaSecret(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAwsIamAuthCaSecret", reflect.TypeOf((*MockClusterManager)(nil).CreateAwsIamAuthCaSecret), arg0, arg1)
+}
+
 // CreateEKSAResources mocks base method.
 func (m *MockClusterManager) CreateEKSAResources(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.DatacenterConfig, arg4 []providers.MachineConfig) error {
 	m.ctrl.T.Helper()
@@ -181,6 +195,20 @@ func (m *MockClusterManager) GetCurrentClusterSpec(arg0 context.Context, arg1 *t
 func (mr *MockClusterManagerMockRecorder) GetCurrentClusterSpec(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentClusterSpec", reflect.TypeOf((*MockClusterManager)(nil).GetCurrentClusterSpec), arg0, arg1, arg2)
+}
+
+// InstallAwsIamAuth mocks base method.
+func (m *MockClusterManager) InstallAwsIamAuth(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InstallAwsIamAuth", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InstallAwsIamAuth indicates an expected call of InstallAwsIamAuth.
+func (mr *MockClusterManagerMockRecorder) InstallAwsIamAuth(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallAwsIamAuth", reflect.TypeOf((*MockClusterManager)(nil).InstallAwsIamAuth), arg0, arg1, arg2, arg3)
 }
 
 // InstallCAPI mocks base method.
