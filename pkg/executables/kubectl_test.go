@@ -735,7 +735,7 @@ func TestKubectlGetEKSAClusters(t *testing.T) {
 			k, ctx, cluster, e := newKubectl(t)
 			e.EXPECT().Execute(ctx, []string{"get", "clusters", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + tt.clusterName}).Return(*bytes.NewBufferString(fileContent), nil)
 
-			gotCluster, err := k.GetEksaCluster(ctx, cluster)
+			gotCluster, err := k.GetEksaCluster(ctx, cluster, tt.clusterName)
 			if err != nil {
 				t.Fatalf("Kubectl.GetEKSAClusters() error = %v, want nil", err)
 			}

@@ -129,11 +129,11 @@ type ProviderKubectlClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	LoadSecret(ctx context.Context, secretObject string, secretObjType string, secretObjectName string, kubeConfFile string) error
-	GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error)
+	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
 	GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
-	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error)
-	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*v1alpha3.MachineDeployment, error)
+	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error)
+	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*v1alpha3.MachineDeployment, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error)
 	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
@@ -1197,7 +1197,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 	var controlPlaneTemplateName, workloadTemplateName, etcdTemplateName string
 	var needsNewEtcdTemplate bool
 
-	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster)
+	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, clusterSpec.Name)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1218,7 +1218,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 
 	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(c, clusterSpec.Cluster, vdc, p.datacenterConfig, controlPlaneVmc, controlPlaneMachineConfig)
 	if !needsNewControlPlaneTemplate {
-		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, c.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1229,7 +1229,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 
 	needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(c, clusterSpec.Cluster, vdc, p.datacenterConfig, workerVmc, workerMachineConfig)
 	if !needsNewWorkloadTemplate {
-		md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+		md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1465,7 +1465,7 @@ func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
 }
 
 func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	prevSpec, err := p.providerKubectlClient.GetEksaCluster(ctx, cluster)
+	prevSpec, err := p.providerKubectlClient.GetEksaCluster(ctx, cluster, clusterSpec.Name)
 	if err != nil {
 		return err
 	}

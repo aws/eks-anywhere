@@ -11,13 +11,13 @@ import (
 )
 
 func ValidateImmutableFields(ctx context.Context, k ValidationsKubectlClient, cluster *types.Cluster, spec *cluster.Spec, provider providers.Provider) error {
-	prevSpec, err := k.GetEksaCluster(ctx, cluster)
+	prevSpec, err := k.GetEksaCluster(ctx, cluster, spec.Name)
 	if err != nil {
 		return err
 	}
 
 	if prevSpec.Name != spec.Name {
-		return fmt.Errorf("cluster name is immutable")
+		return fmt.Errorf("cluster name is immutable. previous name %s, new name %s", prevSpec.Name, spec.Name)
 	}
 
 	if prevSpec.Namespace != spec.Namespace {

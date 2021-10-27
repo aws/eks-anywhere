@@ -58,6 +58,11 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, workloadCl
 		Writer:          c.writer,
 		CAPIUpgrader:    c.capiUpgrader,
 	}
+
+	if clusterSpec.ManagementCluster != nil {
+		commandContext.BootstrapCluster = clusterSpec.ManagementCluster
+	}
+
 	err := task.NewTaskRunner(&setupAndValidateTasks{}).RunTask(ctx, commandContext)
 	if err != nil {
 		_ = commandContext.ClusterManager.SaveLogsManagementCluster(ctx, commandContext.BootstrapCluster)
@@ -133,7 +138,9 @@ func (s *setupAndValidateTasks) Name() string {
 }
 
 func (s *updateSecrets) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	err := commandContext.Provider.UpdateSecrets(ctx, commandContext.WorkloadCluster)
+	target := getManagemtCluster(commandContext)
+
+	err := commandContext.Provider.UpdateSecrets(ctx, target)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
@@ -146,13 +153,15 @@ func (s *updateSecrets) Name() string {
 }
 
 func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	target := getManagemtCluster(commandContext)
+
 	if !features.IsActive(features.ComponentsUpgrade()) {
 		logger.V(4).Info("Core components upgrade feature is disabled, skipping")
 		return &upgradeNeeded{}
 	}
 
 	logger.Info("Upgrading core components")
-	currentSpec, err := commandContext.ClusterManager.GetCurrentClusterSpec(ctx, commandContext.WorkloadCluster)
+	currentSpec, err := commandContext.ClusterManager.GetCurrentClusterSpec(ctx, target, commandContext.ClusterSpec.Name)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
@@ -160,21 +169,21 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 
 	upgradeChangeDiff := types.NewChangeDiff()
 
-	changeDiff, err := commandContext.CAPIUpgrader.Upgrade(ctx, commandContext.WorkloadCluster, commandContext.Provider, currentSpec, commandContext.ClusterSpec)
+	changeDiff, err := commandContext.CAPIUpgrader.Upgrade(ctx, target, commandContext.Provider, currentSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
 	}
 	upgradeChangeDiff.Append(changeDiff)
 
-	changeDiff, err = commandContext.AddonManager.Upgrade(ctx, commandContext.WorkloadCluster, currentSpec, commandContext.ClusterSpec)
+	changeDiff, err = commandContext.AddonManager.Upgrade(ctx, target, currentSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
 	}
 	upgradeChangeDiff.Append(changeDiff)
 
-	changeDiff, err = commandContext.ClusterManager.Upgrade(ctx, commandContext.WorkloadCluster, currentSpec, commandContext.ClusterSpec)
+	changeDiff, err = commandContext.ClusterManager.Upgrade(ctx, target, currentSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
@@ -182,7 +191,7 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 	upgradeChangeDiff.Append(changeDiff)
 
 	if upgradeChangeDiff.Changed() {
-		if err = commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster); err != nil {
+		if err = commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, target); err != nil {
 			commandContext.SetError(err)
 			return nil
 		}
@@ -196,10 +205,12 @@ func (s *upgradeCoreComponents) Name() string {
 }
 
 func (s *upgradeNeeded) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	target := getManagemtCluster(commandContext)
+
 	datacenterConfig := commandContext.Provider.DatacenterConfig()
 	machineConfigs := commandContext.Provider.MachineConfigs()
 	newSpec := commandContext.ClusterSpec
-	diff, err := commandContext.ClusterManager.EKSAClusterSpecChanged(ctx, commandContext.WorkloadCluster, newSpec, datacenterConfig, machineConfigs)
+	diff, err := commandContext.ClusterManager.EKSAClusterSpecChanged(ctx, target, newSpec, datacenterConfig, machineConfigs)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
@@ -218,15 +229,17 @@ func (s *upgradeNeeded) Name() string {
 }
 
 func (s *pauseEksaAndFluxReconcile) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	target := getManagemtCluster(commandContext)
+
 	logger.Info("Pausing EKS-A cluster controller reconcile")
-	err := commandContext.ClusterManager.PauseEKSAControllerReconcile(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider)
+	err := commandContext.ClusterManager.PauseEKSAControllerReconcile(ctx, target, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
 	}
 
 	logger.Info("Pausing Flux kustomization")
-	err = commandContext.AddonManager.PauseGitOpsKustomization(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec)
+	err = commandContext.AddonManager.PauseGitOpsKustomization(ctx, target, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
@@ -239,6 +252,9 @@ func (s *pauseEksaAndFluxReconcile) Name() string {
 }
 
 func (s *createBootstrapClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if commandContext.BootstrapCluster != nil && commandContext.BootstrapCluster.ExistingManagement {
+		return &upgradeWorkloadClusterTask{}
+	}
 	logger.Info("Creating bootstrap cluster")
 	bootstrapOptions, err := commandContext.Provider.BootstrapClusterOpts()
 	if err != nil {
@@ -289,10 +305,15 @@ func (s *moveManagementToBootstrapTask) Name() string {
 }
 
 func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	target := getManagemtCluster(commandContext)
+
 	logger.Info("Upgrading workload cluster")
-	err := commandContext.ClusterManager.UpgradeCluster(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider)
+	err := commandContext.ClusterManager.UpgradeCluster(ctx, commandContext.BootstrapCluster, target, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
+		if commandContext.BootstrapCluster.ExistingManagement {
+			return nil
+		}
 		return &moveManagementToWorkloadTaskAndExit{}
 	}
 
@@ -304,6 +325,9 @@ func (s *upgradeWorkloadClusterTask) Name() string {
 }
 
 func (s *moveManagementToWorkloadTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if commandContext.BootstrapCluster.ExistingManagement {
+		return &updateClusterAndGitResources{}
+	}
 	logger.Info("Moving cluster management from bootstrap to workload cluster")
 	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.WorkloadCluster.Name, types.WithNodeRef(), types.WithNodeHealthy())
 	if err != nil {
@@ -323,17 +347,19 @@ func (s *moveManagementToWorkloadTask) Name() string {
 }
 
 func (s *updateClusterAndGitResources) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	target := getManagemtCluster(commandContext)
+
 	logger.Info("Applying new EKS-A cluster resource; resuming reconcile")
 	datacenterConfig := commandContext.Provider.DatacenterConfig()
 	machineConfigs := commandContext.Provider.MachineConfigs()
-	err := commandContext.ClusterManager.CreateEKSAResources(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
+	err := commandContext.ClusterManager.CreateEKSAResources(ctx, target, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
 	}
 
 	logger.Info("Resuming EKS-A controller reconciliation")
-	err = commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider)
+	err = commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, target, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
@@ -353,15 +379,17 @@ func (s *updateClusterAndGitResources) Name() string {
 }
 
 func (s *resumeFluxReconcile) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	target := getManagemtCluster(commandContext)
+
 	logger.Info("Forcing reconcile Git repo with latest commit")
-	err := commandContext.AddonManager.ForceReconcileGitRepo(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec)
+	err := commandContext.AddonManager.ForceReconcileGitRepo(ctx, target, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
 	}
 
 	logger.Info("Resuming Flux kustomization")
-	err = commandContext.AddonManager.ResumeGitOpsKustomization(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec)
+	err = commandContext.AddonManager.ResumeGitOpsKustomization(ctx, target, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &writeClusterConfigTask{}
@@ -387,7 +415,7 @@ func (s *writeClusterConfigTask) Name() string {
 }
 
 func (s *deleteBootstrapClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if commandContext.BootstrapCluster != nil {
+	if commandContext.BootstrapCluster != nil && !commandContext.BootstrapCluster.ExistingManagement {
 		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, true); err != nil {
 			commandContext.SetError(err)
 		}
