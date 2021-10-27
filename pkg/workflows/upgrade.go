@@ -138,10 +138,8 @@ func (s *setupAndValidateTasks) Name() string {
 }
 
 func (s *updateSecrets) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	target := commandContext.WorkloadCluster
-	if commandContext.BootstrapCluster != nil && commandContext.BootstrapCluster.ExistingManagement {
-		target = commandContext.BootstrapCluster
-	}
+	target := getManagemtCluster(commandContext)
+
 	err := commandContext.Provider.UpdateSecrets(ctx, target)
 	if err != nil {
 		commandContext.SetError(err)
@@ -155,10 +153,7 @@ func (s *updateSecrets) Name() string {
 }
 
 func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	target := commandContext.WorkloadCluster
-	if commandContext.BootstrapCluster != nil && commandContext.BootstrapCluster.ExistingManagement {
-		target = commandContext.BootstrapCluster
-	}
+	target := getManagemtCluster(commandContext)
 
 	if !features.IsActive(features.ComponentsUpgrade()) {
 		logger.V(4).Info("Core components upgrade feature is disabled, skipping")
@@ -210,10 +205,7 @@ func (s *upgradeCoreComponents) Name() string {
 }
 
 func (s *upgradeNeeded) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	target := commandContext.WorkloadCluster
-	if commandContext.BootstrapCluster != nil && commandContext.BootstrapCluster.ExistingManagement {
-		target = commandContext.BootstrapCluster
-	}
+	target := getManagemtCluster(commandContext)
 
 	datacenterConfig := commandContext.Provider.DatacenterConfig()
 	machineConfigs := commandContext.Provider.MachineConfigs()
@@ -237,10 +229,7 @@ func (s *upgradeNeeded) Name() string {
 }
 
 func (s *pauseEksaAndFluxReconcile) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	target := commandContext.WorkloadCluster
-	if commandContext.BootstrapCluster != nil && commandContext.BootstrapCluster.ExistingManagement {
-		target = commandContext.BootstrapCluster
-	}
+	target := getManagemtCluster(commandContext)
 
 	logger.Info("Pausing EKS-A cluster controller reconcile")
 	err := commandContext.ClusterManager.PauseEKSAControllerReconcile(ctx, target, commandContext.ClusterSpec, commandContext.Provider)
@@ -316,10 +305,8 @@ func (s *moveManagementToBootstrapTask) Name() string {
 }
 
 func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	target := commandContext.WorkloadCluster
-	if commandContext.BootstrapCluster.ExistingManagement {
-		target = commandContext.BootstrapCluster
-	}
+	target := getManagemtCluster(commandContext)
+
 	logger.Info("Upgrading workload cluster")
 	err := commandContext.ClusterManager.UpgradeCluster(ctx, commandContext.BootstrapCluster, target, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
@@ -360,10 +347,7 @@ func (s *moveManagementToWorkloadTask) Name() string {
 }
 
 func (s *updateClusterAndGitResources) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	target := commandContext.WorkloadCluster
-	if commandContext.BootstrapCluster.ExistingManagement {
-		target = commandContext.BootstrapCluster
-	}
+	target := getManagemtCluster(commandContext)
 
 	logger.Info("Applying new EKS-A cluster resource; resuming reconcile")
 	datacenterConfig := commandContext.Provider.DatacenterConfig()
@@ -395,10 +379,7 @@ func (s *updateClusterAndGitResources) Name() string {
 }
 
 func (s *resumeFluxReconcile) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	target := commandContext.WorkloadCluster
-	if commandContext.BootstrapCluster.ExistingManagement {
-		target = commandContext.BootstrapCluster
-	}
+	target := getManagemtCluster(commandContext)
 
 	logger.Info("Forcing reconcile Git repo with latest commit")
 	err := commandContext.AddonManager.ForceReconcileGitRepo(ctx, target, commandContext.ClusterSpec)
