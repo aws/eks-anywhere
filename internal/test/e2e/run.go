@@ -10,6 +10,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
+const (
+	passedStatus = "pass"
+	failedStatus = "fail"
+)
+
 type ParallelRunConf struct {
 	MaxInstances        int
 	AmiId               string
@@ -63,10 +68,10 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	failedInstances := 0
 	for r := range resultCh {
 		if r.err != nil {
-			logger.Error(r.err, "An e2e instance run has failed", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "tests", r.conf.regex)
+			logger.Error(r.err, "An e2e instance run has failed", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "tests", r.conf.regex, "status", failedStatus)
 			failedInstances += 1
 		} else {
-			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "tests", r.conf.regex)
+			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "tests", r.conf.regex, "status", passedStatus)
 		}
 	}
 
