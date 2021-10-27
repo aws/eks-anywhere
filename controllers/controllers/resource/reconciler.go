@@ -58,7 +58,7 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 	if err != nil {
 		return err
 	}
-	err = cor.fetchIdentityProviderRefs(ctx, spec)
+	err = cor.fetchIdentityProviderRefs(ctx, spec, objectKey.Namespace)
 	if err != nil {
 		return err
 	}
@@ -143,17 +143,17 @@ func (cor *clusterReconciler) applyTemplates(ctx context.Context, resources []*u
 	return nil
 }
 
-func (cor *clusterReconciler) fetchIdentityProviderRefs(ctx context.Context, cs *cluster.Spec) error {
+func (cor *clusterReconciler) fetchIdentityProviderRefs(ctx context.Context, cs *cluster.Spec, namespace string) error {
 	for _, identityProvider := range cs.Spec.IdentityProviderRefs {
 		switch identityProvider.Kind {
 		case anywherev1.AWSIamConfigKind:
-			awsIamConfig, err := cor.AWSIamConfig(ctx, &identityProvider)
+			awsIamConfig, err := cor.AWSIamConfig(ctx, &identityProvider, namespace)
 			if err != nil {
 				return err
 			}
 			cs.AWSIamConfig = awsIamConfig
 		case anywherev1.OIDCConfigKind:
-			oidcConfig, err := cor.OIDCConfig(ctx, &identityProvider)
+			oidcConfig, err := cor.OIDCConfig(ctx, &identityProvider, namespace)
 			if err != nil {
 				return err
 			}

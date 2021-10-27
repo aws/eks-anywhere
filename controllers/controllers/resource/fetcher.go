@@ -37,8 +37,8 @@ type ResourceFetcher interface {
 	ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*kubeadmnv1alpha3.KubeadmControlPlane, error)
 	Etcd(ctx context.Context, cs *anywherev1.Cluster) (*etcdv1alpha3.EtcdadmCluster, error)
 	FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error)
-	AWSIamConfig(ctx context.Context, ref *anywherev1.Ref) (*anywherev1.AWSIamConfig, error)
-	OIDCConfig(ctx context.Context, ref *anywherev1.Ref) (*anywherev1.OIDCConfig, error)
+	AWSIamConfig(ctx context.Context, ref *anywherev1.Ref, namespace string) (*anywherev1.AWSIamConfig, error)
+	OIDCConfig(ctx context.Context, ref *anywherev1.Ref, namespace string) (*anywherev1.OIDCConfig, error)
 }
 
 type capiResourceFetcher struct {
@@ -279,18 +279,18 @@ func (r *capiResourceFetcher) Etcd(ctx context.Context, cs *anywherev1.Cluster) 
 	return etcdadmCluster, nil
 }
 
-func (r *capiResourceFetcher) AWSIamConfig(ctx context.Context, ref *anywherev1.Ref) (*anywherev1.AWSIamConfig, error) {
+func (r *capiResourceFetcher) AWSIamConfig(ctx context.Context, ref *anywherev1.Ref, namespace string) (*anywherev1.AWSIamConfig, error) {
 	awsIamConfig := &anywherev1.AWSIamConfig{}
-	err := r.FetchObjectByName(ctx, ref.Name, constants.DefaultNamespace, awsIamConfig)
+	err := r.FetchObjectByName(ctx, ref.Name, namespace, awsIamConfig)
 	if err != nil {
 		return nil, err
 	}
 	return awsIamConfig, nil
 }
 
-func (r *capiResourceFetcher) OIDCConfig(ctx context.Context, ref *anywherev1.Ref) (*anywherev1.OIDCConfig, error) {
+func (r *capiResourceFetcher) OIDCConfig(ctx context.Context, ref *anywherev1.Ref, namespace string) (*anywherev1.OIDCConfig, error) {
 	oidcConfig := &anywherev1.OIDCConfig{}
-	err := r.FetchObjectByName(ctx, ref.Name, constants.DefaultNamespace, oidcConfig)
+	err := r.FetchObjectByName(ctx, ref.Name, namespace, oidcConfig)
 	if err != nil {
 		return nil, err
 	}
