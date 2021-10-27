@@ -558,10 +558,11 @@ func TestPreflightValidations(t *testing.T) {
 
 			provider := mockproviders.NewMockProvider(mockCtrl)
 			opts := &upgradevalidations.UpgradeValidationOpts{
-				Kubectl:         k,
-				Spec:            clusterSpec,
-				WorkloadCluster: workloadCluster,
-				Provider:        provider,
+				Kubectl:           k,
+				Spec:              clusterSpec,
+				WorkloadCluster:   workloadCluster,
+				ManagementCluster: workloadCluster,
+				Provider:          provider,
 			}
 
 			clusterSpec.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
@@ -583,8 +584,8 @@ func TestPreflightValidations(t *testing.T) {
 			provider.EXPECT().DatacenterConfig().Return(existingProviderSpec).MaxTimes(1)
 			provider.EXPECT().ValidateNewSpec(ctx, workloadCluster, clusterSpec).Return(nil).MaxTimes(1)
 			k.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
-			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster).Return(tc.cpResponse)
-			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster).Return(tc.workerResponse)
+			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster, clusterSpec.Name).Return(tc.cpResponse)
+			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster, workloadCluster.Name).Return(tc.workerResponse)
 			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
 			k.EXPECT().ValidateClustersCRD(ctx, workloadCluster).Return(tc.crdResponse)
 			k.EXPECT().GetClusters(ctx, workloadCluster).Return(tc.getClusterResponse, nil)

@@ -239,8 +239,8 @@ func (k *Kubectl) ValidateNodes(ctx context.Context, kubeconfig string) error {
 	return nil
 }
 
-func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster) error {
-	cp, err := k.GetKubeadmControlPlane(ctx, cluster, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
+func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error {
+	cp, err := k.GetKubeadmControlPlane(ctx, cluster, clusterName, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return err
 	}
@@ -259,8 +259,9 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 	return nil
 }
 
-func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster) error {
-	md, err := k.GetMachineDeployment(ctx, cluster, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
+func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error {
+	logger.V(6).Info("waiting for nodes", "cluster", clusterName)
+	md, err := k.GetMachineDeployment(ctx, cluster, clusterName, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return err
 	}
@@ -539,8 +540,9 @@ func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOp
 	return response.Items, nil
 }
 
-func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, opts ...KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error) {
-	params := []string{"get", fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", v1alpha3.GroupVersion.Group), cluster.Name, "-o", "json"}
+func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error) {
+	logger.V(6).Info("Getting KubeadmControlPlane CRDs", "cluster", clusterName)
+	params := []string{"get", fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", v1alpha3.GroupVersion.Group), clusterName, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
@@ -556,8 +558,8 @@ func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Clu
 	return response, nil
 }
 
-func (k *Kubectl) GetMachineDeployment(ctx context.Context, cluster *types.Cluster, opts ...KubectlOpt) (*v1alpha3.MachineDeployment, error) {
-	params := []string{"get", fmt.Sprintf("machinedeployments.%s", v1alpha3.GroupVersion.Group), fmt.Sprintf("%s-md-0", cluster.Name), "-o", "json"}
+func (k *Kubectl) GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*v1alpha3.MachineDeployment, error) {
+	params := []string{"get", fmt.Sprintf("machinedeployments.%s", v1alpha3.GroupVersion.Group), fmt.Sprintf("%s-md-0", clusterName), "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {

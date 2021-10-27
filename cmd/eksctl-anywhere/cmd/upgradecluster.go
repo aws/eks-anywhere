@@ -20,9 +20,8 @@ import (
 
 type upgradeClusterOptions struct {
 	clusterOptions
-	wConfig              string
-	forceClean           bool
-	managementKubeconfig string
+	wConfig    string
+	forceClean bool
 }
 
 func (uc *upgradeClusterOptions) kubeConfig(clusterName string) string {
@@ -102,6 +101,11 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		deps.Writer,
 	)
 
+	workloadCluster := &types.Cluster{
+		Name:           clusterSpec.Name,
+		KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
+	}
+
 	var cluster *types.Cluster
 	if clusterSpec.ManagementCluster == nil {
 		cluster = &types.Cluster{
@@ -116,10 +120,11 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	}
 
 	validationOpts := &upgradevalidations.UpgradeValidationOpts{
-		Kubectl:         deps.Kubectl,
-		Spec:            clusterSpec,
-		WorkloadCluster: cluster,
-		Provider:        deps.Provider,
+		Kubectl:           deps.Kubectl,
+		Spec:              clusterSpec,
+		WorkloadCluster:   workloadCluster,
+		ManagementCluster: cluster,
+		Provider:          deps.Provider,
 	}
 	upgradeValidations := upgradevalidations.New(validationOpts)
 

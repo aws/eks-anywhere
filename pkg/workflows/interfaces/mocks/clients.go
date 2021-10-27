@@ -516,18 +516,6 @@ func (mr *MockValidatorMockRecorder) PreflightValidations(arg0 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PreflightValidations", reflect.TypeOf((*MockValidator)(nil).PreflightValidations), arg0)
 }
 
-// SetWorkloadCluster mocks base method.
-func (m *MockValidator) SetWorkloadCluster(arg0 *types.Cluster) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetWorkloadCluster", arg0)
-}
-
-// SetWorkloadCluster indicates an expected call of SetWorkloadCluster.
-func (mr *MockValidatorMockRecorder) SetWorkloadCluster(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetWorkloadCluster", reflect.TypeOf((*MockValidator)(nil).SetWorkloadCluster), arg0)
-}
-
 // MockCAPIUpgrader is a mock of CAPIUpgrader interface.
 type MockCAPIUpgrader struct {
 	ctrl     *gomock.Controller

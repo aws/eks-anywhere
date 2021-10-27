@@ -448,8 +448,8 @@ func TestClusterManagerUpgradeWorkloadClusterSuccess(t *testing.T) {
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", clusterName).MaxTimes(2)
 	m.client.EXPECT().GetMachines(ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil).Times(2)
 	m.client.EXPECT().WaitForDeployment(ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
-	m.client.EXPECT().ValidateControlPlaneNodes(ctx, mCluster).Return(nil)
-	m.client.EXPECT().ValidateWorkerNodes(ctx, mCluster).Return(nil)
+	m.client.EXPECT().ValidateControlPlaneNodes(ctx, mCluster, wCluster.Name).Return(nil)
+	m.client.EXPECT().ValidateWorkerNodes(ctx, mCluster, wCluster.Name).Return(nil)
 	m.provider.EXPECT().GetDeployments()
 	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 
@@ -559,8 +559,8 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForCAPITimeout(t *testing.T) {
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", clusterName).MaxTimes(2)
 	m.client.EXPECT().GetMachines(ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil).Times(2)
 	m.client.EXPECT().WaitForDeployment(ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).Return(errors.New("time out"))
-	m.client.EXPECT().ValidateControlPlaneNodes(ctx, mCluster).Return(nil)
-	m.client.EXPECT().ValidateWorkerNodes(ctx, mCluster).Return(nil)
+	m.client.EXPECT().ValidateControlPlaneNodes(ctx, mCluster, wCluster.Name).Return(nil)
+	m.client.EXPECT().ValidateWorkerNodes(ctx, mCluster, wCluster.Name).Return(nil)
 	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 
 	if err := c.UpgradeCluster(ctx, mCluster, wCluster, wClusterSpec, m.provider); err == nil {

@@ -404,10 +404,10 @@ func (mr *MockProviderKubectlClientMockRecorder) GetEtcdadmCluster(arg0, arg1 in
 }
 
 // GetKubeadmControlPlane mocks base method.
-func (m *MockProviderKubectlClient) GetKubeadmControlPlane(arg0 context.Context, arg1 *types.Cluster, arg2 ...executables.KubectlOpt) (*v1alpha31.KubeadmControlPlane, error) {
+func (m *MockProviderKubectlClient) GetKubeadmControlPlane(arg0 context.Context, arg1 *types.Cluster, arg2 string, arg3 ...executables.KubectlOpt) (*v1alpha31.KubeadmControlPlane, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []interface{}{arg0, arg1, arg2}
+	for _, a := range arg3 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetKubeadmControlPlane", varargs...)
@@ -417,17 +417,17 @@ func (m *MockProviderKubectlClient) GetKubeadmControlPlane(arg0 context.Context,
 }
 
 // GetKubeadmControlPlane indicates an expected call of GetKubeadmControlPlane.
-func (mr *MockProviderKubectlClientMockRecorder) GetKubeadmControlPlane(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+func (mr *MockProviderKubectlClientMockRecorder) GetKubeadmControlPlane(arg0, arg1, arg2 interface{}, arg3 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	varargs := append([]interface{}{arg0, arg1, arg2}, arg3...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetKubeadmControlPlane", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetKubeadmControlPlane), varargs...)
 }
 
 // GetMachineDeployment mocks base method.
-func (m *MockProviderKubectlClient) GetMachineDeployment(arg0 context.Context, arg1 *types.Cluster, arg2 ...executables.KubectlOpt) (*v1alpha30.MachineDeployment, error) {
+func (m *MockProviderKubectlClient) GetMachineDeployment(arg0 context.Context, arg1 *types.Cluster, arg2 string, arg3 ...executables.KubectlOpt) (*v1alpha30.MachineDeployment, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []interface{}{arg0, arg1, arg2}
+	for _, a := range arg3 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetMachineDeployment", varargs...)
@@ -437,9 +437,9 @@ func (m *MockProviderKubectlClient) GetMachineDeployment(arg0 context.Context, a
 }
 
 // GetMachineDeployment indicates an expected call of GetMachineDeployment.
-func (mr *MockProviderKubectlClientMockRecorder) GetMachineDeployment(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+func (mr *MockProviderKubectlClientMockRecorder) GetMachineDeployment(arg0, arg1, arg2 interface{}, arg3 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	varargs := append([]interface{}{arg0, arg1, arg2}, arg3...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineDeployment", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetMachineDeployment), varargs...)
 }
 
