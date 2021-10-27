@@ -27,5 +27,20 @@ When the above PR gets merged, it will build all the upstream dependencies of EK
 * release/triggers/eks-a-release/development/RELEASE_NUMBER
 * release/triggers/eks-a-release/development/RELEASE_VERSION
 
+## Release Steps on Repository
+
+Once we finish the staging release, we can mark the release accordingly on the repository.
+This includes adding a tag as well as a separate branch to have our website be updated to
+point to the new branch.
+
+* Update the [Changelog](docs/content/en/docs/reference/changelog.md) with changes for the release and rename `[Unreleased]` to the release version
+  * If this is not just a patch release, update the value under `versions` in the docs [config](docs/config.toml)
+  * Follow format [here](https://keepachangelog.com/)
+* Tag the commit with the release version (ex. `v0.5.0`)
+* Create a branch from the tag
+* Have one of the maintainers, who has access to the infrastructure cdk package, change the website configuration to point to the newly created branch
+* Add a file to the branch called `PUBLISHED_VERSION` to trigger a change to the infrastructure to deploy the new changes
+
+Now the [homepage](https://anywhere.eks.amazonaws.com/) for EKS-A should be updated with the changes from this new branch
 
 
