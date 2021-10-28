@@ -94,25 +94,20 @@ func buildOverridesLayer(clusterSpec *cluster.Spec, clusterName string, provider
 				bundle.ControlPlane.Metadata,
 			},
 		},
-	}
-
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
-		infraBundles = append(infraBundles, []types.InfrastructureBundle{
-			{
-				FolderName: filepath.Join("bootstrap-etcdadm-bootstrap", bundle.ExternalEtcdBootstrap.Version),
-				Manifests: []v1alpha1.Manifest{
-					bundle.ExternalEtcdBootstrap.Components,
-					bundle.ExternalEtcdBootstrap.Metadata,
-				},
+		{
+			FolderName: filepath.Join("bootstrap-etcdadm-bootstrap", bundle.ExternalEtcdBootstrap.Version),
+			Manifests: []v1alpha1.Manifest{
+				bundle.ExternalEtcdBootstrap.Components,
+				bundle.ExternalEtcdBootstrap.Metadata,
 			},
-			{
-				FolderName: filepath.Join("bootstrap-etcdadm-controller", bundle.ExternalEtcdController.Version),
-				Manifests: []v1alpha1.Manifest{
-					bundle.ExternalEtcdController.Components,
-					bundle.ExternalEtcdController.Metadata,
-				},
+		},
+		{
+			FolderName: filepath.Join("bootstrap-etcdadm-controller", bundle.ExternalEtcdController.Version),
+			Manifests: []v1alpha1.Manifest{
+				bundle.ExternalEtcdController.Components,
+				bundle.ExternalEtcdController.Metadata,
 			},
-		}...)
+		},
 	}
 
 	infraBundles = append(infraBundles, *provider.GetInfrastructureBundle(clusterSpec))
@@ -191,15 +186,14 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, clusterSpec *cluste
 		"--control-plane", clusterctlConfig.controlPlaneVersion,
 		"--infrastructure", fmt.Sprintf("%s:%s", provider.Name(), provider.Version(clusterSpec)),
 		"--config", clusterctlConfig.configFile,
+		"--bootstrap", clusterctlConfig.etcdadmBootstrapVersion,
+		"--bootstrap", clusterctlConfig.etcdadmControllerVersion,
 	}
 	// Not supported for docker controllers at this time
 	if clusterSpec.Spec.DatacenterRef.Kind != anywherev1alpha1.DockerDatacenterKind {
 		params = append(params, "--watching-namespace", constants.EksaSystemNamespace)
 	}
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
-		params = append(params, "--bootstrap", clusterctlConfig.etcdadmBootstrapVersion,
-			"--bootstrap", clusterctlConfig.etcdadmControllerVersion)
-	}
+
 	if cluster.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
 	}
