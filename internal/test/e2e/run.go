@@ -13,6 +13,7 @@ import (
 const (
 	passedStatus = "pass"
 	failedStatus = "fail"
+	baseLogGroup = "/eks-anywhere/test/e2e"
 )
 
 type ParallelRunConf struct {
@@ -83,12 +84,22 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 }
 
 type instanceRunConf struct {
-	amiId, instanceProfileName, storageBucket, jobId, subnetId, regex, instanceId string
-	bundlesOverride                                                               bool
+	amiId, instanceProfileName, storageBucket, jobId, parentJobId, subnetId, regex, instanceId string
+	bundlesOverride                                                                            bool
+}
+
+func (i *instanceRunConf) cloudwatchLogGroup() string {
+	var path []string
+	path = append(path, baseLogGroup)
+	if i.parentJobId != "" {
+		path = append(path, i.parentJobId)
+	}
+	path = append(path, i.jobId)
+	return strings.Join(path, "/")
 }
 
 func RunTests(conf instanceRunConf) (testInstanceID string, err error) {
-	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.jobId, conf.subnetId, conf.bundlesOverride)
+	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.cloudwatchLogGroup(), conf.jobId, conf.subnetId, conf.bundlesOverride)
 	if err != nil {
 		return "", err
 	}
@@ -115,10 +126,13 @@ func (e *E2ESession) runTests(regex string) error {
 
 	command = e.commandWithEnvVars(command)
 
+	opt := ssm.WithOutputToCloudwatch(e.logGroup)
+
 	err := ssm.Run(
 		e.session,
 		e.instanceId,
 		command,
+		opt,
 	)
 	if err != nil {
 		e.uploadGeneratedFilesFromInstance(regex)
@@ -164,6 +178,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 				instanceProfileName: conf.InstanceProfileName,
 				storageBucket:       conf.StorageBucket,
 				jobId:               fmt.Sprintf("%s-%d", conf.JobId, len(runConfs)),
+				parentJobId:         conf.JobId,
 				subnetId:            conf.SubnetId,
 				regex:               strings.Join(testsInCurrentInstance, "|"),
 				bundlesOverride:     conf.BundlesOverride,
