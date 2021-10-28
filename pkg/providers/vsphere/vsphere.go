@@ -115,7 +115,7 @@ type ProviderGovcClient interface {
 	ValidateVCenterSetup(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, selfSigned *bool) error
 	ValidateVCenterSetupMachineConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfig *v1alpha1.VSphereMachineConfig, selfSigned *bool) error
 	CreateLibrary(ctx context.Context, datastore, library string) error
-	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string, resizeDisk2 bool) error
+	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, resourcePool string, resizeDisk2 bool) error
 	ImportTemplate(ctx context.Context, library, ovaURL, name string) error
 	GetTags(ctx context.Context, path string) (tags []string, err error)
 	ListTags(ctx context.Context) ([]string, error)
@@ -160,6 +160,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
 		controlPlaneTemplateFactory = templates.NewFactory(
 			providerGovcClient,
+			datacenterConfig.Spec.Datacenter,
 			controlPlaneMachineSpec.Datastore,
 			controlPlaneMachineSpec.ResourcePool,
 			defaultTemplateLibrary,
@@ -169,6 +170,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 		workerNodeGroupMachineSpec = &machineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec
 		workerNodeGroupTemplateFactory = templates.NewFactory(
 			providerGovcClient,
+			datacenterConfig.Spec.Datacenter,
 			workerNodeGroupMachineSpec.Datastore,
 			workerNodeGroupMachineSpec.ResourcePool,
 			defaultTemplateLibrary,
@@ -179,6 +181,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
 			etcdTemplateFactory = templates.NewFactory(
 				providerGovcClient,
+				datacenterConfig.Spec.Datacenter,
 				etcdMachineSpec.Datastore,
 				etcdMachineSpec.ResourcePool,
 				defaultTemplateLibrary,
