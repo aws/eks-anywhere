@@ -3,7 +3,6 @@ package executables
 import (
 	"context"
 	"fmt"
-	"path"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/git/providers/github"
@@ -30,13 +29,14 @@ func NewFlux(executable Executable) *Flux {
 // components manifests to the main branch. Then it configures the target cluster to synchronize with the repository.
 // If the toolkit components are present on the cluster, the bootstrap command will perform an upgrade if needed.
 func (f *Flux) BootstrapToolkitsComponents(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error {
-	c := gitOpsConfig.Spec.Flux.Github
+	gs := gitOpsConfig.Spec
+	c := gs.Flux.Github
 	params := []string{
 		"bootstrap",
 		gitProvider,
 		"--repository", c.Repository,
 		"--owner", c.Owner,
-		"--path", path.Dir(c.ClusterConfigPath),
+		"--path", gs.ClusterRootPath(),
 	}
 
 	if cluster.KubeconfigFile != "" {

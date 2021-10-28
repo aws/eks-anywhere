@@ -138,7 +138,7 @@ func (f *FluxAddonClient) ForceReconcileGitRepo(ctx context.Context, cluster *ty
 		clusterSpec:     clusterSpec,
 	}
 
-	return f.flux.ForceReconcileGitRepo(ctx, cluster, fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace)
+	return f.flux.ForceReconcileGitRepo(ctx, cluster, fc.namespace())
 }
 
 // InstallGitOps validates and sets up the gitops/flux config, creates a repository if one doesn’t exist,
@@ -190,7 +190,6 @@ func (f *FluxAddonClient) InstallGitOps(ctx context.Context, cluster *types.Clus
 func (f *FluxAddonClient) uninstallGitOpsToolkits(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	fc := &fluxForCluster{
 		FluxAddonClient: f,
-		clusterSpec:     clusterSpec,
 	}
 
 	return f.retrier.Retry(func() error {
@@ -209,7 +208,7 @@ func (f *FluxAddonClient) PauseGitOpsKustomization(ctx context.Context, cluster 
 		clusterSpec:     clusterSpec,
 	}
 
-	logger.V(3).Info("pause reconciliation of all Kustomization", "namespace", clusterSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace)
+	logger.V(3).Info("pause reconciliation of all Kustomization", "namespace", fc.namespace())
 
 	return f.retrier.Retry(func() error {
 		return fc.flux.PauseKustomization(ctx, cluster, clusterSpec.GitOpsConfig)
@@ -227,7 +226,7 @@ func (f *FluxAddonClient) ResumeGitOpsKustomization(ctx context.Context, cluster
 		clusterSpec:     clusterSpec,
 	}
 
-	logger.V(3).Info("resume reconciliation of all Kustomization", "namespace", clusterSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace)
+	logger.V(3).Info("resume reconciliation of all Kustomization", "namespace", fc.namespace())
 	return f.retrier.Retry(func() error {
 		return fc.flux.ResumeKustomization(ctx, cluster, clusterSpec.GitOpsConfig)
 	})
@@ -265,7 +264,7 @@ func (f *FluxAddonClient) UpdateGitEksaSpec(ctx context.Context, clusterSpec *cl
 		return err
 	}
 	logger.V(3).Info("Finished pushing updated cluster config file to git",
-		"repository", clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository)
+		"repository", fc.repository())
 	return nil
 }
 
@@ -305,7 +304,7 @@ func (f *FluxAddonClient) CleanupGitRepo(ctx context.Context, clusterSpec *clust
 		return err
 	}
 
-	p := clusterSpec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath
+	p := fc.path()
 
 	if !validations.FileExists(path.Join(f.gitOpts.Writer.Dir(), p)) {
 		logger.V(3).Info("cluster dir does not exist in git, skip clean up")
@@ -322,7 +321,7 @@ func (f *FluxAddonClient) CleanupGitRepo(ctx context.Context, clusterSpec *clust
 		return err
 	}
 	logger.V(3).Info("Finished cleaning up cluster files in git",
-		"repository", clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository)
+		"repository", fc.repository())
 	return nil
 }
 
@@ -354,8 +353,6 @@ type fluxForCluster struct {
 // These will later be used by Flux and our controllers to reconcile the repository contents and the cluster configuration.
 func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) error {
 	logger.Info("Adding cluster configuration files to Git")
-	config := fc.clusterSpec.GitOpsConfig
-	repository := config.Spec.Flux.Github.Repository
 
 	if err := fc.setupRepository(ctx); err != nil {
 		return err
@@ -382,7 +379,7 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 	} else {
 		logger.V(3).Info("Skipping flux custom manifest files")
 	}
-	p := path.Dir(config.Spec.Flux.Github.ClusterConfigPath)
+	p := path.Dir(fc.path())
 	err = fc.gitOpts.Git.Add(p)
 	if err != nil {
 		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when adding %s to git: %v", p, err)}
@@ -393,14 +390,13 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 		return err
 	}
 	logger.V(3).Info("Finished pushing cluster config and flux custom manifest files to git",
-		"repository", repository)
+		"repository", fc.repository())
 	return nil
 }
 
 func (fc *fluxForCluster) syncGitRepo(ctx context.Context) error {
-	fluxConfig := fc.clusterSpec.GitOpsConfig.Spec.Flux
-	repoName := fluxConfig.Github.Repository
-	branch := fluxConfig.Github.Branch
+	repo := fc.repository()
+	branch := fc.branch()
 
 	f := fc.FluxAddonClient
 
@@ -410,7 +406,7 @@ func (fc *fluxForCluster) syncGitRepo(ctx context.Context) error {
 			return fmt.Errorf("failed cloning git repo: %v", err)
 		}
 		if r == nil {
-			return fmt.Errorf("failed to find remote git repo: %s", repoName)
+			return fmt.Errorf("failed to find remote git repo: %s", repo)
 		}
 	} else {
 		// Make sure the local git repo is on the branch specified in config and up-to-date with the remote
@@ -474,9 +470,9 @@ func (fc *fluxForCluster) generateEksaKustomizeFile() error {
 }
 
 func (fc *fluxForCluster) initFluxWriter() (filewriter.FileWriter, error) {
-	ns := fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace
-	p := fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath
-	fluxSystemDir := path.Join(path.Dir(p), ns)
+	ns := fc.namespace()
+	p := fc.clusterSpec.GitOpsConfig.Spec.ClusterRootPath()
+	fluxSystemDir := path.Join(p, ns)
 	w, err := fc.gitOpts.Writer.WithDir(fluxSystemDir)
 	if err != nil {
 		err = fmt.Errorf("error creating %s directory: %v", ns, err)
@@ -513,7 +509,7 @@ func (fc *fluxForCluster) writeFluxSystemFiles() (err error) {
 
 func (fc *fluxForCluster) generateFluxKustomizeFile(t *templater.Templater) error {
 	values := map[string]string{
-		"Namespace": fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace,
+		"Namespace": fc.namespace(),
 	}
 	if filePath, err := t.WriteToFile(fluxKustomizeContent, values, kustomizeFileName, filewriter.PersistentFile); err != nil {
 		return fmt.Errorf("error creating flux-system kustomization manifest file into %s: %v", filePath, err)
@@ -531,7 +527,7 @@ func (f *FluxAddonClient) generateFluxSyncFile(t *templater.Templater) error {
 func (fc *fluxForCluster) generateFluxPatchFile(t *templater.Templater) error {
 	bundle := fc.clusterSpec.VersionsBundle
 	values := map[string]string{
-		"Namespace":                   fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace,
+		"Namespace":                   fc.namespace(),
 		"SourceControllerImage":       bundle.Flux.SourceController.VersionedImage(),
 		"KustomizeControllerImage":    bundle.Flux.KustomizeController.VersionedImage(),
 		"HelmControllerImage":         bundle.Flux.HelmController.VersionedImage(),
@@ -596,7 +592,7 @@ func (fc *fluxForCluster) clone(ctx context.Context) (*git.Repository, error) {
 		}
 
 		logger.V(3).Info("Creating a new branch")
-		err = fc.gitOpts.Git.Branch(fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.Branch)
+		err = fc.gitOpts.Git.Branch(fc.branch())
 		if err != nil {
 			return nil, err
 		}
@@ -638,7 +634,7 @@ func (fc *fluxForCluster) initializeLocalRepository() error {
 		return fmt.Errorf("error when initializing repository: %v", err)
 	}
 
-	if err = fc.gitOpts.Git.Branch(fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.Branch); err != nil {
+	if err = fc.gitOpts.Git.Branch(fc.branch()); err != nil {
 		return fmt.Errorf("error when creating branch: %v", err)
 	}
 	return nil
@@ -647,7 +643,7 @@ func (fc *fluxForCluster) initializeLocalRepository() error {
 // validateLocalConfigPathDoesNotExist returns an exception if the cluster configuration file exists.
 // This is done so that we avoid clobbering existing cluster configurations in the user-provided git repository.
 func (fc *fluxForCluster) validateLocalConfigPathDoesNotExist() error {
-	p := path.Join(fc.gitOpts.Writer.Dir(), fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath)
+	p := path.Join(fc.gitOpts.Writer.Dir(), fc.path())
 	if validations.FileExists(p) {
 		return fmt.Errorf("a cluster configuration file already exists at path %s", p)
 	}
@@ -684,16 +680,20 @@ func (fc *fluxForCluster) path() string {
 	return fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath
 }
 
+func (fc *fluxForCluster) namespace() string {
+	return fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace
+}
+
+func (fc *fluxForCluster) eksaSystemDir() string {
+	return path.Join(fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath, eksaSystemDirName)
+}
+
 type ConfigVersionControlFailedError struct {
 	Err error
 }
 
 func (e *ConfigVersionControlFailedError) Error() string {
 	return fmt.Sprintf("Encountered an error when attempting to version control cluster config: %v", e.Err)
-}
-
-func (fc *fluxForCluster) eksaSystemDir() string {
-	return path.Join(fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath, eksaSystemDirName)
 }
 
 func (f *FluxAddonClient) shouldSkipFlux() bool {
