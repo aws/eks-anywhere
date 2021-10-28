@@ -4,13 +4,10 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
-
-func boolPointer(b bool) *bool {
-	return &b
-}
 
 func TestClusterMachineConfigRefs(t *testing.T) {
 	cluster := &v1alpha1.Cluster{
@@ -95,24 +92,34 @@ func TestClusterIsSelfManaged(t *testing.T) {
 		want     bool
 	}{
 		{
-			testName: "nil flag",
+			testName: "empty name",
 			cluster:  &v1alpha1.Cluster{},
 			want:     true,
 		},
 		{
-			testName: "true flag",
+			testName: "name same as self",
 			cluster: &v1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster-1",
+				},
 				Spec: v1alpha1.ClusterSpec{
-					Management: boolPointer(true),
+					ManagementCluster: v1alpha1.ManagementCluster{
+						Name: "cluster-1",
+					},
 				},
 			},
 			want: true,
 		},
 		{
-			testName: "false flag",
+			testName: "name different tha self",
 			cluster: &v1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster-2",
+				},
 				Spec: v1alpha1.ClusterSpec{
-					Management: boolPointer(false),
+					ManagementCluster: v1alpha1.ManagementCluster{
+						Name: "cluster-1",
+					},
 				},
 			},
 			want: false,
@@ -859,7 +866,7 @@ func TestClusterSpecEqualRegistryMirrorConfiguration(t *testing.T) {
 func TestClusterSpecEqualManagement(t *testing.T) {
 	testCases := []struct {
 		testName                               string
-		cluster1Management, cluster2Management *bool
+		cluster1Management, cluster2Management bool
 		want                                   bool
 	}{
 		{
@@ -901,6 +908,12 @@ func TestClusterSpecEqualManagement(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
+			cluster1 := &v1alpha1.Cluster{}
+			setSelfManaged(cluster1, tt.cluster1Management)
+			cluster2 := &v1alpha1.Cluster{}
+			setSelfManaged(cluster2, tt.cluster2Management)
+
+
 			clusterSpec1 := &v1alpha1.ClusterSpec{
 				Management: tt.cluster1Management,
 			}

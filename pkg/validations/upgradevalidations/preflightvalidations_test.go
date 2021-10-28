@@ -2,6 +2,7 @@ package upgradevalidations_test
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -459,12 +460,7 @@ func TestPreflightValidations(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("management flag is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				if s.Spec.Management == nil {
-					nb := false
-					s.Spec.Management = &nb
-				} else {
-					*s.Spec.Management = !*s.Spec.Management
-				}
+				s.SetManagedBy(fmt.Sprintf("%s-1", s.ManagedBy()))
 			},
 		},
 	}

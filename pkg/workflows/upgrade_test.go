@@ -375,8 +375,7 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 
 func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	test := newUpgradeTest(t)
-	isManagement := true
-	test.clusterSpec.Spec.Management = &isManagement
+	test.clusterSpec.SetSelfManaged()
 
 	test.bootstrapCluster.Name = "management-cluster"
 	test.bootstrapCluster.ExistingManagement = true
