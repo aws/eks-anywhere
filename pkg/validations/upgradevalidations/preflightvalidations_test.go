@@ -447,6 +447,25 @@ func TestPreflightValidations(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:               "ValidationManagementImmutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            composeError("management flag is immutable"),
+			modifyFunc: func(s *cluster.Spec) {
+				if s.Spec.Management == nil {
+					nb := false
+					s.Spec.Management = &nb
+				} else {
+					*s.Spec.Management = !*s.Spec.Management
+				}
+			},
+		},
 	}
 
 	defaultControlPlane := v1alpha1.ControlPlaneConfiguration{
