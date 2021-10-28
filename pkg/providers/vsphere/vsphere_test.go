@@ -97,7 +97,7 @@ func (pc *DummyProviderGovcClient) CreateLibrary(ctx context.Context, datastore,
 	return nil
 }
 
-func (pc *DummyProviderGovcClient) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string, resizeDisk2 bool) error {
+func (pc *DummyProviderGovcClient) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, resourcePool string, resizeDisk2 bool) error {
 	return nil
 }
 
