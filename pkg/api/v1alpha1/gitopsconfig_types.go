@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"path"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -66,6 +68,11 @@ func (e *GitOpsConfigSpec) Equal(n *GitOpsConfigSpec) bool {
 		return false
 	}
 	return e.Flux == n.Flux
+}
+
+// ClusterRootPath is the root directory of the management and its workload clusters
+func (e *GitOpsConfigSpec) ClusterRootPath() string {
+	return path.Dir(e.Flux.Github.ClusterConfigPath)
 }
 
 //+kubebuilder:object:root=true
