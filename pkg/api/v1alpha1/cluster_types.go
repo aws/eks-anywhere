@@ -1,7 +1,7 @@
 package v1alpha1
 
 import (
-	"reflect"
+	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -59,7 +59,7 @@ func (n *ClusterSpec) Equal(o *ClusterSpec) bool {
 	if !n.ControlPlaneConfiguration.Equal(&o.ControlPlaneConfiguration) {
 		return false
 	}
-	if !reflect.DeepEqual(n.WorkerNodeGroupConfigurations, o.WorkerNodeGroupConfigurations) {
+	if !WorkerNodeGroupConfigurationsSliceEqual(n.WorkerNodeGroupConfigurations, o.WorkerNodeGroupConfigurations) {
 		return false
 	}
 	if !n.DatacenterRef.Equal(&o.DatacenterRef) {
@@ -68,7 +68,7 @@ func (n *ClusterSpec) Equal(o *ClusterSpec) bool {
 	if !RefSliceEqual(n.IdentityProviderRefs, o.IdentityProviderRefs) {
 		return false
 	}
-	if n.GitOpsRef.Equal(o.GitOpsRef) {
+	if !n.GitOpsRef.Equal(o.GitOpsRef) {
 		return false
 	}
 	if !n.ClusterNetwork.Equal(&o.ClusterNetwork) {
@@ -167,6 +167,34 @@ type WorkerNodeGroupConfiguration struct {
 	Count int `json:"count,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
+}
+
+func generateWorkerNodeGroupKey(c WorkerNodeGroupConfiguration) (key string) {
+	if c.MachineGroupRef != nil {
+		key = c.MachineGroupRef.Kind + c.MachineGroupRef.Name
+	}
+	return strconv.Itoa(c.Count) + key
+}
+
+func WorkerNodeGroupConfigurationsSliceEqual(a, b []WorkerNodeGroupConfiguration) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	m := make(map[string]int, len(a))
+	for _, v := range a {
+		m[generateWorkerNodeGroupKey(v)]++
+	}
+	for _, v := range b {
+		k := generateWorkerNodeGroupKey(v)
+		if _, ok := m[k]; !ok {
+			return false
+		}
+		m[k] -= 1
+		if m[k] == 0 {
+			delete(m, k)
+		}
+	}
+	return len(m) == 0
 }
 
 type ClusterNetwork struct {
