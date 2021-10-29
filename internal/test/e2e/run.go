@@ -92,9 +92,11 @@ func (i *instanceRunConf) cloudwatchLogGroup() string {
 	var path []string
 	path = append(path, baseLogGroup)
 	if i.parentJobId != "" {
-		path = append(path, i.parentJobId)
+		j := strings.ReplaceAll(i.parentJobId, ":", "-")
+		path = append(path, j)
 	}
-	path = append(path, i.jobId)
+	j := strings.ReplaceAll(i.parentJobId, ":", "-")
+	path = append(path, j)
 	return strings.Join(path, "/")
 }
 
