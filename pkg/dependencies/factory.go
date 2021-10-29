@@ -20,23 +20,24 @@ import (
 )
 
 type Dependencies struct {
-	Provider         providers.Provider
-	ClusterAwsCli    *executables.Clusterawsadm
-	DockerClient     *executables.Docker
-	Kubectl          *executables.Kubectl
-	Govc             *executables.Govc
-	Writer           filewriter.FileWriter
-	Kind             *executables.Kind
-	Clusterctl       *executables.Clusterctl
-	Flux             *executables.Flux
-	Troubleshoot     *executables.Troubleshoot
-	Networking       clustermanager.Networking
-	ClusterManager   *clustermanager.ClusterManager
-	Bootstrapper     *bootstrapper.Bootstrapper
-	FluxAddonClient  *addonclients.FluxAddonClient
-	AnalyzerFactory  diagnostics.AnalyzerFactory
-	CollectorFactory diagnostics.CollectorFactory
-	CAPIUpgrader     *clusterapi.Upgrader
+	Provider                  providers.Provider
+	ClusterAwsCli             *executables.Clusterawsadm
+	DockerClient              *executables.Docker
+	Kubectl                   *executables.Kubectl
+	Govc                      *executables.Govc
+	Writer                    filewriter.FileWriter
+	Kind                      *executables.Kind
+	Clusterctl                *executables.Clusterctl
+	Flux                      *executables.Flux
+	Troubleshoot              *executables.Troubleshoot
+	Networking                clustermanager.Networking
+	ClusterManager            *clustermanager.ClusterManager
+	Bootstrapper              *bootstrapper.Bootstrapper
+	FluxAddonClient           *addonclients.FluxAddonClient
+	AnalyzerFactory           diagnostics.AnalyzerFactory
+	CollectorFactory          diagnostics.CollectorFactory
+	DignosticCollectorFactory diagnostics.DiagnosticBundleFactory
+	CAPIUpgrader              *clusterapi.Upgrader
 }
 
 func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
@@ -356,6 +357,28 @@ func (f *Factory) WithFluxAddonClient(ctx context.Context, clusterConfig *v1alph
 	return f
 }
 
+func (f *Factory) WithDiagnosticBundleFactory() *Factory {
+	f.WithWriter().WithTroubleshoot().WithCollectorFactory().WithAnalyzerFactory().WithKubectl()
+	f.buildSteps = append(f.buildSteps, func() error {
+		if f.dependencies.DignosticCollectorFactory != nil {
+			return nil
+		}
+
+		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
+			AnalyzerFactory:  f.dependencies.AnalyzerFactory,
+			Client:           f.dependencies.Troubleshoot,
+			CollectorFactory: f.dependencies.CollectorFactory,
+			Kubectl:          f.dependencies.Kubectl,
+			Writer:           f.dependencies.Writer,
+		}
+
+		f.dependencies.DignosticCollectorFactory = diagnostics.NewFactory(opts)
+		return nil
+	})
+
+	return f
+}
+
 func (f *Factory) WithAnalyzerFactory() *Factory {
 	f.buildSteps = append(f.buildSteps, func() error {
 		if f.dependencies.AnalyzerFactory != nil {
@@ -381,7 +404,7 @@ func (f *Factory) WithCollectorFactory() *Factory {
 		}
 
 		if f.diagnosticCollectorImage == "" {
-			return errors.New("diagnostic collector image is required to build CollectorFactory")
+			return errors.New("diagnostic collector image is required to build collectorFactory")
 		}
 
 		f.dependencies.CollectorFactory = diagnostics.NewCollectorFactory(f.diagnosticCollectorImage)

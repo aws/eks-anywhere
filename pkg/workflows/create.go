@@ -34,7 +34,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 	}
 }
 
-func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, forceCleanup bool) error {
+func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, forceCleanup bool, kubeconfig string) error {
 	if forceCleanup {
 		if err := c.bootstrapper.DeleteBootstrapCluster(ctx, &types.Cluster{
 			Name: clusterSpec.Name,
@@ -51,6 +51,18 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, forceCleanu
 		Rollback:       false,
 		Writer:         c.writer,
 	}
+
+	if kubeconfig != "" {
+		managementCluster, err := commandContext.ClusterManager.LoadManagement(kubeconfig)
+		if err != nil {
+			return err
+		}
+		commandContext.BootstrapCluster = managementCluster
+		commandContext.ClusterSpec.SetManagedBy(managementCluster.Name)
+	} else {
+		commandContext.ClusterSpec.SetSelfManaged()
+	}
+
 	err := task.NewTaskRunner(&SetAndValidateTask{}).RunTask(ctx, commandContext)
 	if err != nil {
 		_ = commandContext.ClusterManager.SaveLogs(ctx, commandContext.BootstrapCluster)
@@ -81,7 +93,11 @@ type DeleteBootstrapClusterTask struct{}
 // CreateBootStrapClusterTask implementation
 
 func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if commandContext.BootstrapCluster != nil {
+		return &CreateWorkloadClusterTask{}
+	}
 	logger.Info("Creating new bootstrap cluster")
+
 	bootstrapOptions, err := commandContext.Provider.BootstrapClusterOpts()
 	if err != nil {
 		commandContext.SetError(err)
@@ -189,11 +205,13 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		return nil
 	}
 
-	logger.Info("Installing cluster-api providers on workload cluster")
-	err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
-	if err != nil {
-		commandContext.SetError(err)
-		return nil
+	if !commandContext.BootstrapCluster.ExistingManagement {
+		logger.Info("Installing cluster-api providers on workload cluster")
+		err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
+		if err != nil {
+			commandContext.SetError(err)
+			return nil
+		}
 	}
 
 	logger.V(4).Info("Installing machine health checks on bootstrap cluster")
@@ -213,8 +231,11 @@ func (s *CreateWorkloadClusterTask) Name() string {
 // MoveClusterManagementTask implementation
 
 func (s *MoveClusterManagementTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if commandContext.BootstrapCluster.ExistingManagement {
+		return &InstallEksaComponentsTask{}
+	}
 	logger.Info("Moving cluster management from bootstrap to workload cluster")
-	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, types.WithNodeRef())
+	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.WorkloadCluster.Name, types.WithNodeRef())
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
@@ -230,11 +251,13 @@ func (s *MoveClusterManagementTask) Name() string {
 // InstallEksaComponentsTask implementation
 
 func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	logger.Info("Installing EKS-A custom components (CRD and controller) on workload cluster")
-	err := commandContext.ClusterManager.InstallCustomComponents(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster)
-	if err != nil {
-		commandContext.SetError(err)
-		return nil
+	if !commandContext.BootstrapCluster.ExistingManagement {
+		logger.Info("Installing EKS-A custom components (CRD and controller) on workload cluster")
+		err := commandContext.ClusterManager.InstallCustomComponents(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster)
+		if err != nil {
+			commandContext.SetError(err)
+			return nil
+		}
 	}
 
 	logger.Info("Creating EKS-A CRDs instances on workload cluster")
@@ -245,12 +268,16 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 	commandContext.ClusterSpec.PauseReconcile()
 	datacenterConfig.PauseReconcile()
 
-	err = commandContext.ClusterManager.CreateEKSAResources(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
+	targetCluster := commandContext.WorkloadCluster
+	if commandContext.BootstrapCluster.ExistingManagement {
+		targetCluster = commandContext.BootstrapCluster
+	}
+	err := commandContext.ClusterManager.CreateEKSAResources(ctx, targetCluster, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
 	}
-	err = commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider)
+	err = commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, targetCluster, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
@@ -295,10 +322,12 @@ func (s *WriteClusterConfigTask) Name() string {
 // DeleteBootstrapClusterTask implementation
 
 func (s *DeleteBootstrapClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	logger.Info("Deleting bootstrap cluster")
-	err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, false)
-	if err != nil {
-		commandContext.SetError(err)
+	if !commandContext.BootstrapCluster.ExistingManagement {
+		logger.Info("Deleting bootstrap cluster")
+		err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, false)
+		if err != nil {
+			commandContext.SetError(err)
+		}
 	}
 	if commandContext.OriginalError == nil {
 		logger.MarkSuccess("Cluster created!")

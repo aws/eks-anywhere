@@ -42,9 +42,27 @@ func (c *VSphereMachineConfig) IsControlPlane() bool {
 	return false
 }
 
+func (c *VSphereMachineConfig) SetEtcd() {
+	c.Annotations[etcdAnnotation] = "true"
+}
+
 func (c *VSphereMachineConfig) IsEtcd() bool {
 	if s, ok := c.Annotations[etcdAnnotation]; ok {
 		return s == "true"
+	}
+	return false
+}
+
+func (c *VSphereMachineConfig) SetManagement(clusterName string) {
+	if c.Annotations == nil {
+		c.Annotations = map[string]string{}
+	}
+	c.Annotations[managementAnnotation] = clusterName
+}
+
+func (c *VSphereMachineConfig) IsManagement() bool {
+	if s, ok := c.Annotations[managementAnnotation]; ok {
+		return s != ""
 	}
 	return false
 }

@@ -9,16 +9,19 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
-	v2aws "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/ecrpublic"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/pkg/errors"
+
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type EksAReleases []anywherev1alpha1.EksARelease
@@ -35,28 +38,50 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 		return errors.Cause(err)
 	}
 
-	// Clone cli repository
-	// TODO: replace these exec calls with go-git sdk calls using PlainClone
-	fmt.Println("Cloning cli repository")
+	// Clone the CLI repository
+	fmt.Println("Cloning CLI repository")
 	parentSourceDir := filepath.Join(homeDir, "eks-a-source")
 	r.CliRepoSource = filepath.Join(parentSourceDir, "eks-a-cli")
-	cmd := exec.Command("git", "clone", cliRepoUrl, r.CliRepoSource)
-	out, err := execCommand(cmd)
+	err = os.MkdirAll(r.CliRepoSource, 0o755)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	fmt.Println(out)
+	_, err = git.PlainClone(r.CliRepoSource, false, &git.CloneOptions{
+		Progress: os.Stdout,
+		URL:      cliRepoUrl,
+	})
+	if err != nil {
+		return errors.Cause(err)
+	}
 
-	// Clone the build repository
-	fmt.Println("Cloning build repository")
+	// Clone the build-tooling repository
+	fmt.Println("Cloning build-tooling repository")
 	r.BuildRepoSource = filepath.Join(parentSourceDir, "eks-a-build")
-	cmd = exec.Command("git", "clone", buildRepoUrl, r.BuildRepoSource)
-	out, err = execCommand(cmd)
+	err = os.MkdirAll(r.BuildRepoSource, 0o755)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	fmt.Println(out)
+	buildRepoCloned, err := git.PlainClone(r.BuildRepoSource, false, &git.CloneOptions{
+		Progress: os.Stdout,
+		URL:      buildRepoUrl,
+	})
+	if err != nil {
+		return errors.Cause(err)
+	}
 
+	if r.DevRelease && r.BranchName != "main" {
+		fmt.Println("Getting working tree for build-tooling repo")
+		buildRepoTree, err := buildRepoCloned.Worktree()
+		if err != nil {
+			return errors.Cause(err)
+		}
+		err = buildRepoTree.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.ReferenceName("refs/heads/" + r.BranchName),
+		})
+		if err != nil {
+			return errors.Cause(err)
+		}
+	}
 	// Set HEADs of the repos
 	r.CliRepoHead, err = GetHead(r.CliRepoSource)
 	if err != nil {
@@ -127,7 +152,7 @@ func (r *ReleaseConfig) renameArtifacts(sourceClients *SourceClients, artifacts 
 				archiveArtifact := artifact.Archive
 				oldArtifactFile := filepath.Join(archiveArtifact.ArtifactPath, archiveArtifact.SourceS3Key)
 				newArtifactFile := filepath.Join(archiveArtifact.ArtifactPath, archiveArtifact.ReleaseName)
-				fmt.Printf("Renaming artifact - %s\n", newArtifactFile)
+				fmt.Printf("Renaming archive - %s\n", newArtifactFile)
 				err := os.Rename(oldArtifactFile, newArtifactFile)
 				if err != nil {
 					return errors.Cause(err)
@@ -138,7 +163,7 @@ func (r *ReleaseConfig) renameArtifacts(sourceClients *SourceClients, artifacts 
 				for _, extension := range checksumExtensions {
 					oldChecksumFile := oldArtifactFile + extension
 					newChecksumFile := newArtifactFile + extension
-					fmt.Printf("Renaming artifact - %s\n", newChecksumFile)
+					fmt.Printf("Renaming checksum file - %s\n", newChecksumFile)
 					err = os.Rename(oldChecksumFile, newChecksumFile)
 					if err != nil {
 						return errors.Cause(err)
@@ -152,6 +177,7 @@ func (r *ReleaseConfig) renameArtifacts(sourceClients *SourceClients, artifacts 
 				oldArtifactFile := filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.SourceS3Key)
 				newArtifactFile := filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName)
 
+				fmt.Printf("Renaming manifest - %s\n", newArtifactFile)
 				err := os.Rename(oldArtifactFile, newArtifactFile)
 				if err != nil {
 					return errors.Cause(err)
@@ -163,11 +189,8 @@ func (r *ReleaseConfig) renameArtifacts(sourceClients *SourceClients, artifacts 
 						return errors.Cause(err)
 					}
 					regex := fmt.Sprintf("%s/%s.*", r.SourceContainerRegistry, imageTagOverride.Repository)
-					compiledRegex, err := regexp.Compile(regex)
-					if err != nil {
-						return errors.Cause(err)
-					}
-
+					compiledRegex := regexp.MustCompile(regex)
+					fmt.Printf("Overriding image to %s in manifest %s\n", imageTagOverride.ReleaseUri, newArtifactFile)
 					updatedManifestFileContents := compiledRegex.ReplaceAllString(string(manifestFileContents), imageTagOverride.ReleaseUri)
 					err = ioutil.WriteFile(newArtifactFile, []byte(updatedManifestFileContents), 0o644)
 					if err != nil {
@@ -177,11 +200,11 @@ func (r *ReleaseConfig) renameArtifacts(sourceClients *SourceClients, artifacts 
 			}
 
 			// Rename the image name/tag to the release names
-			dockClient := sourceClients.Docker.Client
+			dockerClient := sourceClients.Docker.Client
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
-				fmt.Printf("Renaming artifact - %s\n", imageArtifact.ReleaseImageURI)
-				err := dockClient.TagImage(imageArtifact.SourceImageURI, docker.TagImageOptions{
+				fmt.Printf("Retagging image - %s\n", imageArtifact.ReleaseImageURI)
+				err := dockerClient.TagImage(imageArtifact.SourceImageURI, docker.TagImageOptions{
 					Repo:    imageArtifact.ReleaseImageURI,
 					Context: context.Background(),
 				})
@@ -196,89 +219,111 @@ func (r *ReleaseConfig) renameArtifacts(sourceClients *SourceClients, artifacts 
 
 func downloadArtifacts(sourceClients *SourceClients, r *ReleaseConfig, eksArtifacts map[string][]Artifact) error {
 	// Get s3 client and docker clients
-	dockClient := sourceClients.Docker.Client
+	dockerClient := sourceClients.Docker.Client
 	s3Downloader := sourceClients.S3.Downloader
 	s3Client := sourceClients.S3.Client
 	ecrAuthConfig := sourceClients.Docker.AuthConfig
+	// Retrier for downloading source S3 objects. This retrier has a max timeout of 60 minutes. It
+	// checks whether the error occured during download is an ObjectNotFound error and retries the
+	// download operation for a maximum of 60 retries, with a wait time of 30 seconds per retry.
+	s3Retrier := NewRetrier(60*time.Minute, WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
+		if IsObjectNotPresentError(err) && totalRetries < 60 {
+			return true, 30 * time.Second
+		}
+		return false, 0
+	}))
+
+	// Retrier for downloading source ECR images. This retrier has a max timeout of 60 minutes. It
+	// checks whether the error occured during download is an ImageNotFound error and retries the
+	// download operation for a maximum of 60 retries, with a wait time of 30 seconds per retry.
+	ecrRetrier := NewRetrier(60*time.Minute, WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
+		if IsImageNotFoundError(err) && totalRetries < 60 {
+			return true, 30 * time.Second
+		}
+		return false, 0
+	}))
 	fmt.Println("============================================================")
 	fmt.Println("                 Downloading Artifacts                      ")
 	fmt.Println("============================================================")
 
 	for _, artifacts := range eksArtifacts {
 		for _, artifact := range artifacts {
-
 			// Check if there is an archive to be downloaded
 			if artifact.Archive != nil {
-				err := s3Client.ListObjectsPages(&s3.ListObjectsInput{
-					Bucket: aws.String(r.SourceBucket),
-					Prefix: aws.String(artifact.Archive.SourceS3Prefix),
-				}, func(page *s3.ListObjectsOutput, lastPage bool) bool {
-					for _, obj := range page.Contents {
-						objName := filepath.Base(v2aws.ToString(obj.Key))
-						file := filepath.Join(artifact.Archive.ArtifactPath, objName)
-						if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
-							return false
-						}
-
-						fd, err := os.Create(file)
-						if err != nil {
-							return false
-						}
-						defer fd.Close()
-						fmt.Printf("Archive - %s\n", v2aws.ToString(obj.Key))
-						_, err = s3Downloader.Download(fd, &s3.GetObjectInput{Bucket: &r.SourceBucket, Key: obj.Key})
-						if err != nil {
-							return false
-						}
+				objectKey := fmt.Sprintf("%s/%s", artifact.Archive.SourceS3Prefix, artifact.Archive.SourceS3Key)
+				err := s3Retrier.Retry(func() error {
+					_, err := s3Client.HeadObject(&s3.HeadObjectInput{
+						Bucket: aws.String(r.SourceBucket),
+						Key:    aws.String(objectKey),
+					})
+					if err != nil {
+						return err
 					}
-					return true
+					return nil
 				})
+				if err != nil {
+					return fmt.Errorf("retries exhausted waiting for archive to be uploaded to source location: %v", err)
+				}
+
+				err = downloadFileFromS3(artifact.Archive.ArtifactPath, "Archive", r.SourceBucket, objectKey, s3Downloader)
 				if err != nil {
 					return errors.Cause(err)
 				}
+
+				// Download checksum files for the archive
+				checksumExtensions := []string{
+					".sha256",
+					".sha512",
+				}
+				for _, extension := range checksumExtensions {
+					objectShasumFileKey := fmt.Sprintf("%s%s", objectKey, extension)
+					err = downloadFileFromS3(artifact.Archive.ArtifactPath, "Checksum file", r.SourceBucket, objectShasumFileKey, s3Downloader)
+					if err != nil {
+						return errors.Cause(err)
+					}
+				}
+
 			}
 
 			// Check if there is a manifest to be downloaded
 			if artifact.Manifest != nil {
-				err := s3Client.ListObjectsPages(&s3.ListObjectsInput{
-					Bucket: aws.String(r.SourceBucket),
-					Prefix: aws.String(artifact.Manifest.SourceS3Prefix),
-				}, func(page *s3.ListObjectsOutput, lastPage bool) bool {
-					for _, obj := range page.Contents {
-						objName := filepath.Base(v2aws.ToString(obj.Key))
-						file := filepath.Join(artifact.Manifest.ArtifactPath, objName)
-						if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
-							return false
-						}
-
-						fd, err := os.Create(file)
-						if err != nil {
-							return false
-						}
-						defer fd.Close()
-						fmt.Printf("Manifest - %s\n", v2aws.ToString(obj.Key))
-						_, err = s3Downloader.Download(fd, &s3.GetObjectInput{Bucket: &r.SourceBucket, Key: obj.Key})
-						if err != nil {
-							return false
-						}
+				objectKey := fmt.Sprintf("%s/%s", artifact.Manifest.SourceS3Prefix, artifact.Manifest.SourceS3Key)
+				err := s3Retrier.Retry(func() error {
+					_, err := s3Client.HeadObject(&s3.HeadObjectInput{
+						Bucket: aws.String(r.SourceBucket),
+						Key:    aws.String(objectKey),
+					})
+					if err != nil {
+						return err
 					}
-					return true
+					return nil
 				})
+				if err != nil {
+					return fmt.Errorf("retries exhausted waiting for manifest to be uploaded to source location: %v", err)
+				}
+
+				err = downloadFileFromS3(artifact.Manifest.ArtifactPath, "Manifest", r.SourceBucket, objectKey, s3Downloader)
 				if err != nil {
 					return errors.Cause(err)
 				}
 			}
 
-			// Check if there is image to be pulled to local
+			// Check if there is an image to be pulled locally
 			if artifact.Image != nil {
-				fmt.Printf("Image   - %s\n", artifact.Image.SourceImageURI)
+				fmt.Printf("Image - %s\n", artifact.Image.SourceImageURI)
 				// TODO: replace background context with proper timeouts
-				err := dockClient.PullImage(docker.PullImageOptions{
-					Repository: artifact.Image.SourceImageURI,
-					Context:    context.Background(),
-				}, *ecrAuthConfig)
+				err := ecrRetrier.Retry(func() error {
+					err := dockerClient.PullImage(docker.PullImageOptions{
+						Repository: artifact.Image.SourceImageURI,
+						Context:    context.Background(),
+					}, *ecrAuthConfig)
+					if err != nil {
+						return err
+					}
+					return nil
+				})
 				if err != nil {
-					return errors.Cause(err)
+					return fmt.Errorf("retries exhausted running docker pull command: %v", err)
 				}
 			}
 		}
@@ -289,7 +334,7 @@ func downloadArtifacts(sourceClients *SourceClients, r *ReleaseConfig, eksArtifa
 func UploadArtifacts(releaseClients *ReleaseClients, r *ReleaseConfig, eksArtifacts map[string][]Artifact) error {
 	// Get clients
 	s3Uploader := releaseClients.S3.Uploader
-	dockClient := releaseClients.Docker.Client
+	dockerClient := releaseClients.Docker.Client
 	ecrAuthConfig := releaseClients.Docker.AuthConfig
 	fmt.Println("============================================================")
 	fmt.Println("                 Uploading Artifacts                      ")
@@ -329,8 +374,8 @@ func UploadArtifacts(releaseClients *ReleaseClients, r *ReleaseConfig, eksArtifa
 			}
 
 			if artifact.Image != nil {
-				fmt.Printf("Image   - %s\n", artifact.Image.ReleaseImageURI)
-				err := dockClient.PushImage(docker.PushImageOptions{
+				fmt.Printf("Image - %s\n", artifact.Image.ReleaseImageURI)
+				err := dockerClient.PushImage(docker.PushImageOptions{
 					Name:    artifact.Image.ReleaseImageURI,
 					Context: context.Background(),
 				}, *ecrAuthConfig)
@@ -344,7 +389,32 @@ func UploadArtifacts(releaseClients *ReleaseClients, r *ReleaseConfig, eksArtifa
 	return nil
 }
 
-// UploadFileToS3 uploads the file to s3 with ACL public-read
+// downloadFileFromS3 downloads a file from S3 and writes it to a local destination
+func downloadFileFromS3(artifactPath, artifactType, bucketName, key string, s3Downloader *s3manager.Downloader) error {
+	objectName := filepath.Base(key)
+	fileName := filepath.Join(artifactPath, objectName)
+	if err := os.MkdirAll(filepath.Dir(fileName), 0o755); err != nil {
+		return errors.Cause(err)
+	}
+
+	fd, err := os.Create(fileName)
+	if err != nil {
+		return errors.Cause(err)
+	}
+	defer fd.Close()
+	fmt.Printf("%s - %s\n", artifactType, key)
+	_, err = s3Downloader.Download(fd, &s3.GetObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return errors.Cause(err)
+	}
+
+	return nil
+}
+
+// UploadFileToS3 uploads the file to S3 with ACL public-read
 func UploadFileToS3(filePath string, bucketName, key *string, s3Uploader *s3manager.Uploader) error {
 	f, err := os.Open(filePath)
 	if err != nil {
@@ -423,7 +493,7 @@ func UpdateImageDigests(releaseClients *ReleaseClients, r *ReleaseConfig, eksArt
 				imageDigest := describeImagesOutput.ImageDetails[0].ImageDigest
 
 				imageDigests[artifact.Image.ReleaseImageURI] = *imageDigest
-				fmt.Printf("Image digest for %s  -  %s\n", artifact.Image.ReleaseImageURI, *imageDigest)
+				fmt.Printf("Image digest for %s - %s\n", artifact.Image.ReleaseImageURI, *imageDigest)
 			}
 		}
 	}
@@ -442,4 +512,30 @@ func (releases EksAReleases) AppendOrUpdateRelease(r anywherev1alpha1.EksAReleas
 	releases = append(releases, r)
 	fmt.Println("Adding new release to releases manifest")
 	return releases
+}
+
+func IsObjectNotPresentError(err error) bool {
+	if aerr, ok := err.(awserr.Error); ok {
+		switch aerr.Code() {
+		case "NotFound":
+			return true
+		default:
+			return false
+		}
+	}
+	return false
+}
+
+func IsImageNotFoundError(err error) bool {
+	regex := "manifest for .* not found: manifest unknown: Requested image not found"
+	compiledRegex := regexp.MustCompile(regex)
+	return compiledRegex.MatchString(err.Error())
+}
+
+func (r *ReleaseConfig) getLatestUploadDestination() string {
+	if r.BranchName == "main" {
+		return "latest"
+	} else {
+		return r.BranchName
+	}
 }

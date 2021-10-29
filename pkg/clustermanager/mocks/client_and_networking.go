@@ -186,18 +186,18 @@ func (mr *MockClusterClientMockRecorder) GetEksaVSphereMachineConfig(arg0, arg1,
 }
 
 // GetMachines mocks base method.
-func (m *MockClusterClient) GetMachines(arg0 context.Context, arg1 *types.Cluster) ([]types.Machine, error) {
+func (m *MockClusterClient) GetMachines(arg0 context.Context, arg1 *types.Cluster, arg2 string) ([]types.Machine, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMachines", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetMachines", arg0, arg1, arg2)
 	ret0, _ := ret[0].([]types.Machine)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetMachines indicates an expected call of GetMachines.
-func (mr *MockClusterClientMockRecorder) GetMachines(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockClusterClientMockRecorder) GetMachines(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachines", reflect.TypeOf((*MockClusterClient)(nil).GetMachines), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachines", reflect.TypeOf((*MockClusterClient)(nil).GetMachines), arg0, arg1, arg2)
 }
 
 // GetNamespace mocks base method.
@@ -297,6 +297,20 @@ func (m *MockClusterClient) UpdateAnnotationInNamespace(arg0 context.Context, ar
 func (mr *MockClusterClientMockRecorder) UpdateAnnotationInNamespace(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAnnotationInNamespace", reflect.TypeOf((*MockClusterClient)(nil).UpdateAnnotationInNamespace), arg0, arg1, arg2, arg3, arg4, arg5)
+}
+
+// UpdateEnvironmentVariablesInNamespace mocks base method.
+func (m *MockClusterClient) UpdateEnvironmentVariablesInNamespace(arg0 context.Context, arg1, arg2 string, arg3 map[string]string, arg4 *types.Cluster, arg5 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateEnvironmentVariablesInNamespace", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateEnvironmentVariablesInNamespace indicates an expected call of UpdateEnvironmentVariablesInNamespace.
+func (mr *MockClusterClientMockRecorder) UpdateEnvironmentVariablesInNamespace(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEnvironmentVariablesInNamespace", reflect.TypeOf((*MockClusterClient)(nil).UpdateEnvironmentVariablesInNamespace), arg0, arg1, arg2, arg3, arg4, arg5)
 }
 
 // ValidateControlPlaneNodes mocks base method.

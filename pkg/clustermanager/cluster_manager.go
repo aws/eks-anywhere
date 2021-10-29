@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"reflect"
 	"sync"
 	"time"
@@ -40,7 +41,8 @@ const (
 )
 
 type ClusterManager struct {
-	clusterClient   ClusterClient
+	*Upgrader
+	clusterClient   *retrierClient
 	writer          filewriter.FileWriter
 	networking      Networking
 	Retrier         *retrier.Retrier
@@ -61,10 +63,11 @@ type ClusterClient interface {
 	InitInfrastructure(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
 	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
 	SaveLog(ctx context.Context, cluster *types.Cluster, deployment *types.Deployment, fileName string, writer filewriter.FileWriter) error
-	GetMachines(ctx context.Context, cluster *types.Cluster) ([]types.Machine, error)
+	GetMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]types.Machine, error)
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
+	UpdateEnvironmentVariablesInNamespace(ctx context.Context, resourceType, resourceName string, envMap map[string]string, cluster *types.Cluster, namespace string) error
 	UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error
 	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
@@ -82,11 +85,14 @@ type Networking interface {
 type ClusterManagerOpt func(*ClusterManager)
 
 func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, opts ...ClusterManagerOpt) *ClusterManager {
+	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
+	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
-		clusterClient:   clusterClient,
+		Upgrader:        NewUpgrader(retrierClient),
+		clusterClient:   retrierClient,
 		writer:          writer,
 		networking:      networking,
-		Retrier:         retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		Retrier:         retrier,
 		machineMaxWait:  machineMaxWait,
 		machineBackoff:  machineBackoff,
 		machinesMinWait: machinesMinWait,
@@ -107,10 +113,17 @@ func WithWaitForMachines(machineBackoff, machineMaxWait, machinesMinWait time.Du
 	}
 }
 
-func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, checkers ...types.NodeReadyChecker) error {
+func WithRetrier(retrier *retrier.Retrier) ClusterManagerOpt {
+	return func(c *ClusterManager) {
+		c.clusterClient.Retrier = retrier
+		c.Retrier = retrier
+	}
+}
+
+func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, clusterName string, checkers ...types.NodeReadyChecker) error {
 	logger.V(3).Info("Waiting for management machines to be ready before move")
 	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
-	if err := c.waitForNodesReady(ctx, from, labels, checkers...); err != nil {
+	if err := c.waitForNodesReady(ctx, from, clusterName, labels, checkers...); err != nil {
 		return err
 	}
 
@@ -126,7 +139,7 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	}
 
 	logger.V(3).Info("Waiting for machines to be ready after move")
-	if err = c.waitForNodesReady(ctx, to, labels, checkers...); err != nil {
+	if err = c.waitForNodesReady(ctx, to, clusterName, labels, checkers...); err != nil {
 		return err
 	}
 
@@ -147,7 +160,8 @@ func (c *ClusterManager) writeCAPISpecFile(clusterName string, content []byte) e
 // It returns a struct of type Cluster containing the name and the kubeconfig of the cluster.
 func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) (*types.Cluster, error) {
 	workloadCluster := &types.Cluster{
-		Name: managementCluster.Name,
+		Name:               clusterSpec.Name,
+		ExistingManagement: managementCluster.ExistingManagement,
 	}
 
 	cpContent, mdContent, err := provider.GenerateCAPISpecForCreate(ctx, workloadCluster, clusterSpec)
@@ -199,7 +213,7 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 
 	logger.V(3).Info("Waiting for controlplane and worker machines to be ready")
 	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
-	if err = c.waitForNodesReady(ctx, managementCluster, labels, types.WithNodeRef()); err != nil {
+	if err = c.waitForNodesReady(ctx, managementCluster, workloadCluster.Name, labels, types.WithNodeRef()); err != nil {
 		return nil, err
 	}
 
@@ -272,7 +286,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for control plane machines to be ready")
-	if err = c.waitForNodesReady(ctx, managementCluster, []string{clusterv1.MachineControlPlaneLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
+	if err = c.waitForNodesReady(ctx, managementCluster, workloadCluster.Name, []string{clusterv1.MachineControlPlaneLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
 		return err
 	}
 
@@ -304,7 +318,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for machine deployment machines to be ready")
-	if err = c.waitForNodesReady(ctx, managementCluster, []string{clusterv1.MachineDeploymentLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
+	if err = c.waitForNodesReady(ctx, managementCluster, workloadCluster.Name, []string{clusterv1.MachineDeploymentLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
 		return err
 	}
 
@@ -399,19 +413,19 @@ func (c *ClusterManager) InstallCAPI(ctx context.Context, clusterSpec *cluster.S
 }
 
 func (c *ClusterManager) waitForCAPI(ctx context.Context, cluster *types.Cluster, provider providers.Provider, externalEtcdTopology bool) error {
-	err := c.waitForDeployments(ctx, internal.CAPIDeployments, cluster)
+	err := c.clusterClient.waitForDeployments(ctx, internal.CAPIDeployments, cluster)
 	if err != nil {
 		return err
 	}
 
 	if externalEtcdTopology {
-		err := c.waitForDeployments(ctx, internal.ExternalEtcdDeployments, cluster)
+		err := c.clusterClient.waitForDeployments(ctx, internal.ExternalEtcdDeployments, cluster)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = c.waitForDeployments(ctx, provider.GetDeployments(), cluster)
+	err = c.clusterClient.waitForDeployments(ctx, provider.GetDeployments(), cluster)
 	if err != nil {
 		return err
 	}
@@ -497,18 +511,6 @@ func (c *ClusterManager) SaveLogs(ctx context.Context, cluster *types.Cluster) e
 	return nil
 }
 
-func (c *ClusterManager) waitForDeployments(ctx context.Context, deploymentsByNamespace map[string][]string, cluster *types.Cluster) error {
-	for namespace, deployments := range deploymentsByNamespace {
-		for _, deployment := range deployments {
-			err := c.clusterClient.WaitForDeployment(ctx, cluster, deploymentWaitStr, "Available", deployment, namespace)
-			if err != nil {
-				return fmt.Errorf("error waiting for %s in namespace %s: %v", deployment, namespace, err)
-			}
-		}
-	}
-	return nil
-}
-
 func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	isCpReady := func() error {
 		return c.clusterClient.ValidateControlPlaneNodes(ctx, managementCluster)
@@ -553,7 +555,7 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 	return nil
 }
 
-func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluster *types.Cluster, labels []string, checkers ...types.NodeReadyChecker) error {
+func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluster *types.Cluster, clusterName string, labels []string, checkers ...types.NodeReadyChecker) error {
 	readyNodes, totalNodes := 0, 0
 	policy := func(_ int, _ error) (bool, time.Duration) {
 		return true, c.machineBackoff * time.Duration(totalNodes-readyNodes)
@@ -561,7 +563,7 @@ func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluste
 
 	areNodesReady := func() error {
 		var err error
-		readyNodes, totalNodes, err = c.countNodesReady(ctx, managementCluster, labels, checkers...)
+		readyNodes, totalNodes, err = c.countNodesReady(ctx, managementCluster, clusterName, labels, checkers...)
 		if err != nil {
 			return err
 		}
@@ -593,8 +595,8 @@ func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluste
 	return nil
 }
 
-func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster *types.Cluster, labels []string, checkers ...types.NodeReadyChecker) (ready, total int, err error) {
-	machines, err := c.clusterClient.GetMachines(ctx, managementCluster)
+func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster *types.Cluster, clusterName string, labels []string, checkers ...types.NodeReadyChecker) (ready, total int, err error) {
+	machines, err := c.clusterClient.GetMachines(ctx, managementCluster, clusterName)
 	if err != nil {
 		return 0, 0, fmt.Errorf("error getting machines resources from management cluster: %v", err)
 	}
@@ -639,20 +641,7 @@ func (c *ClusterManager) waitForAllControlPlanes(ctx context.Context, cluster *t
 }
 
 func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	componentsManifest, err := clusterSpec.LoadManifest(clusterSpec.VersionsBundle.Eksa.Components)
-	if err != nil {
-		return fmt.Errorf("failed loading manifest for eksa components: %v", err)
-	}
-
-	err = c.Retrier.Retry(
-		func() error {
-			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, componentsManifest.Content)
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("error applying eks-a components spec: %v", err)
-	}
-	return c.waitForDeployments(ctx, internal.EksaDeployments, cluster)
+	return c.clusterClient.installCustomComponents(ctx, clusterSpec, cluster)
 }
 
 func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
@@ -845,6 +834,32 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 	}
 
 	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus))
+}
+
+type kubeConfigCluster struct {
+	Name string `json:"name"`
+}
+
+type kubeConfigYAML struct {
+	Clusters []*kubeConfigCluster `json:"clusters"`
+}
+
+func (c *ClusterManager) LoadManagement(kubeconfig string) (*types.Cluster, error) {
+	kubeConfigBytes, err := ioutil.ReadFile(kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+	kc := &kubeConfigYAML{}
+	kc.Clusters = []*kubeConfigCluster{}
+	err = yaml.Unmarshal(kubeConfigBytes, &kc)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing kubeconfig file: %v", err)
+	}
+	return &types.Cluster{
+		Name:               kc.Clusters[0].Name,
+		KubeconfigFile:     kubeconfig,
+		ExistingManagement: true,
+	}, nil
 }
 
 func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {

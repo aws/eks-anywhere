@@ -92,13 +92,13 @@ func (g *Govc) SearchTemplate(ctx context.Context, datacenter string, machineCon
 	templateJson := templateResponse.String()
 	templateJson = strings.TrimSuffix(templateJson, "\n")
 	if templateJson == "null" || templateJson == "" {
-		logger.V(2).Info("Template not found", "ova", filepath.Base(machineConfig.Spec.Template))
+		logger.V(2).Info(fmt.Sprintf("Template not found: %s", machineConfig.Spec.Template))
 		return "", nil
 	}
 
 	templateInfo := make([]string, 0)
 	if err = json.Unmarshal([]byte(templateJson), &templateInfo); err != nil {
-		logger.V(2).Info("failed unmarshalling govc response: %s, %v", templateJson, err)
+		logger.V(2).Info(fmt.Sprintf("Failed unmarshalling govc response: %s, %v", templateJson, err))
 		return "", nil
 	}
 
@@ -114,7 +114,7 @@ func (g *Govc) SearchTemplate(ctx context.Context, datacenter string, machineCon
 		}
 	}
 	if !bTemplateFound {
-		logger.V(2).Info("template '%s' not found", machineConfig.Spec.Template)
+		logger.V(2).Info(fmt.Sprintf("Template '%s' not found", machineConfig.Spec.Template))
 		return "", nil
 	}
 
@@ -128,6 +128,41 @@ func (g *Govc) LibraryElementExists(ctx context.Context, library string) (bool, 
 	}
 
 	return response.Len() > 0, nil
+}
+
+type libElement struct {
+	ContentVersion string `json:"content_version"`
+}
+
+func (g *Govc) GetLibraryElementContentVersion(ctx context.Context, element string) (string, error) {
+	response, err := g.exec(ctx, "library.info", "-json", element)
+	if err != nil {
+		return "", fmt.Errorf("govc failed getting library element info: %v", err)
+	}
+	elementInfoJson := response.String()
+	if elementInfoJson == "null" {
+		return "-1", nil
+	}
+
+	elementInfo := make([]libElement, 0)
+	err = yaml.Unmarshal([]byte(elementInfoJson), &elementInfo)
+	if err != nil {
+		return "", fmt.Errorf("error unmarshalling library element info: %v", err)
+	}
+
+	if len(elementInfo) == 0 {
+		return "", fmt.Errorf("govc failed to return element info for library element %v", element)
+	}
+	return elementInfo[0].ContentVersion, nil
+}
+
+func (g *Govc) DeleteLibraryElement(ctx context.Context, element string) error {
+	_, err := g.exec(ctx, "library.rm", element)
+	if err != nil {
+		return fmt.Errorf("govc failed deleting library item: %v", err)
+	}
+
+	return nil
 }
 
 func (g *Govc) ResizeDisk(ctx context.Context, template, diskName string, diskSizeInGB int) error {
@@ -199,14 +234,10 @@ func (g *Govc) GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1a
 }
 
 func (g *Govc) CreateLibrary(ctx context.Context, datastore, library string) error {
-	err := g.retrier.Retry(func() error {
-		if _, err := g.exec(ctx, "library.create", "-ds", datastore, library); err != nil {
-			return fmt.Errorf("error creating library %s: %v", library, err)
-		}
-		return nil
-	})
-
-	return err
+	if _, err := g.exec(ctx, "library.create", "-ds", datastore, library); err != nil {
+		return fmt.Errorf("error creating library %s: %v", library, err)
+	}
+	return nil
 }
 
 func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string, resizeDisk2 bool) error {

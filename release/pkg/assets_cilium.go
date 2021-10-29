@@ -18,8 +18,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/pkg/errors"
+
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // GetCiliumAssets returns the eks-a artifacts for Cilium
@@ -34,9 +35,10 @@ func (r *ReleaseConfig) GetCiliumAssets() ([]Artifact, error) {
 
 	var sourceS3Prefix string
 	var releaseS3Path string
+	latestPath := r.getLatestUploadDestination()
 
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
-		sourceS3Prefix = fmt.Sprintf("projects/cilium/cilium/latest/manifests/cilium/%s", gitTag)
+		sourceS3Prefix = fmt.Sprintf("projects/cilium/cilium/%s/manifests/cilium/%s", latestPath, gitTag)
 	} else {
 		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cilium/manifests/cilium/%s", r.BundleNumber, gitTag)
 	}

@@ -97,7 +97,7 @@ func (c *deleteTestSetup) expectCleanupGitRepo() {
 func (c *deleteTestSetup) expectMoveManagement() {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().MoveCAPI(
-			c.ctx, c.workloadCluster, c.bootstrapCluster, gomock.Any(),
+			c.ctx, c.workloadCluster, c.bootstrapCluster, c.workloadCluster.Name, gomock.Any(),
 		),
 	)
 }
@@ -111,7 +111,7 @@ func (c *deleteTestSetup) expectCleanupProvider() {
 
 func (c *deleteTestSetup) run() error {
 	// ctx context.Context, workloadCluster *types.Cluster, forceCleanup bool
-	return c.workflow.Run(c.ctx, c.workloadCluster, c.clusterSpec, c.forceCleanup)
+	return c.workflow.Run(c.ctx, c.workloadCluster, c.clusterSpec, c.forceCleanup, "")
 }
 
 func TestDeleteRunSuccess(t *testing.T) {

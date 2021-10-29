@@ -17,6 +17,10 @@ const (
 
 	// etcdAnnotation can be applied to EKS-A machineconfig CR for etcd, to prevent controller from making changes to it
 	etcdAnnotation = "anywhere.eks.amazonaws.com/etcd"
+
+	// managementAnnotation points to the name of a management cluster
+	// cluster object
+	managementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -36,6 +40,8 @@ type ClusterSpec struct {
 	ExternalEtcdConfiguration   *ExternalEtcdConfiguration   `json:"externalEtcdConfiguration,omitempty"`
 	ProxyConfiguration          *ProxyConfiguration          `json:"proxyConfiguration,omitempty"`
 	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
+	// +kubebuilder:validation:Optional
+	Management *bool `json:"management,omitempty"`
 }
 
 type ProxyConfiguration struct {
@@ -267,6 +273,65 @@ func (c *Cluster) EtcdAnnotation() string {
 	return etcdAnnotation
 }
 
+func (s *Cluster) IsSelfManaged() bool {
+	return s.Spec.Management == nil || *s.Spec.Management
+}
+
+func (s *Cluster) SetManagedBy(managementClusterName string) {
+	if s.Annotations == nil {
+		s.Annotations = map[string]string{}
+	}
+
+	s.Annotations[managementAnnotation] = managementClusterName
+	f := false
+	s.Spec.Management = &f
+}
+
+func (s *Cluster) SetSelfManaged() {
+	t := true
+	s.Spec.Management = &t
+}
+
+func (s *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
+	return s.IsSelfManaged() == s2.IsSelfManaged()
+}
+
+func (c *Cluster) MachineConfigRefs() []Ref {
+	machineConfigRefMap := make(refSet, 1)
+
+	machineConfigRefMap.add(*c.Spec.ControlPlaneConfiguration.MachineGroupRef)
+
+	for _, m := range c.Spec.WorkerNodeGroupConfigurations {
+		machineConfigRefMap.add(*m.MachineGroupRef)
+	}
+
+	if c.Spec.ExternalEtcdConfiguration != nil {
+		machineConfigRefMap.add(*c.Spec.ExternalEtcdConfiguration.MachineGroupRef)
+	}
+
+	return machineConfigRefMap.toSlice()
+}
+
+type refSet map[Ref]struct{}
+
+func (r refSet) add(ref Ref) bool {
+	if _, present := r[ref]; !present {
+		r[ref] = struct{}{}
+		return true
+	} else {
+		return false
+	}
+}
+
+func (r refSet) toSlice() []Ref {
+	refs := make([]Ref, 0, len(r))
+	for ref := range r {
+		refs = append(refs, ref)
+	}
+
+	return refs
+}
+
 func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
 	config := &ClusterGenerate{
 		TypeMeta: c.TypeMeta,
@@ -279,6 +344,14 @@ func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
 	}
 
 	return config
+}
+
+func (c *Cluster) IsManaged() bool {
+	return c.Annotations[managementAnnotation] != ""
+}
+
+func (c *Cluster) ManagedBy() string {
+	return c.Annotations[managementAnnotation]
 }
 
 // +kubebuilder:object:root=true

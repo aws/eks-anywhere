@@ -91,6 +91,20 @@ func (mr *MockGovcClientMockRecorder) CreateTag(ctx, tag, category interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTag", reflect.TypeOf((*MockGovcClient)(nil).CreateTag), ctx, tag, category)
 }
 
+// DeleteLibraryElement mocks base method.
+func (m *MockGovcClient) DeleteLibraryElement(ctx context.Context, element string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteLibraryElement", ctx, element)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteLibraryElement indicates an expected call of DeleteLibraryElement.
+func (mr *MockGovcClientMockRecorder) DeleteLibraryElement(ctx, element interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteLibraryElement", reflect.TypeOf((*MockGovcClient)(nil).DeleteLibraryElement), ctx, element)
+}
+
 // DeployTemplateFromLibrary mocks base method.
 func (m *MockGovcClient) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string, resizeDisk2 bool) error {
 	m.ctrl.T.Helper()
@@ -103,6 +117,21 @@ func (m *MockGovcClient) DeployTemplateFromLibrary(ctx context.Context, template
 func (mr *MockGovcClientMockRecorder) DeployTemplateFromLibrary(ctx, templateDir, templateName, library, resourcePool, resizeDisk2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployTemplateFromLibrary", reflect.TypeOf((*MockGovcClient)(nil).DeployTemplateFromLibrary), ctx, templateDir, templateName, library, resourcePool, resizeDisk2)
+}
+
+// GetLibraryElementContentVersion mocks base method.
+func (m *MockGovcClient) GetLibraryElementContentVersion(ctx context.Context, element string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLibraryElementContentVersion", ctx, element)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLibraryElementContentVersion indicates an expected call of GetLibraryElementContentVersion.
+func (mr *MockGovcClientMockRecorder) GetLibraryElementContentVersion(ctx, element interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLibraryElementContentVersion", reflect.TypeOf((*MockGovcClient)(nil).GetLibraryElementContentVersion), ctx, element)
 }
 
 // ImportTemplate mocks base method.

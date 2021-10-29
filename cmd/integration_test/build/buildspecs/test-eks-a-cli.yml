@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    INTEGRATION_TEST_MAX_EC2_COUNT: 47
+    INTEGRATION_TEST_MAX_EC2_COUNT: 49
     T_VSPHERE_CIDR: "198.18.0.0/16"
     T_VSPHERE_PRIVATE_NETWORK_CIDR: "10.1.0.0/24"
   secrets-manager:
@@ -34,6 +34,8 @@ env:
     T_HTTP_PROXY: "proxy-config-data:httpProxy"
     T_HTTPS_PROXY: "proxy-config-data:httpsProxy"
     T_NO_PROXY: "proxy-config-data:noProxy"
+    T_REGISTRY_MIRROR_ENDPOINT: "harbor-registry-data:endpoint"
+    T_REGISTRY_MIRROR_CA_CERT: "harbor-registry-data:caCert"
 
 phases:
   pre_build:

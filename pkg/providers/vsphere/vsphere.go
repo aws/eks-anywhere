@@ -108,6 +108,8 @@ type vsphereProvider struct {
 type ProviderGovcClient interface {
 	SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error)
 	LibraryElementExists(ctx context.Context, library string) (bool, error)
+	GetLibraryElementContentVersion(ctx context.Context, element string) (string, error)
+	DeleteLibraryElement(ctx context.Context, element string) error
 	TemplateHasSnapshot(ctx context.Context, template string) (bool, error)
 	GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1alpha1.VSphereMachineConfig) (float64, error)
 	ValidateVCenterSetup(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, selfSigned *bool) error
@@ -1440,15 +1442,23 @@ func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	workerMachineName := p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
+	if p.clusterConfig.IsManaged() {
+		p.machineConfigs[controlPlaneMachineName].SetManagement(p.clusterConfig.ManagedBy())
+	}
+
 	configs = append(configs, p.machineConfigs[controlPlaneMachineName])
 	if workerMachineName != controlPlaneMachineName {
 		configs = append(configs, p.machineConfigs[workerMachineName])
+		if p.clusterConfig.IsManaged() {
+			p.machineConfigs[workerMachineName].SetManagement(p.clusterConfig.ManagedBy())
+		}
 	}
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
 		if etcdMachineName != controlPlaneMachineName && etcdMachineName != workerMachineName {
 			configs = append(configs, p.machineConfigs[etcdMachineName])
+			p.machineConfigs[etcdMachineName].SetManagement(p.clusterConfig.ManagedBy())
 		}
 	}
 	return configs
@@ -1470,8 +1480,13 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 	oSpec := prevDatacenter.Spec
 	nSpec := datacenter.Spec
 
-	for _, machineConfig := range p.machineConfigs {
-		err := p.validateMachineConfigImmutability(ctx, cluster, machineConfig, clusterSpec)
+	for _, machineConfigRef := range clusterSpec.MachineConfigRefs() {
+		machineConfig, ok := p.machineConfigs[machineConfigRef.Name]
+		if !ok {
+			return fmt.Errorf("cannot find machine config %s in vsphere provider machine configs", machineConfigRef.Name)
+		}
+
+		err = p.validateMachineConfigImmutability(ctx, cluster, machineConfig, clusterSpec)
 		if err != nil {
 			return err
 		}

@@ -112,22 +112,37 @@ func (r *ReleaseConfig) GetCurrentEksADevReleaseVersion(sourceClients *SourceCli
 	}
 	defer os.Remove(tempFile.Name())
 
-	latestReleaseKey := "LATEST_RELEASE_VERSION"
-	_, err = s3Downloader.Download(tempFile, &s3.GetObjectInput{Bucket: &r.ReleaseBucket, Key: &latestReleaseKey})
+	var latestReleaseKey string
+	if r.BranchName == "main" {
+		latestReleaseKey = "LATEST_RELEASE_VERSION"
+	} else {
+		latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BranchName)
+	}
+
+	exists, err := ExistsInS3(sourceClients.S3.Client, r.ReleaseBucket, latestReleaseKey)
 	if err != nil {
 		return "", errors.Cause(err)
 	}
 
-	// Check if current version and latest version are the same semver
-	latestBuildS3, err := ioutil.ReadFile(tempFile.Name())
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-	latestBuildVersion := string(latestBuildS3)
-	fmt.Printf("Previous release version: %s\n", latestBuildVersion)
-	fmt.Printf("Current release version provided: %s\n", releaseVersion)
+	if exists {
+		_, err = s3Downloader.Download(tempFile, &s3.GetObjectInput{Bucket: &r.ReleaseBucket, Key: &latestReleaseKey})
+		if err != nil {
+			return "", errors.Cause(err)
+		}
 
-	return generateNewDevReleaseVersion(latestBuildVersion, releaseVersion)
+		// Check if current version and latest version are the same semver
+		latestBuildS3, err := ioutil.ReadFile(tempFile.Name())
+		if err != nil {
+			return "", errors.Cause(err)
+		}
+		latestBuildVersion := string(latestBuildS3)
+		fmt.Printf("Previous release version: %s\n", latestBuildVersion)
+		fmt.Printf("Current release version provided: %s\n", releaseVersion)
+
+		return generateNewDevReleaseVersion(latestBuildVersion, releaseVersion)
+	} else {
+		return "v0.0.0-dev+build.0", nil
+	}
 }
 
 func generateNewDevReleaseVersion(latestBuildVersion, releaseVersion string) (string, error) {
@@ -162,7 +177,12 @@ func generateNewDevReleaseVersion(latestBuildVersion, releaseVersion string) (st
 func (r *ReleaseConfig) PutEksAReleaseVersion(releaseClients *ReleaseClients, version string) error {
 	s3Uploader := releaseClients.S3.Uploader
 
-	currentReleaseKey := "LATEST_RELEASE_VERSION"
+	var currentReleaseKey string
+	if r.BranchName == "main" {
+		currentReleaseKey = "LATEST_RELEASE_VERSION"
+	} else {
+		currentReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BranchName)
+	}
 	f, err := os.Create(currentReleaseKey)
 	if err != nil {
 		return errors.Cause(err)

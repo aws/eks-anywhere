@@ -105,10 +105,34 @@ func (c *createTestSetup) expectCreateWorkload() {
 	)
 }
 
+func (c *createTestSetup) expectCreateWorkloadSkipCAPI() {
+	gomock.InOrder(
+		c.clusterManager.EXPECT().CreateWorkloadCluster(
+			c.ctx, c.bootstrapCluster, c.clusterSpec, c.provider,
+		).Return(c.workloadCluster, nil),
+
+		c.clusterManager.EXPECT().InstallNetworking(
+			c.ctx, c.workloadCluster, c.clusterSpec,
+		),
+		c.clusterManager.EXPECT().InstallStorageClass(
+			c.ctx, c.workloadCluster, c.provider,
+		),
+	)
+	c.clusterManager.EXPECT().InstallCAPI(
+		c.ctx, c.clusterSpec, c.workloadCluster, c.provider,
+	).Times(0)
+}
+
 func (c *createTestSetup) expectMoveManagement() {
 	c.clusterManager.EXPECT().MoveCAPI(
-		c.ctx, c.bootstrapCluster, c.workloadCluster, gomock.Any(),
+		c.ctx, c.bootstrapCluster, c.workloadCluster, c.workloadCluster.Name, gomock.Any(),
 	)
+}
+
+func (c *createTestSetup) skipMoveManagement() {
+	c.clusterManager.EXPECT().MoveCAPI(
+		c.ctx, c.bootstrapCluster, c.workloadCluster, gomock.Any(),
+	).Times(0)
 }
 
 func (c *createTestSetup) expectInstallEksaComponents() {
@@ -125,6 +149,23 @@ func (c *createTestSetup) expectInstallEksaComponents() {
 		),
 
 		c.clusterManager.EXPECT().ResumeEKSAControllerReconcile(c.ctx, c.workloadCluster, c.clusterSpec, c.provider),
+	)
+}
+
+func (c *createTestSetup) skipInstallEksaComponents() {
+	gomock.InOrder(
+		c.clusterManager.EXPECT().InstallCustomComponents(
+			c.ctx, c.clusterSpec, c.workloadCluster).Times(0),
+
+		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
+
+		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
+
+		c.clusterManager.EXPECT().CreateEKSAResources(
+			c.ctx, c.bootstrapCluster, c.clusterSpec, c.datacenterConfig, c.machineConfigs,
+		),
+
+		c.clusterManager.EXPECT().ResumeEKSAControllerReconcile(c.ctx, c.bootstrapCluster, c.clusterSpec, c.provider),
 	)
 }
 
@@ -150,6 +191,10 @@ func (c *createTestSetup) expectDeleteBootstrap() {
 	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any())
 }
 
+func (c *createTestSetup) expectNotDeleteBootstrap() {
+	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any()).Times(0)
+}
+
 func (c *createTestSetup) expectInstallMHC() {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().InstallMachineHealthChecks(
@@ -158,12 +203,21 @@ func (c *createTestSetup) expectInstallMHC() {
 	)
 }
 
-func (c *createTestSetup) run() error {
-	return c.workflow.Run(c.ctx, c.clusterSpec, c.forceCleanup)
+func (c *createTestSetup) expectLoadManagementCluster(kconfig string, name string) {
+	c.clusterManager.EXPECT().LoadManagement(kconfig).Return(&types.Cluster{
+		Name:               name,
+		KubeconfigFile:     kconfig,
+		ExistingManagement: true,
+	}, nil)
+}
+
+func (c *createTestSetup) run(kubeconfig string) error {
+	return c.workflow.Run(c.ctx, c.clusterSpec, c.forceCleanup, kubeconfig)
 }
 
 func TestCreateRunSuccess(t *testing.T) {
 	test := newCreateTest(t)
+
 	test.expectSetup()
 	test.expectCreateBootstrap()
 	test.expectCreateWorkload()
@@ -174,7 +228,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
 
-	err := test.run()
+	err := test.run("")
 	if err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
 	}
@@ -194,7 +248,36 @@ func TestCreateRunSuccessForceCleanup(t *testing.T) {
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
 
-	err := test.run()
+	err := test.run("")
+	if err != nil {
+		t.Fatalf("Create.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
+	managementKubeconfig := "test.kubeconfig"
+	test := newCreateTest(t)
+
+	test.bootstrapCluster.ExistingManagement = true
+	test.bootstrapCluster.KubeconfigFile = managementKubeconfig
+	test.bootstrapCluster.Name = "cluster-name"
+
+	test.expectSetup()
+	// test.expectCreateBootstrap()
+	test.expectCreateWorkloadSkipCAPI()
+	test.skipMoveManagement()
+	test.skipInstallEksaComponents()
+	test.expectInstallAddonManager()
+	test.expectWriteClusterConfig()
+	test.expectNotDeleteBootstrap()
+	test.expectInstallMHC()
+	test.expectLoadManagementCluster(managementKubeconfig, test.bootstrapCluster.Name)
+	err := test.run(managementKubeconfig)
+
+	if test.clusterSpec.IsSelfManaged() {
+		t.Fatal("Error setting management, expected cluster to not be self-managed")
+	}
+
 	if err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
 	}

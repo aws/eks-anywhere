@@ -28,12 +28,13 @@ import (
 
 type clusterctlTest struct {
 	*WithT
-	ctx        context.Context
-	cluster    *types.Cluster
-	clusterctl *executables.Clusterctl
-	e          *mockexecutables.MockExecutable
-	provider   *mockproviders.MockProvider
-	writer     filewriter.FileWriter
+	ctx            context.Context
+	cluster        *types.Cluster
+	clusterctl     *executables.Clusterctl
+	e              *mockexecutables.MockExecutable
+	provider       *mockproviders.MockProvider
+	writer         filewriter.FileWriter
+	providerEnvMap map[string]string
 }
 
 func newClusterctlTest(t *testing.T) *clusterctlTest {
@@ -48,15 +49,20 @@ func newClusterctlTest(t *testing.T) *clusterctlTest {
 			Name:           "cluster-name",
 			KubeconfigFile: "config/c.kubeconfig",
 		},
-		e:          e,
-		provider:   mockproviders.NewMockProvider(ctrl),
-		clusterctl: executables.NewClusterctl(e, writer),
-		writer:     writer,
+		e:              e,
+		provider:       mockproviders.NewMockProvider(ctrl),
+		clusterctl:     executables.NewClusterctl(e, writer),
+		writer:         writer,
+		providerEnvMap: map[string]string{"var": "value"},
 	}
 }
 
 func (ct *clusterctlTest) expectBuildOverrideLayer() {
 	ct.provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
+}
+
+func (ct *clusterctlTest) expectGetProviderEnvMap() {
+	ct.provider.EXPECT().EnvMap().Return(ct.providerEnvMap, nil)
 }
 
 func TestClusterctlInitInfrastructure(t *testing.T) {
@@ -405,7 +411,8 @@ func TestClusterctlUpgradeAllProvidersSucess(t *testing.T) {
 	}
 
 	tt.expectBuildOverrideLayer()
-	tt.e.EXPECT().Execute(tt.ctx,
+	tt.expectGetProviderEnvMap()
+	tt.e.EXPECT().ExecuteWithEnv(tt.ctx, tt.providerEnvMap,
 		"upgrade", "apply",
 		"--config", test.OfType("string"),
 		"--management-group", "capi-system/cluster-api",
@@ -432,7 +439,8 @@ func TestClusterctlUpgradeInfrastructureProvidersSucess(t *testing.T) {
 	}
 
 	tt.expectBuildOverrideLayer()
-	tt.e.EXPECT().Execute(tt.ctx,
+	tt.expectGetProviderEnvMap()
+	tt.e.EXPECT().ExecuteWithEnv(tt.ctx, tt.providerEnvMap,
 		"upgrade", "apply",
 		"--config", test.OfType("string"),
 		"--management-group", "capi-system/cluster-api",
@@ -454,7 +462,8 @@ func TestClusterctlUpgradeInfrastructureProvidersError(t *testing.T) {
 	}
 
 	tt.expectBuildOverrideLayer()
-	tt.e.EXPECT().Execute(tt.ctx,
+	tt.expectGetProviderEnvMap()
+	tt.e.EXPECT().ExecuteWithEnv(tt.ctx, tt.providerEnvMap,
 		"upgrade", "apply",
 		"--config", test.OfType("string"),
 		"--management-group", "capi-system/cluster-api",

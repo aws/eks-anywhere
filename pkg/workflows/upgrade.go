@@ -163,7 +163,15 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 		return nil
 	}
 
-	// TODO: Add Upgrade calls for FluxAddonManager and eks-a cluster controller and CRDs
+	if err := commandContext.AddonManager.Upgrade(ctx, commandContext.WorkloadCluster, currentSpec, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return nil
+	}
+
+	if err := commandContext.ClusterManager.Upgrade(ctx, commandContext.WorkloadCluster, currentSpec, commandContext.ClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return nil
+	}
 
 	return &upgradeNeeded{}
 }
@@ -183,7 +191,7 @@ func (s *upgradeNeeded) Run(ctx context.Context, commandContext *task.CommandCon
 	}
 
 	if !diff {
-		logger.Info("No upgrades needed")
+		logger.Info("No upgrades needed from cluster spec")
 		return nil
 	}
 
@@ -253,7 +261,7 @@ func (s *installCAPITask) Name() string {
 
 func (s *moveManagementToBootstrapTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Moving cluster management from workload to bootstrap cluster")
-	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.WorkloadCluster, commandContext.BootstrapCluster, types.WithNodeRef(), types.WithNodeHealthy())
+	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.WorkloadCluster, commandContext.BootstrapCluster, commandContext.WorkloadCluster.Name, types.WithNodeRef(), types.WithNodeHealthy())
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
@@ -282,7 +290,7 @@ func (s *upgradeWorkloadClusterTask) Name() string {
 
 func (s *moveManagementToWorkloadTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Moving cluster management from bootstrap to workload cluster")
-	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, types.WithNodeRef(), types.WithNodeHealthy())
+	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.WorkloadCluster.Name, types.WithNodeRef(), types.WithNodeHealthy())
 	if err != nil {
 		commandContext.SetError(err)
 		return nil

@@ -28,7 +28,7 @@ func NewDelete(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 	}
 }
 
-func (c *Delete) Run(ctx context.Context, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, forceCleanup bool) error {
+func (c *Delete) Run(ctx context.Context, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, forceCleanup bool, kubeconfig string) error {
 	if forceCleanup {
 		if err := c.bootstrapper.DeleteBootstrapCluster(ctx, &types.Cluster{
 			Name: workloadCluster.Name,
@@ -46,6 +46,15 @@ func (c *Delete) Run(ctx context.Context, workloadCluster *types.Cluster, cluste
 		ClusterSpec:     clusterSpec,
 		Rollback:        false,
 	}
+
+	if kubeconfig != "" {
+		commandContext.BootstrapCluster = &types.Cluster{
+			Name:               clusterSpec.Name,
+			KubeconfigFile:     kubeconfig,
+			ExistingManagement: true,
+		}
+	}
+
 	err := task.NewTaskRunner(&setupAndValidate{}).RunTask(ctx, commandContext)
 	if err != nil {
 		_ = commandContext.ClusterManager.SaveLogs(ctx, commandContext.BootstrapCluster)
@@ -84,6 +93,9 @@ func (s *setupAndValidate) Name() string {
 }
 
 func (s *createManagementCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if commandContext.BootstrapCluster != nil && commandContext.BootstrapCluster.ExistingManagement {
+		return &deleteWorkloadCluster{}
+	}
 	logger.Info("Creating management cluster")
 	bootstrapOptions, err := commandContext.Provider.BootstrapClusterOpts()
 	if err != nil {
@@ -122,7 +134,7 @@ func (s *installCAPI) Name() string {
 
 func (s *moveClusterManagement) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Moving cluster management from workload cluster")
-	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.WorkloadCluster, commandContext.BootstrapCluster, types.WithNodeRef())
+	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.WorkloadCluster, commandContext.BootstrapCluster, commandContext.WorkloadCluster.Name, types.WithNodeRef())
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
@@ -165,7 +177,7 @@ func (s *cleanupGitRepo) Name() string {
 }
 
 func (s *deleteManagementCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if commandContext.BootstrapCluster != nil {
+	if commandContext.BootstrapCluster != nil && !commandContext.BootstrapCluster.ExistingManagement {
 		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, false); err != nil {
 			commandContext.SetError(err)
 		}

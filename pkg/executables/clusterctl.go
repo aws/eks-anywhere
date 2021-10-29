@@ -265,6 +265,14 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		"EtcdadmControllerTag":                            bundle.ExternalEtcdController.Controller.Tag(),
 		"EtcdadmControllerKubeRbacProxyRepository":        imageRepository(bundle.ExternalEtcdController.KubeProxy),
 		"EtcdadmControllerKubeRbacProxyTag":               bundle.ExternalEtcdController.KubeProxy.Tag(),
+		"DockerProviderVersion":                           bundle.Docker.Version,
+		"VSphereProviderVersion":                          bundle.VSphere.Version,
+		"AwsProviderVersion":                              bundle.Aws.Version,
+		"ClusterApiProviderVersion":                       bundle.ClusterAPI.Version,
+		"KubeadmControlPlaneProviderVersion":              bundle.ControlPlane.Version,
+		"KubeadmBootstrapProviderVersion":                 bundle.Bootstrap.Version,
+		"EtcdadmBootstrapProviderVersion":                 bundle.ExternalEtcdBootstrap.Version,
+		"EtcdadmControllerProviderVersion":                bundle.ExternalEtcdController.Version,
 		"dir":                                             path + "/" + clusterName + capiPrefix,
 	}
 
@@ -326,7 +334,12 @@ func (c *Clusterctl) Upgrade(ctx context.Context, managementCluster *types.Clust
 		upgradeCommand = append(upgradeCommand, "--bootstrap", newBootstrapProvider)
 	}
 
-	if _, err := c.executable.Execute(ctx, upgradeCommand...); err != nil {
+	providerEnvMap, err := provider.EnvMap()
+	if err != nil {
+		return fmt.Errorf("failed generating provider env map for clusterctl upgrade: %v", err)
+	}
+
+	if _, err = c.executable.ExecuteWithEnv(ctx, providerEnvMap, upgradeCommand...); err != nil {
 		return fmt.Errorf("failed running upgrade apply with clusterctl: %v", err)
 	}
 

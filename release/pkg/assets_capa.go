@@ -18,8 +18,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/pkg/errors"
+
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // GetCapaAssets returns the eks-a artifacts for CAPA
@@ -80,9 +81,10 @@ func (r *ReleaseConfig) GetCapaAssets() ([]Artifact, error) {
 	for _, manifest := range manifestList {
 		var sourceS3Prefix string
 		var releaseS3Path string
+		latestPath := r.getLatestUploadDestination()
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
-			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api-provider-aws/latest/manifests/infrastructure-aws/%s", gitTag)
+			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api-provider-aws/%s/manifests/infrastructure-aws/%s", latestPath, gitTag)
 		} else {
 			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cluster-api-provider-aws/manifests/infrastructure-aws/%s", r.BundleNumber, gitTag)
 		}

@@ -18,8 +18,9 @@ import (
 	"fmt"
 	"path/filepath"
 
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/pkg/errors"
+
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // GetDockerAssets returns the eks-a artifacts for CAPD
@@ -69,8 +70,10 @@ func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
 	for _, manifest := range manifestList {
 		var sourceS3Prefix string
 		var releaseS3Path string
+		latestPath := r.getLatestUploadDestination()
+
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
-			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api/latest/manifests/infrastructure-docker/%s", gitTag)
+			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api/%s/manifests/infrastructure-docker/%s", latestPath, gitTag)
 		} else {
 			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cluster-api/manifests/infrastructure-docker/%s", r.BundleNumber, gitTag)
 		}

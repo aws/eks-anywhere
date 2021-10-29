@@ -36,10 +36,11 @@ func (r *ReleaseConfig) GetEtcdadmAssets() ([]Artifact, error) {
 	var sourceS3Prefix string
 	var releaseS3Path string
 	var releaseName string
+	latestPath := r.getLatestUploadDestination()
 
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		sourceS3Key = fmt.Sprintf("etcdadm-%s-%s-%s.tar.gz", os, arch, gitTag)
-		sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/etcdadm/latest")
+		sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/etcdadm/%s", latestPath)
 	} else {
 		sourceS3Key = fmt.Sprintf("etcdadm-%s-%s.tar.gz", os, arch)
 		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/etcdadm/%s", r.BundleNumber, gitTag)

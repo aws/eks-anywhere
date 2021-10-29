@@ -148,12 +148,14 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 					t.Errorf("unmarshal failed: %v", err)
 				}
 
-				fetcher.EXPECT().ControlPlane(ctx, gomock.Any()).Return(kubeAdmControlPlane, nil)
 				fetcher.EXPECT().Etcd(ctx, gomock.Any()).Return(etcdadmCluster, nil)
 				fetcher.EXPECT().ExistingVSphereDatacenterConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereDatacenterConfig{}, nil)
+				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
+				fetcher.EXPECT().ExistingVSphereEtcdMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))
 
+				resourceUpdater.EXPECT().ApplyPatch(ctx, gomock.Any(), false).Return(nil)
 				resourceUpdater.EXPECT().ForceApplyTemplate(ctx, gomock.Any(), gomock.Any()).Do(func(ctx context.Context, template *unstructured.Unstructured, dryRun bool) {
 					assert.Equal(t, false, dryRun, "Expected dryRun didn't match")
 					switch template.GetKind() {
@@ -238,6 +240,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 
 				existingVSMachine := &anywherev1.VSphereMachineConfig{}
 				existingVSMachine.Spec = machineSpec.Spec
+				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any()).Return(existingVSMachine, nil)
 
 				kubeAdmControlPlane := &kubeadmnv1alpha3.KubeadmControlPlane{}
@@ -250,9 +253,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 					t.Errorf("unmarshal failed: %v", err)
 				}
 
-				fetcher.EXPECT().ControlPlane(ctx, gomock.Any()).Return(kubeAdmControlPlane, nil)
 				fetcher.EXPECT().MachineDeployment(ctx, gomock.Any()).Return(mcDeployment, nil)
-
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))
 
 				resourceUpdater.EXPECT().ForceApplyTemplate(ctx, gomock.Any(), gomock.Any()).Do(func(ctx context.Context, template *unstructured.Unstructured, dryRun bool) {

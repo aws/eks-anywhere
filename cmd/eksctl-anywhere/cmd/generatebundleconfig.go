@@ -79,7 +79,8 @@ func (gsbo *generateSupportBundleOptions) validateCmdInput() error {
 func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Context) (*diagnostics.EksaDiagnosticBundle, error) {
 	f := gsbo.fileName
 	if f == "" {
-		return diagnostics.NewDiagnosticBundleDefault(diagnostics.NewAnalyzerFactory(), diagnostics.NewDefaultCollectorFactory()), nil
+		factory := diagnostics.NewFactory(diagnostics.EksaDiagnosticBundleFactoryOpts{})
+		return factory.NewDiagnosticBundleDefault(), nil
 	}
 
 	clusterSpec, err := cluster.NewSpec(f, version.Get())
@@ -89,20 +90,13 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).
 		WithProvider(f, clusterSpec.Cluster, cc.skipIpCheck).
-		WithAnalyzerFactory().
-		WithCollectorFactory().
-		WithWriter().
+		WithDiagnosticBundleFactory().
 		Build()
 	if err != nil {
 		return nil, err
 	}
 
-	opts := diagnostics.EksaDiagnosticBundleOpts{
-		AnalyzerFactory:  deps.AnalyzerFactory,
-		CollectorFactory: deps.CollectorFactory,
-		Writer:           deps.Writer,
-	}
-	return diagnostics.NewDiagnosticBundleFromSpec(clusterSpec, deps.Provider, gsbo.kubeConfig(clusterSpec.Name), opts)
+	return deps.DignosticCollectorFactory.NewDiagnosticBundleFromSpec(clusterSpec, deps.Provider, gsbo.kubeConfig(clusterSpec.Name))
 }
 
 func (gsbo *generateSupportBundleOptions) kubeConfig(clusterName string) string {

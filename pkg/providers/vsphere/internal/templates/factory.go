@@ -11,6 +11,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/internal/tags"
 )
 
+const (
+	libraryContentCorrupted    = "1"
+	libraryContentDoesNotExist = "-1"
+)
+
 type Factory struct {
 	client          GovcClient
 	datastore       string
@@ -25,6 +30,8 @@ type GovcClient interface {
 	SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error)
 	ImportTemplate(ctx context.Context, library, ovaURL, name string) error
 	LibraryElementExists(ctx context.Context, library string) (bool, error)
+	GetLibraryElementContentVersion(ctx context.Context, element string) (string, error)
+	DeleteLibraryElement(ctx context.Context, element string) error
 	ListTags(ctx context.Context) ([]string, error)
 	CreateTag(ctx context.Context, tag, category string) error
 	AddTag(ctx context.Context, path, tag string) error
@@ -107,12 +114,20 @@ func (f *Factory) createLibraryIfMissing(ctx context.Context) error {
 }
 
 func (f *Factory) importOVAIfMissing(ctx context.Context, templateName, ovaURL string) error {
-	templateExistsInLibrary, err := f.client.LibraryElementExists(ctx, filepath.Join(f.templateLibrary, templateName))
+	contentVersion, err := f.client.GetLibraryElementContentVersion(ctx, filepath.Join(f.templateLibrary, templateName))
 	if err != nil {
 		return fmt.Errorf("failed to validate template in library for new template: %v", err)
 	}
 
-	if !templateExistsInLibrary {
+	if contentVersion == libraryContentCorrupted {
+		err := f.client.DeleteLibraryElement(ctx, filepath.Join(f.templateLibrary, templateName))
+		if err != nil {
+			return fmt.Errorf("failed to delete old template in library: %v", err)
+		}
+		contentVersion = libraryContentDoesNotExist
+	}
+
+	if contentVersion == libraryContentDoesNotExist {
 		logger.V(2).Info("Importing template from ova url", "ova", ovaURL)
 		if err = f.client.ImportTemplate(ctx, f.templateLibrary, ovaURL, templateName); err != nil {
 			return fmt.Errorf("failed importing template into library: %v", err)

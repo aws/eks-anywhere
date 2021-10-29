@@ -19,8 +19,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/pkg/errors"
+
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 // GetEksDChannelAssets returns the eks-d artifacts including OVAs and kind node image
@@ -36,10 +37,11 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 		var sourceS3Prefix string
 		var releaseS3Path string
 		var releaseName string
+		latestPath := r.getLatestUploadDestination()
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
 			sourceS3Key = fmt.Sprintf("%s.ova", osName)
-			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/image-builder/%s/latest", eksDReleaseChannel)
+			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/image-builder/%s/%s", eksDReleaseChannel, latestPath)
 		} else {
 			sourceS3Key = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%d-%s.ova",
 				osName,

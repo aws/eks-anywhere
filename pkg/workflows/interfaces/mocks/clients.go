@@ -239,11 +239,26 @@ func (mr *MockClusterManagerMockRecorder) InstallStorageClass(arg0, arg1, arg2 i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallStorageClass", reflect.TypeOf((*MockClusterManager)(nil).InstallStorageClass), arg0, arg1, arg2)
 }
 
-// MoveCAPI mocks base method.
-func (m *MockClusterManager) MoveCAPI(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 ...types.NodeReadyChecker) error {
+// LoadManagement mocks base method.
+func (m *MockClusterManager) LoadManagement(arg0 string) (*types.Cluster, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{arg0, arg1, arg2}
-	for _, a := range arg3 {
+	ret := m.ctrl.Call(m, "LoadManagement", arg0)
+	ret0, _ := ret[0].(*types.Cluster)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// LoadManagement indicates an expected call of LoadManagement.
+func (mr *MockClusterManagerMockRecorder) LoadManagement(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadManagement", reflect.TypeOf((*MockClusterManager)(nil).LoadManagement), arg0)
+}
+
+// MoveCAPI mocks base method.
+func (m *MockClusterManager) MoveCAPI(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 string, arg4 ...types.NodeReadyChecker) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1, arg2, arg3}
+	for _, a := range arg4 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "MoveCAPI", varargs...)
@@ -252,9 +267,9 @@ func (m *MockClusterManager) MoveCAPI(arg0 context.Context, arg1, arg2 *types.Cl
 }
 
 // MoveCAPI indicates an expected call of MoveCAPI.
-func (mr *MockClusterManagerMockRecorder) MoveCAPI(arg0, arg1, arg2 interface{}, arg3 ...interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) MoveCAPI(arg0, arg1, arg2, arg3 interface{}, arg4 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{arg0, arg1, arg2}, arg3...)
+	varargs := append([]interface{}{arg0, arg1, arg2, arg3}, arg4...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveCAPI", reflect.TypeOf((*MockClusterManager)(nil).MoveCAPI), varargs...)
 }
 
@@ -298,6 +313,20 @@ func (m *MockClusterManager) SaveLogs(arg0 context.Context, arg1 *types.Cluster)
 func (mr *MockClusterManagerMockRecorder) SaveLogs(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLogs", reflect.TypeOf((*MockClusterManager)(nil).SaveLogs), arg0, arg1)
+}
+
+// Upgrade mocks base method.
+func (m *MockClusterManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Upgrade indicates an expected call of Upgrade.
+func (mr *MockClusterManagerMockRecorder) Upgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockClusterManager)(nil).Upgrade), arg0, arg1, arg2, arg3)
 }
 
 // UpgradeCluster mocks base method.
@@ -419,6 +448,20 @@ func (m *MockAddonManager) UpdateGitEksaSpec(arg0 context.Context, arg1 *cluster
 func (mr *MockAddonManagerMockRecorder) UpdateGitEksaSpec(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGitEksaSpec", reflect.TypeOf((*MockAddonManager)(nil).UpdateGitEksaSpec), arg0, arg1, arg2, arg3)
+}
+
+// Upgrade mocks base method.
+func (m *MockAddonManager) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Upgrade indicates an expected call of Upgrade.
+func (mr *MockAddonManagerMockRecorder) Upgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockAddonManager)(nil).Upgrade), arg0, arg1, arg2, arg3)
 }
 
 // Validations mocks base method.

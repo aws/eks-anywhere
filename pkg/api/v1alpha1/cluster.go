@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
@@ -28,12 +29,12 @@ type ClusterGenerateOpt func(config *ClusterGenerate)
 
 // Used for generating yaml for generate clusterconfig command
 func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *ClusterGenerate {
-	config := &ClusterGenerate{
+	clusterConfig := &Cluster{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       ClusterKind,
 			APIVersion: SchemeBuilder.GroupVersion.String(),
 		},
-		ObjectMeta: ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterName,
 		},
 		Spec: ClusterSpec{
@@ -49,6 +50,9 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 			},
 		},
 	}
+	clusterConfig.SetSelfManaged()
+	config := clusterConfig.ConvertConfigToConfigGenerateStruct()
+
 	for _, opt := range opts {
 		opt(config)
 	}
@@ -146,6 +150,7 @@ func NewCluster(clusterName string) *Cluster {
 		},
 		Status: ClusterStatus{},
 	}
+	c.SetSelfManaged()
 
 	return c
 }
@@ -352,7 +357,17 @@ func validateProxyConfig(clusterConfig *Cluster) error {
 }
 
 func validateProxyData(proxy string) error {
-	ip, port, err := net.SplitHostPort(proxy)
+	var proxyHost string
+	if strings.HasPrefix(proxy, "http") {
+		u, err := url.ParseRequestURI(proxy)
+		if err != nil {
+			return fmt.Errorf("proxy %s is invalid, please provide a valid URI", proxy)
+		}
+		proxyHost = u.Host
+	} else {
+		proxyHost = proxy
+	}
+	ip, port, err := net.SplitHostPort(proxyHost)
 	if err != nil {
 		return fmt.Errorf("proxy %s is invalid, please provide a valid proxy in the format proxy_ip:port", proxy)
 	}
@@ -360,7 +375,7 @@ func validateProxyData(proxy string) error {
 		return fmt.Errorf("proxy ip %s is invalid, please provide a valid proxy ip", ip)
 	}
 	if p, err := strconv.Atoi(port); err != nil || p < 1 || p > 65535 {
-		return fmt.Errorf("proxy port %s is invalid, please provide a valid proxy ip", port)
+		return fmt.Errorf("proxy port %s is invalid, please provide a valid proxy port", port)
 	}
 	return nil
 }
@@ -372,16 +387,36 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint == "" {
 		return errors.New("no value set for ECRMirror.Endpoint")
 	}
-	if clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent == "" {
+
+	tlsValidator := crypto.NewTlsValidator(clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent, clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint)
+	selfSigned, err := tlsValidator.HasSelfSignedCert()
+	if err != nil {
+		return fmt.Errorf("error validating registy mirror endpoint: %v", err)
+	}
+	if selfSigned {
+		logger.V(1).Info(fmt.Sprintf("Warning: registry mirror endpoint %s is using self-signed certs", clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint))
+	}
+
+	certContent := clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent
+	if certContent == "" {
 		if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
-			_, err := ioutil.ReadFile(caCert)
+			certBuffer, err := ioutil.ReadFile(caCert)
 			if err != nil {
 				return fmt.Errorf("error reading the cert file %s: %v", caCert, err)
 			}
-		} else {
-			logger.Info("Warning: caCertContent is not set, TLS verification will be disabled")
+			certContent = string(certBuffer)
+		} else if selfSigned {
+			return fmt.Errorf("registry %s is using self-signed certs, please provide the certificate using caCertContent field", clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint)
 		}
 	}
+
+	if certContent != "" {
+		err := tlsValidator.ValidateCert()
+		if err != nil {
+			return fmt.Errorf("error validating the registry certificate: %v", err)
+		}
+	}
+
 	return nil
 }
 
