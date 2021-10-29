@@ -1,0 +1,158 @@
+{
+  "apiVersion": "v1",
+  "items": [
+    {
+      "apiVersion": "cluster.x-k8s.io/v1alpha3",
+      "kind": "Cluster",
+      "metadata": {
+        "annotations": {
+          "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"cluster.x-k8s.io/v1alpha3\",\"kind\":\"Cluster\",\"metadata\":{\"annotations\":{},\"name\":\"testcluster1\",\"namespace\":\"default\"},\"spec\":{\"clusterNetwork\":{\"pods\":{\"cidrBlocks\":[\"192.168.0.0/16\"]},\"serviceDomain\":\"cluster.local\",\"services\":{\"cidrBlocks\":[\"10.128.0.0/12\"]}},\"controlPlaneRef\":{\"apiVersion\":\"controlplane.cluster.x-k8s.io/v1alpha3\",\"kind\":\"KubeadmControlPlane\",\"name\":\"testcluster-control-plane\",\"namespace\":\"default\"},\"infrastructureRef\":{\"apiVersion\":\"infrastructure.cluster.x-k8s.io/v1alpha3\",\"kind\":\"DockerCluster\",\"name\":\"testcluster\",\"namespace\":\"default\"}}}\n"
+        },
+        "creationTimestamp": "2021-07-12T20:07:31Z",
+        "finalizers": [
+          "cluster.cluster.x-k8s.io"
+        ],
+        "generation": 3,
+        "name": "testcluster1",
+        "namespace": "default",
+        "resourceVersion": "2728",
+        "uid": "187f7884-2280-4c6d-8b17-dcf1485a54be"
+      },
+      "spec": {
+        "clusterNetwork": {
+          "pods": {
+            "cidrBlocks": [
+              "192.168.0.0/16"
+            ]
+          },
+          "serviceDomain": "cluster.local",
+          "services": {
+            "cidrBlocks": [
+              "10.128.0.0/12"
+            ]
+          }
+        },
+        "controlPlaneEndpoint": {
+          "host": "172.18.0.3",
+          "port": 6443
+        },
+        "controlPlaneRef": {
+          "apiVersion": "controlplane.cluster.x-k8s.io/v1alpha3",
+          "kind": "KubeadmControlPlane",
+          "name": "testcluster-control-plane",
+          "namespace": "default"
+        },
+        "infrastructureRef": {
+          "apiVersion": "infrastructure.cluster.x-k8s.io/v1alpha3",
+          "kind": "DockerCluster",
+          "name": "testcluster",
+          "namespace": "default"
+        },
+        "paused": true
+      },
+      "status": {
+        "conditions": [
+          {
+            "lastTransitionTime": "2021-07-12T20:11:54Z",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2021-07-12T20:11:54Z",
+            "status": "True",
+            "type": "ControlPlaneReady"
+          },
+          {
+            "lastTransitionTime": "2021-07-12T20:07:33Z",
+            "status": "True",
+            "type": "InfrastructureReady"
+          }
+        ],
+        "controlPlaneInitialized": true,
+        "controlPlaneReady": true,
+        "infrastructureReady": true,
+        "observedGeneration": 2,
+        "phase": "Provisioned"
+      }
+    },
+    {
+      "apiVersion": "cluster.x-k8s.io/v1alpha3",
+      "kind": "Cluster",
+      "metadata": {
+        "annotations": {
+          "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"cluster.x-k8s.io/v1alpha3\",\"kind\":\"Cluster\",\"metadata\":{\"annotations\":{},\"name\":\"testcluster2\",\"namespace\":\"default\"},\"spec\":{\"clusterNetwork\":{\"pods\":{\"cidrBlocks\":[\"192.168.0.0/16\"]},\"serviceDomain\":\"cluster.local\",\"services\":{\"cidrBlocks\":[\"10.128.0.0/12\"]}},\"controlPlaneRef\":{\"apiVersion\":\"controlplane.cluster.x-k8s.io/v1alpha3\",\"kind\":\"KubeadmControlPlane\",\"name\":\"testcluster-control-plane\",\"namespace\":\"default\"},\"infrastructureRef\":{\"apiVersion\":\"infrastructure.cluster.x-k8s.io/v1alpha3\",\"kind\":\"DockerCluster\",\"name\":\"testcluster\",\"namespace\":\"default\"}}}\n"
+        },
+        "creationTimestamp": "2021-07-12T20:07:31Z",
+        "finalizers": [
+          "cluster.cluster.x-k8s.io"
+        ],
+        "generation": 3,
+        "name": "testcluster2",
+        "namespace": "default",
+        "resourceVersion": "2728",
+        "uid": "187f7884-2280-4c6d-8b17-dcf1485a54be"
+      },
+      "spec": {
+        "clusterNetwork": {
+          "pods": {
+            "cidrBlocks": [
+              "192.168.0.0/16"
+            ]
+          },
+          "serviceDomain": "cluster.local",
+          "services": {
+            "cidrBlocks": [
+              "10.128.0.0/12"
+            ]
+          }
+        },
+        "controlPlaneEndpoint": {
+          "host": "172.18.0.3",
+          "port": 6443
+        },
+        "controlPlaneRef": {
+          "apiVersion": "controlplane.cluster.x-k8s.io/v1alpha3",
+          "kind": "KubeadmControlPlane",
+          "name": "testcluster-control-plane",
+          "namespace": "default"
+        },
+        "infrastructureRef": {
+          "apiVersion": "infrastructure.cluster.x-k8s.io/v1alpha3",
+          "kind": "DockerCluster",
+          "name": "testcluster2",
+          "namespace": "default"
+        },
+        "paused": true
+      },
+      "status": {
+        "conditions": [
+          {
+            "lastTransitionTime": "2021-07-12T20:11:54Z",
+            "status": "True",
+            "type": "Ready"
+          },
+          {
+            "lastTransitionTime": "2021-07-12T20:11:54Z",
+            "status": "True",
+            "type": "ControlPlaneReady"
+          },
+          {
+            "lastTransitionTime": "2021-07-12T20:07:33Z",
+            "status": "True",
+            "type": "InfrastructureReady"
+          }
+        ],
+        "controlPlaneInitialized": true,
+        "controlPlaneReady": true,
+        "infrastructureReady": true,
+        "observedGeneration": 2,
+        "phase": "Provisioned"
+      }
+    }
+  ],
+  "kind": "List",
+  "metadata": {
+    "resourceVersion": "",
+    "selfLink": ""
+  }
+}

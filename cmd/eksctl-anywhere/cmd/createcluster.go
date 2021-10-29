@@ -10,7 +10,9 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
+	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
@@ -97,7 +99,33 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 		deps.FluxAddonClient,
 		deps.Writer,
 	)
-	err = createCluster.Run(ctx, clusterSpec, cc.forceClean)
+
+	var cluster *types.Cluster
+	if clusterSpec.ManagementCluster == nil {
+		cluster = &types.Cluster{
+			Name:           clusterSpec.Name,
+			KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
+		}
+	} else {
+		cluster = &types.Cluster{
+			Name:           clusterSpec.ManagementCluster.Name,
+			KubeconfigFile: clusterSpec.ManagementCluster.KubeconfigFile,
+		}
+	}
+
+	validationOpts := &createvalidations.CreateValidationOpts{
+		Kubectl: deps.Kubectl,
+		Spec:    clusterSpec,
+		WorkloadCluster: &types.Cluster{
+			Name:           clusterSpec.Name,
+			KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
+		},
+		ManagementCluster: cluster,
+		Provider:          deps.Provider,
+	}
+	createValidations := createvalidations.New(validationOpts)
+
+	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
 	if err == nil {
 		deps.Writer.CleanUpTemp()
 	}

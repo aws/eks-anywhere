@@ -25,6 +25,7 @@ type createTestSetup struct {
 	addonManager     *mocks.MockAddonManager
 	provider         *providermocks.MockProvider
 	writer           *writermocks.MockFileWriter
+	validator        *mocks.MockValidator
 	datacenterConfig providers.DatacenterConfig
 	machineConfigs   []providers.MachineConfig
 	workflow         *workflows.Create
@@ -45,6 +46,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	workflow := workflows.NewCreate(bootstrapper, provider, clusterManager, addonManager, writer)
+	validator := mocks.NewMockValidator(mockCtrl)
 
 	return &createTestSetup{
 		t:                t,
@@ -53,6 +55,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		addonManager:     addonManager,
 		provider:         provider,
 		writer:           writer,
+		validator:        validator,
 		datacenterConfig: datacenterConfig,
 		machineConfigs:   machineConfigs,
 		workflow:         workflow,
@@ -204,7 +207,11 @@ func (c *createTestSetup) expectInstallMHC() {
 }
 
 func (c *createTestSetup) run() error {
-	return c.workflow.Run(c.ctx, c.clusterSpec, c.forceCleanup)
+	return c.workflow.Run(c.ctx, c.clusterSpec, c.validator, c.forceCleanup)
+}
+
+func (c *createTestSetup) expectPreflightValidationsToPass() {
+	c.validator.EXPECT().PreflightValidations(c.ctx).Return(nil)
 }
 
 func TestCreateRunSuccess(t *testing.T) {
@@ -219,6 +226,7 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
+	test.expectPreflightValidationsToPass()
 
 	err := test.run()
 	if err != nil {
@@ -239,6 +247,7 @@ func TestCreateRunSuccessForceCleanup(t *testing.T) {
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
+	test.expectPreflightValidationsToPass()
 
 	err := test.run()
 	if err != nil {
@@ -268,6 +277,7 @@ func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
 	test.expectWriteClusterConfig()
 	test.expectNotDeleteBootstrap()
 	test.expectInstallMHC()
+	test.expectPreflightValidationsToPass()
 
 	if err := test.run(); err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
