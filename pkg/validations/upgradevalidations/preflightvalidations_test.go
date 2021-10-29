@@ -622,10 +622,10 @@ func TestPreflightValidations(t *testing.T) {
 	}
 }
 
-func composeError(msgs ...string) *upgradevalidations.ValidationError {
+func composeError(msgs ...string) *validations.ValidationError {
 	var errs []string
 	errs = append(errs, msgs...)
-	return &upgradevalidations.ValidationError{Errs: errs}
+	return &validations.ValidationError{Errs: errs}
 }
 
 var explodingClusterError = composeError(

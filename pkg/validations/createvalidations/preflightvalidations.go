@@ -3,7 +3,6 @@ package createvalidations
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -41,15 +40,7 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 	}
 
 	if len(errs) > 0 {
-		return &ValidationError{Errs: errs}
+		return &validations.ValidationError{Errs: errs}
 	}
 	return nil
-}
-
-type ValidationError struct {
-	Errs []string
-}
-
-func (v *ValidationError) Error() string {
-	return fmt.Sprintf("validation failed with %d errors: %s", len(v.Errs), strings.Join(v.Errs[:], ","))
 }
