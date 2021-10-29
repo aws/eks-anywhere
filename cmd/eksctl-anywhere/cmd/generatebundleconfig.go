@@ -79,7 +79,10 @@ func (gsbo *generateSupportBundleOptions) validateCmdInput() error {
 func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Context) (diagnostics.DiagnosticBundle, error) {
 	f := gsbo.fileName
 	if f == "" {
-		factory := diagnostics.NewFactory(diagnostics.EksaDiagnosticBundleFactoryOpts{})
+		factory := diagnostics.NewFactory(diagnostics.EksaDiagnosticBundleFactoryOpts{
+			AnalyzerFactory:  diagnostics.NewAnalyzerFactory(),
+			CollectorFactory: diagnostics.NewDefaultCollectorFactory(),
+		})
 		return factory.DiagnosticBundleDefault(), nil
 	}
 
