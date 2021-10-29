@@ -34,7 +34,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 	}
 }
 
-func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, forceCleanup bool, kubeconfig string) error {
+func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator interfaces.Validator, forceCleanup bool) error {
 	if forceCleanup {
 		if err := c.bootstrapper.DeleteBootstrapCluster(ctx, &types.Cluster{
 			Name: clusterSpec.Name,
@@ -50,22 +50,18 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, forceCleanu
 		ClusterSpec:    clusterSpec,
 		Rollback:       false,
 		Writer:         c.writer,
+		Validations:    validator,
 	}
 
-	if kubeconfig != "" {
-		managementCluster, err := commandContext.ClusterManager.LoadManagement(kubeconfig)
-		if err != nil {
-			return err
-		}
-		commandContext.BootstrapCluster = managementCluster
-		commandContext.ClusterSpec.SetManagedBy(managementCluster.Name)
-	} else {
-		commandContext.ClusterSpec.SetSelfManaged()
+	if clusterSpec.ManagementCluster != nil {
+		commandContext.BootstrapCluster = clusterSpec.ManagementCluster
 	}
 
 	err := task.NewTaskRunner(&SetAndValidateTask{}).RunTask(ctx, commandContext)
 	if err != nil {
-		_ = commandContext.ClusterManager.SaveLogs(ctx, commandContext.BootstrapCluster)
+		logger.Info("Cluster creation encountered an error, collecting diagnostic information")
+		_ = commandContext.ClusterManager.SaveLogsManagementCluster(ctx, commandContext.BootstrapCluster)
+		_ = commandContext.ClusterManager.SaveLogsWorkloadCluster(ctx, c.provider, clusterSpec, commandContext.WorkloadCluster)
 	}
 	return err
 }
@@ -118,6 +114,15 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 		return &DeleteKindClusterTask{}
 	}
 
+	if commandContext.ClusterSpec.AWSIamConfig != nil {
+		logger.Info("Creating aws-iam-authenticator certificate and key pair secret on bootstrap cluster")
+		err = commandContext.ClusterManager.CreateAwsIamAuthCaSecret(ctx, bootstrapCluster)
+		if err != nil {
+			commandContext.SetError(err)
+			return &DeleteKindClusterTask{}
+		}
+	}
+
 	logger.Info("Provider specific setup")
 	err = commandContext.Provider.BootstrapSetup(ctx, commandContext.ClusterSpec.Cluster, bootstrapCluster)
 	if err != nil {
@@ -156,6 +161,7 @@ func (s *SetAndValidateTask) Run(ctx context.Context, commandContext *task.Comma
 	runner := validations.NewRunner()
 	runner.Register(s.providerValidation(ctx, commandContext)...)
 	runner.Register(commandContext.AddonManager.Validations(ctx, commandContext.ClusterSpec)...)
+	runner.Register(s.validations(ctx, commandContext)...)
 
 	err := runner.Run()
 	if err != nil {
@@ -163,6 +169,17 @@ func (s *SetAndValidateTask) Run(ctx context.Context, commandContext *task.Comma
 		return nil
 	}
 	return &CreateBootStrapClusterTask{}
+}
+
+func (s *SetAndValidateTask) validations(ctx context.Context, commandContext *task.CommandContext) []validations.Validation {
+	return []validations.Validation{
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name: "create preflight validations pass",
+				Err:  commandContext.Validations.PreflightValidations(ctx),
+			}
+		},
+	}
 }
 
 func (s *SetAndValidateTask) providerValidation(ctx context.Context, commandContext *task.CommandContext) []validations.Validation {
@@ -196,6 +213,15 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
+	}
+
+	if commandContext.ClusterSpec.AWSIamConfig != nil {
+		logger.Info("Installing aws-iam-authenticator on workload cluster")
+		err = commandContext.ClusterManager.InstallAwsIamAuth(ctx, commandContext.BootstrapCluster, workloadCluster, commandContext.ClusterSpec)
+		if err != nil {
+			commandContext.SetError(err)
+			return nil
+		}
 	}
 
 	logger.Info("Installing storage class on workload cluster")
@@ -337,4 +363,12 @@ func (s *DeleteBootstrapClusterTask) Run(ctx context.Context, commandContext *ta
 
 func (s *DeleteBootstrapClusterTask) Name() string {
 	return "delete-kind-cluster"
+}
+
+func getManagemtCluster(commandContext *task.CommandContext) *types.Cluster {
+	target := commandContext.WorkloadCluster
+	if commandContext.BootstrapCluster != nil && commandContext.BootstrapCluster.ExistingManagement {
+		target = commandContext.BootstrapCluster
+	}
+	return target
 }

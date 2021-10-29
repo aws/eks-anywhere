@@ -9,6 +9,7 @@ description: >
 EKS Anywhere provides the command `upgrade`, which allows you to `upgrade` various aspects of your EKS Anywhere cluster.
 When you run `eksctl anywhere upgrade cluster -f ./cluster.yaml`, EKS Anywhere runs a set of preflight checks to ensure your cluster is ready to be upgraded.
 EKS Anywhere then performs the upgrade, modifying your cluster to match the updated specification. 
+The upgrade command also upgrades core components of EKS Anywhere and lets the user enjoy the latest features, bug fixes and security patches.
 
 
 ### Minor Version Upgrades
@@ -26,9 +27,28 @@ Control plane components will be upgraded before worker nodes.
 A new VM is created with the new version and then an old VM is removed.
 This happens one at a time until all the control plane components have been upgraded.
 
+### Core component upgrades
+
+EKS Anywhere `upgrade` also supports upgrading the following core components:
+
+* Core CAPI
+* CAPI providers
+* Cert-manager
+* Etcdadm CAPI provider
+* EKS Anywhere controllers and CRDs
+* Gitops controller (Flux) - this is an optional component, will be upgraded only if specified
+
+The latest versions of these core EKS Anywhere components are embedded into a bundles manifest that the CLI uses to fetch the latest versions 
+and image builds needed for each component upgrade. 
+The command detects both component version changes and new builds of the same versioned component.
+If there is a new Kubernetes version that is going to get rolled out, the core components get upgraded before the Kubernetes
+version. 
+Irrespective of a Kubernetes version change, the upgrade command will always upgrade the internal EKS
+Anywhere components mentioned above to their latest available versions. These upgrade changes are backwards compatible.
+
 ### Performing a cluster upgrade
 
-To perform a cluster upgrade you need to modify your cluster specification `kubernetesVersion` field to the desired version.
+To perform a cluster upgrade you can modify your cluster specification `kubernetesVersion` field to the desired version.
 
 As an example, to upgrade a cluster with version 1.20 to 1.21 you would change your spec
 
@@ -58,7 +78,7 @@ and then you will run the command
 eksctl anywhere upgrade cluster -f cluster.yaml
 ```
 
-This will upgrade the cluster specification and apply the changes using the provisioner controllers.
+This will upgrade the cluster specification (if specified), upgrade the core components to the latest available versions and apply the changes using the provisioner controllers.
 
 Example output:
 
@@ -89,6 +109,8 @@ GitOps not configured, force reconcile flux git repo skipped
 Resuming Flux kustomization
 GitOps field not specified, resume flux kustomization skipped
 ```
+You can see which components were upgraded by running `kubectl get pods -A` and observing the updated `Age` for the upgraded components.
+
 
 ### Upgradeable Cluster Attributes
 EKS Anywhere `upgrade` supports upgrading more than just the `kubernetesVersion`, 
@@ -115,7 +137,7 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 
 ### Troubleshooting
 
-If you attempt to upgrade a cluster more than 1 minor release you will receive the following error.
+Attempting to upgrade a cluster with more than 1 minor release will result in receiving the following error.
 
 ```
 ✅ validate immutable fields

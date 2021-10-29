@@ -158,7 +158,7 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			err = pkg.UploadArtifacts(releaseClients, releaseConfig, artifactsTable)
+			err = pkg.UploadArtifacts(sourceClients, releaseClients, releaseConfig, artifactsTable)
 			if err != nil {
 				fmt.Printf("Error uploading release artifacts: %v\n", err)
 				os.Exit(1)
@@ -252,7 +252,7 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			err = pkg.UploadArtifacts(releaseClients, releaseConfig, artifactsTable)
+			err = pkg.UploadArtifacts(sourceClients, releaseClients, releaseConfig, artifactsTable)
 			if err != nil {
 				fmt.Printf("Error uploading release artifacts: %v\n", err)
 				os.Exit(1)

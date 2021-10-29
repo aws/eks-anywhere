@@ -14,8 +14,9 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockproviders "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/validations"
+	"github.com/aws/eks-anywhere/pkg/validations/mocks"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
-	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations/mocks"
 )
 
 const (
@@ -447,6 +448,25 @@ func TestPreflightValidations(t *testing.T) {
 				}
 			},
 		},
+		{
+			name:               "ValidationManagementImmutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            composeError("management flag is immutable"),
+			modifyFunc: func(s *cluster.Spec) {
+				if s.Spec.Management == nil {
+					nb := false
+					s.Spec.Management = &nb
+				} else {
+					*s.Spec.Management = !*s.Spec.Management
+				}
+			},
+		},
 	}
 
 	defaultControlPlane := v1alpha1.ControlPlaneConfiguration{
@@ -549,19 +569,20 @@ func TestPreflightValidations(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(tt *testing.T) {
-			_, ctx, workloadCluster, _ := newKubectl(t)
+			_, ctx, workloadCluster, _ := validations.NewKubectl(t)
 			workloadCluster.KubeconfigFile = kubeconfigFilePath
 			workloadCluster.Name = testclustername
 
 			mockCtrl := gomock.NewController(t)
-			k := mocks.NewMockValidationsKubectlClient(mockCtrl)
+			k := mocks.NewMockKubectlClient(mockCtrl)
 
 			provider := mockproviders.NewMockProvider(mockCtrl)
-			opts := &upgradevalidations.UpgradeValidationOpts{
-				Kubectl:         k,
-				Spec:            clusterSpec,
-				WorkloadCluster: workloadCluster,
-				Provider:        provider,
+			opts := &validations.Opts{
+				Kubectl:           k,
+				Spec:              clusterSpec,
+				WorkloadCluster:   workloadCluster,
+				ManagementCluster: workloadCluster,
+				Provider:          provider,
 			}
 
 			clusterSpec.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
@@ -583,12 +604,12 @@ func TestPreflightValidations(t *testing.T) {
 			provider.EXPECT().DatacenterConfig().Return(existingProviderSpec).MaxTimes(1)
 			provider.EXPECT().ValidateNewSpec(ctx, workloadCluster, clusterSpec).Return(nil).MaxTimes(1)
 			k.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
-			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster).Return(tc.cpResponse)
-			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster).Return(tc.workerResponse)
+			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster, clusterSpec.Name).Return(tc.cpResponse)
+			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster, workloadCluster.Name).Return(tc.workerResponse)
 			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
 			k.EXPECT().ValidateClustersCRD(ctx, workloadCluster).Return(tc.crdResponse)
 			k.EXPECT().GetClusters(ctx, workloadCluster).Return(tc.getClusterResponse, nil)
-			k.EXPECT().GetEksaCluster(ctx, workloadCluster).Return(existingClusterSpec.Cluster, nil)
+			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Name).Return(existingClusterSpec.Cluster, nil)
 			k.EXPECT().GetEksaGitOpsConfig(ctx, clusterSpec.Spec.GitOpsRef.Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.GitOpsConfig, nil).MaxTimes(1)
 			k.EXPECT().GetEksaOIDCConfig(ctx, clusterSpec.Spec.IdentityProviderRefs[0].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.OIDCConfig, nil).MaxTimes(1)
 			k.EXPECT().Version(ctx, workloadCluster).Return(versionResponse, nil)
@@ -601,10 +622,10 @@ func TestPreflightValidations(t *testing.T) {
 	}
 }
 
-func composeError(msgs ...string) *upgradevalidations.ValidationError {
+func composeError(msgs ...string) *validations.ValidationError {
 	var errs []string
 	errs = append(errs, msgs...)
-	return &upgradevalidations.ValidationError{Errs: errs}
+	return &validations.ValidationError{Errs: errs}
 }
 
 var explodingClusterError = composeError(

@@ -10,6 +10,12 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
+const (
+	passedStatus = "pass"
+	failedStatus = "fail"
+	baseLogGroup = "/eks-anywhere/test/e2e"
+)
+
 type ParallelRunConf struct {
 	MaxInstances        int
 	AmiId               string
@@ -45,7 +51,8 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			defer wg.Done()
 			r := instanceTestsResults{conf: c}
 
-			if err := RunTests(c); err != nil {
+			r.conf.instanceId, err = RunTests(c)
+			if err != nil {
 				r.err = err
 			}
 
@@ -62,10 +69,10 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	failedInstances := 0
 	for r := range resultCh {
 		if r.err != nil {
-			logger.Error(r.err, "An e2e instance run has failed", "jobId", r.conf.jobId, "tests", r.conf.regex)
+			logger.Error(r.err, "An e2e instance run has failed", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "tests", r.conf.regex, "status", failedStatus)
 			failedInstances += 1
 		} else {
-			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "tests", r.conf.regex)
+			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "tests", r.conf.regex, "status", passedStatus)
 		}
 	}
 
@@ -77,27 +84,37 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 }
 
 type instanceRunConf struct {
-	amiId, instanceProfileName, storageBucket, jobId, subnetId, regex string
-	bundlesOverride                                                   bool
+	amiId, instanceProfileName, storageBucket, jobId, parentJobId, subnetId, regex, instanceId string
+	bundlesOverride                                                                            bool
 }
 
-func RunTests(conf instanceRunConf) error {
-	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.jobId, conf.subnetId, conf.bundlesOverride)
+func (i *instanceRunConf) cloudwatchLogGroup() string {
+	var path []string
+	path = append(path, baseLogGroup)
+	if i.parentJobId != "" {
+		path = append(path, i.parentJobId)
+	}
+	path = append(path, i.jobId)
+	return strings.Join(path, "/")
+}
+
+func RunTests(conf instanceRunConf) (testInstanceID string, err error) {
+	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.cloudwatchLogGroup(), conf.jobId, conf.subnetId, conf.bundlesOverride)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = session.setup(conf.regex)
 	if err != nil {
-		return err
+		return session.instanceId, err
 	}
 
 	err = session.runTests(conf.regex)
 	if err != nil {
-		return err
+		return session.instanceId, err
 	}
 
-	return nil
+	return session.instanceId, nil
 }
 
 func (e *E2ESession) runTests(regex string) error {
@@ -109,13 +126,17 @@ func (e *E2ESession) runTests(regex string) error {
 
 	command = e.commandWithEnvVars(command)
 
+	opt := ssm.WithOutputToCloudwatch(e.logGroup)
+
 	err := ssm.Run(
 		e.session,
 		e.instanceId,
 		command,
+		opt,
 	)
 	if err != nil {
-		e.uploadLogFilesFromInstance(regex)
+		e.uploadGeneratedFilesFromInstance(regex)
+		e.uploadDiagnosticArchiveFromInstance(regex)
 		return fmt.Errorf("error running e2e tests on instance %s: %v", e.instanceId, err)
 	}
 
@@ -133,7 +154,7 @@ func (e *E2ESession) commandWithEnvVars(command string) string {
 	fullCommand := make([]string, 0, len(e.testEnvVars)+1)
 
 	for k, v := range e.testEnvVars {
-		fullCommand = append(fullCommand, fmt.Sprintf("export %s=%s", k, v))
+		fullCommand = append(fullCommand, fmt.Sprintf("export %s=\"%s\"", k, v))
 	}
 	fullCommand = append(fullCommand, command)
 
@@ -157,6 +178,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 				instanceProfileName: conf.InstanceProfileName,
 				storageBucket:       conf.StorageBucket,
 				jobId:               fmt.Sprintf("%s-%d", conf.JobId, len(runConfs)),
+				parentJobId:         conf.JobId,
 				subnetId:            conf.SubnetId,
 				regex:               strings.Join(testsInCurrentInstance, "|"),
 				bundlesOverride:     conf.BundlesOverride,

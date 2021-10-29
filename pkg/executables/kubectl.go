@@ -37,6 +37,7 @@ var (
 	eksaAwsResourceType               = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaGitOpsResourceType            = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaOIDCResourceType              = fmt.Sprintf("oidcconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaAwsIamResourceType            = fmt.Sprintf("awsiamconfigs.%s", v1alpha1.GroupVersion.Group)
 	etcdadmClustersResourceType       = fmt.Sprintf("etcdadmclusters.%s", etcdv1alpha3.GroupVersion.Group)
 	bundlesResourceType               = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
 )
@@ -239,8 +240,8 @@ func (k *Kubectl) ValidateNodes(ctx context.Context, kubeconfig string) error {
 	return nil
 }
 
-func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster) error {
-	cp, err := k.GetKubeadmControlPlane(ctx, cluster, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
+func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error {
+	cp, err := k.GetKubeadmControlPlane(ctx, cluster, clusterName, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return err
 	}
@@ -259,8 +260,9 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 	return nil
 }
 
-func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster) error {
-	md, err := k.GetMachineDeployment(ctx, cluster, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
+func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error {
+	logger.V(6).Info("waiting for nodes", "cluster", clusterName)
+	md, err := k.GetMachineDeployment(ctx, cluster, clusterName, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return err
 	}
@@ -417,6 +419,17 @@ func (k *Kubectl) GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (
 	return stdOut.String(), nil
 }
 
+func (k *Kubectl) GetClusterCATlsCert(ctx context.Context, cluster *types.Cluster, namespace string) ([]byte, error) {
+	secretName := fmt.Sprintf("%s-ca", cluster.Name)
+	params := []string{"get", "secret", secretName, "--kubeconfig", cluster.KubeconfigFile, "-o", `jsonpath={.data.tls\.crt}`, "--namespace", namespace}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting cluster ca tls cert: %v", err)
+	}
+
+	return stdOut.Bytes(), nil
+}
+
 func (k *Kubectl) Version(ctx context.Context, cluster *types.Cluster) (*VersionResponse, error) {
 	params := []string{"version", "-o", "json", "--kubeconfig", cluster.KubeconfigFile}
 	stdOut, err := k.executable.Execute(ctx, params...)
@@ -539,8 +552,9 @@ func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOp
 	return response.Items, nil
 }
 
-func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, opts ...KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error) {
-	params := []string{"get", fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", v1alpha3.GroupVersion.Group), cluster.Name, "-o", "json"}
+func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error) {
+	logger.V(6).Info("Getting KubeadmControlPlane CRDs", "cluster", clusterName)
+	params := []string{"get", fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", v1alpha3.GroupVersion.Group), clusterName, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
@@ -556,8 +570,8 @@ func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Clu
 	return response, nil
 }
 
-func (k *Kubectl) GetMachineDeployment(ctx context.Context, cluster *types.Cluster, opts ...KubectlOpt) (*v1alpha3.MachineDeployment, error) {
-	params := []string{"get", fmt.Sprintf("machinedeployments.%s", v1alpha3.GroupVersion.Group), fmt.Sprintf("%s-md-0", cluster.Name), "-o", "json"}
+func (k *Kubectl) GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*v1alpha3.MachineDeployment, error) {
+	params := []string{"get", fmt.Sprintf("machinedeployments.%s", v1alpha3.GroupVersion.Group), fmt.Sprintf("%s-md-0", clusterName), "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
@@ -638,8 +652,8 @@ func (k *Kubectl) RemoveAnnotationInNamespace(ctx context.Context, resourceType,
 	return k.RemoveAnnotation(ctx, resourceType, objectName, key, WithCluster(cluster), WithNamespace(namespace))
 }
 
-func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error) {
-	params := []string{"get", "clusters", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + cluster.Name}
+func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error) {
+	params := []string{"get", "clusters", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + clusterName}
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa cluster: %v", err)
@@ -681,6 +695,22 @@ func (k *Kubectl) GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, 
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing OIDCConfig response: %v", err)
+	}
+
+	return response, nil
+}
+
+func (k *Kubectl) GetEksaAWSIamConfig(ctx context.Context, awsIamConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.AWSIamConfig, error) {
+	params := []string{"get", eksaAwsIamResourceType, awsIamConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting eksa AWSIamConfig: %v", err)
+	}
+
+	response := &v1alpha1.AWSIamConfig{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing AWSIamConfig response: %v", err)
 	}
 
 	return response, nil

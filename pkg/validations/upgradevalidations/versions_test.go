@@ -2,18 +2,13 @@ package upgradevalidations_test
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"reflect"
 	"testing"
 
-	"github.com/golang/mock/gomock"
-
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/executables"
-	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
-	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
 )
 
@@ -50,7 +45,7 @@ func TestValidateVersionSkew(t *testing.T) {
 		},
 	}
 
-	k, ctx, cluster, e := newKubectl(t)
+	k, ctx, cluster, e := validations.NewKubectl(t)
 	for _, tc := range tests {
 		t.Run(tc.name, func(tt *testing.T) {
 			fileContent := test.ReadFile(t, tc.serverVersionResponse)
@@ -61,17 +56,4 @@ func TestValidateVersionSkew(t *testing.T) {
 			}
 		})
 	}
-}
-
-func newKubectl(t *testing.T) (*executables.Kubectl, context.Context, *types.Cluster, *mockexecutables.MockExecutable) {
-	kubeconfigFile := "c.kubeconfig"
-	cluster := &types.Cluster{
-		KubeconfigFile: kubeconfigFile,
-	}
-
-	ctx := context.Background()
-	ctrl := gomock.NewController(t)
-	executable := mockexecutables.NewMockExecutable(ctrl)
-
-	return executables.NewKubectl(executable), ctx, cluster, executable
 }

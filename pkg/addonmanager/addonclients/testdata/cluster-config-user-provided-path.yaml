@@ -1,7 +1,7 @@
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
-  name: fluxAddonTestCluster
+  name: management-cluster
 spec:
   clusterNetwork:
     pods: {}
@@ -17,7 +17,7 @@ spec:
 ---
 kind: VSphereDatacenterConfig
 metadata:
-  name: fluxAddonTestCluster
+  name: management-cluster
 spec:
   datacenter: SDDC-Datacenter
   insecure: false
@@ -28,7 +28,7 @@ spec:
 ---
 kind: VSphereMachineConfig
 metadata:
-  name: fluxAddonTestCluster
+  name: management-cluster
 spec:
   datastore: ""
   folder: ""

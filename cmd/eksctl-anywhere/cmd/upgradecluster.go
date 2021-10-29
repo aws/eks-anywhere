@@ -63,6 +63,7 @@ func init() {
 	upgradeClusterCmd.Flags().StringVarP(&uc.wConfig, "w-config", "w", "", "Kubeconfig file to use when upgrading a workload cluster")
 	upgradeClusterCmd.Flags().BoolVar(&uc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	upgradeClusterCmd.Flags().StringVar(&uc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
+	upgradeClusterCmd.Flags().StringVar(&uc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
 	err := upgradeClusterCmd.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -105,15 +106,29 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
 	}
 
-	validationOpts := &upgradevalidations.UpgradeValidationOpts{
-		Kubectl:         deps.Kubectl,
-		Spec:            clusterSpec,
-		WorkloadCluster: workloadCluster,
-		Provider:        deps.Provider,
+	var cluster *types.Cluster
+	if clusterSpec.ManagementCluster == nil {
+		cluster = &types.Cluster{
+			Name:           clusterSpec.Name,
+			KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
+		}
+	} else {
+		cluster = &types.Cluster{
+			Name:           clusterSpec.ManagementCluster.Name,
+			KubeconfigFile: clusterSpec.ManagementCluster.KubeconfigFile,
+		}
+	}
+
+	validationOpts := &validations.Opts{
+		Kubectl:           deps.Kubectl,
+		Spec:              clusterSpec,
+		WorkloadCluster:   workloadCluster,
+		ManagementCluster: cluster,
+		Provider:          deps.Provider,
 	}
 	upgradeValidations := upgradevalidations.New(validationOpts)
 
-	err = upgradeCluster.Run(ctx, clusterSpec, workloadCluster, upgradeValidations, uc.forceClean)
+	err = upgradeCluster.Run(ctx, clusterSpec, cluster, upgradeValidations, uc.forceClean)
 	if err == nil {
 		deps.Writer.CleanUpTemp()
 	}

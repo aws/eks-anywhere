@@ -56,7 +56,7 @@ func TestFluxUpgradeNoSelfManaged(t *testing.T) {
 	f, _, _ := newAddonClient(t)
 	tt.newSpec.Cluster.SetManagedBy("management-cluster")
 
-	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Succeed())
+	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestFluxUpgradeNoChanges(t *testing.T) {
@@ -64,7 +64,7 @@ func TestFluxUpgradeNoChanges(t *testing.T) {
 	f, _, _ := newAddonClient(t)
 	tt.newSpec.VersionsBundle.Flux.Version = "v0.1.0"
 
-	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Succeed())
+	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
 func TestFluxUpgradeSuccess(t *testing.T) {
@@ -79,6 +79,16 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 	}
 	f, m, _ := newAddonClient(t)
 
+	wantDiff := &types.ChangeDiff{
+		ComponentReports: []types.ComponentChangeDiff{
+			{
+				ComponentName: "Flux",
+				NewVersion:    "v0.2.0",
+				OldVersion:    "v0.1.0",
+			},
+		},
+	}
+
 	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Github.Repository}, nil)
 	m.git.EXPECT().Clone(tt.ctx).Return(nil)
 	m.git.EXPECT().Branch(tt.fluxConfig.Github.Branch).Return(nil)
@@ -89,7 +99,7 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 	m.flux.EXPECT().BootstrapToolkitsComponents(tt.ctx, tt.cluster, tt.newSpec.GitOpsConfig)
 	m.flux.EXPECT().Reconcile(tt.ctx, tt.cluster, tt.newSpec.GitOpsConfig)
 
-	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Succeed())
+	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(Equal(wantDiff))
 }
 
 func TestFluxUpgradeError(t *testing.T) {
@@ -113,5 +123,14 @@ func TestFluxUpgradeError(t *testing.T) {
 
 	m.flux.EXPECT().BootstrapToolkitsComponents(tt.ctx, tt.cluster, tt.newSpec.GitOpsConfig).Return(errors.New("error from client"))
 
-	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).NotTo(Succeed())
+	_, err := f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
+	tt.Expect(err).NotTo(BeNil())
+}
+
+func TestFluxUpgradeNoGitOpsConfig(t *testing.T) {
+	tt := newUpgraderTest(t)
+	f, _, _ := newAddonClient(t)
+	tt.newSpec.GitOpsConfig = nil
+
+	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
 }

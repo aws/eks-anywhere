@@ -43,6 +43,21 @@ func (m *MockResourceFetcher) EXPECT() *MockResourceFetcherMockRecorder {
 	return m.recorder
 }
 
+// AWSIamConfig mocks base method.
+func (m *MockResourceFetcher) AWSIamConfig(arg0 context.Context, arg1 *v1alpha1.Ref, arg2 string) (*v1alpha1.AWSIamConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AWSIamConfig", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*v1alpha1.AWSIamConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AWSIamConfig indicates an expected call of AWSIamConfig.
+func (mr *MockResourceFetcherMockRecorder) AWSIamConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AWSIamConfig", reflect.TypeOf((*MockResourceFetcher)(nil).AWSIamConfig), arg0, arg1, arg2)
+}
+
 // ControlPlane mocks base method.
 func (m *MockResourceFetcher) ControlPlane(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha32.KubeadmControlPlane, error) {
 	m.ctrl.T.Helper()
@@ -219,6 +234,21 @@ func (m *MockResourceFetcher) MachineDeployment(arg0 context.Context, arg1 *v1al
 func (mr *MockResourceFetcherMockRecorder) MachineDeployment(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MachineDeployment", reflect.TypeOf((*MockResourceFetcher)(nil).MachineDeployment), arg0, arg1)
+}
+
+// OIDCConfig mocks base method.
+func (m *MockResourceFetcher) OIDCConfig(arg0 context.Context, arg1 *v1alpha1.Ref, arg2 string) (*v1alpha1.OIDCConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "OIDCConfig", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*v1alpha1.OIDCConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// OIDCConfig indicates an expected call of OIDCConfig.
+func (mr *MockResourceFetcherMockRecorder) OIDCConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OIDCConfig", reflect.TypeOf((*MockResourceFetcher)(nil).OIDCConfig), arg0, arg1, arg2)
 }
 
 // VSphereWorkerMachineTemplate mocks base method.

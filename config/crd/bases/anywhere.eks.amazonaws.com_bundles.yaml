@@ -215,6 +215,40 @@ spec:
                       - metadata
                       - version
                       type: object
+                    bottlerocketAdmin:
+                      properties:
+                        admin:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
+                      required:
+                      - admin
+                      type: object
                     bottlerocketBootstrap:
                       properties:
                         bootstrap:
@@ -1225,12 +1259,6 @@ spec:
                       type: object
                     flux:
                       properties:
-                        components:
-                          properties:
-                            uri:
-                              description: URI points to the manifest yaml file
-                              type: string
-                          type: object
                         helmController:
                           properties:
                             arch:
@@ -1350,7 +1378,6 @@ spec:
                         version:
                           type: string
                       required:
-                      - components
                       - helmController
                       - kustomizeController
                       - notificationController
@@ -1569,6 +1596,7 @@ spec:
                   required:
                   - aws
                   - bootstrap
+                  - bottlerocketAdmin
                   - bottlerocketBootstrap
                   - certManager
                   - cilium

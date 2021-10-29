@@ -18,6 +18,8 @@ set -e
 set -x
 set -o pipefail
 
+export LANG=C.UTF-8
+
 BASE_DIRECTORY=$(git rev-parse --show-toplevel)
 
 ARTIFACTS_DIR="${1?Specify first argument - artifacts path}"
@@ -35,12 +37,12 @@ PIPELINE_NAME=$(cut -d/ -f2 <<< "$CODEBUILD_INITIATOR")
 
 # Querying the execution ID corresponding to the pipeline
 # execution that triggered this dev release
-PIPELINE_EXECUTION_ID="$(aws codepipeline list-action-executions --pipeline-name $PIPELINE_NAME --query "actionExecutionDetails[?output.executionResult.externalExecutionId=='$CODEBUILD_BUILD_ID'].pipelineExecutionId" --output text)"
+PIPELINE_EXECUTION_ID="$(aws codepipeline list-action-executions --pipeline-name $PIPELINE_NAME | jq -r '.actionExecutionDetails[] | select(.output.executionResult.externalExecutionId=='\"$CODEBUILD_BUILD_ID\"').pipelineExecutionId')"
 
 # Using the pipeline execution ID to query the branch
 # corresponding to the eks-anywhere-build-tooling repo
 # source action for this particulat execution
-BRANCH_NAME="$(aws codepipeline list-action-executions --pipeline-name $PIPELINE_NAME --query "actionExecutionDetails[?pipelineExecutionId=='$PIPELINE_EXECUTION_ID'] | [?input.actionTypeId.provider=='CodeCommit'] | [?input.configuration.RepositoryName=='aws.eks-anywhere-build-tooling'].input.configuration.BranchName" --output text)"
+BRANCH_NAME="$(aws codepipeline list-action-executions --pipeline-name $PIPELINE_NAME | jq -r '.actionExecutionDetails[] | select(.pipelineExecutionId=='\"$PIPELINE_EXECUTION_ID\"') | select(.input.configuration.RepositoryName=="aws.eks-anywhere-build-tooling").input.configuration.BranchName')"
 
 # This is a catch-all for pipelines that do not source
 # build-tooling repository, for example, the CLI pipeline

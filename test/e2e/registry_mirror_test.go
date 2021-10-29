@@ -12,7 +12,9 @@ import (
 
 func runRegistryMirrorConfigFlow(test *framework.E2ETest) {
 	test.GenerateClusterConfig()
+	test.ImportImages()
 	test.CreateCluster()
+	test.ImportImages()
 	test.DeleteCluster()
 }
 

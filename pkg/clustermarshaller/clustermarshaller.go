@@ -13,7 +13,7 @@ import (
 )
 
 func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) ([]byte, error) {
-	marshallables := make([]v1alpha1.Marshallable, 0, 4+len(machineConfigs))
+	marshallables := make([]v1alpha1.Marshallable, 0, 5+len(machineConfigs))
 	marshallables = append(marshallables,
 		clusterSpec.Cluster.ConvertConfigToConfigGenerateStruct(),
 		datacenterConfig.Marshallable(),
@@ -30,6 +30,9 @@ func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.Da
 	if clusterSpec.OIDCConfig != nil {
 		marshallables = append(marshallables, clusterSpec.OIDCConfig.ConvertConfigToConfigGenerateStruct())
 	}
+	if clusterSpec.AWSIamConfig != nil {
+		marshallables = append(marshallables, clusterSpec.AWSIamConfig.ConvertConfigToConfigGenerateStruct())
+	}
 
 	resources := make([][]byte, 0, len(marshallables))
 	for _, marshallable := range marshallables {
@@ -39,7 +42,6 @@ func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.Da
 		}
 		resources = append(resources, resource)
 	}
-
 	return templater.AppendYamlResources(resources...), nil
 }
 

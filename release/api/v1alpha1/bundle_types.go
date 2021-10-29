@@ -69,6 +69,7 @@ type VersionsBundle struct {
 	Cilium                 CiliumBundle                `json:"cilium"`
 	Flux                   FluxBundle                  `json:"flux"`
 	BottleRocketBootstrap  BottlerocketBootstrapBundle `json:"bottlerocketBootstrap"`
+	BottleRocketAdmin      BottlerocketAdminBundle     `json:"bottlerocketAdmin"`
 	ExternalEtcdBootstrap  EtcdadmBootstrapBundle      `json:"etcdadmBootstrap"`
 	ExternalEtcdController EtcdadmControllerBundle     `json:"etcdadmController"`
 }
@@ -114,6 +115,10 @@ type OvaArchive struct {
 
 type BottlerocketBootstrapBundle struct {
 	Bootstrap Image `json:"bootstrap"`
+}
+
+type BottlerocketAdminBundle struct {
+	Admin Image `json:"admin"`
 }
 
 type CertManagerBundle struct {
@@ -187,12 +192,11 @@ type CiliumBundle struct {
 }
 
 type FluxBundle struct {
-	Version                string   `json:"version,omitempty"`
-	SourceController       Image    `json:"sourceController"`
-	KustomizeController    Image    `json:"kustomizeController"`
-	HelmController         Image    `json:"helmController"`
-	NotificationController Image    `json:"notificationController"`
-	Components             Manifest `json:"components"`
+	Version                string `json:"version,omitempty"`
+	SourceController       Image  `json:"sourceController"`
+	KustomizeController    Image  `json:"kustomizeController"`
+	HelmController         Image  `json:"helmController"`
+	NotificationController Image  `json:"notificationController"`
 }
 
 type EksaBundle struct {

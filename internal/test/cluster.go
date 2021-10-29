@@ -3,6 +3,8 @@ package test
 import (
 	"embed"
 	"fmt"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,6 +12,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/version"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -59,13 +62,27 @@ func NewFullClusterSpec(t *testing.T, clusterConfigFile string) *cluster.Spec {
 }
 
 func Bundles(t *testing.T) *releasev1alpha1.Bundles {
-	content, err := configFS.ReadFile("testdata/bundles.yaml")
+	content, err := configFS.ReadFile("testdata/bundles_template.yaml")
 	if err != nil {
 		t.Fatalf("Failed to read embed bundles manifest: %s", err)
 	}
 
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("Failed getting path to current file")
+	}
+
+	templateValues := map[string]string{
+		"TestPath": filepath.Dir(filename),
+	}
+
+	bundlesContent, err := templater.Execute(string(content), templateValues)
+	if err != nil {
+		t.Fatalf("Failed writing new bundles file: %v", err)
+	}
+
 	bundles := &releasev1alpha1.Bundles{}
-	if err = yaml.Unmarshal(content, bundles); err != nil {
+	if err = yaml.Unmarshal(bundlesContent, bundles); err != nil {
 		t.Fatalf("Failed to unmarshal bundles manifest: %s", err)
 	}
 

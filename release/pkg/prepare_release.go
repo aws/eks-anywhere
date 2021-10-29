@@ -1,9 +1,10 @@
 package pkg
 
 import (
-	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,7 +19,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -42,45 +42,31 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 	fmt.Println("Cloning CLI repository")
 	parentSourceDir := filepath.Join(homeDir, "eks-a-source")
 	r.CliRepoSource = filepath.Join(parentSourceDir, "eks-a-cli")
-	err = os.MkdirAll(r.CliRepoSource, 0o755)
+	cmd := exec.Command("git", "clone", cliRepoUrl, r.CliRepoSource)
+	out, err := execCommand(cmd)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	_, err = git.PlainClone(r.CliRepoSource, false, &git.CloneOptions{
-		Progress: os.Stdout,
-		URL:      cliRepoUrl,
-	})
-	if err != nil {
-		return errors.Cause(err)
-	}
+	fmt.Println(out)
 
 	// Clone the build-tooling repository
 	fmt.Println("Cloning build-tooling repository")
 	r.BuildRepoSource = filepath.Join(parentSourceDir, "eks-a-build")
-	err = os.MkdirAll(r.BuildRepoSource, 0o755)
+	cmd = exec.Command("git", "clone", buildRepoUrl, r.BuildRepoSource)
+	out, err = execCommand(cmd)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	buildRepoCloned, err := git.PlainClone(r.BuildRepoSource, false, &git.CloneOptions{
-		Progress: os.Stdout,
-		URL:      buildRepoUrl,
-	})
-	if err != nil {
-		return errors.Cause(err)
-	}
+	fmt.Println(out)
 
 	if r.DevRelease && r.BranchName != "main" {
-		fmt.Println("Getting working tree for build-tooling repo")
-		buildRepoTree, err := buildRepoCloned.Worktree()
+		fmt.Printf("Checking out build-tooling repo at branch %s", r.BranchName)
+		cmd = exec.Command("git", "-C", r.BuildRepoSource, "checkout", r.BranchName)
+		out, err = execCommand(cmd)
 		if err != nil {
 			return errors.Cause(err)
 		}
-		err = buildRepoTree.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.ReferenceName("refs/heads/" + r.BranchName),
-		})
-		if err != nil {
-			return errors.Cause(err)
-		}
+		fmt.Println(out)
 	}
 	// Set HEADs of the repos
 	r.CliRepoHead, err = GetHead(r.CliRepoSource)
@@ -88,6 +74,7 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 		return errors.Cause(err)
 	}
 	fmt.Printf("Head of cli repo: %s\n", r.CliRepoHead)
+
 	r.BuildRepoHead, err = GetHead(r.BuildRepoSource)
 	if err != nil {
 		return errors.Cause(err)
@@ -198,20 +185,6 @@ func (r *ReleaseConfig) renameArtifacts(sourceClients *SourceClients, artifacts 
 					}
 				}
 			}
-
-			// Rename the image name/tag to the release names
-			dockerClient := sourceClients.Docker.Client
-			if artifact.Image != nil {
-				imageArtifact := artifact.Image
-				fmt.Printf("Retagging image - %s\n", imageArtifact.ReleaseImageURI)
-				err := dockerClient.TagImage(imageArtifact.SourceImageURI, docker.TagImageOptions{
-					Repo:    imageArtifact.ReleaseImageURI,
-					Context: context.Background(),
-				})
-				if err != nil {
-					return errors.Cause(err)
-				}
-			}
 		}
 	}
 	return nil
@@ -219,10 +192,8 @@ func (r *ReleaseConfig) renameArtifacts(sourceClients *SourceClients, artifacts 
 
 func downloadArtifacts(sourceClients *SourceClients, r *ReleaseConfig, eksArtifacts map[string][]Artifact) error {
 	// Get s3 client and docker clients
-	dockerClient := sourceClients.Docker.Client
 	s3Downloader := sourceClients.S3.Downloader
 	s3Client := sourceClients.S3.Client
-	ecrAuthConfig := sourceClients.Docker.AuthConfig
 	// Retrier for downloading source S3 objects. This retrier has a max timeout of 60 minutes. It
 	// checks whether the error occured during download is an ObjectNotFound error and retries the
 	// download operation for a maximum of 60 retries, with a wait time of 30 seconds per retry.
@@ -233,15 +204,6 @@ func downloadArtifacts(sourceClients *SourceClients, r *ReleaseConfig, eksArtifa
 		return false, 0
 	}))
 
-	// Retrier for downloading source ECR images. This retrier has a max timeout of 60 minutes. It
-	// checks whether the error occured during download is an ImageNotFound error and retries the
-	// download operation for a maximum of 60 retries, with a wait time of 30 seconds per retry.
-	ecrRetrier := NewRetrier(60*time.Minute, WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
-		if IsImageNotFoundError(err) && totalRetries < 60 {
-			return true, 30 * time.Second
-		}
-		return false, 0
-	}))
 	fmt.Println("============================================================")
 	fmt.Println("                 Downloading Artifacts                      ")
 	fmt.Println("============================================================")
@@ -307,35 +269,17 @@ func downloadArtifacts(sourceClients *SourceClients, r *ReleaseConfig, eksArtifa
 					return errors.Cause(err)
 				}
 			}
-
-			// Check if there is an image to be pulled locally
-			if artifact.Image != nil {
-				fmt.Printf("Image - %s\n", artifact.Image.SourceImageURI)
-				// TODO: replace background context with proper timeouts
-				err := ecrRetrier.Retry(func() error {
-					err := dockerClient.PullImage(docker.PullImageOptions{
-						Repository: artifact.Image.SourceImageURI,
-						Context:    context.Background(),
-					}, *ecrAuthConfig)
-					if err != nil {
-						return err
-					}
-					return nil
-				})
-				if err != nil {
-					return fmt.Errorf("retries exhausted running docker pull command: %v", err)
-				}
-			}
 		}
 	}
 	return nil
 }
 
-func UploadArtifacts(releaseClients *ReleaseClients, r *ReleaseConfig, eksArtifacts map[string][]Artifact) error {
+func UploadArtifacts(sourceClients *SourceClients, releaseClients *ReleaseClients, r *ReleaseConfig, eksArtifacts map[string][]Artifact) error {
 	// Get clients
 	s3Uploader := releaseClients.S3.Uploader
-	dockerClient := releaseClients.Docker.Client
-	ecrAuthConfig := releaseClients.Docker.AuthConfig
+	sourceEcrAuthConfig := sourceClients.ECR.AuthConfig
+	releaseEcrAuthConfig := releaseClients.ECRPublic.AuthConfig
+
 	fmt.Println("============================================================")
 	fmt.Println("                 Uploading Artifacts                      ")
 	fmt.Println("============================================================")
@@ -374,11 +318,13 @@ func UploadArtifacts(releaseClients *ReleaseClients, r *ReleaseConfig, eksArtifa
 			}
 
 			if artifact.Image != nil {
-				fmt.Printf("Image - %s\n", artifact.Image.ReleaseImageURI)
-				err := dockerClient.PushImage(docker.PushImageOptions{
-					Name:    artifact.Image.ReleaseImageURI,
-					Context: context.Background(),
-				}, *ecrAuthConfig)
+				fmt.Printf("Source Image - %s\n", artifact.Image.SourceImageURI)
+				fmt.Printf("Destination Image - %s\n", artifact.Image.ReleaseImageURI)
+				err := r.waitForSourceImage(sourceEcrAuthConfig, artifact.Image.SourceImageURI)
+				if err != nil {
+					return errors.Cause(err)
+				}
+				err = copyImageFromSourceToDest(sourceEcrAuthConfig, releaseEcrAuthConfig, artifact.Image.SourceImageURI, artifact.Image.ReleaseImageURI)
 				if err != nil {
 					return errors.Cause(err)
 				}
@@ -527,9 +473,7 @@ func IsObjectNotPresentError(err error) bool {
 }
 
 func IsImageNotFoundError(err error) bool {
-	regex := "manifest for .* not found: manifest unknown: Requested image not found"
-	compiledRegex := regexp.MustCompile(regex)
-	return compiledRegex.MatchString(err.Error())
+	return err.Error() == "Requested image not found"
 }
 
 func (r *ReleaseConfig) getLatestUploadDestination() string {
@@ -538,4 +482,74 @@ func (r *ReleaseConfig) getLatestUploadDestination() string {
 	} else {
 		return r.BranchName
 	}
+}
+
+func (r *ReleaseConfig) waitForSourceImage(sourceAuthConfig *docker.AuthConfiguration, sourceImageUri string) error {
+	sourceImageUriSplit := strings.Split(sourceImageUri, ":")
+	sourceImageName := strings.Replace(sourceImageUriSplit[0], r.SourceContainerRegistry+"/", "", -1)
+	sourceImageTag := sourceImageUriSplit[1]
+
+	var requestUrl string
+	if r.DevRelease || r.ReleaseEnvironment == "development" {
+		requestUrl = fmt.Sprintf("https://%s:%s@%s/v2/%s/manifests/%s", sourceAuthConfig.Username, sourceAuthConfig.Password, r.SourceContainerRegistry, sourceImageName, sourceImageTag)
+	} else {
+		requestUrl = fmt.Sprintf("https://%s:%s@public.ecr.aws/v2/%s/%s/manifests/%s", sourceAuthConfig.Username, sourceAuthConfig.Password, filepath.Base(r.SourceContainerRegistry), sourceImageName, sourceImageTag)
+	}
+
+	// Creating new GET request
+	req, err := http.NewRequest("GET", requestUrl, nil)
+	if err != nil {
+		return errors.Cause(err)
+	}
+
+	// Retrier for downloading source ECR images. This retrier has a max timeout of 60 minutes. It
+	// checks whether the error occured during download is an ImageNotFound error and retries the
+	// download operation for a maximum of 60 retries, with a wait time of 30 seconds per retry.
+	retrier := NewRetrier(60*time.Minute, WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
+		if IsImageNotFoundError(err) && totalRetries < 60 {
+			return true, 30 * time.Second
+		}
+		return false, 0
+	}))
+
+	err = retrier.Retry(func() error {
+		var err error
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		bodyStr := string(body)
+		if strings.Contains(bodyStr, "MANIFEST_UNKNOWN") {
+			return fmt.Errorf("Requested image not found")
+		}
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("retries exhausted waiting for source image to be available for copy: %v", err)
+	}
+
+	return nil
+}
+
+func copyImageFromSourceToDest(sourceAuthConfig, releaseAuthConfig *docker.AuthConfiguration, sourceImageUri, releaseImageUri string) error {
+	sourceRegistryUsername := sourceAuthConfig.Username
+	sourceRegistryPassword := sourceAuthConfig.Password
+	releaseRegistryUsername := releaseAuthConfig.Username
+	releaseRegistryPassword := releaseAuthConfig.Password
+	cmd := exec.Command("skopeo", "copy", "--src-creds", fmt.Sprintf("%s:%s", sourceRegistryUsername, sourceRegistryPassword), "--dest-creds", fmt.Sprintf("%s:%s", releaseRegistryUsername, releaseRegistryPassword), fmt.Sprintf("docker://%s", sourceImageUri), fmt.Sprintf("docker://%s", releaseImageUri), "-f", "oci", "--all")
+	out, err := execCommand(cmd)
+	if err != nil {
+		return errors.Cause(err)
+	}
+	fmt.Println(out)
+
+	return nil
 }

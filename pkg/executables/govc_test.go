@@ -101,6 +101,7 @@ type deployTemplateTest struct {
 	govc                     *executables.Govc
 	mockExecutable           *mockexecutables.MockExecutable
 	env                      map[string]string
+	datacenter               string
 	resourcePool             string
 	templatePath             string
 	ovaURL                   string
@@ -119,6 +120,7 @@ func newDeployTemplateTest(t *testing.T) *deployTemplateTest {
 		govc:                     g,
 		mockExecutable:           exec,
 		env:                      env,
+		datacenter:               "SDDC-Datacenter",
 		resourcePool:             "*/Resources/Compute-ResourcePool",
 		templatePath:             "/SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6",
 		ovaURL:                   "https://aws.com/ova",
@@ -149,7 +151,7 @@ func newMachineConfig(t *testing.T) *v1alpha1.VSphereMachineConfig {
 func (dt *deployTemplateTest) expectDeployToReturn(err error) {
 	dt.expectations = append(
 		dt.expectations,
-		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "library.deploy", "-pool", dt.resourcePool, "-folder", dt.deployFolder, "-options", test.OfType("string"), "-persist-session=false", dt.templateInLibraryPathAbs, dt.templateName).Return(*dt.fakeExecResponse, err),
+		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "library.deploy", "-dc", dt.datacenter, "-pool", dt.resourcePool, "-folder", dt.deployFolder, "-options", test.OfType("string"), "-persist-session=false", dt.templateInLibraryPathAbs, dt.templateName).Return(*dt.fakeExecResponse, err),
 	)
 }
 
@@ -169,7 +171,7 @@ func (dt *deployTemplateTest) expectMarkAsTemplateToReturn(err error) {
 
 func (dt *deployTemplateTest) DeployTemplateFromLibrary() error {
 	gomock.InOrder(dt.expectations...)
-	return dt.govc.DeployTemplateFromLibrary(dt.ctx, dt.deployFolder, dt.templateName, templateLibrary, dt.resourcePool, dt.resizeDisk2)
+	return dt.govc.DeployTemplateFromLibrary(dt.ctx, dt.deployFolder, dt.templateName, templateLibrary, dt.datacenter, dt.resourcePool, dt.resizeDisk2)
 }
 
 func (dt *deployTemplateTest) assertDeployTemplateSuccess(t *testing.T) {
