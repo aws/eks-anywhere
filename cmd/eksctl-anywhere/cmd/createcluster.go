@@ -113,7 +113,7 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 		}
 	}
 
-	validationOpts := &createvalidations.CreateValidationOpts{
+	validationOpts := &validations.Opts{
 		Kubectl: deps.Kubectl,
 		Spec:    clusterSpec,
 		WorkloadCluster: &types.Cluster{

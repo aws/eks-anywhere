@@ -577,7 +577,7 @@ func TestPreflightValidations(t *testing.T) {
 			k := mocks.NewMockValidationsKubectlClient(mockCtrl)
 
 			provider := mockproviders.NewMockProvider(mockCtrl)
-			opts := &upgradevalidations.UpgradeValidationOpts{
+			opts := &validations.Opts{
 				Kubectl:           k,
 				Spec:              clusterSpec,
 				WorkloadCluster:   workloadCluster,
