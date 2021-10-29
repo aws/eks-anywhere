@@ -11,8 +11,10 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
 	"sigs.k8s.io/cluster-api/api/v1alpha3"
+	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -1236,4 +1238,43 @@ func TestKubectlGetBundles(t *testing.T) {
 	gotBundles, err := tt.k.GetBundles(tt.ctx, tt.cluster.KubeconfigFile, bundleName, tt.namespace)
 	tt.Expect(err).To(BeNil())
 	tt.Expect(gotBundles).To(Equal(wantBundles))
+}
+
+func TestKubectlGetClusterResourceSet(t *testing.T) {
+	tt := newKubectlTest(t)
+	resourceSetJson := test.ReadFile(t, "testdata/kubectl_clusterresourceset.json")
+	resourceSetName := "Bundle-name"
+	wantResourceSet := &addons.ClusterResourceSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "addons.cluster.x-k8s.io/v1alpha3",
+			Kind:       "ClusterResourceSet",
+		},
+		Spec: addons.ClusterResourceSetSpec{
+			ClusterSelector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"cluster.x-k8s.io/cluster-name": "cluster-1",
+				},
+			},
+			Strategy: "ApplyOnce",
+			Resources: []addons.ResourceRef{
+				{
+					Kind: "Secret",
+					Name: "vsphere-csi-controller",
+				},
+				{
+					Kind: "ConfigMap",
+					Name: "vsphere-csi-controller-role",
+				},
+			},
+		},
+	}
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"get", "clusterresourcesets.addons.cluster.x-k8s.io", resourceSetName, "-o", "json", "--kubeconfig", tt.cluster.KubeconfigFile, "--namespace", tt.namespace,
+	).Return(*bytes.NewBufferString(resourceSetJson), nil)
+
+	gotResourceSet, err := tt.k.GetClusterResourceSet(tt.ctx, tt.cluster.KubeconfigFile, resourceSetName, tt.namespace)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(gotResourceSet).To(Equal(wantResourceSet))
 }
