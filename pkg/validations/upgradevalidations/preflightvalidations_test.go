@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockproviders "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations/mocks"
 )
@@ -568,7 +569,7 @@ func TestPreflightValidations(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(tt *testing.T) {
-			_, ctx, workloadCluster, _ := newKubectl(t)
+			_, ctx, workloadCluster, _ := validations.NewKubectl(t)
 			workloadCluster.KubeconfigFile = kubeconfigFilePath
 			workloadCluster.Name = testclustername
 
