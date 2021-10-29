@@ -40,6 +40,7 @@ type Dependencies struct {
 	CollectorFactory          diagnostics.CollectorFactory
 	DignosticCollectorFactory diagnostics.DiagnosticBundleFactory
 	CAPIUpgrader              *clusterapi.Upgrader
+	ResourceSetManager        *clusterapi.ResourceSetManager
 }
 
 func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
@@ -123,7 +124,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 }
 
 func (f *Factory) WithProviderFactory() *Factory {
-	f.WithDocker().WithKubectl().WithGovc().WithWriter()
+	f.WithDocker().WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
 
 	f.buildSteps = append(f.buildSteps, func() error {
 		if f.providerFactory != nil {
@@ -131,11 +132,12 @@ func (f *Factory) WithProviderFactory() *Factory {
 		}
 
 		f.providerFactory = &factory.ProviderFactory{
-			DockerClient:         f.dependencies.DockerClient,
-			DockerKubectlClient:  f.dependencies.Kubectl,
-			VSphereGovcClient:    f.dependencies.Govc,
-			VSphereKubectlClient: f.dependencies.Kubectl,
-			Writer:               f.dependencies.Writer,
+			DockerClient:              f.dependencies.DockerClient,
+			DockerKubectlClient:       f.dependencies.Kubectl,
+			VSphereGovcClient:         f.dependencies.Govc,
+			VSphereKubectlClient:      f.dependencies.Kubectl,
+			Writer:                    f.dependencies.Writer,
+			ClusterResourceSetManager: f.dependencies.ResourceSetManager,
 		}
 
 		return nil
@@ -440,6 +442,21 @@ func (f *Factory) WithCAPIUpgrader() *Factory {
 		}
 
 		f.dependencies.CAPIUpgrader = clusterapi.NewUpgrader(f.dependencies.Clusterctl)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithCAPIClusterResourceSetManager() *Factory {
+	f.WithKubectl()
+
+	f.buildSteps = append(f.buildSteps, func() error {
+		if f.dependencies.ResourceSetManager != nil {
+			return nil
+		}
+
+		f.dependencies.ResourceSetManager = clusterapi.NewResourceSetManager(f.dependencies.Kubectl)
 		return nil
 	})
 
