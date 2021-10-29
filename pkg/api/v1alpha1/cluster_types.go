@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"strconv"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -44,19 +46,57 @@ type ClusterSpec struct {
 	Management *bool `json:"management,omitempty"`
 }
 
+func (n *ClusterSpec) Equal(o *ClusterSpec) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	if n.KubernetesVersion != o.KubernetesVersion {
+		return false
+	}
+	if !n.ControlPlaneConfiguration.Equal(&o.ControlPlaneConfiguration) {
+		return false
+	}
+	if !WorkerNodeGroupConfigurationsSliceEqual(n.WorkerNodeGroupConfigurations, o.WorkerNodeGroupConfigurations) {
+		return false
+	}
+	if !n.DatacenterRef.Equal(&o.DatacenterRef) {
+		return false
+	}
+	if !RefSliceEqual(n.IdentityProviderRefs, o.IdentityProviderRefs) {
+		return false
+	}
+	if !n.GitOpsRef.Equal(o.GitOpsRef) {
+		return false
+	}
+	if !n.ClusterNetwork.Equal(&o.ClusterNetwork) {
+		return false
+	}
+	if !n.ExternalEtcdConfiguration.Equal(o.ExternalEtcdConfiguration) {
+		return false
+	}
+	if !n.ProxyConfiguration.Equal(o.ProxyConfiguration) {
+		return false
+	}
+	if !n.RegistryMirrorConfiguration.Equal(o.RegistryMirrorConfiguration) {
+		return false
+	}
+	if n.isSelfManaged() != o.isSelfManaged() {
+		return false
+	}
+	return true
+}
+
+func (s *ClusterSpec) isSelfManaged() bool {
+	return s.Management == nil || *s.Management
+}
+
 type ProxyConfiguration struct {
 	HttpProxy  string   `json:"httpProxy,omitempty"`
 	HttpsProxy string   `json:"httpsProxy,omitempty"`
 	NoProxy    []string `json:"noProxy,omitempty"`
-}
-
-// RegistryMirrorConfiguration defines the settings for image registry mirror
-type RegistryMirrorConfiguration struct {
-	// Endpoint defines the registry mirror endpoint to use for pulling images
-	Endpoint string `json:"endpoint,omitempty"`
-
-	// CACertContent defines the contents registry mirror CA certificate
-	CACertContent string `json:"caCertContent,omitempty"`
 }
 
 func (n *ProxyConfiguration) Equal(o *ProxyConfiguration) bool {
@@ -69,6 +109,25 @@ func (n *ProxyConfiguration) Equal(o *ProxyConfiguration) bool {
 	return n.HttpProxy == o.HttpProxy && n.HttpsProxy == o.HttpsProxy && SliceEqual(n.NoProxy, o.NoProxy)
 }
 
+// RegistryMirrorConfiguration defines the settings for image registry mirror
+type RegistryMirrorConfiguration struct {
+	// Endpoint defines the registry mirror endpoint to use for pulling images
+	Endpoint string `json:"endpoint,omitempty"`
+
+	// CACertContent defines the contents registry mirror CA certificate
+	CACertContent string `json:"caCertContent,omitempty"`
+}
+
+func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.Endpoint == o.Endpoint && n.CACertContent == o.CACertContent
+}
+
 type ControlPlaneConfiguration struct {
 	// Count defines the number of desired control plane nodes. Defaults to 1.
 	Count int `json:"count,omitempty"`
@@ -76,6 +135,16 @@ type ControlPlaneConfiguration struct {
 	Endpoint *Endpoint `json:"endpoint,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the control plane.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
+}
+
+func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.Count == o.Count && n.Endpoint.Equal(o.Endpoint) && n.MachineGroupRef.Equal(o.MachineGroupRef)
 }
 
 type Endpoint struct {
@@ -98,6 +167,34 @@ type WorkerNodeGroupConfiguration struct {
 	Count int `json:"count,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
+}
+
+func generateWorkerNodeGroupKey(c WorkerNodeGroupConfiguration) (key string) {
+	if c.MachineGroupRef != nil {
+		key = c.MachineGroupRef.Kind + c.MachineGroupRef.Name
+	}
+	return strconv.Itoa(c.Count) + key
+}
+
+func WorkerNodeGroupConfigurationsSliceEqual(a, b []WorkerNodeGroupConfiguration) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	m := make(map[string]int, len(a))
+	for _, v := range a {
+		m[generateWorkerNodeGroupKey(v)]++
+	}
+	for _, v := range b {
+		k := generateWorkerNodeGroupKey(v)
+		if _, ok := m[k]; !ok {
+			return false
+		}
+		m[k] -= 1
+		if m[k] == 0 {
+			delete(m, k)
+		}
+	}
+	return len(m) == 0
 }
 
 type ClusterNetwork struct {
@@ -230,6 +327,16 @@ type ExternalEtcdConfiguration struct {
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
 }
 
+func (n *ExternalEtcdConfiguration) Equal(o *ExternalEtcdConfiguration) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.Count == o.Count && n.MachineGroupRef.Equal(o.MachineGroupRef)
+}
+
 // +kubebuilder:object:root=true
 // Cluster is the Schema for the clusters API
 type Cluster struct {
@@ -273,8 +380,8 @@ func (c *Cluster) EtcdAnnotation() string {
 	return etcdAnnotation
 }
 
-func (s *Cluster) IsSelfManaged() bool {
-	return s.Spec.Management == nil || *s.Spec.Management
+func (c *Cluster) IsSelfManaged() bool {
+	return c.Spec.isSelfManaged()
 }
 
 func (s *Cluster) SetManagedBy(managementClusterName string) {
