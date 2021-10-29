@@ -483,7 +483,11 @@ func WithServer(s string) KubectlOpt {
 }
 
 func WithCluster(c *types.Cluster) KubectlOpt {
-	return appendOpt("--kubeconfig", c.KubeconfigFile)
+	return WithKubeconfig(c.KubeconfigFile)
+}
+
+func WithKubeconfig(kubeconfigFile string) KubectlOpt {
+	return appendOpt("--kubeconfig", kubeconfigFile)
 }
 
 func WithNamespace(n string) KubectlOpt {
@@ -546,6 +550,10 @@ func (k *Kubectl) GetDeployments(ctx context.Context, opts ...KubectlOpt) ([]app
 	}
 
 	return response.Items, nil
+}
+
+func (k *Kubectl) GetSecretFromNamespace(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.Secret, error) {
+	return k.GetSecret(ctx, name, WithKubeconfig(kubeconfigFile), WithNamespace(namespace))
 }
 
 func (k *Kubectl) GetSecret(ctx context.Context, secretObjectName string, opts ...KubectlOpt) (*corev1.Secret, error) {
