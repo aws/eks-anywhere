@@ -1,4 +1,4 @@
-package upgradevalidations_test
+package createvalidations_test
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/validations"
-	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
+	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
 )
 
 const testclustername string = "testcluster"
@@ -26,19 +26,19 @@ func TestValidateClusterPresent(t *testing.T) {
 		getClusterResponse string
 	}{
 		{
-			name:               "FailureNoClusters",
-			wantErr:            errors.New("no CAPI cluster objects present on workload cluster testcluster"),
+			name:               "SuccessNoClusters",
+			wantErr:            nil,
 			getClusterResponse: "testdata/empty_get_cluster_response.json",
 		},
 		{
-			name:               "FailureClusterNotPresent",
-			wantErr:            errors.New("couldn't find CAPI cluster object for cluster with name testcluster"),
-			getClusterResponse: "testdata/no_target_cluster_response.json",
+			name:               "FailureClusterNameExists",
+			wantErr:            errors.New("cluster name testcluster already exists"),
+			getClusterResponse: "testdata/cluster_name_exists.json",
 		},
 		{
-			name:               "SuccessClusterPresent",
+			name:               "SuccessClusterNotInList",
 			wantErr:            nil,
-			getClusterResponse: "testdata/target_cluster_response.json",
+			getClusterResponse: "testdata/name_not_in_list.json",
 		},
 	}
 
@@ -48,7 +48,7 @@ func TestValidateClusterPresent(t *testing.T) {
 		t.Run(tc.name, func(tt *testing.T) {
 			fileContent := test.ReadFile(t, tc.getClusterResponse)
 			e.EXPECT().Execute(ctx, []string{"get", capiClustersResourceType, "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}).Return(*bytes.NewBufferString(fileContent), nil)
-			err := upgradevalidations.ValidateClusterObjectExists(ctx, k, cluster)
+			err := createvalidations.ValidateClusterNameIsUnique(ctx, k, cluster, testclustername)
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}

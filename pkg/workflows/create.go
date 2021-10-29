@@ -34,7 +34,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 	}
 }
 
-func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, forceCleanup bool) error {
+func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator interfaces.Validator, forceCleanup bool) error {
 	if forceCleanup {
 		if err := c.bootstrapper.DeleteBootstrapCluster(ctx, &types.Cluster{
 			Name: clusterSpec.Name,
@@ -50,6 +50,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, forceCleanu
 		ClusterSpec:    clusterSpec,
 		Rollback:       false,
 		Writer:         c.writer,
+		Validations:    validator,
 	}
 
 	if clusterSpec.ManagementCluster != nil {
@@ -160,6 +161,7 @@ func (s *SetAndValidateTask) Run(ctx context.Context, commandContext *task.Comma
 	runner := validations.NewRunner()
 	runner.Register(s.providerValidation(ctx, commandContext)...)
 	runner.Register(commandContext.AddonManager.Validations(ctx, commandContext.ClusterSpec)...)
+	runner.Register(s.validations(ctx, commandContext)...)
 
 	err := runner.Run()
 	if err != nil {
@@ -167,6 +169,17 @@ func (s *SetAndValidateTask) Run(ctx context.Context, commandContext *task.Comma
 		return nil
 	}
 	return &CreateBootStrapClusterTask{}
+}
+
+func (s *SetAndValidateTask) validations(ctx context.Context, commandContext *task.CommandContext) []validations.Validation {
+	return []validations.Validation{
+		func() *validations.ValidationResult {
+			return &validations.ValidationResult{
+				Name: "create preflight validations pass",
+				Err:  commandContext.Validations.PreflightValidations(ctx),
+			}
+		},
+	}
 }
 
 func (s *SetAndValidateTask) providerValidation(ctx context.Context, commandContext *task.CommandContext) []validations.Validation {

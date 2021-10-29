@@ -14,8 +14,9 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockproviders "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/validations"
+	"github.com/aws/eks-anywhere/pkg/validations/mocks"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
-	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations/mocks"
 )
 
 const (
@@ -568,15 +569,15 @@ func TestPreflightValidations(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(tt *testing.T) {
-			_, ctx, workloadCluster, _ := newKubectl(t)
+			_, ctx, workloadCluster, _ := validations.NewKubectl(t)
 			workloadCluster.KubeconfigFile = kubeconfigFilePath
 			workloadCluster.Name = testclustername
 
 			mockCtrl := gomock.NewController(t)
-			k := mocks.NewMockValidationsKubectlClient(mockCtrl)
+			k := mocks.NewMockKubectlClient(mockCtrl)
 
 			provider := mockproviders.NewMockProvider(mockCtrl)
-			opts := &upgradevalidations.UpgradeValidationOpts{
+			opts := &validations.Opts{
 				Kubectl:           k,
 				Spec:              clusterSpec,
 				WorkloadCluster:   workloadCluster,
@@ -621,10 +622,10 @@ func TestPreflightValidations(t *testing.T) {
 	}
 }
 
-func composeError(msgs ...string) *upgradevalidations.ValidationError {
+func composeError(msgs ...string) *validations.ValidationError {
 	var errs []string
 	errs = append(errs, msgs...)
-	return &upgradevalidations.ValidationError{Errs: errs}
+	return &validations.ValidationError{Errs: errs}
 }
 
 var explodingClusterError = composeError(

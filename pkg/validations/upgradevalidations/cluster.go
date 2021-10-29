@@ -5,9 +5,10 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
-func ValidateClusterObjectExists(ctx context.Context, k ValidationsKubectlClient, cluster *types.Cluster) error {
+func ValidateClusterObjectExists(ctx context.Context, k validations.KubectlClient, cluster *types.Cluster) error {
 	c, err := k.GetClusters(ctx, cluster)
 	if err != nil {
 		return err

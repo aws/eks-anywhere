@@ -8,9 +8,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
-func ValidateImmutableFields(ctx context.Context, k ValidationsKubectlClient, cluster *types.Cluster, spec *cluster.Spec, provider providers.Provider) error {
+func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, cluster *types.Cluster, spec *cluster.Spec, provider providers.Provider) error {
 	prevSpec, err := k.GetEksaCluster(ctx, cluster, spec.Name)
 	if err != nil {
 		return err
