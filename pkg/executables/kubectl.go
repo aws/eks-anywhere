@@ -949,9 +949,23 @@ func (k *Kubectl) GetClusterResourceSet(ctx context.Context, kubeconfigFile, nam
 	}
 
 	response := &addons.ClusterResourceSet{}
-	err = json.Unmarshal(stdOut.Bytes(), response)
-	if err != nil {
+	if err = json.Unmarshal(stdOut.Bytes(), response); err != nil {
 		return nil, fmt.Errorf("error parsing ClusterResourceSet response: %v", err)
+	}
+
+	return response, nil
+}
+
+func (k *Kubectl) GetConfigMap(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.ConfigMap, error) {
+	params := []string{"get", "configmap", name, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting ConfigMap with kubectl: %v", err)
+	}
+
+	response := &corev1.ConfigMap{}
+	if err = json.Unmarshal(stdOut.Bytes(), response); err != nil {
+		return nil, fmt.Errorf("error parsing ConfigMap response: %v", err)
 	}
 
 	return response, nil

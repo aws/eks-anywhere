@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
 	"sigs.k8s.io/cluster-api/api/v1alpha3"
@@ -1277,4 +1278,38 @@ func TestKubectlGetClusterResourceSet(t *testing.T) {
 	gotResourceSet, err := tt.k.GetClusterResourceSet(tt.ctx, tt.cluster.KubeconfigFile, resourceSetName, tt.namespace)
 	tt.Expect(err).To(BeNil())
 	tt.Expect(gotResourceSet).To(Equal(wantResourceSet))
+}
+
+func TestKubectlGetConfigMap(t *testing.T) {
+	tt := newKubectlTest(t)
+	configmapJson := test.ReadFile(t, "testdata/kubectl_configmap.json")
+	configmapName := "csi.vsphere.vmware.com"
+	wantConfigmap := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      configmapName,
+			Namespace: "eksa-system",
+		},
+		Data: map[string]string{
+			"data": `apiVersion: storage.k8s.io/v1
+kind: CSIDriver
+metadata:
+  name: csi.vsphere.vmware.com
+spec:
+  attachRequired: true
+`,
+		},
+	}
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"get", "configmap", configmapName, "-o", "json", "--kubeconfig", tt.cluster.KubeconfigFile, "--namespace", tt.namespace,
+	).Return(*bytes.NewBufferString(configmapJson), nil)
+
+	gotConfigmap, err := tt.k.GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, configmapName, tt.namespace)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(gotConfigmap).To(Equal(wantConfigmap))
 }
