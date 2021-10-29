@@ -270,6 +270,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/validations/mocks/kubectl.go -package=mocks -source "pkg/validations/kubectl.go" KubectlClient
 	${GOPATH}/bin/mockgen -destination=pkg/diagnostics/interfaces/mocks/diagnostics.go -package=mocks -source "pkg/diagnostics/interfaces.go" DiagnosticBundle,AnalyzerFactory,CollectorFactory,BundleClient
 	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/capiclient.go -package=mocks -source "pkg/clusterapi/upgrader.go" CAPIClient
+	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/client.go -package=mocks -source "pkg/clusterapi/resourceset_manager.go" Client
 	${GOPATH}/bin/mockgen -destination=pkg/crypto/mocks/crypto.go -package=mocks -source "pkg/crypto/certificategen.go" CertificateGenerator
 
 .PHONY: verify-mocks
