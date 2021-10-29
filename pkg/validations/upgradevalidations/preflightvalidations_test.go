@@ -15,8 +15,8 @@ import (
 	mockproviders "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
+	"github.com/aws/eks-anywhere/pkg/validations/mocks"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
-	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations/mocks"
 )
 
 const (
@@ -574,7 +574,7 @@ func TestPreflightValidations(t *testing.T) {
 			workloadCluster.Name = testclustername
 
 			mockCtrl := gomock.NewController(t)
-			k := mocks.NewMockValidationsKubectlClient(mockCtrl)
+			k := mocks.NewMockKubectlClient(mockCtrl)
 
 			provider := mockproviders.NewMockProvider(mockCtrl)
 			opts := &validations.Opts{
