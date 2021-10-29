@@ -421,3 +421,7 @@ func (p *provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.Compone
 		OldVersion:    currentSpec.VersionsBundle.Docker.Version,
 	}
 }
+
+func (p *provider) RunPostUpgrade(ctx context.Context, clusterSpec *cluster.Spec, managementCluster, workloadCluster *types.Cluster) error {
+	return nil
+}

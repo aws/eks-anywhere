@@ -338,6 +338,10 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return fmt.Errorf("error waiting for workload cluster capi components to be ready: %v", err)
 	}
 
+	if err = provider.RunPostUpgrade(ctx, clusterSpec, managementCluster, workloadCluster); err != nil {
+		return fmt.Errorf("failed running provider post upgrade: %v", err)
+	}
+
 	err = cluster.ApplyExtraObjects(ctx, c.clusterClient, workloadCluster, clusterSpec)
 	if err != nil {
 		return fmt.Errorf("error applying extra resources to workload cluster: %v", err)

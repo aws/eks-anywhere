@@ -1576,3 +1576,19 @@ func (p *vsphereProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.
 		OldVersion:    currentSpec.VersionsBundle.VSphere.Version,
 	}
 }
+
+func (p *vsphereProvider) RunPostUpgrade(ctx context.Context, clusterSpec *cluster.Spec, managementCluster, workloadCluster *types.Cluster) error {
+	// Step 1: Refresh ClusterResourceSet
+	// This is unfortunate, but ClusterResourceSet's don't support any type of reapply of the resources they manage
+	// Even if we create a new ClusterResourceSet, if such resources already exist in the cluster, they won't be reapplied
+	// The long term solution is to add this capability to the cluster-api controller, with a new mode like "ReApplyOnChanges" or "ReApplyOnCreate" vs the current "ReApplyOnce"
+	// resourceSetManager.ForceUpdate(ctx, "clusterName-crs-0", constants.EksaSystemNamespace, managementCluster)
+
+	// Step 2: Patch DaemonSet vsphere-cloud-controller-manager in namespace kube-system
+	// More unfortunate stuff. This DaemonSet is created by the capv controller. However, even if it's part of the reconciliation step
+	// it's never refreshed, it's only created once
+	// In new versions of the capv provider, this is not managed by the controller directly anymore but just with a ClusterResourceSet
+	// Which means that adding update capabilities to the ClusterResourceSet controller and updating our capv provider version will solve this problem
+	// p.providerKubectlClient.PatchDaeamonSet(ctx, "vsphere-cloud-controller-manager", "kube-system", {newImagePatch}, workloadCluster.KubeconfigFile)
+	return nil
+}
