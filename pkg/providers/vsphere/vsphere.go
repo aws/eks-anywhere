@@ -40,23 +40,26 @@ import (
 )
 
 const (
-	eksaLicense              = "EKSA_LICENSE"
-	vSphereUsernameKey       = "VSPHERE_USERNAME"
-	vSpherePasswordKey       = "VSPHERE_PASSWORD"
-	eksavSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
-	eksavSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
-	vSphereServerKey         = "VSPHERE_SERVER"
-	govcInsecure             = "GOVC_INSECURE"
-	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
-	secretObjectType         = "addons.cluster.x-k8s.io/resource-set"
-	secretObjectName         = "csi-vsphere-config"
-	credentialsObjectName    = "vsphere-credentials"
-	privateKeyFileName       = "eks-a-id_rsa"
-	publicKeyFileName        = "eks-a-id_rsa.pub"
-	defaultTemplateLibrary   = "eks-a-templates"
-	defaultTemplatesFolder   = "vm/Templates"
-	bottlerocketDefaultUser  = "ec2-user"
-	ubuntuDefaultUser        = "capv"
+	eksaLicense                           = "EKSA_LICENSE"
+	vSphereUsernameKey                    = "VSPHERE_USERNAME"
+	vSpherePasswordKey                    = "VSPHERE_PASSWORD"
+	eksavSphereUsernameKey                = "EKSA_VSPHERE_USERNAME"
+	eksavSpherePasswordKey                = "EKSA_VSPHERE_PASSWORD"
+	vSphereServerKey                      = "VSPHERE_SERVER"
+	govcInsecure                          = "GOVC_INSECURE"
+	expClusterResourceSetKey              = "EXP_CLUSTER_RESOURCE_SET"
+	secretObjectType                      = "addons.cluster.x-k8s.io/resource-set"
+	secretObjectName                      = "csi-vsphere-config"
+	credentialsObjectName                 = "vsphere-credentials"
+	privateKeyFileName                    = "eks-a-id_rsa"
+	publicKeyFileName                     = "eks-a-id_rsa.pub"
+	defaultTemplateLibrary                = "eks-a-templates"
+	defaultTemplatesFolder                = "vm/Templates"
+	bottlerocketDefaultUser               = "ec2-user"
+	ubuntuDefaultUser                     = "capv"
+	cloudControllerDaemonSetName          = "vsphere-cloud-controller-manager"
+	cloudControllerDaemonSetNamespace     = "kube-system"
+	cloudControllerDaemonSetContainerName = "vsphere-cloud-controller-manager"
 )
 
 //go:embed config/template-cp.yaml
@@ -140,6 +143,7 @@ type ProviderKubectlClient interface {
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 	SearchVsphereMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereMachineConfig, error)
 	SearchVsphereDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error)
+	SetDaemonSetImage(ctx context.Context, kubeconfigFile, name, namespace, container, image string) error
 }
 
 type ClusterResourceSetManager interface {
@@ -1624,7 +1628,16 @@ func (p *vsphereProvider) RunPostUpgrade(ctx context.Context, clusterSpec *clust
 	// it's never refreshed, it's only created once
 	// In new versions of the capv provider, this is not managed by the controller directly anymore but just with a ClusterResourceSet
 	// Which means that adding update capabilities to the ClusterResourceSet controller and updating our capv provider version will solve this problem
-	// p.providerKubectlClient.PatchDaeamonSet(ctx, "vsphere-cloud-controller-manager", "kube-system", {newImagePatch}, workloadCluster.KubeconfigFile)
+	if err := p.providerKubectlClient.SetDaemonSetImage(
+		ctx,
+		workloadCluster.KubeconfigFile,
+		cloudControllerDaemonSetName,
+		cloudControllerDaemonSetNamespace,
+		cloudControllerDaemonSetContainerName,
+		clusterSpec.VersionsBundle.VSphere.Manager.VersionedImage(),
+	); err != nil {
+		return fmt.Errorf("failed updating the vs[here cloud controller manager daemonset post upgrade: %v", err)
+	}
 	return nil
 }
 
