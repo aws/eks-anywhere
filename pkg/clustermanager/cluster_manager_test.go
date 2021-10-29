@@ -460,13 +460,14 @@ func TestClusterManagerUpgradeWorkloadClusterSuccess(t *testing.T) {
 		s.Spec.ControlPlaneConfiguration.Count = 3
 		s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 	})
+	newClusterSpec := wClusterSpec.DeepCopy()
 
 	wCluster := &types.Cluster{
 		Name: clusterName,
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateCAPISpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
+	m.provider.EXPECT().GenerateCAPISpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec, newClusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace).Times(2)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", clusterName).MaxTimes(2)
 	m.client.EXPECT().GetMachines(ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil).Times(2)
@@ -476,7 +477,7 @@ func TestClusterManagerUpgradeWorkloadClusterSuccess(t *testing.T) {
 	m.provider.EXPECT().GetDeployments()
 	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 
-	if err := c.UpgradeCluster(ctx, mCluster, wCluster, wClusterSpec, m.provider); err != nil {
+	if err := c.UpgradeCluster(ctx, mCluster, wCluster, wClusterSpec, newClusterSpec, m.provider); err != nil {
 		t.Errorf("ClusterManager.UpgradeCluster() error = %v, wantErr nil", err)
 	}
 }
@@ -493,13 +494,14 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForMachinesTimeout(t *testing.T
 		s.Spec.ControlPlaneConfiguration.Count = 3
 		s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 	})
+	newClusterSpec := wClusterSpec.DeepCopy()
 
 	wCluster := &types.Cluster{
 		Name: clusterName,
 	}
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 50*time.Microsecond, 100*time.Microsecond))
-	m.provider.EXPECT().GenerateCAPISpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
+	m.provider.EXPECT().GenerateCAPISpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec, newClusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", clusterName)
 	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
@@ -510,7 +512,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForMachinesTimeout(t *testing.T
 		Labels: map[string]string{clusterv1.MachineControlPlaneLabelName: ""},
 	}}}, nil)
 
-	if err := c.UpgradeCluster(ctx, mCluster, wCluster, wClusterSpec, m.provider); err == nil {
+	if err := c.UpgradeCluster(ctx, mCluster, wCluster, wClusterSpec, newClusterSpec, m.provider); err == nil {
 		t.Error("ClusterManager.UpgradeCluster() error = nil, wantErr not nil")
 	}
 }
@@ -527,6 +529,7 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesFailedWithUnhealthyNo
 		s.Spec.ControlPlaneConfiguration.Count = 3
 		s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 	})
+	newClusterSpec := wClusterSpec.DeepCopy()
 
 	wCluster := &types.Cluster{
 		Name: clusterName,
@@ -546,7 +549,7 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesFailedWithUnhealthyNo
 	}
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 50*time.Microsecond, 100*time.Microsecond))
-	m.provider.EXPECT().GenerateCAPISpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
+	m.provider.EXPECT().GenerateCAPISpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec, newClusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", clusterName).MaxTimes(5)
 	m.client.EXPECT().WaitForDeployment(ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
@@ -554,7 +557,7 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesFailedWithUnhealthyNo
 	// Return a machine with no nodeRef the rest of the retries
 	m.client.EXPECT().GetMachines(ctx, mCluster, mCluster.Name).MinTimes(1).Return(machines, nil)
 
-	if err := c.UpgradeCluster(ctx, mCluster, wCluster, wClusterSpec, m.provider); err == nil {
+	if err := c.UpgradeCluster(ctx, mCluster, wCluster, wClusterSpec, newClusterSpec, m.provider); err == nil {
 		t.Error("ClusterManager.UpgradeCluster() error = nil, wantErr not nil")
 	}
 }
@@ -571,13 +574,14 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForCAPITimeout(t *testing.T) {
 		s.Spec.ControlPlaneConfiguration.Count = 3
 		s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 	})
+	newClusterSpec := wClusterSpec.DeepCopy()
 
 	wCluster := &types.Cluster{
 		Name: clusterName,
 	}
 
 	c, m := newClusterManager(t)
-	m.provider.EXPECT().GenerateCAPISpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec)
+	m.provider.EXPECT().GenerateCAPISpecForUpgrade(ctx, mCluster, wCluster, wClusterSpec, newClusterSpec)
 	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace).Times(2)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", clusterName).MaxTimes(2)
 	m.client.EXPECT().GetMachines(ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil).Times(2)
@@ -586,7 +590,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForCAPITimeout(t *testing.T) {
 	m.client.EXPECT().ValidateWorkerNodes(ctx, mCluster, wCluster.Name).Return(nil)
 	m.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 
-	if err := c.UpgradeCluster(ctx, mCluster, wCluster, wClusterSpec, m.provider); err == nil {
+	if err := c.UpgradeCluster(ctx, mCluster, wCluster, wClusterSpec, newClusterSpec, m.provider); err == nil {
 		t.Error("ClusterManager.UpgradeCluster() error = nil, wantErr not nil")
 	}
 }

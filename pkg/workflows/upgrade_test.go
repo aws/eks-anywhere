@@ -163,8 +163,9 @@ func (c *upgradeTestSetup) expectUpgradeWorkload(expectedCluster *types.Cluster)
 
 func (c *upgradeTestSetup) expectUpgradeWorkloadToReturn(expectedCluster *types.Cluster, err error) {
 	gomock.InOrder(
+		c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, expectedCluster, c.clusterSpec.Name).Return(c.clusterSpec, nil),
 		c.clusterManager.EXPECT().UpgradeCluster(
-			c.ctx, c.bootstrapCluster, expectedCluster, c.clusterSpec, c.provider,
+			c.ctx, c.bootstrapCluster, expectedCluster, c.clusterSpec, c.clusterSpec, c.provider,
 		).Return(err),
 	)
 }
