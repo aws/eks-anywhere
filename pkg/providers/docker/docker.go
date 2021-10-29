@@ -206,8 +206,8 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 	return values
 }
 
-func NeedsNewControlPlaneTemplate(oldC, newC *v1alpha1.Cluster) bool {
-	return oldC.Spec.KubernetesVersion != newC.Spec.KubernetesVersion
+func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
+	return (oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion) || (oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number)
 }
 
 func NeedsNewWorkloadTemplate(oldC, newC *v1alpha1.Cluster) bool {
@@ -218,7 +218,7 @@ func NeedsNewEtcdTemplate(oldC, newC *v1alpha1.Cluster) bool {
 	return oldC.Spec.KubernetesVersion != newC.Spec.KubernetesVersion
 }
 
-func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.ObjectMeta.Name
 	var controlPlaneTemplateName, workloadTemplateName, etcdTemplateName string
 	var needsNewEtcdTemplate bool
@@ -228,7 +228,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		return nil, nil, err
 	}
 
-	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(c, clusterSpec.Cluster)
+	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, clusterSpec)
 	if !needsNewControlPlaneTemplate {
 		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, workloadCluster.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -323,8 +323,8 @@ func (p *provider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec)
+func (p *provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
 	}

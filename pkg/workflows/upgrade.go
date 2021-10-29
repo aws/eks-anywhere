@@ -306,9 +306,14 @@ func (s *moveManagementToBootstrapTask) Name() string {
 
 func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	target := getManagemtCluster(commandContext)
+	currentSpec, err := commandContext.ClusterManager.GetCurrentClusterSpec(ctx, target, commandContext.ClusterSpec.Name)
+	if err != nil {
+		commandContext.SetError(err)
+		return nil
+	}
 
 	logger.Info("Upgrading workload cluster")
-	err := commandContext.ClusterManager.UpgradeCluster(ctx, commandContext.BootstrapCluster, target, commandContext.ClusterSpec, commandContext.Provider)
+	err = commandContext.ClusterManager.UpgradeCluster(ctx, commandContext.BootstrapCluster, target, currentSpec, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		if commandContext.BootstrapCluster.ExistingManagement {

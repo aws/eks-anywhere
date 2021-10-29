@@ -260,8 +260,8 @@ func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, c
 	)
 }
 
-func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
-	cpContent, mdContent, err := provider.GenerateCAPISpecForUpgrade(ctx, managementCluster, workloadCluster, clusterSpec)
+func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, currentSpec, clusterSpec *cluster.Spec, provider providers.Provider) error {
+	cpContent, mdContent, err := provider.GenerateCAPISpecForUpgrade(ctx, managementCluster, workloadCluster, currentSpec, clusterSpec)
 	if err != nil {
 		return fmt.Errorf("error generating capi spec: %v", err)
 	}
