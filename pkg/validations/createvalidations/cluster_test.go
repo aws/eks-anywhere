@@ -48,7 +48,7 @@ func TestValidateClusterPresent(t *testing.T) {
 		t.Run(tc.name, func(tt *testing.T) {
 			fileContent := test.ReadFile(t, tc.getClusterResponse)
 			e.EXPECT().Execute(ctx, []string{"get", capiClustersResourceType, "-o", "json", "--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}).Return(*bytes.NewBufferString(fileContent), nil)
-			err := createvalidations.ValidateClusterObjectExists(ctx, k, cluster, testclustername)
+			err := createvalidations.ValidateClusterNameIsUnique(ctx, k, cluster, testclustername)
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}

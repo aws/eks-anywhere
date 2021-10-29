@@ -8,7 +8,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
-func ValidateClusterObjectExists(ctx context.Context, k validations.KubectlClient, cluster *types.Cluster, clusterName string) error {
+func ValidateClusterNameIsUnique(ctx context.Context, k validations.KubectlClient, cluster *types.Cluster, clusterName string) error {
 	c, err := k.GetClusters(ctx, cluster)
 	if err != nil {
 		return err

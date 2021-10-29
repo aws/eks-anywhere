@@ -2,6 +2,7 @@ package createvalidations
 
 import (
 	"context"
+
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -21,7 +22,7 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 			validations.ValidationResult{
 				Name:        "validate cluster name",
 				Remediation: "",
-				Err:         ValidateClusterObjectExists(ctx, k, targetCluster, u.Opts.Spec.Name),
+				Err:         ValidateClusterNameIsUnique(ctx, k, targetCluster, u.Opts.Spec.Name),
 			},
 		)
 	}
