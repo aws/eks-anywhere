@@ -1,0 +1,54 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: eksa-unit-test
+spec:
+  clusterNetwork:
+    cni: cilium
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 3
+    endpoint:
+      host: test-ip
+    machineGroupRef:
+      kind: CloudstackMachineConfig
+      name: eksa-unit-test
+  datacenterRef:
+    kind: CloudstackDatacenterConfig
+    name: eksa-unit-test
+  kubernetesVersion: "1.19"
+  workerNodeGroupConfigurations:
+    - count: 3
+      machineGroupRef:
+        kind: CloudstackMachineConfig
+        name: eksa-unit-test
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudstackDatacenterConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  account: "admin"
+  control_plane_endpoint: "https://127.0.0.1:8080/client/api"
+  domain: "domain1"
+  insecure: false
+  network: "net1"
+  zone: "zone1"
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudstackMachineConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  compute_offering: "m4-large"
+  disk_offering: "ssd-100GB"
+  key_pair: "cloudstack-keypair"
+  osFamily: "ubuntu"
+  template: "centos7-k8s-119"

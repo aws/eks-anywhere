@@ -1,0 +1,24 @@
+# permissions for end users to edit cloudstackdatacenterconfigs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cloudstackdatacenterconfig-editor-role
+rules:
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - cloudstackdatacenterconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - cloudstackdatacenterconfigs/status
+  verbs:
+  - get
