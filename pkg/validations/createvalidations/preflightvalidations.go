@@ -34,6 +34,11 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 				Remediation: "",
 				Err:         ValidateDatacenterNameIsUnique(ctx, k, targetCluster, u.Opts.Spec),
 			},
+			validations.ValidationResult{
+				Name:        "validate identityproviders name",
+				Remediation: "",
+				Err:         ValidateIdentityProviderNameIsUnique(ctx, k, targetCluster, u.Opts.Spec),
+			},
 		)
 	}
 

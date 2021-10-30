@@ -392,6 +392,10 @@ type VSphereDatacenterConfigResponse struct {
 	Items []*v1alpha1.VSphereDatacenterConfig `json:"items,omitempty"`
 }
 
+type IdentityProviderConfigResponse struct {
+	Items []*v1alpha1.Ref `json:"items,omitempty"`
+}
+
 func (k *Kubectl) ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error {
 	params := []string{"get", "crd", capiClustersResourceType, "--kubeconfig", cluster.KubeconfigFile}
 	_, err := k.executable.Execute(ctx, params...)
@@ -674,6 +678,36 @@ func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, cl
 	}
 
 	return response, nil
+}
+
+func (k *Kubectl) SearchIdentityProviderConfig(ctx context.Context, ipName string, kind string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
+	var internalType string
+
+	switch kind {
+	case v1alpha1.OIDCConfigKind:
+		internalType = fmt.Sprintf("oidcconfigs.%s", v1alpha1.GroupVersion.Group)
+	case v1alpha1.AWSIamConfigKind:
+		internalType = fmt.Sprintf("awsiamconfigs.%s", v1alpha1.GroupVersion.Group)
+	default:
+		return nil, fmt.Errorf("invalid identity provider %s", kind)
+	}
+
+	params := []string{
+		"get", internalType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + ipName,
+	}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error searching eksa IdentityProvider: %v", err)
+	}
+
+	response := &VSphereDatacenterConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing IdentityProviderConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
 }
 
 func (k *Kubectl) SearchVsphereDatacenterConfig(ctx context.Context, datacenterName string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error) {

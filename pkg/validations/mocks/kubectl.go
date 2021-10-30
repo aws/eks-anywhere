@@ -142,6 +142,21 @@ func (mr *MockKubectlClientMockRecorder) SearchEksaGitOpsConfig(ctx, gitOpsConfi
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchEksaGitOpsConfig", reflect.TypeOf((*MockKubectlClient)(nil).SearchEksaGitOpsConfig), ctx, gitOpsConfigName, kubeconfigFile, namespace)
 }
 
+// SearchIdentityProviderConfig mocks base method.
+func (m *MockKubectlClient) SearchIdentityProviderConfig(ctx context.Context, ipName, kind, kubeconfigFile, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchIdentityProviderConfig", ctx, ipName, kind, kubeconfigFile, namespace)
+	ret0, _ := ret[0].([]*v1alpha1.VSphereDatacenterConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchIdentityProviderConfig indicates an expected call of SearchIdentityProviderConfig.
+func (mr *MockKubectlClientMockRecorder) SearchIdentityProviderConfig(ctx, ipName, kind, kubeconfigFile, namespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchIdentityProviderConfig", reflect.TypeOf((*MockKubectlClient)(nil).SearchIdentityProviderConfig), ctx, ipName, kind, kubeconfigFile, namespace)
+}
+
 // SearchVsphereDatacenterConfig mocks base method.
 func (m *MockKubectlClient) SearchVsphereDatacenterConfig(ctx context.Context, gitOpsConfigName, kubeconfigFile, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
 	m.ctrl.T.Helper()
