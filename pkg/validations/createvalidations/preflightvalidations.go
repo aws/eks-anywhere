@@ -29,6 +29,11 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 				Remediation: "",
 				Err:         ValidateGitOpsNameIsUnique(ctx, k, targetCluster, u.Opts.Spec),
 			},
+			validations.ValidationResult{
+				Name:        "validate vspheredatacenterconfig name",
+				Remediation: "",
+				Err:         ValidateDatacenterNameIsUnique(ctx, k, targetCluster, u.Opts.Spec),
+			},
 		)
 	}
 
