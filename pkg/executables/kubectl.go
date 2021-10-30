@@ -384,6 +384,10 @@ type ClustersResponse struct {
 	Items []types.CAPICluster `json:"items,omitempty"`
 }
 
+type GitOpsConfigResponse struct {
+	Items []*v1alpha1.GitOpsConfig `json:"items,omitempty"`
+}
+
 func (k *Kubectl) ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error {
 	params := []string{"get", "crd", capiClustersResourceType, "--kubeconfig", cluster.KubeconfigFile}
 	_, err := k.executable.Execute(ctx, params...)
@@ -666,6 +670,25 @@ func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, cl
 	}
 
 	return response, nil
+}
+
+func (k *Kubectl) SearchEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) ([]*v1alpha1.GitOpsConfig, error) {
+	params := []string{
+		"get", eksaGitOpsResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + gitOpsConfigName,
+	}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error searching eksa GitOpsConfig: %v", err)
+	}
+
+	response := &GitOpsConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing GitOpsConfig response: %v", err)
+	}
+
+	return response.Items, nil
 }
 
 func (k *Kubectl) GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error) {
