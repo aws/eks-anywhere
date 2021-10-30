@@ -21,6 +21,7 @@ const (
 	LocalPathStorageNamespace                 = "local-path-storage"
 
 	VSphereProviderName = "vsphere"
+	CloudstackProviderName = "cloudstack"
 	DockerProviderName  = "docker"
 	AWSProviderName     = "aws"
 )

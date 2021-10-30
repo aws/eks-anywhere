@@ -1,0 +1,20 @@
+# permissions for end users to view cloudstackdatacenterconfigs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cloudstackdatacenterconfig-viewer-role
+rules:
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - cloudstackdatacenterconfigs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - anywhere.eks.amazonaws.com
+  resources:
+  - cloudstackdatacenterconfigs/status
+  verbs:
+  - get
