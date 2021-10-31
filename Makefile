@@ -80,6 +80,13 @@ eks-a-binary:
 eks-a-embed-config: ## Build a dev release version of eks-a with embed cluster spec config
 	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) RELEASE_MANIFEST_URL=embed:///config/releases.yaml BUILD_TAGS='$(BUILD_TAGS) spec_embed_config'
 
+.PHONY: eks-a-cross-platform-embed-latest-config
+eks-a-cross-platform-embed-latest-config: ## Build cross platform dev release versions of eks-a with the latest bundle-release.yaml embedded in cluster spec config
+	curl -L $(BUNDLE_MANIFEST_URL) --output pkg/cluster/config/bundle-release.yaml
+	$(MAKE) eks-a-embed-config GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/eksctl-anywhere
+	$(MAKE) eks-a-embed-config GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/eksctl-anywhere
+	rm pkg/cluster/config/bundle-release.yaml
+
 .PHONY: eks-a
 eks-a: ## Build a dev release version of eks-a
 	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION)
