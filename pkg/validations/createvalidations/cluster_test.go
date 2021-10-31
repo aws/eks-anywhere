@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"sigs.k8s.io/cluster-api/api/v1alpha3"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -56,4 +57,58 @@ func TestValidateClusterPresent(t *testing.T) {
 	}
 }
 
-var capiClustersResourceType = fmt.Sprintf("clusters.%s", v1alpha3.GroupVersion.Group)
+func TestValidateManagementClusterCRDs(t *testing.T) {
+	tests := []struct {
+		name                      string
+		wantErr                   bool
+		errGetClusterCRD          error
+		errGetClusterCRDCount     int
+		errGetEKSAClusterCRD      error
+		errGetEKSAClusterCRDCount int
+	}{
+		{
+			name:                      "Success",
+			wantErr:                   false,
+			errGetClusterCRD:          nil,
+			errGetClusterCRDCount:     1,
+			errGetEKSAClusterCRD:      nil,
+			errGetEKSAClusterCRDCount: 1,
+		},
+		{
+			name:                      "FailureClusterCRDDoesNotExist",
+			wantErr:                   true,
+			errGetClusterCRD:          errors.New("cluster CRD does not exist"),
+			errGetClusterCRDCount:     1,
+			errGetEKSAClusterCRD:      nil,
+			errGetEKSAClusterCRDCount: 0,
+		},
+		{
+			name:                      "FailureEKSAClusterCRDDoesNotExist",
+			wantErr:                   true,
+			errGetClusterCRD:          nil,
+			errGetClusterCRDCount:     1,
+			errGetEKSAClusterCRD:      errors.New("eksa cluster CRDS do not exist"),
+			errGetEKSAClusterCRDCount: 1,
+		},
+	}
+
+	k, ctx, cluster, e := validations.NewKubectl(t)
+	cluster.Name = testclustername
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			e.EXPECT().Execute(ctx, []string{"get", "crd", capiClustersResourceType, "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, tc.errGetClusterCRD).Times(tc.errGetClusterCRDCount)
+			e.EXPECT().Execute(ctx, []string{"get", "crd", eksaClusterResourceType, "--kubeconfig", cluster.KubeconfigFile}).Return(bytes.Buffer{}, tc.errGetEKSAClusterCRD).Times(tc.errGetEKSAClusterCRDCount)
+			err := createvalidations.ValidateManagementCluster(ctx, k, cluster)
+			if tc.wantErr {
+				assert.Error(tt, err, "expected ValidateManagementCluster to return an error", "test", tc.name)
+			} else {
+				assert.NoError(tt, err, "expected ValidateManagementCluster not to return an error", "test", tc.name)
+			}
+		})
+	}
+}
+
+var (
+	capiClustersResourceType = fmt.Sprintf("clusters.%s", v1alpha3.GroupVersion.Group)
+	eksaClusterResourceType  = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
+)

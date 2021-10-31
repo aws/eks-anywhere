@@ -17,6 +17,7 @@ type KubectlClient interface {
 	ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
 	ValidateNodes(ctx context.Context, kubeconfig string) error
 	ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error
+	ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cluster) error
 	Version(ctx context.Context, cluster *types.Cluster) (*executables.VersionResponse, error)
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)

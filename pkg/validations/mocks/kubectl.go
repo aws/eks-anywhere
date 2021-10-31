@@ -200,6 +200,20 @@ func (mr *MockKubectlClientMockRecorder) ValidateControlPlaneNodes(ctx, cluster,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateControlPlaneNodes", reflect.TypeOf((*MockKubectlClient)(nil).ValidateControlPlaneNodes), ctx, cluster, clusterName)
 }
 
+// ValidateEKSAClustersCRD mocks base method.
+func (m *MockKubectlClient) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateEKSAClustersCRD", ctx, cluster)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateEKSAClustersCRD indicates an expected call of ValidateEKSAClustersCRD.
+func (mr *MockKubectlClientMockRecorder) ValidateEKSAClustersCRD(ctx, cluster interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateEKSAClustersCRD", reflect.TypeOf((*MockKubectlClient)(nil).ValidateEKSAClustersCRD), ctx, cluster)
+}
+
 // ValidateNodes mocks base method.
 func (m *MockKubectlClient) ValidateNodes(ctx context.Context, kubeconfig string) error {
 	m.ctrl.T.Helper()

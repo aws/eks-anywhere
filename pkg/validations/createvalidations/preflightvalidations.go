@@ -39,6 +39,11 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 				Remediation: "",
 				Err:         ValidateIdentityProviderNameIsUnique(ctx, k, targetCluster, u.Opts.Spec),
 			},
+			validations.ValidationResult{
+				Name:        "validate management cluster has eksa crds",
+				Remediation: "",
+				Err:         ValidateManagementCluster(ctx, k, targetCluster),
+			},
 		)
 	}
 

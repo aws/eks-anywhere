@@ -32,6 +32,7 @@ const (
 
 var (
 	capiClustersResourceType          = fmt.Sprintf("clusters.%s", v1alpha3.GroupVersion.Group)
+	eksaClusterResourceType           = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaAwsResourceType               = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -405,6 +406,15 @@ func (k *Kubectl) ValidateClustersCRD(ctx context.Context, cluster *types.Cluste
 	_, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error getting clusters crd: %v", err)
+	}
+	return nil
+}
+
+func (k *Kubectl) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cluster) error {
+	params := []string{"get", "crd", eksaClusterResourceType, "--kubeconfig", cluster.KubeconfigFile}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error getting eksa clusters crd: %v", err)
 	}
 	return nil
 }
