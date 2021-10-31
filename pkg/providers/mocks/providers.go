@@ -466,6 +466,34 @@ func (m *MockMachineConfig) EXPECT() *MockMachineConfigMockRecorder {
 	return m.recorder
 }
 
+// GetName mocks base method.
+func (m *MockMachineConfig) GetName() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetName")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetName indicates an expected call of GetName.
+func (mr *MockMachineConfigMockRecorder) GetName() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetName", reflect.TypeOf((*MockMachineConfig)(nil).GetName))
+}
+
+// GetNamespace mocks base method.
+func (m *MockMachineConfig) GetNamespace() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNamespace")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetNamespace indicates an expected call of GetNamespace.
+func (mr *MockMachineConfigMockRecorder) GetNamespace() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNamespace", reflect.TypeOf((*MockMachineConfig)(nil).GetNamespace))
+}
+
 // Marshallable mocks base method.
 func (m *MockMachineConfig) Marshallable() v1alpha1.Marshallable {
 	m.ctrl.T.Helper()

@@ -800,6 +800,105 @@ func TestSetupAndValidateCreateClusterNoPassword(t *testing.T) {
 	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_PASSWORD is not set or is empty", err)
 }
 
+func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
+	ctx := context.Background()
+	provider := givenProvider(t)
+	clusterSpec := givenEmptyClusterSpec()
+	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
+	var tctx testContext
+	tctx.SaveContext()
+	defer tctx.RestoreContext()
+
+	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	clusterSpec.SetManagedBy("management-cluster")
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+	for _, config := range newMachineConfigs {
+		kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil)
+	}
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+	assert.NoError(t, err, "No error should be returned")
+}
+
+func TestSetupAndValidateCreateWorkloadClusterFailsIfMachineExists(t *testing.T) {
+	ctx := context.Background()
+	provider := givenProvider(t)
+	clusterSpec := givenEmptyClusterSpec()
+	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
+	var tctx testContext
+	tctx.SaveContext()
+	defer tctx.RestoreContext()
+
+	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	clusterSpec.SetManagedBy("management-cluster")
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+
+	idx := 0
+	var existingMachine string
+	for _, config := range newMachineConfigs {
+		if idx == 0 {
+			kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{config}, nil)
+			existingMachine = config.Name
+		} else {
+			kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil).MaxTimes(1)
+		}
+		idx++
+	}
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+
+	thenErrorExpected(t, fmt.Sprintf("VSphereMachineConfig %s already exists", existingMachine), err)
+}
+
+func TestSetupAndValidateSelfManagedClusterSkipMachineNameValidateSuccess(t *testing.T) {
+	ctx := context.Background()
+	provider := givenProvider(t)
+	clusterSpec := givenEmptyClusterSpec()
+	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
+	var tctx testContext
+	tctx.SaveContext()
+	defer tctx.RestoreContext()
+
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+
+	kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+	assert.NoError(t, err, "No error should be returned")
+}
+
 func TestSetupAndValidateDeleteCluster(t *testing.T) {
 	ctx := context.Background()
 	provider := givenProvider(t)

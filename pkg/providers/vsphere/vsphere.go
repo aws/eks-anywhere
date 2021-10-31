@@ -137,6 +137,7 @@ type ProviderKubectlClient interface {
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error)
 	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
+	SearchVsphereMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereMachineConfig, error)
 }
 
 func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *vsphereProvider {
@@ -858,6 +859,19 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 	if err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
+
+	if clusterSpec.IsManaged() {
+		for _, mc := range p.MachineConfigs() {
+			em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, mc.GetName(), clusterSpec.ManagementCluster.KubeconfigFile, mc.GetNamespace())
+			if err != nil {
+				return err
+			}
+			if len(em) > 0 {
+				return fmt.Errorf("VSphereMachineConfig %s already exists", mc.GetName())
+			}
+		}
+	}
+
 	if p.skipIpCheck {
 		logger.Info("Skipping check for whether control plane ip is in use")
 		return nil

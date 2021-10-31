@@ -55,4 +55,6 @@ type TemplateBuilder interface {
 type MachineConfig interface {
 	OSFamily() v1alpha1.OSFamily
 	Marshallable() v1alpha1.Marshallable
+	GetNamespace() string
+	GetName() string
 }

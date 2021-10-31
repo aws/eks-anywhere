@@ -396,6 +396,10 @@ type IdentityProviderConfigResponse struct {
 	Items []*v1alpha1.Ref `json:"items,omitempty"`
 }
 
+type VSphereMachineConfigResponse struct {
+	Items []*v1alpha1.VSphereMachineConfig `json:"items,omitempty"`
+}
+
 func (k *Kubectl) ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error {
 	params := []string{"get", "crd", capiClustersResourceType, "--kubeconfig", cluster.KubeconfigFile}
 	_, err := k.executable.Execute(ctx, params...)
@@ -678,6 +682,25 @@ func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, cl
 	}
 
 	return response, nil
+}
+
+func (k *Kubectl) SearchVsphereMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereMachineConfig, error) {
+	params := []string{
+		"get", eksaVSphereMachineResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error searching eksa VSphereMachineConfigResponse: %v", err)
+	}
+
+	response := &VSphereMachineConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing VSphereMachineConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
 }
 
 func (k *Kubectl) SearchIdentityProviderConfig(ctx context.Context, ipName string, kind string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
