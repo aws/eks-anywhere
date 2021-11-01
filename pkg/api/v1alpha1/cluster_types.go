@@ -42,55 +42,50 @@ type ClusterSpec struct {
 	ExternalEtcdConfiguration   *ExternalEtcdConfiguration   `json:"externalEtcdConfiguration,omitempty"`
 	ProxyConfiguration          *ProxyConfiguration          `json:"proxyConfiguration,omitempty"`
 	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
-	// +kubebuilder:validation:Optional
-	Management *bool `json:"management,omitempty"`
+	ManagementCluster           ManagementCluster            `json:"managementCluster,omitempty"`
 }
 
-func (n *ClusterSpec) Equal(o *ClusterSpec) bool {
+func (n *Cluster) Equal(o *Cluster) bool {
 	if n == o {
 		return true
 	}
 	if n == nil || o == nil {
 		return false
 	}
-	if n.KubernetesVersion != o.KubernetesVersion {
+	if n.Spec.KubernetesVersion != o.Spec.KubernetesVersion {
 		return false
 	}
-	if !n.ControlPlaneConfiguration.Equal(&o.ControlPlaneConfiguration) {
+	if !n.Spec.ControlPlaneConfiguration.Equal(&o.Spec.ControlPlaneConfiguration) {
 		return false
 	}
-	if !WorkerNodeGroupConfigurationsSliceEqual(n.WorkerNodeGroupConfigurations, o.WorkerNodeGroupConfigurations) {
+	if !WorkerNodeGroupConfigurationsSliceEqual(n.Spec.WorkerNodeGroupConfigurations, o.Spec.WorkerNodeGroupConfigurations) {
 		return false
 	}
-	if !n.DatacenterRef.Equal(&o.DatacenterRef) {
+	if !n.Spec.DatacenterRef.Equal(&o.Spec.DatacenterRef) {
 		return false
 	}
-	if !RefSliceEqual(n.IdentityProviderRefs, o.IdentityProviderRefs) {
+	if !RefSliceEqual(n.Spec.IdentityProviderRefs, o.Spec.IdentityProviderRefs) {
 		return false
 	}
-	if !n.GitOpsRef.Equal(o.GitOpsRef) {
+	if !n.Spec.GitOpsRef.Equal(o.Spec.GitOpsRef) {
 		return false
 	}
-	if !n.ClusterNetwork.Equal(&o.ClusterNetwork) {
+	if !n.Spec.ClusterNetwork.Equal(&o.Spec.ClusterNetwork) {
 		return false
 	}
-	if !n.ExternalEtcdConfiguration.Equal(o.ExternalEtcdConfiguration) {
+	if !n.Spec.ExternalEtcdConfiguration.Equal(o.Spec.ExternalEtcdConfiguration) {
 		return false
 	}
-	if !n.ProxyConfiguration.Equal(o.ProxyConfiguration) {
+	if !n.Spec.ProxyConfiguration.Equal(o.Spec.ProxyConfiguration) {
 		return false
 	}
-	if !n.RegistryMirrorConfiguration.Equal(o.RegistryMirrorConfiguration) {
+	if !n.Spec.RegistryMirrorConfiguration.Equal(o.Spec.RegistryMirrorConfiguration) {
 		return false
 	}
-	if n.isSelfManaged() != o.isSelfManaged() {
+	if !n.ManagementClusterEqual(o) {
 		return false
 	}
 	return true
-}
-
-func (s *ClusterSpec) isSelfManaged() bool {
-	return s.Management == nil || *s.Management
 }
 
 type ProxyConfiguration struct {
@@ -337,6 +332,14 @@ func (n *ExternalEtcdConfiguration) Equal(o *ExternalEtcdConfiguration) bool {
 	return n.Count == o.Count && n.MachineGroupRef.Equal(o.MachineGroupRef)
 }
 
+type ManagementCluster struct {
+	Name string `json:"name,omitempty"`
+}
+
+func (n *ManagementCluster) Equal(o ManagementCluster) bool {
+	return n.Name == o.Name
+}
+
 // +kubebuilder:object:root=true
 // Cluster is the Schema for the clusters API
 type Cluster struct {
@@ -380,8 +383,8 @@ func (c *Cluster) EtcdAnnotation() string {
 	return etcdAnnotation
 }
 
-func (c *Cluster) IsSelfManaged() bool {
-	return c.Spec.isSelfManaged()
+func (s *Cluster) IsSelfManaged() bool {
+	return s.Spec.ManagementCluster.Name == "" || s.Spec.ManagementCluster.Name == s.Name
 }
 
 func (s *Cluster) SetManagedBy(managementClusterName string) {
@@ -390,17 +393,15 @@ func (s *Cluster) SetManagedBy(managementClusterName string) {
 	}
 
 	s.Annotations[managementAnnotation] = managementClusterName
-	f := false
-	s.Spec.Management = &f
+	s.Spec.ManagementCluster.Name = managementClusterName
 }
 
 func (s *Cluster) SetSelfManaged() {
-	t := true
-	s.Spec.Management = &t
+	s.Spec.ManagementCluster.Name = s.Name
 }
 
 func (s *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
-	return s.IsSelfManaged() == s2.IsSelfManaged()
+	return s.IsSelfManaged() && s2.IsSelfManaged() || s.Spec.ManagementCluster.Equal(s2.Spec.ManagementCluster)
 }
 
 func (c *Cluster) MachineConfigRefs() []Ref {
@@ -454,11 +455,11 @@ func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
 }
 
 func (c *Cluster) IsManaged() bool {
-	return c.Annotations[managementAnnotation] != ""
+	return !c.IsSelfManaged()
 }
 
 func (c *Cluster) ManagedBy() string {
-	return c.Annotations[managementAnnotation]
+	return c.Spec.ManagementCluster.Name
 }
 
 // +kubebuilder:object:root=true

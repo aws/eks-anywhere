@@ -16,6 +16,8 @@ spec:
   identityProviderRefs:
   - kind: OIDCConfig
     name: config
+  managementCluster:
+    name: mycluster
   workerNodeGroupConfigurations:
   - {}
 

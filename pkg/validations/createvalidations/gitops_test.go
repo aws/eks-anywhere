@@ -51,8 +51,6 @@ func TestValidateGitopsForWorkloadClusters(t *testing.T) {
 	}
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		nb := false
-		s.Spec.Management = &nb
 		s.Name = testclustername
 		s.Spec.GitOpsRef = &v1alpha1.Ref{
 			Kind: v1alpha1.GitOpsConfigKind,
@@ -97,8 +95,7 @@ func TestSkipValidateGitopsWithNoGitOpts(t *testing.T) {
 	}
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		nb := false
-		s.Spec.Management = &nb
+		s.SetManagedBy("management-cluster")
 		s.Name = testclustername
 
 		s.GitOpsConfig = nil
@@ -153,8 +150,6 @@ func TestValidateGitopsForSelfManagedCluster(t *testing.T) {
 	}
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		nb := false
-		s.Spec.Management = &nb
 		s.Name = testclustername
 		s.Spec.GitOpsRef = &v1alpha1.Ref{
 			Kind: v1alpha1.GitOpsConfigKind,

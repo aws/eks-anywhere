@@ -4,13 +4,10 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
-
-func boolPointer(b bool) *bool {
-	return &b
-}
 
 func TestClusterMachineConfigRefs(t *testing.T) {
 	cluster := &v1alpha1.Cluster{
@@ -95,24 +92,34 @@ func TestClusterIsSelfManaged(t *testing.T) {
 		want     bool
 	}{
 		{
-			testName: "nil flag",
+			testName: "empty name",
 			cluster:  &v1alpha1.Cluster{},
 			want:     true,
 		},
 		{
-			testName: "true flag",
+			testName: "name same as self",
 			cluster: &v1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster-1",
+				},
 				Spec: v1alpha1.ClusterSpec{
-					Management: boolPointer(true),
+					ManagementCluster: v1alpha1.ManagementCluster{
+						Name: "cluster-1",
+					},
 				},
 			},
 			want: true,
 		},
 		{
-			testName: "false flag",
+			testName: "name different tha self",
 			cluster: &v1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster-2",
+				},
 				Spec: v1alpha1.ClusterSpec{
-					Management: boolPointer(false),
+					ManagementCluster: v1alpha1.ManagementCluster{
+						Name: "cluster-1",
+					},
 				},
 			},
 			want: false,
@@ -182,7 +189,7 @@ func TestClusterManagementClusterEqual(t *testing.T) {
 	}
 }
 
-func TestClusterSpecEqualKubernetesVersion(t *testing.T) {
+func TestClusterEqualKubernetesVersion(t *testing.T) {
 	testCases := []struct {
 		testName                         string
 		cluster1Version, cluster2Version v1alpha1.KubernetesVersion
@@ -215,20 +222,24 @@ func TestClusterSpecEqualKubernetesVersion(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
-			clusterSpec1 := &v1alpha1.ClusterSpec{
-				KubernetesVersion: tt.cluster1Version,
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					KubernetesVersion: tt.cluster1Version,
+				},
 			}
-			clusterSpec2 := &v1alpha1.ClusterSpec{
-				KubernetesVersion: tt.cluster2Version,
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					KubernetesVersion: tt.cluster2Version,
+				},
 			}
 
 			g := NewWithT(t)
-			g.Expect(clusterSpec1.Equal(clusterSpec2)).To(Equal(tt.want))
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestClusterSpecEqualWorkerNodeGroupConfigurations(t *testing.T) {
+func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 	testCases := []struct {
 		testName                   string
 		cluster1Wngs, cluster2Wngs []v1alpha1.WorkerNodeGroupConfiguration
@@ -344,20 +355,24 @@ func TestClusterSpecEqualWorkerNodeGroupConfigurations(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
-			clusterSpec1 := &v1alpha1.ClusterSpec{
-				WorkerNodeGroupConfigurations: tt.cluster1Wngs,
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					WorkerNodeGroupConfigurations: tt.cluster1Wngs,
+				},
 			}
-			clusterSpec2 := &v1alpha1.ClusterSpec{
-				WorkerNodeGroupConfigurations: tt.cluster2Wngs,
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					WorkerNodeGroupConfigurations: tt.cluster2Wngs,
+				},
 			}
 
 			g := NewWithT(t)
-			g.Expect(clusterSpec1.Equal(clusterSpec2)).To(Equal(tt.want))
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestClusterSpecEqualDatacenterRef(t *testing.T) {
+func TestClusterEqualDatacenterRef(t *testing.T) {
 	testCases := []struct {
 		testName                                     string
 		cluster1DatacenterRef, cluster2DatacenterRef v1alpha1.Ref
@@ -402,20 +417,24 @@ func TestClusterSpecEqualDatacenterRef(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
-			clusterSpec1 := &v1alpha1.ClusterSpec{
-				DatacenterRef: tt.cluster1DatacenterRef,
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					DatacenterRef: tt.cluster1DatacenterRef,
+				},
 			}
-			clusterSpec2 := &v1alpha1.ClusterSpec{
-				DatacenterRef: tt.cluster2DatacenterRef,
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					DatacenterRef: tt.cluster2DatacenterRef,
+				},
 			}
 
 			g := NewWithT(t)
-			g.Expect(clusterSpec1.Equal(clusterSpec2)).To(Equal(tt.want))
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestClusterSpecEqualIdentityProviderRefs(t *testing.T) {
+func TestClusterEqualIdentityProviderRefs(t *testing.T) {
 	testCases := []struct {
 		testName                 string
 		cluster1Ipr, cluster2Ipr []v1alpha1.Ref
@@ -496,20 +515,24 @@ func TestClusterSpecEqualIdentityProviderRefs(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
-			clusterSpec1 := &v1alpha1.ClusterSpec{
-				IdentityProviderRefs: tt.cluster1Ipr,
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					IdentityProviderRefs: tt.cluster1Ipr,
+				},
 			}
-			clusterSpec2 := &v1alpha1.ClusterSpec{
-				IdentityProviderRefs: tt.cluster2Ipr,
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					IdentityProviderRefs: tt.cluster2Ipr,
+				},
 			}
 
 			g := NewWithT(t)
-			g.Expect(clusterSpec1.Equal(clusterSpec2)).To(Equal(tt.want))
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestClusterSpecEqualGitOpsRef(t *testing.T) {
+func TestClusterEqualGitOpsRef(t *testing.T) {
 	testCases := []struct {
 		testName                             string
 		cluster1GitOpsRef, cluster2GitOpsRef *v1alpha1.Ref
@@ -557,20 +580,24 @@ func TestClusterSpecEqualGitOpsRef(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
-			clusterSpec1 := &v1alpha1.ClusterSpec{
-				GitOpsRef: tt.cluster1GitOpsRef,
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					GitOpsRef: tt.cluster1GitOpsRef,
+				},
 			}
-			clusterSpec2 := &v1alpha1.ClusterSpec{
-				GitOpsRef: tt.cluster2GitOpsRef,
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					GitOpsRef: tt.cluster2GitOpsRef,
+				},
 			}
 
 			g := NewWithT(t)
-			g.Expect(clusterSpec1.Equal(clusterSpec2)).To(Equal(tt.want))
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestClusterSpecEqualClusterNetwork(t *testing.T) {
+func TestClusterEqualClusterNetwork(t *testing.T) {
 	testCases := []struct {
 		testName                                       string
 		cluster1ClusterNetwork, cluster2ClusterNetwork v1alpha1.ClusterNetwork
@@ -632,20 +659,24 @@ func TestClusterSpecEqualClusterNetwork(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
-			clusterSpec1 := &v1alpha1.ClusterSpec{
-				ClusterNetwork: tt.cluster1ClusterNetwork,
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					ClusterNetwork: tt.cluster1ClusterNetwork,
+				},
 			}
-			clusterSpec2 := &v1alpha1.ClusterSpec{
-				ClusterNetwork: tt.cluster2ClusterNetwork,
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					ClusterNetwork: tt.cluster2ClusterNetwork,
+				},
 			}
 
 			g := NewWithT(t)
-			g.Expect(clusterSpec1.Equal(clusterSpec2)).To(Equal(tt.want))
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestClusterSpecEqualExternalEtcdConfiguration(t *testing.T) {
+func TestClusterEqualExternalEtcdConfiguration(t *testing.T) {
 	testCases := []struct {
 		testName                   string
 		cluster1Etcd, cluster2Etcd *v1alpha1.ExternalEtcdConfiguration
@@ -726,20 +757,24 @@ func TestClusterSpecEqualExternalEtcdConfiguration(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
-			clusterSpec1 := &v1alpha1.ClusterSpec{
-				ExternalEtcdConfiguration: tt.cluster1Etcd,
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					ExternalEtcdConfiguration: tt.cluster1Etcd,
+				},
 			}
-			clusterSpec2 := &v1alpha1.ClusterSpec{
-				ExternalEtcdConfiguration: tt.cluster2Etcd,
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					ExternalEtcdConfiguration: tt.cluster2Etcd,
+				},
 			}
 
 			g := NewWithT(t)
-			g.Expect(clusterSpec1.Equal(clusterSpec2)).To(Equal(tt.want))
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestClusterSpecEqualProxyConfiguration(t *testing.T) {
+func TestClusterEqualProxyConfiguration(t *testing.T) {
 	testCases := []struct {
 		testName                     string
 		cluster1Proxy, cluster2Proxy *v1alpha1.ProxyConfiguration
@@ -782,20 +817,24 @@ func TestClusterSpecEqualProxyConfiguration(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
-			clusterSpec1 := &v1alpha1.ClusterSpec{
-				ProxyConfiguration: tt.cluster1Proxy,
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					ProxyConfiguration: tt.cluster1Proxy,
+				},
 			}
-			clusterSpec2 := &v1alpha1.ClusterSpec{
-				ProxyConfiguration: tt.cluster2Proxy,
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					ProxyConfiguration: tt.cluster2Proxy,
+				},
 			}
 
 			g := NewWithT(t)
-			g.Expect(clusterSpec1.Equal(clusterSpec2)).To(Equal(tt.want))
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestClusterSpecEqualRegistryMirrorConfiguration(t *testing.T) {
+func TestClusterEqualRegistryMirrorConfiguration(t *testing.T) {
 	testCases := []struct {
 		testName                   string
 		cluster1Regi, cluster2Regi *v1alpha1.RegistryMirrorConfiguration
@@ -843,73 +882,91 @@ func TestClusterSpecEqualRegistryMirrorConfiguration(t *testing.T) {
 	}
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
-			clusterSpec1 := &v1alpha1.ClusterSpec{
-				RegistryMirrorConfiguration: tt.cluster1Regi,
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					RegistryMirrorConfiguration: tt.cluster1Regi,
+				},
 			}
-			clusterSpec2 := &v1alpha1.ClusterSpec{
-				RegistryMirrorConfiguration: tt.cluster2Regi,
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					RegistryMirrorConfiguration: tt.cluster2Regi,
+				},
 			}
 
 			g := NewWithT(t)
-			g.Expect(clusterSpec1.Equal(clusterSpec2)).To(Equal(tt.want))
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
 		})
 	}
 }
 
-func TestClusterSpecEqualManagement(t *testing.T) {
+func TestClusterEqualManagement(t *testing.T) {
 	testCases := []struct {
 		testName                               string
-		cluster1Management, cluster2Management *bool
+		cluster1Management, cluster2Management string
 		want                                   bool
 	}{
 		{
-			testName:           "both nil",
-			cluster1Management: nil,
-			cluster2Management: nil,
+			testName:           "both empty",
+			cluster1Management: "",
+			cluster2Management: "",
 			want:               true,
 		},
 		{
-			testName:           "one nil, one true",
-			cluster1Management: boolPointer(true),
-			cluster2Management: nil,
+			testName:           "one empty, one equal to self",
+			cluster1Management: "",
+			cluster2Management: "cluster-1",
 			want:               true,
 		},
 		{
-			testName:           "one nil, one false",
-			cluster1Management: boolPointer(false),
-			cluster2Management: nil,
+			testName:           "both equal to self",
+			cluster1Management: "cluster-1",
+			cluster2Management: "cluster-1",
+			want:               true,
+		},
+		{
+			testName:           "one empty, one not equal to self",
+			cluster1Management: "",
+			cluster2Management: "cluster-2",
 			want:               false,
 		},
 		{
-			testName:           "one true, one false",
-			cluster1Management: boolPointer(true),
-			cluster2Management: boolPointer(false),
+			testName:           "one equal to self, one not equal to self",
+			cluster1Management: "cluster-1",
+			cluster2Management: "cluster-2",
 			want:               false,
 		},
 		{
-			testName:           "both true",
-			cluster1Management: boolPointer(true),
-			cluster2Management: boolPointer(true),
-			want:               true,
-		},
-		{
-			testName:           "both false",
-			cluster1Management: boolPointer(false),
-			cluster2Management: boolPointer(false),
-			want:               true,
+			testName:           "both not equal to self and different",
+			cluster1Management: "cluster-2",
+			cluster2Management: "cluster-3",
+			want:               false,
 		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {
-			clusterSpec1 := &v1alpha1.ClusterSpec{
-				Management: tt.cluster1Management,
+			cluster1 := &v1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster-1",
+				},
+				Spec: v1alpha1.ClusterSpec{
+					ManagementCluster: v1alpha1.ManagementCluster{
+						Name: tt.cluster1Management,
+					},
+				},
 			}
-			clusterSpec2 := &v1alpha1.ClusterSpec{
-				Management: tt.cluster2Management,
+			cluster2 := &v1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cluster-1",
+				},
+				Spec: v1alpha1.ClusterSpec{
+					ManagementCluster: v1alpha1.ManagementCluster{
+						Name: tt.cluster2Management,
+					},
+				},
 			}
 
 			g := NewWithT(t)
-			g.Expect(clusterSpec1.Equal(clusterSpec2)).To(Equal(tt.want))
+			g.Expect(cluster1.Equal(cluster2)).To(Equal(tt.want))
 		})
 	}
 }
