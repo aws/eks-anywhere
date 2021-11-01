@@ -51,8 +51,6 @@ func TestValidateIdendityProviderForWorkloadClusters(t *testing.T) {
 	}
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		nb := false
-		s.Spec.Management = &nb
 		s.Name = testclustername
 		s.Spec.IdentityProviderRefs = []v1alpha1.Ref{
 			{
@@ -113,8 +111,6 @@ func TestValidateIdentityProviderForSelfManagedCluster(t *testing.T) {
 	}
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		nb := false
-		s.Spec.Management = &nb
 		s.Name = testclustername
 		s.Spec.IdentityProviderRefs = []v1alpha1.Ref{
 			{

@@ -160,7 +160,7 @@ func givenEmptyClusterSpec() *cluster.Spec {
 }
 
 func fillClusterSpecWithClusterConfig(spec *cluster.Spec, clusterConfig *v1alpha1.Cluster) {
-	spec.Spec = clusterConfig.Spec
+	spec.Cluster = clusterConfig
 }
 
 func givenDatacenterConfig(t *testing.T, fileName string) *v1alpha1.VSphereDatacenterConfig {
