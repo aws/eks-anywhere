@@ -14,6 +14,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
+const ssmLogGroup = "/eks-anywhere/test/e2e"
+
 var initE2EDirCommand = "mkdir -p /home/e2e/bin && cd /home/e2e"
 
 func WaitForSSMReady(session *session.Session, instanceId string) error {
@@ -36,9 +38,10 @@ func WithOutputToS3(bucket, dir string) CommandOpt {
 	}
 }
 
-func WithOutputToCloudwatch(logGroup string) CommandOpt {
+func WithOutputToCloudwatch() CommandOpt {
 	return func(c *ssm.SendCommandInput) {
 		cwEnabled := true
+		logGroup := ssmLogGroup
 		cw := ssm.CloudWatchOutputConfig{
 			CloudWatchLogGroupName:  &logGroup,
 			CloudWatchOutputEnabled: &cwEnabled,

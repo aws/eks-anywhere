@@ -13,7 +13,6 @@ import (
 const (
 	passedStatus = "pass"
 	failedStatus = "fail"
-	baseLogGroup = "/eks-anywhere/test/e2e"
 )
 
 type ParallelRunConf struct {
@@ -88,20 +87,8 @@ type instanceRunConf struct {
 	bundlesOverride                                                                            bool
 }
 
-func (i *instanceRunConf) cloudwatchLogGroup() string {
-	var path []string
-	path = append(path, baseLogGroup)
-	if i.parentJobId != "" {
-		j := strings.ReplaceAll(i.parentJobId, ":", "-")
-		path = append(path, j)
-	}
-	j := strings.ReplaceAll(i.parentJobId, ":", "-")
-	path = append(path, j)
-	return strings.Join(path, "/")
-}
-
 func RunTests(conf instanceRunConf) (testInstanceID string, err error) {
-	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.cloudwatchLogGroup(), conf.jobId, conf.subnetId, conf.bundlesOverride)
+	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.jobId, conf.subnetId, conf.bundlesOverride)
 	if err != nil {
 		return "", err
 	}
@@ -128,7 +115,7 @@ func (e *E2ESession) runTests(regex string) error {
 
 	command = e.commandWithEnvVars(command)
 
-	opt := ssm.WithOutputToCloudwatch(e.logGroup)
+	opt := ssm.WithOutputToCloudwatch()
 
 	err := ssm.Run(
 		e.session,
