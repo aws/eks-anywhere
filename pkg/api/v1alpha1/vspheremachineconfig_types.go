@@ -71,6 +71,14 @@ func (c *VSphereMachineConfig) OSFamily() OSFamily {
 	return c.Spec.OSFamily
 }
 
+func (c *VSphereMachineConfig) GetNamespace() string {
+	return c.Namespace
+}
+
+func (c *VSphereMachineConfig) GetName() string {
+	return c.Name
+}
+
 type OSFamily string
 
 const (

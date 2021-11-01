@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -36,6 +37,7 @@ type Spec struct {
 	OIDCConfig          *eksav1alpha1.OIDCConfig
 	AWSIamConfig        *eksav1alpha1.AWSIamConfig
 	GitOpsConfig        *eksav1alpha1.GitOpsConfig
+	DatacenterConfig    *metav1.ObjectMeta
 	releasesManifestURL string
 	bundlesManifestURL  string
 	configFS            embed.FS
@@ -210,6 +212,21 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 			return nil, err
 		}
 		s.GitOpsConfig = gitOpsConfig
+	}
+
+	switch s.Cluster.Spec.DatacenterRef.Kind {
+	case eksav1alpha1.VSphereDatacenterKind:
+		datacenterConfig, err := eksav1alpha1.GetVSphereDatacenterConfig(clusterConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		s.DatacenterConfig = &datacenterConfig.ObjectMeta
+	case eksav1alpha1.DockerDatacenterKind:
+		datacenterConfig, err := eksav1alpha1.GetDockerDatacenterConfig(clusterConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		s.DatacenterConfig = &datacenterConfig.ObjectMeta
 	}
 
 	if s.ManagementCluster != nil {

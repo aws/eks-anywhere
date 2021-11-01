@@ -32,6 +32,7 @@ const (
 
 var (
 	capiClustersResourceType          = fmt.Sprintf("clusters.%s", v1alpha3.GroupVersion.Group)
+	eksaClusterResourceType           = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaAwsResourceType               = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -384,11 +385,36 @@ type ClustersResponse struct {
 	Items []types.CAPICluster `json:"items,omitempty"`
 }
 
+type GitOpsConfigResponse struct {
+	Items []*v1alpha1.GitOpsConfig `json:"items,omitempty"`
+}
+
+type VSphereDatacenterConfigResponse struct {
+	Items []*v1alpha1.VSphereDatacenterConfig `json:"items,omitempty"`
+}
+
+type IdentityProviderConfigResponse struct {
+	Items []*v1alpha1.Ref `json:"items,omitempty"`
+}
+
+type VSphereMachineConfigResponse struct {
+	Items []*v1alpha1.VSphereMachineConfig `json:"items,omitempty"`
+}
+
 func (k *Kubectl) ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error {
 	params := []string{"get", "crd", capiClustersResourceType, "--kubeconfig", cluster.KubeconfigFile}
 	_, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error getting clusters crd: %v", err)
+	}
+	return nil
+}
+
+func (k *Kubectl) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cluster) error {
+	params := []string{"get", "crd", eksaClusterResourceType, "--kubeconfig", cluster.KubeconfigFile}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error getting eksa clusters crd: %v", err)
 	}
 	return nil
 }
@@ -666,6 +692,93 @@ func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, cl
 	}
 
 	return response, nil
+}
+
+func (k *Kubectl) SearchVsphereMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereMachineConfig, error) {
+	params := []string{
+		"get", eksaVSphereMachineResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error searching eksa VSphereMachineConfigResponse: %v", err)
+	}
+
+	response := &VSphereMachineConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing VSphereMachineConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
+func (k *Kubectl) SearchIdentityProviderConfig(ctx context.Context, ipName string, kind string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
+	var internalType string
+
+	switch kind {
+	case v1alpha1.OIDCConfigKind:
+		internalType = fmt.Sprintf("oidcconfigs.%s", v1alpha1.GroupVersion.Group)
+	case v1alpha1.AWSIamConfigKind:
+		internalType = fmt.Sprintf("awsiamconfigs.%s", v1alpha1.GroupVersion.Group)
+	default:
+		return nil, fmt.Errorf("invalid identity provider %s", kind)
+	}
+
+	params := []string{
+		"get", internalType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + ipName,
+	}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error searching eksa IdentityProvider: %v", err)
+	}
+
+	response := &VSphereDatacenterConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing IdentityProviderConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
+func (k *Kubectl) SearchVsphereDatacenterConfig(ctx context.Context, datacenterName string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
+	params := []string{
+		"get", eksaVSphereDatacenterResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + datacenterName,
+	}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error searching eksa VSphereDatacenterConfigResponse: %v", err)
+	}
+
+	response := &VSphereDatacenterConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing VSphereDatacenterConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
+func (k *Kubectl) SearchEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) ([]*v1alpha1.GitOpsConfig, error) {
+	params := []string{
+		"get", eksaGitOpsResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + gitOpsConfigName,
+	}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error searching eksa GitOpsConfig: %v", err)
+	}
+
+	response := &GitOpsConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing GitOpsConfig response: %v", err)
+	}
+
+	return response.Items, nil
 }
 
 func (k *Kubectl) GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error) {

@@ -1,0 +1,25 @@
+{
+  "apiVersion": "v1",
+  "items": [
+    {
+      "apiVersion": "anywhere.eks.amazonaws.com/v1alpha1",
+      "kind": "VSphereDatacenterConfig",
+      "metadata": {
+        "name": "vspheredatacenter",
+        "namespace": "default"
+      },
+      "spec": {
+        "datacenter": "TEST-Datacenter",
+        "insecure": false,
+        "network": "/TEST-Datacenter/network/test-network",
+        "server": "server.com",
+        "thumbprint": "test"
+      }
+    }
+  ],
+  "kind": "List",
+  "metadata": {
+    "resourceVersion": "",
+    "selfLink": ""
+  }
+}

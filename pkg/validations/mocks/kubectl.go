@@ -127,6 +127,36 @@ func (mr *MockKubectlClientMockRecorder) GetEksaVSphereDatacenterConfig(ctx, vsp
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereDatacenterConfig", reflect.TypeOf((*MockKubectlClient)(nil).GetEksaVSphereDatacenterConfig), ctx, vsphereDatacenterConfigName, kubeconfigFile, namespace)
 }
 
+// SearchEksaGitOpsConfig mocks base method.
+func (m *MockKubectlClient) SearchEksaGitOpsConfig(ctx context.Context, gitOpsConfigName, kubeconfigFile, namespace string) ([]*v1alpha1.GitOpsConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchEksaGitOpsConfig", ctx, gitOpsConfigName, kubeconfigFile, namespace)
+	ret0, _ := ret[0].([]*v1alpha1.GitOpsConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchEksaGitOpsConfig indicates an expected call of SearchEksaGitOpsConfig.
+func (mr *MockKubectlClientMockRecorder) SearchEksaGitOpsConfig(ctx, gitOpsConfigName, kubeconfigFile, namespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchEksaGitOpsConfig", reflect.TypeOf((*MockKubectlClient)(nil).SearchEksaGitOpsConfig), ctx, gitOpsConfigName, kubeconfigFile, namespace)
+}
+
+// SearchIdentityProviderConfig mocks base method.
+func (m *MockKubectlClient) SearchIdentityProviderConfig(ctx context.Context, ipName, kind, kubeconfigFile, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchIdentityProviderConfig", ctx, ipName, kind, kubeconfigFile, namespace)
+	ret0, _ := ret[0].([]*v1alpha1.VSphereDatacenterConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchIdentityProviderConfig indicates an expected call of SearchIdentityProviderConfig.
+func (mr *MockKubectlClientMockRecorder) SearchIdentityProviderConfig(ctx, ipName, kind, kubeconfigFile, namespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchIdentityProviderConfig", reflect.TypeOf((*MockKubectlClient)(nil).SearchIdentityProviderConfig), ctx, ipName, kind, kubeconfigFile, namespace)
+}
+
 // ValidateClustersCRD mocks base method.
 func (m *MockKubectlClient) ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error {
 	m.ctrl.T.Helper()
@@ -153,6 +183,20 @@ func (m *MockKubectlClient) ValidateControlPlaneNodes(ctx context.Context, clust
 func (mr *MockKubectlClientMockRecorder) ValidateControlPlaneNodes(ctx, cluster, clusterName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateControlPlaneNodes", reflect.TypeOf((*MockKubectlClient)(nil).ValidateControlPlaneNodes), ctx, cluster, clusterName)
+}
+
+// ValidateEKSAClustersCRD mocks base method.
+func (m *MockKubectlClient) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateEKSAClustersCRD", ctx, cluster)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateEKSAClustersCRD indicates an expected call of ValidateEKSAClustersCRD.
+func (mr *MockKubectlClientMockRecorder) ValidateEKSAClustersCRD(ctx, cluster interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateEKSAClustersCRD", reflect.TypeOf((*MockKubectlClient)(nil).ValidateEKSAClustersCRD), ctx, cluster)
 }
 
 // ValidateNodes mocks base method.

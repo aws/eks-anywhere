@@ -20,3 +20,10 @@ func ValidateClusterNameIsUnique(ctx context.Context, k validations.KubectlClien
 	}
 	return nil
 }
+
+func ValidateManagementCluster(ctx context.Context, k validations.KubectlClient, cluster *types.Cluster) error {
+	if err := k.ValidateClustersCRD(ctx, cluster); err != nil {
+		return err
+	}
+	return k.ValidateEKSAClustersCRD(ctx, cluster)
+}
