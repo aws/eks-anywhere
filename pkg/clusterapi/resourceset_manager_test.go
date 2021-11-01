@@ -108,7 +108,12 @@ func newResourceSetManagerTest(t *testing.T) *resourceSetManagerTest {
 				Kind:       "Secret",
 			},
 			Data: map[string][]byte{
-				"data": []byte("YXBpVmVyc2lvbjogdjEKa2luZDogU2VydmljZUFjY291bnQKbWV0YWRhdGE6CiAgbmFtZTogdnNwaGVyZS1jc2ktY29udHJvbGxlcgogIG5hbWVzcGFjZToga3ViZS1zeXN0ZW0K"),
+				"data": []byte(`apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vsphere-csi-controller
+  namespace: kube-system
+`),
 			},
 		},
 		secretResources: [][]byte{

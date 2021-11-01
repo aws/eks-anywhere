@@ -637,30 +637,59 @@ func TestKubectlLoadSecret(t *testing.T) {
 
 func TestKubectlGetSecret(t *testing.T) {
 	tests := []struct {
-		testName string
-		params   []string
-		wantErr  error
+		testName     string
+		responseFile string
+		wantSecret   *corev1.Secret
+		params       []string
+		wantErr      error
 	}{
 		{
-			testName: "SuccessScenario",
-			params:   []string{"get", "secret", secretObjectName, "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "c.kubeconfig"},
-			wantErr:  nil,
+			testName:     "SuccessScenario",
+			responseFile: "testdata/kubectl_secret.json",
+			wantSecret: &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vsphere-csi-controller",
+					Namespace: "eksa-system",
+				},
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       "Secret",
+				},
+				Data: map[string][]byte{
+					"data": []byte(`apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vsphere-csi-controller
+  namespace: kube-system
+`),
+				},
+				Type: corev1.SecretType("addons.cluster.x-k8s.io/resource-set"),
+			},
+			params:  []string{"get", "secret", secretObjectName, "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "c.kubeconfig"},
+			wantErr: nil,
 		},
 		{
-			testName: "ErrorScenario",
-			params:   []string{"get", "secret", secretObjectName, "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "c.kubeconfig"},
-			wantErr:  errors.New("error getting secret: "),
+			testName:     "ErrorScenario",
+			responseFile: "testdata/kubectl_secret.json",
+			wantSecret:   nil,
+			params:       []string{"get", "secret", secretObjectName, "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "c.kubeconfig"},
+			wantErr:      errors.New("error from kubectl client"),
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.testName, func(tt *testing.T) {
+			response := test.ReadFile(t, tc.responseFile)
 			k, ctx, cluster, e := newKubectl(t)
-			e.EXPECT().Execute(ctx, tc.params).Return(bytes.Buffer{}, tc.wantErr)
+			e.EXPECT().Execute(ctx, tc.params).Return(*bytes.NewBufferString(response), tc.wantErr)
 
-			_, err := k.GetSecret(ctx, secretObjectName, executables.WithNamespace(constants.EksaSystemNamespace), executables.WithCluster(cluster))
+			secret, err := k.GetSecret(ctx, secretObjectName, executables.WithNamespace(constants.EksaSystemNamespace), executables.WithCluster(cluster))
 
-			if (tc.wantErr != nil && err == nil) && !reflect.DeepEqual(tc.wantErr, err) {
-				t.Errorf("%v got = %v, want %v", tc.testName, err, tc.wantErr)
+			g := NewWithT(t)
+			if tc.wantErr != nil {
+				g.Expect(err.Error()).To(HaveSuffix(tc.wantErr.Error()))
+			} else {
+				g.Expect(err).To(BeNil())
+				g.Expect(secret).To(Equal(tc.wantSecret))
 			}
 		})
 	}

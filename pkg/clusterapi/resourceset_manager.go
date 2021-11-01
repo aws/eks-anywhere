@@ -2,12 +2,12 @@ package clusterapi
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
 
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -32,12 +32,14 @@ type Client interface {
 }
 
 func (r *ResourceSetManager) ForceUpdate(ctx context.Context, name, namespace string, managementCluster, workloadCluster *types.Cluster) error {
+	logger.V(3).Info("Reconciling ClusterResourceSet", "name", name)
 	resourceSet, err := r.client.GetClusterResourceSet(ctx, managementCluster.KubeconfigFile, name, namespace)
 	if err != nil {
 		return fmt.Errorf("failed getting resourceset to update it: %v", err)
 	}
 
 	for _, resource := range resourceSet.Spec.Resources {
+		logger.V(3).Info("Reconciling CRS managed resource", "name", resource.Name)
 		objects, err := r.getResources(ctx, resource, namespace, managementCluster)
 		if err != nil {
 			return err
@@ -67,6 +69,7 @@ func (r *ResourceSetManager) getResources(ctx context.Context, resource addons.R
 }
 
 func (r *ResourceSetManager) getResourcesFromConfigMap(ctx context.Context, name, namespace string, cluster *types.Cluster) ([]unstructuredObject, error) {
+	logger.V(4).Info("Getting objects from CRS managed configmap", "name", name)
 	configMap, err := r.client.GetConfigMap(ctx, cluster.KubeconfigFile, name, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed getting config map from resource set: %v", err)
@@ -76,23 +79,14 @@ func (r *ResourceSetManager) getResourcesFromConfigMap(ctx context.Context, name
 }
 
 func (r *ResourceSetManager) getResourcesFromSecret(ctx context.Context, name, namespace string, cluster *types.Cluster) ([]unstructuredObject, error) {
+	logger.V(4).Info("Getting objects from CRS managed secret", "name", name)
 	secret, err := r.client.GetSecretFromNamespace(ctx, cluster.KubeconfigFile, name, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed getting secret from resource set: %v", err)
 	}
 
-	resources := extractResourcesFromData(secret.Data)
-
-	// Secret's content need to be decoded
-	for i, resource := range resources {
-		decoded, err := base64.StdEncoding.DecodeString(string(resource))
-		if err != nil {
-			return nil, fmt.Errorf("failed decoding resource in Secret from ClusterResourceSet: %v", err)
-		}
-		resources[i] = decoded
-	}
-
-	return resources, nil
+	// Secret's content don't need to be decoded if they are unmarshalled into a corev1.Secret
+	return extractResourcesFromData(secret.Data), nil
 }
 
 func toMapOfBytes(data map[string]string) map[string][]byte {
