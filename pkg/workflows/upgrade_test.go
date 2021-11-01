@@ -109,7 +109,6 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(expectedCluster *types.Cl
 		c.capiUpgrader.EXPECT().Upgrade(c.ctx, expectedCluster, c.provider, currentSpec, c.clusterSpec).Return(capiChangeDiff, nil),
 		c.addonManager.EXPECT().Upgrade(c.ctx, expectedCluster, currentSpec, c.clusterSpec).Return(fluxChangeDiff, nil),
 		c.clusterManager.EXPECT().Upgrade(c.ctx, expectedCluster, currentSpec, c.clusterSpec).Return(eksaChangeDiff, nil),
-		c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.clusterSpec, expectedCluster),
 	)
 }
 
@@ -159,6 +158,7 @@ func (c *upgradeTestSetup) expectNotToDeleteBootstrap() {
 
 func (c *upgradeTestSetup) expectUpgradeWorkload(expectedCluster *types.Cluster) {
 	c.expectUpgradeWorkloadToReturn(expectedCluster, nil)
+	c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.clusterSpec, expectedCluster)
 }
 
 func (c *upgradeTestSetup) expectUpgradeWorkloadToReturn(expectedCluster *types.Cluster, err error) {
@@ -408,7 +408,7 @@ func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	test.expectUpdateGitEksaSpec()
 	test.expectForceReconcileGitRepo(test.bootstrapCluster)
 	test.expectResumeGitOpsKustomization(test.bootstrapCluster)
-	test.expectUpgradeWorkloadToReturn(test.bootstrapCluster, nil)
+	test.expectUpgradeWorkload(test.bootstrapCluster)
 
 	err := test.run()
 	if err != nil {
