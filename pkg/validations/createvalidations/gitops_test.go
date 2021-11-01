@@ -20,17 +20,91 @@ func TestValidateGitopsForWorkloadClustersPath(t *testing.T) {
 	tests := []struct {
 		name    string
 		wantErr error
-		path    string
+		github  v1alpha1.Github
 	}{
 		{
 			name:    "Success",
 			wantErr: nil,
-			path:    "clusters/" + testclustername,
+			github: v1alpha1.Github{
+				Owner:               "owner",
+				Repository:          "repo",
+				FluxSystemNamespace: "flux-system",
+				Branch:              "main",
+				ClusterConfigPath:   "clusters/" + testclustername,
+				Personal:            false,
+			},
 		},
 		{
 			name:    "Failure, path invalid",
-			wantErr: errors.New("gitOpsConfig.Spec.Flux.ClusterConfigPath: clusters2/testcluster is invalid: expect workload cluster's GitOps clusterConfigPath to share the same parent directory as managaement cluster's"),
-			path:    "clusters2/" + testclustername,
+			wantErr: errors.New("gitOpsConfig.spec.flux.clusterConfigPath: diffpath/testcluster is invalid: expected workload cluster's GitOps clusterConfigPath to share the same parent directory as management cluster's"),
+			github: v1alpha1.Github{
+				Owner:               "owner",
+				Repository:          "repo",
+				FluxSystemNamespace: "flux-system",
+				Branch:              "main",
+				ClusterConfigPath:   "diffpath/" + testclustername,
+				Personal:            false,
+			},
+		},
+		{
+			name:    "Failure, branch diff",
+			wantErr: errors.New("gitOpsConfig.spec.flux.branch must be same as management cluster's. want: main, got: dev"),
+			github: v1alpha1.Github{
+				Owner:               "owner",
+				Repository:          "repo",
+				FluxSystemNamespace: "flux-system",
+				Branch:              "dev",
+				ClusterConfigPath:   "clusters/" + testclustername,
+				Personal:            false,
+			},
+		},
+		{
+			name:    "Failure, owner owner",
+			wantErr: errors.New("gitOpsConfig.spec.flux.owner must be same as management cluster's. want: owner, got: janedoe"),
+			github: v1alpha1.Github{
+				Owner:               "janedoe",
+				Repository:          "repo",
+				FluxSystemNamespace: "flux-system",
+				Branch:              "main",
+				ClusterConfigPath:   "clusters/" + testclustername,
+				Personal:            false,
+			},
+		},
+		{
+			name:    "Failure, repo diff",
+			wantErr: errors.New("gitOpsConfig.spec.flux.repository must be same as management cluster's. want: repo, got: diffrepo"),
+			github: v1alpha1.Github{
+				Owner:               "owner",
+				Repository:          "diffrepo",
+				FluxSystemNamespace: "flux-system",
+				Branch:              "main",
+				ClusterConfigPath:   "clusters/" + testclustername,
+				Personal:            false,
+			},
+		},
+		{
+			name:    "Failure, namespace diff",
+			wantErr: errors.New("gitOpsConfig.spec.flux.fluxSystemNamespace must be same as management cluster's. want: flux-system, got: diff-ns"),
+			github: v1alpha1.Github{
+				Owner:               "owner",
+				Repository:          "repo",
+				FluxSystemNamespace: "diff-ns",
+				Branch:              "main",
+				ClusterConfigPath:   "clusters/" + testclustername,
+				Personal:            false,
+			},
+		},
+		{
+			name:    "Failure, personal diff",
+			wantErr: errors.New("gitOpsConfig.spec.flux.personal must be same as management cluster's. want: false, got: true"),
+			github: v1alpha1.Github{
+				Owner:               "owner",
+				Repository:          "repo",
+				FluxSystemNamespace: "flux-system",
+				Branch:              "main",
+				ClusterConfigPath:   "clusters/" + testclustername,
+				Personal:            true,
+			},
 		},
 	}
 
@@ -43,14 +117,7 @@ func TestValidateGitopsForWorkloadClustersPath(t *testing.T) {
 			defaultGitOps := &v1alpha1.GitOpsConfig{
 				Spec: v1alpha1.GitOpsConfigSpec{
 					Flux: v1alpha1.Flux{
-						Github: v1alpha1.Github{
-							Owner:               "owner",
-							Repository:          "repo",
-							FluxSystemNamespace: "flux-system",
-							Branch:              "main",
-							ClusterConfigPath:   tc.path,
-							Personal:            false,
-						},
+						Github: tc.github,
 					},
 				},
 			}

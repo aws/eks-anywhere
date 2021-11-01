@@ -10,9 +10,9 @@
                 "branch": "main",
                 "clusterConfigPath": "clusters/management-gitops",
                 "fluxSystemNamespace": "flux-system",
-                "owner": "janedoe",
-                "personal": true,
-                "repository": "management-gitops"
+                "owner": "owner",
+                "personal": false,
+                "repository": "repo"
             }
         }
     }
