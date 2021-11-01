@@ -14,22 +14,95 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
 )
 
-var capiGitOpsResourceType = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
+var eksaGitOpsResourceType = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
 
-func TestValidateGitopsForWorkloadClusters(t *testing.T) {
+func TestValidateGitopsForWorkloadClustersPath(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr error
+		path    string
+	}{
+		{
+			name:    "Success",
+			wantErr: nil,
+			path:    "clusters/" + testclustername,
+		},
+		{
+			name:    "Failure, path invalid",
+			wantErr: errors.New("gitOpsConfig.Spec.Flux.ClusterConfigPath: clusters2/testcluster is invalid: expect workload cluster's GitOps clusterConfigPath to share the same parent directory as managaement cluster's"),
+			path:    "clusters2/" + testclustername,
+		},
+	}
+
+	gitOpsListContent := test.ReadFile(t, "testdata/empty_get_gitops_response.json")
+	eksaClusterContent := test.ReadFile(t, "testdata/eksa_cluster_exists.json")
+	mgmtGitOpsContent := test.ReadFile(t, "testdata/management_gitops_config.json")
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			defaultGitOps := &v1alpha1.GitOpsConfig{
+				Spec: v1alpha1.GitOpsConfigSpec{
+					Flux: v1alpha1.Flux{
+						Github: v1alpha1.Github{
+							Owner:               "owner",
+							Repository:          "repo",
+							FluxSystemNamespace: "flux-system",
+							Branch:              "main",
+							ClusterConfigPath:   tc.path,
+							Personal:            false,
+						},
+					},
+				},
+			}
+
+			clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Name = testclustername
+				s.Spec.GitOpsRef = &v1alpha1.Ref{
+					Kind: v1alpha1.GitOpsConfigKind,
+					Name: "gitopstest",
+				}
+				s.GitOpsConfig = defaultGitOps
+				s.SetManagedBy("management-cluster")
+			})
+			k, ctx, cluster, e := validations.NewKubectl(t)
+			cluster.Name = "management-cluster"
+
+			e.EXPECT().Execute(
+				ctx, []string{
+					"get", eksaGitOpsResourceType, "-o", "json", "--kubeconfig",
+					cluster.KubeconfigFile, "--namespace", clusterSpec.Namespace,
+					"--field-selector=metadata.name=gitopstest",
+				}).Return(*bytes.NewBufferString(gitOpsListContent), nil)
+
+			e.EXPECT().Execute(
+				ctx, []string{
+					"get", "clusters", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig",
+					cluster.KubeconfigFile,
+					"--field-selector=metadata.name=management-cluster",
+				}).Return(*bytes.NewBufferString(eksaClusterContent), nil)
+
+			e.EXPECT().Execute(
+				ctx, []string{
+					"get", eksaGitOpsResourceType, "management-gitops", "-o", "json", "--kubeconfig",
+					cluster.KubeconfigFile, "--namespace", clusterSpec.Namespace,
+				}).Return(*bytes.NewBufferString(mgmtGitOpsContent), nil)
+
+			err := createvalidations.ValidateGitOps(ctx, k, cluster, clusterSpec)
+			if !reflect.DeepEqual(err, tc.wantErr) {
+				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateGitopsForWorkloadClustersFailure(t *testing.T) {
 	tests := []struct {
 		name               string
 		wantErr            error
-		upgradeVersion     v1alpha1.KubernetesVersion
 		getClusterResponse string
 	}{
 		{
-			name:               "SuccessNoGitops",
-			wantErr:            nil,
-			getClusterResponse: "testdata/empty_get_gitops_response.json",
-		},
-		{
-			name:               "FailureGitopsNameExists",
+			name:               "FailureGitOpsNameExists",
 			wantErr:            errors.New("gitOpsConfig gitopstest already exists"),
 			getClusterResponse: "testdata/gitops_name_exists.json",
 		},
@@ -67,12 +140,12 @@ func TestValidateGitopsForWorkloadClusters(t *testing.T) {
 			fileContent := test.ReadFile(t, tc.getClusterResponse)
 			e.EXPECT().Execute(
 				ctx, []string{
-					"get", capiGitOpsResourceType, "-o", "json", "--kubeconfig",
+					"get", eksaGitOpsResourceType, "-o", "json", "--kubeconfig",
 					cluster.KubeconfigFile, "--namespace", clusterSpec.Namespace,
 					"--field-selector=metadata.name=gitopstest",
 				}).Return(*bytes.NewBufferString(fileContent), nil)
 
-			err := createvalidations.ValidateGitOpsNameIsUnique(ctx, k, cluster, clusterSpec)
+			err := createvalidations.ValidateGitOps(ctx, k, cluster, clusterSpec)
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}
@@ -84,7 +157,6 @@ func TestSkipValidateGitopsWithNoGitOpts(t *testing.T) {
 	tests := []struct {
 		name               string
 		wantErr            error
-		upgradeVersion     v1alpha1.KubernetesVersion
 		getClusterResponse string
 	}{
 		{
@@ -107,12 +179,12 @@ func TestSkipValidateGitopsWithNoGitOpts(t *testing.T) {
 		t.Run(tc.name, func(tt *testing.T) {
 			e.EXPECT().Execute(
 				ctx, []string{
-					"get", capiGitOpsResourceType, "-o", "json", "--kubeconfig",
+					"get", eksaGitOpsResourceType, "-o", "json", "--kubeconfig",
 					cluster.KubeconfigFile, "--namespace", clusterSpec.Namespace,
 					"--field-selector=metadata.name=gitopstest",
 				}).Times(0)
 
-			err := createvalidations.ValidateGitOpsNameIsUnique(ctx, k, cluster, clusterSpec)
+			err := createvalidations.ValidateGitOps(ctx, k, cluster, clusterSpec)
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}
@@ -124,7 +196,6 @@ func TestValidateGitopsForSelfManagedCluster(t *testing.T) {
 	tests := []struct {
 		name               string
 		wantErr            error
-		upgradeVersion     v1alpha1.KubernetesVersion
 		getClusterResponse string
 	}{
 		{
@@ -165,12 +236,12 @@ func TestValidateGitopsForSelfManagedCluster(t *testing.T) {
 		t.Run(tc.name, func(tt *testing.T) {
 			e.EXPECT().Execute(
 				ctx, []string{
-					"get", capiGitOpsResourceType, "-o", "json", "--kubeconfig",
+					"get", eksaGitOpsResourceType, "-o", "json", "--kubeconfig",
 					cluster.KubeconfigFile, "--namespace", clusterSpec.Namespace,
 					"--field-selector=metadata.name=gitopstest",
 				}).Times(0)
 
-			err := createvalidations.ValidateGitOpsNameIsUnique(ctx, k, cluster, clusterSpec)
+			err := createvalidations.ValidateGitOps(ctx, k, cluster, clusterSpec)
 			if !reflect.DeepEqual(err, tc.wantErr) {
 				t.Errorf("%v got = %v, \nwant %v", tc.name, err, tc.wantErr)
 			}
