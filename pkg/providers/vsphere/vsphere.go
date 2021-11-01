@@ -1200,31 +1200,31 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	return values
 }
 
-func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	clusterName := clusterSpec.ObjectMeta.Name
+func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	clusterName := newClusterSpec.ObjectMeta.Name
 	var controlPlaneTemplateName, workloadTemplateName, etcdTemplateName string
 	var needsNewEtcdTemplate bool
 
-	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, clusterSpec.Name)
+	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, newClusterSpec.Name)
 	if err != nil {
 		return nil, nil, err
 	}
-	vdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, p.datacenterConfig.Name, workloadCluster.KubeconfigFile, clusterSpec.Namespace)
+	vdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, p.datacenterConfig.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
 	if err != nil {
 		return nil, nil, err
 	}
-	controlPlaneMachineConfig := p.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-	controlPlaneVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, clusterSpec.Namespace)
+	controlPlaneMachineConfig := p.machineConfigs[newClusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+	controlPlaneVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
 	if err != nil {
 		return nil, nil, err
 	}
-	workerMachineConfig := p.machineConfigs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
-	workerVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, workloadCluster.KubeconfigFile, clusterSpec.Namespace)
+	workerMachineConfig := p.machineConfigs[newClusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
+	workerVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(c, clusterSpec.Cluster, vdc, p.datacenterConfig, controlPlaneVmc, controlPlaneMachineConfig)
+	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(c, newClusterSpec.Cluster, vdc, p.datacenterConfig, controlPlaneVmc, controlPlaneMachineConfig)
 	if !needsNewControlPlaneTemplate {
 		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, c.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -1235,7 +1235,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}
 
-	needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(c, clusterSpec.Cluster, vdc, p.datacenterConfig, workerVmc, workerMachineConfig)
+	needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(c, newClusterSpec.Cluster, vdc, p.datacenterConfig, workerVmc, workerMachineConfig)
 	if !needsNewWorkloadTemplate {
 		md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -1246,13 +1246,13 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName)
 	}
 
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineConfig := p.machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-		etcdMachineVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, clusterSpec.Namespace)
+	if newClusterSpec.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineConfig := p.machineConfigs[newClusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+		etcdMachineVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
 		if err != nil {
 			return nil, nil, err
 		}
-		needsNewEtcdTemplate = NeedsNewEtcdTemplate(c, clusterSpec.Cluster, vdc, p.datacenterConfig, etcdMachineVmc, etcdMachineConfig)
+		needsNewEtcdTemplate = NeedsNewEtcdTemplate(c, newClusterSpec.Cluster, vdc, p.datacenterConfig, etcdMachineVmc, etcdMachineConfig)
 		if !needsNewEtcdTemplate {
 			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
@@ -1281,7 +1281,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		values["vsphereEtcdSshAuthorizedKey"] = p.etcdSshAuthKey
 		values["etcdTemplateName"] = etcdTemplateName
 	}
-	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
+	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(newClusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1290,7 +1290,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		values["workloadTemplateName"] = workloadTemplateName
 		values["vsphereWorkerSshAuthorizedKey"] = p.workerSshAuthKey
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workersOpt)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workersOpt)
 	if err != nil {
 		return nil, nil, err
 	}

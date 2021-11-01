@@ -284,7 +284,6 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 				Name: "bootstrap-test",
 			}
 			clusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
-			currentSpec := clusterSpec.DeepCopy()
 			vsphereDatacenter := &v1alpha1.VSphereDatacenterConfig{
 				Spec: v1alpha1.VSphereDatacenterConfigSpec{},
 			}
@@ -309,7 +308,7 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 				t.Fatalf("failed to setup and validate: %v", err)
 			}
 
-			cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, currentSpec, clusterSpec)
+			cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, clusterSpec.DeepCopy())
 			if err != nil {
 				t.Fatalf("failed to generate cluster api spec contents: %v", err)
 			}
@@ -352,7 +351,6 @@ func TestProviderGenerateCAPISpecForUpgradeOIDC(t *testing.T) {
 				Name: "bootstrap-test",
 			}
 			clusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
-			currentSpec := clusterSpec.DeepCopy()
 			vsphereDatacenter := &v1alpha1.VSphereDatacenterConfig{
 				Spec: v1alpha1.VSphereDatacenterConfigSpec{},
 			}
@@ -377,7 +375,7 @@ func TestProviderGenerateCAPISpecForUpgradeOIDC(t *testing.T) {
 				t.Fatalf("failed to setup and validate: %v", err)
 			}
 
-			cp, _, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, currentSpec, clusterSpec)
+			cp, _, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, clusterSpec.DeepCopy())
 			if err != nil {
 				t.Fatalf("failed to generate cluster api spec contents: %v", err)
 			}
@@ -416,7 +414,6 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *
 				Name: "bootstrap-test",
 			}
 			clusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
-			currentSpec := clusterSpec.DeepCopy()
 			vsphereDatacenter := &v1alpha1.VSphereDatacenterConfig{
 				Spec: v1alpha1.VSphereDatacenterConfigSpec{},
 			}
@@ -443,7 +440,7 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *
 				t.Fatalf("failed to setup and validate: %v", err)
 			}
 
-			cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, currentSpec, clusterSpec)
+			cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, clusterSpec.DeepCopy())
 			if err != nil {
 				t.Fatalf("failed to generate cluster api spec contents: %v", err)
 			}
@@ -468,7 +465,6 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 		Name: "bootstrap-test",
 	}
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	currentSpec := clusterSpec.DeepCopy()
 
 	oldCP := &kubeadmnv1alpha3.KubeadmControlPlane{
 		Spec: kubeadmnv1alpha3.KubeadmControlPlaneSpec{
@@ -520,7 +516,7 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 	kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, clusterSpec.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldCP, nil)
 	kubectl.EXPECT().GetMachineDeployment(ctx, cluster, clusterSpec.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldMD, nil)
 	kubectl.EXPECT().GetEtcdadmCluster(ctx, cluster, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(etcdadmCluster, nil)
-	cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, currentSpec, clusterSpec)
+	cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, clusterSpec.DeepCopy())
 	if err != nil {
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}

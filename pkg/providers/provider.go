@@ -16,7 +16,7 @@ type Provider interface {
 	SetupAndValidateUpgradeCluster(ctx context.Context, clusterSpec *cluster.Spec) error
 	UpdateSecrets(ctx context.Context, cluster *types.Cluster) error
 	GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
-	GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currrentSpec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
+	GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currrentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
 	GenerateStorageClass() []byte
 	BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error
 	CleanupProviderInfrastructure(ctx context.Context) error

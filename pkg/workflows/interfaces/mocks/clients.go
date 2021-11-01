@@ -372,17 +372,17 @@ func (mr *MockClusterManagerMockRecorder) Upgrade(arg0, arg1, arg2, arg3 interfa
 }
 
 // UpgradeCluster mocks base method.
-func (m *MockClusterManager) UpgradeCluster(arg0 context.Context, arg1, arg2 *types.Cluster, arg3, arg4 *cluster.Spec, arg5 providers.Provider) error {
+func (m *MockClusterManager) UpgradeCluster(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec, arg4 providers.Provider) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpgradeCluster", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret := m.ctrl.Call(m, "UpgradeCluster", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpgradeCluster indicates an expected call of UpgradeCluster.
-func (mr *MockClusterManagerMockRecorder) UpgradeCluster(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) UpgradeCluster(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeCluster", reflect.TypeOf((*MockClusterManager)(nil).UpgradeCluster), arg0, arg1, arg2, arg3, arg4, arg5)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeCluster", reflect.TypeOf((*MockClusterManager)(nil).UpgradeCluster), arg0, arg1, arg2, arg3, arg4)
 }
 
 // MockAddonManager is a mock of AddonManager interface.

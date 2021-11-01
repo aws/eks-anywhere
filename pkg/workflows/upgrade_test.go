@@ -55,7 +55,8 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	capiUpgrader := mocks.NewMockCAPIUpgrader(mockCtrl)
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
-	workflow := workflows.NewUpgrade(bootstrapper, provider, capiUpgrader, clusterManager, addonManager, writer)
+	upgradeChangeDiff := *types.NewChangeDiff()
+	workflow := workflows.NewUpgrade(bootstrapper, provider, capiUpgrader, clusterManager, addonManager, writer, upgradeChangeDiff)
 
 	return &upgradeTestSetup{
 		t:                t,
@@ -109,7 +110,6 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(expectedCluster *types.Cl
 		c.capiUpgrader.EXPECT().Upgrade(c.ctx, expectedCluster, c.provider, currentSpec, c.clusterSpec).Return(capiChangeDiff, nil),
 		c.addonManager.EXPECT().Upgrade(c.ctx, expectedCluster, currentSpec, c.clusterSpec).Return(fluxChangeDiff, nil),
 		c.clusterManager.EXPECT().Upgrade(c.ctx, expectedCluster, currentSpec, c.clusterSpec).Return(eksaChangeDiff, nil),
-		c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.clusterSpec, expectedCluster),
 	)
 }
 
@@ -159,13 +159,13 @@ func (c *upgradeTestSetup) expectNotToDeleteBootstrap() {
 
 func (c *upgradeTestSetup) expectUpgradeWorkload(expectedCluster *types.Cluster) {
 	c.expectUpgradeWorkloadToReturn(expectedCluster, nil)
+	c.clusterManager.EXPECT().ApplyBundles(c.ctx, c.clusterSpec, expectedCluster)
 }
 
 func (c *upgradeTestSetup) expectUpgradeWorkloadToReturn(expectedCluster *types.Cluster, err error) {
 	gomock.InOrder(
-		c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, expectedCluster, c.clusterSpec.Name).Return(c.clusterSpec, nil),
 		c.clusterManager.EXPECT().UpgradeCluster(
-			c.ctx, c.bootstrapCluster, expectedCluster, c.clusterSpec, c.clusterSpec, c.provider,
+			c.ctx, c.bootstrapCluster, expectedCluster, c.clusterSpec, c.provider,
 		).Return(err),
 	)
 }
@@ -410,7 +410,7 @@ func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	test.expectUpdateGitEksaSpec()
 	test.expectForceReconcileGitRepo(test.bootstrapCluster)
 	test.expectResumeGitOpsKustomization(test.bootstrapCluster)
-	test.expectUpgradeWorkloadToReturn(test.bootstrapCluster, nil)
+	test.expectUpgradeWorkload(test.bootstrapCluster)
 
 	err := test.run()
 	if err != nil {
