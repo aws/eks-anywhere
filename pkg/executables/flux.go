@@ -3,7 +3,6 @@ package executables
 import (
 	"context"
 	"fmt"
-	"path"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/git/providers/github"
@@ -36,7 +35,7 @@ func (f *Flux) BootstrapToolkitsComponents(ctx context.Context, cluster *types.C
 		gitProvider,
 		"--repository", c.Repository,
 		"--owner", c.Owner,
-		"--path", path.Dir(c.ClusterConfigPath),
+		"--path", c.ClusterRootPath(),
 	}
 
 	if cluster.KubeconfigFile != "" {
