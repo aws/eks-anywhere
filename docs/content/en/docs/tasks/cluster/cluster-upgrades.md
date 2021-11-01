@@ -109,8 +109,6 @@ GitOps not configured, force reconcile flux git repo skipped
 Resuming Flux kustomization
 GitOps field not specified, resume flux kustomization skipped
 ```
-You can see which components were upgraded by running `kubectl get pods -A` and observing the updated `Age` for the upgraded components.
-
 
 ### Upgradeable Cluster Attributes
 EKS Anywhere `upgrade` supports upgrading more than just the `kubernetesVersion`, 
