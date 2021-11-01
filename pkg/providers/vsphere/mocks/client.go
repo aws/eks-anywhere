@@ -477,6 +477,21 @@ func (mr *MockProviderKubectlClientMockRecorder) LoadSecret(arg0, arg1, arg2, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadSecret", reflect.TypeOf((*MockProviderKubectlClient)(nil).LoadSecret), arg0, arg1, arg2, arg3, arg4)
 }
 
+// SearchVsphereDatacenterConfig mocks base method.
+func (m *MockProviderKubectlClient) SearchVsphereDatacenterConfig(arg0 context.Context, arg1, arg2, arg3 string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchVsphereDatacenterConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([]*v1alpha1.VSphereDatacenterConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchVsphereDatacenterConfig indicates an expected call of SearchVsphereDatacenterConfig.
+func (mr *MockProviderKubectlClientMockRecorder) SearchVsphereDatacenterConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchVsphereDatacenterConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).SearchVsphereDatacenterConfig), arg0, arg1, arg2, arg3)
+}
+
 // SearchVsphereMachineConfig mocks base method.
 func (m *MockProviderKubectlClient) SearchVsphereMachineConfig(arg0 context.Context, arg1, arg2, arg3 string) ([]*v1alpha1.VSphereMachineConfig, error) {
 	m.ctrl.T.Helper()

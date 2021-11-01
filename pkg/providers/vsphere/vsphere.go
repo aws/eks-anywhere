@@ -138,6 +138,7 @@ type ProviderKubectlClient interface {
 	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 	SearchVsphereMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereMachineConfig, error)
+	SearchVsphereDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error)
 }
 
 func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *vsphereProvider {
@@ -869,6 +870,13 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 			if len(em) > 0 {
 				return fmt.Errorf("VSphereMachineConfig %s already exists", mc.GetName())
 			}
+		}
+		existingDatacenter, err := p.providerKubectlClient.SearchVsphereDatacenterConfig(ctx, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Namespace)
+		if err != nil {
+			return err
+		}
+		if len(existingDatacenter) > 0 {
+			return fmt.Errorf("VSphereDatacenter %s already exists", p.datacenterConfig.Name)
 		}
 	}
 
