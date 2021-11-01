@@ -3,7 +3,6 @@ title: "Ports and protocols"
 weight: 55
 description: >
   Ports used with an EKS Anywhere cluster
-url: /tasks/ports 
 ---
 
 EKS Anywhere requires that various ports on control plane and worker nodes be open.
