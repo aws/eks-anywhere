@@ -352,7 +352,7 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		return false, err
 	}
 
-	if !cc.Spec.Equal(&newClusterSpec.Spec) {
+	if !cc.Equal(newClusterSpec.Cluster) {
 		logger.V(3).Info("Existing cluster and new cluster spec differ")
 		return true, nil
 	}

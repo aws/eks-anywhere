@@ -45,44 +45,44 @@ type ClusterSpec struct {
 	ManagementCluster           ManagementCluster            `json:"managementCluster,omitempty"`
 }
 
-func (n *ClusterSpec) Equal(o *ClusterSpec) bool {
+func (n *Cluster) Equal(o *Cluster) bool {
 	if n == o {
 		return true
 	}
 	if n == nil || o == nil {
 		return false
 	}
-	if n.KubernetesVersion != o.KubernetesVersion {
+	if n.Spec.KubernetesVersion != o.Spec.KubernetesVersion {
 		return false
 	}
-	if !n.ControlPlaneConfiguration.Equal(&o.ControlPlaneConfiguration) {
+	if !n.Spec.ControlPlaneConfiguration.Equal(&o.Spec.ControlPlaneConfiguration) {
 		return false
 	}
-	if !WorkerNodeGroupConfigurationsSliceEqual(n.WorkerNodeGroupConfigurations, o.WorkerNodeGroupConfigurations) {
+	if !WorkerNodeGroupConfigurationsSliceEqual(n.Spec.WorkerNodeGroupConfigurations, o.Spec.WorkerNodeGroupConfigurations) {
 		return false
 	}
-	if !n.DatacenterRef.Equal(&o.DatacenterRef) {
+	if !n.Spec.DatacenterRef.Equal(&o.Spec.DatacenterRef) {
 		return false
 	}
-	if !RefSliceEqual(n.IdentityProviderRefs, o.IdentityProviderRefs) {
+	if !RefSliceEqual(n.Spec.IdentityProviderRefs, o.Spec.IdentityProviderRefs) {
 		return false
 	}
-	if !n.GitOpsRef.Equal(o.GitOpsRef) {
+	if !n.Spec.GitOpsRef.Equal(o.Spec.GitOpsRef) {
 		return false
 	}
-	if !n.ClusterNetwork.Equal(&o.ClusterNetwork) {
+	if !n.Spec.ClusterNetwork.Equal(&o.Spec.ClusterNetwork) {
 		return false
 	}
-	if !n.ExternalEtcdConfiguration.Equal(o.ExternalEtcdConfiguration) {
+	if !n.Spec.ExternalEtcdConfiguration.Equal(o.Spec.ExternalEtcdConfiguration) {
 		return false
 	}
-	if !n.ProxyConfiguration.Equal(o.ProxyConfiguration) {
+	if !n.Spec.ProxyConfiguration.Equal(o.Spec.ProxyConfiguration) {
 		return false
 	}
-	if !n.RegistryMirrorConfiguration.Equal(o.RegistryMirrorConfiguration) {
+	if !n.Spec.RegistryMirrorConfiguration.Equal(o.Spec.RegistryMirrorConfiguration) {
 		return false
 	}
-	if !n.ManagementCluster.Equal(o.ManagementCluster) {
+	if !n.ManagementClusterEqual(o) {
 		return false
 	}
 	return true
@@ -401,7 +401,7 @@ func (s *Cluster) SetSelfManaged() {
 }
 
 func (s *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
-	return s.Spec.ManagementCluster.Equal(s2.Spec.ManagementCluster)
+	return s.IsSelfManaged() && s2.IsSelfManaged() || s.Spec.ManagementCluster.Equal(s2.Spec.ManagementCluster)
 }
 
 func (c *Cluster) MachineConfigRefs() []Ref {
