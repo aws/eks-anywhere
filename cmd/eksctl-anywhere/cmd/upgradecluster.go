@@ -99,7 +99,6 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		deps.ClusterManager,
 		deps.FluxAddonClient,
 		deps.Writer,
-		types.ChangeDiff{},
 	)
 
 	workloadCluster := &types.Cluster{

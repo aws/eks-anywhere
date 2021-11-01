@@ -23,11 +23,12 @@ type Upgrade struct {
 	addonManager      interfaces.AddonManager
 	writer            filewriter.FileWriter
 	capiUpgrader      interfaces.CAPIUpgrader
-	upgradeChangeDiff types.ChangeDiff
+	upgradeChangeDiff *types.ChangeDiff
 }
 
 func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provider, capiUpgrader interfaces.CAPIUpgrader,
-	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter, upgradeChangeDiff types.ChangeDiff) *Upgrade {
+	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter) *Upgrade {
+	upgradeChangeDiff := types.NewChangeDiff()
 	return &Upgrade{
 		bootstrapper:      bootstrapper,
 		provider:          provider,

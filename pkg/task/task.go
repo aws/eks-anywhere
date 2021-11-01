@@ -28,7 +28,7 @@ type CommandContext struct {
 	Writer            filewriter.FileWriter
 	CAPIUpgrader      interfaces.CAPIUpgrader
 	ClusterSpec       *cluster.Spec
-	UpgradeChangeDiff types.ChangeDiff
+	UpgradeChangeDiff *types.ChangeDiff
 	BootstrapCluster  *types.Cluster
 	WorkloadCluster   *types.Cluster
 	Profiler          *Profiler
