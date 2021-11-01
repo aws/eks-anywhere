@@ -265,6 +265,12 @@ func TestClusterctlInitInfrastructureInstallEtcdadmControllers(t *testing.T) {
 }
 
 func TestClusterctlInitInfrastructureEnvMapError(t *testing.T) {
+	cluster := &types.Cluster{Name: "cluster-name"}
+	defer func() {
+		if !t.Failed() {
+			os.RemoveAll(cluster.Name)
+		}
+	}()
 	ctx := context.Background()
 
 	_, writer := test.NewWriter(t)
@@ -280,7 +286,7 @@ func TestClusterctlInitInfrastructureEnvMapError(t *testing.T) {
 
 	c := executables.NewClusterctl(executable, writer)
 
-	if err := c.InitInfrastructure(ctx, clusterSpec, &types.Cluster{Name: "cluster-name"}, provider); err == nil {
+	if err := c.InitInfrastructure(ctx, clusterSpec, cluster, provider); err == nil {
 		t.Fatal("Clusterctl.InitInfrastructure() error = nil")
 	}
 }

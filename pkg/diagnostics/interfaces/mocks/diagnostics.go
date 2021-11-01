@@ -93,62 +93,77 @@ func (m *MockDiagnosticBundleFactory) EXPECT() *MockDiagnosticBundleFactoryMockR
 	return m.recorder
 }
 
-// NewDiagnosticBundle mocks base method.
-func (m *MockDiagnosticBundleFactory) NewDiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig, bundlePath string) (*diagnostics.EksaDiagnosticBundle, error) {
+// DiagnosticBundle mocks base method.
+func (m *MockDiagnosticBundleFactory) DiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig, bundlePath string) (diagnostics.DiagnosticBundle, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewDiagnosticBundle", spec, provider, kubeconfig, bundlePath)
-	ret0, _ := ret[0].(*diagnostics.EksaDiagnosticBundle)
+	ret := m.ctrl.Call(m, "DiagnosticBundle", spec, provider, kubeconfig, bundlePath)
+	ret0, _ := ret[0].(diagnostics.DiagnosticBundle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// NewDiagnosticBundle indicates an expected call of NewDiagnosticBundle.
-func (mr *MockDiagnosticBundleFactoryMockRecorder) NewDiagnosticBundle(spec, provider, kubeconfig, bundlePath interface{}) *gomock.Call {
+// DiagnosticBundle indicates an expected call of DiagnosticBundle.
+func (mr *MockDiagnosticBundleFactoryMockRecorder) DiagnosticBundle(spec, provider, kubeconfig, bundlePath interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewDiagnosticBundle", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).NewDiagnosticBundle), spec, provider, kubeconfig, bundlePath)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiagnosticBundle", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).DiagnosticBundle), spec, provider, kubeconfig, bundlePath)
 }
 
-// NewDiagnosticBundleCustom mocks base method.
-func (m *MockDiagnosticBundleFactory) NewDiagnosticBundleCustom(kubeconfig, bundlePath string) *diagnostics.EksaDiagnosticBundle {
+// DiagnosticBundleCustom mocks base method.
+func (m *MockDiagnosticBundleFactory) DiagnosticBundleCustom(kubeconfig, bundlePath string) diagnostics.DiagnosticBundle {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewDiagnosticBundleCustom", kubeconfig, bundlePath)
-	ret0, _ := ret[0].(*diagnostics.EksaDiagnosticBundle)
+	ret := m.ctrl.Call(m, "DiagnosticBundleCustom", kubeconfig, bundlePath)
+	ret0, _ := ret[0].(diagnostics.DiagnosticBundle)
 	return ret0
 }
 
-// NewDiagnosticBundleCustom indicates an expected call of NewDiagnosticBundleCustom.
-func (mr *MockDiagnosticBundleFactoryMockRecorder) NewDiagnosticBundleCustom(kubeconfig, bundlePath interface{}) *gomock.Call {
+// DiagnosticBundleCustom indicates an expected call of DiagnosticBundleCustom.
+func (mr *MockDiagnosticBundleFactoryMockRecorder) DiagnosticBundleCustom(kubeconfig, bundlePath interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewDiagnosticBundleCustom", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).NewDiagnosticBundleCustom), kubeconfig, bundlePath)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiagnosticBundleCustom", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).DiagnosticBundleCustom), kubeconfig, bundlePath)
 }
 
-// NewDiagnosticBundleDefault mocks base method.
-func (m *MockDiagnosticBundleFactory) NewDiagnosticBundleDefault() *diagnostics.EksaDiagnosticBundle {
+// DiagnosticBundleDefault mocks base method.
+func (m *MockDiagnosticBundleFactory) DiagnosticBundleDefault() diagnostics.DiagnosticBundle {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewDiagnosticBundleDefault")
-	ret0, _ := ret[0].(*diagnostics.EksaDiagnosticBundle)
+	ret := m.ctrl.Call(m, "DiagnosticBundleDefault")
+	ret0, _ := ret[0].(diagnostics.DiagnosticBundle)
 	return ret0
 }
 
-// NewDiagnosticBundleDefault indicates an expected call of NewDiagnosticBundleDefault.
-func (mr *MockDiagnosticBundleFactoryMockRecorder) NewDiagnosticBundleDefault() *gomock.Call {
+// DiagnosticBundleDefault indicates an expected call of DiagnosticBundleDefault.
+func (mr *MockDiagnosticBundleFactoryMockRecorder) DiagnosticBundleDefault() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewDiagnosticBundleDefault", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).NewDiagnosticBundleDefault))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiagnosticBundleDefault", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).DiagnosticBundleDefault))
 }
 
-// NewDiagnosticBundleFromSpec mocks base method.
-func (m *MockDiagnosticBundleFactory) NewDiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (*diagnostics.EksaDiagnosticBundle, error) {
+// DiagnosticBundleFromSpec mocks base method.
+func (m *MockDiagnosticBundleFactory) DiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (diagnostics.DiagnosticBundle, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "NewDiagnosticBundleFromSpec", spec, provider, kubeconfig)
-	ret0, _ := ret[0].(*diagnostics.EksaDiagnosticBundle)
+	ret := m.ctrl.Call(m, "DiagnosticBundleFromSpec", spec, provider, kubeconfig)
+	ret0, _ := ret[0].(diagnostics.DiagnosticBundle)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// NewDiagnosticBundleFromSpec indicates an expected call of NewDiagnosticBundleFromSpec.
-func (mr *MockDiagnosticBundleFactoryMockRecorder) NewDiagnosticBundleFromSpec(spec, provider, kubeconfig interface{}) *gomock.Call {
+// DiagnosticBundleFromSpec indicates an expected call of DiagnosticBundleFromSpec.
+func (mr *MockDiagnosticBundleFactoryMockRecorder) DiagnosticBundleFromSpec(spec, provider, kubeconfig interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NewDiagnosticBundleFromSpec", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).NewDiagnosticBundleFromSpec), spec, provider, kubeconfig)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiagnosticBundleFromSpec", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).DiagnosticBundleFromSpec), spec, provider, kubeconfig)
+}
+
+// DiagnosticBundleManagementCluster mocks base method.
+func (m *MockDiagnosticBundleFactory) DiagnosticBundleManagementCluster(kubeconfig string) (diagnostics.DiagnosticBundle, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DiagnosticBundleManagementCluster", kubeconfig)
+	ret0, _ := ret[0].(diagnostics.DiagnosticBundle)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DiagnosticBundleManagementCluster indicates an expected call of DiagnosticBundleManagementCluster.
+func (mr *MockDiagnosticBundleFactoryMockRecorder) DiagnosticBundleManagementCluster(kubeconfig interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DiagnosticBundleManagementCluster", reflect.TypeOf((*MockDiagnosticBundleFactory)(nil).DiagnosticBundleManagementCluster), kubeconfig)
 }
 
 // MockDiagnosticBundle is a mock of DiagnosticBundle interface.
@@ -172,6 +187,34 @@ func NewMockDiagnosticBundle(ctrl *gomock.Controller) *MockDiagnosticBundle {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockDiagnosticBundle) EXPECT() *MockDiagnosticBundleMockRecorder {
 	return m.recorder
+}
+
+// CollectAndAnalyze mocks base method.
+func (m *MockDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeValue *time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CollectAndAnalyze", ctx, sinceTimeValue)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CollectAndAnalyze indicates an expected call of CollectAndAnalyze.
+func (mr *MockDiagnosticBundleMockRecorder) CollectAndAnalyze(ctx, sinceTimeValue interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CollectAndAnalyze", reflect.TypeOf((*MockDiagnosticBundle)(nil).CollectAndAnalyze), ctx, sinceTimeValue)
+}
+
+// PrintAnalysis mocks base method.
+func (m *MockDiagnosticBundle) PrintAnalysis() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PrintAnalysis")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PrintAnalysis indicates an expected call of PrintAnalysis.
+func (mr *MockDiagnosticBundleMockRecorder) PrintAnalysis() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PrintAnalysis", reflect.TypeOf((*MockDiagnosticBundle)(nil).PrintAnalysis))
 }
 
 // PrintBundleConfig mocks base method.
@@ -258,6 +301,34 @@ func (mr *MockDiagnosticBundleMockRecorder) WithGitOpsConfig(config interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithGitOpsConfig", reflect.TypeOf((*MockDiagnosticBundle)(nil).WithGitOpsConfig), config)
 }
 
+// WithLogTextAnalyzers mocks base method.
+func (m *MockDiagnosticBundle) WithLogTextAnalyzers() *diagnostics.EksaDiagnosticBundle {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WithLogTextAnalyzers")
+	ret0, _ := ret[0].(*diagnostics.EksaDiagnosticBundle)
+	return ret0
+}
+
+// WithLogTextAnalyzers indicates an expected call of WithLogTextAnalyzers.
+func (mr *MockDiagnosticBundleMockRecorder) WithLogTextAnalyzers() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithLogTextAnalyzers", reflect.TypeOf((*MockDiagnosticBundle)(nil).WithLogTextAnalyzers))
+}
+
+// WithMachineConfigs mocks base method.
+func (m *MockDiagnosticBundle) WithMachineConfigs(configs []providers.MachineConfig) *diagnostics.EksaDiagnosticBundle {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WithMachineConfigs", configs)
+	ret0, _ := ret[0].(*diagnostics.EksaDiagnosticBundle)
+	return ret0
+}
+
+// WithMachineConfigs indicates an expected call of WithMachineConfigs.
+func (mr *MockDiagnosticBundleMockRecorder) WithMachineConfigs(configs interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithMachineConfigs", reflect.TypeOf((*MockDiagnosticBundle)(nil).WithMachineConfigs), configs)
+}
+
 // WithOidcConfig mocks base method.
 func (m *MockDiagnosticBundle) WithOidcConfig(config *v1alpha1.OIDCConfig) *diagnostics.EksaDiagnosticBundle {
 	m.ctrl.T.Helper()
@@ -270,6 +341,35 @@ func (m *MockDiagnosticBundle) WithOidcConfig(config *v1alpha1.OIDCConfig) *diag
 func (mr *MockDiagnosticBundleMockRecorder) WithOidcConfig(config interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithOidcConfig", reflect.TypeOf((*MockDiagnosticBundle)(nil).WithOidcConfig), config)
+}
+
+// WriteAnalysisToFile mocks base method.
+func (m *MockDiagnosticBundle) WriteAnalysisToFile() (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WriteAnalysisToFile")
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// WriteAnalysisToFile indicates an expected call of WriteAnalysisToFile.
+func (mr *MockDiagnosticBundleMockRecorder) WriteAnalysisToFile() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteAnalysisToFile", reflect.TypeOf((*MockDiagnosticBundle)(nil).WriteAnalysisToFile))
+}
+
+// WriteBundleConfig mocks base method.
+func (m *MockDiagnosticBundle) WriteBundleConfig() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WriteBundleConfig")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WriteBundleConfig indicates an expected call of WriteBundleConfig.
+func (mr *MockDiagnosticBundleMockRecorder) WriteBundleConfig() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WriteBundleConfig", reflect.TypeOf((*MockDiagnosticBundle)(nil).WriteBundleConfig))
 }
 
 // MockAnalyzerFactory is a mock of AnalyzerFactory interface.

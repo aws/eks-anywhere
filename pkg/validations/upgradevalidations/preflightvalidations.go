@@ -3,28 +3,32 @@ package upgradevalidations
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"sigs.k8s.io/cluster-api/api/v1alpha3"
 
+	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err error) {
 	k := u.Opts.Kubectl
 
+	targetCluster := &types.Cluster{
+		Name:           u.Opts.WorkloadCluster.Name,
+		KubeconfigFile: u.Opts.ManagementCluster.KubeconfigFile,
+	}
 	var upgradeValidations []validations.ValidationResult
 	upgradeValidations = append(
 		upgradeValidations,
 		validations.ValidationResult{
 			Name:        "control plane ready",
 			Remediation: fmt.Sprintf("ensure control plane nodes and pods for cluster %s are Ready", u.Opts.WorkloadCluster.Name),
-			Err:         k.ValidateControlPlaneNodes(ctx, u.Opts.WorkloadCluster),
+			Err:         k.ValidateControlPlaneNodes(ctx, targetCluster, targetCluster.Name),
 		},
 		validations.ValidationResult{
 			Name:        "worker nodes ready",
 			Remediation: fmt.Sprintf("ensure machine deployments for cluster %s are Ready", u.Opts.WorkloadCluster.Name),
-			Err:         k.ValidateWorkerNodes(ctx, u.Opts.WorkloadCluster),
+			Err:         k.ValidateWorkerNodes(ctx, targetCluster, u.Opts.Spec.Name),
 		},
 		validations.ValidationResult{
 			Name:        "nodes ready",
@@ -34,12 +38,12 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		validations.ValidationResult{
 			Name:        "cluster CRDs ready",
 			Remediation: "",
-			Err:         k.ValidateClustersCRD(ctx, u.Opts.WorkloadCluster),
+			Err:         k.ValidateClustersCRD(ctx, u.Opts.ManagementCluster),
 		},
 		validations.ValidationResult{
 			Name:        "cluster object present on workload cluster",
 			Remediation: fmt.Sprintf("ensure that the CAPI cluster object %s representing cluster %s is present", v1alpha3.GroupVersion, u.Opts.WorkloadCluster.Name),
-			Err:         ValidateClusterObjectExists(ctx, k, u.Opts.WorkloadCluster),
+			Err:         ValidateClusterObjectExists(ctx, k, u.Opts.ManagementCluster),
 		},
 		validations.ValidationResult{
 			Name:        "upgrade cluster kubernetes version increment",
@@ -49,7 +53,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		validations.ValidationResult{
 			Name:        "validate immutable fields",
 			Remediation: "",
-			Err:         ValidateImmutableFields(ctx, k, u.Opts.WorkloadCluster, u.Opts.Spec, u.Opts.Provider),
+			Err:         ValidateImmutableFields(ctx, k, targetCluster, u.Opts.Spec, u.Opts.Provider),
 		},
 	)
 
@@ -63,15 +67,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 	}
 
 	if len(errs) > 0 {
-		return &ValidationError{Errs: errs}
+		return &validations.ValidationError{Errs: errs}
 	}
 	return nil
-}
-
-type ValidationError struct {
-	Errs []string
-}
-
-func (v *ValidationError) Error() string {
-	return fmt.Sprintf("validation failed with %d errors: %s", len(v.Errs), strings.Join(v.Errs[:], ","))
 }

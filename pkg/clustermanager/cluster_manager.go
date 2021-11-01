@@ -5,9 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"reflect"
-	"sync"
 	"time"
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
@@ -18,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -34,7 +33,6 @@ const (
 	machineBackoff    = 1 * time.Second
 	machinesMinWait   = 30 * time.Minute
 	moveCAPIWait      = 5 * time.Minute
-	logDir            = "logs"
 	ctrlPlaneWaitStr  = "60m"
 	etcdWaitStr       = "60m"
 	deploymentWaitStr = "30m"
@@ -42,13 +40,15 @@ const (
 
 type ClusterManager struct {
 	*Upgrader
-	clusterClient   *retrierClient
-	writer          filewriter.FileWriter
-	networking      Networking
-	Retrier         *retrier.Retrier
-	machineMaxWait  time.Duration
-	machineBackoff  time.Duration
-	machinesMinWait time.Duration
+	clusterClient      *retrierClient
+	writer             filewriter.FileWriter
+	networking         Networking
+	diagnosticsFactory diagnostics.DiagnosticBundleFactory
+	Retrier            *retrier.Retrier
+	machineMaxWait     time.Duration
+	machineBackoff     time.Duration
+	machinesMinWait    time.Duration
+	awsIamAuth         AwsIamAuth
 }
 
 type ClusterClient interface {
@@ -65,7 +65,7 @@ type ClusterClient interface {
 	SaveLog(ctx context.Context, cluster *types.Cluster, deployment *types.Deployment, fileName string, writer filewriter.FileWriter) error
 	GetMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]types.Machine, error)
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
-	GetEksaCluster(ctx context.Context, cluster *types.Cluster) (*v1alpha1.Cluster, error)
+	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
 	UpdateEnvironmentVariablesInNamespace(ctx context.Context, resourceType, resourceName string, envMap map[string]string, cluster *types.Cluster, namespace string) error
 	UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error
@@ -73,29 +73,39 @@ type ClusterClient interface {
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
-	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster) error
-	ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster) error
+	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
+	ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
 	GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error)
+	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
+	GetClusterCATlsCert(ctx context.Context, cluster *types.Cluster, namespace string) ([]byte, error)
 }
 
 type Networking interface {
 	GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
 }
 
+type AwsIamAuth interface {
+	GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
+	GenerateCertKeyPairSecret() ([]byte, error)
+	GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, serverUrl, tlsCert string) ([]byte, error)
+}
+
 type ClusterManagerOpt func(*ClusterManager)
 
-func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, opts ...ClusterManagerOpt) *ClusterManager {
+func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, opts ...ClusterManagerOpt) *ClusterManager {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
-		Upgrader:        NewUpgrader(retrierClient),
-		clusterClient:   retrierClient,
-		writer:          writer,
-		networking:      networking,
-		Retrier:         retrier,
-		machineMaxWait:  machineMaxWait,
-		machineBackoff:  machineBackoff,
-		machinesMinWait: machinesMinWait,
+		Upgrader:           NewUpgrader(retrierClient),
+		clusterClient:      retrierClient,
+		writer:             writer,
+		networking:         networking,
+		Retrier:            retrier,
+		diagnosticsFactory: diagnosticBundleFactory,
+		machineMaxWait:     machineMaxWait,
+		machineBackoff:     machineBackoff,
+		machinesMinWait:    machinesMinWait,
+		awsIamAuth:         awsIamAuth,
 	}
 
 	for _, o := range opts {
@@ -185,7 +195,7 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 	}
 
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
-		logger.V(3).Info("Waiting for external etcd to be ready")
+		logger.V(3).Info("Waiting for external etcd to be ready", "cluster", workloadCluster.Name)
 		err = c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWaitStr, workloadCluster.Name)
 		if err != nil {
 			return nil, fmt.Errorf("error waiting for external etcd for workload cluster to be ready: %v", err)
@@ -286,7 +296,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for control plane machines to be ready")
-	if err = c.waitForNodesReady(ctx, managementCluster, workloadCluster.Name, []string{clusterv1.MachineControlPlaneLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
+	if err = c.waitForNodesReady(ctx, managementCluster, clusterSpec.Name, []string{clusterv1.MachineControlPlaneLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
 		return err
 	}
 
@@ -318,7 +328,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for machine deployment machines to be ready")
-	if err = c.waitForNodesReady(ctx, managementCluster, workloadCluster.Name, []string{clusterv1.MachineDeploymentLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
+	if err = c.waitForNodesReady(ctx, managementCluster, clusterSpec.Name, []string{clusterv1.MachineDeploymentLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
 		return err
 	}
 
@@ -337,12 +347,12 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 }
 
 func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
-	cc, err := c.clusterClient.GetEksaCluster(ctx, cluster)
+	cc, err := c.clusterClient.GetEksaCluster(ctx, cluster, newClusterSpec.Name)
 	if err != nil {
 		return false, err
 	}
 
-	if !reflect.DeepEqual(cc.Spec, newClusterSpec.Spec) {
+	if !cc.Spec.Equal(&newClusterSpec.Spec) {
 		logger.V(3).Info("Existing cluster and new cluster spec differ")
 		return true, nil
 	}
@@ -497,34 +507,120 @@ func (c *ClusterManager) InstallMachineHealthChecks(ctx context.Context, workloa
 	return nil
 }
 
-func (c *ClusterManager) SaveLogs(ctx context.Context, cluster *types.Cluster) error {
-	if c == nil || cluster == nil {
-		return nil
+// InstallAwsIamAuth applies the aws-iam-authenticator manifest based on cluster spec inputs.
+// Generates a kubeconfig for interacting with the cluster with aws-iam-authenticator client.
+func (c *ClusterManager) InstallAwsIamAuth(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	awsIamAuthManifest, err := c.awsIamAuth.GenerateManifest(clusterSpec)
+	if err != nil {
+		return fmt.Errorf("error generating aws-iam-authenticator manifest: %v", err)
 	}
-	var wg sync.WaitGroup
-	wg.Add(len(internal.ClusterDeployments))
-
-	w, err := c.writer.WithDir(logDir)
+	err = c.Retrier.Retry(
+		func() error {
+			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, workloadCluster, awsIamAuthManifest)
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error applying aws-iam-authenticator manifest: %v", err)
+	}
+	err = c.generateAwsIamAuthKubeconfig(ctx, managementCluster, workloadCluster, clusterSpec)
 	if err != nil {
 		return err
 	}
-	for fileName, deployment := range internal.ClusterDeployments {
-		go func(dep *types.Deployment, f string) {
-			// Ignoring error for now
-			defer wg.Done()
-			err := c.clusterClient.SaveLog(ctx, cluster, dep, f, w)
-			if err != nil {
-				logger.V(5).Info("Error saving logs", "error", err)
-			}
-		}(deployment, fileName)
+	return nil
+}
+
+func (c *ClusterManager) CreateAwsIamAuthCaSecret(ctx context.Context, cluster *types.Cluster) error {
+	awsIamAuthCaSecret, err := c.awsIamAuth.GenerateCertKeyPairSecret()
+	if err != nil {
+		return fmt.Errorf("error generating aws-iam-authenticator ca secret: %v", err)
 	}
-	wg.Wait()
+	err = c.Retrier.Retry(
+		func() error {
+			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, awsIamAuthCaSecret)
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error applying aws-iam-authenticator ca secret: %v", err)
+	}
+	return nil
+}
+
+func (c *ClusterManager) generateAwsIamAuthKubeconfig(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	fileName := fmt.Sprintf("%s-aws.kubeconfig", workloadCluster.Name)
+	serverUrl, err := c.clusterClient.GetApiServerUrl(ctx, workloadCluster)
+	if err != nil {
+		return fmt.Errorf("error generating aws-iam-authenticator kubeconfig: %v", err)
+	}
+	tlsCert, err := c.clusterClient.GetClusterCATlsCert(ctx, managementCluster, constants.EksaSystemNamespace)
+	if err != nil {
+		return fmt.Errorf("error generating aws-iam-authenticator kubeconfig: %v", err)
+	}
+	awsIamAuthKubeconfigContent, err := c.awsIamAuth.GenerateAwsIamAuthKubeconfig(clusterSpec, serverUrl, string(tlsCert))
+	if err != nil {
+		return fmt.Errorf("error generating aws-iam-authenticator kubeconfig: %v", err)
+	}
+	writtenFile, err := c.writer.Write(fileName, awsIamAuthKubeconfigContent, filewriter.PersistentFile, filewriter.Permission0600)
+	if err != nil {
+		return fmt.Errorf("error writing aws-iam-authenticator kubeconfig to %s: %v", writtenFile, err)
+	}
+	logger.V(3).Info("Generated aws-iam-authenticator kubeconfig", "kubeconfig", writtenFile)
+	return nil
+}
+
+func (c *ClusterManager) SaveLogsManagementCluster(ctx context.Context, cluster *types.Cluster) error {
+	if cluster == nil {
+		return nil
+	}
+
+	if cluster.KubeconfigFile == "" {
+		return nil
+	}
+
+	bundle, err := c.diagnosticsFactory.DiagnosticBundleManagementCluster(cluster.KubeconfigFile)
+	if err != nil {
+		logger.V(5).Info("Error generating support bundle for bootstrap cluster", "error", err)
+		return nil
+	}
+	return collectDiagnosticBundle(ctx, bundle)
+}
+
+func (c *ClusterManager) SaveLogsWorkloadCluster(ctx context.Context, provider providers.Provider, spec *cluster.Spec, cluster *types.Cluster) error {
+	if cluster == nil {
+		return nil
+	}
+
+	if cluster.KubeconfigFile == "" {
+		return nil
+	}
+
+	bundle, err := c.diagnosticsFactory.DiagnosticBundleFromSpec(spec, provider, cluster.KubeconfigFile)
+	if err != nil {
+		logger.V(5).Info("Error generating support bundle for workload cluster", "error", err)
+		return nil
+	}
+
+	return collectDiagnosticBundle(ctx, bundle)
+}
+
+func collectDiagnosticBundle(ctx context.Context, bundle diagnostics.DiagnosticBundle) error {
+	var sinceTimeValue *time.Time
+	oneHour := "1h"
+	sinceTimeValue, err := diagnostics.ParseTimeFromDuration(oneHour)
+	if err != nil {
+		logger.V(5).Info("Error parsing time options for support bundle generation", "error", err)
+		return nil
+	}
+
+	err = bundle.CollectAndAnalyze(ctx, sinceTimeValue)
+	if err != nil {
+		logger.V(5).Info("Error collecting and saving logs", "error", err)
+	}
 	return nil
 }
 
 func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	isCpReady := func() error {
-		return c.clusterClient.ValidateControlPlaneNodes(ctx, managementCluster)
+		return c.clusterClient.ValidateControlPlaneNodes(ctx, managementCluster, clusterSpec.Name)
 	}
 
 	err := isCpReady()
@@ -546,7 +642,7 @@ func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, m
 
 func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	isMdReady := func() error {
-		return c.clusterClient.ValidateWorkerNodes(ctx, managementCluster)
+		return c.clusterClient.ValidateWorkerNodes(ctx, managementCluster, clusterSpec.Name)
 	}
 
 	err := isMdReady()
@@ -580,7 +676,7 @@ func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluste
 		}
 
 		if readyNodes != totalNodes {
-			logger.V(4).Info("Nodes are not ready yet", "total", totalNodes, "ready", readyNodes)
+			logger.V(4).Info("Nodes are not ready yet", "total", totalNodes, "ready", readyNodes, "cluster name", clusterName)
 			return errors.New("nodes are not ready yet")
 		}
 
@@ -751,7 +847,7 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 
 	err = c.Retrier.Retry(
 		func() error {
-			return c.clusterClient.UpdateAnnotationInNamespace(ctx, clusterSpec.ResourceType(), cluster.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
+			return c.clusterClient.UpdateAnnotationInNamespace(ctx, clusterSpec.ResourceType(), clusterSpec.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 		},
 	)
 	if err != nil {
@@ -815,7 +911,7 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 
 	err = c.Retrier.Retry(
 		func() error {
-			return c.clusterClient.RemoveAnnotationInNamespace(ctx, clusterSpec.ResourceType(), cluster.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
+			return c.clusterClient.RemoveAnnotationInNamespace(ctx, clusterSpec.ResourceType(), clusterSpec.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 		},
 	)
 	if err != nil {
@@ -839,8 +935,8 @@ func (c *ClusterManager) applyResource(ctx context.Context, cluster *types.Clust
 	return nil
 }
 
-func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.Cluster) (*cluster.Spec, error) {
-	eksaCluster, err := c.clusterClient.GetEksaCluster(ctx, clus)
+func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.Cluster, clusterName string) (*cluster.Spec, error) {
+	eksaCluster, err := c.clusterClient.GetEksaCluster(ctx, clus, clusterName)
 	if err != nil {
 		return nil, fmt.Errorf("failed getting EKS-A cluster to build current cluster Spec: %v", err)
 	}
@@ -850,32 +946,6 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 
 func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
 	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus))
-}
-
-type kubeConfigCluster struct {
-	Name string `json:"name"`
-}
-
-type kubeConfigYAML struct {
-	Clusters []*kubeConfigCluster `json:"clusters"`
-}
-
-func (c *ClusterManager) LoadManagement(kubeconfig string) (*types.Cluster, error) {
-	kubeConfigBytes, err := ioutil.ReadFile(kubeconfig)
-	if err != nil {
-		return nil, err
-	}
-	kc := &kubeConfigYAML{}
-	kc.Clusters = []*kubeConfigCluster{}
-	err = yaml.Unmarshal(kubeConfigBytes, &kc)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing kubeconfig file: %v", err)
-	}
-	return &types.Cluster{
-		Name:               kc.Clusters[0].Name,
-		KubeconfigFile:     kubeconfig,
-		ExistingManagement: true,
-	}, nil
 }
 
 func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {

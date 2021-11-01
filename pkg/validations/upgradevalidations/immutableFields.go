@@ -8,16 +8,17 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
-func ValidateImmutableFields(ctx context.Context, k ValidationsKubectlClient, cluster *types.Cluster, spec *cluster.Spec, provider providers.Provider) error {
-	prevSpec, err := k.GetEksaCluster(ctx, cluster)
+func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, cluster *types.Cluster, spec *cluster.Spec, provider providers.Provider) error {
+	prevSpec, err := k.GetEksaCluster(ctx, cluster, spec.Name)
 	if err != nil {
 		return err
 	}
 
 	if prevSpec.Name != spec.Name {
-		return fmt.Errorf("cluster name is immutable")
+		return fmt.Errorf("cluster name is immutable. previous name %s, new name %s", prevSpec.Name, spec.Name)
 	}
 
 	if prevSpec.Namespace != spec.Namespace {
@@ -73,15 +74,30 @@ func ValidateImmutableFields(ctx context.Context, k ValidationsKubectlClient, cl
 		return fmt.Errorf("spec.identityProviderRefs is immutable")
 	}
 	if len(nSpec.IdentityProviderRefs) > 0 {
-		// if it got here, it means we already validated for IdentityProviderRefs to ensure it only has one and is
-		// of type OIDCConfig
-		prevOIDC, err := k.GetEksaOIDCConfig(ctx, nSpec.IdentityProviderRefs[0].Name, cluster.KubeconfigFile, spec.Namespace)
-		if err != nil {
-			return err
+		for _, nIdentityProvider := range nSpec.IdentityProviderRefs {
+			switch nIdentityProvider.Kind {
+			case v1alpha1.OIDCConfigKind:
+				prevOIDC, err := k.GetEksaOIDCConfig(ctx, nIdentityProvider.Name, cluster.KubeconfigFile, spec.Namespace)
+				if err != nil {
+					return err
+				}
+				if !prevOIDC.Spec.Equal(&spec.OIDCConfig.Spec) {
+					return fmt.Errorf("oidc identity provider is immutable")
+				}
+			case v1alpha1.AWSIamConfigKind:
+				prevAwsIam, err := k.GetEksaAWSIamConfig(ctx, nIdentityProvider.Name, cluster.KubeconfigFile, spec.Namespace)
+				if err != nil {
+					return err
+				}
+				if !prevAwsIam.Spec.Equal(&spec.AWSIamConfig.Spec) {
+					return fmt.Errorf("aws iam identity provider is immutable")
+				}
+			}
 		}
-		if !prevOIDC.Spec.Equal(&spec.OIDCConfig.Spec) {
-			return fmt.Errorf("oidc identity provider is immutable")
-		}
+	}
+
+	if spec.IsSelfManaged() != prevSpec.IsSelfManaged() {
+		return fmt.Errorf("management flag is immutable")
 	}
 
 	return provider.ValidateNewSpec(ctx, cluster, spec)

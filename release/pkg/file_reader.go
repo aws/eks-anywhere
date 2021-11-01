@@ -28,6 +28,8 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+var imageBuilderProjectSource = "projects/kubernetes-sigs/image-builder"
+
 func (r *ReleaseConfig) readShaSums(filename string) (sha256, sha512 string, err error) {
 	sha256Path := filename + ".sha256"
 	sha256, err = readShaFile(sha256Path)
@@ -77,11 +79,11 @@ func readEksDReleases(r *ReleaseConfig) (map[string]interface{}, error) {
 	return eksDReleaseMap, nil
 }
 
-func getBottlerocketSupportedK8sVersions(r *ReleaseConfig, projectSource string) ([]string, error) {
+func getBottlerocketSupportedK8sVersions(r *ReleaseConfig) ([]string, error) {
 	// Read the eks-d latest release file to get all the releases
 	var bottlerocketOvaReleaseMap map[string]interface{}
 	var bottlerocketSupportedK8sVersions []string
-	bottlerocketOvaReleaseFilePath := filepath.Join(r.BuildRepoSource, projectSource, "BOTTLEROCKET_OVA_RELEASES")
+	bottlerocketOvaReleaseFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectSource, "BOTTLEROCKET_OVA_RELEASES")
 
 	bottlerocketOvaReleaseFile, err := ioutil.ReadFile(bottlerocketOvaReleaseFilePath)
 	if err != nil {
@@ -97,6 +99,23 @@ func getBottlerocketSupportedK8sVersions(r *ReleaseConfig, projectSource string)
 	}
 
 	return bottlerocketSupportedK8sVersions, nil
+}
+
+func (r *ReleaseConfig) getBottlerocketAdminContainerMetadata() (string, string, error) {
+	var bottlerocketAdminContainerMetadataMap map[string]interface{}
+	bottlerocketAdminContainerMetadataFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectSource, "BOTTLEROCKET_ADMIN_CONTAINER_METADATA")
+	metadata, err := ioutil.ReadFile(bottlerocketAdminContainerMetadataFilePath)
+	if err != nil {
+		return "", "", errors.Cause(err)
+	}
+	err = yaml.Unmarshal(metadata, &bottlerocketAdminContainerMetadataMap)
+	if err != nil {
+		return "", "", errors.Cause(err)
+	}
+
+	tag, imageDigest := bottlerocketAdminContainerMetadataMap["tag"].(string), bottlerocketAdminContainerMetadataMap["imageDigest"].(string)
+
+	return tag, imageDigest, nil
 }
 
 func GetEksDReleaseManifestUrl(releaseChannel, releaseNumber string) string {

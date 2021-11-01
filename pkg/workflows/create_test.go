@@ -25,6 +25,7 @@ type createTestSetup struct {
 	addonManager     *mocks.MockAddonManager
 	provider         *providermocks.MockProvider
 	writer           *writermocks.MockFileWriter
+	validator        *mocks.MockValidator
 	datacenterConfig providers.DatacenterConfig
 	machineConfigs   []providers.MachineConfig
 	workflow         *workflows.Create
@@ -45,6 +46,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	workflow := workflows.NewCreate(bootstrapper, provider, clusterManager, addonManager, writer)
+	validator := mocks.NewMockValidator(mockCtrl)
 
 	return &createTestSetup{
 		t:                t,
@@ -53,6 +55,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		addonManager:     addonManager,
 		provider:         provider,
 		writer:           writer,
+		validator:        validator,
 		datacenterConfig: datacenterConfig,
 		machineConfigs:   machineConfigs,
 		workflow:         workflow,
@@ -203,16 +206,12 @@ func (c *createTestSetup) expectInstallMHC() {
 	)
 }
 
-func (c *createTestSetup) expectLoadManagementCluster(kconfig string, name string) {
-	c.clusterManager.EXPECT().LoadManagement(kconfig).Return(&types.Cluster{
-		Name:               name,
-		KubeconfigFile:     kconfig,
-		ExistingManagement: true,
-	}, nil)
+func (c *createTestSetup) run() error {
+	return c.workflow.Run(c.ctx, c.clusterSpec, c.validator, c.forceCleanup)
 }
 
-func (c *createTestSetup) run(kubeconfig string) error {
-	return c.workflow.Run(c.ctx, c.clusterSpec, c.forceCleanup, kubeconfig)
+func (c *createTestSetup) expectPreflightValidationsToPass() {
+	c.validator.EXPECT().PreflightValidations(c.ctx).Return(nil)
 }
 
 func TestCreateRunSuccess(t *testing.T) {
@@ -227,8 +226,9 @@ func TestCreateRunSuccess(t *testing.T) {
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
+	test.expectPreflightValidationsToPass()
 
-	err := test.run("")
+	err := test.run()
 	if err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
 	}
@@ -247,8 +247,9 @@ func TestCreateRunSuccessForceCleanup(t *testing.T) {
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap()
 	test.expectInstallMHC()
+	test.expectPreflightValidationsToPass()
 
-	err := test.run("")
+	err := test.run()
 	if err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
 	}
@@ -262,8 +263,13 @@ func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
 	test.bootstrapCluster.KubeconfigFile = managementKubeconfig
 	test.bootstrapCluster.Name = "cluster-name"
 
+	test.clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               test.bootstrapCluster.Name,
+		KubeconfigFile:     managementKubeconfig,
+		ExistingManagement: true,
+	}
+
 	test.expectSetup()
-	// test.expectCreateBootstrap()
 	test.expectCreateWorkloadSkipCAPI()
 	test.skipMoveManagement()
 	test.skipInstallEksaComponents()
@@ -271,14 +277,9 @@ func TestCreateWorkloadClusterRunSuccess(t *testing.T) {
 	test.expectWriteClusterConfig()
 	test.expectNotDeleteBootstrap()
 	test.expectInstallMHC()
-	test.expectLoadManagementCluster(managementKubeconfig, test.bootstrapCluster.Name)
-	err := test.run(managementKubeconfig)
+	test.expectPreflightValidationsToPass()
 
-	if test.clusterSpec.IsSelfManaged() {
-		t.Fatal("Error setting management, expected cluster to not be self-managed")
-	}
-
-	if err != nil {
+	if err := test.run(); err != nil {
 		t.Fatalf("Create.Run() err = %v, want err = nil", err)
 	}
 }

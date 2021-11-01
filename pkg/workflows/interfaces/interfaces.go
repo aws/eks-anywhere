@@ -23,7 +23,8 @@ type ClusterManager interface {
 	InstallCAPI(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
 	InstallNetworking(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	InstallStorageClass(ctx context.Context, cluster *types.Cluster, provider providers.Provider) error
-	SaveLogs(ctx context.Context, cluster *types.Cluster) error
+	SaveLogsManagementCluster(ctx context.Context, cluster *types.Cluster) error
+	SaveLogsWorkloadCluster(ctx context.Context, provider providers.Provider, spec *cluster.Spec, cluster *types.Cluster) error
 	InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
 	CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error
 	ApplyBundles(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
@@ -31,9 +32,10 @@ type ClusterManager interface {
 	ResumeEKSAControllerReconcile(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error)
 	InstallMachineHealthChecks(ctx context.Context, workloadCluster *types.Cluster, provider providers.Provider) error
-	GetCurrentClusterSpec(ctx context.Context, cluster *types.Cluster) (*cluster.Spec, error)
-	LoadManagement(kubeconfig string) (*types.Cluster, error)
+	GetCurrentClusterSpec(ctx context.Context, cluster *types.Cluster, clusterName string) (*cluster.Spec, error)
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
+	InstallAwsIamAuth(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) error
+	CreateAwsIamAuthCaSecret(ctx context.Context, cluster *types.Cluster) error
 }
 
 type AddonManager interface {

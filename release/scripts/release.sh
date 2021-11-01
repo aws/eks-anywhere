@@ -18,6 +18,8 @@ set -e
 set -x
 set -o pipefail
 
+export LANG=C.UTF-8
+
 BASE_DIRECTORY=$(git rev-parse --show-toplevel)
 
 ARTIFACTS_DIR="${1?Specify first argument - artifacts path}"

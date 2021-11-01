@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
@@ -28,10 +29,29 @@ func OIDCToExtraArgs(oidc *v1alpha1.OIDCConfig) ExtraArgs {
 	return args
 }
 
+func AwsIamAuthExtraArgs(awsiam *v1alpha1.AWSIamConfig) ExtraArgs {
+	args := ExtraArgs{}
+	if awsiam == nil {
+		return args
+	}
+	args.AddIfNotEmpty("authentication-token-webhook-config-file", "/etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml")
+
+	return args
+}
+
 func (e ExtraArgs) AddIfNotEmpty(k, v string) {
 	if v != "" {
+		logger.V(5).Info("Adding extraArgs", k, v)
 		e[k] = v
 	}
+}
+
+func (e ExtraArgs) Append(args ExtraArgs) ExtraArgs {
+	for k, v := range args {
+		e[k] = v
+	}
+
+	return e
 }
 
 func (e ExtraArgs) ToPartialYaml() templater.PartialYaml {

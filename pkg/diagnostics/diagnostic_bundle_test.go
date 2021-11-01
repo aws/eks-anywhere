@@ -1,15 +1,21 @@
 package diagnostics_test
 
 import (
+	"bytes"
+	"context"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	supportMocks "github.com/aws/eks-anywhere/pkg/diagnostics/interfaces/mocks"
+	"github.com/aws/eks-anywhere/pkg/executables"
+	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
 	"github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	providerMocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -124,7 +130,7 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		_, _ = f.NewDiagnosticBundleFromSpec(spec, p, "")
+		_, _ = f.DiagnosticBundleFromSpec(spec, p, "")
 	})
 }
 
@@ -174,7 +180,7 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		_, _ = f.NewDiagnosticBundleFromSpec(spec, p, "")
+		_, _ = f.DiagnosticBundleFromSpec(spec, p, "")
 	})
 }
 
@@ -224,7 +230,7 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		_, _ = f.NewDiagnosticBundleFromSpec(spec, p, "")
+		_, _ = f.DiagnosticBundleFromSpec(spec, p, "")
 	})
 }
 
@@ -245,14 +251,111 @@ func TestGenerateDefaultBundle(t *testing.T) {
 		}
 
 		f := diagnostics.NewFactory(opts)
-		_ = f.NewDiagnosticBundleDefault()
+		_ = f.DiagnosticBundleDefault()
+	})
+}
+
+func TestBundleFromSpecComplete(t *testing.T) {
+	spec := &cluster.Spec{
+		Cluster: &eksav1alpha1.Cluster{
+			TypeMeta:   metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{},
+			Spec:       eksav1alpha1.ClusterSpec{},
+			Status:     eksav1alpha1.ClusterStatus{},
+		},
+	}
+
+	spec.Cluster.Spec.ExternalEtcdConfiguration = &eksav1alpha1.ExternalEtcdConfiguration{
+		Count: 3,
+		MachineGroupRef: &eksav1alpha1.Ref{
+			Kind: eksav1alpha1.VSphereMachineConfigKind,
+			Name: "testRef",
+		},
+	}
+
+	spec.Cluster.Spec.DatacenterRef = eksav1alpha1.Ref{
+		Kind: eksav1alpha1.VSphereDatacenterKind,
+		Name: "testRef",
+	}
+
+	t.Run(t.Name(), func(t *testing.T) {
+		ctx := context.Background()
+		kubeconfig := "testcluster.kubeconfig"
+
+		p := givenProvider(t)
+		p.EXPECT().MachineConfigs().Return(machineConfigs())
+
+		a := givenMockAnalyzerFactory(t)
+		a.EXPECT().EksaExternalEtcdAnalyzers().Return(nil)
+		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
+		a.EXPECT().DefaultAnalyzers().Return(nil)
+		a.EXPECT().EksaLogTextAnalyzers(gomock.Any()).Return(nil)
+
+		c := givenMockCollectorsFactory(t)
+		c.EXPECT().DefaultCollectors().Return(nil)
+		c.EXPECT().EksaHostCollectors(gomock.Any()).Return(nil)
+
+		w := givenWriter(t)
+		w.EXPECT().Write(gomock.Any(), gomock.Any()).Times(2)
+
+		k, e := givenKubectl(t)
+		expectedParam := []string{"create", "namespace", constants.EksaDiagnosticsNamespace, "--kubeconfig", kubeconfig}
+		e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
+
+		expectedParam = []string{"delete", "namespace", constants.EksaDiagnosticsNamespace, "--kubeconfig", kubeconfig}
+		e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
+
+		expectedParam = []string{"apply", "-f", "-", "--kubeconfig", kubeconfig}
+		e.EXPECT().ExecuteWithStdin(ctx, gomock.Any(), gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
+
+		expectedParam = []string{"delete", "-f", "-", "--kubeconfig", kubeconfig}
+		e.EXPECT().ExecuteWithStdin(ctx, gomock.Any(), gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
+
+		returnAnalysis := []*executables.SupportBundleAnalysis{
+			{
+				Title:   "itsATestYo",
+				IsPass:  true,
+				IsFail:  false,
+				IsWarn:  false,
+				Message: "",
+				Uri:     "",
+			},
+		}
+
+		tc := givenTroubleshootClient(t)
+		mockArchivePath := "/tmp/archive/path"
+		tc.EXPECT().Collect(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(mockArchivePath, nil)
+		tc.EXPECT().Analyze(ctx, gomock.Any(), mockArchivePath).Return(returnAnalysis, nil)
+
+		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
+			AnalyzerFactory:  a,
+			CollectorFactory: c,
+			Writer:           w,
+			Kubectl:          k,
+			Client:           tc,
+		}
+
+		var sinceTimeValue *time.Time
+		sinceTimeValue, err := diagnostics.ParseTimeOptions("1h", "")
+		if err != nil {
+			t.Errorf("ParseTimeOptions() error = %v, wantErr nil", err)
+			return
+		}
+
+		f := diagnostics.NewFactory(opts)
+		b, _ := f.DiagnosticBundleFromSpec(spec, p, kubeconfig)
+		err = b.CollectAndAnalyze(ctx, sinceTimeValue)
+		if err != nil {
+			t.Errorf("CollectAndAnalyze() error = %v, wantErr nil", err)
+			return
+		}
 	})
 }
 
 func TestGenerateCustomBundle(t *testing.T) {
 	t.Run(t.Name(), func(t *testing.T) {
 		f := diagnostics.NewFactory(getOpts(t))
-		_ = f.NewDiagnosticBundleCustom("", "")
+		_ = f.DiagnosticBundleCustom("", "")
 	})
 }
 
@@ -271,6 +374,18 @@ func getOpts(t *testing.T) diagnostics.EksaDiagnosticBundleFactoryOpts {
 		AnalyzerFactory:  givenMockAnalyzerFactory(t),
 		CollectorFactory: givenMockCollectorsFactory(t),
 	}
+}
+
+func givenKubectl(t *testing.T) (*executables.Kubectl, *mockexecutables.MockExecutable) {
+	ctrl := gomock.NewController(t)
+	executable := mockexecutables.NewMockExecutable(ctrl)
+
+	return executables.NewKubectl(executable), executable
+}
+
+func givenTroubleshootClient(t *testing.T) *supportMocks.MockBundleClient {
+	ctrl := gomock.NewController(t)
+	return supportMocks.NewMockBundleClient(ctrl)
 }
 
 func givenWriter(t *testing.T) *mocks.MockFileWriter {

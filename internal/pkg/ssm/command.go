@@ -36,6 +36,17 @@ func WithOutputToS3(bucket, dir string) CommandOpt {
 	}
 }
 
+func WithOutputToCloudwatch(logGroup string) CommandOpt {
+	return func(c *ssm.SendCommandInput) {
+		cwEnabled := true
+		cw := ssm.CloudWatchOutputConfig{
+			CloudWatchLogGroupName:  &logGroup,
+			CloudWatchOutputEnabled: &cwEnabled,
+		}
+		c.CloudWatchOutputConfig = &cw
+	}
+}
+
 var nonFinalStatuses = map[string]struct{}{
 	ssm.CommandInvocationStatusInProgress: {}, ssm.CommandInvocationStatusDelayed: {}, ssm.CommandInvocationStatusPending: {},
 }
@@ -43,6 +54,7 @@ var nonFinalStatuses = map[string]struct{}{
 // TODO: cleanup this method
 func Run(session *session.Session, instanceId string, command string, opts ...CommandOpt) error {
 	service := ssm.New(session)
+
 	c := &ssm.SendCommandInput{
 		DocumentName: aws.String("AWS-RunShellScript"),
 		InstanceIds:  []*string{aws.String(instanceId)},

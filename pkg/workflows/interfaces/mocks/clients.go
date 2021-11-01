@@ -110,6 +110,20 @@ func (mr *MockClusterManagerMockRecorder) ApplyBundles(arg0, arg1, arg2 interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyBundles", reflect.TypeOf((*MockClusterManager)(nil).ApplyBundles), arg0, arg1, arg2)
 }
 
+// CreateAwsIamAuthCaSecret mocks base method.
+func (m *MockClusterManager) CreateAwsIamAuthCaSecret(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAwsIamAuthCaSecret", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateAwsIamAuthCaSecret indicates an expected call of CreateAwsIamAuthCaSecret.
+func (mr *MockClusterManagerMockRecorder) CreateAwsIamAuthCaSecret(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAwsIamAuthCaSecret", reflect.TypeOf((*MockClusterManager)(nil).CreateAwsIamAuthCaSecret), arg0, arg1)
+}
+
 // CreateEKSAResources mocks base method.
 func (m *MockClusterManager) CreateEKSAResources(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.DatacenterConfig, arg4 []providers.MachineConfig) error {
 	m.ctrl.T.Helper()
@@ -169,18 +183,32 @@ func (mr *MockClusterManagerMockRecorder) EKSAClusterSpecChanged(arg0, arg1, arg
 }
 
 // GetCurrentClusterSpec mocks base method.
-func (m *MockClusterManager) GetCurrentClusterSpec(arg0 context.Context, arg1 *types.Cluster) (*cluster.Spec, error) {
+func (m *MockClusterManager) GetCurrentClusterSpec(arg0 context.Context, arg1 *types.Cluster, arg2 string) (*cluster.Spec, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCurrentClusterSpec", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetCurrentClusterSpec", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*cluster.Spec)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetCurrentClusterSpec indicates an expected call of GetCurrentClusterSpec.
-func (mr *MockClusterManagerMockRecorder) GetCurrentClusterSpec(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) GetCurrentClusterSpec(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentClusterSpec", reflect.TypeOf((*MockClusterManager)(nil).GetCurrentClusterSpec), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentClusterSpec", reflect.TypeOf((*MockClusterManager)(nil).GetCurrentClusterSpec), arg0, arg1, arg2)
+}
+
+// InstallAwsIamAuth mocks base method.
+func (m *MockClusterManager) InstallAwsIamAuth(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 *cluster.Spec) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InstallAwsIamAuth", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InstallAwsIamAuth indicates an expected call of InstallAwsIamAuth.
+func (mr *MockClusterManagerMockRecorder) InstallAwsIamAuth(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallAwsIamAuth", reflect.TypeOf((*MockClusterManager)(nil).InstallAwsIamAuth), arg0, arg1, arg2, arg3)
 }
 
 // InstallCAPI mocks base method.
@@ -253,21 +281,6 @@ func (mr *MockClusterManagerMockRecorder) InstallStorageClass(arg0, arg1, arg2 i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallStorageClass", reflect.TypeOf((*MockClusterManager)(nil).InstallStorageClass), arg0, arg1, arg2)
 }
 
-// LoadManagement mocks base method.
-func (m *MockClusterManager) LoadManagement(arg0 string) (*types.Cluster, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoadManagement", arg0)
-	ret0, _ := ret[0].(*types.Cluster)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// LoadManagement indicates an expected call of LoadManagement.
-func (mr *MockClusterManagerMockRecorder) LoadManagement(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadManagement", reflect.TypeOf((*MockClusterManager)(nil).LoadManagement), arg0)
-}
-
 // MoveCAPI mocks base method.
 func (m *MockClusterManager) MoveCAPI(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 string, arg4 ...types.NodeReadyChecker) error {
 	m.ctrl.T.Helper()
@@ -315,18 +328,32 @@ func (mr *MockClusterManagerMockRecorder) ResumeEKSAControllerReconcile(arg0, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResumeEKSAControllerReconcile", reflect.TypeOf((*MockClusterManager)(nil).ResumeEKSAControllerReconcile), arg0, arg1, arg2, arg3)
 }
 
-// SaveLogs mocks base method.
-func (m *MockClusterManager) SaveLogs(arg0 context.Context, arg1 *types.Cluster) error {
+// SaveLogsManagementCluster mocks base method.
+func (m *MockClusterManager) SaveLogsManagementCluster(arg0 context.Context, arg1 *types.Cluster) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SaveLogs", arg0, arg1)
+	ret := m.ctrl.Call(m, "SaveLogsManagementCluster", arg0, arg1)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SaveLogs indicates an expected call of SaveLogs.
-func (mr *MockClusterManagerMockRecorder) SaveLogs(arg0, arg1 interface{}) *gomock.Call {
+// SaveLogsManagementCluster indicates an expected call of SaveLogsManagementCluster.
+func (mr *MockClusterManagerMockRecorder) SaveLogsManagementCluster(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLogs", reflect.TypeOf((*MockClusterManager)(nil).SaveLogs), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLogsManagementCluster", reflect.TypeOf((*MockClusterManager)(nil).SaveLogsManagementCluster), arg0, arg1)
+}
+
+// SaveLogsWorkloadCluster mocks base method.
+func (m *MockClusterManager) SaveLogsWorkloadCluster(arg0 context.Context, arg1 providers.Provider, arg2 *cluster.Spec, arg3 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SaveLogsWorkloadCluster", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SaveLogsWorkloadCluster indicates an expected call of SaveLogsWorkloadCluster.
+func (mr *MockClusterManagerMockRecorder) SaveLogsWorkloadCluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLogsWorkloadCluster", reflect.TypeOf((*MockClusterManager)(nil).SaveLogsWorkloadCluster), arg0, arg1, arg2, arg3)
 }
 
 // Upgrade mocks base method.

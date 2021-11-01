@@ -4,7 +4,10 @@ import (
 	"os"
 )
 
-const ComponentsUpgradesEnvVar = "COMPONENTS_UPGRADE"
+const (
+	ComponentsUpgradesEnvVar  = "COMPONENTS_UPGRADE"
+	AwsIamAuthenticatorEnvVar = "AWS_IAM_AUTHENTICATOR"
+)
 
 var cache = newMutexMap()
 
@@ -33,5 +36,12 @@ func ComponentsUpgrade() Feature {
 	return Feature{
 		Name:     "Core components upgrade",
 		IsActive: isActiveForEnvVar(ComponentsUpgradesEnvVar),
+	}
+}
+
+func AwsIamAuthenticator() Feature {
+	return Feature{
+		Name:     "aws-iam-authenticator identity provider",
+		IsActive: isActiveForEnvVar(AwsIamAuthenticatorEnvVar),
 	}
 }

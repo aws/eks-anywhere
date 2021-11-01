@@ -14,8 +14,10 @@ import (
 	"sigs.k8s.io/yaml"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/semver"
+	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -32,6 +34,7 @@ var releasesManifestURL string
 type Spec struct {
 	*eksav1alpha1.Cluster
 	OIDCConfig          *eksav1alpha1.OIDCConfig
+	AWSIamConfig        *eksav1alpha1.AWSIamConfig
 	GitOpsConfig        *eksav1alpha1.GitOpsConfig
 	releasesManifestURL string
 	bundlesManifestURL  string
@@ -41,6 +44,7 @@ type Spec struct {
 	VersionsBundle      *VersionsBundle
 	eksdRelease         *eksdv1alpha1.Release
 	Bundles             *v1alpha1.Bundles
+	ManagementCluster   *types.Cluster
 }
 
 func (s *Spec) DeepCopy() *Spec {
@@ -66,7 +70,11 @@ func (cs *Spec) SetDefaultGitOps() {
 	if cs != nil && cs.GitOpsConfig != nil {
 		c := &cs.GitOpsConfig.Spec.Flux
 		if len(c.Github.ClusterConfigPath) == 0 {
-			c.Github.ClusterConfigPath = path.Join("clusters", cs.Name)
+			if cs.Cluster.IsSelfManaged() {
+				c.Github.ClusterConfigPath = path.Join("clusters", cs.Name, cs.Name)
+			} else {
+				c.Github.ClusterConfigPath = path.Join("clusters", cs.Cluster.ManagedBy(), cs.Name)
+			}
 		}
 		if len(c.Github.FluxSystemNamespace) == 0 {
 			c.Github.FluxSystemNamespace = FluxDefaultNamespace
@@ -94,6 +102,7 @@ type KubeDistro struct {
 	Pause               v1alpha1.Image
 	EtcdImage           v1alpha1.Image
 	EtcdVersion         string
+	AwsIamAuthIamge     v1alpha1.Image
 }
 
 func (k *KubeDistro) deepCopy() *KubeDistro {
@@ -122,6 +131,12 @@ func WithEmbedFS(embedFS embed.FS) SpecOpt {
 func WithOverrideBundlesManifest(fileURL string) SpecOpt {
 	return func(s *Spec) {
 		s.bundlesManifestURL = fileURL
+	}
+}
+
+func WithManagementCluster(cluster *types.Cluster) SpecOpt {
+	return func(s *Spec) {
+		s.ManagementCluster = cluster
 	}
 }
 
@@ -168,14 +183,25 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 		KubeDistro:     kubeDistro,
 	}
 	s.eksdRelease = eksd
-	if len(s.Cluster.Spec.IdentityProviderRefs) != 0 {
-		// Since we only support one configuration, and only OIDCConfig, for identityProviderRefs, it is safe to assume that
-		// it is the only element that exists in the array
-		oidcConfig, err := eksav1alpha1.GetAndValidateOIDCConfig(clusterConfigPath, s.Cluster.Spec.IdentityProviderRefs[0].Name, clusterConfig)
-		if err != nil {
-			return nil, err
+	for _, identityProvider := range s.Cluster.Spec.IdentityProviderRefs {
+		switch identityProvider.Kind {
+		case eksav1alpha1.OIDCConfigKind:
+			oidcConfig, err := eksav1alpha1.GetAndValidateOIDCConfig(clusterConfigPath, identityProvider.Name, clusterConfig)
+			if err != nil {
+				return nil, err
+			}
+			s.OIDCConfig = oidcConfig
+		case eksav1alpha1.AWSIamConfigKind:
+			if features.IsActive(features.AwsIamAuthenticator()) {
+				awsIamConfig, err := eksav1alpha1.GetAndValidateAWSIamConfig(clusterConfigPath, identityProvider.Name, clusterConfig)
+				if err != nil {
+					return nil, err
+				}
+				s.AWSIamConfig = awsIamConfig
+			} else {
+				return nil, fmt.Errorf("unsupported IdentityProviderRef kind: %s", eksav1alpha1.AWSIamConfigKind)
+			}
 		}
-		s.OIDCConfig = oidcConfig
 	}
 
 	if s.Cluster.Spec.GitOpsRef != nil {
@@ -185,6 +211,13 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 		}
 		s.GitOpsConfig = gitOpsConfig
 	}
+
+	if s.ManagementCluster != nil {
+		s.SetManagedBy(s.ManagementCluster.Name)
+	} else {
+		s.SetSelfManaged()
+	}
+
 	s.SetDefaultGitOps()
 
 	return s, nil
@@ -388,6 +421,7 @@ func buildKubeDistro(eksd *eksdv1alpha1.Release) (*KubeDistro, error) {
 		"external-provisioner-image":  &kubeDistro.ExternalProvisioner,
 		"pause-image":                 &kubeDistro.Pause,
 		"etcd-image":                  &kubeDistro.EtcdImage,
+		"aws-iam-authenticator-image": &kubeDistro.AwsIamAuthIamge,
 	}
 
 	for assetName, image := range kubeDistroComponents {

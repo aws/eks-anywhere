@@ -2,15 +2,16 @@ package dependencies
 
 import (
 	"context"
-	"errors"
 
 	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/flux"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -31,6 +32,7 @@ type Dependencies struct {
 	Flux                      *executables.Flux
 	Troubleshoot              *executables.Troubleshoot
 	Networking                clustermanager.Networking
+	AwsIamAuth                clustermanager.AwsIamAuth
 	ClusterManager            *clustermanager.ClusterManager
 	Bootstrapper              *bootstrapper.Bootstrapper
 	FluxAddonClient           *addonclients.FluxAddonClient
@@ -283,6 +285,19 @@ func (f *Factory) WithNetworking() *Factory {
 	return f
 }
 
+func (f *Factory) WithAwsIamAuth() *Factory {
+	f.buildSteps = append(f.buildSteps, func() error {
+		if f.dependencies.AwsIamAuth != nil {
+			return nil
+		}
+		certgen := crypto.NewCertificateGenerator()
+		f.dependencies.AwsIamAuth = awsiamauth.NewAwsIamAuth(certgen)
+		return nil
+	})
+
+	return f
+}
+
 type bootstrapperClient struct {
 	*executables.Kind
 	*executables.Kubectl
@@ -309,7 +324,7 @@ type clusterManagerClient struct {
 }
 
 func (f *Factory) WithClusterManager() *Factory {
-	f.WithClusterctl().WithKubectl().WithNetworking().WithWriter()
+	f.WithClusterctl().WithKubectl().WithNetworking().WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth()
 
 	f.buildSteps = append(f.buildSteps, func() error {
 		if f.dependencies.ClusterManager != nil {
@@ -323,6 +338,8 @@ func (f *Factory) WithClusterManager() *Factory {
 			},
 			f.dependencies.Networking,
 			f.dependencies.Writer,
+			f.dependencies.DignosticCollectorFactory,
+			f.dependencies.AwsIamAuth,
 		)
 		return nil
 	})
@@ -404,10 +421,10 @@ func (f *Factory) WithCollectorFactory() *Factory {
 		}
 
 		if f.diagnosticCollectorImage == "" {
-			return errors.New("diagnostic collector image is required to build collectorFactory")
+			f.dependencies.CollectorFactory = diagnostics.NewDefaultCollectorFactory()
+		} else {
+			f.dependencies.CollectorFactory = diagnostics.NewCollectorFactory(f.diagnosticCollectorImage)
 		}
-
-		f.dependencies.CollectorFactory = diagnostics.NewCollectorFactory(f.diagnosticCollectorImage)
 		return nil
 	})
 

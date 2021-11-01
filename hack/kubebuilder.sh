@@ -1,19 +1,27 @@
 #!/usr/bin/env bash
 
+TEMP_FOLDER=tmp-kubebuilder-project
+PATH_TO_KUBEBUILDER=hack/tools/bin/kubebuilder
+
 setupFakeKubebuilderEnv() {
-	ln -sr pkg/api api
-	mv controllers controllers_tmp
-	ln -sr controllers_tmp/controllers controllers
-	ln -sr controllers_tmp/main.go main.go
+	mkdir -p $TEMP_FOLDER/hack
+	ln -s $(pwd)/pkg/api $TEMP_FOLDER/api
+	ln -s $(pwd)/controllers/controllers $TEMP_FOLDER/controllers
+	ln -s $(pwd)/controllers/main.go $TEMP_FOLDER/main.go
+	ln -s $(pwd)/hack/boilerplate.go.txt $TEMP_FOLDER/hack/boilerplate.go.txt
+	ln -s $(pwd)/PROJECT $TEMP_FOLDER/PROJECT
+	cp hack/fake-Makefile $TEMP_FOLDER/Makefile
 }
 
 restoreKubebuilderEnv() {
-	rm main.go
-	rm controllers
-	mv controllers_tmp controllers
-	rm api
+	rm -rf $TEMP_FOLDER
 }
 
+if [ ! -f $PATH_TO_KUBEBUILDER ]; then
+	echo "Kubebuilder is not installed. Run 'make hack/tools/bin/kubebuilder'"
+	exit 1
+fi
+
 setupFakeKubebuilderEnv
-./hack/tools/bin/kubebuilder "$@"
+(cd $TEMP_FOLDER && ./../$PATH_TO_KUBEBUILDER "$@")
 restoreKubebuilderEnv
