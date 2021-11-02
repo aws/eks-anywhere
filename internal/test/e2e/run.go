@@ -25,6 +25,7 @@ type ParallelRunConf struct {
 	Regex               string
 	TestsToSkip         []string
 	BundlesOverride     bool
+	Gates               []string
 }
 
 type instanceTestsResults struct {
@@ -86,6 +87,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 type instanceRunConf struct {
 	amiId, instanceProfileName, storageBucket, jobId, parentJobId, subnetId, regex, instanceId string
 	bundlesOverride                                                                            bool
+	gates                                                                                      []string
 }
 
 func RunTests(conf instanceRunConf) (testInstanceID, commandId string, err error) {
@@ -94,7 +96,7 @@ func RunTests(conf instanceRunConf) (testInstanceID, commandId string, err error
 		return "", "", err
 	}
 
-	err = session.setup(conf.regex)
+	err = session.setup(conf.regex, conf.gates)
 	if err != nil {
 		return session.instanceId, "", err
 	}
