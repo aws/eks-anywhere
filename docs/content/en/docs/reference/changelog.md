@@ -2,6 +2,13 @@
 linkTitle: "Changelog"
 weight: 55
 ---
+title: "What's New?"
+linkTitle: "What's New?"
+weight: 55
+menu:
+  main:
+    weight: 10
+---
 
 # What's New?
 
