@@ -244,9 +244,11 @@ func TestGenerateDefaultBundle(t *testing.T) {
 	t.Run(t.Name(), func(t *testing.T) {
 		a := givenMockAnalyzerFactory(t)
 		a.EXPECT().DefaultAnalyzers().Return(nil)
+		a.EXPECT().ManagementClusterAnalyzers().Return(nil)
 
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
+		c.EXPECT().ManagementClusterCollectors().Return(nil)
 
 		w := givenWriter(t)
 
