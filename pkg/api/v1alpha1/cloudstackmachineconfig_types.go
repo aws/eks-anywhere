@@ -25,12 +25,12 @@ import (
 type CloudStackMachineConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Template        string            `json:"template,omitempty"`
+	Template        string            `json:"template"`
 	ComputeOffering string            `json:"computeOffering"`
-	DiskOffering    string            `json:"diskOffering,omitempty"`
-	OSFamily        OSFamily          `json:"osFamily,omitempty"`
-	KeyPairName     string            `json:"keyPairName,omitempty"`
-	Details         map[string]string `json:"details,omitempty"`
+	DiskOffering    string            `json:"diskOffering"`
+	OSFamily        OSFamily          `json:"osFamily"`
+	KeyPairName     string            `json:"keyPairName"`
+	Details         map[string]string `json:"details"`
 }
 
 func (c *CloudStackMachineConfig) PauseReconcile() {
