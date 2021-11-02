@@ -29,6 +29,13 @@ etcd cluster externally or on custom ports.
 |----------|-----------|------------|-------------------------|---------------------------|
 | TCP      | Inbound   | 2379-2380  | etcd server client API  | kube-apiserver, etcd      |
 
+Use the following to access the SSH service on the control plane and etcd nodes:
+
+| Protocol | Direction | Port Range | Purpose                 | Used By                   |
+|----------|-----------|------------|-------------------------|---------------------------|
+| TCP      | Inbound   | 22         | SSHD server             | SSH clients               |
+
+
 ## Kubernetes worker nodes
 The following table represents the ports published by the Kubernetes project that must be accessible from worker nodes.
 
@@ -40,6 +47,12 @@ The following table represents the ports published by the Kubernetes project tha
 
 The API server port that is sometimes switched to 443.
 Alternatively, the default port is kept as is and API server is put behind a load balancer that listens on 443 and routes the requests to API server on the default port.
+ 
+Use the following to access the SSH service on the worker nodes:
+
+| Protocol | Direction | Port Range | Purpose                 | Used By                   |
+|----------|-----------|------------|-------------------------|---------------------------|
+| TCP      | Inbound   | 22         | SSHD server             | SSH clients               |
 
 ## VMware provider
 
