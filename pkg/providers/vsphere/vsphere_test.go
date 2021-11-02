@@ -2600,3 +2600,57 @@ func TestVsphereProviderRunPostUpgrade(t *testing.T) {
 
 	tt.Expect(tt.provider.RunPostUpgrade(tt.ctx, tt.clusterSpec, tt.managementCluster, tt.workloadCluster)).To(Succeed())
 }
+
+func TestProviderUpgradeNeeded(t *testing.T) {
+	testCases := []struct {
+		testName               string
+		newSyncer, oldSyncer   string
+		newDriver, oldDriver   string
+		newManager, oldManager string
+		newKubeVip, oldKubeVip string
+		want                   bool
+	}{
+		{
+			testName:  "different syncer",
+			newSyncer: "a", oldSyncer: "b",
+			want: true,
+		},
+		{
+			testName:  "different driver",
+			newDriver: "a", oldDriver: "b",
+			want: true,
+		},
+		{
+			testName:   "different manager",
+			newManager: "a", oldManager: "b",
+			want: true,
+		},
+		{
+			testName:   "different kubevip",
+			newKubeVip: "a", oldKubeVip: "b",
+			want: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			provider := givenProvider(t)
+			clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundle.VSphere.Syncer.ImageDigest = tt.oldSyncer
+				s.VersionsBundle.VSphere.Driver.ImageDigest = tt.oldDriver
+				s.VersionsBundle.VSphere.Manager.ImageDigest = tt.oldManager
+				s.VersionsBundle.VSphere.KubeVip.ImageDigest = tt.oldKubeVip
+			})
+
+			newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundle.VSphere.Syncer.ImageDigest = tt.newSyncer
+				s.VersionsBundle.VSphere.Driver.ImageDigest = tt.newDriver
+				s.VersionsBundle.VSphere.Manager.ImageDigest = tt.newManager
+				s.VersionsBundle.VSphere.KubeVip.ImageDigest = tt.newKubeVip
+			})
+
+			g := NewWithT(t)
+			g.Expect(provider.UpgradeNeeded(context.Background(), clusterSpec, newClusterSpec)).To(Equal(tt.want))
+		})
+	}
+}

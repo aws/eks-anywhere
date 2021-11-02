@@ -1644,3 +1644,12 @@ func (p *vsphereProvider) RunPostUpgrade(ctx context.Context, clusterSpec *clust
 func resourceSetName(clusterSpec *cluster.Spec) string {
 	return fmt.Sprintf("%s-crs-0", clusterSpec.Name)
 }
+
+func (p *vsphereProvider) UpgradeNeeded(_ context.Context, newSpec, currentSpec *cluster.Spec) (bool, error) {
+	newV, oldV := newSpec.VersionsBundle.VSphere, currentSpec.VersionsBundle.VSphere
+
+	return newV.Driver.ImageDigest != oldV.Driver.ImageDigest ||
+		newV.Syncer.ImageDigest != oldV.Syncer.ImageDigest ||
+		newV.Manager.ImageDigest != oldV.Manager.ImageDigest ||
+		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest, nil
+}

@@ -170,6 +170,7 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 		commandContext.SetError(err)
 		return nil
 	}
+	commandContext.CurrentClusterSpec = currentSpec
 
 	changeDiff, err := commandContext.CAPIUpgrader.Upgrade(ctx, target, commandContext.Provider, currentSpec, commandContext.ClusterSpec)
 	if err != nil {
@@ -200,6 +201,14 @@ func (s *upgradeCoreComponents) Name() string {
 }
 
 func (s *upgradeNeeded) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if upgradeNeeded, err := commandContext.Provider.UpgradeNeeded(ctx, commandContext.ClusterSpec, commandContext.CurrentClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return nil
+	} else if upgradeNeeded {
+		logger.V(3).Info("Provider needs a cluster upgrade")
+		return &pauseEksaAndFluxReconcile{}
+	}
+
 	target := getManagemtCluster(commandContext)
 
 	datacenterConfig := commandContext.Provider.DatacenterConfig()
