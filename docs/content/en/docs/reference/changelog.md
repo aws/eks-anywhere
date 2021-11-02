@@ -21,8 +21,9 @@ weight: 55
 - k8s CIS compliance [#193](https://github.com/aws/eks-anywhere/pull/192/)
 - Support bundle improvements [#92](https://github.com/aws/eks-anywhere/issues/92)
 - Ability to upgrade control plane nodes before worker nodes [#100](https://github.com/aws/eks-anywhere/issues/100)
-- Ability to "bring your own registry" [#98](https://github.com/aws/eks-anywhere/issues/98)
-- Make namespace configurable for anywhere resources [#177](hsuttps://github.com/aws/eks-anywhere/pull/177/files)
+- Ability to use your own container registry [#98](https://github.com/aws/eks-anywhere/issues/98)
+- Make namespace configurable for anywhere resources [#177](https://github.com/aws/eks-anywhere/pull/177/files)
+
 
 ### Fixed
 - Fix ova auto-import issue for multi-datacenter environments [#437](https://github.com/aws/eks-anywhere/issues/437)
