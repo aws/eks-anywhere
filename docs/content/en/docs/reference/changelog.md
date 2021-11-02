@@ -1,3 +1,7 @@
+---
+linkTitle: "Changelog"
+weight: 55
+---
 
 # Changelog
 
@@ -12,12 +16,12 @@
 
 ### Added
 
-- Support to create and manage a management cluster
-- Support for upgrading eks-anywhere components
-- k8s CIS compliance
-- Support bundle improvements
-- Ability to upgrade control plane nodes before worker nodes
-- Ability to "bring your own registry" [issue 98](https://github.com/aws/eks-anywhere/issues/98)
+- Support to create and manage workload clusters [#94](https://github.com/aws/eks-anywhere/issues/94)
+- Support for upgrading eks-anywhere components [#93](https://github.com/aws/eks-anywhere/issues/93), [cluster upgrades](https://github.com/aws/eks-anywhere/blob/main/docs/content/en/docs/tasks/cluster/cluster-upgrades.md)
+- k8s CIS compliance [#193](https://github.com/aws/eks-anywhere/pull/192/)
+- Support bundle improvements [#92](https://github.com/aws/eks-anywhere/issues/92)
+- Ability to upgrade control plane nodes before worker nodes [#100](https://github.com/aws/eks-anywhere/issues/100)
+- Ability to "bring your own registry" [#98](https://github.com/aws/eks-anywhere/issues/98)
 - Make namespace configurable for anywhere resources [#177](hsuttps://github.com/aws/eks-anywhere/pull/177/files)
 - Add proxy configuration to etcd nodes for bottlerocket [#195](https://github.com/aws/eks-anywhere/issues/195)
 
