@@ -67,7 +67,7 @@ func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactor
 		writer:           writer,
 	}
 
-	b.WithDefaultCollectors().WithDefaultAnalyzers()
+	b.WithDefaultCollectors().WithDefaultAnalyzers().WithManagementCluster(true)
 
 	err := b.WriteBundleConfig()
 	if err != nil {
