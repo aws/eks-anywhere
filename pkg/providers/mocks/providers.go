@@ -270,6 +270,20 @@ func (mr *MockProviderMockRecorder) Name() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockProvider)(nil).Name))
 }
 
+// RunPostUpgrade mocks base method.
+func (m *MockProvider) RunPostUpgrade(arg0 context.Context, arg1 *cluster.Spec, arg2, arg3 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RunPostUpgrade", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RunPostUpgrade indicates an expected call of RunPostUpgrade.
+func (mr *MockProviderMockRecorder) RunPostUpgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RunPostUpgrade", reflect.TypeOf((*MockProvider)(nil).RunPostUpgrade), arg0, arg1, arg2, arg3)
+}
+
 // SetupAndValidateCreateCluster mocks base method.
 func (m *MockProvider) SetupAndValidateCreateCluster(arg0 context.Context, arg1 *cluster.Spec) error {
 	m.ctrl.T.Helper()

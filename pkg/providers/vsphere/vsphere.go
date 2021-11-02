@@ -103,6 +103,7 @@ type vsphereProvider struct {
 	etcdTemplateFactory         *templates.Factory
 	templateBuilder             *VsphereTemplateBuilder
 	skipIpCheck                 bool
+	resourceSetManager          ClusterResourceSetManager
 }
 
 type ProviderGovcClient interface {
@@ -141,7 +142,11 @@ type ProviderKubectlClient interface {
 	SearchVsphereDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error)
 }
 
-func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *vsphereProvider {
+type ClusterResourceSetManager interface {
+	ForceUpdate(ctx context.Context, name, namespace string, managementCluster, workloadCluster *types.Cluster) error
+}
+
+func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *vsphereProvider {
 	return NewProviderCustomNet(
 		datacenterConfig,
 		machineConfigs,
@@ -152,10 +157,11 @@ func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConf
 		&networkutils.DefaultNetClient{},
 		now,
 		skipIpCheck,
+		resourceSetManager,
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool) *vsphereProvider {
+func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *vsphereProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.VSphereMachineConfigSpec
 	var controlPlaneTemplateFactory, workerNodeGroupTemplateFactory, etcdTemplateFactory *templates.Factory
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
@@ -209,7 +215,8 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 			etcdMachineSpec:            etcdMachineSpec,
 			now:                        now,
 		},
-		skipIpCheck: skipIpCheck,
+		skipIpCheck:        skipIpCheck,
+		resourceSetManager: resourceSetManager,
 	}
 }
 
@@ -1101,6 +1108,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"etcdImage":                            bundle.KubeDistro.EtcdImage.VersionedImage(),
 		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
 		"auditPolicy":                          common.GetAuditPolicy(),
+		"resourceSetName":                      resourceSetName(clusterSpec),
 	}
 
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
@@ -1600,4 +1608,26 @@ func (p *vsphereProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.
 		NewVersion:    newSpec.VersionsBundle.VSphere.Version,
 		OldVersion:    currentSpec.VersionsBundle.VSphere.Version,
 	}
+}
+
+func (p *vsphereProvider) RunPostUpgrade(ctx context.Context, clusterSpec *cluster.Spec, managementCluster, workloadCluster *types.Cluster) error {
+	// This is unfortunate, but ClusterResourceSet's don't support any type of reapply of the resources they manage
+	// Even if we create a new ClusterResourceSet, if such resources already exist in the cluster, they won't be reapplied
+	// The long term solution is to add this capability to the cluster-api controller,
+	// with a new mode like "ReApplyOnChanges" or "ReApplyOnCreate" vs the current "ReApplyOnce"
+	if err := p.resourceSetManager.ForceUpdate(ctx, resourceSetName(clusterSpec), constants.EksaSystemNamespace, managementCluster, workloadCluster); err != nil {
+		return fmt.Errorf("failed updating the vsphere provider resource set post upgrade: %v", err)
+	}
+
+	// Step 2: Patch DaemonSet vsphere-cloud-controller-manager in namespace kube-system
+	// More unfortunate stuff. This DaemonSet is created by the capv controller. However, even if it's part of the reconciliation step
+	// it's never refreshed, it's only created once
+	// In new versions of the capv provider, this is not managed by the controller directly anymore but just with a ClusterResourceSet
+	// Which means that adding update capabilities to the ClusterResourceSet controller and updating our capv provider version will solve this problem
+	// p.providerKubectlClient.PatchDaeamonSet(ctx, "vsphere-cloud-controller-manager", "kube-system", {newImagePatch}, workloadCluster.KubeconfigFile)
+	return nil
+}
+
+func resourceSetName(clusterSpec *cluster.Spec) string {
+	return fmt.Sprintf("%s-crs-0", clusterSpec.Name)
 }

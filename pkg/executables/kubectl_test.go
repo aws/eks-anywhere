@@ -11,8 +11,11 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
 	"sigs.k8s.io/cluster-api/api/v1alpha3"
+	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -634,30 +637,59 @@ func TestKubectlLoadSecret(t *testing.T) {
 
 func TestKubectlGetSecret(t *testing.T) {
 	tests := []struct {
-		testName string
-		params   []string
-		wantErr  error
+		testName     string
+		responseFile string
+		wantSecret   *corev1.Secret
+		params       []string
+		wantErr      error
 	}{
 		{
-			testName: "SuccessScenario",
-			params:   []string{"get", "secret", secretObjectName, "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "c.kubeconfig"},
-			wantErr:  nil,
+			testName:     "SuccessScenario",
+			responseFile: "testdata/kubectl_secret.json",
+			wantSecret: &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "vsphere-csi-controller",
+					Namespace: "eksa-system",
+				},
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1",
+					Kind:       "Secret",
+				},
+				Data: map[string][]byte{
+					"data": []byte(`apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vsphere-csi-controller
+  namespace: kube-system
+`),
+				},
+				Type: corev1.SecretType("addons.cluster.x-k8s.io/resource-set"),
+			},
+			params:  []string{"get", "secret", secretObjectName, "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "c.kubeconfig"},
+			wantErr: nil,
 		},
 		{
-			testName: "ErrorScenario",
-			params:   []string{"get", "secret", secretObjectName, "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "c.kubeconfig"},
-			wantErr:  errors.New("error getting secret: "),
+			testName:     "ErrorScenario",
+			responseFile: "testdata/kubectl_secret.json",
+			wantSecret:   nil,
+			params:       []string{"get", "secret", secretObjectName, "-o", "json", "--namespace", constants.EksaSystemNamespace, "--kubeconfig", "c.kubeconfig"},
+			wantErr:      errors.New("error from kubectl client"),
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.testName, func(tt *testing.T) {
+			response := test.ReadFile(t, tc.responseFile)
 			k, ctx, cluster, e := newKubectl(t)
-			e.EXPECT().Execute(ctx, tc.params).Return(bytes.Buffer{}, tc.wantErr)
+			e.EXPECT().Execute(ctx, tc.params).Return(*bytes.NewBufferString(response), tc.wantErr)
 
-			_, err := k.GetSecret(ctx, secretObjectName, executables.WithNamespace(constants.EksaSystemNamespace), executables.WithCluster(cluster))
+			secret, err := k.GetSecret(ctx, secretObjectName, executables.WithNamespace(constants.EksaSystemNamespace), executables.WithCluster(cluster))
 
-			if (tc.wantErr != nil && err == nil) && !reflect.DeepEqual(tc.wantErr, err) {
-				t.Errorf("%v got = %v, want %v", tc.testName, err, tc.wantErr)
+			g := NewWithT(t)
+			if tc.wantErr != nil {
+				g.Expect(err.Error()).To(HaveSuffix(tc.wantErr.Error()))
+			} else {
+				g.Expect(err).To(BeNil())
+				g.Expect(secret).To(Equal(tc.wantSecret))
 			}
 		})
 	}
@@ -1236,4 +1268,77 @@ func TestKubectlGetBundles(t *testing.T) {
 	gotBundles, err := tt.k.GetBundles(tt.ctx, tt.cluster.KubeconfigFile, bundleName, tt.namespace)
 	tt.Expect(err).To(BeNil())
 	tt.Expect(gotBundles).To(Equal(wantBundles))
+}
+
+func TestKubectlGetClusterResourceSet(t *testing.T) {
+	tt := newKubectlTest(t)
+	resourceSetJson := test.ReadFile(t, "testdata/kubectl_clusterresourceset.json")
+	resourceSetName := "Bundle-name"
+	wantResourceSet := &addons.ClusterResourceSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "addons.cluster.x-k8s.io/v1alpha3",
+			Kind:       "ClusterResourceSet",
+		},
+		Spec: addons.ClusterResourceSetSpec{
+			ClusterSelector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"cluster.x-k8s.io/cluster-name": "cluster-1",
+				},
+			},
+			Strategy: "ApplyOnce",
+			Resources: []addons.ResourceRef{
+				{
+					Kind: "Secret",
+					Name: "vsphere-csi-controller",
+				},
+				{
+					Kind: "ConfigMap",
+					Name: "vsphere-csi-controller-role",
+				},
+			},
+		},
+	}
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"get", "clusterresourcesets.addons.cluster.x-k8s.io", resourceSetName, "-o", "json", "--kubeconfig", tt.cluster.KubeconfigFile, "--namespace", tt.namespace,
+	).Return(*bytes.NewBufferString(resourceSetJson), nil)
+
+	gotResourceSet, err := tt.k.GetClusterResourceSet(tt.ctx, tt.cluster.KubeconfigFile, resourceSetName, tt.namespace)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(gotResourceSet).To(Equal(wantResourceSet))
+}
+
+func TestKubectlGetConfigMap(t *testing.T) {
+	tt := newKubectlTest(t)
+	configmapJson := test.ReadFile(t, "testdata/kubectl_configmap.json")
+	configmapName := "csi.vsphere.vmware.com"
+	wantConfigmap := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "ConfigMap",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      configmapName,
+			Namespace: "eksa-system",
+		},
+		Data: map[string]string{
+			"data": `apiVersion: storage.k8s.io/v1
+kind: CSIDriver
+metadata:
+  name: csi.vsphere.vmware.com
+spec:
+  attachRequired: true
+`,
+		},
+	}
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"get", "configmap", configmapName, "-o", "json", "--kubeconfig", tt.cluster.KubeconfigFile, "--namespace", tt.namespace,
+	).Return(*bytes.NewBufferString(configmapJson), nil)
+
+	gotConfigmap, err := tt.k.GetConfigMap(tt.ctx, tt.cluster.KubeconfigFile, configmapName, tt.namespace)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(gotConfigmap).To(Equal(wantConfigmap))
 }
