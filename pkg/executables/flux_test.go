@@ -72,7 +72,7 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 				},
 			},
 			wantExecArgs: []interface{}{
-				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", expectedPath, "--kubeconfig", "f.kubeconfig",
+				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", expectedPath, "--ssh-key-algorithm", "ecdsa", "--kubeconfig", "f.kubeconfig",
 			},
 		},
 		{
@@ -87,7 +87,7 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 				},
 			},
 			wantExecArgs: []interface{}{
-				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", expectedPath, "--personal",
+				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", expectedPath, "--ssh-key-algorithm", "ecdsa", "--personal",
 			},
 		},
 		{
@@ -102,7 +102,7 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 				},
 			},
 			wantExecArgs: []interface{}{
-				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", expectedPath, "--branch", "main",
+				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", expectedPath, "--ssh-key-algorithm", "ecdsa", "--branch", "main",
 			},
 		},
 		{
@@ -117,7 +117,7 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 				},
 			},
 			wantExecArgs: []interface{}{
-				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", expectedPath, "--namespace", "flux-system",
+				"bootstrap", gitProvider, "--repository", repo, "--owner", owner, "--path", expectedPath, "--ssh-key-algorithm", "ecdsa", "--namespace", "flux-system",
 			},
 		},
 		{
@@ -127,7 +127,7 @@ func TestFluxInstallGitOpsToolkitsSuccess(t *testing.T) {
 				Github: v1alpha1.Github{},
 			},
 			wantExecArgs: []interface{}{
-				"bootstrap", gitProvider, "--repository", "", "--owner", "", "--path", ".",
+				"bootstrap", gitProvider, "--repository", "", "--owner", "", "--path", ".", "--ssh-key-algorithm", "ecdsa",
 			},
 		},
 	}
