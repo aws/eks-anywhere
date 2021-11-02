@@ -35,6 +35,7 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Bundles.Spec.Number = 1
+		s.VersionsBundle.CertManager.Version = "v0.1.0"
 		s.VersionsBundle.ClusterAPI.Version = "v0.1.0"
 		s.VersionsBundle.ControlPlane.Version = "v0.1.0"
 		s.VersionsBundle.Bootstrap.Version = "v0.1.0"
@@ -115,12 +116,18 @@ func TestUpgraderUpgradeCoreChanges(t *testing.T) {
 
 func TestUpgraderUpgradeEverythingChangesStackedEtcd(t *testing.T) {
 	tt := newUpgraderTest(t)
+	tt.newSpec.VersionsBundle.CertManager.Version = "v0.2.0"
 	tt.newSpec.VersionsBundle.ClusterAPI.Version = "v0.2.0"
 	tt.newSpec.VersionsBundle.ControlPlane.Version = "v0.2.0"
 	tt.newSpec.VersionsBundle.Bootstrap.Version = "v0.2.0"
 	tt.newSpec.VersionsBundle.ExternalEtcdBootstrap.Version = "v0.2.0"
 	tt.newSpec.VersionsBundle.ExternalEtcdController.Version = "v0.2.0"
 	changeDiff := &clusterapi.CAPIChangeDiff{
+		CertManager: &types.ComponentChangeDiff{
+			ComponentName: "cert-manager",
+			NewVersion:    "v0.2.0",
+			OldVersion:    "v0.1.0",
+		},
 		Core: &types.ComponentChangeDiff{
 			ComponentName: "cluster-api",
 			NewVersion:    "v0.2.0",
@@ -141,7 +148,7 @@ func TestUpgraderUpgradeEverythingChangesStackedEtcd(t *testing.T) {
 		InfrastructureProvider: tt.providerChangeDiff,
 	}
 	wantDiff := &types.ChangeDiff{
-		ComponentReports: []types.ComponentChangeDiff{*changeDiff.Core, *changeDiff.ControlPlane, *tt.providerChangeDiff, changeDiff.BootstrapProviders[0]},
+		ComponentReports: []types.ComponentChangeDiff{*changeDiff.CertManager, *changeDiff.Core, *changeDiff.ControlPlane, *tt.providerChangeDiff, changeDiff.BootstrapProviders[0]},
 	}
 
 	tt.provider.EXPECT().ChangeDiff(tt.currentSpec, tt.newSpec).Return(tt.providerChangeDiff)
@@ -153,12 +160,18 @@ func TestUpgraderUpgradeEverythingChangesStackedEtcd(t *testing.T) {
 func TestUpgraderUpgradeEverythingChangesExternalEtcd(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.newSpec.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{}
+	tt.newSpec.VersionsBundle.CertManager.Version = "v0.2.0"
 	tt.newSpec.VersionsBundle.ClusterAPI.Version = "v0.2.0"
 	tt.newSpec.VersionsBundle.ControlPlane.Version = "v0.2.0"
 	tt.newSpec.VersionsBundle.Bootstrap.Version = "v0.2.0"
 	tt.newSpec.VersionsBundle.ExternalEtcdBootstrap.Version = "v0.2.0"
 	tt.newSpec.VersionsBundle.ExternalEtcdController.Version = "v0.2.0"
 	changeDiff := &clusterapi.CAPIChangeDiff{
+		CertManager: &types.ComponentChangeDiff{
+			ComponentName: "cert-manager",
+			NewVersion:    "v0.2.0",
+			OldVersion:    "v0.1.0",
+		},
 		Core: &types.ComponentChangeDiff{
 			ComponentName: "cluster-api",
 			NewVersion:    "v0.2.0",
@@ -190,7 +203,7 @@ func TestUpgraderUpgradeEverythingChangesExternalEtcd(t *testing.T) {
 	}
 	wantDiff := &types.ChangeDiff{
 		ComponentReports: []types.ComponentChangeDiff{
-			*changeDiff.Core, *changeDiff.ControlPlane, *tt.providerChangeDiff,
+			*changeDiff.CertManager, *changeDiff.Core, *changeDiff.ControlPlane, *tt.providerChangeDiff,
 			changeDiff.BootstrapProviders[0],
 			changeDiff.BootstrapProviders[1],
 			changeDiff.BootstrapProviders[2],
