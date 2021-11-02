@@ -25,17 +25,22 @@ import (
 
 // GetClusterControllerAssets returns the artifacts for eks-a cluster controller
 func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
-	// Get git tag
-	cmd := exec.Command("git", "-C", r.CliRepoSource, "describe", "--tag")
-	out, err := execCommand(cmd)
-	if err != nil {
-		return nil, errors.Cause(err)
-	}
+	var gitTag string
+	if r.DevRelease {
+		// Get git tag
+		cmd := exec.Command("git", "-C", r.CliRepoSource, "describe", "--tag")
+		out, err := execCommand(cmd)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
 
-	gitVersion := strings.Split(out, "-")
-	gitTag := gitVersion[0]
-	if err != nil {
-		return nil, errors.Cause(err)
+		gitVersion := strings.Split(out, "-")
+		gitTag = gitVersion[0]
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+	} else {
+		gitTag = r.ReleaseVersion
 	}
 
 	name := "eks-anywhere-cluster-controller"
