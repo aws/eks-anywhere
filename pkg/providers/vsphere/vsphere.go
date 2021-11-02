@@ -1636,7 +1636,7 @@ func (p *vsphereProvider) RunPostUpgrade(ctx context.Context, clusterSpec *clust
 		cloudControllerDaemonSetContainerName,
 		clusterSpec.VersionsBundle.VSphere.Manager.VersionedImage(),
 	); err != nil {
-		return fmt.Errorf("failed updating the vs[here cloud controller manager daemonset post upgrade: %v", err)
+		return fmt.Errorf("failed updating the VSphere cloud controller manager daemonset post upgrade: %v", err)
 	}
 	return nil
 }
