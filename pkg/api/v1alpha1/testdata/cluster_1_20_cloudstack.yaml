@@ -16,26 +16,26 @@ spec:
     endpoint:
       host: test-ip
     machineGroupRef:
-      kind: CloudstackMachineConfig
+      kind: CloudStackMachineConfig
       name: eksa-unit-test
   datacenterRef:
-    kind: CloudstackDatacenterConfig
+    kind: CloudStackDeploymentConfig
     name: eksa-unit-test
   kubernetesVersion: "1.20"
   workerNodeGroupConfigurations:
     - count: 3
       machineGroupRef:
-        kind: CloudstackMachineConfig
+        kind: CloudStackMachineConfig
         name: eksa-unit-test
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: CloudstackDatacenterConfig
+kind: CloudStackDeploymentConfig
 metadata:
   name: eksa-unit-test
 spec:
   account: "admin"
-  control_plane_endpoint: "https://127.0.0.1:8080/client/api"
+  managementApiEndpoint: "https://127.0.0.1:8080/client/api"
   domain: "domain1"
   insecure: false
   network: "net1"
@@ -43,12 +43,15 @@ spec:
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: CloudstackMachineConfig
+kind: CloudStackMachineConfig
 metadata:
   name: eksa-unit-test
 spec:
-  compute_offering: "m4-large"
-  disk_offering: "ssd-100GB"
-  key_pair: "cloudstack-keypair"
+  computeOffering: "m4-large"
+  diskOffering: "ssd-100GB"
+  keyPairName: "cloudstack-keypair"
   osFamily: "ubuntu"
   template: "centos7-k8s-120"
+  details:
+    foo: "bar"
+    key: "value"

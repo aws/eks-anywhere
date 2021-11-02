@@ -26,6 +26,7 @@ require (
 	k8s.io/api v0.21.2
 	k8s.io/apimachinery v0.21.2
 	k8s.io/client-go v0.21.2
+	mvdan.cc/gofumpt v0.1.1 // indirect
 	sigs.k8s.io/cluster-api v0.3.11-0.20210430210359-402a4524f006
 	sigs.k8s.io/cluster-api-provider-vsphere v0.7.8
 	sigs.k8s.io/controller-runtime v0.9.0-beta.0

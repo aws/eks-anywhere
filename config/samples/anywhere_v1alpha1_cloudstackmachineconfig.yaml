@@ -1,5 +1,5 @@
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: CloudstackMachineConfig
+kind: CloudStackMachineConfig
 metadata:
   name: cloudstackmachineconfig-sample
 spec:

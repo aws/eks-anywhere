@@ -26,9 +26,9 @@ import (
 )
 
 // log is for logging in this package.
-var cloudstackdatacenterconfiglog = logf.Log.WithName("cloudstackdatacenterconfig-resource")
+var cloudstackdeploymentconfiglog = logf.Log.WithName("cloudstackdeploymentconfig-resource")
 
-func (r *CloudstackDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (r *CloudStackDeploymentConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -37,43 +37,43 @@ func (r *CloudstackDatacenterConfig) SetupWebhookWithManager(mgr ctrl.Manager) e
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
 // change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackdatacenterconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=cloudstackdatacenterconfigs,verbs=create;update,versions=v1alpha1,name=validation.cloudstackdatacenterconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
+//+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackdeploymentconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=cloudstackdeploymentconfigs,verbs=create;update,versions=v1alpha1,name=validation.cloudstackdeploymentconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &CloudstackDatacenterConfig{}
+var _ webhook.Validator = &CloudStackDeploymentConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *CloudstackDatacenterConfig) ValidateCreate() error {
-	cloudstackdatacenterconfiglog.Info("validate create", "name", r.Name)
+func (r *CloudStackDeploymentConfig) ValidateCreate() error {
+	cloudstackdeploymentconfiglog.Info("validate create", "name", r.Name)
 	if r.IsReconcilePaused() {
-		cloudstackdatacenterconfiglog.Info("CloudstackDatacenterConfig is paused, so allowing create", "name", r.Name)
+		cloudstackdeploymentconfiglog.Info("CloudStackDeploymentConfig is paused, so allowing create", "name", r.Name)
 		return nil
 	}
-	return apierrors.NewBadRequest("Creating new CloudstackDatacenterConfig on existing cluster is not supported")
+	return apierrors.NewBadRequest("Creating new CloudStackDeploymentConfig on existing cluster is not supported")
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *CloudstackDatacenterConfig) ValidateUpdate(old runtime.Object) error {
-	cloudstackdatacenterconfiglog.Info("validate update", "name", r.Name)
+func (r *CloudStackDeploymentConfig) ValidateUpdate(old runtime.Object) error {
+	cloudstackdeploymentconfiglog.Info("validate update", "name", r.Name)
 
-	oldDatacenterConfig, ok := old.(*CloudstackDatacenterConfig)
+	oldDatacenterConfig, ok := old.(*CloudStackDeploymentConfig)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a CloudstackDataCenterConfig but got a %T", old))
+		return apierrors.NewBadRequest(fmt.Sprintf("expected a CloudStackDataCenterConfig but got a %T", old))
 	}
 
 	var allErrs field.ErrorList
 
-	allErrs = append(allErrs, validateImmutableFieldsCloudstackCluster(r, oldDatacenterConfig)...)
+	allErrs = append(allErrs, validateImmutableFieldsCloudStackCluster(r, oldDatacenterConfig)...)
 
 	if len(allErrs) == 0 {
 		return nil
 	}
 
-	return apierrors.NewInvalid(GroupVersion.WithKind(CloudstackDatacenterKind).GroupKind(), r.Name, allErrs)
+	return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackDeploymentKind).GroupKind(), r.Name, allErrs)
 }
 
-func validateImmutableFieldsCloudstackCluster(new, old *CloudstackDatacenterConfig) field.ErrorList {
+func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDeploymentConfig) field.ErrorList {
 	if old.IsReconcilePaused() {
-		cloudstackdatacenterconfiglog.Info("Reconciliation is paused")
+		cloudstackdeploymentconfiglog.Info("Reconciliation is paused")
 		return nil
 	}
 
@@ -93,13 +93,6 @@ func validateImmutableFieldsCloudstackCluster(new, old *CloudstackDatacenterConf
 		)
 	}
 
-	if old.Spec.Project != new.Spec.Project {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "project"), new.Spec.Project, "field is immutable"),
-		)
-	}
-
 	if old.Spec.Account != new.Spec.Account {
 		allErrs = append(
 			allErrs,
@@ -114,10 +107,10 @@ func validateImmutableFieldsCloudstackCluster(new, old *CloudstackDatacenterConf
 		)
 	}
 
-	if old.Spec.ControlPlaneEndpoint != new.Spec.ControlPlaneEndpoint {
+	if old.Spec.ManagementApiEndpoint != new.Spec.ManagementApiEndpoint {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "control_plane_endpoint"), new.Spec.ControlPlaneEndpoint, "field is immutable"),
+			field.Invalid(field.NewPath("spec", "control_plane_endpoint"), new.Spec.ManagementApiEndpoint, "field is immutable"),
 		)
 	}
 
@@ -132,8 +125,8 @@ func validateImmutableFieldsCloudstackCluster(new, old *CloudstackDatacenterConf
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *CloudstackDatacenterConfig) ValidateDelete() error {
-	cloudstackdatacenterconfiglog.Info("validate delete", "name", r.Name)
+func (r *CloudStackDeploymentConfig) ValidateDelete() error {
+	cloudstackdeploymentconfiglog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil

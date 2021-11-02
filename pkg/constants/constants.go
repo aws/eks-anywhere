@@ -20,8 +20,8 @@ const (
 	KubeSystemNamespace                       = "kube-system"
 	LocalPathStorageNamespace                 = "local-path-storage"
 
-	VSphereProviderName = "vsphere"
-	CloudstackProviderName = "cloudstack"
-	DockerProviderName  = "docker"
-	AWSProviderName     = "aws"
+	VSphereProviderName    = "vsphere"
+	CloudStackProviderName = "cloudstack"
+	DockerProviderName     = "docker"
+	AWSProviderName        = "aws"
 )
