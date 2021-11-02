@@ -479,6 +479,20 @@ func (mr *MockAnalyzerFactoryMockRecorder) EksaOidcAnalyzers() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EksaOidcAnalyzers", reflect.TypeOf((*MockAnalyzerFactory)(nil).EksaOidcAnalyzers))
 }
 
+// ManagementClusterAnalyzers mocks base method.
+func (m *MockAnalyzerFactory) ManagementClusterAnalyzers() []*diagnostics.Analyze {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ManagementClusterAnalyzers")
+	ret0, _ := ret[0].([]*diagnostics.Analyze)
+	return ret0
+}
+
+// ManagementClusterAnalyzers indicates an expected call of ManagementClusterAnalyzers.
+func (mr *MockAnalyzerFactoryMockRecorder) ManagementClusterAnalyzers() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ManagementClusterAnalyzers", reflect.TypeOf((*MockAnalyzerFactory)(nil).ManagementClusterAnalyzers))
+}
+
 // MockCollectorFactory is a mock of CollectorFactory interface.
 type MockCollectorFactory struct {
 	ctrl     *gomock.Controller
@@ -528,4 +542,18 @@ func (m *MockCollectorFactory) EksaHostCollectors(configs []providers.MachineCon
 func (mr *MockCollectorFactoryMockRecorder) EksaHostCollectors(configs interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EksaHostCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).EksaHostCollectors), configs)
+}
+
+// ManagementClusterCollectors mocks base method.
+func (m *MockCollectorFactory) ManagementClusterCollectors() []*diagnostics.Collect {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ManagementClusterCollectors")
+	ret0, _ := ret[0].([]*diagnostics.Collect)
+	return ret0
+}
+
+// ManagementClusterCollectors indicates an expected call of ManagementClusterCollectors.
+func (mr *MockCollectorFactoryMockRecorder) ManagementClusterCollectors() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ManagementClusterCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).ManagementClusterCollectors))
 }

@@ -19,10 +19,36 @@ func NewAnalyzerFactory() *analyzerFactory {
 }
 
 func (a *analyzerFactory) DefaultAnalyzers() []*Analyze {
-	return append(a.defaultDeploymentAnalyzers(), a.defaultCrdAnalyzers()...)
+	var analyzers []*Analyze
+	return append(analyzers, a.defaultDeploymentAnalyzers()...)
 }
 
 func (a *analyzerFactory) defaultDeploymentAnalyzers() []*Analyze {
+	d := []eksaDeployment{
+		{
+			Name:             "coredns",
+			Namespace:        constants.KubeSystemNamespace,
+			ExpectedReplicas: 2,
+		},
+	}
+	return a.generateDeploymentAnalyzers(d)
+}
+
+func (a *analyzerFactory) ManagementClusterAnalyzers() []*Analyze {
+	var analyzers []*Analyze
+	analyzers = append(analyzers, a.managementClusterDeploymentAnalyzers()...)
+	return append(analyzers, a.managementClusterCrdAnalyzers()...)
+}
+
+func (a *analyzerFactory) managementClusterCrdAnalyzers() []*Analyze {
+	crds := []string{
+		fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group),
+		fmt.Sprintf("bundles.%s", v1alpha1.GroupVersion.Group),
+	}
+	return a.generateCrdAnalyzers(crds)
+}
+
+func (a *analyzerFactory) managementClusterDeploymentAnalyzers() []*Analyze {
 	d := []eksaDeployment{
 		{
 			Name:             "capv-controller-manager",
@@ -32,10 +58,6 @@ func (a *analyzerFactory) defaultDeploymentAnalyzers() []*Analyze {
 			Name:             "capv-controller-manager",
 			Namespace:        constants.CapvSystemNamespace,
 			ExpectedReplicas: 1,
-		}, {
-			Name:             "coredns",
-			Namespace:        constants.KubeSystemNamespace,
-			ExpectedReplicas: 2,
 		}, {
 			Name:             "cert-manager-webhook",
 			Namespace:        constants.CertManagerNamespace,
@@ -79,14 +101,6 @@ func (a *analyzerFactory) defaultDeploymentAnalyzers() []*Analyze {
 		},
 	}
 	return a.generateDeploymentAnalyzers(d)
-}
-
-func (a *analyzerFactory) defaultCrdAnalyzers() []*Analyze {
-	crds := []string{
-		fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group),
-		fmt.Sprintf("bundles.%s", v1alpha1.GroupVersion.Group),
-	}
-	return a.generateCrdAnalyzers(crds)
 }
 
 func (a *analyzerFactory) EksaGitopsAnalyzers() []*Analyze {

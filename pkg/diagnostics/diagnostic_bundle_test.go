@@ -115,10 +115,12 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
 		a.EXPECT().DefaultAnalyzers().Return(nil)
 		a.EXPECT().EksaLogTextAnalyzers(gomock.Any()).Return(nil)
+		a.EXPECT().ManagementClusterAnalyzers().Return(nil)
 
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
 		c.EXPECT().EksaHostCollectors(gomock.Any()).Return(nil)
+		c.EXPECT().ManagementClusterCollectors().Return(nil)
 
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any())
@@ -165,6 +167,7 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
 		a.EXPECT().DefaultAnalyzers().Return(nil)
 		a.EXPECT().EksaLogTextAnalyzers(gomock.Any()).Return(nil)
+		a.EXPECT().ManagementClusterAnalyzers().Return(nil)
 
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any())
@@ -172,6 +175,7 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
 		c.EXPECT().EksaHostCollectors(gomock.Any()).Return(nil)
+		c.EXPECT().ManagementClusterCollectors().Return(nil)
 
 		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
 			AnalyzerFactory:  a,
@@ -215,6 +219,7 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
 		a.EXPECT().DefaultAnalyzers().Return(nil)
 		a.EXPECT().EksaLogTextAnalyzers(gomock.Any()).Return(nil)
+		a.EXPECT().ManagementClusterAnalyzers().Return(nil)
 
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any())
@@ -222,6 +227,7 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
 		c.EXPECT().EksaHostCollectors(gomock.Any()).Return(nil)
+		c.EXPECT().ManagementClusterCollectors().Return(nil)
 
 		opts := diagnostics.EksaDiagnosticBundleFactoryOpts{
 			AnalyzerFactory:  a,
@@ -238,9 +244,11 @@ func TestGenerateDefaultBundle(t *testing.T) {
 	t.Run(t.Name(), func(t *testing.T) {
 		a := givenMockAnalyzerFactory(t)
 		a.EXPECT().DefaultAnalyzers().Return(nil)
+		a.EXPECT().ManagementClusterAnalyzers().Return(nil)
 
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
+		c.EXPECT().ManagementClusterCollectors().Return(nil)
 
 		w := givenWriter(t)
 
@@ -290,10 +298,12 @@ func TestBundleFromSpecComplete(t *testing.T) {
 		a.EXPECT().DataCenterConfigAnalyzers(spec.Cluster.Spec.DatacenterRef).Return(nil)
 		a.EXPECT().DefaultAnalyzers().Return(nil)
 		a.EXPECT().EksaLogTextAnalyzers(gomock.Any()).Return(nil)
+		a.EXPECT().ManagementClusterAnalyzers().Return(nil)
 
 		c := givenMockCollectorsFactory(t)
 		c.EXPECT().DefaultCollectors().Return(nil)
 		c.EXPECT().EksaHostCollectors(gomock.Any()).Return(nil)
+		c.EXPECT().ManagementClusterCollectors().Return(nil)
 
 		w := givenWriter(t)
 		w.EXPECT().Write(gomock.Any(), gomock.Any()).Times(2)
