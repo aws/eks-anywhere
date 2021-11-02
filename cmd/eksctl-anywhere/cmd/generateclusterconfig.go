@@ -108,9 +108,9 @@ func generateClusterConfig(clusterName string) error {
 			return fmt.Errorf("error outputting yaml: %v", err)
 		}
 		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml, etcdMcYaml)
-	case constants.CloudstackProviderName:
+	case constants.CloudStackProviderName:
 		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithClusterEndpoint())
-		datacenterConfig := v1alpha1.NewCloudstackDatacenterConfigGenerate(clusterName)
+		datacenterConfig := v1alpha1.NewCloudStackDeploymentConfigGenerate(clusterName)
 		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))
 		clusterConfigOpts = append(clusterConfigOpts,
 			v1alpha1.ControlPlaneConfigCount(2),
@@ -124,9 +124,9 @@ func generateClusterConfig(clusterName string) error {
 		datacenterYaml = dcyaml
 		// need to default control plane config name to something different from the cluster name based on assumption
 		// in controller code
-		cpMachineConfig := v1alpha1.NewCloudstackMachineConfigGenerate(clusterName + "-cp")
-		workerMachineConfig := v1alpha1.NewCloudstackMachineConfigGenerate(clusterName)
-		etcdMachineConfig := v1alpha1.NewCloudstackMachineConfigGenerate(fmt.Sprintf("%s-etcd", clusterName))
+		cpMachineConfig := v1alpha1.NewCloudStackMachineConfigGenerate(clusterName + "-cp")
+		workerMachineConfig := v1alpha1.NewCloudStackMachineConfigGenerate(clusterName)
+		etcdMachineConfig := v1alpha1.NewCloudStackMachineConfigGenerate(fmt.Sprintf("%s-etcd", clusterName))
 		clusterConfigOpts = append(clusterConfigOpts,
 			v1alpha1.WithCPMachineGroupRef(cpMachineConfig),
 			v1alpha1.WithWorkerMachineGroupRef(workerMachineConfig),

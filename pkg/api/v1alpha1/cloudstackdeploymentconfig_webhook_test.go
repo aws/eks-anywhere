@@ -9,7 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
-//func TestCloudstackDatacenterValidateUpdateServerImmutable(t *testing.T) {
+//func TestCloudStackDeploymentValidateUpdateServerImmutable(t *testing.T) {
 //	vOld := cloudstackDatacenterConfig()
 //	vOld.Spec.Server = "https://realOldServer.realOldDatacenter.com"
 //	c := vOld.DeepCopy()
@@ -19,7 +19,7 @@ import (
 //	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 //}
 
-func TestCloudstackDatacenterValidateUpdateDomainImmutable(t *testing.T) {
+func TestCloudStackDeploymentValidateUpdateDomainImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Domain = "oldCruftyDomain"
 	c := vOld.DeepCopy()
@@ -29,7 +29,7 @@ func TestCloudstackDatacenterValidateUpdateDomainImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCloudstackDatacenterValidateUpdateZoneImmutable(t *testing.T) {
+func TestCloudStackDeploymentValidateUpdateZoneImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Zone = "oldCruftyZone"
 	c := vOld.DeepCopy()
@@ -39,19 +39,7 @@ func TestCloudstackDatacenterValidateUpdateZoneImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-
-
-func TestCloudstackDatacenterValidateUpdateProjectImmutable(t *testing.T) {
-	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.Project = "oldCruftyDatacenter"
-	c := vOld.DeepCopy()
-
-	c.Spec.Project = "shinyNewDatacenter"
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
-}
-
-func TestCloudstackDatacenterValidateUpdateAccountImmutable(t *testing.T) {
+func TestCloudStackDeploymentValidateUpdateAccountImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Account = "oldCruftyAccount"
 	c := vOld.DeepCopy()
@@ -61,7 +49,7 @@ func TestCloudstackDatacenterValidateUpdateAccountImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCloudstackDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
+func TestCloudStackDeploymentValidateUpdateNetworkImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Network = "OldNet"
 	c := vOld.DeepCopy()
@@ -71,17 +59,17 @@ func TestCloudstackDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCloudstackDatacenterValidateUpdateControlPlaneEndpointImmutable(t *testing.T) {
+func TestCloudStackDeploymentValidateUpdateControlPlaneEndpointImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.ControlPlaneEndpoint = "OldControlPlaneEndpoint"
+	vOld.Spec.ManagementApiEndpoint = "OldManagementApiEndpoint"
 	c := vOld.DeepCopy()
 
-	c.Spec.ControlPlaneEndpoint = "NewControlPlaneEndpoint"
+	c.Spec.ManagementApiEndpoint = "NewManagementApiEndpoint"
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCloudstackDatacenterValidateUpdateTLSInsecureImmutable(t *testing.T) {
+func TestCloudStackDeploymentValidateUpdateTLSInsecureImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Insecure = true
 	c := vOld.DeepCopy()
@@ -91,7 +79,7 @@ func TestCloudstackDatacenterValidateUpdateTLSInsecureImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCloudstackDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
+func TestCloudStackDeploymentValidateUpdateWithPausedAnnotation(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Network = "oldNetwork"
 	c := vOld.DeepCopy()
@@ -104,19 +92,19 @@ func TestCloudstackDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestCloudstackDatacenterValidateUpdateInvalidType(t *testing.T) {
+func TestCloudStackDeploymentValidateUpdateInvalidType(t *testing.T) {
 	vOld := &v1alpha1.Cluster{}
-	c := &v1alpha1.CloudstackDatacenterConfig{}
+	c := &v1alpha1.CloudStackDeploymentConfig{}
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(vOld)).NotTo(Succeed())
 }
 
-func cloudstackDatacenterConfig() v1alpha1.CloudstackDatacenterConfig {
-	return v1alpha1.CloudstackDatacenterConfig{
+func cloudstackDatacenterConfig() v1alpha1.CloudStackDeploymentConfig {
+	return v1alpha1.CloudStackDeploymentConfig{
 		TypeMeta:   metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string, 1)},
-		Spec:       v1alpha1.CloudstackDatacenterConfigSpec{},
-		Status:     v1alpha1.CloudstackDatacenterConfigStatus{},
+		Spec:       v1alpha1.CloudStackDeploymentConfigSpec{},
+		Status:     v1alpha1.CloudStackDeploymentConfigStatus{},
 	}
 }

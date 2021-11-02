@@ -9,7 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
-func TestCPCloudstackMachineValidateUpdateTemplateImmutable(t *testing.T) {
+func TestCPCloudStackMachineValidateUpdateTemplateImmutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Template = "oldTemplate"
@@ -20,7 +20,7 @@ func TestCPCloudstackMachineValidateUpdateTemplateImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkersCPCloudstackMachineValidateUpdateTemplateImmutable(t *testing.T) {
+func TestWorkersCPCloudStackMachineValidateUpdateTemplateImmutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.Spec.Template = "oldTemplate"
 	c := vOld.DeepCopy()
@@ -30,7 +30,7 @@ func TestWorkersCPCloudstackMachineValidateUpdateTemplateImmutable(t *testing.T)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCPCloudstackMachineValidateUpdateComputeOfferingImmutable(t *testing.T) {
+func TestCPCloudStackMachineValidateUpdateComputeOfferingImmutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.ComputeOffering = "oldComputeOffering"
@@ -41,7 +41,7 @@ func TestCPCloudstackMachineValidateUpdateComputeOfferingImmutable(t *testing.T)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkersCPCloudstackMachineValidateUpdateComputeOfferingImmutable(t *testing.T) {
+func TestWorkersCPCloudStackMachineValidateUpdateComputeOfferingImmutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.Spec.ComputeOffering = "oldComputeOffering"
 	c := vOld.DeepCopy()
@@ -51,7 +51,7 @@ func TestWorkersCPCloudstackMachineValidateUpdateComputeOfferingImmutable(t *tes
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCPCloudstackMachineValidateUpdateDiskOfferingImmutable(t *testing.T) {
+func TestCPCloudStackMachineValidateUpdateDiskOfferingImmutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.DiskOffering = "oldDiskOffering"
@@ -62,7 +62,7 @@ func TestCPCloudstackMachineValidateUpdateDiskOfferingImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkersCPCloudstackMachineValidateUpdateDiskOfferingImmutable(t *testing.T) {
+func TestWorkersCPCloudStackMachineValidateUpdateDiskOfferingImmutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.Spec.DiskOffering = "oldDiskOffering"
 	c := vOld.DeepCopy()
@@ -72,30 +72,63 @@ func TestWorkersCPCloudstackMachineValidateUpdateDiskOfferingImmutable(t *testin
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCPCloudstackMachineValidateUpdateKeypairImmutable(t *testing.T) {
+func TestCPCloudStackMachineValidateUpdateKeypairImmutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
-	vOld.Spec.KeyPair = "oldKeypair"
+	vOld.Spec.KeyPairName = "oldKeypair"
 	c := vOld.DeepCopy()
 
-	c.Spec.KeyPair = "newKeypair"
+	c.Spec.KeyPairName = "newKeypair"
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCloudstackMachineValidateUpdateInvalidType(t *testing.T) {
+func TestCPCloudStackMachineValidateUpdateDetailsImmutable(t *testing.T) {
+	vOld := cloudstackMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.Details = map[string]string {
+		"k1" : "v1",
+		"k2" : "v2",
+	}
+	c := vOld.DeepCopy()
+
+	c.Spec.Details = map[string]string {
+		"k1" : "v2",
+		"k2" : "v1",
+	}
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestCloudStackMachineValidateUpdateDetailsImmutable(t *testing.T) {
+	vOld := cloudstackMachineConfig()
+	vOld.Spec.Details = map[string]string {
+		"k1" : "v1",
+		"k2" : "v2",
+	}
+	c := vOld.DeepCopy()
+
+	c.Spec.Details = map[string]string {
+		"k1" : "v2",
+		"k2" : "v1",
+	}
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestCloudStackMachineValidateUpdateInvalidType(t *testing.T) {
 	vOld := &v1alpha1.Cluster{}
-	c := &v1alpha1.CloudstackMachineConfig{}
+	c := &v1alpha1.CloudStackMachineConfig{}
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(vOld)).NotTo(Succeed())
 }
 
-func cloudstackMachineConfig() v1alpha1.CloudstackMachineConfig {
-	return v1alpha1.CloudstackMachineConfig{
+func cloudstackMachineConfig() v1alpha1.CloudStackMachineConfig {
+	return v1alpha1.CloudStackMachineConfig{
 		TypeMeta:   metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string, 2)},
-		Spec:       v1alpha1.CloudstackMachineConfigSpec{},
-		Status:     v1alpha1.CloudstackMachineConfigStatus{},
+		Spec:       v1alpha1.CloudStackMachineConfigSpec{},
+		Status:     v1alpha1.CloudStackMachineConfigStatus{},
 	}
 }

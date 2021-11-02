@@ -22,8 +22,8 @@ const (
 	EtcdAdmBootstrapProviderName            = "bootstrap-etcdadm-bootstrap"
 	EtcdadmControllerProviderName           = "bootstrap-etcdadm-controller"
 
-	VSphereProviderName = "vsphere"
-	CloudstackProviderName = "cloudstack"
-	DockerProviderName  = "docker"
-	AWSProviderName     = "aws"
+	VSphereProviderName    = "vsphere"
+	CloudStackProviderName = "cloudstack"
+	DockerProviderName     = "docker"
+	AWSProviderName        = "aws"
 )

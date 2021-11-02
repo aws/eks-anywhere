@@ -2,6 +2,8 @@ package v1alpha1
 
 import (
 	"fmt"
+	"reflect"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -13,7 +15,7 @@ import (
 // log is for logging in this package.
 var cloudstackmachineconfiglog = logf.Log.WithName("cloudstackmachineconfig-resource")
 
-func (r *CloudstackMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (r *CloudStackMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -24,36 +26,36 @@ func (r *CloudstackMachineConfig) SetupWebhookWithManager(mgr ctrl.Manager) erro
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackmachineconfig,mutating=false,failurePolicy=fail,sideEffects=None,groups=anywhere.eks.amazonaws.com,resources=cloudstackmachineconfigs,verbs=create;update,versions=v1alpha1,name=validation.cloudstackmachineconfig.anywhere.amazonaws.com,admissionReviewVersions={v1,v1beta1}
 
-var _ webhook.Validator = &CloudstackMachineConfig{}
+var _ webhook.Validator = &CloudStackMachineConfig{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *CloudstackMachineConfig) ValidateCreate() error {
+func (r *CloudStackMachineConfig) ValidateCreate() error {
 	cloudstackmachineconfiglog.Info("validate create", "name", r.Name)
 
 	return nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *CloudstackMachineConfig) ValidateUpdate(old runtime.Object) error {
+func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 	cloudstackmachineconfiglog.Info("validate update", "name", r.Name)
 
-	oldCloudstackMachineConfig, ok := old.(*CloudstackMachineConfig)
+	oldCloudStackMachineConfig, ok := old.(*CloudStackMachineConfig)
 	if !ok {
-		return apierrors.NewBadRequest(fmt.Sprintf("expected a CloudstackMachineConfig but got a %T", old))
+		return apierrors.NewBadRequest(fmt.Sprintf("expected a CloudStackMachineConfig but got a %T", old))
 	}
 
 	var allErrs field.ErrorList
 
-	allErrs = append(allErrs, validateImmutableFieldsCloudstackMachineConfig(r, oldCloudstackMachineConfig)...)
+	allErrs = append(allErrs, validateImmutableFieldsCloudStackMachineConfig(r, oldCloudStackMachineConfig)...)
 
 	if len(allErrs) == 0 {
 		return nil
 	}
 
-	return apierrors.NewInvalid(GroupVersion.WithKind(CloudstackMachineConfigKind).GroupKind(), r.Name, allErrs)
+	return apierrors.NewInvalid(GroupVersion.WithKind(CloudStackMachineConfigKind).GroupKind(), r.Name, allErrs)
 }
 
-func validateImmutableFieldsCloudstackMachineConfig(new, old *CloudstackMachineConfig) field.ErrorList {
+func validateImmutableFieldsCloudStackMachineConfig(new, old *CloudStackMachineConfig) field.ErrorList {
 	if old.IsReconcilePaused() {
 		cloudstackmachineconfiglog.Info("Reconciliation is paused")
 		return nil
@@ -80,21 +82,28 @@ func validateImmutableFieldsCloudstackMachineConfig(new, old *CloudstackMachineC
 	if old.Spec.ComputeOffering != new.Spec.ComputeOffering {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "compute_offering"), new.Spec.ComputeOffering, "field is immutable"),
+			field.Invalid(field.NewPath("spec", "computeOffering"), new.Spec.ComputeOffering, "field is immutable"),
 		)
 	}
 
 	if old.Spec.DiskOffering != new.Spec.DiskOffering {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "disk_offering"), new.Spec.DiskOffering, "field is immutable"),
+			field.Invalid(field.NewPath("spec", "diskOffering"), new.Spec.DiskOffering, "field is immutable"),
 		)
 	}
 
-	if old.Spec.KeyPair != new.Spec.KeyPair {
+	if old.Spec.KeyPairName != new.Spec.KeyPairName {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "key_pair"), new.Spec.KeyPair, "field is immutable"),
+			field.Invalid(field.NewPath("spec", "kePairName"), new.Spec.KeyPairName, "field is immutable"),
+		)
+	}
+
+	if !reflect.DeepEqual(old.Spec.Details, new.Spec.Details) {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "details"), new.Spec.Details, "field is immutable"),
 		)
 	}
 
@@ -102,7 +111,7 @@ func validateImmutableFieldsCloudstackMachineConfig(new, old *CloudstackMachineC
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *CloudstackMachineConfig) ValidateDelete() error {
+func (r *CloudStackMachineConfig) ValidateDelete() error {
 	cloudstackmachineconfiglog.Info("validate delete", "name", r.Name)
 
 	return nil

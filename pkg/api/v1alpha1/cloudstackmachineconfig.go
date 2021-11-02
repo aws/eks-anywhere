@@ -9,60 +9,64 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const CloudstackMachineConfigKind = "CloudstackMachineConfig"
+const CloudStackMachineConfigKind = "CloudStackMachineConfig"
 
 // Used for generating yaml for generate clusterconfig command
-func NewCloudstackMachineConfigGenerate(name string) *CloudstackMachineConfigGenerate {
-	return &CloudstackMachineConfigGenerate{
+func NewCloudStackMachineConfigGenerate(name string) *CloudStackMachineConfigGenerate {
+	return &CloudStackMachineConfigGenerate{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       CloudstackMachineConfigKind,
+			Kind:       CloudStackMachineConfigKind,
 			APIVersion: SchemeBuilder.GroupVersion.String(),
 		},
 		ObjectMeta: ObjectMeta{
 			Name: name,
 		},
-		Spec: CloudstackMachineConfigSpec{
-			Template: "Cloudstack template name",
-			ComputeOffering: "Cloudstack compute offering name",
-			DiskOffering: "Cloudstack disk offering name",
-			KeyPair: "cloudstack keypair name",
+		Spec: CloudStackMachineConfigSpec{
+			Template:        "CloudStack template name",
+			ComputeOffering: "CloudStack compute offering name",
+			DiskOffering:    "CloudStack disk offering name",
+			KeyPairName:     "cloudstack keypair name",
+			Details: map[string]string {
+				"foo": "bar",
+				"key": "value",
+			},
 		},
 	}
 }
 
-func (c *CloudstackMachineConfigGenerate) APIVersion() string {
+func (c *CloudStackMachineConfigGenerate) APIVersion() string {
 	return c.TypeMeta.APIVersion
 }
 
-func (c *CloudstackMachineConfigGenerate) Kind() string {
+func (c *CloudStackMachineConfigGenerate) Kind() string {
 	return c.TypeMeta.Kind
 }
 
-func (c *CloudstackMachineConfigGenerate) Name() string {
+func (c *CloudStackMachineConfigGenerate) Name() string {
 	return c.ObjectMeta.Name
 }
 
-func GetCloudstackMachineConfigs(fileName string) (map[string]*CloudstackMachineConfig, error) {
-	configs := make(map[string]*CloudstackMachineConfig)
+func GetCloudStackMachineConfigs(fileName string) (map[string]*CloudStackMachineConfig, error) {
+	configs := make(map[string]*CloudStackMachineConfig)
 	content, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file due to: %v", err)
 	}
 	for _, c := range strings.Split(string(content), YamlSeparator) {
-		var config CloudstackMachineConfig
+		var config CloudStackMachineConfig
 		if err = yaml.UnmarshalStrict([]byte(c), &config); err == nil {
-			if config.Kind == CloudstackMachineConfigKind {
+			if config.Kind == CloudStackMachineConfigKind {
 				configs[config.Name] = &config
 				continue
 			}
 		}
 		_ = yaml.Unmarshal([]byte(c), &config) // this is to check if there is a bad spec in the file
-		if config.Kind == CloudstackMachineConfigKind {
+		if config.Kind == CloudStackMachineConfigKind {
 			return nil, fmt.Errorf("unable to unmarshall content from file due to: %v", err)
 		}
 	}
 	if len(configs) == 0 {
-		return nil, fmt.Errorf("unable to find kind %v in file", CloudstackMachineConfigKind)
+		return nil, fmt.Errorf("unable to find kind %v in file", CloudStackMachineConfigKind)
 	}
 	return configs, nil
 }
