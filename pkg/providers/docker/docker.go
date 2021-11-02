@@ -53,7 +53,7 @@ type ProviderKubectlClient interface {
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error)
 	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*v1alpha3.MachineDeployment, error)
-	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error)
+	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 }
 
@@ -254,7 +254,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		// TODO: replace controlPlaneMachineConfig with etcdMachineConfig once available in final GA spec
 		needsNewEtcdTemplate = NeedsNewEtcdTemplate(c, newClusterSpec.Cluster)
 		if !needsNewEtcdTemplate {
-			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, newClusterSpec.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
 				return nil, nil, err
 			}
@@ -264,7 +264,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 			as etcd endpoints. KCP rollout should not start until then. As a temporary solution in the absence of static etcd endpoints, we annotate the etcd cluster as "upgrading",
 			so that KCP checks this annotation and does not proceed if etcd cluster is upgrading. The etcdadm controller removes this annotation once the etcd upgrade is complete.
 			*/
-			err = p.providerKubectlClient.UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", workloadCluster.Name),
+			err = p.providerKubectlClient.UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", newClusterSpec.Name),
 				map[string]string{etcdv1alpha3.UpgradeInProgressAnnotation: "true"},
 				executables.WithCluster(bootstrapCluster),
 				executables.WithNamespace(constants.EksaSystemNamespace))
