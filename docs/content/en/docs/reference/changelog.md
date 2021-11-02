@@ -24,7 +24,7 @@ menu:
 ### Added
 
 - Support to create and manage workload clusters [#94](https://github.com/aws/eks-anywhere/issues/94)
-- Support for upgrading eks-anywhere components [#93](https://github.com/aws/eks-anywhere/issues/93), [cluster upgrades](https://github.com/aws/eks-anywhere/blob/main/docs/content/en/docs/tasks/cluster/cluster-upgrades.md)
+- Support for upgrading eks-anywhere components [#93](https://github.com/aws/eks-anywhere/issues/93), [cluster upgrades] [Create cluster workflow]({{< relref "/docs/tasks/cluster/cluster-upgrades" >}})
 - k8s CIS compliance [#193](https://github.com/aws/eks-anywhere/pull/192/)
 - Support bundle improvements [#92](https://github.com/aws/eks-anywhere/issues/92)
 - Ability to upgrade control plane nodes before worker nodes [#100](https://github.com/aws/eks-anywhere/issues/100)
