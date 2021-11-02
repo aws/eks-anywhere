@@ -3,7 +3,6 @@ package workflows_test
 import (
 	"context"
 	"errors"
-	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -12,7 +11,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/features"
 	writermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -41,10 +39,6 @@ type upgradeTestSetup struct {
 }
 
 func newUpgradeTest(t *testing.T) *upgradeTestSetup {
-	os.Setenv(features.ComponentsUpgradesEnvVar, "true")
-	t.Cleanup(func() {
-		os.Unsetenv(features.ComponentsUpgradesEnvVar)
-	})
 	mockCtrl := gomock.NewController(t)
 	bootstrapper := mocks.NewMockBootstrapper(mockCtrl)
 	clusterManager := mocks.NewMockClusterManager(mockCtrl)

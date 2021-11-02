@@ -6,7 +6,6 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -158,11 +157,6 @@ func (s *updateSecrets) Name() string {
 
 func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	target := getManagemtCluster(commandContext)
-
-	if !features.IsActive(features.ComponentsUpgrade()) {
-		logger.V(4).Info("Core components upgrade feature is disabled, skipping")
-		return &upgradeNeeded{}
-	}
 
 	logger.Info("Upgrading core components")
 	currentSpec, err := commandContext.ClusterManager.GetCurrentClusterSpec(ctx, target, commandContext.ClusterSpec.Name)
