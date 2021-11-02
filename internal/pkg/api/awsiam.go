@@ -1,8 +1,9 @@
 package api
 
 import (
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
 type AWSIamConfigOpt func(c *v1alpha1.AWSIamConfig)
