@@ -34,6 +34,7 @@ type Provider interface {
 	GenerateMHC() ([]byte, error)
 	ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff
 	RunPostUpgrade(ctx context.Context, clusterSpec *cluster.Spec, managementCluster, workloadCluster *types.Cluster) error
+	UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error)
 }
 
 type DatacenterConfig interface {

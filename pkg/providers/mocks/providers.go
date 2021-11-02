@@ -354,6 +354,21 @@ func (mr *MockProviderMockRecorder) UpdateSecrets(arg0, arg1 interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSecrets", reflect.TypeOf((*MockProvider)(nil).UpdateSecrets), arg0, arg1)
 }
 
+// UpgradeNeeded mocks base method.
+func (m *MockProvider) UpgradeNeeded(arg0 context.Context, arg1, arg2 *cluster.Spec) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpgradeNeeded", arg0, arg1, arg2)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpgradeNeeded indicates an expected call of UpgradeNeeded.
+func (mr *MockProviderMockRecorder) UpgradeNeeded(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeNeeded", reflect.TypeOf((*MockProvider)(nil).UpgradeNeeded), arg0, arg1, arg2)
+}
+
 // ValidateNewSpec mocks base method.
 func (m *MockProvider) ValidateNewSpec(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) error {
 	m.ctrl.T.Helper()
