@@ -3,7 +3,7 @@ linkTitle: "Changelog"
 weight: 55
 ---
 
-# Changelog
+# What's New?
 
 ## [Unreleased]
 
