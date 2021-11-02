@@ -457,7 +457,7 @@ func TestClusterManagerUpgradeWorkloadClusterSuccess(t *testing.T) {
 		Name: clusterName,
 	}
 
-	tt := newClusterChangedTest(t)
+	tt := newSpecChangedTest(t)
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Name).Return(tt.oldClusterConfig, nil)
 	tt.mocks.client.EXPECT().GetBundles(tt.ctx, tt.cluster.KubeconfigFile, tt.cluster.Name, "").Return(test.Bundles(t), nil)
 	tt.mocks.provider.EXPECT().GenerateCAPISpecForUpgrade(tt.ctx, mCluster, wCluster, tt.clusterSpec, tt.clusterSpec.DeepCopy())
@@ -487,7 +487,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForMachinesTimeout(t *testing.T
 		Name: clusterName,
 	}
 
-	tt := newClusterChangedTest(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 50*time.Microsecond, 100*time.Microsecond))
+	tt := newSpecChangedTest(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 50*time.Microsecond, 100*time.Microsecond))
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Name).Return(tt.oldClusterConfig, nil)
 	tt.mocks.client.EXPECT().GetBundles(tt.ctx, tt.cluster.KubeconfigFile, tt.cluster.Name, "").Return(test.Bundles(t), nil)
 	tt.mocks.provider.EXPECT().GenerateCAPISpecForUpgrade(ctx, mCluster, wCluster, tt.clusterSpec, tt.clusterSpec.DeepCopy())
@@ -528,7 +528,7 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesFailedWithUnhealthyNo
 		{Metadata: types.MachineMetadata{Labels: map[string]string{clusterv1.MachineControlPlaneLabelName: ""}}, Status: status},
 	}
 
-	tt := newClusterChangedTest(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 50*time.Microsecond, 100*time.Microsecond))
+	tt := newSpecChangedTest(t, clustermanager.WithWaitForMachines(1*time.Nanosecond, 50*time.Microsecond, 100*time.Microsecond))
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Name).Return(tt.oldClusterConfig, nil)
 	tt.mocks.client.EXPECT().GetBundles(tt.ctx, tt.cluster.KubeconfigFile, tt.cluster.Name, "").Return(test.Bundles(t), nil)
 	tt.mocks.provider.EXPECT().GenerateCAPISpecForUpgrade(tt.ctx, mCluster, wCluster, tt.clusterSpec, tt.clusterSpec.DeepCopy())
@@ -553,7 +553,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForCAPITimeout(t *testing.T) {
 		Name: clusterName,
 	}
 
-	tt := newClusterChangedTest(t)
+	tt := newSpecChangedTest(t)
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Name).Return(tt.oldClusterConfig, nil)
 	tt.mocks.client.EXPECT().GetBundles(tt.ctx, tt.cluster.KubeconfigFile, tt.cluster.Name, "").Return(test.Bundles(t), nil)
 	tt.mocks.provider.EXPECT().GenerateCAPISpecForUpgrade(tt.ctx, mCluster, wCluster, tt.clusterSpec, tt.clusterSpec.DeepCopy())
@@ -867,7 +867,7 @@ func TestClusterManagerInstallCustomComponentsErrorApplying(t *testing.T) {
 	}
 }
 
-type clusterChangedTest struct {
+type specChangedTest struct {
 	*testSetup
 	oldClusterConfig, newClusterConfig                         *v1alpha1.Cluster
 	oldDatacenterConfig, newDatacenterConfig                   *v1alpha1.VSphereDatacenterConfig
@@ -875,7 +875,7 @@ type clusterChangedTest struct {
 	oldWorkerMachineConfig, newWorkerMachineConfig             *v1alpha1.VSphereMachineConfig
 }
 
-func newClusterChangedTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) *clusterChangedTest {
+func newSpecChangedTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) *specChangedTest {
 	testSetup := newTest(t, opts...)
 	clusterName := testSetup.clusterName
 	clusterConfig := &v1alpha1.Cluster{
@@ -928,7 +928,7 @@ func newClusterChangedTest(t *testing.T, opts ...clustermanager.ClusterManagerOp
 	workerMachineConfig := machineConfig.DeepCopy()
 	workerMachineConfig.Name = clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 
-	changedTest := &clusterChangedTest{
+	changedTest := &specChangedTest{
 		testSetup:                    testSetup,
 		oldClusterConfig:             clusterConfig,
 		newClusterConfig:             newClusterConfig,
@@ -950,7 +950,7 @@ func newClusterChangedTest(t *testing.T, opts ...clustermanager.ClusterManagerOp
 }
 
 func TestClusterManagerClusterSpecChangedNoChanges(t *testing.T) {
-	tt := newClusterChangedTest(t)
+	tt := newSpecChangedTest(t)
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Name).Return(tt.oldClusterConfig, nil)
 	tt.mocks.client.EXPECT().GetBundles(tt.ctx, tt.cluster.KubeconfigFile, tt.cluster.Name, "").Return(test.Bundles(t), nil)
 	tt.mocks.client.EXPECT().GetEksaVSphereDatacenterConfig(tt.ctx, tt.oldClusterConfig.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(tt.oldDatacenterConfig, nil)
@@ -962,7 +962,7 @@ func TestClusterManagerClusterSpecChangedNoChanges(t *testing.T) {
 }
 
 func TestClusterManagerClusterSpecChangedClusterChanged(t *testing.T) {
-	tt := newClusterChangedTest(t)
+	tt := newSpecChangedTest(t)
 	tt.newClusterConfig.Spec.KubernetesVersion = "1.20"
 
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Name).Return(tt.oldClusterConfig, nil)
@@ -972,7 +972,7 @@ func TestClusterManagerClusterSpecChangedClusterChanged(t *testing.T) {
 }
 
 func TestClusterManagerClusterSpecChangedEksDReleaseChanged(t *testing.T) {
-	tt := newClusterChangedTest(t)
+	tt := newSpecChangedTest(t)
 	tt.clusterSpec.VersionsBundle.EksD.Name = "kubernetes-1-19-eks-5"
 
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Name).Return(tt.oldClusterConfig, nil)
@@ -983,7 +983,7 @@ func TestClusterManagerClusterSpecChangedEksDReleaseChanged(t *testing.T) {
 }
 
 func TestClusterManagerClusterSpecChangedNoChangesDatacenterSpecChanged(t *testing.T) {
-	tt := newClusterChangedTest(t)
+	tt := newSpecChangedTest(t)
 	tt.newDatacenterConfig.Spec.Insecure = false
 
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Name).Return(tt.oldClusterConfig, nil)
@@ -995,7 +995,7 @@ func TestClusterManagerClusterSpecChangedNoChangesDatacenterSpecChanged(t *testi
 }
 
 func TestClusterManagerClusterSpecChangedNoChangesControlPlaneMachineConfigSpecChanged(t *testing.T) {
-	tt := newClusterChangedTest(t)
+	tt := newSpecChangedTest(t)
 	tt.newControlPlaneMachineConfig.Spec.NumCPUs = 4
 
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Name).Return(tt.oldClusterConfig, nil)
@@ -1009,7 +1009,7 @@ func TestClusterManagerClusterSpecChangedNoChangesControlPlaneMachineConfigSpecC
 }
 
 func TestClusterManagerClusterSpecChangedNoChangesWorkerNodeMachineConfigSpecChanged(t *testing.T) {
-	tt := newClusterChangedTest(t)
+	tt := newSpecChangedTest(t)
 	tt.newWorkerMachineConfig.Spec.NumCPUs = 4
 
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Name).Return(tt.oldClusterConfig, nil)
@@ -1024,7 +1024,7 @@ func TestClusterManagerClusterSpecChangedNoChangesWorkerNodeMachineConfigSpecCha
 }
 
 func TestClusterManagerClusterSpecChangedGitOpsDefault(t *testing.T) {
-	tt := newClusterChangedTest(t)
+	tt := newSpecChangedTest(t)
 	tt.clusterSpec.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{Kind: v1alpha1.GitOpsConfigKind}
 	tt.oldClusterConfig = tt.clusterSpec.Cluster.DeepCopy()
 	tt.clusterSpec.SetDefaultGitOps()
