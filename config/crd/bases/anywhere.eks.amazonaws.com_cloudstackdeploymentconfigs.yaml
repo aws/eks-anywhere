@@ -6,20 +6,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.1
   creationTimestamp: null
-  name: cloudstackdatacenterconfigs.anywhere.eks.amazonaws.com
+  name: cloudstackdeploymentconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
   names:
-    kind: CloudstackDatacenterConfig
-    listKind: CloudstackDatacenterConfigList
-    plural: cloudstackdatacenterconfigs
-    singular: cloudstackdatacenterconfig
+    kind: CloudStackDeploymentConfig
+    listKind: CloudStackDeploymentConfigList
+    plural: cloudstackdeploymentconfigs
+    singular: cloudstackdeploymentconfig
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: CloudstackDatacenterConfig is the Schema for the cloudstackdatacenterconfigs
+        description: CloudStackDeploymentConfig is the Schema for the cloudstackdeploymentconfigs
           API
         properties:
           apiVersion:
@@ -35,36 +35,33 @@ spec:
           metadata:
             type: object
           spec:
-            description: CloudstackDatacenterConfigSpec defines the desired state
-              of CloudstackDatacenterConfig
+            description: CloudStackDeploymentConfigSpec defines the desired state
+              of CloudStackDeploymentConfig
             properties:
               account:
                 type: string
-              control_plane_endpoint:
-                type: string
               domain:
-                description: Foo is an example field of CloudstackDatacenterConfig.
-                  Edit cloudstackdatacenterconfig_types.go to remove/update
+                description: Foo is an example field of CloudStackDeploymentConfig.
+                  Edit cloudstackdeploymentconfig_types.go to remove/update
                 type: string
               insecure:
-                description: Server     string `json:"server"` Thumbprint string `json:"thumbprint"`
                 type: boolean
-              network:
+              managementApiEndpoint:
                 type: string
-              project:
+              network:
                 type: string
               zone:
                 type: string
             required:
-            - control_plane_endpoint
             - domain
             - insecure
+            - managementApiEndpoint
             - network
             - zone
             type: object
           status:
-            description: CloudstackDatacenterConfigStatus defines the observed state
-              of CloudstackDatacenterConfig
+            description: CloudStackDeploymentConfigStatus defines the observed state
+              of CloudStackDeploymentConfig
             type: object
         type: object
     served: true

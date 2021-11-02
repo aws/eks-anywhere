@@ -21,71 +21,70 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// CloudstackMachineConfigSpec defines the desired state of CloudstackMachineConfig
-type CloudstackMachineConfigSpec struct {
+// CloudStackMachineConfigSpec defines the desired state of CloudStackMachineConfig
+type CloudStackMachineConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Template          string              `json:"template,omitempty"`
-	ComputeOffering	  string			  `json:"compute_offering"`
-	DiskOffering	  string			  `json:"disk_offering,omitempty"`
-	OSFamily          OSFamily            `json:"osFamily"`
-	KeyPair 		  string			  `json:"key_pair"`
+	Template        string            `json:"template,omitempty"`
+	ComputeOffering string            `json:"computeOffering"`
+	DiskOffering    string            `json:"diskOffering,omitempty"`
+	OSFamily        OSFamily          `json:"osFamily,omitempty"`
+	KeyPairName     string            `json:"keyPairName,omitempty"`
+	Details         map[string]string `json:"details,omitempty"`
 }
 
-
-func (c *CloudstackMachineConfig) PauseReconcile() {
+func (c *CloudStackMachineConfig) PauseReconcile() {
 	c.Annotations[pausedAnnotation] = "true"
 }
 
-func (c *CloudstackMachineConfig) IsReconcilePaused() bool {
+func (c *CloudStackMachineConfig) IsReconcilePaused() bool {
 	if s, ok := c.Annotations[pausedAnnotation]; ok {
 		return s == "true"
 	}
 	return false
 }
 
-func (c *CloudstackMachineConfig) SetControlPlane() {
+func (c *CloudStackMachineConfig) SetControlPlane() {
 	c.Annotations[controlPlaneAnnotation] = "true"
 }
 
-func (c *CloudstackMachineConfig) IsControlPlane() bool {
+func (c *CloudStackMachineConfig) IsControlPlane() bool {
 	if s, ok := c.Annotations[controlPlaneAnnotation]; ok {
 		return s == "true"
 	}
 	return false
 }
 
-func (c *CloudstackMachineConfig) SetEtcd() {
+func (c *CloudStackMachineConfig) SetEtcd() {
 	c.Annotations[etcdAnnotation] = "true"
 }
 
-func (c *CloudstackMachineConfig) IsEtcd() bool {
+func (c *CloudStackMachineConfig) IsEtcd() bool {
 	if s, ok := c.Annotations[etcdAnnotation]; ok {
 		return s == "true"
 	}
 	return false
 }
 
-// CloudstackMachineConfigStatus defines the observed state of CloudstackMachineConfig
-type CloudstackMachineConfigStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+// CloudStackMachineConfigStatus defines the observed state of CloudStackMachineConfig
+type CloudStackMachineConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// CloudstackMachineConfig is the Schema for the cloudstackmachineconfigs API
-type CloudstackMachineConfig struct {
+// CloudStackMachineConfig is the Schema for the cloudstackmachineconfigs API
+type CloudStackMachineConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CloudstackMachineConfigSpec   `json:"spec,omitempty"`
-	Status CloudstackMachineConfigStatus `json:"status,omitempty"`
+	Spec   CloudStackMachineConfigSpec   `json:"spec,omitempty"`
+	Status CloudStackMachineConfigStatus `json:"status,omitempty"`
 }
 
-func (c *CloudstackMachineConfig) ConvertConfigToConfigGenerateStruct() *CloudstackMachineConfigGenerate {
-	config := &CloudstackMachineConfigGenerate{
+func (c *CloudStackMachineConfig) ConvertConfigToConfigGenerateStruct() *CloudStackMachineConfigGenerate {
+	config := &CloudStackMachineConfigGenerate{
 		TypeMeta: c.TypeMeta,
 		ObjectMeta: ObjectMeta{
 			Name:        c.Name,
@@ -98,30 +97,29 @@ func (c *CloudstackMachineConfig) ConvertConfigToConfigGenerateStruct() *Cloudst
 	return config
 }
 
-func (c *CloudstackMachineConfig) Marshallable() Marshallable {
+func (c *CloudStackMachineConfig) Marshallable() Marshallable {
 	return c.ConvertConfigToConfigGenerateStruct()
 }
 
-
 // +kubebuilder:object:generate=false
 
-// Same as CloudstackMachineConfig except stripped down for generation of yaml file during generate clusterconfig
-type CloudstackMachineConfigGenerate struct {
+// Same as CloudStackMachineConfig except stripped down for generation of yaml file during generate clusterconfig
+type CloudStackMachineConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
 
-	Spec CloudstackMachineConfigSpec `json:"spec,omitempty"`
+	Spec CloudStackMachineConfigSpec `json:"spec,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// CloudstackMachineConfigList contains a list of CloudstackMachineConfig
-type CloudstackMachineConfigList struct {
+// CloudStackMachineConfigList contains a list of CloudStackMachineConfig
+type CloudStackMachineConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []CloudstackMachineConfig `json:"items"`
+	Items           []CloudStackMachineConfig `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&CloudstackMachineConfig{}, &CloudstackMachineConfigList{})
+	SchemeBuilder.Register(&CloudStackMachineConfig{}, &CloudStackMachineConfigList{})
 }

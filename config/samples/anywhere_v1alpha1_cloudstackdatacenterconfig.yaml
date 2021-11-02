@@ -1,7 +1,7 @@
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: CloudstackDatacenterConfig
+kind: CloudStackDeploymentConfig
 metadata:
-  name: cloudstackdatacenterconfig-sample
+  name: cloudstackdeploymentconfig-sample
 spec:
   # Add fields here
   foo: bar

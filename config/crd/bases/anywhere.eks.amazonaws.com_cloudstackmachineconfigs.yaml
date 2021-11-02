@@ -10,8 +10,8 @@ metadata:
 spec:
   group: anywhere.eks.amazonaws.com
   names:
-    kind: CloudstackMachineConfig
-    listKind: CloudstackMachineConfigList
+    kind: CloudStackMachineConfig
+    listKind: CloudStackMachineConfigList
     plural: cloudstackmachineconfigs
     singular: cloudstackmachineconfig
   scope: Namespaced
@@ -19,7 +19,7 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: CloudstackMachineConfig is the Schema for the cloudstackmachineconfigs
+        description: CloudStackMachineConfig is the Schema for the cloudstackmachineconfigs
           API
         properties:
           apiVersion:
@@ -35,26 +35,36 @@ spec:
           metadata:
             type: object
           spec:
-            description: CloudstackMachineConfigSpec defines the desired state of
-              CloudstackMachineConfig
+            description: CloudStackMachineConfigSpec defines the desired state of
+              CloudStackMachineConfig
             properties:
-              compute_offering:
+              computeOffering:
                 type: string
-              disk_offering:
+              details:
+                additionalProperties:
+                  type: string
+                type: object
+              diskOffering:
                 type: string
-              key_pair:
+              keyPairName:
+                type: string
+              osFamily:
                 type: string
               template:
                 description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
                   Important: Run "make" to regenerate code after modifying this file'
                 type: string
             required:
-            - compute_offering
-            - key_pair
+            - computeOffering
+            - details
+            - diskOffering
+            - keyPairName
+            - osFamily
+            - template
             type: object
           status:
-            description: CloudstackMachineConfigStatus defines the observed state
-              of CloudstackMachineConfig
+            description: CloudStackMachineConfigStatus defines the observed state
+              of CloudStackMachineConfig
             type: object
         type: object
     served: true
