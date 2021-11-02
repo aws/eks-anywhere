@@ -68,7 +68,9 @@ For [Linux](https://docs.docker.com/engine/security/certificates/), you can plac
 
 For [Mac](https://docs.docker.com/desktop/mac/#add-tls-certificates), you can follow this guide to add the certificate to your keychain: https://docs.docker.com/desktop/mac/#add-tls-certificates
 
->>>NOTE: You may need to restart Docker after adding the certificates.
+{{% alert title="Note" color="primary" %}}
+  You may need to restart Docker after adding the certificates.
+{{% /alert %}}
 
 ## Registry configurations
 Depending on what registry you decide to use, you will need to create the following projects:
