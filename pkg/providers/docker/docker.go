@@ -53,7 +53,7 @@ type ProviderKubectlClient interface {
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error)
 	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*v1alpha3.MachineDeployment, error)
-	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error)
+	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 }
 
@@ -206,8 +206,8 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 	return values
 }
 
-func NeedsNewControlPlaneTemplate(oldC, newC *v1alpha1.Cluster) bool {
-	return oldC.Spec.KubernetesVersion != newC.Spec.KubernetesVersion
+func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
+	return (oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion) || (oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number)
 }
 
 func NeedsNewWorkloadTemplate(oldC, newC *v1alpha1.Cluster) bool {
@@ -218,17 +218,17 @@ func NeedsNewEtcdTemplate(oldC, newC *v1alpha1.Cluster) bool {
 	return oldC.Spec.KubernetesVersion != newC.Spec.KubernetesVersion
 }
 
-func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	clusterName := clusterSpec.ObjectMeta.Name
+func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	clusterName := newClusterSpec.ObjectMeta.Name
 	var controlPlaneTemplateName, workloadTemplateName, etcdTemplateName string
 	var needsNewEtcdTemplate bool
 
-	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, clusterSpec.Name)
+	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, newClusterSpec.Name)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(c, clusterSpec.Cluster)
+	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec)
 	if !needsNewControlPlaneTemplate {
 		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, workloadCluster.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -239,9 +239,9 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}
 
-	needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(c, clusterSpec.Cluster)
+	needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(c, newClusterSpec.Cluster)
 	if !needsNewWorkloadTemplate {
-		md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, clusterSpec.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+		md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, newClusterSpec.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -250,11 +250,11 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName)
 	}
 
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+	if newClusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		// TODO: replace controlPlaneMachineConfig with etcdMachineConfig once available in final GA spec
-		needsNewEtcdTemplate = NeedsNewEtcdTemplate(c, clusterSpec.Cluster)
+		needsNewEtcdTemplate = NeedsNewEtcdTemplate(c, newClusterSpec.Cluster)
 		if !needsNewEtcdTemplate {
-			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, newClusterSpec.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
 				return nil, nil, err
 			}
@@ -264,7 +264,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 			as etcd endpoints. KCP rollout should not start until then. As a temporary solution in the absence of static etcd endpoints, we annotate the etcd cluster as "upgrading",
 			so that KCP checks this annotation and does not proceed if etcd cluster is upgrading. The etcdadm controller removes this annotation once the etcd upgrade is complete.
 			*/
-			err = p.providerKubectlClient.UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", workloadCluster.Name),
+			err = p.providerKubectlClient.UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", newClusterSpec.Name),
 				map[string]string{etcdv1alpha3.UpgradeInProgressAnnotation: "true"},
 				executables.WithCluster(bootstrapCluster),
 				executables.WithNamespace(constants.EksaSystemNamespace))
@@ -279,7 +279,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
 		values["etcdTemplateName"] = etcdTemplateName
 	}
-	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
+	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(newClusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -287,7 +287,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 	workersOpts := func(values map[string]interface{}) {
 		values["workloadTemplateName"] = workloadTemplateName
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workersOpts)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workersOpts)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -323,8 +323,8 @@ func (p *provider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec)
+func (p *provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, newClusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
 	}
@@ -420,4 +420,12 @@ func (p *provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.Compone
 		NewVersion:    newSpec.VersionsBundle.Docker.Version,
 		OldVersion:    currentSpec.VersionsBundle.Docker.Version,
 	}
+}
+
+func (p *provider) RunPostUpgrade(ctx context.Context, clusterSpec *cluster.Spec, managementCluster, workloadCluster *types.Cluster) error {
+	return nil
+}
+
+func (p *provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec) (bool, error) {
+	return false, nil
 }

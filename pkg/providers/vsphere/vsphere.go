@@ -40,23 +40,26 @@ import (
 )
 
 const (
-	eksaLicense              = "EKSA_LICENSE"
-	vSphereUsernameKey       = "VSPHERE_USERNAME"
-	vSpherePasswordKey       = "VSPHERE_PASSWORD"
-	eksavSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
-	eksavSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
-	vSphereServerKey         = "VSPHERE_SERVER"
-	govcInsecure             = "GOVC_INSECURE"
-	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
-	secretObjectType         = "addons.cluster.x-k8s.io/resource-set"
-	secretObjectName         = "csi-vsphere-config"
-	credentialsObjectName    = "vsphere-credentials"
-	privateKeyFileName       = "eks-a-id_rsa"
-	publicKeyFileName        = "eks-a-id_rsa.pub"
-	defaultTemplateLibrary   = "eks-a-templates"
-	defaultTemplatesFolder   = "vm/Templates"
-	bottlerocketDefaultUser  = "ec2-user"
-	ubuntuDefaultUser        = "capv"
+	eksaLicense                           = "EKSA_LICENSE"
+	vSphereUsernameKey                    = "VSPHERE_USERNAME"
+	vSpherePasswordKey                    = "VSPHERE_PASSWORD"
+	eksavSphereUsernameKey                = "EKSA_VSPHERE_USERNAME"
+	eksavSpherePasswordKey                = "EKSA_VSPHERE_PASSWORD"
+	vSphereServerKey                      = "VSPHERE_SERVER"
+	govcInsecure                          = "GOVC_INSECURE"
+	expClusterResourceSetKey              = "EXP_CLUSTER_RESOURCE_SET"
+	secretObjectType                      = "addons.cluster.x-k8s.io/resource-set"
+	secretObjectName                      = "csi-vsphere-config"
+	credentialsObjectName                 = "vsphere-credentials"
+	privateKeyFileName                    = "eks-a-id_rsa"
+	publicKeyFileName                     = "eks-a-id_rsa.pub"
+	defaultTemplateLibrary                = "eks-a-templates"
+	defaultTemplatesFolder                = "vm/Templates"
+	bottlerocketDefaultUser               = "ec2-user"
+	ubuntuDefaultUser                     = "capv"
+	cloudControllerDaemonSetName          = "vsphere-cloud-controller-manager"
+	cloudControllerDaemonSetNamespace     = "kube-system"
+	cloudControllerDaemonSetContainerName = "vsphere-cloud-controller-manager"
 )
 
 //go:embed config/template-cp.yaml
@@ -103,6 +106,7 @@ type vsphereProvider struct {
 	etcdTemplateFactory         *templates.Factory
 	templateBuilder             *VsphereTemplateBuilder
 	skipIpCheck                 bool
+	resourceSetManager          ClusterResourceSetManager
 }
 
 type ProviderGovcClient interface {
@@ -115,7 +119,7 @@ type ProviderGovcClient interface {
 	ValidateVCenterSetup(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, selfSigned *bool) error
 	ValidateVCenterSetupMachineConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfig *v1alpha1.VSphereMachineConfig, selfSigned *bool) error
 	CreateLibrary(ctx context.Context, datastore, library string) error
-	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, resourcePool string, resizeDisk2 bool) error
+	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, resourcePool string, resizeDisk2 bool) error
 	ImportTemplate(ctx context.Context, library, ovaURL, name string) error
 	GetTags(ctx context.Context, path string) (tags []string, err error)
 	ListTags(ctx context.Context) ([]string, error)
@@ -134,12 +138,19 @@ type ProviderKubectlClient interface {
 	GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error)
 	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*v1alpha3.MachineDeployment, error)
-	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, opts ...executables.KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error)
+	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error)
 	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
+	SearchVsphereMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereMachineConfig, error)
+	SearchVsphereDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error)
+	SetDaemonSetImage(ctx context.Context, kubeconfigFile, name, namespace, container, image string) error
 }
 
-func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *vsphereProvider {
+type ClusterResourceSetManager interface {
+	ForceUpdate(ctx context.Context, name, namespace string, managementCluster, workloadCluster *types.Cluster) error
+}
+
+func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *vsphereProvider {
 	return NewProviderCustomNet(
 		datacenterConfig,
 		machineConfigs,
@@ -150,16 +161,18 @@ func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConf
 		&networkutils.DefaultNetClient{},
 		now,
 		skipIpCheck,
+		resourceSetManager,
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool) *vsphereProvider {
+func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *vsphereProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.VSphereMachineConfigSpec
 	var controlPlaneTemplateFactory, workerNodeGroupTemplateFactory, etcdTemplateFactory *templates.Factory
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
 		controlPlaneTemplateFactory = templates.NewFactory(
 			providerGovcClient,
+			datacenterConfig.Spec.Datacenter,
 			controlPlaneMachineSpec.Datastore,
 			controlPlaneMachineSpec.ResourcePool,
 			defaultTemplateLibrary,
@@ -169,6 +182,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 		workerNodeGroupMachineSpec = &machineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec
 		workerNodeGroupTemplateFactory = templates.NewFactory(
 			providerGovcClient,
+			datacenterConfig.Spec.Datacenter,
 			workerNodeGroupMachineSpec.Datastore,
 			workerNodeGroupMachineSpec.ResourcePool,
 			defaultTemplateLibrary,
@@ -179,6 +193,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
 			etcdTemplateFactory = templates.NewFactory(
 				providerGovcClient,
+				datacenterConfig.Spec.Datacenter,
 				etcdMachineSpec.Datastore,
 				etcdMachineSpec.ResourcePool,
 				defaultTemplateLibrary,
@@ -204,7 +219,8 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 			etcdMachineSpec:            etcdMachineSpec,
 			now:                        now,
 		},
-		skipIpCheck: skipIpCheck,
+		skipIpCheck:        skipIpCheck,
+		resourceSetManager: resourceSetManager,
 	}
 }
 
@@ -855,6 +871,26 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 	if err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
+
+	if clusterSpec.IsManaged() {
+		for _, mc := range p.MachineConfigs() {
+			em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, mc.GetName(), clusterSpec.ManagementCluster.KubeconfigFile, mc.GetNamespace())
+			if err != nil {
+				return err
+			}
+			if len(em) > 0 {
+				return fmt.Errorf("VSphereMachineConfig %s already exists", mc.GetName())
+			}
+		}
+		existingDatacenter, err := p.providerKubectlClient.SearchVsphereDatacenterConfig(ctx, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Namespace)
+		if err != nil {
+			return err
+		}
+		if len(existingDatacenter) > 0 {
+			return fmt.Errorf("VSphereDatacenter %s already exists", p.datacenterConfig.Name)
+		}
+	}
+
 	if p.skipIpCheck {
 		logger.Info("Skipping check for whether control plane ip is in use")
 		return nil
@@ -904,14 +940,17 @@ func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context) err
 	return nil
 }
 
-func NeedsNewControlPlaneTemplate(oldC, newC *v1alpha1.Cluster, oldVdc, newVdc *v1alpha1.VSphereDatacenterConfig, oldVmc, newVmc *v1alpha1.VSphereMachineConfig) bool {
+func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.VSphereDatacenterConfig, oldVmc, newVmc *v1alpha1.VSphereMachineConfig) bool {
 	// Another option is to generate MachineTemplates based on the old and new eksa spec,
 	// remove the name field and compare them with DeepEqual
 	// We plan to approach this way since it's more flexible to add/remove fields and test out for validation
-	if oldC.Spec.KubernetesVersion != newC.Spec.KubernetesVersion {
+	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
 		return true
 	}
-	if oldC.Spec.ControlPlaneConfiguration.Endpoint.Host != newC.Spec.ControlPlaneConfiguration.Endpoint.Host {
+	if oldSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host != newSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host {
+		return true
+	}
+	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
 	return AnyImmutableFieldChanged(oldVdc, newVdc, oldVmc, newVmc)
@@ -1073,6 +1112,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"etcdImage":                            bundle.KubeDistro.EtcdImage.VersionedImage(),
 		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
 		"auditPolicy":                          common.GetAuditPolicy(),
+		"resourceSetName":                      resourceSetName(clusterSpec),
 	}
 
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
@@ -1197,31 +1237,31 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	return values
 }
 
-func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	clusterName := clusterSpec.ObjectMeta.Name
+func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	clusterName := newClusterSpec.ObjectMeta.Name
 	var controlPlaneTemplateName, workloadTemplateName, etcdTemplateName string
 	var needsNewEtcdTemplate bool
 
-	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, clusterSpec.Name)
+	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, newClusterSpec.Name)
 	if err != nil {
 		return nil, nil, err
 	}
-	vdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, p.datacenterConfig.Name, workloadCluster.KubeconfigFile, clusterSpec.Namespace)
+	vdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, p.datacenterConfig.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
 	if err != nil {
 		return nil, nil, err
 	}
-	controlPlaneMachineConfig := p.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-	controlPlaneVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, clusterSpec.Namespace)
+	controlPlaneMachineConfig := p.machineConfigs[newClusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+	controlPlaneVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
 	if err != nil {
 		return nil, nil, err
 	}
-	workerMachineConfig := p.machineConfigs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
-	workerVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, workloadCluster.KubeconfigFile, clusterSpec.Namespace)
+	workerMachineConfig := p.machineConfigs[newClusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
+	workerVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(c, clusterSpec.Cluster, vdc, p.datacenterConfig, controlPlaneVmc, controlPlaneMachineConfig)
+	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, controlPlaneVmc, controlPlaneMachineConfig)
 	if !needsNewControlPlaneTemplate {
 		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, c.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -1232,7 +1272,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}
 
-	needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(c, clusterSpec.Cluster, vdc, p.datacenterConfig, workerVmc, workerMachineConfig)
+	needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(c, newClusterSpec.Cluster, vdc, p.datacenterConfig, workerVmc, workerMachineConfig)
 	if !needsNewWorkloadTemplate {
 		md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -1243,15 +1283,15 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName)
 	}
 
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineConfig := p.machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-		etcdMachineVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, clusterSpec.Namespace)
+	if newClusterSpec.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineConfig := p.machineConfigs[newClusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+		etcdMachineVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
 		if err != nil {
 			return nil, nil, err
 		}
-		needsNewEtcdTemplate = NeedsNewEtcdTemplate(c, clusterSpec.Cluster, vdc, p.datacenterConfig, etcdMachineVmc, etcdMachineConfig)
+		needsNewEtcdTemplate = NeedsNewEtcdTemplate(c, newClusterSpec.Cluster, vdc, p.datacenterConfig, etcdMachineVmc, etcdMachineConfig)
 		if !needsNewEtcdTemplate {
-			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
 				return nil, nil, err
 			}
@@ -1261,7 +1301,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 			as etcd endpoints. KCP rollout should not start until then. As a temporary solution in the absence of static etcd endpoints, we annotate the etcd cluster as "upgrading",
 			so that KCP checks this annotation and does not proceed if etcd cluster is upgrading. The etcdadm controller removes this annotation once the etcd upgrade is complete.
 			*/
-			err = p.providerKubectlClient.UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", workloadCluster.Name),
+			err = p.providerKubectlClient.UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", clusterName),
 				map[string]string{etcdv1alpha3.UpgradeInProgressAnnotation: "true"},
 				executables.WithCluster(bootstrapCluster),
 				executables.WithNamespace(constants.EksaSystemNamespace))
@@ -1278,7 +1318,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		values["vsphereEtcdSshAuthorizedKey"] = p.etcdSshAuthKey
 		values["etcdTemplateName"] = etcdTemplateName
 	}
-	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
+	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(newClusterSpec, cpOpt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1287,7 +1327,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		values["workloadTemplateName"] = workloadTemplateName
 		values["vsphereWorkerSshAuthorizedKey"] = p.workerSshAuthKey
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workersOpt)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workersOpt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1318,8 +1358,8 @@ func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *vsphereProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, clusterSpec)
+func (p *vsphereProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, clusterSpec)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
 	}
@@ -1572,4 +1612,44 @@ func (p *vsphereProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.
 		NewVersion:    newSpec.VersionsBundle.VSphere.Version,
 		OldVersion:    currentSpec.VersionsBundle.VSphere.Version,
 	}
+}
+
+func (p *vsphereProvider) RunPostUpgrade(ctx context.Context, clusterSpec *cluster.Spec, managementCluster, workloadCluster *types.Cluster) error {
+	// This is unfortunate, but ClusterResourceSet's don't support any type of reapply of the resources they manage
+	// Even if we create a new ClusterResourceSet, if such resources already exist in the cluster, they won't be reapplied
+	// The long term solution is to add this capability to the cluster-api controller,
+	// with a new mode like "ReApplyOnChanges" or "ReApplyOnCreate" vs the current "ReApplyOnce"
+	if err := p.resourceSetManager.ForceUpdate(ctx, resourceSetName(clusterSpec), constants.EksaSystemNamespace, managementCluster, workloadCluster); err != nil {
+		return fmt.Errorf("failed updating the vsphere provider resource set post upgrade: %v", err)
+	}
+
+	// Step 2: Patch DaemonSet vsphere-cloud-controller-manager in namespace kube-system
+	// More unfortunate stuff. This DaemonSet is created by the capv controller. However, even if it's part of the reconciliation step
+	// it's never refreshed, it's only created once
+	// In new versions of the capv provider, this is not managed by the controller directly anymore but just with a ClusterResourceSet
+	// Which means that adding update capabilities to the ClusterResourceSet controller and updating our capv provider version will solve this problem
+	if err := p.providerKubectlClient.SetDaemonSetImage(
+		ctx,
+		workloadCluster.KubeconfigFile,
+		cloudControllerDaemonSetName,
+		cloudControllerDaemonSetNamespace,
+		cloudControllerDaemonSetContainerName,
+		clusterSpec.VersionsBundle.VSphere.Manager.VersionedImage(),
+	); err != nil {
+		return fmt.Errorf("failed updating the VSphere cloud controller manager daemonset post upgrade: %v", err)
+	}
+	return nil
+}
+
+func resourceSetName(clusterSpec *cluster.Spec) string {
+	return fmt.Sprintf("%s-crs-0", clusterSpec.Name)
+}
+
+func (p *vsphereProvider) UpgradeNeeded(_ context.Context, newSpec, currentSpec *cluster.Spec) (bool, error) {
+	newV, oldV := newSpec.VersionsBundle.VSphere, currentSpec.VersionsBundle.VSphere
+
+	return newV.Driver.ImageDigest != oldV.Driver.ImageDigest ||
+		newV.Syncer.ImageDigest != oldV.Syncer.ImageDigest ||
+		newV.Manager.ImageDigest != oldV.Manager.ImageDigest ||
+		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest, nil
 }

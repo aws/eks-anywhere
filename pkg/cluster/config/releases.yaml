@@ -5,20 +5,13 @@ metadata:
 spec:
   latestVersion: ""
   releases:
-    - bundleManifestUrl: "https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml"
+    - bundleManifestUrl: "embed:///config/bundle-release.yaml"
       date: ""
       eksABinary: {}
       gitCommit: ""
       gitTag: ""
       number: 0
       version: v0.0.0-dev
-    - bundleManifestUrl: "https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml"
-      date: ""
-      eksABinary: {}
-      gitCommit: ""
-      gitTag: ""
-      number: 0
-      version: v0.2.0
     - bundleManifestUrl: "https://eks-anywhere-beta.s3.amazonaws.com/0.3.0/bundle-release.yaml"
       date: ""
       eksABinary: {}

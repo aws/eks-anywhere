@@ -35,7 +35,7 @@ func (f *Flux) BootstrapToolkitsComponents(ctx context.Context, cluster *types.C
 		gitProvider,
 		"--repository", c.Repository,
 		"--owner", c.Owner,
-		"--path", c.ClusterConfigPath,
+		"--path", c.ClusterRootPath(),
 	}
 
 	if cluster.KubeconfigFile != "" {

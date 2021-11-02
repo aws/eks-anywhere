@@ -119,7 +119,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		}
 	}
 
-	validationOpts := &upgradevalidations.UpgradeValidationOpts{
+	validationOpts := &validations.Opts{
 		Kubectl:           deps.Kubectl,
 		Spec:              clusterSpec,
 		WorkloadCluster:   workloadCluster,

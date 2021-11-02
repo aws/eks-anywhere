@@ -44,6 +44,9 @@ https://github.com/go-logr/zapr
 ** github.com/golang/groupcache/lru; version v0.0.0-20210331224755-41bb18bfe9da --
 https://github.com/golang/groupcache
 
+** github.com/golang/mock/gomock; version v1.5.0 --
+https://github.com/golang/mock
+
 ** github.com/google/gofuzz; version v1.2.0 --
 https://github.com/google/gofuzz
 

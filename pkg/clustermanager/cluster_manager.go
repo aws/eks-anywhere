@@ -260,13 +260,18 @@ func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, c
 	)
 }
 
-func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
-	cpContent, mdContent, err := provider.GenerateCAPISpecForUpgrade(ctx, managementCluster, workloadCluster, clusterSpec)
+func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, newClusterSpec *cluster.Spec, provider providers.Provider) error {
+	currentSpec, err := c.GetCurrentClusterSpec(ctx, workloadCluster, newClusterSpec.Name)
+	if err != nil {
+		return fmt.Errorf("error getting current cluster spec: %v", err)
+	}
+
+	cpContent, mdContent, err := provider.GenerateCAPISpecForUpgrade(ctx, managementCluster, workloadCluster, currentSpec, newClusterSpec)
 	if err != nil {
 		return fmt.Errorf("error generating capi spec: %v", err)
 	}
 
-	if err = c.writeCAPISpecFile(clusterSpec.ObjectMeta.Name, templater.AppendYamlResources(cpContent, mdContent)); err != nil {
+	if err = c.writeCAPISpecFile(newClusterSpec.ObjectMeta.Name, templater.AppendYamlResources(cpContent, mdContent)); err != nil {
 		return err
 	}
 
@@ -280,9 +285,9 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	var externalEtcdTopology bool
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+	if newClusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		logger.V(3).Info("Waiting for external etcd to be ready after upgrade")
-		if err := c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWaitStr, workloadCluster.Name); err != nil {
+		if err := c.clusterClient.WaitForManagedExternalEtcdReady(ctx, managementCluster, etcdWaitStr, newClusterSpec.Name); err != nil {
 			return fmt.Errorf("error waiting for external etcd for workload cluster to be ready: %v", err)
 		}
 		externalEtcdTopology = true
@@ -290,24 +295,24 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready")
-	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, workloadCluster.Name)
+	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, newClusterSpec.Name)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster control plane to be ready: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for control plane machines to be ready")
-	if err = c.waitForNodesReady(ctx, managementCluster, clusterSpec.Name, []string{clusterv1.MachineControlPlaneLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
+	if err = c.waitForNodesReady(ctx, managementCluster, newClusterSpec.Name, []string{clusterv1.MachineControlPlaneLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
 		return err
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready after upgrade")
-	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, workloadCluster.Name)
+	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, newClusterSpec.Name)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster control plane to be ready: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for workload cluster control plane replicas to be ready after upgrade")
-	err = c.waitForControlPlaneReplicasReady(ctx, managementCluster, clusterSpec)
+	err = c.waitForControlPlaneReplicasReady(ctx, managementCluster, newClusterSpec)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster control plane replicas to be ready: %v", err)
 	}
@@ -322,13 +327,13 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for workload cluster machine deployment replicas to be ready after upgrade")
-	err = c.waitForMachineDeploymentReplicasReady(ctx, managementCluster, clusterSpec)
+	err = c.waitForMachineDeploymentReplicasReady(ctx, managementCluster, newClusterSpec)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster machinedeployment replicas to be ready: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for machine deployment machines to be ready")
-	if err = c.waitForNodesReady(ctx, managementCluster, clusterSpec.Name, []string{clusterv1.MachineDeploymentLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
+	if err = c.waitForNodesReady(ctx, managementCluster, newClusterSpec.Name, []string{clusterv1.MachineDeploymentLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
 		return err
 	}
 
@@ -338,8 +343,11 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return fmt.Errorf("error waiting for workload cluster capi components to be ready: %v", err)
 	}
 
-	err = cluster.ApplyExtraObjects(ctx, c.clusterClient, workloadCluster, clusterSpec)
-	if err != nil {
+	if err = provider.RunPostUpgrade(ctx, newClusterSpec, managementCluster, workloadCluster); err != nil {
+		return fmt.Errorf("failed running provider post upgrade: %v", err)
+	}
+
+	if err = cluster.ApplyExtraObjects(ctx, c.clusterClient, workloadCluster, newClusterSpec); err != nil {
 		return fmt.Errorf("error applying extra resources to workload cluster: %v", err)
 	}
 
@@ -352,7 +360,7 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		return false, err
 	}
 
-	if !reflect.DeepEqual(cc.Spec, newClusterSpec.Spec) {
+	if !cc.Equal(newClusterSpec.Cluster) {
 		logger.V(3).Info("Existing cluster and new cluster spec differ")
 		return true, nil
 	}

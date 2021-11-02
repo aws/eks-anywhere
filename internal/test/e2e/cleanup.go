@@ -41,7 +41,12 @@ func CleanUpAwsTestResources(storageBucket string, maxAge string, tag string) er
 		logger.V(1).Info("No EC2 instances available for termination")
 	}
 	logger.V(1).Info("Clean up s3 bucket objects")
-	err = s3.CleanUpS3Bucket(session, storageBucket, maxAgeFloat)
+	s3MaxAge := "604800" // one week
+	s3MaxAgeFloat, err := strconv.ParseFloat(s3MaxAge, 64)
+	if err != nil {
+		return fmt.Errorf("error parsing S3 max age: %v", err)
+	}
+	err = s3.CleanUpS3Bucket(session, storageBucket, s3MaxAgeFloat)
 	if err != nil {
 		return fmt.Errorf("error clean up s3 bucket objects: %v", err)
 	}

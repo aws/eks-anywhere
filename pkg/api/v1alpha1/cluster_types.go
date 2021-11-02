@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"strconv"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -40,23 +42,56 @@ type ClusterSpec struct {
 	ExternalEtcdConfiguration   *ExternalEtcdConfiguration   `json:"externalEtcdConfiguration,omitempty"`
 	ProxyConfiguration          *ProxyConfiguration          `json:"proxyConfiguration,omitempty"`
 	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
-	// +kubebuilder:validation:Optional
-	Management *bool `json:"management,omitempty"`
+	ManagementCluster           ManagementCluster            `json:"managementCluster,omitempty"`
+}
+
+func (n *Cluster) Equal(o *Cluster) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	if n.Spec.KubernetesVersion != o.Spec.KubernetesVersion {
+		return false
+	}
+	if !n.Spec.ControlPlaneConfiguration.Equal(&o.Spec.ControlPlaneConfiguration) {
+		return false
+	}
+	if !WorkerNodeGroupConfigurationsSliceEqual(n.Spec.WorkerNodeGroupConfigurations, o.Spec.WorkerNodeGroupConfigurations) {
+		return false
+	}
+	if !n.Spec.DatacenterRef.Equal(&o.Spec.DatacenterRef) {
+		return false
+	}
+	if !RefSliceEqual(n.Spec.IdentityProviderRefs, o.Spec.IdentityProviderRefs) {
+		return false
+	}
+	if !n.Spec.GitOpsRef.Equal(o.Spec.GitOpsRef) {
+		return false
+	}
+	if !n.Spec.ClusterNetwork.Equal(&o.Spec.ClusterNetwork) {
+		return false
+	}
+	if !n.Spec.ExternalEtcdConfiguration.Equal(o.Spec.ExternalEtcdConfiguration) {
+		return false
+	}
+	if !n.Spec.ProxyConfiguration.Equal(o.Spec.ProxyConfiguration) {
+		return false
+	}
+	if !n.Spec.RegistryMirrorConfiguration.Equal(o.Spec.RegistryMirrorConfiguration) {
+		return false
+	}
+	if !n.ManagementClusterEqual(o) {
+		return false
+	}
+	return true
 }
 
 type ProxyConfiguration struct {
 	HttpProxy  string   `json:"httpProxy,omitempty"`
 	HttpsProxy string   `json:"httpsProxy,omitempty"`
 	NoProxy    []string `json:"noProxy,omitempty"`
-}
-
-// RegistryMirrorConfiguration defines the settings for image registry mirror
-type RegistryMirrorConfiguration struct {
-	// Endpoint defines the registry mirror endpoint to use for pulling images
-	Endpoint string `json:"endpoint,omitempty"`
-
-	// CACertContent defines the contents registry mirror CA certificate
-	CACertContent string `json:"caCertContent,omitempty"`
 }
 
 func (n *ProxyConfiguration) Equal(o *ProxyConfiguration) bool {
@@ -69,6 +104,25 @@ func (n *ProxyConfiguration) Equal(o *ProxyConfiguration) bool {
 	return n.HttpProxy == o.HttpProxy && n.HttpsProxy == o.HttpsProxy && SliceEqual(n.NoProxy, o.NoProxy)
 }
 
+// RegistryMirrorConfiguration defines the settings for image registry mirror
+type RegistryMirrorConfiguration struct {
+	// Endpoint defines the registry mirror endpoint to use for pulling images
+	Endpoint string `json:"endpoint,omitempty"`
+
+	// CACertContent defines the contents registry mirror CA certificate
+	CACertContent string `json:"caCertContent,omitempty"`
+}
+
+func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.Endpoint == o.Endpoint && n.CACertContent == o.CACertContent
+}
+
 type ControlPlaneConfiguration struct {
 	// Count defines the number of desired control plane nodes. Defaults to 1.
 	Count int `json:"count,omitempty"`
@@ -76,6 +130,16 @@ type ControlPlaneConfiguration struct {
 	Endpoint *Endpoint `json:"endpoint,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the control plane.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
+}
+
+func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.Count == o.Count && n.Endpoint.Equal(o.Endpoint) && n.MachineGroupRef.Equal(o.MachineGroupRef)
 }
 
 type Endpoint struct {
@@ -98,6 +162,34 @@ type WorkerNodeGroupConfiguration struct {
 	Count int `json:"count,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
+}
+
+func generateWorkerNodeGroupKey(c WorkerNodeGroupConfiguration) (key string) {
+	if c.MachineGroupRef != nil {
+		key = c.MachineGroupRef.Kind + c.MachineGroupRef.Name
+	}
+	return strconv.Itoa(c.Count) + key
+}
+
+func WorkerNodeGroupConfigurationsSliceEqual(a, b []WorkerNodeGroupConfiguration) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	m := make(map[string]int, len(a))
+	for _, v := range a {
+		m[generateWorkerNodeGroupKey(v)]++
+	}
+	for _, v := range b {
+		k := generateWorkerNodeGroupKey(v)
+		if _, ok := m[k]; !ok {
+			return false
+		}
+		m[k] -= 1
+		if m[k] == 0 {
+			delete(m, k)
+		}
+	}
+	return len(m) == 0
 }
 
 type ClusterNetwork struct {
@@ -230,6 +322,24 @@ type ExternalEtcdConfiguration struct {
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
 }
 
+func (n *ExternalEtcdConfiguration) Equal(o *ExternalEtcdConfiguration) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.Count == o.Count && n.MachineGroupRef.Equal(o.MachineGroupRef)
+}
+
+type ManagementCluster struct {
+	Name string `json:"name,omitempty"`
+}
+
+func (n *ManagementCluster) Equal(o ManagementCluster) bool {
+	return n.Name == o.Name
+}
+
 // +kubebuilder:object:root=true
 // Cluster is the Schema for the clusters API
 type Cluster struct {
@@ -274,7 +384,7 @@ func (c *Cluster) EtcdAnnotation() string {
 }
 
 func (s *Cluster) IsSelfManaged() bool {
-	return s.Spec.Management == nil || *s.Spec.Management
+	return s.Spec.ManagementCluster.Name == "" || s.Spec.ManagementCluster.Name == s.Name
 }
 
 func (s *Cluster) SetManagedBy(managementClusterName string) {
@@ -283,17 +393,15 @@ func (s *Cluster) SetManagedBy(managementClusterName string) {
 	}
 
 	s.Annotations[managementAnnotation] = managementClusterName
-	f := false
-	s.Spec.Management = &f
+	s.Spec.ManagementCluster.Name = managementClusterName
 }
 
 func (s *Cluster) SetSelfManaged() {
-	t := true
-	s.Spec.Management = &t
+	s.Spec.ManagementCluster.Name = s.Name
 }
 
 func (s *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
-	return s.IsSelfManaged() == s2.IsSelfManaged()
+	return s.IsSelfManaged() && s2.IsSelfManaged() || s.Spec.ManagementCluster.Equal(s2.Spec.ManagementCluster)
 }
 
 func (c *Cluster) MachineConfigRefs() []Ref {
@@ -347,11 +455,11 @@ func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
 }
 
 func (c *Cluster) IsManaged() bool {
-	return c.Annotations[managementAnnotation] != ""
+	return !c.IsSelfManaged()
 }
 
 func (c *Cluster) ManagedBy() string {
-	return c.Annotations[managementAnnotation]
+	return c.Spec.ManagementCluster.Name
 }
 
 // +kubebuilder:object:root=true

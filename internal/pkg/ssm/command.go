@@ -14,6 +14,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
+const ssmLogGroup = "/eks-anywhere/test/e2e"
+
 var initE2EDirCommand = "mkdir -p /home/e2e/bin && cd /home/e2e"
 
 func WaitForSSMReady(session *session.Session, instanceId string) error {
@@ -36,6 +38,18 @@ func WithOutputToS3(bucket, dir string) CommandOpt {
 	}
 }
 
+func WithOutputToCloudwatch() CommandOpt {
+	return func(c *ssm.SendCommandInput) {
+		cwEnabled := true
+		logGroup := ssmLogGroup
+		cw := ssm.CloudWatchOutputConfig{
+			CloudWatchLogGroupName:  &logGroup,
+			CloudWatchOutputEnabled: &cwEnabled,
+		}
+		c.CloudWatchOutputConfig = &cw
+	}
+}
+
 var nonFinalStatuses = map[string]struct{}{
 	ssm.CommandInvocationStatusInProgress: {}, ssm.CommandInvocationStatusDelayed: {}, ssm.CommandInvocationStatusPending: {},
 }
@@ -43,6 +57,7 @@ var nonFinalStatuses = map[string]struct{}{
 // TODO: cleanup this method
 func Run(session *session.Session, instanceId string, command string, opts ...CommandOpt) error {
 	service := ssm.New(session)
+
 	c := &ssm.SendCommandInput{
 		DocumentName: aws.String("AWS-RunShellScript"),
 		InstanceIds:  []*string{aws.String(instanceId)},

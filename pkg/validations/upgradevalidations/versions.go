@@ -10,11 +10,12 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
 const supportedMinorVersionIncrement = 1
 
-func ValidateServerVersionSkew(ctx context.Context, compareVersion v1alpha1.KubernetesVersion, cluster *types.Cluster, kubectl ValidationsKubectlClient) error {
+func ValidateServerVersionSkew(ctx context.Context, compareVersion v1alpha1.KubernetesVersion, cluster *types.Cluster, kubectl validations.KubectlClient) error {
 	versions, err := kubectl.Version(ctx, cluster)
 	if err != nil {
 		return fmt.Errorf("error while fetching cluster version: %v", err)

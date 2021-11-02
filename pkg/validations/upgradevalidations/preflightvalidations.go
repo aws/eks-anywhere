@@ -3,7 +3,6 @@ package upgradevalidations
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"sigs.k8s.io/cluster-api/api/v1alpha3"
 
@@ -68,15 +67,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 	}
 
 	if len(errs) > 0 {
-		return &ValidationError{Errs: errs}
+		return &validations.ValidationError{Errs: errs}
 	}
 	return nil
-}
-
-type ValidationError struct {
-	Errs []string
-}
-
-func (v *ValidationError) Error() string {
-	return fmt.Sprintf("validation failed with %d errors: %s", len(v.Errs), strings.Join(v.Errs[:], ","))
 }

@@ -59,7 +59,7 @@ func TestFluxAddonClientInstallGitOpsOnManagementClusterWithPrexistingRepo(t *te
 			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
 			expectedKustomizationFileName: defaultKustomizationManifestFileName,
 			expectedConfigFileContents:    "./testdata/cluster-config-default-path-management.yaml",
-			expectedFluxSystemDirPath:     "clusters/management-cluster/management-cluster/flux-system",
+			expectedFluxSystemDirPath:     "clusters/management-cluster/flux-system",
 			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
 			expectedFluxSyncFileName:      defaultFluxSyncFileName,
 		},
@@ -73,7 +73,7 @@ func TestFluxAddonClientInstallGitOpsOnManagementClusterWithPrexistingRepo(t *te
 			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
 			expectedKustomizationFileName: defaultKustomizationManifestFileName,
 			expectedConfigFileContents:    "./testdata/cluster-config-user-provided-path.yaml",
-			expectedFluxSystemDirPath:     "user/provided/path/flux-system",
+			expectedFluxSystemDirPath:     "user/provided/flux-system",
 			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
 			expectedFluxSyncFileName:      defaultFluxSyncFileName,
 		},
@@ -151,12 +151,12 @@ func TestFluxAddonClientInstallGitOpsOnWorkloadClusterWithPrexistingRepo(t *test
 	expectedKustomizationPath := path.Join(writePath, "clusters/management-cluster/workload-cluster/eksa-system", defaultKustomizationManifestFileName)
 	test.AssertFilesEquals(t, expectedKustomizationPath, "./testdata/kustomization.yaml")
 
-	expectedFluxPatchesPath := path.Join(writePath, "clusters/management-cluster/workload-cluster/flux-system", defaultFluxPatchesFileName)
+	expectedFluxPatchesPath := path.Join(writePath, "clusters/management-cluster/flux-system", defaultFluxPatchesFileName)
 	if _, err := os.Stat(expectedFluxPatchesPath); errors.Is(err, os.ErrExist) {
 		t.Errorf("File exists at %s, should not exist", expectedFluxPatchesPath)
 	}
 
-	expectedFluxSyncPath := path.Join(writePath, "clusters/management-cluster/workload-cluster/flux-system", defaultFluxSyncFileName)
+	expectedFluxSyncPath := path.Join(writePath, "clusters/management-cluster/flux-system", defaultFluxSyncFileName)
 	if _, err := os.Stat(expectedFluxSyncPath); errors.Is(err, os.ErrExist) {
 		t.Errorf("File exists at %s, should not exist", expectedFluxSyncPath)
 	}
@@ -186,7 +186,7 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
 			expectedKustomizationFileName: defaultKustomizationManifestFileName,
 			expectedConfigFileContents:    "./testdata/cluster-config-default-path-management.yaml",
-			expectedFluxSystemDirPath:     "clusters/management-cluster/management-cluster/flux-system",
+			expectedFluxSystemDirPath:     "clusters/management-cluster/flux-system",
 			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
 			expectedFluxSyncFileName:      defaultFluxSyncFileName,
 		},
@@ -199,7 +199,7 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
 			expectedKustomizationFileName: defaultKustomizationManifestFileName,
 			expectedConfigFileContents:    "./testdata/cluster-config-user-provided-path.yaml",
-			expectedFluxSystemDirPath:     "user/provided/path/flux-system",
+			expectedFluxSystemDirPath:     "user/provided/flux-system",
 			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
 			expectedFluxSyncFileName:      defaultFluxSyncFileName,
 		},
@@ -282,7 +282,7 @@ func TestFluxAddonClientInstallGitOpsToolkitsBareRepo(t *testing.T) {
 			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
 			expectedKustomizationFileName: defaultKustomizationManifestFileName,
 			expectedConfigFileContents:    "./testdata/cluster-config-default-path-management.yaml",
-			expectedFluxSystemDirPath:     "clusters/management-cluster/management-cluster/flux-system",
+			expectedFluxSystemDirPath:     "clusters/management-cluster/flux-system",
 			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
 			expectedFluxSyncFileName:      defaultFluxSyncFileName,
 		},

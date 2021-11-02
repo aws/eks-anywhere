@@ -14,11 +14,12 @@ import (
 )
 
 type ProviderFactory struct {
-	DockerClient         docker.ProviderClient
-	DockerKubectlClient  docker.ProviderKubectlClient
-	VSphereGovcClient    vsphere.ProviderGovcClient
-	VSphereKubectlClient vsphere.ProviderKubectlClient
-	Writer               filewriter.FileWriter
+	DockerClient              docker.ProviderClient
+	DockerKubectlClient       docker.ProviderKubectlClient
+	VSphereGovcClient         vsphere.ProviderGovcClient
+	VSphereKubectlClient      vsphere.ProviderKubectlClient
+	Writer                    filewriter.FileWriter
+	ClusterResourceSetManager vsphere.ClusterResourceSetManager
 }
 
 func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool) (providers.Provider, error) {
@@ -32,7 +33,7 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 		if err != nil {
 			return nil, fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFileName, err)
 		}
-		return vsphere.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.VSphereGovcClient, p.VSphereKubectlClient, p.Writer, time.Now, skipIpCheck), nil
+		return vsphere.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.VSphereGovcClient, p.VSphereKubectlClient, p.Writer, time.Now, skipIpCheck, p.ClusterResourceSetManager), nil
 	case v1alpha1.DockerDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetDockerDatacenterConfig(clusterConfigFileName)
 		if err != nil {

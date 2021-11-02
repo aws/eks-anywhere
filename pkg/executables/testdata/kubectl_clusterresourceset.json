@@ -1,0 +1,22 @@
+{
+    "apiVersion": "addons.cluster.x-k8s.io/v1alpha3",
+    "kind": "ClusterResourceSet", 
+    "spec": {
+        "clusterSelector": {
+            "matchLabels": {
+                "cluster.x-k8s.io/cluster-name": "cluster-1"
+            }
+        },
+        "resources": [
+            {
+                "kind": "Secret",
+                "name": "vsphere-csi-controller"
+            },
+            {
+                "kind": "ConfigMap",
+                "name": "vsphere-csi-controller-role"
+            }  
+        ],
+        "strategy": "ApplyOnce"
+    } 
+}

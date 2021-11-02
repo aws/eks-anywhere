@@ -78,7 +78,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 	if !old.ManagementClusterEqual(new) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "Management"), new.Spec.Management, "field is immutable"))
+			field.Invalid(field.NewPath("spec", "managementCluster"), new.Spec.ManagementCluster, "field is immutable"))
 	}
 
 	if !new.Spec.ControlPlaneConfiguration.Endpoint.Equal(old.Spec.ControlPlaneConfiguration.Endpoint) {

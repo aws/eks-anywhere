@@ -17,23 +17,26 @@ import (
 )
 
 type Upgrade struct {
-	bootstrapper   interfaces.Bootstrapper
-	provider       providers.Provider
-	clusterManager interfaces.ClusterManager
-	addonManager   interfaces.AddonManager
-	writer         filewriter.FileWriter
-	capiUpgrader   interfaces.CAPIUpgrader
+	bootstrapper      interfaces.Bootstrapper
+	provider          providers.Provider
+	clusterManager    interfaces.ClusterManager
+	addonManager      interfaces.AddonManager
+	writer            filewriter.FileWriter
+	capiUpgrader      interfaces.CAPIUpgrader
+	upgradeChangeDiff *types.ChangeDiff
 }
 
 func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provider, capiUpgrader interfaces.CAPIUpgrader,
 	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter) *Upgrade {
+	upgradeChangeDiff := types.NewChangeDiff()
 	return &Upgrade{
-		bootstrapper:   bootstrapper,
-		provider:       provider,
-		clusterManager: clusterManager,
-		addonManager:   addonManager,
-		writer:         writer,
-		capiUpgrader:   capiUpgrader,
+		bootstrapper:      bootstrapper,
+		provider:          provider,
+		clusterManager:    clusterManager,
+		addonManager:      addonManager,
+		writer:            writer,
+		capiUpgrader:      capiUpgrader,
+		upgradeChangeDiff: upgradeChangeDiff,
 	}
 }
 
@@ -47,16 +50,17 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, workloadCl
 	}
 
 	commandContext := &task.CommandContext{
-		Bootstrapper:    c.bootstrapper,
-		Provider:        c.provider,
-		ClusterManager:  c.clusterManager,
-		AddonManager:    c.addonManager,
-		WorkloadCluster: workloadCluster,
-		ClusterSpec:     clusterSpec,
-		Validations:     validator,
-		Rollback:        true,
-		Writer:          c.writer,
-		CAPIUpgrader:    c.capiUpgrader,
+		Bootstrapper:      c.bootstrapper,
+		Provider:          c.provider,
+		ClusterManager:    c.clusterManager,
+		AddonManager:      c.addonManager,
+		WorkloadCluster:   workloadCluster,
+		ClusterSpec:       clusterSpec,
+		Validations:       validator,
+		Rollback:          true,
+		Writer:            c.writer,
+		CAPIUpgrader:      c.capiUpgrader,
+		UpgradeChangeDiff: c.upgradeChangeDiff,
 	}
 
 	if clusterSpec.ManagementCluster != nil {
@@ -166,36 +170,28 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 		commandContext.SetError(err)
 		return nil
 	}
-
-	upgradeChangeDiff := types.NewChangeDiff()
+	commandContext.CurrentClusterSpec = currentSpec
 
 	changeDiff, err := commandContext.CAPIUpgrader.Upgrade(ctx, target, commandContext.Provider, currentSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
 	}
-	upgradeChangeDiff.Append(changeDiff)
+	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
 	changeDiff, err = commandContext.AddonManager.Upgrade(ctx, target, currentSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
 	}
-	upgradeChangeDiff.Append(changeDiff)
+	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
 	changeDiff, err = commandContext.ClusterManager.Upgrade(ctx, target, currentSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
 	}
-	upgradeChangeDiff.Append(changeDiff)
-
-	if upgradeChangeDiff.Changed() {
-		if err = commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, target); err != nil {
-			commandContext.SetError(err)
-			return nil
-		}
-	}
+	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
 	return &upgradeNeeded{}
 }
@@ -205,6 +201,14 @@ func (s *upgradeCoreComponents) Name() string {
 }
 
 func (s *upgradeNeeded) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if upgradeNeeded, err := commandContext.Provider.UpgradeNeeded(ctx, commandContext.ClusterSpec, commandContext.CurrentClusterSpec); err != nil {
+		commandContext.SetError(err)
+		return nil
+	} else if upgradeNeeded {
+		logger.V(3).Info("Provider needs a cluster upgrade")
+		return &pauseEksaAndFluxReconcile{}
+	}
+
 	target := getManagemtCluster(commandContext)
 
 	datacenterConfig := commandContext.Provider.DatacenterConfig()
@@ -315,6 +319,13 @@ func (s *upgradeWorkloadClusterTask) Run(ctx context.Context, commandContext *ta
 			return nil
 		}
 		return &moveManagementToWorkloadTaskAndExit{}
+	}
+
+	if commandContext.UpgradeChangeDiff.Changed() {
+		if err = commandContext.ClusterManager.ApplyBundles(ctx, commandContext.ClusterSpec, target); err != nil {
+			commandContext.SetError(err)
+			return nil
+		}
 	}
 
 	return &moveManagementToWorkloadTask{}

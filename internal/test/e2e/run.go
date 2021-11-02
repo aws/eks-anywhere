@@ -83,8 +83,8 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 }
 
 type instanceRunConf struct {
-	amiId, instanceProfileName, storageBucket, jobId, subnetId, regex, instanceId string
-	bundlesOverride                                                               bool
+	amiId, instanceProfileName, storageBucket, jobId, parentJobId, subnetId, regex, instanceId string
+	bundlesOverride                                                                            bool
 }
 
 func RunTests(conf instanceRunConf) (testInstanceID string, err error) {
@@ -115,10 +115,13 @@ func (e *E2ESession) runTests(regex string) error {
 
 	command = e.commandWithEnvVars(command)
 
+	opt := ssm.WithOutputToCloudwatch()
+
 	err := ssm.Run(
 		e.session,
 		e.instanceId,
 		command,
+		opt,
 	)
 	if err != nil {
 		e.uploadGeneratedFilesFromInstance(regex)
@@ -164,6 +167,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 				instanceProfileName: conf.InstanceProfileName,
 				storageBucket:       conf.StorageBucket,
 				jobId:               fmt.Sprintf("%s-%d", conf.JobId, len(runConfs)),
+				parentJobId:         conf.JobId,
 				subnetId:            conf.SubnetId,
 				regex:               strings.Join(testsInCurrentInstance, "|"),
 				bundlesOverride:     conf.BundlesOverride,

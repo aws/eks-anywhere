@@ -11,7 +11,6 @@ require (
 	github.com/go-logr/zapr v0.4.0
 	github.com/golang/mock v1.5.0
 	github.com/google/go-github/v35 v35.2.0
-	github.com/kisielk/godepgraph v0.0.0-20190626013829-57a7e4a651a9 // indirect
 	github.com/mrajashree/etcdadm-controller v0.1.1-0.20210807012710-3e2035176ab8
 	github.com/onsi/gomega v1.14.0
 	github.com/spf13/cobra v1.1.3
