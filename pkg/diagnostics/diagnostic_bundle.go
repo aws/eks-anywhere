@@ -134,7 +134,7 @@ func newDiagnosticBundleDefault(af AnalyzerFactory, cf CollectorFactory) *EksaDi
 		analyzerFactory:  af,
 		collectorFactory: cf,
 	}
-	return b.WithDefaultAnalyzers().WithDefaultCollectors()
+	return b.WithDefaultAnalyzers().WithDefaultCollectors().WithManagementCluster(true)
 }
 
 func newDiagnosticBundleCustom(af AnalyzerFactory, cf CollectorFactory, client BundleClient, kubectl *executables.Kubectl, bundlePath string, kubeconfig string) *EksaDiagnosticBundle {

@@ -20,8 +20,7 @@ func NewAnalyzerFactory() *analyzerFactory {
 
 func (a *analyzerFactory) DefaultAnalyzers() []*Analyze {
 	var analyzers []*Analyze
-	analyzers = append(analyzers, a.defaultDeploymentAnalyzers()...)
-	return append(analyzers, a.ManagementClusterAnalyzers()...)
+	return append(analyzers, a.defaultDeploymentAnalyzers()...)
 }
 
 func (a *analyzerFactory) defaultDeploymentAnalyzers() []*Analyze {
