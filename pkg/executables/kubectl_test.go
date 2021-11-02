@@ -1342,3 +1342,17 @@ spec:
 	tt.Expect(err).To(BeNil())
 	tt.Expect(gotConfigmap).To(Equal(wantConfigmap))
 }
+
+func TestKubectlSetDaemonSetImage(t *testing.T) {
+	tt := newKubectlTest(t)
+	daemonSetName := "ds-1"
+	container := "cont1"
+	image := "public.ecr.aws/image2"
+
+	tt.e.EXPECT().Execute(
+		tt.ctx,
+		"set", "image", "daemonset/ds-1", "cont1=public.ecr.aws/image2", "--namespace", tt.namespace, "--kubeconfig", tt.cluster.KubeconfigFile,
+	).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.SetDaemonSetImage(tt.ctx, tt.cluster.KubeconfigFile, daemonSetName, tt.namespace, container, image)).To(Succeed())
+}

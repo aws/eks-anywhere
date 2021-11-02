@@ -979,3 +979,18 @@ func (k *Kubectl) GetConfigMap(ctx context.Context, kubeconfigFile, name, namesp
 
 	return response, nil
 }
+
+func (k *Kubectl) SetDaemonSetImage(ctx context.Context, kubeconfigFile, name, namespace, container, image string) error {
+	return k.setImage(ctx, "daemonset", name, container, image, WithNamespace(namespace), WithKubeconfig(kubeconfigFile))
+}
+
+func (k *Kubectl) setImage(ctx context.Context, kind, name, container, image string, opts ...KubectlOpt) error {
+	params := []string{"set", "image", fmt.Sprintf("%s/%s", kind, name), fmt.Sprintf("%s=%s", container, image)}
+	applyOpts(&params, opts...)
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error setting image for %s: %v", kind, err)
+	}
+
+	return nil
+}

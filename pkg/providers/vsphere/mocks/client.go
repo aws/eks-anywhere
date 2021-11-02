@@ -507,6 +507,20 @@ func (mr *MockProviderKubectlClientMockRecorder) SearchVsphereMachineConfig(arg0
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchVsphereMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).SearchVsphereMachineConfig), arg0, arg1, arg2, arg3)
 }
 
+// SetDaemonSetImage mocks base method.
+func (m *MockProviderKubectlClient) SetDaemonSetImage(arg0 context.Context, arg1, arg2, arg3, arg4, arg5 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetDaemonSetImage", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetDaemonSetImage indicates an expected call of SetDaemonSetImage.
+func (mr *MockProviderKubectlClientMockRecorder) SetDaemonSetImage(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetDaemonSetImage", reflect.TypeOf((*MockProviderKubectlClient)(nil).SetDaemonSetImage), arg0, arg1, arg2, arg3, arg4, arg5)
+}
+
 // UpdateAnnotation mocks base method.
 func (m *MockProviderKubectlClient) UpdateAnnotation(arg0 context.Context, arg1, arg2 string, arg3 map[string]string, arg4 ...executables.KubectlOpt) error {
 	m.ctrl.T.Helper()
