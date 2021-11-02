@@ -887,8 +887,9 @@ func (k *Kubectl) GetCurrentClusterContext(ctx context.Context, cluster *types.C
 	return stdOut.String(), nil
 }
 
-func (k *Kubectl) GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, opts ...KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error) {
-	params := []string{"get", etcdadmClustersResourceType, fmt.Sprintf("%s-etcd", cluster.Name), "-o", "json"}
+func (k *Kubectl) GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error) {
+	logger.V(6).Info("Getting EtcdadmCluster CRD", "cluster", clusterName)
+	params := []string{"get", etcdadmClustersResourceType, fmt.Sprintf("%s-etcd", clusterName), "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {

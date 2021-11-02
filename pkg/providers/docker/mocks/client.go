@@ -94,10 +94,10 @@ func (mr *MockProviderKubectlClientMockRecorder) GetEksaCluster(arg0, arg1, arg2
 }
 
 // GetEtcdadmCluster mocks base method.
-func (m *MockProviderKubectlClient) GetEtcdadmCluster(arg0 context.Context, arg1 *types.Cluster, arg2 ...executables.KubectlOpt) (*v1alpha3.EtcdadmCluster, error) {
+func (m *MockProviderKubectlClient) GetEtcdadmCluster(arg0 context.Context, arg1 *types.Cluster, arg2 string, arg3 ...executables.KubectlOpt) (*v1alpha3.EtcdadmCluster, error) {
 	m.ctrl.T.Helper()
-	varargs := []interface{}{arg0, arg1}
-	for _, a := range arg2 {
+	varargs := []interface{}{arg0, arg1, arg2}
+	for _, a := range arg3 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "GetEtcdadmCluster", varargs...)
@@ -107,9 +107,9 @@ func (m *MockProviderKubectlClient) GetEtcdadmCluster(arg0 context.Context, arg1
 }
 
 // GetEtcdadmCluster indicates an expected call of GetEtcdadmCluster.
-func (mr *MockProviderKubectlClientMockRecorder) GetEtcdadmCluster(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+func (mr *MockProviderKubectlClientMockRecorder) GetEtcdadmCluster(arg0, arg1, arg2 interface{}, arg3 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	varargs := append([]interface{}{arg0, arg1, arg2}, arg3...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEtcdadmCluster", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetEtcdadmCluster), varargs...)
 }
 
