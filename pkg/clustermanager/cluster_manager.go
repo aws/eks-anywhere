@@ -1006,7 +1006,7 @@ func (c *ClusterManager) DeleteOIDCConfig(ctx context.Context, managementCluster
 }
 
 func (c *ClusterManager) DeleteAWSIamConfig(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
-	return c.clusterClient.DeleteOIDCConfig(ctx, managementCluster, name, namespace)
+	return c.clusterClient.DeleteAWSIamConfig(ctx, managementCluster, name, namespace)
 }
 
 func (c *ClusterManager) DeleteEKSACluster(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
