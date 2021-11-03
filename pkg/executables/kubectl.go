@@ -199,7 +199,7 @@ func (k *Kubectl) DeleteEksaVSphereMachineConfig(ctx context.Context, vsphereMac
 	params := []string{"delete", eksaVSphereMachineResourceType, vsphereMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.executable.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error deleting vsphermachineconfig cluster %s apply: %v", vsphereMachineConfigName, err)
+		return fmt.Errorf("error deleting vspheremachineconfig cluster %s apply: %v", vsphereMachineConfigName, err)
 	}
 	return nil
 }
