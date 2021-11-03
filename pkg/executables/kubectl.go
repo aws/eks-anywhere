@@ -190,7 +190,7 @@ func (k *Kubectl) DeleteEksaVSphereDatacenterConfig(ctx context.Context, vsphere
 	params := []string{"delete", eksaVSphereDatacenterResourceType, vsphereDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	_, err := k.executable.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error deleting vspherdatacenterconfig cluster %s apply: %v", vsphereDatacenterConfigName, err)
+		return fmt.Errorf("error deleting vspheredatacenterconfig cluster %s apply: %v", vsphereDatacenterConfigName, err)
 	}
 	return nil
 }
