@@ -272,7 +272,6 @@ func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, c
 				}
 			}
 			if clusterSpec.OIDCConfig != nil {
-				fmt.Printf("deleting oicd\n")
 				if err := c.DeleteOIDCConfig(ctx, managementCluster, clusterSpec.OIDCConfig.Name, clusterSpec.OIDCConfig.Namespace); err != nil {
 					return err
 				}
