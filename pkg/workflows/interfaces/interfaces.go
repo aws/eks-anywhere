@@ -53,6 +53,7 @@ type Validator interface {
 	PreflightValidations(ctx context.Context) error
 }
 
-type CAPIUpgrader interface {
+type CAPIManager interface {
 	Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
+	EnsureEtcdProvidersInstallation(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, currSpec *cluster.Spec) error
 }

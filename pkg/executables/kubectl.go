@@ -1048,3 +1048,21 @@ func (k *Kubectl) setImage(ctx context.Context, kind, name, container, image str
 
 	return nil
 }
+
+func (k *Kubectl) CheckProviderExists(ctx context.Context, kubeconfigFile, name, namespace string) (bool, error) {
+	params := []string{"get", "namespace", fmt.Sprintf("--field-selector=metadata.name=%s", namespace), "--kubeconfig", kubeconfigFile}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return false, fmt.Errorf("error checking whether provider namespace exists: %v", err)
+	}
+	if stdOut.Len() == 0 {
+		return false, nil
+	}
+
+	params = []string{"get", "provider", "--namespace", namespace, fmt.Sprintf("--field-selector=metadata.name=%s", name), "--kubeconfig", kubeconfigFile}
+	stdOut, err = k.executable.Execute(ctx, params...)
+	if err != nil {
+		return false, fmt.Errorf("error checking whether provider exists: %v", err)
+	}
+	return stdOut.Len() != 0, nil
+}

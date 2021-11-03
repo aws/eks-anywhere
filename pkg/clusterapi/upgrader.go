@@ -11,16 +11,15 @@ import (
 )
 
 type Upgrader struct {
-	capiClient CAPIClient
+	*clients
 }
 
-type CAPIClient interface {
-	Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, newSpec *cluster.Spec, changeDiff *CAPIChangeDiff) error
-}
-
-func NewUpgrader(client CAPIClient) *Upgrader {
+func NewUpgrader(capiClient CAPIClient, kubectlClient KubectlClient) *Upgrader {
 	return &Upgrader{
-		capiClient: client,
+		clients: &clients{
+			capiClient:    capiClient,
+			kubectlClient: kubectlClient,
+		},
 	}
 }
 
@@ -109,28 +108,26 @@ func (u *Upgrader) capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider p
 		componentChanged = true
 	}
 
-	if newSpec.Spec.ExternalEtcdConfiguration != nil {
-		if currentSpec.VersionsBundle.ExternalEtcdBootstrap.Version != newSpec.VersionsBundle.ExternalEtcdBootstrap.Version {
-			componentChangeDiff := types.ComponentChangeDiff{
-				ComponentName: "etcdadm-bootstrap",
-				NewVersion:    newSpec.VersionsBundle.ExternalEtcdBootstrap.Version,
-				OldVersion:    currentSpec.VersionsBundle.ExternalEtcdBootstrap.Version,
-			}
-			changeDiff.BootstrapProviders = append(changeDiff.BootstrapProviders, componentChangeDiff)
-			logger.V(1).Info("CAPI Etcdadm Bootstrap Provider change diff", "oldVersion", componentChangeDiff.OldVersion, "newVersion", componentChangeDiff.NewVersion)
-			componentChanged = true
+	if currentSpec.VersionsBundle.ExternalEtcdBootstrap.Version != newSpec.VersionsBundle.ExternalEtcdBootstrap.Version {
+		componentChangeDiff := types.ComponentChangeDiff{
+			ComponentName: "etcdadm-bootstrap",
+			NewVersion:    newSpec.VersionsBundle.ExternalEtcdBootstrap.Version,
+			OldVersion:    currentSpec.VersionsBundle.ExternalEtcdBootstrap.Version,
 		}
+		changeDiff.BootstrapProviders = append(changeDiff.BootstrapProviders, componentChangeDiff)
+		logger.V(1).Info("CAPI Etcdadm Bootstrap Provider change diff", "oldVersion", componentChangeDiff.OldVersion, "newVersion", componentChangeDiff.NewVersion)
+		componentChanged = true
+	}
 
-		if currentSpec.VersionsBundle.ExternalEtcdController.Version != newSpec.VersionsBundle.ExternalEtcdController.Version {
-			componentChangeDiff := types.ComponentChangeDiff{
-				ComponentName: "etcdadm-controller",
-				NewVersion:    newSpec.VersionsBundle.ExternalEtcdController.Version,
-				OldVersion:    currentSpec.VersionsBundle.ExternalEtcdController.Version,
-			}
-			changeDiff.BootstrapProviders = append(changeDiff.BootstrapProviders, componentChangeDiff)
-			logger.V(1).Info("CAPI Etcdadm Controller Provider change diff", "oldVersion", componentChangeDiff.OldVersion, "newVersion", componentChangeDiff.NewVersion)
-			componentChanged = true
+	if currentSpec.VersionsBundle.ExternalEtcdController.Version != newSpec.VersionsBundle.ExternalEtcdController.Version {
+		componentChangeDiff := types.ComponentChangeDiff{
+			ComponentName: "etcdadm-controller",
+			NewVersion:    newSpec.VersionsBundle.ExternalEtcdController.Version,
+			OldVersion:    currentSpec.VersionsBundle.ExternalEtcdController.Version,
 		}
+		changeDiff.BootstrapProviders = append(changeDiff.BootstrapProviders, componentChangeDiff)
+		logger.V(1).Info("CAPI Etcdadm Controller Provider change diff", "oldVersion", componentChangeDiff.OldVersion, "newVersion", componentChangeDiff.NewVersion)
+		componentChanged = true
 	}
 
 	if providerChangeDiff := provider.ChangeDiff(currentSpec, newSpec); providerChangeDiff != nil {
