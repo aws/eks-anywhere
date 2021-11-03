@@ -210,23 +210,18 @@ func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
 	return (oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion) || (oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number)
 }
 
-func NeedsNewWorkloadTemplate(oldC, newC *v1alpha1.Cluster) bool {
-	return oldC.Spec.KubernetesVersion != newC.Spec.KubernetesVersion
+func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec) bool {
+	return (oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion) || (oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number)
 }
 
-func NeedsNewEtcdTemplate(oldC, newC *v1alpha1.Cluster) bool {
-	return oldC.Spec.KubernetesVersion != newC.Spec.KubernetesVersion
+func NeedsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec) bool {
+	return (oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion) || (oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number)
 }
 
 func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := newClusterSpec.ObjectMeta.Name
 	var controlPlaneTemplateName, workloadTemplateName, etcdTemplateName string
 	var needsNewEtcdTemplate bool
-
-	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, newClusterSpec.Name)
-	if err != nil {
-		return nil, nil, err
-	}
 
 	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec)
 	if !needsNewControlPlaneTemplate {
@@ -239,7 +234,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}
 
-	needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(c, newClusterSpec.Cluster)
+	needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec)
 	if !needsNewWorkloadTemplate {
 		md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, newClusterSpec.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -252,7 +247,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 
 	if newClusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		// TODO: replace controlPlaneMachineConfig with etcdMachineConfig once available in final GA spec
-		needsNewEtcdTemplate = NeedsNewEtcdTemplate(c, newClusterSpec.Cluster)
+		needsNewEtcdTemplate = NeedsNewEtcdTemplate(currentSpec, newClusterSpec)
 		if !needsNewEtcdTemplate {
 			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, newClusterSpec.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
