@@ -17,6 +17,12 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		Name:           u.Opts.WorkloadCluster.Name,
 		KubeconfigFile: u.Opts.ManagementCluster.KubeconfigFile,
 	}
+
+	prevSpec, err := k.GetEksaCluster(ctx, targetCluster, targetCluster.Name)
+	if err != nil {
+		return err
+	}
+
 	var upgradeValidations []validations.ValidationResult
 	upgradeValidations = append(
 		upgradeValidations,
@@ -46,6 +52,11 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 			Err:         ValidateClusterObjectExists(ctx, k, u.Opts.ManagementCluster),
 		},
 		validations.ValidationResult{
+			Name:        "eksa machineconfig name",
+			Remediation: "ensure that the eksa machine configs name does not exist in cluster",
+			Err:         ValidateMachineConfigsNameUnique(ctx, k, u.Opts.Provider, targetCluster, u.Opts.Spec, prevSpec),
+		},
+		validations.ValidationResult{
 			Name:        "upgrade cluster kubernetes version increment",
 			Remediation: "ensure that the cluster kubernetes version is incremented by one minor version exactly (e.g. 1.18 -> 1.19)",
 			Err:         ValidateServerVersionSkew(ctx, u.Opts.Spec.Spec.KubernetesVersion, u.Opts.WorkloadCluster, k),
@@ -53,7 +64,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		validations.ValidationResult{
 			Name:        "validate immutable fields",
 			Remediation: "",
-			Err:         ValidateImmutableFields(ctx, k, targetCluster, u.Opts.Spec, u.Opts.Provider),
+			Err:         ValidateImmutableFields(ctx, k, targetCluster, u.Opts.Spec, u.Opts.Provider, prevSpec),
 		},
 	)
 

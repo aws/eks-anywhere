@@ -11,12 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
 
-func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, cluster *types.Cluster, spec *cluster.Spec, provider providers.Provider) error {
-	prevSpec, err := k.GetEksaCluster(ctx, cluster, spec.Name)
-	if err != nil {
-		return err
-	}
-
+func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, cluster *types.Cluster, spec *cluster.Spec, provider providers.Provider, prevSpec *v1alpha1.Cluster) error {
 	if prevSpec.Name != spec.Name {
 		return fmt.Errorf("cluster name is immutable. previous name %s, new name %s", prevSpec.Name, spec.Name)
 	}

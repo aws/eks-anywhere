@@ -228,6 +228,21 @@ func (mr *MockProviderMockRecorder) GetInfrastructureBundle(arg0 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInfrastructureBundle", reflect.TypeOf((*MockProvider)(nil).GetInfrastructureBundle), arg0)
 }
 
+// MachineConfigExists mocks base method.
+func (m *MockProvider) MachineConfigExists(arg0 context.Context, arg1, arg2, arg3 string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MachineConfigExists", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MachineConfigExists indicates an expected call of MachineConfigExists.
+func (mr *MockProviderMockRecorder) MachineConfigExists(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MachineConfigExists", reflect.TypeOf((*MockProvider)(nil).MachineConfigExists), arg0, arg1, arg2, arg3)
+}
+
 // MachineConfigs mocks base method.
 func (m *MockProvider) MachineConfigs() []providers.MachineConfig {
 	m.ctrl.T.Helper()

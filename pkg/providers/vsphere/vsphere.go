@@ -858,6 +858,14 @@ func (p *vsphereProvider) defaultTemplateForClusterSpec(clusterSpec *cluster.Spe
 	return ova.URI
 }
 
+func (p *vsphereProvider) MachineConfigExists(ctx context.Context, name, namespace, kubeconfig string) (bool, error) {
+	em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, name, kubeconfig, namespace)
+	if err != nil {
+		return false, err
+	}
+	return len(em) > 0, nil
+}
+
 func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	err := p.validateEnv(ctx)
 	if err != nil {
@@ -874,11 +882,11 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 
 	if clusterSpec.IsManaged() {
 		for _, mc := range p.MachineConfigs() {
-			em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, mc.GetName(), clusterSpec.ManagementCluster.KubeconfigFile, mc.GetNamespace())
+			exists, err := p.MachineConfigExists(ctx, mc.GetName(), mc.GetNamespace(), clusterSpec.ManagementCluster.KubeconfigFile)
 			if err != nil {
 				return err
 			}
-			if len(em) > 0 {
+			if exists {
 				return fmt.Errorf("VSphereMachineConfig %s already exists", mc.GetName())
 			}
 		}
