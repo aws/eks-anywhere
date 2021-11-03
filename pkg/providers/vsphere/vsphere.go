@@ -928,37 +928,37 @@ func (p *vsphereProvider) validateMachineConfigsNameUniqueness(ctx context.Conte
 		return err
 	}
 
-	cpmc := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	if prevSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name != cpmc {
-		em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, cpmc, cluster.KubeconfigFile, clusterSpec.GetNamespace())
+	cpMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	if prevSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name != cpMachineConfigName {
+		em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, cpMachineConfigName, cluster.KubeconfigFile, clusterSpec.GetNamespace())
 		if err != nil {
 			return err
 		}
 		if len(em) > 0 {
-			return fmt.Errorf("control plane VSphereMachineConfig %s already exists", cpmc)
+			return fmt.Errorf("control plane VSphereMachineConfig %s already exists", cpMachineConfigName)
 		}
 	}
 
-	wnmc := clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	if prevSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name != wnmc {
-		em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, wnmc, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.GetNamespace())
+	workerMachineConfigName := clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	if prevSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name != workerMachineConfigName {
+		em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, workerMachineConfigName, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.GetNamespace())
 		if err != nil {
 			return err
 		}
 		if len(em) > 0 {
-			return fmt.Errorf("worker nodes VSphereMachineConfig %s already exists", wnmc)
+			return fmt.Errorf("worker nodes VSphereMachineConfig %s already exists", workerMachineConfigName)
 		}
 	}
 
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil && prevSpec.Spec.ExternalEtcdConfiguration != nil {
-		etcdmc := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-		if prevSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name != etcdmc {
-			em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, etcdmc, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.GetNamespace())
+		etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		if prevSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name != etcdMachineConfigName {
+			em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, etcdMachineConfigName, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.GetNamespace())
 			if err != nil {
 				return err
 			}
 			if len(em) > 0 {
-				return fmt.Errorf("external etcd machineconfig %s already exists", etcdmc)
+				return fmt.Errorf("external etcd machineconfig %s already exists", etcdMachineConfigName)
 			}
 		}
 	}
