@@ -35,7 +35,7 @@ const (
 //go:embed testdata/oidc-roles.yaml
 var oidcRoles []byte
 
-type E2ETest struct {
+type ClusterE2ETest struct {
 	T                     *testing.T
 	ClusterConfigLocation string
 	ClusterName           string
@@ -52,10 +52,10 @@ type E2ETest struct {
 	ProxyConfig           *v1alpha1.ProxyConfiguration
 }
 
-type E2ETestOpt func(e *E2ETest)
+type ClusterE2ETestOpt func(e *ClusterE2ETest)
 
-func NewE2ETest(t *testing.T, provider Provider, opts ...E2ETestOpt) *E2ETest {
-	e := &E2ETest{
+func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOpt) *ClusterE2ETest {
+	e := &ClusterE2ETest{
 		T:                     t,
 		Provider:              provider,
 		ClusterConfigLocation: defaultClusterConfigFile,
@@ -73,14 +73,14 @@ func NewE2ETest(t *testing.T, provider Provider, opts ...E2ETestOpt) *E2ETest {
 	return e
 }
 
-func WithClusterFiller(f api.ClusterFiller) E2ETestOpt {
-	return func(e *E2ETest) {
+func WithClusterFiller(f api.ClusterFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
 		e.clusterFillers = append(e.clusterFillers, f)
 	}
 }
 
-func WithClusterConfigLocationOverride(path string) E2ETestOpt {
-	return func(e *E2ETest) {
+func WithClusterConfigLocationOverride(path string) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
 		e.ClusterConfigLocation = path
 	}
 }
@@ -92,7 +92,7 @@ type Provider interface {
 	Setup()
 }
 
-func (e *E2ETest) GenerateClusterConfig() {
+func (e *ClusterE2ETest) GenerateClusterConfig() {
 	e.RunEKSA("anywhere", "generate", "clusterconfig", e.ClusterName, "-p", e.Provider.Name(), ">", e.ClusterConfigLocation)
 
 	clusterFillersFromProvider := e.Provider.ClusterConfigFillers()
@@ -107,11 +107,11 @@ func (e *E2ETest) GenerateClusterConfig() {
 	})
 }
 
-func (e *E2ETest) ImportImages() {
+func (e *ClusterE2ETest) ImportImages() {
 	e.RunEKSA("anywhere", "import-images", "-f", e.ClusterConfigLocation)
 }
 
-func (e *E2ETest) CreateCluster() {
+func (e *ClusterE2ETest) CreateCluster() {
 	createClusterArgs := []string{"anywhere", "create", "cluster", "-f", e.ClusterConfigLocation, "-v", "4"}
 	if getBundlesOverride() == "true" {
 		createClusterArgs = append(createClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
@@ -123,7 +123,7 @@ func (e *E2ETest) CreateCluster() {
 	})
 }
 
-func (e *E2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion) {
+func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion) {
 	ctx := context.Background()
 	e.T.Log("Validating cluster node status")
 	r := retrier.New(10 * time.Minute)
@@ -149,13 +149,13 @@ func (e *E2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion) {
 	}
 }
 
-func WithClusterUpgrade(fillers ...api.ClusterFiller) E2ETestOpt {
-	return func(e *E2ETest) {
+func WithClusterUpgrade(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
 		e.ClusterConfigB = e.customizeClusterConfig(fillers...)
 	}
 }
 
-func (e *E2ETest) UpgradeCluster(opts ...E2ETestOpt) {
+func (e *ClusterE2ETest) UpgradeCluster(opts ...ClusterE2ETestOpt) {
 	for _, opt := range opts {
 		opt(e)
 	}
@@ -168,7 +168,7 @@ func (e *E2ETest) UpgradeCluster(opts ...E2ETestOpt) {
 	e.RunEKSA(upgradeClusterArgs...)
 }
 
-func (e *E2ETest) buildClusterConfigFile() {
+func (e *ClusterE2ETest) buildClusterConfigFile() {
 	yamlB := make([][]byte, 0, 4)
 	yamlB = append(yamlB, e.ClusterConfigB, e.ProviderConfigB)
 	if e.OIDCConfig != nil {
@@ -200,11 +200,11 @@ func (e *E2ETest) buildClusterConfigFile() {
 	e.ClusterConfigLocation = writtenFile
 }
 
-func (e *E2ETest) DeleteCluster() {
+func (e *ClusterE2ETest) DeleteCluster() {
 	e.RunEKSA("anywhere", "delete", "cluster", e.ClusterName, "-v", "4")
 }
 
-func (e *E2ETest) Run(name string, args ...string) {
+func (e *ClusterE2ETest) Run(name string, args ...string) {
 	command := strings.Join(append([]string{name}, args...), " ")
 	shArgs := []string{"-c", command}
 
@@ -228,17 +228,17 @@ func (e *E2ETest) Run(name string, args ...string) {
 	}
 }
 
-func (e *E2ETest) RunEKSA(args ...string) {
+func (e *ClusterE2ETest) RunEKSA(args ...string) {
 	e.Run("eksctl", args...)
 }
 
-func (e *E2ETest) StopIfFailed() {
+func (e *ClusterE2ETest) StopIfFailed() {
 	if e.T.Failed() {
 		e.T.FailNow()
 	}
 }
 
-func (e *E2ETest) customizeClusterConfig(fillers ...api.ClusterFiller) []byte {
+func (e *ClusterE2ETest) customizeClusterConfig(fillers ...api.ClusterFiller) []byte {
 	b, err := api.AutoFillCluster(e.ClusterConfigLocation, fillers...)
 	if err != nil {
 		e.T.Fatalf("Error filling cluster config: %v", err)
@@ -247,7 +247,7 @@ func (e *E2ETest) customizeClusterConfig(fillers ...api.ClusterFiller) []byte {
 	return b
 }
 
-func (e *E2ETest) cleanup(f func()) {
+func (e *ClusterE2ETest) cleanup(f func()) {
 	e.T.Cleanup(func() {
 		if !e.T.Failed() {
 			f()
@@ -255,18 +255,18 @@ func (e *E2ETest) cleanup(f func()) {
 	})
 }
 
-func (e *E2ETest) cluster() *types.Cluster {
+func (e *ClusterE2ETest) cluster() *types.Cluster {
 	return &types.Cluster{
 		Name:           e.ClusterName,
 		KubeconfigFile: e.kubeconfigFilePath(),
 	}
 }
 
-func (e *E2ETest) kubeconfigFilePath() string {
+func (e *ClusterE2ETest) kubeconfigFilePath() string {
 	return filepath.Join(e.ClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", e.ClusterName))
 }
 
-func (e *E2ETest) GetEksaVSphereMachineConfigs() []v1alpha1.VSphereMachineConfig {
+func (e *ClusterE2ETest) GetEksaVSphereMachineConfigs() []v1alpha1.VSphereMachineConfig {
 	clusterConfig := e.clusterConfig()
 	machineConfigNames := make([]string, 0, len(clusterConfig.Spec.WorkerNodeGroupConfigurations)+1)
 	machineConfigNames = append(machineConfigNames, clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
@@ -290,7 +290,7 @@ func (e *E2ETest) GetEksaVSphereMachineConfigs() []v1alpha1.VSphereMachineConfig
 	return machineConfigs
 }
 
-func (e *E2ETest) clusterConfig() *v1alpha1.Cluster {
+func (e *ClusterE2ETest) clusterConfig() *v1alpha1.Cluster {
 	if e.ClusterConfig != nil {
 		return e.ClusterConfig
 	}
@@ -304,7 +304,7 @@ func (e *E2ETest) clusterConfig() *v1alpha1.Cluster {
 	return e.ClusterConfig
 }
 
-func (e *E2ETest) getJobIdFromEnv() string {
+func (e *ClusterE2ETest) getJobIdFromEnv() string {
 	return os.Getenv(JobIdVar)
 }
 

@@ -10,14 +10,14 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-func runProxyConfigFlow(test *framework.E2ETest) {
+func runProxyConfigFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
 	test.DeleteCluster()
 }
 
 func TestVSphereKubernetes121UbuntuProxyConfig(t *testing.T) {
-	test := framework.NewE2ETest(
+	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu121(),
 			framework.WithPrivateNetwork()),
@@ -31,7 +31,7 @@ func TestVSphereKubernetes121UbuntuProxyConfig(t *testing.T) {
 }
 
 func TestVSphereKubernetes121BottlerocketProxyConfig(t *testing.T) {
-	test := framework.NewE2ETest(
+	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket121(),
 			framework.WithPrivateNetwork()),

@@ -25,8 +25,8 @@ var oidcRequiredEnvVars = []string{
 	OIDCKeyFileVar,
 }
 
-func WithOIDC() E2ETestOpt {
-	return func(e *E2ETest) {
+func WithOIDC() ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, oidcRequiredEnvVars)
 		e.OIDCConfig = api.NewOIDCConfig(defaultClusterName,
 			api.WithOIDCRequiredClaims("kubernetesAccess", "true"),
@@ -43,7 +43,7 @@ func WithOIDC() E2ETestOpt {
 	}
 }
 
-func (e *E2ETest) ValidateOIDC() {
+func (e *ClusterE2ETest) ValidateOIDC() {
 	ctx := context.Background()
 	cluster := e.cluster()
 	e.T.Log("Creating roles for OIDC")
