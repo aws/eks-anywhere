@@ -187,7 +187,7 @@ func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, f
 }
 
 func (k *Kubectl) DeleteEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) error {
-	params := []string{"delete", eksaVSphereDatacenterResourceType, vsphereDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace}
+	params := []string{"delete", eksaVSphereDatacenterResourceType, vsphereDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error deleting vspheredatacenterconfig cluster %s apply: %v", vsphereDatacenterConfigName, err)
@@ -196,7 +196,7 @@ func (k *Kubectl) DeleteEksaVSphereDatacenterConfig(ctx context.Context, vsphere
 }
 
 func (k *Kubectl) DeleteEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) error {
-	params := []string{"delete", eksaVSphereMachineResourceType, vsphereMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace}
+	params := []string{"delete", eksaVSphereMachineResourceType, vsphereMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error deleting vsphermachineconfig cluster %s apply: %v", vsphereMachineConfigName, err)
@@ -205,7 +205,7 @@ func (k *Kubectl) DeleteEksaVSphereMachineConfig(ctx context.Context, vsphereMac
 }
 
 func (k *Kubectl) DeleteEKSACluster(ctx context.Context, managementCluster *types.Cluster, eksaClusterName, eksaClusterNamespace string) error {
-	params := []string{"delete", eksaClusterResourceType, eksaClusterName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", eksaClusterNamespace}
+	params := []string{"delete", eksaClusterResourceType, eksaClusterName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", eksaClusterNamespace, "--ignore-not-found=true"}
 	_, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error deleting eksa cluster %s apply: %v", eksaClusterName, err)
@@ -214,7 +214,7 @@ func (k *Kubectl) DeleteEKSACluster(ctx context.Context, managementCluster *type
 }
 
 func (k *Kubectl) DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, gitOpsConfigName, gitOpsConfigNamespace string) error {
-	params := []string{"delete", eksaGitOpsResourceType, gitOpsConfigName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", gitOpsConfigNamespace}
+	params := []string{"delete", eksaGitOpsResourceType, gitOpsConfigName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", gitOpsConfigNamespace, "--ignore-not-found=true"}
 	_, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error deleting gitops config %s apply: %v", gitOpsConfigName, err)
@@ -223,7 +223,7 @@ func (k *Kubectl) DeleteGitOpsConfig(ctx context.Context, managementCluster *typ
 }
 
 func (k *Kubectl) DeleteOIDCConfig(ctx context.Context, managementCluster *types.Cluster, oidcConfigName, oidcConfigNamespace string) error {
-	params := []string{"delete", eksaOIDCResourceType, oidcConfigName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", oidcConfigNamespace}
+	params := []string{"delete", eksaOIDCResourceType, oidcConfigName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", oidcConfigNamespace, "--ignore-not-found=true"}
 	_, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error deleting oidc config %s apply: %v", oidcConfigName, err)
@@ -232,7 +232,7 @@ func (k *Kubectl) DeleteOIDCConfig(ctx context.Context, managementCluster *types
 }
 
 func (k *Kubectl) DeleteAWSIamConfig(ctx context.Context, managementCluster *types.Cluster, awsIamConfigName, awsIamConfigNamespace string) error {
-	params := []string{"delete", eksaAwsIamResourceType, awsIamConfigName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", awsIamConfigNamespace}
+	params := []string{"delete", eksaAwsIamResourceType, awsIamConfigName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", awsIamConfigNamespace, "--ignore-not-found=true"}
 	_, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error deleting awsIam config %s apply: %v", awsIamConfigName, err)
