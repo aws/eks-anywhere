@@ -34,7 +34,6 @@ type E2ESession struct {
 	instanceId          string
 	testEnvVars         map[string]string
 	bundlesOverride     bool
-	commandId           string
 }
 
 func newSession(amiId, instanceProfileName, storageBucket, jobId, subnetId string, bundlesOverride bool) (*E2ESession, error) {
