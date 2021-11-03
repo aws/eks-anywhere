@@ -46,6 +46,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster
 }
 
 type CAPIChangeDiff struct {
+	CertManager            *types.ComponentChangeDiff
 	Core                   *types.ComponentChangeDiff
 	ControlPlane           *types.ComponentChangeDiff
 	BootstrapProviders     []types.ComponentChangeDiff
@@ -53,8 +54,8 @@ type CAPIChangeDiff struct {
 }
 
 func (c *CAPIChangeDiff) toChangeDiff() *types.ChangeDiff {
-	r := make([]*types.ComponentChangeDiff, 0, 3+len(c.BootstrapProviders))
-	r = append(r, c.Core, c.ControlPlane, c.InfrastructureProvider)
+	r := make([]*types.ComponentChangeDiff, 0, 4+len(c.BootstrapProviders))
+	r = append(r, c.CertManager, c.Core, c.ControlPlane, c.InfrastructureProvider)
 	for _, bootstrapChangeDiff := range c.BootstrapProviders {
 		b := bootstrapChangeDiff
 		r = append(r, &b)
@@ -66,6 +67,16 @@ func (c *CAPIChangeDiff) toChangeDiff() *types.ChangeDiff {
 func (u *Upgrader) capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider providers.Provider) *CAPIChangeDiff {
 	changeDiff := &CAPIChangeDiff{}
 	componentChanged := false
+
+	if currentSpec.VersionsBundle.CertManager.Version != newSpec.VersionsBundle.CertManager.Version {
+		changeDiff.CertManager = &types.ComponentChangeDiff{
+			ComponentName: "cert-manager",
+			NewVersion:    newSpec.VersionsBundle.CertManager.Version,
+			OldVersion:    currentSpec.VersionsBundle.CertManager.Version,
+		}
+		logger.V(1).Info("Cert-manager change diff", "oldVersion", changeDiff.CertManager.OldVersion, "newVersion", changeDiff.CertManager.NewVersion)
+		componentChanged = true
+	}
 
 	if currentSpec.VersionsBundle.ClusterAPI.Version != newSpec.VersionsBundle.ClusterAPI.Version {
 		changeDiff.Core = &types.ComponentChangeDiff{

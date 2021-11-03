@@ -10,9 +10,10 @@ import (
 )
 
 const (
-	fluxPath       = "flux"
-	githubTokenEnv = "GITHUB_TOKEN"
-	gitProvider    = "github"
+	fluxPath            = "flux"
+	githubTokenEnv      = "GITHUB_TOKEN"
+	gitProvider         = "github"
+	privateKeyAlgorithm = "ecdsa"
 )
 
 type Flux struct {
@@ -36,6 +37,7 @@ func (f *Flux) BootstrapToolkitsComponents(ctx context.Context, cluster *types.C
 		"--repository", c.Repository,
 		"--owner", c.Owner,
 		"--path", c.ClusterRootPath(),
+		"--ssh-key-algorithm", privateKeyAlgorithm,
 	}
 
 	if cluster.KubeconfigFile != "" {
