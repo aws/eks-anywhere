@@ -259,36 +259,38 @@ func (c *ClusterManager) generateWorkloadKubeconfig(ctx context.Context, cluster
 func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster, provider providers.Provider, clusterSpec *cluster.Spec) error {
 	return c.Retrier.Retry(
 		func() error {
-			if err := c.PauseEKSAControllerReconcile(ctx, clusterToDelete, clusterSpec, provider); err != nil {
-				return err
-			}
+			if clusterSpec.IsManaged() {
+				if err := c.PauseEKSAControllerReconcile(ctx, clusterToDelete, clusterSpec, provider); err != nil {
+					return err
+				}
 
-			if err := c.clusterClient.DeleteCluster(ctx, managementCluster, clusterToDelete); err != nil {
-				return err
-			}
+				if clusterSpec.GitOpsConfig != nil {
+					if err := c.DeleteGitOpsConfig(ctx, managementCluster, clusterSpec.GitOpsConfig.Name, clusterSpec.GitOpsConfig.Namespace); err != nil {
+						return err
+					}
+				}
+				if clusterSpec.OIDCConfig != nil {
+					if err := c.DeleteOIDCConfig(ctx, managementCluster, clusterSpec.OIDCConfig.Name, clusterSpec.OIDCConfig.Namespace); err != nil {
+						return err
+					}
+				}
 
-			if clusterSpec.GitOpsConfig != nil {
-				if err := c.DeleteGitOpsConfig(ctx, managementCluster, clusterSpec.GitOpsConfig.Name, clusterSpec.GitOpsConfig.Namespace); err != nil {
+				if clusterSpec.AWSIamConfig != nil {
+					if err := c.DeleteAWSIamConfig(ctx, managementCluster, clusterSpec.AWSIamConfig.Name, clusterSpec.AWSIamConfig.Namespace); err != nil {
+						return err
+					}
+				}
+
+				if err := provider.DeleteResources(ctx, clusterSpec); err != nil {
+					return err
+				}
+
+				if err := c.DeleteEKSACluster(ctx, managementCluster, clusterSpec.Name, clusterSpec.Namespace); err != nil {
 					return err
 				}
 			}
-			if clusterSpec.OIDCConfig != nil {
-				if err := c.DeleteOIDCConfig(ctx, managementCluster, clusterSpec.OIDCConfig.Name, clusterSpec.OIDCConfig.Namespace); err != nil {
-					return err
-				}
-			}
 
-			if clusterSpec.AWSIamConfig != nil {
-				if err := c.DeleteAWSIamConfig(ctx, managementCluster, clusterSpec.AWSIamConfig.Name, clusterSpec.AWSIamConfig.Namespace); err != nil {
-					return err
-				}
-			}
-
-			if err := provider.DeleteResources(ctx, clusterSpec); err != nil {
-				return err
-			}
-
-			return c.DeleteEKSACluster(ctx, managementCluster, clusterSpec.Name, clusterSpec.Namespace)
+			return c.clusterClient.DeleteCluster(ctx, managementCluster, clusterToDelete)
 		},
 	)
 }
