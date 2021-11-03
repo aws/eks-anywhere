@@ -158,7 +158,7 @@ func (e *E2ESession) downloadRequiredFileInInstance(file string) error {
 	} else {
 		command = fmt.Sprintf("aws s3 cp s3://%s/%s/%s ./bin/ && chmod 645 ./bin/%s", e.storageBucket, e.jobId, file, file)
 	}
-	err := ssm.Run(e.session, e.instanceId, command)
+	_, err := ssm.Run(e.session, e.instanceId, command)
 	if err != nil {
 		return fmt.Errorf("error downloading file in instance: %v", err)
 	}
@@ -172,7 +172,7 @@ func (e *E2ESession) uploadGeneratedFilesFromInstance(testName string) {
 	command := fmt.Sprintf("aws s3 cp /home/e2e/%s/ %s/%s/ --recursive",
 		e.instanceId, e.generatedArtifactsBucketPath(), testName)
 
-	err := ssm.Run(e.session, e.instanceId, command)
+	_, err := ssm.Run(e.session, e.instanceId, command)
 	if err != nil {
 		logger.Error(err, "error uploading log files from instance")
 	} else {
@@ -186,7 +186,7 @@ func (e *E2ESession) uploadDiagnosticArchiveFromInstance(testName string) {
 	command := fmt.Sprintf("aws s3 cp /home/e2e/ %s/%s/ --recursive --exclude \"*\" --include \"%s\"",
 		e.generatedArtifactsBucketPath(), testName, bundleNameFormat)
 
-	err := ssm.Run(e.session, e.instanceId, command)
+	_, err := ssm.Run(e.session, e.instanceId, command)
 	if err != nil {
 		logger.Error(err, "error uploading diagnostic bundle from instance")
 	} else {
@@ -214,7 +214,7 @@ func (e *E2ESession) downloadRequiredFilesInInstance() error {
 
 func (e *E2ESession) createTestNameFile(testName string) error {
 	command := fmt.Sprintf("echo %s > %s", testName, testNameFile)
-	err := ssm.Run(e.session, e.instanceId, command)
+	_, err := ssm.Run(e.session, e.instanceId, command)
 	if err != nil {
 		return fmt.Errorf("error creating test name file in instance: %v", err)
 	}
