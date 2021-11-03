@@ -70,6 +70,19 @@ func (c *deleteTestSetup) expectCreateBootstrap() {
 	)
 }
 
+func (c *deleteTestSetup) expectNotToCreateBootstrap() {
+	opts := []bootstrapper.BootstrapClusterOption{
+		bootstrapper.WithDefaultCNIDisabled(), bootstrapper.WithExtraDockerMounts(),
+	}
+
+	c.provider.EXPECT().BootstrapClusterOpts().Return(opts, nil).Times(0)
+	c.bootstrapper.EXPECT().CreateBootstrapCluster(
+		c.ctx, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
+	).Return(c.bootstrapCluster, nil).Times(0)
+
+	c.clusterManager.EXPECT().InstallCAPI(c.ctx, gomock.Not(gomock.Nil()), c.bootstrapCluster, c.provider).Times(0)
+}
+
 func (c *deleteTestSetup) expectDeleteBootstrap() {
 	gomock.InOrder(
 		c.bootstrapper.EXPECT().DeleteBootstrapCluster(
@@ -78,10 +91,14 @@ func (c *deleteTestSetup) expectDeleteBootstrap() {
 	)
 }
 
-func (c *deleteTestSetup) expectDeleteWorkload() {
+func (c *deleteTestSetup) expectNotToDeleteBootstrap() {
+	c.bootstrapper.EXPECT().DeleteBootstrapCluster(c.ctx, c.bootstrapCluster, gomock.Any()).Return(nil).Times(0)
+}
+
+func (c *deleteTestSetup) expectDeleteWorkload(cluster *types.Cluster) {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().DeleteCluster(
-			c.ctx, c.bootstrapCluster, c.workloadCluster,
+			c.ctx, cluster, c.workloadCluster, c.provider, c.clusterSpec,
 		).Return(nil),
 	)
 }
@@ -102,6 +119,14 @@ func (c *deleteTestSetup) expectMoveManagement() {
 	)
 }
 
+func (c *deleteTestSetup) expectNotToMoveManagement() {
+	gomock.InOrder(
+		c.clusterManager.EXPECT().MoveCAPI(
+			c.ctx, c.workloadCluster, c.bootstrapCluster, c.workloadCluster.Name, gomock.Any(),
+		).Times(0),
+	)
+}
+
 func (c *deleteTestSetup) expectCleanupProvider() {
 	gomock.InOrder(
 		c.provider.EXPECT().CleanupProviderInfrastructure(
@@ -118,10 +143,32 @@ func TestDeleteRunSuccess(t *testing.T) {
 	test := newDeleteTest(t)
 	test.expectSetup()
 	test.expectCreateBootstrap()
-	test.expectDeleteWorkload()
+	test.expectDeleteWorkload(test.bootstrapCluster)
 	test.expectCleanupGitRepo()
 	test.expectMoveManagement()
 	test.expectDeleteBootstrap()
+	test.expectCleanupProvider()
+
+	err := test.run()
+	if err != nil {
+		t.Fatalf("Delete.Run() err = %v, want err = nil", err)
+	}
+}
+
+func TestDeleteWorkloadRunSuccess(t *testing.T) {
+	test := newDeleteTest(t)
+	test.expectSetup()
+	test.expectNotToCreateBootstrap()
+	test.clusterSpec.ManagementCluster = &types.Cluster{
+		Name:               "management-cluster",
+		KubeconfigFile:     "kc.kubeconfig",
+		ExistingManagement: true,
+	}
+	test.clusterSpec.SetManagedBy(test.clusterSpec.ManagementCluster.Name)
+	test.expectDeleteWorkload(test.clusterSpec.ManagementCluster)
+	test.expectCleanupGitRepo()
+	test.expectNotToMoveManagement()
+	test.expectNotToDeleteBootstrap()
 	test.expectCleanupProvider()
 
 	err := test.run()

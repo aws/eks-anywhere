@@ -338,6 +338,34 @@ func (mr *MockProviderKubectlClientMockRecorder) CreateNamespace(arg0, arg1, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespace", reflect.TypeOf((*MockProviderKubectlClient)(nil).CreateNamespace), arg0, arg1, arg2)
 }
 
+// DeleteEksaVSphereDatacenterConfig mocks base method.
+func (m *MockProviderKubectlClient) DeleteEksaVSphereDatacenterConfig(arg0 context.Context, arg1, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteEksaVSphereDatacenterConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteEksaVSphereDatacenterConfig indicates an expected call of DeleteEksaVSphereDatacenterConfig.
+func (mr *MockProviderKubectlClientMockRecorder) DeleteEksaVSphereDatacenterConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEksaVSphereDatacenterConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).DeleteEksaVSphereDatacenterConfig), arg0, arg1, arg2, arg3)
+}
+
+// DeleteEksaVSphereMachineConfig mocks base method.
+func (m *MockProviderKubectlClient) DeleteEksaVSphereMachineConfig(arg0 context.Context, arg1, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteEksaVSphereMachineConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteEksaVSphereMachineConfig indicates an expected call of DeleteEksaVSphereMachineConfig.
+func (mr *MockProviderKubectlClientMockRecorder) DeleteEksaVSphereMachineConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEksaVSphereMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).DeleteEksaVSphereMachineConfig), arg0, arg1, arg2, arg3)
+}
+
 // GetEksaCluster mocks base method.
 func (m *MockProviderKubectlClient) GetEksaCluster(arg0 context.Context, arg1 *types.Cluster, arg2 string) (*v1alpha1.Cluster, error) {
 	m.ctrl.T.Helper()

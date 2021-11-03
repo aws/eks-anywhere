@@ -60,6 +60,9 @@ type ClusterClient interface {
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
 	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error
+	DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, gitOpsName, namespace string) error
+	DeleteOIDCConfig(ctx context.Context, managementCluster *types.Cluster, oidcConfigName, oidcConfigNamespace string) error
+	DeleteEKSACluster(ctx context.Context, managementCluster *types.Cluster, eksaClusterName, eksaClusterNamespace string) error
 	InitInfrastructure(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
 	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
 	SaveLog(ctx context.Context, cluster *types.Cluster, deployment *types.Deployment, fileName string, writer filewriter.FileWriter) error
@@ -252,10 +255,33 @@ func (c *ClusterManager) generateWorkloadKubeconfig(ctx context.Context, cluster
 	return writtenFile, nil
 }
 
-func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error {
+func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster, provider providers.Provider, clusterSpec *cluster.Spec) error {
 	return c.Retrier.Retry(
 		func() error {
-			return c.clusterClient.DeleteCluster(ctx, managementCluster, clusterToDelete)
+			if err := c.PauseEKSAControllerReconcile(ctx, clusterToDelete, clusterSpec, provider); err != nil {
+				return err
+			}
+
+			if err := c.clusterClient.DeleteCluster(ctx, managementCluster, clusterToDelete); err != nil {
+				return err
+			}
+
+			if clusterSpec.GitOpsConfig != nil {
+				if err := c.DeleteGitOpsConfig(ctx, managementCluster, clusterSpec.GitOpsConfig.Name, clusterSpec.GitOpsConfig.Namespace); err != nil {
+					return err
+				}
+			}
+			if clusterSpec.OIDCConfig != nil {
+				fmt.Printf("deleting oicd\n")
+				if err := c.DeleteOIDCConfig(ctx, managementCluster, clusterSpec.OIDCConfig.Name, clusterSpec.OIDCConfig.Namespace); err != nil {
+					return err
+				}
+			}
+			if err := provider.DeleteResources(ctx, clusterSpec); err != nil {
+				return err
+			}
+
+			return c.DeleteEKSACluster(ctx, managementCluster, clusterSpec.Name, clusterSpec.Namespace)
 		},
 	)
 }
@@ -960,4 +986,16 @@ func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesF
 	return func(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
 		return c.clusterClient.GetBundles(ctx, cluster.KubeconfigFile, name, namespace)
 	}
+}
+
+func (c *ClusterManager) DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
+	return c.clusterClient.DeleteGitOpsConfig(ctx, managementCluster, name, namespace)
+}
+
+func (c *ClusterManager) DeleteOIDCConfig(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
+	return c.clusterClient.DeleteOIDCConfig(ctx, managementCluster, name, namespace)
+}
+
+func (c *ClusterManager) DeleteEKSACluster(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
+	return c.clusterClient.DeleteEKSACluster(ctx, managementCluster, name, namespace)
 }

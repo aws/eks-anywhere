@@ -124,6 +124,20 @@ func (mr *MockProviderMockRecorder) DatacenterResourceType() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DatacenterResourceType", reflect.TypeOf((*MockProvider)(nil).DatacenterResourceType))
 }
 
+// DeleteResources mocks base method.
+func (m *MockProvider) DeleteResources(arg0 context.Context, arg1 *cluster.Spec) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteResources", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteResources indicates an expected call of DeleteResources.
+func (mr *MockProviderMockRecorder) DeleteResources(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteResources", reflect.TypeOf((*MockProvider)(nil).DeleteResources), arg0, arg1)
+}
+
 // EnvMap mocks base method.
 func (m *MockProvider) EnvMap() (map[string]string, error) {
 	m.ctrl.T.Helper()
