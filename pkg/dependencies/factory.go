@@ -39,7 +39,7 @@ type Dependencies struct {
 	AnalyzerFactory           diagnostics.AnalyzerFactory
 	CollectorFactory          diagnostics.CollectorFactory
 	DignosticCollectorFactory diagnostics.DiagnosticBundleFactory
-	CAPIUpgrader              *clusterapi.Upgrader
+	CAPIManager               *clusterapi.Manager
 	ResourceSetManager        *clusterapi.ResourceSetManager
 }
 
@@ -433,16 +433,16 @@ func (f *Factory) WithCollectorFactory() *Factory {
 	return f
 }
 
-func (f *Factory) WithCAPIUpgrader() *Factory {
+func (f *Factory) WithCAPIManager() *Factory {
 	f.WithClusterctl()
 	f.WithKubectl()
 
 	f.buildSteps = append(f.buildSteps, func() error {
-		if f.dependencies.CAPIUpgrader != nil {
+		if f.dependencies.CAPIManager != nil {
 			return nil
 		}
 
-		f.dependencies.CAPIUpgrader = clusterapi.NewUpgrader(f.dependencies.Clusterctl, f.dependencies.Kubectl)
+		f.dependencies.CAPIManager = clusterapi.NewManager(f.dependencies.Clusterctl, f.dependencies.Kubectl)
 		return nil
 	})
 

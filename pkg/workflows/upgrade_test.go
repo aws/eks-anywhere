@@ -27,7 +27,7 @@ type upgradeTestSetup struct {
 	provider           *providermocks.MockProvider
 	writer             *writermocks.MockFileWriter
 	validator          *mocks.MockValidator
-	capiUpgrader       *mocks.MockCAPIUpgrader
+	capiManager        *mocks.MockCAPIManager
 	datacenterConfig   providers.DatacenterConfig
 	machineConfigs     []providers.MachineConfig
 	workflow           *workflows.Upgrade
@@ -48,7 +48,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	writer := writermocks.NewMockFileWriter(mockCtrl)
 	validator := mocks.NewMockValidator(mockCtrl)
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
-	capiUpgrader := mocks.NewMockCAPIUpgrader(mockCtrl)
+	capiUpgrader := mocks.NewMockCAPIManager(mockCtrl)
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	workflow := workflows.NewUpgrade(bootstrapper, provider, capiUpgrader, clusterManager, addonManager, writer)
 
@@ -60,7 +60,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		provider:         provider,
 		writer:           writer,
 		validator:        validator,
-		capiUpgrader:     capiUpgrader,
+		capiManager:      capiUpgrader,
 		datacenterConfig: datacenterConfig,
 		machineConfigs:   machineConfigs,
 		workflow:         workflow,
@@ -82,6 +82,11 @@ func (c *upgradeTestSetup) expectUpdateSecrets(expectedCluster *types.Cluster) {
 	)
 }
 
+func (c *upgradeTestSetup) expectEnsureEtcdCAPIComponentsExistTask(expectedCluster *types.Cluster) {
+	currentSpec := c.currentClusterSpec
+	c.capiManager.EXPECT().EnsureEtcdProvidersInstallation(c.ctx, expectedCluster, c.provider, currentSpec)
+}
+
 func (c *upgradeTestSetup) expectUpgradeCoreComponents(expectedCluster *types.Cluster) {
 	currentSpec := c.currentClusterSpec
 	capiChangeDiff := types.NewChangeDiff(&types.ComponentChangeDiff{
@@ -101,7 +106,7 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(expectedCluster *types.Cl
 	})
 	gomock.InOrder(
 		c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, expectedCluster, c.newClusterSpec.Name).Return(currentSpec, nil),
-		c.capiUpgrader.EXPECT().Upgrade(c.ctx, expectedCluster, c.provider, currentSpec, c.newClusterSpec).Return(capiChangeDiff, nil),
+		c.capiManager.EXPECT().Upgrade(c.ctx, expectedCluster, c.provider, currentSpec, c.newClusterSpec).Return(capiChangeDiff, nil),
 		c.addonManager.EXPECT().Upgrade(c.ctx, expectedCluster, currentSpec, c.newClusterSpec).Return(fluxChangeDiff, nil),
 		c.clusterManager.EXPECT().Upgrade(c.ctx, expectedCluster, currentSpec, c.newClusterSpec).Return(eksaChangeDiff, nil),
 	)
@@ -314,6 +319,7 @@ func TestSkipUpgradeRunSuccess(t *testing.T) {
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.workloadCluster)
+	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
 	test.expectUpgradeCoreComponents(test.workloadCluster)
 	test.expectProviderNoUpgradeNeeded()
 	test.expectVerifyClusterSpecNoChanges()
@@ -332,6 +338,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.workloadCluster)
+	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
 	test.expectUpgradeCoreComponents(test.workloadCluster)
 	test.expectProviderNoUpgradeNeeded()
 	test.expectVerifyClusterSpecChanged(test.workloadCluster)
@@ -362,6 +369,7 @@ func TestUpgradeRunProviderNeedsUpgradeSuccess(t *testing.T) {
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.workloadCluster)
+	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
 	test.expectUpgradeCoreComponents(test.workloadCluster)
 	test.expectProviderUpgradeNeeded()
 	test.expectPauseEKSAControllerReconcile(test.workloadCluster)
@@ -391,6 +399,7 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.workloadCluster)
+	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
 	test.expectUpgradeCoreComponents(test.workloadCluster)
 	test.expectProviderNoUpgradeNeeded()
 	test.expectVerifyClusterSpecChanged(test.workloadCluster)
@@ -427,6 +436,7 @@ func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	test.expectSetup()
 	test.expectPreflightValidationsToPass()
 	test.expectUpdateSecrets(test.bootstrapCluster)
+	test.expectEnsureEtcdCAPIComponentsExistTask(test.bootstrapCluster)
 	test.expectUpgradeCoreComponents(test.bootstrapCluster)
 	test.expectProviderNoUpgradeNeeded()
 	test.expectVerifyClusterSpecChanged(test.bootstrapCluster)

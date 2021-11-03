@@ -364,6 +364,8 @@ func (c *Clusterctl) InstallEtcdadmProviders(ctx context.Context, clusterSpec *c
 			params = append(params, "--bootstrap", clusterctlConfig.etcdadmBootstrapVersion)
 		case constants.EtcdadmControllerProviderName:
 			params = append(params, "--bootstrap", clusterctlConfig.etcdadmControllerVersion)
+		default:
+			return fmt.Errorf("unrecognized capi provider %s", provider)
 		}
 	}
 
