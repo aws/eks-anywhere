@@ -72,7 +72,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 }
 
 func (c *upgradeTestSetup) expectSetup() {
-	c.provider.EXPECT().SetupAndValidateUpgradeCluster(c.ctx, c.newClusterSpec)
+	c.provider.EXPECT().SetupAndValidateUpgradeCluster(c.ctx, gomock.Any(), c.newClusterSpec)
 	c.provider.EXPECT().Name()
 }
 

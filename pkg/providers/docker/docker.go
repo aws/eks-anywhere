@@ -100,7 +100,7 @@ func (p *provider) SetupAndValidateDeleteCluster(ctx context.Context) error {
 	return nil
 }
 
-func (p *provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *cluster.Spec) error {
+func (p *provider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec) error {
 	return nil
 }
 

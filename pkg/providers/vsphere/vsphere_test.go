@@ -1078,12 +1078,17 @@ func TestSetupAndValidateUpgradeCluster(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
+	cluster := &types.Cluster{}
 	provider := givenProvider(t)
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec)
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1098,7 +1103,8 @@ func TestSetupAndValidateUpgradeClusterNoUsername(t *testing.T) {
 	defer tctx.RestoreContext()
 	os.Unsetenv(eksavSphereUsernameKey)
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec)
+	cluster := &types.Cluster{}
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 
 	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_USERNAME is not set or is empty", err)
 }
@@ -1112,23 +1118,10 @@ func TestSetupAndValidateUpgradeClusterNoPassword(t *testing.T) {
 	defer tctx.RestoreContext()
 	os.Unsetenv(eksavSpherePasswordKey)
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec)
+	cluster := &types.Cluster{}
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 
 	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_PASSWORD is not set or is empty", err)
-}
-
-func TestSetupAndValidateUpgradeClusterIpExists(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec)
-	if err != nil {
-		t.Fatalf("unexpected failure %v", err)
-	}
 }
 
 func TestSetupAndValidateUpgradeClusterCPSshNotExists(t *testing.T) {
@@ -1141,7 +1134,13 @@ func TestSetupAndValidateUpgradeClusterCPSshNotExists(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec)
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	cluster := &types.Cluster{}
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1157,7 +1156,14 @@ func TestSetupAndValidateUpgradeClusterWorkerSshNotExists(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec)
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	cluster := &types.Cluster{}
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
+
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1173,7 +1179,14 @@ func TestSetupAndValidateUpgradeClusterEtcdSshNotExists(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec)
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	cluster := &types.Cluster{}
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.GetName()).Return(clusterSpec.Cluster.DeepCopy(), nil)
+
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1652,7 +1665,8 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidCP(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec)
+	cluster := &types.Cluster{}
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	thenErrorExpected(t, "failed setup and validations: provided VSphereMachineConfig sshAuthorizedKey is invalid: ssh: no key found", err)
 }
 
@@ -1667,7 +1681,8 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidWorker(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec)
+	cluster := &types.Cluster{}
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	thenErrorExpected(t, "failed setup and validations: provided VSphereMachineConfig sshAuthorizedKey is invalid: ssh: no key found", err)
 }
 
@@ -1682,7 +1697,8 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 
-	err := provider.SetupAndValidateUpgradeCluster(ctx, clusterSpec)
+	cluster := &types.Cluster{}
+	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	thenErrorExpected(t, "failed setup and validations: provided VSphereMachineConfig sshAuthorizedKey is invalid: ssh: no key found", err)
 }
 

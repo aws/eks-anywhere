@@ -122,9 +122,10 @@ func (s *setupAndValidateTasks) Run(ctx context.Context, commandContext *task.Co
 func (s *setupAndValidateTasks) validations(ctx context.Context, commandContext *task.CommandContext) []validations.Validation {
 	return []validations.Validation{
 		func() *validations.ValidationResult {
+			target := getManagemtCluster(commandContext)
 			return &validations.ValidationResult{
 				Name: fmt.Sprintf("%s Provider setup is valid", commandContext.Provider.Name()),
-				Err:  commandContext.Provider.SetupAndValidateUpgradeCluster(ctx, commandContext.ClusterSpec),
+				Err:  commandContext.Provider.SetupAndValidateUpgradeCluster(ctx, target, commandContext.ClusterSpec),
 			}
 		},
 		func() *validations.ValidationResult {
