@@ -293,8 +293,8 @@ var providerNamespaces = map[string]string{
 	constants.VSphereProviderName: constants.CapvSystemNamespace,
 	constants.DockerProviderName:  constants.CapdSystemNamespace,
 	constants.AWSProviderName:     constants.CapaSystemNamespace,
-	etcdadmBootstrapProviderName:  constants.EtcdAdminBootstrapProviderSystemNamespace,
-	etcdadmControllerProviderName: constants.EtcdAdminControllerSystemNamespace,
+	etcdadmBootstrapProviderName:  constants.EtcdAdmBootstrapProviderSystemNamespace,
+	etcdadmControllerProviderName: constants.EtcdAdmControllerSystemNamespace,
 	kubeadmBootstrapProviderName:  constants.CapiKubeadmBootstrapSystemNamespace,
 }
 
@@ -336,6 +336,54 @@ func (c *Clusterctl) Upgrade(ctx context.Context, managementCluster *types.Clust
 
 	if _, err = c.executable.ExecuteWithEnv(ctx, providerEnvMap, upgradeCommand...); err != nil {
 		return fmt.Errorf("failed running upgrade apply with clusterctl: %v", err)
+	}
+
+	return nil
+}
+
+func (c *Clusterctl) InstallEtcdadmProviders(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, infraProvider providers.Provider, installProviders []string) error {
+	if cluster == nil {
+		return fmt.Errorf("invalid cluster (nil)")
+	}
+	if cluster.Name == "" {
+		return fmt.Errorf("invalid cluster name '%s'", cluster.Name)
+	}
+	clusterctlConfig, err := c.buildConfig(clusterSpec, cluster.Name, infraProvider)
+	if err != nil {
+		return err
+	}
+
+	params := []string{
+		"init",
+		"--config", clusterctlConfig.configFile,
+	}
+
+	for _, provider := range installProviders {
+		switch provider {
+		case constants.EtcdAdmBootstrapProviderName:
+			params = append(params, "--bootstrap", clusterctlConfig.etcdadmBootstrapVersion)
+		case constants.EtcdadmControllerProviderName:
+			params = append(params, "--bootstrap", clusterctlConfig.etcdadmControllerVersion)
+		}
+	}
+
+	// Not supported for docker controllers at this time
+	if clusterSpec.Spec.DatacenterRef.Kind != anywherev1alpha1.DockerDatacenterKind {
+		params = append(params, "--watching-namespace", constants.EksaSystemNamespace)
+	}
+
+	if cluster.KubeconfigFile != "" {
+		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
+	}
+
+	envMap, err := infraProvider.EnvMap()
+	if err != nil {
+		return err
+	}
+
+	_, err = c.executable.ExecuteWithEnv(ctx, envMap, params...)
+	if err != nil {
+		return fmt.Errorf("error executing init: %v", err)
 	}
 
 	return nil

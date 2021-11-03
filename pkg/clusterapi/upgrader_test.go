@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clusterapi/mocks"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	providerMocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -21,6 +22,7 @@ type upgraderTest struct {
 	*WithT
 	ctx                context.Context
 	capiClient         *mocks.MockCAPIClient
+	kubectlClient      *mocks.MockKubectlClient
 	upgrader           *clusterapi.Upgrader
 	currentSpec        *cluster.Spec
 	newSpec            *cluster.Spec
@@ -32,6 +34,7 @@ type upgraderTest struct {
 func newUpgraderTest(t *testing.T) *upgraderTest {
 	ctrl := gomock.NewController(t)
 	capiClient := mocks.NewMockCAPIClient(ctrl)
+	kubectlClient := mocks.NewMockKubectlClient(ctrl)
 
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Bundles.Spec.Number = 1
@@ -44,12 +47,13 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 	})
 
 	return &upgraderTest{
-		WithT:       NewWithT(t),
-		ctx:         context.Background(),
-		capiClient:  capiClient,
-		upgrader:    clusterapi.NewUpgrader(capiClient),
-		currentSpec: currentSpec,
-		newSpec:     currentSpec.DeepCopy(),
+		WithT:         NewWithT(t),
+		ctx:           context.Background(),
+		capiClient:    capiClient,
+		kubectlClient: kubectlClient,
+		upgrader:      clusterapi.NewUpgrader(capiClient, kubectlClient),
+		currentSpec:   currentSpec,
+		newSpec:       currentSpec.DeepCopy(),
 		cluster: &types.Cluster{
 			Name:           "cluster-name",
 			KubeconfigFile: "k.kubeconfig",
@@ -70,10 +74,22 @@ func TestUpgraderUpgradeNoSelfManaged(t *testing.T) {
 	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
-func TestUpgraderUpgradeNoChanges(t *testing.T) {
+func TestUpgraderUpgradeNoChangesStackedEtcd(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.provider.EXPECT().ChangeDiff(tt.currentSpec, tt.newSpec).Return(nil)
+	tt.kubectlClient.EXPECT().CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, constants.EtcdAdmBootstrapProviderName, constants.EtcdAdmBootstrapProviderSystemNamespace)
+	tt.kubectlClient.EXPECT().CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, constants.EtcdadmControllerProviderName, constants.EtcdAdmControllerSystemNamespace)
+	tt.capiClient.EXPECT().InstallEtcdadmProviders(tt.ctx, tt.newSpec, tt.cluster, tt.provider, []string{constants.EtcdAdmBootstrapProviderName, constants.EtcdadmControllerProviderName})
 
+	tt.provider.EXPECT().ChangeDiff(tt.currentSpec, tt.newSpec).Return(nil)
+	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(BeNil())
+}
+
+func TestUpgraderUpgradeNoChangesExternalEtcd(t *testing.T) {
+	tt := newUpgraderTest(t)
+	tt.kubectlClient.EXPECT().CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, constants.EtcdAdmBootstrapProviderName, constants.EtcdAdmBootstrapProviderSystemNamespace).Return(true, nil)
+	tt.kubectlClient.EXPECT().CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, constants.EtcdadmControllerProviderName, constants.EtcdAdmControllerSystemNamespace).Return(true, nil)
+
+	tt.provider.EXPECT().ChangeDiff(tt.currentSpec, tt.newSpec).Return(nil)
 	tt.Expect(tt.upgrader.Upgrade(tt.ctx, tt.cluster, tt.provider, tt.currentSpec, tt.newSpec)).To(BeNil())
 }
 
@@ -86,6 +102,10 @@ func TestUpgraderUpgradeProviderChanges(t *testing.T) {
 	wantDiff := &types.ChangeDiff{
 		ComponentReports: []types.ComponentChangeDiff{*tt.providerChangeDiff},
 	}
+
+	tt.kubectlClient.EXPECT().CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, constants.EtcdAdmBootstrapProviderName, constants.EtcdAdmBootstrapProviderSystemNamespace)
+	tt.kubectlClient.EXPECT().CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, constants.EtcdadmControllerProviderName, constants.EtcdAdmControllerSystemNamespace)
+	tt.capiClient.EXPECT().InstallEtcdadmProviders(tt.ctx, tt.newSpec, tt.cluster, tt.provider, []string{constants.EtcdAdmBootstrapProviderName, constants.EtcdadmControllerProviderName})
 
 	tt.provider.EXPECT().ChangeDiff(tt.currentSpec, tt.newSpec).Return(tt.providerChangeDiff)
 	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
@@ -107,6 +127,10 @@ func TestUpgraderUpgradeCoreChanges(t *testing.T) {
 	wantDiff := &types.ChangeDiff{
 		ComponentReports: []types.ComponentChangeDiff{*changeDiff.Core},
 	}
+
+	tt.kubectlClient.EXPECT().CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, constants.EtcdAdmBootstrapProviderName, constants.EtcdAdmBootstrapProviderSystemNamespace)
+	tt.kubectlClient.EXPECT().CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, constants.EtcdadmControllerProviderName, constants.EtcdAdmControllerSystemNamespace)
+	tt.capiClient.EXPECT().InstallEtcdadmProviders(tt.ctx, tt.newSpec, tt.cluster, tt.provider, []string{constants.EtcdAdmBootstrapProviderName, constants.EtcdadmControllerProviderName})
 
 	tt.provider.EXPECT().ChangeDiff(tt.currentSpec, tt.newSpec).Return(nil)
 	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
@@ -144,12 +168,28 @@ func TestUpgraderUpgradeEverythingChangesStackedEtcd(t *testing.T) {
 				NewVersion:    "v0.2.0",
 				OldVersion:    "v0.1.0",
 			},
+			{
+				ComponentName: "etcdadm-bootstrap",
+				NewVersion:    "v0.2.0",
+				OldVersion:    "v0.1.0",
+			},
+			{
+				ComponentName: "etcdadm-controller",
+				NewVersion:    "v0.2.0",
+				OldVersion:    "v0.1.0",
+			},
 		},
 		InfrastructureProvider: tt.providerChangeDiff,
 	}
+	componentReports := []types.ComponentChangeDiff{*changeDiff.Core, *changeDiff.ControlPlane, *tt.providerChangeDiff}
+	componentReports = append(componentReports, changeDiff.BootstrapProviders...)
 	wantDiff := &types.ChangeDiff{
-		ComponentReports: []types.ComponentChangeDiff{*changeDiff.CertManager, *changeDiff.Core, *changeDiff.ControlPlane, *tt.providerChangeDiff, changeDiff.BootstrapProviders[0]},
-	}
+		ComponentReports: []types.ComponentChangeDiff{*changeDiff.CertManager, *changeDiff.Core, *changeDiff.ControlPlane, *tt.providerChangeDiff, changeDiff.BootstrapProviders[0]
+	},
+
+	tt.kubectlClient.EXPECT().CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, constants.EtcdAdmBootstrapProviderName, constants.EtcdAdmBootstrapProviderSystemNamespace)
+	tt.kubectlClient.EXPECT().CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, constants.EtcdadmControllerProviderName, constants.EtcdAdmControllerSystemNamespace)
+	tt.capiClient.EXPECT().InstallEtcdadmProviders(tt.ctx, tt.newSpec, tt.cluster, tt.provider, []string{constants.EtcdAdmBootstrapProviderName, constants.EtcdadmControllerProviderName})
 
 	tt.provider.EXPECT().ChangeDiff(tt.currentSpec, tt.newSpec).Return(tt.providerChangeDiff)
 	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
@@ -210,6 +250,9 @@ func TestUpgraderUpgradeEverythingChangesExternalEtcd(t *testing.T) {
 		},
 	}
 
+	tt.kubectlClient.EXPECT().CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, constants.EtcdAdmBootstrapProviderName, constants.EtcdAdmBootstrapProviderSystemNamespace).Return(true, nil)
+	tt.kubectlClient.EXPECT().CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, constants.EtcdadmControllerProviderName, constants.EtcdAdmControllerSystemNamespace).Return(true, nil)
+
 	tt.provider.EXPECT().ChangeDiff(tt.currentSpec, tt.newSpec).Return(tt.providerChangeDiff)
 	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff)
 
@@ -221,6 +264,11 @@ func TestUpgraderUpgradeCAPIClientError(t *testing.T) {
 	changeDiff := &clusterapi.CAPIChangeDiff{
 		InfrastructureProvider: tt.providerChangeDiff,
 	}
+
+	tt.kubectlClient.EXPECT().CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, constants.EtcdAdmBootstrapProviderName, constants.EtcdAdmBootstrapProviderSystemNamespace)
+	tt.kubectlClient.EXPECT().CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, constants.EtcdadmControllerProviderName, constants.EtcdAdmControllerSystemNamespace)
+	tt.capiClient.EXPECT().InstallEtcdadmProviders(tt.ctx, tt.newSpec, tt.cluster, tt.provider, []string{constants.EtcdAdmBootstrapProviderName, constants.EtcdadmControllerProviderName})
+
 	tt.provider.EXPECT().ChangeDiff(tt.currentSpec, tt.newSpec).Return(tt.providerChangeDiff)
 	tt.capiClient.EXPECT().Upgrade(tt.ctx, tt.cluster, tt.provider, tt.newSpec, changeDiff).Return(errors.New("error from client"))
 

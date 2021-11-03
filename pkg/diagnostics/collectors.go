@@ -176,14 +176,14 @@ func (c *collectorFactory) managementClusterLogCollectors() []*Collect {
 		},
 		{
 			Logs: &logs{
-				Namespace: constants.EtcdAdminBootstrapProviderSystemNamespace,
-				Name:      logpath(constants.EtcdAdminBootstrapProviderSystemNamespace),
+				Namespace: constants.EtcdAdmBootstrapProviderSystemNamespace,
+				Name:      logpath(constants.EtcdAdmBootstrapProviderSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: constants.EtcdAdminControllerSystemNamespace,
-				Name:      logpath(constants.EtcdAdminControllerSystemNamespace),
+				Namespace: constants.EtcdAdmControllerSystemNamespace,
+				Name:      logpath(constants.EtcdAdmControllerSystemNamespace),
 			},
 		},
 	}

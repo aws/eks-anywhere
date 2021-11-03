@@ -5,22 +5,30 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 type Upgrader struct {
-	capiClient CAPIClient
+	capiClient    CAPIClient
+	kubectlClient KubectlClient
 }
 
 type CAPIClient interface {
 	Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, newSpec *cluster.Spec, changeDiff *CAPIChangeDiff) error
+	InstallEtcdadmProviders(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider, installProviders []string) error
 }
 
-func NewUpgrader(client CAPIClient) *Upgrader {
+type KubectlClient interface {
+	CheckProviderExists(ctx context.Context, kubeconfigFile, name, namespace string) (bool, error)
+}
+
+func NewUpgrader(capiClient CAPIClient, kubectlClient KubectlClient) *Upgrader {
 	return &Upgrader{
-		capiClient: client,
+		capiClient:    capiClient,
+		kubectlClient: kubectlClient,
 	}
 }
 
@@ -29,6 +37,10 @@ func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster
 	if !newSpec.Cluster.IsSelfManaged() {
 		logger.V(1).Info("Skipping CAPI upgrades, not a self-managed cluster")
 		return nil, nil
+	}
+
+	if err := u.installEtcdProvidersIfNotFound(ctx, managementCluster, provider, newSpec); err != nil {
+		return nil, err
 	}
 
 	capiChangeDiff := u.capiChangeDiff(currentSpec, newSpec, provider)
@@ -43,6 +55,29 @@ func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster
 	}
 
 	return capiChangeDiff.toChangeDiff(), nil
+}
+
+func (u *Upgrader) installEtcdProvidersIfNotFound(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, newSpec *cluster.Spec) error {
+	var installProviders []string
+	etcdBootstrapExists, err := u.kubectlClient.CheckProviderExists(ctx, managementCluster.KubeconfigFile, constants.EtcdAdmBootstrapProviderName, constants.EtcdAdmBootstrapProviderSystemNamespace)
+	if err != nil {
+		return err
+	}
+	if !etcdBootstrapExists {
+		installProviders = append(installProviders, constants.EtcdAdmBootstrapProviderName)
+	}
+	etcdControllerExists, err := u.kubectlClient.CheckProviderExists(ctx, managementCluster.KubeconfigFile, constants.EtcdadmControllerProviderName, constants.EtcdAdmControllerSystemNamespace)
+	if err != nil {
+		return err
+	}
+	if !etcdControllerExists {
+		installProviders = append(installProviders, constants.EtcdadmControllerProviderName)
+	}
+
+	if len(installProviders) > 0 {
+		return u.capiClient.InstallEtcdadmProviders(ctx, newSpec, managementCluster, provider, installProviders)
+	}
+	return nil
 }
 
 type CAPIChangeDiff struct {
@@ -109,28 +144,26 @@ func (u *Upgrader) capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider p
 		componentChanged = true
 	}
 
-	if newSpec.Spec.ExternalEtcdConfiguration != nil {
-		if currentSpec.VersionsBundle.ExternalEtcdBootstrap.Version != newSpec.VersionsBundle.ExternalEtcdBootstrap.Version {
-			componentChangeDiff := types.ComponentChangeDiff{
-				ComponentName: "etcdadm-bootstrap",
-				NewVersion:    newSpec.VersionsBundle.ExternalEtcdBootstrap.Version,
-				OldVersion:    currentSpec.VersionsBundle.ExternalEtcdBootstrap.Version,
-			}
-			changeDiff.BootstrapProviders = append(changeDiff.BootstrapProviders, componentChangeDiff)
-			logger.V(1).Info("CAPI Etcdadm Bootstrap Provider change diff", "oldVersion", componentChangeDiff.OldVersion, "newVersion", componentChangeDiff.NewVersion)
-			componentChanged = true
+	if currentSpec.VersionsBundle.ExternalEtcdBootstrap.Version != newSpec.VersionsBundle.ExternalEtcdBootstrap.Version {
+		componentChangeDiff := types.ComponentChangeDiff{
+			ComponentName: "etcdadm-bootstrap",
+			NewVersion:    newSpec.VersionsBundle.ExternalEtcdBootstrap.Version,
+			OldVersion:    currentSpec.VersionsBundle.ExternalEtcdBootstrap.Version,
 		}
+		changeDiff.BootstrapProviders = append(changeDiff.BootstrapProviders, componentChangeDiff)
+		logger.V(1).Info("CAPI Etcdadm Bootstrap Provider change diff", "oldVersion", componentChangeDiff.OldVersion, "newVersion", componentChangeDiff.NewVersion)
+		componentChanged = true
+	}
 
-		if currentSpec.VersionsBundle.ExternalEtcdController.Version != newSpec.VersionsBundle.ExternalEtcdController.Version {
-			componentChangeDiff := types.ComponentChangeDiff{
-				ComponentName: "etcdadm-controller",
-				NewVersion:    newSpec.VersionsBundle.ExternalEtcdController.Version,
-				OldVersion:    currentSpec.VersionsBundle.ExternalEtcdController.Version,
-			}
-			changeDiff.BootstrapProviders = append(changeDiff.BootstrapProviders, componentChangeDiff)
-			logger.V(1).Info("CAPI Etcdadm Controller Provider change diff", "oldVersion", componentChangeDiff.OldVersion, "newVersion", componentChangeDiff.NewVersion)
-			componentChanged = true
+	if currentSpec.VersionsBundle.ExternalEtcdController.Version != newSpec.VersionsBundle.ExternalEtcdController.Version {
+		componentChangeDiff := types.ComponentChangeDiff{
+			ComponentName: "etcdadm-controller",
+			NewVersion:    newSpec.VersionsBundle.ExternalEtcdController.Version,
+			OldVersion:    currentSpec.VersionsBundle.ExternalEtcdController.Version,
 		}
+		changeDiff.BootstrapProviders = append(changeDiff.BootstrapProviders, componentChangeDiff)
+		logger.V(1).Info("CAPI Etcdadm Controller Provider change diff", "oldVersion", componentChangeDiff.OldVersion, "newVersion", componentChangeDiff.NewVersion)
+		componentChanged = true
 	}
 
 	if providerChangeDiff := provider.ChangeDiff(currentSpec, newSpec); providerChangeDiff != nil {

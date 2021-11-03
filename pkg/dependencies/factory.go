@@ -435,13 +435,14 @@ func (f *Factory) WithCollectorFactory() *Factory {
 
 func (f *Factory) WithCAPIUpgrader() *Factory {
 	f.WithClusterctl()
+	f.WithKubectl()
 
 	f.buildSteps = append(f.buildSteps, func() error {
 		if f.dependencies.CAPIUpgrader != nil {
 			return nil
 		}
 
-		f.dependencies.CAPIUpgrader = clusterapi.NewUpgrader(f.dependencies.Clusterctl)
+		f.dependencies.CAPIUpgrader = clusterapi.NewUpgrader(f.dependencies.Clusterctl, f.dependencies.Kubectl)
 		return nil
 	})
 

@@ -121,11 +121,11 @@ func (a *analyzerFactory) EksaExternalEtcdAnalyzers() []*Analyze {
 	deployments := []eksaDeployment{
 		{
 			Name:             "etcdadm-controller-controller-manager",
-			Namespace:        constants.EtcdAdminControllerSystemNamespace,
+			Namespace:        constants.EtcdAdmControllerSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "etcdadm-bootstrap-provider-controller-manager",
-			Namespace:        constants.EtcdAdminBootstrapProviderSystemNamespace,
+			Namespace:        constants.EtcdAdmBootstrapProviderSystemNamespace,
 			ExpectedReplicas: 1,
 		},
 	}
