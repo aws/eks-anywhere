@@ -2654,3 +2654,11 @@ func TestProviderUpgradeNeeded(t *testing.T) {
 		})
 	}
 }
+
+func TestMachineConfigExists(t *testing.T) {
+	tt := newProviderTest(t)
+	tt.kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), "mc", "", "c.kubeconfig")
+	exists, err := tt.provider.MachineConfigExists(tt.ctx, "mc", "c.kubeconfig", "")
+	assert.NoError(t, err, "Expected successful execution of MachineConfigExists() but got an error", "error", err)
+	assert.Equal(t, false, exists, "MachineConfigExists should be false")
+}
