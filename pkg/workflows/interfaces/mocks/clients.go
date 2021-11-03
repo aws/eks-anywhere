@@ -154,17 +154,17 @@ func (mr *MockClusterManagerMockRecorder) CreateWorkloadCluster(arg0, arg1, arg2
 }
 
 // DeleteCluster mocks base method.
-func (m *MockClusterManager) DeleteCluster(arg0 context.Context, arg1, arg2 *types.Cluster) error {
+func (m *MockClusterManager) DeleteCluster(arg0 context.Context, arg1, arg2 *types.Cluster, arg3 providers.Provider, arg4 *cluster.Spec) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteCluster", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "DeleteCluster", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteCluster indicates an expected call of DeleteCluster.
-func (mr *MockClusterManagerMockRecorder) DeleteCluster(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) DeleteCluster(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCluster", reflect.TypeOf((*MockClusterManager)(nil).DeleteCluster), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCluster", reflect.TypeOf((*MockClusterManager)(nil).DeleteCluster), arg0, arg1, arg2, arg3, arg4)
 }
 
 // EKSAClusterSpecChanged mocks base method.

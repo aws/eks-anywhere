@@ -144,6 +144,8 @@ type ProviderKubectlClient interface {
 	SearchVsphereMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereMachineConfig, error)
 	SearchVsphereDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error)
 	SetDaemonSetImage(ctx context.Context, kubeconfigFile, name, namespace, container, image string) error
+	DeleteEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) error
+	DeleteEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) error
 }
 
 type ClusterResourceSetManager interface {
@@ -856,6 +858,15 @@ func (p *vsphereProvider) defaultTemplateForClusterSpec(clusterSpec *cluster.Spe
 	templateName := fmt.Sprintf("%s-%s-%s-%s-%s", osFamily, eksd.KubeVersion, eksd.Name, strings.Join(ova.Arch, "-"), ova.SHA256[:7])
 	machineConfig.Spec.Template = filepath.Join("/", p.datacenterConfig.Spec.Datacenter, defaultTemplatesFolder, templateName)
 	return ova.URI
+}
+
+func (p *vsphereProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
+	for _, mc := range p.machineConfigs {
+		if err := p.providerKubectlClient.DeleteEksaVSphereMachineConfig(ctx, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace); err != nil {
+			return err
+		}
+	}
+	return p.providerKubectlClient.DeleteEksaVSphereDatacenterConfig(ctx, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
 }
 
 func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {

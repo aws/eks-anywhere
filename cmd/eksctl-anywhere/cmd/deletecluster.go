@@ -4,32 +4,21 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
-	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/pkg/workflows"
 )
 
 type deleteClusterOptions struct {
-	fileName             string
-	wConfig              string
-	forceCleanup         bool
-	managementKubeconfig string
-}
-
-func (dc *deleteClusterOptions) kubeConfig(clusterName string) string {
-	if dc.wConfig == "" {
-		return filepath.Join(clusterName, fmt.Sprintf(kubeconfigPattern, clusterName))
-	}
-	return dc.wConfig
+	clusterOptions
+	wConfig      string
+	forceCleanup bool
 }
 
 var dc = &deleteClusterOptions{}
@@ -92,7 +81,7 @@ func (dc *deleteClusterOptions) validate(ctx context.Context, args []string) err
 }
 
 func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
-	clusterSpec, err := cluster.NewSpec(dc.fileName, version.Get())
+	clusterSpec, err := newClusterSpec(dc.clusterOptions)
 	if err != nil {
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
@@ -115,12 +104,20 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		deps.FluxAddonClient,
 	)
 
-	// Initialize Workload cluster type
-	workloadCluster := &types.Cluster{
-		Name:           clusterSpec.Name,
-		KubeconfigFile: dc.kubeConfig(clusterSpec.Name),
+	var cluster *types.Cluster
+	if clusterSpec.ManagementCluster == nil {
+		cluster = &types.Cluster{
+			Name:           clusterSpec.Name,
+			KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
+		}
+	} else {
+		cluster = &types.Cluster{
+			Name:           clusterSpec.Name,
+			KubeconfigFile: clusterSpec.ManagementCluster.KubeconfigFile,
+		}
 	}
-	err = deleteCluster.Run(ctx, workloadCluster, clusterSpec, dc.forceCleanup, dc.managementKubeconfig)
+
+	err = deleteCluster.Run(ctx, cluster, clusterSpec, dc.forceCleanup, dc.managementKubeconfig)
 	if err == nil {
 		deps.Writer.CleanUp()
 	}

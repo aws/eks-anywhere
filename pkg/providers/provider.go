@@ -35,6 +35,7 @@ type Provider interface {
 	ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff
 	RunPostUpgrade(ctx context.Context, clusterSpec *cluster.Spec, managementCluster, workloadCluster *types.Cluster) error
 	UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error)
+	DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error
 }
 
 type DatacenterConfig interface {
