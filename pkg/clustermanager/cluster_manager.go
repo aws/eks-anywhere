@@ -62,6 +62,7 @@ type ClusterClient interface {
 	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error
 	DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, gitOpsName, namespace string) error
 	DeleteOIDCConfig(ctx context.Context, managementCluster *types.Cluster, oidcConfigName, oidcConfigNamespace string) error
+	DeleteAWSIamConfig(ctx context.Context, managementCluster *types.Cluster, awsIamConfigName, awsIamConfigNamespace string) error
 	DeleteEKSACluster(ctx context.Context, managementCluster *types.Cluster, eksaClusterName, eksaClusterNamespace string) error
 	InitInfrastructure(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
 	WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error
@@ -276,6 +277,13 @@ func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, c
 					return err
 				}
 			}
+
+			if clusterSpec.AWSIamConfig != nil {
+				if err := c.DeleteAWSIamConfig(ctx, managementCluster, clusterSpec.AWSIamConfig.Name, clusterSpec.AWSIamConfig.Namespace); err != nil {
+					return err
+				}
+			}
+
 			if err := provider.DeleteResources(ctx, clusterSpec); err != nil {
 				return err
 			}
@@ -992,6 +1000,10 @@ func (c *ClusterManager) DeleteGitOpsConfig(ctx context.Context, managementClust
 }
 
 func (c *ClusterManager) DeleteOIDCConfig(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
+	return c.clusterClient.DeleteOIDCConfig(ctx, managementCluster, name, namespace)
+}
+
+func (c *ClusterManager) DeleteAWSIamConfig(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
 	return c.clusterClient.DeleteOIDCConfig(ctx, managementCluster, name, namespace)
 }
 

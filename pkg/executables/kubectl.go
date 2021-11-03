@@ -231,6 +231,15 @@ func (k *Kubectl) DeleteOIDCConfig(ctx context.Context, managementCluster *types
 	return nil
 }
 
+func (k *Kubectl) DeleteAWSIamConfig(ctx context.Context, managementCluster *types.Cluster, awsIamConfigName, awsIamConfigNamespace string) error {
+	params := []string{"delete", eksaAwsIamResourceType, awsIamConfigName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", awsIamConfigNamespace}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error deleting awsIam config %s apply: %v", awsIamConfigName, err)
+	}
+	return nil
+}
+
 func (k *Kubectl) DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error {
 	params := []string{"delete", capiClustersResourceType, clusterToDelete.Name, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace}
 	_, err := k.executable.Execute(ctx, params...)
