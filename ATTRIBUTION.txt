@@ -2,7 +2,7 @@
 ** cloud.google.com/go/compute/metadata; version v0.54.0 --
 https://github.com/googleapis/google-cloud-go
 
-** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20210810165539-7d41d9b36b74 --
+** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
 https://github.com/aws/eks-distro-build-tooling/release
 
 ** github.com/Azure/go-autorest/autorest; version v0.11.12 --
