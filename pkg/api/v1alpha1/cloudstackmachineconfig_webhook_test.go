@@ -72,13 +72,50 @@ func TestWorkersCPCloudStackMachineValidateUpdateDiskOfferingImmutable(t *testin
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCPCloudStackMachineValidateUpdateKeypairImmutable(t *testing.T) {
+func TestManagementCloudStackMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
-	vOld.Spec.KeyPairName = "oldKeypair"
+	vOld.SetManagement("test-cluster")
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	vOld.Spec.Users[0].SshAuthorizedKeys = []string{"rsa-blahdeblahbalh"}
 	c := vOld.DeepCopy()
 
-	c.Spec.KeyPairName = "newKeypair"
+	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestWorkloadCloudStackMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
+	vOld := cloudstackMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	vOld.Spec.Users[0].SshAuthorizedKeys = []string{"rsa-blahdeblahbalh"}
+	c := vOld.DeepCopy()
+
+	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestManagementCloudStackMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
+	vOld := cloudstackMachineConfig()
+	vOld.SetControlPlane()
+	vOld.SetManagement("test-cluster")
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	c := vOld.DeepCopy()
+
+	c.Spec.Users[0].Name = "Andy"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestWorkloadCloudStackMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
+	vOld := cloudstackMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	c := vOld.DeepCopy()
+
+	c.Spec.Users[0].Name = "Andy"
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
@@ -86,15 +123,15 @@ func TestCPCloudStackMachineValidateUpdateKeypairImmutable(t *testing.T) {
 func TestCPCloudStackMachineValidateUpdateDetailsImmutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
-	vOld.Spec.Details = map[string]string {
-		"k1" : "v1",
-		"k2" : "v2",
+	vOld.Spec.Details = map[string]string{
+		"k1": "v1",
+		"k2": "v2",
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.Details = map[string]string {
-		"k1" : "v2",
-		"k2" : "v1",
+	c.Spec.Details = map[string]string{
+		"k1": "v2",
+		"k2": "v1",
 	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
@@ -102,15 +139,15 @@ func TestCPCloudStackMachineValidateUpdateDetailsImmutable(t *testing.T) {
 
 func TestCloudStackMachineValidateUpdateDetailsImmutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
-	vOld.Spec.Details = map[string]string {
-		"k1" : "v1",
-		"k2" : "v2",
+	vOld.Spec.Details = map[string]string{
+		"k1": "v1",
+		"k2": "v2",
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.Details = map[string]string {
-		"k1" : "v2",
-		"k2" : "v1",
+	c.Spec.Details = map[string]string{
+		"k1": "v2",
+		"k2": "v1",
 	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())

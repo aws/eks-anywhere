@@ -50,7 +50,10 @@ spec:
   computeOffering: "m4-large"
   diskOffering: "ssd-100GB"
   osFamily: "ubuntu"
-  keyPairName: "cloudstack-keypair"
+  users:
+    - name: "mySshUsername"
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"
   template: "centos7-k8s-118"
   details:
     foo: "bar"
