@@ -31,7 +31,7 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 		"vsphere-csi-driver":           r.GetVsphereCsiAssets,
 	}
 
-	version, err := r.GenerateComponentBundleVersion(
+	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api-provider-vsphere")),
 	)
 	if err != nil {

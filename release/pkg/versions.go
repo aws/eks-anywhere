@@ -9,11 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func GetBuildComponentVersionFunc(isDevRelease bool) generateComponentBundleVersion {
-	return buildComponentVersionForDev
-}
-
-func buildComponentVersionForDev(versioner projectVersioner) (string, error) {
+func BuildComponentVersion(versioner projectVersioner) (string, error) {
 	patchVersion, err := versioner.patchVersion()
 	if err != nil {
 		return "", err
@@ -25,15 +21,6 @@ func buildComponentVersionForDev(versioner projectVersioner) (string, error) {
 	}
 
 	return fmt.Sprintf("%s+%s", patchVersion, metadata), nil
-}
-
-func buildComponentVersionForProd(versioner projectVersioner) (string, error) {
-	patchVersion, err := versioner.patchVersion()
-	if err != nil {
-		return "", err
-	}
-
-	return patchVersion, nil
 }
 
 type versioner struct {
@@ -94,4 +81,20 @@ func (v *versionerWithGITTAG) patchVersion() (string, error) {
 	}
 
 	return gitTag, nil
+}
+
+type cliVersioner struct {
+	versioner
+	cliVersion string
+}
+
+func newCliVersioner(cliVersion, pathToProject string) *cliVersioner {
+	return &cliVersioner{
+		cliVersion: cliVersion,
+		versioner:  versioner{pathToProject: pathToProject},
+	}
+}
+
+func (v *cliVersioner) patchVersion() (string, error) {
+	return v.cliVersion, nil
 }

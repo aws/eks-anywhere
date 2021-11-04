@@ -129,7 +129,7 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 		"kube-proxy":  r.GetKubeRbacProxyAssets,
 	}
 
-	version, err := r.GenerateComponentBundleVersion(
+	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
 	)
 	if err != nil {
@@ -195,7 +195,7 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 		"kube-proxy":  r.GetKubeRbacProxyAssets,
 	}
 
-	version, err := r.GenerateComponentBundleVersion(
+	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
 	)
 	if err != nil {
@@ -261,7 +261,7 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 		"kube-proxy":  r.GetKubeRbacProxyAssets,
 	}
 
-	version, err := r.GenerateComponentBundleVersion(
+	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
 	)
 	if err != nil {

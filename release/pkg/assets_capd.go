@@ -109,7 +109,7 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 		"kube-proxy":                  r.GetKubeRbacProxyAssets,
 	}
 
-	version, err := r.GenerateComponentBundleVersion(
+	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
 	)
 	if err != nil {
