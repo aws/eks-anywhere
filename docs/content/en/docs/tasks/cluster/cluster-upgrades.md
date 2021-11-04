@@ -36,7 +36,7 @@ EKS Anywhere `upgrade` also supports upgrading the following core components:
 * Cert-manager
 * Etcdadm CAPI provider
 * EKS Anywhere controllers and CRDs
-* Gitops controller (Flux) - this is an optional component, will be upgraded only if specified
+* GitOps controllers (Flux) - this is an optional component, will be upgraded only if specified
 
 The latest versions of these core EKS Anywhere components are embedded into a bundles manifest that the CLI uses to fetch the latest versions 
 and image builds needed for each component upgrade. 
@@ -44,7 +44,45 @@ The command detects both component version changes and new builds of the same ve
 If there is a new Kubernetes version that is going to get rolled out, the core components get upgraded before the Kubernetes
 version. 
 Irrespective of a Kubernetes version change, the upgrade command will always upgrade the internal EKS
-Anywhere components mentioned above to their latest available versions. These upgrade changes are backwards compatible.
+Anywhere components mentioned above to their latest available versions. Most upgrade changes are backwards compatible.
+
+#### GitOps controller upgrade
+
+In order to accommodate the management cluster feature, the CLI structures the repo directory following the convention:
+
+```
+clusters
+└── management-cluster
+    ├── flux-system
+    │   └── ...
+    ├── management-cluster
+    │   └── eksa-system
+    │       └── eksa-cluster.yaml
+    ├── workload-cluster-1
+    │   └── eksa-system
+    │       └── eksa-cluster.yaml
+    └── workload-cluster-2
+        └── eksa-system
+            └── eksa-cluster.yaml
+```
+*By default, Flux kustomization reconciles at the management cluster's root level (`./clusters/management-cluster`), so both management and all its workload clusters are synced.*
+
+To upgrade an existing GitOps enabled cluster that was created with older release (v0.5.0 and below), a manual Git repo update is needed before running the upgrade command. User needs to bring the eksa cluster config into a subfolder under the management cluster's root level (shown as above). And update the `clusterConfigPath` field in the `eksa-cluster.yaml`, to reflect the new path that holds the `eksa-system` directory. e.g.
+
+```yaml
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: GitOpsConfig
+metadata:
+  name: management-cluster
+spec:
+  flux:
+    github:
+      clusterConfigPath: clusters/management-cluster/management-cluster # old: clusters/management-cluster
+      ...
+```
+
+After pushing the changes to the Git repo, user can savely run the upgrade command and expect the Flux components to be upgraded.
+
 
 ### Performing a cluster upgrade
 
