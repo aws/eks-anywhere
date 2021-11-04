@@ -77,19 +77,24 @@ If you would like to create a new repo you can [click here](https://github.new) 
 
 If your repository contains multiple cluster specification files, store them in subfolders and specify the [configuration path]({{< relref "../../reference/clusterspec/gitops/#__clusterconfigpath__-optional" >}}) in your cluster specification.
 
-Example repository structure:
+In order to accommodate the management cluster feature, the CLI will now structure the repo directory following a new convention:
+
 ```
 clusters
-├── dev
-│   └── eksa-system
-│       └── eksa-cluster.yaml
-├── prod
-│   └── eksa-system
-│       └── eksa-cluster.yaml
-└── stage
-    └── eksa-system
-        └── eksa-cluster.yaml
+└── management-cluster
+    ├── flux-system
+    │   └── ...
+    ├── management-cluster
+    │   └── eksa-system
+    │       └── eksa-cluster.yaml
+    ├── workload-cluster-1
+    │   └── eksa-system
+    │       └── eksa-cluster.yaml
+    └── workload-cluster-2
+        └── eksa-system
+            └── eksa-cluster.yaml
 ```
+*By default, Flux kustomization reconciles at the management cluster's root level (`./clusters/management-cluster`), so both the management cluster and all of the workload clusters it manages are synced.*
 
 ### Example GitOps cluster configuration
 
