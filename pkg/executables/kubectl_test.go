@@ -1356,3 +1356,28 @@ func TestKubectlSetDaemonSetImage(t *testing.T) {
 
 	tt.Expect(tt.k.SetDaemonSetImage(tt.ctx, tt.cluster.KubeconfigFile, daemonSetName, tt.namespace, container, image)).To(Succeed())
 }
+
+func TestKubectlCheckCAPIProviderExistsNotInstalled(t *testing.T) {
+	tt := newKubectlTest(t)
+	providerName := "providerName"
+	providerNs := "providerNs"
+
+	tt.e.EXPECT().Execute(tt.ctx,
+		[]string{"get", "namespace", fmt.Sprintf("--field-selector=metadata.name=%s", providerNs), "--kubeconfig", tt.cluster.KubeconfigFile}).Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.k.CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, providerName, providerNs))
+}
+
+func TestKubectlCheckCAPIProviderExistsInstalled(t *testing.T) {
+	tt := newKubectlTest(t)
+	providerName := "providerName"
+	providerNs := "providerNs"
+
+	tt.e.EXPECT().Execute(tt.ctx,
+		[]string{"get", "namespace", fmt.Sprintf("--field-selector=metadata.name=%s", providerNs), "--kubeconfig", tt.cluster.KubeconfigFile}).Return(*bytes.NewBufferString("namespace"), nil)
+
+	tt.e.EXPECT().Execute(tt.ctx,
+		[]string{"get", "provider", "--namespace", providerNs, fmt.Sprintf("--field-selector=metadata.name=%s", providerName), "--kubeconfig", tt.cluster.KubeconfigFile})
+
+	tt.Expect(tt.k.CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, providerName, providerNs))
+}
