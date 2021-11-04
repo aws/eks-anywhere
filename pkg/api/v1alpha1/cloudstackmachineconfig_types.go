@@ -25,12 +25,12 @@ import (
 type CloudStackMachineConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Template        string            `json:"template,omitempty"`
-	ComputeOffering string            `json:"computeOffering"`
-	DiskOffering    string            `json:"diskOffering,omitempty"`
-	OSFamily        OSFamily          `json:"osFamily,omitempty"`
-	KeyPairName     string            `json:"keyPairName,omitempty"`
-	Details         map[string]string `json:"details,omitempty"`
+	Template        string              `json:"template,omitempty"`
+	ComputeOffering string              `json:"computeOffering"`
+	DiskOffering    string              `json:"diskOffering,omitempty"`
+	OSFamily        OSFamily            `json:"osFamily,omitempty"`
+	Details         map[string]string   `json:"details,omitempty"`
+	Users           []UserConfiguration `json:"users,omitempty"`
 }
 
 func (c *CloudStackMachineConfig) PauseReconcile() {
@@ -62,6 +62,20 @@ func (c *CloudStackMachineConfig) SetEtcd() {
 func (c *CloudStackMachineConfig) IsEtcd() bool {
 	if s, ok := c.Annotations[etcdAnnotation]; ok {
 		return s == "true"
+	}
+	return false
+}
+
+func (c *CloudStackMachineConfig) SetManagement(clusterName string) {
+	if c.Annotations == nil {
+		c.Annotations = map[string]string{}
+	}
+	c.Annotations[managementAnnotation] = clusterName
+}
+
+func (c *CloudStackMachineConfig) IsManagement() bool {
+	if s, ok := c.Annotations[managementAnnotation]; ok {
+		return s != ""
 	}
 	return false
 }

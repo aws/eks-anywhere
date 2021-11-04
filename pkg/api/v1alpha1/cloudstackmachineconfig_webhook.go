@@ -70,6 +70,13 @@ func validateImmutableFieldsCloudStackMachineConfig(new, old *CloudStackMachineC
 		)
 	}
 
+	if !reflect.DeepEqual(old.Spec.Users, new.Spec.Users) {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "users"), new.Spec.Users, "field is immutable"),
+		)
+	}
+
 	if old.Spec.Template != new.Spec.Template {
 		allErrs = append(
 			allErrs,
@@ -90,13 +97,6 @@ func validateImmutableFieldsCloudStackMachineConfig(new, old *CloudStackMachineC
 		allErrs = append(
 			allErrs,
 			field.Invalid(field.NewPath("spec", "diskOffering"), new.Spec.DiskOffering, "field is immutable"),
-		)
-	}
-
-	if old.Spec.KeyPairName != new.Spec.KeyPairName {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "kePairName"), new.Spec.KeyPairName, "field is immutable"),
 		)
 	}
 

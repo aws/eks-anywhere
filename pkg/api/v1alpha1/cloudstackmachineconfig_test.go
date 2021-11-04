@@ -43,8 +43,11 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						ComputeOffering: "m4-large",
 						DiskOffering:    "ssd-100GB",
 						OSFamily:        Ubuntu,
-						KeyPairName:     "cloudstack-keypair",
-						Details: map[string]string {
+						Users: []UserConfiguration{{
+							Name:              "mySshUsername",
+							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
+						}},
+						Details: map[string]string{
 							"foo": "bar",
 							"key": "value",
 						},
@@ -70,8 +73,11 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						ComputeOffering: "m4-large",
 						DiskOffering:    "ssd-100GB",
 						OSFamily:        Ubuntu,
-						KeyPairName:     "cloudstack-keypair",
-						Details: map[string]string {
+						Users: []UserConfiguration{{
+							Name:              "mySshUsername",
+							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
+						}},
+						Details: map[string]string{
 							"foo": "bar",
 							"key": "value",
 						},
@@ -97,8 +103,11 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						ComputeOffering: "m4-large",
 						DiskOffering:    "ssd-100GB",
 						OSFamily:        Ubuntu,
-						KeyPairName:     "cloudstack-keypair",
-						Details: map[string]string {
+						Users: []UserConfiguration{{
+							Name:              "mySshUsername",
+							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
+						}},
+						Details: map[string]string{
 							"foo": "bar",
 							"key": "value",
 						},
@@ -124,8 +133,11 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						ComputeOffering: "m4-large",
 						DiskOffering:    "ssd-100GB",
 						OSFamily:        Ubuntu,
-						KeyPairName:     "cloudstack-keypair",
-						Details: map[string]string {
+						Users: []UserConfiguration{{
+							Name:              "mySshUsername",
+							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
+						}},
+						Details: map[string]string{
 							"foo": "bar",
 							"key": "value",
 						},
@@ -151,8 +163,11 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						ComputeOffering: "m4-large",
 						DiskOffering:    "ssd-100GB",
 						OSFamily:        Ubuntu,
-						KeyPairName:     "cloudstack-keypair",
-						Details: map[string]string {
+						Users: []UserConfiguration{{
+							Name:              "mySshUsername",
+							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
+						}},
+						Details: map[string]string{
 							"foo": "bar",
 							"key": "value",
 						},
@@ -171,8 +186,11 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						ComputeOffering: "m5-xlarge",
 						DiskOffering:    "ssd-100GB",
 						OSFamily:        Ubuntu,
-						KeyPairName:     "cloudstack-keypair",
-						Details: map[string]string {
+						Users: []UserConfiguration{{
+							Name:              "mySshUsername",
+							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
+						}},
+						Details: map[string]string{
 							"foo": "bar",
 							"key": "value",
 						},

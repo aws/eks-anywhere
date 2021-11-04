@@ -46,14 +46,28 @@ spec:
                 type: object
               diskOffering:
                 type: string
-              keyPairName:
-                type: string
               osFamily:
                 type: string
               template:
                 description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
                   Important: Run "make" to regenerate code after modifying this file'
                 type: string
+              users:
+                items:
+                  description: UserConfiguration defines the configuration of the
+                    user to be added to the VSphere VM
+                  properties:
+                    name:
+                      type: string
+                    sshAuthorizedKeys:
+                      items:
+                        type: string
+                      type: array
+                  required:
+                  - name
+                  - sshAuthorizedKeys
+                  type: object
+                type: array
             required:
             - computeOffering
             type: object

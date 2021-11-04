@@ -25,8 +25,11 @@ func NewCloudStackMachineConfigGenerate(name string) *CloudStackMachineConfigGen
 			Template:        "CloudStack template name",
 			ComputeOffering: "CloudStack compute offering name",
 			DiskOffering:    "CloudStack disk offering name",
-			KeyPairName:     "cloudstack keypair name",
-			Details: map[string]string {
+			Users: []UserConfiguration{{
+				Name:              "ec2-user",
+				SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},
+			}},
+			Details: map[string]string{
 				"foo": "bar",
 				"key": "value",
 			},
