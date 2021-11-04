@@ -4,131 +4,153 @@ weight: 40
 ---
 
 EKS Anywhere supports a vSphere provider for production grade EKS Anywhere deployments.
-The purpose of this doc is to walk you through getting set-up with EKS Anywhere.
 EKS Anywhere allows you to provision and manage Amazon EKS on your own infrastructure.
+
+This document walks you through setting up EKS Anywhere in a way that:
+
+* Deploys a management cluster on your vSphere environment
+* Deploys one or more workload clusters from the management cluster
+* Keeps the management cluster in place so you can use it to later upgrade and delete workload clusters
+
+{{% alert title="Important" color="warning" %}}
+
+In the initial release, EKS Anywhere clusters functioned as both workload and management clusters.
+Separating management features into a separate, persistant management cluster
+provides a cleaner model for managing the lifecycle of workload clusters (to create, upgrade, and delete clusters), while workload clusters run user applications.
+This approach also reduces provider permissions for workload clusters.
+
+{{% /alert %}}
 
 ## Prerequisite Checklist
 
 EKS Anywhere needs to be run on an administrative machine that has certain [machine
 requirements]({{< relref "../install" >}}).
 An EKS Anywhere deployment will also require the availability of certain
-[resources from your VMware vSphere deployment]({{< relref "../../reference/vsphere/vsphere-prereq/_index.md" >}}).
+[resources from your VMware vSphere deployment]({{< relref "/docs/reference/vsphere/vsphere-prereq/_index.md" >}}).
 
 ## Steps
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
-1. Generate a cluster config
+1. Generate a management cluster config:
    ```bash
-   CLUSTER_NAME=prod
+   CLUSTER_NAME=mgmt
    eksctl anywhere generate clusterconfig $CLUSTER_NAME \
-      --provider vsphere > eksa-cluster.yaml
+      --provider vsphere > eksa-mgmt-cluster.yaml
    ```
 
-    A production grade EKS Anywhere cluster should be made with at least three control plane nodes and three worker nodes
-    for high availability and rolling upgrades:
-    ```
-      controlPlaneConfiguration:
-        count: 2
-        endpoint:
-          host: "192.168.0.20"
-        machineGroupRef:
-          kind: VSphereMachineConfig
-          name: prod-control-plane
-      externalEtcdConfiguration:
-        count: 3
-        machineGroupRef:
-          kind: VSphereMachineConfig
-          name: prod-etcd
-      workerNodeGroupConfigurations:
-        - count: 2
-          machineGroupRef:
-            kind: VSphereMachineConfig
-            name: prod-data-plane
-    ```
+1. Modify the management cluster config (`eksa-mgmt-cluster.yaml`) as follows:
 
-    Further information about the values in the `eksa-cluster.yaml` can be found in the [cluster specification
-    reference]({{< relref "../../reference/clusterspec/vsphere.md" >}})
+   * Refer to [vsphere configuration]({{< relref "../../reference/clusterspec/vsphere.md" >}}) for information on configuring this cluster config for a vSphere provider.
+   * Create at least two control plane nodes, three worker nodes, and three etcd nodes for a production cluster, to provide high availability and rolling upgrades.
+   * Optionally, configure the cluster for [OIDC]({{< relref "(/docs/reference/clusterspec/oidc.md" >}}), [etcd]({{< relref "(/docs/reference/clusterspec/etcd.md" >}}), [proxy]({{< relref "(/docs/reference/clusterspec/proxy.md" >}}), [gitops]({{< relref "(/docs/reference/clusterspec/gitops.md" >}}) and/or [a container registry mirror]({{< relref "/docs/reference/clusterspec/registrymirror.md" >}}).
 
 1. Set Credential Environment Variables
 
-   Before you create a cluster, you will need to set and export these environment variables for your vSphere user
-   name and password. Make sure you use single quotes around the values so that your shell does not interpret the values:
+   Before you create a workload cluster, you will need to set and export these environment variables for your vSphere user name and password.
+Make sure you use single quotes around the values so that your shell does not interpret the values:
    
    ```bash
    export EKSA_VSPHERE_USERNAME='billy'
    export EKSA_VSPHERE_PASSWORD='t0p$ecret'
    ```
 
-   EKS Anywhere clusters function as both workload and management clusters.
-   Management clusters are responsible for the lifecycle of workload clusters (i.e. create, upgrade, and delete clusters), while workload clusters run user applications.
+1. Create a management cluster
 
-   Future versions of EKS Anywhere will enable users to create a dedicated management cluster that will govern multiple workload clusters allowing for segmentation of different cluster types.
-
-1. Create a cluster
-
-   After you have created your `eks-cluster.yaml` and set your credential environment variables, you will be ready
-   to create a cluster:
+   After you have created your `eksa-mgmt-cluster.yaml` and set your credential environment variables, you will be ready to create a management cluster:
    ```bash
-   eksctl anywhere create cluster -f eksa-cluster.yaml
-   ```
-   Example command output
-   ```
-    Performing setup and validations
-    ✅ Connected to server
-    ✅ Authenticated to vSphere
-    ✅ datacenter validated
-    ✅ datastore validated
-    ✅ folder validated
-    ✅ resource pool validated
-    ✅ network validated
-    ✅ Template validated
-    ✅ validation succeeded	{"validation": "vsphere Provider setup is valid"}
-    Creating new bootstrap cluster
-    Installing cluster-api providers on bootstrap cluster
-    Provider specific setup
-    Creating new workload cluster
-    Installing networking on workload cluster
-    Installing storage class on workload cluster
-    Installing cluster-api providers on workload cluster
-    Moving cluster management from bootstrap to workload cluster
-    Installing EKS-A custom components (CRD and controller) on workload cluster
-    Creating EKS-A CRDs instances on workload cluster
-    Installing AddonManager and GitOps Toolkit on workload cluster
-    GitOps field not specified, bootstrap flux skipped
-    Deleting bootstrap cluster
-    🎉 Cluster created!
+   eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml
    ```
 
-1. Use the cluster
-
-   Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory
+1. Once the management cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
 
    ```bash
    export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
-   kubectl get ns
    ```
-   Example command output
-   ```
-    NAME                                STATUS   AGE
-    capi-kubeadm-bootstrap-system       Active   4m26s
-    capi-kubeadm-control-plane-system   Active   4m19s
-    capi-system                         Active   4m36s
-    capi-webhook-system                 Active   4m46s
-    capv-system                         Active   4m4s
-    cert-manager                        Active   5m40s
-    default                             Active   12m
-    eksa-system                         Active   3m7s
-    kube-node-lease                     Active   12m
-    kube-public                         Active   12m
-    kube-system                         Active   12m
-   ```
+1. Check the management cluster nodes:
 
-   You can now use the cluster like you would any Kubernetes cluster.
-   Deploy the test application with:
+   To check that the cluster completed, list the machines to see the control plane, etcd, and worker nodes:
 
    ```bash
+   kubectl get machines -A
+   ```
+
+   Example command output
+   ```
+   NAMESPACE   NAME                PROVIDERID        PHASE    VERSION
+   eksa-system mgmt-b2xyz          vsphere:/xxxxx    Running  v1.21.2-eks-1-21-5
+   eksa-system mgmt-etcd-r9b42     vsphere:/xxxxx    Running  
+   eksa-system mgmt-md-8-6xr-rnr   vsphere:/xxxxx    Running  v1.21.2-eks-1-21-5
+   ...
+   ```
+
+   The etcd machine doesn't show the Kubernetes version because it doesn't run the kubelet service.
+
+1. Check the management cluster CRD:
+
+   To ensure you are looking at the management cluster, list the CRD to see that the name of its management cluster is itself:
+
+   ```bash
+   kubectl get clusters mgmt -o yaml
+   ```
+
+   Example command output
+   ```
+   ...
+   kubernetesVersion: "1.21"
+   managementCluster:
+     name: mgmt
+   workerNodeGroupConfigurations:
+   ...
+   ```
+
+   {{% alert title="Note" color="primary" %}}
+   The management cluster is now ready to deploy workload clusters.
+   However, if you just want to use it for testing or demos, you can deploy pod workloads directly on the management cluster without deploying a separate workload cluster.
+   {{% /alert %}}
+
+
+1. Generate a workload cluster config:
+   ```bash
+   CLUSTER_NAME=w01
+   eksctl anywhere generate clusterconfig $CLUSTER_NAME \
+      --provider vsphere > eksa-w01-cluster.yaml
+   ```
+
+   Refer to the management config described earlier for the required and optional settings.
+   The main difference is that you must have a new cluster name and cannot use the same vSphere resources.
+
+
+1. Create a workload cluster
+
+   To create a new workload cluster from your management cluster run this command, identifying:
+
+   * The workload cluster yaml file
+   * The management cluster credentials (this causes the workload cluster to be managed from the management cluster)
+
+
+   ```bash
+   eksctl anywhere create cluster \
+       -f eksa-w01-cluster.yaml  \
+       --kubeconfig mgmt/mgmt-eks-a-cluster.kubeconfig
+   ```
+
+   As noted earlier, adding the `--kubeconfig` option tells `eksctl` to use the management cluster identified by that kubeconfig file to create a different workload cluster.
+
+1. Check the workload cluster:
+
+   You can now use the workload cluster as you would any Kubernetes cluster.
+   Change your credentials to point to the new workload cluster (for example, `mgmt-w01`), then run the test application with:
+
+   ```bash
+   export CLUSTER_NAME=mgmt-w01
+   export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
    kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
    ```
 
    Verify the test application in the [deploy test application section]({{< relref "../../tasks/workload/test-app" >}}).
-   See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section with more information on common operational tasks like scaling and deleting the cluster.
+
+1. Add more workload clusters:
+
+   To add more workload clusters, go through the same steps for creating the initial workload, copying the config file to a new name (such as `eksa-w02-cluster.yaml`), modifying resource names, and running the create cluster command again.
+
+See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section with more information on common operational tasks like scaling and deleting the cluster.
