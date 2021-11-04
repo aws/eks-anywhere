@@ -112,9 +112,18 @@ func (e *ClusterE2ETest) ImportImages() {
 }
 
 func (e *ClusterE2ETest) CreateCluster() {
+	e.createCluster()
+}
+
+func (e *ClusterE2ETest) createCluster(opts ...commandOpt) {
+	e.T.Logf("Creating cluster %s", e.ClusterName)
 	createClusterArgs := []string{"anywhere", "create", "cluster", "-f", e.ClusterConfigLocation, "-v", "4"}
 	if getBundlesOverride() == "true" {
 		createClusterArgs = append(createClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
+	}
+
+	for _, o := range opts {
+		o(&createClusterArgs)
 	}
 
 	e.RunEKSA(createClusterArgs...)
