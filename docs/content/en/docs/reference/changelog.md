@@ -6,9 +6,6 @@ menu:
   main:
     weight: 10
 ---
-
-# What's New?
-
 ## [Unreleased]
 
 ### Added
