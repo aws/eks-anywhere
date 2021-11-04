@@ -10,11 +10,7 @@ import (
 )
 
 func GetBuildComponentVersionFunc(isDevRelease bool) generateComponentBundleVersion {
-	if isDevRelease {
-		return buildComponentVersionForDev
-	} else {
-		return buildComponentVersionForProd
-	}
+	return buildComponentVersionForDev
 }
 
 func buildComponentVersionForDev(versioner projectVersioner) (string, error) {
