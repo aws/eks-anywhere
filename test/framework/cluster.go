@@ -219,7 +219,16 @@ func (e *ClusterE2ETest) buildClusterConfigFile() {
 }
 
 func (e *ClusterE2ETest) DeleteCluster() {
-	e.RunEKSA("anywhere", "delete", "cluster", e.ClusterName, "-v", "4")
+	e.deleteCluster()
+}
+
+func (e *ClusterE2ETest) deleteCluster(opts ...commandOpt) {
+	deleteClusterArgs := []string{"anywhere", "delete", "cluster", e.ClusterName, "-v", "4"}
+	for _, o := range opts {
+		o(&deleteClusterArgs)
+	}
+
+	e.RunEKSA(deleteClusterArgs...)
 }
 
 func (e *ClusterE2ETest) Run(name string, args ...string) {
