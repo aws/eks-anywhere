@@ -204,14 +204,16 @@ func (e *ClusterE2ETest) buildClusterConfigFile() {
 		}
 		yamlB = append(yamlB, gitOpsConfigB)
 	}
-	writer, err := filewriter.NewWriter(filepath.Dir(e.ClusterConfigLocation))
+
+	clusterConfigFolder := fmt.Sprintf("%s-config", e.ClusterName)
+	writer, err := filewriter.NewWriter(clusterConfigFolder)
 	if err != nil {
 		e.T.Fatalf("Error creating writer: %v", err)
 	}
 
 	b := templater.AppendYamlResources(yamlB...)
 
-	writtenFile, err := writer.Write(filepath.Base(e.ClusterConfigLocation), b)
+	writtenFile, err := writer.Write(filepath.Base(e.ClusterConfigLocation), b, filewriter.PersistentFile)
 	if err != nil {
 		e.T.Fatalf("Error writing cluster config to file %s: %v", e.ClusterConfigLocation, err)
 	}
