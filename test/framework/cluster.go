@@ -165,6 +165,10 @@ func WithClusterUpgrade(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 }
 
 func (e *ClusterE2ETest) UpgradeCluster(opts ...ClusterE2ETestOpt) {
+	e.upgradeCluster(nil, opts...)
+}
+
+func (e *ClusterE2ETest) upgradeCluster(commandOpts []commandOpt, opts ...ClusterE2ETestOpt) {
 	for _, opt := range opts {
 		opt(e)
 	}
@@ -174,6 +178,11 @@ func (e *ClusterE2ETest) UpgradeCluster(opts ...ClusterE2ETestOpt) {
 	if getBundlesOverride() == "true" {
 		upgradeClusterArgs = append(upgradeClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
 	}
+
+	for _, o := range commandOpts {
+		o(&upgradeClusterArgs)
+	}
+
 	e.RunEKSA(upgradeClusterArgs...)
 }
 
