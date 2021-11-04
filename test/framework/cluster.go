@@ -2,6 +2,7 @@ package framework
 
 import (
 	"context"
+	"crypto/sha1"
 	_ "embed"
 	"fmt"
 	"os"
@@ -59,7 +60,7 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 		T:                     t,
 		Provider:              provider,
 		ClusterConfigLocation: defaultClusterConfigFile,
-		ClusterName:           getClusterName(),
+		ClusterName:           getClusterName(t),
 		clusterFillers:        make([]api.ClusterFiller, 0),
 		KubectlClient:         buildKubectl(t),
 	}
@@ -335,10 +336,15 @@ func (e *ClusterE2ETest) getJobIdFromEnv() string {
 	return os.Getenv(JobIdVar)
 }
 
-func getClusterName() string {
+func getClusterName(t *testing.T) string {
 	value := os.Getenv(ClusterNameVar)
 	if len(value) == 0 {
-		return defaultClusterName
+		h := sha1.New()
+		h.Write([]byte(t.Name()))
+		testNameHash := fmt.Sprintf("%x", h.Sum(nil))
+		// Append hash to make each cluster name unique per test. Using the testname will be too long
+		// and would fail validations
+		return fmt.Sprintf("%s-%s", testNameHash[:7], defaultClusterName)
 	}
 	return value
 }
