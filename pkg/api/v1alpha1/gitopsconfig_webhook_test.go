@@ -19,6 +19,16 @@ func TestClusterValidateUpdateGitOpsRepoImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&gOld)).NotTo(Succeed())
 }
 
+func TestClusterValidateUpdateGitOpsPathMutable(t *testing.T) {
+	gOld := gitOpsConfig()
+	gOld.Spec.Flux.Github.ClusterConfigPath = "oldPath"
+	c := gOld.DeepCopy()
+
+	c.Spec.Flux.Github.ClusterConfigPath = "newPath"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&gOld)).To(Succeed())
+}
+
 func TestClusterValidateUpdateGitOpsBranchImmutable(t *testing.T) {
 	gOld := gitOpsConfig()
 	gOld.Spec.Flux.Github.Branch = "oldMain"
