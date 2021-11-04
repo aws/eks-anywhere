@@ -74,9 +74,9 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 	return e
 }
 
-func WithClusterFiller(f api.ClusterFiller) ClusterE2ETestOpt {
+func WithClusterFiller(f ...api.ClusterFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		e.clusterFillers = append(e.clusterFillers, f)
+		e.clusterFillers = append(e.clusterFillers, f...)
 	}
 }
 
