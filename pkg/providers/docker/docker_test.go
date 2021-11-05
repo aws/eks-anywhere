@@ -142,6 +142,21 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 			wantMDFile: "testdata/valid_deployment_custom_cidrs_md_expected.yaml",
 		},
 		{
+			testName: "valid config with bundle version change",
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Name = "test-cluster"
+				s.Spec.KubernetesVersion = "1.19"
+				s.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+				s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
+				s.Spec.ControlPlaneConfiguration.Count = 3
+				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+				s.VersionsBundle = versionsBundle
+				s.Bundles.Spec.Number = 2
+			}),
+			wantCPFile: "testdata/valid_deployment_cp_expected.yaml",
+			wantMDFile: "testdata/valid_deployment_md_expected.yaml",
+		},
+		{
 			testName: "with minimal oidc",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Name = "test-cluster"
@@ -205,7 +220,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				Name: "test",
 			}
 			currentSpec := tt.clusterSpec.DeepCopy()
-			tt.clusterSpec.Bundles.Spec.Number = 2
+			currentSpec.Bundles.Spec.Number = 1
 			bootstrapCluster := &types.Cluster{
 				Name: "bootstrap-test",
 			}
