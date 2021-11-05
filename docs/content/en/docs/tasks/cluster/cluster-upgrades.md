@@ -72,7 +72,7 @@ Before running the `upgrade` command on an existing GitOps enabled cluster, you 
           clusterConfigPath: clusters/management-cluster/management-cluster # old: clusters/management-cluster
           ...
     ```
-4. wait untill the change is reflected in the cluster, then recreate the EKS-A validating webhook
+4. wait until the change is reflected in the cluster, then recreate the EKS-A validating webhook
     ```sh
     kubectl apply -f eksa-validating-webhook.yaml
     ```
