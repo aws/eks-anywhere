@@ -63,38 +63,10 @@ func (r *GitOpsConfig) ValidateDelete() error {
 func validateImmutableGitOpsFields(new, old *GitOpsConfig) field.ErrorList {
 	var allErrs field.ErrorList
 
-	if old.Spec.Flux.Github.Owner != new.Spec.Flux.Github.Owner {
+	if !new.Spec.Equal(&old.Spec) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec.flux.github", "owner"), new.Spec.Flux.Github.Owner, "field is immutable"),
-		)
-	}
-
-	if old.Spec.Flux.Github.Repository != new.Spec.Flux.Github.Repository {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec.flux.github", "repository"), new.Spec.Flux.Github.Repository, "field is immutable"),
-		)
-	}
-
-	if old.Spec.Flux.Github.FluxSystemNamespace != new.Spec.Flux.Github.FluxSystemNamespace {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec.flux.github", "fluxSystemNamespace"), new.Spec.Flux.Github.FluxSystemNamespace, "field is immutable"),
-		)
-	}
-
-	if old.Spec.Flux.Github.Branch != new.Spec.Flux.Github.Branch {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec.flux.github", "branch"), new.Spec.Flux.Github.Branch, "field is immutable"),
-		)
-	}
-
-	if old.Spec.Flux.Github.Personal != new.Spec.Flux.Github.Personal {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec.flux.github", "personal"), new.Spec.Flux.Github.Personal, "field is immutable"),
+			field.Invalid(field.NewPath("spec", "GitOpsConfig"), new, "config is immutable"),
 		)
 	}
 
