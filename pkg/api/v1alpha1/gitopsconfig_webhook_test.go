@@ -19,22 +19,12 @@ func TestClusterValidateUpdateGitOpsRepoImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&gOld)).NotTo(Succeed())
 }
 
-func TestClusterValidateUpdateGitOpsPathMutable(t *testing.T) {
-	gOld := gitOpsConfig()
-	gOld.Spec.Flux.Github.ClusterConfigPath = "oldPath"
-	c := gOld.DeepCopy()
-
-	c.Spec.Flux.Github.ClusterConfigPath = "newPath"
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&gOld)).To(Succeed())
-}
-
 func TestClusterValidateUpdateGitOpsBranchImmutable(t *testing.T) {
 	gOld := gitOpsConfig()
 	gOld.Spec.Flux.Github.Branch = "oldMain"
 	c := gOld.DeepCopy()
 
-	c.Spec.Flux.Github.Repository = "newMain"
+	c.Spec.Flux.Github.Branch = "newMain"
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&gOld)).NotTo(Succeed())
 }
@@ -47,6 +37,17 @@ func TestClusterValidateUpdateGitOpsSubtractionImmutable(t *testing.T) {
 	c.Spec = v1alpha1.GitOpsConfigSpec{}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&gOld)).NotTo(Succeed())
+}
+
+func TestClusterValidateUpdateGitOpsUpdateWithPausedAnnotation(t *testing.T) {
+	gOld := gitOpsConfig()
+	gOld.Spec.Flux.Github.Repository = "oldRepo"
+	c := gOld.DeepCopy()
+	c.Spec.Flux.Github.Repository = "newRepo"
+
+	gOld.PauseReconcile()
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&gOld)).To(Succeed())
 }
 
 func gitOpsConfig() v1alpha1.GitOpsConfig {

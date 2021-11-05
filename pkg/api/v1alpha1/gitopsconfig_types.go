@@ -105,6 +105,20 @@ func (c *GitOpsConfig) ConvertConfigToConfigGenerateStruct() *GitOpsConfigGenera
 	return config
 }
 
+func (v *GitOpsConfig) PauseReconcile() {
+	if v.Annotations == nil {
+		v.Annotations = map[string]string{}
+	}
+	v.Annotations[pausedAnnotation] = "true"
+}
+
+func (v *GitOpsConfig) IsReconcilePaused() bool {
+	if s, ok := v.Annotations[pausedAnnotation]; ok {
+		return s == "true"
+	}
+	return false
+}
+
 func init() {
 	SchemeBuilder.Register(&GitOpsConfig{}, &GitOpsConfigList{})
 }
