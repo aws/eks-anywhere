@@ -51,13 +51,16 @@ Anywhere components mentioned above to their latest available versions. All upgr
 __Upgrading an existing GitOps enabled cluster created by an older release of the EKS-A CLI (v0.5.0 and below) requires a manual update to the git repository structure.__ 
 	
 Before running the `upgrade` command on an existing GitOps enabled cluster, you must:
-1. temporarily disable the EKS Anywhere webhook by 1) saving the eksa validating webhook locally 2) delete it in cluster
+1. temporarily disable the EKS-A validating webhook 
+
+    - save the eksa validating webhook configuration to a local file 
+    - delete the validating webhook from the cluster
     ```sh
     kubectl get validatingwebhookconfigurations.admissionregistration.k8s.io eksa-validating-webhook-configuration -n eksa-system -oyaml > eksa-validating-webhook.yaml
     kubectl delete validatingwebhookconfigurations.admissionregistration.k8s.io eksa-validating-webhook-configuration -n eksa-system
     ```
-2. move the eksa cluster config into a subdirectory under the management cluster's root level, following the [repo directory convention]({{< relref "./cluster-flux/#create-gitops-configuration-repo" >}})
-3. update the `clusterConfigPath` field of the `GitOpsConfig` of the `eksa-cluster.yaml` to reflect the new path of the `eksa-system` directory. For example:
+2. move the EKS-A cluster configuration file into a subdirectory under the management cluster's root level, following the [repo directory convention]({{< relref "./cluster-flux/#create-gitops-configuration-repo" >}})
+3. update the version controlled cluster configuration file, `eksa-cluster.yaml`, so that the `clusterConfigPath` field of the `GitOpsConfig` reflects the new path of the `eksa-system` directory. For example:
     ```yaml
     apiVersion: anywhere.eks.amazonaws.com/v1alpha1
     kind: GitOpsConfig
@@ -69,7 +72,7 @@ Before running the `upgrade` command on an existing GitOps enabled cluster, you 
           clusterConfigPath: clusters/management-cluster/management-cluster # old: clusters/management-cluster
           ...
     ```
-3. wait till the change is reflected in the cluster, then recreate the eksa validating webhook
+4. wait untill the change is reflected in the cluster, then recreate the EKS-A validating webhook
     ```sh
     kubectl apply -f eksa-validating-webhook.yaml
     ```
