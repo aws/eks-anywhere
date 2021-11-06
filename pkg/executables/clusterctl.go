@@ -94,25 +94,20 @@ func buildOverridesLayer(clusterSpec *cluster.Spec, clusterName string, provider
 				bundle.ControlPlane.Metadata,
 			},
 		},
-	}
-
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
-		infraBundles = append(infraBundles, []types.InfrastructureBundle{
-			{
-				FolderName: filepath.Join("bootstrap-etcdadm-bootstrap", bundle.ExternalEtcdBootstrap.Version),
-				Manifests: []v1alpha1.Manifest{
-					bundle.ExternalEtcdBootstrap.Components,
-					bundle.ExternalEtcdBootstrap.Metadata,
-				},
+		{
+			FolderName: filepath.Join("bootstrap-etcdadm-bootstrap", bundle.ExternalEtcdBootstrap.Version),
+			Manifests: []v1alpha1.Manifest{
+				bundle.ExternalEtcdBootstrap.Components,
+				bundle.ExternalEtcdBootstrap.Metadata,
 			},
-			{
-				FolderName: filepath.Join("bootstrap-etcdadm-controller", bundle.ExternalEtcdController.Version),
-				Manifests: []v1alpha1.Manifest{
-					bundle.ExternalEtcdController.Components,
-					bundle.ExternalEtcdController.Metadata,
-				},
+		},
+		{
+			FolderName: filepath.Join("bootstrap-etcdadm-controller", bundle.ExternalEtcdController.Version),
+			Manifests: []v1alpha1.Manifest{
+				bundle.ExternalEtcdController.Components,
+				bundle.ExternalEtcdController.Metadata,
 			},
-		}...)
+		},
 	}
 
 	infraBundles = append(infraBundles, *provider.GetInfrastructureBundle(clusterSpec))
@@ -191,15 +186,14 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, clusterSpec *cluste
 		"--control-plane", clusterctlConfig.controlPlaneVersion,
 		"--infrastructure", fmt.Sprintf("%s:%s", provider.Name(), provider.Version(clusterSpec)),
 		"--config", clusterctlConfig.configFile,
+		"--bootstrap", clusterctlConfig.etcdadmBootstrapVersion,
+		"--bootstrap", clusterctlConfig.etcdadmControllerVersion,
 	}
 	// Not supported for docker controllers at this time
 	if clusterSpec.Spec.DatacenterRef.Kind != anywherev1alpha1.DockerDatacenterKind {
 		params = append(params, "--watching-namespace", constants.EksaSystemNamespace)
 	}
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
-		params = append(params, "--bootstrap", clusterctlConfig.etcdadmBootstrapVersion,
-			"--bootstrap", clusterctlConfig.etcdadmControllerVersion)
-	}
+
 	if cluster.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
 	}
@@ -233,6 +227,7 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		"CertManagerControllerTag":                        bundle.CertManager.Controller.Tag(),
 		"CertManagerWebhookRepository":                    imageRepository(bundle.CertManager.Webhook),
 		"CertManagerWebhookTag":                           bundle.CertManager.Webhook.Tag(),
+		"CertManagerVersion":                              bundle.CertManager.Version,
 		"ClusterApiControllerRepository":                  imageRepository(bundle.ClusterAPI.Controller),
 		"ClusterApiControllerTag":                         bundle.ClusterAPI.Controller.Tag(),
 		"ClusterApiKubeRbacProxyRepository":               imageRepository(bundle.ClusterAPI.KubeProxy),
@@ -298,8 +293,8 @@ var providerNamespaces = map[string]string{
 	constants.VSphereProviderName: constants.CapvSystemNamespace,
 	constants.DockerProviderName:  constants.CapdSystemNamespace,
 	constants.AWSProviderName:     constants.CapaSystemNamespace,
-	etcdadmBootstrapProviderName:  constants.EtcdAdminBootstrapProviderSystemNamespace,
-	etcdadmControllerProviderName: constants.EtcdAdminControllerSystemNamespace,
+	etcdadmBootstrapProviderName:  constants.EtcdAdmBootstrapProviderSystemNamespace,
+	etcdadmControllerProviderName: constants.EtcdAdmControllerSystemNamespace,
 	kubeadmBootstrapProviderName:  constants.CapiKubeadmBootstrapSystemNamespace,
 }
 
@@ -341,6 +336,56 @@ func (c *Clusterctl) Upgrade(ctx context.Context, managementCluster *types.Clust
 
 	if _, err = c.executable.ExecuteWithEnv(ctx, providerEnvMap, upgradeCommand...); err != nil {
 		return fmt.Errorf("failed running upgrade apply with clusterctl: %v", err)
+	}
+
+	return nil
+}
+
+func (c *Clusterctl) InstallEtcdadmProviders(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, infraProvider providers.Provider, installProviders []string) error {
+	if cluster == nil {
+		return fmt.Errorf("invalid cluster (nil)")
+	}
+	if cluster.Name == "" {
+		return fmt.Errorf("invalid cluster name '%s'", cluster.Name)
+	}
+	clusterctlConfig, err := c.buildConfig(clusterSpec, cluster.Name, infraProvider)
+	if err != nil {
+		return err
+	}
+
+	params := []string{
+		"init",
+		"--config", clusterctlConfig.configFile,
+	}
+
+	for _, provider := range installProviders {
+		switch provider {
+		case constants.EtcdAdmBootstrapProviderName:
+			params = append(params, "--bootstrap", clusterctlConfig.etcdadmBootstrapVersion)
+		case constants.EtcdadmControllerProviderName:
+			params = append(params, "--bootstrap", clusterctlConfig.etcdadmControllerVersion)
+		default:
+			return fmt.Errorf("unrecognized capi provider %s", provider)
+		}
+	}
+
+	// Not supported for docker controllers at this time
+	if clusterSpec.Spec.DatacenterRef.Kind != anywherev1alpha1.DockerDatacenterKind {
+		params = append(params, "--watching-namespace", constants.EksaSystemNamespace)
+	}
+
+	if cluster.KubeconfigFile != "" {
+		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
+	}
+
+	envMap, err := infraProvider.EnvMap()
+	if err != nil {
+		return err
+	}
+
+	_, err = c.executable.ExecuteWithEnv(ctx, envMap, params...)
+	if err != nil {
+		return fmt.Errorf("error executing init: %v", err)
 	}
 
 	return nil

@@ -34,10 +34,7 @@ metadata:
   name: eksa-unit-test
 spec:
   datacenter: "myDatacenter"
-  datastore: "myDatastore"
-  folder: "myFolder"
   network: "myNetwork"
-  resourcePool: "myResourcePool"
   server: "myServer"
   insecure: false
   thumbprint: "myTlsThumbprint"

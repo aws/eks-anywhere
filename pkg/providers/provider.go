@@ -13,10 +13,10 @@ type Provider interface {
 	Name() string
 	SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error
 	SetupAndValidateDeleteCluster(ctx context.Context) error
-	SetupAndValidateUpgradeCluster(ctx context.Context, clusterSpec *cluster.Spec) error
+	SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	UpdateSecrets(ctx context.Context, cluster *types.Cluster) error
 	GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
-	GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
+	GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currrentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
 	GenerateStorageClass() []byte
 	BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error
 	CleanupProviderInfrastructure(ctx context.Context) error
@@ -33,6 +33,9 @@ type Provider interface {
 	ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	GenerateMHC() ([]byte, error)
 	ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff
+	RunPostUpgrade(ctx context.Context, clusterSpec *cluster.Spec, managementCluster, workloadCluster *types.Cluster) error
+	UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error)
+	DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error
 }
 
 type DatacenterConfig interface {
@@ -55,4 +58,6 @@ type TemplateBuilder interface {
 type MachineConfig interface {
 	OSFamily() v1alpha1.OSFamily
 	Marshallable() v1alpha1.Marshallable
+	GetNamespace() string
+	GetName() string
 }

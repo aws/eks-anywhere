@@ -5,7 +5,6 @@ import (
 )
 
 const (
-	ComponentsUpgradesEnvVar  = "COMPONENTS_UPGRADE"
 	AwsIamAuthenticatorEnvVar = "AWS_IAM_AUTHENTICATOR"
 )
 
@@ -29,13 +28,6 @@ func isActiveForEnvVar(envVar string) func() bool {
 		}
 
 		return active
-	}
-}
-
-func ComponentsUpgrade() Feature {
-	return Feature{
-		Name:     "Core components upgrade",
-		IsActive: isActiveForEnvVar(ComponentsUpgradesEnvVar),
 	}
 }
 

@@ -20,19 +20,21 @@ type Task interface {
 
 // Command context maintains the mutable and shared entities
 type CommandContext struct {
-	Bootstrapper     interfaces.Bootstrapper
-	Provider         providers.Provider
-	ClusterManager   interfaces.ClusterManager
-	AddonManager     interfaces.AddonManager
-	Validations      interfaces.Validator
-	Writer           filewriter.FileWriter
-	CAPIUpgrader     interfaces.CAPIUpgrader
-	ClusterSpec      *cluster.Spec
-	BootstrapCluster *types.Cluster
-	WorkloadCluster  *types.Cluster
-	Profiler         *Profiler
-	Rollback         bool
-	OriginalError    error
+	Bootstrapper       interfaces.Bootstrapper
+	Provider           providers.Provider
+	ClusterManager     interfaces.ClusterManager
+	AddonManager       interfaces.AddonManager
+	Validations        interfaces.Validator
+	Writer             filewriter.FileWriter
+	CAPIManager        interfaces.CAPIManager
+	ClusterSpec        *cluster.Spec
+	CurrentClusterSpec *cluster.Spec
+	UpgradeChangeDiff  *types.ChangeDiff
+	BootstrapCluster   *types.Cluster
+	WorkloadCluster    *types.Cluster
+	Profiler           *Profiler
+	Rollback           bool
+	OriginalError      error
 }
 
 func (c *CommandContext) SetError(err error) {

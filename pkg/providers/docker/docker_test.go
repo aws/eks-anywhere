@@ -204,16 +204,12 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 			cluster := &types.Cluster{
 				Name: "test",
 			}
+			currentSpec := tt.clusterSpec.DeepCopy()
+			tt.clusterSpec.Bundles.Spec.Number = 2
 			bootstrapCluster := &types.Cluster{
 				Name: "bootstrap-test",
 			}
-			oriCluster := &v1alpha1.Cluster{
-				Spec: v1alpha1.ClusterSpec{
-					KubernetesVersion: v1alpha1.Kube118,
-				},
-			}
-			kubectl.EXPECT().GetEksaCluster(ctx, cluster, tt.clusterSpec.Name).Return(oriCluster, nil)
-			cpContent, mdContent, err := p.GenerateCAPISpecForUpgrade(ctx, bootstrapCluster, cluster, tt.clusterSpec)
+			cpContent, mdContent, err := p.GenerateCAPISpecForUpgrade(ctx, bootstrapCluster, cluster, currentSpec, tt.clusterSpec)
 			if err != nil {
 				t.Fatalf("provider.GenerateCAPISpecForUpgrade() error = %v, wantErr nil", err)
 			}
@@ -235,6 +231,7 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 	cluster := &types.Cluster{
 		Name: "test",
 	}
+	currentSpec := clusterSpec.DeepCopy()
 	bootstrapCluster := &types.Cluster{
 		Name: "bootstrap-test",
 	}
@@ -258,11 +255,10 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 		},
 	}
 
-	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Name).Return(clusterSpec.Cluster, nil)
 	kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, cluster.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(cp, nil)
 	kubectl.EXPECT().GetMachineDeployment(ctx, cluster, clusterSpec.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(md, nil)
 
-	cpContent, mdContent, err := p.GenerateCAPISpecForUpgrade(ctx, bootstrapCluster, cluster, clusterSpec)
+	cpContent, mdContent, err := p.GenerateCAPISpecForUpgrade(ctx, bootstrapCluster, cluster, currentSpec, clusterSpec)
 	if err != nil {
 		t.Fatalf("provider.GenerateCAPISpecForUpgrade() error = %v, wantErr nil", err)
 	}

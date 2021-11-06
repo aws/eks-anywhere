@@ -36,7 +36,7 @@ EKS Anywhere `upgrade` also supports upgrading the following core components:
 * Cert-manager
 * Etcdadm CAPI provider
 * EKS Anywhere controllers and CRDs
-* Gitops controller (Flux) - this is an optional component, will be upgraded only if specified
+* GitOps controllers (Flux) - this is an optional component, will be upgraded only if specified
 
 The latest versions of these core EKS Anywhere components are embedded into a bundles manifest that the CLI uses to fetch the latest versions 
 and image builds needed for each component upgrade. 
@@ -44,7 +44,41 @@ The command detects both component version changes and new builds of the same ve
 If there is a new Kubernetes version that is going to get rolled out, the core components get upgraded before the Kubernetes
 version. 
 Irrespective of a Kubernetes version change, the upgrade command will always upgrade the internal EKS
-Anywhere components mentioned above to their latest available versions. These upgrade changes are backwards compatible.
+Anywhere components mentioned above to their latest available versions. All upgrade changes are backwards compatible except GitOps.
+
+#### GitOps controller upgrade
+
+__Upgrading an existing GitOps enabled cluster created by an older release of the EKS-A CLI (v0.5.0 and below) requires a manual update to the git repository structure.__ 
+	
+Before running the `upgrade` command on an existing GitOps enabled cluster, you must:
+1. temporarily disable the EKS-A validating webhook 
+
+    - save the eksa validating webhook configuration to a local file 
+    - delete the validating webhook from the cluster
+    ```sh
+    kubectl get validatingwebhookconfigurations.admissionregistration.k8s.io eksa-validating-webhook-configuration -n eksa-system -oyaml > eksa-validating-webhook.yaml
+    kubectl delete validatingwebhookconfigurations.admissionregistration.k8s.io eksa-validating-webhook-configuration -n eksa-system
+    ```
+2. move the EKS-A cluster configuration file into a subdirectory under the management cluster's root level, following the [repo directory convention]({{< relref "./cluster-flux/#create-gitops-configuration-repo" >}})
+3. update the version controlled cluster configuration file, `eksa-cluster.yaml`, so that the `clusterConfigPath` field of the `GitOpsConfig` reflects the new path of the `eksa-system` directory. For example:
+    ```yaml
+    apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+    kind: GitOpsConfig
+    metadata:
+      name: management-cluster
+    spec:
+      flux:
+        github:
+          clusterConfigPath: clusters/management-cluster/management-cluster # old: clusters/management-cluster
+          ...
+    ```
+4. wait until the change is reflected in the cluster, then recreate the EKS-A validating webhook
+    ```sh
+    kubectl apply -f eksa-validating-webhook.yaml
+    ```
+
+After pushing the changes to the git repo, user can safely run the `upgrade` command, and the Flux components will be upgraded.
+
 
 ### Performing a cluster upgrade
 
@@ -109,8 +143,6 @@ GitOps not configured, force reconcile flux git repo skipped
 Resuming Flux kustomization
 GitOps field not specified, resume flux kustomization skipped
 ```
-You can see which components were upgraded by running `kubectl get pods -A` and observing the updated `Age` for the upgraded components.
-
 
 ### Upgradeable Cluster Attributes
 EKS Anywhere `upgrade` supports upgrading more than just the `kubernetesVersion`, 

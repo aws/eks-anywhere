@@ -2,7 +2,7 @@
 ** cloud.google.com/go/compute/metadata; version v0.54.0 --
 https://github.com/googleapis/google-cloud-go
 
-** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20210810165539-7d41d9b36b74 --
+** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
 https://github.com/aws/eks-distro-build-tooling/release
 
 ** github.com/Azure/go-autorest/autorest; version v0.11.12 --
@@ -43,6 +43,9 @@ https://github.com/go-logr/zapr
 
 ** github.com/golang/groupcache/lru; version v0.0.0-20210331224755-41bb18bfe9da --
 https://github.com/golang/groupcache
+
+** github.com/golang/mock/gomock; version v1.5.0 --
+https://github.com/golang/mock
 
 ** github.com/google/gofuzz; version v1.2.0 --
 https://github.com/google/gofuzz

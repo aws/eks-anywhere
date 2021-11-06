@@ -16,6 +16,7 @@ import (
 	vspherev3 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
 	"sigs.k8s.io/cluster-api/api/v1alpha3"
 	kubeadmnv1alpha3 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -32,6 +33,7 @@ const (
 
 var (
 	capiClustersResourceType          = fmt.Sprintf("clusters.%s", v1alpha3.GroupVersion.Group)
+	eksaClusterResourceType           = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaAwsResourceType               = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -40,6 +42,7 @@ var (
 	eksaAwsIamResourceType            = fmt.Sprintf("awsiamconfigs.%s", v1alpha1.GroupVersion.Group)
 	etcdadmClustersResourceType       = fmt.Sprintf("etcdadmclusters.%s", etcdv1alpha3.GroupVersion.Group)
 	bundlesResourceType               = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
+	clusterResourceSetResourceType    = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
 )
 
 type Kubectl struct {
@@ -179,6 +182,60 @@ func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, f
 		"--for=condition="+forCondition, property, "--kubeconfig", kubeconfig, "-n", namespace)
 	if err != nil {
 		return fmt.Errorf("error executing wait: %v", err)
+	}
+	return nil
+}
+
+func (k *Kubectl) DeleteEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) error {
+	params := []string{"delete", eksaVSphereDatacenterResourceType, vsphereDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error deleting vspheredatacenterconfig cluster %s apply: %v", vsphereDatacenterConfigName, err)
+	}
+	return nil
+}
+
+func (k *Kubectl) DeleteEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) error {
+	params := []string{"delete", eksaVSphereMachineResourceType, vsphereMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error deleting vspheremachineconfig cluster %s apply: %v", vsphereMachineConfigName, err)
+	}
+	return nil
+}
+
+func (k *Kubectl) DeleteEKSACluster(ctx context.Context, managementCluster *types.Cluster, eksaClusterName, eksaClusterNamespace string) error {
+	params := []string{"delete", eksaClusterResourceType, eksaClusterName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", eksaClusterNamespace, "--ignore-not-found=true"}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error deleting eksa cluster %s apply: %v", eksaClusterName, err)
+	}
+	return nil
+}
+
+func (k *Kubectl) DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, gitOpsConfigName, gitOpsConfigNamespace string) error {
+	params := []string{"delete", eksaGitOpsResourceType, gitOpsConfigName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", gitOpsConfigNamespace, "--ignore-not-found=true"}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error deleting gitops config %s apply: %v", gitOpsConfigName, err)
+	}
+	return nil
+}
+
+func (k *Kubectl) DeleteOIDCConfig(ctx context.Context, managementCluster *types.Cluster, oidcConfigName, oidcConfigNamespace string) error {
+	params := []string{"delete", eksaOIDCResourceType, oidcConfigName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", oidcConfigNamespace, "--ignore-not-found=true"}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error deleting oidc config %s apply: %v", oidcConfigName, err)
+	}
+	return nil
+}
+
+func (k *Kubectl) DeleteAWSIamConfig(ctx context.Context, managementCluster *types.Cluster, awsIamConfigName, awsIamConfigNamespace string) error {
+	params := []string{"delete", eksaAwsIamResourceType, awsIamConfigName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", awsIamConfigNamespace, "--ignore-not-found=true"}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error deleting awsIam config %s apply: %v", awsIamConfigName, err)
 	}
 	return nil
 }
@@ -384,11 +441,36 @@ type ClustersResponse struct {
 	Items []types.CAPICluster `json:"items,omitempty"`
 }
 
+type GitOpsConfigResponse struct {
+	Items []*v1alpha1.GitOpsConfig `json:"items,omitempty"`
+}
+
+type VSphereDatacenterConfigResponse struct {
+	Items []*v1alpha1.VSphereDatacenterConfig `json:"items,omitempty"`
+}
+
+type IdentityProviderConfigResponse struct {
+	Items []*v1alpha1.Ref `json:"items,omitempty"`
+}
+
+type VSphereMachineConfigResponse struct {
+	Items []*v1alpha1.VSphereMachineConfig `json:"items,omitempty"`
+}
+
 func (k *Kubectl) ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error {
 	params := []string{"get", "crd", capiClustersResourceType, "--kubeconfig", cluster.KubeconfigFile}
 	_, err := k.executable.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error getting clusters crd: %v", err)
+	}
+	return nil
+}
+
+func (k *Kubectl) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cluster) error {
+	params := []string{"get", "crd", eksaClusterResourceType, "--kubeconfig", cluster.KubeconfigFile}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error getting eksa clusters crd: %v", err)
 	}
 	return nil
 }
@@ -455,7 +537,11 @@ func WithServer(s string) KubectlOpt {
 }
 
 func WithCluster(c *types.Cluster) KubectlOpt {
-	return appendOpt("--kubeconfig", c.KubeconfigFile)
+	return WithKubeconfig(c.KubeconfigFile)
+}
+
+func WithKubeconfig(kubeconfigFile string) KubectlOpt {
+	return appendOpt("--kubeconfig", kubeconfigFile)
 }
 
 func WithNamespace(n string) KubectlOpt {
@@ -518,6 +604,10 @@ func (k *Kubectl) GetDeployments(ctx context.Context, opts ...KubectlOpt) ([]app
 	}
 
 	return response.Items, nil
+}
+
+func (k *Kubectl) GetSecretFromNamespace(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.Secret, error) {
+	return k.GetSecret(ctx, name, WithKubeconfig(kubeconfigFile), WithNamespace(namespace))
 }
 
 func (k *Kubectl) GetSecret(ctx context.Context, secretObjectName string, opts ...KubectlOpt) (*corev1.Secret, error) {
@@ -668,6 +758,93 @@ func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, cl
 	return response, nil
 }
 
+func (k *Kubectl) SearchVsphereMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereMachineConfig, error) {
+	params := []string{
+		"get", eksaVSphereMachineResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error searching eksa VSphereMachineConfigResponse: %v", err)
+	}
+
+	response := &VSphereMachineConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing VSphereMachineConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
+func (k *Kubectl) SearchIdentityProviderConfig(ctx context.Context, ipName string, kind string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
+	var internalType string
+
+	switch kind {
+	case v1alpha1.OIDCConfigKind:
+		internalType = fmt.Sprintf("oidcconfigs.%s", v1alpha1.GroupVersion.Group)
+	case v1alpha1.AWSIamConfigKind:
+		internalType = fmt.Sprintf("awsiamconfigs.%s", v1alpha1.GroupVersion.Group)
+	default:
+		return nil, fmt.Errorf("invalid identity provider %s", kind)
+	}
+
+	params := []string{
+		"get", internalType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + ipName,
+	}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error searching eksa IdentityProvider: %v", err)
+	}
+
+	response := &VSphereDatacenterConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing IdentityProviderConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
+func (k *Kubectl) SearchVsphereDatacenterConfig(ctx context.Context, datacenterName string, kubeconfigFile string, namespace string) ([]*v1alpha1.VSphereDatacenterConfig, error) {
+	params := []string{
+		"get", eksaVSphereDatacenterResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + datacenterName,
+	}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error searching eksa VSphereDatacenterConfigResponse: %v", err)
+	}
+
+	response := &VSphereDatacenterConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing VSphereDatacenterConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
+func (k *Kubectl) SearchEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) ([]*v1alpha1.GitOpsConfig, error) {
+	params := []string{
+		"get", eksaGitOpsResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + gitOpsConfigName,
+	}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error searching eksa GitOpsConfig: %v", err)
+	}
+
+	response := &GitOpsConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing GitOpsConfig response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
 func (k *Kubectl) GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error) {
 	params := []string{"get", eksaGitOpsResourceType, gitOpsConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.executable.Execute(ctx, params...)
@@ -774,8 +951,9 @@ func (k *Kubectl) GetCurrentClusterContext(ctx context.Context, cluster *types.C
 	return stdOut.String(), nil
 }
 
-func (k *Kubectl) GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, opts ...KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error) {
-	params := []string{"get", etcdadmClustersResourceType, fmt.Sprintf("%s-etcd", cluster.Name), "-o", "json"}
+func (k *Kubectl) GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error) {
+	logger.V(6).Info("Getting EtcdadmCluster CRD", "cluster", clusterName)
+	params := []string{"get", etcdadmClustersResourceType, fmt.Sprintf("%s-etcd", clusterName), "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.executable.Execute(ctx, params...)
 	if err != nil {
@@ -824,4 +1002,67 @@ func (k *Kubectl) GetBundles(ctx context.Context, kubeconfigFile, name, namespac
 	}
 
 	return response, nil
+}
+
+func (k *Kubectl) GetClusterResourceSet(ctx context.Context, kubeconfigFile, name, namespace string) (*addons.ClusterResourceSet, error) {
+	params := []string{"get", clusterResourceSetResourceType, name, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting ClusterResourceSet with kubectl: %v", err)
+	}
+
+	response := &addons.ClusterResourceSet{}
+	if err = json.Unmarshal(stdOut.Bytes(), response); err != nil {
+		return nil, fmt.Errorf("error parsing ClusterResourceSet response: %v", err)
+	}
+
+	return response, nil
+}
+
+func (k *Kubectl) GetConfigMap(ctx context.Context, kubeconfigFile, name, namespace string) (*corev1.ConfigMap, error) {
+	params := []string{"get", "configmap", name, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting ConfigMap with kubectl: %v", err)
+	}
+
+	response := &corev1.ConfigMap{}
+	if err = json.Unmarshal(stdOut.Bytes(), response); err != nil {
+		return nil, fmt.Errorf("error parsing ConfigMap response: %v", err)
+	}
+
+	return response, nil
+}
+
+func (k *Kubectl) SetDaemonSetImage(ctx context.Context, kubeconfigFile, name, namespace, container, image string) error {
+	return k.setImage(ctx, "daemonset", name, container, image, WithNamespace(namespace), WithKubeconfig(kubeconfigFile))
+}
+
+func (k *Kubectl) setImage(ctx context.Context, kind, name, container, image string, opts ...KubectlOpt) error {
+	params := []string{"set", "image", fmt.Sprintf("%s/%s", kind, name), fmt.Sprintf("%s=%s", container, image)}
+	applyOpts(&params, opts...)
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error setting image for %s: %v", kind, err)
+	}
+
+	return nil
+}
+
+func (k *Kubectl) CheckProviderExists(ctx context.Context, kubeconfigFile, name, namespace string) (bool, error) {
+	params := []string{"get", "namespace", fmt.Sprintf("--field-selector=metadata.name=%s", namespace), "--kubeconfig", kubeconfigFile}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return false, fmt.Errorf("error checking whether provider namespace exists: %v", err)
+	}
+	if stdOut.Len() == 0 {
+		return false, nil
+	}
+
+	params = []string{"get", "provider", "--namespace", namespace, fmt.Sprintf("--field-selector=metadata.name=%s", name), "--kubeconfig", kubeconfigFile}
+	stdOut, err = k.executable.Execute(ctx, params...)
+	if err != nil {
+		return false, fmt.Errorf("error checking whether provider exists: %v", err)
+	}
+	return stdOut.Len() != 0, nil
 }

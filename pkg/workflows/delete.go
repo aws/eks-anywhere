@@ -47,12 +47,8 @@ func (c *Delete) Run(ctx context.Context, workloadCluster *types.Cluster, cluste
 		Rollback:        false,
 	}
 
-	if kubeconfig != "" {
-		commandContext.BootstrapCluster = &types.Cluster{
-			Name:               clusterSpec.Name,
-			KubeconfigFile:     kubeconfig,
-			ExistingManagement: true,
-		}
+	if clusterSpec.ManagementCluster != nil {
+		commandContext.BootstrapCluster = clusterSpec.ManagementCluster
 	}
 
 	err := task.NewTaskRunner(&setupAndValidate{}).RunTask(ctx, commandContext)
@@ -148,7 +144,7 @@ func (s *moveClusterManagement) Name() string {
 
 func (s *deleteWorkloadCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Deleting workload cluster")
-	err := commandContext.ClusterManager.DeleteCluster(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster)
+	err := commandContext.ClusterManager.DeleteCluster(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.Provider, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil

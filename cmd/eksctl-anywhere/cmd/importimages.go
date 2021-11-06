@@ -55,20 +55,15 @@ func importImages(context context.Context, spec string) error {
 	}
 	endpoint := clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
 
-	bundle := clusterSpec.VersionsBundle
-
-	for _, image := range bundle.Images() {
+	images, err := getImages(spec)
+	if err != nil {
+		return err
+	}
+	for _, image := range images {
 		if err := importImage(context, de, image.URI, endpoint); err != nil {
 			return fmt.Errorf("error importing image %s: %v", image.URI, err)
 		}
 	}
-	kubeDistroImages := clusterSpec.KubeDistroImages()
-	for _, image := range kubeDistroImages {
-		if err := importImage(context, de, image.URI, endpoint); err != nil {
-			return fmt.Errorf("error importing image %s: %v", image.URI, err)
-		}
-	}
-
 	return nil
 }
 

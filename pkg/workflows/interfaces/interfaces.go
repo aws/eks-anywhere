@@ -19,7 +19,7 @@ type ClusterManager interface {
 	MoveCAPI(ctx context.Context, from, to *types.Cluster, clusterName string, checkers ...types.NodeReadyChecker) error
 	CreateWorkloadCluster(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) (*types.Cluster, error)
 	UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
-	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error
+	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster, provider providers.Provider, clusterSpec *cluster.Spec) error
 	InstallCAPI(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
 	InstallNetworking(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	InstallStorageClass(ctx context.Context, cluster *types.Cluster, provider providers.Provider) error
@@ -53,6 +53,7 @@ type Validator interface {
 	PreflightValidations(ctx context.Context) error
 }
 
-type CAPIUpgrader interface {
+type CAPIManager interface {
 	Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
+	EnsureEtcdProvidersInstallation(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, currSpec *cluster.Spec) error
 }

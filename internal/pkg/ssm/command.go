@@ -14,11 +14,14 @@ import (
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 
+const ssmLogGroup = "/eks-anywhere/test/e2e"
+
 var initE2EDirCommand = "mkdir -p /home/e2e/bin && cd /home/e2e"
 
 func WaitForSSMReady(session *session.Session, instanceId string) error {
 	err := retrier.Retry(10, 20*time.Second, func() error {
-		return Run(session, instanceId, "ls")
+		_, err := Run(session, instanceId, "ls")
+		return err
 	})
 	if err != nil {
 		return fmt.Errorf("error waiting for ssm to be ready: %v", err)
@@ -36,9 +39,10 @@ func WithOutputToS3(bucket, dir string) CommandOpt {
 	}
 }
 
-func WithOutputToCloudwatch(logGroup string) CommandOpt {
+func WithOutputToCloudwatch() CommandOpt {
 	return func(c *ssm.SendCommandInput) {
 		cwEnabled := true
+		logGroup := ssmLogGroup
 		cw := ssm.CloudWatchOutputConfig{
 			CloudWatchLogGroupName:  &logGroup,
 			CloudWatchOutputEnabled: &cwEnabled,
@@ -52,7 +56,7 @@ var nonFinalStatuses = map[string]struct{}{
 }
 
 // TODO: cleanup this method
-func Run(session *session.Session, instanceId string, command string, opts ...CommandOpt) error {
+func Run(session *session.Session, instanceId, command string, opts ...CommandOpt) (commandId string, err error) {
 	service := ssm.New(session)
 
 	c := &ssm.SendCommandInput{
@@ -71,7 +75,7 @@ func Run(session *session.Session, instanceId string, command string, opts ...Co
 		}
 		return false, 0
 	}))
-	err := r.Retry(func() error {
+	err = r.Retry(func() error {
 		var err error
 		logger.V(2).Info("Running ssm command", "cmd", command)
 		result, err = service.SendCommand(c)
@@ -81,7 +85,7 @@ func Run(session *session.Session, instanceId string, command string, opts ...Co
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("retries exhausted sending ssm command: %v", err)
+		return "", fmt.Errorf("retries exhausted sending ssm command: %v", err)
 	}
 
 	logger.V(2).Info("SSM command started", "commandId", result.Command.CommandId)
@@ -92,8 +96,9 @@ func Run(session *session.Session, instanceId string, command string, opts ...Co
 		)
 	}
 
+	commandId = *result.Command.CommandId
 	commandIn := &ssm.GetCommandInvocationInput{
-		CommandId:  result.Command.CommandId,
+		CommandId:  &commandId,
 		InstanceId: aws.String(instanceId),
 	}
 
@@ -108,7 +113,7 @@ func Run(session *session.Session, instanceId string, command string, opts ...Co
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("error waiting for ssm command to be registered: %v", err)
+		return commandId, fmt.Errorf("error waiting for ssm command to be registered: %v", err)
 	}
 
 	logger.V(2).Info("Waiting for ssm command to finish")
@@ -123,7 +128,7 @@ func Run(session *session.Session, instanceId string, command string, opts ...Co
 
 		status := *commandOut.Status
 		if isFinalStatus(status) {
-			logger.V(2).Info("SSM command finished", "status", status)
+			logger.V(2).Info("SSM command finished", "status", status, "commandId", result.Command.CommandId)
 			// TODO: these outputs might be truncated (8000 chars max). Get the logs from s3 with StandardErrorUrl and StandardOutputContent instead
 			fmt.Println("Command stdout:")
 			fmt.Println(*commandOut.StandardOutputContent)
@@ -138,14 +143,14 @@ func Run(session *session.Session, instanceId string, command string, opts ...Co
 		return fmt.Errorf("command still running with status %s", status)
 	})
 	if err != nil {
-		return fmt.Errorf("retries exhausted running ssm command: %v", err)
+		return commandId, fmt.Errorf("retries exhausted running ssm command: %v", err)
 	}
 
 	if *commandOut.Status != ssm.CommandInvocationStatusSuccess {
-		return errors.New("failed to execute ssm command")
+		return commandId, errors.New("failed to execute ssm command")
 	}
 
-	return nil
+	return commandId, nil
 }
 
 func isFinalStatus(status string) bool {

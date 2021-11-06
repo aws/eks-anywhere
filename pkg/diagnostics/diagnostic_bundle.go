@@ -67,7 +67,7 @@ func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactor
 		writer:           writer,
 	}
 
-	b.WithDefaultCollectors().WithDefaultAnalyzers()
+	b.WithDefaultCollectors().WithDefaultAnalyzers().WithManagementCluster(true)
 
 	err := b.WriteBundleConfig()
 	if err != nil {
@@ -106,6 +106,7 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 		WithExternalEtcd(spec.Spec.ExternalEtcdConfiguration).
 		WithDatacenterConfig(spec.Spec.DatacenterRef).
 		WithMachineConfigs(provider.MachineConfigs()).
+		WithManagementCluster(spec.IsSelfManaged()).
 		WithDefaultAnalyzers().
 		WithDefaultCollectors().
 		WithLogTextAnalyzers()
@@ -133,7 +134,7 @@ func newDiagnosticBundleDefault(af AnalyzerFactory, cf CollectorFactory) *EksaDi
 		analyzerFactory:  af,
 		collectorFactory: cf,
 	}
-	return b.WithDefaultAnalyzers().WithDefaultCollectors()
+	return b.WithDefaultAnalyzers().WithDefaultCollectors().WithManagementCluster(true)
 }
 
 func newDiagnosticBundleCustom(af AnalyzerFactory, cf CollectorFactory, client BundleClient, kubectl *executables.Kubectl, bundlePath string, kubeconfig string) *EksaDiagnosticBundle {
@@ -239,6 +240,14 @@ func (e *EksaDiagnosticBundle) WithDefaultCollectors() *EksaDiagnosticBundle {
 
 func (e *EksaDiagnosticBundle) WithDefaultAnalyzers() *EksaDiagnosticBundle {
 	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.DefaultAnalyzers()...)
+	return e
+}
+
+func (e *EksaDiagnosticBundle) WithManagementCluster(isSelfManaged bool) *EksaDiagnosticBundle {
+	if isSelfManaged {
+		e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.ManagementClusterAnalyzers()...)
+		e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.ManagementClusterCollectors()...)
+	}
 	return e
 }
 

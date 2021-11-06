@@ -41,7 +41,6 @@ func (c *collectorFactory) DefaultCollectors() []*Collect {
 		},
 	}
 	collectors = append(collectors, c.defaultLogCollectors()...)
-	collectors = append(collectors, c.defaultCrdCollectors()...)
 	return collectors
 }
 
@@ -57,6 +56,13 @@ func (c *collectorFactory) EksaHostCollectors(machineConfigs []providers.Machine
 			osFamiliesSeen[config.OSFamily()] = true
 		}
 	}
+	return collectors
+}
+
+func (c *collectorFactory) ManagementClusterCollectors() []*Collect {
+	var collectors []*Collect
+	collectors = append(collectors, c.managementClusterCrdCollectors()...)
+	collectors = append(collectors, c.managementClusterLogCollectors()...)
 	return collectors
 }
 
@@ -105,10 +111,39 @@ func (c *collectorFactory) defaultLogCollectors() []*Collect {
 	return []*Collect{
 		{
 			Logs: &logs{
-				Namespace: constants.CapdSystemNamespace,
-				Name:      logpath(constants.CapdSystemNamespace),
+				Namespace: constants.EksaSystemNamespace,
+				Name:      logpath(constants.EksaSystemNamespace),
 			},
 		},
+		{
+			Logs: &logs{
+				Namespace: constants.DefaultNamespace,
+				Name:      logpath(constants.DefaultNamespace),
+			},
+		},
+		{
+			Logs: &logs{
+				Namespace: constants.KubeNodeLeaseNamespace,
+				Name:      logpath(constants.KubeNodeLeaseNamespace),
+			},
+		},
+		{
+			Logs: &logs{
+				Namespace: constants.KubePublicNamespace,
+				Name:      logpath(constants.KubePublicNamespace),
+			},
+		},
+		{
+			Logs: &logs{
+				Namespace: constants.KubeSystemNamespace,
+				Name:      logpath(constants.KubeSystemNamespace),
+			},
+		},
+	}
+}
+
+func (c *collectorFactory) managementClusterLogCollectors() []*Collect {
+	return []*Collect{
 		{
 			Logs: &logs{
 				Namespace: constants.CapiKubeadmBootstrapSystemNamespace,
@@ -141,58 +176,28 @@ func (c *collectorFactory) defaultLogCollectors() []*Collect {
 		},
 		{
 			Logs: &logs{
-				Namespace: constants.EksaSystemNamespace,
-				Name:      logpath(constants.EksaSystemNamespace),
+				Namespace: constants.EtcdAdmBootstrapProviderSystemNamespace,
+				Name:      logpath(constants.EtcdAdmBootstrapProviderSystemNamespace),
 			},
 		},
 		{
 			Logs: &logs{
-				Namespace: constants.DefaultNamespace,
-				Name:      logpath(constants.DefaultNamespace),
-			},
-		},
-		{
-			Logs: &logs{
-				Namespace: constants.EtcdAdminBootstrapProviderSystemNamespace,
-				Name:      logpath(constants.EtcdAdminBootstrapProviderSystemNamespace),
-			},
-		},
-		{
-			Logs: &logs{
-				Namespace: constants.EtcdAdminControllerSystemNamespace,
-				Name:      logpath(constants.EtcdAdminControllerSystemNamespace),
-			},
-		},
-		{
-			Logs: &logs{
-				Namespace: constants.KubeNodeLeaseNamespace,
-				Name:      logpath(constants.KubeNodeLeaseNamespace),
-			},
-		},
-		{
-			Logs: &logs{
-				Namespace: constants.KubePublicNamespace,
-				Name:      logpath(constants.KubePublicNamespace),
-			},
-		},
-		{
-			Logs: &logs{
-				Namespace: constants.KubeSystemNamespace,
-				Name:      logpath(constants.KubeSystemNamespace),
+				Namespace: constants.EtcdAdmControllerSystemNamespace,
+				Name:      logpath(constants.EtcdAdmControllerSystemNamespace),
 			},
 		},
 	}
 }
 
-func (c *collectorFactory) defaultCrdCollectors() []*Collect {
-	defaultCrds := []string{
+func (c *collectorFactory) managementClusterCrdCollectors() []*Collect {
+	mgmtCrds := []string{
 		"clusters.anywhere.eks.amazonaws.com",
 		"bundles.anywhere.eks.amazonaws.com",
 		"clusters.cluster.x-k8s.io",
 		"machinedeployments.cluster.x-k8s.io",
 		"machines.cluster.x-k8s.io",
 	}
-	return c.generateCrdCollectors(defaultCrds)
+	return c.generateCrdCollectors(mgmtCrds)
 }
 
 func (c *collectorFactory) generateCrdCollectors(crds []string) []*Collect {

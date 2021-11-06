@@ -96,6 +96,20 @@ func (mr *MockClusterClientMockRecorder) CreateNamespace(arg0, arg1, arg2 interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespace", reflect.TypeOf((*MockClusterClient)(nil).CreateNamespace), arg0, arg1, arg2)
 }
 
+// DeleteAWSIamConfig mocks base method.
+func (m *MockClusterClient) DeleteAWSIamConfig(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteAWSIamConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteAWSIamConfig indicates an expected call of DeleteAWSIamConfig.
+func (mr *MockClusterClientMockRecorder) DeleteAWSIamConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAWSIamConfig", reflect.TypeOf((*MockClusterClient)(nil).DeleteAWSIamConfig), arg0, arg1, arg2, arg3)
+}
+
 // DeleteCluster mocks base method.
 func (m *MockClusterClient) DeleteCluster(arg0 context.Context, arg1, arg2 *types.Cluster) error {
 	m.ctrl.T.Helper()
@@ -108,6 +122,48 @@ func (m *MockClusterClient) DeleteCluster(arg0 context.Context, arg1, arg2 *type
 func (mr *MockClusterClientMockRecorder) DeleteCluster(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCluster", reflect.TypeOf((*MockClusterClient)(nil).DeleteCluster), arg0, arg1, arg2)
+}
+
+// DeleteEKSACluster mocks base method.
+func (m *MockClusterClient) DeleteEKSACluster(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteEKSACluster", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteEKSACluster indicates an expected call of DeleteEKSACluster.
+func (mr *MockClusterClientMockRecorder) DeleteEKSACluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEKSACluster", reflect.TypeOf((*MockClusterClient)(nil).DeleteEKSACluster), arg0, arg1, arg2, arg3)
+}
+
+// DeleteGitOpsConfig mocks base method.
+func (m *MockClusterClient) DeleteGitOpsConfig(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteGitOpsConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteGitOpsConfig indicates an expected call of DeleteGitOpsConfig.
+func (mr *MockClusterClientMockRecorder) DeleteGitOpsConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteGitOpsConfig", reflect.TypeOf((*MockClusterClient)(nil).DeleteGitOpsConfig), arg0, arg1, arg2, arg3)
+}
+
+// DeleteOIDCConfig mocks base method.
+func (m *MockClusterClient) DeleteOIDCConfig(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteOIDCConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteOIDCConfig indicates an expected call of DeleteOIDCConfig.
+func (mr *MockClusterClientMockRecorder) DeleteOIDCConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOIDCConfig", reflect.TypeOf((*MockClusterClient)(nil).DeleteOIDCConfig), arg0, arg1, arg2, arg3)
 }
 
 // GetApiServerUrl mocks base method.

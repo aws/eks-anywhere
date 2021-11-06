@@ -12,7 +12,6 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/internal/test"
-	specv1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -71,6 +70,8 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 	core := "cluster-api:v0.3.19"
 	bootstrap := "kubeadm:v0.3.19"
 	controlPlane := "kubeadm:v0.3.19"
+	etcdadmBootstrap := "etcdadm-bootstrap:v0.1.0"
+	etcdadmController := "etcdadm-controller:v0.1.0"
 
 	tests := []struct {
 		cluster         *types.Cluster
@@ -93,6 +94,7 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			env:             map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
 			wantExecArgs: []interface{}{
 				"init", "--core", core, "--bootstrap", bootstrap, "--control-plane", controlPlane, "--infrastructure", "aws:v0.6.4", "--config", test.OfType("string"),
+				"--bootstrap", etcdadmBootstrap, "--bootstrap", etcdadmController,
 				"--watching-namespace", constants.EksaSystemNamespace,
 			},
 			wantConfig: "testdata/clusterctl_expected.yaml",
@@ -108,6 +110,7 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			env:             map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
 			wantExecArgs: []interface{}{
 				"init", "--core", core, "--bootstrap", bootstrap, "--control-plane", controlPlane, "--infrastructure", "vsphere:v0.7.8", "--config", test.OfType("string"),
+				"--bootstrap", etcdadmBootstrap, "--bootstrap", etcdadmController,
 				"--watching-namespace", constants.EksaSystemNamespace, "--kubeconfig", "tmp/k.kubeconfig",
 			},
 			wantConfig: "testdata/clusterctl_expected.yaml",
@@ -163,101 +166,6 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			c := executables.NewClusterctl(executable, writer)
 
 			if err := c.InitInfrastructure(ctx, clusterSpec, tt.cluster, provider); err != nil {
-				t.Fatalf("Clusterctl.InitInfrastructure() error = %v, want nil", err)
-			}
-		})
-	}
-}
-
-func TestClusterctlInitInfrastructureInstallEtcdadmControllers(t *testing.T) {
-	_, writer := test.NewWriter(t)
-
-	clusterWithUnstackedEtcd := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle = versionBundle
-	})
-	clusterWithUnstackedEtcd.Spec.ExternalEtcdConfiguration = &specv1.ExternalEtcdConfiguration{}
-
-	core := "cluster-api:v0.3.19"
-	bootstrapKubeadm := "kubeadm:v0.3.19"
-	controlPlane := "kubeadm:v0.3.19"
-	bootstrapEtcdamBootstrap := "etcdadm-bootstrap:v0.1.0"
-	bootstrapEtcdamController := "etcdadm-controller:v0.1.0"
-
-	tests := []struct {
-		cluster         *types.Cluster
-		env             map[string]string
-		testName        string
-		providerName    string
-		providerVersion string
-		infrastructure  string
-		wantConfig      string
-		wantExecArgs    []interface{}
-	}{
-		{
-			testName: "unstacked etcd",
-			cluster: &types.Cluster{
-				Name:           "cluster-name",
-				KubeconfigFile: "tmp/k.kubeconfig",
-			},
-			providerName:    "vsphere",
-			providerVersion: versionBundle.VSphere.Version,
-			env:             map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
-			wantExecArgs: []interface{}{
-				"init", "--core", core, "--bootstrap", bootstrapKubeadm, "--control-plane", controlPlane, "--infrastructure", "vsphere:v0.7.8", "--config", test.OfType("string"),
-				"--watching-namespace", constants.EksaSystemNamespace, "--bootstrap", bootstrapEtcdamBootstrap, "--bootstrap", bootstrapEtcdamController, "--kubeconfig", "tmp/k.kubeconfig",
-			},
-			wantConfig: "testdata/clusterctl_expected.yaml",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.testName, func(t *testing.T) {
-			mockCtrl := gomock.NewController(t)
-			defer func() {
-				if !t.Failed() {
-					os.RemoveAll(tt.cluster.Name)
-				}
-			}()
-			gotConfig := ""
-			ctx := context.Background()
-
-			provider := mockproviders.NewMockProvider(mockCtrl)
-			provider.EXPECT().Name().Return(tt.providerName)
-			provider.EXPECT().Version(clusterWithUnstackedEtcd).Return(tt.providerVersion)
-			provider.EXPECT().EnvMap().Return(tt.env, nil)
-			provider.EXPECT().GetInfrastructureBundle(clusterWithUnstackedEtcd).Return(&types.InfrastructureBundle{})
-
-			executable := mockexecutables.NewMockExecutable(mockCtrl)
-			executable.EXPECT().ExecuteWithEnv(ctx, tt.env, tt.wantExecArgs...).Return(bytes.Buffer{}, nil).Times(1).Do(
-				func(ctx context.Context, envs map[string]string, args ...string) (stdout bytes.Buffer, err error) {
-					gotConfig = args[10]
-					tw := templater.New(writer)
-					path, err := os.Getwd()
-					if err != nil {
-						t.Fatalf("Error getting local folder: %v", err)
-					}
-					data := map[string]string{
-						"dir": path,
-					}
-
-					template, err := os.ReadFile(tt.wantConfig)
-					if err != nil {
-						t.Fatalf("Error reading local file %s: %v", tt.wantConfig, err)
-					}
-					filePath, err := tw.WriteToFile(string(template), data, "file.tmp")
-					if err != nil {
-						t.Fatalf("Error writing local file %s: %v", "file.tmp", err)
-					}
-
-					test.AssertFilesEquals(t, gotConfig, filePath)
-
-					return bytes.Buffer{}, nil
-				},
-			)
-
-			c := executables.NewClusterctl(executable, writer)
-
-			if err := c.InitInfrastructure(ctx, clusterWithUnstackedEtcd, tt.cluster, provider); err != nil {
 				t.Fatalf("Clusterctl.InitInfrastructure() error = %v, want nil", err)
 			}
 		})
@@ -519,6 +427,7 @@ var versionBundle = &cluster.VersionsBundle{
 			Webhook: v1alpha1.Image{
 				URI: "public.ecr.aws/l0g8r8j6/jetstack/cert-manager-webhook:v1.1.0",
 			},
+			Version: "v1.1.0+88d7476",
 		},
 		ClusterAPI: v1alpha1.CoreClusterAPI{
 			Version: "v0.3.19",

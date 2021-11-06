@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"path"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -33,6 +35,10 @@ type Github struct {
 
 	// if true, the owner is assumed to be a Git user; otherwise an org.
 	Personal bool `json:"personal,omitempty"`
+}
+
+func (g *Github) ClusterRootPath() string {
+	return path.Dir(g.ClusterConfigPath)
 }
 
 // GitOpsConfigStatus defines the observed state of GitOpsConfig

@@ -13,7 +13,6 @@ import (
 const (
 	passedStatus = "pass"
 	failedStatus = "fail"
-	baseLogGroup = "/eks-anywhere/test/e2e"
 )
 
 type ParallelRunConf struct {
@@ -29,8 +28,9 @@ type ParallelRunConf struct {
 }
 
 type instanceTestsResults struct {
-	conf instanceRunConf
-	err  error
+	conf      instanceRunConf
+	commandId string
+	err       error
 }
 
 func RunTestsInParallel(conf ParallelRunConf) error {
@@ -51,7 +51,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			defer wg.Done()
 			r := instanceTestsResults{conf: c}
 
-			r.conf.instanceId, err = RunTests(c)
+			r.conf.instanceId, r.commandId, err = RunTests(c)
 			if err != nil {
 				r.err = err
 			}
@@ -69,10 +69,10 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	failedInstances := 0
 	for r := range resultCh {
 		if r.err != nil {
-			logger.Error(r.err, "An e2e instance run has failed", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "tests", r.conf.regex, "status", failedStatus)
+			logger.Error(r.err, "An e2e instance run has failed", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.commandId, "tests", r.conf.regex, "status", failedStatus)
 			failedInstances += 1
 		} else {
-			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "tests", r.conf.regex, "status", passedStatus)
+			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.commandId, "tests", r.conf.regex, "status", passedStatus)
 		}
 	}
 
@@ -88,36 +88,26 @@ type instanceRunConf struct {
 	bundlesOverride                                                                            bool
 }
 
-func (i *instanceRunConf) cloudwatchLogGroup() string {
-	var path []string
-	path = append(path, baseLogGroup)
-	if i.parentJobId != "" {
-		path = append(path, i.parentJobId)
-	}
-	path = append(path, i.jobId)
-	return strings.Join(path, "/")
-}
-
-func RunTests(conf instanceRunConf) (testInstanceID string, err error) {
-	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.cloudwatchLogGroup(), conf.jobId, conf.subnetId, conf.bundlesOverride)
+func RunTests(conf instanceRunConf) (testInstanceID, commandId string, err error) {
+	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.jobId, conf.subnetId, conf.bundlesOverride)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	err = session.setup(conf.regex)
 	if err != nil {
-		return session.instanceId, err
+		return session.instanceId, "", err
 	}
 
-	err = session.runTests(conf.regex)
+	commandId, err = session.runTests(conf.regex)
 	if err != nil {
-		return session.instanceId, err
+		return session.instanceId, commandId, err
 	}
 
-	return session.instanceId, nil
+	return session.instanceId, commandId, nil
 }
 
-func (e *E2ESession) runTests(regex string) error {
+func (e *E2ESession) runTests(regex string) (commandId string, err error) {
 	logger.V(1).Info("Running e2e tests", "regex", regex)
 	command := "./bin/e2e.test -test.v"
 	if regex != "" {
@@ -126,9 +116,9 @@ func (e *E2ESession) runTests(regex string) error {
 
 	command = e.commandWithEnvVars(command)
 
-	opt := ssm.WithOutputToCloudwatch(e.logGroup)
+	opt := ssm.WithOutputToCloudwatch()
 
-	err := ssm.Run(
+	commandId, err = ssm.Run(
 		e.session,
 		e.instanceId,
 		command,
@@ -137,17 +127,17 @@ func (e *E2ESession) runTests(regex string) error {
 	if err != nil {
 		e.uploadGeneratedFilesFromInstance(regex)
 		e.uploadDiagnosticArchiveFromInstance(regex)
-		return fmt.Errorf("error running e2e tests on instance %s: %v", e.instanceId, err)
+		return commandId, fmt.Errorf("error running e2e tests on instance %s: %v", e.instanceId, err)
 	}
 
 	key := "Integration-Test-Done"
 	value := "TRUE"
 	err = ec2.TagInstance(e.session, e.instanceId, key, value)
 	if err != nil {
-		return fmt.Errorf("error tagging instance for e2e success: %v", err)
+		return commandId, fmt.Errorf("error tagging instance for e2e success: %v", err)
 	}
 
-	return nil
+	return commandId, nil
 }
 
 func (e *E2ESession) commandWithEnvVars(command string) string {

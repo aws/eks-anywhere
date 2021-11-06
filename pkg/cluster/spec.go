@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -36,6 +37,7 @@ type Spec struct {
 	OIDCConfig          *eksav1alpha1.OIDCConfig
 	AWSIamConfig        *eksav1alpha1.AWSIamConfig
 	GitOpsConfig        *eksav1alpha1.GitOpsConfig
+	DatacenterConfig    *metav1.ObjectMeta
 	releasesManifestURL string
 	bundlesManifestURL  string
 	configFS            embed.FS
@@ -212,6 +214,21 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 		s.GitOpsConfig = gitOpsConfig
 	}
 
+	switch s.Cluster.Spec.DatacenterRef.Kind {
+	case eksav1alpha1.VSphereDatacenterKind:
+		datacenterConfig, err := eksav1alpha1.GetVSphereDatacenterConfig(clusterConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		s.DatacenterConfig = &datacenterConfig.ObjectMeta
+	case eksav1alpha1.DockerDatacenterKind:
+		datacenterConfig, err := eksav1alpha1.GetDockerDatacenterConfig(clusterConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		s.DatacenterConfig = &datacenterConfig.ObjectMeta
+	}
+
 	if s.ManagementCluster != nil {
 		s.SetManagedBy(s.ManagementCluster.Name)
 	} else {
@@ -271,7 +288,7 @@ func (s *Spec) getVersionsBundle(clusterConfig *eksav1alpha1.Cluster, bundles *v
 func (s *Spec) GetBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
 	bundlesURL := s.bundlesManifestURL
 	if bundlesURL == "" {
-		release, err := s.getRelease(cliVersion)
+		release, err := s.GetRelease(cliVersion)
 		if err != nil {
 			return nil, err
 		}
@@ -280,7 +297,7 @@ func (s *Spec) GetBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
 	}
 
 	logger.V(4).Info("Reading bundles manifest", "url", bundlesURL)
-	content, err := s.readFile(bundlesURL)
+	content, err := s.ReadFile(bundlesURL)
 	if err != nil {
 		return nil, err
 	}
@@ -293,7 +310,7 @@ func (s *Spec) GetBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
 	return bundles, nil
 }
 
-func (s *Spec) getRelease(cliVersion version.Info) (*v1alpha1.EksARelease, error) {
+func (s *Spec) GetRelease(cliVersion version.Info) (*v1alpha1.EksARelease, error) {
 	cliSemVersion, err := semver.New(cliVersion.GitVersion)
 	if err != nil {
 		return nil, fmt.Errorf("invalid cli version: %v", err)
@@ -320,7 +337,7 @@ func (s *Spec) getRelease(cliVersion version.Info) (*v1alpha1.EksARelease, error
 
 func (s *Spec) getReleases(releasesManifest string) (*v1alpha1.Release, error) {
 	logger.V(4).Info("Reading releases manifest", "url", releasesManifestURL)
-	content, err := s.readFile(releasesManifest)
+	content, err := s.ReadFile(releasesManifest)
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +350,7 @@ func (s *Spec) getReleases(releasesManifest string) (*v1alpha1.Release, error) {
 	return releases, nil
 }
 
-func (s *Spec) readFile(uri string) ([]byte, error) {
+func (s *Spec) ReadFile(uri string) ([]byte, error) {
 	url, err := url.Parse(uri)
 	if err != nil {
 		return nil, fmt.Errorf("can't build cluster spec, invalid release manifest url: %v", err)
@@ -341,15 +358,15 @@ func (s *Spec) readFile(uri string) ([]byte, error) {
 
 	switch url.Scheme {
 	case httpsScheme:
-		return s.readHttpFile(uri)
+		return s.ReadHttpFile(uri)
 	case embedScheme:
-		return s.readEmbedFile(url)
+		return s.ReadEmbedFile(url)
 	default:
-		return readLocalFile(uri)
+		return ReadLocalFile(uri)
 	}
 }
 
-func (s *Spec) readHttpFile(uri string) ([]byte, error) {
+func (s *Spec) ReadHttpFile(uri string) ([]byte, error) {
 	request, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed creating http GET request for downloading file: %v", err)
@@ -370,7 +387,7 @@ func (s *Spec) readHttpFile(uri string) ([]byte, error) {
 	return data, nil
 }
 
-func (s *Spec) readEmbedFile(url *url.URL) ([]byte, error) {
+func (s *Spec) ReadEmbedFile(url *url.URL) ([]byte, error) {
 	data, err := s.configFS.ReadFile(strings.TrimPrefix(url.Path, "/"))
 	if err != nil {
 		return nil, fmt.Errorf("failed reading embed file [%s] for cluster spec: %v", url.Path, err)
@@ -379,7 +396,7 @@ func (s *Spec) readEmbedFile(url *url.URL) ([]byte, error) {
 	return data, nil
 }
 
-func readLocalFile(filename string) ([]byte, error) {
+func ReadLocalFile(filename string) ([]byte, error) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed reading local file [%s] for cluster spec: %v", filename, err)
@@ -465,7 +482,7 @@ func kubeDistroRepository(image *eksdv1alpha1.AssetImage) (repo, tag string) {
 }
 
 func (s *Spec) getEksdRelease(versionsBundle *v1alpha1.VersionsBundle) (*eksdv1alpha1.Release, error) {
-	content, err := s.readFile(versionsBundle.EksD.EksDReleaseUrl)
+	content, err := s.ReadFile(versionsBundle.EksD.EksDReleaseUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -510,7 +527,7 @@ func (s *Spec) LoadManifest(manifest v1alpha1.Manifest) (*Manifest, error) {
 		return nil, fmt.Errorf("invalid manifest URI: %v", err)
 	}
 
-	content, err := s.readFile(manifest.URI)
+	content, err := s.ReadFile(manifest.URI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load manifest: %v", err)
 	}
@@ -598,4 +615,81 @@ func (vb *VersionsBundle) Images() []v1alpha1.Image {
 	images = append(images, vb.VsphereImages()...)
 
 	return images
+}
+
+func (vb *VersionsBundle) Ovas() []v1alpha1.Archive {
+	return []v1alpha1.Archive{
+		vb.EksD.Ova.Bottlerocket.Archive,
+		vb.EksD.Ova.Ubuntu.Archive,
+	}
+}
+
+func (vb *VersionsBundle) Manifests() map[string][]v1alpha1.Manifest {
+	manifests := map[string][]v1alpha1.Manifest{}
+
+	// CAPA manifests
+	manifests["cluster-api-provider-aws"] = []v1alpha1.Manifest{
+		vb.Aws.Components,
+		vb.Aws.ClusterTemplate,
+		vb.Aws.Metadata,
+	}
+
+	// Core CAPI manifests
+	manifests["core-cluster-api"] = []v1alpha1.Manifest{
+		vb.ClusterAPI.Components,
+		vb.ClusterAPI.Metadata,
+	}
+
+	// CAPI Kubeadm bootstrap manifests
+	manifests["capi-kubeadm-bootstrap"] = []v1alpha1.Manifest{
+		vb.Bootstrap.Components,
+		vb.Bootstrap.Metadata,
+	}
+
+	// CAPI Kubeadm Controlplane manifests
+	manifests["capi-kubeadm-control-plane"] = []v1alpha1.Manifest{
+		vb.ControlPlane.Components,
+		vb.ControlPlane.Metadata,
+	}
+
+	// CAPD manifests
+	manifests["cluster-api-provider-docker"] = []v1alpha1.Manifest{
+		vb.Docker.Components,
+		vb.Docker.ClusterTemplate,
+		vb.Docker.Metadata,
+	}
+
+	// CAPV manifests
+	manifests["cluster-api-provider-vsphere"] = []v1alpha1.Manifest{
+		vb.VSphere.Components,
+		vb.VSphere.ClusterTemplate,
+		vb.VSphere.Metadata,
+	}
+
+	// Cilium manifest
+	manifests["cilium"] = []v1alpha1.Manifest{vb.Cilium.Manifest}
+
+	// EKS Anywhere CRD manifest
+	manifests["eks-anywhere-cluster-controller"] = []v1alpha1.Manifest{vb.Eksa.Components}
+
+	// Etcdadm bootstrap provider manifests
+	manifests["etcdadm-bootstrap-provider"] = []v1alpha1.Manifest{
+		vb.ExternalEtcdBootstrap.Components,
+		vb.ExternalEtcdBootstrap.Metadata,
+	}
+
+	// Etcdadm controller manifests
+	manifests["etcdadm-controller"] = []v1alpha1.Manifest{
+		vb.ExternalEtcdController.Components,
+		vb.ExternalEtcdController.Metadata,
+	}
+
+	// EKS Distro release manifest
+	manifests["eks-distro"] = []v1alpha1.Manifest{v1alpha1.Manifest{URI: vb.EksD.EksDReleaseUrl}}
+
+	return manifests
+}
+
+func (s *Spec) GetReleaseManifestUrl() string {
+	return s.releasesManifestURL
 }
