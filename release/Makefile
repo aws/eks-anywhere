@@ -1,7 +1,7 @@
 REPO_ROOT=$(shell git rev-parse --show-toplevel)
 
 AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output text)
-AWS_REGION=us-west-2
+AWS_REGION?=us-west-2
 
 RELEASE_ENVIRONMENT?=development
 RELEASE_VERSION?=$(shell cat triggers/eks-a-release/$(RELEASE_ENVIRONMENT)/RELEASE_VERSION)
