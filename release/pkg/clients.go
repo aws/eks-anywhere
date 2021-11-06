@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -69,31 +70,10 @@ type ReleaseECRPublicClient struct {
 func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClients, error) {
 	fmt.Println("Creating new dev release clients for S3, docker and ECR public")
 
-	// PDX session for eks-a-build-prod-pdx
-	pdxSession, err := session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2"),
-	})
-	if err != nil {
-		return nil, nil, errors.Cause(err)
-	}
-
-	// IAD session for eks-a-build-prod-pdx
+	// IAD session for eks-a-build-prod-pdx, ECR-public is only on IAD
 	iadSession, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1"),
 	})
-	if err != nil {
-		return nil, nil, errors.Cause(err)
-	}
-
-	// S3 client and managers
-	s3Client := s3.New(pdxSession)
-	downloader := s3manager.NewDownloader(pdxSession)
-	uploader := s3manager.NewUploader(pdxSession)
-
-	// Get source ECR auth config
-	fmt.Printf("Source container registry is: %s", r.SourceContainerRegistry)
-	ecrClient := ecr.New(pdxSession)
-	sourceAuthConfig, err := getEcrAuthConfig(ecrClient)
 	if err != nil {
 		return nil, nil, errors.Cause(err)
 	}
@@ -102,6 +82,31 @@ func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClien
 	fmt.Printf("Release container registry is: %s", r.ReleaseContainerRegistry)
 	ecrPublicClient := ecrpublic.New(iadSession)
 	releaseAuthConfig, err := getEcrPublicAuthConfig(ecrPublicClient)
+	if err != nil {
+		return nil, nil, errors.Cause(err)
+	}
+
+	// Check if current region is not IAD
+	currentRegionSession := iadSession
+	currentRegion := os.Getenv("AWS_REGION")
+	if currentRegion != "us-east-1" {
+		currentRegionSession, err = session.NewSession(&aws.Config{
+			Region: aws.String(currentRegion),
+		})
+		if err != nil {
+			return nil, nil, errors.Cause(err)
+		}
+	}
+
+	// S3 client and managers
+	s3Client := s3.New(currentRegionSession)
+	downloader := s3manager.NewDownloader(currentRegionSession)
+	uploader := s3manager.NewUploader(currentRegionSession)
+
+	// Get source ECR auth config
+	fmt.Printf("Source container registry is: %s", r.SourceContainerRegistry)
+	ecrClient := ecr.New(currentRegionSession)
+	sourceAuthConfig, err := getEcrAuthConfig(ecrClient)
 	if err != nil {
 		return nil, nil, errors.Cause(err)
 	}
