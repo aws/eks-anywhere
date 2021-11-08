@@ -130,4 +130,4 @@ public GitHub issue.
 
 ## Licensing
 
-See the [LICENSE](LICENSE) file for our project's licensing. We will ask you to confirm the licensing of your contribution.
+See the [LICENSE](https://github.com/aws/eks-anywhere/blob/main/LICENSE) file for our project's licensing. We will ask you to confirm the licensing of your contribution.
