@@ -51,11 +51,7 @@ func (c *Delete) Run(ctx context.Context, workloadCluster *types.Cluster, cluste
 		commandContext.BootstrapCluster = clusterSpec.ManagementCluster
 	}
 
-	err := task.NewTaskRunner(&setupAndValidate{}).RunTask(ctx, commandContext)
-	if err != nil {
-		_ = commandContext.ClusterManager.SaveLogsManagementCluster(ctx, commandContext.BootstrapCluster)
-	}
-	return err
+	return task.NewTaskRunner(&setupAndValidate{}).RunTask(ctx, commandContext)
 }
 
 type setupAndValidate struct{}
@@ -70,9 +66,9 @@ type deleteWorkloadCluster struct{}
 
 type cleanupGitRepo struct{}
 
-type deleteManagementCluster struct{}
-
-type cleanupProviderInfrastructure struct{}
+type deleteManagementCluster struct{
+	*CollectDiagnosticsTask
+}
 
 func (s *setupAndValidate) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Performing provider setup and validations")
@@ -133,7 +129,7 @@ func (s *moveClusterManagement) Run(ctx context.Context, commandContext *task.Co
 	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.WorkloadCluster, commandContext.BootstrapCluster, commandContext.WorkloadCluster.Name, types.WithNodeRef())
 	if err != nil {
 		commandContext.SetError(err)
-		return nil
+		return &CollectDiagnosticsTask{}
 	}
 	return &deleteWorkloadCluster{}
 }
@@ -147,7 +143,7 @@ func (s *deleteWorkloadCluster) Run(ctx context.Context, commandContext *task.Co
 	err := commandContext.ClusterManager.DeleteCluster(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.Provider, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
-		return nil
+		return &CollectDiagnosticsTask{}
 	}
 
 	return &cleanupGitRepo{}
@@ -162,7 +158,7 @@ func (s *cleanupGitRepo) Run(ctx context.Context, commandContext *task.CommandCo
 	err := commandContext.AddonManager.CleanupGitRepo(ctx, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
-		return nil
+		return &CollectDiagnosticsTask{}
 	}
 
 	return &deleteManagementCluster{}
@@ -173,32 +169,23 @@ func (s *cleanupGitRepo) Name() string {
 }
 
 func (s *deleteManagementCluster) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if commandContext.OriginalError != nil {
+		_ = s.CollectDiagnosticsTask.Run(ctx, commandContext)
+	}
 	if commandContext.BootstrapCluster != nil && !commandContext.BootstrapCluster.ExistingManagement {
 		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, false); err != nil {
 			commandContext.SetError(err)
 		}
-		return &cleanupProviderInfrastructure{}
-	}
-	logger.Info("Bootstrap cluster information missing - skipping delete kind cluster")
-	return &cleanupProviderInfrastructure{}
-}
-
-func (s *deleteManagementCluster) Name() string {
-	return "kind-cluster-delete"
-}
-
-func (s *cleanupProviderInfrastructure) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	err := commandContext.Provider.CleanupProviderInfrastructure(ctx)
-	if err != nil {
-		commandContext.SetError(err)
 		return nil
 	}
+	logger.Info("Bootstrap cluster information missing - skipping delete kind cluster")
 	if commandContext.OriginalError == nil {
 		logger.MarkSuccess("Cluster deleted!")
 	}
 	return nil
 }
 
-func (s *cleanupProviderInfrastructure) Name() string {
-	return "cleanup-provider-infrastructure"
+func (s *deleteManagementCluster) Name() string {
+	return "kind-cluster-delete"
 }
+
