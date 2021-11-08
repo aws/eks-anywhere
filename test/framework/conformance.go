@@ -13,7 +13,7 @@ import (
 
 const kubeConformanceImage = "k8s.gcr.io/conformance"
 
-func (e *E2ETest) RunConformanceTests() {
+func (e *ClusterE2ETest) RunConformanceTests() {
 	ctx := context.Background()
 	cluster := e.cluster()
 	setKubeconfigEnvVar(e.T, e.ClusterName)
@@ -55,7 +55,7 @@ func (e *E2ETest) RunConformanceTests() {
 	}
 }
 
-func (e *E2ETest) getEksdReleaseKubeVersion() (string, error) {
+func (e *ClusterE2ETest) getEksdReleaseKubeVersion() (string, error) {
 	c, err := v1alpha1.GetClusterConfig(e.ClusterConfigLocation)
 	if err != nil {
 		return "", fmt.Errorf("error fetching cluster config from file: %v", err)

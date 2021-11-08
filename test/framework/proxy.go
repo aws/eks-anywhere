@@ -19,8 +19,8 @@ var proxyRequiredEnvVars = []string{
 	noProxyVar,
 }
 
-func WithProxy() E2ETestOpt {
-	return func(e *E2ETest) {
+func WithProxy() ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, proxyRequiredEnvVars)
 		httpProxy := os.Getenv(httpProxyVar)
 		httpsProxy := os.Getenv(httpsProxyVar)

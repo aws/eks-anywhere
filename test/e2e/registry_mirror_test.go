@@ -10,7 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-func runRegistryMirrorConfigFlow(test *framework.E2ETest) {
+func runRegistryMirrorConfigFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.ImportImages()
 	test.CreateCluster()
@@ -19,7 +19,7 @@ func runRegistryMirrorConfigFlow(test *framework.E2ETest) {
 }
 
 func TestVSphereKubernetes121UbuntuRegistryMirrorAndCert(t *testing.T) {
-	test := framework.NewE2ETest(
+	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu121(), framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
@@ -32,7 +32,7 @@ func TestVSphereKubernetes121UbuntuRegistryMirrorAndCert(t *testing.T) {
 }
 
 func TestVSphereKubernetes121BottlerocketRegistryMirrorAndCert(t *testing.T) {
-	test := framework.NewE2ETest(
+	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket121(), framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),

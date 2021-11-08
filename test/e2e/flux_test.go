@@ -16,7 +16,7 @@ const (
 	fluxUserProvidedPath      = "test/testerson"
 )
 
-func runUpgradeFlowWithFlux(test *framework.E2ETest, updateVersion v1alpha1.KubernetesVersion, opts ...framework.E2ETestOpt) {
+func runUpgradeFlowWithFlux(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, opts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
 	test.UpgradeCluster(opts...)
@@ -26,7 +26,7 @@ func runUpgradeFlowWithFlux(test *framework.E2ETest, updateVersion v1alpha1.Kube
 	test.DeleteCluster()
 }
 
-func runFluxFlow(test *framework.E2ETest) {
+func runFluxFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
 	test.ValidateFlux()
@@ -35,7 +35,7 @@ func runFluxFlow(test *framework.E2ETest) {
 }
 
 func TestDockerKubernetes120Flux(t *testing.T) {
-	test := framework.NewE2ETest(t,
+	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
@@ -44,7 +44,7 @@ func TestDockerKubernetes120Flux(t *testing.T) {
 }
 
 func TestDockerKubernetes121Flux(t *testing.T) {
-	test := framework.NewE2ETest(t,
+	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
@@ -53,7 +53,7 @@ func TestDockerKubernetes121Flux(t *testing.T) {
 }
 
 func TestVSphereKubernetes120Flux(t *testing.T) {
-	test := framework.NewE2ETest(t,
+	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu120()),
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
@@ -65,7 +65,7 @@ func TestVSphereKubernetes120Flux(t *testing.T) {
 }
 
 func TestVSphereKubernetes121Flux(t *testing.T) {
-	test := framework.NewE2ETest(t,
+	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu121()),
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
@@ -77,7 +77,7 @@ func TestVSphereKubernetes121Flux(t *testing.T) {
 }
 
 func TestVSphereKubernetes120BottleRocketFlux(t *testing.T) {
-	test := framework.NewE2ETest(t,
+	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket120()),
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
@@ -89,7 +89,7 @@ func TestVSphereKubernetes120BottleRocketFlux(t *testing.T) {
 }
 
 func TestVSphereKubernetes121BottleRocketFlux(t *testing.T) {
-	test := framework.NewE2ETest(t,
+	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithBottleRocket121()),
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
@@ -101,7 +101,7 @@ func TestVSphereKubernetes121BottleRocketFlux(t *testing.T) {
 }
 
 func TestVSphereKubernetes121ThreeReplicasThreeWorkersFlux(t *testing.T) {
-	test := framework.NewE2ETest(t,
+	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
@@ -112,7 +112,7 @@ func TestVSphereKubernetes121ThreeReplicasThreeWorkersFlux(t *testing.T) {
 }
 
 func TestDockerKubernetes121GitopsOptionsFlux(t *testing.T) {
-	test := framework.NewE2ETest(t,
+	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
@@ -127,7 +127,7 @@ func TestDockerKubernetes121GitopsOptionsFlux(t *testing.T) {
 }
 
 func TestVSphereKubernetes121GitopsOptionsFlux(t *testing.T) {
-	test := framework.NewE2ETest(t,
+	test := framework.NewClusterE2ETest(t,
 		framework.NewVSphere(t, framework.WithUbuntu121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),

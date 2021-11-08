@@ -121,3 +121,9 @@ func WithRegistryMirror(endpoint, caCert string) ClusterFiller {
 		c.Spec.RegistryMirrorConfiguration.CACertContent = caCert
 	}
 }
+
+func WithManagementCluster(name string) ClusterFiller {
+	return func(c *v1alpha1.Cluster) {
+		c.Spec.ManagementCluster.Name = name
+	}
+}
