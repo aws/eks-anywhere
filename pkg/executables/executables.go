@@ -100,6 +100,19 @@ func (e *linuxDockerExecutable) buildCommand(envs map[string]string, cli string,
 		"-w", directory, "-v", "/var/run/docker.sock:/var/run/docker.sock",
 	}
 
+	for idx, dir := range args {
+		if dir == "--kubeconfig" {
+			absPath, err := filepath.Abs(filepath.Dir(args[idx+1]))
+			if err != nil {
+				return nil, "", err
+			}
+			workDirAbsPath := directory
+			if absPath != "." && absPath != workDirAbsPath {
+				dockerCommands = append(dockerCommands, "-v", absPath+":"+absPath)
+			}
+		}
+	}
+
 	dockerCommands = append(dockerCommands, envVars...)
 	dockerCommands = append(dockerCommands, "--entrypoint", cli, e.image)
 	dockerCommands = append(dockerCommands, args...)
