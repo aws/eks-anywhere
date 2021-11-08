@@ -64,7 +64,7 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 
 type CreateBootStrapClusterTask struct{}
 
-type DeleteKindClusterTask struct{
+type DeleteKindClusterTask struct {
 	*CollectDiagnosticsTask
 }
 
@@ -80,7 +80,7 @@ type MoveClusterManagementTask struct{}
 
 type WriteClusterConfigTask struct{}
 
-type DeleteBootstrapClusterTask struct{
+type DeleteBootstrapClusterTask struct {
 	*CollectDiagnosticsTask
 }
 
@@ -316,7 +316,7 @@ func (s *InstallEksaComponentsTask) Name() string {
 
 // InstallAddonManagerTask implementation
 
-func (s *InstallAddonManagerTask) Run(ctx context.Context, commandContext *task.CommandContext)  (task task.Task) {
+func (s *InstallAddonManagerTask) Run(ctx context.Context, commandContext *task.CommandContext) (task task.Task) {
 	logger.Info("Installing AddonManager and GitOps Toolkit on workload cluster")
 
 	err := commandContext.AddonManager.InstallGitOps(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(), commandContext.Provider.MachineConfigs())

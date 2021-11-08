@@ -96,7 +96,7 @@ type moveManagementToWorkloadTask struct{}
 
 type upgradeWorkloadClusterTask struct{}
 
-type deleteBootstrapClusterTask struct{
+type deleteBootstrapClusterTask struct {
 	*CollectDiagnosticsTask
 }
 

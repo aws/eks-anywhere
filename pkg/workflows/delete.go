@@ -66,7 +66,7 @@ type deleteWorkloadCluster struct{}
 
 type cleanupGitRepo struct{}
 
-type deleteManagementCluster struct{
+type deleteManagementCluster struct {
 	*CollectDiagnosticsTask
 }
 
@@ -188,4 +188,3 @@ func (s *deleteManagementCluster) Run(ctx context.Context, commandContext *task.
 func (s *deleteManagementCluster) Name() string {
 	return "kind-cluster-delete"
 }
-
