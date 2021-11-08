@@ -82,20 +82,6 @@ func (mr *MockProviderMockRecorder) ChangeDiff(arg0, arg1 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChangeDiff", reflect.TypeOf((*MockProvider)(nil).ChangeDiff), arg0, arg1)
 }
 
-// CleanupProviderInfrastructure mocks base method.
-func (m *MockProvider) CleanupProviderInfrastructure(arg0 context.Context) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CleanupProviderInfrastructure", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CleanupProviderInfrastructure indicates an expected call of CleanupProviderInfrastructure.
-func (mr *MockProviderMockRecorder) CleanupProviderInfrastructure(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanupProviderInfrastructure", reflect.TypeOf((*MockProvider)(nil).CleanupProviderInfrastructure), arg0)
-}
-
 // DatacenterConfig mocks base method.
 func (m *MockProvider) DatacenterConfig() providers.DatacenterConfig {
 	m.ctrl.T.Helper()
