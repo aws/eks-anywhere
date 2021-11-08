@@ -423,12 +423,12 @@ func GetEksdRelease(cliVersion version.Info, clusterConfig *eksav1alpha1.Cluster
 		return nil, nil, err
 	}
 
-	eksdRalease, err := s.reader.GetEksdRelease(versionsBundle)
+	eksdRelease, err := s.reader.GetEksdRelease(versionsBundle)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return &versionsBundle.EksD, eksdRalease, nil
+	return &versionsBundle.EksD, eksdRelease, nil
 }
 
 type Manifest struct {

@@ -43,7 +43,7 @@ func WithAWSIamClusterID(clusterId string) AWSIamConfigOpt {
 	}
 }
 
-func WithAWSIamRole(arn, username string, groups []string) *v1alpha1.MapRoles {
+func AddAWSIamRole(arn, username string, groups []string) *v1alpha1.MapRoles {
 	return &v1alpha1.MapRoles{
 		RoleARN:  arn,
 		Username: username,
@@ -51,13 +51,13 @@ func WithAWSIamRole(arn, username string, groups []string) *v1alpha1.MapRoles {
 	}
 }
 
-func AddAWSIamMapRoles(mapRoles *v1alpha1.MapRoles) AWSIamConfigOpt {
+func WithAWSIamMapRoles(mapRoles *v1alpha1.MapRoles) AWSIamConfigOpt {
 	return func(c *v1alpha1.AWSIamConfig) {
 		c.Spec.MapRoles = append(c.Spec.MapRoles, *mapRoles)
 	}
 }
 
-func WithAWSIamUser(arn, username string, groups []string) *v1alpha1.MapUsers {
+func AddAWSIamUser(arn, username string, groups []string) *v1alpha1.MapUsers {
 	return &v1alpha1.MapUsers{
 		UserARN:  arn,
 		Username: username,
@@ -65,7 +65,7 @@ func WithAWSIamUser(arn, username string, groups []string) *v1alpha1.MapUsers {
 	}
 }
 
-func AddAWSIamMapUsers(mapUsers *v1alpha1.MapUsers) AWSIamConfigOpt {
+func WithAWSIamMapUsers(mapUsers *v1alpha1.MapUsers) AWSIamConfigOpt {
 	return func(c *v1alpha1.AWSIamConfig) {
 		c.Spec.MapUsers = append(c.Spec.MapUsers, *mapUsers)
 	}

@@ -64,7 +64,6 @@ phases:
       -r 'Test'
       -v 4
       --bundles-override=${BUNDLES_OVERRIDE}
-      -g AWS_IAM_AUTHENTICATOR
   post_build:
     commands:
     - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE

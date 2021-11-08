@@ -56,7 +56,7 @@ func newSession(amiId, instanceProfileName, storageBucket, jobId, subnetId strin
 	return e, nil
 }
 
-func (e *E2ESession) setup(regex string, gates []string) error {
+func (e *E2ESession) setup(regex string) error {
 	err := e.uploadRequiredFiles()
 	if err != nil {
 		return err
@@ -123,11 +123,6 @@ func (e *E2ESession) setup(regex string, gates []string) error {
 	e.testEnvVars[e2etests.JobIdVar] = e.jobId
 	e.testEnvVars[e2etests.BundlesOverrideVar] = strconv.FormatBool(e.bundlesOverride)
 	e.testEnvVars[e2etests.ClusterNameVar] = instanceId
-	// Setting feature gates
-	for _, gate := range gates {
-		e.testEnvVars[gate] = "true"
-		logger.V(1).Info("Activated feature gate", gate, "true")
-	}
 	return nil
 }
 

@@ -16,7 +16,6 @@ import (
 
 const (
 	AWSIamRoleArn = "T_AWS_IAM_ROLE_ARN"
-	AWSIamUserArn = "T_AWS_IAM_USER_ARN"
 )
 
 var awsIamRequiredEnvVars = []string{
@@ -27,15 +26,15 @@ func RequiredAWSIamEnvVars() []string {
 	return awsIamRequiredEnvVars
 }
 
-func WithAWSIam() E2ETestOpt {
-	return func(e *E2ETest) {
+func WithAWSIam() ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, awsIamRequiredEnvVars)
 		e.AWSIamConfig = api.NewAWSIamConfig(defaultClusterName,
 			api.WithAWSIamAWSRegion("us-west-1"),
 			api.WithAWSIamClusterID(defaultClusterName),
 			api.WithAWSIamPartition("aws"),
 			api.WithAWSIamBackendMode("EKSConfigMap"),
-			api.AddAWSIamMapRoles(api.WithAWSIamRole(withArnFromEnv(AWSIamRoleArn), "kubernetes-admin", []string{"system:masters"})),
+			api.WithAWSIamMapRoles(api.AddAWSIamRole(withArnFromEnv(AWSIamRoleArn), "kubernetes-admin", []string{"system:masters"})),
 		)
 		e.clusterFillers = append(e.clusterFillers,
 			api.WithAWSIamIdentityProviderRef(defaultClusterName),
@@ -47,7 +46,7 @@ func withArnFromEnv(envVar string) string {
 	return os.Getenv(envVar)
 }
 
-func (e *E2ETest) ValidateAWSIamAuth() {
+func (e *ClusterE2ETest) ValidateAWSIamAuth() {
 	ctx := context.Background()
 	e.T.Log("Downloading aws-iam-authenticator client")
 	err := e.downloadAwsIamAuthClient()
@@ -64,7 +63,7 @@ func (e *E2ETest) ValidateAWSIamAuth() {
 	}
 }
 
-func (e *E2ETest) downloadAwsIamAuthClient() error {
+func (e *ClusterE2ETest) downloadAwsIamAuthClient() error {
 	eksdRelease, err := e.getEksdReleaseManifest()
 	if err != nil {
 		return err
@@ -76,7 +75,7 @@ func (e *E2ETest) downloadAwsIamAuthClient() error {
 	return nil
 }
 
-func (e *E2ETest) getEksdReleaseManifest() (*eksdv1alpha1.Release, error) {
+func (e *ClusterE2ETest) getEksdReleaseManifest() (*eksdv1alpha1.Release, error) {
 	c := e.clusterConfig()
 	_, eksdRelease, err := cluster.GetEksdRelease(version.Get(), c)
 	if err != nil {
@@ -85,6 +84,6 @@ func (e *E2ETest) getEksdReleaseManifest() (*eksdv1alpha1.Release, error) {
 	return eksdRelease, nil
 }
 
-func (e *E2ETest) iamAuthKubeconfigFilePath() string {
+func (e *ClusterE2ETest) iamAuthKubeconfigFilePath() string {
 	return filepath.Join(e.ClusterName, fmt.Sprintf("%s-aws.kubeconfig", e.ClusterName))
 }

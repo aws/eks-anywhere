@@ -54,5 +54,4 @@ $REPO_ROOT/bin/test e2e run \
     -j ${JOB_ID} \
     -i ${INTEGRATION_TEST_INSTANCE_PROFILE} \
     -r ${TEST_REGEX} \
-    --bundles-override=${BUNDLES_OVERRIDE} \
-    -g AWS_IAM_AUTHENTICATOR
+    --bundles-override=${BUNDLES_OVERRIDE}
