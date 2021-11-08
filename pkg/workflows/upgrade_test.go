@@ -269,9 +269,10 @@ func (c *upgradeTestSetup) expectVerifyClusterSpecChanged(expectedCluster *types
 	)
 }
 
-func (c *upgradeTestSetup) expectSaveLogs() {
+func (c *upgradeTestSetup) expectSaveLogs(expectedWorkloadCluster *types.Cluster) {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().SaveLogsManagementCluster(c.ctx, c.bootstrapCluster).Return(nil),
+		c. clusterManager.EXPECT().SaveLogsWorkloadCluster(c.ctx, c.provider, c.clusterSpec, expectedWorkloadCluster),
 	)
 }
 
@@ -409,7 +410,7 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 	test.expectMoveManagementToBootstrap()
 	test.expectUpgradeWorkloadToReturn(test.workloadCluster, errors.New("failed upgrading"))
 	test.expectMoveManagementToWorkload()
-	test.expectSaveLogs()
+	test.expectSaveLogs(test.workloadCluster)
 
 	err := test.run()
 	if err == nil {
