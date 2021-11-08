@@ -57,6 +57,20 @@ type ClusterStatus struct {
 	Phase string
 }
 
+type CmkTemplate struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+	Zonename string `json:"zonename"`
+}
+
+type CmkServiceOffering struct {
+	CpuNumber int	`json:"cpunumber"`
+	CpuSpeed int	`json:"cpuspeed""`
+	Memory int `json:"memory"`
+	Id string `json:"id"`
+	Name string `json:"name"`
+}
+
 type Metadata struct {
 	Name string
 }
