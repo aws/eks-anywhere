@@ -6,12 +6,6 @@ menu:
   main:
     weight: 10
 ---
-## [Unreleased]
-
-### Added
-
-- aws-iam-authenticator support
-- Allow the retention of node taints during an upgrade
 
 ## v0.6.0 - 2021-10-29
 
