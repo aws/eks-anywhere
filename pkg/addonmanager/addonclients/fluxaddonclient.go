@@ -664,6 +664,10 @@ func (fc *fluxForCluster) validateRemoteConfigPathDoesNotExist(ctx context.Conte
 	return nil
 }
 
+func (fc *fluxForCluster) namespace() string {
+	return fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace
+}
+
 func (fc *fluxForCluster) repository() string {
 	return fc.clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository
 }

@@ -191,14 +191,14 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
-	changeDiff, err = commandContext.AddonManager.Upgrade(ctx, target, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	changeDiff, err = commandContext.ClusterManager.Upgrade(ctx, target, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
-	changeDiff, err = commandContext.ClusterManager.Upgrade(ctx, target, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	changeDiff, err = commandContext.AddonManager.Upgrade(ctx, target, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil

@@ -206,7 +206,7 @@ func TestPreflightValidations(t *testing.T) {
 			workerResponse:     nil,
 			nodeResponse:       nil,
 			crdResponse:        nil,
-			wantErr:            composeError("gitOps is immutable"),
+			wantErr:            composeError("gitOps spec.flux.github.fluxSystemNamespace is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
 				s.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace = "new-namespace"
 			},
@@ -220,7 +220,7 @@ func TestPreflightValidations(t *testing.T) {
 			workerResponse:     nil,
 			nodeResponse:       nil,
 			crdResponse:        nil,
-			wantErr:            composeError("gitOps is immutable"),
+			wantErr:            composeError("gitOps spec.flux.github.branch is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
 				s.GitOpsConfig.Spec.Flux.Github.Branch = "new-branch"
 			},
@@ -234,7 +234,7 @@ func TestPreflightValidations(t *testing.T) {
 			workerResponse:     nil,
 			nodeResponse:       nil,
 			crdResponse:        nil,
-			wantErr:            composeError("gitOps is immutable"),
+			wantErr:            composeError("gitOps spec.flux.github.owner is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
 				s.GitOpsConfig.Spec.Flux.Github.Owner = "new-owner"
 			},
@@ -248,13 +248,13 @@ func TestPreflightValidations(t *testing.T) {
 			workerResponse:     nil,
 			nodeResponse:       nil,
 			crdResponse:        nil,
-			wantErr:            composeError("gitOps is immutable"),
+			wantErr:            composeError("gitOps spec.flux.github.repository is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
 				s.GitOpsConfig.Spec.Flux.Github.Repository = "new-repository"
 			},
 		},
 		{
-			name:               "ValidationGitOpsPathImmutable",
+			name:               "ValidationGitOpsPathMutable",
 			clusterVersion:     "v1.19.16-eks-1-19-4",
 			upgradeVersion:     "1.19",
 			getClusterResponse: goodClusterResponse,
@@ -262,7 +262,7 @@ func TestPreflightValidations(t *testing.T) {
 			workerResponse:     nil,
 			nodeResponse:       nil,
 			crdResponse:        nil,
-			wantErr:            composeError("gitOps is immutable"),
+			wantErr:            nil,
 			modifyFunc: func(s *cluster.Spec) {
 				s.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath = "new-path"
 			},
@@ -276,7 +276,7 @@ func TestPreflightValidations(t *testing.T) {
 			workerResponse:     nil,
 			nodeResponse:       nil,
 			crdResponse:        nil,
-			wantErr:            composeError("gitOps is immutable"),
+			wantErr:            composeError("gitOps spec.flux.github.personal is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
 				s.GitOpsConfig.Spec.Flux.Github.Personal = !s.GitOpsConfig.Spec.Flux.Github.Personal
 			},
