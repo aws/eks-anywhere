@@ -180,9 +180,9 @@ func (fc *fluxForCluster) updateGitOpsConfig(fileName string) ([]byte, error) {
 		return nil, fmt.Errorf("unable to read file due to: %v", err)
 	}
 
-	var gitopsconfig v1alpha1.GitOpsConfig
 	var resources [][]byte
 	for _, c := range strings.Split(string(content), v1alpha1.YamlSeparator) {
+		var gitopsconfig v1alpha1.GitOpsConfig
 		if err = yaml.Unmarshal([]byte(c), &gitopsconfig); err != nil {
 			return nil, fmt.Errorf("unable to parse %s\nyaml: %s\n %v", fileName, c, err)
 		}
