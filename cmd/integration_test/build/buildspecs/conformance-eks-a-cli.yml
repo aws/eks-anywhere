@@ -32,7 +32,8 @@ env:
 phases:
   pre_build:
     commands:
-    - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup.sh
+    - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
+    - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
     - make conformance-tests
   build:
     commands:
