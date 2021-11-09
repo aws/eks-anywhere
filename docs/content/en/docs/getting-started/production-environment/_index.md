@@ -10,7 +10,7 @@ This document walks you through setting up EKS Anywhere in a way that:
 
 * Deploys a management cluster on your vSphere environment
 * Deploys one or more workload clusters from the management cluster
-* Keeps the management cluster in place so you can use it to later upgrade and delete workload clusters
+* Keeps the management cluster in place so you can use it later to modify, upgrade, and delete workload clusters
 
 {{% alert title="Important" color="warning" %}}
 
