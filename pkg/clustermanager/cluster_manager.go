@@ -81,7 +81,7 @@ type ClusterClient interface {
 	ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
 	GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error)
 	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
-	GetClusterCATlsCert(ctx context.Context, cluster *types.Cluster, namespace string) ([]byte, error)
+	GetClusterCATlsCert(ctx context.Context, clusterName string, cluster *types.Cluster, namespace string) ([]byte, error)
 }
 
 type Networking interface {
@@ -594,7 +594,7 @@ func (c *ClusterManager) generateAwsIamAuthKubeconfig(ctx context.Context, manag
 	if err != nil {
 		return fmt.Errorf("error generating aws-iam-authenticator kubeconfig: %v", err)
 	}
-	tlsCert, err := c.clusterClient.GetClusterCATlsCert(ctx, managementCluster, constants.EksaSystemNamespace)
+	tlsCert, err := c.clusterClient.GetClusterCATlsCert(ctx, workloadCluster.Name, managementCluster, constants.EksaSystemNamespace)
 	if err != nil {
 		return fmt.Errorf("error generating aws-iam-authenticator kubeconfig: %v", err)
 	}
