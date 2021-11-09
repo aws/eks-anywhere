@@ -146,7 +146,7 @@ func (fc *fluxForCluster) updateFileStructure() error {
 		}
 		err := fc.gitOpts.Git.Remove(filepath.Join(clusterRoot, eksaSystemDirName))
 		if err != nil {
-			return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when removing %s in git: %v", filepath.Join(clusterRootPath, eksaSystemDirName), err)}
+			return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when removing %s in git: %v", filepath.Join(clusterRoot, eksaSystemDirName), err)}
 		}
 	}
 
