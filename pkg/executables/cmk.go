@@ -149,6 +149,27 @@ func (c *Cmk) ListZones(ctx context.Context, offering string) ([]types.CmkZone, 
 	return response.CmkZones, nil
 }
 
+// TODO: Add support for domain filtering
+func (c *Cmk) ListAccounts(ctx context.Context, accountName string) ([]types.CmkAccount, error) {
+	nameFilterArg := fmt.Sprintf("name=\"%s\"", accountName)
+	result, err := c.exec(ctx, "list", "accounts", nameFilterArg)
+	if err != nil {
+		return make([]types.CmkAccount, 0), fmt.Errorf("error getting accounts info: %v", err)
+	}
+	if result.Len() == 0 {
+		return make([]types.CmkAccount, 0), nil
+	}
+
+	response := struct {
+		CmkAccounts []types.CmkAccount `json:"account"`
+	}{}
+	err = json.Unmarshal(result.Bytes(), &response)
+	if err != nil {
+		return make([]types.CmkAccount, 0), fmt.Errorf("failed to parse response into json: %v", err)
+	}
+	return response.CmkAccounts, nil
+}
+
 func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, err error) {
 	c.setupExecConfig()
 	envMap, err := c.getEnvMap()

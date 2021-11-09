@@ -175,6 +175,70 @@ func TestListServiceOfferings(t *testing.T) {
 	}
 }
 
+func TestListAccounts(t *testing.T) {
+	_, writer := test.NewWriter(t)
+	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
+	tests := []struct {
+		testName         string
+		jsonResponseFile string
+		cmkResponseError error
+		wantErr          bool
+		wantResultCount  int
+	}{
+		{
+			testName:         "success",
+			jsonResponseFile: "testdata/cmk_list_account_singular.json",
+			cmkResponseError: nil,
+			wantErr:          false,
+			wantResultCount:  1,
+		},
+		{
+			testName:         "no results",
+			jsonResponseFile: "testdata/cmk_list_empty_response.json",
+			cmkResponseError: nil,
+			wantErr:          false,
+			wantResultCount:  0,
+		},
+		{
+			testName:         "json parse exception",
+			jsonResponseFile: "testdata/cmk_non_json_response.txt",
+			cmkResponseError: nil,
+			wantErr:          true,
+			wantResultCount:  0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			fileContent := test.ReadFile(t, tt.jsonResponseFile)
+
+			ctx := context.Background()
+			mockCtrl := gomock.NewController(t)
+
+			var tctx testContext
+			tctx.SaveContext()
+			defer tctx.RestoreContext()
+
+			executable := mockexecutables.NewMockExecutable(mockCtrl)
+			executable.EXPECT().Execute(ctx, []string{"-c", configFilePath,
+				"list", "accounts", fmt.Sprintf("name=\"%s\"", resourceName)}).
+				Return(*bytes.NewBufferString(fileContent), tt.cmkResponseError)
+			cmk := executables.NewCmk(executable, writer)
+			templates, err := cmk.ListAccounts(ctx, resourceName)
+			if tt.wantErr {
+				return
+			}
+			if err != nil {
+				t.Fatalf("Cmk.ListAccounts() error: %v", err)
+			}
+
+			if len(templates) != tt.wantResultCount {
+				t.Fatalf("Cmk.ListAccounts returned = %d results, want %d", len(templates), tt.wantResultCount)
+			}
+		})
+	}
+}
+
 func TestListDiskOfferings(t *testing.T) {
 	_, writer := test.NewWriter(t)
 	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
