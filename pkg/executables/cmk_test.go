@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	cmkConfigFileName  	= "cmk_tmp.ini"
-	resourceName = "TEST_RESOURCE"
+	cmkConfigFileName = "cmk_tmp.ini"
+	resourceName      = "TEST_RESOURCE"
 )
 
 func TestValidateCloudStackConnectionSuccess(t *testing.T) {
@@ -25,7 +25,7 @@ func TestValidateCloudStackConnectionSuccess(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
-	configFilePath := filepath.Join(writer.Dir(), "generated", cmkConfigFileName)
+	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	expectedArgs := []string{"-c", configFilePath, "sync"}
 	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, nil)
 	c := executables.NewCmk(executable, writer)
@@ -41,7 +41,7 @@ func TestValidateCloudStackConnectionError(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
-	configFilePath := filepath.Join(writer.Dir(), "generated", cmkConfigFileName)
+	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	expectedArgs := []string{"-c", configFilePath, "sync"}
 	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, errors.New("cmk test error"))
 	c := executables.NewCmk(executable, writer)
@@ -51,70 +51,32 @@ func TestValidateCloudStackConnectionError(t *testing.T) {
 	}
 }
 
-func TestRegisterSshKeyPairSuccess(t *testing.T) {
-	_, writer := test.NewWriter(t)
-	ctx := context.Background()
-	mockCtrl := gomock.NewController(t)
-	keyName := "testKeyname"
-	keyValue := "ssh-rsa key-value"
-
-	executable := mockexecutables.NewMockExecutable(mockCtrl)
-	configFilePath := filepath.Join(writer.Dir(), "generated", cmkConfigFileName)
-	expectedArgs := []string{"-c", configFilePath, "register", "sshkeypair", fmt.Sprintf("name=\"%s\"", keyName),
-		fmt.Sprintf("publickey=\"%s\"", keyValue)}
-	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, nil)
-	c := executables.NewCmk(executable, writer)
-	err := c.RegisterSSHKeyPair(ctx, keyName, keyValue)
-	if err != nil {
-		t.Fatalf("Cmk.RegisterSshKey() error = %v, want nil", err)
-	}
-}
-
-func TestRegisterSshKeyPairError(t *testing.T) {
-	_, writer := test.NewWriter(t)
-	ctx := context.Background()
-	mockCtrl := gomock.NewController(t)
-	keyName := "testKeyname"
-	keyValue := "ssh-rsa key-value"
-
-	executable := mockexecutables.NewMockExecutable(mockCtrl)
-	configFilePath := filepath.Join(writer.Dir(), "generated", cmkConfigFileName)
-	expectedArgs := []string{"-c", configFilePath, "register", "sshkeypair", fmt.Sprintf("name=\"%s\"", keyName),
-		fmt.Sprintf("publickey=\"%s\"", keyValue)}
-	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, errors.New("cmk test error"))
-	c := executables.NewCmk(executable, writer)
-	err := c.RegisterSSHKeyPair(ctx, keyName, keyValue)
-	if err == nil {
-		t.Fatalf("Cmk.RegisterSshKeyPair() didn't throw expected error")
-	}
-}
-
 func TestListTemplates(t *testing.T) {
 	_, writer := test.NewWriter(t)
-	configFilePath := filepath.Join(writer.Dir(), "generated", cmkConfigFileName)
+	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	tests := []struct {
-		testName         	string
-		jsonResponseFile 	string
-		wantErr				bool
-		wantResultCount		int
+		testName         string
+		jsonResponseFile string
+		wantErr          bool
+		wantResultCount  int
 	}{
 		{
 			testName:         "success",
 			jsonResponseFile: "testdata/cmk_list_template_singular.json",
-			wantErr: false,
-			wantResultCount: 1,
+			wantErr:          false,
+			wantResultCount:  1,
 		},
 		{
 			testName:         "no results",
 			jsonResponseFile: "testdata/cmk_list_empty_response.json",
-			wantErr: false,
-			wantResultCount: 0,
+			wantErr:          false,
+			wantResultCount:  0,
 		},
 		{
 			testName:         "json parse exception",
 			jsonResponseFile: "testdata/cmk_non_json_response.txt",
-			wantErr: true,
-			wantResultCount: 0,
+			wantErr:          true,
+			wantResultCount:  0,
 		},
 	}
 
@@ -151,34 +113,34 @@ func TestListTemplates(t *testing.T) {
 
 func TestListServiceOfferings(t *testing.T) {
 	_, writer := test.NewWriter(t)
-	configFilePath := filepath.Join(writer.Dir(), "generated", cmkConfigFileName)
+	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	tests := []struct {
-		testName         	string
-		jsonResponseFile 	string
-		cmkResponseError	error
-		wantErr				bool
-		wantResultCount		int
+		testName         string
+		jsonResponseFile string
+		cmkResponseError error
+		wantErr          bool
+		wantResultCount  int
 	}{
 		{
 			testName:         "success",
 			jsonResponseFile: "testdata/cmk_list_serviceoffering_singular.json",
 			cmkResponseError: nil,
-			wantErr: false,
-			wantResultCount: 1,
+			wantErr:          false,
+			wantResultCount:  1,
 		},
 		{
 			testName:         "no results",
 			jsonResponseFile: "testdata/cmk_list_empty_response.json",
 			cmkResponseError: nil,
-			wantErr: false,
-			wantResultCount: 0,
+			wantErr:          false,
+			wantResultCount:  0,
 		},
 		{
 			testName:         "json parse exception",
 			jsonResponseFile: "testdata/cmk_non_json_response.txt",
 			cmkResponseError: nil,
-			wantErr: true,
-			wantResultCount: 0,
+			wantErr:          true,
+			wantResultCount:  0,
 		},
 	}
 
@@ -215,34 +177,34 @@ func TestListServiceOfferings(t *testing.T) {
 
 func TestListDiskOfferings(t *testing.T) {
 	_, writer := test.NewWriter(t)
-	configFilePath := filepath.Join(writer.Dir(), "generated", cmkConfigFileName)
+	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	tests := []struct {
-		testName         	string
-		jsonResponseFile 	string
-		cmkResponseError	error
-		wantErr				bool
-		wantResultCount		int
+		testName         string
+		jsonResponseFile string
+		cmkResponseError error
+		wantErr          bool
+		wantResultCount  int
 	}{
 		{
 			testName:         "success",
 			jsonResponseFile: "testdata/cmk_list_diskoffering_singular.json",
 			cmkResponseError: nil,
-			wantErr: false,
-			wantResultCount: 1,
+			wantErr:          false,
+			wantResultCount:  1,
 		},
 		{
 			testName:         "no results",
 			jsonResponseFile: "testdata/cmk_list_empty_response.json",
 			cmkResponseError: nil,
-			wantErr: false,
-			wantResultCount: 0,
+			wantErr:          false,
+			wantResultCount:  0,
 		},
 		{
 			testName:         "json parse exception",
 			jsonResponseFile: "testdata/cmk_non_json_response.txt",
 			cmkResponseError: nil,
-			wantErr: true,
-			wantResultCount: 0,
+			wantErr:          true,
+			wantResultCount:  0,
 		},
 	}
 
@@ -279,34 +241,34 @@ func TestListDiskOfferings(t *testing.T) {
 
 func TestListZones(t *testing.T) {
 	_, writer := test.NewWriter(t)
-	configFilePath := filepath.Join(writer.Dir(), "generated", cmkConfigFileName)
+	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	tests := []struct {
-		testName         	string
-		jsonResponseFile 	string
-		cmkResponseError	error
-		wantErr				bool
-		wantResultCount		int
+		testName         string
+		jsonResponseFile string
+		cmkResponseError error
+		wantErr          bool
+		wantResultCount  int
 	}{
 		{
 			testName:         "success",
 			jsonResponseFile: "testdata/cmk_list_zone_singular.json",
 			cmkResponseError: nil,
-			wantErr: false,
-			wantResultCount: 1,
+			wantErr:          false,
+			wantResultCount:  1,
 		},
 		{
 			testName:         "no results",
 			jsonResponseFile: "testdata/cmk_list_empty_response.json",
 			cmkResponseError: nil,
-			wantErr: false,
-			wantResultCount: 0,
+			wantErr:          false,
+			wantResultCount:  0,
 		},
 		{
 			testName:         "json parse exception",
 			jsonResponseFile: "testdata/cmk_non_json_response.txt",
 			cmkResponseError: nil,
-			wantErr: true,
-			wantResultCount: 0,
+			wantErr:          true,
+			wantResultCount:  0,
 		},
 	}
 
