@@ -129,24 +129,22 @@ func (fc *fluxForCluster) writeFluxUpgradeFiles() error {
 
 func (fc *fluxForCluster) updateFileStructure() error {
 	config := fc.clusterSpec.GitOpsConfig
-	clusterRootPath := config.Spec.Flux.Github.ClusterRootPath()
-	fluxSystemPath := filepath.Join(fc.gitOpts.Writer.Dir(), clusterRootPath, fc.namespace())
+	clusterRoot := config.Spec.Flux.Github.ClusterRootPath()
+	fluxSystemPath := filepath.Join(fc.gitOpts.Writer.Dir(), fc.fluxSystemDir())
 	nEksaSystemPath := filepath.Join(fc.gitOpts.Writer.Dir(), fc.eksaSystemDir())
-	oEksaSystemPath := filepath.Join(fc.gitOpts.Writer.Dir(), clusterRootPath, eksaSystemDirName)
+	oEksaSystemPath := filepath.Join(fc.gitOpts.Writer.Dir(), clusterRoot, eksaSystemDirName)
 
 	if validations.FileExists(fluxSystemPath) && validations.FileExists(nEksaSystemPath) {
 		logger.V(3).Info("File structure is already up-to-date")
 		return nil
 	}
 
-	if !validations.FileExists(nEksaSystemPath) &&
-		validations.FileExists(oEksaSystemPath) {
-
-		logger.V(3).Info("Updating eks-a cluster config content - gitopsconfig clusterConfigPath...")
+	if !validations.FileExists(nEksaSystemPath) && validations.FileExists(oEksaSystemPath) {
+		logger.V(3).Info("Updating eksa-system files...")
 		if err := fc.writeEksaUpgradeFiles(oEksaSystemPath); err != nil {
 			return err
 		}
-		err := fc.gitOpts.Git.Remove(filepath.Join(clusterRootPath, eksaSystemDirName))
+		err := fc.gitOpts.Git.Remove(filepath.Join(clusterRoot, eksaSystemDirName))
 		if err != nil {
 			return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when removing %s in git: %v", filepath.Join(clusterRootPath, eksaSystemDirName), err)}
 		}
@@ -176,6 +174,7 @@ func (fc *fluxForCluster) writeEksaUpgradeFiles(oldEksaSystemPath string) error 
 }
 
 func (fc *fluxForCluster) updateGitOpsConfig(fileName string) ([]byte, error) {
+	logger.V(3).Info("Updating eks-a cluster config content - gitopsconfig clusterConfigPath...")
 	content, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file due to: %v", err)
@@ -189,7 +188,9 @@ func (fc *fluxForCluster) updateGitOpsConfig(fileName string) ([]byte, error) {
 		}
 
 		if gitopsconfig.Kind() != gitopsconfig.ExpectedKind() {
-			resources = append(resources, []byte(c))
+			if len(c) > 0 {
+				resources = append(resources, []byte(c))
+			}
 			continue
 		}
 
