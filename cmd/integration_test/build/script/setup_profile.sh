@@ -32,7 +32,3 @@ role_arn=${TEST_ROLE_ARN}
 region=us-west-2
 credential_source=EcsContainer
 EOF
-
-source /docker.sh
-start::dockerd
-wait::for::dockerd
