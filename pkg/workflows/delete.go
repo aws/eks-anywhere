@@ -44,7 +44,6 @@ func (c *Delete) Run(ctx context.Context, workloadCluster *types.Cluster, cluste
 		AddonManager:    c.addonManager,
 		WorkloadCluster: workloadCluster,
 		ClusterSpec:     clusterSpec,
-		Rollback:        false,
 	}
 
 	if clusterSpec.ManagementCluster != nil {

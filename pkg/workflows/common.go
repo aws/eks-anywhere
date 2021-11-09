@@ -10,16 +10,12 @@ import (
 type CollectDiagnosticsTask struct{}
 
 func (s *CollectDiagnosticsTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	collectDiagnostics(ctx, commandContext)
+	logger.Info("collecting cluster diagnostics")
+	_ = commandContext.ClusterManager.SaveLogsManagementCluster(ctx, commandContext.BootstrapCluster)
+	_ = commandContext.ClusterManager.SaveLogsWorkloadCluster(ctx, commandContext.Provider, commandContext.ClusterSpec, commandContext.WorkloadCluster)
 	return nil
 }
 
 func (s *CollectDiagnosticsTask) Name() string {
 	return "collect-cluster-diagnostics"
-}
-
-func collectDiagnostics(ctx context.Context, commandContext *task.CommandContext) {
-	logger.Info("collecting cluster diagnostics")
-	_ = commandContext.ClusterManager.SaveLogsManagementCluster(ctx, commandContext.BootstrapCluster)
-	_ = commandContext.ClusterManager.SaveLogsWorkloadCluster(ctx, commandContext.Provider, commandContext.ClusterSpec, commandContext.WorkloadCluster)
 }

@@ -57,7 +57,6 @@ func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, workloadCl
 		WorkloadCluster:   workloadCluster,
 		ClusterSpec:       clusterSpec,
 		Validations:       validator,
-		Rollback:          true,
 		Writer:            c.writer,
 		CAPIManager:       c.capiManager,
 		UpgradeChangeDiff: c.upgradeChangeDiff,

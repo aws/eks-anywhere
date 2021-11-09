@@ -48,7 +48,6 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		ClusterManager: c.clusterManager,
 		AddonManager:   c.addonManager,
 		ClusterSpec:    clusterSpec,
-		Rollback:       false,
 		Writer:         c.writer,
 		Validations:    validator,
 	}
@@ -138,7 +137,9 @@ func (s *CreateBootStrapClusterTask) Name() string {
 // DeleteKindClusterTask implementation
 
 func (s *DeleteKindClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	_ = s.CollectDiagnosticsTask.Run(ctx, commandContext)
+	if commandContext.OriginalError != nil {
+		_ = s.CollectDiagnosticsTask.Run(ctx, commandContext)
+	}
 	if commandContext.BootstrapCluster != nil {
 		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, false); err != nil {
 			commandContext.SetError(err)
@@ -316,7 +317,7 @@ func (s *InstallEksaComponentsTask) Name() string {
 
 // InstallAddonManagerTask implementation
 
-func (s *InstallAddonManagerTask) Run(ctx context.Context, commandContext *task.CommandContext) (task task.Task) {
+func (s *InstallAddonManagerTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Installing AddonManager and GitOps Toolkit on workload cluster")
 
 	err := commandContext.AddonManager.InstallGitOps(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(), commandContext.Provider.MachineConfigs())
