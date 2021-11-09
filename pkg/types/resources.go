@@ -64,9 +64,20 @@ type CmkTemplate struct {
 }
 
 type CmkServiceOffering struct {
-	CpuNumber int	`json:"cpunumber"`
-	CpuSpeed int	`json:"cpuspeed""`
+	CpuNumber int `json:"cpunumber"`
+	CpuSpeed int `json:"cpuspeed""`
 	Memory int `json:"memory"`
+	Id string `json:"id"`
+	Name string `json:"name"`
+}
+
+type CmkDiskOffering struct {
+	DiskSize int `json:"disksize"`
+	Id string `json:"id"`
+	Name string `json:"name"`
+}
+
+type CmkZone struct {
 	Id string `json:"id"`
 	Name string `json:"name"`
 }

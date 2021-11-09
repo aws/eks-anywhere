@@ -16,8 +16,7 @@ import (
 
 const (
 	cmkConfigFileName  	= "cmk_tmp.ini"
-	templateName		= "TEST_TEMPLATE"
-	offeringName 		= "TEST_OFFERING"
+	resourceName = "TEST_RESOURCE"
 )
 
 func TestValidateCloudStackConnectionSuccess(t *testing.T) {
@@ -132,10 +131,10 @@ func TestListTemplates(t *testing.T) {
 
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
 			executable.EXPECT().Execute(ctx, []string{"-c", configFilePath,
-				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", templateName)}).
+				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName)}).
 				Return(*bytes.NewBufferString(fileContent), nil)
 			cmk := executables.NewCmk(executable, writer)
-			templates, err := cmk.ListTemplates(ctx, templateName)
+			templates, err := cmk.ListTemplates(ctx, resourceName)
 			if tt.wantErr {
 				return
 			}
@@ -196,10 +195,10 @@ func TestListServiceOfferings(t *testing.T) {
 
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
 			executable.EXPECT().Execute(ctx, []string{"-c", configFilePath,
-				"list", "serviceofferings", fmt.Sprintf("name=\"%s\"", offeringName)}).
+				"list", "serviceofferings", fmt.Sprintf("name=\"%s\"", resourceName)}).
 				Return(*bytes.NewBufferString(fileContent), tt.cmkResponseError)
 			cmk := executables.NewCmk(executable, writer)
-			templates, err := cmk.ListServiceOfferings(ctx, offeringName)
+			templates, err := cmk.ListServiceOfferings(ctx, resourceName)
 			if tt.wantErr {
 				return
 			}
@@ -260,10 +259,10 @@ func TestListDiskOfferings(t *testing.T) {
 
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
 			executable.EXPECT().Execute(ctx, []string{"-c", configFilePath,
-				"list", "diskofferings", fmt.Sprintf("name=\"%s\"", offeringName)}).
+				"list", "diskofferings", fmt.Sprintf("name=\"%s\"", resourceName)}).
 				Return(*bytes.NewBufferString(fileContent), tt.cmkResponseError)
 			cmk := executables.NewCmk(executable, writer)
-			templates, err := cmk.ListDiskOfferings(ctx, offeringName)
+			templates, err := cmk.ListDiskOfferings(ctx, resourceName)
 			if tt.wantErr {
 				return
 			}
@@ -273,6 +272,70 @@ func TestListDiskOfferings(t *testing.T) {
 
 			if len(templates) != tt.wantResultCount {
 				t.Fatalf("Cmk.ListDiskOfferings returned = %d results, want %d", len(templates), tt.wantResultCount)
+			}
+		})
+	}
+}
+
+func TestListZones(t *testing.T) {
+	_, writer := test.NewWriter(t)
+	configFilePath := filepath.Join(writer.Dir(), "generated", cmkConfigFileName)
+	tests := []struct {
+		testName         	string
+		jsonResponseFile 	string
+		cmkResponseError	error
+		wantErr				bool
+		wantResultCount		int
+	}{
+		{
+			testName:         "success",
+			jsonResponseFile: "testdata/cmk_list_zone_singular.json",
+			cmkResponseError: nil,
+			wantErr: false,
+			wantResultCount: 1,
+		},
+		{
+			testName:         "no results",
+			jsonResponseFile: "testdata/cmk_list_empty_response.json",
+			cmkResponseError: nil,
+			wantErr: false,
+			wantResultCount: 0,
+		},
+		{
+			testName:         "json parse exception",
+			jsonResponseFile: "testdata/cmk_non_json_response.txt",
+			cmkResponseError: nil,
+			wantErr: true,
+			wantResultCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			fileContent := test.ReadFile(t, tt.jsonResponseFile)
+
+			ctx := context.Background()
+			mockCtrl := gomock.NewController(t)
+
+			var tctx testContext
+			tctx.SaveContext()
+			defer tctx.RestoreContext()
+
+			executable := mockexecutables.NewMockExecutable(mockCtrl)
+			executable.EXPECT().Execute(ctx, []string{"-c", configFilePath,
+				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName)}).
+				Return(*bytes.NewBufferString(fileContent), tt.cmkResponseError)
+			cmk := executables.NewCmk(executable, writer)
+			templates, err := cmk.ListZones(ctx, resourceName)
+			if tt.wantErr {
+				return
+			}
+			if err != nil {
+				t.Fatalf("Cmk.ListZones() error: %v", err)
+			}
+
+			if len(templates) != tt.wantResultCount {
+				t.Fatalf("Cmk.ListZones returned = %d results, want %d", len(templates), tt.wantResultCount)
 			}
 		})
 	}

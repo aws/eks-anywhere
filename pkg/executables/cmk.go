@@ -135,6 +135,29 @@ func (c *Cmk) ListDiskOfferings(ctx context.Context, offering string) ([]types.C
 	return response.CmkDiskOfferings, nil
 }
 
+type cmkZoneResponse struct {
+	CmkZones []types.CmkZone `json:"zone"`
+}
+
+// TODO: Add support for domain, account filtering
+func (c *Cmk) ListZones(ctx context.Context, offering string) ([]types.CmkZone, error) {
+	nameFilterArg := fmt.Sprintf("name=\"%s\"", offering)
+	result, err := c.exec(ctx, "list", "zones", nameFilterArg)
+	if err != nil {
+		return make([]types.CmkZone, 0), fmt.Errorf("error getting zones info: %v", err)
+	}
+	if result.Len() == 0 {
+		return make([]types.CmkZone, 0), nil
+	}
+
+	response := &cmkZoneResponse{}
+	err = json.Unmarshal(result.Bytes(), response)
+	if err != nil {
+		return make([]types.CmkZone, 0), fmt.Errorf("failed to parse response into json: %v", err)
+	}
+	return response.CmkZones, nil
+}
+
 // TODO: Add support for domain, account filtering
 func (c *Cmk) RegisterSSHKeyPair(ctx context.Context, name string, publicKey string) error {
 	keyNameArgument := fmt.Sprintf("name=\"%s\"", name)
