@@ -15,7 +15,7 @@ This document walks you through setting up EKS Anywhere in a way that:
 {{% alert title="Important" color="warning" %}}
 
 In the initial release, EKS Anywhere clusters functioned as both workload and management clusters.
-Separating management features into a separate, persistant management cluster
+Separating management features into a separate, persistent management cluster
 provides a cleaner model for managing the lifecycle of workload clusters (to create, upgrade, and delete clusters), while workload clusters run user applications.
 This approach also reduces provider permissions for workload clusters.
 
@@ -40,9 +40,9 @@ An EKS Anywhere deployment will also require the availability of certain
 
 1. Modify the management cluster config (`eksa-mgmt-cluster.yaml`) as follows:
 
-   * Refer to [vsphere configuration]({{< relref "../../reference/clusterspec/vsphere.md" >}}) for information on configuring this cluster config for a vSphere provider.
+   * Refer to [vsphere configuration]({{< relref "../../reference/clusterspec/vsphere" >}}) for information on configuring this cluster config for a vSphere provider.
    * Create at least two control plane nodes, three worker nodes, and three etcd nodes for a production cluster, to provide high availability and rolling upgrades.
-   * Optionally, configure the cluster for [OIDC]({{< relref "(/docs/reference/clusterspec/oidc.md" >}}), [etcd]({{< relref "(/docs/reference/clusterspec/etcd.md" >}}), [proxy]({{< relref "(/docs/reference/clusterspec/proxy.md" >}}), [gitops]({{< relref "(/docs/reference/clusterspec/gitops.md" >}}) and/or [a container registry mirror]({{< relref "/docs/reference/clusterspec/registrymirror.md" >}}).
+   * Optionally, configure the cluster for [OIDC]({{< relref "/docs/reference/clusterspec/oidc" >}}), [etcd]({{< relref "/docs/reference/clusterspec/etcd" >}}), [proxy]({{< relref "/docs/reference/clusterspec/proxy" >}}), [gitops]({{< relref "/docs/reference/clusterspec/gitops" >}}) and/or [a container registry mirror]({{< relref "/docs/reference/clusterspec/registrymirror" >}}).
 
 1. Set Credential Environment Variables
 
