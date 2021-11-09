@@ -43,7 +43,9 @@ phases:
   pre_build:
     commands:
     - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/set_profile.sh
-    - /docker.sh
+    - source /docker.sh
+    - start::dockerd
+    - wait::for::dockerd
   build:
     commands:
     - export JOB_ID=$CODEBUILD_BUILD_ID
