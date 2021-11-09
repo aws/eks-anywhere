@@ -989,12 +989,18 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 }
 
 func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus))
+	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.gitOpsFetcher(clus))
 }
 
 func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {
 	return func(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
 		return c.clusterClient.GetBundles(ctx, cluster.KubeconfigFile, name, namespace)
+	}
+}
+
+func (c *ClusterManager) gitOpsFetcher(cluster *types.Cluster) cluster.GitOpsFetch {
+	return func(ctx context.Context, name, namespace string) (*v1alpha1.GitOpsConfig, error) {
+		return c.clusterClient.GetEksaGitOpsConfig(ctx, name, cluster.KubeconfigFile, namespace)
 	}
 }
 
@@ -1012,11 +1018,4 @@ func (c *ClusterManager) DeleteAWSIamConfig(ctx context.Context, managementClust
 
 func (c *ClusterManager) DeleteEKSACluster(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
 	return c.clusterClient.DeleteEKSACluster(ctx, managementCluster, name, namespace)
-}
-
-func (c *ClusterManager) GetGitOpsConfig(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (*v1alpha1.GitOpsConfig, error) {
-	if clusterSpec.Spec.GitOpsRef == nil {
-		return nil, nil
-	}
-	return c.clusterClient.GetEksaGitOpsConfig(ctx, clusterSpec.Spec.GitOpsRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace)
 }

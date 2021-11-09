@@ -198,12 +198,6 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 	}
 	commandContext.UpgradeChangeDiff.Append(changeDiff)
 
-	currentGitOps, err := commandContext.ClusterManager.GetGitOpsConfig(ctx, target, commandContext.CurrentClusterSpec)
-	if err != nil {
-		commandContext.SetError(err)
-		return nil
-	}
-	commandContext.CurrentClusterSpec.GitOpsConfig = currentGitOps
 	err = commandContext.AddonManager.UpdateLegacyFileStructure(ctx, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)

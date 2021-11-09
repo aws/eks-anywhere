@@ -142,6 +142,12 @@ func WithManagementCluster(cluster *types.Cluster) SpecOpt {
 	}
 }
 
+func WithGitOpsConfig(gitOpsConfig *eksav1alpha1.GitOpsConfig) SpecOpt {
+	return func(s *Spec) {
+		s.GitOpsConfig = gitOpsConfig
+	}
+}
+
 func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt) (*Spec, error) {
 	clusterConfig, err := eksav1alpha1.GetClusterConfig(clusterConfigPath)
 	if err != nil {

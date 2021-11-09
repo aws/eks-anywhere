@@ -8,7 +8,6 @@ import (
 	context "context"
 	reflect "reflect"
 
-	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	bootstrapper "github.com/aws/eks-anywhere/pkg/bootstrapper"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	providers "github.com/aws/eks-anywhere/pkg/providers"
@@ -196,21 +195,6 @@ func (m *MockClusterManager) GetCurrentClusterSpec(arg0 context.Context, arg1 *t
 func (mr *MockClusterManagerMockRecorder) GetCurrentClusterSpec(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentClusterSpec", reflect.TypeOf((*MockClusterManager)(nil).GetCurrentClusterSpec), arg0, arg1, arg2)
-}
-
-// GetGitOpsConfig mocks base method.
-func (m *MockClusterManager) GetGitOpsConfig(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) (*v1alpha1.GitOpsConfig, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetGitOpsConfig", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*v1alpha1.GitOpsConfig)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetGitOpsConfig indicates an expected call of GetGitOpsConfig.
-func (mr *MockClusterManagerMockRecorder) GetGitOpsConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitOpsConfig", reflect.TypeOf((*MockClusterManager)(nil).GetGitOpsConfig), arg0, arg1, arg2)
 }
 
 // InstallAwsIamAuth mocks base method.
