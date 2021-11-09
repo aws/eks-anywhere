@@ -31,7 +31,7 @@ export KUBEVERSION="1.21"
 ```
 5. Download the OVA
 ```
-OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.2.0.ova"
+OVA="bottlerocket-vmware-k8s-${KUBEVERSION}-x86_64-v1.3.0.ova"
 tuftool download . --target-name "${OVA}" \
    --root ./root.json \
    --metadata-url "https://updates.bottlerocket.aws/2020-07-07/vmware-k8s-${KUBEVERSION}/x86_64/" \
@@ -44,21 +44,21 @@ OS Family - `os:bottlerocket`
 
 EKS-D Release
 
-1.21 - `eksdRelease:kubernetes-1-21-eks-5`
+1.21 - `eksdRelease:kubernetes-1-21-eks-6`
 
-1.20 - `eksdRelease:kubernetes-1-20-eks-7`
+1.20 - `eksdRelease:kubernetes-1-20-eks-8`
 
 ## Ubuntu with Kubernetes 1.21
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/2/artifacts/ova/1-21/ubuntu-v1.21.2-eks-d-1-21-5-eks-a-2-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/4/artifacts/ova/1-21/ubuntu-v1.21.2-eks-d-1-21-6-eks-a-4-amd64.ova
 * `os:ubuntu`
-* `eksdRelease:kubernetes-1-21-eks-5`
+* `eksdRelease:kubernetes-1-21-eks-6`
 
 ## Ubuntu with Kubernetes 1.20
 
-* https://anywhere-assets.eks.amazonaws.com/releases/bundles/2/artifacts/ova/1-20/ubuntu-v1.20.7-eks-d-1-20-7-eks-a-2-amd64.ova
+* https://anywhere-assets.eks.amazonaws.com/releases/bundles/4/artifacts/ova/1-20/ubuntu-v1.20.7-eks-d-1-20-8-eks-a-4-amd64.ova
 * `os:ubuntu`
-* `eksdRelease:kubernetes-1-20-eks-7`
+* `eksdRelease:kubernetes-1-20-eks-8`
 
 ## Building your own Ubuntu OVA
 The EKS Anywhere project OVA building process leverages upstream [image-builder repository.](https://github.com/kubernetes-sigs/image-builder)
