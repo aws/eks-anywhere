@@ -23,21 +23,20 @@ type ClusterSpecOpt func(*cluster.Spec)
 var configFS embed.FS
 
 func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
-	s := &cluster.Spec{
-		Cluster: &v1alpha1.Cluster{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "fluxAddonTestCluster",
-			},
-			Spec: v1alpha1.ClusterSpec{
-				WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{}},
-			},
+	s := cluster.NewSpec()
+	s.Cluster = &v1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "fluxAddonTestCluster",
 		},
-		VersionsBundle: &cluster.VersionsBundle{
-			VersionsBundle: &releasev1alpha1.VersionsBundle{},
-			KubeDistro:     &cluster.KubeDistro{},
+		Spec: v1alpha1.ClusterSpec{
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{}},
 		},
-		Bundles: &releasev1alpha1.Bundles{},
 	}
+	s.VersionsBundle = &cluster.VersionsBundle{
+		VersionsBundle: &releasev1alpha1.VersionsBundle{},
+		KubeDistro:     &cluster.KubeDistro{},
+	}
+	s.Bundles = &releasev1alpha1.Bundles{}
 
 	for _, opt := range opts {
 		opt(s)
@@ -48,7 +47,7 @@ func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
 }
 
 func NewFullClusterSpec(t *testing.T, clusterConfigFile string) *cluster.Spec {
-	s, err := cluster.NewSpec(
+	s, err := cluster.NewSpecFromClusterConfig(
 		clusterConfigFile,
 		version.Info{GitVersion: "v0.0.0-dev"},
 		cluster.WithReleasesManifest("embed:///testdata/releases.yaml"),

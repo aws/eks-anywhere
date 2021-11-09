@@ -7,7 +7,7 @@ import (
 )
 
 func getImages(spec string) ([]v1alpha1.Image, error) {
-	clusterSpec, err := cluster.NewSpec(spec, version.Get())
+	clusterSpec, err := cluster.NewSpecFromClusterConfig(spec, version.Get())
 	if err != nil {
 		return nil, err
 	}

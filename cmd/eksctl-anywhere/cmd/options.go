@@ -26,7 +26,7 @@ func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
 		specOpts = append(specOpts, cluster.WithManagementCluster(managementCluster))
 	}
 
-	clusterSpec, err := cluster.NewSpec(options.fileName, version.Get(), specOpts...)
+	clusterSpec, err := cluster.NewSpecFromClusterConfig(options.fileName, version.Get(), specOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
 	}

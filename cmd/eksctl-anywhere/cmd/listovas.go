@@ -52,7 +52,7 @@ var listOvasCmd = &cobra.Command{
 }
 
 func listOvas(context context.Context, spec string) error {
-	clusterSpec, err := cluster.NewSpec(spec, version.Get())
+	clusterSpec, err := cluster.NewSpecFromClusterConfig(spec, version.Get())
 	if err != nil {
 		return err
 	}

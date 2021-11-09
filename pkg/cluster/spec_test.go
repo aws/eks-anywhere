@@ -15,7 +15,7 @@ var testdataFS embed.FS
 
 func TestNewSpecInvalidClusterConfig(t *testing.T) {
 	v := version.Info{}
-	if _, err := cluster.NewSpec("testdata/cluster_invalid_kinds.yaml", v); err == nil {
+	if _, err := cluster.NewSpecFromClusterConfig("testdata/cluster_invalid_kinds.yaml", v); err == nil {
 		t.Fatal("NewSpec() error nil , want err not nil")
 	}
 }
@@ -27,24 +27,6 @@ func TestNewSpecError(t *testing.T) {
 		clusterConfigFile string
 		cliVersion        string
 	}{
-		{
-			testName:          "InvalidManifestURL",
-			clusterConfigFile: "testdata/cluster_1_19.yaml",
-			releaseURL:        ":domain.com/",
-			cliVersion:        "",
-		},
-		{
-			testName:          "GettingReleasesManifestEmbed",
-			clusterConfigFile: "testdata/cluster_1_19.yaml",
-			releaseURL:        "embed://fake.yaml",
-			cliVersion:        "",
-		},
-		{
-			testName:          "GettingReleasesManifestLocal",
-			clusterConfigFile: "testdata/cluster_1_19.yaml",
-			releaseURL:        "fake.yaml",
-			cliVersion:        "",
-		},
 		{
 			testName:          "InvalidReleasesManifest",
 			clusterConfigFile: "testdata/cluster_1_19.yaml",
@@ -115,7 +97,7 @@ func TestNewSpecError(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			v := version.Info{GitVersion: tt.cliVersion}
-			if _, err := cluster.NewSpec(tt.clusterConfigFile, v, cluster.WithReleasesManifest(tt.releaseURL)); err == nil {
+			if _, err := cluster.NewSpecFromClusterConfig(tt.clusterConfigFile, v, cluster.WithReleasesManifest(tt.releaseURL)); err == nil {
 				t.Fatal("NewSpec() error nil, want err not nil")
 			}
 		})
@@ -124,7 +106,7 @@ func TestNewSpecError(t *testing.T) {
 
 func TestNewSpecValidEmbedManifest(t *testing.T) {
 	v := version.Info{GitVersion: "v0.0.1"}
-	_, err := cluster.NewSpec(
+	_, err := cluster.NewSpecFromClusterConfig(
 		"testdata/cluster_1_19.yaml",
 		v,
 		cluster.WithReleasesManifest("embed:///testdata/simple_release.yaml"),
@@ -137,7 +119,7 @@ func TestNewSpecValidEmbedManifest(t *testing.T) {
 
 func TestNewSpecValid(t *testing.T) {
 	v := version.Info{GitVersion: "v0.0.1"}
-	gotSpec, err := cluster.NewSpec("testdata/cluster_1_19.yaml", v, cluster.WithReleasesManifest("testdata/simple_release.yaml"))
+	gotSpec, err := cluster.NewSpecFromClusterConfig("testdata/cluster_1_19.yaml", v, cluster.WithReleasesManifest("testdata/simple_release.yaml"))
 	if err != nil {
 		t.Fatalf("NewSpec() error = %v, want err nil", err)
 	}
@@ -147,7 +129,7 @@ func TestNewSpecValid(t *testing.T) {
 
 func TestNewSpecWithBundlesOverrideValid(t *testing.T) {
 	v := version.Info{GitVersion: "v0.0.1"}
-	gotSpec, err := cluster.NewSpec("testdata/cluster_1_19.yaml", v,
+	gotSpec, err := cluster.NewSpecFromClusterConfig("testdata/cluster_1_19.yaml", v,
 		cluster.WithReleasesManifest("testdata/invalid_release_version.yaml"),
 		cluster.WithOverrideBundlesManifest("testdata/simple_bundle.yaml"),
 	)
@@ -188,7 +170,7 @@ func validateVersionedRepo(t *testing.T, gotImage cluster.VersionedRepository, w
 }
 
 func TestSpecLoadManifestError(t *testing.T) {
-	s := &cluster.Spec{}
+	s := cluster.NewSpec()
 	tests := []struct {
 		testName string
 		manifest v1alpha1.Manifest
@@ -214,7 +196,7 @@ func TestSpecLoadManifestError(t *testing.T) {
 func TestSpecLoadManifestSuccess(t *testing.T) {
 	filename := "testdata/cluster_1_19.yaml"
 	wantFilename := "cluster_1_19.yaml"
-	s := &cluster.Spec{}
+	s := cluster.NewSpec()
 	manifest := v1alpha1.Manifest{URI: filename}
 	m, err := s.LoadManifest(manifest)
 	if err != nil {
