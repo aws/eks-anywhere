@@ -67,7 +67,7 @@ func TestRegisterSshKeyPairSuccess(t *testing.T) {
 	c := executables.NewCmk(executable, writer)
 	err := c.RegisterSSHKeyPair(ctx, keyName, keyValue)
 	if err != nil {
-		t.Fatalf("Awscli.CreateAccessKey() error = %v, want nil", err)
+		t.Fatalf("Cmk.RegisterSshKey() error = %v, want nil", err)
 	}
 }
 
@@ -156,24 +156,28 @@ func TestListServiceOfferings(t *testing.T) {
 	tests := []struct {
 		testName         	string
 		jsonResponseFile 	string
+		cmkResponseError	error
 		wantErr				bool
 		wantResultCount		int
 	}{
 		{
 			testName:         "success",
 			jsonResponseFile: "testdata/cmk_list_serviceoffering_singular.json",
+			cmkResponseError: nil,
 			wantErr: false,
 			wantResultCount: 1,
 		},
 		{
 			testName:         "no results",
 			jsonResponseFile: "testdata/cmk_list_empty_response.json",
+			cmkResponseError: nil,
 			wantErr: false,
 			wantResultCount: 0,
 		},
 		{
 			testName:         "json parse exception",
 			jsonResponseFile: "testdata/cmk_non_json_response.txt",
+			cmkResponseError: nil,
 			wantErr: true,
 			wantResultCount: 0,
 		},
@@ -193,7 +197,7 @@ func TestListServiceOfferings(t *testing.T) {
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
 			executable.EXPECT().Execute(ctx, []string{"-c", configFilePath,
 				"list", "serviceofferings", fmt.Sprintf("name=\"%s\"", offeringName)}).
-				Return(*bytes.NewBufferString(fileContent), nil)
+				Return(*bytes.NewBufferString(fileContent), tt.cmkResponseError)
 			cmk := executables.NewCmk(executable, writer)
 			templates, err := cmk.ListServiceOfferings(ctx, offeringName)
 			if tt.wantErr {
@@ -205,6 +209,70 @@ func TestListServiceOfferings(t *testing.T) {
 
 			if len(templates) != tt.wantResultCount {
 				t.Fatalf("Cmk.ListServiceOfferings returned = %d results, want %d", len(templates), tt.wantResultCount)
+			}
+		})
+	}
+}
+
+func TestListDiskOfferings(t *testing.T) {
+	_, writer := test.NewWriter(t)
+	configFilePath := filepath.Join(writer.Dir(), "generated", cmkConfigFileName)
+	tests := []struct {
+		testName         	string
+		jsonResponseFile 	string
+		cmkResponseError	error
+		wantErr				bool
+		wantResultCount		int
+	}{
+		{
+			testName:         "success",
+			jsonResponseFile: "testdata/cmk_list_diskoffering_singular.json",
+			cmkResponseError: nil,
+			wantErr: false,
+			wantResultCount: 1,
+		},
+		{
+			testName:         "no results",
+			jsonResponseFile: "testdata/cmk_list_empty_response.json",
+			cmkResponseError: nil,
+			wantErr: false,
+			wantResultCount: 0,
+		},
+		{
+			testName:         "json parse exception",
+			jsonResponseFile: "testdata/cmk_non_json_response.txt",
+			cmkResponseError: nil,
+			wantErr: true,
+			wantResultCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			fileContent := test.ReadFile(t, tt.jsonResponseFile)
+
+			ctx := context.Background()
+			mockCtrl := gomock.NewController(t)
+
+			var tctx testContext
+			tctx.SaveContext()
+			defer tctx.RestoreContext()
+
+			executable := mockexecutables.NewMockExecutable(mockCtrl)
+			executable.EXPECT().Execute(ctx, []string{"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("name=\"%s\"", offeringName)}).
+				Return(*bytes.NewBufferString(fileContent), tt.cmkResponseError)
+			cmk := executables.NewCmk(executable, writer)
+			templates, err := cmk.ListDiskOfferings(ctx, offeringName)
+			if tt.wantErr {
+				return
+			}
+			if err != nil {
+				t.Fatalf("Cmk.ListDiskOfferings() error: %v", err)
+			}
+
+			if len(templates) != tt.wantResultCount {
+				t.Fatalf("Cmk.ListDiskOfferings returned = %d results, want %d", len(templates), tt.wantResultCount)
 			}
 		})
 	}

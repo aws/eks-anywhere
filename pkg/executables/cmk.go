@@ -112,6 +112,29 @@ func (c *Cmk) ListServiceOfferings(ctx context.Context, offering string) ([]type
 	return response.CmkServiceOfferings, nil
 }
 
+type cmkDiskOfferingResponse struct {
+	CmkDiskOfferings []types.CmkDiskOffering `json:"diskoffering"`
+}
+
+// TODO: Add support for domain, account filtering
+func (c *Cmk) ListDiskOfferings(ctx context.Context, offering string) ([]types.CmkDiskOffering, error) {
+	templateNameFilterArg := fmt.Sprintf("name=\"%s\"", offering)
+	result, err := c.exec(ctx, "list", "diskofferings", templateNameFilterArg)
+	if err != nil {
+		return make([]types.CmkDiskOffering, 0), fmt.Errorf("error getting disk offerings info: %v", err)
+	}
+	if result.Len() == 0 {
+		return make([]types.CmkDiskOffering, 0), nil
+	}
+
+	response := &cmkDiskOfferingResponse{}
+	err = json.Unmarshal(result.Bytes(), response)
+	if err != nil {
+		return make([]types.CmkDiskOffering, 0), fmt.Errorf("failed to parse response into json: %v", err)
+	}
+	return response.CmkDiskOfferings, nil
+}
+
 // TODO: Add support for domain, account filtering
 func (c *Cmk) RegisterSSHKeyPair(ctx context.Context, name string, publicKey string) error {
 	keyNameArgument := fmt.Sprintf("name=\"%s\"", name)
@@ -176,13 +199,13 @@ func (c *Cmk) validateAndSetupCreds() (map[string]string, error) {
 	var ok bool
 	var envMap map[string]string
 	if cloudStackUsername, ok = os.LookupEnv(cloudStackUsernameKey);  !ok || len(cloudStackUsername) <= 0 {
-		return nil, fmt.Errorf("%s is not set or is empty: %t", cloudStackUsername, ok)
+		return nil, fmt.Errorf("%s is not set or is empty: %t", cloudStackUsernameKey, ok)
 	}
 	if cloudStackPassword, ok = os.LookupEnv(cloudStackPasswordKey);  !ok || len(cloudStackPassword) <= 0 {
-		return nil, fmt.Errorf("%s is not set or is empty: %t", cloudStackPassword, ok)
+		return nil, fmt.Errorf("%s is not set or is empty: %t", cloudStackPasswordKey, ok)
 	}
 	if cloudStackURL, ok = os.LookupEnv(cloudStackURLKey);  !ok || len(cloudStackURL) <= 0 {
-		return nil, fmt.Errorf("%s is not set or is empty: %t", cloudStackURL, ok)
+		return nil, fmt.Errorf("%s is not set or is empty: %t", cloudStackURLKey, ok)
 	}
 	envMap, err := c.getEnvMap()
 	if err != nil {
