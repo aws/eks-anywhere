@@ -59,6 +59,7 @@ type ClusterClient interface {
 	WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
+	GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error)
 	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error
 	DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, gitOpsName, namespace string) error
 	DeleteOIDCConfig(ctx context.Context, managementCluster *types.Cluster, oidcConfigName, oidcConfigNamespace string) error
@@ -1011,4 +1012,11 @@ func (c *ClusterManager) DeleteAWSIamConfig(ctx context.Context, managementClust
 
 func (c *ClusterManager) DeleteEKSACluster(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {
 	return c.clusterClient.DeleteEKSACluster(ctx, managementCluster, name, namespace)
+}
+
+func (c *ClusterManager) GetGitOpsConfig(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (*v1alpha1.GitOpsConfig, error) {
+	if clusterSpec.Spec.GitOpsRef == nil {
+		return nil, nil
+	}
+	return c.clusterClient.GetEksaGitOpsConfig(ctx, clusterSpec.Spec.GitOpsRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace)
 }

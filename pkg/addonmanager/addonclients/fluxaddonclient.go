@@ -483,6 +483,10 @@ func (fc *fluxForCluster) writeFluxSystemFiles() (err error) {
 		return err
 	}
 
+	return fc.generateFluxSystemFiles(w)
+}
+
+func (fc *fluxForCluster) generateFluxSystemFiles(w filewriter.FileWriter) (err error) {
 	t := templater.New(w)
 
 	logger.V(3).Info("Generating flux-system kustomization file...")
