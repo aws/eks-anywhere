@@ -63,10 +63,6 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 
 type CreateBootStrapClusterTask struct{}
 
-type DeleteKindClusterTask struct {
-	*CollectDiagnosticsTask
-}
-
 type SetAndValidateTask struct{}
 
 type CreateWorkloadClusterTask struct{}
@@ -132,26 +128,6 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 
 func (s *CreateBootStrapClusterTask) Name() string {
 	return "bootstrap-cluster-init"
-}
-
-// DeleteKindClusterTask implementation
-
-func (s *DeleteKindClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if commandContext.OriginalError != nil {
-		_ = s.CollectDiagnosticsTask.Run(ctx, commandContext)
-	}
-	if commandContext.BootstrapCluster != nil {
-		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, false); err != nil {
-			commandContext.SetError(err)
-		}
-		return nil
-	}
-	logger.Info("Bootstrap cluster information missing - skipping delete kind cluster")
-	return nil
-}
-
-func (s *DeleteKindClusterTask) Name() string {
-	return "delete-kind-cluster"
 }
 
 // SetAndValidateTask implementation
