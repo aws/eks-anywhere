@@ -30,25 +30,25 @@ func TestValidateGitopsForWorkloadClustersPath(t *testing.T) {
 				Repository:          "repo",
 				FluxSystemNamespace: "flux-system",
 				Branch:              "main",
-				ClusterConfigPath:   "clusters/" + testclustername,
+				ClusterConfigPath:   "clusters/management-gitops",
 				Personal:            false,
 			},
 		},
 		{
-			name:    "Failure, path invalid",
-			wantErr: errors.New("workload cluster gitOpsConfig is invalid: expected spec.flux.clusterConfigPath to share the same parent directory as management cluster's"),
+			name:    "Failure, path diff",
+			wantErr: errors.New("workload cluster gitOpsConfig is invalid: expected gitOpsConfig to be the same between management and its workload clusters"),
 			github: v1alpha1.Github{
 				Owner:               "owner",
 				Repository:          "repo",
 				FluxSystemNamespace: "flux-system",
 				Branch:              "main",
-				ClusterConfigPath:   "diffpath/" + testclustername,
+				ClusterConfigPath:   "clusters/" + testclustername,
 				Personal:            false,
 			},
 		},
 		{
 			name:    "Failure, branch diff",
-			wantErr: errors.New("workload cluster gitOpsConfig is invalid: spec.flux.branch must be same as management cluster's. want: main, got: dev"),
+			wantErr: errors.New("workload cluster gitOpsConfig is invalid: expected gitOpsConfig to be the same between management and its workload clusters"),
 			github: v1alpha1.Github{
 				Owner:               "owner",
 				Repository:          "repo",
@@ -60,7 +60,7 @@ func TestValidateGitopsForWorkloadClustersPath(t *testing.T) {
 		},
 		{
 			name:    "Failure, owner owner",
-			wantErr: errors.New("workload cluster gitOpsConfig is invalid: spec.flux.owner must be same as management cluster's. want: owner, got: janedoe"),
+			wantErr: errors.New("workload cluster gitOpsConfig is invalid: expected gitOpsConfig to be the same between management and its workload clusters"),
 			github: v1alpha1.Github{
 				Owner:               "janedoe",
 				Repository:          "repo",
@@ -72,7 +72,7 @@ func TestValidateGitopsForWorkloadClustersPath(t *testing.T) {
 		},
 		{
 			name:    "Failure, repo diff",
-			wantErr: errors.New("workload cluster gitOpsConfig is invalid: spec.flux.repository must be same as management cluster's. want: repo, got: diffrepo"),
+			wantErr: errors.New("workload cluster gitOpsConfig is invalid: expected gitOpsConfig to be the same between management and its workload clusters"),
 			github: v1alpha1.Github{
 				Owner:               "owner",
 				Repository:          "diffrepo",
@@ -84,7 +84,7 @@ func TestValidateGitopsForWorkloadClustersPath(t *testing.T) {
 		},
 		{
 			name:    "Failure, namespace diff",
-			wantErr: errors.New("workload cluster gitOpsConfig is invalid: spec.flux.fluxSystemNamespace must be same as management cluster's. want: flux-system, got: diff-ns"),
+			wantErr: errors.New("workload cluster gitOpsConfig is invalid: expected gitOpsConfig to be the same between management and its workload clusters"),
 			github: v1alpha1.Github{
 				Owner:               "owner",
 				Repository:          "repo",
@@ -96,7 +96,7 @@ func TestValidateGitopsForWorkloadClustersPath(t *testing.T) {
 		},
 		{
 			name:    "Failure, personal diff",
-			wantErr: errors.New("workload cluster gitOpsConfig is invalid: spec.flux.personal must be same as management cluster's. want: false, got: true"),
+			wantErr: errors.New("workload cluster gitOpsConfig is invalid: expected gitOpsConfig to be the same between management and its workload clusters"),
 			github: v1alpha1.Github{
 				Owner:               "owner",
 				Repository:          "repo",
