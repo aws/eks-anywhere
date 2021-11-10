@@ -126,14 +126,14 @@ Make sure your ESXi hosts are also up to date.
 ```
 Failed to create cluster {"error": "error initializing capi resources in cluster: error executing init: Fetching providers\nInstalling cert-manager Version=\"v1.1.0\"\nWaiting for cert-manager to be available...\nError: timed out waiting for the condition\n"}
 ```
-This is likely a [Memory or disk resource problem](#problem-memory-or-disk-resource-problem).
-You can also try using techniques from [Generic cluster unavailable](#problem-generic-cluster-unavailable).
+This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
+You can also try using techniques from [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}).
 
 ### Timed out waiting for the condition on deployments/capv-controller-manager
 ```
 Failed to create cluster {"error": "error initializing capi in bootstrap cluster: error waiting for capv-controller-manager in namespace capv-system: error executing wait: error: timed out waiting for the condition on deployments/capv-controller-manager\n"}
 ```
-Debug this problem using techniques from [Generic cluster unavailable](#problem-generic-cluster-unavailable).
+Debug this problem using techniques from [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}).
 
 ### Timed out waiting for the condition on clusters/<your-cluster-name>
 ```
@@ -172,7 +172,7 @@ Installing cluster-api providers on bootstrap cluster
 Error initializing capi in bootstrap cluster	{"error": "error waiting for capi-kubeadm-control-plane-controller-manager in namespace capi-kubeadm-control-plane-system: error executing wait: The connection to the server localhost:8080 was refused - did you specify the right host or port?\n"}
 Failed to create cluster	{"error": "error waiting for capi-kubeadm-control-plane-controller-manager in namespace capi-kubeadm-control-plane-system: error executing wait: The connection to the server localhost:8080 was refused - did you specify the right host or port?\n"}
 ```
-This is likely a [Memory or disk resource problem](#problem-memory-or-disk-resource-problem).
+This is likely a [Memory or disk resource problem]({{< relref "#memory-or-disk-resource-problem" >}}).
 
 ### Generic cluster unavailable
 Troubleshoot more by inspecting bootstrap cluster or workload cluster (depending on the stage of failure) using kubectl commands. 
@@ -217,7 +217,7 @@ If this IP is not present on any control plane VM, make sure the `network` has a
 
 {{% content "../../reference/vsphere/domains.md" %}}
 
-If no VMs are created, check the `capi-controller-manager`, `capv-controller-manager` and `capi-kubeadm-control-plane-controller-manager` logs using the commands mentioned in [Generic cluster unavailable](#problem-generic-cluster-unavailable) section.
+If no VMs are created, check the `capi-controller-manager`, `capv-controller-manager` and `capi-kubeadm-control-plane-controller-manager` logs using the commands mentioned in [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}) section.
 
 ### Cluster Deletion Fails
 If cluster deletion fails, you may need to manually delete the VMs associated with the cluster.
