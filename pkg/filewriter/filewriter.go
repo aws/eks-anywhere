@@ -8,6 +8,7 @@ type FileWriter interface {
 	CleanUp()
 	CleanUpTemp()
 	Dir() string
+	Copy(from, to string) error
 }
 
 type FileOptions struct {

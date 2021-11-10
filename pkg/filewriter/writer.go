@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 )
 
@@ -41,6 +42,33 @@ func (t *writer) Write(fileName string, content []byte, f ...FileOptionsFunc) (s
 	}
 
 	return filePath, nil
+}
+
+func (t *writer) Copy(from, to string) error {
+	fromPath := filepath.Join(t.dir, from)
+	f, err := os.Stat(fromPath)
+	if err != nil {
+		return err
+	}
+	if f.IsDir() {
+		return fmt.Errorf("error copying file: [%s] is a directory", from)
+	}
+
+	content, err := ioutil.ReadFile(fromPath)
+	if err != nil {
+		return fmt.Errorf("error reading file content: %v", err)
+	}
+
+	nw, err := t.WithDir(path.Dir(to))
+	if err != nil {
+		return err
+	}
+	_, err = nw.Write(path.Base(to), content, PersistentFile)
+	if err != nil {
+		return fmt.Errorf("error write content to [%s]: %v", to, err)
+	}
+	nw.CleanUpTemp()
+	return nil
 }
 
 func (w *writer) WithDir(dir string) (FileWriter, error) {

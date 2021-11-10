@@ -44,26 +44,11 @@ func (f *FluxAddonClient) UpdateLegacyFileStructure(ctx context.Context, current
 		return err
 	}
 
-	eksaSpec, err := nfc.updateGitOpsConfig(filepath.Join(ofc.gitOpts.Writer.Dir(), ofc.eksaSystemDir(), clusterConfigFileName))
-	if err != nil {
+	if err := nfc.updateEksaSystemFiles(ofc.eksaSystemDir()); err != nil {
 		return err
 	}
 
-	err = ofc.gitOpts.Git.Remove(ofc.path())
-	if err != nil {
-		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when removing %s in git: %v", ofc.path(), err)}
-	}
-
-	if err := nfc.writeEksaUpgradeFiles(eksaSpec); err != nil {
-		return err
-	}
-
-	nWriter, err := nfc.initFluxWriter()
-	if err != nil {
-		return err
-	}
-
-	if err = ofc.generateFluxSystemFiles(nWriter); err != nil {
+	if err := nfc.moveFluxSystemFiles(filepath.Join(ofc.path(), ofc.namespace())); err != nil {
 		return err
 	}
 
@@ -85,6 +70,58 @@ func (fc *fluxForCluster) filesUpdateNeeded() bool {
 	fluxSystemPath := filepath.Join(fc.gitOpts.Writer.Dir(), fc.fluxSystemDir())
 	eksaSystemPath := filepath.Join(fc.gitOpts.Writer.Dir(), fc.eksaSystemDir())
 	return !(validations.FileExists(fluxSystemPath) && validations.FileExists(eksaSystemPath))
+}
+
+func (fc *fluxForCluster) moveFluxSystemFiles(oldPath string) error {
+	if oldPath == fc.fluxSystemDir() {
+		logger.V(3).Info("Directory [flux-system] is already up-to-date")
+		return nil
+	}
+
+	w := fc.gitOpts.Writer
+
+	if err := w.Copy(filepath.Join(oldPath, kustomizeFileName), filepath.Join(fc.fluxSystemDir(), kustomizeFileName)); err != nil {
+		return err
+	}
+
+	if err := w.Copy(filepath.Join(oldPath, fluxSyncFileName), filepath.Join(fc.fluxSystemDir(), fluxSyncFileName)); err != nil {
+		return err
+	}
+
+	if err := w.Copy(filepath.Join(oldPath, fluxPatchFileName), filepath.Join(fc.fluxSystemDir(), fluxPatchFileName)); err != nil {
+		return err
+	}
+
+	if err := w.Copy(filepath.Join(oldPath, fluxComponentsFileName), filepath.Join(fc.fluxSystemDir(), fluxComponentsFileName)); err != nil {
+		return err
+	}
+
+	err := fc.gitOpts.Git.Remove(oldPath)
+	if err != nil {
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when removing %s in git: %v", oldPath, err)}
+	}
+	return nil
+}
+
+func (fc *fluxForCluster) updateEksaSystemFiles(oldPath string) error {
+	if oldPath == fc.eksaSystemDir() {
+		logger.V(3).Info("Directory [eksa-system] is already up-to-date")
+		return nil
+	}
+	eksaSpec, err := fc.updateGitOpsConfig(filepath.Join(fc.gitOpts.Writer.Dir(), oldPath, clusterConfigFileName))
+	if err != nil {
+		return err
+	}
+
+	if err := fc.writeEksaUpgradeFiles(eksaSpec); err != nil {
+		return err
+	}
+
+	err = fc.gitOpts.Git.Remove(oldPath)
+	if err != nil {
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when removing %s in git: %v", oldPath, err)}
+	}
+	return nil
 }
 
 func (fc *fluxForCluster) writeEksaUpgradeFiles(resourcesSpec []byte) error {
@@ -129,7 +166,7 @@ func (fc *fluxForCluster) updateGitOpsConfig(fileName string) ([]byte, error) {
 
 		gitopsconfig.Spec.Flux.Github.ClusterConfigPath = fc.path()
 
-		gitopsYaml, err := yaml.Marshal(gitopsconfig)
+		gitopsYaml, err := yaml.Marshal(gitopsconfig.ConvertConfigToConfigGenerateStruct())
 		if err != nil {
 			return nil, fmt.Errorf("error outputting yaml: %v", err)
 		}

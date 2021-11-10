@@ -58,6 +58,20 @@ func (mr *MockFileWriterMockRecorder) CleanUpTemp() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CleanUpTemp", reflect.TypeOf((*MockFileWriter)(nil).CleanUpTemp))
 }
 
+// Copy mocks base method.
+func (m *MockFileWriter) Copy(arg0, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Copy", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Copy indicates an expected call of Copy.
+func (mr *MockFileWriterMockRecorder) Copy(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Copy", reflect.TypeOf((*MockFileWriter)(nil).Copy), arg0, arg1)
+}
+
 // Dir mocks base method.
 func (m *MockFileWriter) Dir() string {
 	m.ctrl.T.Helper()
