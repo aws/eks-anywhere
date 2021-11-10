@@ -1192,19 +1192,6 @@ func TestSetupAndValidateUpgradeClusterEtcdSshNotExists(t *testing.T) {
 	}
 }
 
-func TestCleanupProviderInfrastructure(t *testing.T) {
-	ctx := context.Background()
-	provider := givenProvider(t)
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
-
-	err := provider.CleanupProviderInfrastructure(ctx)
-	if err != nil {
-		t.Fatalf("unexpected failure %v", err)
-	}
-}
-
 func TestVersion(t *testing.T) {
 	vSphereProviderVersion := "v0.7.10"
 	provider := givenProvider(t)
