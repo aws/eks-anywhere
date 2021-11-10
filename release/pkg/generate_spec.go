@@ -226,6 +226,7 @@ func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) 
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
+		fmt.Printf("Preparing artifact data for %s/n", componentName)
 		artifacts, err := artifactFunc()
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
@@ -234,11 +235,13 @@ func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) 
 		artifactsTable[componentName] = artifacts
 	}
 
+	fmt.Println("Preparing artifact data for eksdReleases")
 	eksDReleaseMap, err := readEksDReleases(r)
 	if err != nil {
 		return nil, err
 	}
 
+	fmt.Println("Preparing artifact data for bottlerocket")
 	bottlerocketSupportedK8sVersions, err := getBottlerocketSupportedK8sVersions(r)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
