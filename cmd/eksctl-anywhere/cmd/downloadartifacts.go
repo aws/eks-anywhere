@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -58,7 +59,7 @@ var downloadArtifactsCmd = &cobra.Command{
 
 func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) error {
 	cliVersion := version.Get()
-	clusterSpec, err := cluster.NewSpec(opts.fileName, cliVersion)
+	clusterSpec, err := cluster.NewSpecFromClusterConfig(opts.fileName, cliVersion)
 	if err != nil {
 		return err
 	}
@@ -73,12 +74,13 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 		bundlesManifestUrl,
 		clusterSpec.GetReleaseManifestUrl(),
 	}
+	reader := files.NewReader(files.WithUserAgent(fmt.Sprintf("eks-a-cli-download/%s", version.Get().GitVersion)))
 	for _, manifestURI := range specManifests {
 		if opts.dryRun {
 			logger.Info(fmt.Sprintf("Found artifact: %s\n", manifestURI))
 			continue
 		}
-		if err = downloadArtifact("", opts.downloadDir, manifestURI, clusterSpec); err != nil {
+		if err = downloadArtifact("", opts.downloadDir, manifestURI, reader); err != nil {
 			return fmt.Errorf("error downloading artifact: %v", err)
 		}
 	}
@@ -90,7 +92,7 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 				logger.Info(fmt.Sprintf("Found artifact: %s\n", manifest.URI))
 				continue
 			}
-			if err = downloadArtifact(component, opts.downloadDir, manifest.URI, clusterSpec); err != nil {
+			if err = downloadArtifact(component, opts.downloadDir, manifest.URI, reader); err != nil {
 				return fmt.Errorf("error downloading artifact for component %s: %v", component, err)
 			}
 		}
@@ -120,7 +122,7 @@ func preRunDownloadArtifactsCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func downloadArtifact(component, downloadDir, artifactUri string, s *cluster.Spec) error {
+func downloadArtifact(component, downloadDir, artifactUri string, reader *files.Reader) error {
 	logger.V(3).Info(fmt.Sprintf("Downloading artifact: %s", artifactUri))
 
 	fileName := filepath.Base(artifactUri)
@@ -137,7 +139,7 @@ func downloadArtifact(component, downloadDir, artifactUri string, s *cluster.Spe
 
 	logger.V(3).Info(fmt.Sprintf("Creating local artifact file: %s", filePath))
 
-	contents, err := s.ReadFile(artifactUri)
+	contents, err := reader.ReadFile(artifactUri)
 	if err != nil {
 		return err
 	}
