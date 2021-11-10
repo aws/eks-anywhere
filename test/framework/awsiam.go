@@ -11,6 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/awsiam"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
@@ -53,8 +54,17 @@ func (e *ClusterE2ETest) ValidateAWSIamAuth() {
 	if err != nil {
 		e.T.Fatalf("Error downloading aws-iam-authenticator client: %v", err)
 	}
+	e.T.Log("Setting aws-iam-authenticator client in env PATH")
+	err = e.setIamAuthClientPATH()
+	if err != nil {
+		e.T.Fatalf("Error updating PATH: %v", err)
+	}
 	e.T.Log("Getting pods with aws-iam-authenticator kubeconfig")
-	pods, err := awsiam.GetAllPods(ctx, "--kubeconfig", e.iamAuthKubeconfigFilePath())
+	kubectlClient := buildLocalKubectl()
+	pods, err := kubectlClient.GetPods(ctx,
+		executables.WithAllNamespaces(),
+		executables.WithKubeconfig(e.iamAuthKubeconfigFilePath()),
+	)
 	if err != nil {
 		e.T.Fatalf("Error getting pods: %v", err)
 	}
@@ -71,6 +81,19 @@ func (e *ClusterE2ETest) downloadAwsIamAuthClient() error {
 	err = awsiam.DownloadAwsIamAuthClient(eksdRelease)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (e *ClusterE2ETest) setIamAuthClientPATH() error {
+	envPath := os.Getenv("PATH")
+	workDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("error finding current working directory: %v", err)
+	}
+	err = os.Setenv("PATH", fmt.Sprintf("%s/bin:%s", workDir, envPath))
+	if err != nil {
+		return fmt.Errorf("error setting %s/bin to PATH: %v", workDir, err)
 	}
 	return nil
 }
