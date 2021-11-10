@@ -3,8 +3,11 @@
 package e2e
 
 import (
+	"path/filepath"
+
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/semver"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -51,7 +54,7 @@ func getLatestMinorReleaseFromReleaseBranch(test *framework.ClusterE2ETest, rele
 	var latestPrevMinorRelease *releasev1alpha1.EksARelease
 
 	for _, release := range releases.Spec.Releases {
-		releaseVersion := semver.New(release.Version)
+		releaseVersion, err := semver.New(release.Version)
 		if releaseVersion.IsPrevMinorVersion(releaseBranchVersion) && releaseVersion.GreaterThan(latestPrevMinorRelease.Version) {
 			latestPrevMinorRelease = &releasee
 		}
