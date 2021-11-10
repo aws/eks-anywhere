@@ -82,6 +82,13 @@ type CmkZone struct {
 	Name string `json:"name"`
 }
 
+type CmkAccount struct {
+	RoleType string `json:"roletype"`
+	Domain string `json:"domain"`
+	Id string `json:"id"`
+	Name string `json:"name"`
+}
+
 type Metadata struct {
 	Name string
 }
