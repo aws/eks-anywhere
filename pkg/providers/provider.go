@@ -19,7 +19,6 @@ type Provider interface {
 	GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currrentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error)
 	GenerateStorageClass() []byte
 	BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error
-	CleanupProviderInfrastructure(ctx context.Context) error
 	BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error)
 	UpdateKubeConfig(content *[]byte, clusterName string) error
 	Version(clusterSpec *cluster.Spec) string

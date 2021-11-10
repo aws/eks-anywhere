@@ -127,13 +127,6 @@ func (c *deleteTestSetup) expectNotToMoveManagement() {
 	)
 }
 
-func (c *deleteTestSetup) expectCleanupProvider() {
-	gomock.InOrder(
-		c.provider.EXPECT().CleanupProviderInfrastructure(
-			c.ctx,
-		).Return(nil))
-}
-
 func (c *deleteTestSetup) run() error {
 	// ctx context.Context, workloadCluster *types.Cluster, forceCleanup bool
 	return c.workflow.Run(c.ctx, c.workloadCluster, c.clusterSpec, c.forceCleanup, "")
@@ -147,7 +140,6 @@ func TestDeleteRunSuccess(t *testing.T) {
 	test.expectCleanupGitRepo()
 	test.expectMoveManagement()
 	test.expectDeleteBootstrap()
-	test.expectCleanupProvider()
 
 	err := test.run()
 	if err != nil {
@@ -169,7 +161,6 @@ func TestDeleteWorkloadRunSuccess(t *testing.T) {
 	test.expectCleanupGitRepo()
 	test.expectNotToMoveManagement()
 	test.expectNotToDeleteBootstrap()
-	test.expectCleanupProvider()
 
 	err := test.run()
 	if err != nil {
