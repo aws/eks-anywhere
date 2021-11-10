@@ -37,8 +37,8 @@ var fluxRequiredEnvVars = []string{
 	githubTokenVar,
 }
 
-func WithFlux(opts ...api.GitOpsConfigOpt) E2ETestOpt {
-	return func(e *E2ETest) {
+func WithFlux(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, fluxRequiredEnvVars)
 		e.GitOpsConfig = api.NewGitOpsConfig(defaultClusterName,
 			api.WithPersonalFluxRepository(true),
@@ -72,7 +72,7 @@ func withFluxRepositorySuffix(suffix string) api.GitOpsConfigOpt {
 	}
 }
 
-func (e *E2ETest) ValidateFlux() {
+func (e *ClusterE2ETest) ValidateFlux() {
 	c := e.clusterConfig()
 
 	writer, err := filewriter.NewWriter(e.cluster().Name)
@@ -110,7 +110,7 @@ func (e *E2ETest) ValidateFlux() {
 	e.validateGitopsRepoContent(gitOptions)
 }
 
-func (e *E2ETest) CleanUpGithubRepo() {
+func (e *ClusterE2ETest) CleanUpGithubRepo() {
 	c := e.clusterConfig()
 	writer, err := filewriter.NewWriter(e.cluster().Name)
 	if err != nil {
@@ -135,7 +135,7 @@ type providerConfig struct {
 	machineConfigs   []providers.MachineConfig
 }
 
-func (e *E2ETest) validateInitialFluxState(ctx context.Context) error {
+func (e *ClusterE2ETest) validateInitialFluxState(ctx context.Context) error {
 	if err := e.validateFluxDeployments(ctx); err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func (e *E2ETest) validateInitialFluxState(ctx context.Context) error {
 	return nil
 }
 
-func (e *E2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Context) error {
+func (e *ClusterE2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Context) error {
 	switch e.ClusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		clusterConfGitPath := e.clusterConfigGitPath()
@@ -205,7 +205,7 @@ func (e *E2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Context) erro
 	}
 }
 
-func (e *E2ETest) validateGitopsRepoContent(gitOptions *GitOptions) {
+func (e *ClusterE2ETest) validateGitopsRepoContent(gitOptions *GitOptions) {
 	repoName := e.gitRepoName()
 	gitFilePath := e.clusterConfigGitPath()
 	localFilePath := filepath.Join(e.ClusterName, repoName, e.clusterConfGitPath())
@@ -233,7 +233,7 @@ func (e *E2ETest) validateGitopsRepoContent(gitOptions *GitOptions) {
 	}
 }
 
-func (e *E2ETest) convertVSphereMachineConfigs(cpName, workerName, etcdName string, vsphereMachineConfigs map[string]*v1alpha1.VSphereMachineConfig) []providers.MachineConfig {
+func (e *ClusterE2ETest) convertVSphereMachineConfigs(cpName, workerName, etcdName string, vsphereMachineConfigs map[string]*v1alpha1.VSphereMachineConfig) []providers.MachineConfig {
 	var configs []providers.MachineConfig
 	if vsphereMachineConfigs[cpName] != nil {
 		configs = append(configs, vsphereMachineConfigs[cpName])
@@ -247,7 +247,7 @@ func (e *E2ETest) convertVSphereMachineConfigs(cpName, workerName, etcdName stri
 	return configs
 }
 
-func (e *E2ETest) validateWorkerNodeReplicaUpdates(ctx context.Context) error {
+func (e *ClusterE2ETest) validateWorkerNodeReplicaUpdates(ctx context.Context) error {
 	machineTemplateName, err := e.machineTemplateName(ctx)
 	if err != nil {
 		return err
@@ -275,7 +275,7 @@ func (e *E2ETest) validateWorkerNodeReplicaUpdates(ctx context.Context) error {
 	return e.validateWorkerNodeUpdates(ctx)
 }
 
-func (e *E2ETest) validateWorkerNodeUpdates(ctx context.Context) error {
+func (e *ClusterE2ETest) validateWorkerNodeUpdates(ctx context.Context) error {
 	clusterConfGitPath := e.clusterConfigGitPath()
 	clusterConfig, err := v1alpha1.GetClusterConfig(clusterConfGitPath)
 	if err != nil {
@@ -294,7 +294,7 @@ func (e *E2ETest) validateWorkerNodeUpdates(ctx context.Context) error {
 	return e.validateWorkerNodeMachineSpec(ctx, clusterConfGitPath)
 }
 
-func (e *E2ETest) machineTemplateName(ctx context.Context) (string, error) {
+func (e *ClusterE2ETest) machineTemplateName(ctx context.Context) (string, error) {
 	machineTemplateName, err := e.KubectlClient.MachineTemplateName(ctx, e.ClusterConfig.Name, e.cluster().KubeconfigFile, executables.WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return "", err
@@ -302,7 +302,7 @@ func (e *E2ETest) machineTemplateName(ctx context.Context) (string, error) {
 	return machineTemplateName, nil
 }
 
-func (e *E2ETest) validateFluxDeployments(ctx context.Context) error {
+func (e *ClusterE2ETest) validateFluxDeployments(ctx context.Context) error {
 	deploymentReplicas := 1
 	expectedDeployments := map[string]int{
 		"helm-controller":         deploymentReplicas,
@@ -313,12 +313,12 @@ func (e *E2ETest) validateFluxDeployments(ctx context.Context) error {
 	return e.validateDeployments(ctx, fluxSystemNamespace, expectedDeployments)
 }
 
-func (e *E2ETest) validateEksaSystemDeployments(ctx context.Context) error {
+func (e *ClusterE2ETest) validateEksaSystemDeployments(ctx context.Context) error {
 	expectedDeployments := map[string]int{"eksa-controller-manager": 1}
 	return e.validateDeployments(ctx, constants.EksaSystemNamespace, expectedDeployments)
 }
 
-func (e *E2ETest) validateDeployments(ctx context.Context, namespace string, expectedeployments map[string]int) error {
+func (e *ClusterE2ETest) validateDeployments(ctx context.Context, namespace string, expectedeployments map[string]int) error {
 	err := retrier.Retry(20, time.Second, func() error {
 		cluster := e.cluster()
 
@@ -352,7 +352,7 @@ func (e *E2ETest) validateDeployments(ctx context.Context, namespace string, exp
 	return nil
 }
 
-func (e *E2ETest) updateWorkerNodeCountValue(newValue int) (string, error) {
+func (e *ClusterE2ETest) updateWorkerNodeCountValue(newValue int) (string, error) {
 	clusterConfGitPath := e.clusterConfigGitPath()
 	providerConfig, err := e.providerConfig(clusterConfGitPath)
 	if err != nil {
@@ -374,7 +374,7 @@ func (e *E2ETest) updateWorkerNodeCountValue(newValue int) (string, error) {
 	return p, nil
 }
 
-func (e *E2ETest) providerConfig(clusterConfGitPath string) (*providerConfig, error) {
+func (e *ClusterE2ETest) providerConfig(clusterConfGitPath string) (*providerConfig, error) {
 	var providerConfig providerConfig
 	switch e.ClusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
@@ -408,7 +408,7 @@ func (e *E2ETest) providerConfig(clusterConfGitPath string) (*providerConfig, er
 	return &providerConfig, nil
 }
 
-func (e *E2ETest) waitForWorkerNodeValidation() error {
+func (e *ClusterE2ETest) waitForWorkerNodeValidation() error {
 	ctx := context.Background()
 	return retrier.Retry(10, time.Second*10, func() error {
 		e.T.Log("Attempting to validate worker nodes...")
@@ -420,7 +420,7 @@ func (e *E2ETest) waitForWorkerNodeValidation() error {
 	})
 }
 
-func (e *E2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clusterConfGitPath string) error {
+func (e *ClusterE2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clusterConfGitPath string) error {
 	switch e.ClusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		clusterConfig, err := v1alpha1.GetClusterConfig(clusterConfGitPath)
@@ -504,7 +504,7 @@ func (e *E2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clusterConf
 	}
 }
 
-func (e *E2ETest) waitForWorkerScaling(targetvalue int) error {
+func (e *ClusterE2ETest) waitForWorkerScaling(targetvalue int) error {
 	e.T.Logf("Waiting for worker node MachineDeployment to scale to target value %d", targetvalue)
 	ctx := context.Background()
 	cluster := e.cluster()
@@ -529,7 +529,7 @@ func (e *E2ETest) waitForWorkerScaling(targetvalue int) error {
 	})
 }
 
-func (e *E2ETest) updateEKSASpecInGit(c *v1alpha1.Cluster, providersConfig providerConfig) (string, error) {
+func (e *ClusterE2ETest) updateEKSASpecInGit(c *v1alpha1.Cluster, providersConfig providerConfig) (string, error) {
 	p, err := e.writeEKSASpec(c, providersConfig.datacenterConfig, providersConfig.machineConfigs)
 	if err != nil {
 		return "", err
@@ -541,7 +541,7 @@ func (e *E2ETest) updateEKSASpecInGit(c *v1alpha1.Cluster, providersConfig provi
 	return p, nil
 }
 
-func (e *E2ETest) pushConfigChanges() error {
+func (e *ClusterE2ETest) pushConfigChanges() error {
 	p := e.clusterConfGitPath()
 	g := e.GitProvider
 	if err := g.Add(p); err != nil {
@@ -554,7 +554,7 @@ func (e *E2ETest) pushConfigChanges() error {
 }
 
 // todo: reuse logic in clustermanager to template resources
-func (e *E2ETest) writeEKSASpec(c *v1alpha1.Cluster, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (path string, err error) {
+func (e *ClusterE2ETest) writeEKSASpec(c *v1alpha1.Cluster, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (path string, err error) {
 	clusterObj, err := yaml.Marshal(c)
 	if err != nil {
 		return "", fmt.Errorf("error outputting cluster yaml: %v", err)
@@ -584,15 +584,15 @@ func (e *E2ETest) writeEKSASpec(c *v1alpha1.Cluster, datacenterConfig providers.
 	return clusterConfGitPath, nil
 }
 
-func (e *E2ETest) gitRepoName() string {
+func (e *ClusterE2ETest) gitRepoName() string {
 	return e.GitOpsConfig.Spec.Flux.Github.Repository
 }
 
-func (e *E2ETest) gitBranch() string {
+func (e *ClusterE2ETest) gitBranch() string {
 	return e.GitOpsConfig.Spec.Flux.Github.Branch
 }
 
-func (e *E2ETest) clusterConfGitPath() string {
+func (e *ClusterE2ETest) clusterConfGitPath() string {
 	p := e.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath
 	if len(p) == 0 {
 		p = path.Join("clusters", e.ClusterName)
@@ -600,7 +600,7 @@ func (e *E2ETest) clusterConfGitPath() string {
 	return path.Join(p, constants.EksaSystemNamespace, eksaConfigFileName)
 }
 
-func (e *E2ETest) clusterConfigGitPath() string {
+func (e *ClusterE2ETest) clusterConfigGitPath() string {
 	return filepath.Join(e.GitWriter.Dir(), e.clusterConfGitPath())
 }
 

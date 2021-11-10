@@ -11,7 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-func runAutoImportFlow(test *framework.E2ETest, provider *framework.VSphere) {
+func runAutoImportFlow(test *framework.ClusterE2ETest, provider *framework.VSphere) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
 	templates := getMachineConfigs(test)
@@ -19,7 +19,7 @@ func runAutoImportFlow(test *framework.E2ETest, provider *framework.VSphere) {
 	deleteTemplates(test, provider, templates)
 }
 
-func getMachineConfigs(test *framework.E2ETest) map[string]v1alpha1.VSphereMachineConfig {
+func getMachineConfigs(test *framework.ClusterE2ETest) map[string]v1alpha1.VSphereMachineConfig {
 	test.T.Log("Getting vsphere machine configs to extract template and resource pool")
 	machineConfigs := test.GetEksaVSphereMachineConfigs()
 	uniqueMachineConfigs := make(map[string]v1alpha1.VSphereMachineConfig, len(machineConfigs))
@@ -30,7 +30,7 @@ func getMachineConfigs(test *framework.E2ETest) map[string]v1alpha1.VSphereMachi
 	return uniqueMachineConfigs
 }
 
-func deleteTemplates(test *framework.E2ETest, provider *framework.VSphere, machineConfigs map[string]v1alpha1.VSphereMachineConfig) {
+func deleteTemplates(test *framework.ClusterE2ETest, provider *framework.VSphere, machineConfigs map[string]v1alpha1.VSphereMachineConfig) {
 	ctx := context.Background()
 	for _, machineConfig := range machineConfigs {
 		test.T.Logf("Deleting vSphere template: %s", machineConfig.Spec.Template)
@@ -48,7 +48,7 @@ func TestVSphereKubernetes120UbuntuAutoimport(t *testing.T) {
 			api.WithOsFamily(v1alpha1.Ubuntu),
 		),
 	)
-	test := framework.NewE2ETest(
+	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
@@ -63,7 +63,7 @@ func TestVSphereKubernetes121UbuntuAutoimport(t *testing.T) {
 			api.WithOsFamily(v1alpha1.Ubuntu),
 		),
 	)
-	test := framework.NewE2ETest(
+	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
@@ -78,7 +78,7 @@ func TestVSphereKubernetes120BottlerocketAutoimport(t *testing.T) {
 			api.WithOsFamily(v1alpha1.Bottlerocket),
 		),
 	)
-	test := framework.NewE2ETest(
+	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
@@ -93,7 +93,7 @@ func TestVSphereKubernetes121BottlerocketAutoimport(t *testing.T) {
 			api.WithOsFamily(v1alpha1.Bottlerocket),
 		),
 	)
-	test := framework.NewE2ETest(
+	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),

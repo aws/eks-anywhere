@@ -18,7 +18,7 @@ type GitOptions struct {
 	Writer filewriter.FileWriter
 }
 
-func (e *E2ETest) NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig, writer filewriter.FileWriter, repoPath string) (*GitOptions, error) {
+func (e *ClusterE2ETest) NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig, writer filewriter.FileWriter, repoPath string) (*GitOptions, error) {
 	if gitOpsConfig == nil {
 		return nil, nil
 	}

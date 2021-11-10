@@ -206,8 +206,8 @@ func (v *VSphere) customizeProviderConfig(file string, fillers ...api.VSphereFil
 	return providerOutput
 }
 
-func (v *VSphere) WithProviderUpgrade(fillers ...api.VSphereFiller) E2ETestOpt {
-	return func(e *E2ETest) {
+func (v *VSphere) WithProviderUpgrade(fillers ...api.VSphereFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
 		e.ProviderConfigB = v.customizeProviderConfig(e.ClusterConfigLocation, fillers...)
 	}
 }
