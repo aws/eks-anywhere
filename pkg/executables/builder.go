@@ -38,6 +38,10 @@ func (b *ExecutableBuilder) BuildGovcExecutable(writer filewriter.FileWriter) *G
 	return NewGovc(buildExecutable(govcPath, b.useDocker, b.image, b.mountDir), writer)
 }
 
+func (b *ExecutableBuilder) BuildCmkExecutable(writer filewriter.FileWriter) *Cmk {
+	return NewCmk(buildExecutable(cmkPath, b.useDocker, b.image, b.mountDir), writer)
+}
+
 func (b *ExecutableBuilder) BuildAwsCli() *AwsCli {
 	return NewAwsCli(buildExecutable(awsCliPath, b.useDocker, b.image, b.mountDir))
 }

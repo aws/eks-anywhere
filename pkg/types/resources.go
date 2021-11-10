@@ -57,6 +57,38 @@ type ClusterStatus struct {
 	Phase string
 }
 
+type CmkTemplate struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+	Zonename string `json:"zonename"`
+}
+
+type CmkServiceOffering struct {
+	CpuNumber int `json:"cpunumber"`
+	CpuSpeed int `json:"cpuspeed""`
+	Memory int `json:"memory"`
+	Id string `json:"id"`
+	Name string `json:"name"`
+}
+
+type CmkDiskOffering struct {
+	DiskSize int `json:"disksize"`
+	Id string `json:"id"`
+	Name string `json:"name"`
+}
+
+type CmkZone struct {
+	Id string `json:"id"`
+	Name string `json:"name"`
+}
+
+type CmkAccount struct {
+	RoleType string `json:"roletype"`
+	Domain string `json:"domain"`
+	Id string `json:"id"`
+	Name string `json:"name"`
+}
+
 type Metadata struct {
 	Name string
 }

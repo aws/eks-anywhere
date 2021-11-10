@@ -26,6 +26,7 @@ type Dependencies struct {
 	DockerClient              *executables.Docker
 	Kubectl                   *executables.Kubectl
 	Govc                      *executables.Govc
+	Cmk                       *executables.Cmk
 	Writer                    filewriter.FileWriter
 	Kind                      *executables.Kind
 	Clusterctl                *executables.Clusterctl
@@ -124,7 +125,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 }
 
 func (f *Factory) WithProviderFactory() *Factory {
-	f.WithDocker().WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
+	f.WithDocker().WithKubectl().WithGovc().WithCmk().WithWriter().WithCAPIClusterResourceSetManager()
 
 	f.buildSteps = append(f.buildSteps, func() error {
 		if f.providerFactory != nil {
@@ -194,6 +195,21 @@ func (f *Factory) WithGovc() *Factory {
 		}
 
 		f.dependencies.Govc = f.executableBuilder.BuildGovcExecutable(f.dependencies.Writer)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithCmk() *Factory {
+	f.WithWriter()
+
+	f.buildSteps = append(f.buildSteps, func() error {
+		if f.dependencies.Cmk != nil {
+			return nil
+		}
+
+		f.dependencies.Cmk = f.executableBuilder.BuildCmkExecutable(f.dependencies.Writer)
 		return nil
 	})
 
