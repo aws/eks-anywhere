@@ -35,13 +35,13 @@ func (f *FluxAddonClient) UpdateLegacyFileStructure(ctx context.Context, current
 		clusterSpec:     newSpec,
 	}
 
+	if err := nfc.syncGitRepo(ctx); err != nil {
+		return err
+	}
+
 	if !nfc.filesUpdateNeeded() {
 		logger.V(1).Info("Git repo file structure is already up-to-date")
 		return nil
-	}
-
-	if err := nfc.syncGitRepo(ctx); err != nil {
-		return err
 	}
 
 	if err := nfc.updateEksaSystemFiles(ofc.eksaSystemDir()); err != nil {
