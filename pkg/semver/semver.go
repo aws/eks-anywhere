@@ -67,3 +67,23 @@ func (v *Version) SamePrerelease(v2 *Version) bool {
 func (v *Version) Equal(v2 *Version) bool {
 	return v.SamePrerelease(v2) && v.Buildmetadata == v2.Buildmetadata
 }
+
+func (v *Version) GreaterThan(v2 *Version) bool {
+	if v2 == nil {
+		return true
+	}
+	if v.Major > v2.Major {
+		return true
+	}
+	if v.Minor > v2.Minor {
+		return true
+	}
+	if v.Patch > v2.Patch {
+		return true
+	}
+	return false
+}
+
+func (v *Version) IsPrevMinorVersion(v2 *Version) bool {
+	return v.Minor < v2.Minor
+}
