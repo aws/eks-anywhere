@@ -70,11 +70,6 @@ spec:
                 type: array
             required:
             - computeOffering
-            - details
-            - diskOffering
-            - keyPairName
-            - osFamily
-            - template
             type: object
           status:
             description: CloudStackMachineConfigStatus defines the observed state
