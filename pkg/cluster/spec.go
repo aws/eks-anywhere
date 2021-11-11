@@ -143,6 +143,12 @@ func WithUserAgent(userAgent string) SpecOpt {
 	}
 }
 
+func WithGitOpsConfig(gitOpsConfig *eksav1alpha1.GitOpsConfig) SpecOpt {
+	return func(s *Spec) {
+		s.GitOpsConfig = gitOpsConfig
+	}
+}
+
 func NewSpec(opts ...SpecOpt) *Spec {
 	s := &Spec{
 		releasesManifestURL: releasesManifestURL,
@@ -248,8 +254,6 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	} else {
 		s.SetSelfManaged()
 	}
-
-	s.SetDefaultGitOps()
 
 	return s, nil
 }
