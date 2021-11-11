@@ -84,6 +84,14 @@ func (c *CloudStackMachineConfig) OSFamily() OSFamily {
 	return c.Spec.OSFamily
 }
 
+func (c *CloudStackMachineConfig) GetNamespace() string {
+	return c.Namespace
+}
+
+func (c *CloudStackMachineConfig) GetName() string {
+	return c.Name
+}
+
 // CloudStackMachineConfigStatus defines the observed state of CloudStackMachineConfig
 type CloudStackMachineConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
