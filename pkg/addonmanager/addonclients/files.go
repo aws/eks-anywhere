@@ -116,7 +116,7 @@ func (fc *fluxForCluster) updateGitOpsConfig(fileName string) ([]byte, error) {
 	var resources [][]byte
 	for _, c := range strings.Split(string(content), v1alpha1.YamlSeparator) {
 		var gitopsconfig v1alpha1.GitOpsConfig
-		if err = yaml.Unmarshal([]byte(c), &gitopsconfig); err != nil {
+		if err := yaml.Unmarshal([]byte(c), &gitopsconfig); err != nil {
 			return nil, fmt.Errorf("unable to parse %s\nyaml: %s\n %v", fileName, c, err)
 		}
 
@@ -125,10 +125,6 @@ func (fc *fluxForCluster) updateGitOpsConfig(fileName string) ([]byte, error) {
 				resources = append(resources, []byte(c))
 			}
 			continue
-		}
-
-		if err := yaml.UnmarshalStrict([]byte(c), gitopsconfig); err != nil {
-			return nil, err
 		}
 
 		gitopsconfig.Spec.Flux.Github.ClusterConfigPath = fc.path()
