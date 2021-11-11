@@ -83,10 +83,6 @@ func updateEksaSystemFiles(ofc, nfc *fluxForCluster) error {
 		return err
 	}
 
-	if err := nfc.writeEksaUpgradeFiles(eksaSpec); err != nil {
-		return err
-	}
-
 	w, err := nfc.initEksaWriter()
 	if err != nil {
 		return err
@@ -108,22 +104,6 @@ func updateEksaSystemFiles(ofc, nfc *fluxForCluster) error {
 	}
 
 	return nil
-}
-
-func (fc *fluxForCluster) writeEksaUpgradeFiles(resourcesSpec []byte) error {
-	w, err := fc.initEksaWriter()
-	if err != nil {
-		return err
-	}
-
-	t := templater.New(w)
-	logger.V(3).Info("Updating eksa-system cluster config file...")
-
-	if _, err = t.WriteBytesToFile(resourcesSpec, clusterConfigFileName, filewriter.PersistentFile); err != nil {
-		return err
-	}
-
-	return fc.generateEksaKustomizeFile(w)
 }
 
 func (fc *fluxForCluster) updateGitOpsConfig(fileName string) ([]byte, error) {
