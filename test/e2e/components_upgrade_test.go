@@ -3,21 +3,15 @@
 package e2e
 
 import (
-	"path/filepath"
-
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-const (
-	prodReleasesManifest = "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml"
-	latestReleasePath    = "bin/latest-release"
-	releaseBinaryName    = "eksctl-anywhere"
-)
+const prodReleasesManifest = "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml"
 
-func getLatestMinorReleaseFromMain(test *framework.ClusterE2ETest) (binaryPath string) {
+func getLatestMinorReleaseFromMain(test *framework.ClusterE2ETest) *releasev1alpha1.EksARelease {
 	reader := cluster.NewManifestReader()
 	test.T.Logf("Reading prod release manifest %s", prodReleasesManifest)
 	releases, err := reader.GetReleases(prodReleasesManifest)
@@ -37,13 +31,10 @@ func getLatestMinorReleaseFromMain(test *framework.ClusterE2ETest) (binaryPath s
 		test.T.Fatalf("Releases manifest doesn't contain latest release %s", releases.Spec.LatestVersion)
 	}
 
-	latestReleaseBinaryFolder := filepath.Join(latestReleasePath, latestRelease.Version)
-	latestReleaseBinaryPath := filepath.Join(latestReleaseBinaryFolder, releaseBinaryName)
-
-	return latestReleaseBinaryPath
+	return latestRelease
 }
 
-func getLatestMinorReleaseFromReleaseBranch(test *framework.ClusterE2ETest, releaseBranchVersion *semver.Version) (binaryPath string) {
+func getLatestMinorReleaseFromReleaseBranch(test *framework.ClusterE2ETest, releaseBranchVersion *semver.Version) *releasev1alpha1.EksARelease {
 	reader := cluster.NewManifestReader()
 	test.T.Logf("Reading prod release manifest %s", prodReleasesManifest)
 	releases, err := reader.GetReleases(prodReleasesManifest)
@@ -52,11 +43,22 @@ func getLatestMinorReleaseFromReleaseBranch(test *framework.ClusterE2ETest, rele
 	}
 
 	var latestPrevMinorRelease *releasev1alpha1.EksARelease
+	latestPrevMinorReleaseVersion, err := semver.New("0.0.0")
+	if err != nil {
+		test.T.Fatal(err)
+	}
 
 	for _, release := range releases.Spec.Releases {
 		releaseVersion, err := semver.New(release.Version)
-		if releaseVersion.IsPrevMinorVersion(releaseBranchVersion) && releaseVersion.GreaterThan(latestPrevMinorRelease.Version) {
-			latestPrevMinorRelease = &releasee
+		if err != nil {
+			test.T.Fatal(err)
+		}
+		if releaseVersion.LessThan(releaseBranchVersion) && releaseVersion.Minor != releaseBranchVersion.Minor && releaseVersion.GreaterThan(latestPrevMinorReleaseVersion) {
+			latestPrevMinorRelease = &release
+			latestPrevMinorReleaseVersion, err = semver.New(release.Version)
+			if err != nil {
+				test.T.Fatal(err)
+			}
 		}
 	}
 
@@ -64,8 +66,5 @@ func getLatestMinorReleaseFromReleaseBranch(test *framework.ClusterE2ETest, rele
 		test.T.Fatalf("Releases manifest doesn't contain a version of the previous minor release")
 	}
 
-	latestReleaseBinaryFolder := filepath.Join(latestReleasePath, latestPrevMinorRelease.Version)
-	latestPrevMinorReleaseBinaryPath := filepath.Join(latestReleaseBinaryFolder, releaseBinaryName)
-
-	return latestPrevMinorReleaseBinaryPath
+	return latestPrevMinorRelease
 }
