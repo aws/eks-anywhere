@@ -410,20 +410,25 @@ func kubeDistroRepository(image *eksdv1alpha1.AssetImage) (repo, tag string) {
 	return i.Image()[:lastInd], i.Tag()
 }
 
-func GetEksdRelease(cliVersion version.Info, clusterConfig *eksav1alpha1.Cluster) (*v1alpha1.EksDRelease, error) {
+func GetEksdRelease(cliVersion version.Info, clusterConfig *eksav1alpha1.Cluster) (*v1alpha1.EksDRelease, *eksdv1alpha1.Release, error) {
 	s := newWithCliVersion(cliVersion)
 
 	bundles, err := s.GetBundles(cliVersion)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	versionsBundle, err := s.getVersionsBundle(clusterConfig, bundles)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return &versionsBundle.EksD, nil
+	eksdRelease, err := s.reader.GetEksdRelease(versionsBundle)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &versionsBundle.EksD, eksdRelease, nil
 }
 
 type Manifest struct {

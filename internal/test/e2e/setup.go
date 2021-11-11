@@ -114,6 +114,11 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
+	err = e.setupAwsIam(regex)
+	if err != nil {
+		return err
+	}
+
 	// Adding JobId to Test Env variables
 	e.testEnvVars[e2etests.JobIdVar] = e.jobId
 	e.testEnvVars[e2etests.BundlesOverrideVar] = strconv.FormatBool(e.bundlesOverride)

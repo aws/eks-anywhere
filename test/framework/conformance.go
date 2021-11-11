@@ -60,7 +60,7 @@ func (e *ClusterE2ETest) getEksdReleaseKubeVersion() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error fetching cluster config from file: %v", err)
 	}
-	eksdRelease, err := cluster.GetEksdRelease(version.Get(), c)
+	eksdRelease, _, err := cluster.GetEksdRelease(version.Get(), c)
 	if err != nil {
 		return "", fmt.Errorf("error getting EKS-D release spec from bundle: %v", err)
 	}
