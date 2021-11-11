@@ -33,7 +33,6 @@ type CommandContext struct {
 	BootstrapCluster   *types.Cluster
 	WorkloadCluster    *types.Cluster
 	Profiler           *Profiler
-	Rollback           bool
 	OriginalError      error
 }
 
@@ -41,16 +40,6 @@ func (c *CommandContext) SetError(err error) {
 	if c.OriginalError == nil {
 		c.OriginalError = err
 	}
-}
-
-func (c *CommandContext) rollbackDisabled() bool {
-	if c.Rollback {
-		return false
-	}
-	if c.OriginalError == nil {
-		return false
-	}
-	return true
 }
 
 type Profiler struct {
@@ -127,9 +116,6 @@ func (pr *taskRunner) RunTask(ctx context.Context, commandContext *CommandContex
 		commandContext.Profiler.MarkDoneTask(task.Name())
 		commandContext.Profiler.logProfileSummary(task.Name())
 		task = nextTask
-		if commandContext.rollbackDisabled() {
-			break
-		}
 	}
 	return commandContext.OriginalError
 }

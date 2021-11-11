@@ -359,10 +359,6 @@ func getUpdatedKubeConfigContent(content *[]byte, dockerLbPort string) {
 	*content = updatedContentByte
 }
 
-func (p *provider) CleanupProviderInfrastructure(_ context.Context) error {
-	return nil
-}
-
 func (p *provider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.Docker.Version
 }

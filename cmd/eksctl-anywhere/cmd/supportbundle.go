@@ -87,7 +87,7 @@ func preRunSupportBundle(cmd *cobra.Command, args []string) error {
 }
 
 func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since, sinceTime, bundleConfig string) error {
-	clusterSpec, err := cluster.NewSpec(csbo.fileName, version.Get())
+	clusterSpec, err := cluster.NewSpecFromClusterConfig(csbo.fileName, version.Get())
 	if err != nil {
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
 	}

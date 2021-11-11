@@ -41,26 +41,9 @@ func validateWorkloadFields(ctx context.Context, k validations.KubectlClient, cl
 		return err
 	}
 
-	mg := mgmtGitOps.Spec.Flux.Github
-	wg := spec.GitOpsConfig.Spec.Flux.Github
+	if !mgmtGitOps.Spec.Equal(&spec.GitOpsConfig.Spec) {
+		return fmt.Errorf("expected gitOpsConfig to be the same between management and its workload clusters")
+	}
 
-	if mg.ClusterRootPath() != wg.ClusterRootPath() {
-		return fmt.Errorf("expected spec.flux.clusterConfigPath to share the same parent directory as management cluster's")
-	}
-	if mg.Branch != wg.Branch {
-		return fmt.Errorf("spec.flux.branch must be same as management cluster's. want: %s, got: %s", mg.Branch, wg.Branch)
-	}
-	if mg.Owner != wg.Owner {
-		return fmt.Errorf("spec.flux.owner must be same as management cluster's. want: %s, got: %s", mg.Owner, wg.Owner)
-	}
-	if mg.Repository != wg.Repository {
-		return fmt.Errorf("spec.flux.repository must be same as management cluster's. want: %s, got: %s", mg.Repository, wg.Repository)
-	}
-	if mg.FluxSystemNamespace != wg.FluxSystemNamespace {
-		return fmt.Errorf("spec.flux.fluxSystemNamespace must be same as management cluster's. want: %s, got: %s", mg.FluxSystemNamespace, wg.FluxSystemNamespace)
-	}
-	if mg.Personal != wg.Personal {
-		return fmt.Errorf("spec.flux.personal must be same as management cluster's. want: %v, got: %v", mg.Personal, wg.Personal)
-	}
 	return nil
 }
