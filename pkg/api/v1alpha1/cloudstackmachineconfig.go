@@ -22,17 +22,12 @@ func NewCloudStackMachineConfigGenerate(name string) *CloudStackMachineConfigGen
 			Name: name,
 		},
 		Spec: CloudStackMachineConfigSpec{
-			Template:        "CloudStack template name",
-			ComputeOffering: "CloudStack compute offering name",
-			DiskOffering:    "CloudStack disk offering name",
+			ComputeOffering: "",
+			OSFamily:        Ubuntu,
 			Users: []UserConfiguration{{
-				Name:              "ec2-user",
+				Name:              "capc",
 				SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},
 			}},
-			Details: map[string]string{
-				"foo": "bar",
-				"key": "value",
-			},
 		},
 	}
 }

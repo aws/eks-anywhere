@@ -27,28 +27,6 @@ func TestGetCloudStackDeploymentConfig(t *testing.T) {
 			wantErr:                  true,
 		},
 		{
-			testName: "valid 1.18",
-			fileName: "testdata/cluster_1_18_cloudstack.yaml",
-			wantCloudStackDeployment: &CloudStackDeploymentConfig{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       CloudStackDeploymentKind,
-					APIVersion: SchemeBuilder.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "eksa-unit-test",
-				},
-				Spec: CloudStackDeploymentConfigSpec{
-					Domain:                "domain1",
-					Zone:                  "zone1",
-					Account:               "admin",
-					Network:               "net1",
-					ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
-					Insecure:              false,
-				},
-			},
-			wantErr: false,
-		},
-		{
 			testName: "valid 1.19",
 			fileName: "testdata/cluster_1_19_cloudstack.yaml",
 			wantCloudStackDeployment: &CloudStackDeploymentConfig{
