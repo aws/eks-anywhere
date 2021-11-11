@@ -639,20 +639,23 @@ func (fc *fluxForCluster) initializeLocalRepository() error {
 // validateLocalConfigPathDoesNotExist returns an exception if the cluster configuration file exists.
 // This is done so that we avoid clobbering existing cluster configurations in the user-provided git repository.
 func (fc *fluxForCluster) validateLocalConfigPathDoesNotExist() error {
-	p := path.Join(fc.gitOpts.Writer.Dir(), fc.path())
-	if validations.FileExists(p) {
-		return fmt.Errorf("a cluster configuration file already exists at path %s", p)
+	if fc.clusterSpec.IsSelfManaged() {
+		p := path.Join(fc.gitOpts.Writer.Dir(), fc.path())
+		if validations.FileExists(p) {
+			return fmt.Errorf("a cluster configuration file already exists at path %s", p)
+		}
 	}
 	return nil
 }
 
 func (fc *fluxForCluster) validateRemoteConfigPathDoesNotExist(ctx context.Context) error {
-	if exists, err := fc.gitOpts.Git.PathExists(ctx, fc.owner(), fc.repository(), fc.branch(), fc.path()); err != nil {
-		return fmt.Errorf("failed validating remote flux config path: %s", err)
-	} else if exists {
-		return fmt.Errorf("flux path %s already exists in remote repository", fc.path())
+	if fc.clusterSpec.IsSelfManaged() {
+		if exists, err := fc.gitOpts.Git.PathExists(ctx, fc.owner(), fc.repository(), fc.branch(), fc.path()); err != nil {
+			return fmt.Errorf("failed validating remote flux config path: %v", err)
+		} else if exists {
+			return fmt.Errorf("flux path %s already exists in remote repository", fc.path())
+		}
 	}
-
 	return nil
 }
 
