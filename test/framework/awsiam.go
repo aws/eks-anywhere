@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 
@@ -91,9 +92,13 @@ func (e *ClusterE2ETest) setIamAuthClientPATH() error {
 	if err != nil {
 		return fmt.Errorf("error finding current working directory: %v", err)
 	}
-	err = os.Setenv("PATH", fmt.Sprintf("%s/bin:%s", workDir, envPath))
+	iamAuthClientPath := fmt.Sprintf("%s/bin", workDir)
+	if strings.Contains(envPath, iamAuthClientPath) {
+		return nil
+	}
+	err = os.Setenv("PATH", fmt.Sprintf("%s:%s", iamAuthClientPath, envPath))
 	if err != nil {
-		return fmt.Errorf("error setting %s/bin to PATH: %v", workDir, err)
+		return fmt.Errorf("error setting %s to PATH: %v", iamAuthClientPath, err)
 	}
 	return nil
 }
