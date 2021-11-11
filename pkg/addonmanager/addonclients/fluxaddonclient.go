@@ -651,7 +651,7 @@ func (fc *fluxForCluster) validateLocalConfigPathDoesNotExist() error {
 func (fc *fluxForCluster) validateRemoteConfigPathDoesNotExist(ctx context.Context) error {
 	if fc.clusterSpec.IsSelfManaged() {
 		if exists, err := fc.gitOpts.Git.PathExists(ctx, fc.owner(), fc.repository(), fc.branch(), fc.path()); err != nil {
-			return fmt.Errorf("failed validating remote flux config path: %s", err)
+			return fmt.Errorf("failed validating remote flux config path: %v", err)
 		} else if exists {
 			return fmt.Errorf("flux path %s already exists in remote repository", fc.path())
 		}
