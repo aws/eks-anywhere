@@ -639,9 +639,11 @@ func (fc *fluxForCluster) initializeLocalRepository() error {
 // validateLocalConfigPathDoesNotExist returns an exception if the cluster configuration file exists.
 // This is done so that we avoid clobbering existing cluster configurations in the user-provided git repository.
 func (fc *fluxForCluster) validateLocalConfigPathDoesNotExist() error {
-	p := path.Join(fc.gitOpts.Writer.Dir(), fc.path())
-	if validations.FileExists(p) {
-		return fmt.Errorf("a cluster configuration file already exists at path %s", p)
+	if fc.clusterSpec.IsSelfManaged() {
+		p := path.Join(fc.gitOpts.Writer.Dir(), fc.path())
+		if validations.FileExists(p) {
+			return fmt.Errorf("a cluster configuration file already exists at path %s", p)
+		}
 	}
 	return nil
 }
