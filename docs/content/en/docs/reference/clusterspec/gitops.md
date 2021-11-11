@@ -68,7 +68,7 @@ spec:
 
 #### __clusterConfigPath__ (optional)
 * __Description__: The path relative to the root of the git repository where EKS Anywhere will store the cluster configuration files.
-* __Default__: `clusters/$MANAGEMENT_CLUSTER_NAME/$CLUSTER_NAME`
+* __Default__: `clusters/$MANAGEMENT_CLUSTER_NAME`
 * __Type__: string
 
 #### __fluxSystemNamespace__ (optional)

@@ -68,9 +68,9 @@ func (cs *Spec) SetDefaultGitOps() {
 		c := &cs.GitOpsConfig.Spec.Flux
 		if len(c.Github.ClusterConfigPath) == 0 {
 			if cs.Cluster.IsSelfManaged() {
-				c.Github.ClusterConfigPath = path.Join("clusters", cs.Name, cs.Name)
+				c.Github.ClusterConfigPath = path.Join("clusters", cs.Name)
 			} else {
-				c.Github.ClusterConfigPath = path.Join("clusters", cs.Cluster.ManagedBy(), cs.Name)
+				c.Github.ClusterConfigPath = path.Join("clusters", cs.Cluster.ManagedBy())
 			}
 		}
 		if len(c.Github.FluxSystemNamespace) == 0 {
