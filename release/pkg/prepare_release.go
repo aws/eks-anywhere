@@ -226,6 +226,7 @@ func downloadArtifacts(sourceClients *SourceClients, r *ReleaseConfig, eksArtifa
 			// Check if there is an archive to be downloaded
 			if artifact.Archive != nil {
 				objectKey := fmt.Sprintf("%s/%s", artifact.Archive.SourceS3Prefix, artifact.Archive.SourceS3Key)
+				fmt.Printf("Archive - %s\n", objectKey)
 				err := s3Retrier.Retry(func() error {
 					_, err := s3Client.HeadObject(&s3.HeadObjectInput{
 						Bucket: aws.String(r.SourceBucket),
@@ -240,7 +241,7 @@ func downloadArtifacts(sourceClients *SourceClients, r *ReleaseConfig, eksArtifa
 					return fmt.Errorf("retries exhausted waiting for archive to be uploaded to source location: %v", err)
 				}
 
-				err = downloadFileFromS3(artifact.Archive.ArtifactPath, "Archive", r.SourceBucket, objectKey, s3Downloader)
+				err = downloadFileFromS3(artifact.Archive.ArtifactPath, r.SourceBucket, objectKey, s3Downloader)
 				if err != nil {
 					return errors.Cause(err)
 				}
@@ -252,7 +253,8 @@ func downloadArtifacts(sourceClients *SourceClients, r *ReleaseConfig, eksArtifa
 				}
 				for _, extension := range checksumExtensions {
 					objectShasumFileKey := fmt.Sprintf("%s%s", objectKey, extension)
-					err = downloadFileFromS3(artifact.Archive.ArtifactPath, "Checksum file", r.SourceBucket, objectShasumFileKey, s3Downloader)
+					fmt.Printf("Checksum file - %s\n", objectShasumFileKey)
+					err = downloadFileFromS3(artifact.Archive.ArtifactPath, r.SourceBucket, objectShasumFileKey, s3Downloader)
 					if err != nil {
 						return errors.Cause(err)
 					}
@@ -263,6 +265,7 @@ func downloadArtifacts(sourceClients *SourceClients, r *ReleaseConfig, eksArtifa
 			// Check if there is a manifest to be downloaded
 			if artifact.Manifest != nil {
 				objectKey := fmt.Sprintf("%s/%s", artifact.Manifest.SourceS3Prefix, artifact.Manifest.SourceS3Key)
+				fmt.Printf("Manifest - %s\n", objectKey)
 				err := s3Retrier.Retry(func() error {
 					_, err := s3Client.HeadObject(&s3.HeadObjectInput{
 						Bucket: aws.String(r.SourceBucket),
@@ -277,7 +280,7 @@ func downloadArtifacts(sourceClients *SourceClients, r *ReleaseConfig, eksArtifa
 					return fmt.Errorf("retries exhausted waiting for manifest to be uploaded to source location: %v", err)
 				}
 
-				err = downloadFileFromS3(artifact.Manifest.ArtifactPath, "Manifest", r.SourceBucket, objectKey, s3Downloader)
+				err = downloadFileFromS3(artifact.Manifest.ArtifactPath, r.SourceBucket, objectKey, s3Downloader)
 				if err != nil {
 					return errors.Cause(err)
 				}
@@ -353,7 +356,7 @@ func UploadArtifacts(sourceClients *SourceClients, releaseClients *ReleaseClient
 }
 
 // downloadFileFromS3 downloads a file from S3 and writes it to a local destination
-func downloadFileFromS3(artifactPath, artifactType, bucketName, key string, s3Downloader *s3manager.Downloader) error {
+func downloadFileFromS3(artifactPath, bucketName, key string, s3Downloader *s3manager.Downloader) error {
 	objectName := filepath.Base(key)
 	fileName := filepath.Join(artifactPath, objectName)
 	if err := os.MkdirAll(filepath.Dir(fileName), 0o755); err != nil {
@@ -365,7 +368,6 @@ func downloadFileFromS3(artifactPath, artifactType, bucketName, key string, s3Do
 		return errors.Cause(err)
 	}
 	defer fd.Close()
-	fmt.Printf("%s - %s\n", artifactType, key)
 	_, err = s3Downloader.Download(fd, &s3.GetObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(key),
