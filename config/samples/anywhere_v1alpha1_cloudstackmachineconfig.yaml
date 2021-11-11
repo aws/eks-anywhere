@@ -1,7 +1,0 @@
-apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: CloudStackMachineConfig
-metadata:
-  name: cloudstackmachineconfig-sample
-spec:
-  # Add fields here
-  foo: bar

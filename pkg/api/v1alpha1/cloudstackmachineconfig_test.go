@@ -27,36 +27,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 			wantErr:                      true,
 		},
 		{
-			testName: "valid 1.18",
-			fileName: "testdata/cluster_1_18_cloudstack.yaml",
-			wantCloudStackMachineConfigs: map[string]*CloudStackMachineConfig{
-				"eksa-unit-test": {
-					TypeMeta: metav1.TypeMeta{
-						Kind:       CloudStackMachineConfigKind,
-						APIVersion: SchemeBuilder.GroupVersion.String(),
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "eksa-unit-test",
-					},
-					Spec: CloudStackMachineConfigSpec{
-						Template:        "centos7-k8s-118",
-						ComputeOffering: "m4-large",
-						DiskOffering:    "ssd-100GB",
-						OSFamily:        Ubuntu,
-						Users: []UserConfiguration{{
-							Name:              "mySshUsername",
-							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
-						}},
-						Details: map[string]string{
-							"foo": "bar",
-							"key": "value",
-						},
-					},
-				},
-			},
-			wantErr: false,
-		},
-		{
 			testName: "valid 1.19",
 			fileName: "testdata/cluster_1_19_cloudstack.yaml",
 			wantCloudStackMachineConfigs: map[string]*CloudStackMachineConfig{

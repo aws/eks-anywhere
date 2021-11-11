@@ -80,6 +80,10 @@ func (c *CloudStackMachineConfig) IsManagement() bool {
 	return false
 }
 
+func (c *CloudStackMachineConfig) OSFamily() OSFamily {
+	return c.Spec.OSFamily
+}
+
 // CloudStackMachineConfigStatus defines the observed state of CloudStackMachineConfig
 type CloudStackMachineConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file

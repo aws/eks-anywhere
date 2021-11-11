@@ -9,16 +9,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
-//func TestCloudStackDeploymentValidateUpdateServerImmutable(t *testing.T) {
-//	vOld := cloudstackDatacenterConfig()
-//	vOld.Spec.Server = "https://realOldServer.realOldDatacenter.com"
-//	c := vOld.DeepCopy()
-//
-//	c.Spec.Server = "https://newFancyServer.newFancyCloud.io"
-//	g := NewWithT(t)
-//	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
-//}
-
 func TestCloudStackDeploymentValidateUpdateDomainImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Domain = "oldCruftyDomain"
