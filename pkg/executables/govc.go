@@ -270,13 +270,15 @@ func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templ
 		}
 	}
 
-	logger.V(4).Info("Taking template snapshot", "templateName", templateName)
-	if err := g.createVMSnapshot(ctx, templateName); err != nil {
+	templateFullPath := filepath.Join(templateDir, templateName)
+
+	logger.V(4).Info("Taking template snapshot", "templateName", templateFullPath)
+	if err := g.createVMSnapshot(ctx, templateFullPath); err != nil {
 		return err
 	}
 
-	logger.V(4).Info("Marking vm as template", "templateName", templateName)
-	if err := g.markVMAsTemplate(ctx, templateName); err != nil {
+	logger.V(4).Info("Marking vm as template", "templateName", templateFullPath)
+	if err := g.markVMAsTemplate(ctx, templateFullPath); err != nil {
 		return err
 	}
 
@@ -292,6 +294,11 @@ func (g *Govc) ImportTemplate(ctx context.Context, library, ovaURL, name string)
 }
 
 func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deployFolder, datacenter, resourcePool string) error {
+	envMap, err := g.validateAndSetupCreds()
+	if err != nil {
+		return fmt.Errorf("failed govc validations: %v", err)
+	}
+
 	templateInLibraryPath := filepath.Join(library, templateName)
 	if !filepath.IsAbs(templateInLibraryPath) {
 		templateInLibraryPath = fmt.Sprintf("/%s", templateInLibraryPath)
@@ -302,7 +309,36 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 		return fmt.Errorf("failed writing deploy options file to disk: %v", err)
 	}
 
-	params := []string{
+	bFolderNotFound := false
+	params := []string{"folder.info", deployFolder}
+	err = g.retrier.Retry(func() error {
+		errBuffer, err := g.executable.ExecuteWithEnv(ctx, envMap, params...)
+		errString := strings.ToLower(errBuffer.String())
+		if err != nil {
+			if !strings.Contains(errString, "not found") {
+				return fmt.Errorf("error obtaining folder information: %v", err)
+			} else {
+				bFolderNotFound = true
+			}
+		}
+		return nil
+	})
+	if err != nil || bFolderNotFound {
+		params = []string{"folder.create", deployFolder}
+		err = g.retrier.Retry(func() error {
+			errBuffer, err := g.executable.ExecuteWithEnv(ctx, envMap, params...)
+			errString := strings.ToLower(errBuffer.String())
+			if err != nil && !strings.Contains(errString, "already exists") {
+				return fmt.Errorf("error creating folder: %v", err)
+			}
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("error creating folder: %v", err)
+		}
+	}
+
+	params = []string{
 		"library.deploy",
 		"-dc", datacenter,
 		"-pool", resourcePool,
