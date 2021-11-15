@@ -8,7 +8,7 @@ import (
 
 const prodReleasesManifest = "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml"
 
-func (e *ClusterE2ETest) getLatestMinorReleaseFromMain() *releasev1alpha1.EksARelease {
+func (e *ClusterE2ETest) GetLatestMinorReleaseFromMain() *releasev1alpha1.EksARelease {
 	reader := cluster.NewManifestReader()
 	e.T.Logf("Reading prod release manifest %s", prodReleasesManifest)
 	releases, err := reader.GetReleases(prodReleasesManifest)
@@ -31,7 +31,7 @@ func (e *ClusterE2ETest) getLatestMinorReleaseFromMain() *releasev1alpha1.EksARe
 	return latestRelease
 }
 
-func (e *ClusterE2ETest) getLatestMinorReleaseFromReleaseBranch(releaseBranchVersion *semver.Version) *releasev1alpha1.EksARelease {
+func (e *ClusterE2ETest) GetLatestMinorReleaseFromReleaseBranch(releaseBranchVersion *semver.Version) *releasev1alpha1.EksARelease {
 	reader := cluster.NewManifestReader()
 	e.T.Logf("Reading prod release manifest %s", prodReleasesManifest)
 	releases, err := reader.GetReleases(prodReleasesManifest)
