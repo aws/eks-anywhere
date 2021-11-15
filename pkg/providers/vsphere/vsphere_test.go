@@ -29,6 +29,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -224,6 +225,7 @@ func (tctx *testContext) SaveContext() {
 	os.Setenv(vSpherePasswordKey, os.Getenv(eksavSpherePasswordKey))
 	os.Setenv(vSphereServerKey, expectedVSphereServer)
 	os.Setenv(expClusterResourceSetKey, expectedExpClusterResourceSet)
+	os.Setenv(features.TaintsSupportEnvVar, "true")
 }
 
 func (tctx *testContext) RestoreContext() {
@@ -488,6 +490,12 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *
 			testName:          "main",
 			clusterconfigFile: testClusterConfigMainFilename,
 			wantCPFile:        "testdata/expected_results_main_cp.yaml",
+			wantMDFile:        "testdata/expected_results_main_md.yaml",
+		},
+		{
+			testName:          "main_with_taints",
+			clusterconfigFile: "cluster_main_with_taints.yaml",
+			wantCPFile:        "testdata/expected_results_main_with_taints_cp.yaml",
 			wantMDFile:        "testdata/expected_results_main_md.yaml",
 		},
 	}
@@ -2588,7 +2596,7 @@ func TestChangeDiffWithChange(t *testing.T) {
 	assert.Equal(t, wantDiff, provider.ChangeDiff(clusterSpec, newClusterSpec))
 }
 
-func TestVsphereProviderRunPostUpgrade(t *testing.T) {
+func TestVsphereProviderRunSpecificUpgradeOps(t *testing.T) {
 	tt := newProviderTest(t)
 
 	tt.resourceSetManager.EXPECT().ForceUpdate(tt.ctx, "test-crs-0", "eksa-system", tt.managementCluster, tt.workloadCluster)
@@ -2600,8 +2608,14 @@ func TestVsphereProviderRunPostUpgrade(t *testing.T) {
 		"vsphere-cloud-controller-manager",
 		"public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
 	)
-
-	tt.Expect(tt.provider.RunPostUpgrade(tt.ctx, tt.clusterSpec, tt.managementCluster, tt.workloadCluster)).To(Succeed())
+	tt.kubectl.EXPECT().ApplyTolerationsFromTaintsToDaemonSet(
+		tt.ctx,
+		nil,
+		nil,
+		"vsphere-cloud-controller-manager",
+		tt.workloadCluster.KubeconfigFile,
+	)
+	tt.Expect(tt.provider.RunSpecificUpgradeOps(tt.ctx, tt.clusterSpec, tt.clusterSpec, tt.workloadCluster, tt.managementCluster)).To(Succeed())
 }
 
 func TestProviderUpgradeNeeded(t *testing.T) {

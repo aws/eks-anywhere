@@ -1431,12 +1431,6 @@ spec:
                       type: object
                     flux:
                       properties:
-                        components:
-                          properties:
-                            uri:
-                              description: URI points to the manifest yaml file
-                              type: string
-                          type: object
                         helmController:
                           properties:
                             arch:
@@ -1556,7 +1550,6 @@ spec:
                         version:
                           type: string
                       required:
-                      - components
                       - helmController
                       - kustomizeController
                       - notificationController
@@ -1908,6 +1901,36 @@ spec:
                       name:
                         type: string
                     type: object
+                  taints:
+                    description: Taints define the set of taints to be applied on
+                      control plane nodes
+                    items:
+                      description: The node this Taint is attached to has the "effect"
+                        on any pod that does not tolerate the Taint.
+                      properties:
+                        effect:
+                          description: Required. The effect of the taint on pods that
+                            do not tolerate the taint. Valid effects are NoSchedule,
+                            PreferNoSchedule and NoExecute.
+                          type: string
+                        key:
+                          description: Required. The taint key to be applied to a
+                            node.
+                          type: string
+                        timeAdded:
+                          description: TimeAdded represents the time at which the
+                            taint was added. It is only written for NoExecute taints.
+                          format: date-time
+                          type: string
+                        value:
+                          description: The taint value corresponding to the taint
+                            key.
+                          type: string
+                      required:
+                      - effect
+                      - key
+                      type: object
+                    type: array
                 type: object
               datacenterRef:
                 properties:
@@ -1950,8 +1973,11 @@ spec:
                 type: array
               kubernetesVersion:
                 type: string
-              management:
-                type: boolean
+              managementCluster:
+                properties:
+                  name:
+                    type: string
+                type: object
               overrideClusterSpecFile:
                 description: 'Deprecated: This field has no function and is going
                   to be removed in a future release.'
@@ -1996,6 +2022,36 @@ spec:
                         name:
                           type: string
                       type: object
+                    taints:
+                      description: Taints define the set of taints to be applied on
+                        worker nodes
+                      items:
+                        description: The node this Taint is attached to has the "effect"
+                          on any pod that does not tolerate the Taint.
+                        properties:
+                          effect:
+                            description: Required. The effect of the taint on pods
+                              that do not tolerate the taint. Valid effects are NoSchedule,
+                              PreferNoSchedule and NoExecute.
+                            type: string
+                          key:
+                            description: Required. The taint key to be applied to
+                              a node.
+                            type: string
+                          timeAdded:
+                            description: TimeAdded represents the time at which the
+                              taint was added. It is only written for NoExecute taints.
+                            format: date-time
+                            type: string
+                          value:
+                            description: The taint value corresponding to the taint
+                              key.
+                            type: string
+                        required:
+                        - effect
+                        - key
+                        type: object
+                      type: array
                   type: object
                 type: array
             type: object

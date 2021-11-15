@@ -344,6 +344,20 @@ func (mr *MockClusterClientMockRecorder) InitInfrastructure(arg0, arg1, arg2, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitInfrastructure", reflect.TypeOf((*MockClusterClient)(nil).InitInfrastructure), arg0, arg1, arg2, arg3)
 }
 
+// KubeconfigSecretAvailable mocks base method.
+func (m *MockClusterClient) KubeconfigSecretAvailable(arg0 context.Context, arg1, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "KubeconfigSecretAvailable", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// KubeconfigSecretAvailable indicates an expected call of KubeconfigSecretAvailable.
+func (mr *MockClusterClientMockRecorder) KubeconfigSecretAvailable(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KubeconfigSecretAvailable", reflect.TypeOf((*MockClusterClient)(nil).KubeconfigSecretAvailable), arg0, arg1, arg2, arg3)
+}
+
 // MoveManagement mocks base method.
 func (m *MockClusterClient) MoveManagement(arg0 context.Context, arg1, arg2 *types.Cluster) error {
 	m.ctrl.T.Helper()
