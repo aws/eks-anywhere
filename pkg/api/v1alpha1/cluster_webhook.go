@@ -46,6 +46,12 @@ func (r *Cluster) ValidateCreate() error {
 		clusterlog.Info("cluster is paused, so allowing create", "name", r.Name)
 		return nil
 	}
+
+	if !r.IsSelfManaged() {
+		clusterlog.Info("Cluster is not self managed, allowing create", "name", r.Name)
+		return nil
+	}
+
 	return apierrors.NewBadRequest("Creating new cluster on existing cluster is not supported")
 }
 

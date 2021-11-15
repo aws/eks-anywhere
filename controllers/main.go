@@ -4,6 +4,9 @@ import (
 	"flag"
 	"os"
 
+	// +kubebuilder:scaffold:imports
+	"github.com/spf13/pflag"
+
 	etcdv1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -11,6 +14,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	vspherev3 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
+	"sigs.k8s.io/cluster-api/controllers/remote"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -24,9 +28,13 @@ import (
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
+	gates    = []string{}
 )
 
-const WEBHOOK = "webhook"
+const (
+	WEBHOOK          = "webhook"
+	reconcilerV2Gate = "reconcilerV2"
+)
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -37,6 +45,10 @@ func init() {
 	utilruntime.Must(vspherev3.AddToScheme(scheme))
 	utilruntime.Must(etcdv1alpha3.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
+}
+
+func InitFlags(fs *pflag.FlagSet) {
+	fs.StringSliceVar(&gates, "feature-gates", []string{}, "A set of key=value pairs that describe feature gates for alpha/experimental features. ")
 }
 
 func main() {
@@ -52,7 +64,10 @@ func main() {
 		Development: true,
 	}
 	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+
+	InitFlags(pflag.CommandLine)
+	pflag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
@@ -69,13 +84,41 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (controllers.NewClusterReconciler(
-		mgr.GetClient(),
-		ctrl.Log.WithName("controllers").WithName(anywherev1alpha1.ClusterKind),
-		mgr.GetScheme())).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", anywherev1alpha1.ClusterKind)
-		os.Exit(1)
+	if gateEnabled(reconcilerV2Gate) {
+		// TODO: figure out if we want our own (maybe ligther implementation) of the remote client
+		// For now, using CAPI's, which is wrapped around the "tracker". Which seems to be mostly a cache
+		tracker, err := remote.NewClusterCacheTracker(
+			ctrl.Log.WithName("remote").WithName("ClusterCacheTracker"),
+			mgr,
+		)
+		if err != nil {
+			setupLog.Error(err, "unable to create cluster cache tracker")
+			os.Exit(1)
+		}
+
+		setupLog.Info("Init reconciler V2")
+		if err = controllers.NewClusterReconcilerV2(
+			mgr.GetClient(),
+			tracker,
+			ctrl.Log.WithName("controllers").WithName(anywherev1alpha1.ClusterKind),
+			mgr.GetScheme(),
+		).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create reconciler v2", "controller", anywherev1alpha1.ClusterKind)
+			os.Exit(1)
+		}
+		setupLog.Info("Reconciler V2 init succesfully")
+	} else {
+		setupLog.Info("Init reconciler V1")
+		if err = (controllers.NewClusterReconciler(
+			mgr.GetClient(),
+			ctrl.Log.WithName("controllers").WithName(anywherev1alpha1.ClusterKind),
+			mgr.GetScheme())).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", anywherev1alpha1.ClusterKind)
+			os.Exit(1)
+		}
+		setupLog.Info("Reconciler V1 init succesfully")
 	}
+
 	if err = (&anywherev1alpha1.Cluster{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1alpha1.ClusterKind)
 		os.Exit(1)
@@ -117,4 +160,14 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
+
+func gateEnabled(gate string) bool {
+	for _, g := range gates {
+		if g == gate {
+			return true
+		}
+	}
+
+	return false
 }

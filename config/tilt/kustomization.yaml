@@ -3,6 +3,9 @@ kind: Kustomization
 resources:
 - ../default
 
+patchesStrategicMerge:
+- manager_gates_patch.yaml
+
 images:
 - name: controller
   newName: cluster-controller

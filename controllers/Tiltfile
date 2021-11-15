@@ -41,7 +41,10 @@ docker_build_with_restart(
 	IMG,
 	'.', 
 	dockerfile_contents=DOCKERFILE,
-	entrypoint='/manager',
+	# TODO: figure out why the manager is not using the args declared in the kubernets object
+	# I suspect it is bc the tilt restart wrapper is somehow ignoring those
+	# Harcoding the gates flag here works for testing but we should find a proper fix
+	entrypoint='/manager --feature-gates=reconcilerV2',
 	only=['./bin/manager'],
 	live_update=[
 		sync('./bin/manager', '/manager'),
