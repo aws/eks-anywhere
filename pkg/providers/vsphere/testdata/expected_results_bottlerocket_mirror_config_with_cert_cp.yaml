@@ -1,3 +1,4 @@
+
 apiVersion: cluster.x-k8s.io/v1alpha3
 kind: Cluster
 metadata:
@@ -151,11 +152,6 @@ spec:
           mountPath: /var/log/kubernetes
           name: audit-log-dir
           pathType: DirectoryOrCreate
-          readOnly: false
-        - hostPath: /var/log/kubernetes/api-audit.log
-          mountPath: /var/log/kubernetes/api-audit.log
-          name: audit-log
-          pathType: FileOrCreate
           readOnly: false
       controllerManager:
         extraArgs:
