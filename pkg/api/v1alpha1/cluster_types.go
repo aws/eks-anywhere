@@ -23,6 +23,9 @@ const (
 	// managementAnnotation points to the name of a management cluster
 	// cluster object
 	managementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
+
+	// defaultEksaNamespace is the default namespace for EKS-A resources when not specified.
+	defaultEksaNamespace = "default"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -441,12 +444,16 @@ func (r refSet) toSlice() []Ref {
 }
 
 func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
+	namespace := defaultEksaNamespace
+	if c.Namespace != "" {
+		namespace = c.Namespace
+	}
 	config := &ClusterGenerate{
 		TypeMeta: c.TypeMeta,
 		ObjectMeta: ObjectMeta{
 			Name:        c.Name,
 			Annotations: c.Annotations,
-			Namespace:   c.Namespace,
+			Namespace:   namespace,
 		},
 		Spec: c.Spec,
 	}
