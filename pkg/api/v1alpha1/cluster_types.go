@@ -182,8 +182,6 @@ type WorkerNodeGroupConfiguration struct {
 	Count int `json:"count,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
-	// Taints define the set of taints to be applied on worker nodes
-	Taints []corev1.Taint `json:"taints,omitempty"`
 }
 
 func generateWorkerNodeGroupKey(c WorkerNodeGroupConfiguration) (key string) {
