@@ -3,13 +3,18 @@ package addonclients_test
 import (
 	"context"
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"testing"
 
 	. "github.com/onsi/gomega"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -27,6 +32,11 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 	currentSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Bundles.Spec.Number = 1
 		s.VersionsBundle.Flux.Version = "v0.1.0"
+		s.Cluster = &v1alpha1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "management-cluster",
+			},
+		}
 	})
 
 	return &upgraderTest{
@@ -35,7 +45,7 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 		currentSpec: currentSpec,
 		newSpec:     currentSpec.DeepCopy(),
 		cluster: &types.Cluster{
-			Name:           "cluster-name",
+			Name:           "management-cluster",
 			KubeconfigFile: "k.kubeconfig",
 		},
 		fluxConfig: v1alpha1.Flux{
@@ -44,7 +54,7 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 				Repository:          "testRepo",
 				FluxSystemNamespace: "flux-system",
 				Branch:              "testBranch",
-				ClusterConfigPath:   "clusters/fluxAddonTestCluster/flux-system",
+				ClusterConfigPath:   "clusters/management-cluster",
 				Personal:            true,
 			},
 		},
@@ -70,14 +80,17 @@ func TestFluxUpgradeNoChanges(t *testing.T) {
 func TestFluxUpgradeSuccess(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.newSpec.VersionsBundle.Flux.Version = "v0.2.0"
-	fluxSystemDirPath := "clusters/fluxAddonTestCluster"
 
 	tt.newSpec.GitOpsConfig = &v1alpha1.GitOpsConfig{
 		Spec: v1alpha1.GitOpsConfigSpec{
 			Flux: tt.fluxConfig,
 		},
 	}
-	f, m, _ := newAddonClient(t)
+	f, m, g := newAddonClient(t)
+
+	if err := setupTestFiles(t, g); err != nil {
+		t.Errorf("error setting up files: %v", err)
+	}
 
 	wantDiff := &types.ChangeDiff{
 		ComponentReports: []types.ComponentChangeDiff{
@@ -92,7 +105,7 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Github.Repository}, nil)
 	m.git.EXPECT().Clone(tt.ctx).Return(nil)
 	m.git.EXPECT().Branch(tt.fluxConfig.Github.Branch).Return(nil)
-	m.git.EXPECT().Add(fluxSystemDirPath).Return(nil)
+	m.git.EXPECT().Add(tt.fluxConfig.Github.ClusterConfigPath).Return(nil)
 	m.git.EXPECT().Commit(test.OfType("string")).Return(nil)
 	m.git.EXPECT().Push(tt.ctx).Return(nil)
 
@@ -105,19 +118,22 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 func TestFluxUpgradeError(t *testing.T) {
 	tt := newUpgraderTest(t)
 	tt.newSpec.VersionsBundle.Flux.Version = "v0.2.0"
-	fluxSystemDirPath := "clusters/fluxAddonTestCluster"
 
 	tt.newSpec.GitOpsConfig = &v1alpha1.GitOpsConfig{
 		Spec: v1alpha1.GitOpsConfigSpec{
 			Flux: tt.fluxConfig,
 		},
 	}
-	f, m, _ := newAddonClient(t)
+	f, m, g := newAddonClient(t)
+
+	if err := setupTestFiles(t, g); err != nil {
+		t.Errorf("error setting up files: %v", err)
+	}
 
 	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Github.Repository}, nil)
 	m.git.EXPECT().Clone(tt.ctx).Return(nil)
 	m.git.EXPECT().Branch(tt.fluxConfig.Github.Branch).Return(nil)
-	m.git.EXPECT().Add(fluxSystemDirPath).Return(nil)
+	m.git.EXPECT().Add(tt.fluxConfig.Github.ClusterConfigPath).Return(nil)
 	m.git.EXPECT().Commit(test.OfType("string")).Return(nil)
 	m.git.EXPECT().Push(tt.ctx).Return(nil)
 
@@ -133,4 +149,20 @@ func TestFluxUpgradeNoGitOpsConfig(t *testing.T) {
 	tt.newSpec.GitOpsConfig = nil
 
 	tt.Expect(f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)).To(BeNil())
+}
+
+func setupTestFiles(t *testing.T, g *addonclients.GitOptions) error {
+	w, err := g.Writer.WithDir("clusters/management-cluster/management-cluster/eksa-system")
+	if err != nil {
+		return fmt.Errorf("failed to create test eksa-system directory: %v", err)
+	}
+	eksaContent, err := ioutil.ReadFile("./testdata/cluster-config-default-path-management.yaml")
+	if err != nil {
+		return fmt.Errorf("File [%s] reading error in test: %v", "cluster-config-default-path-management.yaml", err)
+	}
+	_, err = w.Write(defaultEksaClusterConfigFileName, eksaContent, filewriter.PersistentFile)
+	if err != nil {
+		return fmt.Errorf("failed to write eksa-cluster.yaml in test: %v", err)
+	}
+	return nil
 }
