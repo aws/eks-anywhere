@@ -52,10 +52,7 @@ func (e *ClusterE2ETest) GetLatestMinorReleaseFromReleaseBranch(releaseBranchVer
 		}
 		if releaseVersion.LessThan(releaseBranchVersion) && releaseVersion.Minor != releaseBranchVersion.Minor && releaseVersion.GreaterThan(latestPrevMinorReleaseVersion) {
 			latestPrevMinorRelease = &release
-			latestPrevMinorReleaseVersion, err = semver.New(release.Version)
-			if err != nil {
-				e.T.Fatal(err)
-			}
+			latestPrevMinorReleaseVersion = releaseVersion
 		}
 	}
 
