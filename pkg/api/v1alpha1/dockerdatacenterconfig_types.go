@@ -50,12 +50,16 @@ func (d *DockerDatacenterConfig) ClearPauseAnnotation() {
 }
 
 func (d *DockerDatacenterConfig) ConvertConfigToConfigGenerateStruct() *DockerDatacenterConfigGenerate {
+	namespace := defaultEksaNamespace
+	if d.Namespace != "" {
+		namespace = d.Namespace
+	}
 	config := &DockerDatacenterConfigGenerate{
 		TypeMeta: d.TypeMeta,
 		ObjectMeta: ObjectMeta{
 			Name:        d.Name,
 			Annotations: d.Annotations,
-			Namespace:   d.Namespace,
+			Namespace:   namespace,
 		},
 		Spec: d.Spec,
 	}

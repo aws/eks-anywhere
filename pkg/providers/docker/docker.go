@@ -194,6 +194,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	if clusterSpec.AWSIamConfig != nil {
 		values["awsIamAuth"] = true
 	}
+
+	if len(clusterSpec.Spec.ControlPlaneConfiguration.Taints) > 0 {
+		values["controlPlaneTaints"] = clusterSpec.Spec.ControlPlaneConfiguration.Taints
+	}
+
 	return values
 }
 
@@ -417,10 +422,14 @@ func (p *provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.Compone
 	}
 }
 
-func (p *provider) RunPostUpgrade(ctx context.Context, clusterSpec *cluster.Spec, managementCluster, workloadCluster *types.Cluster) error {
+func (p *provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
 	return nil
 }
 
 func (p *provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec) (bool, error) {
 	return false, nil
+}
+
+func (p *provider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+	return nil
 }

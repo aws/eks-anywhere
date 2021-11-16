@@ -96,7 +96,7 @@ func (e *linuxDockerExecutable) buildCommand(envs map[string]string, cli string,
 	}
 	containerName := containerNamePrefix + cli + "_" + strconv.FormatInt(time.Now().UnixNano(), 10)
 	dockerCommands := []string{
-		"run", "--name", containerName, "-i", "--network", "host", "-v", fmt.Sprintf("%s:%s", directory, directory),
+		"run", "--name", containerName, "-i", "--network", "host", "-v", fmt.Sprintf("%[1]s:%[1]s", directory),
 		"-w", directory, "-v", "/var/run/docker.sock:/var/run/docker.sock",
 	}
 

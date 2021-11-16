@@ -64,7 +64,7 @@ func (dc *deleteClusterOptions) validate(ctx context.Context, args []string) err
 		if err != nil {
 			return fmt.Errorf("please provide either a valid <cluster-name> or -f <config-file>")
 		}
-		filename := fmt.Sprintf("%s/%s-eks-a-cluster.yaml", clusterName, clusterName)
+		filename := fmt.Sprintf("%[1]s/%[1]s-eks-a-cluster.yaml", clusterName)
 		if !validations.FileExists(filename) {
 			return fmt.Errorf("clusterconfig file %s for cluster: %s not found, please provide the clusterconfig path manually using -f <config-file>", filename, clusterName)
 		}

@@ -127,3 +127,10 @@ func WithManagementCluster(name string) ClusterFiller {
 		c.Spec.ManagementCluster.Name = name
 	}
 }
+
+func WithAWSIamIdentityProviderRef(name string) ClusterFiller {
+	return func(c *v1alpha1.Cluster) {
+		c.Spec.IdentityProviderRefs = append(c.Spec.IdentityProviderRefs,
+			v1alpha1.Ref{Name: name, Kind: v1alpha1.AWSIamConfigKind})
+	}
+}

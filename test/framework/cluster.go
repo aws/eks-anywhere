@@ -51,6 +51,7 @@ type ClusterE2ETest struct {
 	OIDCConfig            *v1alpha1.OIDCConfig
 	GitOpsConfig          *v1alpha1.GitOpsConfig
 	ProxyConfig           *v1alpha1.ProxyConfiguration
+	AWSIamConfig          *v1alpha1.AWSIamConfig
 }
 
 type ClusterE2ETestOpt func(e *ClusterE2ETest)
@@ -94,7 +95,7 @@ type Provider interface {
 }
 
 func (e *ClusterE2ETest) GenerateClusterConfig() {
-	e.RunEKSA("anywhere", "generate", "clusterconfig", e.ClusterName, "-p", e.Provider.Name(), ">", e.ClusterConfigLocation)
+	e.RunEKSA("generate", "clusterconfig", e.ClusterName, "-p", e.Provider.Name(), ">", e.ClusterConfigLocation)
 
 	clusterFillersFromProvider := e.Provider.ClusterConfigFillers()
 	clusterConfigFillers := make([]api.ClusterFiller, 0, len(e.clusterFillers)+len(clusterFillersFromProvider))
@@ -109,7 +110,7 @@ func (e *ClusterE2ETest) GenerateClusterConfig() {
 }
 
 func (e *ClusterE2ETest) ImportImages() {
-	e.RunEKSA("anywhere", "import-images", "-f", e.ClusterConfigLocation)
+	e.RunEKSA("import-images", "-f", e.ClusterConfigLocation)
 }
 
 func (e *ClusterE2ETest) CreateCluster() {
@@ -118,7 +119,7 @@ func (e *ClusterE2ETest) CreateCluster() {
 
 func (e *ClusterE2ETest) createCluster(opts ...commandOpt) {
 	e.T.Logf("Creating cluster %s", e.ClusterName)
-	createClusterArgs := []string{"anywhere", "create", "cluster", "-f", e.ClusterConfigLocation, "-v", "4"}
+	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "4"}
 	if getBundlesOverride() == "true" {
 		createClusterArgs = append(createClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
 	}
@@ -175,7 +176,7 @@ func (e *ClusterE2ETest) upgradeCluster(commandOpts []commandOpt, opts ...Cluste
 	}
 	e.buildClusterConfigFile()
 
-	upgradeClusterArgs := []string{"anywhere", "upgrade", "cluster", "-f", e.ClusterConfigLocation, "-v", "4"}
+	upgradeClusterArgs := []string{"upgrade", "cluster", "-f", e.ClusterConfigLocation, "-v", "4"}
 	if getBundlesOverride() == "true" {
 		upgradeClusterArgs = append(upgradeClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
 	}
@@ -197,6 +198,13 @@ func (e *ClusterE2ETest) buildClusterConfigFile() {
 		}
 		yamlB = append(yamlB, oidcConfigB)
 	}
+	if e.AWSIamConfig != nil {
+		awsIamConfigB, err := yaml.Marshal(e.AWSIamConfig)
+		if err != nil {
+			e.T.Fatalf("error marshalling aws iam config: %v", err)
+		}
+		yamlB = append(yamlB, awsIamConfigB)
+	}
 	if e.GitOpsConfig != nil {
 		gitOpsConfigB, err := yaml.Marshal(e.GitOpsConfig)
 		if err != nil {
@@ -217,7 +225,6 @@ func (e *ClusterE2ETest) buildClusterConfigFile() {
 	if err != nil {
 		e.T.Fatalf("Error writing cluster config to file %s: %v", e.ClusterConfigLocation, err)
 	}
-
 	e.ClusterConfigLocation = writtenFile
 }
 
@@ -226,7 +233,7 @@ func (e *ClusterE2ETest) DeleteCluster() {
 }
 
 func (e *ClusterE2ETest) deleteCluster(opts ...commandOpt) {
-	deleteClusterArgs := []string{"anywhere", "delete", "cluster", e.ClusterName, "-v", "4"}
+	deleteClusterArgs := []string{"delete", "cluster", e.ClusterName, "-v", "4"}
 	for _, o := range opts {
 		o(&deleteClusterArgs)
 	}
@@ -259,7 +266,8 @@ func (e *ClusterE2ETest) Run(name string, args ...string) {
 }
 
 func (e *ClusterE2ETest) RunEKSA(args ...string) {
-	e.Run("eksctl", args...)
+	command := append([]string{"anywhere"}, args...)
+	e.Run("eksctl", command...)
 }
 
 func (e *ClusterE2ETest) StopIfFailed() {

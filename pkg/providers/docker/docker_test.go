@@ -3,6 +3,7 @@ package docker_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"reflect"
 	"testing"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	dockerMocks "github.com/aws/eks-anywhere/pkg/providers/docker/mocks"
@@ -107,6 +109,12 @@ clusters:
 func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 
+	var taints []v1.Taint
+
+	taints = append(taints, v1.Taint{Key: "key1", Value: "val1", Effect: "NoSchedule", TimeAdded: nil})
+	taints = append(taints, v1.Taint{Key: "key2", Value: "val2", Effect: "PreferNoSchedule", TimeAdded: nil})
+	taints = append(taints, v1.Taint{Key: "key3", Value: "val3", Effect: "NoExecute", TimeAdded: nil})
+
 	tests := []struct {
 		testName    string
 		clusterSpec *cluster.Spec
@@ -125,6 +133,21 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				s.VersionsBundle = versionsBundle
 			}),
 			wantCPFile: "testdata/valid_deployment_cp_expected.yaml",
+			wantMDFile: "testdata/valid_deployment_md_expected.yaml",
+		},
+		{
+			testName: "valid config with cp taints",
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Name = "test-cluster"
+				s.Spec.KubernetesVersion = "1.19"
+				s.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+				s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
+				s.Spec.ControlPlaneConfiguration.Count = 3
+				s.Spec.ControlPlaneConfiguration.Taints = taints
+				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+				s.VersionsBundle = versionsBundle
+			}),
+			wantCPFile: "testdata/valid_deployment_cp_taints_expected.yaml",
 			wantMDFile: "testdata/valid_deployment_md_expected.yaml",
 		},
 		{
@@ -194,6 +217,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 			wantMDFile: "testdata/capd_valid_full_oidc_md_expected.yaml",
 		},
 	}
+	os.Setenv(features.TaintsSupportEnvVar, "true")
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
@@ -254,6 +278,7 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 			},
 		},
 	}
+	os.Setenv(features.TaintsSupportEnvVar, "true")
 
 	kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, cluster.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(cp, nil)
 	kubectl.EXPECT().GetMachineDeployment(ctx, cluster, clusterSpec.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(md, nil)

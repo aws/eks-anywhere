@@ -222,6 +222,15 @@ func (k *Kubectl) DeleteGitOpsConfig(ctx context.Context, managementCluster *typ
 	return nil
 }
 
+func (k *Kubectl) DeleteSecret(ctx context.Context, managementCluster *types.Cluster, secretName, namespace string) error {
+	params := []string{"delete", "secret", secretName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", namespace}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error deleting secret %s in namespace %s: %v", secretName, namespace, err)
+	}
+	return nil
+}
+
 func (k *Kubectl) DeleteOIDCConfig(ctx context.Context, managementCluster *types.Cluster, oidcConfigName, oidcConfigNamespace string) error {
 	params := []string{"delete", eksaOIDCResourceType, oidcConfigName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", oidcConfigNamespace, "--ignore-not-found=true"}
 	_, err := k.executable.Execute(ctx, params...)
@@ -1065,4 +1074,81 @@ func (k *Kubectl) CheckProviderExists(ctx context.Context, kubeconfigFile, name,
 		return false, fmt.Errorf("error checking whether provider exists: %v", err)
 	}
 	return stdOut.Len() != 0, nil
+}
+
+type Toleration struct {
+	Effect            string      `json:"effect,omitempty"`
+	Key               string      `json:"key,omitempty"`
+	Operator          string      `json:"operator,omitempty"`
+	Value             string      `json:"value,omitempty"`
+	TolerationSeconds json.Number `json:"tolerationSeconds,omitempty"`
+}
+
+func (k *Kubectl) ApplyTolerationsFromTaintsToDaemonSet(ctx context.Context, oldTaints []corev1.Taint, newTaints []corev1.Taint, dsName string, kubeconfigFile string) error {
+	return k.ApplyTolerationsFromTaints(ctx, oldTaints, newTaints, "ds", dsName, kubeconfigFile, "kube-system", "/spec/template/spec/tolerations")
+}
+
+func (k *Kubectl) ApplyTolerationsFromTaints(ctx context.Context, oldTaints []corev1.Taint, newTaints []corev1.Taint, resource string, name string, kubeconfigFile string, namespace string, path string) error {
+	params := []string{
+		"get", resource, name,
+		"-o", "jsonpath={range .spec.template.spec}{.tolerations} {end}",
+		"-n", namespace, "--kubeconfig", kubeconfigFile,
+	}
+	output, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return err
+	}
+	var appliedTolerations []Toleration
+	err = json.Unmarshal(output.Bytes(), &appliedTolerations)
+	if err != nil {
+		return fmt.Errorf("error parsing toleration response: %v", err)
+	}
+
+	oldTolerationSet := make(map[Toleration]bool)
+	for _, taint := range oldTaints {
+		var toleration Toleration
+		toleration.Key = taint.Key
+		toleration.Value = taint.Value
+		toleration.Effect = string(taint.Effect)
+		toleration.Operator = "Equal"
+		oldTolerationSet[toleration] = true
+	}
+
+	var finalTolerations []string
+	format := "{\"key\":\"%s\",\"operator\":\"%s\",\"value\":\"%s\",\"effect\":\"%s\",\"tolerationSeconds\":%s}"
+	for _, toleration := range appliedTolerations {
+		_, present := oldTolerationSet[toleration]
+		if !present {
+			finalTolerations = append(finalTolerations, fmt.Sprintf(format, toleration.Key, toleration.Operator, toleration.Value, toleration.Effect, string(toleration.TolerationSeconds)))
+		}
+	}
+	for _, taint := range newTaints {
+		finalTolerations = append(finalTolerations, fmt.Sprintf(format, taint.Key, "Equal", taint.Value, taint.Effect, ""))
+	}
+
+	if len(finalTolerations) > 0 {
+		params := []string{
+			"patch", resource, name,
+			"--type=json", fmt.Sprintf("-p=[{\"op\": \"add\", \"path\": %s, \"value\":[%s]}]", path, strings.Join(finalTolerations, ", ")), "-n", namespace, "--kubeconfig", kubeconfigFile,
+		}
+		_, err = k.executable.Execute(ctx, params...)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (k *Kubectl) KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error) {
+	return k.GetResource(ctx, "secret", fmt.Sprintf("%s-kubeconfig", clusterName), kubeconfig, namespace)
+}
+
+func (k *Kubectl) GetResource(ctx context.Context, resourceType string, name string, kubeconfig string, namespace string) (bool, error) {
+	params := []string{"get", resourceType, name, "--ignore-not-found", "-n", namespace, "--kubeconfig", kubeconfig}
+	output, err := k.executable.Execute(ctx, params...)
+	var found bool
+	if err == nil && len(output.String()) > 0 {
+		found = true
+	}
+	return found, err
 }

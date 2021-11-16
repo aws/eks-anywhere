@@ -13,6 +13,10 @@ func buildKubectl(t *testing.T) *executables.Kubectl {
 	return executableBuilder(t, ctx).BuildKubectlExecutable()
 }
 
+func buildLocalKubectl() *executables.Kubectl {
+	return executables.NewLocalExecutableBuilder().BuildKubectlExecutable()
+}
+
 func executableBuilder(t *testing.T, ctx context.Context) *executables.ExecutableBuilder {
 	executableBuilder, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {

@@ -110,3 +110,91 @@ func TestNewSuccess(t *testing.T) {
 		})
 	}
 }
+
+func TestCompareSuccess(t *testing.T) {
+	testCases := []struct {
+		testName string
+		v1       *semver.Version
+		v2       *semver.Version
+		want     int
+	}{
+		{
+			testName: "equal",
+			v1: &semver.Version{
+				Major: 1,
+				Minor: 0,
+				Patch: 4,
+			},
+			v2: &semver.Version{
+				Major: 1,
+				Minor: 0,
+				Patch: 4,
+			},
+			want: 0,
+		},
+		{
+			testName: "less than",
+			v1: &semver.Version{
+				Major: 1,
+				Minor: 0,
+				Patch: 3,
+			},
+			v2: &semver.Version{
+				Major: 1,
+				Minor: 0,
+				Patch: 4,
+			},
+			want: -1,
+		},
+		{
+			testName: "less than, diff major",
+			v1: &semver.Version{
+				Major: 1,
+				Minor: 2,
+				Patch: 3,
+			},
+			v2: &semver.Version{
+				Major: 2,
+				Minor: 0,
+				Patch: 4,
+			},
+			want: -1,
+		},
+		{
+			testName: "greater than",
+			v1: &semver.Version{
+				Major: 1,
+				Minor: 0,
+				Patch: 5,
+			},
+			v2: &semver.Version{
+				Major: 1,
+				Minor: 0,
+				Patch: 4,
+			},
+			want: 1,
+		},
+		{
+			testName: "greater than, diff major",
+			v1: &semver.Version{
+				Major: 2,
+				Minor: 1,
+				Patch: 3,
+			},
+			v2: &semver.Version{
+				Major: 1,
+				Minor: 2,
+				Patch: 4,
+			},
+			want: 1,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			got := tt.v1.Compare(tt.v2)
+			if got != tt.want {
+				t.Fatalf("semver.Compare() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

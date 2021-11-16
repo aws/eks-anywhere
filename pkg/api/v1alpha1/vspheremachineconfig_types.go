@@ -108,12 +108,16 @@ type VSphereMachineConfig struct {
 }
 
 func (c *VSphereMachineConfig) ConvertConfigToConfigGenerateStruct() *VSphereMachineConfigGenerate {
+	namespace := defaultEksaNamespace
+	if c.Namespace != "" {
+		namespace = c.Namespace
+	}
 	config := &VSphereMachineConfigGenerate{
 		TypeMeta: c.TypeMeta,
 		ObjectMeta: ObjectMeta{
 			Name:        c.Name,
 			Annotations: c.Annotations,
-			Namespace:   c.Namespace,
+			Namespace:   namespace,
 		},
 		Spec: c.Spec,
 	}
