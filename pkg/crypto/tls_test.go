@@ -9,7 +9,14 @@ import (
 const (
 	endpoint         = "unit-test.local"
 	invalid_endpoint = "invalid-endpoint.local"
-	cert             = `
+	/*
+		This certificate was generated using the following commands and is valid only for `unit-test.local`
+		openssl genrsa -out ca.key 2048
+		openssl req -new -x509 -days 3650 -key ca.key -out ca.crt
+		openssl req -newkey rsa:2048 -nodes -keyout server.key -out server.csr
+		openssl x509 -req -extfile <(printf "subjectAltName=DNS:unit-test.local") -days 365 -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt
+	*/
+	cert = `
 -----BEGIN CERTIFICATE-----
 MIID/jCCAuagAwIBAgIUO/ncrEaWxLUqZ8IioBVCRl1P2R4wDQYJKoZIhvcNAQEL
 BQAwgagxCzAJBgNVBAYTAlVTMRMwEQYDVQQIDApXYXNoaW5ndG9uMRAwDgYDVQQH
