@@ -82,7 +82,7 @@ See EKS Anywhere [vSphere prerequisite]({{< relref "../vsphere" >}}) documentati
 
 You can perform cluster life cycle and configuration management at scale through GitOps-based tools.
 EKS Anywhere offers git-driven cluster management through the integrated Flux Controller.
-See [Manage cluster with GitOps]({{< relref "../../tasks/cluster/cluster-flux.md" >}}) documentation for details.
+See [Manage cluster with GitOps]({{< relref "../../tasks/cluster/cluster-flux" >}}) documentation for details.
 
 ### Can I run EKS Anywhere on ESXi?
 

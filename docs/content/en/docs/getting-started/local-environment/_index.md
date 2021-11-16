@@ -12,6 +12,8 @@ To install the EKS Anywhere binaries and see system requirements please follow t
 
 ## Steps
 
+### Cluster setup
+
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate a cluster config
    ```bash
@@ -44,36 +46,28 @@ To install the EKS Anywhere binaries and see system requirements please follow t
    🎉 Cluster created!
    ```
 
-1. Use the cluster
+### Verification
 
-   Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory
+- Use the cluster - Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory
 
-   ```bash
-   export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
-   kubectl get ns
-   ```
-   Example command output
-   ```
-   NAME                                STATUS   AGE
-   capd-system                         Active   21m
-   capi-kubeadm-bootstrap-system       Active   21m
-   capi-kubeadm-control-plane-system   Active   21m
-   capi-system                         Active   21m
-   capi-webhook-system                 Active   21m
-   cert-manager                        Active   22m
-   default                             Active   23m
-   eksa-system                         Active   20m
-   kube-node-lease                     Active   23m
-   kube-public                         Active   23m
-   kube-system                         Active   23m
-   ```
+```bash
+export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
+kubectl get ns
+```
 
-   You can now use the cluster like you would any Kubernetes cluster.
-   Deploy the test application with:
+**Example Output**
 
-   ```bash
-   kubectl apply -f "https://anywhere.eks.amazonaws.com/manifests/hello-eks-a.yaml"
-   ```
-
-   Verify the test application in the [deploy test application section]({{< relref "../../tasks/workload/test-app" >}}).
-   See the [Cluster management]({{< relref "../../tasks/cluster" >}}) section with more information on common operational tasks like scaling and deleting the cluster.
+```
+NAME                                STATUS   AGE
+capd-system                         Active   21m
+capi-kubeadm-bootstrap-system       Active   21m
+capi-kubeadm-control-plane-system   Active   21m
+capi-system                         Active   21m
+capi-webhook-system                 Active   21m
+cert-manager                        Active   22m
+default                             Active   23m
+eksa-system                         Active   20m
+kube-node-lease                     Active   23m
+kube-public                         Active   23m
+kube-system                         Active   23m
+```

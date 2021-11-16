@@ -22,6 +22,10 @@ This will let you create a cluster in multiple providers for local development o
 - 16GB memory
 - 30GB free disk space
 
+### Install Docker
+
+Download `Docker desktop` to containerize applications on your desktop, for more [details](https://www.docker.com/products/docker-desktop)
+
 > **_NOTE:_** If you are using Ubuntu use the [Docker CE](https://docs.docker.com/engine/install/ubuntu/) installation instructions to install Docker and not the Snap installation.
 
 ### Install EKS Anywhere CLI tools
@@ -79,9 +83,4 @@ You can verify your installed version with
 eksctl anywhere version
 ```
 
-## Deploy a cluster
-
 Once you have the tools installed you can deploy a local cluster or production cluster in the next steps.
-
-* [Create local cluster](../local-environment/)
-* [Create production cluster](../production-environment/)
