@@ -32,10 +32,10 @@ type Provider interface {
 	ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	GenerateMHC() ([]byte, error)
 	ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff
-	RunSpecificUpgradeOps(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error
+	RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error
 	UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error)
 	DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error
-	RunSpecificCreateOps(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
+	RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
 }
 
 type DatacenterConfig interface {

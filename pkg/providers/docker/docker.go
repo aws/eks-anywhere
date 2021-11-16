@@ -422,7 +422,7 @@ func (p *provider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.Compone
 	}
 }
 
-func (p *provider) RunSpecificUpgradeOps(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
+func (p *provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
 	return nil
 }
 
@@ -430,6 +430,6 @@ func (p *provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec) (bool, e
 	return false, nil
 }
 
-func (p *provider) RunSpecificCreateOps(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+func (p *provider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
 	return nil
 }

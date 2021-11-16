@@ -2596,7 +2596,7 @@ func TestChangeDiffWithChange(t *testing.T) {
 	assert.Equal(t, wantDiff, provider.ChangeDiff(clusterSpec, newClusterSpec))
 }
 
-func TestVsphereProviderRunSpecificUpgradeOps(t *testing.T) {
+func TestVsphereProviderRunPostControlPlaneUpgrade(t *testing.T) {
 	tt := newProviderTest(t)
 
 	tt.resourceSetManager.EXPECT().ForceUpdate(tt.ctx, "test-crs-0", "eksa-system", tt.managementCluster, tt.workloadCluster)
@@ -2615,7 +2615,7 @@ func TestVsphereProviderRunSpecificUpgradeOps(t *testing.T) {
 		"vsphere-cloud-controller-manager",
 		tt.workloadCluster.KubeconfigFile,
 	)
-	tt.Expect(tt.provider.RunSpecificUpgradeOps(tt.ctx, tt.clusterSpec, tt.clusterSpec, tt.workloadCluster, tt.managementCluster)).To(Succeed())
+	tt.Expect(tt.provider.RunPostControlPlaneUpgrade(tt.ctx, tt.clusterSpec, tt.clusterSpec, tt.workloadCluster, tt.managementCluster)).To(Succeed())
 }
 
 func TestProviderUpgradeNeeded(t *testing.T) {

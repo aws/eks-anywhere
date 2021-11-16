@@ -1130,12 +1130,16 @@ func (k *Kubectl) ApplyTolerationsFromTaints(ctx context.Context, oldTaints []co
 	return nil
 }
 
-func (k *Kubectl) KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) error {
+func (k *Kubectl) KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error) {
 	return k.GetResource(ctx, "secret", fmt.Sprintf("%s-kubeconfig", clusterName), kubeconfig, namespace)
 }
 
-func (k *Kubectl) GetResource(ctx context.Context, resourceType string, name string, kubeconfig string, namespace string) error {
-	params := []string{"get", resourceType, name, "-n", namespace, "--kubeconfig", kubeconfig}
-	_, err := k.executable.Execute(ctx, params...)
-	return err
+func (k *Kubectl) GetResource(ctx context.Context, resourceType string, name string, kubeconfig string, namespace string) (bool, error) {
+	params := []string{"get", resourceType, name, "--ignore-not-found", "-n", namespace, "--kubeconfig", kubeconfig}
+	output, err := k.executable.Execute(ctx, params...)
+	var found bool
+	if err == nil && len(output.String()) > 0 {
+		found = true
+	}
+	return found, err
 }

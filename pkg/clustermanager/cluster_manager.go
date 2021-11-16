@@ -83,7 +83,7 @@ type ClusterClient interface {
 	GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error)
 	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
 	GetClusterCATlsCert(ctx context.Context, clusterName string, cluster *types.Cluster, namespace string) ([]byte, error)
-	KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) error
+	KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error)
 }
 
 type Networking interface {
@@ -213,36 +213,27 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 	logger.V(3).Info("Waiting for workload kubeconfig secret to be ready", "cluster", workloadCluster.Name)
 	err = c.Retrier.Retry(
 		func() error {
-			err = c.clusterClient.KubeconfigSecretAvailable(ctx, managementCluster.KubeconfigFile, workloadCluster.Name, constants.EksaSystemNamespace)
+			found, err := c.clusterClient.KubeconfigSecretAvailable(ctx, managementCluster.KubeconfigFile, workloadCluster.Name, constants.EksaSystemNamespace)
+			if err == nil && !found {
+				err = fmt.Errorf("kubeconfig secret does not exist")
+			}
 			return err
 		},
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("error checking availability of kubeconfig secret: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", workloadCluster.Name)
-	err = c.Retrier.Retry(
-		func() error {
-			workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
-			return err
-		},
-	)
-
+	workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
 	if err != nil {
 		return nil, fmt.Errorf("error generating workload kubeconfig: %v", err)
 	}
 
-	logger.V(3).Info("Run provider specific create operations")
-	err = c.Retrier.Retry(
-		func() error {
-			err = provider.RunSpecificCreateOps(ctx, clusterSpec, workloadCluster)
-			return err
-		},
-	)
+	logger.V(3).Info("Run post control plane creation operations")
+	err = provider.RunPostControlPlaneCreation(ctx, clusterSpec, workloadCluster)
 	if err != nil {
-		return nil, fmt.Errorf("error running provider specific create operations: %v", err)
+		return nil, fmt.Errorf("error running post control plane creation operations: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready")
@@ -355,10 +346,10 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		logger.V(3).Info("External etcd is ready")
 	}
 
-	logger.V(3).Info("Run provider specific upgrade operations")
-	err = provider.RunSpecificUpgradeOps(ctx, currentSpec, newClusterSpec, workloadCluster, managementCluster)
+	logger.V(3).Info("Run post control plane upgrade operations")
+	err = provider.RunPostControlPlaneUpgrade(ctx, currentSpec, newClusterSpec, workloadCluster, managementCluster)
 	if err != nil {
-		return fmt.Errorf("error running provider specific upgrade operations: %v", err)
+		return fmt.Errorf("error running post control plane upgrade operations: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready")

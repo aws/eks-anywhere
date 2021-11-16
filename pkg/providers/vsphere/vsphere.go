@@ -1686,7 +1686,9 @@ func (p *vsphereProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.
 	}
 }
 
-func (p *vsphereProvider) RunSpecificUpgradeOps(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
+func (p *vsphereProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
+	// Use retrier so that cluster upgrade does not fail due to any intermittent failure while connecting to kube-api server
+
 	// This is unfortunate, but ClusterResourceSet's don't support any type of reapply of the resources they manage
 	// Even if we create a new ClusterResourceSet, if such resources already exist in the cluster, they won't be reapplied
 	// The long term solution is to add this capability to the cluster-api controller,
@@ -1747,6 +1749,12 @@ func (p *vsphereProvider) UpgradeNeeded(_ context.Context, newSpec, currentSpec 
 		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest, nil
 }
 
-func (p *vsphereProvider) RunSpecificCreateOps(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	return p.providerKubectlClient.ApplyTolerationsFromTaintsToDaemonSet(ctx, nil, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints, cloudControllerDaemonSetContainerName, cluster.KubeconfigFile)
+func (p *vsphereProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+	// Use retrier so that cluster creation does not fail due to any intermittent failure while connecting to kube-api server
+	err := p.Retrier.Retry(
+		func() error {
+			return p.providerKubectlClient.ApplyTolerationsFromTaintsToDaemonSet(ctx, nil, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints, cloudControllerDaemonSetContainerName, cluster.KubeconfigFile)
+		},
+	)
+	return err
 }
