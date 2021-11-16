@@ -166,6 +166,13 @@ spec:
                 description: 'Deprecated: This field has no function and is going
                   to be removed in a future release.'
                 type: string
+              podIamConfig:
+                properties:
+                  serviceAccountIssuer:
+                    type: string
+                required:
+                - serviceAccountIssuer
+                type: object
               proxyConfiguration:
                 properties:
                   httpProxy:

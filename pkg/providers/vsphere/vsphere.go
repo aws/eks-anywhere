@@ -1245,6 +1245,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		values["awsIamAuth"] = true
 	}
 
+	if clusterSpec.Spec.PodIAMConfig != nil {
+		values["serviceAccountIssuer"] = clusterSpec.Spec.PodIAMConfig.ServiceAccountIssuer
+	}
+
 	return values
 }
 

@@ -163,6 +163,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateIdentityProviderRefs,
 	validateProxyConfig,
 	validateMirrorConfig,
+	validatePodIAMConfig,
 }
 
 func GetClusterConfig(fileName string) (*Cluster, error) {
@@ -462,6 +463,16 @@ func validateGitOps(clusterConfig *Cluster) error {
 	}
 	if gitOpsRef.Name == "" {
 		return errors.New("GitOpsConfig name can't be empty; specify a valid name for GitOpsConfig")
+	}
+	return nil
+}
+
+func validatePodIAMConfig(clusterConfig *Cluster) error {
+	if clusterConfig.Spec.PodIAMConfig == nil {
+		return nil
+	}
+	if clusterConfig.Spec.PodIAMConfig.ServiceAccountIssuer == "" {
+		return errors.New("ServiceAccount Issuer can't be empty while configuring IAM roles for pods")
 	}
 	return nil
 }

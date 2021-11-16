@@ -47,6 +47,7 @@ type ClusterSpec struct {
 	ProxyConfiguration          *ProxyConfiguration          `json:"proxyConfiguration,omitempty"`
 	RegistryMirrorConfiguration *RegistryMirrorConfiguration `json:"registryMirrorConfiguration,omitempty"`
 	ManagementCluster           ManagementCluster            `json:"managementCluster,omitempty"`
+	PodIAMConfig                *PodIAMConfig                `json:"podIamConfig,omitempty"`
 }
 
 func (n *Cluster) Equal(o *Cluster) bool {
@@ -361,6 +362,20 @@ type ManagementCluster struct {
 
 func (n *ManagementCluster) Equal(o ManagementCluster) bool {
 	return n.Name == o.Name
+}
+
+type PodIAMConfig struct {
+	ServiceAccountIssuer string `json:"serviceAccountIssuer"`
+}
+
+func (n *PodIAMConfig) Equal(o *PodIAMConfig) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.ServiceAccountIssuer == o.ServiceAccountIssuer
 }
 
 // +kubebuilder:object:root=true
