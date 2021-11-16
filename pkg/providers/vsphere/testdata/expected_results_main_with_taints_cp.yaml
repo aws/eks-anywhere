@@ -60,7 +60,7 @@ spec:
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereMachineTemplate
 metadata:
-  name: test-control-plane-template-original
+  name: test-control-plane-template-1234567890000
   namespace: eksa-system
 spec:
   template:
@@ -91,7 +91,7 @@ spec:
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: VSphereMachineTemplate
-    name: test-control-plane-template-original
+    name: test-control-plane-template-1234567890000
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
@@ -349,14 +349,32 @@ spec:
         kubeletExtraArgs:
           cloud-provider: external
         name: '{{ ds.meta_data.hostname }}'
-        taints: []
+        taints: 
+          - key: key1
+            value: val1
+            effect: PreferNoSchedule
+          - key: key2
+            value: val2
+            effect: NoSchedule
+          - key: key3
+            value: val3
+            effect: NoExecute
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
         name: '{{ ds.meta_data.hostname }}'
-        taints: []
+        taints: 
+          - key: key1
+            value: val1
+            effect: PreferNoSchedule
+          - key: key2
+            value: val2
+            effect: NoSchedule
+          - key: key3
+            value: val3
+            effect: NoExecute
     preKubeadmCommands:
     - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
@@ -427,12 +445,12 @@ spec:
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: VSphereMachineTemplate
-    name: test-etcd-template-original
+    name: test-etcd-template-1234567890000
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereMachineTemplate
 metadata:
-  name: test-etcd-template-original
+  name: test-etcd-template-1234567890000
   namespace: 'eksa-system'
 spec:
   template:
