@@ -43,9 +43,27 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 		if err != nil {
 			return err
 		}
-		if !prevGitOps.Spec.Equal(&spec.GitOpsConfig.Spec) {
-			return fmt.Errorf("gitOps is immutable")
+
+		if prevGitOps.Spec.Flux.Github.Owner != spec.GitOpsConfig.Spec.Flux.Github.Owner {
+			return fmt.Errorf("gitOps spec.flux.github.owner is immutable")
 		}
+		if prevGitOps.Spec.Flux.Github.Repository != spec.GitOpsConfig.Spec.Flux.Github.Repository {
+			return fmt.Errorf("gitOps spec.flux.github.repository is immutable")
+		}
+		if prevGitOps.Spec.Flux.Github.Personal != spec.GitOpsConfig.Spec.Flux.Github.Personal {
+			return fmt.Errorf("gitOps spec.flux.github.personal is immutable")
+		}
+		if spec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace != "" && prevGitOps.Spec.Flux.Github.FluxSystemNamespace != spec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace {
+			return fmt.Errorf("gitOps spec.flux.github.fluxSystemNamespace is immutable")
+		}
+		if spec.GitOpsConfig.Spec.Flux.Github.Branch != "" && prevGitOps.Spec.Flux.Github.Branch != spec.GitOpsConfig.Spec.Flux.Github.Branch {
+			return fmt.Errorf("gitOps spec.flux.github.branch is immutable")
+		}
+		if spec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath != "" && prevGitOps.Spec.Flux.Github.ClusterConfigPath != spec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath {
+			return fmt.Errorf("gitOps spec.flux.github.clusterConfigPath is immutable")
+		}
+
+		spec.SetDefaultGitOps()
 	}
 
 	if !nSpec.ControlPlaneConfiguration.Endpoint.Equal(oSpec.ControlPlaneConfiguration.Endpoint) {

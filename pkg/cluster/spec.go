@@ -73,9 +73,9 @@ func (cs *Spec) SetDefaultGitOps() {
 		c := &cs.GitOpsConfig.Spec.Flux
 		if len(c.Github.ClusterConfigPath) == 0 {
 			if cs.Cluster.IsSelfManaged() {
-				c.Github.ClusterConfigPath = path.Join("clusters", cs.Name, cs.Name)
+				c.Github.ClusterConfigPath = path.Join("clusters", cs.Name)
 			} else {
-				c.Github.ClusterConfigPath = path.Join("clusters", cs.Cluster.ManagedBy(), cs.Name)
+				c.Github.ClusterConfigPath = path.Join("clusters", cs.Cluster.ManagedBy())
 			}
 		}
 		if len(c.Github.FluxSystemNamespace) == 0 {
@@ -139,6 +139,12 @@ func WithOverrideBundlesManifest(fileURL string) SpecOpt {
 func WithManagementCluster(cluster *types.Cluster) SpecOpt {
 	return func(s *Spec) {
 		s.ManagementCluster = cluster
+	}
+}
+
+func WithGitOpsConfig(gitOpsConfig *eksav1alpha1.GitOpsConfig) SpecOpt {
+	return func(s *Spec) {
+		s.GitOpsConfig = gitOpsConfig
 	}
 }
 
@@ -234,8 +240,6 @@ func NewSpec(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt)
 	} else {
 		s.SetSelfManaged()
 	}
-
-	s.SetDefaultGitOps()
 
 	return s, nil
 }

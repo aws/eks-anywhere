@@ -68,7 +68,7 @@ spec:
   flux:
     github:
       branch: main
-      clusterConfigPath: clusters/mycluster/mycluster
+      clusterConfigPath: clusters/mycluster
       fluxSystemNamespace: flux-system
       owner: me
       repository: ""

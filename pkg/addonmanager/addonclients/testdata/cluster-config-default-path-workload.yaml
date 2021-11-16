@@ -51,7 +51,7 @@ spec:
   flux:
     github:
       branch: testBranch
-      clusterConfigPath: clusters/management-cluster/workload-cluster
+      clusterConfigPath: clusters/management-cluster
       fluxSystemNamespace: flux-system
       owner: mFowler
       personal: true
