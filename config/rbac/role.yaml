@@ -7,6 +7,23 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - addons.cluster.x-k8s.io
+  - bootstrap.cluster.x-k8s.io
+  - cluster.x-k8s.io
+  - controlplane.cluster.x-k8s.io
+  - etcdcluster.cluster.x-k8s.io
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - '*'
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - anywhere.eks.amazonaws.com
   resources:
   - awsiamconfigs
@@ -58,22 +75,6 @@ rules:
   - apps
   resources:
   - daemonsets
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - bootstrap.cluster.x-k8s.io
-  - cluster.x-k8s.io
-  - controlplane.cluster.x-k8s.io
-  - etcdcluster.cluster.x-k8s.io
-  - infrastructure.cluster.x-k8s.io
-  resources:
-  - '*'
   verbs:
   - create
   - delete

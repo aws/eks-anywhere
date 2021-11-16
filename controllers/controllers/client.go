@@ -32,7 +32,6 @@ func (r *ClusterReconcilerV2) BuildRemoteClientForCluster(ctx context.Context, c
 	return &eksaClient{Client: remoteClient}, nil
 }
 
-
 type eksaClient struct {
 	client.Client
 }
@@ -157,4 +156,41 @@ func (c eksaClient) GetWorkerMachineDeployments(ctx context.Context, cluster *an
 	}
 
 	return machineDeploymentList, nil
+}
+
+func (c eksaClient) GetVSphereDatacenter(ctx context.Context, cluster *anywhere.Cluster) (*anywhere.VSphereDatacenterConfig, error) {
+	datacenter := &anywhere.VSphereDatacenterConfig{}
+	if err := c.Get(ctx, types.NamespacedName{Name: cluster.Spec.DatacenterRef.Name, Namespace: cluster.Namespace}, datacenter); err != nil {
+		return nil, err
+	}
+	return datacenter, nil
+}
+
+func (c eksaClient) GetVSphereControlPlaneMachineConfig(ctx context.Context, cluster *anywhere.Cluster) (*anywhere.VSphereMachineConfig, error) {
+	return c.GetVSphereMachineConfig(ctx, cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.Namespace)
+}
+
+func (c eksaClient) GetVSphereEtcdMachineConfig(ctx context.Context, cluster *anywhere.Cluster) (*anywhere.VSphereMachineConfig, error) {
+	return c.GetVSphereMachineConfig(ctx, cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.Namespace)
+}
+
+func (c eksaClient) GetVSphereWorkersMachineConfig(ctx context.Context, cluster *anywhere.Cluster) ([]anywhere.VSphereMachineConfig, error) {
+	machineConfigs := make([]anywhere.VSphereMachineConfig, 0, len(cluster.Spec.WorkerNodeGroupConfigurations))
+	for _, w := range cluster.Spec.WorkerNodeGroupConfigurations {
+		machine, err := c.GetVSphereMachineConfig(ctx, w.MachineGroupRef.Name, cluster.Namespace)
+		if err != nil {
+			return nil, err
+		}
+		machineConfigs = append(machineConfigs, *machine)
+	}
+
+	return machineConfigs, nil
+}
+
+func (c eksaClient) GetVSphereMachineConfig(ctx context.Context, name, namespace string) (*anywhere.VSphereMachineConfig, error) {
+	machineConfig := &anywhere.VSphereMachineConfig{}
+	if err := c.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, machineConfig); err != nil {
+		return nil, err
+	}
+	return machineConfig, nil
 }

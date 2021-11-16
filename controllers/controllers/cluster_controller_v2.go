@@ -34,7 +34,7 @@ func NewClusterReconcilerV2(client client.Client, tracker *remote.ClusterCacheTr
 		Client:  eksaClient{Client: client},
 		Log:     log,
 		Scheme:  scheme,
-		Tracker: tracker,
+		Tracker: tracker, // TODO: Need to figure what to do to avoid: {"reconciler group": "anywhere.eks.amazonaws.com", "reconciler kind": "Cluster", "name": "br-w3-cluster", "namespace": "eksa-system", "error": "the cache is not started, can not read objects"}
 	}
 }
 
@@ -61,7 +61,7 @@ func (r *ClusterReconcilerV2) SetupWithManager(mgr ctrl.Manager) error {
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters;vspheredatacenterconfigs;vspheremachineconfigs;dockerdatacenterconfigs;bundles;awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/status;vspheredatacenterconfigs/status;vspheremachineconfigs/status;dockerdatacenterconfigs/status;bundles/status;awsiamconfigs/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/finalizers;vspheredatacenterconfigs/finalizers;vspheremachineconfigs/finalizers;dockerdatacenterconfigs/finalizers;bundles/finalizers;awsiamconfigs/finalizers,verbs=update
-//+kubebuilder:rbac:groups=cluster.x-k8s.io;infrastructure.cluster.x-k8s.io;bootstrap.cluster.x-k8s.io;controlplane.cluster.x-k8s.io;etcdcluster.cluster.x-k8s.io,resources=*,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=cluster.x-k8s.io;infrastructure.cluster.x-k8s.io;bootstrap.cluster.x-k8s.io;controlplane.cluster.x-k8s.io;etcdcluster.cluster.x-k8s.io;addons.cluster.x-k8s.io,resources=*,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to

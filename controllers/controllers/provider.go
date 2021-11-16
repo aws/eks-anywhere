@@ -14,7 +14,7 @@ type providerReconciler interface {
 func (r *ClusterReconcilerV2) buildProviderReconciler(cluster *anywhere.Cluster) providerReconciler {
 	switch cluster.Spec.DatacenterRef.Kind {
 	case anywhere.VSphereDatacenterKind:
-		return &vsphere{}
+		return &vsphere{client: r.Client}
 	case anywhere.DockerDatacenterKind:
 		return &docker{client: r.Client}
 	default:

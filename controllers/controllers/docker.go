@@ -11,6 +11,7 @@ import (
 	dockerp "github.com/aws/eks-anywhere/pkg/providers/docker"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type docker struct {
@@ -35,8 +36,12 @@ func (d *docker) ReconcileControlPlane(ctx context.Context, cluster *anywhere.Cl
 		return err
 	}
 
+	return createControlPlaneObjectsFromYamlManifest(ctx, d.client, cluster, controlPlaneSpec)
+}
+
+func createControlPlaneObjectsFromYamlManifest(ctx context.Context, client client.Client, cluster *anywhere.Cluster, yamlManifest []byte) error {
 	// Convert yaml CP spec to objects
-	objs, err := yamlToUnstructured(controlPlaneSpec)
+	objs, err := yamlToUnstructured(yamlManifest)
 	if err != nil {
 		return err
 	}
@@ -53,7 +58,7 @@ func (d *docker) ReconcileControlPlane(ctx context.Context, cluster *anywhere.Cl
 			labels[ClusterLabelName] = cluster.Name
 			obj.SetLabels(labels)
 		}
-		if err := d.client.Create(ctx, &obj); err != nil {
+		if err := client.Create(ctx, &obj); err != nil {
 			if apierrors.IsAlreadyExists(err) {
 				// TODO: log this so we know the object already exits bc with the current logic it shouldn't
 				//  I just don't have the logger here yet
@@ -100,14 +105,14 @@ func (d *docker) ReconcileWorkers(ctx context.Context, cluster *anywhere.Cluster
 		return err
 	}
 
-	// Generate CAPI CP yaml
-	controlPlaneSpec, err := generateWorkersCAPISpecForCreate(spec)
+	// Generate CAPI workers yaml
+	workersSpec, err := generateWorkersCAPISpecForCreate(spec)
 	if err != nil {
 		return err
 	}
 
-	// Convert yaml CP spec to objects
-	objs, err := yamlToUnstructured(controlPlaneSpec)
+	// Convert yaml workers spec to objects
+	objs, err := yamlToUnstructured(workersSpec)
 	if err != nil {
 		return err
 	}

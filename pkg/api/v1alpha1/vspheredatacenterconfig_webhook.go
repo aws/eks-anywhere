@@ -44,11 +44,7 @@ var _ webhook.Validator = &VSphereDatacenterConfig{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *VSphereDatacenterConfig) ValidateCreate() error {
 	vspheredatacenterconfiglog.Info("validate create", "name", r.Name)
-	if r.IsReconcilePaused() {
-		vspheredatacenterconfiglog.Info("VSphereDatacenterConfig is paused, so allowing create", "name", r.Name)
-		return nil
-	}
-	return apierrors.NewBadRequest("Creating new VSphereDatacenterConfig on existing cluster is not supported")
+	return nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
