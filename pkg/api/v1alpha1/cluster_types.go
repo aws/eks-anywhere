@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"strconv"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -133,6 +134,25 @@ type ControlPlaneConfiguration struct {
 	Endpoint *Endpoint `json:"endpoint,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the control plane.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
+	// Taints define the set of taints to be applied on control plane nodes
+	Taints []corev1.Taint `json:"taints,omitempty"`
+}
+
+func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+	taints := make(map[corev1.Taint]bool)
+	for _, taint := range s1 {
+		taints[taint] = true
+	}
+	for _, taint := range s2 {
+		_, ok := taints[taint]
+		if !ok {
+			return false
+		}
+	}
+	return true
 }
 
 func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
@@ -142,7 +162,7 @@ func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Count == o.Count && n.Endpoint.Equal(o.Endpoint) && n.MachineGroupRef.Equal(o.MachineGroupRef)
+	return n.Count == o.Count && n.Endpoint.Equal(o.Endpoint) && n.MachineGroupRef.Equal(o.MachineGroupRef) && TaintsSliceEqual(n.Taints, o.Taints)
 }
 
 type Endpoint struct {
