@@ -201,6 +201,17 @@ func TestKubectlDeleteNamespaceError(t *testing.T) {
 	}
 }
 
+func TestKubectlDeleteSecretSuccess(t *testing.T) {
+	var secretName, namespace string
+
+	k, ctx, cluster, e := newKubectl(t)
+	expectedParam := []string{"delete", "secret", secretName, "--kubeconfig", cluster.KubeconfigFile, "--namespace", namespace}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(bytes.Buffer{}, nil)
+	if err := k.DeleteSecret(ctx, cluster, secretName, namespace); err != nil {
+		t.Errorf("Kubectl.DeleteNamespace() error = %v, want nil", err)
+	}
+}
+
 func TestKubectlGetNamespaceSuccess(t *testing.T) {
 	var kubeconfig, namespace string
 

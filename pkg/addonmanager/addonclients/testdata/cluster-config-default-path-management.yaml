@@ -2,6 +2,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
   name: management-cluster
+  namespace: default
 spec:
   clusterNetwork:
     pods: {}
@@ -19,6 +20,7 @@ spec:
 kind: VSphereDatacenterConfig
 metadata:
   name: management-cluster
+  namespace: default
 spec:
   datacenter: SDDC-Datacenter
   insecure: false
@@ -30,6 +32,7 @@ spec:
 kind: VSphereMachineConfig
 metadata:
   name: management-cluster
+  namespace: default
 spec:
   datastore: ""
   folder: ""

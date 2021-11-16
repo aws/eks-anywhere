@@ -120,6 +120,9 @@ type Flux interface {
 	// ForceReconcileGitRepo sync git repo with latest commit
 	ForceReconcileGitRepo(ctx context.Context, cluster *types.Cluster, namespace string) error
 
+	// DeleteFluxSystemSecret deletes flux-system secret
+	DeleteFluxSystemSecret(ctx context.Context, cluster *types.Cluster, namespace string) error
+
 	// Reconcile reconciles sources and resources
 	Reconcile(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error
 }
