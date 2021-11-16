@@ -548,6 +548,7 @@ func (vb *VersionsBundle) SharedImages() []v1alpha1.Image {
 	images = append(images, vb.Bootstrap.KubeProxy)
 
 	images = append(images, vb.BottleRocketBootstrap.Bootstrap)
+	images = append(images, vb.BottleRocketAdmin.Admin)
 
 	images = append(images, vb.CertManager.Acmesolver)
 	images = append(images, vb.CertManager.Cainjector)
