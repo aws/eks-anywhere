@@ -403,6 +403,10 @@ func (s *Cluster) SetSelfManaged() {
 	s.Spec.ManagementCluster.Name = s.Name
 }
 
+func (c *ClusterGenerate) SetSelfManaged() {
+	c.Spec.ManagementCluster.Name = c.Name
+}
+
 func (s *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
 	return s.IsSelfManaged() && s2.IsSelfManaged() || s.Spec.ManagementCluster.Equal(s2.Spec.ManagementCluster)
 }
