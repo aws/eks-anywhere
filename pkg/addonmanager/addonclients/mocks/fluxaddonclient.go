@@ -50,6 +50,20 @@ func (mr *MockFluxMockRecorder) BootstrapToolkitsComponents(arg0, arg1, arg2 int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BootstrapToolkitsComponents", reflect.TypeOf((*MockFlux)(nil).BootstrapToolkitsComponents), arg0, arg1, arg2)
 }
 
+// DeleteFluxSystemSecret mocks base method.
+func (m *MockFlux) DeleteFluxSystemSecret(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFluxSystemSecret", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteFluxSystemSecret indicates an expected call of DeleteFluxSystemSecret.
+func (mr *MockFluxMockRecorder) DeleteFluxSystemSecret(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFluxSystemSecret", reflect.TypeOf((*MockFlux)(nil).DeleteFluxSystemSecret), arg0, arg1, arg2)
+}
+
 // ForceReconcileGitRepo mocks base method.
 func (m *MockFlux) ForceReconcileGitRepo(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
 	m.ctrl.T.Helper()

@@ -126,12 +126,16 @@ func (c *OIDCConfig) ExpectedKind() string {
 }
 
 func (c *OIDCConfig) ConvertConfigToConfigGenerateStruct() *OIDCConfigGenerate {
+	namespace := defaultEksaNamespace
+	if c.Namespace != "" {
+		namespace = c.Namespace
+	}
 	config := &OIDCConfigGenerate{
 		TypeMeta: c.TypeMeta,
 		ObjectMeta: ObjectMeta{
 			Name:        c.Name,
 			Annotations: c.Annotations,
-			Namespace:   c.Namespace,
+			Namespace:   namespace,
 		},
 		Spec: c.Spec,
 	}

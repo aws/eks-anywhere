@@ -86,12 +86,16 @@ func (c *GitOpsConfig) ExpectedKind() string {
 }
 
 func (c *GitOpsConfig) ConvertConfigToConfigGenerateStruct() *GitOpsConfigGenerate {
+	namespace := defaultEksaNamespace
+	if c.Namespace != "" {
+		namespace = c.Namespace
+	}
 	config := &GitOpsConfigGenerate{
 		TypeMeta: c.TypeMeta,
 		ObjectMeta: ObjectMeta{
 			Name:        c.Name,
 			Annotations: c.Annotations,
-			Namespace:   c.Namespace,
+			Namespace:   namespace,
 		},
 		Spec: c.Spec,
 	}

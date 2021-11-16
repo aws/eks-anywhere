@@ -52,12 +52,16 @@ func (a *AWSDatacenterConfig) ClearPauseAnnotation() {
 }
 
 func (a *AWSDatacenterConfig) ConvertConfigToConfigGenerateStruct() *AWSDatacenterConfigGenerate {
+	namespace := defaultEksaNamespace
+	if a.Namespace != "" {
+		namespace = a.Namespace
+	}
 	config := &AWSDatacenterConfigGenerate{
 		TypeMeta: a.TypeMeta,
 		ObjectMeta: ObjectMeta{
 			Name:        a.Name,
 			Annotations: a.Annotations,
-			Namespace:   a.Namespace,
+			Namespace:   namespace,
 		},
 		Spec: a.Spec,
 	}

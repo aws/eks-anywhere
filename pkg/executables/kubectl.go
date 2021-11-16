@@ -222,6 +222,15 @@ func (k *Kubectl) DeleteGitOpsConfig(ctx context.Context, managementCluster *typ
 	return nil
 }
 
+func (k *Kubectl) DeleteSecret(ctx context.Context, managementCluster *types.Cluster, secretName, namespace string) error {
+	params := []string{"delete", "secret", secretName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", namespace}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error deleting secret %s in namespace %s: %v", secretName, namespace, err)
+	}
+	return nil
+}
+
 func (k *Kubectl) DeleteOIDCConfig(ctx context.Context, managementCluster *types.Cluster, oidcConfigName, oidcConfigNamespace string) error {
 	params := []string{"delete", eksaOIDCResourceType, oidcConfigName, "--kubeconfig", managementCluster.KubeconfigFile, "--namespace", oidcConfigNamespace, "--ignore-not-found=true"}
 	_, err := k.executable.Execute(ctx, params...)
