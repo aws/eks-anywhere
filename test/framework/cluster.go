@@ -52,6 +52,7 @@ type ClusterE2ETest struct {
 	GitOpsConfig          *v1alpha1.GitOpsConfig
 	ProxyConfig           *v1alpha1.ProxyConfiguration
 	AWSIamConfig          *v1alpha1.AWSIamConfig
+	eksaVersion           string
 }
 
 type ClusterE2ETestOpt func(e *ClusterE2ETest)
@@ -64,6 +65,7 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 		ClusterName:           getClusterName(t),
 		clusterFillers:        make([]api.ClusterFiller, 0),
 		KubectlClient:         buildKubectl(t),
+		eksaVersion:           "anywhere",
 	}
 
 	for _, opt := range opts {
@@ -92,6 +94,11 @@ type Provider interface {
 	CustomizeProviderConfig(file string) []byte
 	ClusterConfigFillers() []api.ClusterFiller
 	Setup()
+}
+
+func (e *ClusterE2ETest) WithEKsaVersion(version string) *ClusterE2ETest {
+	e.eksaVersion = version
+	return e
 }
 
 func (e *ClusterE2ETest) GenerateClusterConfig() {
@@ -266,7 +273,8 @@ func (e *ClusterE2ETest) Run(name string, args ...string) {
 }
 
 func (e *ClusterE2ETest) RunEKSA(args ...string) {
-	command := append([]string{"anywhere"}, args...)
+	eksaVersionPath := e.eksaVersion
+	command := append([]string{eksaVersionPath}, args...)
 	e.Run("eksctl", command...)
 }
 
