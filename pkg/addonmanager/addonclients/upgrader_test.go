@@ -109,6 +109,7 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 	m.git.EXPECT().Commit(test.OfType("string")).Return(nil)
 	m.git.EXPECT().Push(tt.ctx).Return(nil)
 
+	m.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace)
 	m.flux.EXPECT().BootstrapToolkitsComponents(tt.ctx, tt.cluster, tt.newSpec.GitOpsConfig)
 	m.flux.EXPECT().Reconcile(tt.ctx, tt.cluster, tt.newSpec.GitOpsConfig)
 
@@ -137,6 +138,7 @@ func TestFluxUpgradeError(t *testing.T) {
 	m.git.EXPECT().Commit(test.OfType("string")).Return(nil)
 	m.git.EXPECT().Push(tt.ctx).Return(nil)
 
+	m.flux.EXPECT().DeleteFluxSystemSecret(tt.ctx, tt.cluster, tt.newSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace)
 	m.flux.EXPECT().BootstrapToolkitsComponents(tt.ctx, tt.cluster, tt.newSpec.GitOpsConfig).Return(errors.New("error from client"))
 
 	_, err := f.Upgrade(tt.ctx, tt.cluster, tt.currentSpec, tt.newSpec)
