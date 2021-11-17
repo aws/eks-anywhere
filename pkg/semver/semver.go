@@ -77,22 +77,22 @@ func (v *Version) LessThan(v2 *Version) bool {
 }
 
 func (v *Version) Compare(v2 *Version) int {
-	if v.Major != v2.Major {
-		if v.Major > v2.Major {
-			return 1
-		}
-		return -1
+	if c := compare(v.Major, v2.Major); c != 0 {
+		return c
 	}
-	if v.Minor != v2.Minor {
-		if v.Minor > v2.Minor {
-			return 1
-		}
-		return -1
+	if c := compare(v.Minor, v2.Minor); c != 0 {
+		return c
 	}
-	if v.Patch != v2.Patch {
-		if v.Patch > v2.Patch {
-			return 1
-		}
+	if c := compare(v.Patch, v2.Patch); c != 0 {
+		return c
+	}
+	return 0
+}
+
+func compare(i, i2 uint64) int {
+	if i > i2 {
+		return 1
+	} else if i < i2 {
 		return -1
 	}
 	return 0

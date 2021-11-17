@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
@@ -46,7 +47,7 @@ func GzipFileDownloadExtract(uri, fileToExtract, destination string) error {
 		switch header.Typeflag {
 		case tar.TypeReg:
 			name := header.FileInfo().Name()
-			if name == fileToExtract {
+			if strings.TrimPrefix(name, "./") == fileToExtract {
 				out, err := os.OpenFile(targetFile, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 				if err != nil {
 					return fmt.Errorf("error opening %s file: %v", fileToExtract, err)
