@@ -122,6 +122,7 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         extraVolumes:
         - hostPath: /var/lib/kubeadm/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -142,6 +143,7 @@ spec:
         extraArgs:
           cloud-provider: external
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         extraVolumes:
         - hostPath: /var/lib/kubeadm/controller-manager.conf
           mountPath: /etc/kubernetes/controller-manager.conf
@@ -151,6 +153,7 @@ spec:
       scheduler:
         extraArgs:
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         extraVolumes:
         - hostPath: /var/lib/kubeadm/scheduler.conf
           mountPath: /etc/kubernetes/scheduler.conf
@@ -369,6 +372,7 @@ spec:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.hostname }}'
         taints: []
     joinConfiguration:
@@ -384,6 +388,7 @@ spec:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.hostname }}'
         taints: []
     preKubeadmCommands:

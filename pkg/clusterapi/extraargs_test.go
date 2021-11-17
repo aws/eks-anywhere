@@ -2,10 +2,12 @@ package clusterapi_test
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
@@ -230,6 +232,28 @@ func TestPodIAMConfigExtraArgs(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			if got := clusterapi.PodIAMAuthExtraArgs(tt.podIAM); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("PodIAMAuthExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSecureTlsCipherSuitesExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName string
+		want     clusterapi.ExtraArgs
+	}{
+		{
+			testName: "default",
+			want: clusterapi.ExtraArgs{
+				"tls-cipher-suites": strings.Join(crypto.SecureCipherSuiteNames(), ","),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.SecureTlsCipherSuitesExtraArgs(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SecureTlsCipherSuitesExtraArgs() = %v, want %v", got, tt.want)
 			}
 		})
 	}

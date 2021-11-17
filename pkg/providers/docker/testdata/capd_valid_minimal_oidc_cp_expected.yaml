@@ -75,6 +75,7 @@ spec:
           profiling: "false"
           oidc-client-id: my-client-id
           oidc-issuer-url: https://mydomain.com/issuer
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -95,9 +96,11 @@ spec:
         extraArgs:
           enable-hostpath-provisioner: "true"
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       scheduler:
         extraArgs:
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     files:
     - content: |
         apiVersion: audit.k8s.io/v1beta1
@@ -263,6 +266,7 @@ spec:
         kubeletExtraArgs:
           cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         taints: []
     joinConfiguration:
       nodeRegistration:
@@ -270,6 +274,7 @@ spec:
         kubeletExtraArgs:
           cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         taints: []
   replicas: 3
   version: v1.19.6-eks-1-19-2

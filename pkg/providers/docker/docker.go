@@ -168,27 +168,31 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 
 func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
-
+	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
-		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Spec.PodIAMConfig))
+		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Spec.PodIAMConfig)).
+		Append(sharedExtraArgs)
 
 	values := map[string]interface{}{
-		"clusterName":            clusterSpec.Name,
-		"control_plane_replicas": clusterSpec.Spec.ControlPlaneConfiguration.Count,
-		"kubernetesRepository":   bundle.KubeDistro.Kubernetes.Repository,
-		"kubernetesVersion":      bundle.KubeDistro.Kubernetes.Tag,
-		"etcdRepository":         bundle.KubeDistro.Etcd.Repository,
-		"etcdVersion":            bundle.KubeDistro.Etcd.Tag,
-		"corednsRepository":      bundle.KubeDistro.CoreDNS.Repository,
-		"corednsVersion":         bundle.KubeDistro.CoreDNS.Tag,
-		"kindNodeImage":          bundle.EksD.KindNode.VersionedImage(),
-		"apiserverExtraArgs":     apiServerExtraArgs.ToPartialYaml(),
-		"externalEtcdVersion":    bundle.KubeDistro.EtcdVersion,
-		"eksaSystemNamespace":    constants.EksaSystemNamespace,
-		"auditPolicy":            common.GetAuditPolicy(),
-		"podCidrs":               clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
-		"serviceCidrs":           clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
+		"clusterName":                clusterSpec.Name,
+		"control_plane_replicas":     clusterSpec.Spec.ControlPlaneConfiguration.Count,
+		"kubernetesRepository":       bundle.KubeDistro.Kubernetes.Repository,
+		"kubernetesVersion":          bundle.KubeDistro.Kubernetes.Tag,
+		"etcdRepository":             bundle.KubeDistro.Etcd.Repository,
+		"etcdVersion":                bundle.KubeDistro.Etcd.Tag,
+		"corednsRepository":          bundle.KubeDistro.CoreDNS.Repository,
+		"corednsVersion":             bundle.KubeDistro.CoreDNS.Tag,
+		"kindNodeImage":              bundle.EksD.KindNode.VersionedImage(),
+		"apiserverExtraArgs":         apiServerExtraArgs.ToPartialYaml(),
+		"controllermanagerExtraArgs": sharedExtraArgs.ToPartialYaml(),
+		"schedulerExtraArgs":         sharedExtraArgs.ToPartialYaml(),
+		"kubeletExtraArgs":           sharedExtraArgs.ToPartialYaml(),
+		"externalEtcdVersion":        bundle.KubeDistro.EtcdVersion,
+		"eksaSystemNamespace":        constants.EksaSystemNamespace,
+		"auditPolicy":                common.GetAuditPolicy(),
+		"podCidrs":                   clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
+		"serviceCidrs":               clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
 	}
 
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {

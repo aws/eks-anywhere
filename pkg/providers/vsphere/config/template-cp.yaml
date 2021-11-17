@@ -190,6 +190,9 @@ spec:
         extraArgs:
           cloud-provider: external
           profiling: "false"
+{{- if .controllermanagerExtraArgs }}
+{{ .controllermanagerExtraArgs.ToYaml | indent 10 }}
+{{- end }}
 {{- if (eq .format "bottlerocket") }}
         extraVolumes:
         - hostPath: /var/lib/kubeadm/controller-manager.conf
@@ -201,6 +204,9 @@ spec:
       scheduler:
         extraArgs:
           profiling: "false"
+{{- if .schedulerExtraArgs }}
+{{ .schedulerExtraArgs.ToYaml | indent 10 }}
+{{- end }}
 {{- if (eq .format "bottlerocket") }}
         extraVolumes:
         - hostPath: /var/lib/kubeadm/scheduler.conf
@@ -333,6 +339,9 @@ spec:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
         name: '{{`{{ ds.meta_data.hostname }}`}}'
 {{- if .controlPlaneTaints }}
         taints: {{ range .controlPlaneTaints}}
@@ -374,6 +383,9 @@ spec:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
         name: '{{`{{ ds.meta_data.hostname }}`}}'
 {{- if .controlPlaneTaints }}
         taints: {{ range .controlPlaneTaints}}
