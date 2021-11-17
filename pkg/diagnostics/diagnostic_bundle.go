@@ -253,6 +253,7 @@ func (e *EksaDiagnosticBundle) WithManagementCluster(isSelfManaged bool) *EksaDi
 
 func (e *EksaDiagnosticBundle) WithDatacenterConfig(config v1alpha1.Ref) *EksaDiagnosticBundle {
 	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.DataCenterConfigAnalyzers(config)...)
+	e.bundle.Spec.Collectors = append(e.bundle.Spec.Collectors, e.collectorFactory.DataCenterConfigCollectors(config)...)
 	return e
 }
 
