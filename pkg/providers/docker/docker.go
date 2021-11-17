@@ -199,6 +199,9 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 		values["controlPlaneTaints"] = clusterSpec.Spec.ControlPlaneConfiguration.Taints
 	}
 
+	if clusterSpec.Spec.PodIAMConfig != nil {
+		values["serviceAccountIssuer"] = clusterSpec.Spec.PodIAMConfig.ServiceAccountIssuer
+	}
 	return values
 }
 

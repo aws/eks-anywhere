@@ -1159,6 +1159,55 @@ func TestRegistryMirrorConfigurationEqual(t *testing.T) {
 	}
 }
 
+func TestPodIAMServiceAccountIssuerHasNotChanged(t *testing.T) {
+	testCases := []struct {
+		testName                                   string
+		cluster1PodIAMConfig, cluster2PodIAMConfig *v1alpha1.PodIAMConfig
+		want                                       bool
+	}{
+		{
+			testName:             "both nil",
+			cluster1PodIAMConfig: nil,
+			cluster2PodIAMConfig: nil,
+			want:                 true,
+		},
+		{
+			testName: "one nil, one exists",
+			cluster1PodIAMConfig: &v1alpha1.PodIAMConfig{
+				ServiceAccountIssuer: "https://test",
+			},
+			cluster2PodIAMConfig: nil,
+			want:                 false,
+		},
+		{
+			testName: "both exist, same",
+			cluster1PodIAMConfig: &v1alpha1.PodIAMConfig{
+				ServiceAccountIssuer: "https://test",
+			},
+			cluster2PodIAMConfig: &v1alpha1.PodIAMConfig{
+				ServiceAccountIssuer: "https://test",
+			},
+			want: true,
+		},
+		{
+			testName: "both exist, service account issuer different",
+			cluster1PodIAMConfig: &v1alpha1.PodIAMConfig{
+				ServiceAccountIssuer: "https://test1",
+			},
+			cluster2PodIAMConfig: &v1alpha1.PodIAMConfig{
+				ServiceAccountIssuer: "https://test2",
+			},
+			want: false,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cluster1PodIAMConfig.Equal(tt.cluster2PodIAMConfig)).To(Equal(tt.want))
+		})
+	}
+}
+
 func setSelfManaged(c *v1alpha1.Cluster, s bool) {
 	if s {
 		c.SetSelfManaged()
