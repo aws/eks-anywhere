@@ -88,7 +88,7 @@ func (e *ClusterE2ETest) GetReleaseFromVersion(version *semver.Version) string {
 
 	binaryPath, err := e.getBinary(targetVersion)
 	if err != nil {
-		v := fmt.Sprintf("v%d.%d.%d", version.Minor, version.Minor, version.Patch)
+		v := fmt.Sprintf("v%d.%d.%d", version.Major, version.Minor, version.Patch)
 		e.T.Fatalf("Failed getting binary for specified version %s: %s", v, err)
 	}
 
