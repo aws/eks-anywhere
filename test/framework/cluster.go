@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/retrier"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -27,6 +28,7 @@ import (
 const (
 	defaultClusterConfigFile         = "cluster.yaml"
 	defaultBundleReleaseManifestFile = "bin/local-bundle-release.yaml"
+	defaultEksaBinaryLocation        = "anywhere"
 	defaultClusterName               = "eksa-test"
 	ClusterNameVar                   = "T_CLUSTER_NAME"
 	JobIdVar                         = "T_JOB_ID"
@@ -52,7 +54,7 @@ type ClusterE2ETest struct {
 	GitOpsConfig          *v1alpha1.GitOpsConfig
 	ProxyConfig           *v1alpha1.ProxyConfiguration
 	AWSIamConfig          *v1alpha1.AWSIamConfig
-	eksaVersion           string
+	eksaBinaryLocation    string
 }
 
 type ClusterE2ETestOpt func(e *ClusterE2ETest)
@@ -65,7 +67,7 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 		ClusterName:           getClusterName(t),
 		clusterFillers:        make([]api.ClusterFiller, 0),
 		KubectlClient:         buildKubectl(t),
-		eksaVersion:           "anywhere",
+		eksaBinaryLocation:    defaultEksaBinaryLocation,
 	}
 
 	for _, opt := range opts {
@@ -96,8 +98,23 @@ type Provider interface {
 	Setup()
 }
 
-func (e *ClusterE2ETest) WithEKsaVersion(version string) *ClusterE2ETest {
-	e.eksaVersion = version
+func (e *ClusterE2ETest) WithEKsaVersion(version *semver.Version) *ClusterE2ETest {
+	e.eksaBinaryLocation = e.GetReleaseFromVersion(version)
+	return e
+}
+
+func (e *ClusterE2ETest) WithLatestEksaVersion() *ClusterE2ETest {
+	e.eksaBinaryLocation = defaultEksaBinaryLocation
+	return e
+}
+
+func (e *ClusterE2ETest) WithLatestMinorReleaseFromMain() *ClusterE2ETest {
+	e.eksaBinaryLocation = e.GetLatestMinorReleaseBinaryFromMain()
+	return e
+}
+
+func (e *ClusterE2ETest) WithLatestMinorReleaseFromVersion(version *semver.Version) *ClusterE2ETest {
+	e.eksaBinaryLocation = e.GetLatestMinorReleaseBinaryFromReleaseBranch(version)
 	return e
 }
 
@@ -273,8 +290,7 @@ func (e *ClusterE2ETest) Run(name string, args ...string) {
 }
 
 func (e *ClusterE2ETest) RunEKSA(args ...string) {
-	eksaVersionPath := e.eksaVersion
-	command := append([]string{eksaVersionPath}, args...)
+	command := append([]string{e.eksaBinaryLocation}, args...)
 	e.Run("eksctl", command...)
 }
 

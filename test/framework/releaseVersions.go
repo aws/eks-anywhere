@@ -18,12 +18,7 @@ const (
 )
 
 func (e *ClusterE2ETest) GetLatestMinorReleaseBinaryFromMain() string {
-	reader := cluster.NewManifestReader()
-	e.T.Logf("Reading prod release manifest %s", prodReleasesManifest)
-	releases, err := reader.GetReleases(prodReleasesManifest)
-	if err != nil {
-		e.T.Fatal(err)
-	}
+	releases := e.prodReleases()
 
 	var latestRelease *releasev1alpha1.EksARelease
 	for _, release := range releases.Spec.Releases {
@@ -46,12 +41,7 @@ func (e *ClusterE2ETest) GetLatestMinorReleaseBinaryFromMain() string {
 }
 
 func (e *ClusterE2ETest) GetLatestMinorReleaseBinaryFromReleaseBranch(releaseBranchVersion *semver.Version) string {
-	reader := cluster.NewManifestReader()
-	e.T.Logf("Reading prod release manifest %s", prodReleasesManifest)
-	releases, err := reader.GetReleases(prodReleasesManifest)
-	if err != nil {
-		e.T.Fatal(err)
-	}
+	releases := e.prodReleases()
 
 	var latestPrevMinorRelease *releasev1alpha1.EksARelease
 	latestPrevMinorReleaseVersion, err := semver.New("0.0.0")
@@ -82,6 +72,39 @@ func (e *ClusterE2ETest) GetLatestMinorReleaseBinaryFromReleaseBranch(releaseBra
 	return binaryPath
 }
 
+func (e *ClusterE2ETest) GetReleaseFromVersion(version *semver.Version) string {
+	releases := e.prodReleases()
+
+	var targetVersion *releasev1alpha1.EksARelease
+	for _, release := range releases.Spec.Releases {
+		releaseVersion, err := semver.New(release.Version)
+		if err != nil {
+			e.T.Fatal(err)
+		}
+		if releaseVersion == version {
+			targetVersion = &release
+		}
+	}
+
+	binaryPath, err := e.getBinary(targetVersion)
+	if err != nil {
+		v := fmt.Sprintf("v%d.%d.%d", version.Minor, version.Minor, version.Patch)
+		e.T.Fatalf("Failed getting binary for specified version %s: %s", v, err)
+	}
+
+	return binaryPath
+}
+
+func (e *ClusterE2ETest) GetReleaseVersion() string {
+	reader := cluster.NewManifestReader()
+	e.T.Logf("Reading prod release manifest %s", prodReleasesManifest)
+	releases, err := reader.GetReleases(prodReleasesManifest)
+	if err != nil {
+		e.T.Fatal(err)
+	}
+	return releases.Spec.LatestVersion
+}
+
 func (e *ClusterE2ETest) getBinary(release *releasev1alpha1.EksARelease) (string, error) {
 	latestReleaseBinaryFolder := filepath.Join("bin", release.Version)
 	latestReleaseBinaryPath := filepath.Join(latestReleaseBinaryFolder, releaseBinaryName)
@@ -99,4 +122,14 @@ func (e *ClusterE2ETest) getBinary(release *releasev1alpha1.EksARelease) (string
 		}
 	}
 	return latestReleaseBinaryPath, nil
+}
+
+func (e *ClusterE2ETest) prodReleases() (release *releasev1alpha1.Release) {
+	reader := cluster.NewManifestReader()
+	e.T.Logf("Reading prod release manifest %s", prodReleasesManifest)
+	releases, err := reader.GetReleases(prodReleasesManifest)
+	if err != nil {
+		e.T.Fatal(err)
+	}
+	return releases
 }
