@@ -86,7 +86,7 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 		return factory.DiagnosticBundleDefault(), nil
 	}
 
-	clusterSpec, err := cluster.NewSpec(f, version.Get())
+	clusterSpec, err := cluster.NewSpecFromClusterConfig(f, version.Get())
 	if err != nil {
 		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
 	}

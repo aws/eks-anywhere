@@ -48,7 +48,6 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		ClusterManager: c.clusterManager,
 		AddonManager:   c.addonManager,
 		ClusterSpec:    clusterSpec,
-		Rollback:       false,
 		Writer:         c.writer,
 		Validations:    validator,
 	}
@@ -57,20 +56,12 @@ func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator i
 		commandContext.BootstrapCluster = clusterSpec.ManagementCluster
 	}
 
-	err := task.NewTaskRunner(&SetAndValidateTask{}).RunTask(ctx, commandContext)
-	if err != nil {
-		logger.Info("Cluster creation encountered an error, collecting diagnostic information")
-		_ = commandContext.ClusterManager.SaveLogsManagementCluster(ctx, commandContext.BootstrapCluster)
-		_ = commandContext.ClusterManager.SaveLogsWorkloadCluster(ctx, c.provider, clusterSpec, commandContext.WorkloadCluster)
-	}
-	return err
+	return task.NewTaskRunner(&SetAndValidateTask{}).RunTask(ctx, commandContext)
 }
 
-// Task related entities
+// task related entities
 
 type CreateBootStrapClusterTask struct{}
-
-type DeleteKindClusterTask struct{}
 
 type SetAndValidateTask struct{}
 
@@ -84,7 +75,9 @@ type MoveClusterManagementTask struct{}
 
 type WriteClusterConfigTask struct{}
 
-type DeleteBootstrapClusterTask struct{}
+type DeleteBootstrapClusterTask struct {
+	*CollectDiagnosticsTask
+}
 
 // CreateBootStrapClusterTask implementation
 
@@ -103,7 +96,7 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 	bootstrapCluster, err := commandContext.Bootstrapper.CreateBootstrapCluster(ctx, commandContext.ClusterSpec, bootstrapOptions...)
 	if err != nil {
 		commandContext.SetError(err)
-		return &DeleteKindClusterTask{}
+		return nil
 	}
 	commandContext.BootstrapCluster = bootstrapCluster
 
@@ -111,7 +104,7 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 	err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, bootstrapCluster, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
-		return &DeleteKindClusterTask{}
+		return &CollectMgmtClusterDiagnosticsTask{}
 	}
 
 	if commandContext.ClusterSpec.AWSIamConfig != nil {
@@ -119,7 +112,7 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 		err = commandContext.ClusterManager.CreateAwsIamAuthCaSecret(ctx, bootstrapCluster)
 		if err != nil {
 			commandContext.SetError(err)
-			return &DeleteKindClusterTask{}
+			return &CollectMgmtClusterDiagnosticsTask{}
 		}
 	}
 
@@ -127,7 +120,7 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 	err = commandContext.Provider.BootstrapSetup(ctx, commandContext.ClusterSpec.Cluster, bootstrapCluster)
 	if err != nil {
 		commandContext.SetError(err)
-		return &DeleteKindClusterTask{}
+		return &CollectMgmtClusterDiagnosticsTask{}
 	}
 
 	return &CreateWorkloadClusterTask{}
@@ -135,23 +128,6 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 
 func (s *CreateBootStrapClusterTask) Name() string {
 	return "bootstrap-cluster-init"
-}
-
-// DeleteKindClusterTask implementation
-
-func (s *DeleteKindClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
-	if commandContext.BootstrapCluster != nil {
-		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, false); err != nil {
-			commandContext.SetError(err)
-		}
-		return nil
-	}
-	logger.Info("Bootstrap cluster information missing - skipping delete kind cluster")
-	return nil
-}
-
-func (s *DeleteKindClusterTask) Name() string {
-	return "delete-kind-cluster"
 }
 
 // SetAndValidateTask implementation
@@ -204,7 +180,7 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	workloadCluster, err := commandContext.ClusterManager.CreateWorkloadCluster(ctx, commandContext.BootstrapCluster, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
-		return nil
+		return &CollectDiagnosticsTask{}
 	}
 	commandContext.WorkloadCluster = workloadCluster
 
@@ -212,7 +188,7 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	err = commandContext.ClusterManager.InstallNetworking(ctx, workloadCluster, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
-		return nil
+		return &CollectDiagnosticsTask{}
 	}
 
 	if commandContext.ClusterSpec.AWSIamConfig != nil {
@@ -220,7 +196,7 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		err = commandContext.ClusterManager.InstallAwsIamAuth(ctx, commandContext.BootstrapCluster, workloadCluster, commandContext.ClusterSpec)
 		if err != nil {
 			commandContext.SetError(err)
-			return nil
+			return &CollectDiagnosticsTask{}
 		}
 	}
 
@@ -228,7 +204,7 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	err = commandContext.ClusterManager.InstallStorageClass(ctx, workloadCluster, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
-		return nil
+		return &CollectDiagnosticsTask{}
 	}
 
 	if !commandContext.BootstrapCluster.ExistingManagement {
@@ -236,7 +212,7 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
 		if err != nil {
 			commandContext.SetError(err)
-			return nil
+			return &CollectDiagnosticsTask{}
 		}
 	}
 
@@ -244,7 +220,7 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	err = commandContext.ClusterManager.InstallMachineHealthChecks(ctx, commandContext.BootstrapCluster, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
-		return nil
+		return &CollectDiagnosticsTask{}
 	}
 
 	return &MoveClusterManagementTask{}
@@ -264,7 +240,7 @@ func (s *MoveClusterManagementTask) Run(ctx context.Context, commandContext *tas
 	err := commandContext.ClusterManager.MoveCAPI(ctx, commandContext.BootstrapCluster, commandContext.WorkloadCluster, commandContext.WorkloadCluster.Name, types.WithNodeRef())
 	if err != nil {
 		commandContext.SetError(err)
-		return nil
+		return &CollectDiagnosticsTask{}
 	}
 
 	return &InstallEksaComponentsTask{}
@@ -282,7 +258,7 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 		err := commandContext.ClusterManager.InstallCustomComponents(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster)
 		if err != nil {
 			commandContext.SetError(err)
-			return nil
+			return &CollectDiagnosticsTask{}
 		}
 	}
 
@@ -301,12 +277,12 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 	err := commandContext.ClusterManager.CreateEKSAResources(ctx, targetCluster, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
 	if err != nil {
 		commandContext.SetError(err)
-		return nil
+		return &CollectDiagnosticsTask{}
 	}
 	err = commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, targetCluster, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
-		return nil
+		return &CollectDiagnosticsTask{}
 	}
 	return &InstallAddonManagerTask{}
 }
@@ -337,6 +313,7 @@ func (s *WriteClusterConfigTask) Run(ctx context.Context, commandContext *task.C
 	err := clustermarshaller.WriteClusterConfig(commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(), commandContext.Provider.MachineConfigs(), commandContext.Writer)
 	if err != nil {
 		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
 	}
 	return &DeleteBootstrapClusterTask{}
 }

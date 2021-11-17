@@ -597,7 +597,7 @@ func (e *ClusterE2ETest) clusterConfGitPath() string {
 	if len(p) == 0 {
 		p = path.Join("clusters", e.ClusterName)
 	}
-	return path.Join(p, constants.EksaSystemNamespace, eksaConfigFileName)
+	return path.Join(p, e.ClusterName, constants.EksaSystemNamespace, eksaConfigFileName)
 }
 
 func (e *ClusterE2ETest) clusterConfigGitPath() string {

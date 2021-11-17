@@ -2,7 +2,6 @@ package task_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -54,28 +53,5 @@ func TestTaskRunnerRunTask(t *testing.T) {
 				t.Fatal("Error Profiler doesn't have metrics")
 			}
 		}
-	}
-}
-
-func TestTaskRunnerRunTaskRollback(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	ctx := context.Background()
-	cmdContext := &task.CommandContext{}
-	expectedError := fmt.Errorf("error")
-	cmdContext.OriginalError = expectedError
-	cleanTaskA := mocktasks.NewMockTask(ctrl)
-	cleanTaskB := mocktasks.NewMockTask(ctrl)
-
-	cleanTaskA.EXPECT().Run(ctx, cmdContext).Return(cleanTaskB).Times(1)
-	cleanTaskA.EXPECT().Name().Return("taskA").Times(4)
-	cleanTaskB.EXPECT().Run(ctx, cmdContext).Return(nil).Times(0)
-	cleanTaskB.EXPECT().Name().Return("taskB").Times(0)
-
-	runner := task.NewTaskRunner(cleanTaskA)
-	err := runner.RunTask(ctx, cmdContext)
-	if err != expectedError {
-		t.Fatal("Expected error not returned")
 	}
 }

@@ -1455,10 +1455,6 @@ func (p *vsphereProvider) GenerateMHC() ([]byte, error) {
 	return mhc, nil
 }
 
-func (p *vsphereProvider) CleanupProviderInfrastructure(_ context.Context) error {
-	return nil
-}
-
 func (p *vsphereProvider) createSecret(cluster *types.Cluster, contents *bytes.Buffer) error {
 	t, err := template.New("tmpl").Parse(defaultSecretObject)
 	if err != nil {

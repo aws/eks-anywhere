@@ -54,7 +54,7 @@ func TestFluxAddonClientInstallGitOpsOnManagementClusterWithPrexistingRepo(t *te
 			clusterName:                   "management-cluster",
 			selfManaged:                   true,
 			fluxpath:                      "",
-			expectedClusterConfigGitPath:  "clusters/management-cluster/management-cluster",
+			expectedClusterConfigGitPath:  "clusters/management-cluster",
 			expectedEksaSystemDirPath:     "clusters/management-cluster/management-cluster/eksa-system",
 			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
 			expectedKustomizationFileName: defaultKustomizationManifestFileName,
@@ -69,11 +69,11 @@ func TestFluxAddonClientInstallGitOpsOnManagementClusterWithPrexistingRepo(t *te
 			selfManaged:                   true,
 			fluxpath:                      "user/provided/path",
 			expectedClusterConfigGitPath:  "user/provided/path",
-			expectedEksaSystemDirPath:     "user/provided/path/eksa-system",
+			expectedEksaSystemDirPath:     "user/provided/path/management-cluster/eksa-system",
 			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
 			expectedKustomizationFileName: defaultKustomizationManifestFileName,
 			expectedConfigFileContents:    "./testdata/cluster-config-user-provided-path.yaml",
-			expectedFluxSystemDirPath:     "user/provided/flux-system",
+			expectedFluxSystemDirPath:     "user/provided/path/flux-system",
 			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
 			expectedFluxSyncFileName:      defaultFluxSyncFileName,
 		},
@@ -105,6 +105,7 @@ func TestFluxAddonClientInstallGitOpsOnManagementClusterWithPrexistingRepo(t *te
 				t.Errorf("FluxAddonClient.InstallGitOps() error = %v, want nil", err)
 			}
 			expectedEksaClusterConfigPath := path.Join(writePath, tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
+			fmt.Println(expectedEksaClusterConfigPath)
 			test.AssertFilesEquals(t, expectedEksaClusterConfigPath, tt.expectedConfigFileContents)
 
 			expectedKustomizationPath := path.Join(writePath, tt.expectedEksaSystemDirPath, tt.expectedKustomizationFileName)
@@ -133,7 +134,7 @@ func TestFluxAddonClientInstallGitOpsOnWorkloadClusterWithPrexistingRepo(t *test
 	m.git.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository}, nil)
 	m.git.EXPECT().Clone(ctx).Return(nil)
 	m.git.EXPECT().Branch(clusterSpec.GitOpsConfig.Spec.Flux.Github.Branch).Return(nil)
-	m.git.EXPECT().Add(path.Dir("clusters/management-cluster/workload-cluster")).Return(nil)
+	m.git.EXPECT().Add(path.Dir("clusters/management-cluster")).Return(nil)
 	m.git.EXPECT().Commit(test.OfType("string")).Return(nil)
 	m.git.EXPECT().Push(ctx).Return(nil)
 	m.git.EXPECT().Pull(ctx, clusterSpec.GitOpsConfig.Spec.Flux.Github.Branch).Return(nil)
@@ -181,7 +182,7 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 			testName:                      "with default config path",
 			clusterName:                   "management-cluster",
 			fluxpath:                      "",
-			expectedClusterConfigGitPath:  "clusters/management-cluster/management-cluster",
+			expectedClusterConfigGitPath:  "clusters/management-cluster",
 			expectedEksaSystemDirPath:     "clusters/management-cluster/management-cluster/eksa-system",
 			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
 			expectedKustomizationFileName: defaultKustomizationManifestFileName,
@@ -195,11 +196,11 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 			clusterName:                   "management-cluster",
 			fluxpath:                      "user/provided/path",
 			expectedClusterConfigGitPath:  "user/provided/path",
-			expectedEksaSystemDirPath:     "user/provided/path/eksa-system",
+			expectedEksaSystemDirPath:     "user/provided/path/management-cluster/eksa-system",
 			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
 			expectedKustomizationFileName: defaultKustomizationManifestFileName,
 			expectedConfigFileContents:    "./testdata/cluster-config-user-provided-path.yaml",
-			expectedFluxSystemDirPath:     "user/provided/flux-system",
+			expectedFluxSystemDirPath:     "user/provided/path/flux-system",
 			expectedFluxPatchesFileName:   defaultFluxPatchesFileName,
 			expectedFluxSyncFileName:      defaultFluxSyncFileName,
 		},
@@ -277,7 +278,7 @@ func TestFluxAddonClientInstallGitOpsToolkitsBareRepo(t *testing.T) {
 			testName:                      "with default config path",
 			clusterName:                   "management-cluster",
 			fluxpath:                      "",
-			expectedClusterConfigGitPath:  "clusters/management-cluster/management-cluster",
+			expectedClusterConfigGitPath:  "clusters/management-cluster",
 			expectedEksaSystemDirPath:     "clusters/management-cluster/management-cluster/eksa-system",
 			expectedEksaConfigFileName:    defaultEksaClusterConfigFileName,
 			expectedKustomizationFileName: defaultKustomizationManifestFileName,
@@ -568,7 +569,7 @@ func TestFluxAddonClientCleanupGitRepo(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	ctx := context.Background()
 	clusterConfig := v1alpha1.NewCluster("management-cluster")
-	expectedClusterPath := "clusters/management-cluster/management-cluster"
+	expectedClusterPath := "clusters/management-cluster"
 	clusterSpec := newClusterSpec(clusterConfig, "")
 
 	gitProvider := gitMocks.NewMockProvider(mockCtrl)
