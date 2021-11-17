@@ -324,6 +324,20 @@ func (mr *MockProviderKubectlClientMockRecorder) ApplyKubeSpecFromBytes(arg0, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytes", reflect.TypeOf((*MockProviderKubectlClient)(nil).ApplyKubeSpecFromBytes), arg0, arg1, arg2)
 }
 
+// ApplyTolerationsFromTaintsToDaemonSet mocks base method.
+func (m *MockProviderKubectlClient) ApplyTolerationsFromTaintsToDaemonSet(arg0 context.Context, arg1, arg2 []v1.Taint, arg3, arg4 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ApplyTolerationsFromTaintsToDaemonSet", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ApplyTolerationsFromTaintsToDaemonSet indicates an expected call of ApplyTolerationsFromTaintsToDaemonSet.
+func (mr *MockProviderKubectlClientMockRecorder) ApplyTolerationsFromTaintsToDaemonSet(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyTolerationsFromTaintsToDaemonSet", reflect.TypeOf((*MockProviderKubectlClient)(nil).ApplyTolerationsFromTaintsToDaemonSet), arg0, arg1, arg2, arg3, arg4)
+}
+
 // CreateNamespace mocks base method.
 func (m *MockProviderKubectlClient) CreateNamespace(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()

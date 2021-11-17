@@ -3,6 +3,7 @@ package v1alpha1
 import (
 	"strconv"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -23,6 +24,9 @@ const (
 	// managementAnnotation points to the name of a management cluster
 	// cluster object
 	managementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
+
+	// defaultEksaNamespace is the default namespace for EKS-A resources when not specified.
+	defaultEksaNamespace = "default"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -130,6 +134,25 @@ type ControlPlaneConfiguration struct {
 	Endpoint *Endpoint `json:"endpoint,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the control plane.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
+	// Taints define the set of taints to be applied on control plane nodes
+	Taints []corev1.Taint `json:"taints,omitempty"`
+}
+
+func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+	taints := make(map[corev1.Taint]bool)
+	for _, taint := range s1 {
+		taints[taint] = true
+	}
+	for _, taint := range s2 {
+		_, ok := taints[taint]
+		if !ok {
+			return false
+		}
+	}
+	return true
 }
 
 func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
@@ -139,7 +162,7 @@ func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Count == o.Count && n.Endpoint.Equal(o.Endpoint) && n.MachineGroupRef.Equal(o.MachineGroupRef)
+	return n.Count == o.Count && n.Endpoint.Equal(o.Endpoint) && n.MachineGroupRef.Equal(o.MachineGroupRef) && TaintsSliceEqual(n.Taints, o.Taints)
 }
 
 type Endpoint struct {
@@ -400,6 +423,10 @@ func (s *Cluster) SetSelfManaged() {
 	s.Spec.ManagementCluster.Name = s.Name
 }
 
+func (c *ClusterGenerate) SetSelfManaged() {
+	c.Spec.ManagementCluster.Name = c.Name
+}
+
 func (s *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
 	return s.IsSelfManaged() && s2.IsSelfManaged() || s.Spec.ManagementCluster.Equal(s2.Spec.ManagementCluster)
 }
@@ -441,12 +468,16 @@ func (r refSet) toSlice() []Ref {
 }
 
 func (c *Cluster) ConvertConfigToConfigGenerateStruct() *ClusterGenerate {
+	namespace := defaultEksaNamespace
+	if c.Namespace != "" {
+		namespace = c.Namespace
+	}
 	config := &ClusterGenerate{
 		TypeMeta: c.TypeMeta,
 		ObjectMeta: ObjectMeta{
 			Name:        c.Name,
 			Annotations: c.Annotations,
-			Namespace:   c.Namespace,
+			Namespace:   namespace,
 		},
 		Spec: c.Spec,
 	}

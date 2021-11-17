@@ -468,11 +468,11 @@ func (g *Govc) ValidateVCenterSetup(ctx context.Context, datacenterConfig *v1alp
 	params := []string{"about", "-k"}
 	err = g.retrier.Retry(func() error {
 		_, err = g.executable.ExecuteWithEnv(ctx, envMap, params...)
-		if err != nil {
-			return fmt.Errorf("vSphere authentication failed: %v", err)
-		}
-		return nil
+		return err
 	})
+	if err != nil {
+		return fmt.Errorf("vSphere authentication failed: %v", err)
+	}
 	logger.MarkPass("Authenticated to vSphere")
 
 	// hack to test if thumbprint is required or not
@@ -515,11 +515,11 @@ func (g *Govc) ValidateVCenterSetup(ctx context.Context, datacenterConfig *v1alp
 	params = []string{"datacenter.info", datacenterConfig.Spec.Datacenter}
 	err = g.retrier.Retry(func() error {
 		_, err = g.executable.ExecuteWithEnv(ctx, envMap, params...)
-		if err != nil {
-			return fmt.Errorf("failed to get datacenter: %v", err)
-		}
-		return nil
+		return err
 	})
+	if err != nil {
+		return fmt.Errorf("failed to get datacenter: %v", err)
+	}
 	logger.MarkPass("Datacenter validated")
 
 	datacenterConfig.Spec.Network, err = prependPath(network, datacenterConfig.Spec.Network, datacenterConfig.Spec.Datacenter)
@@ -534,6 +534,9 @@ func (g *Govc) ValidateVCenterSetup(ctx context.Context, datacenterConfig *v1alp
 		}
 		return nil
 	})
+	if err != nil {
+		return fmt.Errorf("network '%s' not found", filepath.Base(datacenterConfig.Spec.Network))
+	}
 	logger.MarkPass("Network validated")
 
 	return nil
@@ -563,6 +566,9 @@ func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenter
 		}
 		return nil
 	})
+	if err != nil {
+		return fmt.Errorf("failed to get datastore: %v", err)
+	}
 	logger.MarkPass("Datastore validated")
 
 	if len(machineConfig.Spec.Folder) > 0 {
@@ -589,6 +595,9 @@ func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenter
 			}
 			return nil
 		})
+		if err != nil {
+			return fmt.Errorf("failed to get folder: %v", err)
+		}
 		logger.MarkPass("Folder validated")
 	}
 
@@ -596,11 +605,11 @@ func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenter
 	params = []string{"find", "-json", "/" + datacenterConfig.Spec.Datacenter, "-type", "p", "-name", filepath.Base(machineConfig.Spec.ResourcePool)}
 	err = g.retrier.Retry(func() error {
 		poolInfoResponse, err = g.executable.ExecuteWithEnv(ctx, envMap, params...)
-		if err != nil {
-			return fmt.Errorf("error getting resource pool: %v", err)
-		}
-		return nil
+		return err
 	})
+	if err != nil {
+		return fmt.Errorf("error getting resource pool: %v", err)
+	}
 
 	poolInfoJson := poolInfoResponse.String()
 	poolInfoJson = strings.TrimSuffix(poolInfoJson, "\n")

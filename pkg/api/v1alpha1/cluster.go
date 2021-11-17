@@ -29,12 +29,12 @@ type ClusterGenerateOpt func(config *ClusterGenerate)
 
 // Used for generating yaml for generate clusterconfig command
 func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *ClusterGenerate {
-	clusterConfig := &Cluster{
+	clusterConfig := &ClusterGenerate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       ClusterKind,
 			APIVersion: SchemeBuilder.GroupVersion.String(),
 		},
-		ObjectMeta: metav1.ObjectMeta{
+		ObjectMeta: ObjectMeta{
 			Name: clusterName,
 		},
 		Spec: ClusterSpec{
@@ -51,12 +51,11 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 		},
 	}
 	clusterConfig.SetSelfManaged()
-	config := clusterConfig.ConvertConfigToConfigGenerateStruct()
 
 	for _, opt := range opts {
-		opt(config)
+		opt(clusterConfig)
 	}
-	return config
+	return clusterConfig
 }
 
 func ControlPlaneConfigCount(count int) ClusterGenerateOpt {
@@ -388,7 +387,7 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return errors.New("no value set for ECRMirror.Endpoint")
 	}
 
-	tlsValidator := crypto.NewTlsValidator(clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent, clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint)
+	tlsValidator := crypto.NewTlsValidator(clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint)
 	selfSigned, err := tlsValidator.HasSelfSignedCert()
 	if err != nil {
 		return fmt.Errorf("error validating registy mirror endpoint: %v", err)
@@ -411,7 +410,7 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 	}
 
 	if certContent != "" {
-		err := tlsValidator.ValidateCert()
+		err := tlsValidator.ValidateCert(certContent)
 		if err != nil {
 			return fmt.Errorf("error validating the registry certificate: %v", err)
 		}

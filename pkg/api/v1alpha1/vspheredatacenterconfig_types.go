@@ -62,12 +62,16 @@ func (v *VSphereDatacenterConfig) ClearPauseAnnotation() {
 }
 
 func (v *VSphereDatacenterConfig) ConvertConfigToConfigGenerateStruct() *VSphereDatacenterConfigGenerate {
+	namespace := defaultEksaNamespace
+	if v.Namespace != "" {
+		namespace = v.Namespace
+	}
 	config := &VSphereDatacenterConfigGenerate{
 		TypeMeta: v.TypeMeta,
 		ObjectMeta: ObjectMeta{
 			Name:        v.Name,
 			Annotations: v.Annotations,
-			Namespace:   v.Namespace,
+			Namespace:   namespace,
 		},
 		Spec: v.Spec,
 	}

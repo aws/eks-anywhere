@@ -45,7 +45,7 @@ func (kg *keygenerator) GenerateSSHKeyPair(privateKeyDir string, publicKeyDir st
 	if err != nil {
 		return nil, fmt.Errorf("failed to write private key to %s: %s", filePath, err.Error())
 	}
-	logMsg := fmt.Sprintf("VSphereDatacenterConfig private key saved to %s. Use 'ssh -i %s %s@<VM-IP-Address>' to login to your cluster VM", filePath, filePath, clusterUsername)
+	logMsg := fmt.Sprintf("VSphereDatacenterConfig private key saved to %[1]s. Use 'ssh -i %[1]s %s@<VM-IP-Address>' to login to your cluster VM", filePath, clusterUsername)
 	logger.Info(logMsg)
 
 	filePath, err = kg.writeKeyToFile([]byte(publicKeyBytes), publicKeyDir, publicKeyFileName)
