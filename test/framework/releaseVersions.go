@@ -17,7 +17,7 @@ const (
 	releaseBinaryName    = "eksctl-anywhere"
 )
 
-func (e *ClusterE2ETest) GetLatestMinorReleaseFromMain() string {
+func (e *ClusterE2ETest) GetLatestMinorReleaseBinaryFromMain() string {
 	reader := cluster.NewManifestReader()
 	e.T.Logf("Reading prod release manifest %s", prodReleasesManifest)
 	releases, err := reader.GetReleases(prodReleasesManifest)
@@ -45,7 +45,7 @@ func (e *ClusterE2ETest) GetLatestMinorReleaseFromMain() string {
 	return binaryPath
 }
 
-func (e *ClusterE2ETest) GetLatestMinorReleaseFromReleaseBranch(releaseBranchVersion *semver.Version) string {
+func (e *ClusterE2ETest) GetLatestMinorReleaseBinaryFromReleaseBranch(releaseBranchVersion *semver.Version) string {
 	reader := cluster.NewManifestReader()
 	e.T.Logf("Reading prod release manifest %s", prodReleasesManifest)
 	releases, err := reader.GetReleases(prodReleasesManifest)
