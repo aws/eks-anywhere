@@ -98,7 +98,7 @@ type Provider interface {
 	Setup()
 }
 
-func (e *ClusterE2ETest) WithEKsaVersion(version *semver.Version) *ClusterE2ETest {
+func (e *ClusterE2ETest) WithEksaVersion(version *semver.Version) *ClusterE2ETest {
 	e.eksaBinaryLocation = e.GetReleaseFromVersion(version)
 	return e
 }
