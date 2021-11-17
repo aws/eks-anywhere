@@ -388,7 +388,7 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return errors.New("no value set for ECRMirror.Endpoint")
 	}
 
-	tlsValidator := crypto.NewTlsValidator(clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent, clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint)
+	tlsValidator := crypto.NewTlsValidator(clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint)
 	selfSigned, err := tlsValidator.HasSelfSignedCert()
 	if err != nil {
 		return fmt.Errorf("error validating registy mirror endpoint: %v", err)
@@ -411,7 +411,7 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 	}
 
 	if certContent != "" {
-		err := tlsValidator.ValidateCert()
+		err := tlsValidator.ValidateCert(certContent)
 		if err != nil {
 			return fmt.Errorf("error validating the registry certificate: %v", err)
 		}
