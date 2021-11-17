@@ -34,6 +34,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/internal/templates"
+	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -60,6 +61,8 @@ const (
 	cloudControllerDaemonSetName          = "vsphere-cloud-controller-manager"
 	cloudControllerDaemonSetNamespace     = "kube-system"
 	cloudControllerDaemonSetContainerName = "vsphere-cloud-controller-manager"
+	maxRetries                            = 30
+	backOffPeriod                         = 5 * time.Second
 )
 
 //go:embed config/template-cp.yaml
@@ -107,6 +110,7 @@ type vsphereProvider struct {
 	templateBuilder             *VsphereTemplateBuilder
 	skipIpCheck                 bool
 	resourceSetManager          ClusterResourceSetManager
+	Retrier                     *retrier.Retrier
 }
 
 type ProviderGovcClient interface {
@@ -146,6 +150,7 @@ type ProviderKubectlClient interface {
 	SetDaemonSetImage(ctx context.Context, kubeconfigFile, name, namespace, container, image string) error
 	DeleteEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) error
+	ApplyTolerationsFromTaintsToDaemonSet(ctx context.Context, oldTaints []corev1.Taint, newTaints []corev1.Taint, dsName string, kubeconfigFile string) error
 }
 
 type ClusterResourceSetManager interface {
@@ -202,6 +207,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 			)
 		}
 	}
+	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	return &vsphereProvider{
 		datacenterConfig:            datacenterConfig,
 		machineConfigs:              machineConfigs,
@@ -223,6 +229,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 		},
 		skipIpCheck:        skipIpCheck,
 		resourceSetManager: resourceSetManager,
+		Retrier:            retrier,
 	}
 }
 
@@ -1230,6 +1237,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
 	}
 
+	if len(clusterSpec.Spec.ControlPlaneConfiguration.Taints) > 0 {
+		values["controlPlaneTaints"] = clusterSpec.Spec.ControlPlaneConfiguration.Taints
+	}
+
 	if clusterSpec.AWSIamConfig != nil {
 		values["awsIamAuth"] = true
 	}
@@ -1675,12 +1686,19 @@ func (p *vsphereProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.
 	}
 }
 
-func (p *vsphereProvider) RunPostUpgrade(ctx context.Context, clusterSpec *cluster.Spec, managementCluster, workloadCluster *types.Cluster) error {
+func (p *vsphereProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
+	// Use retrier so that cluster upgrade does not fail due to any intermittent failure while connecting to kube-api server
+
 	// This is unfortunate, but ClusterResourceSet's don't support any type of reapply of the resources they manage
 	// Even if we create a new ClusterResourceSet, if such resources already exist in the cluster, they won't be reapplied
 	// The long term solution is to add this capability to the cluster-api controller,
 	// with a new mode like "ReApplyOnChanges" or "ReApplyOnCreate" vs the current "ReApplyOnce"
-	if err := p.resourceSetManager.ForceUpdate(ctx, resourceSetName(clusterSpec), constants.EksaSystemNamespace, managementCluster, workloadCluster); err != nil {
+	err := p.Retrier.Retry(
+		func() error {
+			return p.resourceSetManager.ForceUpdate(ctx, resourceSetName(clusterSpec), constants.EksaSystemNamespace, managementCluster, workloadCluster)
+		},
+	)
+	if err != nil {
 		return fmt.Errorf("failed updating the vsphere provider resource set post upgrade: %v", err)
 	}
 
@@ -1689,15 +1707,31 @@ func (p *vsphereProvider) RunPostUpgrade(ctx context.Context, clusterSpec *clust
 	// it's never refreshed, it's only created once
 	// In new versions of the capv provider, this is not managed by the controller directly anymore but just with a ClusterResourceSet
 	// Which means that adding update capabilities to the ClusterResourceSet controller and updating our capv provider version will solve this problem
-	if err := p.providerKubectlClient.SetDaemonSetImage(
-		ctx,
-		workloadCluster.KubeconfigFile,
-		cloudControllerDaemonSetName,
-		cloudControllerDaemonSetNamespace,
-		cloudControllerDaemonSetContainerName,
-		clusterSpec.VersionsBundle.VSphere.Manager.VersionedImage(),
-	); err != nil {
+	err = p.Retrier.Retry(
+		func() error {
+			return p.providerKubectlClient.SetDaemonSetImage(
+				ctx,
+				workloadCluster.KubeconfigFile,
+				cloudControllerDaemonSetName,
+				cloudControllerDaemonSetNamespace,
+				cloudControllerDaemonSetContainerName,
+				clusterSpec.VersionsBundle.VSphere.Manager.VersionedImage(),
+			)
+		},
+	)
+	if err != nil {
 		return fmt.Errorf("failed updating the VSphere cloud controller manager daemonset post upgrade: %v", err)
+	}
+
+	// Step 2: Patch DaemonSet vsphere-cloud-controller-manager in namespace kube-system with toleration values for the taints provided in
+	// the cluster spec file
+	err = p.Retrier.Retry(
+		func() error {
+			return p.providerKubectlClient.ApplyTolerationsFromTaintsToDaemonSet(ctx, oldClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints, cloudControllerDaemonSetContainerName, workloadCluster.KubeconfigFile)
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed to apply tolerations on VSphere cloud controller manager daemonset post upgrade: %v", err)
 	}
 	return nil
 }
@@ -1713,4 +1747,14 @@ func (p *vsphereProvider) UpgradeNeeded(_ context.Context, newSpec, currentSpec 
 		newV.Syncer.ImageDigest != oldV.Syncer.ImageDigest ||
 		newV.Manager.ImageDigest != oldV.Manager.ImageDigest ||
 		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest, nil
+}
+
+func (p *vsphereProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+	// Use retrier so that cluster creation does not fail due to any intermittent failure while connecting to kube-api server
+	err := p.Retrier.Retry(
+		func() error {
+			return p.providerKubectlClient.ApplyTolerationsFromTaintsToDaemonSet(ctx, nil, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints, cloudControllerDaemonSetContainerName, cluster.KubeconfigFile)
+		},
+	)
+	return err
 }
