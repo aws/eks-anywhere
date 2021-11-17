@@ -21,6 +21,7 @@ func (e *E2ESession) setupProxyEnv(testRegex string) error {
 			e.testEnvVars[eVar] = val
 		}
 	}
+	e.testEnvVars[vsphereHostVar] = getUniqueIP(e.testEnvVars[privateNetworkCidrVar])
 
 	return nil
 }

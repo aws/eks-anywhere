@@ -12,6 +12,12 @@ import (
 	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
 
+const (
+	vsphereHostVar        = "T_VSPHERE_HOST"
+	cidrVar               = "T_VSPHERE_CIDR"
+	privateNetworkCidrVar = "T_VSPHERE_PRIVATE_NETWORK_CIDR"
+)
+
 func (e *E2ESession) setupVSphereEnv(testRegex string) error {
 	re := regexp.MustCompile(`^.*VSphere.*$`)
 	if !re.MatchString(testRegex) {
@@ -25,6 +31,7 @@ func (e *E2ESession) setupVSphereEnv(testRegex string) error {
 			e.testEnvVars[eVar] = val
 		}
 	}
+	e.testEnvVars[vsphereHostVar] = getUniqueIP(e.testEnvVars[cidrVar])
 
 	return nil
 }

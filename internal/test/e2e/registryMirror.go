@@ -29,6 +29,8 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 		return e.mountRegistryCert(e.testEnvVars[e2etests.RegistryCACertVar], e.testEnvVars[e2etests.RegistryEndpointVar])
 	}
 
+	e.testEnvVars[vsphereHostVar] = getUniqueIP(e.testEnvVars[privateNetworkCidrVar])
+
 	return nil
 }
 
