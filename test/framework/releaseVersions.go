@@ -87,15 +87,15 @@ func (e *ClusterE2ETest) getBinary(release *releasev1alpha1.EksARelease) (string
 	latestReleaseBinaryPath := filepath.Join(latestReleaseBinaryFolder, releaseBinaryName)
 
 	if !validations.FileExists(latestReleaseBinaryPath) {
-		e.T.Logf("Downloading binary for EKS-A release [%s]", release.Version)
+		e.T.Logf("Downloading binary for EKS-A release [%s] to path ./%s", release.Version, latestReleaseBinaryPath)
 		err := os.MkdirAll(latestReleaseBinaryFolder, os.ModePerm)
 		if err != nil {
-			return "", fmt.Errorf("failed creating directory for release [%s]: %s", release.Version, err)
+			return "", fmt.Errorf("failed creating directory ./%s: %s", latestReleaseBinaryFolder, err)
 		}
 
 		err = files.GzipFileDownloadExtract(release.EksABinary.LinuxBinary.URI, releaseBinaryName, latestReleaseBinaryFolder)
 		if err != nil {
-			return "", fmt.Errorf("failed extracting binary for release [%s]: %s", release.Version, err)
+			return "", fmt.Errorf("failed extracting binary for EKS-A release [%s] to path ./%s: %s", release.Version, latestReleaseBinaryPath, err)
 		}
 	}
 	return latestReleaseBinaryPath, nil
