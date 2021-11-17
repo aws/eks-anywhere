@@ -104,7 +104,7 @@ func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev
 		}
 	}
 
-	version, err := r.GenerateComponentBundleVersion(newVersioner(r.CliRepoSource))
+	version, err := BuildComponentVersion(newCliVersioner(r.ReleaseVersion, r.CliRepoSource))
 	if err != nil {
 		return anywherev1alpha1.EksaBundle{}, errors.Wrapf(err, "failed generating version for eksa bundle")
 	}

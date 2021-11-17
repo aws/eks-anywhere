@@ -28,40 +28,35 @@ import (
 
 // ReleaseConfig contains metadata fields for a release
 type ReleaseConfig struct {
-	ReleaseVersion                 string
-	DevReleaseUriVersion           string
-	BundleNumber                   int
-	CliMinVersion                  string
-	CliMaxVersion                  string
-	CliRepoSource                  string
-	CliRepoHead                    string
-	BuildRepoSource                string
-	BuildRepoHead                  string
-	BranchName                     string
-	ArtifactDir                    string
-	SourceBucket                   string
-	ReleaseBucket                  string
-	SourceContainerRegistry        string
-	ReleaseContainerRegistry       string
-	CDN                            string
-	ReleaseNumber                  int
-	ReleaseDate                    time.Time
-	DevRelease                     bool
-	ReleaseEnvironment             string
-	GenerateComponentBundleVersion generateComponentBundleVersion
+	ReleaseVersion           string
+	DevReleaseUriVersion     string
+	BundleNumber             int
+	CliMinVersion            string
+	CliMaxVersion            string
+	CliRepoSource            string
+	CliRepoHead              string
+	BuildRepoSource          string
+	BuildRepoHead            string
+	BranchName               string
+	ArtifactDir              string
+	SourceBucket             string
+	ReleaseBucket            string
+	SourceContainerRegistry  string
+	ReleaseContainerRegistry string
+	CDN                      string
+	ReleaseNumber            int
+	ReleaseDate              time.Time
+	DevRelease               bool
+	ReleaseEnvironment       string
 }
-
-type generateComponentBundleVersion func(projectVersioner) (string, error)
 
 type projectVersioner interface {
 	patchVersion() (string, error)
 	buildMetadata() (string, error)
 }
 
-// GetArtifactsData will get asset information for each component
-// This information will be used to download them (in case of dev release)
-// Rename them, create the manifest and to upload the artifacts to the
-// proper location in S3 or ECR.
+// GetVersionsBundles will build the entire bundle manifest from the
+// individual component bundles
 func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]anywherev1alpha1.VersionsBundle, error) {
 	versionsBundles := []anywherev1alpha1.VersionsBundle{}
 

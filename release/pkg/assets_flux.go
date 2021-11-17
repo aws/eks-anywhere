@@ -69,7 +69,7 @@ func (r *ReleaseConfig) GetFluxBundle(imageDigests map[string]string) (anywherev
 		bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
 	}
 
-	version, err := r.GenerateComponentBundleVersion(
+	version, err := BuildComponentVersion(
 		newMultiProjectVersionerWithGITTAG(
 			filepath.Join(r.BuildRepoSource, "projects/fluxcd"),
 			filepath.Join(r.BuildRepoSource, "projects/fluxcd/flux2"),
