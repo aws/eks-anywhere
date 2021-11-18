@@ -132,10 +132,10 @@ func (r *ReleaseConfig) GetCurrentEksADevReleaseVersion(sourceClients *SourceCli
 	defer os.Remove(tempFile.Name())
 
 	var latestReleaseKey string
-	if r.BranchName == "main" {
+	if r.BuildRepoBranchName == "main" {
 		latestReleaseKey = "LATEST_RELEASE_VERSION"
 	} else {
-		latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BranchName)
+		latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
 	}
 
 	exists, err := ExistsInS3(sourceClients.S3.Client, r.ReleaseBucket, latestReleaseKey)
@@ -197,10 +197,10 @@ func (r *ReleaseConfig) PutEksAReleaseVersion(releaseClients *ReleaseClients, ve
 	s3Uploader := releaseClients.S3.Uploader
 
 	var currentReleaseKey string
-	if r.BranchName == "main" {
+	if r.BuildRepoBranchName == "main" {
 		currentReleaseKey = "LATEST_RELEASE_VERSION"
 	} else {
-		currentReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BranchName)
+		currentReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
 	}
 	f, err := os.Create(currentReleaseKey)
 	if err != nil {

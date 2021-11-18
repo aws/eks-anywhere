@@ -37,7 +37,8 @@ type ReleaseConfig struct {
 	CliRepoHead              string
 	BuildRepoSource          string
 	BuildRepoHead            string
-	BranchName               string
+	BuildRepoBranchName      string
+	CliRepoBranchName        string
 	ArtifactDir              string
 	SourceBucket             string
 	ReleaseBucket            string
