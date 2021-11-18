@@ -14,6 +14,8 @@ RELEASE_BUCKET?=my-s3-bucket
 SOURCE_CONTAINER_REGISTRY?=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 RELEASE_CONTAINER_REGISTRY?=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 CDN?=https://my-s3-bucket
+BUILD_REPO_BRANCH_NAME?=main
+CLI_REPO_BRANCH_NAME?=main
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
@@ -96,13 +98,13 @@ run: manifests generate fmt vet ## Run a controller from your host.
 ##@ Release
 
 dev-release: build ## Perform a dev release of EKS-A bundles and CLI manifests
-	scripts/release.sh $(REPO_ROOT)/artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY)
+	scripts/release.sh $(REPO_ROOT)/artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(BUILD_REPO_BRANCH_NAME) $(CLI_REPO_BRANCH_NAME)
 
 bundle-release: build ## Perform EKS-A versioned bundles release
-	scripts/bundle-release.sh $(REPO_ROOT)/artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(CLI_MIN_VERSION) $(CLI_MAX_VERSION) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(RELEASE_ENVIRONMENT)
+	scripts/bundle-release.sh $(REPO_ROOT)/artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(CLI_MIN_VERSION) $(CLI_MAX_VERSION) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(RELEASE_ENVIRONMENT) $(BUILD_REPO_BRANCH_NAME)
 
 eks-a-release: build ## Perform EKS-A CLI release
-	scripts/eks-a-release.sh $(RELEASE_VERSION) $(REPO_ROOT)/artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(RELEASE_NUMBER) $(RELEASE_ENVIRONMENT)
+	scripts/eks-a-release.sh $(RELEASE_VERSION) $(REPO_ROOT)/artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(RELEASE_NUMBER) $(RELEASE_ENVIRONMENT) $(CLI_REPO_BRANCH_NAME)
 
 ##@ Deployment
 

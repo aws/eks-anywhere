@@ -59,15 +59,26 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 	}
 	fmt.Println(out)
 
-	if r.DevRelease && r.BranchName != "main" {
-		fmt.Printf("Checking out build-tooling repo at branch %s", r.BranchName)
-		cmd = exec.Command("git", "-C", r.BuildRepoSource, "checkout", r.BranchName)
+	if r.BuildRepoBranchName != "main" {
+		fmt.Printf("Checking out build-tooling repo at branch %s", r.BuildRepoBranchName)
+		cmd = exec.Command("git", "-C", r.BuildRepoSource, "checkout", r.BuildRepoBranchName)
 		out, err = execCommand(cmd)
 		if err != nil {
 			return errors.Cause(err)
 		}
 		fmt.Println(out)
 	}
+
+	if r.CliRepoBranchName != "main" {
+		fmt.Printf("Checking out CLI repo at branch %s", r.CliRepoBranchName)
+		cmd = exec.Command("git", "-C", r.CliRepoSource, "checkout", r.CliRepoBranchName)
+		out, err = execCommand(cmd)
+		if err != nil {
+			return errors.Cause(err)
+		}
+		fmt.Println(out)
+	}
+
 	// Set HEADs of the repos
 	r.CliRepoHead, err = GetHead(r.CliRepoSource)
 	if err != nil {
@@ -479,10 +490,10 @@ func IsImageNotFoundError(err error) bool {
 }
 
 func (r *ReleaseConfig) getLatestUploadDestination() string {
-	if r.BranchName == "main" {
+	if r.BuildRepoBranchName == "main" {
 		return "latest"
 	} else {
-		return r.BranchName
+		return r.BuildRepoBranchName
 	}
 }
 

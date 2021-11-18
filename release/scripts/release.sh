@@ -28,34 +28,18 @@ RELEASE_BUCKET="${3?Specify third argument - release bucket}"
 CDN="${4?Specify fourth argument - cdn}"
 SOURCE_CONTAINER_REGISTRY="${5?Specify fifth argument - source container registry}"
 RELEASE_CONTAINER_REGISTRY="${6?Specify sixth argument - release container registry}"
+BUILD_REPO_BRANCH_NAME="${7?Specify seventh argument - Build repo branch name}"
+CLI_REPO_BRANCH_NAME="${8?Specify eighth argument - CLI repo branch name}"
 
 mkdir -p "${ARTIFACTS_DIR}"
 
-# CODEBUILD_INITIATOR is a CodeBuild environment variable
-# of the form `codepipeline/<pipeline_name>`
-PIPELINE_NAME=$(cut -d/ -f2 <<< "$CODEBUILD_INITIATOR")
-
-# Querying the execution ID corresponding to the pipeline
-# execution that triggered this dev release
-PIPELINE_EXECUTION_ID="$(aws codepipeline list-action-executions --pipeline-name $PIPELINE_NAME | jq -r '.actionExecutionDetails[] | select(.output.executionResult.externalExecutionId=='\"$CODEBUILD_BUILD_ID\"').pipelineExecutionId')"
-
-# Using the pipeline execution ID to query the branch
-# corresponding to the eks-anywhere-build-tooling repo
-# source action for this particulat execution
-BRANCH_NAME="$(aws codepipeline list-action-executions --pipeline-name $PIPELINE_NAME | jq -r '.actionExecutionDetails[] | select(.pipelineExecutionId=='\"$PIPELINE_EXECUTION_ID\"') | select(.input.configuration.RepositoryName=="aws.eks-anywhere-build-tooling").input.configuration.BranchName')"
-
-# This is a catch-all for pipelines that do not source
-# build-tooling repository, for example, the CLI pipeline
-if [ "$BRANCH_NAME" = "" ]; then
-	BRANCH_NAME="main"
-fi
-
 ${BASE_DIRECTORY}/release/bin/eks-anywhere-release release \
-	--artifact-dir "${ARTIFACTS_DIR}" \
-	--branch-name "${BRANCH_NAME}" \
-	--source-bucket "${SOURCE_BUCKET}" \
-	--source-container-registry "${SOURCE_CONTAINER_REGISTRY}" \
-	--cdn "${CDN}" \
-	--release-bucket "${RELEASE_BUCKET}" \
-	--release-container-registry "${RELEASE_CONTAINER_REGISTRY}" \
-	--dev-release=true
+    --artifact-dir "${ARTIFACTS_DIR}" \
+    --build-repo-branch-name "${BUILD_REPO_BRANCH_NAME}" \
+    --cli-repo-branch-name "${CLI_REPO_BRANCH_NAME}" \
+    --source-bucket "${SOURCE_BUCKET}" \
+    --source-container-registry "${SOURCE_CONTAINER_REGISTRY}" \
+    --cdn "${CDN}" \
+    --release-bucket "${RELEASE_BUCKET}" \
+    --release-container-registry "${RELEASE_CONTAINER_REGISTRY}" \
+    --dev-release=true

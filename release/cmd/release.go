@@ -56,7 +56,8 @@ var releaseCmd = &cobra.Command{
 		releaseNumber := viper.GetInt("release-number")
 		cliRepoDir := viper.GetString("cli-repo-source")
 		buildRepoDir := viper.GetString("build-repo-source")
-		branchName := viper.GetString("branch-name")
+		buildRepoBranchName := viper.GetString("build-repo-branch-name")
+		cliRepoBranchName := viper.GetString("cli-repo-branch-name")
 		artifactDir := viper.GetString("artifact-dir")
 		sourceBucket := viper.GetString("source-bucket")
 		releaseBucket := viper.GetString("release-bucket")
@@ -82,7 +83,8 @@ var releaseCmd = &cobra.Command{
 		releaseConfig := &pkg.ReleaseConfig{
 			CliRepoSource:            cliRepoDir,
 			BuildRepoSource:          buildRepoDir,
-			BranchName:               branchName,
+			BuildRepoBranchName:      buildRepoBranchName,
+			CliRepoBranchName:        cliRepoBranchName,
 			ArtifactDir:              artifactDir,
 			SourceBucket:             sourceBucket,
 			ReleaseBucket:            releaseBucket,
@@ -192,8 +194,8 @@ var releaseCmd = &cobra.Command{
 			var bundleReleaseManifestKey string
 			if devRelease {
 				bundleReleaseManifestKey = bundleReleaseManifestFile
-				if releaseConfig.BranchName != "main" {
-					bundleReleaseManifestKey = fmt.Sprintf("/%s/%s", releaseConfig.BranchName, bundleReleaseManifestFile)
+				if releaseConfig.BuildRepoBranchName != "main" {
+					bundleReleaseManifestKey = fmt.Sprintf("/%s/%s", releaseConfig.BuildRepoBranchName, bundleReleaseManifestFile)
 				}
 			} else {
 				bundleReleaseManifestKey = fmt.Sprintf("/releases/bundles/%d/manifest.yaml", releaseConfig.BundleNumber)
@@ -313,7 +315,8 @@ func init() {
 	releaseCmd.Flags().Int("release-number", 1, "The release-number to create")
 	releaseCmd.Flags().String("cli-repo-source", "", "The eks-anywhere-cli source")
 	releaseCmd.Flags().String("build-repo-source", "", "The eks-anywhere-build-tooling source")
-	releaseCmd.Flags().String("branch-name", "main", "The branch name to build bundles from")
+	releaseCmd.Flags().String("build-repo-branch-name", "main", "The branch name to build bundles from")
+	releaseCmd.Flags().String("cli-repo-branch-name", "main", "The branch name to build EKS-A CLI from")
 	releaseCmd.Flags().String("artifact-dir", "", "The base directory for artifacts")
 	releaseCmd.Flags().String("cdn", "https://anywhere.eks.amazonaws.com", "The URL base for artifacts")
 	releaseCmd.Flags().String("source-bucket", "eks-a-source-bucket", "The bucket name where the built/staging artifacts are located to download")
