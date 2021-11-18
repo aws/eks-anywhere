@@ -32,11 +32,12 @@ type E2ESession struct {
 	jobId               string
 	subnetId            string
 	instanceId          string
+	controlPlaneIP      string
 	testEnvVars         map[string]string
 	bundlesOverride     bool
 }
 
-func newSession(amiId, instanceProfileName, storageBucket, jobId, subnetId string, bundlesOverride bool) (*E2ESession, error) {
+func newSession(amiId, instanceProfileName, storageBucket, jobId, subnetId, controlPlaneIP string, bundlesOverride bool) (*E2ESession, error) {
 	session, err := session.NewSession()
 	if err != nil {
 		return nil, fmt.Errorf("error creating session: %v", err)
@@ -49,6 +50,7 @@ func newSession(amiId, instanceProfileName, storageBucket, jobId, subnetId strin
 		storageBucket:       storageBucket,
 		jobId:               jobId,
 		subnetId:            subnetId,
+		controlPlaneIP:      controlPlaneIP,
 		testEnvVars:         make(map[string]string),
 		bundlesOverride:     bundlesOverride,
 	}

@@ -16,10 +16,11 @@ const (
 	vsphereHostVar        = "T_VSPHERE_HOST"
 	cidrVar               = "T_VSPHERE_CIDR"
 	privateNetworkCidrVar = "T_VSPHERE_PRIVATE_NETWORK_CIDR"
+	vsphereRegex          = `^.*VSphere.*$`
 )
 
 func (e *E2ESession) setupVSphereEnv(testRegex string) error {
-	re := regexp.MustCompile(`^.*VSphere.*$`)
+	re := regexp.MustCompile(vsphereRegex)
 	if !re.MatchString(testRegex) {
 		logger.V(2).Info("Not running VSphere tests, skipping Env variable setup")
 		return nil
@@ -31,7 +32,9 @@ func (e *E2ESession) setupVSphereEnv(testRegex string) error {
 			e.testEnvVars[eVar] = val
 		}
 	}
-	e.testEnvVars[vsphereHostVar] = getUniqueIP(e.testEnvVars[cidrVar])
+	if e.controlPlaneIP != "" {
+		e.testEnvVars[vsphereHostVar] = e.controlPlaneIP
+	}
 
 	return nil
 }
