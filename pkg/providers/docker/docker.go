@@ -169,6 +169,10 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 
+	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
+		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
+		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Spec.PodIAMConfig))
+
 	values := map[string]interface{}{
 		"clusterName":            clusterSpec.Name,
 		"control_plane_replicas": clusterSpec.Spec.ControlPlaneConfiguration.Count,
@@ -179,7 +183,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 		"corednsRepository":      bundle.KubeDistro.CoreDNS.Repository,
 		"corednsVersion":         bundle.KubeDistro.CoreDNS.Tag,
 		"kindNodeImage":          bundle.EksD.KindNode.VersionedImage(),
-		"apiserverExtraArgs":     clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).ToPartialYaml(),
+		"apiserverExtraArgs":     apiServerExtraArgs.ToPartialYaml(),
 		"externalEtcdVersion":    bundle.KubeDistro.EtcdVersion,
 		"eksaSystemNamespace":    constants.EksaSystemNamespace,
 		"auditPolicy":            common.GetAuditPolicy(),
@@ -199,9 +203,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 		values["controlPlaneTaints"] = clusterSpec.Spec.ControlPlaneConfiguration.Taints
 	}
 
-	if clusterSpec.Spec.PodIAMConfig != nil {
-		values["serviceAccountIssuer"] = clusterSpec.Spec.PodIAMConfig.ServiceAccountIssuer
-	}
 	return values
 }
 

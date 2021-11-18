@@ -39,6 +39,15 @@ func AwsIamAuthExtraArgs(awsiam *v1alpha1.AWSIamConfig) ExtraArgs {
 	return args
 }
 
+func PodIAMAuthExtraArgs(podIAMConfig *v1alpha1.PodIAMConfig) ExtraArgs {
+	if podIAMConfig == nil {
+		return nil
+	}
+	args := ExtraArgs{}
+	args.AddIfNotEmpty("service-account-issuer", podIAMConfig.ServiceAccountIssuer)
+	return args
+}
+
 func (e ExtraArgs) AddIfNotEmpty(k, v string) {
 	if v != "" {
 		logger.V(5).Info("Adding extraArgs", k, v)

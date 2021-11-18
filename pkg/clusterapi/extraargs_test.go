@@ -206,6 +206,35 @@ func TestAwsIamAuthExtraArgs(t *testing.T) {
 	}
 }
 
+func TestPodIAMConfigExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName string
+		podIAM   *v1alpha1.PodIAMConfig
+		want     clusterapi.ExtraArgs
+	}{
+		{
+			testName: "no pod IAM config",
+			podIAM:   nil,
+			want:     nil,
+		},
+		{
+			testName: "with pod IAM config",
+			podIAM:   &v1alpha1.PodIAMConfig{ServiceAccountIssuer: "https://test"},
+			want: clusterapi.ExtraArgs{
+				"service-account-issuer": "https://test",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.PodIAMAuthExtraArgs(tt.podIAM); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("PodIAMAuthExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestAppend(t *testing.T) {
 	tests := []struct {
 		testName string
@@ -234,6 +263,16 @@ func TestAppend(t *testing.T) {
 			want: clusterapi.ExtraArgs{
 				"key1": "value1",
 				"key2": "value2",
+			},
+		},
+		{
+			testName: "append nil extraArgs",
+			e: clusterapi.ExtraArgs{
+				"key1": "value1",
+			},
+			a: nil,
+			want: clusterapi.ExtraArgs{
+				"key1": "value1",
 			},
 		},
 	}
