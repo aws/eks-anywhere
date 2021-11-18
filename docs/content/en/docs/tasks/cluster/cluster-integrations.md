@@ -3,7 +3,7 @@ title: "Add cluster integrations"
 linkTitle: "Add cluster integrations"
 weight: 11
 description: >
-  How to add integrations to an EKS Anywhere cluster *
+  How to add integrations to an EKS Anywhere cluster
 ---
 
 EKS Anywhere offers AWS support for certain third-party vendor components,
@@ -12,6 +12,10 @@ It also provides flexibility for you to integrate with your choice of tools in o
 Below is a list of example third-party tools your consideration.
 
 For a full list of partner integration options, please visit [Amazon EKS Anywhere Partner page](https://aws.amazon.com/eks/eks-anywhere/partners/).
+
+{{% alert title="Note" color="primary" %}}
+The solutions listed on this page have not been tested by AWS and are not covered by the EKS Anywhere Support Subscription.
+{{% /alert %}}
 
 | Feature                       | Example third-party tools                 |
 |-------------------------------|-------------------------------------------|
@@ -27,4 +31,3 @@ For a full list of partner integration options, please visit [Amazon EKS Anywher
 | Etcd backup and restore       | [Velero](https://velero.io/)                                    |
 | Storage                       | Default storage class, any compatible CSI |
 
-* The solutions listed on this page have not been tested by AWS and are not covered by the EKS Anywhere Support Subscription.
