@@ -65,7 +65,7 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 		return anywherev1alpha1.CertManagerBundle{}, errors.Cause(err)
 	}
 
-	version, err := r.GenerateComponentBundleVersion(
+	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/jetstack/cert-manager")),
 	)
 	if err != nil {
