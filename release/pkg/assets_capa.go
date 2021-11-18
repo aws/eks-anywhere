@@ -123,7 +123,7 @@ func (r *ReleaseConfig) GetAwsBundle(imageDigests map[string]string) (anywherev1
 		"kube-proxy":               r.GetKubeRbacProxyAssets,
 	}
 
-	version, err := r.GenerateComponentBundleVersion(
+	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api-provider-aws")),
 	)
 	if err != nil {

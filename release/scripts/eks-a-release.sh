@@ -30,6 +30,7 @@ CDN="${5?Specify fifth argument - cdn}"
 BUNDLE_NUMBER="${6?Specify sixth argument - Bundle number}"
 RELEASE_NUMBER="${7?Specify seventh argument - Release number}"
 RELEASE_ENVIRONMENT="${8?Specify eighth argument - Release environment}"
+CLI_REPO_BRANCH_NAME="${9?Specify ninth argument - Branch name}"
 
 set_aws_config "$RELEASE_ENVIRONMENT"
 
@@ -38,11 +39,12 @@ mkdir -p "${ARTIFACTS_DIR}"
 ${BASE_DIRECTORY}/release/bin/eks-anywhere-release release \
     --release-version "${RELEASE_VERSION}" \
     --bundle-number "${BUNDLE_NUMBER}" \
-	--release-number "${RELEASE_NUMBER}" \
-	--artifact-dir "${ARTIFACTS_DIR}" \
-	--source-bucket "${SOURCE_BUCKET}" \
-	--cdn "${CDN}" \
-	--release-bucket "${RELEASE_BUCKET}" \
+    --release-number "${RELEASE_NUMBER}" \
+    --cli-repo-branch-name "${CLI_REPO_BRANCH_NAME}" \
+    --artifact-dir "${ARTIFACTS_DIR}" \
+    --source-bucket "${SOURCE_BUCKET}" \
+    --cdn "${CDN}" \
+    --release-bucket "${RELEASE_BUCKET}" \
     --release-environment ${RELEASE_ENVIRONMENT} \
-	--dev-release=false \
+    --dev-release=false \
     --bundle-release=false
