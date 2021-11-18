@@ -59,6 +59,39 @@ func (c *collectorFactory) EksaHostCollectors(machineConfigs []providers.Machine
 	return collectors
 }
 
+func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref) []*Collect {
+	switch datacenter.Kind {
+	case v1alpha1.VSphereDatacenterKind:
+		return c.eksaVsphereCollectors()
+	case v1alpha1.DockerDatacenterKind:
+		return c.eksaDockerCollectors()
+	default:
+		return nil
+	}
+}
+
+func (c *collectorFactory) eksaVsphereCollectors() []*Collect {
+	return []*Collect{
+		{
+			Logs: &logs{
+				Namespace: constants.CapvSystemNamespace,
+				Name:      logpath(constants.CapvSystemNamespace),
+			},
+		},
+	}
+}
+
+func (c *collectorFactory) eksaDockerCollectors() []*Collect {
+	return []*Collect{
+		{
+			Logs: &logs{
+				Namespace: constants.CapdSystemNamespace,
+				Name:      logpath(constants.CapdSystemNamespace),
+			},
+		},
+	}
+}
+
 func (c *collectorFactory) ManagementClusterCollectors() []*Collect {
 	var collectors []*Collect
 	collectors = append(collectors, c.managementClusterCrdCollectors()...)

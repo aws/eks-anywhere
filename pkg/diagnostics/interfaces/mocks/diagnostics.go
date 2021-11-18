@@ -516,6 +516,20 @@ func (m *MockCollectorFactory) EXPECT() *MockCollectorFactoryMockRecorder {
 	return m.recorder
 }
 
+// DataCenterConfigCollectors mocks base method.
+func (m *MockCollectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref) []*diagnostics.Collect {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DataCenterConfigCollectors", datacenter)
+	ret0, _ := ret[0].([]*diagnostics.Collect)
+	return ret0
+}
+
+// DataCenterConfigCollectors indicates an expected call of DataCenterConfigCollectors.
+func (mr *MockCollectorFactoryMockRecorder) DataCenterConfigCollectors(datacenter interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DataCenterConfigCollectors", reflect.TypeOf((*MockCollectorFactory)(nil).DataCenterConfigCollectors), datacenter)
+}
+
 // DefaultCollectors mocks base method.
 func (m *MockCollectorFactory) DefaultCollectors() []*diagnostics.Collect {
 	m.ctrl.T.Helper()
