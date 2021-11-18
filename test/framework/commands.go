@@ -2,34 +2,39 @@ package framework
 
 import "github.com/aws/eks-anywhere/pkg/semver"
 
-type commandOpt func(*[]string)
+type CommandOpt func(*string, *[]string) (err error)
 
-func appendOpt(new ...string) commandOpt {
-	return func(args *[]string) {
+func appendOpt(new ...string) CommandOpt {
+	return func(binaryPath *string, args *[]string) (err error) {
 		*args = append(*args, new...)
+		return nil
 	}
 }
 
-func withKubeconfig(kubeconfigFile string) commandOpt {
+func withKubeconfig(kubeconfigFile string) CommandOpt {
 	return appendOpt("--kubeconfig", kubeconfigFile)
 }
 
-type VersionOpt func() (binaryPath string, err error)
-
-func ExecuteWithEksaVersion(version *semver.Version) VersionOpt {
-	return func() (binaryPath string, err error) {
-		return GetReleaseBinaryFromVersion(version)
+func ExecuteWithEksaVersion(version *semver.Version) CommandOpt {
+	return func(binaryPath *string, args *[]string) (err error) {
+		b, err := GetReleaseBinaryFromVersion(version)
+		*binaryPath = b
+		return err
 	}
 }
 
-func ExecuteWithLatestMinorReleaseFromVersion(version *semver.Version) VersionOpt {
-	return func() (binaryPath string, err error) {
-		return GetLatestMinorReleaseBinaryFromVersion(version)
+func ExecuteWithLatestMinorReleaseFromVersion(version *semver.Version) CommandOpt {
+	return func(binaryPath *string, args *[]string) (err error) {
+		b, err := GetLatestMinorReleaseBinaryFromVersion(version)
+		*binaryPath = b
+		return err
 	}
 }
 
-func ExecuteWithLatestMinorReleaseFromMain() VersionOpt {
-	return func() (binaryPath string, err error) {
-		return GetLatestMinorReleaseBinaryFromMain()
+func ExecuteWithLatestMinorReleaseFromMain() CommandOpt {
+	return func(binaryPath *string, args *[]string) (err error) {
+		b, err := GetLatestMinorReleaseBinaryFromMain()
+		*binaryPath = b
+		return err
 	}
 }
