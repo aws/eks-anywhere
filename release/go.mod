@@ -3,10 +3,10 @@ module github.com/aws/eks-anywhere/release
 go 1.16
 
 require (
-	github.com/Microsoft/hcsshim v0.8.21 // indirect
 	github.com/aws/aws-sdk-go v1.38.40
 	github.com/aws/aws-sdk-go-v2 v1.5.0
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
+	github.com/containerd/containerd v1.5.1 // indirect
 	github.com/docker/docker v20.10.6+incompatible // indirect
 	github.com/fsouza/go-dockerclient v1.7.2
 	github.com/go-git/go-git/v5 v5.3.0
@@ -21,4 +21,7 @@ require (
 	sigs.k8s.io/yaml v1.2.0
 )
 
-replace github.com/containerd/containerd v1.5.1 => github.com/containerd/containerd v1.5.7
+replace (
+	github.com/containerd/containerd => github.com/containerd/containerd v1.5.8
+	github.com/opencontainers/image-spec => github.com/opencontainers/image-spec v1.0.2
+)
