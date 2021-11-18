@@ -80,6 +80,7 @@ func (c *collectorFactory) eksaVsphereCollectors() []*Collect {
 		},
 	}
 	return append(vsphereLogs, c.vsphereCrdCollectors()...)
+
 }
 
 func (c *collectorFactory) eksaDockerCollectors() []*Collect {
@@ -93,7 +94,6 @@ func (c *collectorFactory) eksaDockerCollectors() []*Collect {
 	}
 }
 
->>>>>>> dd4f5b7 (add vsphere crd collectors to diagnostic bundle collection (#677))
 func (c *collectorFactory) ManagementClusterCollectors() []*Collect {
 	var collectors []*Collect
 	collectors = append(collectors, c.managementClusterCrdCollectors()...)
