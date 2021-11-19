@@ -123,7 +123,7 @@ func getBinary(release *releasev1alpha1.EksARelease) (string, error) {
 
 func prodReleases() (release *releasev1alpha1.Release, err error) {
 	reader := cluster.NewManifestReader()
-	logger.Info("Reading prod release manifest %s", prodReleasesManifest)
+	logger.Info("Reading prod release manifest", "manifest", prodReleasesManifest)
 	releases, err := reader.GetReleases(prodReleasesManifest)
 	if err != nil {
 		return nil, err
