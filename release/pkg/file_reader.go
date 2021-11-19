@@ -119,7 +119,7 @@ func (r *ReleaseConfig) getBottlerocketAdminContainerMetadata() (string, string,
 }
 
 func GetEksDReleaseManifestUrl(releaseChannel, releaseNumber string) string {
-	manifestUrl := fmt.Sprintf("https://distro.eks.amazonaws.com/kubernetes-%s/kubernetes-%s-eks-%s.yaml", releaseChannel, releaseChannel, releaseNumber)
+	manifestUrl := fmt.Sprintf("https://distro.eks.amazonaws.com/kubernetes-%[1]s/kubernetes-%[1]s-eks-%s.yaml", releaseChannel, releaseNumber)
 	return manifestUrl
 }
 

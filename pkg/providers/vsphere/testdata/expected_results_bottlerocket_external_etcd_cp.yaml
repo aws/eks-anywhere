@@ -375,6 +375,7 @@ spec:
         kubeletExtraArgs:
           cloud-provider: external
         name: '{{ ds.meta_data.hostname }}'
+        taints: []
     joinConfiguration:
       pause:
         imageRepository: public.ecr.aws/eks-distro/kubernetes/pause
@@ -387,6 +388,7 @@ spec:
         kubeletExtraArgs:
           cloud-provider: external
         name: '{{ ds.meta_data.hostname }}'
+        taints: []
     preKubeadmCommands:
     - hostname "{{ ds.meta_data.hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts

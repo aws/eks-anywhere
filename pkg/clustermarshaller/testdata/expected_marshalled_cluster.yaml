@@ -2,6 +2,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
   name: mycluster
+  namespace: default
 spec:
   clusterNetwork:
     pods: {}
@@ -26,6 +27,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereDatacenterConfig
 metadata:
   name: config
+  namespace: default
 spec:
   datacenter: ""
   insecure: false
@@ -38,6 +40,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereMachineConfig
 metadata:
   name: machineconf-1
+  namespace: default
 spec:
   datastore: ""
   folder: my-folder
@@ -51,6 +54,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereMachineConfig
 metadata:
   name: machineconf-2
+  namespace: default
 spec:
   datastore: ""
   folder: my-folder
@@ -64,6 +68,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: GitOpsConfig
 metadata:
   name: config
+  namespace: default
 spec:
   flux:
     github:
@@ -78,6 +83,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: OIDCConfig
 metadata:
   name: config
+  namespace: default
 spec:
   issuerUrl: https://url
 

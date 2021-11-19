@@ -3,9 +3,16 @@ package addonclients
 import (
 	"context"
 	"fmt"
-	"path"
+	"io/ioutil"
+	"path/filepath"
+	"strings"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"sigs.k8s.io/yaml"
+
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -34,6 +41,9 @@ func (f *FluxAddonClient) Upgrade(ctx context.Context, managementCluster *types.
 	logger.V(1).Info("Starting Flux upgrades")
 	if err := f.upgradeFilesAndCommit(ctx, newSpec); err != nil {
 		return nil, fmt.Errorf("failed upgrading Flux from bundles %d to bundles %d: %v", currentSpec.Bundles.Spec.Number, newSpec.Bundles.Spec.Number, err)
+	}
+	if err := f.flux.DeleteFluxSystemSecret(ctx, managementCluster, newSpec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace); err != nil {
+		return nil, fmt.Errorf("failed upgrading Flux when deleting old flux-system secret: %v", err)
 	}
 	if err := f.flux.BootstrapToolkitsComponents(ctx, managementCluster, newSpec.GitOpsConfig); err != nil {
 		return nil, fmt.Errorf("failed upgrading Flux components: %v", err)
@@ -79,27 +89,26 @@ func (f *FluxAddonClient) upgradeFilesAndCommit(ctx context.Context, newSpec *cl
 
 func (fc *fluxForCluster) commitFluxUpgradeFilesToGit(ctx context.Context) error {
 	logger.Info("Adding flux configuration files to Git")
-	config := fc.clusterSpec.GitOpsConfig
-	repository := config.Spec.Flux.Github.Repository
 
-	logger.V(3).Info("Generating flux custom manifest files...")
-	err := fc.writeFluxUpgradeFiles()
-	if err != nil {
+	logger.V(3).Info("Generating eks-a cluster config file...")
+	if err := fc.writeEksaUpgradeFiles(); err != nil {
 		return err
 	}
 
-	p := path.Dir(config.Spec.Flux.Github.ClusterConfigPath)
-	err = fc.gitOpts.Git.Add(p)
-	if err != nil {
-		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when adding %s to git: %v", p, err)}
+	logger.V(3).Info("Generating flux custom manifest files...")
+	if err := fc.writeFluxUpgradeFiles(); err != nil {
+		return err
 	}
 
-	err = fc.FluxAddonClient.pushToRemoteRepo(ctx, p, upgradeFluxconfigCommitMessage)
-	if err != nil {
+	if err := fc.gitOpts.Git.Add(fc.path()); err != nil {
+		return &ConfigVersionControlFailedError{Err: fmt.Errorf("error when adding %s to git: %v", fc.path(), err)}
+	}
+
+	if err := fc.FluxAddonClient.pushToRemoteRepo(ctx, fc.path(), upgradeFluxconfigCommitMessage); err != nil {
 		return err
 	}
 	logger.V(3).Info("Finished pushing flux custom manifest files to git",
-		"repository", repository)
+		"repository", fc.repository())
 	return nil
 }
 
@@ -116,4 +125,52 @@ func (fc *fluxForCluster) writeFluxUpgradeFiles() error {
 	}
 
 	return nil
+}
+
+func (fc *fluxForCluster) writeEksaUpgradeFiles() error {
+	eksaSpec, err := fc.generateUpdatedEksaConfig(filepath.Join(fc.gitOpts.Writer.Dir(), fc.eksaSystemDir(), clusterConfigFileName))
+	if err != nil {
+		return err
+	}
+
+	w, err := fc.initEksaWriter()
+	if err != nil {
+		return err
+	}
+
+	logger.V(3).Info("Updating eksa-system eksa-cluster.yaml")
+	if _, err = w.Write(clusterConfigFileName, eksaSpec, filewriter.PersistentFile); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (fc *fluxForCluster) generateUpdatedEksaConfig(fileName string) ([]byte, error) {
+	logger.V(3).Info("Updating eks-a cluster config content")
+	content, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read file due to: %v", err)
+	}
+
+	var resources [][]byte
+	for _, c := range strings.Split(string(content), v1alpha1.YamlSeparator) {
+		var resource unstructured.Unstructured
+		if err := yaml.Unmarshal([]byte(c), &resource); err != nil {
+			return nil, fmt.Errorf("unable to parse %s\nyaml: %s\n %v", fileName, c, err)
+		}
+		if resource.GetKind() == "" {
+			continue
+		}
+		if resource.GetNamespace() == "" {
+			logger.V(4).Info("Namespace is not presented, set to default", "resource", resource.GetKind())
+			resource.SetNamespace("default")
+		}
+		resourceYaml, err := yaml.Marshal(resource.Object)
+		if err != nil {
+			return nil, fmt.Errorf("error outputting yaml: %v", err)
+		}
+		resources = append(resources, resourceYaml)
+	}
+
+	return templater.AppendYamlResources(resources...), nil
 }

@@ -21,6 +21,11 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 	upgradeValidations = append(
 		upgradeValidations,
 		validations.ValidationResult{
+			Name:        "validate taints support",
+			Remediation: "ensure TAINTS_SUPPORT env variable is set",
+			Err:         ValidateTaintsSupport(ctx, u.Opts.Spec),
+		},
+		validations.ValidationResult{
 			Name:        "control plane ready",
 			Remediation: fmt.Sprintf("ensure control plane nodes and pods for cluster %s are Ready", u.Opts.WorkloadCluster.Name),
 			Err:         k.ValidateControlPlaneNodes(ctx, targetCluster, targetCluster.Name),
