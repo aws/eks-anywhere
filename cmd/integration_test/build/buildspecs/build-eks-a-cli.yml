@@ -4,7 +4,6 @@ phases:
   build:
     commands:
     - make e2e
-    - ./cmd/integration_test/build/script/get_bundle.sh
     - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" >> bin/githash
 
 artifacts:
