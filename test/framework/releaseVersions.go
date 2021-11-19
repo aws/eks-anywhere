@@ -132,7 +132,7 @@ type platformAwareRelease struct {
 	*releasev1alpha1.EksARelease
 }
 
-func (p *platformAwareRelease) binaryUri () (binaryUri string, err error) {
+func (p *platformAwareRelease) binaryUri() (binaryUri string, err error) {
 	r := runtime.GOOS
 	switch r {
 	case "darwin":
