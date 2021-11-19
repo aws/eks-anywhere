@@ -83,15 +83,20 @@ func (c *Cmk) SearchDiskOffering(ctx context.Context, domain string, zone string
 }
 
 func (c *Cmk) ValidateCloudStackSetup(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, selfSigned *bool) error {
-	return nil
-	// return c.ValidateCloudStackConnection(ctx)
+	return c.ValidateCloudStackConnection(ctx)
 }
 
+// TODO: Add support for network checking
 func (c *Cmk) ValidateCloudStackSetupMachineConfig(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, machineConfig *v1alpha1.CloudStackMachineConfig, selfSigned *bool) error {
-	//_, err := c.ListZones(ctx, deploymentConfig.Spec.Zone)
-	//if err != nil {
-	//	return fmt.Errorf("zone: %s not found, error: %v", deploymentConfig.Spec.Zone, err)
-	//}
+	zones, err := c.ListZones(ctx, deploymentConfig.Spec.Zone)
+	if err != nil {
+		return fmt.Errorf("zone %s not found. error: %v", deploymentConfig.Spec.Zone, err)
+	} else if len(zones) > 1 {
+		return fmt.Errorf("duplicate zone %s found", deploymentConfig.Spec.Zone)
+	} else if len(zones) == 0 {
+		return fmt.Errorf("zone %s not found", deploymentConfig.Spec.Zone)
+	}
+
 	return nil
 }
 
