@@ -192,7 +192,7 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 		return nil
 	})
 	if err != nil {
-		e.T.Fatalf("%v", err)
+		e.T.Fatal(err)
 	}
 	e.T.Log("Validating cluster node version")
 	err = retrier.Retry(180, 1*time.Second, func() error {
@@ -308,7 +308,7 @@ func (e *ClusterE2ETest) RunEKSA(args []string, opts ...CommandOpt) {
 	for _, o := range opts {
 		err := o(&binaryPath, &args)
 		if err != nil {
-			e.T.Fatalf(err.Error())
+			e.T.Fatalf("Error executing EKS-A at path %s with args %s: %v", binaryPath, args, err)
 		}
 	}
 	e.Run(binaryPath, args...)
