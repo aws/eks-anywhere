@@ -300,6 +300,7 @@ eks-a-e2e:
 		if [[ "$(CODEBUILD_BUILD_ID)" =~ "aws-staging-eks-a-build" ]]; then \
 			make eks-a-release-cross-platform GIT_VERSION=$(shell cat release/triggers/eks-a-release/development/RELEASE_VERSION) RELEASE_MANIFEST_URL=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml; \
 			make eks-a-release GIT_VERSION=$(DEV_GIT_VERSION); \
+			scripts/get_bundle.sh; \
 		else \
 			make check-eksa-components-override; \
 			make eks-a-cross-platform; \
