@@ -25,7 +25,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentS
 		logger.V(1).Info("Skipping EKS-A components upgrade, not a self-managed cluster")
 		return nil, nil
 	}
-	changeDiff := eksaChangeDiff(currentSpec, newSpec)
+	changeDiff := ChangeDiff(currentSpec, newSpec)
 	if changeDiff == nil {
 		logger.V(1).Info("Nothing to upgrade for controller and CRDs")
 		return nil, nil
@@ -40,7 +40,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentS
 	return types.NewChangeDiff(changeDiff), nil
 }
 
-func eksaChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
+func ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
 	if currentSpec.VersionsBundle.Eksa.Version != newSpec.VersionsBundle.Eksa.Version {
 		return &types.ComponentChangeDiff{
 			ComponentName: "EKS-A",
