@@ -89,6 +89,10 @@ func (v *Version) Compare(v2 *Version) int {
 	return 0
 }
 
+func (v *Version) String() string {
+	return fmt.Sprintf("v%d.%d.%d", v.Major, v.Minor, v.Patch)
+}
+
 func compare(i, i2 uint64) int {
 	if i > i2 {
 		return 1
