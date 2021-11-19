@@ -67,6 +67,10 @@ type ReleaseECRPublicClient struct {
 
 // Function to create release clients for dev release
 func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClients, error) {
+	if r.DryRun {
+		fmt.Println("Skipping clients creation in dry-run mode")
+		return nil, nil, nil
+	}
 	fmt.Println("Creating new dev release clients for S3, docker and ECR public")
 
 	// PDX session for eks-a-build-prod-pdx

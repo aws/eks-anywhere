@@ -56,6 +56,8 @@ var releaseCmd = &cobra.Command{
 		releaseNumber := viper.GetInt("release-number")
 		cliRepoDir := viper.GetString("cli-repo-source")
 		buildRepoDir := viper.GetString("build-repo-source")
+		cliRepoUrl := viper.GetString("cli-repo-url")
+		buildRepoUrl := viper.GetString("build-repo-url")
 		buildRepoBranchName := viper.GetString("build-repo-branch-name")
 		cliRepoBranchName := viper.GetString("cli-repo-branch-name")
 		artifactDir := viper.GetString("artifact-dir")
@@ -83,6 +85,8 @@ var releaseCmd = &cobra.Command{
 		releaseConfig := &pkg.ReleaseConfig{
 			CliRepoSource:            cliRepoDir,
 			BuildRepoSource:          buildRepoDir,
+			CliRepoUrl:               cliRepoUrl,
+			BuildRepoUrl:             buildRepoUrl,
 			BuildRepoBranchName:      buildRepoBranchName,
 			CliRepoBranchName:        cliRepoBranchName,
 			ArtifactDir:              artifactDir,
@@ -96,6 +100,7 @@ var releaseCmd = &cobra.Command{
 			ReleaseVersion:           releaseVersion,
 			ReleaseDate:              releaseTime,
 			DevRelease:               devRelease,
+			DryRun:                   dryRun,
 			ReleaseEnvironment:       releaseEnvironment,
 		}
 
@@ -136,8 +141,8 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 			releaseConfig.ReleaseVersion = releaseVersion
-			releaseConfig.DevReleaseUriVersion = strings.ReplaceAll(releaseVersion, "+", "-")
 		}
+		releaseConfig.DevReleaseUriVersion = strings.ReplaceAll(releaseVersion, "+", "-")
 
 		if devRelease || bundleRelease {
 			bundle := &anywherev1alpha1.Bundles{
@@ -151,93 +156,103 @@ var releaseCmd = &cobra.Command{
 			bundle.Kind = "Bundles"
 			bundle.CreationTimestamp = v1.Time{Time: releaseTime}
 
-			// Prepare release - Download artifacts, ECR images + S3 artifacts
-			// Rename them to the proper release name for manifest generation.
-			artifactsTable, err := releaseConfig.PrepareBundleRelease(sourceClients)
+			fmt.Println("Getting bundle artifacts data")
+			artifactsTable, err := releaseConfig.GetBundleArtifactsData()
 			if err != nil {
-				fmt.Printf("Error preparing release: %v\n", err)
+				fmt.Printf("Error getting bundle artifacts data: %v\n", err)
+				os.Exit(1)
+			}
+
+			// Download ECR images + S3 artifacts and rename them to the
+			// proper release URIs for manifest generation.
+			err = releaseConfig.PrepareBundleRelease(artifactsTable, sourceClients)
+			if err != nil {
+				fmt.Printf("Error preparing bundle release: %v\n", err)
 				os.Exit(1)
 			}
 
 			err = pkg.UploadArtifacts(sourceClients, releaseClients, releaseConfig, artifactsTable)
 			if err != nil {
-				fmt.Printf("Error uploading release artifacts: %v\n", err)
+				fmt.Printf("Error uploading bundle release artifacts: %v\n", err)
 				os.Exit(1)
 			}
-			fmt.Println("All artifacts have been uploaded")
 
 			imageDigests, err := pkg.UpdateImageDigests(releaseClients, releaseConfig, artifactsTable)
 			if err != nil {
-				fmt.Printf("Error updating image digest in bundle manifest: %+v\n", err)
+				fmt.Printf("Error updating image digests in bundles manifest: %+v\n", err)
 				os.Exit(1)
 			}
 
 			err = releaseConfig.GenerateBundleSpec(bundle, imageDigests)
 			if err != nil {
-				fmt.Printf("Error generating bundle manifest: %+v\n", err)
+				fmt.Printf("Error generating bundles manifest: %+v\n", err)
 				os.Exit(1)
 			}
 
 			bundleManifest, err := yaml.Marshal(bundle)
 			if err != nil {
-				fmt.Printf("Error marshaling bundle manifest: %+v\n", err)
+				fmt.Printf("Error marshaling bundles manifest: %+v\n", err)
 				os.Exit(1)
 			}
-			fmt.Printf("Generated bundle manifest:\n%s", string(bundleManifest))
+			fmt.Printf("Generated bundles manifest:\n%s\n", string(bundleManifest))
 
-			err = ioutil.WriteFile(bundleReleaseManifestFile, bundleManifest, 0o755)
-			if err != nil {
-				fmt.Printf("Error writing bundle manifest file to disk: %v\n", err)
-				os.Exit(1)
-			}
-
-			var bundleReleaseManifestKey string
-			if devRelease {
-				bundleReleaseManifestKey = bundleReleaseManifestFile
-				if releaseConfig.BuildRepoBranchName != "main" {
-					bundleReleaseManifestKey = fmt.Sprintf("/%s/%s", releaseConfig.BuildRepoBranchName, bundleReleaseManifestFile)
+			if !dryRun {
+				err = ioutil.WriteFile(bundleReleaseManifestFile, bundleManifest, 0o755)
+				if err != nil {
+					fmt.Printf("Error writing bundles manifest file to disk: %v\n", err)
+					os.Exit(1)
 				}
-			} else {
-				bundleReleaseManifestKey = fmt.Sprintf("/releases/bundles/%d/manifest.yaml", releaseConfig.BundleNumber)
+
+				var bundleReleaseManifestKey string
+				if devRelease {
+					bundleReleaseManifestKey = bundleReleaseManifestFile
+					if releaseConfig.BuildRepoBranchName != "main" {
+						bundleReleaseManifestKey = fmt.Sprintf("/%s/%s", releaseConfig.BuildRepoBranchName, bundleReleaseManifestFile)
+					}
+				} else {
+					bundleReleaseManifestKey = fmt.Sprintf("/releases/bundles/%d/manifest.yaml", releaseConfig.BundleNumber)
+				}
+				err = pkg.UploadFileToS3(bundleReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(bundleReleaseManifestKey), releaseClients.S3.Uploader)
+				if err != nil {
+					fmt.Printf("Error uploading bundle manifest to release bucket: %+v", err)
+					os.Exit(1)
+				}
+				fmt.Println("Bundle release successful")
 			}
-			err = pkg.UploadFileToS3(bundleReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(bundleReleaseManifestKey), releaseClients.S3.Uploader)
-			if err != nil {
-				fmt.Printf("Error uploading bundle manifest to release bucket: %+v", err)
-				os.Exit(1)
-			}
+
 		}
 
 		if devRelease || !bundleRelease {
 			var eksAReleaseManifestKey string
-			release := &anywherev1alpha1.Release{}
-
-			if devRelease {
-				eksAReleaseManifestKey = eksAReleaseManifestFile
-			} else {
-				eksAReleaseManifestKey = "/releases/eks-a/manifest.yaml"
+			release := &anywherev1alpha1.Release{
+				Spec: anywherev1alpha1.ReleaseSpec{
+					Releases: []anywherev1alpha1.EksARelease{},
+				},
 			}
-			eksAReleaseManifestUrl := fmt.Sprintf("%s%s", releaseConfig.CDN, eksAReleaseManifestKey)
 
-			exists, err := pkg.ExistsInS3(releaseClients.S3.Client, releaseConfig.ReleaseBucket, eksAReleaseManifestKey)
-			if err != nil {
-				fmt.Printf("Error checking if release manifest exists in S3: %v", err)
-				os.Exit(1)
-			}
-			if exists {
-				contents, err := pkg.ReadHttpFile(eksAReleaseManifestUrl)
+			if !dryRun {
+				if devRelease {
+					eksAReleaseManifestKey = eksAReleaseManifestFile
+				} else {
+					eksAReleaseManifestKey = "/releases/eks-a/manifest.yaml"
+				}
+				eksAReleaseManifestUrl := fmt.Sprintf("%s%s", releaseConfig.CDN, eksAReleaseManifestKey)
+
+				exists, err := pkg.ExistsInS3(releaseClients.S3.Client, releaseConfig.ReleaseBucket, eksAReleaseManifestKey)
 				if err != nil {
-					fmt.Printf("Error reading release manifest from S3: %v", err)
+					fmt.Printf("Error checking if releases manifest exists in S3: %v", err)
 					os.Exit(1)
 				}
-				if err = yaml.Unmarshal(contents, release); err != nil {
-					fmt.Printf("Error unmarshaling releases manifest from [%s]: %v", eksAReleaseManifestUrl, err)
-					os.Exit(1)
-				}
-			} else {
-				release = &anywherev1alpha1.Release{
-					Spec: anywherev1alpha1.ReleaseSpec{
-						Releases: []anywherev1alpha1.EksARelease{},
-					},
+				if exists {
+					contents, err := pkg.ReadHttpFile(eksAReleaseManifestUrl)
+					if err != nil {
+						fmt.Printf("Error reading releases manifest from S3: %v", err)
+						os.Exit(1)
+					}
+					if err = yaml.Unmarshal(contents, release); err != nil {
+						fmt.Printf("Error unmarshaling releases manifest from [%s]: %v", eksAReleaseManifestUrl, err)
+						os.Exit(1)
+					}
 				}
 			}
 
@@ -247,56 +262,68 @@ var releaseCmd = &cobra.Command{
 			release.CreationTimestamp = v1.Time{Time: releaseTime}
 			release.Spec.LatestVersion = releaseVersion
 
-			artifactsTable, err := releaseConfig.PrepareEksARelease(sourceClients)
+			artifactsTable, err := releaseConfig.GetEksAArtifactsData()
 			if err != nil {
-				fmt.Printf("Error preparing release: %v\n", err)
+				fmt.Printf("Error getting EKS-A artifacts data: %v\n", err)
+				os.Exit(1)
+			}
+
+			err = releaseConfig.PrepareEksARelease(sourceClients)
+			if err != nil {
+				fmt.Printf("Error preparing EKS-A release: %v\n", err)
 				os.Exit(1)
 			}
 
 			err = pkg.UploadArtifacts(sourceClients, releaseClients, releaseConfig, artifactsTable)
 			if err != nil {
-				fmt.Printf("Error uploading release artifacts: %v\n", err)
+				fmt.Printf("Error uploading EKS-A release artifacts: %v\n", err)
 				os.Exit(1)
 			}
-			fmt.Println("All artifacts have been uploaded")
+			fmt.Println("All EKS-A release artifacts have been uploaded")
 
-			eksARelease, err := releaseConfig.GetEksARelease()
+			currentEksARelease, err := releaseConfig.GetEksARelease()
 			if err != nil {
-				fmt.Printf("Error getting eks-a release asset: %v\n", err)
+				fmt.Printf("Error getting EKS-A release: %v\n", err)
 				os.Exit(1)
 			}
 
-			currentReleases := pkg.EksAReleases(release.Spec.Releases)
-			release.Spec.Releases = currentReleases.AppendOrUpdateRelease(eksARelease)
-
-			output, err := yaml.Marshal(release)
+			currentEksAReleaseYaml, err := yaml.Marshal(currentEksARelease)
 			if err != nil {
-				fmt.Printf("Error marshaling release: %+v\n", err)
+				fmt.Printf("Error marshaling EKS-A releases manifest: %+v\n", err)
 				os.Exit(1)
 			}
-			fmt.Println(string(output))
+			fmt.Printf("Generated current EKS-A release:\n%s\n", string(currentEksAReleaseYaml))
+
+			previousReleases := pkg.EksAReleases(release.Spec.Releases)
+			release.Spec.Releases = previousReleases.AppendOrUpdateRelease(currentEksARelease)
+
+			releaseManifest, err := yaml.Marshal(release)
+			if err != nil {
+				fmt.Printf("Error marshaling EKS-A releases manifest: %+v\n", err)
+				os.Exit(1)
+			}
+
 			if dryRun {
 				fmt.Println("Dry-run completed.")
 				os.Exit(0)
 			}
-
 			// Push the manifest file and other artifacts to release locations
-			err = ioutil.WriteFile(eksAReleaseManifestFile, output, 0o755)
+			err = ioutil.WriteFile(eksAReleaseManifestFile, releaseManifest, 0o755)
 			if err != nil {
-				fmt.Printf("Error writing manifest file to disk: %v\n", err)
+				fmt.Printf("Error writing EKS-A release manifest file to disk: %v\n", err)
 				os.Exit(1)
 			}
 
 			err = pkg.UploadFileToS3(eksAReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(eksAReleaseManifestKey), releaseClients.S3.Uploader)
 			if err != nil {
-				fmt.Printf("Error uploading bundle manifest to release bucket: %+v", err)
+				fmt.Printf("Error uploading EKS-A release manifest to release bucket: %+v", err)
 				os.Exit(1)
 			}
 
 			if devRelease {
 				err = releaseConfig.PutEksAReleaseVersion(releaseClients, releaseVersion)
 				if err != nil {
-					fmt.Printf("Error uploading latest release version to S3: %v\n", err)
+					fmt.Printf("Error uploading latest EKS-A release version to S3: %v\n", err)
 					os.Exit(1)
 				}
 			}
@@ -313,6 +340,8 @@ func init() {
 	releaseCmd.Flags().String("min-version", "v0.0.0", "The minimum version of eks-a supported by dependency bundles")
 	releaseCmd.Flags().String("max-version", "v0.0.0", "The maximum version of eks-a supported by dependency bundles")
 	releaseCmd.Flags().Int("release-number", 1, "The release-number to create")
+	releaseCmd.Flags().String("cli-repo-url", "", "URL to clone the eks-anywhere repo")
+	releaseCmd.Flags().String("build-repo-url", "", "URL to clone the eks-anywhere-build-tooling repo")
 	releaseCmd.Flags().String("cli-repo-source", "", "The eks-anywhere-cli source")
 	releaseCmd.Flags().String("build-repo-source", "", "The eks-anywhere-build-tooling source")
 	releaseCmd.Flags().String("build-repo-branch-name", "main", "The branch name to build bundles from")
