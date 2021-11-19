@@ -133,12 +133,14 @@ func (f *Factory) WithProviderFactory() *Factory {
 		}
 
 		f.providerFactory = &factory.ProviderFactory{
-			DockerClient:              f.dependencies.DockerClient,
-			DockerKubectlClient:       f.dependencies.Kubectl,
-			VSphereGovcClient:         f.dependencies.Govc,
-			VSphereKubectlClient:      f.dependencies.Kubectl,
-			Writer:                    f.dependencies.Writer,
-			ClusterResourceSetManager: f.dependencies.ResourceSetManager,
+			DockerClient:                f.dependencies.DockerClient,
+			DockerKubectlClient:         f.dependencies.Kubectl,
+			VSphereGovcClient:           f.dependencies.Govc,
+			VSphereKubectlClient:        f.dependencies.Kubectl,
+			CloudStackCloudMonkeyClient: f.dependencies.Cmk,
+			CloudStackKubectlClient:     f.dependencies.Kubectl,
+			Writer:                      f.dependencies.Writer,
+			ClusterResourceSetManager:   f.dependencies.ResourceSetManager,
 		}
 
 		return nil

@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -20,14 +22,16 @@ import (
 const (
 	cmkPath               = "cmk"
 	cmkConfigFileName     = "cmk_tmp.ini"
-	cloudStackUsernameKey = "CLOUDSTACK_USERNAME"
-	cloudStackPasswordKey = "CLOUDSTACK_PASSWORD"
+	cloudStackUsernameKey = "EKSA_CLOUDSTACK_USERNAME"
+	cloudStackPasswordKey = "EKSA_CLOUDSTACK_PASSWORD"
 	cloudStackURLKey      = "CLOUDSTACK_URL"
 )
 
-//go:embed config/cmk.ini
-var cmkConfigTemplate string
-var requiredEnvsCmk = []string{cloudStackUsernameKey, cloudStackPasswordKey, cloudStackURLKey}
+var (
+	//go:embed config/cmk.ini
+	cmkConfigTemplate string
+	requiredEnvsCmk   = []string{cloudStackUsernameKey, cloudStackPasswordKey, cloudStackURLKey}
+)
 
 const (
 	maxRetriesCmk    = 5
@@ -39,6 +43,56 @@ type Cmk struct {
 	executable Executable
 	retrier    *retrier.Retrier
 	execConfig *cmkExecConfig
+}
+
+func (c *Cmk) SearchTemplate(ctx context.Context, domain string, zone string, account string, template string) (string, error) {
+	templates, err := c.ListTemplates(ctx, template)
+	if err != nil {
+		return "", fmt.Errorf("search template %s error: %v", template, err)
+	} else if len(templates) > 1 {
+		return "", fmt.Errorf("duplicate templates %s found", template)
+	} else if len(templates) == 0 {
+		return "", fmt.Errorf("template %s not found", template)
+	}
+	return templates[0].Name, nil
+}
+
+func (c *Cmk) SearchComputeOffering(ctx context.Context, domain string, zone string, account string, computeOffering string) (string, error) {
+	offerings, err := c.ListServiceOfferings(ctx, computeOffering)
+	if err != nil {
+		return "", fmt.Errorf("compute offering %s not found. error: %v", computeOffering, err)
+	} else if len(offerings) > 1 {
+		return "", fmt.Errorf("duplicate compute offering %s found", computeOffering)
+	} else if len(offerings) == 0 {
+		return "", fmt.Errorf("compute offering %s not found", computeOffering)
+	}
+
+	return offerings[0].Name, nil
+}
+
+func (c *Cmk) SearchDiskOffering(ctx context.Context, domain string, zone string, account string, diskOffering string) (string, error) {
+	offerings, err := c.ListDiskOfferings(ctx, diskOffering)
+	if err != nil {
+		return "", fmt.Errorf("disk offering %s not found. error: %v", diskOffering, err)
+	} else if len(offerings) > 1 {
+		return "", fmt.Errorf("duplicate disk offering %s found", diskOffering)
+	} else if len(offerings) == 0 {
+		return "", fmt.Errorf("disk offering %s not found", diskOffering)
+	}
+	return offerings[0].Name, nil
+}
+
+func (c *Cmk) ValidateCloudStackSetup(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, selfSigned *bool) error {
+	return nil
+	// return c.ValidateCloudStackConnection(ctx)
+}
+
+func (c *Cmk) ValidateCloudStackSetupMachineConfig(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, machineConfig *v1alpha1.CloudStackMachineConfig, selfSigned *bool) error {
+	//_, err := c.ListZones(ctx, deploymentConfig.Spec.Zone)
+	//if err != nil {
+	//	return fmt.Errorf("zone: %s not found, error: %v", deploymentConfig.Spec.Zone, err)
+	//}
+	return nil
 }
 
 // cmkExecConfig contains transient information for the execution of cmk commands

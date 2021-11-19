@@ -133,6 +133,22 @@ spec:
       syncer:
         uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b
       version: v0.7.8
+    cloudStack:
+      clusterAPIController:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v4.14.1-eks-a-0.0.1.build.38
+      clusterTemplate:
+        uri: config/clusterctl/overrides/infrastructure-cloudstack/v4.14.1/cluster-template.yaml
+      components:
+        uri: config/clusterctl/overrides/infrastructure-cloudstack/v4.14.1/infrastructure-components.yaml
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      kubeVip:
+        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+      manager:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-cloudstack/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+      metadata:
+        uri: config/clusterctl/overrides/infrastructure-cloudstack/v4.14.1/metadata.yaml
+      version: v4.14.1
   - aws:
       clusterTemplate:
         uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/cluster-template.yaml
@@ -261,6 +277,22 @@ spec:
       syncer:
         uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b
       version: v0.7.8
+    cloudStack:
+      clusterAPIController:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v4.14.1-eks-a-0.0.1.build.38
+      clusterTemplate:
+        uri: config/clusterctl/overrides/infrastructure-cloudstack/v4.14.1/cluster-template.yaml
+      components:
+        uri: config/clusterctl/overrides/infrastructure-cloudstack/v4.14.1/infrastructure-components.yaml
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      kubeVip:
+        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+      manager:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-cloudstack/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+      metadata:
+        uri: config/clusterctl/overrides/infrastructure-cloudstack/v4.14.1/metadata.yaml
+      version: v4.14.1
   - aws:
       clusterTemplate:
         uri: config/clusterctl/overrides/infrastructure-aws/v0.6.4/cluster-template.yaml
@@ -389,6 +421,22 @@ spec:
       syncer:
         uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b
       version: v0.7.8
+    cloudStack:
+      clusterAPIController:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v4.14.1-eks-a-0.0.1.build.38
+      clusterTemplate:
+        uri: config/clusterctl/overrides/infrastructure-cloudstack/v4.14.1/cluster-template.yaml
+      components:
+        uri: config/clusterctl/overrides/infrastructure-cloudstack/v4.14.1/infrastructure-components.yaml
+      kubeProxy:
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244
+      kubeVip:
+        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+      manager:
+        uri: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-cloudstack/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774
+      metadata:
+        uri: config/clusterctl/overrides/infrastructure-cloudstack/v4.14.1/metadata.yaml
+      version: v4.14.1
   - aws:
       clusterTemplate:
         uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api-provider-aws/manifests/infrastructure-aws/v0.6.4/cluster-template.yaml
@@ -744,4 +792,44 @@ spec:
         os: linux
         uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/vsphere-csi-driver/csi/syncer:v2.2.0-eks-a-v0.0.0-dev-build.158
       version: v0.7.10
+    cloudStack:
+      clusterAPIController:
+        arch:
+          - amd64
+        description: Container image for cluster-api-cloudstack-controller image
+        imageDigest: sha256:b7390a5be95e823bb3f5e38a9120786d8c657e7b7530105bee9dec3df86892ce
+        name: cluster-api-cloudstack-controller
+        os: linux
+        uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v4.14.1-eks-a-v0.0.0-dev-build.158
+      clusterTemplate:
+        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v4.14.1/cluster-template.yaml
+      components:
+        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v4.14.1/infrastructure-components.yaml
+      kubeProxy:
+        arch:
+          - amd64
+        description: Container image for kube-rbac-proxy image
+        imageDigest: sha256:7e38d182d7b9a6b8ef428e026a4c83daa4719e066f82b552bed72f482ecfc74c
+        name: kube-rbac-proxy
+        os: linux
+        uri: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.158
+      kubeVip:
+        arch:
+          - amd64
+        description: Container image for kube-vip image
+        imageDigest: sha256:204c63f246bd6eccc330be2875805cae0a1f6867ecac16c07732103429d312b7
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+      manager:
+        arch:
+          - amd64
+        description: Container image for cloud-provider-cloudstack image
+        imageDigest: sha256:d883d89d1fce34f5a8971943f8526a1451a9deeec1771882d01284bcff1766c1
+        name: cloud-provider-cloudstack
+        os: linux
+        uri: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-cloudstack/cpi/manager:v1.21.0-eks-d-1-21-eks-a-v0.0.0-dev-build.158
+      metadata:
+        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.158/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/v4.14.1/metadata.yaml
+      version: v4.14.1
 status: {}
