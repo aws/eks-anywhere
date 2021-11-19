@@ -25,6 +25,19 @@ const (
 	managementAnnotation = "anywhere.eks.amazonaws.com/managed-by"
 )
 
+type OSFamily string
+
+const (
+	Ubuntu       OSFamily = "ubuntu"
+	Bottlerocket OSFamily = "bottlerocket"
+)
+
+// UserConfiguration defines the configuration of the user to be added to the VSphere VM
+type UserConfiguration struct {
+	Name              string   `json:"name"`
+	SshAuthorizedKeys []string `json:"sshAuthorizedKeys"`
+}
+
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // ClusterSpec defines the desired state of Cluster
