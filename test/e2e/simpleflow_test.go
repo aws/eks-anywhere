@@ -43,6 +43,17 @@ func TestDockerKubernetes121SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestEksa060LatestPatchDockerKubernetes121SimpleFlow(t *testing.T) {
+	eksa060 := framework.Eksa060()
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithLatestMinorReleaseFromVersion(eksa060),
+	)
+	runSimpleFlow(test)
+}
+
 func TestVSphereKubernetes120SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
