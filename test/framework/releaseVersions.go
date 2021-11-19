@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/aws/eks-anywhere/internal/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -103,22 +104,44 @@ func GetReleaseBinaryFromVersion(version *semver.Version) (binaryPath string, er
 }
 
 func getBinary(release *releasev1alpha1.EksARelease) (string, error) {
-	latestReleaseBinaryFolder := filepath.Join("bin", release.Version)
+	r := platformAwareRelease{release}
+
+	latestReleaseBinaryFolder := filepath.Join("bin", r.Version)
 	latestReleaseBinaryPath := filepath.Join(latestReleaseBinaryFolder, releaseBinaryName)
 
 	if !validations.FileExists(latestReleaseBinaryPath) {
-		logger.Info("Downloading binary for EKS-A release [%s] to path ./%s", release.Version, latestReleaseBinaryPath)
+		logger.Info("Downloading binary for EKS-A release [%s] to path ./%s", r.Version, latestReleaseBinaryPath)
 		err := os.MkdirAll(latestReleaseBinaryFolder, os.ModePerm)
 		if err != nil {
 			return "", fmt.Errorf("failed creating directory ./%s: %s", latestReleaseBinaryFolder, err)
 		}
 
-		err = files.GzipFileDownloadExtract(release.EksABinary.LinuxBinary.URI, releaseBinaryName, latestReleaseBinaryFolder)
+		binaryUri, err := r.binaryUri()
 		if err != nil {
-			return "", fmt.Errorf("failed extracting binary for EKS-A release [%s] to path ./%s: %s", release.Version, latestReleaseBinaryPath, err)
+			return "", fmt.Errorf("error determining URI for EKS-A binary: %v", err)
+		}
+		err = files.GzipFileDownloadExtract(binaryUri, releaseBinaryName, latestReleaseBinaryFolder)
+		if err != nil {
+			return "", fmt.Errorf("failed extracting binary for EKS-A release [%s] to path ./%s: %s", r.Version, latestReleaseBinaryPath, err)
 		}
 	}
 	return latestReleaseBinaryPath, nil
+}
+
+type platformAwareRelease struct {
+	*releasev1alpha1.EksARelease
+}
+
+func (p *platformAwareRelease) binaryUri () (binaryUri string, err error) {
+	r := runtime.GOOS
+	switch r {
+	case "darwin":
+		return p.EksABinary.DarwinBinary.URI, nil
+	case "linux":
+		return p.EksABinary.LinuxBinary.URI, nil
+	default:
+		return "", fmt.Errorf("unsupported runtime %s", r)
+	}
 }
 
 func prodReleases() (release *releasev1alpha1.Release, err error) {
