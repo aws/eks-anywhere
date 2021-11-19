@@ -150,6 +150,13 @@ func newMachineConfig(t *testing.T) *v1alpha1.VSphereMachineConfig {
 	}
 }
 
+func (dt *deployTemplateTest) expectFolderInfoToReturn(err error) {
+	dt.expectations = append(
+		dt.expectations,
+		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "folder.info", dt.deployFolder).Return(*dt.fakeExecResponse, err),
+	)
+}
+
 func (dt *deployTemplateTest) expectDeployToReturn(err error) {
 	dt.expectations = append(
 		dt.expectations,
@@ -160,14 +167,14 @@ func (dt *deployTemplateTest) expectDeployToReturn(err error) {
 func (dt *deployTemplateTest) expectCreateSnapshotToReturn(err error) {
 	dt.expectations = append(
 		dt.expectations,
-		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "snapshot.create", "-m=false", "-vm", dt.templateName, "root").Return(*dt.fakeExecResponse, err),
+		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "snapshot.create", "-m=false", "-vm", dt.templatePath, "root").Return(*dt.fakeExecResponse, err),
 	)
 }
 
 func (dt *deployTemplateTest) expectMarkAsTemplateToReturn(err error) {
 	dt.expectations = append(
 		dt.expectations,
-		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "vm.markastemplate", dt.templateName).Return(*dt.fakeExecResponse, err),
+		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "vm.markastemplate", dt.templatePath).Return(*dt.fakeExecResponse, err),
 	)
 }
 
@@ -405,6 +412,7 @@ func TestGovcGetWorkloadAvailableSpace(t *testing.T) {
 
 func TestDeployTemplateFromLibrarySuccess(t *testing.T) {
 	tt := newDeployTemplateTest(t)
+	tt.expectFolderInfoToReturn(nil)
 	tt.expectDeployToReturn(nil)
 	tt.expectCreateSnapshotToReturn(nil)
 	tt.expectMarkAsTemplateToReturn(nil)
@@ -414,12 +422,14 @@ func TestDeployTemplateFromLibrarySuccess(t *testing.T) {
 
 func TestDeployTemplateFromLibraryErrorDeploy(t *testing.T) {
 	tt := newDeployTemplateTest(t)
+	tt.expectFolderInfoToReturn(nil)
 	tt.expectDeployToReturn(errors.New("error exec"))
 	tt.assertDeployTemplateError(t)
 }
 
 func TestDeployTemplateFromLibraryErrorCreateSnapshot(t *testing.T) {
 	tt := newDeployTemplateTest(t)
+	tt.expectFolderInfoToReturn(nil)
 	tt.expectDeployToReturn(nil)
 	tt.expectCreateSnapshotToReturn(errors.New("error exec"))
 	tt.assertDeployTemplateError(t)
@@ -427,6 +437,7 @@ func TestDeployTemplateFromLibraryErrorCreateSnapshot(t *testing.T) {
 
 func TestDeployTemplateFromLibraryErrorMarkAsTemplate(t *testing.T) {
 	tt := newDeployTemplateTest(t)
+	tt.expectFolderInfoToReturn(nil)
 	tt.expectDeployToReturn(nil)
 	tt.expectCreateSnapshotToReturn(nil)
 	tt.expectMarkAsTemplateToReturn(errors.New("error exec"))
