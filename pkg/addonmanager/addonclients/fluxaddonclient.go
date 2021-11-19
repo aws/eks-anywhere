@@ -120,6 +120,9 @@ type Flux interface {
 	// ForceReconcileGitRepo sync git repo with latest commit
 	ForceReconcileGitRepo(ctx context.Context, cluster *types.Cluster, namespace string) error
 
+	// DeleteFluxSystemSecret deletes flux-system secret
+	DeleteFluxSystemSecret(ctx context.Context, cluster *types.Cluster, namespace string) error
+
 	// Reconcile reconciles sources and resources
 	Reconcile(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error
 }
@@ -250,7 +253,7 @@ func (f *FluxAddonClient) UpdateGitEksaSpec(ctx context.Context, clusterSpec *cl
 		return err
 	}
 
-	if err := fc.generateClusterConfigFile(); err != nil {
+	if err := fc.writeEksaSystemFiles(); err != nil {
 		return err
 	}
 
@@ -273,6 +276,8 @@ func (f *FluxAddonClient) Validations(ctx context.Context, clusterSpec *cluster.
 	if f.shouldSkipFlux() {
 		return nil
 	}
+
+	clusterSpec.SetDefaultGitOps()
 
 	fc := &fluxForCluster{
 		FluxAddonClient: f,
@@ -427,20 +432,21 @@ func (fc *fluxForCluster) initEksaWriter() (filewriter.FileWriter, error) {
 }
 
 func (fc *fluxForCluster) writeEksaSystemFiles() error {
-	logger.V(3).Info("Generating eks-a cluster config file...")
-	if err := fc.generateClusterConfigFile(); err != nil {
-		return err
-	}
-
-	logger.V(3).Info("Generating eks-a kustomization file...")
-	return fc.generateEksaKustomizeFile()
-}
-
-func (fc *fluxForCluster) generateClusterConfigFile() error {
 	w, err := fc.initEksaWriter()
 	if err != nil {
 		return err
 	}
+
+	logger.V(3).Info("Generating eks-a cluster config file...")
+	if err := fc.generateClusterConfigFile(w); err != nil {
+		return err
+	}
+
+	logger.V(3).Info("Generating eks-a kustomization file...")
+	return fc.generateEksaKustomizeFile(w)
+}
+
+func (fc *fluxForCluster) generateClusterConfigFile(w filewriter.FileWriter) error {
 	resourcesSpec, err := clustermarshaller.MarshalClusterSpec(fc.clusterSpec, fc.datacenterConfig, fc.machineConfigs)
 	if err != nil {
 		return err
@@ -452,12 +458,7 @@ func (fc *fluxForCluster) generateClusterConfigFile() error {
 	return nil
 }
 
-func (fc *fluxForCluster) generateEksaKustomizeFile() error {
-	w, err := fc.initEksaWriter()
-	if err != nil {
-		return err
-	}
-
+func (fc *fluxForCluster) generateEksaKustomizeFile(w filewriter.FileWriter) error {
 	values := map[string]string{
 		"ConfigFileName": clusterConfigFileName,
 	}

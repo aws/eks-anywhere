@@ -24,3 +24,7 @@ func (f *FluxKubectl) ForceReconcileGitRepo(ctx context.Context, cluster *types.
 		executables.WithNamespace(namespace),
 	)
 }
+
+func (f *FluxKubectl) DeleteFluxSystemSecret(ctx context.Context, cluster *types.Cluster, namespace string) error {
+	return f.DeleteSecret(ctx, cluster, "flux-system", namespace)
+}

@@ -114,6 +114,11 @@ func (e *E2ESession) setup(regex string) error {
 		return err
 	}
 
+	err = e.setupAwsIam(regex)
+	if err != nil {
+		return err
+	}
+
 	// Adding JobId to Test Env variables
 	e.testEnvVars[e2etests.JobIdVar] = e.jobId
 	e.testEnvVars[e2etests.BundlesOverrideVar] = strconv.FormatBool(e.bundlesOverride)
@@ -154,9 +159,9 @@ func (e *E2ESession) downloadRequiredFileInInstance(file string) error {
 
 	var command string
 	if file == "eksctl" {
-		command = fmt.Sprintf("aws s3 cp s3://%s/eksctl/%s ./bin/ && chmod 645 ./bin/%s", e.storageBucket, file, file)
+		command = fmt.Sprintf("aws s3 cp s3://%s/eksctl/%[2]s ./bin/ && chmod 645 ./bin/%[2]s", e.storageBucket, file)
 	} else {
-		command = fmt.Sprintf("aws s3 cp s3://%s/%s/%s ./bin/ && chmod 645 ./bin/%s", e.storageBucket, e.jobId, file, file)
+		command = fmt.Sprintf("aws s3 cp s3://%s/%s/%[3]s ./bin/ && chmod 645 ./bin/%[3]s", e.storageBucket, e.jobId, file)
 	}
 	_, err := ssm.Run(e.session, e.instanceId, command)
 	if err != nil {

@@ -84,7 +84,7 @@ func TestFluxAddonClientInstallGitOpsOnManagementClusterWithPrexistingRepo(t *te
 			ctx := context.Background()
 			cluster := &types.Cluster{}
 			clusterConfig := v1alpha1.NewCluster(tt.clusterName)
-			f, m, writePath := newAddonClient(t)
+			f, m, g := newAddonClient(t)
 			clusterSpec := newClusterSpec(clusterConfig, tt.fluxpath)
 
 			m.flux.EXPECT().BootstrapToolkitsComponents(ctx, cluster, clusterSpec.GitOpsConfig)
@@ -104,17 +104,16 @@ func TestFluxAddonClientInstallGitOpsOnManagementClusterWithPrexistingRepo(t *te
 			if err != nil {
 				t.Errorf("FluxAddonClient.InstallGitOps() error = %v, want nil", err)
 			}
-			expectedEksaClusterConfigPath := path.Join(writePath, tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
-			fmt.Println(expectedEksaClusterConfigPath)
+			expectedEksaClusterConfigPath := path.Join(g.Writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
 			test.AssertFilesEquals(t, expectedEksaClusterConfigPath, tt.expectedConfigFileContents)
 
-			expectedKustomizationPath := path.Join(writePath, tt.expectedEksaSystemDirPath, tt.expectedKustomizationFileName)
+			expectedKustomizationPath := path.Join(g.Writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedKustomizationFileName)
 			test.AssertFilesEquals(t, expectedKustomizationPath, "./testdata/kustomization.yaml")
 
-			expectedFluxPatchesPath := path.Join(writePath, tt.expectedFluxSystemDirPath, tt.expectedFluxPatchesFileName)
+			expectedFluxPatchesPath := path.Join(g.Writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedFluxPatchesFileName)
 			test.AssertFilesEquals(t, expectedFluxPatchesPath, "./testdata/gotk-patches.yaml")
 
-			expectedFluxSyncPath := path.Join(writePath, tt.expectedFluxSystemDirPath, tt.expectedFluxSyncFileName)
+			expectedFluxSyncPath := path.Join(g.Writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedFluxSyncFileName)
 			test.AssertFilesEquals(t, expectedFluxSyncPath, "./testdata/gotk-sync.yaml")
 		})
 	}
@@ -126,7 +125,7 @@ func TestFluxAddonClientInstallGitOpsOnWorkloadClusterWithPrexistingRepo(t *test
 	clusterName := "workload-cluster"
 	clusterConfig := v1alpha1.NewCluster(clusterName)
 	clusterConfig.SetManagedBy("management-cluster")
-	f, m, writePath := newAddonClient(t)
+	f, m, g := newAddonClient(t)
 	clusterSpec := newClusterSpec(clusterConfig, "")
 
 	m.flux.EXPECT().BootstrapToolkitsComponents(ctx, cluster, clusterSpec.GitOpsConfig)
@@ -146,18 +145,18 @@ func TestFluxAddonClientInstallGitOpsOnWorkloadClusterWithPrexistingRepo(t *test
 	if err != nil {
 		t.Errorf("FluxAddonClient.InstallGitOps() error = %v, want nil", err)
 	}
-	expectedEksaClusterConfigPath := path.Join(writePath, "clusters/management-cluster/workload-cluster/eksa-system", defaultEksaClusterConfigFileName)
+	expectedEksaClusterConfigPath := path.Join(g.Writer.Dir(), "clusters/management-cluster/workload-cluster/eksa-system", defaultEksaClusterConfigFileName)
 	test.AssertFilesEquals(t, expectedEksaClusterConfigPath, "./testdata/cluster-config-default-path-workload.yaml")
 
-	expectedKustomizationPath := path.Join(writePath, "clusters/management-cluster/workload-cluster/eksa-system", defaultKustomizationManifestFileName)
+	expectedKustomizationPath := path.Join(g.Writer.Dir(), "clusters/management-cluster/workload-cluster/eksa-system", defaultKustomizationManifestFileName)
 	test.AssertFilesEquals(t, expectedKustomizationPath, "./testdata/kustomization.yaml")
 
-	expectedFluxPatchesPath := path.Join(writePath, "clusters/management-cluster/flux-system", defaultFluxPatchesFileName)
+	expectedFluxPatchesPath := path.Join(g.Writer.Dir(), "clusters/management-cluster/flux-system", defaultFluxPatchesFileName)
 	if _, err := os.Stat(expectedFluxPatchesPath); errors.Is(err, os.ErrExist) {
 		t.Errorf("File exists at %s, should not exist", expectedFluxPatchesPath)
 	}
 
-	expectedFluxSyncPath := path.Join(writePath, "clusters/management-cluster/flux-system", defaultFluxSyncFileName)
+	expectedFluxSyncPath := path.Join(g.Writer.Dir(), "clusters/management-cluster/flux-system", defaultFluxSyncFileName)
 	if _, err := os.Stat(expectedFluxSyncPath); errors.Is(err, os.ErrExist) {
 		t.Errorf("File exists at %s, should not exist", expectedFluxSyncPath)
 	}
@@ -211,7 +210,7 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 			ctx := context.Background()
 			cluster := &types.Cluster{}
 			clusterConfig := v1alpha1.NewCluster(tt.clusterName)
-			f, m, writePath := newAddonClient(t)
+			f, m, g := newAddonClient(t)
 			clusterSpec := newClusterSpec(clusterConfig, tt.fluxpath)
 
 			m.flux.EXPECT().BootstrapToolkitsComponents(ctx, cluster, clusterSpec.GitOpsConfig)
@@ -245,16 +244,16 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 			if err != nil {
 				t.Errorf("FluxAddonClient.InstallGitOps() error = %v, want nil", err)
 			}
-			expectedEksaClusterConfigPath := path.Join(writePath, tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
+			expectedEksaClusterConfigPath := path.Join(g.Writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
 			test.AssertFilesEquals(t, expectedEksaClusterConfigPath, tt.expectedConfigFileContents)
 
-			expectedKustomizationPath := path.Join(writePath, tt.expectedEksaSystemDirPath, tt.expectedKustomizationFileName)
+			expectedKustomizationPath := path.Join(g.Writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedKustomizationFileName)
 			test.AssertFilesEquals(t, expectedKustomizationPath, "./testdata/kustomization.yaml")
 
-			expectedFluxPatchesPath := path.Join(writePath, tt.expectedFluxSystemDirPath, tt.expectedFluxPatchesFileName)
+			expectedFluxPatchesPath := path.Join(g.Writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedFluxPatchesFileName)
 			test.AssertFilesEquals(t, expectedFluxPatchesPath, "./testdata/gotk-patches.yaml")
 
-			expectedFluxSyncPath := path.Join(writePath, tt.expectedFluxSystemDirPath, tt.expectedFluxSyncFileName)
+			expectedFluxSyncPath := path.Join(g.Writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedFluxSyncFileName)
 			test.AssertFilesEquals(t, expectedFluxSyncPath, "./testdata/gotk-sync.yaml")
 		})
 	}
@@ -294,7 +293,7 @@ func TestFluxAddonClientInstallGitOpsToolkitsBareRepo(t *testing.T) {
 			ctx := context.Background()
 			cluster := &types.Cluster{}
 			clusterConfig := v1alpha1.NewCluster(tt.clusterName)
-			f, m, writePath := newAddonClient(t)
+			f, m, g := newAddonClient(t)
 			clusterSpec := newClusterSpec(clusterConfig, tt.fluxpath)
 
 			m.flux.EXPECT().BootstrapToolkitsComponents(ctx, cluster, clusterSpec.GitOpsConfig)
@@ -315,16 +314,16 @@ func TestFluxAddonClientInstallGitOpsToolkitsBareRepo(t *testing.T) {
 			if err != nil {
 				t.Errorf("FluxAddonClient.InstallGitOpsToolkits() error = %v, want nil", err)
 			}
-			expectedEksaClusterConfigPath := path.Join(writePath, tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
+			expectedEksaClusterConfigPath := path.Join(g.Writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedEksaConfigFileName)
 			test.AssertFilesEquals(t, expectedEksaClusterConfigPath, tt.expectedConfigFileContents)
 
-			expectedKustomizationPath := path.Join(writePath, tt.expectedEksaSystemDirPath, tt.expectedKustomizationFileName)
+			expectedKustomizationPath := path.Join(g.Writer.Dir(), tt.expectedEksaSystemDirPath, tt.expectedKustomizationFileName)
 			test.AssertFilesEquals(t, expectedKustomizationPath, "./testdata/kustomization.yaml")
 
-			expectedFluxPatchesPath := path.Join(writePath, tt.expectedFluxSystemDirPath, tt.expectedFluxPatchesFileName)
+			expectedFluxPatchesPath := path.Join(g.Writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedFluxPatchesFileName)
 			test.AssertFilesEquals(t, expectedFluxPatchesPath, "./testdata/gotk-patches.yaml")
 
-			expectedFluxSyncPath := path.Join(writePath, tt.expectedFluxSystemDirPath, tt.expectedFluxSyncFileName)
+			expectedFluxSyncPath := path.Join(g.Writer.Dir(), tt.expectedFluxSystemDirPath, tt.expectedFluxSyncFileName)
 			test.AssertFilesEquals(t, expectedFluxSyncPath, "./testdata/gotk-sync.yaml")
 		})
 	}
@@ -366,7 +365,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoNotExists(t *testing.T) {
 	clusterName := "management-cluster"
 	clusterConfig := v1alpha1.NewCluster(clusterName)
 	eksaSystemDirPath := "clusters/management-cluster/management-cluster/eksa-system"
-	f, m, writePath := newAddonClient(t)
+	f, m, g := newAddonClient(t)
 	clusterSpec := newClusterSpec(clusterConfig, "")
 
 	m.git.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository}, nil)
@@ -382,7 +381,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoNotExists(t *testing.T) {
 	if err != nil {
 		t.Errorf("FluxAddonClient.UpdateGitEksaSpec() error = %v, want nil", err)
 	}
-	expectedEksaClusterConfigPath := path.Join(writePath, eksaSystemDirPath, defaultEksaClusterConfigFileName)
+	expectedEksaClusterConfigPath := path.Join(g.Writer.Dir(), eksaSystemDirPath, defaultEksaClusterConfigFileName)
 	test.AssertFilesEquals(t, expectedEksaClusterConfigPath, "./testdata/cluster-config-default-path-management.yaml")
 }
 
@@ -789,16 +788,16 @@ type mocks struct {
 	git  *gitMocks.MockProvider
 }
 
-func newAddonClient(t *testing.T) (*addonclients.FluxAddonClient, *mocks, string) {
+func newAddonClient(t *testing.T) (*addonclients.FluxAddonClient, *mocks, *addonclients.GitOptions) {
 	mockCtrl := gomock.NewController(t)
 	m := &mocks{
 		flux: addonClientMocks.NewMockFlux(mockCtrl),
 		git:  gitMocks.NewMockProvider(mockCtrl),
 	}
-	writePath, w := test.NewWriter(t)
+	_, w := test.NewWriter(t)
 	gitOpts := &addonclients.GitOptions{Git: m.git, Writer: w}
 	f := addonclients.NewFluxAddonClient(m.flux, gitOpts)
 	retrier := retrier.NewWithMaxRetries(2, 1)
 	f.SetRetier(retrier)
-	return f, m, writePath
+	return f, m, gitOpts
 }

@@ -59,6 +59,7 @@ type ClusterClient interface {
 	WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
+	GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error)
 	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error
 	DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, gitOpsName, namespace string) error
 	DeleteOIDCConfig(ctx context.Context, managementCluster *types.Cluster, oidcConfigName, oidcConfigNamespace string) error
@@ -82,6 +83,7 @@ type ClusterClient interface {
 	GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error)
 	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
 	GetClusterCATlsCert(ctx context.Context, clusterName string, cluster *types.Cluster, namespace string) ([]byte, error)
+	KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error)
 }
 
 type Networking interface {
@@ -208,21 +210,36 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		// the condition external etcd ready if true indicates that all etcd machines are ready and the etcd cluster is ready to accept requests
 	}
 
+	logger.V(3).Info("Waiting for workload kubeconfig secret to be ready", "cluster", workloadCluster.Name)
+	err = c.Retrier.Retry(
+		func() error {
+			found, err := c.clusterClient.KubeconfigSecretAvailable(ctx, managementCluster.KubeconfigFile, workloadCluster.Name, constants.EksaSystemNamespace)
+			if err == nil && !found {
+				err = fmt.Errorf("kubeconfig secret does not exist")
+			}
+			return err
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("error checking availability of kubeconfig secret: %v", err)
+	}
+
+	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", workloadCluster.Name)
+	workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
+	if err != nil {
+		return nil, fmt.Errorf("error generating workload kubeconfig: %v", err)
+	}
+
+	logger.V(3).Info("Run post control plane creation operations")
+	err = provider.RunPostControlPlaneCreation(ctx, clusterSpec, workloadCluster)
+	if err != nil {
+		return nil, fmt.Errorf("error running post control plane creation operations: %v", err)
+	}
+
 	logger.V(3).Info("Waiting for control plane to be ready")
 	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, workloadCluster.Name)
 	if err != nil {
 		return nil, fmt.Errorf("error waiting for workload cluster control plane to be ready: %v", err)
-	}
-
-	err = c.Retrier.Retry(
-		func() error {
-			workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
-			return err
-		},
-	)
-
-	if err != nil {
-		return nil, fmt.Errorf("error generating workload kubeconfig: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for controlplane and worker machines to be ready")
@@ -329,6 +346,12 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		logger.V(3).Info("External etcd is ready")
 	}
 
+	logger.V(3).Info("Run post control plane upgrade operations")
+	err = provider.RunPostControlPlaneUpgrade(ctx, currentSpec, newClusterSpec, workloadCluster, managementCluster)
+	if err != nil {
+		return fmt.Errorf("error running post control plane upgrade operations: %v", err)
+	}
+
 	logger.V(3).Info("Waiting for control plane to be ready")
 	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, newClusterSpec.Name)
 	if err != nil {
@@ -376,10 +399,6 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	err = c.waitForCAPI(ctx, workloadCluster, provider, externalEtcdTopology)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster capi components to be ready: %v", err)
-	}
-
-	if err = provider.RunPostUpgrade(ctx, newClusterSpec, managementCluster, workloadCluster); err != nil {
-		return fmt.Errorf("failed running provider post upgrade: %v", err)
 	}
 
 	if err = cluster.ApplyExtraObjects(ctx, c.clusterClient, workloadCluster, newClusterSpec); err != nil {
@@ -988,12 +1007,18 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 }
 
 func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus))
+	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.gitOpsFetcher(clus))
 }
 
 func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {
 	return func(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
 		return c.clusterClient.GetBundles(ctx, cluster.KubeconfigFile, name, namespace)
+	}
+}
+
+func (c *ClusterManager) gitOpsFetcher(cluster *types.Cluster) cluster.GitOpsFetch {
+	return func(ctx context.Context, name, namespace string) (*v1alpha1.GitOpsConfig, error) {
+		return c.clusterClient.GetEksaGitOpsConfig(ctx, name, cluster.KubeconfigFile, namespace)
 	}
 }
 

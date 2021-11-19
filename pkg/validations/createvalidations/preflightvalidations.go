@@ -25,6 +25,11 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 				Err:         ValidateClusterNameIsUnique(ctx, k, targetCluster, u.Opts.Spec.Name),
 			},
 			validations.ValidationResult{
+				Name:        "validate taints support",
+				Remediation: "",
+				Err:         ValidateTaintsSupport(ctx, u.Opts.Spec),
+			},
+			validations.ValidationResult{
 				Name:        "validate gitops",
 				Remediation: "",
 				Err:         ValidateGitOps(ctx, k, u.Opts.ManagementCluster, u.Opts.Spec),

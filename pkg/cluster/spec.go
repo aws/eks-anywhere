@@ -143,6 +143,12 @@ func WithUserAgent(userAgent string) SpecOpt {
 	}
 }
 
+func WithGitOpsConfig(gitOpsConfig *eksav1alpha1.GitOpsConfig) SpecOpt {
+	return func(s *Spec) {
+		s.GitOpsConfig = gitOpsConfig
+	}
+}
+
 func NewSpec(opts ...SpecOpt) *Spec {
 	s := &Spec{
 		releasesManifestURL: releasesManifestURL,
@@ -248,8 +254,6 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	} else {
 		s.SetSelfManaged()
 	}
-
-	s.SetDefaultGitOps()
 
 	return s, nil
 }
@@ -410,20 +414,25 @@ func kubeDistroRepository(image *eksdv1alpha1.AssetImage) (repo, tag string) {
 	return i.Image()[:lastInd], i.Tag()
 }
 
-func GetEksdRelease(cliVersion version.Info, clusterConfig *eksav1alpha1.Cluster) (*v1alpha1.EksDRelease, error) {
+func GetEksdRelease(cliVersion version.Info, clusterConfig *eksav1alpha1.Cluster) (*v1alpha1.EksDRelease, *eksdv1alpha1.Release, error) {
 	s := newWithCliVersion(cliVersion)
 
 	bundles, err := s.GetBundles(cliVersion)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	versionsBundle, err := s.getVersionsBundle(clusterConfig, bundles)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return &versionsBundle.EksD, nil
+	eksdRelease, err := s.reader.GetEksdRelease(versionsBundle)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return &versionsBundle.EksD, eksdRelease, nil
 }
 
 type Manifest struct {
@@ -458,6 +467,7 @@ func (vb *VersionsBundle) SharedImages() []v1alpha1.Image {
 	images = append(images, vb.Bootstrap.KubeProxy)
 
 	images = append(images, vb.BottleRocketBootstrap.Bootstrap)
+	images = append(images, vb.BottleRocketAdmin.Admin)
 
 	images = append(images, vb.CertManager.Acmesolver)
 	images = append(images, vb.CertManager.Cainjector)

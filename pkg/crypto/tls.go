@@ -8,19 +8,17 @@ import (
 )
 
 type DefaultTlsValidator struct {
-	cert string
-	url  string
+	url string
 }
 
 type TlsValidator interface {
-	ValidateCert() error
+	ValidateCert(cert string) error
 	HasSelfSignedCert() (bool, error)
 }
 
-func NewTlsValidator(cert, url string) TlsValidator {
+func NewTlsValidator(url string) TlsValidator {
 	return &DefaultTlsValidator{
-		cert: cert,
-		url:  url,
+		url: url,
 	}
 }
 
@@ -42,9 +40,9 @@ func (tv *DefaultTlsValidator) HasSelfSignedCert() (bool, error) {
 }
 
 // ValidateCert parses the cert, ensures that the cert format is valid and verifies that the cert is valid for the url
-func (tv *DefaultTlsValidator) ValidateCert() error {
+func (tv *DefaultTlsValidator) ValidateCert(cert string) error {
 	// Validates that the cert format is valid
-	block, _ := pem.Decode([]byte(tv.cert))
+	block, _ := pem.Decode([]byte(cert))
 	if block == nil {
 		return fmt.Errorf("failed to parse certificate PEM")
 	}
