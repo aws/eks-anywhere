@@ -32,6 +32,7 @@ const (
 	govcInsecure         = "GOVC_INSECURE"
 	govcTlsHostsFile     = "govc_known_hosts"
 	govcTlsKnownHostsKey = "GOVC_TLS_KNOWN_HOSTS"
+	govcPersistSession   = "GOVC_PERSIST_SESSION"
 	vSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
 	vSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
 	vSphereServerKey     = "VSPHERE_SERVER"
@@ -344,7 +345,6 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 		"-pool", resourcePool,
 		"-folder", deployFolder,
 		"-options", deployOptsPath,
-		"-persist-session=false",
 		templateInLibraryPath, templateName,
 	}
 	if _, err := g.exec(ctx, params...); err != nil {
@@ -390,14 +390,14 @@ func (g *Govc) deleteVM(ctx context.Context, path string) error {
 }
 
 func (g *Govc) createVMSnapshot(ctx context.Context, name string) error {
-	if _, err := g.exec(ctx, "snapshot.create", "-m=false", "-persist-session=false", "-vm", name, "root"); err != nil {
+	if _, err := g.exec(ctx, "snapshot.create", "-m=false", "-vm", name, "root"); err != nil {
 		return fmt.Errorf("govc failed taking vm snapshot: %v", err)
 	}
 	return nil
 }
 
 func (g *Govc) markVMAsTemplate(ctx context.Context, vmName string) error {
-	if _, err := g.exec(ctx, "vm.markastemplate", "-persist-session=false", vmName); err != nil {
+	if _, err := g.exec(ctx, "vm.markastemplate", vmName); err != nil {
 		return fmt.Errorf("error marking VM as template: %v", err)
 	}
 	return nil
@@ -418,6 +418,8 @@ func (g *Govc) getEnvMap() (map[string]string, error) {
 			}
 		}
 	}
+	envMap[govcPersistSession] = "false"
+
 	return envMap, nil
 }
 

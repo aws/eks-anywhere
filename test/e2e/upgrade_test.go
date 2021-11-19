@@ -23,10 +23,10 @@ const (
 	clusterNamespace           = "test-namespace"
 )
 
-func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, opts ...framework.ClusterE2ETestOpt) {
+func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
-	test.UpgradeCluster(opts...)
+	test.UpgradeCluster(clusterOpts)
 	test.ValidateCluster(updateVersion)
 	test.StopIfFailed()
 	test.DeleteCluster()
