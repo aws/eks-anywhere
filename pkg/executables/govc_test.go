@@ -167,14 +167,14 @@ func (dt *deployTemplateTest) expectDeployToReturn(err error) {
 func (dt *deployTemplateTest) expectCreateSnapshotToReturn(err error) {
 	dt.expectations = append(
 		dt.expectations,
-		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "snapshot.create", "-m=false", "-vm", dt.templatePath, "root").Return(*dt.fakeExecResponse, err),
+		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "snapshot.create", "-dc", dt.datacenter, "-m=false", "-vm", dt.templatePath, "root").Return(*dt.fakeExecResponse, err),
 	)
 }
 
 func (dt *deployTemplateTest) expectMarkAsTemplateToReturn(err error) {
 	dt.expectations = append(
 		dt.expectations,
-		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "vm.markastemplate", dt.templatePath).Return(*dt.fakeExecResponse, err),
+		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "vm.markastemplate", "-dc", dt.datacenter, dt.templatePath).Return(*dt.fakeExecResponse, err),
 	)
 }
 

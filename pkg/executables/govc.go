@@ -167,16 +167,16 @@ func (g *Govc) DeleteLibraryElement(ctx context.Context, element string) error {
 	return nil
 }
 
-func (g *Govc) ResizeDisk(ctx context.Context, template, diskName string, diskSizeInGB int) error {
-	_, err := g.exec(ctx, "vm.disk.change", "-vm", template, "-disk.name", diskName, "-size", strconv.Itoa(diskSizeInGB)+"G")
+func (g *Govc) ResizeDisk(ctx context.Context, datacenter, template, diskName string, diskSizeInGB int) error {
+	_, err := g.exec(ctx, "vm.disk.change", "-dc", datacenter, "-vm", template, "-disk.name", diskName, "-size", strconv.Itoa(diskSizeInGB)+"G")
 	if err != nil {
 		return fmt.Errorf("failed to resize disk %s: %v", diskName, err)
 	}
 	return nil
 }
 
-func (g *Govc) DevicesInfo(ctx context.Context, template string) (interface{}, error) {
-	response, err := g.exec(ctx, "device.info", "-vm", template, "-json")
+func (g *Govc) DevicesInfo(ctx context.Context, datacenter, template string) (interface{}, error) {
+	response, err := g.exec(ctx, "device.info", "-dc", datacenter, "-vm", template, "-json")
 	if err != nil {
 		return nil, fmt.Errorf("error getting template device information: %v", err)
 	}
@@ -251,7 +251,7 @@ func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templ
 	if resizeDisk2 {
 		// Get devices information template to identify second disk properly
 		logger.V(4).Info("Getting devices info for template")
-		devicesInfo, err := g.DevicesInfo(ctx, templateName)
+		devicesInfo, err := g.DevicesInfo(ctx, datacenter, templateName)
 		if err != nil {
 			return err
 		}
@@ -262,7 +262,7 @@ func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templ
 				// Get the name of the hard disk and resize the disk to 20G
 				diskName := deviceInfo.(map[string]interface{})["Name"].(string)
 				logger.V(4).Info("Resizing disk 2 of template to 20G")
-				err := g.ResizeDisk(ctx, templateName, diskName, 20)
+				err := g.ResizeDisk(ctx, datacenter, templateName, diskName, 20)
 				if err != nil {
 					return fmt.Errorf("error resizing disk 2 to 20G: %v", err)
 				}
@@ -274,12 +274,12 @@ func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templ
 	templateFullPath := filepath.Join(templateDir, templateName)
 
 	logger.V(4).Info("Taking template snapshot", "templateName", templateFullPath)
-	if err := g.createVMSnapshot(ctx, templateFullPath); err != nil {
+	if err := g.createVMSnapshot(ctx, datacenter, templateFullPath); err != nil {
 		return err
 	}
 
 	logger.V(4).Info("Marking vm as template", "templateName", templateFullPath)
-	if err := g.markVMAsTemplate(ctx, templateFullPath); err != nil {
+	if err := g.markVMAsTemplate(ctx, datacenter, templateFullPath); err != nil {
 		return err
 	}
 
@@ -389,15 +389,15 @@ func (g *Govc) deleteVM(ctx context.Context, path string) error {
 	return nil
 }
 
-func (g *Govc) createVMSnapshot(ctx context.Context, name string) error {
-	if _, err := g.exec(ctx, "snapshot.create", "-m=false", "-vm", name, "root"); err != nil {
+func (g *Govc) createVMSnapshot(ctx context.Context, datacenter, name string) error {
+	if _, err := g.exec(ctx, "snapshot.create", "-dc", datacenter, "-m=false", "-vm", name, "root"); err != nil {
 		return fmt.Errorf("govc failed taking vm snapshot: %v", err)
 	}
 	return nil
 }
 
-func (g *Govc) markVMAsTemplate(ctx context.Context, vmName string) error {
-	if _, err := g.exec(ctx, "vm.markastemplate", vmName); err != nil {
+func (g *Govc) markVMAsTemplate(ctx context.Context, datacenter, vmName string) error {
+	if _, err := g.exec(ctx, "vm.markastemplate", "-dc", datacenter, vmName); err != nil {
 		return fmt.Errorf("error marking VM as template: %v", err)
 	}
 	return nil
