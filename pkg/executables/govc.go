@@ -32,6 +32,7 @@ const (
 	govcInsecure         = "GOVC_INSECURE"
 	govcTlsHostsFile     = "govc_known_hosts"
 	govcTlsKnownHostsKey = "GOVC_TLS_KNOWN_HOSTS"
+	govcPersistSession   = "GOVC_PERSIST_SESSION"
 	vSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
 	vSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
 	vSphereServerKey     = "VSPHERE_SERVER"
@@ -270,13 +271,15 @@ func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templ
 		}
 	}
 
-	logger.V(4).Info("Taking template snapshot", "templateName", templateName)
-	if err := g.createVMSnapshot(ctx, datacenter, templateName); err != nil {
+	templateFullPath := filepath.Join(templateDir, templateName)
+
+	logger.V(4).Info("Taking template snapshot", "templateName", templateFullPath)
+	if err := g.createVMSnapshot(ctx, datacenter, templateFullPath); err != nil {
 		return err
 	}
 
-	logger.V(4).Info("Marking vm as template", "templateName", templateName)
-	if err := g.markVMAsTemplate(ctx, datacenter, templateName); err != nil {
+	logger.V(4).Info("Marking vm as template", "templateName", templateFullPath)
+	if err := g.markVMAsTemplate(ctx, datacenter, templateFullPath); err != nil {
 		return err
 	}
 
@@ -292,6 +295,11 @@ func (g *Govc) ImportTemplate(ctx context.Context, library, ovaURL, name string)
 }
 
 func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deployFolder, datacenter, resourcePool string) error {
+	envMap, err := g.validateAndSetupCreds()
+	if err != nil {
+		return fmt.Errorf("failed govc validations: %v", err)
+	}
+
 	templateInLibraryPath := filepath.Join(library, templateName)
 	if !filepath.IsAbs(templateInLibraryPath) {
 		templateInLibraryPath = fmt.Sprintf("/%s", templateInLibraryPath)
@@ -302,13 +310,41 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 		return fmt.Errorf("failed writing deploy options file to disk: %v", err)
 	}
 
-	params := []string{
+	bFolderNotFound := false
+	params := []string{"folder.info", deployFolder}
+	err = g.retrier.Retry(func() error {
+		errBuffer, err := g.executable.ExecuteWithEnv(ctx, envMap, params...)
+		errString := strings.ToLower(errBuffer.String())
+		if err != nil {
+			if !strings.Contains(errString, "not found") {
+				return fmt.Errorf("error obtaining folder information: %v", err)
+			} else {
+				bFolderNotFound = true
+			}
+		}
+		return nil
+	})
+	if err != nil || bFolderNotFound {
+		params = []string{"folder.create", deployFolder}
+		err = g.retrier.Retry(func() error {
+			errBuffer, err := g.executable.ExecuteWithEnv(ctx, envMap, params...)
+			errString := strings.ToLower(errBuffer.String())
+			if err != nil && !strings.Contains(errString, "already exists") {
+				return fmt.Errorf("error creating folder: %v", err)
+			}
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("error creating folder: %v", err)
+		}
+	}
+
+	params = []string{
 		"library.deploy",
 		"-dc", datacenter,
 		"-pool", resourcePool,
 		"-folder", deployFolder,
 		"-options", deployOptsPath,
-		"-persist-session=false",
 		templateInLibraryPath, templateName,
 	}
 	if _, err := g.exec(ctx, params...); err != nil {
@@ -354,14 +390,14 @@ func (g *Govc) deleteVM(ctx context.Context, path string) error {
 }
 
 func (g *Govc) createVMSnapshot(ctx context.Context, datacenter, name string) error {
-	if _, err := g.exec(ctx, "snapshot.create", "-dc", datacenter, "-m=false", "-persist-session=false", "-vm", name, "root"); err != nil {
+	if _, err := g.exec(ctx, "snapshot.create", "-dc", datacenter, "-m=false", "-vm", name, "root"); err != nil {
 		return fmt.Errorf("govc failed taking vm snapshot: %v", err)
 	}
 	return nil
 }
 
 func (g *Govc) markVMAsTemplate(ctx context.Context, datacenter, vmName string) error {
-	if _, err := g.exec(ctx, "vm.markastemplate", "-dc", datacenter, "-persist-session=false", vmName); err != nil {
+	if _, err := g.exec(ctx, "vm.markastemplate", "-dc", datacenter, vmName); err != nil {
 		return fmt.Errorf("error marking VM as template: %v", err)
 	}
 	return nil
@@ -382,6 +418,8 @@ func (g *Govc) getEnvMap() (map[string]string, error) {
 			}
 		}
 	}
+	envMap[govcPersistSession] = "false"
+
 	return envMap, nil
 }
 
