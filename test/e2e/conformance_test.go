@@ -10,7 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-func runConformanceFlow(test *framework.E2ETest) {
+func runConformanceFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
 	test.RunConformanceTests()
@@ -19,7 +19,7 @@ func runConformanceFlow(test *framework.E2ETest) {
 }
 
 func TestDockerKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
-	test := framework.NewE2ETest(
+	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
@@ -29,7 +29,7 @@ func TestDockerKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
 }
 
 func TestDockerKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
-	test := framework.NewE2ETest(
+	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
@@ -39,7 +39,7 @@ func TestDockerKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
 }
 
 func TestVSphereKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
-	test := framework.NewE2ETest(
+	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu120()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
@@ -49,7 +49,7 @@ func TestVSphereKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
 }
 
 func TestVSphereKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
-	test := framework.NewE2ETest(
+	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
@@ -59,7 +59,7 @@ func TestVSphereKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
 }
 
 func TestVSphereKubernetes120BottleRocketThreeWorkersConformanceFlow(t *testing.T) {
-	test := framework.NewE2ETest(
+	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket120()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
@@ -69,7 +69,7 @@ func TestVSphereKubernetes120BottleRocketThreeWorkersConformanceFlow(t *testing.
 }
 
 func TestVSphereKubernetes121BottleRocketThreeWorkersConformanceFlow(t *testing.T) {
-	test := framework.NewE2ETest(
+	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
