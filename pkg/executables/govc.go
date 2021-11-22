@@ -32,7 +32,7 @@ const (
 	govcInsecure         = "GOVC_INSECURE"
 	govcTlsHostsFile     = "govc_known_hosts"
 	govcTlsKnownHostsKey = "GOVC_TLS_KNOWN_HOSTS"
-	govcPersistSession   = "GOVC_PERSIST_SESSION"
+	govmomiHomeEnvVar    = "GOVMOMI_HOME"
 	vSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
 	vSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
 	vSphereServerKey     = "VSPHERE_SERVER"
@@ -418,7 +418,25 @@ func (g *Govc) getEnvMap() (map[string]string, error) {
 			}
 		}
 	}
-	envMap[govcPersistSession] = "false"
+
+	// This ensures that sessions will be persisted to a known dir that will be available to all future govc commands
+	// Even when being run from a container
+	govmomiHome, err := filepath.Abs(g.writer.TmpDir())
+	if err != nil {
+		return nil, fmt.Errorf("failed generating govmomi home env var: %v", err)
+	}
+	envMap[govmomiHomeEnvVar] = govmomiHome
+
+	// We have to create these two folders manually because if we let govc create them,
+	// they will be owned by root (user in the container), so we won't be able to delete them
+	// The session files will still be owned by root, but that's ok
+	// We should find a better solution at the docker executable level, making the Executable interface trully transparent
+	if err = os.MkdirAll(filepath.Join(govmomiHome, "sessions"), 0x0700); err != nil {
+		return nil, fmt.Errorf("failed creating govmomi sessions dir: %v", err)
+	}
+	if err = os.MkdirAll(filepath.Join(govmomiHome, "rest_sessions"), 0x0700); err != nil {
+		return nil, fmt.Errorf("failed creating govmomi rest sessions dir: %v", err)
+	}
 
 	return envMap, nil
 }

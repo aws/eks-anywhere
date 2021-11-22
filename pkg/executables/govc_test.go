@@ -22,23 +22,22 @@ import (
 )
 
 const (
-	govcUsername       = "GOVC_USERNAME"
-	govcPassword       = "GOVC_PASSWORD"
-	govcURL            = "GOVC_URL"
-	govcInsecure       = "GOVC_INSECURE"
-	govcPersistSession = "GOVC_PERSIST_SESSION"
-	vSphereUsername    = "EKSA_VSPHERE_USERNAME"
-	vSpherePassword    = "EKSA_VSPHERE_PASSWORD"
-	vSphereServer      = "VSPHERE_SERVER"
-	templateLibrary    = "eks-a-templates"
+	govcUsername      = "GOVC_USERNAME"
+	govcPassword      = "GOVC_PASSWORD"
+	govcURL           = "GOVC_URL"
+	govcInsecure      = "GOVC_INSECURE"
+	govmomiHomeEnvVar = "GOVMOMI_HOME"
+	vSphereUsername   = "EKSA_VSPHERE_USERNAME"
+	vSpherePassword   = "EKSA_VSPHERE_PASSWORD"
+	vSphereServer     = "VSPHERE_SERVER"
+	templateLibrary   = "eks-a-templates"
 )
 
 var govcEnvironment = map[string]string{
-	govcUsername:       "vsphere_username",
-	govcPassword:       "vsphere_password",
-	govcURL:            "vsphere_server",
-	govcInsecure:       "false",
-	govcPersistSession: "false",
+	govcUsername: "vsphere_username",
+	govcPassword: "vsphere_password",
+	govcURL:      "vsphere_server",
+	govcInsecure: "false",
 }
 
 type testContext struct {
@@ -96,7 +95,19 @@ func setup(t *testing.T) (govc *executables.Govc, mockExecutable *mockexecutable
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
 	g := executables.NewGovc(executable, writer)
 
-	return g, executable, govcEnvironment
+	// copy map
+	env = make(map[string]string, len(govcEnvironment)+1)
+	for k, v := range govcEnvironment {
+		env[k] = v
+	}
+
+	govmomiHomeEnv, err := filepath.Abs(writer.TmpDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	env[govmomiHomeEnvVar] = govmomiHomeEnv
+
+	return g, executable, env
 }
 
 type deployTemplateTest struct {
@@ -338,22 +349,13 @@ func TestDeleteLibraryElementError(t *testing.T) {
 }
 
 func TestGovcTemplateHasSnapshot(t *testing.T) {
-	_, writer := test.NewWriter(t)
 	template := "/SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6"
 
-	env := govcEnvironment
-
+	g, executable, env := setup(t)
 	ctx := context.Background()
-	mockCtrl := gomock.NewController(t)
 
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
-
-	executable := mockexecutables.NewMockExecutable(mockCtrl)
 	params := []string{"snapshot.tree", "-vm", template}
 	executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(*bytes.NewBufferString("testing"), nil)
-	g := executables.NewGovc(executable, writer)
 	snap, err := g.TemplateHasSnapshot(ctx, template)
 	if err != nil {
 		t.Fatalf("error getting template snapshot: %v", err)
@@ -378,9 +380,8 @@ func TestGovcGetWorkloadAvailableSpace(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			_, writer := test.NewWriter(t)
 			fileContent := test.ReadFile(t, tt.jsonResponseFile)
-			env := govcEnvironment
+			g, executable, env := setup(t)
 			providerConfig := &v1alpha1.VSphereMachineConfig{
 				Spec: v1alpha1.VSphereMachineConfigSpec{
 					Datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore",
@@ -388,16 +389,9 @@ func TestGovcGetWorkloadAvailableSpace(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			mockCtrl := gomock.NewController(t)
 
-			var tctx testContext
-			tctx.SaveContext()
-			defer tctx.RestoreContext()
-
-			executable := mockexecutables.NewMockExecutable(mockCtrl)
 			params := []string{"datastore.info", "-json=true", providerConfig.Spec.Datastore}
 			executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(*bytes.NewBufferString(fileContent), nil)
-			g := executables.NewGovc(executable, writer)
 			freeSpace, err := g.GetWorkloadAvailableSpace(ctx, providerConfig)
 			if err != nil {
 				t.Fatalf("Govc.GetWorkloadAvailableSpace() error: %v", err)
@@ -456,16 +450,8 @@ func TestGovcValidateVCenterSetup(t *testing.T) {
 			Insecure:   true,
 		},
 	}
-	env := govcEnvironment
-	mockCtrl := gomock.NewController(t)
-	_, writer := test.NewWriter(t)
+	g, executable, env := setup(t)
 	selfSigned := true
-
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
-
-	executable := mockexecutables.NewMockExecutable(mockCtrl)
 
 	var params []string
 	params = []string{"about", "-k"}
@@ -476,8 +462,6 @@ func TestGovcValidateVCenterSetup(t *testing.T) {
 
 	params = []string{"find", "-maxdepth=1", filepath.Dir(providerConfig.Spec.Network), "-type", "n", "-name", filepath.Base(providerConfig.Spec.Network)}
 	executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(*bytes.NewBufferString("/SDDC Datacenter/network/test network"), nil)
-
-	g := executables.NewGovc(executable, writer)
 
 	err := g.ValidateVCenterSetup(ctx, &providerConfig, &selfSigned)
 	if err != nil {
@@ -503,16 +487,8 @@ func TestGovcValidateVCenterSetupMachineConfig(t *testing.T) {
 			ResourcePool: "*/Resources/Compute ResourcePool",
 		},
 	}
-	env := govcEnvironment
-	mockCtrl := gomock.NewController(t)
-	_, writer := test.NewWriter(t)
+	g, executable, env := setup(t)
 	selfSigned := true
-
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
-
-	executable := mockexecutables.NewMockExecutable(mockCtrl)
 
 	var params []string
 
@@ -526,8 +502,6 @@ func TestGovcValidateVCenterSetupMachineConfig(t *testing.T) {
 	resourcePoolName := "Compute ResourcePool"
 	params = []string{"find", "-json", datacenter, "-type", "p", "-name", resourcePoolName}
 	executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(*bytes.NewBufferString("[\"/SDDC Datacenter/host/Cluster-1/Resources/Compute ResourcePool\"]"), nil)
-
-	g := executables.NewGovc(executable, writer)
 
 	err := g.ValidateVCenterSetupMachineConfig(ctx, &datacenterConfig, &machineConfig, &selfSigned)
 	if err != nil {
@@ -552,18 +526,9 @@ func TestGovcCleanupVms(t *testing.T) {
 
 	var dryRun bool
 
-	env := govcEnvironment
-	mockCtrl := gomock.NewController(t)
-	_, writer := test.NewWriter(t)
+	g, executable, env := setup(t)
 
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
-
-	executable := mockexecutables.NewMockExecutable(mockCtrl)
-
-	var params []string
-	params = []string{"find", "-type", "VirtualMachine", "-name", clusterName + "*"}
+	params := []string{"find", "-type", "VirtualMachine", "-name", clusterName + "*"}
 	executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(*bytes.NewBufferString(clusterName), nil)
 
 	params = []string{"vm.power", "-off", "-force", vmName}
@@ -571,8 +536,6 @@ func TestGovcCleanupVms(t *testing.T) {
 
 	params = []string{"object.destroy", vmName}
 	executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(bytes.Buffer{}, nil)
-
-	g := executables.NewGovc(executable, writer)
 
 	err := g.CleanupVms(ctx, clusterName, dryRun)
 	if err != nil {
