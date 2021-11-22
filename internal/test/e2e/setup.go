@@ -1,8 +1,8 @@
 package e2e
 
 import (
+	"errors"
 	"fmt"
-	"github.com/pkg/errors"
 	"os"
 	"strconv"
 
