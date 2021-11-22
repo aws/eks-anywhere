@@ -72,6 +72,20 @@ func (mr *MockFileWriterMockRecorder) Dir() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Dir", reflect.TypeOf((*MockFileWriter)(nil).Dir))
 }
 
+// TmpDir mocks base method.
+func (m *MockFileWriter) TmpDir() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TmpDir")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// TmpDir indicates an expected call of TmpDir.
+func (mr *MockFileWriterMockRecorder) TmpDir() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TmpDir", reflect.TypeOf((*MockFileWriter)(nil).TmpDir))
+}
+
 // WithDir mocks base method.
 func (m *MockFileWriter) WithDir(arg0 string) (filewriter.FileWriter, error) {
 	m.ctrl.T.Helper()

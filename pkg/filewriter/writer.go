@@ -6,21 +6,25 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 type writer struct {
-	dir string
+	dir       string
+	tmpFolder string
 }
 
 func NewWriter(dir string) (FileWriter, error) {
-	newFolder := filepath.Join(dir, DefaultTmpFolder)
+	tmpFolder := DefaultTmpFolder
+	newFolder := filepath.Join(dir, tmpFolder)
 	if _, err := os.Stat(newFolder); errors.Is(err, os.ErrNotExist) {
 		err := os.MkdirAll(newFolder, os.ModePerm)
 		if err != nil {
 			return nil, fmt.Errorf("error creating directory [%s]: %v", dir, err)
 		}
 	}
-	return &writer{dir: dir}, nil
+	return &writer{dir: dir, tmpFolder: tmpFolder}, nil
 }
 
 func (t *writer) Write(fileName string, content []byte, f ...FileOptionsFunc) (string, error) {
@@ -30,7 +34,7 @@ func (t *writer) Write(fileName string, content []byte, f ...FileOptionsFunc) (s
 	}
 	var currentDir string
 	if op.IsTemp {
-		currentDir = t.dir + "/" + DefaultTmpFolder
+		currentDir = t.TmpDir()
 	} else {
 		currentDir = t.dir
 	}
@@ -51,6 +55,10 @@ func (t *writer) Dir() string {
 	return t.dir
 }
 
+func (t *writer) TmpDir() string {
+	return filepath.Join(t.dir, t.tmpFolder)
+}
+
 func (t *writer) CleanUp() {
 	_, err := os.Stat(t.dir)
 	if err == nil {
@@ -59,9 +67,10 @@ func (t *writer) CleanUp() {
 }
 
 func (t *writer) CleanUpTemp() {
-	currentDir := filepath.Join(t.dir, DefaultTmpFolder)
-	_, err := os.Stat(currentDir)
-	if err == nil {
-		os.RemoveAll(currentDir)
+	currentDir := t.TmpDir()
+	if _, err := os.Stat(currentDir); err == nil {
+		if err = os.RemoveAll(currentDir); err != nil {
+			logger.Error(err, "failed deleting tmp dir")
+		}
 	}
 }
