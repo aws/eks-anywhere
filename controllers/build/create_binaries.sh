@@ -43,7 +43,7 @@ function build::eks-anywhere-cluster-controller::create_binaries(){
   ARCH="$(cut -d '/' -f2 <<< ${platform})"
   CGO_ENABLED=0 GOOS=$OS GOARCH=$ARCH make build-cluster-controller-binaries
   mkdir -p ${BIN_PATH}/${OS}-${ARCH}/
-  mv bin/* ${BIN_PATH}/${OS}-${ARCH}/
+  mv bin/manager ${BIN_PATH}/${OS}-${ARCH}/
 }
 
 function build::eks-anywhere-cluster-controller::manifests(){
@@ -74,6 +74,7 @@ function build::eks-anywhere-cluster-controller::binaries(){
   build::common::use_go_version $GOLANG_VERSION
   go mod vendor
   build::eks-anywhere-cluster-controller::create_binaries "linux/amd64"
+  build::eks-anywhere-cluster-controller::create_binaries "linux/arm64"
   build::eks-anywhere-cluster-controller::manifests
   build::gather_licenses $REPO_ROOT/_output "./controllers"
 }
