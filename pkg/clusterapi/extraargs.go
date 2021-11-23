@@ -58,7 +58,7 @@ func SecureTlsCipherSuitesExtraArgs() ExtraArgs {
 	return args
 }
 
-func SecureEtcdCipherSuitesExtraArgs() ExtraArgs {
+func SecureEtcdTlsCipherSuitesExtraArgs() ExtraArgs {
 	args := ExtraArgs{}
 	cipherSuitesString := strings.Join(crypto.SecureCipherSuiteNames(), ",")
 	args.AddIfNotEmpty("cipher-suites", cipherSuitesString)

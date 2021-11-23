@@ -168,7 +168,7 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 
 func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
-	etcdExtraArgs := clusterapi.SecureEtcdCipherSuitesExtraArgs()
+	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
 	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
@@ -214,6 +214,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 
 func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
 
 	values := map[string]interface{}{
 		"clusterName":         clusterSpec.Name,
@@ -221,6 +222,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 		"kubernetesVersion":   bundle.KubeDistro.Kubernetes.Tag,
 		"kindNodeImage":       bundle.EksD.KindNode.VersionedImage(),
 		"eksaSystemNamespace": constants.EksaSystemNamespace,
+		"kubeletExtraArgs":    kubeletExtraArgs.ToPartialYaml(),
 	}
 	return values
 }
