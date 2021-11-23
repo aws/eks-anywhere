@@ -217,6 +217,7 @@ If this IP is not present on any control plane VM, make sure the `network` has a
 
 {{% content "../../reference/vsphere/domains.md" %}}
 
+If VMs are created, but they do not get a network connection and DHCP is not configured for your vSphere deployment, you may need to [create your own DHCP server]({{< relref "../../reference/vsphere/vsphere-dhcp" >}}).
 If no VMs are created, check the `capi-controller-manager`, `capv-controller-manager` and `capi-kubeadm-control-plane-controller-manager` logs using the commands mentioned in [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}) section.
 
 ### Cluster Deletion Fails
