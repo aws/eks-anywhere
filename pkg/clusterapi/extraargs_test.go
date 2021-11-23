@@ -259,6 +259,28 @@ func TestSecureTlsCipherSuitesExtraArgs(t *testing.T) {
 	}
 }
 
+func TestSecureEtcdCipherSuitesExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName string
+		want     clusterapi.ExtraArgs
+	}{
+		{
+			testName: "default",
+			want: clusterapi.ExtraArgs{
+				"cipher-suites": strings.Join(crypto.SecureCipherSuiteNames(), ","),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.SecureEtcdCipherSuitesExtraArgs(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SecureEtcdCipherSuitesExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestAppend(t *testing.T) {
 	tests := []struct {
 		testName string

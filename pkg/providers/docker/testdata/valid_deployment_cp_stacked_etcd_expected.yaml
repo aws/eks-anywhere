@@ -20,11 +20,6 @@ spec:
     kind: DockerCluster
     name: test-cluster
     namespace: eksa-system
-  managedExternalEtcdRef:
-    apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
-    kind: EtcdadmCluster
-    name: test-cluster-etcd
-    namespace: eksa-system
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: DockerCluster
@@ -60,11 +55,11 @@ spec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
       etcd:
-        external:
-          endpoints: []
-          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
-          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
-          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
+        local:
+          imageRepository: public.ecr.aws/eks-distro/etcd-io
+          imageTag: v3.4.14-eks-1-19-2
+          extraArgs:
+            cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       dns:
         type: CoreDNS
         imageRepository: public.ecr.aws/eks-distro/coredns
@@ -80,13 +75,6 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           profiling: "false"
-          oidc-client-id: my-client-id
-          oidc-groups-claim: claim1
-          oidc-groups-prefix: prefix-for-groups
-          oidc-issuer-url: https://mydomain.com/issuer
-          oidc-required-claim: sub=test
-          oidc-username-claim: username-claim
-          oidc-username-prefix: username-prefix
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
@@ -288,35 +276,5 @@ spec:
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         taints: []
-  replicas: 3
+  replicas: 1
   version: v1.19.6-eks-1-19-2
----
-kind: EtcdadmCluster
-apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
-metadata:
-  name: test-cluster-etcd
-  namespace: eksa-system
-spec:
-  replicas: 3
-  etcdadmConfigSpec:
-    etcdadmBuiltin: true
-    cloudInitConfig:
-      version: 3.4.14
-  infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-    kind: DockerMachineTemplate
-    name: test-cluster-etcd-template-1234567890000
-    namespace: eksa-system
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-kind: DockerMachineTemplate
-metadata:
-  name: test-cluster-etcd-template-1234567890000
-  namespace: eksa-system
-spec:
-  template:
-    spec:
-      extraMounts:
-        - containerPath: /var/run/docker.sock
-          hostPath: /var/run/docker.sock
-      customImage: public.ecr.aws/eks-distro/kubernetes-sigs/kind/node:v1.18.16-eks-1-18-4-216edda697a37f8bf16651af6c23b7e2bb7ef42f-62681885fe3a97ee4f2b110cc277e084e71230fa

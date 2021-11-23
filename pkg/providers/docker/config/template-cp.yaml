@@ -72,6 +72,10 @@ spec:
         local:
           imageRepository: {{.etcdRepository}}
           imageTag: {{.etcdVersion}}
+{{- if .etcdExtraArgs }}
+          extraArgs:
+{{ .etcdExtraArgs.ToYaml | indent 12 }}
+{{- end }}
 {{- end }}
       dns:
         type: CoreDNS

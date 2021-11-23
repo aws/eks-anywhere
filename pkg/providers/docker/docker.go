@@ -168,6 +168,7 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 
 func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
+	etcdExtraArgs := clusterapi.SecureEtcdCipherSuitesExtraArgs()
 	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
@@ -184,6 +185,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 		"corednsRepository":          bundle.KubeDistro.CoreDNS.Repository,
 		"corednsVersion":             bundle.KubeDistro.CoreDNS.Tag,
 		"kindNodeImage":              bundle.EksD.KindNode.VersionedImage(),
+		"etcdExtraArgs":              etcdExtraArgs.ToPartialYaml(),
 		"apiserverExtraArgs":         apiServerExtraArgs.ToPartialYaml(),
 		"controllermanagerExtraArgs": sharedExtraArgs.ToPartialYaml(),
 		"schedulerExtraArgs":         sharedExtraArgs.ToPartialYaml(),

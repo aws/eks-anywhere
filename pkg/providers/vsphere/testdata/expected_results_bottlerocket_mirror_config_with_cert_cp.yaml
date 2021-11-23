@@ -335,7 +335,7 @@ spec:
         # Get repsonses can be large; skip them.
         - level: Request
           verbs: ["get", "list", "watch"]
-          resources: 
+          resources:
           - group: "" # core
           - group: "admissionregistration.k8s.io"
           - group: "apiextensions.k8s.io"
@@ -358,7 +358,7 @@ spec:
           - "RequestReceived"
         # Default level for known APIs
         - level: RequestResponse
-          resources: 
+          resources:
           - group: "" # core
           - group: "admissionregistration.k8s.io"
           - group: "apiextensions.k8s.io"
