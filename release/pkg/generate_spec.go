@@ -33,12 +33,14 @@ type ReleaseConfig struct {
 	BundleNumber             int
 	CliMinVersion            string
 	CliMaxVersion            string
+	CliRepoUrl               string
 	CliRepoSource            string
 	CliRepoHead              string
+	CliRepoBranchName        string
+	BuildRepoUrl             string
 	BuildRepoSource          string
 	BuildRepoHead            string
 	BuildRepoBranchName      string
-	CliRepoBranchName        string
 	ArtifactDir              string
 	SourceBucket             string
 	ReleaseBucket            string
@@ -48,6 +50,7 @@ type ReleaseConfig struct {
 	ReleaseNumber            int
 	ReleaseDate              time.Time
 	DevRelease               bool
+	DryRun                   bool
 	ReleaseEnvironment       string
 }
 
@@ -184,7 +187,6 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 func (r *ReleaseConfig) GenerateBundleSpec(bundles *anywherev1alpha1.Bundles, imageDigests map[string]string) error {
 	fmt.Println("Generating versions bundles")
 	versionsBundles, err := r.GetVersionsBundles(imageDigests)
-	fmt.Println(versionsBundles)
 	if err != nil {
 		return err
 	}

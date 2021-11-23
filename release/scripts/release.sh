@@ -28,13 +28,18 @@ RELEASE_BUCKET="${3?Specify third argument - release bucket}"
 CDN="${4?Specify fourth argument - cdn}"
 SOURCE_CONTAINER_REGISTRY="${5?Specify fifth argument - source container registry}"
 RELEASE_CONTAINER_REGISTRY="${6?Specify sixth argument - release container registry}"
-BUILD_REPO_BRANCH_NAME="${7?Specify seventh argument - Build repo branch name}"
-CLI_REPO_BRANCH_NAME="${8?Specify eighth argument - CLI repo branch name}"
+BUILD_REPO_URL="${7?Specify seventh argument - Build repo URL}"
+CLI_REPO_URL="${8?Specify eighth argument - CLI repo URL}"
+BUILD_REPO_BRANCH_NAME="${9?Specify seventh argument - Build repo branch name}"
+CLI_REPO_BRANCH_NAME="${10?Specify eighth argument - CLI repo branch name}"
+DRY_RUN="${11?Specify ninth argument - Dry run}"
 
 mkdir -p "${ARTIFACTS_DIR}"
 
 ${BASE_DIRECTORY}/release/bin/eks-anywhere-release release \
     --artifact-dir "${ARTIFACTS_DIR}" \
+    --build-repo-url "${BUILD_REPO_URL}" \
+    --cli-repo-url "${CLI_REPO_URL}" \
     --build-repo-branch-name "${BUILD_REPO_BRANCH_NAME}" \
     --cli-repo-branch-name "${CLI_REPO_BRANCH_NAME}" \
     --source-bucket "${SOURCE_BUCKET}" \
@@ -42,4 +47,5 @@ ${BASE_DIRECTORY}/release/bin/eks-anywhere-release release \
     --cdn "${CDN}" \
     --release-bucket "${RELEASE_BUCKET}" \
     --release-container-registry "${RELEASE_CONTAINER_REGISTRY}" \
-    --dev-release=true
+    --dev-release=true \
+    --dry-run=${DRY_RUN}

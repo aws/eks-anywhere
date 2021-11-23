@@ -28,10 +28,8 @@ type EksAReleases []anywherev1alpha1.EksARelease
 
 func (r *ReleaseConfig) SetRepoHeads() error {
 	// Get the repos from env var
-	cliRepoUrl := os.Getenv("CLI_REPO_URL")
-	buildRepoUrl := os.Getenv("BUILD_REPO_URL")
-	if cliRepoUrl == "" || buildRepoUrl == "" {
-		return fmt.Errorf("clone env urls not set")
+	if r.CliRepoUrl == "" || r.BuildRepoUrl == "" {
+		return fmt.Errorf("One or both clone URLs are empty")
 	}
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -42,7 +40,7 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 	fmt.Println("Cloning CLI repository")
 	parentSourceDir := filepath.Join(homeDir, "eks-a-source")
 	r.CliRepoSource = filepath.Join(parentSourceDir, "eks-a-cli")
-	cmd := exec.Command("git", "clone", cliRepoUrl, r.CliRepoSource)
+	cmd := exec.Command("git", "clone", r.CliRepoUrl, r.CliRepoSource)
 	out, err := execCommand(cmd)
 	if err != nil {
 		return errors.Cause(err)
@@ -52,7 +50,7 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 	// Clone the build-tooling repository
 	fmt.Println("Cloning build-tooling repository")
 	r.BuildRepoSource = filepath.Join(parentSourceDir, "eks-a-build")
-	cmd = exec.Command("git", "clone", buildRepoUrl, r.BuildRepoSource)
+	cmd = exec.Command("git", "clone", r.BuildRepoUrl, r.BuildRepoSource)
 	out, err = execCommand(cmd)
 	if err != nil {
 		return errors.Cause(err)
@@ -94,48 +92,52 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 	return nil
 }
 
-func (r *ReleaseConfig) PrepareBundleRelease(sourceClients *SourceClients) (map[string][]Artifact, error) {
-	artifactsTable, err := r.GetBundleArtifactsData()
-	if err != nil {
-		return nil, errors.Cause(err)
+func (r *ReleaseConfig) PrepareBundleRelease(artifactsTable map[string][]Artifact, sourceClients *SourceClients) error {
+	if r.DryRun {
+		fmt.Println("Skipping bundle artifacts download and rename in dry-run mode")
+		return nil
 	}
-	fmt.Println("Initialized artifacts data")
-
-	err = downloadArtifacts(sourceClients, r, artifactsTable)
+	fmt.Println("Preparing bundle release")
+	err := downloadArtifacts(sourceClients, r, artifactsTable)
 	if err != nil {
-		return nil, errors.Cause(err)
+		return errors.Cause(err)
 	}
 	fmt.Println("Artifacts download complete")
 
 	err = r.renameArtifacts(sourceClients, artifactsTable)
 	if err != nil {
-		return nil, errors.Cause(err)
+		return errors.Cause(err)
 	}
 	fmt.Println("Renaming artifacts complete")
 
-	return artifactsTable, nil
+	return nil
 }
 
-func (r *ReleaseConfig) PrepareEksARelease(sourceClients *SourceClients) (map[string][]Artifact, error) {
+func (r *ReleaseConfig) PrepareEksARelease(sourceClients *SourceClients) error {
+	if r.DryRun {
+		fmt.Println("Skipping EKS-A artifacts download and rename in dry-run mode")
+		return nil
+	}
+	fmt.Println("Preparing EKS-A release")
 	artifactsTable, err := r.GetEksAArtifactsData()
 	if err != nil {
-		return nil, errors.Cause(err)
+		return errors.Cause(err)
 	}
 	fmt.Println("Initialized artifacts data")
 
 	err = downloadArtifacts(sourceClients, r, artifactsTable)
 	if err != nil {
-		return nil, errors.Cause(err)
+		return errors.Cause(err)
 	}
 	fmt.Println("Artifacts download complete")
 
 	err = r.renameArtifacts(sourceClients, artifactsTable)
 	if err != nil {
-		return nil, errors.Cause(err)
+		return errors.Cause(err)
 	}
 	fmt.Println("Renaming artifacts complete")
 
-	return artifactsTable, nil
+	return nil
 }
 
 func (r *ReleaseConfig) renameArtifacts(sourceClients *SourceClients, artifacts map[string][]Artifact) error {
@@ -286,6 +288,10 @@ func downloadArtifacts(sourceClients *SourceClients, r *ReleaseConfig, eksArtifa
 }
 
 func UploadArtifacts(sourceClients *SourceClients, releaseClients *ReleaseClients, r *ReleaseConfig, eksArtifacts map[string][]Artifact) error {
+	if r.DryRun {
+		fmt.Println("Skipping artifacts upload in dry-run mode")
+		return nil
+	}
 	// Get clients
 	s3Uploader := releaseClients.S3.Uploader
 	sourceEcrAuthConfig := sourceClients.ECR.AuthConfig
@@ -419,38 +425,48 @@ func execCommand(cmd *exec.Cmd) (string, error) {
 }
 
 func UpdateImageDigests(releaseClients *ReleaseClients, r *ReleaseConfig, eksArtifacts map[string][]Artifact) (map[string]string, error) {
-	// Get clients
-	ecrPublicClient := releaseClients.ECRPublic.Client
 	fmt.Println("============================================================")
 	fmt.Println("                 Updating Image Digests                      ")
 	fmt.Println("============================================================")
-
 	imageDigests := make(map[string]string)
+
 	for _, artifacts := range eksArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
-				var imageTag string
-				releaseUriSplit := strings.Split(artifact.Image.ReleaseImageURI, ":")
-				repoName := strings.Replace(releaseUriSplit[0], r.ReleaseContainerRegistry+"/", "", -1)
-				imageTag = releaseUriSplit[1]
-				describeImagesOutput, err := ecrPublicClient.DescribeImages(
-					&ecrpublic.DescribeImagesInput{
-						ImageIds: []*ecrpublic.ImageIdentifier{
-							{
-								ImageTag: aws.String(imageTag),
+				var imageDigestStr string
+				if r.DryRun {
+					sha256sum, err := GenerateRandomSha(256)
+					if err != nil {
+						return nil, errors.Cause(err)
+					}
+					imageDigestStr = fmt.Sprintf("sha256:%s", sha256sum)
+				} else {
+					ecrPublicClient := releaseClients.ECRPublic.Client
+
+					var imageTag string
+					releaseUriSplit := strings.Split(artifact.Image.ReleaseImageURI, ":")
+					repoName := strings.Replace(releaseUriSplit[0], r.ReleaseContainerRegistry+"/", "", -1)
+					imageTag = releaseUriSplit[1]
+					describeImagesOutput, err := ecrPublicClient.DescribeImages(
+						&ecrpublic.DescribeImagesInput{
+							ImageIds: []*ecrpublic.ImageIdentifier{
+								{
+									ImageTag: aws.String(imageTag),
+								},
 							},
+							RepositoryName: aws.String(repoName),
 						},
-						RepositoryName: aws.String(repoName),
-					},
-				)
-				if err != nil {
-					return nil, errors.Cause(err)
+					)
+					if err != nil {
+						return nil, errors.Cause(err)
+					}
+
+					imageDigest := describeImagesOutput.ImageDetails[0].ImageDigest
+					imageDigestStr = *imageDigest
 				}
 
-				imageDigest := describeImagesOutput.ImageDetails[0].ImageDigest
-
-				imageDigests[artifact.Image.ReleaseImageURI] = *imageDigest
-				fmt.Printf("Image digest for %s - %s\n", artifact.Image.ReleaseImageURI, *imageDigest)
+				imageDigests[artifact.Image.ReleaseImageURI] = imageDigestStr
+				fmt.Printf("Image digest for %s - %s\n", artifact.Image.ReleaseImageURI, imageDigestStr)
 			}
 		}
 	}

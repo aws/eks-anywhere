@@ -15,8 +15,12 @@
 package pkg
 
 import (
+	crand "crypto/rand"
+	"crypto/sha256"
+	"crypto/sha512"
 	"fmt"
 	"io/ioutil"
+	mrand "math/rand"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -30,16 +34,30 @@ import (
 
 var imageBuilderProjectSource = "projects/kubernetes-sigs/image-builder"
 
-func (r *ReleaseConfig) readShaSums(filename string) (sha256, sha512 string, err error) {
-	sha256Path := filename + ".sha256"
-	sha256, err = readShaFile(sha256Path)
-	if err != nil {
-		return "", "", errors.Cause(err)
-	}
-	sha512Path := filename + ".sha512"
-	sha512, err = readShaFile(sha512Path)
-	if err != nil {
-		return "", "", errors.Cause(err)
+func (r *ReleaseConfig) readShaSums(filename string) (string, string, error) {
+	var sha256, sha512 string
+	var err error
+	if r.DryRun {
+		sha256, err = GenerateRandomSha(256)
+		if err != nil {
+			return "", "", errors.Cause(err)
+		}
+
+		sha512, err = GenerateRandomSha(512)
+		if err != nil {
+			return "", "", errors.Cause(err)
+		}
+	} else {
+		sha256Path := filename + ".sha256"
+		sha256, err = readShaFile(sha256Path)
+		if err != nil {
+			return "", "", errors.Cause(err)
+		}
+		sha512Path := filename + ".sha512"
+		sha512, err = readShaFile(sha512Path)
+		if err != nil {
+			return "", "", errors.Cause(err)
+		}
 	}
 	return sha256, sha512, nil
 }
@@ -124,6 +142,9 @@ func GetEksDReleaseManifestUrl(releaseChannel, releaseNumber string) string {
 }
 
 func (r *ReleaseConfig) GetCurrentEksADevReleaseVersion(sourceClients *SourceClients, releaseVersion string) (string, error) {
+	if r.DryRun {
+		return "v0.0.0-dev+build.0", nil
+	}
 	s3Downloader := sourceClients.S3.Downloader
 	tempFile, err := ioutil.TempFile("", "latest-dev-release-version")
 	if err != nil {
@@ -228,4 +249,25 @@ func existsInList(a string, list []string) bool {
 		}
 	}
 	return false
+}
+
+func GenerateRandomSha(hashType int) (string, error) {
+	if (hashType != 256) && (hashType != 512) {
+		return "", fmt.Errorf("Unsupported hash algorithm: %d", hashType)
+	}
+	l := mrand.Intn(1000)
+	buff := make([]byte, l)
+
+	_, err := crand.Read(buff)
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+
+	var shaSum string
+	if hashType == 256 {
+		shaSum = fmt.Sprintf("%x", sha256.Sum256(buff))
+	} else {
+		shaSum = fmt.Sprintf("%x", sha512.Sum512(buff))
+	}
+	return shaSum, nil
 }
