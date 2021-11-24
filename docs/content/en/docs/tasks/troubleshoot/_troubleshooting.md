@@ -155,7 +155,7 @@ To resolve the issue, set `insecure` to `false` and `thumbprint` to the TLS thum
 "msg"="discovered IP address"
 ```
 The aforementioned log message can also appear with an address value of the controlplane in either of the ${CLUSTER_NAME}/logs/capv-controller-manager.log file
-or the capv-controller-manager pod log which can be extracted with the follwoing command,
+or the capv-controller-manager pod log which can be extracted with the following command,
 ```bash
 export KUBECONFIG=${PWD}/${CLUSTER_NAME}/generated/${CLUSTER_NAME}.kind.kubeconfig
 kubectl logs -f -n capv-system -l control-plane="controller-manager" -c manager

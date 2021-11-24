@@ -45,7 +45,7 @@ See the [Install EKS Anywhere]({{< relref "../getting-started/install" >}}) guid
 To obtain EKS Anywhere software, you need Internet access to the repositories holding that software.
 EKS Anywhere does not currently support the use of private registries and repositories for the software that EKS Anywhere needs to draw on during cluster creation at this time.
 EKS Anywhere software is divided into two types of components.
-The CLI interface for managing clusters and the cluster components an controllers used to run workloads and configure clusters.
+The CLI interface for managing clusters and the cluster components and controllers used to run workloads and configure clusters.
 The software you need to obtain includes:
 
 * **Command line tools**: Binaries to [install on the administrative machine]({{< relref "../getting-started/install" >}}), include `eksctl`, `eksctl-anywhere`, `kubectl`, and `aws-iam-authenticator`.
@@ -312,7 +312,7 @@ Networking features of your EKS Anywhere cluster start with how virtual machines
 The current state of networking on the vSphere node level include the following:
 
 * **DHCP**: EKS Anywhere requires that a DHCP server be available to the control plane and worker nodes in vSphere for them to obtain their IP addresses.
-There is currently no support for static IP addresses or multinetwork clusters.
+There is currently no support for static IP addresses or multi-network clusters.
 All control plane and nodes are on the same network. 
 * **CAPI endpoint**: A static IP address should have been assigned to the control plane configuration endpoint, to provide access to the Cluster API.
 It should have been set up to not conflict with any other node IP addresses in the cluster.
