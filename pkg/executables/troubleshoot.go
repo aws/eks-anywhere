@@ -14,12 +14,12 @@ const (
 )
 
 type Troubleshoot struct {
-	executable Executable
+	Executable
 }
 
 func NewTroubleshoot(executable Executable) *Troubleshoot {
 	return &Troubleshoot{
-		executable: executable,
+		Executable: executable,
 	}
 }
 
@@ -30,7 +30,7 @@ func (t *Troubleshoot) Collect(ctx context.Context, bundlePath string, sinceTime
 	}
 	params := []string{bundlePath, "--kubeconfig", kubeconfig, "--interactive=false", "--since-time", string(marshalledTime)}
 
-	output, err := t.executable.Execute(ctx, params...)
+	output, err := t.Execute(ctx, params...)
 	if err != nil {
 		return "", fmt.Errorf("error when executing support-bundle: %v", err)
 	}
@@ -43,7 +43,7 @@ func (t *Troubleshoot) Collect(ctx context.Context, bundlePath string, sinceTime
 
 func (t *Troubleshoot) Analyze(ctx context.Context, bundleSpecPath string, archivePath string) ([]*SupportBundleAnalysis, error) {
 	params := []string{"analyze", bundleSpecPath, "--bundle", archivePath, "--output", "json"}
-	output, err := t.executable.Execute(ctx, params...)
+	output, err := t.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error when analyzing support bundle %s with analyzers %s: %v", archivePath, bundleSpecPath, err)
 	}
