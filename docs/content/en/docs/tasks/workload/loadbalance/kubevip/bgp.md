@@ -43,13 +43,13 @@ You can use either a CIDR block or an IP range
     kubectl apply -f https://kube-vip.io/manifests/controller.yaml
     ```
 
-1. Create ClusterRoles and RoleBindings for kube-vip daemonset
+1. Create ClusterRoles and RoleBindings for kube-vip Daemonset
 
     ```bash
     kubectl apply -f https://kube-vip.io/manifests/rbac.yaml
     ```
 
-1. Create the kube-vip daemonset
+1. Create the kube-vip DaemonSet
 
     ```bash
     alias kube-vip="docker run --network host --rm plndr/kube-vip:latest"
@@ -75,7 +75,7 @@ You can use either a CIDR block or an IP range
 	--bgppeers — Comma separated list of BGP peers in the format <address:AS:password:multihop>
     ```
   
-    Below is an example daemonset creation command. 
+    Below is an example DaemonSet creation command. 
 
     ```bash
     kube-vip manifest daemonset \
@@ -248,7 +248,7 @@ BGP configuration will vary depending upon network vendor equipment and local ne
    a. Individual BGP neighbors
 
       Determine the IP addresses of each of the EKS-A nodes via VMWare console or DHCP server allocation.  
-      In the example below, node IP adresses are 10.69.20.165, 10.69.20.167, and 10.69.20.170.  
+      In the example below, node IP addresses are 10.69.20.165, 10.69.20.167, and 10.69.20.170.  
       Note that remote-as is the AS used as the bgp_as value in the generated example manifest above.
 
       ```

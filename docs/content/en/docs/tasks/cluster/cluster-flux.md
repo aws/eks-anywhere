@@ -37,7 +37,7 @@ Currently, you can manage a subset of cluster properties with GitOps:
 - `VSphereMachineConfig.resourcePool`
 
 Any other changes to the cluster configuration in the git repository will be ignored.
-If an immutable immutable field is changed in Git repsitory, there are two ways to find the error message:
+If an immutable immutable field is changed in Git repository, there are two ways to find the error message:
 1. If a notification webhook is set up, check the error message in notification channel.
 2. Check the Flux Kustomization Controller log: `kubectl logs -f -n flux-system kustomize-controller-******` for error message containing text similar to `Invalid value: 1: field is immutable`
 
@@ -127,7 +127,7 @@ spec:
 Generate your cluster configuration and add the GitOps configuration.
 For a full spec reference see the [Cluster Spec reference]({{< relref "../../reference/clusterspec/gitops" >}}).
 
->**_NOTE:_** After your cluster is created the cluster configuration will automatically be commited to your git repo.
+>**_NOTE:_** After your cluster is created the cluster configuration will automatically be committed to your git repo.
 
 1. Create an EKS Anywhere cluster with GitOps enabled.
 

@@ -9,7 +9,7 @@ description: >
 
 <!-- overview -->
 
-In ARP mode, kube-vip will perform leader election and assign the Virtul IP to the leader.
+In ARP mode, kube-vip will perform leader election and assign the Virtual IP to the leader.
 This node will inherit the VIP and become the load-balancing leader within the cluster.
 
 <!-- body -->
@@ -42,13 +42,13 @@ You can use either a CIDR block or an IP range
     kubectl apply -f https://kube-vip.io/manifests/controller.yaml
     ```
 
-1. Create ClusterRoles and RoleBindings for kube-vip daemonset
+1. Create ClusterRoles and RoleBindings for kube-vip DaemonSet
 
     ```bash
     kubectl apply -f https://kube-vip.io/manifests/rbac.yaml
     ```
 
-1. Create the kube-vip daemonset
+1. Create the kube-vip DaemonSet
 
     An example manifest has been included at the end of this document which you can use in place of this step.
 

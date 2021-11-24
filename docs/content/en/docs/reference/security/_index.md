@@ -148,4 +148,4 @@ EKS Anywhere creates clusters with server hardening configurations out of the bo
 
 `kube-bench` runs checks documented in the [CIS Benchmark for Kubernetes](https://www.cisecurity.org/benchmark/kubernetes/), such as, pod specification file permissions, disabling insecure arguments, and so on.
 
-Refer to the [EKS Anywhwere CIS Self-Assessment Guide]({{< relref "./kube-bench.md" >}}) for more information on how to evaluate the security configurations of your EKS Anywhere cluster.
+Refer to the [EKS Anywhere CIS Self-Assessment Guide]({{< relref "./kube-bench.md" >}}) for more information on how to evaluate the security configurations of your EKS Anywhere cluster.
