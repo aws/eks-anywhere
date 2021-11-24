@@ -147,7 +147,7 @@ func (e *E2ESession) uploadRequiredFile(file string) error {
 func (e *E2ESession) uploadRequiredFiles() error {
 	if e.bundlesOverride {
 		e.requiredFiles = append(e.requiredFiles, bundlesReleaseManifestFile)
-		if _, err := os.Stat(eksAComponentsManifestFile); err == nil {
+		if _, err := os.Stat(fmt.Sprintf("bin/%s", eksAComponentsManifestFile)); err == nil {
 			e.requiredFiles = append(e.requiredFiles, eksAComponentsManifestFile)
 		} else if errors.Is(err, os.ErrNotExist) {
 			logger.V(0).Info("WARNING: no components manifest override found, but bundle override is present. " +
