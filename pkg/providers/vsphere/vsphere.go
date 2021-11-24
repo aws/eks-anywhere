@@ -1143,10 +1143,12 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.S
 func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphereDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.VSphereMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
-
+	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
+	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
-		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Spec.PodIAMConfig))
+		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Spec.PodIAMConfig)).
+		Append(sharedExtraArgs)
 
 	values := map[string]interface{}{
 		"clusterName":                          clusterSpec.ObjectMeta.Name,
@@ -1182,7 +1184,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"controlPlaneSshUsername":              controlPlaneMachineSpec.Users[0].Name,
 		"podCidrs":                             clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                         clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
+		"etcdExtraArgs":                        etcdExtraArgs.ToPartialYaml(),
 		"apiserverExtraArgs":                   apiServerExtraArgs.ToPartialYaml(),
+		"controllermanagerExtraArgs":           sharedExtraArgs.ToPartialYaml(),
+		"schedulerExtraArgs":                   sharedExtraArgs.ToPartialYaml(),
+		"kubeletExtraArgs":                     sharedExtraArgs.ToPartialYaml(),
 		"format":                               format,
 		"externalEtcdVersion":                  bundle.KubeDistro.EtcdVersion,
 		"etcdImage":                            bundle.KubeDistro.EtcdImage.VersionedImage(),
@@ -1255,6 +1261,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphereDatacenterConfigSpec, workerNodeGroupMachineSpec v1alpha1.VSphereMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
 
 	values := map[string]interface{}{
 		"clusterName":                    clusterSpec.ObjectMeta.Name,
@@ -1275,6 +1282,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"workerSshUsername":              workerNodeGroupMachineSpec.Users[0].Name,
 		"format":                         format,
 		"eksaSystemNamespace":            constants.EksaSystemNamespace,
+		"kubeletExtraArgs":               kubeletExtraArgs.ToPartialYaml(),
 	}
 
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {

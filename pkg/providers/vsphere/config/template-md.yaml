@@ -37,6 +37,9 @@ spec:
 {{- if .cgroupDriverSystemd}}
             cgroup-driver: systemd
 {{- end }}
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 12 }}
+{{- end }}
           name: '{{"{{"}} ds.meta_data.hostname {{"}}"}}'
 {{- if and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorConfiguration) }}
       files:
