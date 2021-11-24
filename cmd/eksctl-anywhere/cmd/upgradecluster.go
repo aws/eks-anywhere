@@ -79,7 +79,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		return err
 	}
 
-	deps, err := dependencies.ForSpec(ctx, clusterSpec).
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
 		WithBootstrapper().
 		WithClusterManager().
 		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck).
@@ -87,10 +87,11 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 		WithWriter().
 		WithCAPIManager().
 		WithKubectl().
-		Build()
+		Build(ctx)
 	if err != nil {
 		return err
 	}
+	defer close(ctx, deps)
 
 	upgradeCluster := workflows.NewUpgrade(
 		deps.Bootstrapper,

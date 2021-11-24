@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/version"
@@ -11,6 +12,15 @@ type clusterOptions struct {
 	fileName             string
 	bundlesOverride      string
 	managementKubeconfig string
+}
+
+func (c clusterOptions) mountDirs() []string {
+	var dirs []string
+	if c.managementKubeconfig != "" {
+		dirs = append(dirs, filepath.Dir(c.managementKubeconfig))
+	}
+
+	return dirs
 }
 
 func newClusterSpec(options clusterOptions) (*cluster.Spec, error) {
