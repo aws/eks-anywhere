@@ -54,9 +54,10 @@ func (r *ReleaseConfig) GetFluxBundle(imageDigests map[string]string) (anywherev
 	}
 
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
+	bundleObjects := []string{}
+
 	for _, artifact := range artifacts {
 		imageArtifact := artifact.Image
-
 		bundleImageArtifact := anywherev1alpha1.Image{
 			Name:        imageArtifact.AssetName,
 			Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
@@ -67,13 +68,16 @@ func (r *ReleaseConfig) GetFluxBundle(imageDigests map[string]string) (anywherev
 		}
 
 		bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+		bundleObjects = append(bundleObjects, bundleImageArtifact.ImageDigest)
 	}
 
+	componentChecksum := GenerateComponentChecksum(bundleObjects)
 	version, err := BuildComponentVersion(
 		newMultiProjectVersionerWithGITTAG(
 			filepath.Join(r.BuildRepoSource, "projects/fluxcd"),
 			filepath.Join(r.BuildRepoSource, "projects/fluxcd/flux2"),
 		),
+		componentChecksum,
 	)
 	if err != nil {
 		return anywherev1alpha1.FluxBundle{}, errors.Wrap(err, "failed generating version for flux bundle")

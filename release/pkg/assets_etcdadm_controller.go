@@ -108,17 +108,14 @@ func (r *ReleaseConfig) GetEtcdadmControllerBundle(imageDigests map[string]strin
 		"etcdadm-controller": r.GetEtcdadmControllerAssets,
 		"kube-proxy":         r.GetKubeRbacProxyAssets,
 	}
+	components := SortArtifactsFuncMap(etcdadmControllerBundleArtifactsFuncs)
 
-	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/mrajashree/etcdadm-controller")),
-	)
-	if err != nil {
-		return anywherev1alpha1.EtcdadmControllerBundle{}, errors.Wrapf(err, "Error getting version for etcdadm-controller")
-	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
+	bundleObjects := []string{}
 
-	for componentName, artifactFunc := range etcdadmControllerBundleArtifactsFuncs {
+	for _, componentName := range components {
+		artifactFunc := etcdadmControllerBundleArtifactsFuncs[componentName]
 		artifacts, err := artifactFunc()
 		if err != nil {
 			return anywherev1alpha1.EtcdadmControllerBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
@@ -137,6 +134,7 @@ func (r *ReleaseConfig) GetEtcdadmControllerBundle(imageDigests map[string]strin
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+				bundleObjects = append(bundleObjects, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -146,8 +144,23 @@ func (r *ReleaseConfig) GetEtcdadmControllerBundle(imageDigests map[string]strin
 				}
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+
+				manifestContents, err := ReadHttpFile(bundleManifestArtifact.URI)
+				if err != nil {
+					return anywherev1alpha1.EtcdadmControllerBundle{}, err
+				}
+				bundleObjects = append(bundleObjects, string(manifestContents[:]))
 			}
 		}
+	}
+
+	componentChecksum := GenerateComponentChecksum(bundleObjects)
+	version, err := BuildComponentVersion(
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/mrajashree/etcdadm-controller")),
+		componentChecksum,
+	)
+	if err != nil {
+		return anywherev1alpha1.EtcdadmControllerBundle{}, errors.Wrapf(err, "Error getting version for etcdadm-controller")
 	}
 
 	bundle := anywherev1alpha1.EtcdadmControllerBundle{

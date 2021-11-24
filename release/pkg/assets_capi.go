@@ -17,6 +17,7 @@ package pkg
 import (
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -72,8 +73,10 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 		"cluster-api":           {"core-components.yaml", "metadata.yaml"},
 		"control-plane-kubeadm": {"control-plane-components.yaml", "metadata.yaml"},
 	}
+	components := sortManifestMap(componentManifestMap)
 
-	for component, manifestList := range componentManifestMap {
+	for _, component := range components {
+		manifestList := componentManifestMap[component]
 		for _, manifest := range manifestList {
 			var sourceS3Prefix string
 			var releaseS3Path string
@@ -128,16 +131,14 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 		"cluster-api": r.GetCAPIAssets,
 		"kube-proxy":  r.GetKubeRbacProxyAssets,
 	}
+	components := SortArtifactsFuncMap(coreClusterAPIBundleArtifactsFuncs)
 
-	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
-	)
-	if err != nil {
-		return anywherev1alpha1.CoreClusterAPI{}, errors.Wrapf(err, "Error getting version for cluster-api")
-	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifactFunc := range coreClusterAPIBundleArtifactsFuncs {
+	bundleObjects := []string{}
+
+	for _, componentName := range components {
+		artifactFunc := coreClusterAPIBundleArtifactsFuncs[componentName]
 		artifacts, err := artifactFunc()
 		if err != nil {
 			return anywherev1alpha1.CoreClusterAPI{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
@@ -161,6 +162,7 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+				bundleObjects = append(bundleObjects, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -174,8 +176,23 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 				}
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+
+				manifestContents, err := ReadHttpFile(bundleManifestArtifact.URI)
+				if err != nil {
+					return anywherev1alpha1.CoreClusterAPI{}, err
+				}
+				bundleObjects = append(bundleObjects, string(manifestContents[:]))
 			}
 		}
+	}
+
+	componentChecksum := GenerateComponentChecksum(bundleObjects)
+	version, err := BuildComponentVersion(
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
+		componentChecksum,
+	)
+	if err != nil {
+		return anywherev1alpha1.CoreClusterAPI{}, errors.Wrapf(err, "Error getting version for cluster-api")
 	}
 
 	bundle := anywherev1alpha1.CoreClusterAPI{
@@ -194,16 +211,14 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 		"cluster-api": r.GetCAPIAssets,
 		"kube-proxy":  r.GetKubeRbacProxyAssets,
 	}
+	components := SortArtifactsFuncMap(kubeadmBootstrapBundleArtifactsFuncs)
 
-	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
-	)
-	if err != nil {
-		return anywherev1alpha1.KubeadmBootstrapBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")
-	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifactFunc := range kubeadmBootstrapBundleArtifactsFuncs {
+	bundleObjects := []string{}
+
+	for _, componentName := range components {
+		artifactFunc := kubeadmBootstrapBundleArtifactsFuncs[componentName]
 		artifacts, err := artifactFunc()
 		if err != nil {
 			return anywherev1alpha1.KubeadmBootstrapBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
@@ -227,6 +242,7 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+				bundleObjects = append(bundleObjects, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -240,8 +256,23 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 				}
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+
+				manifestContents, err := ReadHttpFile(bundleManifestArtifact.URI)
+				if err != nil {
+					return anywherev1alpha1.KubeadmBootstrapBundle{}, err
+				}
+				bundleObjects = append(bundleObjects, string(manifestContents[:]))
 			}
 		}
+	}
+
+	componentChecksum := GenerateComponentChecksum(bundleObjects)
+	version, err := BuildComponentVersion(
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
+		componentChecksum,
+	)
+	if err != nil {
+		return anywherev1alpha1.KubeadmBootstrapBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")
 	}
 
 	bundle := anywherev1alpha1.KubeadmBootstrapBundle{
@@ -260,16 +291,14 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 		"cluster-api": r.GetCAPIAssets,
 		"kube-proxy":  r.GetKubeRbacProxyAssets,
 	}
+	components := SortArtifactsFuncMap(kubeadmControlPlaneBundleArtifactsFuncs)
 
-	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
-	)
-	if err != nil {
-		return anywherev1alpha1.KubeadmControlPlaneBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")
-	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifactFunc := range kubeadmControlPlaneBundleArtifactsFuncs {
+	bundleObjects := []string{}
+
+	for _, componentName := range components {
+		artifactFunc := kubeadmControlPlaneBundleArtifactsFuncs[componentName]
 		artifacts, err := artifactFunc()
 		if err != nil {
 			return anywherev1alpha1.KubeadmControlPlaneBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
@@ -293,6 +322,7 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+				bundleObjects = append(bundleObjects, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -306,10 +336,24 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 				}
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+
+				manifestContents, err := ReadHttpFile(bundleManifestArtifact.URI)
+				if err != nil {
+					return anywherev1alpha1.KubeadmControlPlaneBundle{}, err
+				}
+				bundleObjects = append(bundleObjects, string(manifestContents[:]))
 			}
 		}
 	}
 
+	componentChecksum := GenerateComponentChecksum(bundleObjects)
+	version, err := BuildComponentVersion(
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
+		componentChecksum,
+	)
+	if err != nil {
+		return anywherev1alpha1.KubeadmControlPlaneBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")
+	}
 	bundle := anywherev1alpha1.KubeadmControlPlaneBundle{
 		Version:    version,
 		Controller: bundleImageArtifacts["kubeadm-control-plane-controller"],
@@ -330,4 +374,14 @@ func (r *ReleaseConfig) getCAPIGitTag() (string, error) {
 	}
 
 	return gitTag, nil
+}
+
+func sortManifestMap(m map[string][]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	return keys
 }

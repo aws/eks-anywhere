@@ -1,26 +1,24 @@
 package pkg
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
 )
 
-func BuildComponentVersion(versioner projectVersioner) (string, error) {
+func BuildComponentVersion(versioner projectVersioner, componentCheckSum string) (string, error) {
 	patchVersion, err := versioner.patchVersion()
 	if err != nil {
 		return "", err
 	}
 
-	metadata, err := versioner.buildMetadata()
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%s+%s", patchVersion, metadata), nil
+	return fmt.Sprintf("%s+%s", patchVersion, componentCheckSum), nil
 }
 
 type versioner struct {
@@ -29,16 +27,6 @@ type versioner struct {
 
 func newVersioner(pathToProject string) *versioner {
 	return &versioner{pathToProject: pathToProject}
-}
-
-func (v *versioner) buildMetadata() (string, error) {
-	cmd := exec.Command("git", "-C", v.pathToProject, "log", "--pretty=format:%h", "-n1", v.pathToProject)
-	out, err := execCommand(cmd)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed executing git log to get build metadata in [%s]", v.pathToProject)
-	}
-
-	return out, nil
 }
 
 func (v *versioner) patchVersion() (string, error) {
@@ -97,4 +85,28 @@ func newCliVersioner(cliVersion, pathToProject string) *cliVersioner {
 
 func (v *cliVersioner) patchVersion() (string, error) {
 	return v.cliVersion, nil
+}
+
+func GenerateComponentChecksum(hashes []string) string {
+	b := make([][]byte, len(hashes))
+	if hashes != nil {
+		for i, str := range hashes {
+			b[i] = []byte(str)
+		}
+	}
+	joinByteArrays := bytes.Join(b, []byte(""))
+	sum256 := sha256.Sum256(joinByteArrays)
+	sumStr := string(sum256[:])[:4]
+
+	return sumStr
+}
+
+func SortArtifactsFuncMap(m map[string]func() ([]Artifact, error)) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	return keys
 }

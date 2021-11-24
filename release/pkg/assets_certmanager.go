@@ -65,13 +65,8 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 		return anywherev1alpha1.CertManagerBundle{}, errors.Cause(err)
 	}
 
-	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/jetstack/cert-manager")),
-	)
-	if err != nil {
-		return anywherev1alpha1.CertManagerBundle{}, errors.Wrapf(err, "Error getting version for cert-manager")
-	}
 	bundleArtifacts := map[string]anywherev1alpha1.Image{}
+	bundleObjects := []string{}
 
 	for _, artifact := range artifacts {
 		imageArtifact := artifact.Image
@@ -85,6 +80,16 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 		}
 
 		bundleArtifacts[imageArtifact.AssetName] = bundleArtifact
+		bundleObjects = append(bundleObjects, bundleArtifact.ImageDigest)
+	}
+
+	componentChecksum := GenerateComponentChecksum(bundleObjects)
+	version, err := BuildComponentVersion(
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/jetstack/cert-manager")),
+		componentChecksum,
+	)
+	if err != nil {
+		return anywherev1alpha1.CertManagerBundle{}, errors.Wrapf(err, "Error getting version for cert-manager")
 	}
 
 	bundle := anywherev1alpha1.CertManagerBundle{

@@ -69,10 +69,14 @@ func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev
 		"cluster-controller":    r.GetClusterControllerAssets,
 		"diagnostic-collector:": r.GetDiagnosticCollectorAssets,
 	}
+	components := SortArtifactsFuncMap(eksABundleArtifactsFuncs)
 
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifactFunc := range eksABundleArtifactsFuncs {
+	bundleObjects := []string{}
+
+	for _, componentName := range components {
+		artifactFunc := eksABundleArtifactsFuncs[componentName]
 		artifacts, err := artifactFunc()
 		if err != nil {
 			return anywherev1alpha1.EksaBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
@@ -91,6 +95,7 @@ func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+				bundleObjects = append(bundleObjects, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -100,11 +105,18 @@ func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev
 				}
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+
+				manifestContents, err := ReadHttpFile(bundleManifestArtifact.URI)
+				if err != nil {
+					return anywherev1alpha1.EksaBundle{}, err
+				}
+				bundleObjects = append(bundleObjects, string(manifestContents[:]))
 			}
 		}
 	}
 
-	version, err := BuildComponentVersion(newCliVersioner(r.ReleaseVersion, r.CliRepoSource))
+	componentChecksum := GenerateComponentChecksum(bundleObjects)
+	version, err := BuildComponentVersion(newCliVersioner(r.ReleaseVersion, r.CliRepoSource), componentChecksum)
 	if err != nil {
 		return anywherev1alpha1.EksaBundle{}, errors.Wrapf(err, "failed generating version for eksa bundle")
 	}

@@ -108,16 +108,14 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 		"cluster-api-provider-docker": r.GetDockerAssets,
 		"kube-proxy":                  r.GetKubeRbacProxyAssets,
 	}
+	components := SortArtifactsFuncMap(dockerBundleArtifactsFuncs)
 
-	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
-	)
-	if err != nil {
-		return anywherev1alpha1.DockerBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")
-	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifactFunc := range dockerBundleArtifactsFuncs {
+	bundleObjects := []string{}
+
+	for _, componentName := range components {
+		artifactFunc := dockerBundleArtifactsFuncs[componentName]
 		artifacts, err := artifactFunc()
 		if err != nil {
 			return anywherev1alpha1.DockerBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
@@ -136,6 +134,7 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+				bundleObjects = append(bundleObjects, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -145,8 +144,23 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 				}
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+
+				manifestContents, err := ReadHttpFile(bundleManifestArtifact.URI)
+				if err != nil {
+					return anywherev1alpha1.DockerBundle{}, err
+				}
+				bundleObjects = append(bundleObjects, string(manifestContents[:]))
 			}
 		}
+	}
+
+	componentChecksum := GenerateComponentChecksum(bundleObjects)
+	version, err := BuildComponentVersion(
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
+		componentChecksum,
+	)
+	if err != nil {
+		return anywherev1alpha1.DockerBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")
 	}
 
 	bundle := anywherev1alpha1.DockerBundle{

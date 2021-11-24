@@ -30,16 +30,14 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 		"kube-vip":                     r.GetKubeVipAssets,
 		"vsphere-csi-driver":           r.GetVsphereCsiAssets,
 	}
+	components := SortArtifactsFuncMap(vsphereBundleArtifactsFuncs)
 
-	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api-provider-vsphere")),
-	)
-	if err != nil {
-		return anywherev1alpha1.VSphereBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-sphere")
-	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifactFunc := range vsphereBundleArtifactsFuncs {
+	bundleObjects := []string{}
+
+	for _, componentName := range components {
+		artifactFunc := vsphereBundleArtifactsFuncs[componentName]
 		artifacts, err := artifactFunc()
 		if err != nil {
 			return anywherev1alpha1.VSphereBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
@@ -57,6 +55,7 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+				bundleObjects = append(bundleObjects, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -66,6 +65,12 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 				}
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+
+				manifestContents, err := ReadHttpFile(bundleManifestArtifact.URI)
+				if err != nil {
+					return anywherev1alpha1.VSphereBundle{}, err
+				}
+				bundleObjects = append(bundleObjects, string(manifestContents[:]))
 			}
 		}
 	}
@@ -87,6 +92,16 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 			ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 		}
 		bundleImageArtifacts[imageArtifact.AssetName] = bundleArtifact
+		bundleObjects = append(bundleObjects, bundleArtifact.ImageDigest)
+	}
+
+	componentChecksum := GenerateComponentChecksum(bundleObjects)
+	version, err := BuildComponentVersion(
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api-provider-vsphere")),
+		componentChecksum,
+	)
+	if err != nil {
+		return anywherev1alpha1.VSphereBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-sphere")
 	}
 
 	bundle := anywherev1alpha1.VSphereBundle{
