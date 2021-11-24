@@ -13,41 +13,47 @@ import (
 const defaultEksaImage = "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v1-21-4-ed8ad899e40f0a0e625b7a49d7d90e6077f97a28"
 
 type ExecutableBuilder struct {
-	useDocker bool
-	image     string
-	mountDir  string
+	useDocker  bool
+	image      string
+	mountDirs  []string
+	workingDir string
+	container  *dockerContainer
 }
 
 func (b *ExecutableBuilder) BuildKindExecutable(writer filewriter.FileWriter) *Kind {
-	return NewKind(buildExecutable(kindPath, b.useDocker, b.image, b.mountDir), writer)
+	return NewKind(b.buildExecutable(kindPath), writer)
 }
 
 func (b *ExecutableBuilder) BuildClusterAwsAdmExecutable() *Clusterawsadm {
-	return NewClusterawsadm(buildExecutable(clusterAwsAdminPath, b.useDocker, b.image, b.mountDir))
+	return NewClusterawsadm(b.buildExecutable(clusterAwsAdminPath))
 }
 
 func (b *ExecutableBuilder) BuildClusterCtlExecutable(writer filewriter.FileWriter) *Clusterctl {
-	return NewClusterctl(buildExecutable(clusterCtlPath, b.useDocker, b.image, b.mountDir), writer)
+	return NewClusterctl(b.buildExecutable(clusterCtlPath), writer)
 }
 
 func (b *ExecutableBuilder) BuildKubectlExecutable() *Kubectl {
-	return NewKubectl(buildExecutable(kubectlPath, b.useDocker, b.image, b.mountDir))
+	return NewKubectl(b.buildExecutable(kubectlPath))
 }
 
 func (b *ExecutableBuilder) BuildGovcExecutable(writer filewriter.FileWriter) *Govc {
-	return NewGovc(buildExecutable(govcPath, b.useDocker, b.image, b.mountDir), writer)
+	return NewGovc(b.buildExecutable(govcPath), writer)
 }
 
 func (b *ExecutableBuilder) BuildAwsCli() *AwsCli {
-	return NewAwsCli(buildExecutable(awsCliPath, b.useDocker, b.image, b.mountDir))
+	return NewAwsCli(b.buildExecutable(awsCliPath))
 }
 
 func (b *ExecutableBuilder) BuildFluxExecutable() *Flux {
-	return NewFlux(buildExecutable(fluxPath, b.useDocker, b.image, b.mountDir))
+	return NewFlux(b.buildExecutable(fluxPath))
 }
 
 func (b *ExecutableBuilder) BuildTroubleshootExecutable() *Troubleshoot {
-	return NewTroubleshoot(buildExecutable(troubleshootPath, b.useDocker, b.image, b.mountDir))
+	return NewTroubleshoot(b.buildExecutable(troubleshootPath))
+}
+
+func (b *ExecutableBuilder) Close(ctx context.Context) *Troubleshoot {
+	return NewTroubleshoot(b.buildExecutable(troubleshootPath))
 }
 
 func BuildSonobuoyExecutable() *Sonobuoy {
@@ -62,11 +68,11 @@ func BuildDockerExecutable() *Docker {
 	})
 }
 
-func buildExecutable(cli string, useDocker bool, image string, mountDir string) Executable {
-	if !useDocker {
+func (b *ExecutableBuilder) buildExecutable(cli string) Executable {
+	if !b.useDocker {
 		return NewExecutable(cli)
 	} else {
-		return NewDockerExecutable(cli, image, mountDir)
+		return NewDockerExecutable(cli, b.container)
 	}
 }
 
@@ -79,37 +85,39 @@ func checkMRToolsDisabled() bool {
 	return false
 }
 
-func NewExecutableBuilder(ctx context.Context, image string) (*ExecutableBuilder, error) {
-	useDocker := !checkMRToolsDisabled()
-	if useDocker {
-		if err := setupDockerDependencies(ctx, image); err != nil {
-			return nil, err
-		}
-	}
-	mountDir, err := os.Getwd()
+func NewExecutableBuilder(ctx context.Context, image string, mountDirs ...string) (*ExecutableBuilder, error) {
+	currentDir, err := os.Getwd()
 	if err != nil {
 		return nil, fmt.Errorf("error getting current directory: %v", err)
 	}
-	return &ExecutableBuilder{
-		useDocker: useDocker,
-		image:     image,
-		mountDir:  mountDir,
-	}, nil
+
+	mountDirs = append(mountDirs, currentDir)
+
+	useDocker := !checkMRToolsDisabled()
+	e := &ExecutableBuilder{
+		useDocker:  useDocker,
+		image:      image,
+		mountDirs:  mountDirs,
+		workingDir: currentDir,
+	}
+
+	if useDocker {
+		// We build, init and store the container in the builder so we reuse the same one for all the executables
+		container := newDockerContainer(image, e.workingDir, e.mountDirs, BuildDockerExecutable())
+		if err := container.init(ctx); err != nil {
+			return nil, err
+		}
+		e.container = container
+	}
+
+	return e, nil
 }
 
 func NewLocalExecutableBuilder() *ExecutableBuilder {
 	return &ExecutableBuilder{
 		useDocker: false,
 		image:     "",
-		mountDir:  "",
 	}
-}
-
-func setupDockerDependencies(ctx context.Context, image string) error {
-	if err := BuildDockerExecutable().SetUpCLITools(ctx, image); err != nil {
-		return fmt.Errorf("failed to setup eks-a dependencies: %v", err)
-	}
-	return nil
 }
 
 func DefaultEksaImage() string {
