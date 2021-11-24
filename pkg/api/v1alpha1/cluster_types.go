@@ -301,10 +301,12 @@ type CNI string
 const (
 	Cilium           CNI = "cilium"
 	CiliumEnterprise CNI = "cilium-enterprise"
+	Kindnetd         CNI = "kindnetd"
 )
 
 var validCNIs = map[CNI]struct{}{
-	Cilium: {},
+	Cilium:   {},
+	Kindnetd: {},
 }
 
 // ClusterStatus defines the observed state of Cluster

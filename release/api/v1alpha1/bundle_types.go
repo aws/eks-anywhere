@@ -67,6 +67,7 @@ type VersionsBundle struct {
 	Docker                 DockerBundle                `json:"docker"`
 	Eksa                   EksaBundle                  `json:"eksa"`
 	Cilium                 CiliumBundle                `json:"cilium"`
+	Kindnetd               KindnetdBundle              `json:"kindnetd"`
 	Flux                   FluxBundle                  `json:"flux"`
 	BottleRocketBootstrap  BottlerocketBootstrapBundle `json:"bottlerocketBootstrap"`
 	BottleRocketAdmin      BottlerocketAdminBundle     `json:"bottlerocketAdmin"`
@@ -188,6 +189,11 @@ type CiliumBundle struct {
 	Version  string   `json:"version,omitempty"`
 	Cilium   Image    `json:"cilium"`
 	Operator Image    `json:"operator"`
+	Manifest Manifest `json:"manifest"`
+}
+
+type KindnetdBundle struct {
+	Version  string   `json:"version,omitempty"`
 	Manifest Manifest `json:"manifest"`
 }
 

@@ -104,6 +104,11 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		return nil, errors.Wrapf(err, "Error getting bundle for Cilium")
 	}
 
+	kindnetdBundle, err := r.GetKindnetdBundle()
+	if err != nil {
+		return nil, errors.Wrapf(err, "Error getting bundle for Kindnetd")
+	}
+
 	fluxBundle, err := r.GetFluxBundle(imageDigests)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting bundle for Flux controllers")
@@ -173,6 +178,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			Docker:                 dockerBundle,
 			Eksa:                   eksaBundle,
 			Cilium:                 ciliumBundle,
+			Kindnetd:               kindnetdBundle,
 			Flux:                   fluxBundle,
 			ExternalEtcdBootstrap:  etcdadmBootstrapBundle,
 			ExternalEtcdController: etcdadmControllerBundle,

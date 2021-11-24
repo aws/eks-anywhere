@@ -589,6 +589,9 @@ func (vb *VersionsBundle) Manifests() map[string][]v1alpha1.Manifest {
 	// Cilium manifest
 	manifests["cilium"] = []v1alpha1.Manifest{vb.Cilium.Manifest}
 
+	// Kindnetd manifest
+	manifests["kindnetd"] = []v1alpha1.Manifest{vb.Kindnetd.Manifest}
+
 	// EKS Anywhere CRD manifest
 	manifests["eks-anywhere-cluster-controller"] = []v1alpha1.Manifest{vb.Eksa.Components}
 
