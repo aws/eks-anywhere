@@ -50,6 +50,7 @@ func validateCluster(ctx context.Context, cluster *types.Cluster, clusterName st
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	kubectl := executableBuilder.BuildKubectlExecutable()
+	defer kubectl.Close(ctx)
 	err = kubectl.ValidateNodes(ctx, cluster.KubeconfigFile)
 	if err != nil {
 		return err
