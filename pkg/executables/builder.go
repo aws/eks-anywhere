@@ -10,7 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
-const defaultEksaImage = "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v1-21-4-ed8ad899e40f0a0e625b7a49d7d90e6077f97a28"
+const defaultEksaImage = "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.529"
 
 type ExecutableBuilder struct {
 	useDocker  bool
