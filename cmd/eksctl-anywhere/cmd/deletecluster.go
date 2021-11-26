@@ -86,16 +86,17 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		return fmt.Errorf("unable to get cluster config from file: %v", err)
 	}
 
-	deps, err := dependencies.ForSpec(ctx, clusterSpec).
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
 		WithBootstrapper().
 		WithClusterManager().
 		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck).
 		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
 		WithWriter().
-		Build()
+		Build(ctx)
 	if err != nil {
 		return err
 	}
+	defer close(ctx, deps)
 
 	deleteCluster := workflows.NewDelete(
 		deps.Bootstrapper,

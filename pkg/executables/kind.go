@@ -23,8 +23,8 @@ var kindConfigTemplate string
 const configFileName = "kind_tmp.yaml"
 
 type Kind struct {
-	writer     filewriter.FileWriter
-	executable Executable
+	writer filewriter.FileWriter
+	Executable
 	execConfig *kindExecConfig
 }
 
@@ -50,7 +50,7 @@ type kindExecConfig struct {
 func NewKind(executable Executable, writer filewriter.FileWriter) *Kind {
 	return &Kind{
 		writer:     writer,
-		executable: executable,
+		Executable: executable,
 	}
 }
 
@@ -78,7 +78,7 @@ func (k *Kind) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.
 	executionArgs := k.execArguments(clusterSpec.Name, kubeconfigName)
 
 	logger.V(4).Info("Creating kind cluster", "name", getInternalName(clusterSpec.Name), "kubeconfig", kubeconfigName)
-	_, err = k.executable.ExecuteWithEnv(ctx, k.execConfig.env, executionArgs...)
+	_, err = k.ExecuteWithEnv(ctx, k.execConfig.env, executionArgs...)
 	if err != nil {
 		return "", fmt.Errorf("error executing create cluster: %v", err)
 	}
@@ -88,7 +88,7 @@ func (k *Kind) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.
 
 func (k *Kind) ClusterExists(ctx context.Context, clusterName string) (bool, error) {
 	internalName := getInternalName(clusterName)
-	stdOut, err := k.executable.Execute(ctx, "get", "clusters")
+	stdOut, err := k.Execute(ctx, "get", "clusters")
 	if err != nil {
 		return false, fmt.Errorf("error executing get clusters: %v", err)
 	}
@@ -111,7 +111,7 @@ func (k *Kind) ClusterExists(ctx context.Context, clusterName string) (bool, err
 
 func (k *Kind) GetKubeconfig(ctx context.Context, clusterName string) (string, error) {
 	internalName := getInternalName(clusterName)
-	stdOut, err := k.executable.Execute(ctx, "get", "kubeconfig", "--name", internalName)
+	stdOut, err := k.Execute(ctx, "get", "kubeconfig", "--name", internalName)
 	if err != nil {
 		return "", fmt.Errorf("error executing get kubeconfig: %v", err)
 	}
@@ -171,7 +171,7 @@ func (k *Kind) WithRegistryMirror(endpoint string, caCertFile string) bootstrapp
 func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluster) error {
 	internalName := getInternalName(cluster.Name)
 	logger.V(4).Info("Deleting kind cluster", "name", internalName)
-	_, err := k.executable.Execute(ctx, "delete", "cluster", "--name", internalName)
+	_, err := k.Execute(ctx, "delete", "cluster", "--name", internalName)
 	if err != nil {
 		return fmt.Errorf("error executing delete cluster: %v", err)
 	}
