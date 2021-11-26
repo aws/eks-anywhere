@@ -167,7 +167,7 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 
 			if artifact.Manifest != nil {
 				manifestArtifact := artifact.Manifest
-				if !strings.Contains(manifestArtifact.ReleaseName, "core") && !strings.Contains(manifestArtifact.ReleaseName, "metadata") {
+				if !strings.Contains(manifestArtifact.ArtifactPath, "cluster-api-manifests") {
 					continue
 				}
 
@@ -247,7 +247,7 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 
 			if artifact.Manifest != nil {
 				manifestArtifact := artifact.Manifest
-				if !strings.Contains(manifestArtifact.ReleaseName, "bootstrap") && !strings.Contains(manifestArtifact.ReleaseName, "metadata") {
+				if !strings.Contains(manifestArtifact.ArtifactPath, "bootstrap-kubeadm-manifests") {
 					continue
 				}
 
@@ -327,7 +327,7 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 
 			if artifact.Manifest != nil {
 				manifestArtifact := artifact.Manifest
-				if !strings.Contains(manifestArtifact.ReleaseName, "control-plane") && !strings.Contains(manifestArtifact.ReleaseName, "metadata") {
+				if !strings.Contains(manifestArtifact.ArtifactPath, "control-plane-kubeadm-manifests") {
 					continue
 				}
 
