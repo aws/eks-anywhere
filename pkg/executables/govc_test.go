@@ -22,23 +22,21 @@ import (
 )
 
 const (
-	govcUsername       = "GOVC_USERNAME"
-	govcPassword       = "GOVC_PASSWORD"
-	govcURL            = "GOVC_URL"
-	govcInsecure       = "GOVC_INSECURE"
-	govcPersistSession = "GOVC_PERSIST_SESSION"
-	vSphereUsername    = "EKSA_VSPHERE_USERNAME"
-	vSpherePassword    = "EKSA_VSPHERE_PASSWORD"
-	vSphereServer      = "VSPHERE_SERVER"
-	templateLibrary    = "eks-a-templates"
+	govcUsername    = "GOVC_USERNAME"
+	govcPassword    = "GOVC_PASSWORD"
+	govcURL         = "GOVC_URL"
+	govcInsecure    = "GOVC_INSECURE"
+	vSphereUsername = "EKSA_VSPHERE_USERNAME"
+	vSpherePassword = "EKSA_VSPHERE_PASSWORD"
+	vSphereServer   = "VSPHERE_SERVER"
+	templateLibrary = "eks-a-templates"
 )
 
 var govcEnvironment = map[string]string{
-	govcUsername:       "vsphere_username",
-	govcPassword:       "vsphere_password",
-	govcURL:            "vsphere_server",
-	govcInsecure:       "false",
-	govcPersistSession: "false",
+	govcUsername: "vsphere_username",
+	govcPassword: "vsphere_password",
+	govcURL:      "vsphere_server",
+	govcInsecure: "false",
 }
 
 type testContext struct {
@@ -981,5 +979,16 @@ func TestDeleteTemplateDeleteVMError(t *testing.T) {
 
 	if err := g.DeleteTemplate(ctx, resourcePool, template); err == nil {
 		t.Fatal("Govc.DeleteTemplate() err = nil, want err not nil")
+	}
+}
+
+func TestGovcLogoutSuccess(t *testing.T) {
+	ctx := context.Background()
+	g, executable, env := setup(t)
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "session.logout").Return(*bytes.NewBufferString(""), nil)
+
+	if err := g.Logout(ctx); err != nil {
+		t.Fatalf("Govc.Logout() err = %v, want err nil", err)
 	}
 }

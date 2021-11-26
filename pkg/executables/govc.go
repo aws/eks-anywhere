@@ -32,7 +32,6 @@ const (
 	govcInsecure         = "GOVC_INSECURE"
 	govcTlsHostsFile     = "govc_known_hosts"
 	govcTlsKnownHostsKey = "GOVC_TLS_KNOWN_HOSTS"
-	govcPersistSession   = "GOVC_PERSIST_SESSION"
 	vSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
 	vSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
 	vSphereServerKey     = "VSPHERE_SERVER"
@@ -76,6 +75,22 @@ func (g *Govc) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, e
 	}
 
 	return g.ExecuteWithEnv(ctx, envMap, args...)
+}
+
+func (g *Govc) Close(ctx context.Context) error {
+	if err := g.Logout(ctx); err != nil {
+		return err
+	}
+
+	return g.Executable.Close(ctx)
+}
+
+func (g *Govc) Logout(ctx context.Context) error {
+	logger.V(3).Info("Logging out from current govc session")
+	if _, err := g.exec(ctx, "session.logout"); err != nil {
+		return fmt.Errorf("govc returned error when logging out: %v", err)
+	}
+	return nil
 }
 
 func (g *Govc) SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error) {
@@ -418,7 +433,6 @@ func (g *Govc) getEnvMap() (map[string]string, error) {
 			}
 		}
 	}
-	envMap[govcPersistSession] = "false"
 
 	return envMap, nil
 }
@@ -536,6 +550,13 @@ func (g *Govc) ValidateVCenterSetup(ctx context.Context, datacenterConfig *v1alp
 				if err != nil {
 					return fmt.Errorf("error writing to file %s: %v", govcTlsHostsFile, err)
 				}
+
+				// The next command after adding GOVC_TLS_KNOWN_HOSTS will create a new session
+				// So we destroy the existing session here to avoid leaving it orphaned
+				if _, err = g.ExecuteWithEnv(ctx, envMap, "session.logout", "-k"); err != nil {
+					return err
+				}
+
 				if err = os.Setenv(govcTlsKnownHostsKey, path); err != nil {
 					return fmt.Errorf("unable to set %s: %v", govcTlsKnownHostsKey, err)
 				}
