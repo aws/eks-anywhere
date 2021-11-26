@@ -96,7 +96,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer close(ctx, deps)
+	defer cleanup(ctx, deps, err)
 
 	deleteCluster := workflows.NewDelete(
 		deps.Bootstrapper,
@@ -119,8 +119,5 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	}
 
 	err = deleteCluster.Run(ctx, cluster, clusterSpec, dc.forceCleanup, dc.managementKubeconfig)
-	if err == nil {
-		deps.Writer.CleanUp()
-	}
 	return err
 }

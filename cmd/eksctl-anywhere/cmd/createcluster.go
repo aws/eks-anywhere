@@ -91,7 +91,7 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer close(ctx, deps)
+	defer cleanup(ctx, deps, err)
 
 	createCluster := workflows.NewCreate(
 		deps.Bootstrapper,
@@ -127,8 +127,5 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 	createValidations := createvalidations.New(validationOpts)
 
 	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
-	if err == nil {
-		deps.Writer.CleanUpTemp()
-	}
 	return err
 }
