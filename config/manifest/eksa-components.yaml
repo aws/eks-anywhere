@@ -1555,6 +1555,19 @@ spec:
                       - notificationController
                       - sourceController
                       type: object
+                    kindnetd:
+                      properties:
+                        manifest:
+                          properties:
+                            uri:
+                              description: URI points to the manifest yaml file
+                              type: string
+                          type: object
+                        version:
+                          type: string
+                      required:
+                      - manifest
+                      type: object
                     kubeVersion:
                       type: string
                     vSphere:
@@ -1780,6 +1793,7 @@ spec:
                   - etcdadmBootstrap
                   - etcdadmController
                   - flux
+                  - kindnetd
                   - kubeVersion
                   - vSphere
                   type: object
