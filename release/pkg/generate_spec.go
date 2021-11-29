@@ -17,7 +17,6 @@ package pkg
 import (
 	"fmt"
 	"net/url"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -301,7 +300,7 @@ func (r *ReleaseConfig) GetURI(path string) (string, error) {
 }
 
 func (r *ReleaseConfig) GetSourceManifestURI(path string) (string, error) {
-	bucket := filepath.Join("https://", r.SourceBucket)
+	bucket := fmt.Sprintf("https://%s", r.SourceBucket)
 	uri, err := url.Parse(bucket)
 	if err != nil {
 		return "", err
