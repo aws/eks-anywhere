@@ -201,7 +201,11 @@ func (e *E2ETest) buildClusterConfigFile() {
 }
 
 func (e *E2ETest) DeleteCluster() {
-	e.RunEKSA("anywhere", "delete", "cluster", e.ClusterName, "-v", "4")
+	deleteClusterArgs := []string{"delete", "cluster", e.ClusterName, "-v", "4"}
+	if getBundlesOverride() == "true" {
+		deleteClusterArgs = append(deleteClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
+	}
+	e.RunEKSA(deleteClusterArgs...)
 }
 
 func (e *E2ETest) Run(name string, args ...string) {
