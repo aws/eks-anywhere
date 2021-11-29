@@ -8,10 +8,11 @@ import (
 	context "context"
 	reflect "reflect"
 
-	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
 	v1 "k8s.io/api/core/v1"
 	v1alpha3 "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
+
+	types "github.com/aws/eks-anywhere/pkg/types"
 )
 
 // MockClient is a mock of Client interface.

@@ -8,8 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
+
+	types "github.com/aws/eks-anywhere/pkg/types"
 )
 
 // MockClusterClient is a mock of ClusterClient interface.

@@ -8,14 +8,15 @@ import (
 	context "context"
 	reflect "reflect"
 
-	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	executables "github.com/aws/eks-anywhere/pkg/executables"
-	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
 	v1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	v1 "k8s.io/api/core/v1"
 	v1alpha30 "sigs.k8s.io/cluster-api/api/v1alpha3"
 	v1alpha31 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+
+	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	executables "github.com/aws/eks-anywhere/pkg/executables"
+	types "github.com/aws/eks-anywhere/pkg/types"
 )
 
 // MockProviderGovcClient is a mock of ProviderGovcClient interface.

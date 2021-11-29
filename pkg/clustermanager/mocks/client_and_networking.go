@@ -8,13 +8,14 @@ import (
 	context "context"
 	reflect "reflect"
 
+	gomock "github.com/golang/mock/gomock"
+
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	filewriter "github.com/aws/eks-anywhere/pkg/filewriter"
 	providers "github.com/aws/eks-anywhere/pkg/providers"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	v1alpha10 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	gomock "github.com/golang/mock/gomock"
 )
 
 // MockClusterClient is a mock of ClusterClient interface.

@@ -8,11 +8,12 @@ import (
 	context "context"
 	reflect "reflect"
 
+	gomock "github.com/golang/mock/gomock"
+
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	clusterapi "github.com/aws/eks-anywhere/pkg/clusterapi"
 	providers "github.com/aws/eks-anywhere/pkg/providers"
 	types "github.com/aws/eks-anywhere/pkg/types"
-	gomock "github.com/golang/mock/gomock"
 )
 
 // MockCAPIClient is a mock of CAPIClient interface.

@@ -8,9 +8,10 @@ import (
 	context "context"
 	reflect "reflect"
 
+	gomock "github.com/golang/mock/gomock"
+
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	types "github.com/aws/eks-anywhere/pkg/types"
-	gomock "github.com/golang/mock/gomock"
 )
 
 // MockFlux is a mock of Flux interface.

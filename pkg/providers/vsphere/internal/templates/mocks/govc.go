@@ -8,8 +8,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
+
+	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
 // MockGovcClient is a mock of GovcClient interface.

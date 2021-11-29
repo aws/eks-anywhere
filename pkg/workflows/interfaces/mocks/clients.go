@@ -8,12 +8,13 @@ import (
 	context "context"
 	reflect "reflect"
 
+	gomock "github.com/golang/mock/gomock"
+
 	bootstrapper "github.com/aws/eks-anywhere/pkg/bootstrapper"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	providers "github.com/aws/eks-anywhere/pkg/providers"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	validations "github.com/aws/eks-anywhere/pkg/validations"
-	gomock "github.com/golang/mock/gomock"
 )
 
 // MockBootstrapper is a mock of Bootstrapper interface.

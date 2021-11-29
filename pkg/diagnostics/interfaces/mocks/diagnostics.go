@@ -9,12 +9,13 @@ import (
 	reflect "reflect"
 	time "time"
 
+	gomock "github.com/golang/mock/gomock"
+
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	diagnostics "github.com/aws/eks-anywhere/pkg/diagnostics"
 	executables "github.com/aws/eks-anywhere/pkg/executables"
 	providers "github.com/aws/eks-anywhere/pkg/providers"
-	gomock "github.com/golang/mock/gomock"
 )
 
 // MockBundleClient is a mock of BundleClient interface.

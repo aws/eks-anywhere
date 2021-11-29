@@ -8,12 +8,13 @@ import (
 	context "context"
 	reflect "reflect"
 
+	gomock "github.com/golang/mock/gomock"
+
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	bootstrapper "github.com/aws/eks-anywhere/pkg/bootstrapper"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	providers "github.com/aws/eks-anywhere/pkg/providers"
 	types "github.com/aws/eks-anywhere/pkg/types"
-	gomock "github.com/golang/mock/gomock"
 )
 
 // MockProvider is a mock of Provider interface.

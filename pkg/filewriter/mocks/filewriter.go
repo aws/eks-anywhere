@@ -7,8 +7,9 @@ package mocks
 import (
 	reflect "reflect"
 
-	filewriter "github.com/aws/eks-anywhere/pkg/filewriter"
 	gomock "github.com/golang/mock/gomock"
+
+	filewriter "github.com/aws/eks-anywhere/pkg/filewriter"
 )
 
 // MockFileWriter is a mock of FileWriter interface.

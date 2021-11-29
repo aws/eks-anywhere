@@ -8,8 +8,6 @@ import (
 	context "context"
 	reflect "reflect"
 
-	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	gomock "github.com/golang/mock/gomock"
 	v1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -18,6 +16,9 @@ import (
 	v1alpha31 "sigs.k8s.io/cluster-api/api/v1alpha3"
 	v1alpha32 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
+
+	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 )
 
 // MockResourceFetcher is a mock of ResourceFetcher interface.

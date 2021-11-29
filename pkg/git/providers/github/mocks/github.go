@@ -8,9 +8,10 @@ import (
 	context "context"
 	reflect "reflect"
 
-	git "github.com/aws/eks-anywhere/pkg/git"
 	gomock "github.com/golang/mock/gomock"
 	github "github.com/google/go-github/v35/github"
+
+	git "github.com/aws/eks-anywhere/pkg/git"
 )
 
 // MockGitProviderClient is a mock of GitProviderClient interface.

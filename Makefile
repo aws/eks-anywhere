@@ -254,6 +254,7 @@ capd-test-%: e2e ## Run CAPD tests
 .PHONY: mocks
 mocks: ## Generate mocks
 	go install github.com/golang/mock/mockgen@v1.5.0
+	go install github.com/daixiang0/gci@v0.2.9
 	${GOPATH}/bin/mockgen -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
 	${GOPATH}/bin/mockgen -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable
 	${GOPATH}/bin/mockgen -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
@@ -278,6 +279,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/capiclient.go -package=mocks -source "pkg/clusterapi/manager.go" CAPIClient,KubectlClient
 	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/client.go -package=mocks -source "pkg/clusterapi/resourceset_manager.go" Client
 	${GOPATH}/bin/mockgen -destination=pkg/crypto/mocks/crypto.go -package=mocks -source "pkg/crypto/certificategen.go" CertificateGenerator
+	${GOPATH}/bin/gci -w -local github.com/aws/eks-anywhere .
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
