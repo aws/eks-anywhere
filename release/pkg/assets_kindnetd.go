@@ -66,13 +66,6 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 		} else {
 			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/kind/manifests", r.BundleNumber)
 		}
-		var imageTagOverrides []ImageTagOverride
-
-		imageTagOverride := ImageTagOverride{
-			Repository: repoName,
-			ReleaseUri: imageArtifact.ReleaseImageURI,
-		}
-		imageTagOverrides = append(imageTagOverrides, imageTagOverride)
 
 		if r.DevRelease {
 			releaseS3Path = fmt.Sprintf("artifacts/%s/kind/manifests", r.DevReleaseUriVersion)
@@ -92,7 +85,6 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 			ReleaseName:       manifest,
 			ReleaseS3Path:     releaseS3Path,
 			ReleaseCdnURI:     cdnURI,
-			ImageTagOverrides: imageTagOverrides,
 		}
 		artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 	}
