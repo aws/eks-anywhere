@@ -27,6 +27,7 @@ import (
 func (r *ReleaseConfig) GetFluxAssets() ([]Artifact, error) {
 	fluxControllerProjects := []string{"source-controller", "kustomize-controller", "helm-controller", "notification-controller"}
 	artifacts := []Artifact{}
+
 	for _, project := range fluxControllerProjects {
 		gitTag, err := r.getFluxGitTag(project)
 		if err != nil {
@@ -34,11 +35,15 @@ func (r *ReleaseConfig) GetFluxAssets() ([]Artifact, error) {
 		}
 
 		repoName, tagOptions := r.getFluxImageAttributes(project, gitTag)
+		releaseImageUri, err := r.GetReleaseImageURI(project, repoName, tagOptions)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
 
 		imageArtifact := &ImageArtifact{
 			AssetName:       project,
 			SourceImageURI:  r.GetSourceImageURI(project, repoName, tagOptions),
-			ReleaseImageURI: r.GetReleaseImageURI(project, repoName, tagOptions),
+			ReleaseImageURI: releaseImageUri,
 			Arch:            []string{"amd64"},
 			OS:              "linux",
 		}

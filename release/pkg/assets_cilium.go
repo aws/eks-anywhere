@@ -31,7 +31,6 @@ func (r *ReleaseConfig) GetCiliumAssets() ([]Artifact, error) {
 	}
 
 	manifestName := "cilium.yaml"
-	artifacts := []Artifact{}
 
 	var sourceS3Prefix string
 	var releaseS3Path string
@@ -65,7 +64,7 @@ func (r *ReleaseConfig) GetCiliumAssets() ([]Artifact, error) {
 		ReleaseCdnURI:     cdnURI,
 		ImageTagOverrides: []ImageTagOverride{},
 	}
-	artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
+	artifacts := []Artifact{Artifact{Manifest: manifestArtifact}}
 
 	return artifacts, nil
 }
