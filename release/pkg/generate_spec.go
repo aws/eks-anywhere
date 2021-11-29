@@ -299,6 +299,14 @@ func (r *ReleaseConfig) GetURI(path string) (string, error) {
 	return uri.String(), nil
 }
 
+func (r *ReleaseConfig) GetSourceManifestURI(path string) (string, error) {
+	uri, err := url.Parse(path)
+	if err != nil {
+		return "", err
+	}
+	return uri.String(), nil
+}
+
 func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[string]string) string {
 	var sourceImageUri string
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
