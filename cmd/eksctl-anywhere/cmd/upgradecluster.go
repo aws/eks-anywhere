@@ -91,7 +91,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer close(ctx, deps)
+	defer cleanup(ctx, deps, err)
 
 	upgradeCluster := workflows.NewUpgrade(
 		deps.Bootstrapper,
@@ -130,9 +130,6 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	upgradeValidations := upgradevalidations.New(validationOpts)
 
 	err = upgradeCluster.Run(ctx, clusterSpec, cluster, upgradeValidations, uc.forceClean)
-	if err == nil {
-		deps.Writer.CleanUpTemp()
-	}
 	return err
 }
 

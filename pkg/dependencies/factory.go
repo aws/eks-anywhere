@@ -45,7 +45,7 @@ type Dependencies struct {
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
-	closers := []types.Closer{d.DockerClient, d.Kubectl, d.Govc, d.Kind, d.Clusterctl, d.Flux, d.Troubleshoot}
+	closers := []types.Closer{d.Govc, d.DockerClient, d.Kubectl, d.Kind, d.Clusterctl, d.Flux, d.Troubleshoot}
 	for _, c := range closers {
 		if err := c.Close(ctx); err != nil {
 			return err
