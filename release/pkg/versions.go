@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -99,14 +98,4 @@ func GenerateComponentChecksum(hashes []string) string {
 	sumStr := string(sum256[:])[:4]
 
 	return sumStr
-}
-
-func SortArtifactsFuncMap(m map[string]func() ([]Artifact, error)) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	return keys
 }

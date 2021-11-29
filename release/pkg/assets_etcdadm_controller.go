@@ -88,9 +88,15 @@ func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
 			return nil, errors.Cause(err)
 		}
 
+		sourceS3URI, err := r.GetURI(filepath.Join(sourceS3Prefix, manifest))
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+
 		manifestArtifact := &ManifestArtifact{
 			SourceS3Key:       manifest,
 			SourceS3Prefix:    sourceS3Prefix,
+			SourceS3URI:       sourceS3URI,
 			ArtifactPath:      filepath.Join(r.ArtifactDir, "etcdadm-controller-manifests", r.BuildRepoHead),
 			ReleaseName:       manifest,
 			ReleaseS3Path:     releaseS3Path,
@@ -145,7 +151,7 @@ func (r *ReleaseConfig) GetEtcdadmControllerBundle(imageDigests map[string]strin
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
 
-				manifestContents, err := ReadHttpFile(bundleManifestArtifact.URI)
+				manifestContents, err := ReadHttpFile(manifestArtifact.SourceS3URI)
 				if err != nil {
 					return anywherev1alpha1.EtcdadmControllerBundle{}, err
 				}

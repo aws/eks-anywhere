@@ -44,6 +44,7 @@ type ImageArtifact struct {
 type ManifestArtifact struct {
 	SourceS3Prefix    string // S3 uri till base to download artifact
 	SourceS3Key       string
+	SourceS3URI       string
 	ArtifactPath      string
 	ReleaseName       string
 	ReleaseS3Path     string

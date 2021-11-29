@@ -66,7 +66,7 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
 
-				manifestContents, err := ReadHttpFile(bundleManifestArtifact.URI)
+				manifestContents, err := ReadHttpFile(manifestArtifact.SourceS3URI)
 				if err != nil {
 					return anywherev1alpha1.VSphereBundle{}, err
 				}

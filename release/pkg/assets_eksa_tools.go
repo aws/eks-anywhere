@@ -105,12 +105,6 @@ func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev
 				}
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
-
-				manifestContents, err := ReadHttpFile(bundleManifestArtifact.URI)
-				if err != nil {
-					return anywherev1alpha1.EksaBundle{}, err
-				}
-				bundleObjects = append(bundleObjects, string(manifestContents[:]))
 			}
 		}
 	}
