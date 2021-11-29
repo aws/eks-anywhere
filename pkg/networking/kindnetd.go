@@ -30,7 +30,7 @@ func (c *Kindnetd) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error) {
 	for _, template := range templates {
 		u := &unstructured.Unstructured{}
 		if err := yaml.Unmarshal([]byte(template), u); err != nil {
-			return nil, fmt.Errorf("unmarhsaling kindnetd type [%s]: %v", template, err)
+			return nil, fmt.Errorf("unmarshaling kindnetd type [%s]: %v", template, err)
 		}
 		if u.GetKind() == "DaemonSet" {
 			updated, err := updatePodSubnet(clusterSpec, u)
