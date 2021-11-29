@@ -2,63 +2,49 @@ package controllers
 
 import (
 	"context"
-	"time"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	"github.com/aws/eks-anywhere/controllers/controllers/resource"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
 // ClusterReconciler reconciles a Cluster object
 type ClusterReconciler struct {
-	client.Client
-	Log             logr.Logger
-	Scheme          *runtime.Scheme
-	reconcilers     []resource.Reconciler
-	resourceFetcher resource.ResourceFetcher
+	client client.Client
+	log    logr.Logger
 }
 
 func NewClusterReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) *ClusterReconciler {
 	return &ClusterReconciler{
-		Client: client,
-		Log:    log,
-		Scheme: scheme,
-		reconcilers: []resource.Reconciler{
-			resource.NewClusterReconciler(
-				resource.NewCAPIResourceFetcher(client, log),
-				resource.NewCAPIResourceUpdater(client, log),
-				time.Now,
-				log),
-		},
-		resourceFetcher: resource.NewCAPIResourceFetcher(client, log),
+		client: client,
+		log:    log,
 	}
 }
 
-//+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters;vspheredatacenterconfigs;vspheremachineconfigs;dockerdatacenterconfigs;bundles;awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=oidcconfigs,verbs=get;list
-//+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/status;vspheredatacenterconfigs/status;vspheremachineconfigs/status;dockerdatacenterconfigs/status;bundles/status;awsiamconfigs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/finalizers;vspheredatacenterconfigs/finalizers;vspheremachineconfigs/finalizers;dockerdatacenterconfigs/finalizers;bundles/finalizers;awsiamconfigs/finalizers,verbs=update
+// SetupWithManager sets up the controller with the Manager.
+func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&anywherev1.Cluster{}).
+		Complete(r)
+}
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
+// TODO: add here kubebuilder permissions as neeeded
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	_ = r.Log.WithValues("cluster", req.NamespacedName)
-	// Fetch the Cluster instance.
-	cluster, err := r.resourceFetcher.FetchCluster(ctx, req.NamespacedName)
-	if err != nil {
+	log := r.log.WithValues("cluster", req.NamespacedName)
+
+	// Fetch the Cluster object
+	cluster := &anywherev1.Cluster{}
+	if err := r.client.Get(ctx, req.NamespacedName, cluster); err != nil {
 		return ctrl.Result{}, err
 	}
+
 	// Initialize the patch helper
-	patchHelper, err := patch.NewHelper(cluster, r.Client)
+	patchHelper, err := patch.NewHelper(cluster, r.client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -70,54 +56,32 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 		}
 	}()
 
-	// Ignore deleted Clusters, this can happen when foregroundDeletion
-	// is enabled
 	if !cluster.DeletionTimestamp.IsZero() {
-		return ctrl.Result{}, nil
+		return r.reconcileDelete(ctx, cluster, log)
 	}
 
-	// If the external object is paused, return without any further processing.
+	// If the cluster is paused, return without any further processing.
 	if cluster.IsReconcilePaused() {
-		r.Log.Info("eksa reconciliation is paused")
+		log.Info("Cluster reconciliation is paused")
 		return ctrl.Result{}, nil
 	}
 
-	// dry run
-	result, err := r.reconcile(ctx, req.NamespacedName, true)
-	if err != nil {
-		r.Log.Error(err, "Dry run failed to reconcile Cluster")
-		return result, err
+	if cluster.IsSelfManaged() {
+		log.Info("Ignoring self managed cluster")
+		return ctrl.Result{}, nil
 	}
-	// non dry run
-	result, err = r.reconcile(ctx, req.NamespacedName, false)
+
+	result, err := r.reconcile(ctx, cluster, log)
 	if err != nil {
-		r.Log.Error(err, "Failed to reconcile Cluster")
+		log.Error(err, "Failed to reconcile Cluster")
 	}
 	return result, err
 }
 
-func (r *ClusterReconciler) reconcile(ctx context.Context, objectKey types.NamespacedName, dryRun bool) (ctrl.Result, error) {
-	r.Log.Info("Reconcile EKS-A Cluster", "dryRun", dryRun)
-	errs := []error{}
-	for _, phase := range r.reconcilers {
-		err := phase.Reconcile(ctx, objectKey, dryRun)
-		if err != nil {
-			errs = append(errs, err)
-		}
-		if len(errs) > 0 {
-			continue
-		}
-	}
-	return ctrl.Result{}, kerrors.NewAggregate(errs)
+func (r *ClusterReconciler) reconcile(ctx context.Context, cluster *anywherev1.Cluster, log logr.Logger) (ctrl.Result, error) {
+	return ctrl.Result{}, nil
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&anywherev1.Cluster{}).
-		Watches(&source.Kind{Type: &anywherev1.VSphereDatacenterConfig{}}, &handler.EnqueueRequestForObject{}).
-		Watches(&source.Kind{Type: &anywherev1.VSphereMachineConfig{}}, &handler.EnqueueRequestForObject{}).
-		Watches(&source.Kind{Type: &anywherev1.DockerDatacenterConfig{}}, &handler.EnqueueRequestForObject{}).
-		Watches(&source.Kind{Type: &anywherev1.AWSIamConfig{}}, &handler.EnqueueRequestForObject{}).
-		Complete(r)
+func (r *ClusterReconciler) reconcileDelete(ctx context.Context, cluster *anywherev1.Cluster, log logr.Logger) (ctrl.Result, error) {
+	return ctrl.Result{}, nil
 }
