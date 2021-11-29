@@ -85,6 +85,7 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 			ReleaseName:       manifest,
 			ReleaseS3Path:     releaseS3Path,
 			ReleaseCdnURI:     cdnURI,
+			ImageTagOverrides: [],
 		}
 		artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 	}
