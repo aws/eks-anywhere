@@ -48,7 +48,7 @@ func (c *Kindnetd) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error) {
 func updatePodSubnet(clusterSpec *cluster.Spec, unstructured *unstructured.Unstructured) ([]byte, error) {
 	var daemonSet appsv1.DaemonSet
 	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(unstructured.UnstructuredContent(), &daemonSet); err != nil {
-		return nil, fmt.Errorf("unmarhsaling kindnetd daemonset: %v", err)
+		return nil, fmt.Errorf("unmarshaling kindnetd daemonset: %v", err)
 	}
 	if len(daemonSet.Spec.Template.Spec.Containers) == 0 {
 		return nil, errors.New("missing container in kindnetd daemonset")
