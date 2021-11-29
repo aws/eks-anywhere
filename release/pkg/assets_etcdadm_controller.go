@@ -88,7 +88,7 @@ func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
 			return nil, errors.Cause(err)
 		}
 
-		sourceS3URI, err := r.GetSourceManifestURI(filepath.Join(r.SourceBucket, sourceS3Prefix, manifest))
+		sourceS3URI, err := r.GetSourceManifestURI(filepath.Join(sourceS3Prefix, manifest))
 		if err != nil {
 			return nil, errors.Cause(err)
 		}
