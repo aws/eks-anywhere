@@ -9,13 +9,13 @@ import (
 	"sort"
 	"strings"
 
-	etcdv1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/version"
-	vspherev3 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
-	"sigs.k8s.io/cluster-api/api/v1alpha3"
-	kubeadmnv1alpha3 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
+	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
 	"sigs.k8s.io/yaml"
 
@@ -32,7 +32,7 @@ const (
 )
 
 var (
-	capiClustersResourceType          = fmt.Sprintf("clusters.%s", v1alpha3.GroupVersion.Group)
+	capiClustersResourceType          = fmt.Sprintf("clusters.%s", clusterv1.GroupVersion.Group)
 	eksaClusterResourceType           = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -40,7 +40,7 @@ var (
 	eksaGitOpsResourceType            = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaOIDCResourceType              = fmt.Sprintf("oidcconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaAwsIamResourceType            = fmt.Sprintf("awsiamconfigs.%s", v1alpha1.GroupVersion.Group)
-	etcdadmClustersResourceType       = fmt.Sprintf("etcdadmclusters.%s", etcdv1alpha3.GroupVersion.Group)
+	etcdadmClustersResourceType       = fmt.Sprintf("etcdadmclusters.%s", etcdv1.GroupVersion.Group)
 	bundlesResourceType               = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
 	clusterResourceSetResourceType    = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
 )
@@ -170,7 +170,7 @@ func (k *Kubectl) WaitForControlPlaneReady(ctx context.Context, cluster *types.C
 }
 
 func (k *Kubectl) WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
-	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ManagedEtcdReady", fmt.Sprintf("clusters.%s/%s", v1alpha3.GroupVersion.Group, newClusterName), constants.EksaSystemNamespace)
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ManagedEtcdReady", fmt.Sprintf("clusters.%s/%s", clusterv1.GroupVersion.Group, newClusterName), constants.EksaSystemNamespace)
 }
 
 func (k *Kubectl) WaitForDeployment(ctx context.Context, cluster *types.Cluster, timeout string, condition string, target string, namespace string) error {
@@ -347,7 +347,7 @@ func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, cluster *types.Cluste
 	return nil
 }
 
-func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, clusterName string, kubeconfig string, namespace string) (*vspherev3.VSphereMachineTemplate, error) {
+func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, clusterName string, kubeconfig string, namespace string) (*vspherev1.VSphereMachineTemplate, error) {
 	machineTemplateName, err := k.MachineTemplateName(ctx, clusterName, kubeconfig, WithNamespace(namespace))
 	if err != nil {
 		return nil, err
@@ -358,7 +358,7 @@ func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, cluster
 	if err != nil {
 		return nil, err
 	}
-	machineTemplateSpec := &vspherev3.VSphereMachineTemplate{}
+	machineTemplateSpec := &vspherev1.VSphereMachineTemplate{}
 	if err := yaml.Unmarshal(buffer.Bytes(), machineTemplateSpec); err != nil {
 		return nil, err
 	}
@@ -634,15 +634,15 @@ func (k *Kubectl) GetSecret(ctx context.Context, secretObjectName string, opts .
 	return response, err
 }
 
-func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOpt) ([]kubeadmnv1alpha3.KubeadmControlPlane, error) {
-	params := []string{"get", fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", v1alpha3.GroupVersion.Group), "-o", "json"}
+func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOpt) ([]bootstrapv1.KubeadmControlPlane, error) {
+	params := []string{"get", fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group), "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting kubeadmcontrolplanes: %v", err)
 	}
 
-	response := &kubeadmnv1alpha3.KubeadmControlPlaneList{}
+	response := &bootstrapv1.KubeadmControlPlaneList{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing get kubeadmcontrolplanes response: %v", err)
@@ -651,16 +651,16 @@ func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOp
 	return response.Items, nil
 }
 
-func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error) {
+func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*bootstrapv1.KubeadmControlPlane, error) {
 	logger.V(6).Info("Getting KubeadmControlPlane CRDs", "cluster", clusterName)
-	params := []string{"get", fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", v1alpha3.GroupVersion.Group), clusterName, "-o", "json"}
+	params := []string{"get", fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group), clusterName, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting kubeadmcontrolplane: %v", err)
 	}
 
-	response := &kubeadmnv1alpha3.KubeadmControlPlane{}
+	response := &bootstrapv1.KubeadmControlPlane{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing get kubeadmcontrolplane response: %v", err)
@@ -669,15 +669,15 @@ func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Clu
 	return response, nil
 }
 
-func (k *Kubectl) GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*v1alpha3.MachineDeployment, error) {
-	params := []string{"get", fmt.Sprintf("machinedeployments.%s", v1alpha3.GroupVersion.Group), fmt.Sprintf("%s-md-0", clusterName), "-o", "json"}
+func (k *Kubectl) GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*clusterv1.MachineDeployment, error) {
+	params := []string{"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), fmt.Sprintf("%s-md-0", clusterName), "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting machine deployment: %v", err)
 	}
 
-	response := &v1alpha3.MachineDeployment{}
+	response := &clusterv1.MachineDeployment{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing get machineDeployment response: %v", err)
@@ -686,15 +686,15 @@ func (k *Kubectl) GetMachineDeployment(ctx context.Context, cluster *types.Clust
 	return response, nil
 }
 
-func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt) ([]v1alpha3.MachineDeployment, error) {
-	params := []string{"get", fmt.Sprintf("machinedeployments.%s", v1alpha3.GroupVersion.Group), "-o", "json"}
+func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt) ([]clusterv1.MachineDeployment, error) {
+	params := []string{"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting machine deployments: %v", err)
 	}
 
-	response := &v1alpha3.MachineDeploymentList{}
+	response := &clusterv1.MachineDeploymentList{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing get machineDeployments response: %v", err)
@@ -960,7 +960,7 @@ func (k *Kubectl) GetCurrentClusterContext(ctx context.Context, cluster *types.C
 	return stdOut.String(), nil
 }
 
-func (k *Kubectl) GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error) {
+func (k *Kubectl) GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*etcdv1.EtcdadmCluster, error) {
 	logger.V(6).Info("Getting EtcdadmCluster CRD", "cluster", clusterName)
 	params := []string{"get", etcdadmClustersResourceType, fmt.Sprintf("%s-etcd", clusterName), "-o", "json"}
 	applyOpts(&params, opts...)
@@ -969,7 +969,7 @@ func (k *Kubectl) GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster,
 		return nil, fmt.Errorf("error getting etcdadmCluster: %v", err)
 	}
 
-	response := &etcdv1alpha3.EtcdadmCluster{}
+	response := &etcdv1.EtcdadmCluster{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing get etcdadmCluster response: %v", err)
