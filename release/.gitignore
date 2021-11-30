@@ -23,3 +23,6 @@ testbin/*
 *.swp
 *.swo
 *~
+
+# Directory of artifacts downloaded during release
+downloaded-artifacts

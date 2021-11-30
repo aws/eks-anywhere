@@ -38,19 +38,20 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 	tagOptions := map[string]string{
 		"gitTag": gitTag,
 	}
-
-	artifacts := []Artifact{}
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
 
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
 		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, repoName, tagOptions),
+		ReleaseImageURI: releaseImageUri,
 		Arch:            []string{"amd64"},
 		OS:              "linux",
 		GitTag:          gitTag,
 	}
-
-	artifacts = append(artifacts, Artifact{Image: imageArtifact})
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
 	manifestList := []string{
 		"kindnetd.yaml",
@@ -79,12 +80,12 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 		}
 
 		manifestArtifact := &ManifestArtifact{
-			SourceS3Key:       manifest,
-			SourceS3Prefix:    sourceS3Prefix,
-			ArtifactPath:      filepath.Join(r.ArtifactDir, "kind-manifests", r.BuildRepoHead),
-			ReleaseName:       manifest,
-			ReleaseS3Path:     releaseS3Path,
-			ReleaseCdnURI:     cdnURI,
+			SourceS3Key:    manifest,
+			SourceS3Prefix: sourceS3Prefix,
+			ArtifactPath:   filepath.Join(r.ArtifactDir, "kind-manifests", r.BuildRepoHead),
+			ReleaseName:    manifest,
+			ReleaseS3Path:  releaseS3Path,
+			ReleaseCdnURI:  cdnURI,
 		}
 		artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 	}

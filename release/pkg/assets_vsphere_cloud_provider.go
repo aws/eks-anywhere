@@ -37,15 +37,18 @@ func (r *ReleaseConfig) GetVsphereCloudProviderAssets(eksDReleaseChannel string)
 		"eksDReleaseChannel": eksDReleaseChannel,
 	}
 
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
 		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, repoName, tagOptions),
+		ReleaseImageURI: releaseImageUri,
 		Arch:            []string{"amd64"},
 		OS:              "linux",
 	}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
-	artifact := Artifact{Image: imageArtifact}
-
-	return []Artifact{artifact}, nil
+	return artifacts, nil
 }

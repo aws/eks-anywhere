@@ -58,7 +58,6 @@ func (r *ReleaseConfig) GetCriToolsAssets() ([]Artifact, error) {
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
-	artifacts := []Artifact{}
 
 	archiveArtifact := &ArchiveArtifact{
 		SourceS3Key:    sourceS3Key,
@@ -70,7 +69,7 @@ func (r *ReleaseConfig) GetCriToolsAssets() ([]Artifact, error) {
 		OS:             os,
 		Arch:           []string{arch},
 	}
-	artifacts = append(artifacts, Artifact{Archive: archiveArtifact})
+	artifacts := []Artifact{Artifact{Archive: archiveArtifact}}
 
 	return artifacts, nil
 }

@@ -43,10 +43,14 @@ func (r *ReleaseConfig) GetVsphereCsiAssets() ([]Artifact, error) {
 			"gitTag": gitTag,
 		}
 
+		releaseImageUri, err := r.GetReleaseImageURI(image, repoName, tagOptions)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
 		imageArtifact := &ImageArtifact{
 			AssetName:       fmt.Sprintf("vsphere-csi-%s", image),
 			SourceImageURI:  r.GetSourceImageURI(image, repoName, tagOptions),
-			ReleaseImageURI: r.GetReleaseImageURI(image, repoName, tagOptions),
+			ReleaseImageURI: releaseImageUri,
 			Arch:            []string{"amd64"},
 			OS:              "linux",
 		}

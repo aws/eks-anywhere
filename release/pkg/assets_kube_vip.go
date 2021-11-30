@@ -36,17 +36,20 @@ func (r *ReleaseConfig) GetKubeVipAssets() ([]Artifact, error) {
 	tagOptions := map[string]string{
 		"gitTag": gitTag,
 	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
 
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
 		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, repoName, tagOptions),
+		ReleaseImageURI: releaseImageUri,
 		Arch:            []string{"amd64"},
 		OS:              "linux",
 		GitTag:          gitTag,
 	}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
-	artifact := &Artifact{Image: imageArtifact}
-
-	return []Artifact{*artifact}, nil
+	return artifacts, nil
 }
