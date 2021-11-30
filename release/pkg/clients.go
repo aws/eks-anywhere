@@ -45,8 +45,7 @@ type ReleaseClients struct {
 }
 
 type SourceS3Clients struct {
-	Client     *s3.S3
-	Downloader *s3manager.Downloader
+	Client *s3.S3
 }
 
 type ReleaseS3Clients struct {
@@ -89,13 +88,12 @@ func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClien
 		return nil, nil, errors.Cause(err)
 	}
 
-	// S3 client and managers
+	// S3 client and uploader
 	s3Client := s3.New(pdxSession)
-	downloader := s3manager.NewDownloader(pdxSession)
 	uploader := s3manager.NewUploader(pdxSession)
 
 	// Get source ECR auth config
-	fmt.Printf("Source container registry is: %s", r.SourceContainerRegistry)
+	fmt.Printf("Source container registry is: %s\n", r.SourceContainerRegistry)
 	ecrClient := ecr.New(pdxSession)
 	sourceAuthConfig, err := getEcrAuthConfig(ecrClient)
 	if err != nil {
@@ -103,7 +101,7 @@ func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClien
 	}
 
 	// Get release ECR Public auth config
-	fmt.Printf("Release container registry is: %s", r.ReleaseContainerRegistry)
+	fmt.Printf("Release container registry is: %s\n", r.ReleaseContainerRegistry)
 	ecrPublicClient := ecrpublic.New(iadSession)
 	releaseAuthConfig, err := getEcrPublicAuthConfig(ecrPublicClient)
 	if err != nil {
@@ -113,8 +111,7 @@ func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClien
 	// Constructing source clients
 	sourceClients := &SourceClients{
 		S3: &SourceS3Clients{
-			Client:     s3Client,
-			Downloader: downloader,
+			Client: s3Client,
 		},
 		ECR: &SourceECRClient{
 			EcrClient:  ecrClient,
@@ -162,16 +159,15 @@ func (r *ReleaseConfig) CreateStagingReleaseClients() (*SourceClients, *ReleaseC
 		return nil, nil, errors.Cause(err)
 	}
 
-	// Source S3 client and downloader
+	// Source S3 client
 	sourceS3Client := s3.New(sourceSession)
-	downloader := s3manager.NewDownloader(sourceSession)
 
 	// Release S3 client and uploader
 	releaseS3Client := s3.New(releaseSession)
 	uploader := s3manager.NewUploader(releaseSession)
 
 	// Get source ECR auth config
-	fmt.Printf("Source container registry is: %s", r.SourceContainerRegistry)
+	fmt.Printf("Source container registry is: %s\n", r.SourceContainerRegistry)
 	ecrClient := ecr.New(sourceSession)
 	sourceAuthConfig, err := getEcrAuthConfig(ecrClient)
 	if err != nil {
@@ -179,7 +175,7 @@ func (r *ReleaseConfig) CreateStagingReleaseClients() (*SourceClients, *ReleaseC
 	}
 
 	// Get release ECR Public auth config
-	fmt.Printf("Release container registry is: %s", r.ReleaseContainerRegistry)
+	fmt.Printf("Release container registry is: %s\n", r.ReleaseContainerRegistry)
 	ecrPublicClient := ecrpublic.New(releaseSession)
 	releaseAuthConfig, err := getEcrPublicAuthConfig(ecrPublicClient)
 	if err != nil {
@@ -189,8 +185,7 @@ func (r *ReleaseConfig) CreateStagingReleaseClients() (*SourceClients, *ReleaseC
 	// Constructing source clients
 	sourceClients := &SourceClients{
 		S3: &SourceS3Clients{
-			Client:     sourceS3Client,
-			Downloader: downloader,
+			Client: sourceS3Client,
 		},
 		ECR: &SourceECRClient{
 			EcrClient:  ecrClient,
@@ -239,16 +234,15 @@ func (r *ReleaseConfig) CreateProdReleaseClients() (*SourceClients, *ReleaseClie
 		return nil, nil, errors.Cause(err)
 	}
 
-	// Source S3 client and downloader
+	// Source S3 client
 	sourceS3Client := s3.New(sourceSession)
-	downloader := s3manager.NewDownloader(sourceSession)
 
 	// Release S3 client and uploader
 	releaseS3Client := s3.New(releaseSession)
 	uploader := s3manager.NewUploader(releaseSession)
 
 	// Get source ECR Public auth config
-	fmt.Printf("Source container registry is: %s", r.SourceContainerRegistry)
+	fmt.Printf("Source container registry is: %s\n", r.SourceContainerRegistry)
 	sourceEcrPublicClient := ecrpublic.New(sourceSession)
 	sourceAuthConfig, err := getEcrPublicAuthConfig(sourceEcrPublicClient)
 	if err != nil {
@@ -256,7 +250,7 @@ func (r *ReleaseConfig) CreateProdReleaseClients() (*SourceClients, *ReleaseClie
 	}
 
 	// Get release ECR Public auth config
-	fmt.Printf("Release container registry is: %s", r.ReleaseContainerRegistry)
+	fmt.Printf("Release container registry is: %s\n", r.ReleaseContainerRegistry)
 	releaseEcrPublicClient := ecrpublic.New(releaseSession)
 	releaseAuthConfig, err := getEcrPublicAuthConfig(releaseEcrPublicClient)
 	if err != nil {
@@ -266,8 +260,7 @@ func (r *ReleaseConfig) CreateProdReleaseClients() (*SourceClients, *ReleaseClie
 	// Constructing release clients
 	sourceClients := &SourceClients{
 		S3: &SourceS3Clients{
-			Client:     sourceS3Client,
-			Downloader: downloader,
+			Client: sourceS3Client,
 		},
 		ECR: &SourceECRClient{
 			EcrPublicClient: sourceEcrPublicClient,

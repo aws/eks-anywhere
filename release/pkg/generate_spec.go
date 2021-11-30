@@ -22,7 +22,9 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -52,6 +54,8 @@ type ReleaseConfig struct {
 	DevRelease               bool
 	DryRun                   bool
 	ReleaseEnvironment       string
+	SourceClients            *SourceClients
+	ReleaseClients           *ReleaseClients
 }
 
 type projectVersioner interface {
@@ -390,78 +394,144 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 	return sourceImageUri
 }
 
-func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map[string]string) string {
+func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map[string]string) (string, error) {
 	var releaseImageUri string
-	var semVer string
-	if r.DevRelease {
-		semVer = r.DevReleaseUriVersion
-	} else {
-		semVer = fmt.Sprintf("%d", r.BundleNumber)
-	}
 
 	if name == "bottlerocket-bootstrap" {
-		releaseImageUri = fmt.Sprintf("%s/%s:v%s-%s-eks-a-%s",
+		releaseImageUri = fmt.Sprintf("%s/%s:v%s-%s-eks-a",
 			r.ReleaseContainerRegistry,
 			repoName,
 			tagOptions["eksDReleaseChannel"],
 			tagOptions["eksDReleaseNumber"],
-			semVer,
 		)
 	} else if name == "cloud-provider-vsphere" {
-		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-eks-a-%s",
+		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-eks-a",
 			r.ReleaseContainerRegistry,
 			repoName,
 			tagOptions["gitTag"],
 			tagOptions["eksDReleaseChannel"],
-			semVer,
 		)
 	} else if name == "eks-anywhere-cluster-controller" {
 		if r.DevRelease {
-			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a-%s",
+			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a",
 				r.ReleaseContainerRegistry,
 				repoName,
-				semVer,
 			)
 		} else {
-			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%s",
+			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
 				r.ReleaseContainerRegistry,
 				repoName,
 				r.ReleaseVersion,
-				semVer,
 			)
 		}
 	} else if name == "eks-anywhere-diagnostic-collector" {
 		if r.DevRelease {
-			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a-%s",
+			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a",
 				r.ReleaseContainerRegistry,
 				repoName,
-				semVer,
 			)
 		} else {
-			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%s",
+			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
 				r.ReleaseContainerRegistry,
 				repoName,
 				r.ReleaseVersion,
-				semVer,
 			)
 		}
 	} else if name == "kind-node" {
-		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-%s-eks-a-%s",
+		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-%s-eks-a",
 			r.ReleaseContainerRegistry,
 			repoName,
 			tagOptions["kubeVersion"],
 			tagOptions["eksDReleaseChannel"],
 			tagOptions["eksDReleaseNumber"],
-			semVer,
 		)
 	} else {
-		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%s",
+		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
 			r.ReleaseContainerRegistry,
 			repoName,
 			tagOptions["gitTag"],
-			semVer,
 		)
 	}
 
-	return releaseImageUri
+	var semver string
+	if r.DevRelease {
+		currentSourceImageUri := r.GetSourceImageURI(name, repoName, tagOptions)
+		previousReleaseImageSemver, err := r.GetPreviousReleaseImageSemver(releaseImageUri)
+		if err != nil {
+			return "", errors.Cause(err)
+		}
+		previousReleaseImageUri := fmt.Sprintf("%s-%s", releaseImageUri, previousReleaseImageSemver)
+
+		sameDigest, err := r.CompareHashWithPreviousBundle(currentSourceImageUri, previousReleaseImageUri)
+		if err != nil {
+			return "", errors.Cause(err)
+		}
+		if sameDigest {
+			semver = previousReleaseImageSemver
+		} else {
+			newSemver, err := generateNewDevReleaseVersion(previousReleaseImageSemver, "vDev")
+			if err != nil {
+				return "", errors.Cause(err)
+			}
+			semver = strings.ReplaceAll(newSemver, "+", "-")
+		}
+	} else {
+		semver = fmt.Sprintf("%d", r.BundleNumber)
+	}
+
+	releaseImageUri = fmt.Sprintf("%s-%s", releaseImageUri, semver)
+
+	return releaseImageUri, nil
+}
+
+func (r *ReleaseConfig) CompareHashWithPreviousBundle(currentSourceImageUri, previousReleaseImageUri string) (bool, error) {
+	if r.DryRun {
+		return false, nil
+	}
+	currentSourceImageUriDigest, err := r.GetECRImageDigest(currentSourceImageUri)
+	if err != nil {
+		return false, errors.Cause(err)
+	}
+
+	previousReleaseImageUriDigest, err := r.GetECRPublicImageDigest(previousReleaseImageUri)
+	if err != nil {
+		return false, errors.Cause(err)
+	}
+
+	return currentSourceImageUriDigest == previousReleaseImageUriDigest, nil
+}
+
+func (r *ReleaseConfig) GetPreviousReleaseImageSemver(releaseImageUri string) (string, error) {
+	var semver string
+	if r.DryRun {
+		semver = "v0.0.0-dev-build.0"
+	} else {
+		bundles := &anywherev1alpha1.Bundles{}
+		bundleReleaseManifestKey := r.GetManifestFilepaths(anywherev1alpha1.BundlesKind)
+		bundleManifestUrl := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", r.ReleaseBucket, bundleReleaseManifestKey)
+		contents, err := ReadHttpFile(bundleManifestUrl)
+		if err != nil {
+			return "", fmt.Errorf("Error reading bundle manifest from S3: %v", err)
+		}
+
+		if err = yaml.Unmarshal(contents, bundles); err != nil {
+			return "", fmt.Errorf("Error unmarshaling bundles manifest from [%s]: %v", bundleManifestUrl, err)
+		}
+
+		for _, versionedBundle := range bundles.Spec.VersionsBundles {
+			vb := &cluster.VersionsBundle{VersionsBundle: &versionedBundle}
+			vbImages := vb.Images()
+			for _, image := range vbImages {
+				if strings.Contains(image.URI, releaseImageUri) {
+					imageUri := image.URI
+					numDashes := strings.Count(imageUri, "-")
+					imageUriSplit := strings.SplitAfterN(imageUri, "-", numDashes-1)
+					semver := imageUriSplit[len(imageUriSplit)-1]
+					fmt.Printf("Previous release image URI is %s\n", semver)
+				}
+			}
+
+		}
+	}
+	return semver, nil
 }

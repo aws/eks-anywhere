@@ -45,11 +45,15 @@ func (r *ReleaseConfig) GetCertManagerAssets() ([]Artifact, error) {
 		tagOptions := map[string]string{
 			"gitTag": gitTag,
 		}
+		releaseImageUri, err := r.GetReleaseImageURI(image, repoName, tagOptions)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
 
 		imageArtifact := &ImageArtifact{
 			AssetName:       image,
 			SourceImageURI:  r.GetSourceImageURI(image, repoName, tagOptions),
-			ReleaseImageURI: r.GetReleaseImageURI(image, repoName, tagOptions),
+			ReleaseImageURI: releaseImageUri,
 			Arch:            []string{"amd64"},
 			OS:              "linux",
 		}

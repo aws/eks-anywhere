@@ -134,10 +134,13 @@ var releaseCmd = &cobra.Command{
 			}
 		}
 
+		releaseConfig.SourceClients = sourceClients
+		releaseConfig.ReleaseClients = releaseClients
+
 		if devRelease {
-			releaseVersion, err = releaseConfig.GetCurrentEksADevReleaseVersion(sourceClients, releaseVersion)
+			releaseVersion, err = releaseConfig.GetCurrentEksADevReleaseVersion(releaseVersion)
 			if err != nil {
-				fmt.Printf("Error getting previous eks a dev release number: %v\n", err)
+				fmt.Printf("Error getting previous EKS-A dev release number: %v\n", err)
 				os.Exit(1)
 			}
 			releaseConfig.ReleaseVersion = releaseVersion
@@ -153,7 +156,7 @@ var releaseCmd = &cobra.Command{
 				},
 			}
 			bundle.APIVersion = "anywhere.eks.amazonaws.com/v1alpha1"
-			bundle.Kind = "Bundles"
+			bundle.Kind = anywherev1alpha1.BundlesKind
 			bundle.CreationTimestamp = v1.Time{Time: releaseTime}
 
 			fmt.Println("Getting bundle artifacts data")
@@ -165,19 +168,19 @@ var releaseCmd = &cobra.Command{
 
 			// Download ECR images + S3 artifacts and rename them to the
 			// proper release URIs for manifest generation.
-			err = releaseConfig.PrepareBundleRelease(artifactsTable, sourceClients)
+			err = releaseConfig.PrepareBundleRelease(artifactsTable)
 			if err != nil {
 				fmt.Printf("Error preparing bundle release: %v\n", err)
 				os.Exit(1)
 			}
 
-			err = pkg.UploadArtifacts(sourceClients, releaseClients, releaseConfig, artifactsTable)
+			err = releaseConfig.UploadArtifacts(artifactsTable)
 			if err != nil {
 				fmt.Printf("Error uploading bundle release artifacts: %v\n", err)
 				os.Exit(1)
 			}
 
-			imageDigests, err := pkg.UpdateImageDigests(releaseClients, releaseConfig, artifactsTable)
+			imageDigests, err := releaseConfig.UpdateImageDigests(artifactsTable)
 			if err != nil {
 				fmt.Printf("Error updating image digests in bundles manifest: %+v\n", err)
 				os.Exit(1)
@@ -194,7 +197,7 @@ var releaseCmd = &cobra.Command{
 				fmt.Printf("Error marshaling bundles manifest: %+v\n", err)
 				os.Exit(1)
 			}
-			fmt.Printf("Generated bundles manifest:\n%s\n", string(bundleManifest))
+			fmt.Printf("Generated bundles manifest:\n\n%s\n", string(bundleManifest))
 
 			if !dryRun {
 				err = ioutil.WriteFile(bundleReleaseManifestFile, bundleManifest, 0o755)
@@ -203,16 +206,8 @@ var releaseCmd = &cobra.Command{
 					os.Exit(1)
 				}
 
-				var bundleReleaseManifestKey string
-				if devRelease {
-					bundleReleaseManifestKey = bundleReleaseManifestFile
-					if releaseConfig.BuildRepoBranchName != "main" {
-						bundleReleaseManifestKey = fmt.Sprintf("/%s/%s", releaseConfig.BuildRepoBranchName, bundleReleaseManifestFile)
-					}
-				} else {
-					bundleReleaseManifestKey = fmt.Sprintf("/releases/bundles/%d/manifest.yaml", releaseConfig.BundleNumber)
-				}
-				err = pkg.UploadFileToS3(bundleReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(bundleReleaseManifestKey), releaseClients.S3.Uploader)
+				bundleReleaseManifestKey := releaseConfig.GetManifestFilepaths(anywherev1alpha1.BundlesKind)
+				err = releaseConfig.UploadFileToS3(bundleReleaseManifestFile, aws.String(bundleReleaseManifestKey))
 				if err != nil {
 					fmt.Printf("Error uploading bundle manifest to release bucket: %+v", err)
 					os.Exit(1)
@@ -223,42 +218,16 @@ var releaseCmd = &cobra.Command{
 		}
 
 		if devRelease || !bundleRelease {
-			var eksAReleaseManifestKey string
-			release := &anywherev1alpha1.Release{
-				Spec: anywherev1alpha1.ReleaseSpec{
-					Releases: []anywherev1alpha1.EksARelease{},
-				},
-			}
-
-			if !dryRun {
-				if devRelease {
-					eksAReleaseManifestKey = eksAReleaseManifestFile
-				} else {
-					eksAReleaseManifestKey = "/releases/eks-a/manifest.yaml"
-				}
-				eksAReleaseManifestUrl := fmt.Sprintf("%s%s", releaseConfig.CDN, eksAReleaseManifestKey)
-
-				exists, err := pkg.ExistsInS3(releaseClients.S3.Client, releaseConfig.ReleaseBucket, eksAReleaseManifestKey)
-				if err != nil {
-					fmt.Printf("Error checking if releases manifest exists in S3: %v", err)
-					os.Exit(1)
-				}
-				if exists {
-					contents, err := pkg.ReadHttpFile(eksAReleaseManifestUrl)
-					if err != nil {
-						fmt.Printf("Error reading releases manifest from S3: %v", err)
-						os.Exit(1)
-					}
-					if err = yaml.Unmarshal(contents, release); err != nil {
-						fmt.Printf("Error unmarshaling releases manifest from [%s]: %v", eksAReleaseManifestUrl, err)
-						os.Exit(1)
-					}
-				}
+			eksAReleaseManifestKey := releaseConfig.GetManifestFilepaths(anywherev1alpha1.ReleaseKind)
+			release, err := releaseConfig.GetPreviousReleaseIfExists()
+			if err != nil {
+				fmt.Printf("Error getting previous EKS-A releases: %v\n", err)
+				os.Exit(1)
 			}
 
 			release.Name = "eks-anywhere"
 			release.APIVersion = "anywhere.eks.amazonaws.com/v1alpha1"
-			release.Kind = "Release"
+			release.Kind = anywherev1alpha1.ReleaseKind
 			release.CreationTimestamp = v1.Time{Time: releaseTime}
 			release.Spec.LatestVersion = releaseVersion
 
@@ -268,18 +237,17 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			err = releaseConfig.PrepareEksARelease(sourceClients)
+			err = releaseConfig.PrepareEksARelease()
 			if err != nil {
 				fmt.Printf("Error preparing EKS-A release: %v\n", err)
 				os.Exit(1)
 			}
 
-			err = pkg.UploadArtifacts(sourceClients, releaseClients, releaseConfig, artifactsTable)
+			err = releaseConfig.UploadArtifacts(artifactsTable)
 			if err != nil {
 				fmt.Printf("Error uploading EKS-A release artifacts: %v\n", err)
 				os.Exit(1)
 			}
-			fmt.Println("All EKS-A release artifacts have been uploaded")
 
 			currentEksARelease, err := releaseConfig.GetEksARelease()
 			if err != nil {
@@ -289,24 +257,24 @@ var releaseCmd = &cobra.Command{
 
 			currentEksAReleaseYaml, err := yaml.Marshal(currentEksARelease)
 			if err != nil {
-				fmt.Printf("Error marshaling EKS-A releases manifest: %+v\n", err)
+				fmt.Printf("Error marshaling EKS-A releases manifest: %v\n", err)
 				os.Exit(1)
 			}
-			fmt.Printf("Generated current EKS-A release:\n%s\n", string(currentEksAReleaseYaml))
+			fmt.Printf("Generated current EKS-A release:\n\n%s\n", string(currentEksAReleaseYaml))
+			if dryRun {
+				fmt.Println("Dry-run completed")
+				os.Exit(0)
+			}
 
 			previousReleases := pkg.EksAReleases(release.Spec.Releases)
 			release.Spec.Releases = previousReleases.AppendOrUpdateRelease(currentEksARelease)
 
 			releaseManifest, err := yaml.Marshal(release)
 			if err != nil {
-				fmt.Printf("Error marshaling EKS-A releases manifest: %+v\n", err)
+				fmt.Printf("Error marshaling EKS-A releases manifest: %v\n", err)
 				os.Exit(1)
 			}
 
-			if dryRun {
-				fmt.Println("Dry-run completed.")
-				os.Exit(0)
-			}
 			// Push the manifest file and other artifacts to release locations
 			err = ioutil.WriteFile(eksAReleaseManifestFile, releaseManifest, 0o755)
 			if err != nil {
@@ -314,14 +282,14 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			err = pkg.UploadFileToS3(eksAReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(eksAReleaseManifestKey), releaseClients.S3.Uploader)
+			err = releaseConfig.UploadFileToS3(eksAReleaseManifestFile, aws.String(eksAReleaseManifestKey))
 			if err != nil {
-				fmt.Printf("Error uploading EKS-A release manifest to release bucket: %+v", err)
+				fmt.Printf("Error uploading EKS-A release manifest to release bucket: %v", err)
 				os.Exit(1)
 			}
 
 			if devRelease {
-				err = releaseConfig.PutEksAReleaseVersion(releaseClients, releaseVersion)
+				err = releaseConfig.PutEksAReleaseVersion(releaseVersion)
 				if err != nil {
 					fmt.Printf("Error uploading latest EKS-A release version to S3: %v\n", err)
 					os.Exit(1)
@@ -346,7 +314,7 @@ func init() {
 	releaseCmd.Flags().String("build-repo-source", "", "The eks-anywhere-build-tooling source")
 	releaseCmd.Flags().String("build-repo-branch-name", "main", "The branch name to build bundles from")
 	releaseCmd.Flags().String("cli-repo-branch-name", "main", "The branch name to build EKS-A CLI from")
-	releaseCmd.Flags().String("artifact-dir", "", "The base directory for artifacts")
+	releaseCmd.Flags().String("artifact-dir", "downloaded-artifacts", "The base directory for artifacts")
 	releaseCmd.Flags().String("cdn", "https://anywhere.eks.amazonaws.com", "The URL base for artifacts")
 	releaseCmd.Flags().String("source-bucket", "eks-a-source-bucket", "The bucket name where the built/staging artifacts are located to download")
 	releaseCmd.Flags().String("release-bucket", "eks-a-release-bucket", "The bucket name where released artifacts live")

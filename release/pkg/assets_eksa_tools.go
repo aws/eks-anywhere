@@ -50,17 +50,22 @@ func (r *ReleaseConfig) GetEksAToolsAssets() ([]Artifact, error) {
 	tagOptions := map[string]string{
 		"gitTag": gitTag,
 	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, releaseRepoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
 		SourceImageURI:  r.GetSourceImageURI(name, sourceRepoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, releaseRepoName, tagOptions),
+		ReleaseImageURI: releaseImageUri,
 		Arch:            []string{"amd64"},
 		OS:              "linux",
 	}
 
-	artifact := Artifact{Image: imageArtifact}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
-	return []Artifact{artifact}, nil
+	return artifacts, nil
 }
 
 func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev1alpha1.EksaBundle, error) {

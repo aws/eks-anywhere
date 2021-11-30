@@ -33,17 +33,20 @@ func (r *ReleaseConfig) GetCapvAssets() ([]Artifact, error) {
 	tagOptions := map[string]string{
 		"gitTag": gitTag,
 	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
 
-	artifacts := []Artifact{}
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
 		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, repoName, tagOptions),
+		ReleaseImageURI: releaseImageUri,
 		Arch:            []string{"amd64"},
 		OS:              "linux",
 		GitTag:          gitTag,
 	}
-	artifacts = append(artifacts, Artifact{Image: imageArtifact})
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
 	var imageTagOverrides []ImageTagOverride
 

@@ -32,21 +32,22 @@ func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
 
 	name := "capd-manager"
 	repoName := fmt.Sprintf("kubernetes-sigs/cluster-api/%s", name)
-
-	artifacts := []Artifact{}
 	tagOptions := map[string]string{
 		"gitTag": gitTag,
+	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
 	}
 
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
 		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, repoName, tagOptions),
+		ReleaseImageURI: releaseImageUri,
 		Arch:            []string{"amd64"},
 		OS:              "linux",
 	}
-
-	artifacts = append(artifacts, Artifact{Image: imageArtifact})
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
 	var imageTagOverrides []ImageTagOverride
 
