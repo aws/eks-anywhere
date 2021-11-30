@@ -592,6 +592,11 @@ func TestClusterManagerMoveCAPISuccess(t *testing.T) {
 	to := &types.Cluster{
 		Name: "to-cluster",
 	}
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Name = to.Name
+		s.Spec.ControlPlaneConfiguration.Count = 3
+		s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+	})
 	ctx := context.Background()
 
 	c, m := newClusterManager(t)
@@ -601,9 +606,11 @@ func TestClusterManagerMoveCAPISuccess(t *testing.T) {
 	clusters := []types.CAPICluster{{Metadata: types.Metadata{Name: capiClusterName}}}
 	m.client.EXPECT().GetClusters(ctx, to).Return(clusters, nil)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "5m0s", capiClusterName)
+	m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
+	m.client.EXPECT().ValidateWorkerNodes(ctx, to, to.Name)
 	m.client.EXPECT().GetMachines(ctx, to, to.Name)
 
-	if err := c.MoveCAPI(ctx, from, to, to.Name); err != nil {
+	if err := c.MoveCAPI(ctx, from, to, to.Name, clusterSpec); err != nil {
 		t.Errorf("ClusterManager.MoveCAPI() error = %v, wantErr nil", err)
 	}
 }
@@ -615,13 +622,18 @@ func TestClusterManagerMoveCAPIErrorMove(t *testing.T) {
 	to := &types.Cluster{
 		Name: "to-cluster",
 	}
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Name = to.Name
+		s.Spec.ControlPlaneConfiguration.Count = 3
+		s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+	})
 	ctx := context.Background()
 
 	c, m := newClusterManager(t)
 	m.client.EXPECT().GetMachines(ctx, from, from.Name)
 	m.client.EXPECT().MoveManagement(ctx, from, to).Return(errors.New("error moving"))
 
-	if err := c.MoveCAPI(ctx, from, to, from.Name); err == nil {
+	if err := c.MoveCAPI(ctx, from, to, from.Name, clusterSpec); err == nil {
 		t.Error("ClusterManager.MoveCAPI() error = nil, wantErr not nil")
 	}
 }
@@ -633,6 +645,11 @@ func TestClusterManagerMoveCAPIErrorGetClusters(t *testing.T) {
 	to := &types.Cluster{
 		Name: "to-cluster",
 	}
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Name = to.Name
+		s.Spec.ControlPlaneConfiguration.Count = 3
+		s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+	})
 	ctx := context.Background()
 
 	c, m := newClusterManager(t)
@@ -640,7 +657,7 @@ func TestClusterManagerMoveCAPIErrorGetClusters(t *testing.T) {
 	m.client.EXPECT().MoveManagement(ctx, from, to)
 	m.client.EXPECT().GetClusters(ctx, to).Return(nil, errors.New("error getting clusters"))
 
-	if err := c.MoveCAPI(ctx, from, to, from.Name); err == nil {
+	if err := c.MoveCAPI(ctx, from, to, from.Name, clusterSpec); err == nil {
 		t.Error("ClusterManager.MoveCAPI() error = nil, wantErr not nil")
 	}
 }
@@ -652,6 +669,11 @@ func TestClusterManagerMoveCAPIErrorWaitForControlPlane(t *testing.T) {
 	to := &types.Cluster{
 		Name: "to-cluster",
 	}
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Name = to.Name
+		s.Spec.ControlPlaneConfiguration.Count = 3
+		s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+	})
 	ctx := context.Background()
 
 	c, m := newClusterManager(t)
@@ -662,7 +684,7 @@ func TestClusterManagerMoveCAPIErrorWaitForControlPlane(t *testing.T) {
 	m.client.EXPECT().GetClusters(ctx, to).Return(clusters, nil)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "5m0s", capiClusterName).Return(errors.New("error waiting for control plane"))
 
-	if err := c.MoveCAPI(ctx, from, to, from.Name); err == nil {
+	if err := c.MoveCAPI(ctx, from, to, from.Name, clusterSpec); err == nil {
 		t.Error("ClusterManager.MoveCAPI() error = nil, wantErr not nil")
 	}
 }
@@ -674,15 +696,22 @@ func TestClusterManagerMoveCAPIErrorGetMachines(t *testing.T) {
 	to := &types.Cluster{
 		Name: "to-cluster",
 	}
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Name = to.Name
+		s.Spec.ControlPlaneConfiguration.Count = 3
+		s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+	})
 	ctx := context.Background()
 
 	c, m := newClusterManager(t, clustermanager.WithWaitForMachines(0, 10*time.Microsecond, 20*time.Microsecond))
 	m.client.EXPECT().GetMachines(ctx, from, from.Name)
 	m.client.EXPECT().MoveManagement(ctx, from, to)
 	m.client.EXPECT().GetClusters(ctx, to)
+	m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
+	m.client.EXPECT().ValidateWorkerNodes(ctx, to, to.Name)
 	m.client.EXPECT().GetMachines(ctx, to, from.Name).Return(nil, errors.New("error getting machines")).AnyTimes()
 
-	if err := c.MoveCAPI(ctx, from, to, from.Name); err == nil {
+	if err := c.MoveCAPI(ctx, from, to, from.Name, clusterSpec); err == nil {
 		t.Error("ClusterManager.MoveCAPI() error = nil, wantErr not nil")
 	}
 }
