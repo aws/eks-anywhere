@@ -16,9 +16,10 @@ TAR_PATH="${CODEBUILD_SRC_DIR}/${PROJECT_PATH}/${BUILD_IDENTIFIER}-${GIT_HASH}/a
 
 function build::cli::move_artifacts() {
   local -r os=$1
-  local -r cli_artifacts_path=$2
+  local -r arch=$2
+  local -r cli_artifacts_path=$3
 
-  mv ${BINARY_PATH}/${os}/eksctl-anywhere ${cli_artifacts_path}
+  mv ${BINARY_PATH}/${os}/${arch}/eksctl-anywhere ${cli_artifacts_path}
   cp ATTRIBUTION.txt ${cli_artifacts_path}
 }
 
@@ -102,7 +103,7 @@ for platform in "${SUPPORTED_PLATFORMS[@]}"; do
   mkdir -p $TAR_PATH/$OS
   mkdir -p $CLI_ARTIFACTS_PATH
 
-  build::cli::move_artifacts $OS $CLI_ARTIFACTS_PATH
+  build::cli::move_artifacts $OS $ARCH $CLI_ARTIFACTS_PATH
   build::cli::create_tarball $OS $ARCH $TAR_FILE $TAR_PATH $CLI_ARTIFACTS_PATH
   build::cli::generate_shasum $TAR_PATH $OS
 done
