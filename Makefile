@@ -314,6 +314,7 @@ eks-a-e2e:
 		fi \
 	else \
 		make check-eksa-components-override; \
+		make eks-a-cross-platform; \
 		make eks-a; \
 	fi
 

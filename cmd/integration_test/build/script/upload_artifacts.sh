@@ -5,14 +5,16 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-ARTIFACTS_BUCKET="${1?Specify first argument - artifacts buckets}"
-PROJECT_PATH="${2? Specify second argument - project path}"
-BUILD_IDENTIFIER="${3? Specify third argument - build identifier}"
-GIT_HASH="${4?Specify fourth argument - git hash of the tar builds}"
+ARTIFACTS_BUCKET="${1?Specify first argument - artifacts bucket}"
+REPO_ROOT="${2?Specify second argument - repo root directory}"
+PROJECT_PATH="${3? Specify third argument - project path}"
+BUILD_IDENTIFIER="${4? Specify fourth argument - build identifier}"
+GIT_HASH="${5?Specify fifth argument - git hash of the tar builds}"
+DRY_RUN="${6?Specify sixth argument - Dry run upload}"
 
 REPO="eksctl-anywhere"
 BINARY_PATH="bin"
-TAR_PATH="${CODEBUILD_SRC_DIR}/${PROJECT_PATH}/${BUILD_IDENTIFIER}-${GIT_HASH}/artifacts"
+TAR_PATH="${REPO_ROOT}/${PROJECT_PATH}/${BUILD_IDENTIFIER}-${GIT_HASH}/artifacts"
 
 function build::cli::move_artifacts() {
   local -r os=$1
@@ -38,6 +40,7 @@ function build::cli::create_tarball() {
 function build::cli::generate_shasum() {
   local -r tar_path=$1
   local -r os=$2
+  local -r arch=$3
 
   echo "Writing artifact hashes to shasum files..."
 
@@ -46,7 +49,7 @@ function build::cli::generate_shasum() {
     exit 1
   fi
 
-  cd $tar_path/$os
+  cd $tar_path/$os/$arch
   for file in $(find . -name '*.tar.gz'); do
     filepath=$(basename $file)
     sha256sum "$filepath" > "$file.sha256"
@@ -83,11 +86,16 @@ function build::cli::upload() {
 
   echo "$githash" >> "$artifactspath"/githash
 
-  # Upload artifacts to s3
-  # 1. To proper path on s3 with buildId-githash
-  # 2. Latest path to indicate the latest build, with --delete option to delete stale files in the dest path
-  aws s3 sync "$artifactspath" "$artifactsbucket"/"$projectpath"/"$buildidentifier"-"$githash"/artifacts --acl public-read
-  aws s3 sync "$artifactspath" "$artifactsbucket"/"$projectpath"/latest --delete --acl public-read
+  if [ "$DRY_RUN" = "true" ]; then
+    aws s3 cp "$artifactspath" "$artifactsbucket"/"$projectpath"/"$buildidentifier"-"$githash"/artifacts --recursive --dryrun
+    aws s3 cp "$artifactspath" "$artifactsbucket"/"$projectpath"/latest --recursive --dryrun
+  else
+    # Upload artifacts to s3
+    # 1. To proper path on s3 with buildId-githash
+    # 2. Latest path to indicate the latest build, with --delete option to delete stale files in the dest path
+    aws s3 sync "$artifactspath" "$artifactsbucket"/"$projectpath"/"$buildidentifier"-"$githash"/artifacts --acl public-read
+    aws s3 sync "$artifactspath" "$artifactsbucket"/"$projectpath"/latest --delete --acl public-read
+  fi
 }
 
 SUPPORTED_PLATFORMS=(
@@ -105,6 +113,6 @@ for platform in "${SUPPORTED_PLATFORMS[@]}"; do
 
   build::cli::move_artifacts $OS $ARCH $CLI_ARTIFACTS_PATH
   build::cli::create_tarball $OS $ARCH $TAR_FILE $TAR_PATH $CLI_ARTIFACTS_PATH
-  build::cli::generate_shasum $TAR_PATH $OS
+  build::cli::generate_shasum $TAR_PATH $OS $ARCH
 done
 build::cli::upload ${TAR_PATH} ${ARTIFACTS_BUCKET} ${PROJECT_PATH} ${BUILD_IDENTIFIER} ${GIT_HASH}
