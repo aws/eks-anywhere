@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/aws/aws-sdk-go v1.38.40
 	github.com/aws/aws-sdk-go-v2 v1.5.0
-	github.com/aws/eks-anywhere v0.6.1
+	github.com/aws/eks-anywhere v0.6.2-0.20211130214857-f40ef7755a29
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
 	github.com/fsouza/go-dockerclient v1.7.2
 	github.com/go-git/go-git/v5 v5.4.2
@@ -20,7 +20,6 @@ require (
 )
 
 replace (
-	github.com/aws/eks-anywhere => ../
 	github.com/containerd/containerd => github.com/containerd/containerd v1.5.8
 	github.com/opencontainers/image-spec => github.com/opencontainers/image-spec v1.0.2
 )

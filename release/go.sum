@@ -108,6 +108,8 @@ github.com/aws/aws-sdk-go v1.38.40/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2z
 github.com/aws/aws-sdk-go-v2 v0.18.0/go.mod h1:JWVYvqSMppoMJC0x5wdwiImzgXTI9FuZwxzkQq9wy+g=
 github.com/aws/aws-sdk-go-v2 v1.5.0 h1:o0TprBiEkqtMGD2Ira1VCq3zwWej256zHLSRcd+cxUA=
 github.com/aws/aws-sdk-go-v2 v1.5.0/go.mod h1:tI4KhsR5VkzlUa2DZAdwx7wCAYGwkZZ1H31PYrBFx1w=
+github.com/aws/eks-anywhere v0.6.2-0.20211130214857-f40ef7755a29 h1:0u0zGSWIV1vX/CZq88bqPBJW98cdoiCoi/HbwdovQaA=
+github.com/aws/eks-anywhere v0.6.2-0.20211130214857-f40ef7755a29/go.mod h1:kcUEYj1OOj6RBqowATMFHv4bfBvJtfTGkQwyNcHevX4=
 github.com/aws/eks-anywhere/release v0.0.0-20211130194657-f6e9593c6551/go.mod h1:+5ilD0ZsYMalQma8EbAP5KKwKELEPrOuO53g876i4Ig=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e h1:GB6Cn9yKEt31mDF7RrVWyM9WoppNkGYth8zBPIJGJ+w=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e/go.mod h1:p/KHVJAMv3kofnUnShkZ6pUnZYzm+LK2G7bIi8nnTKA=
