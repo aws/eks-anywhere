@@ -32,7 +32,7 @@ function build::cli::create_tarball() {
 
   build::ensure_tar
 
-  "${TAR}" czf "${tar_path}/${os}/${tar_file}" -C ${cli_artifacts_path} . --owner=0 --group=0
+  "${TAR}" czf "${tar_path}/${os}/${arch}/${tar_file}" -C ${cli_artifacts_path} . --owner=0 --group=0
 }
 
 function build::cli::generate_shasum() {
@@ -99,8 +99,8 @@ for platform in "${SUPPORTED_PLATFORMS[@]}"; do
   OS="$(cut -d '/' -f1 <<< ${platform})"
   ARCH="$(cut -d '/' -f2 <<< ${platform})"
   TAR_FILE="${REPO}-${OS}-${ARCH}.tar.gz"
-  CLI_ARTIFACTS_PATH="cli-artifacts/${OS}"
-  mkdir -p $TAR_PATH/$OS
+  CLI_ARTIFACTS_PATH="cli-artifacts/${OS}/${ARCH}"
+  mkdir -p $TAR_PATH/$OS/$ARCH
   mkdir -p $CLI_ARTIFACTS_PATH
 
   build::cli::move_artifacts $OS $ARCH $CLI_ARTIFACTS_PATH
