@@ -39,16 +39,16 @@ func (r *ReleaseConfig) GetEksACliArtifacts() ([]Artifact, error) {
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
 			sourceS3Key = fmt.Sprintf("eksctl-anywhere-%s-%s.tar.gz", os, arch)
-			sourceS3Prefix = fmt.Sprintf("eks-a-cli/latest/%s", os)
+			sourceS3Prefix = fmt.Sprintf("eks-a-cli/latest/%s/%s", os, arch)
 		} else {
 			sourceS3Key = fmt.Sprintf("eksctl-anywhere-%s-%s-%s.tar.gz", r.ReleaseVersion, os, arch)
-			sourceS3Prefix = fmt.Sprintf("releases/eks-a/%d/artifacts/eks-a/%s/%s", r.ReleaseNumber, r.ReleaseVersion, os)
+			sourceS3Prefix = fmt.Sprintf("releases/eks-a/%d/artifacts/eks-a/%s/%s/%s", r.ReleaseNumber, r.ReleaseVersion, os, arch)
 		}
 
 		if r.DevRelease {
-			releaseS3Path = fmt.Sprintf("eks-anywhere/%s/eks-a-cli/%s", r.DevReleaseUriVersion, os)
+			releaseS3Path = fmt.Sprintf("eks-anywhere/%s/eks-a-cli/%s/%s", r.DevReleaseUriVersion, os, arch)
 		} else {
-			releaseS3Path = fmt.Sprintf("releases/eks-a/%d/artifacts/eks-a/%s/%s", r.ReleaseNumber, r.ReleaseVersion, os)
+			releaseS3Path = fmt.Sprintf("releases/eks-a/%d/artifacts/eks-a/%s/%s/%s", r.ReleaseNumber, r.ReleaseVersion, os, arch)
 		}
 
 		cdnURI, err := r.GetURI(filepath.Join(releaseS3Path, releaseName))

@@ -16,9 +16,10 @@ TAR_PATH="${CODEBUILD_SRC_DIR}/${PROJECT_PATH}/${BUILD_IDENTIFIER}-${GIT_HASH}/a
 
 function build::cli::move_artifacts() {
   local -r os=$1
-  local -r cli_artifacts_path=$2
+  local -r arch=$2
+  local -r cli_artifacts_path=$3
 
-  mv ${BINARY_PATH}/${os}/eksctl-anywhere ${cli_artifacts_path}
+  mv ${BINARY_PATH}/${os}/${arch}/eksctl-anywhere ${cli_artifacts_path}
   cp ATTRIBUTION.txt ${cli_artifacts_path}
 }
 
@@ -31,7 +32,7 @@ function build::cli::create_tarball() {
 
   build::ensure_tar
 
-  "${TAR}" czf "${tar_path}/${os}/${tar_file}" -C ${cli_artifacts_path} . --owner=0 --group=0
+  "${TAR}" czf "${tar_path}/${os}/${arch}/${tar_file}" -C ${cli_artifacts_path} . --owner=0 --group=0
 }
 
 function build::cli::generate_shasum() {
@@ -98,11 +99,11 @@ for platform in "${SUPPORTED_PLATFORMS[@]}"; do
   OS="$(cut -d '/' -f1 <<< ${platform})"
   ARCH="$(cut -d '/' -f2 <<< ${platform})"
   TAR_FILE="${REPO}-${OS}-${ARCH}.tar.gz"
-  CLI_ARTIFACTS_PATH="cli-artifacts/${OS}"
-  mkdir -p $TAR_PATH/$OS
+  CLI_ARTIFACTS_PATH="cli-artifacts/${OS}/${ARCH}"
+  mkdir -p $TAR_PATH/$OS/$ARCH
   mkdir -p $CLI_ARTIFACTS_PATH
 
-  build::cli::move_artifacts $OS $CLI_ARTIFACTS_PATH
+  build::cli::move_artifacts $OS $ARCH $CLI_ARTIFACTS_PATH
   build::cli::create_tarball $OS $ARCH $TAR_FILE $TAR_PATH $CLI_ARTIFACTS_PATH
   build::cli::generate_shasum $TAR_PATH $OS
 done
