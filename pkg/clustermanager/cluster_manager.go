@@ -135,7 +135,7 @@ func WithRetrier(retrier *retrier.Retrier) ClusterManagerOpt {
 	}
 }
 
-func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, clusterName string, checkers ...types.NodeReadyChecker) error {
+func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, clusterName string, clusterSpec *cluster.Spec, checkers ...types.NodeReadyChecker) error {
 	logger.V(3).Info("Waiting for management machines to be ready before move")
 	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}
 	if err := c.waitForNodesReady(ctx, from, clusterName, labels, checkers...); err != nil {
@@ -151,6 +151,18 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	err = c.waitForAllControlPlanes(ctx, to, moveCAPIWait)
 	if err != nil {
 		return err
+	}
+
+	logger.V(3).Info("Waiting for workload cluster control plane replicas to be ready after move")
+	err = c.waitForControlPlaneReplicasReady(ctx, to, clusterSpec)
+	if err != nil {
+		return fmt.Errorf("error waiting for workload cluster control plane replicas to be ready: %v", err)
+	}
+
+	logger.V(3).Info("Waiting for workload cluster machine deployment replicas to be ready after move")
+	err = c.waitForMachineDeploymentReplicasReady(ctx, to, clusterSpec)
+	if err != nil {
+		return fmt.Errorf("error waiting for workload cluster machinedeployment replicas to be ready: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for machines to be ready after move")
