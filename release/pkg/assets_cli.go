@@ -46,7 +46,7 @@ func (r *ReleaseConfig) GetEksACliArtifacts() ([]Artifact, error) {
 		}
 
 		if r.DevRelease {
-			releaseS3Path = fmt.Sprintf("eks-anywhere/%s/eks-a-cli/%s", r.DevReleaseUriVersion, os)
+			releaseS3Path = fmt.Sprintf("eks-anywhere/%s/eks-a-cli/%s/%s", r.DevReleaseUriVersion, os, arch)
 		} else {
 			releaseS3Path = fmt.Sprintf("releases/eks-a/%d/artifacts/eks-a/%s/%s/%s", r.ReleaseNumber, r.ReleaseVersion, os, arch)
 		}
