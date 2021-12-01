@@ -548,48 +548,52 @@ func userAgent(eksAComponent, version string) string {
 
 func (vb *VersionsBundle) SharedImages() []v1alpha1.Image {
 	var images []v1alpha1.Image
-	images = append(images, vb.Bootstrap.Controller)
-	images = append(images, vb.Bootstrap.KubeProxy)
+	if vb.VersionsBundle != nil {
+		images = append(images, vb.Bootstrap.Controller)
+		images = append(images, vb.Bootstrap.KubeProxy)
 
-	images = append(images, vb.BottleRocketBootstrap.Bootstrap)
-	images = append(images, vb.BottleRocketAdmin.Admin)
+		images = append(images, vb.BottleRocketBootstrap.Bootstrap)
+		images = append(images, vb.BottleRocketAdmin.Admin)
 
-	images = append(images, vb.CertManager.Acmesolver)
-	images = append(images, vb.CertManager.Cainjector)
-	images = append(images, vb.CertManager.Controller)
-	images = append(images, vb.CertManager.Webhook)
+		images = append(images, vb.CertManager.Acmesolver)
+		images = append(images, vb.CertManager.Cainjector)
+		images = append(images, vb.CertManager.Controller)
+		images = append(images, vb.CertManager.Webhook)
 
-	images = append(images, vb.Cilium.Cilium)
-	images = append(images, vb.Cilium.Operator)
+		images = append(images, vb.Cilium.Cilium)
+		images = append(images, vb.Cilium.Operator)
 
-	images = append(images, vb.ClusterAPI.Controller)
-	images = append(images, vb.ClusterAPI.KubeProxy)
+		images = append(images, vb.ClusterAPI.Controller)
+		images = append(images, vb.ClusterAPI.KubeProxy)
 
-	images = append(images, vb.ControlPlane.Controller)
-	images = append(images, vb.ControlPlane.KubeProxy)
+		images = append(images, vb.ControlPlane.Controller)
+		images = append(images, vb.ControlPlane.KubeProxy)
 
-	images = append(images, vb.EksD.KindNode)
-	images = append(images, vb.Eksa.CliTools)
-	images = append(images, vb.Eksa.ClusterController)
+		images = append(images, vb.EksD.KindNode)
+		images = append(images, vb.Eksa.CliTools)
+		images = append(images, vb.Eksa.ClusterController)
 
-	images = append(images, vb.Flux.HelmController)
-	images = append(images, vb.Flux.KustomizeController)
-	images = append(images, vb.Flux.NotificationController)
-	images = append(images, vb.Flux.SourceController)
+		images = append(images, vb.Flux.HelmController)
+		images = append(images, vb.Flux.KustomizeController)
+		images = append(images, vb.Flux.NotificationController)
+		images = append(images, vb.Flux.SourceController)
 
-	images = append(images, vb.ExternalEtcdBootstrap.Controller)
-	images = append(images, vb.ExternalEtcdBootstrap.KubeProxy)
+		images = append(images, vb.ExternalEtcdBootstrap.Controller)
+		images = append(images, vb.ExternalEtcdBootstrap.KubeProxy)
 
-	images = append(images, vb.ExternalEtcdController.Controller)
-	images = append(images, vb.ExternalEtcdController.KubeProxy)
+		images = append(images, vb.ExternalEtcdController.Controller)
+		images = append(images, vb.ExternalEtcdController.KubeProxy)
+	}
 
-	images = append(images, vb.KubeDistro.EtcdImage)
-	images = append(images, vb.KubeDistro.ExternalAttacher)
-	images = append(images, vb.KubeDistro.ExternalProvisioner)
-	images = append(images, vb.KubeDistro.LivenessProbe)
-	images = append(images, vb.KubeDistro.NodeDriverRegistrar)
-	images = append(images, vb.KubeDistro.Pause)
+	if vb.KubeDistro != nil {
+		images = append(images, vb.KubeDistro.EtcdImage)
+		images = append(images, vb.KubeDistro.ExternalAttacher)
+		images = append(images, vb.KubeDistro.ExternalProvisioner)
+		images = append(images, vb.KubeDistro.LivenessProbe)
+		images = append(images, vb.KubeDistro.NodeDriverRegistrar)
+		images = append(images, vb.KubeDistro.Pause)
 
+	}
 	return images
 }
 
