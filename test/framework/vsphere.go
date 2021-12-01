@@ -221,13 +221,13 @@ func RequiredVsphereEnvVars() []string {
 }
 
 func (v *VSphere) generateUniqueIp() string {
+	ipgen := networkutils.NewIPGenerator(&networkutils.DefaultNetClient{})
 	ip := os.Getenv(vsphereHost)
-	if len(ip) > 0 {
+	if len(ip) > 0 && ipgen.IsIPUnique(ip) {
 		logger.V(1).Info("Using configured ip: " + ip)
 		return ip
 	}
 	logger.V(1).Info("Generating unique IP for vsphere control plane")
-	ipgen := networkutils.NewIPGenerator(&networkutils.DefaultNetClient{})
 	ip, err := ipgen.GenerateUniqueIP(v.cidr)
 	if err != nil {
 		v.t.Fatalf("Error getting unique IP for vsphere: %v", err)
