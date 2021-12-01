@@ -32,6 +32,7 @@ const (
 	machineMaxWait    = 10 * time.Minute
 	machineBackoff    = 1 * time.Second
 	machinesMinWait   = 30 * time.Minute
+	moveCAPIWait      = 15 * time.Minute
 	ctrlPlaneWaitStr  = "60m"
 	etcdWaitStr       = "60m"
 	deploymentWaitStr = "30m"
@@ -148,7 +149,7 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	}
 
 	logger.V(3).Info("Waiting for control planes to be ready after move")
-	err = c.waitForAllControlPlanes(ctx, to, ctrlPlaneWaitStr)
+	err = c.waitForAllControlPlanes(ctx, to, moveCAPIWait)
 	if err != nil {
 		return err
 	}
@@ -804,14 +805,14 @@ func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster 
 	return ready, total, nil
 }
 
-func (c *ClusterManager) waitForAllControlPlanes(ctx context.Context, cluster *types.Cluster, waitForCluster string) error {
+func (c *ClusterManager) waitForAllControlPlanes(ctx context.Context, cluster *types.Cluster, waitForCluster time.Duration) error {
 	clusters, err := c.clusterClient.GetClusters(ctx, cluster)
 	if err != nil {
 		return fmt.Errorf("error getting clusters: %v", err)
 	}
 
 	for _, clu := range clusters {
-		err = c.clusterClient.WaitForControlPlaneReady(ctx, cluster, waitForCluster, clu.Metadata.Name)
+		err = c.clusterClient.WaitForControlPlaneReady(ctx, cluster, waitForCluster.String(), clu.Metadata.Name)
 		if err != nil {
 			return fmt.Errorf("error waiting for workload cluster control plane for cluster %s to be ready: %v", clu.Metadata.Name, err)
 		}

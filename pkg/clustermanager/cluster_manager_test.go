@@ -605,7 +605,7 @@ func TestClusterManagerMoveCAPISuccess(t *testing.T) {
 	capiClusterName := "capi-cluster"
 	clusters := []types.CAPICluster{{Metadata: types.Metadata{Name: capiClusterName}}}
 	m.client.EXPECT().GetClusters(ctx, to).Return(clusters, nil)
-	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "60m", capiClusterName)
+	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", capiClusterName)
 	m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
 	m.client.EXPECT().ValidateWorkerNodes(ctx, to, to.Name)
 	m.client.EXPECT().GetMachines(ctx, to, to.Name)
@@ -682,7 +682,7 @@ func TestClusterManagerMoveCAPIErrorWaitForControlPlane(t *testing.T) {
 	clusters := []types.CAPICluster{{Metadata: types.Metadata{Name: capiClusterName}}}
 	m.client.EXPECT().GetMachines(ctx, from, from.Name)
 	m.client.EXPECT().GetClusters(ctx, to).Return(clusters, nil)
-	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "60m", capiClusterName).Return(errors.New("error waiting for control plane"))
+	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", capiClusterName).Return(errors.New("error waiting for control plane"))
 
 	if err := c.MoveCAPI(ctx, from, to, from.Name, clusterSpec); err == nil {
 		t.Error("ClusterManager.MoveCAPI() error = nil, wantErr not nil")
