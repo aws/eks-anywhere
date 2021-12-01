@@ -49,10 +49,7 @@ func (r *ReleaseConfig) GetBottlerocketBootstrapAssets(eksDReleaseChannel, eksDR
 }
 
 func (r *ReleaseConfig) GetBottlerocketBootstrapBundle(eksDReleaseChannel, eksDReleaseNumber string, imageDigests map[string]string) (anywherev1alpha1.BottlerocketBootstrapBundle, error) {
-	artifacts, err := r.GetBottlerocketBootstrapAssets(eksDReleaseChannel, eksDReleaseNumber)
-	if err != nil {
-		return anywherev1alpha1.BottlerocketBootstrapBundle{}, errors.Cause(err)
-	}
+	artifacts := r.BundleArtifactsTable[fmt.Sprintf("bottlerocket-bootstrap-%s-%s", eksDReleaseChannel, eksDReleaseNumber)]
 
 	bundleArtifacts := map[string]anywherev1alpha1.Image{}
 

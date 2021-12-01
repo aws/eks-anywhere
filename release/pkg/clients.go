@@ -66,11 +66,13 @@ type ReleaseECRPublicClient struct {
 
 // Function to create release clients for dev release
 func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClients, error) {
+	fmt.Println("\n==========================================================")
+	fmt.Println("                 Dev Release Clients Creation")
+	fmt.Println("==========================================================")
 	if r.DryRun {
 		fmt.Println("Skipping clients creation in dry-run mode")
 		return nil, nil, nil
 	}
-	fmt.Println("Creating new dev release clients for S3, docker and ECR public")
 
 	// PDX session for eks-a-build-prod-pdx
 	pdxSession, err := session.NewSession(&aws.Config{
@@ -131,12 +133,16 @@ func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClien
 		},
 	}
 
+	fmt.Printf("%s Successfully created dev release clients\n", SuccessIcon)
+
 	return sourceClients, releaseClients, nil
 }
 
 // Function to create clients for staging release
 func (r *ReleaseConfig) CreateStagingReleaseClients() (*SourceClients, *ReleaseClients, error) {
-	fmt.Println("Creating new staging release clients for S3, docker and ECR public")
+	fmt.Println("\n==========================================================")
+	fmt.Println("              Staging Release Clients Creation")
+	fmt.Println("==========================================================")
 
 	// Session for eks-a-build-prod-pdx
 	sourceSession, err := session.NewSessionWithOptions(session.Options{
@@ -205,12 +211,16 @@ func (r *ReleaseConfig) CreateStagingReleaseClients() (*SourceClients, *ReleaseC
 		},
 	}
 
+	fmt.Printf("%s Successfully created staging release clients\n", SuccessIcon)
+
 	return sourceClients, releaseClients, nil
 }
 
 // Function to create clients for production release
 func (r *ReleaseConfig) CreateProdReleaseClients() (*SourceClients, *ReleaseClients, error) {
-	fmt.Println("Creating new production release clients for S3, docker and ECR public")
+	fmt.Println("\n==========================================================")
+	fmt.Println("             Production Release Clients Creation")
+	fmt.Println("==========================================================")
 
 	// Session for eks-a-artifact-beta-iad
 	sourceSession, err := session.NewSessionWithOptions(session.Options{
@@ -279,6 +289,8 @@ func (r *ReleaseConfig) CreateProdReleaseClients() (*SourceClients, *ReleaseClie
 			AuthConfig: releaseAuthConfig,
 		},
 	}
+
+	fmt.Printf("%s Successfully created production release clients\n", SuccessIcon)
 
 	return sourceClients, releaseClients, nil
 }

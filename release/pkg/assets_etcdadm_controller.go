@@ -106,9 +106,9 @@ func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
 }
 
 func (r *ReleaseConfig) GetEtcdadmControllerBundle(imageDigests map[string]string) (anywherev1alpha1.EtcdadmControllerBundle, error) {
-	etcdadmControllerBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"etcdadm-controller": r.GetEtcdadmControllerAssets,
-		"kube-proxy":         r.GetKubeRbacProxyAssets,
+	etcdadmControllerBundleArtifacts := map[string][]Artifact{
+		"etcdadm-controller": r.BundleArtifactsTable["etcdadm-controller"],
+		"kube-rbac-proxy":    r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
 	version, err := BuildComponentVersion(
@@ -117,15 +117,11 @@ func (r *ReleaseConfig) GetEtcdadmControllerBundle(imageDigests map[string]strin
 	if err != nil {
 		return anywherev1alpha1.EtcdadmControllerBundle{}, errors.Wrapf(err, "Error getting version for etcdadm-controller")
 	}
+
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 
-	for componentName, artifactFunc := range etcdadmControllerBundleArtifactsFuncs {
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.EtcdadmControllerBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
-
+	for _, artifacts := range etcdadmControllerBundleArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image

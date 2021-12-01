@@ -105,9 +105,9 @@ func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
 }
 
 func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywherev1alpha1.DockerBundle, error) {
-	dockerBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"cluster-api-provider-docker": r.GetDockerAssets,
-		"kube-proxy":                  r.GetKubeRbacProxyAssets,
+	dockerBundleArtifacts := map[string][]Artifact{
+		"cluster-api-provider-docker": r.BundleArtifactsTable["cluster-api-provider-docker"],
+		"kube-rbac-proxy":             r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
 	version, err := BuildComponentVersion(
@@ -118,12 +118,7 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifactFunc := range dockerBundleArtifactsFuncs {
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.DockerBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
-
+	for _, artifacts := range dockerBundleArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image

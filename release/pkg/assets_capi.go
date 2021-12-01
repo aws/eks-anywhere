@@ -128,9 +128,9 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 }
 
 func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) (anywherev1alpha1.CoreClusterAPI, error) {
-	coreClusterAPIBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"cluster-api": r.GetCAPIAssets,
-		"kube-proxy":  r.GetKubeRbacProxyAssets,
+	coreClusterAPIBundleArtifacts := map[string][]Artifact{
+		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
+		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
 	version, err := BuildComponentVersion(
@@ -141,12 +141,7 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifactFunc := range coreClusterAPIBundleArtifactsFuncs {
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.CoreClusterAPI{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
-
+	for componentName, artifacts := range coreClusterAPIBundleArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
@@ -194,9 +189,9 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 }
 
 func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string) (anywherev1alpha1.KubeadmBootstrapBundle, error) {
-	kubeadmBootstrapBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"cluster-api": r.GetCAPIAssets,
-		"kube-proxy":  r.GetKubeRbacProxyAssets,
+	kubeadmBootstrapBundleArtifacts := map[string][]Artifact{
+		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
+		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
 	version, err := BuildComponentVersion(
@@ -207,12 +202,7 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifactFunc := range kubeadmBootstrapBundleArtifactsFuncs {
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.KubeadmBootstrapBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
-
+	for componentName, artifacts := range kubeadmBootstrapBundleArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
@@ -260,9 +250,9 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 }
 
 func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]string) (anywherev1alpha1.KubeadmControlPlaneBundle, error) {
-	kubeadmControlPlaneBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"cluster-api": r.GetCAPIAssets,
-		"kube-proxy":  r.GetKubeRbacProxyAssets,
+	kubeadmControlPlaneBundleArtifacts := map[string][]Artifact{
+		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
+		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
 	version, err := BuildComponentVersion(
@@ -273,12 +263,7 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 	}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifactFunc := range kubeadmControlPlaneBundleArtifactsFuncs {
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.KubeadmControlPlaneBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
-
+	for componentName, artifacts := range kubeadmControlPlaneBundleArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image

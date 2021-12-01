@@ -90,3 +90,42 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 
 	return artifacts, nil
 }
+
+func (r *ReleaseConfig) GetKindnetdBundle() (anywherev1alpha1.KindnetdBundle, error) {
+	artifacts := r.BundleArtifactsTable["kindnetd"]
+
+	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
+
+	for _, artifact := range artifacts {
+		if artifact.Manifest != nil {
+			manifestArtifact := artifact.Manifest
+			bundleManifestArtifact := anywherev1alpha1.Manifest{
+				URI: manifestArtifact.ReleaseCdnURI,
+			}
+
+			bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+		}
+	}
+
+	kindnetdGitTag, err := r.getKindnetdGitTag()
+	if err != nil {
+		return anywherev1alpha1.KindnetdBundle{}, errors.Cause(err)
+	}
+	bundle := anywherev1alpha1.KindnetdBundle{
+		Version:  kindnetdGitTag,
+		Manifest: bundleManifestArtifacts["kindnetd.yaml"],
+	}
+
+	return bundle, nil
+}
+
+func (r *ReleaseConfig) getKindnetdGitTag() (string, error) {
+	projectSource := "projects/kubernetes-sigs/kind"
+	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
+	gitTag, err := readFile(tagFile)
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+
+	return gitTag, nil
+}

@@ -64,10 +64,7 @@ func (r *ReleaseConfig) GetCertManagerAssets() ([]Artifact, error) {
 }
 
 func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (anywherev1alpha1.CertManagerBundle, error) {
-	artifacts, err := r.GetCertManagerAssets()
-	if err != nil {
-		return anywherev1alpha1.CertManagerBundle{}, errors.Cause(err)
-	}
+	artifacts := r.BundleArtifactsTable["cert-manager"]
 
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/jetstack/cert-manager")),
