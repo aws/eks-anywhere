@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
@@ -33,6 +34,11 @@ type VsphereTemplate struct {
 
 type AWSIamConfigTemplate struct {
 	ResourceFetcher
+}
+
+type TinkerbellTemplate struct {
+	ResourceFetcher
+	now anywhereTypes.NowFunc
 }
 
 func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdc anywherev1.VSphereDatacenterConfig, cpVmc, workerVmc, etcdVmc anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
@@ -101,14 +107,48 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
-		values["vsphereControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpVmc)
-		values["vsphereEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdVmc)
+		values["vsphereControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpVmc.Spec.Users)
+		values["vsphereEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdVmc.Spec.Users)
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 
 	workersOpt := func(values map[string]interface{}) {
 		values["workloadTemplateName"] = workloadTemplateName
-		values["vsphereWorkerSshAuthorizedKey"] = sshAuthorizedKey(workerVmc)
+		values["vsphereWorkerSshAuthorizedKey"] = sshAuthorizedKey(workerVmc.Spec.Users)
+	}
+
+	return generateTemplateResources(templateBuilder, clusterSpec, cpOpt, workersOpt)
+}
+
+func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, tdc anywherev1.TinkerbellDatacenterConfig, cpTmc, workerTmc, etcdTmc anywherev1.TinkerbellMachineConfig) ([]*unstructured.Unstructured, error) {
+	templateBuilder := tinkerbell.NewTinkerbellTemplateBuilder(&tdc.Spec, &cpTmc.Spec, &workerTmc.Spec, &etcdTmc.Spec, r.now)
+	md, err := r.MachineDeployment(ctx, eksaCluster)
+	if err != nil {
+		return nil, err
+	}
+	cp, err := r.ControlPlane(ctx, eksaCluster)
+	if err != nil {
+		return nil, err
+	}
+	var etcdTemplateName string
+	if eksaCluster.Spec.ExternalEtcdConfiguration != nil {
+		etcd, err := r.Etcd(ctx, eksaCluster)
+		if err != nil {
+			return nil, err
+		}
+		etcdTemplateName = etcd.Spec.InfrastructureTemplate.Name
+	}
+
+	cpOpt := func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = cp.Spec.InfrastructureTemplate.Name
+		values["vsphereControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpTmc.Spec.Users)
+		values["vsphereEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdTmc.Spec.Users)
+		values["etcdTemplateName"] = etcdTemplateName
+	}
+
+	workersOpt := func(values map[string]interface{}) {
+		values["workloadTemplateName"] = md.Spec.Template.Spec.InfrastructureRef.Name
+		values["vsphereWorkerSshAuthorizedKey"] = sshAuthorizedKey(workerTmc.Spec.Users)
 	}
 
 	return generateTemplateResources(templateBuilder, clusterSpec, cpOpt, workersOpt)
@@ -168,11 +208,11 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 	return generateTemplateResources(templateBuilder, clusterSpec, cpOpt, workersOpt)
 }
 
-func sshAuthorizedKey(vmc anywherev1.VSphereMachineConfig) string {
-	if len(vmc.Spec.Users) <= 0 || len(vmc.Spec.Users[0].SshAuthorizedKeys) <= 0 {
+func sshAuthorizedKey(users []anywherev1.UserConfiguration) string {
+	if len(users) <= 0 || len(users[0].SshAuthorizedKeys) <= 0 {
 		return ""
 	}
-	return vmc.Spec.Users[0].SshAuthorizedKeys[0]
+	return users[0].SshAuthorizedKeys[0]
 }
 
 func (r *AWSIamConfigTemplate) TemplateResources(ctx context.Context, clusterSpec *cluster.Spec) ([]*unstructured.Unstructured, error) {
