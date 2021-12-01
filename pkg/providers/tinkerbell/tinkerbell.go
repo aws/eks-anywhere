@@ -75,7 +75,7 @@ func (p *tinkerbellProvider) BootstrapSetup(ctx context.Context, clusterConfig *
 }
 
 func (p *tinkerbellProvider) Name() string {
-	return constants.TinkerellProviderName
+	return constants.TinkerbellProviderName
 }
 
 func (p *tinkerbellProvider) DatacenterResourceType() string {
