@@ -514,7 +514,7 @@ func (r *ReleaseConfig) GetPreviousReleaseImageSemver(releaseImageUri string) (s
 	} else {
 		bundles := &anywherev1alpha1.Bundles{}
 		bundleReleaseManifestKey := r.GetManifestFilepaths(anywherev1alpha1.BundlesKind)
-		bundleManifestUrl := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", r.ReleaseBucket, bundleReleaseManifestKey)
+		bundleManifestUrl := fmt.Sprintf("https://%s.s3.amazonaws.com%s", r.ReleaseBucket, bundleReleaseManifestKey)
 		contents, err := ReadHttpFile(bundleManifestUrl)
 		if err != nil {
 			return "", fmt.Errorf("Error reading bundle manifest from S3: %v", err)
