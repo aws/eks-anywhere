@@ -2,6 +2,7 @@ package tinkerbell
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"os"
@@ -36,14 +37,14 @@ type tinkerbellProvider struct {
 	clusterConfig    *v1alpha1.Cluster
 	datacenterConfig *v1alpha1.TinkerbellDatacenterConfig
 	// TODO: Update hardwareConfig to proper type
-	hardwareConfig        string
-	providerKubectlClient ProviderKubectlClient
-	templateBuilder       TinkerbellTemplateBuilder
+	hardwareConfig string
+	// providerKubectlClient ProviderKubectlClient
+	// templateBuilder TinkerbellTemplateBuilder
 }
 
-type ProviderKubectlClient interface {
-	// TODO: Add necessary kubectl functions here
-}
+// type ProviderKubectlClient interface {
+// 	// TODO: Add necessary kubectl functions here
+// }
 
 func NewProvider(hardwareConfig string) *tinkerbellProvider {
 	return &tinkerbellProvider{
