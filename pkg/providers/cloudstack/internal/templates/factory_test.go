@@ -91,6 +91,6 @@ func newCreateTest(t *testing.T) *createTest {
 	}
 }
 
-func (ct *createTest) checkIfMissing() error {
-	return ct.factory.CheckIfMissing(ct.ctx, ct.machineConfig)
+func (ct *createTest) validateMachineResources() error {
+	return ct.factory.ValidateMachineResources(ct.ctx, ct.machineConfig)
 }

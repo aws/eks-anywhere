@@ -46,7 +46,6 @@ const (
 	eksd119ReleaseTag             = "eksdRelease:kubernetes-1-19-eks-4"
 	eksd121ReleaseTag             = "eksdRelease:kubernetes-1-21-eks-4"
 	ubuntuOSTag                   = "os:ubuntu"
-	bottlerocketOSTag             = "os:bottlerocket"
 	testTemplate                  = "centos7-k8s-118"
 )
 
@@ -589,88 +588,6 @@ func TestProviderGenerateCAPISpecForCreate(t *testing.T) {
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md.yaml")
 }
 
-func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *testing.T) {
-	clusterSpecManifest := "cluster_bottlerocket_external_etcd.yaml"
-	mockCtrl := gomock.NewController(t)
-	setupContext(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	cluster := &types.Cluster{Name: "test"}
-	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
-	deploymentConfig := givenDatacenterConfig(t, clusterSpecManifest)
-	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
-	ctx := context.Background()
-	cloudmonkey := NewDummyProviderCloudMonkeyClient()
-	cloudmonkey.osTag = bottlerocketOSTag
-	provider := newProviderWithKubectl(t, deploymentConfig, machineConfigs, clusterSpec.Cluster, kubectl)
-	provider.providerCloudMonkeyClient = cloudmonkey
-
-	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
-		t.Fatalf("failed to setup and validate: %v", err)
-	}
-
-	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
-	if err != nil {
-		t.Fatalf("failed to generate cluster api spec contents: %v", err)
-	}
-
-	test.AssertContentToFile(t, string(cp), "testdata/expected_results_bottlerocket_external_etcd_cp.yaml")
-	test.AssertContentToFile(t, string(md), "testdata/expected_results_bottlerocket_external_etcd_md.yaml")
-}
-
-func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorConfig(t *testing.T) {
-	clusterSpecManifest := "cluster_bottlerocket_mirror_config.yaml"
-	mockCtrl := gomock.NewController(t)
-	setupContext(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	cluster := &types.Cluster{Name: "test"}
-	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
-	deploymentConfig := givenDatacenterConfig(t, clusterSpecManifest)
-	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
-	ctx := context.Background()
-	cloudmonkey := NewDummyProviderCloudMonkeyClient()
-	cloudmonkey.osTag = bottlerocketOSTag
-	provider := newProviderWithKubectl(t, deploymentConfig, machineConfigs, clusterSpec.Cluster, kubectl)
-	provider.providerCloudMonkeyClient = cloudmonkey
-	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
-		t.Fatalf("failed to setup and validate: %v", err)
-	}
-
-	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
-	if err != nil {
-		t.Fatalf("failed to generate cluster api spec contents: %v", err)
-	}
-
-	test.AssertContentToFile(t, string(cp), "testdata/expected_results_bottlerocket_mirror_config_cp.yaml")
-	test.AssertContentToFile(t, string(md), "testdata/expected_results_bottlerocket_mirror_config_md.yaml")
-}
-
-func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorAndCertConfig(t *testing.T) {
-	clusterSpecManifest := "cluster_bottlerocket_mirror_with_cert_config.yaml"
-	mockCtrl := gomock.NewController(t)
-	setupContext(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	cluster := &types.Cluster{Name: "test"}
-	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
-	deploymentConfig := givenDatacenterConfig(t, clusterSpecManifest)
-	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
-	ctx := context.Background()
-	cloudmonkey := NewDummyProviderCloudMonkeyClient()
-	cloudmonkey.osTag = bottlerocketOSTag
-	provider := newProviderWithKubectl(t, deploymentConfig, machineConfigs, clusterSpec.Cluster, kubectl)
-	provider.providerCloudMonkeyClient = cloudmonkey
-	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
-		t.Fatalf("failed to setup and validate: %v", err)
-	}
-
-	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
-	if err != nil {
-		t.Fatalf("failed to generate cluster api spec contents: %v", err)
-	}
-
-	test.AssertContentToFile(t, string(cp), "testdata/expected_results_bottlerocket_mirror_config_with_cert_cp.yaml")
-	test.AssertContentToFile(t, string(md), "testdata/expected_results_bottlerocket_mirror_config_with_cert_md.yaml")
-}
-
 func TestProviderGenerateDeploymentFileWithMirrorConfig(t *testing.T) {
 	clusterSpecManifest := "cluster_mirror_config.yaml"
 	mockCtrl := gomock.NewController(t)
@@ -786,6 +703,16 @@ func thenErrorExpected(t *testing.T, expected string, err error) {
 	}
 	actual := err.Error()
 	if expected != actual {
+		t.Fatalf("Expected=<%s> actual=<%s>", expected, actual)
+	}
+}
+
+func thenErrorContainsExpected(t *testing.T, expected string, err error) {
+	if err == nil {
+		t.Fatalf("Expected=<%s> actual=<nil>", expected)
+	}
+	actual := err.Error()
+	if !strings.Contains(actual, expected) {
 		t.Fatalf("Expected=<%s> actual=<%s>", expected, actual)
 	}
 }
@@ -1666,7 +1593,7 @@ func TestSetupAndValidateCreateClusterOsFamilyDifferent(t *testing.T) {
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
 	provider := givenProvider(t)
 	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "bottlerocket"
+	provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "redhat"
 	var tctx testContext
 	tctx.SaveContext()
 
@@ -1682,7 +1609,7 @@ func TestSetupAndValidateCreateClusterOsFamilyDifferentForEtcd(t *testing.T) {
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
 	provider := givenProvider(t)
 	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily = "bottlerocket"
+	provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily = "ubuntu"
 	var tctx testContext
 	tctx.SaveContext()
 
@@ -1700,7 +1627,7 @@ func TestSetupAndValidateCreateClusterOsFamilyEmpty(t *testing.T) {
 	deploymentConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 	cloudmonkey := NewDummyProviderCloudMonkeyClient()
-	cloudmonkey.osTag = bottlerocketOSTag
+	cloudmonkey.osTag = ubuntuOSTag
 	provider := newProviderWithKubectl(t, deploymentConfig, machineConfigs, clusterConfig, nil)
 	provider.providerCloudMonkeyClient = cloudmonkey
 	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
@@ -1719,14 +1646,14 @@ func TestSetupAndValidateCreateClusterOsFamilyEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
 	}
-	if provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily != v1alpha1.Bottlerocket {
-		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Bottlerocket)
+	if provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily != v1alpha1.Ubuntu {
+		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Ubuntu)
 	}
-	if provider.machineConfigs[workerNodeMachineConfigName].Spec.OSFamily != v1alpha1.Bottlerocket {
-		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Bottlerocket)
+	if provider.machineConfigs[workerNodeMachineConfigName].Spec.OSFamily != v1alpha1.Ubuntu {
+		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Ubuntu)
 	}
-	if provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily != v1alpha1.Bottlerocket {
-		t.Fatalf("got osFamily for etcd machine as %v, want %v", provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily, v1alpha1.Bottlerocket)
+	if provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily != v1alpha1.Ubuntu {
+		t.Fatalf("got osFamily for etcd machine as %v, want %v", provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily, v1alpha1.Ubuntu)
 	}
 }
 
@@ -1768,7 +1695,7 @@ func TestSetupAndValidateCreateClusterTemplateDoesNotExist(t *testing.T) {
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "error validating template: "+template+" not found. Has the template been imported?", err)
+	thenErrorContainsExpected(t, "error validating template: "+template+" not found. Has the template been imported?", err)
 }
 
 func TestSetupAndValidateCreateClusterComputeOfferingDoesNotExist(t *testing.T) {
@@ -1793,7 +1720,7 @@ func TestSetupAndValidateCreateClusterComputeOfferingDoesNotExist(t *testing.T) 
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "error validating computeOffering: "+computeOffering+" not found. Has the compute offering been imported?", err)
+	thenErrorContainsExpected(t, "error validating computeOffering: "+computeOffering+" not found. Has the compute offering been imported?", err)
 }
 
 func TestSetupAndValidateCreateClusterDiskOfferingDoesNotExist(t *testing.T) {
@@ -1818,7 +1745,7 @@ func TestSetupAndValidateCreateClusterDiskOfferingDoesNotExist(t *testing.T) {
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "error validating diskOffering: "+diskOffering+" not found. Has the disk offering been imported?", err)
+	thenErrorContainsExpected(t, "error validating diskOffering: "+diskOffering+" not found. Has the disk offering been imported?", err)
 }
 
 func TestSetupAndValidateCreateClusterErrorCheckingTemplate(t *testing.T) {
@@ -1838,7 +1765,7 @@ func TestSetupAndValidateCreateClusterErrorCheckingTemplate(t *testing.T) {
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "error validating template: failed to get template", err)
+	thenErrorContainsExpected(t, "error validating template: failed to get template", err)
 }
 
 func TestGetInfrastructureBundleSuccess(t *testing.T) {
@@ -1856,15 +1783,6 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 					},
 					Manager: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-cloudstack/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
-					},
-					KubeVip: releasev1alpha1.Image{
-						URI: "public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
-					},
-					Driver: releasev1alpha1.Image{
-						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cloudstack-csi-driver/csi/driver:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b",
-					},
-					Syncer: releasev1alpha1.Image{
-						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cloudstack-csi-driver/csi/syncer:v2.2.0-7c2690c880c6521afdd9ffa8d90443a11c6b817b",
 					},
 					Metadata: releasev1alpha1.Manifest{
 						URI: "Metadata.yaml",
@@ -2234,30 +2152,12 @@ func TestCloudStackProviderRunPostUpgrade(t *testing.T) {
 func TestProviderUpgradeNeeded(t *testing.T) {
 	testCases := []struct {
 		testName               string
-		newSyncer, oldSyncer   string
-		newDriver, oldDriver   string
 		newManager, oldManager string
-		newKubeVip, oldKubeVip string
 		want                   bool
 	}{
 		{
-			testName:  "different syncer",
-			newSyncer: "a", oldSyncer: "b",
-			want: true,
-		},
-		{
-			testName:  "different driver",
-			newDriver: "a", oldDriver: "b",
-			want: true,
-		},
-		{
 			testName:   "different manager",
 			newManager: "a", oldManager: "b",
-			want: true,
-		},
-		{
-			testName:   "different kubevip",
-			newKubeVip: "a", oldKubeVip: "b",
 			want: true,
 		},
 	}
@@ -2266,17 +2166,11 @@ func TestProviderUpgradeNeeded(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			provider := givenProvider(t)
 			clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.CloudStack.Syncer.ImageDigest = tt.oldSyncer
-				s.VersionsBundle.CloudStack.Driver.ImageDigest = tt.oldDriver
 				s.VersionsBundle.CloudStack.Manager.ImageDigest = tt.oldManager
-				s.VersionsBundle.CloudStack.KubeVip.ImageDigest = tt.oldKubeVip
 			})
 
 			newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.CloudStack.Syncer.ImageDigest = tt.newSyncer
-				s.VersionsBundle.CloudStack.Driver.ImageDigest = tt.newDriver
 				s.VersionsBundle.CloudStack.Manager.ImageDigest = tt.newManager
-				s.VersionsBundle.CloudStack.KubeVip.ImageDigest = tt.newKubeVip
 			})
 
 			g := NewWithT(t)

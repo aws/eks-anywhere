@@ -33,7 +33,7 @@ func NewFactory(client CloudMonkeyClient, network, domain, zone, account string)
 	}
 }
 
-func (f *Factory) CheckIfMissing(ctx context.Context, machineConfig *v1alpha1.CloudStackMachineConfig) error {
+func (f *Factory) ValidateMachineResources(ctx context.Context, machineConfig *v1alpha1.CloudStackMachineConfig) error {
 	_, err := f.client.SearchTemplate(ctx, f.domain, f.zone, f.account, machineConfig.Spec.Template)
 	if err != nil {
 		return fmt.Errorf("error checking for machine config template: #{err}")

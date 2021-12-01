@@ -1,4 +1,4 @@
-## cloudStack Provider
+## CloudStack Provider
 
 The original cloudstack provider template was generated with `clusterctl` and modified to support EKS-D. The template
 is stored in `pkg/providers/cloudstack/config/template.yaml` The original file is stored in

@@ -79,11 +79,26 @@ spec:
       pause:
         imageRepository: public.ecr.aws/eks-distro/kubernetes/pause
         imageTag: v1.21.2-eks-1-21-4
-      bottlerocketBootstrap:
-        imageRepository: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap
-        imageTag: v1-21-4-eks-a-v0.0.0-dev-build.158
       registryMirror:
         endpoint: 1.2.3.4
+        caCert: |
+          -----BEGIN CERTIFICATE-----
+          MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
+          BAMTCnRlc3QubG9jYWwwHhcNMjEwOTIzMjAxOTEyWhcNMzEwOTIxMjAxOTEyWjAV
+          MRMwEQYDVQQDEwp0ZXN0LmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+          CgKCAQEAwDHozKwX0kAGICTaV1XoMdJ+t+8LQsAGmzIKYhrSh+WdEcx/xc1SDJcp
+          EBFeUmVuFwI5DYX2BTvJ0AApSBuViNZn669yn1dBV7PHM27NV37/dDCFkjiqBtax
+          lOXchrL6IoZirmMgMnI/PfASdI/PCR75DNCIQFGZbwWAbEBxxLHgWPEFJ5TWP6fD
+          2s95gbc9gykI09ta/H5ITKCd3EVtiAlcQ86Ax9EZRmvJYGw5NFmPnJ0X/OmXmLXx
+          o0ggkjHTeyG8sZQpDTs6oQrX/XLfLOvrJi3suiiJXz0pNAXZoFaLu8Z0Ci+EoquM
+          cFh4NhfSAD5BJADxwf7iv7KXCWtQTwIDAQABoxkwFzAVBgNVHREEDjAMggp0ZXN0
+          LmxvY2FsMA0GCSqGSIb3DQEBBQUAA4IBAQBr4qDklaG/ZLcrkc0PBo9ylj3rtt1M
+          ar1nv+Nv8zXByTsYs9muEQYBKpzvk9SJZ4OfYVcx6qETbG7z7kdgZtDktQULw5fQ
+          hsiy0flLv+JkdD4M30rtjhDIiuNH2ew6+2JB80QaSznW7Z3Fd18BmDaE1qqLYQFX
+          iCau7fRD2aQyVluuJ0OeDOuk33jY3Vn3gyKGfnjPAnb4DxCg7v1IeazGSVK18urL
+          zkYl4nSFENRLV5sL/wox2ohjMLff2lv6gyqkMFrLNSeHSQLGu8diat4UVDk8MMza
+          9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
+          -----END CERTIFICATE-----
       apiServer:
         extraArgs:
           cloud-provider: external
@@ -130,53 +145,6 @@ spec:
           readOnly: true
       certificatesDir: /var/lib/kubeadm/pki
     files:
-    - content: |
-        apiVersion: v1
-        kind: Pod
-        metadata:
-          creationTimestamp: null
-          name: kube-vip
-          namespace: kube-system
-        spec:
-          containers:
-          - args:
-            - start
-            env:
-            - name: vip_arp
-              value: "true"
-            - name: vip_leaderelection
-              value: "true"
-            - name: vip_address
-              value: 1.2.3.4
-            - name: vip_interface
-              value: eth0
-            - name: vip_leaseduration
-              value: "15"
-            - name: vip_renewdeadline
-              value: "10"
-            - name: vip_retryperiod
-              value: "2"
-            image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
-            imagePullPolicy: IfNotPresent
-            name: kube-vip
-            resources: {}
-            securityContext:
-              capabilities:
-                add:
-                - NET_ADMIN
-                - SYS_TIME
-            volumeMounts:
-            - mountPath: /etc/kubernetes/admin.conf
-              name: kubeconfig
-          hostNetwork: true
-          volumes:
-          - hostPath:
-              path: /etc/kubernetes/admin.conf
-              type: FileOrCreate
-            name: kubeconfig
-        status: {}
-      owner: root:root
-      path: /etc/kubernetes/manifests/kube-vip.yaml
     - content: |
         apiVersion: audit.k8s.io/v1beta1
         kind: Policy
@@ -345,11 +313,26 @@ spec:
       pause:
         imageRepository: public.ecr.aws/eks-distro/kubernetes/pause
         imageTag: v1.21.2-eks-1-21-4
-      bottlerocketBootstrap:
-        imageRepository: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap
-        imageTag: v1-21-4-eks-a-v0.0.0-dev-build.158
       registryMirror:
         endpoint: 1.2.3.4
+        caCert: |
+          -----BEGIN CERTIFICATE-----
+          MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
+          BAMTCnRlc3QubG9jYWwwHhcNMjEwOTIzMjAxOTEyWhcNMzEwOTIxMjAxOTEyWjAV
+          MRMwEQYDVQQDEwp0ZXN0LmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+          CgKCAQEAwDHozKwX0kAGICTaV1XoMdJ+t+8LQsAGmzIKYhrSh+WdEcx/xc1SDJcp
+          EBFeUmVuFwI5DYX2BTvJ0AApSBuViNZn669yn1dBV7PHM27NV37/dDCFkjiqBtax
+          lOXchrL6IoZirmMgMnI/PfASdI/PCR75DNCIQFGZbwWAbEBxxLHgWPEFJ5TWP6fD
+          2s95gbc9gykI09ta/H5ITKCd3EVtiAlcQ86Ax9EZRmvJYGw5NFmPnJ0X/OmXmLXx
+          o0ggkjHTeyG8sZQpDTs6oQrX/XLfLOvrJi3suiiJXz0pNAXZoFaLu8Z0Ci+EoquM
+          cFh4NhfSAD5BJADxwf7iv7KXCWtQTwIDAQABoxkwFzAVBgNVHREEDjAMggp0ZXN0
+          LmxvY2FsMA0GCSqGSIb3DQEBBQUAA4IBAQBr4qDklaG/ZLcrkc0PBo9ylj3rtt1M
+          ar1nv+Nv8zXByTsYs9muEQYBKpzvk9SJZ4OfYVcx6qETbG7z7kdgZtDktQULw5fQ
+          hsiy0flLv+JkdD4M30rtjhDIiuNH2ew6+2JB80QaSznW7Z3Fd18BmDaE1qqLYQFX
+          iCau7fRD2aQyVluuJ0OeDOuk33jY3Vn3gyKGfnjPAnb4DxCg7v1IeazGSVK18urL
+          zkYl4nSFENRLV5sL/wox2ohjMLff2lv6gyqkMFrLNSeHSQLGu8diat4UVDk8MMza
+          9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
+          -----END CERTIFICATE-----
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
@@ -367,7 +350,7 @@ spec:
       sshAuthorizedKeys:
       - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
       sudo: ALL=(ALL) NOPASSWD:ALL
-    format: bottlerocket
+    format: ubuntu
   replicas: 3
   version: v1.21.2-eks-1-21-4
 ---
@@ -380,11 +363,7 @@ spec:
   replicas: 3
   etcdadmConfigSpec:
     etcdadmBuiltin: true
-    format: bottlerocket
-    bottlerocketConfig:
-      etcdImage: public.ecr.aws/eks-distro/etcd-io/etcd:v3.4.16-eks-1-21-4
-      bootstrapImage: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap:v1-21-4-eks-a-v0.0.0-dev-build.158
-      pauseImage: public.ecr.aws/eks-distro/kubernetes/pause:v1.21.2-eks-1-21-4
+    format: ubuntu
     users:
     - name: ec2-user
       sshAuthorizedKeys:
@@ -392,6 +371,24 @@ spec:
       sudo: ALL=(ALL) NOPASSWD:ALL
     registryMirror:
       endpoint: 1.2.3.4
+      caCert: |
+        -----BEGIN CERTIFICATE-----
+        MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
+        BAMTCnRlc3QubG9jYWwwHhcNMjEwOTIzMjAxOTEyWhcNMzEwOTIxMjAxOTEyWjAV
+        MRMwEQYDVQQDEwp0ZXN0LmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+        CgKCAQEAwDHozKwX0kAGICTaV1XoMdJ+t+8LQsAGmzIKYhrSh+WdEcx/xc1SDJcp
+        EBFeUmVuFwI5DYX2BTvJ0AApSBuViNZn669yn1dBV7PHM27NV37/dDCFkjiqBtax
+        lOXchrL6IoZirmMgMnI/PfASdI/PCR75DNCIQFGZbwWAbEBxxLHgWPEFJ5TWP6fD
+        2s95gbc9gykI09ta/H5ITKCd3EVtiAlcQ86Ax9EZRmvJYGw5NFmPnJ0X/OmXmLXx
+        o0ggkjHTeyG8sZQpDTs6oQrX/XLfLOvrJi3suiiJXz0pNAXZoFaLu8Z0Ci+EoquM
+        cFh4NhfSAD5BJADxwf7iv7KXCWtQTwIDAQABoxkwFzAVBgNVHREEDjAMggp0ZXN0
+        LmxvY2FsMA0GCSqGSIb3DQEBBQUAA4IBAQBr4qDklaG/ZLcrkc0PBo9ylj3rtt1M
+        ar1nv+Nv8zXByTsYs9muEQYBKpzvk9SJZ4OfYVcx6qETbG7z7kdgZtDktQULw5fQ
+        hsiy0flLv+JkdD4M30rtjhDIiuNH2ew6+2JB80QaSznW7Z3Fd18BmDaE1qqLYQFX
+        iCau7fRD2aQyVluuJ0OeDOuk33jY3Vn3gyKGfnjPAnb4DxCg7v1IeazGSVK18urL
+        zkYl4nSFENRLV5sL/wox2ohjMLff2lv6gyqkMFrLNSeHSQLGu8diat4UVDk8MMza
+        9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
+        -----END CERTIFICATE-----
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
     kind: CloudStackMachineTemplate

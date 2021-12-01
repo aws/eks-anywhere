@@ -181,9 +181,6 @@ type CloudStackBundle struct {
 	ClusterAPIController Image    `json:"clusterAPIController"`
 	KubeProxy            Image    `json:"kubeProxy"`
 	Manager              Image    `json:"manager"`
-	KubeVip              Image    `json:"kubeVip"`
-	Driver               Image    `json:"driver"`
-	Syncer               Image    `json:"syncer"`
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
 	ClusterTemplate      Manifest `json:"clusterTemplate"`

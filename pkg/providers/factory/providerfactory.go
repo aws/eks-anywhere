@@ -40,7 +40,7 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 	case v1alpha1.CloudStackDeploymentKind:
 		datacenterConfig, err := v1alpha1.GetCloudStackDeploymentConfig(clusterConfigFileName)
 		if err != nil {
-			return nil, fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFileName, err)
+			return nil, fmt.Errorf("unable to get deployment config from file %s: %v", clusterConfigFileName, err)
 		}
 		machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(clusterConfigFileName)
 		if err != nil {

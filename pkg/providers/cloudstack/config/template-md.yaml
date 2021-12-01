@@ -7,29 +7,6 @@ spec:
   template:
     spec:
       joinConfiguration:
-{{- if (eq .format "bottlerocket") }}
-        pause:
-          imageRepository: {{.pauseRepository}}
-          imageTag: {{.pauseVersion}}
-        bottlerocketBootstrap:
-          imageRepository: {{.bottlerocketBootstrapRepository}}
-          imageTag: {{.bottlerocketBootstrapVersion}}
-{{- end }}
-{{- if and .proxyConfig (eq .format "bottlerocket") }}
-        proxy:
-          httpsProxy: {{.httpsProxy}}
-          noProxy: {{ range .noProxy }}
-            - {{ . }}
-          {{- end }}
-{{- end }}
-{{- if and .registryMirrorConfiguration (eq .format "bottlerocket") }}
-        registryMirror:
-          endpoint: {{.registryMirrorConfiguration}}
-          {{- if .registryCACert }}
-          caCert: |
-{{ .registryCACert | indent 12 }}
-          {{- end }}
-{{- end }}
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
           kubeletExtraArgs:
@@ -38,10 +15,10 @@ spec:
             cgroup-driver: systemd
 {{- end }}
           name: '{{"{{"}} ds.meta_data.hostname {{"}}"}}'
-{{- if and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorConfiguration) }}
+{{- if or .proxyConfig .registryMirrorConfiguration }}
       files:
 {{- end }}
-{{- if and .proxyConfig (ne .format "bottlerocket") }}
+{{- if .proxyConfig }}
       - content: |
           [Service]
           Environment="HTTP_PROXY={{.httpProxy}}"
@@ -50,7 +27,6 @@ spec:
         owner: root:root
         path: /etc/systemd/system/containerd.service.d/http-proxy.conf
 {{- end }}
-{{- if (ne .format "bottlerocket") }}
 {{- if .registryCACert }}
       - content: |
 {{ .registryCACert | indent 10 }}
@@ -69,12 +45,11 @@ spec:
         owner: root:root
         path: "/etc/containerd/config_append.toml"
 {{- end }}
-{{- end }}
       preKubeadmCommands:
-{{- if and .registryMirrorConfiguration (ne .format "bottlerocket") }}
+{{- if .registryMirrorConfiguration }}
       - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
 {{- end }}
-{{- if and (or .proxyConfig .registryMirrorConfiguration) (ne .format "bottlerocket") }}
+{{- if or .proxyConfig .registryMirrorConfiguration }}
       - sudo systemctl daemon-reload
       - sudo systemctl restart containerd
 {{- end }}

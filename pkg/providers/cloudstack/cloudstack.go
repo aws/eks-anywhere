@@ -47,19 +47,13 @@ const (
 	cloudStackPasswordKey     = "CLOUDSTACK_PASSWORD"
 	eksacloudStackUsernameKey = "EKSA_CLOUDSTACK_USERNAME"
 	eksacloudStackPasswordKey = "EKSA_CLOUDSTACK_PASSWORD"
-	// vSphereServerKey         = "VSPHERE_SERVER"
-	cloudMonkeyInsecure      = "CLOUDMONKEY_INSECURE"
-	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
-	// secretObjectType         = "addons.cluster.x-k8s.io/resource-set"
-	// secretObjectName         = "csi-cloudstack-config"
-	credentialsObjectName = "cloudstack-credentials"
-	privateKeyFileName    = "eks-a-id_rsa"
-	publicKeyFileName     = "eks-a-id_rsa.pub"
-	// defaultTemplateLibrary = "eks-a-templates"
-	// defaultTemplatesFolder   = "vm/Templates"
-	bottlerocketDefaultUser = "ec2-user"
-	ubuntuDefaultUser       = "capc"
-	redhatDefaultUser       = "capc"
+	cloudMonkeyInsecure       = "CLOUDMONKEY_INSECURE"
+	expClusterResourceSetKey  = "EXP_CLUSTER_RESOURCE_SET"
+	credentialsObjectName     = "cloudstack-credentials"
+	privateKeyFileName        = "eks-a-id_rsa"
+	publicKeyFileName         = "eks-a-id_rsa.pub"
+	ubuntuDefaultUser         = "capc"
+	redhatDefaultUser         = "capc"
 )
 
 //go:embed config/template-cp.yaml
@@ -106,20 +100,20 @@ type cloudstackProvider struct {
 	resourceSetManager          ClusterResourceSetManager
 }
 
+func (p *cloudstackProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
+	panic("implement me")
+}
+
+func (p *cloudstackProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+	panic("implement me")
+}
+
 type ProviderCloudMonkeyClient interface {
 	SearchTemplate(ctx context.Context, domain string, zone string, account string, template string) (string, error)
 	SearchComputeOffering(ctx context.Context, domain string, zone string, account string, computeOffering string) (string, error)
 	SearchDiskOffering(ctx context.Context, domain string, zone string, account string, diskOffering string) (string, error)
-	// TemplateHasSnapshot(ctx context.Context, template string) (bool, error)
-	// GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1alpha1.CloudStackMachineConfig) (float64, error)
 	ValidateCloudStackSetup(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, selfSigned *bool) error
 	ValidateCloudStackSetupMachineConfig(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, machineConfig *v1alpha1.CloudStackMachineConfig, selfSigned *bool) error
-	// CreateLibrary(ctx context.Context, datastore, library string) error
-	// ImportTemplate(ctx context.Context, library, ovaURL, name string) error
-	// GetTags(ctx context.Context, path string) (tags []string, err error)
-	// ListTags(ctx context.Context) ([]string, error)
-	// CreateTag(ctx context.Context, tag, category string) error
-	// AddTag(ctx context.Context, path, tag string) error
 }
 
 type ProviderKubectlClient interface {
@@ -400,14 +394,14 @@ func getHostnameFromUrl(rawurl string) (string, error) {
 func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	if cloudStackUsername, ok := os.LookupEnv(eksacloudStackUsernameKey); ok && len(cloudStackUsername) > 0 {
 		if err := os.Setenv(cloudStackUsernameKey, cloudStackUsername); err != nil {
-			return fmt.Errorf("unable to set %s: %v", eksacloudStackUsernameKey, err)
+			return fmt.Errorf("unable to set %s: %v", cloudStackUsernameKey, err)
 		}
 	} else {
 		return fmt.Errorf("%s is not set or is empty", eksacloudStackUsernameKey)
 	}
 	if cloudStackPassword, ok := os.LookupEnv(eksacloudStackPasswordKey); ok && len(cloudStackPassword) > 0 {
 		if err := os.Setenv(cloudStackPasswordKey, cloudStackPassword); err != nil {
-			return fmt.Errorf("unable to set %s: %v", eksacloudStackPasswordKey, err)
+			return fmt.Errorf("unable to set %s: %v", cloudStackPasswordKey, err)
 		}
 	} else {
 		return fmt.Errorf("%s is not set or is empty", eksacloudStackPasswordKey)
@@ -428,20 +422,12 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 
 func (p *cloudstackProvider) validateSSHUsername(machineConfig *v1alpha1.CloudStackMachineConfig) error {
 	if len(machineConfig.Spec.Users[0].Name) <= 0 {
-		if machineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
-			machineConfig.Spec.Users[0].Name = bottlerocketDefaultUser
-		} else if machineConfig.Spec.OSFamily == v1alpha1.Ubuntu {
+		if machineConfig.Spec.OSFamily == v1alpha1.Ubuntu {
 			machineConfig.Spec.Users[0].Name = ubuntuDefaultUser
 		} else {
 			machineConfig.Spec.Users[0].Name = redhatDefaultUser
 		}
 		logger.V(1).Info(fmt.Sprintf("SSHUsername is not set or is empty for CloudStackMachineConfig %v. Defaulting to %s", machineConfig.Name, machineConfig.Spec.Users[0].Name))
-	} else {
-		if machineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
-			if machineConfig.Spec.Users[0].Name != bottlerocketDefaultUser {
-				return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket", machineConfig.Spec.Users[0].Name)
-			}
-		}
 	}
 	return nil
 }
@@ -544,11 +530,11 @@ func (p *cloudstackProvider) setupAndValidateCluster(ctx context.Context, cluste
 		return errors.New("control plane and etcd machines must have the same osFamily specified")
 	}
 	if len(string(controlPlaneMachineConfig.Spec.OSFamily)) <= 0 {
-		logger.Info("Warning: OS family not specified in cluster specification. Defaulting to Bottlerocket.")
-		controlPlaneMachineConfig.Spec.OSFamily = v1alpha1.Bottlerocket
-		workerNodeGroupMachineConfig.Spec.OSFamily = v1alpha1.Bottlerocket
+		logger.Info("Warning: OS family not specified in cluster specification. Defaulting to Ubuntu.")
+		controlPlaneMachineConfig.Spec.OSFamily = v1alpha1.Ubuntu
+		workerNodeGroupMachineConfig.Spec.OSFamily = v1alpha1.Ubuntu
 		if etcdMachineConfig != nil {
-			etcdMachineConfig.Spec.OSFamily = v1alpha1.Bottlerocket
+			etcdMachineConfig.Spec.OSFamily = v1alpha1.Ubuntu
 		}
 	}
 
@@ -866,9 +852,9 @@ func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.CloudStackDeploymentConfi
 	return false
 }
 
-func NewCloudStackTemplateBuilder(datacenterSpec *v1alpha1.CloudStackDeploymentConfigSpec, controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
+func NewCloudStackTemplateBuilder(cloudStackDeploymentConfigSpecSpec *v1alpha1.CloudStackDeploymentConfigSpec, controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
 	return &CloudStackTemplateBuilder{
-		deploymentConfigSpec:       datacenterSpec,
+		deploymentConfigSpec:       cloudStackDeploymentConfigSpecSpec,
 		controlPlaneMachineSpec:    controlPlaneMachineSpec,
 		workerNodeGroupMachineSpec: workerNodeGroupMachineSpec,
 		etcdMachineSpec:            etcdMachineSpec,
@@ -954,9 +940,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 		"thumbprint":                             deploymentConfigSpec.Thumbprint,
 		"cloudstackManagementApiEndpoint":        deploymentConfigSpec.ManagementApiEndpoint,
 		"managerImage":                           bundle.CloudStack.Manager.VersionedImage(),
-		"kubeVipImage":                           bundle.CloudStack.KubeVip.VersionedImage(),
-		"driverImage":                            bundle.CloudStack.Driver.VersionedImage(),
-		"syncerImage":                            bundle.CloudStack.Syncer.VersionedImage(),
 		"insecure":                               deploymentConfigSpec.Insecure,
 		"cloudstackNetwork":                      deploymentConfigSpec.Network,
 		"cloudstackDomain":                       deploymentConfigSpec.Domain,
@@ -1019,14 +1002,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
 	}
 
-	if controlPlaneMachineSpec.OSFamily == v1alpha1.Bottlerocket {
-		values["format"] = string(v1alpha1.Bottlerocket)
-		values["pauseRepository"] = bundle.KubeDistro.Pause.Image()
-		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
-		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketBootstrap.Bootstrap.Image()
-		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
-	}
-
 	if clusterSpec.AWSIamConfig != nil {
 		values["awsIamAuth"] = true
 	}
@@ -1083,14 +1058,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 		values["httpProxy"] = clusterSpec.Spec.ProxyConfiguration.HttpProxy
 		values["httpsProxy"] = clusterSpec.Spec.ProxyConfiguration.HttpsProxy
 		values["noProxy"] = noProxyList
-	}
-
-	if workerNodeGroupMachineSpec.OSFamily == v1alpha1.Bottlerocket {
-		values["format"] = string(v1alpha1.Bottlerocket)
-		values["pauseRepository"] = bundle.KubeDistro.Pause.Image()
-		values["pauseVersion"] = bundle.KubeDistro.Pause.Tag()
-		values["bottlerocketBootstrapRepository"] = bundle.BottleRocketBootstrap.Bootstrap.Image()
-		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
 	}
 
 	return values
@@ -1232,10 +1199,6 @@ func (p *cloudstackProvider) GenerateCAPISpecForCreate(ctx context.Context, clus
 	}
 	return controlPlaneSpec, workersSpec, nil
 }
-
-//func (p *cloudstackProvider) GenerateStorageClass() []byte {
-//	return defaultStorageClass
-//}
 
 func (p *cloudstackProvider) GenerateMHC() ([]byte, error) {
 	data := map[string]string{
@@ -1487,10 +1450,8 @@ func resourceSetName(clusterSpec *cluster.Spec) string {
 func (p *cloudstackProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error) {
 	newV, oldV := newSpec.VersionsBundle.CloudStack, currentSpec.VersionsBundle.CloudStack
 
-	return newV.Driver.ImageDigest != oldV.Driver.ImageDigest ||
-		newV.Syncer.ImageDigest != oldV.Syncer.ImageDigest ||
-		newV.Manager.ImageDigest != oldV.Manager.ImageDigest ||
-		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest, nil
+	return newV.Manager.ImageDigest != oldV.Manager.ImageDigest, nil
+	// || newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest, nil
 }
 
 func (p *cloudstackProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
