@@ -22,6 +22,8 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const bottlerocketBootstrapProjectPath = "projects/aws/bottlerocket-boostrap"
+
 // GetBottlerocketBootstrapAssets returns the eks-a artifacts for Bottlerocket bootstrap container
 func (r *ReleaseConfig) GetBottlerocketBootstrapAssets(eksDReleaseChannel, eksDReleaseNumber string) ([]Artifact, error) {
 	name := "bottlerocket-bootstrap"
@@ -30,6 +32,11 @@ func (r *ReleaseConfig) GetBottlerocketBootstrapAssets(eksDReleaseChannel, eksDR
 		"eksDReleaseChannel": eksDReleaseChannel,
 		"eksDReleaseNumber":  eksDReleaseNumber,
 	}
+
+	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
 	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)
@@ -37,10 +44,11 @@ func (r *ReleaseConfig) GetBottlerocketBootstrapAssets(eksDReleaseChannel, eksDR
 
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
+		SourceImageURI:  sourceImageUri,
 		ReleaseImageURI: releaseImageUri,
 		Arch:            []string{"amd64"},
 		OS:              "linux",
+		ProjectPath:     bottlerocketBootstrapProjectPath,
 	}
 
 	artifact := Artifact{Image: imageArtifact}

@@ -25,7 +25,7 @@ import (
 
 // GetDockerAssets returns the eks-a artifacts for CAPD
 func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
-	gitTag, err := r.getCAPIGitTag()
+	gitTag, err := r.readGitTag(capiProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -33,7 +33,13 @@ func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
 	name := "capd-manager"
 	repoName := fmt.Sprintf("kubernetes-sigs/cluster-api/%s", name)
 	tagOptions := map[string]string{
-		"gitTag": gitTag,
+		"gitTag":      gitTag,
+		"projectPath": capiProjectPath,
+	}
+
+	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
 	}
 	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
 	if err != nil {
@@ -42,10 +48,12 @@ func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
 
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
+		SourceImageURI:  sourceImageUri,
 		ReleaseImageURI: releaseImageUri,
 		Arch:            []string{"amd64"},
 		OS:              "linux",
+		GitTag:          gitTag,
+		ProjectPath:     capiProjectPath,
 	}
 	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
@@ -74,7 +82,7 @@ func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
 		latestPath := r.getLatestUploadDestination()
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
-			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api/%s/manifests/infrastructure-docker/%s", latestPath, gitTag)
+			sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/infrastructure-docker/%s", capiProjectPath, latestPath, gitTag)
 		} else {
 			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cluster-api/manifests/infrastructure-docker/%s", r.BundleNumber, gitTag)
 		}
@@ -97,6 +105,8 @@ func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
 			ReleaseS3Path:     releaseS3Path,
 			ReleaseCdnURI:     cdnURI,
 			ImageTagOverrides: imageTagOverrides,
+			GitTag:            gitTag,
+			ProjectPath:       capiProjectPath,
 		}
 		artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 	}
@@ -111,7 +121,7 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 	}
 
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, capiProjectPath)),
 	)
 	if err != nil {
 		return anywherev1alpha1.DockerBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")

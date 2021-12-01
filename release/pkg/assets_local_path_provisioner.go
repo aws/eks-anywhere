@@ -16,17 +16,15 @@ package pkg
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 )
 
+const localPathProvisonerProjectPath = "projects/rancher/local-path-provisioner"
+
 // GetLocalPathProvisionerAssets returns the eks-a artifacts for local-path-provisioner
 func (r *ReleaseConfig) GetLocalPathProvisionerAssets() ([]Artifact, error) {
-	// Get Git tag for the project
-	projectSource := "projects/rancher/local-path-provisioner"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
+	gitTag, err := r.readGitTag(localPathProvisonerProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -34,7 +32,13 @@ func (r *ReleaseConfig) GetLocalPathProvisionerAssets() ([]Artifact, error) {
 	name := "local-path-provisioner"
 	repoName := fmt.Sprintf("rancher/%s", name)
 	tagOptions := map[string]string{
-		"gitTag": gitTag,
+		"gitTag":      gitTag,
+		"projectPath": localPathProvisonerProjectPath,
+	}
+
+	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
 	}
 	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
 	if err != nil {
@@ -43,11 +47,12 @@ func (r *ReleaseConfig) GetLocalPathProvisionerAssets() ([]Artifact, error) {
 
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
+		SourceImageURI:  sourceImageUri,
 		ReleaseImageURI: releaseImageUri,
 		Arch:            []string{"amd64"},
 		OS:              "linux",
 		GitTag:          gitTag,
+		ProjectPath:     localPathProvisonerProjectPath,
 	}
 	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 

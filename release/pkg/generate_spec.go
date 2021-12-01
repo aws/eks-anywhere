@@ -328,8 +328,9 @@ func (r *ReleaseConfig) GetURI(path string) (string, error) {
 	return uri.String(), nil
 }
 
-func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[string]string) string {
+func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[string]string) (string, error) {
 	var sourceImageUri string
+
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		latestTag := r.getLatestUploadDestination()
 		if name == "bottlerocket-bootstrap" {
@@ -362,6 +363,27 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 				repoName,
 				latestTag,
 			)
+		}
+		if !r.DryRun {
+			sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
+			err := r.waitForSourceImage(sourceEcrAuthConfig, sourceImageUri)
+			if err != nil {
+				if r.BuildRepoBranchName != "main" {
+					fmt.Printf("Tag corresponding to %s branch not found for %s image. Using image artifact from main\n", r.BuildRepoBranchName, repoName)
+					var gitTagFromMain string
+					if name == "bottlerocket-bootstrap" {
+						gitTagFromMain = "non-existent"
+					} else {
+						gitTagFromMain, err = r.readGitTag(tagOptions["projectPath"], "main")
+						if err != nil {
+							return "", errors.Cause(err)
+						}
+					}
+					sourceImageUri = strings.NewReplacer(r.BuildRepoBranchName, "latest", tagOptions["gitTag"], gitTagFromMain).Replace(sourceImageUri)
+				} else {
+					return "", errors.Cause(err)
+				}
+			}
 		}
 	} else if r.ReleaseEnvironment == "production" {
 		if name == "bottlerocket-bootstrap" {
@@ -413,7 +435,7 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 		}
 	}
 
-	return sourceImageUri
+	return sourceImageUri, nil
 }
 
 func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map[string]string) (string, error) {
@@ -477,7 +499,11 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 
 	var semver string
 	if r.DevRelease {
-		currentSourceImageUri := r.GetSourceImageURI(name, repoName, tagOptions)
+		currentSourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+		if err != nil {
+			return "", errors.Cause(err)
+		}
+
 		previousReleaseImageSemver, err := r.GetPreviousReleaseImageSemver(releaseImageUri)
 		if err != nil {
 			return "", errors.Cause(err)
@@ -538,28 +564,30 @@ func (r *ReleaseConfig) GetPreviousReleaseImageSemver(releaseImageUri string) (s
 	} else {
 		bundles := &anywherev1alpha1.Bundles{}
 		bundleReleaseManifestKey := r.GetManifestFilepaths(anywherev1alpha1.BundlesKind)
-		bundleManifestUrl := fmt.Sprintf("https://%s.s3.amazonaws.com%s", r.ReleaseBucket, bundleReleaseManifestKey)
-		contents, err := ReadHttpFile(bundleManifestUrl)
-		if err != nil {
-			return "", fmt.Errorf("Error reading bundle manifest from S3: %v", err)
-		}
-
-		if err = yaml.Unmarshal(contents, bundles); err != nil {
-			return "", fmt.Errorf("Error unmarshaling bundles manifest from [%s]: %v", bundleManifestUrl, err)
-		}
-
-		for _, versionedBundle := range bundles.Spec.VersionsBundles {
-			vb := &cluster.VersionsBundle{VersionsBundle: &versionedBundle}
-			vbImages := vb.Images()
-			for _, image := range vbImages {
-				if strings.Contains(image.URI, releaseImageUri) {
-					imageUri := image.URI
-					numDashes := strings.Count(imageUri, "-")
-					imageUriSplit := strings.SplitAfterN(imageUri, "-", numDashes-1)
-					semver = imageUriSplit[len(imageUriSplit)-1]
-				}
+		bundleManifestUrl := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", r.ReleaseBucket, bundleReleaseManifestKey)
+		if ExistsInS3(r.ReleaseBucket, bundleReleaseManifestKey) {
+			contents, err := ReadHttpFile(bundleManifestUrl)
+			if err != nil {
+				return "", fmt.Errorf("Error reading bundle manifest from S3: %v", err)
 			}
 
+			if err = yaml.Unmarshal(contents, bundles); err != nil {
+				return "", fmt.Errorf("Error unmarshaling bundles manifest from [%s]: %v", bundleManifestUrl, err)
+			}
+
+			for _, versionedBundle := range bundles.Spec.VersionsBundles {
+				vb := &cluster.VersionsBundle{VersionsBundle: &versionedBundle}
+				vbImages := vb.Images()
+				for _, image := range vbImages {
+					if strings.Contains(image.URI, releaseImageUri) {
+						imageUri := image.URI
+						numDashes := strings.Count(imageUri, "-")
+						imageUriSplit := strings.SplitAfterN(imageUri, "-", numDashes-1)
+						semver = imageUriSplit[len(imageUriSplit)-1]
+					}
+				}
+
+			}
 		}
 	}
 	return semver, nil
