@@ -32,7 +32,7 @@ const (
 	machineMaxWait    = 10 * time.Minute
 	machineBackoff    = 1 * time.Second
 	machinesMinWait   = 30 * time.Minute
-	moveCAPIWait      = 5 * time.Minute
+	moveCAPIWait      = 15 * time.Minute
 	ctrlPlaneWaitStr  = "60m"
 	etcdWaitStr       = "60m"
 	deploymentWaitStr = "30m"
