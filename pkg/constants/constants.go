@@ -25,5 +25,5 @@ const (
 	VSphereProviderName   = "vsphere"
 	DockerProviderName    = "docker"
 	AWSProviderName       = "aws"
-	TinkerellProviderName = "tinkerbell"
+	TinkerbellProviderName = "tinkerbell"
 )
