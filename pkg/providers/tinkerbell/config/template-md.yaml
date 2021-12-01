@@ -55,6 +55,6 @@ spec:
       users:
       - name: {{.workerSshUsername}}
         sshAuthorizedKeys:
-        - '{{.vsphereWorkerSshAuthorizedKey}}'
+        - '{{.workerSshAuthorizedKey}}'
         sudo: ALL=(ALL) NOPASSWD:ALL
       format: {{.format}}
