@@ -466,6 +466,7 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 		if err != nil {
 			return "", errors.Cause(err)
 		}
+		fmt.Printf("Previous release image semver: %s\n", previousReleaseImageSemver)
 		previousReleaseImageUri := fmt.Sprintf("%s-%s", releaseImageUri, previousReleaseImageSemver)
 
 		sameDigest, err := r.CompareHashWithPreviousBundle(currentSourceImageUri, previousReleaseImageUri)
@@ -474,12 +475,14 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 		}
 		if sameDigest {
 			semver = previousReleaseImageSemver
+			fmt.Printf("Image digest for %s image has not changed, tagging with previous dev release semver: %s\n", repoName, semver)
 		} else {
 			newSemver, err := generateNewDevReleaseVersion(previousReleaseImageSemver, "vDev")
 			if err != nil {
 				return "", errors.Cause(err)
 			}
 			semver = strings.ReplaceAll(newSemver, "+", "-")
+			fmt.Printf("Image digest for %s image has changed, tagging with new dev release semver: %s\n", repoName, semver)
 		}
 	} else {
 		semver = fmt.Sprintf("%d", r.BundleNumber)
@@ -494,6 +497,7 @@ func (r *ReleaseConfig) CompareHashWithPreviousBundle(currentSourceImageUri, pre
 	if r.DryRun {
 		return false, nil
 	}
+	fmt.Printf("Comparing digests for [%s] and [%s]", currentSourceImageUri, previousReleaseImageUri)
 	currentSourceImageUriDigest, err := r.GetECRImageDigest(currentSourceImageUri)
 	if err != nil {
 		return false, errors.Cause(err)
@@ -532,8 +536,7 @@ func (r *ReleaseConfig) GetPreviousReleaseImageSemver(releaseImageUri string) (s
 					imageUri := image.URI
 					numDashes := strings.Count(imageUri, "-")
 					imageUriSplit := strings.SplitAfterN(imageUri, "-", numDashes-1)
-					semver := imageUriSplit[len(imageUriSplit)-1]
-					fmt.Printf("Previous release image URI is %s\n", semver)
+					semver = imageUriSplit[len(imageUriSplit)-1]
 				}
 			}
 

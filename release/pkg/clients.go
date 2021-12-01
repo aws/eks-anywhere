@@ -372,7 +372,6 @@ func getEksdRelease(eksdReleaseURL string) (*eksdv1alpha1.Release, error) {
 }
 
 func ReadHttpFile(uri string) ([]byte, error) {
-	fmt.Printf("Downloading %s\n", uri)
 	resp, err := http.Get(uri)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed reading file from url [%s]", uri)
