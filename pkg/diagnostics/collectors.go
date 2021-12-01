@@ -59,6 +59,40 @@ func (c *collectorFactory) EksaHostCollectors(machineConfigs []providers.Machine
 	return collectors
 }
 
+func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref) []*Collect {
+	switch datacenter.Kind {
+	case v1alpha1.VSphereDatacenterKind:
+		return c.eksaVsphereCollectors()
+	case v1alpha1.DockerDatacenterKind:
+		return c.eksaDockerCollectors()
+	default:
+		return nil
+	}
+}
+
+func (c *collectorFactory) eksaVsphereCollectors() []*Collect {
+	vsphereLogs := []*Collect{
+		{
+			Logs: &logs{
+				Namespace: constants.CapvSystemNamespace,
+				Name:      logpath(constants.CapvSystemNamespace),
+			},
+		},
+	}
+	return append(vsphereLogs, c.vsphereCrdCollectors()...)
+}
+
+func (c *collectorFactory) eksaDockerCollectors() []*Collect {
+	return []*Collect{
+		{
+			Logs: &logs{
+				Namespace: constants.CapdSystemNamespace,
+				Name:      logpath(constants.CapdSystemNamespace),
+			},
+		},
+	}
+}
+
 func (c *collectorFactory) ManagementClusterCollectors() []*Collect {
 	var collectors []*Collect
 	collectors = append(collectors, c.managementClusterCrdCollectors()...)
@@ -198,6 +232,19 @@ func (c *collectorFactory) managementClusterCrdCollectors() []*Collect {
 		"machines.cluster.x-k8s.io",
 	}
 	return c.generateCrdCollectors(mgmtCrds)
+}
+
+func (c *collectorFactory) vsphereCrdCollectors() []*Collect {
+	capvCrds := []string{
+		"vsphereclusteridentities.infrastructure.cluster.x-k8s.io",
+		"vsphereclusters.infrastructure.cluster.x-k8s.io",
+		"vspheredatacenterconfigs.anywhere.eks.amazonaws.com",
+		"vspheremachineconfigs.anywhere.eks.amazonaws.com",
+		"vspheremachines.infrastructure.cluster.x-k8s.io",
+		"vspheremachinetemplates.infrastructure.cluster.x-k8s.io",
+		"vspherevms.infrastructure.cluster.x-k8s.io",
+	}
+	return c.generateCrdCollectors(capvCrds)
 }
 
 func (c *collectorFactory) generateCrdCollectors(crds []string) []*Collect {
