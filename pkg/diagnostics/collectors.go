@@ -80,7 +80,6 @@ func (c *collectorFactory) eksaVsphereCollectors() []*Collect {
 		},
 	}
 	return append(vsphereLogs, c.vsphereCrdCollectors()...)
-
 }
 
 func (c *collectorFactory) eksaDockerCollectors() []*Collect {
