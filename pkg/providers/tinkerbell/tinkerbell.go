@@ -291,7 +291,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"eksaSystemNamespace":          constants.EksaSystemNamespace,
 		"format":                       format,
 		"kubernetesVersion":            bundle.KubeDistro.Kubernetes.Tag,
-		"kubeVipImage":                 bundle.VSphere.KubeVip.VersionedImage(),
+		"kubeVipImage":                 "ghcr.io/kube-vip/kube-vip:latest",
 		"podCidrs":                     clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                 clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
 	}
