@@ -141,6 +141,10 @@ func GetEksDReleaseManifestUrl(releaseChannel, releaseNumber string) string {
 }
 
 func (r *ReleaseConfig) GetCurrentEksADevReleaseVersion(releaseVersion string) (string, error) {
+	fmt.Println("\n==========================================================")
+	fmt.Println("              Dev Release Version Computation")
+	fmt.Println("==========================================================")
+
 	var latestBuildVersion string
 	if r.DryRun {
 		latestBuildVersion = "v0.0.0-dev+build.0"
@@ -183,6 +187,8 @@ func (r *ReleaseConfig) GetCurrentEksADevReleaseVersion(releaseVersion string) (
 	}
 
 	fmt.Printf("Next release version: %s\n", newDevReleaseVersion)
+
+	fmt.Printf("%s Successfully computed current dev release version\n", SuccessIcon)
 	return newDevReleaseVersion, nil
 }
 

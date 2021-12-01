@@ -69,20 +69,15 @@ func (r *ReleaseConfig) GetEksAToolsAssets() ([]Artifact, error) {
 }
 
 func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev1alpha1.EksaBundle, error) {
-	eksABundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"eks-a-tools":           r.GetEksAToolsAssets,
-		"cluster-controller":    r.GetClusterControllerAssets,
-		"diagnostic-collector:": r.GetDiagnosticCollectorAssets,
+	eksABundleArtifacts := map[string][]Artifact{
+		"eks-a-tools":          r.BundleArtifactsTable["eks-a-tools"],
+		"cluster-controller":   r.BundleArtifactsTable["cluster-controller"],
+		"diagnostic-collector": r.BundleArtifactsTable["diagnostic-collector"],
 	}
 
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifactFunc := range eksABundleArtifactsFuncs {
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.EksaBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
-
+	for _, artifacts := range eksABundleArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image

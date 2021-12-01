@@ -53,10 +53,7 @@ func (r *ReleaseConfig) GetFluxAssets() ([]Artifact, error) {
 }
 
 func (r *ReleaseConfig) GetFluxBundle(imageDigests map[string]string) (anywherev1alpha1.FluxBundle, error) {
-	artifacts, err := r.GetFluxAssets()
-	if err != nil {
-		return anywherev1alpha1.FluxBundle{}, errors.Cause(err)
-	}
+	artifacts := r.BundleArtifactsTable["flux"]
 
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	for _, artifact := range artifacts {

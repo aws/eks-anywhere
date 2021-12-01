@@ -28,6 +28,10 @@ import (
 type EksAReleases []anywherev1alpha1.EksARelease
 
 func (r *ReleaseConfig) SetRepoHeads() error {
+	fmt.Println("\n==========================================================")
+	fmt.Println("                    Local Repository Setup")
+	fmt.Println("==========================================================")
+
 	// Get the repos from env var
 	if r.CliRepoUrl == "" || r.BuildRepoUrl == "" {
 		return fmt.Errorf("One or both clone URLs are empty")
@@ -90,57 +94,50 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 		return errors.Cause(err)
 	}
 	fmt.Printf("Head of build repo: %s\n", r.BuildRepoHead)
+
+	fmt.Printf("%s Successfully completed local repository setup\n", SuccessIcon)
+
 	return nil
 }
 
-func (r *ReleaseConfig) PrepareBundleRelease(artifactsTable map[string][]Artifact) error {
-	fmt.Println("Preparing bundle release")
-	err := r.downloadArtifacts(artifactsTable)
+func (r *ReleaseConfig) PrepareBundleRelease() error {
+	fmt.Println("\n==========================================================")
+	fmt.Println("                  Bundle Release Preparation")
+	fmt.Println("==========================================================")
+	err := r.downloadArtifacts(r.BundleArtifactsTable)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	fmt.Println("Artifacts download complete")
 
-	err = r.renameArtifacts(artifactsTable)
+	err = r.renameArtifacts(r.BundleArtifactsTable)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	fmt.Println("Renaming artifacts complete")
 
 	return nil
 }
 
 func (r *ReleaseConfig) PrepareEksARelease() error {
-	if r.DryRun {
-		fmt.Println("Skipping EKS-A artifacts download and rename in dry-run mode")
-		return nil
-	}
-	fmt.Println("Preparing EKS-A release")
-	artifactsTable, err := r.GetEksAArtifactsData()
+	fmt.Println("\n==========================================================")
+	fmt.Println("                 EKS-A CLI Release Preparation")
+	fmt.Println("==========================================================")
+	err := r.downloadArtifacts(r.EksAArtifactsTable)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	fmt.Println("Initialized artifacts data")
 
-	err = r.downloadArtifacts(artifactsTable)
+	err = r.renameArtifacts(r.EksAArtifactsTable)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	fmt.Println("Artifacts download complete")
-
-	err = r.renameArtifacts(artifactsTable)
-	if err != nil {
-		return errors.Cause(err)
-	}
-	fmt.Println("Renaming artifacts complete")
 
 	return nil
 }
 
 func (r *ReleaseConfig) renameArtifacts(artifacts map[string][]Artifact) error {
-	fmt.Println("============================================================")
-	fmt.Println("                 Renaming Artifacts                         ")
-	fmt.Println("============================================================")
+	fmt.Println("\n==========================================================")
+	fmt.Println("                    Artifacts Rename")
+	fmt.Println("==========================================================")
 	for _, artifactsList := range artifacts {
 		for _, artifact := range artifactsList {
 
@@ -200,6 +197,8 @@ func (r *ReleaseConfig) renameArtifacts(artifacts map[string][]Artifact) error {
 			}
 		}
 	}
+	fmt.Printf("%s Successfully renamed artifacts\n", SuccessIcon)
+
 	return nil
 }
 
@@ -220,9 +219,9 @@ func (r *ReleaseConfig) downloadArtifacts(eksArtifacts map[string][]Artifact) er
 			return false, 0
 		}))
 	}
-	fmt.Println("============================================================")
-	fmt.Println("                 Downloading Artifacts                      ")
-	fmt.Println("============================================================")
+	fmt.Println("==========================================================")
+	fmt.Println("                  Artifacts Download")
+	fmt.Println("==========================================================")
 
 	for _, artifacts := range eksArtifacts {
 		for _, artifact := range artifacts {
@@ -302,10 +301,15 @@ func (r *ReleaseConfig) downloadArtifacts(eksArtifacts map[string][]Artifact) er
 			}
 		}
 	}
+	fmt.Printf("%s Successfully downloaded artifacts\n", SuccessIcon)
+
 	return nil
 }
 
 func (r *ReleaseConfig) UploadArtifacts(eksArtifacts map[string][]Artifact) error {
+	fmt.Println("\n==========================================================")
+	fmt.Println("                  Artifacts Upload")
+	fmt.Println("==========================================================")
 	if r.DryRun {
 		fmt.Println("Skipping artifacts upload in dry-run mode")
 		return nil
@@ -313,10 +317,6 @@ func (r *ReleaseConfig) UploadArtifacts(eksArtifacts map[string][]Artifact) erro
 
 	sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
 	releaseEcrAuthConfig := r.ReleaseClients.ECRPublic.AuthConfig
-
-	fmt.Println("============================================================")
-	fmt.Println("                 Uploading Artifacts                      ")
-	fmt.Println("============================================================")
 
 	for _, artifacts := range eksArtifacts {
 		for _, artifact := range artifacts {
@@ -365,6 +365,7 @@ func (r *ReleaseConfig) UploadArtifacts(eksArtifacts map[string][]Artifact) erro
 			}
 		}
 	}
+	fmt.Printf("%s Successsfully uploaded artifacts\n", SuccessIcon)
 
 	return nil
 }
@@ -451,10 +452,10 @@ func execCommand(cmd *exec.Cmd) (string, error) {
 	return string(stdout), nil
 }
 
-func (r *ReleaseConfig) UpdateImageDigests(eksArtifacts map[string][]Artifact) (map[string]string, error) {
-	fmt.Println("============================================================")
-	fmt.Println("                 Updating Image Digests                      ")
-	fmt.Println("============================================================")
+func (r *ReleaseConfig) GenerateImageDigestsTable(eksArtifacts map[string][]Artifact) (map[string]string, error) {
+	fmt.Println("\n==========================================================")
+	fmt.Println("                 Image Digests Table Generation")
+	fmt.Println("==========================================================")
 	imageDigests := make(map[string]string)
 
 	for _, artifacts := range eksArtifacts {
@@ -480,6 +481,7 @@ func (r *ReleaseConfig) UpdateImageDigests(eksArtifacts map[string][]Artifact) (
 			}
 		}
 	}
+	fmt.Printf("%s Successfully generated image digests table\n", SuccessIcon)
 
 	return imageDigests, nil
 }

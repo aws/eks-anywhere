@@ -159,30 +159,30 @@ var releaseCmd = &cobra.Command{
 			bundle.Kind = anywherev1alpha1.BundlesKind
 			bundle.CreationTimestamp = v1.Time{Time: releaseTime}
 
-			fmt.Println("Getting bundle artifacts data")
-			artifactsTable, err := releaseConfig.GetBundleArtifactsData()
+			bundleArtifactsTable, err := releaseConfig.GenerateBundleArtifactsTable()
 			if err != nil {
 				fmt.Printf("Error getting bundle artifacts data: %v\n", err)
 				os.Exit(1)
 			}
+			releaseConfig.BundleArtifactsTable = bundleArtifactsTable
 
 			// Download ECR images + S3 artifacts and rename them to the
 			// proper release URIs for manifest generation.
-			err = releaseConfig.PrepareBundleRelease(artifactsTable)
+			err = releaseConfig.PrepareBundleRelease()
 			if err != nil {
 				fmt.Printf("Error preparing bundle release: %v\n", err)
 				os.Exit(1)
 			}
 
-			err = releaseConfig.UploadArtifacts(artifactsTable)
+			err = releaseConfig.UploadArtifacts(bundleArtifactsTable)
 			if err != nil {
 				fmt.Printf("Error uploading bundle release artifacts: %v\n", err)
 				os.Exit(1)
 			}
 
-			imageDigests, err := releaseConfig.UpdateImageDigests(artifactsTable)
+			imageDigests, err := releaseConfig.GenerateImageDigestsTable(bundleArtifactsTable)
 			if err != nil {
-				fmt.Printf("Error updating image digests in bundles manifest: %+v\n", err)
+				fmt.Printf("Error generating image digests table: %+v\n", err)
 				os.Exit(1)
 			}
 
@@ -197,7 +197,7 @@ var releaseCmd = &cobra.Command{
 				fmt.Printf("Error marshaling bundles manifest: %+v\n", err)
 				os.Exit(1)
 			}
-			fmt.Printf("Generated bundles manifest:\n\n%s\n", string(bundleManifest))
+			fmt.Printf("\n%s\n", string(bundleManifest))
 
 			if !dryRun {
 				err = ioutil.WriteFile(bundleReleaseManifestFile, bundleManifest, 0o755)
@@ -212,7 +212,7 @@ var releaseCmd = &cobra.Command{
 					fmt.Printf("Error uploading bundle manifest to release bucket: %+v", err)
 					os.Exit(1)
 				}
-				fmt.Println("Bundle release successful")
+				fmt.Printf("%s Successfully completed bundle release\n", pkg.SuccessIcon)
 			}
 
 		}
@@ -231,11 +231,12 @@ var releaseCmd = &cobra.Command{
 			release.CreationTimestamp = v1.Time{Time: releaseTime}
 			release.Spec.LatestVersion = releaseVersion
 
-			artifactsTable, err := releaseConfig.GetEksAArtifactsData()
+			eksAArtifactsTable, err := releaseConfig.GenerateEksAArtifactsTable()
 			if err != nil {
 				fmt.Printf("Error getting EKS-A artifacts data: %v\n", err)
 				os.Exit(1)
 			}
+			releaseConfig.EksAArtifactsTable = eksAArtifactsTable
 
 			err = releaseConfig.PrepareEksARelease()
 			if err != nil {
@@ -243,7 +244,7 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			err = releaseConfig.UploadArtifacts(artifactsTable)
+			err = releaseConfig.UploadArtifacts(eksAArtifactsTable)
 			if err != nil {
 				fmt.Printf("Error uploading EKS-A release artifacts: %v\n", err)
 				os.Exit(1)
@@ -260,9 +261,10 @@ var releaseCmd = &cobra.Command{
 				fmt.Printf("Error marshaling EKS-A releases manifest: %v\n", err)
 				os.Exit(1)
 			}
-			fmt.Printf("Generated current EKS-A release:\n\n%s\n", string(currentEksAReleaseYaml))
+			fmt.Printf("\n%s\n", string(currentEksAReleaseYaml))
+
 			if dryRun {
-				fmt.Println("Dry-run completed")
+				fmt.Printf("%s Successfully completed dry-run of release process\n", pkg.SuccessIcon)
 				os.Exit(0)
 			}
 
@@ -295,7 +297,7 @@ var releaseCmd = &cobra.Command{
 					os.Exit(1)
 				}
 			}
-			fmt.Println("EKS-A release successful")
+			fmt.Printf("%s Successfully completed EKS-A release\n", pkg.SuccessIcon)
 		}
 	},
 }

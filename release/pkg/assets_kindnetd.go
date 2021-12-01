@@ -94,10 +94,7 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 }
 
 func (r *ReleaseConfig) GetKindnetdBundle() (anywherev1alpha1.KindnetdBundle, error) {
-	artifacts, err := r.GetKindnetdAssets()
-	if err != nil {
-		return anywherev1alpha1.KindnetdBundle{}, errors.Cause(err)
-	}
+	artifacts := r.BundleArtifactsTable["kindnetd"]
 
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 

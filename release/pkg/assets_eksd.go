@@ -128,14 +128,11 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 }
 
 func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDReleaseNumber string, imageDigests map[string]string) (anywherev1alpha1.EksDRelease, error) {
-	artifacts, err := r.GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDReleaseNumber)
-	if err != nil {
-		return anywherev1alpha1.EksDRelease{}, errors.Cause(err)
-	}
+	artifacts := r.BundleArtifactsTable[fmt.Sprintf("eks-d-%s", eksDReleaseChannel)]
 
-	tarballArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"etcdadm":   r.GetEtcdadmAssets,
-		"cri-tools": r.GetCriToolsAssets,
+	tarballArtifacts := map[string][]Artifact{
+		"cri-tools": r.BundleArtifactsTable["cri-tools"],
+		"etcdadm":   r.BundleArtifactsTable["etcdadm"],
 	}
 
 	bundleArchiveArtifacts := map[string]anywherev1alpha1.Archive{}
@@ -182,11 +179,7 @@ func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDRe
 		}
 	}
 
-	for componentName, artifactFunc := range tarballArtifactsFuncs {
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.EksDRelease{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
+	for componentName, artifacts := range tarballArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Archive != nil {
 				archiveArtifact := artifact.Archive
