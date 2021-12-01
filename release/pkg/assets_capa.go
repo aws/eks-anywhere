@@ -122,9 +122,9 @@ func (r *ReleaseConfig) GetCapaAssets() ([]Artifact, error) {
 }
 
 func (r *ReleaseConfig) GetAwsBundle(imageDigests map[string]string) (anywherev1alpha1.AwsBundle, error) {
-	awsBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"cluster-api-provider-aws": r.GetCapaAssets,
-		"kube-proxy":               r.GetKubeRbacProxyAssets,
+	awsBundleArtifacts := map[string][]Artifact{
+		"cluster-api-provider-aws": r.BundleArtifactsTable["cluster-api-provider-aws"],
+		"kube-rbac-proxy":          r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
 	version, err := BuildComponentVersion(
@@ -136,12 +136,7 @@ func (r *ReleaseConfig) GetAwsBundle(imageDigests map[string]string) (anywherev1
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 
-	for componentName, artifactFunc := range awsBundleArtifactsFuncs {
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.AwsBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
-
+	for _, artifacts := range awsBundleArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image

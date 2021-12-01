@@ -28,6 +28,8 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const SuccessIcon = "✅"
+
 // ReleaseConfig contains metadata fields for a release
 type ReleaseConfig struct {
 	ReleaseVersion           string
@@ -56,6 +58,8 @@ type ReleaseConfig struct {
 	ReleaseEnvironment       string
 	SourceClients            *SourceClients
 	ReleaseClients           *ReleaseClients
+	BundleArtifactsTable     map[string][]Artifact
+	EksAArtifactsTable       map[string][]Artifact
 }
 
 type projectVersioner interface {
@@ -195,21 +199,25 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 }
 
 func (r *ReleaseConfig) GenerateBundleSpec(bundles *anywherev1alpha1.Bundles, imageDigests map[string]string) error {
-	fmt.Println("Generating versions bundles")
+	fmt.Println("\n==========================================================")
+	fmt.Println("               Bundles Manifest Spec Generation")
+	fmt.Println("==========================================================")
 	versionsBundles, err := r.GetVersionsBundles(imageDigests)
 	if err != nil {
 		return err
 	}
 
 	bundles.Spec.VersionsBundles = versionsBundles
+
+	fmt.Printf("%s Successfully generated bundle manifest spec\n", SuccessIcon)
 	return nil
 }
 
-// GetArtifactsData will get asset information for each component
-// This information will be used to download them (in case of dev release)
-// Rename them, create the manifest and to upload the artifacts to the
-// proper location in S3 or ECR.
-func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) {
+func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, error) {
+	fmt.Println("\n==========================================================")
+	fmt.Println("              Bundle Artifacts Table Generation")
+	fmt.Println("==========================================================")
+
 	artifactsTable := map[string][]Artifact{}
 	eksAArtifactsFuncs := map[string]func() ([]Artifact, error){
 		"eks-a-tools":                  r.GetEksAToolsAssets,
@@ -262,7 +270,7 @@ func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) 
 		kubeVersion := release.(map[interface{}]interface{})["kubeVersion"]
 		kubeVersionStr := kubeVersion.(string)
 
-		artifacts, err := r.GetEksDChannelAssets(channel, kubeVersionStr, releaseNumberStr)
+		eksDChannelArtifacts, err := r.GetEksDChannelAssets(channel, kubeVersionStr, releaseNumberStr)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", channel)
 		}
@@ -278,7 +286,7 @@ func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) 
 		}
 
 		eksDComponentName := fmt.Sprintf("eks-d-%s", channel)
-		artifactsTable[eksDComponentName] = artifacts
+		artifactsTable[eksDComponentName] = eksDChannelArtifacts
 
 		vSphereCloudProviderComponentName := fmt.Sprintf("cloud-provider-vsphere-%s", channel)
 		artifactsTable[vSphereCloudProviderComponentName] = vSphereCloudProviderArtifacts
@@ -287,10 +295,16 @@ func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) 
 		artifactsTable[bottlerocketBootstrapComponentName] = bottlerocketBootstrapArtifacts
 	}
 
+	fmt.Printf("%s Successfully generated bundle artifacts table\n", SuccessIcon)
+
 	return artifactsTable, nil
 }
 
-func (r *ReleaseConfig) GetEksAArtifactsData() (map[string][]Artifact, error) {
+func (r *ReleaseConfig) GenerateEksAArtifactsTable() (map[string][]Artifact, error) {
+	fmt.Println("\n==========================================================")
+	fmt.Println("                 EKS-A Artifacts Table Generation")
+	fmt.Println("==========================================================")
+
 	artifactsTable := map[string][]Artifact{}
 	artifacts, err := r.GetEksACliArtifacts()
 	if err != nil {
@@ -298,6 +312,8 @@ func (r *ReleaseConfig) GetEksAArtifactsData() (map[string][]Artifact, error) {
 	}
 
 	artifactsTable["eks-a-cli"] = artifacts
+
+	fmt.Printf("%s Successfully generated EKS-A artifacts table\n", SuccessIcon)
 
 	return artifactsTable, nil
 }
@@ -469,7 +485,7 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 		if previousReleaseImageSemver == "" {
 			semver = r.DevReleaseUriVersion
 		} else {
-			fmt.Printf("Previous release image semver: %s\n", previousReleaseImageSemver)
+			fmt.Printf("Previous release image semver for %s image: %s\n", repoName, previousReleaseImageSemver)
 			previousReleaseImageUri := fmt.Sprintf("%s-%s", releaseImageUri, previousReleaseImageSemver)
 
 			sameDigest, err := r.CompareHashWithPreviousBundle(currentSourceImageUri, previousReleaseImageUri)
