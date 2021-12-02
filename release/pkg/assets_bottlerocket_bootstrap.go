@@ -31,6 +31,7 @@ func (r *ReleaseConfig) GetBottlerocketBootstrapAssets(eksDReleaseChannel, eksDR
 	tagOptions := map[string]string{
 		"eksDReleaseChannel": eksDReleaseChannel,
 		"eksDReleaseNumber":  eksDReleaseNumber,
+		"gitTag":             "non-existent",
 	}
 
 	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
