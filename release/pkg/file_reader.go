@@ -144,42 +144,42 @@ func (r *ReleaseConfig) GetCurrentEksADevReleaseVersion(releaseVersion string) (
 	fmt.Println("==========================================================")
 
 	var latestBuildVersion string
-	if r.DryRun {
-		latestBuildVersion = "v0.0.0-dev+build.0"
+	var newDevReleaseVersion string
+	tempFileName := "latest-dev-release-version"
+
+	var latestReleaseKey string
+
+	if r.BuildRepoBranchName == "main" {
+		latestReleaseKey = "LATEST_RELEASE_VERSION"
 	} else {
-		tempFileName := "latest-dev-release-version"
-
-		var latestReleaseKey string
-		if r.BuildRepoBranchName == "main" {
-			latestReleaseKey = "LATEST_RELEASE_VERSION"
-		} else {
-			latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
-		}
-
-		if ExistsInS3(r.ReleaseBucket, latestReleaseKey) {
-			err := downloadFileFromS3(tempFileName, r.ReleaseBucket, latestReleaseKey)
-			if err != nil {
-				return "", errors.Cause(err)
-			}
-
-			// Check if current version and latest version are the same semver
-			latestBuildS3, err := ioutil.ReadFile(tempFileName)
-			if err != nil {
-				return "", errors.Cause(err)
-			}
-			latestBuildVersion = string(latestBuildS3)
-		} else {
-			return "v0.0.0-dev+build.0", nil
-		}
-	}
-	fmt.Printf("Previous release version: %s\n", latestBuildVersion)
-	fmt.Printf("Current release version provided: %s\n", releaseVersion)
-	newDevReleaseVersion, err := generateNewDevReleaseVersion(latestBuildVersion, releaseVersion)
-	if err != nil {
-		return "", errors.Cause(err)
+		latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
 	}
 
-	fmt.Printf("Next release version: %s\n", newDevReleaseVersion)
+	if ExistsInS3(r.ReleaseBucket, latestReleaseKey) {
+		err := downloadFileFromS3(tempFileName, r.ReleaseBucket, latestReleaseKey)
+		if err != nil {
+			return "", errors.Cause(err)
+		}
+
+		// Check if current version and latest version are the same semver
+		latestBuildS3, err := ioutil.ReadFile(tempFileName)
+		if err != nil {
+			return "", errors.Cause(err)
+		}
+		latestBuildVersion = string(latestBuildS3)
+		newDevReleaseVersion, err = generateNewDevReleaseVersion(latestBuildVersion, releaseVersion)
+		if err != nil {
+			return "", errors.Cause(err)
+		}
+		fmt.Printf("Previous release version: %s\n", latestBuildVersion)
+		fmt.Printf("Current release version provided: %s\n", releaseVersion)
+	} else {
+		newDevReleaseVersion = "v0.0.0-dev+build.0"
+		if r.BuildRepoBranchName != "main" {
+			newDevReleaseVersion = fmt.Sprintf("v0.0.0-dev-%s+build.0", r.BuildRepoBranchName)
+		}
+	}
+	fmt.Printf("New dev release release version: %s\n", newDevReleaseVersion)
 
 	fmt.Printf("%s Successfully computed current dev release version\n", SuccessIcon)
 	return newDevReleaseVersion, nil

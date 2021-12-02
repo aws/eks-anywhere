@@ -62,6 +62,7 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 	}
 
 	tagOptions := map[string]string{
+		"gitTag":      gitTag,
 		"projectPath": eksAnywhereProjectPath,
 	}
 
