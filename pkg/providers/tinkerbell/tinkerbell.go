@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"os"
 	"time"
 
@@ -18,6 +19,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
+const (
+	tinkerbellCertURLKey                           = "TINKERBELL_CERT_URL"
+	tinkerbellGRPCAuthKey                    = "TINKERBELL_GRPC_AUTHORITY"
+	tinkerbellIPKey                    = "TINKERBELL_IP"
+)
 //go:embed config/template-cp.yaml
 var defaultCAPIConfigCP string
 
@@ -30,7 +36,7 @@ var mhcTemplate []byte
 var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	requiredEnvs                         = []string{}
+	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey}
 )
 
 type tinkerbellProvider struct {
@@ -99,6 +105,10 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 
 func (p *tinkerbellProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
 	// TODO: validations?
+	err := p.validateEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
 	return nil
 }
 
@@ -241,7 +251,23 @@ func (p *tinkerbellProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) 
 	// 	},
 	// }
 	// return &infraBundle
-	return nil
+	folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", "v0.1.0")
+	infraBundle := types.InfrastructureBundle{
+		FolderName: folderName,
+		Manifests: []releasev1alpha1.Manifest{
+			{
+				"https://github.com/tinkerbell/cluster-api-provider-tinkerbell/releases/download/v0.1.0/infrastructure-components.yaml",
+			},
+			{
+				"https://github.com/tinkerbell/cluster-api-provider-tinkerbell/releases/download/v0.1.0/metadata.yaml",
+			},
+			{
+				"https://github.com/tinkerbell/cluster-api-provider-tinkerbell/releases/download/v0.1.0/cluster-template.yaml",
+			},
+		},
+	}
+
+	return &infraBundle
 }
 
 func (p *tinkerbellProvider) DatacenterConfig() providers.DatacenterConfig {
@@ -313,4 +339,28 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
 	}
 	return values
+}
+func (p *tinkerbellProvider) validateEnv(ctx context.Context) error {
+	if tinkerbellCertURL, ok := os.LookupEnv(tinkerbellCertURLKey); ok && len(tinkerbellCertURL) > 0 {
+		if err := os.Setenv(tinkerbellCertURLKey, tinkerbellCertURL); err != nil {
+			return fmt.Errorf("unable to set %s: %v", tinkerbellCertURLKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", tinkerbellCertURLKey)
+	}
+	if tinkerbellGRPCAuth, ok := os.LookupEnv(tinkerbellGRPCAuthKey); ok && len(tinkerbellGRPCAuth) > 0 {
+		if err := os.Setenv(tinkerbellGRPCAuthKey, tinkerbellGRPCAuth); err != nil {
+			return fmt.Errorf("unable to set %s: %v", tinkerbellGRPCAuthKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", tinkerbellGRPCAuthKey)
+	}
+	if tinkerbellIP, ok := os.LookupEnv(tinkerbellIPKey); ok && len(tinkerbellIP) > 0 {
+		if err := os.Setenv(tinkerbellIPKey, tinkerbellIP); err != nil {
+			return fmt.Errorf("unable to set %s: %v", tinkerbellIPKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", tinkerbellIPKey)
+	}
+	return nil
 }
