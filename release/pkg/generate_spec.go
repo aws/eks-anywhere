@@ -576,7 +576,7 @@ func (r *ReleaseConfig) GetPreviousReleaseImageSemver(releaseImageUri string) (s
 					if strings.Contains(image.URI, releaseImageUri) {
 						imageUri := image.URI
 						numDashes := strings.Count(imageUri, "-")
-						splitIndex := numDashes - strings.Count(r.BuildRepoBranchName, "-") - 1
+						splitIndex := numDashes - strings.Count(r.BuildRepoBranchName, "-") - 2
 						imageUriSplit := strings.SplitAfterN(imageUri, "-", splitIndex)
 						semver = imageUriSplit[len(imageUriSplit)-1]
 					}
