@@ -16,17 +16,15 @@ package pkg
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 )
 
+const vSphereCsiProjectPath = "projects/kubernetes-sigs/vsphere-csi-driver"
+
 // GetVsphereCsiAssets returns the eks-a artifacts for vSphere CSI
 func (r *ReleaseConfig) GetVsphereCsiAssets() ([]Artifact, error) {
-	// Get Git tag for the project
-	projectSource := "projects/kubernetes-sigs/vsphere-csi-driver"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
+	gitTag, err := r.readGitTag(vSphereCsiProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -40,19 +38,27 @@ func (r *ReleaseConfig) GetVsphereCsiAssets() ([]Artifact, error) {
 	for _, image := range vsphereCsiImages {
 		repoName := fmt.Sprintf("kubernetes-sigs/vsphere-csi-driver/csi/%s", image)
 		tagOptions := map[string]string{
-			"gitTag": gitTag,
+			"gitTag":      gitTag,
+			"projectPath": vSphereCsiProjectPath,
 		}
 
+		sourceImageUri, err := r.GetSourceImageURI(image, repoName, tagOptions)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
 		releaseImageUri, err := r.GetReleaseImageURI(image, repoName, tagOptions)
 		if err != nil {
 			return nil, errors.Cause(err)
 		}
+
 		imageArtifact := &ImageArtifact{
 			AssetName:       fmt.Sprintf("vsphere-csi-%s", image),
-			SourceImageURI:  r.GetSourceImageURI(image, repoName, tagOptions),
+			SourceImageURI:  sourceImageUri,
 			ReleaseImageURI: releaseImageUri,
 			Arch:            []string{"amd64"},
 			OS:              "linux",
+			GitTag:          gitTag,
+			ProjectPath:     vSphereCsiProjectPath,
 		}
 		artifacts = append(artifacts, Artifact{Image: imageArtifact})
 	}

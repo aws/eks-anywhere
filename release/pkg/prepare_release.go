@@ -15,7 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/ecrpublic"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/go-git/go-git/v5"
@@ -40,13 +39,12 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 	if err != nil {
 		return errors.Cause(err)
 	}
+	parentSourceDir := filepath.Join(homeDir, "eks-a-source")
 
 	// Clone the CLI repository
 	fmt.Println("Cloning CLI repository")
-	parentSourceDir := filepath.Join(homeDir, "eks-a-source")
 	r.CliRepoSource = filepath.Join(parentSourceDir, "eks-a-cli")
-	cmd := exec.Command("git", "clone", r.CliRepoUrl, r.CliRepoSource)
-	out, err := execCommand(cmd)
+	out, err := cloneRepo(r.CliRepoUrl, r.CliRepoSource)
 	if err != nil {
 		return errors.Cause(err)
 	}
@@ -55,8 +53,7 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 	// Clone the build-tooling repository
 	fmt.Println("Cloning build-tooling repository")
 	r.BuildRepoSource = filepath.Join(parentSourceDir, "eks-a-build")
-	cmd = exec.Command("git", "clone", r.BuildRepoUrl, r.BuildRepoSource)
-	out, err = execCommand(cmd)
+	out, err = cloneRepo(r.BuildRepoUrl, r.BuildRepoSource)
 	if err != nil {
 		return errors.Cause(err)
 	}
@@ -64,8 +61,7 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 
 	if r.BuildRepoBranchName != "main" {
 		fmt.Printf("Checking out build-tooling repo at branch %s\n", r.BuildRepoBranchName)
-		cmd = exec.Command("git", "-C", r.BuildRepoSource, "checkout", r.BuildRepoBranchName)
-		out, err = execCommand(cmd)
+		out, err = checkoutRepo(r.BuildRepoSource, r.BuildRepoBranchName)
 		if err != nil {
 			return errors.Cause(err)
 		}
@@ -74,8 +70,7 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 
 	if r.CliRepoBranchName != "main" {
 		fmt.Printf("Checking out CLI repo at branch %s\n", r.CliRepoBranchName)
-		cmd = exec.Command("git", "-C", r.CliRepoSource, "checkout", r.CliRepoBranchName)
-		out, err = execCommand(cmd)
+		out, err = checkoutRepo(r.CliRepoSource, r.CliRepoBranchName)
 		if err != nil {
 			return errors.Cause(err)
 		}
@@ -203,22 +198,15 @@ func (r *ReleaseConfig) renameArtifacts(artifacts map[string][]Artifact) error {
 }
 
 func (r *ReleaseConfig) downloadArtifacts(eksArtifacts map[string][]Artifact) error {
-	var s3Client *s3.S3
-	var s3Retrier *Retrier
-	var err error
-	if !r.DryRun {
-		// Get s3 client and docker clients
-		s3Client = r.SourceClients.S3.Client
-		// Retrier for downloading source S3 objects. This retrier has a max timeout of 60 minutes. It
-		// checks whether the error occured during download is an ObjectNotFound error and retries the
-		// download operation for a maximum of 60 retries, with a wait time of 30 seconds per retry.
-		s3Retrier = NewRetrier(60*time.Minute, WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
-			if IsObjectNotFoundError(err) && totalRetries < 60 {
-				return true, 30 * time.Second
-			}
-			return false, 0
-		}))
-	}
+	// Retrier for downloading source S3 objects. This retrier has a max timeout of 60 minutes. It
+	// checks whether the error occured during download is an ObjectNotFound error and retries the
+	// download operation for a maximum of 60 retries, with a wait time of 30 seconds per retry.
+	s3Retrier := NewRetrier(60*time.Minute, WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
+		if r.BuildRepoBranchName == "main" && IsObjectNotFoundError(err) && totalRetries < 60 {
+			return true, 30 * time.Second
+		}
+		return false, 0
+	}))
 	fmt.Println("==========================================================")
 	fmt.Println("                  Artifacts Download")
 	fmt.Println("==========================================================")
@@ -227,25 +215,33 @@ func (r *ReleaseConfig) downloadArtifacts(eksArtifacts map[string][]Artifact) er
 		for _, artifact := range artifacts {
 			// Check if there is an archive to be downloaded
 			if artifact.Archive != nil {
-				objectKey := filepath.Join(artifact.Archive.SourceS3Prefix, artifact.Archive.SourceS3Key)
-				objectLocalFilePath := filepath.Join(artifact.Archive.ArtifactPath, artifact.Archive.SourceS3Key)
+				sourceS3Prefix := artifact.Archive.SourceS3Prefix
+				sourceS3Key := artifact.Archive.SourceS3Key
+				artifactPath := artifact.Archive.ArtifactPath
+				objectKey := filepath.Join(sourceS3Prefix, sourceS3Key)
+				objectLocalFilePath := filepath.Join(artifactPath, sourceS3Key)
 				fmt.Printf("Archive - %s\n", objectKey)
-				if r.DryRun && strings.HasSuffix(artifact.Archive.SourceS3Key, ".ova") {
+				if r.DryRun && strings.HasSuffix(sourceS3Key, ".ova") {
 					fmt.Println("Skipping OVA downloads in dry-run mode")
 					continue
 				}
-				if !r.DryRun {
-					err := s3Retrier.Retry(func() error {
-						exists, err := ExistsInS3(s3Client, r.SourceBucket, objectKey)
+
+				err := s3Retrier.Retry(func() error {
+					if !ExistsInS3(r.SourceBucket, objectKey) {
+						return fmt.Errorf("Requested object not found")
+					}
+					return nil
+				})
+				if err != nil {
+					if r.BuildRepoBranchName != "main" {
+						fmt.Printf("Artifact corresponding to %s branch not found for %s archive. Using artifact from main\n", r.BuildRepoBranchName, sourceS3Key)
+						gitTagFromMain, err := r.readGitTag(artifact.Archive.ProjectPath, "main")
 						if err != nil {
-							return err
+							return errors.Cause(err)
 						}
-						if !exists {
-							return fmt.Errorf("Requested object not found")
-						}
-						return nil
-					})
-					if err != nil {
+						latestSourceS3PrefixFromMain := strings.NewReplacer(r.BuildRepoBranchName, "latest", artifact.Archive.GitTag, gitTagFromMain).Replace(sourceS3Prefix)
+						objectKey = filepath.Join(latestSourceS3PrefixFromMain, sourceS3Key)
+					} else {
 						return fmt.Errorf("retries exhausted waiting for archive to be uploaded to source location: %v", err)
 					}
 				}
@@ -261,36 +257,64 @@ func (r *ReleaseConfig) downloadArtifacts(eksArtifacts map[string][]Artifact) er
 					".sha512",
 				}
 				for _, extension := range checksumExtensions {
-					objectShasumFileName := fmt.Sprintf("%s%s", artifact.Archive.SourceS3Key, extension)
-					objectShasumFileKey := filepath.Join(artifact.Archive.SourceS3Prefix, objectShasumFileName)
-					objectShasumFileLocalFilePath := filepath.Join(artifact.Archive.ArtifactPath, objectShasumFileName)
+					objectShasumFileName := fmt.Sprintf("%s%s", sourceS3Key, extension)
+					objectShasumFileKey := filepath.Join(sourceS3Prefix, objectShasumFileName)
+					objectShasumFileLocalFilePath := filepath.Join(artifactPath, objectShasumFileName)
 					fmt.Printf("Checksum file - %s\n", objectShasumFileKey)
-					err = downloadFileFromS3(objectShasumFileLocalFilePath, r.SourceBucket, objectShasumFileKey)
-					if err != nil {
-						return errors.Cause(err)
-					}
-				}
 
-			}
-
-			// Check if there is a manifest to be downloaded
-			if artifact.Manifest != nil {
-				objectKey := filepath.Join(artifact.Manifest.SourceS3Prefix, artifact.Manifest.SourceS3Key)
-				objectLocalFilePath := filepath.Join(artifact.Manifest.ArtifactPath, artifact.Manifest.SourceS3Key)
-				fmt.Printf("Manifest - %s\n", objectKey)
-				if !r.DryRun {
 					err := s3Retrier.Retry(func() error {
-						exists, err := ExistsInS3(s3Client, r.SourceBucket, objectKey)
-						if err != nil {
-							return err
-						}
-						if !exists {
+						if !ExistsInS3(r.SourceBucket, objectShasumFileKey) {
 							return fmt.Errorf("Requested object not found")
 						}
 						return nil
 					})
 					if err != nil {
-						return fmt.Errorf("retries exhausted waiting for manifest to be uploaded to source location: %v", err)
+						if r.BuildRepoBranchName != "main" {
+							fmt.Printf("Artifact corresponding to %s branch not found for %s checksum file. Using artifact from main\n", r.BuildRepoBranchName, sourceS3Key)
+							gitTagFromMain, err := r.readGitTag(artifact.Archive.ProjectPath, "main")
+							if err != nil {
+								return errors.Cause(err)
+							}
+							latestSourceS3PrefixFromMain := strings.NewReplacer(r.BuildRepoBranchName, "latest", artifact.Archive.GitTag, gitTagFromMain).Replace(sourceS3Prefix)
+							objectShasumFileKey = filepath.Join(latestSourceS3PrefixFromMain, objectShasumFileName)
+						} else {
+							return fmt.Errorf("retries exhausted waiting for checksum file to be uploaded to source location: %v", err)
+						}
+					}
+
+					err = downloadFileFromS3(objectShasumFileLocalFilePath, r.SourceBucket, objectShasumFileKey)
+					if err != nil {
+						return errors.Cause(err)
+					}
+				}
+			}
+
+			// Check if there is a manifest to be downloaded
+			if artifact.Manifest != nil {
+				sourceS3Prefix := artifact.Manifest.SourceS3Prefix
+				sourceS3Key := artifact.Manifest.SourceS3Key
+				artifactPath := artifact.Manifest.ArtifactPath
+				objectKey := filepath.Join(sourceS3Prefix, sourceS3Key)
+				objectLocalFilePath := filepath.Join(artifactPath, sourceS3Key)
+				fmt.Printf("Manifest - %s\n", objectKey)
+
+				err := s3Retrier.Retry(func() error {
+					if !ExistsInS3(r.SourceBucket, objectKey) {
+						return fmt.Errorf("Requested object not found")
+					}
+					return nil
+				})
+				if err != nil {
+					if r.BuildRepoBranchName != "main" {
+						fmt.Printf("Artifact corresponding to %s branch not found for %s manifest. Using artifact from main\n", r.BuildRepoBranchName, sourceS3Key)
+						gitTagFromMain, err := r.readGitTag(artifact.Manifest.ProjectPath, "main")
+						if err != nil {
+							return errors.Cause(err)
+						}
+						latestSourceS3PrefixFromMain := strings.NewReplacer(r.BuildRepoBranchName, "latest", artifact.Manifest.GitTag, gitTagFromMain).Replace(sourceS3Prefix)
+						objectKey = filepath.Join(latestSourceS3PrefixFromMain, sourceS3Key)
+					} else {
+						return fmt.Errorf("retries exhausted waiting for archive to be uploaded to source location: %v", err)
 					}
 				}
 
@@ -352,13 +376,11 @@ func (r *ReleaseConfig) UploadArtifacts(eksArtifacts map[string][]Artifact) erro
 			}
 
 			if artifact.Image != nil {
-				fmt.Printf("Source Image - %s\n", artifact.Image.SourceImageURI)
-				fmt.Printf("Destination Image - %s\n", artifact.Image.ReleaseImageURI)
-				err := r.waitForSourceImage(sourceEcrAuthConfig, artifact.Image.SourceImageURI)
-				if err != nil {
-					return errors.Cause(err)
-				}
-				err = copyImageFromSourceToDest(sourceEcrAuthConfig, releaseEcrAuthConfig, artifact.Image.SourceImageURI, artifact.Image.ReleaseImageURI)
+				sourceImageUri := artifact.Image.SourceImageURI
+				releaseImageUri := artifact.Image.ReleaseImageURI
+				fmt.Printf("Source Image - %s\n", sourceImageUri)
+				fmt.Printf("Destination Image - %s\n", releaseImageUri)
+				err := copyImageFromSourceToDest(sourceEcrAuthConfig, releaseEcrAuthConfig, sourceImageUri, releaseImageUri)
 				if err != nil {
 					return errors.Cause(err)
 				}
@@ -373,6 +395,7 @@ func (r *ReleaseConfig) UploadArtifacts(eksArtifacts map[string][]Artifact) erro
 // downloadFileFromS3 downloads a file from S3 and writes it to a local destination
 func downloadFileFromS3(objectLocalFilePath, bucketName, key string) error {
 	objectURL := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucketName, key)
+
 	if err := os.MkdirAll(filepath.Dir(objectLocalFilePath), 0o755); err != nil {
 		return errors.Cause(err)
 	}
@@ -424,6 +447,16 @@ func (r *ReleaseConfig) UploadFileToS3(filePath string, key *string) error {
 	}
 	fmt.Printf("Artifact file uploaded to %s\n", result.Location)
 	return nil
+}
+
+func cloneRepo(cloneUrl, cloneFolder string) (string, error) {
+	cmd := exec.Command("git", "clone", cloneUrl, cloneFolder)
+	return execCommand(cmd)
+}
+
+func checkoutRepo(cloneFolder, branch string) (string, error) {
+	cmd := exec.Command("git", "-C", cloneFolder, "checkout", branch)
+	return execCommand(cmd)
 }
 
 // Gets the head commit has of the repo in the path provided
@@ -498,13 +531,9 @@ func (r *ReleaseConfig) GetPreviousReleaseIfExists() (*anywherev1alpha1.Release,
 
 	release := &anywherev1alpha1.Release{}
 	eksAReleaseManifestKey := r.GetManifestFilepaths(anywherev1alpha1.ReleaseKind)
-	eksAReleaseManifestUrl := fmt.Sprintf("%s%s", r.CDN, eksAReleaseManifestKey)
+	eksAReleaseManifestUrl := fmt.Sprintf("%s/%s", r.CDN, eksAReleaseManifestKey)
 
-	exists, err := ExistsInS3(r.ReleaseClients.S3.Client, r.ReleaseBucket, eksAReleaseManifestKey)
-	if err != nil {
-		return nil, fmt.Errorf("Error checking if releases manifest exists in S3: %v", err)
-	}
-	if exists {
+	if ExistsInS3(r.ReleaseBucket, eksAReleaseManifestKey) {
 		contents, err := ReadHttpFile(eksAReleaseManifestUrl)
 		if err != nil {
 			return nil, fmt.Errorf("Error reading releases manifest from S3: %v", err)
@@ -571,7 +600,7 @@ func (r *ReleaseConfig) waitForSourceImage(sourceAuthConfig *docker.AuthConfigur
 	// checks whether the error occured during download is an ImageNotFound error and retries the
 	// download operation for a maximum of 60 retries, with a wait time of 30 seconds per retry.
 	retrier := NewRetrier(60*time.Minute, WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
-		if IsImageNotFoundError(err) && totalRetries < 60 {
+		if r.BuildRepoBranchName == "main" && IsImageNotFoundError(err) && totalRetries < 60 {
 			return true, 30 * time.Second
 		}
 		return false, 0
@@ -625,18 +654,18 @@ func (r *ReleaseConfig) GetManifestFilepaths(kind string) string {
 	case anywherev1alpha1.BundlesKind:
 		if r.DevRelease {
 			if r.BuildRepoBranchName != "main" {
-				manifestFilepath = fmt.Sprintf("/%s/bundle-release.yaml", r.BuildRepoBranchName)
+				manifestFilepath = fmt.Sprintf("%s/bundle-release.yaml", r.BuildRepoBranchName)
 			} else {
-				manifestFilepath = "/bundle-release.yaml"
+				manifestFilepath = "bundle-release.yaml"
 			}
 		} else {
-			manifestFilepath = fmt.Sprintf("/releases/bundles/%d/manifest.yaml", r.BundleNumber)
+			manifestFilepath = fmt.Sprintf("releases/bundles/%d/manifest.yaml", r.BundleNumber)
 		}
 	case anywherev1alpha1.ReleaseKind:
 		if r.DevRelease {
-			manifestFilepath = "/eks-a-release.yaml"
+			manifestFilepath = "eks-a-release.yaml"
 		} else {
-			manifestFilepath = "/releases/eks-a/manifest.yaml"
+			manifestFilepath = "releases/eks-a/manifest.yaml"
 		}
 	}
 	return manifestFilepath

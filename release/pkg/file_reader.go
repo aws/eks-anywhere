@@ -31,8 +31,6 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-var imageBuilderProjectSource = "projects/kubernetes-sigs/image-builder"
-
 func (r *ReleaseConfig) readShaSums(filename string) (string, string, error) {
 	var sha256, sha512 string
 	var err error
@@ -100,7 +98,7 @@ func getBottlerocketSupportedK8sVersions(r *ReleaseConfig) ([]string, error) {
 	// Read the eks-d latest release file to get all the releases
 	var bottlerocketOvaReleaseMap map[string]interface{}
 	var bottlerocketSupportedK8sVersions []string
-	bottlerocketOvaReleaseFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectSource, "BOTTLEROCKET_OVA_RELEASES")
+	bottlerocketOvaReleaseFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectPath, "BOTTLEROCKET_OVA_RELEASES")
 
 	bottlerocketOvaReleaseFile, err := ioutil.ReadFile(bottlerocketOvaReleaseFilePath)
 	if err != nil {
@@ -120,7 +118,7 @@ func getBottlerocketSupportedK8sVersions(r *ReleaseConfig) ([]string, error) {
 
 func (r *ReleaseConfig) getBottlerocketAdminContainerMetadata() (string, string, error) {
 	var bottlerocketAdminContainerMetadataMap map[string]interface{}
-	bottlerocketAdminContainerMetadataFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectSource, "BOTTLEROCKET_ADMIN_CONTAINER_METADATA")
+	bottlerocketAdminContainerMetadataFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectPath, "BOTTLEROCKET_ADMIN_CONTAINER_METADATA")
 	metadata, err := ioutil.ReadFile(bottlerocketAdminContainerMetadataFilePath)
 	if err != nil {
 		return "", "", errors.Cause(err)
@@ -158,13 +156,8 @@ func (r *ReleaseConfig) GetCurrentEksADevReleaseVersion(releaseVersion string) (
 			latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
 		}
 
-		exists, err := ExistsInS3(r.ReleaseClients.S3.Client, r.ReleaseBucket, latestReleaseKey)
-		if err != nil {
-			return "", errors.Cause(err)
-		}
-
-		if exists {
-			err = downloadFileFromS3(tempFileName, r.ReleaseBucket, latestReleaseKey)
+		if ExistsInS3(r.ReleaseBucket, latestReleaseKey) {
+			err := downloadFileFromS3(tempFileName, r.ReleaseBucket, latestReleaseKey)
 			if err != nil {
 				return "", errors.Cause(err)
 			}
@@ -275,4 +268,19 @@ func GenerateRandomSha(hashType int) (string, error) {
 		shaSum = fmt.Sprintf("%x", sha512.Sum512(buff))
 	}
 	return shaSum, nil
+}
+
+func (r *ReleaseConfig) readGitTag(projectPath, branch string) (string, error) {
+	_, err := checkoutRepo(r.BuildRepoSource, branch)
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+
+	tagFile := filepath.Join(r.BuildRepoSource, projectPath, "GIT_TAG")
+	gitTag, err := readFile(tagFile)
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+
+	return gitTag, nil
 }

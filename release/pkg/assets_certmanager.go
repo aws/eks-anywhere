@@ -23,11 +23,11 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const certManagerProjectPath = "projects/jetstack/cert-manager"
+
 // GetCertManagerAssets returns the eks-a artifacts for certmanager
 func (r *ReleaseConfig) GetCertManagerAssets() ([]Artifact, error) {
-	projectSource := "projects/jetstack/cert-manager"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
+	gitTag, err := r.readGitTag(certManagerProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -43,7 +43,13 @@ func (r *ReleaseConfig) GetCertManagerAssets() ([]Artifact, error) {
 	for _, image := range certImages {
 		repoName := fmt.Sprintf("jetstack/%s", image)
 		tagOptions := map[string]string{
-			"gitTag": gitTag,
+			"gitTag":      gitTag,
+			"projectPath": certManagerProjectPath,
+		}
+
+		sourceImageUri, err := r.GetSourceImageURI(image, repoName, tagOptions)
+		if err != nil {
+			return nil, errors.Cause(err)
 		}
 		releaseImageUri, err := r.GetReleaseImageURI(image, repoName, tagOptions)
 		if err != nil {
@@ -52,10 +58,12 @@ func (r *ReleaseConfig) GetCertManagerAssets() ([]Artifact, error) {
 
 		imageArtifact := &ImageArtifact{
 			AssetName:       image,
-			SourceImageURI:  r.GetSourceImageURI(image, repoName, tagOptions),
+			SourceImageURI:  sourceImageUri,
 			ReleaseImageURI: releaseImageUri,
 			Arch:            []string{"amd64"},
 			OS:              "linux",
+			GitTag:          gitTag,
+			ProjectPath:     certManagerProjectPath,
 		}
 		artifacts = append(artifacts, Artifact{Image: imageArtifact})
 	}
@@ -67,7 +75,7 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 	artifacts := r.BundleArtifactsTable["cert-manager"]
 
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/jetstack/cert-manager")),
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, certManagerProjectPath)),
 	)
 	if err != nil {
 		return anywherev1alpha1.CertManagerBundle{}, errors.Wrapf(err, "Error getting version for cert-manager")

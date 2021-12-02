@@ -23,10 +23,7 @@ import (
 
 // GetKindnetdAssets returns the eks-a artifacts for kindnetd
 func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
-	// Get Git tag for the project
-	projectSource := "projects/kubernetes-sigs/kind"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
+	gitTag, err := r.readGitTag(kindProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -34,7 +31,13 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 	name := "kindnetd"
 	repoName := fmt.Sprintf("kubernetes-sigs/kind/%s", name)
 	tagOptions := map[string]string{
-		"gitTag": gitTag,
+		"gitTag":      gitTag,
+		"projectPath": kindProjectPath,
+	}
+
+	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
 	}
 	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
 	if err != nil {
@@ -43,11 +46,12 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
+		SourceImageURI:  sourceImageUri,
 		ReleaseImageURI: releaseImageUri,
 		Arch:            []string{"amd64"},
 		OS:              "linux",
 		GitTag:          gitTag,
+		ProjectPath:     kindProjectPath,
 	}
 	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
@@ -61,7 +65,7 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 		latestPath := r.getLatestUploadDestination()
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
-			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/kind/%s/manifests", latestPath)
+			sourceS3Prefix = fmt.Sprintf("%s/%s/manifests", kindProjectPath, latestPath)
 		} else {
 			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/kind/manifests", r.BundleNumber)
 		}
@@ -84,6 +88,8 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 			ReleaseName:    manifest,
 			ReleaseS3Path:  releaseS3Path,
 			ReleaseCdnURI:  cdnURI,
+			GitTag:         gitTag,
+			ProjectPath:    kindProjectPath,
 		}
 		artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 	}
@@ -107,25 +113,17 @@ func (r *ReleaseConfig) GetKindnetdBundle() (anywherev1alpha1.KindnetdBundle, er
 		}
 	}
 
-	kindnetdGitTag, err := r.getKindnetdGitTag()
+	version, err := BuildComponentVersion(
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, kindProjectPath)),
+	)
 	if err != nil {
-		return anywherev1alpha1.KindnetdBundle{}, errors.Cause(err)
+		return anywherev1alpha1.KindnetdBundle{}, errors.Wrapf(err, "Error getting version for kind")
 	}
+
 	bundle := anywherev1alpha1.KindnetdBundle{
-		Version:  kindnetdGitTag,
+		Version:  version,
 		Manifest: bundleManifestArtifacts["kindnetd.yaml"],
 	}
 
 	return bundle, nil
-}
-
-func (r *ReleaseConfig) getKindnetdGitTag() (string, error) {
-	projectSource := "projects/kubernetes-sigs/kind"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-
-	return gitTag, nil
 }
