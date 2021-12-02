@@ -663,6 +663,11 @@ func (r *ReleaseConfig) GetManifestFilepaths(kind string) string {
 		}
 	case anywherev1alpha1.ReleaseKind:
 		if r.DevRelease {
+			if r.BuildRepoBranchName != "main" {
+				manifestFilepath = fmt.Sprintf("%s/eks-a-release.yaml", r.BuildRepoBranchName)
+			} else {
+				manifestFilepath = "eks-a-release.yaml"
+			}
 			manifestFilepath = "eks-a-release.yaml"
 		} else {
 			manifestFilepath = "releases/eks-a/manifest.yaml"

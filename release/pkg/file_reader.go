@@ -221,6 +221,12 @@ func (r *ReleaseConfig) PutEksAReleaseVersion(version string) error {
 	} else {
 		currentReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
 	}
+
+	err := os.MkdirAll(filepath.Dir(currentReleaseKey), 0o755)
+	if err != nil {
+		return errors.Cause(err)
+	}
+
 	f, err := os.Create(currentReleaseKey)
 	if err != nil {
 		return errors.Cause(err)
