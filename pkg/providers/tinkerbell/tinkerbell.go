@@ -20,10 +20,11 @@ import (
 )
 
 const (
-	tinkerbellCertURLKey                           = "TINKERBELL_CERT_URL"
-	tinkerbellGRPCAuthKey                    = "TINKERBELL_GRPC_AUTHORITY"
-	tinkerbellIPKey                    = "TINKERBELL_IP"
+	tinkerbellCertURLKey  = "TINKERBELL_CERT_URL"
+	tinkerbellGRPCAuthKey = "TINKERBELL_GRPC_AUTHORITY"
+	tinkerbellIPKey       = "TINKERBELL_IP"
 )
+
 //go:embed config/template-cp.yaml
 var defaultCAPIConfigCP string
 
