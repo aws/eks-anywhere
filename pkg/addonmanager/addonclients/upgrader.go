@@ -65,7 +65,6 @@ func FluxChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDi
 			NewVersion:    newVersion,
 			OldVersion:    oldVersion,
 		}
-
 	}
 	return nil
 }

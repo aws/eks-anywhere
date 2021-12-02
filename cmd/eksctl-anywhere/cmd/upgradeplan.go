@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"text/tabwriter"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	upgrader "github.com/aws/eks-anywhere/pkg/clusterapi"
+	fluxupgrader "github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
+	eksaupgrader "github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -23,7 +26,7 @@ var upgradePlanCmd = &cobra.Command{
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := uc.upgradePlanCluster(cmd.Context()); err != nil {
-			return fmt.Errorf("failed to upgrade cluster: %v", err)
+			return fmt.Errorf("failed to display upgrade plan: %v", err)
 		}
 		return nil
 	},
@@ -63,7 +66,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 		WithClusterManager().
 		WithFluxAddonClient(ctx, newClusterSpec.Cluster, newClusterSpec.GitOpsConfig).
 		WithCAPIManager().
-		Build()
+		Build(ctx)
 	if err != nil {
 		return err
 	}
@@ -78,12 +81,17 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	provider := deps.Provider
-	fmt.Printf("Plan output==============================\n")
-	fmt.Printf("Current spec %v", currentSpec)
 
-	capiChangeDiff := upgrader.CapiChangeDiff(currentSpec, newClusterSpec, provider)
-	fmt.Printf("CAPI Cert Mgr %s %s %s", capiChangeDiff.CertManager.ComponentName, capiChangeDiff.CertManager.NewVersion, capiChangeDiff.CertManager.OldVersion)
+	eksaChangeDiff := eksaupgrader.ChangeDiff(currentSpec, newClusterSpec)
+	fluxChangeDiff := fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec)
+	w := tabwriter.NewWriter(os.Stdout, 10, 4, 3, ' ', 0)
+	fmt.Fprintln(w, "NAME\tCURRENT VERSION\tNEXT VERSION")
+	fmt.Fprintf(w, "%s\t%s\t%s\n", eksaChangeDiff.ComponentName, eksaChangeDiff.NewVersion, eksaChangeDiff.OldVersion)
+	fmt.Fprintf(w, "%s\t%s\t%s\n", fluxChangeDiff.ComponentName, fluxChangeDiff.NewVersion, fluxChangeDiff.OldVersion)
 
+	if err := w.Flush(); err != nil {
+		fmt.Printf("Error %v", err)
+	}
+	fmt.Println("")
 	return nil
 }
