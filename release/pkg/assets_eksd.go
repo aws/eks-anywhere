@@ -24,6 +24,11 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const (
+	imageBuilderProjectPath = "projects/kubernetes-sigs/image-builder"
+	kindProjectPath         = "projects/kubernetes-sigs/kind"
+)
+
 // GetEksDChannelAssets returns the eks-d artifacts including OVAs and kind node image
 func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDReleaseNumber string) ([]Artifact, error) {
 	// Ova artifacts
@@ -31,6 +36,10 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 	arch := "amd64"
 	osNames := []string{"ubuntu", "bottlerocket"}
 	artifacts := []Artifact{}
+	gitTag, err := r.readGitTag(imageBuilderProjectPath, r.BuildRepoBranchName)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
 
 	for _, osName := range osNames {
 		var sourceS3Key string
@@ -41,7 +50,7 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
 			sourceS3Key = fmt.Sprintf("%s.ova", osName)
-			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/image-builder/%s/%s", eksDReleaseChannel, latestPath)
+			sourceS3Prefix = fmt.Sprintf("%s/%s/%s", imageBuilderProjectPath, eksDReleaseChannel, latestPath)
 		} else {
 			sourceS3Key = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%d-%s.ova",
 				osName,
@@ -96,6 +105,8 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 			OS:             os,
 			OSName:         osName,
 			Arch:           []string{arch},
+			GitTag:         gitTag,
+			ProjectPath:    imageBuilderProjectPath,
 		}
 
 		artifacts = append(artifacts, Artifact{Archive: archiveArtifact})
@@ -108,6 +119,12 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 		"eksDReleaseChannel": eksDReleaseChannel,
 		"eksDReleaseNumber":  eksDReleaseNumber,
 		"kubeVersion":        kubeVer,
+		"projectPath":        kindProjectPath,
+	}
+
+	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
 	}
 	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
 	if err != nil {
@@ -116,7 +133,7 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
+		SourceImageURI:  sourceImageUri,
 		ReleaseImageURI: releaseImageUri,
 		Arch:            []string{"amd64"},
 		OS:              "linux",

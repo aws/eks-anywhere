@@ -29,12 +29,21 @@ func (r *ReleaseConfig) GetFluxAssets() ([]Artifact, error) {
 	artifacts := []Artifact{}
 
 	for _, project := range fluxControllerProjects {
-		gitTag, err := r.getFluxGitTag(project)
+		fluxControllerProjectPath := fmt.Sprintf("projects/fluxcd/%s", project)
+		gitTag, err := r.readGitTag(fluxControllerProjectPath, r.BuildRepoBranchName)
 		if err != nil {
 			return nil, errors.Cause(err)
 		}
+		repoName := fmt.Sprintf("fluxcd/%s", project)
+		tagOptions := map[string]string{
+			"gitTag":      gitTag,
+			"projectPath": fluxControllerProjectPath,
+		}
 
-		repoName, tagOptions := r.getFluxImageAttributes(project, gitTag)
+		sourceImageUri, err := r.GetSourceImageURI(project, repoName, tagOptions)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
 		releaseImageUri, err := r.GetReleaseImageURI(project, repoName, tagOptions)
 		if err != nil {
 			return nil, errors.Cause(err)
@@ -42,10 +51,12 @@ func (r *ReleaseConfig) GetFluxAssets() ([]Artifact, error) {
 
 		imageArtifact := &ImageArtifact{
 			AssetName:       project,
-			SourceImageURI:  r.GetSourceImageURI(project, repoName, tagOptions),
+			SourceImageURI:  sourceImageUri,
 			ReleaseImageURI: releaseImageUri,
 			Arch:            []string{"amd64"},
 			OS:              "linux",
+			GitTag:          gitTag,
+			ProjectPath:     fluxControllerProjectPath,
 		}
 		artifacts = append(artifacts, Artifact{Image: imageArtifact})
 	}
@@ -90,24 +101,4 @@ func (r *ReleaseConfig) GetFluxBundle(imageDigests map[string]string) (anywherev
 	}
 
 	return bundle, nil
-}
-
-func (r *ReleaseConfig) getFluxGitTag(project string) (string, error) {
-	projectSource := fmt.Sprintf("projects/fluxcd/%s", project)
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-
-	return gitTag, nil
-}
-
-func (r *ReleaseConfig) getFluxImageAttributes(project, gitTag string) (string, map[string]string) {
-	repoName := fmt.Sprintf("fluxcd/%s", project)
-	tagOptions := map[string]string{
-		"gitTag": gitTag,
-	}
-
-	return repoName, tagOptions
 }

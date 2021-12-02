@@ -24,9 +24,11 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const capiProjectPath = "projects/kubernetes-sigs/cluster-api"
+
 // GetCAPIAssets returns the eks-a artifacts for cluster-api
 func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
-	gitTag, err := r.getCAPIGitTag()
+	gitTag, err := r.readGitTag(capiProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -42,7 +44,13 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 	for _, image := range capiImages {
 		repoName := fmt.Sprintf("kubernetes-sigs/cluster-api/%s", image)
 		tagOptions := map[string]string{
-			"gitTag": gitTag,
+			"gitTag":      gitTag,
+			"projectPath": capiProjectPath,
+		}
+
+		sourceImageUri, err := r.GetSourceImageURI(image, repoName, tagOptions)
+		if err != nil {
+			return nil, errors.Cause(err)
 		}
 		releaseImageUri, err := r.GetReleaseImageURI(image, repoName, tagOptions)
 		if err != nil {
@@ -51,10 +59,12 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 
 		imageArtifact := &ImageArtifact{
 			AssetName:       image,
-			SourceImageURI:  r.GetSourceImageURI(image, repoName, tagOptions),
+			SourceImageURI:  sourceImageUri,
 			ReleaseImageURI: releaseImageUri,
 			Arch:            []string{"amd64"},
 			OS:              "linux",
+			GitTag:          gitTag,
+			ProjectPath:     capiProjectPath,
 		}
 		artifacts = append(artifacts, Artifact{Image: imageArtifact})
 
@@ -85,7 +95,7 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 			latestPath := r.getLatestUploadDestination()
 
 			if r.DevRelease || r.ReleaseEnvironment == "development" {
-				sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api/%s/manifests/%s/%s", latestPath, component, gitTag)
+				sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/%s/%s", capiProjectPath, latestPath, component, gitTag)
 			} else {
 				sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cluster-api/manifests/%s/%s", r.BundleNumber, component, gitTag)
 			}
@@ -119,6 +129,8 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 				ReleaseS3Path:     releaseS3Path,
 				ReleaseCdnURI:     cdnURI,
 				ImageTagOverrides: imageTagOverrides,
+				GitTag:            gitTag,
+				ProjectPath:       capiProjectPath,
 			}
 			artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 		}
@@ -134,7 +146,7 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 	}
 
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, capiProjectPath)),
 	)
 	if err != nil {
 		return anywherev1alpha1.CoreClusterAPI{}, errors.Wrapf(err, "Error getting version for cluster-api")
@@ -195,7 +207,7 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 	}
 
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, capiProjectPath)),
 	)
 	if err != nil {
 		return anywherev1alpha1.KubeadmBootstrapBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")
@@ -256,7 +268,7 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 	}
 
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, capiProjectPath)),
 	)
 	if err != nil {
 		return anywherev1alpha1.KubeadmControlPlaneBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")
@@ -308,15 +320,4 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 	}
 
 	return bundle, nil
-}
-
-func (r *ReleaseConfig) getCAPIGitTag() (string, error) {
-	projectSource := "projects/kubernetes-sigs/cluster-api"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-
-	return gitTag, nil
 }

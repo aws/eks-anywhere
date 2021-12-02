@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/ecrpublic"
@@ -398,21 +397,13 @@ func ReadHttpFile(uri string) ([]byte, error) {
 	return data, nil
 }
 
-func ExistsInS3(s3Client *s3.S3, bucket string, key string) (bool, error) {
-	_, err := s3Client.HeadObject(&s3.HeadObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-	})
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case "NotFound":
-				return false, nil
-			default:
-				return false, err
-			}
-		}
-		return false, err
+func ExistsInS3(bucket string, key string) bool {
+	objectUrl := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, key)
+
+	resp, err := http.Head(objectUrl)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return false
 	}
-	return true, nil
+
+	return true
 }

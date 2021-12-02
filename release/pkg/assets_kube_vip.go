@@ -16,17 +16,15 @@ package pkg
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 )
 
+const kubeVipProjectPath = "projects/plunder-app/kube-vip"
+
 // GetKubeVipAssets returns the eks a artifacts for kube-vip
 func (r *ReleaseConfig) GetKubeVipAssets() ([]Artifact, error) {
-	// Get Git tag for the project
-	projectSource := "projects/plunder-app/kube-vip"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
+	gitTag, err := r.readGitTag(kubeVipProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -34,7 +32,13 @@ func (r *ReleaseConfig) GetKubeVipAssets() ([]Artifact, error) {
 	name := "kube-vip"
 	repoName := fmt.Sprintf("plunder-app/%s", name)
 	tagOptions := map[string]string{
-		"gitTag": gitTag,
+		"gitTag":      gitTag,
+		"projectPath": kubeVipProjectPath,
+	}
+
+	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
 	}
 	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
 	if err != nil {
@@ -43,11 +47,12 @@ func (r *ReleaseConfig) GetKubeVipAssets() ([]Artifact, error) {
 
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
+		SourceImageURI:  sourceImageUri,
 		ReleaseImageURI: releaseImageUri,
 		Arch:            []string{"amd64"},
 		OS:              "linux",
 		GitTag:          gitTag,
+		ProjectPath:     kubeVipProjectPath,
 	}
 	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
