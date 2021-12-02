@@ -36,7 +36,7 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 	arch := "amd64"
 	osNames := []string{"ubuntu", "bottlerocket"}
 	artifacts := []Artifact{}
-	gitTag, err := r.readGitTag(imageBuilderProjectPath, r.BuildRepoBranchName)
+	imageBuilderGitTag, err := r.readGitTag(imageBuilderProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -105,14 +105,18 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 			OS:             os,
 			OSName:         osName,
 			Arch:           []string{arch},
-			GitTag:         gitTag,
+			GitTag:         imageBuilderGitTag,
 			ProjectPath:    imageBuilderProjectPath,
 		}
 
 		artifacts = append(artifacts, Artifact{Archive: archiveArtifact})
 	}
 
-	// Add kind images
+	kindGitTag, err := r.readGitTag(kindProjectPath, r.BuildRepoBranchName)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+
 	name := "kind-node"
 	repoName := "kubernetes-sigs/kind/node"
 	tagOptions := map[string]string{
@@ -120,6 +124,7 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 		"eksDReleaseNumber":  eksDReleaseNumber,
 		"kubeVersion":        kubeVer,
 		"projectPath":        kindProjectPath,
+		"gitTag":             kindGitTag,
 	}
 
 	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
