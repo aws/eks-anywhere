@@ -13,8 +13,8 @@ import (
 	"github.com/aws/eks-anywhere-test-tool/pkg/codebuild"
 	"github.com/aws/eks-anywhere-test-tool/pkg/constants"
 	"github.com/aws/eks-anywhere-test-tool/pkg/filewriter"
-	"github.com/aws/eks-anywhere-test-tool/pkg/logger"
 	"github.com/aws/eks-anywhere-test-tool/pkg/s3"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
 

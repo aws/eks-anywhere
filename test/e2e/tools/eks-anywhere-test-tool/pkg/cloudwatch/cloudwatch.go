@@ -10,7 +10,7 @@ import (
 
 	"github.com/aws/eks-anywhere-test-tool/pkg/awsprofiles"
 	"github.com/aws/eks-anywhere-test-tool/pkg/constants"
-	"github.com/aws/eks-anywhere-test-tool/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 type Cloudwatch struct {

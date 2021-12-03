@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere-test-tool/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 var rootCmd = &cobra.Command{
