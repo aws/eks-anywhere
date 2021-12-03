@@ -575,8 +575,14 @@ func (r *ReleaseConfig) GetPreviousReleaseImageSemver(releaseImageUri string) (s
 				for _, image := range vbImages {
 					if strings.Contains(image.URI, releaseImageUri) {
 						imageUri := image.URI
+						var differential int
+						if r.BuildRepoBranchName == "main" {
+							differential = 1
+						} else {
+							differential = 2
+						}
 						numDashes := strings.Count(imageUri, "-")
-						splitIndex := numDashes - strings.Count(r.BuildRepoBranchName, "-") - 2
+						splitIndex := numDashes - strings.Count(r.BuildRepoBranchName, "-") - differential
 						imageUriSplit := strings.SplitAfterN(imageUri, "-", splitIndex)
 						semver = imageUriSplit[len(imageUriSplit)-1]
 					}
