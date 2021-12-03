@@ -264,6 +264,7 @@ type providerTest struct {
 }
 
 func newProviderTest(t *testing.T) *providerTest {
+	setupContext(t)
 	ctrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
 	govc := mocks.NewMockProviderGovcClient(ctrl)
@@ -302,6 +303,23 @@ func newProviderTest(t *testing.T) *providerTest {
 	}
 }
 
+func (tt *providerTest) setExpectationsForDefaultDiskGovcCalls() {
+	for _, m := range tt.machineConfigs {
+		tt.govc.EXPECT().TemplateHasSnapshot(tt.ctx, m.Spec.Template).Return(true, nil)
+		tt.govc.EXPECT().GetWorkloadAvailableSpace(tt.ctx, m).Return(10000.0, nil)
+	}
+}
+
+func (tt *providerTest) setExpectationForVCenterValidation() {
+	tt.govc.EXPECT().ValidateVCenterSetup(tt.ctx, tt.datacenterConfig, &tt.provider.selfSigned).Return(nil)
+}
+
+func (tt *providerTest) setExpectationsForMachineConfigsVCenterValidation() {
+	for _, m := range tt.machineConfigs {
+		tt.govc.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, tt.datacenterConfig, m, &tt.provider.selfSigned).Return(nil)
+	}
+}
+
 func TestNewProvider(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
@@ -330,6 +348,21 @@ func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.VSphereData
 		machineConfigs,
 		clusterConfig,
 		NewDummyProviderGovcClient(),
+		kubectl,
+		resourceSetManager,
+	)
+}
+
+func newProviderWithGovc(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, govc ProviderGovcClient) *vsphereProvider {
+	ctrl := gomock.NewController(t)
+	resourceSetManager := mocks.NewMockClusterResourceSetManager(ctrl)
+	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
+	return newProvider(
+		t,
+		datacenterConfig,
+		machineConfigs,
+		clusterConfig,
+		govc,
 		kubectl,
 		resourceSetManager,
 	)
@@ -669,6 +702,7 @@ func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *tes
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	resourceSetManager := mocks.NewMockClusterResourceSetManager(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
@@ -676,8 +710,7 @@ func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *tes
 	ctx := context.Background()
 	govc := NewDummyProviderGovcClient()
 	govc.osTag = bottlerocketOSTag
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
-	provider.providerGovcClient = govc
+	provider := newProvider(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, govc, kubectl, resourceSetManager)
 
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
@@ -697,6 +730,7 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorConfig(t *testin
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	resourceSetManager := mocks.NewMockClusterResourceSetManager(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
@@ -704,8 +738,7 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorConfig(t *testin
 	ctx := context.Background()
 	govc := NewDummyProviderGovcClient()
 	govc.osTag = bottlerocketOSTag
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
-	provider.providerGovcClient = govc
+	provider := newProvider(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, govc, kubectl, resourceSetManager)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
@@ -724,6 +757,7 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorAndCertConfig(t 
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	resourceSetManager := mocks.NewMockClusterResourceSetManager(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
@@ -731,8 +765,7 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorAndCertConfig(t 
 	ctx := context.Background()
 	govc := NewDummyProviderGovcClient()
 	govc.osTag = bottlerocketOSTag
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
-	provider.providerGovcClient = govc
+	provider := newProvider(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, govc, kubectl, resourceSetManager)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
@@ -1309,7 +1342,7 @@ func TestSetupAndValidateCreateClusterNoServer(t *testing.T) {
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "failed setup and validations: VSphereDatacenterConfig server is not set or is empty", err)
+	thenErrorExpected(t, "VSphereDatacenterConfig server is not set or is empty", err)
 }
 
 func TestSetupAndValidateCreateClusterInsecure(t *testing.T) {
@@ -1961,7 +1994,7 @@ func TestSetupAndValidateCreateClusterOsFamilyEmpty(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 	govc := NewDummyProviderGovcClient()
 	govc.osTag = bottlerocketOSTag
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterConfig, nil)
+	provider := newProviderWithGovc(t, datacenterConfig, machineConfigs, clusterConfig, govc)
 	provider.providerGovcClient = govc
 	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = ""
@@ -2007,89 +2040,62 @@ func TestSetupAndValidateCreateClusterTemplateDifferent(t *testing.T) {
 }
 
 func TestSetupAndValidateCreateClusterTemplateDoesNotExist(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	govc := givenGovcMock(t)
-	provider.providerGovcClient = govc
-	setupContext(t)
+	tt := newProviderTest(t)
 
-	govc.EXPECT().ValidateVCenterSetup(ctx, provider.datacenterConfig, &provider.selfSigned).Return(nil)
-	govc.EXPECT().ValidateVCenterSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	govc.EXPECT().ValidateVCenterSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	govc.EXPECT().ValidateVCenterSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	govc.EXPECT().SearchTemplate(ctx, provider.datacenterConfig.Spec.Datacenter, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]).Return("", nil)
+	tt.setExpectationsForDefaultDiskGovcCalls()
+	tt.setExpectationForVCenterValidation()
+	tt.setExpectationsForMachineConfigsVCenterValidation()
+	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, tt.machineConfigs[tt.clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]).Return("", nil)
 
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 
 	thenErrorExpected(t, "template <"+testTemplate+"> not found. Has the template been imported?", err)
 }
 
 func TestSetupAndValidateCreateClusterErrorCheckingTemplate(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	govc := givenGovcMock(t)
-	provider.providerGovcClient = govc
+	tt := newProviderTest(t)
 	errorMessage := "failed getting template"
-	setupContext(t)
 
-	govc.EXPECT().ValidateVCenterSetup(ctx, provider.datacenterConfig, &provider.selfSigned).Return(nil)
-	govc.EXPECT().ValidateVCenterSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	govc.EXPECT().ValidateVCenterSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	govc.EXPECT().ValidateVCenterSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	govc.EXPECT().SearchTemplate(ctx, provider.datacenterConfig.Spec.Datacenter, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]).Return("", errors.New(errorMessage))
+	tt.setExpectationsForDefaultDiskGovcCalls()
+	tt.setExpectationForVCenterValidation()
+	tt.setExpectationsForMachineConfigsVCenterValidation()
+	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, tt.machineConfigs[tt.clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]).Return("", errors.New(errorMessage))
 
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 
 	thenErrorExpected(t, "error validating template: failed getting template", err)
 }
 
 func TestSetupAndValidateCreateClusterTemplateMissingTags(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	govc := givenGovcMock(t)
-	provider.providerGovcClient = govc
-	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Template = testTemplate
-	setupContext(t)
+	tt := newProviderTest(t)
+	controlPlaneMachineConfigName := tt.clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	controlPlaneMachineConfig := tt.machineConfigs[controlPlaneMachineConfigName]
 
-	govc.EXPECT().ValidateVCenterSetup(ctx, provider.datacenterConfig, &provider.selfSigned).Return(nil)
-	govc.EXPECT().ValidateVCenterSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	govc.EXPECT().ValidateVCenterSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	govc.EXPECT().ValidateVCenterSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	govc.EXPECT().SearchTemplate(ctx, provider.datacenterConfig.Spec.Datacenter, provider.machineConfigs[controlPlaneMachineConfigName]).Return(provider.machineConfigs[controlPlaneMachineConfigName].Spec.Template, nil)
-	govc.EXPECT().GetTags(ctx, provider.machineConfigs[controlPlaneMachineConfigName].Spec.Template).Return(nil, nil)
+	tt.setExpectationsForDefaultDiskGovcCalls()
+	tt.setExpectationForVCenterValidation()
+	tt.setExpectationsForMachineConfigsVCenterValidation()
+	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, controlPlaneMachineConfig).Return(controlPlaneMachineConfig.Spec.Template, nil)
+	tt.govc.EXPECT().GetTags(tt.ctx, controlPlaneMachineConfig.Spec.Template).Return(nil, nil)
 
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 
 	thenErrorPrefixExpected(t, "template "+testTemplate+" is missing tag ", err)
 }
 
 func TestSetupAndValidateCreateClusterErrorGettingTags(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	govc := givenGovcMock(t)
-	provider.providerGovcClient = govc
-	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Template = testTemplate
+	tt := newProviderTest(t)
 	errorMessage := "failed getting tags"
-	setupContext(t)
 
-	govc.EXPECT().ValidateVCenterSetup(ctx, provider.datacenterConfig, &provider.selfSigned).Return(nil)
-	govc.EXPECT().ValidateVCenterSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	govc.EXPECT().ValidateVCenterSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	govc.EXPECT().ValidateVCenterSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	govc.EXPECT().SearchTemplate(ctx, provider.datacenterConfig.Spec.Datacenter, provider.machineConfigs[controlPlaneMachineConfigName]).Return(provider.machineConfigs[controlPlaneMachineConfigName].Spec.Template, nil)
-	govc.EXPECT().GetTags(ctx, provider.machineConfigs[controlPlaneMachineConfigName].Spec.Template).Return(nil, errors.New(errorMessage))
+	controlPlaneMachineConfigName := tt.clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	controlPlaneMachineConfig := tt.machineConfigs[controlPlaneMachineConfigName]
 
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	tt.setExpectationsForDefaultDiskGovcCalls()
+	tt.setExpectationForVCenterValidation()
+	tt.setExpectationsForMachineConfigsVCenterValidation()
+	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, controlPlaneMachineConfig).Return(controlPlaneMachineConfig.Spec.Template, nil)
+	tt.govc.EXPECT().GetTags(tt.ctx, controlPlaneMachineConfig.Spec.Template).Return(nil, errors.New(errorMessage))
+
+	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 
 	thenErrorExpected(t, "error validating template tags: failed getting tags", err)
 }

@@ -111,6 +111,8 @@ type vsphereProvider struct {
 	skipIpCheck                 bool
 	resourceSetManager          ClusterResourceSetManager
 	Retrier                     *retrier.Retrier
+	validator                   *validator
+	defaulter                   *defaulter
 }
 
 type ProviderGovcClient interface {
@@ -230,6 +232,8 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 		skipIpCheck:        skipIpCheck,
 		resourceSetManager: resourceSetManager,
 		Retrier:            retrier,
+		validator:          newValidator(providerGovcClient),
+		defaulter:          newDefaulter(providerGovcClient),
 	}
 }
 
@@ -395,7 +399,7 @@ func (p *vsphereProvider) validateControlPlaneIpUniqueness(ip string) error {
 	return nil
 }
 
-func (p *vsphereProvider) validateEnv(ctx context.Context) error {
+func (p *vsphereProvider) validateEnv(_ context.Context) error {
 	if vSphereUsername, ok := os.LookupEnv(eksavSphereUsernameKey); ok && len(vSphereUsername) > 0 {
 		if err := os.Setenv(vSphereUsernameKey, vSphereUsername); err != nil {
 			return fmt.Errorf("unable to set %s: %v", eksavSphereUsernameKey, err)
@@ -819,24 +823,6 @@ func (p *vsphereProvider) validateTemplateTags(ctx context.Context, clusterSpec 
 	return nil
 }
 
-func requiredTemplateTags(clusterSpec *cluster.Spec, machineConfig *v1alpha1.VSphereMachineConfig) []string {
-	tagsByCategory := requiredTemplateTagsByCategory(clusterSpec, machineConfig)
-	tags := make([]string, 0, len(tagsByCategory))
-	for _, t := range tagsByCategory {
-		tags = append(tags, t...)
-	}
-
-	return tags
-}
-
-func requiredTemplateTagsByCategory(clusterSpec *cluster.Spec, machineConfig *v1alpha1.VSphereMachineConfig) map[string][]string {
-	osFamily := machineConfig.Spec.OSFamily
-	return map[string][]string{
-		"eksdRelease": {fmt.Sprintf("eksdRelease:%s", clusterSpec.VersionsBundle.EksD.Name)},
-		"os":          {fmt.Sprintf("os:%s", strings.ToLower(string(osFamily)))},
-	}
-}
-
 func (p *vsphereProvider) setupDefaultTemplate(ctx context.Context, clusterSpec *cluster.Spec, machineConfig *v1alpha1.VSphereMachineConfig, templateFactory *templates.Factory) error {
 	ovaURL := p.defaultTemplateForClusterSpec(clusterSpec, machineConfig)
 
@@ -877,19 +863,25 @@ func (p *vsphereProvider) DeleteResources(ctx context.Context, clusterSpec *clus
 }
 
 func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	err := p.validateEnv(ctx)
-	if err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
-	err = p.setupAndValidateCluster(ctx, clusterSpec)
-	if err != nil {
-		return err
-	}
-	err = p.setupSSHAuthKeysForCreate()
-	if err != nil {
+	if err := setupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
+	vSphereClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+
+	if err := p.defaulter.setDefaults(ctx, vSphereClusterSpec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+
+	if err := p.validator.validateCluster(ctx, vSphereClusterSpec); err != nil {
+		return err
+	}
+
+	if err := p.setupSSHAuthKeysForCreate(); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+
+	// TODO: move this to validator
 	if clusterSpec.IsManaged() {
 		for _, mc := range p.MachineConfigs() {
 			em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, mc.GetName(), clusterSpec.ManagementCluster.KubeconfigFile, mc.GetNamespace())
@@ -913,23 +905,30 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		logger.Info("Skipping check for whether control plane ip is in use")
 		return nil
 	}
-	err = p.validateControlPlaneIpUniqueness(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
-	if err != nil {
+
+	// TODO: move this to validator
+	if err := p.validateControlPlaneIpUniqueness(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	err := p.validateEnv(ctx)
-	if err != nil {
+	if err := setupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
-	err = p.setupAndValidateCluster(ctx, clusterSpec)
-	if err != nil {
+
+	vSphereClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+
+	if err := p.defaulter.setDefaults(ctx, vSphereClusterSpec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+
+	if err := p.validator.validateCluster(ctx, vSphereClusterSpec); err != nil {
 		return err
 	}
-	err = p.setupSSHAuthKeysForUpgrade()
+
+	err := p.setupSSHAuthKeysForUpgrade()
 	if err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -999,8 +998,7 @@ func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Clus
 }
 
 func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
-	err := p.validateEnv(ctx)
-	if err != nil {
+	if err := setupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 	return nil
