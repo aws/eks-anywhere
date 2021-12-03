@@ -232,6 +232,11 @@ func (p *validator) validateTemplateTags(ctx context.Context, spec *spec, machin
 	return nil
 }
 
+type datastoreUsage struct {
+	availableSpace float64
+	needGiBSpace   int
+}
+
 // TODO: cleanup this method signature
 // TODO: dry out implementation
 func (p *validator) validateDatastoreUsage(ctx context.Context, clusterSpec *cluster.Spec, controlPlaneMachineConfig *anywherev1.VSphereMachineConfig, workerNodeGroupMachineConfig *anywherev1.VSphereMachineConfig, etcdMachineConfig *anywherev1.VSphereMachineConfig) error {

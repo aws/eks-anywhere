@@ -198,11 +198,6 @@ func givenProvider(t *testing.T) *vsphereProvider {
 	return provider
 }
 
-func givenGovcMock(t *testing.T) *mocks.MockProviderGovcClient {
-	ctrl := gomock.NewController(t)
-	return mocks.NewMockProviderGovcClient(ctrl)
-}
-
 type testContext struct {
 	oldUsername                string
 	isUsernameSet              bool
@@ -311,12 +306,12 @@ func (tt *providerTest) setExpectationsForDefaultDiskGovcCalls() {
 }
 
 func (tt *providerTest) setExpectationForVCenterValidation() {
-	tt.govc.EXPECT().ValidateVCenterSetup(tt.ctx, tt.datacenterConfig, &tt.provider.selfSigned).Return(nil)
+	tt.govc.EXPECT().ValidateVCenterSetup(tt.ctx, tt.datacenterConfig, &tt.provider.validator.selfSigned).Return(nil)
 }
 
 func (tt *providerTest) setExpectationsForMachineConfigsVCenterValidation() {
 	for _, m := range tt.machineConfigs {
-		tt.govc.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, tt.datacenterConfig, m, &tt.provider.selfSigned).Return(nil)
+		tt.govc.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, tt.datacenterConfig, m, &tt.provider.validator.selfSigned).Return(nil)
 	}
 }
 
