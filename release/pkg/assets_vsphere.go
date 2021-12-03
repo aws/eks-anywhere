@@ -16,7 +16,6 @@ package pkg
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 
@@ -31,19 +30,22 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 		"vsphere-csi-driver":           r.BundleArtifactsTable["vsphere-csi-driver"],
 	}
 
-	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, capvProjectPath)),
-	)
-	if err != nil {
-		return anywherev1alpha1.VSphereBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-sphere")
-	}
-
+	var version string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for _, artifacts := range vsphereBundleArtifacts {
+	for componentName, artifacts := range vsphereBundleArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
+				if componentName == "cluster-api-provider-vsphere" {
+					componentVersion, err := BuildComponentVersion(
+						newVersionerWithGITTAG(r.BuildRepoSource, capvProjectPath, imageArtifact.SourcedFromBranch, r),
+					)
+					if err != nil {
+						return anywherev1alpha1.VSphereBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-vsphere")
+					}
+					version = componentVersion
+				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
 					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),

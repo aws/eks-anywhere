@@ -36,7 +36,7 @@ func (r *ReleaseConfig) GetLocalPathProvisionerAssets() ([]Artifact, error) {
 		"projectPath": localPathProvisonerProjectPath,
 	}
 
-	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -46,13 +46,14 @@ func (r *ReleaseConfig) GetLocalPathProvisionerAssets() ([]Artifact, error) {
 	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  sourceImageUri,
-		ReleaseImageURI: releaseImageUri,
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-		GitTag:          gitTag,
-		ProjectPath:     localPathProvisonerProjectPath,
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       localPathProvisonerProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
