@@ -173,25 +173,25 @@ func (c *upgradeTestSetup) expectUpgradeWorkloadToReturn(expectedCluster *types.
 func (c *upgradeTestSetup) expectMoveManagementToBootstrap() {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().MoveCAPI(
-			c.ctx, c.workloadCluster, c.bootstrapCluster, gomock.Any(), gomock.Any(),
+			c.ctx, c.workloadCluster, c.bootstrapCluster, gomock.Any(), c.newClusterSpec, gomock.Any(),
 		),
 	)
 }
 
 func (c *upgradeTestSetup) expectNotToMoveManagementToBootstrap() {
-	c.clusterManager.EXPECT().MoveCAPI(c.ctx, c.workloadCluster, c.bootstrapCluster, gomock.Any(), gomock.Any()).Times(0)
+	c.clusterManager.EXPECT().MoveCAPI(c.ctx, c.workloadCluster, c.bootstrapCluster, gomock.Any(), c.newClusterSpec, gomock.Any()).Times(0)
 }
 
 func (c *upgradeTestSetup) expectMoveManagementToWorkload() {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().MoveCAPI(
-			c.ctx, c.bootstrapCluster, c.workloadCluster, gomock.Any(), gomock.Any(),
+			c.ctx, c.bootstrapCluster, c.workloadCluster, gomock.Any(), c.newClusterSpec, gomock.Any(),
 		),
 	)
 }
 
 func (c *upgradeTestSetup) expectNotToMoveManagementToWorkload() {
-	c.clusterManager.EXPECT().MoveCAPI(c.ctx, c.bootstrapCluster, c.workloadCluster, gomock.Any(), gomock.Any()).Times(0)
+	c.clusterManager.EXPECT().MoveCAPI(c.ctx, c.bootstrapCluster, c.workloadCluster, gomock.Any(), c.newClusterSpec, gomock.Any()).Times(0)
 }
 
 func (c *upgradeTestSetup) expectPauseEKSAControllerReconcile(expectedCluster *types.Cluster) {

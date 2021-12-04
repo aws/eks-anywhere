@@ -7,6 +7,7 @@ import (
 const (
 	AwsIamAuthenticatorEnvVar = "AWS_IAM_AUTHENTICATOR"
 	TaintsSupportEnvVar       = "TAINTS_SUPPORT"
+	TinkerbellProviderEnvVar  = "TINKERBELL_PROVIDER"
 )
 
 var cache = newMutexMap()
@@ -43,5 +44,12 @@ func TaintsSupport() Feature {
 	return Feature{
 		Name:     "Taints support",
 		IsActive: isActiveForEnvVar(TaintsSupportEnvVar),
+	}
+}
+
+func TinkerbellProvider() Feature {
+	return Feature{
+		Name:     "Tinkerbell provider support",
+		IsActive: isActiveForEnvVar(TinkerbellProviderEnvVar),
 	}
 }

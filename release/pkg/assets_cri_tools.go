@@ -21,13 +21,13 @@ import (
 	"github.com/pkg/errors"
 )
 
+const criToolsProjectPath = "projects/kubernetes-sigs/cri-tools"
+
 // GetCriToolsAssets returns the eks-a artifacts for cri-tools
 func (r *ReleaseConfig) GetCriToolsAssets() ([]Artifact, error) {
 	os := "linux"
 	arch := "amd64"
-	projectSource := "projects/kubernetes-sigs/cri-tools"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
+	gitTag, err := r.readGitTag(criToolsProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -40,7 +40,7 @@ func (r *ReleaseConfig) GetCriToolsAssets() ([]Artifact, error) {
 
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		sourceS3Key = fmt.Sprintf("cri-tools-%s-%s-%s.tar.gz", os, arch, gitTag)
-		sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cri-tools/%s", latestPath)
+		sourceS3Prefix = fmt.Sprintf("%s/%s", criToolsProjectPath, latestPath)
 	} else {
 		sourceS3Key = fmt.Sprintf("cri-tools-%s-%s.tar.gz", os, arch)
 		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cri-tools/%s", r.BundleNumber, gitTag)
@@ -58,7 +58,6 @@ func (r *ReleaseConfig) GetCriToolsAssets() ([]Artifact, error) {
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
-	artifacts := []Artifact{}
 
 	archiveArtifact := &ArchiveArtifact{
 		SourceS3Key:    sourceS3Key,
@@ -69,8 +68,10 @@ func (r *ReleaseConfig) GetCriToolsAssets() ([]Artifact, error) {
 		ReleaseCdnURI:  cdnURI,
 		OS:             os,
 		Arch:           []string{arch},
+		GitTag:         gitTag,
+		ProjectPath:    criToolsProjectPath,
 	}
-	artifacts = append(artifacts, Artifact{Archive: archiveArtifact})
+	artifacts := []Artifact{Artifact{Archive: archiveArtifact}}
 
 	return artifacts, nil
 }

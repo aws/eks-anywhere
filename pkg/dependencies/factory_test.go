@@ -47,7 +47,7 @@ func TestFactoryBuildWithProvider(t *testing.T) {
 func TestFactoryBuildWithClusterManager(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
-		WithClusterManager().
+		WithClusterManager(tt.clusterSpec.Cluster).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -58,7 +58,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
 		WithBootstrapper().
-		WithClusterManager().
+		WithClusterManager(tt.clusterSpec.Cluster).
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false).
 		WithFluxAddonClient(tt.ctx, tt.clusterSpec.Cluster, tt.clusterSpec.GitOpsConfig).
 		WithWriter().

@@ -5,11 +5,15 @@ export INTEGRATION_TEST_MAX_INSTANCE_AGE?=86400
 export INTEGRATION_TEST_SUBNET_ID?=integration_test_subnet_id
 export INTEGRATION_TEST_INSTANCE_TAG?=integration_test_instance_tag
 export JOB_ID?=${PROW_JOB_ID}
-GO_TEST ?= go test
+
+SHELL := /bin/bash
+
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git describe --tag | cut -d'-' -f1)
 GOLANG_VERSION?="1.16"
+GO ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))/go
+GO_TEST ?= $(GO) test
 
 RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml
@@ -21,8 +25,13 @@ AWS_REGION=us-west-2
 BIN_DIR := bin
 TOOLS_BIN_DIR := hack/tools/bin
 
+OUTPUT_DIR := _output
+OUTPUT_BIN_DIR := ${OUTPUT_DIR}/bin
+
 KUSTOMIZE := $(TOOLS_BIN_DIR)/kustomize
 KUSTOMIZE_VERSION := 4.2.0
+
+KUSTOMIZE_OUTPUT_BIN_DIR="${OUTPUT_DIR}/kustomize-bin/"
 
 KUBEBUILDER := $(TOOLS_BIN_DIR)/kubebuilder
 KUBEBUILDER_VERSION := v3.1.0
@@ -37,7 +46,7 @@ BINARY_NAME=eks-anywhere-cluster-controller
 ifdef CODEBUILD_SRC_DIR
 	TAR_PATH?=$(CODEBUILD_SRC_DIR)/$(PROJECT_PATH)/$(CODEBUILD_BUILD_NUMBER)-$(CODEBUILD_RESOLVED_SOURCE_VERSION)/artifacts
 else
-	TAR_PATH?="_output/tar"
+	TAR_PATH?="$(OUTPUT_DIR)/tar"
 endif
 
 BASE_REPO?=public.ecr.aws/eks-distro-build-tooling
@@ -51,11 +60,26 @@ CLUSTER_CONTROLLER_IMAGE_NAME=eks-anywhere-cluster-controller
 CLUSTER_CONTROLLER_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):$(IMAGE_TAG)
 CLUSTER_CONTROLLER_LATEST_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):latest
 
+MANIFEST_IMAGE_NAME_OVERRIDE="$(IMAGE_REPO)/eks-anywhere-cluster-controller"
+MANIFEST_IMAGE_TAG_OVERRIDE=${IMAGE_TAG}
+KUBE_RBAC_PROXY_IMAGE_NAME_OVERRIDE="${IMAGE_REPO}/brancz/kube-rbac-proxy"
+KUBE_RBAC_PROXY_IMAGE_TAG_OVERRIDE="latest"
+KUSTOMIZATION_CONFIG=./config/prod/kustomization.yaml
+
+CONTROLLER_MANIFEST_OUTPUT_DIR=$(OUTPUT_DIR)/manifests/cluster-controller
+
 # This removes the compile dependency on C libraries from github.com/containers/storage which is imported by github.com/replicatedhq/troubleshoot
 BUILD_TAGS := exclude_graphdriver_btrfs exclude_graphdriver_devicemapper
 
 GO_ARCH:=$(shell go env GOARCH)
 GO_OS:=$(shell go env GOOS)
+
+CLUSTER_CONTROLLER_PLATFORMS ?= linux-amd64 linux-arm64
+CREATE_CLUSTER_CONTROLLER_BINARIES := $(foreach platform,$(CLUSTER_CONTROLLER_PLATFORMS),create-cluster-controller-binary-$(platform))
+
+EKS_A_PLATFORMS ?= linux-amd64 linux-arm64 darwin-arm64 darwin-amd64
+EKS_A_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-cross-platform-$(platform))
+EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-release-cross-platform-$(platform))
 
 DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow
 
@@ -74,7 +98,7 @@ eks-a-binary: LINKER_FLAGS_ARG := -ldflags "$(ALL_LINKER_FLAGS)"
 eks-a-binary: BUILD_TAGS_ARG := -tags "$(BUILD_TAGS)"
 eks-a-binary: OUTPUT_FILE ?= bin/eksctl-anywhere
 eks-a-binary:
-	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) go build $(BUILD_TAGS_ARG) $(LINKER_FLAGS_ARG) -o $(OUTPUT_FILE) github.com/aws/eks-anywhere/cmd/eksctl-anywhere
+	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) build $(BUILD_TAGS_ARG) $(LINKER_FLAGS_ARG) -o $(OUTPUT_FILE) github.com/aws/eks-anywhere/cmd/eksctl-anywhere
 
 .PHONY: eks-a-embed-config
 eks-a-embed-config: ## Build a dev release version of eks-a with embed cluster spec config
@@ -83,10 +107,10 @@ eks-a-embed-config: ## Build a dev release version of eks-a with embed cluster s
 .PHONY: eks-a-cross-platform-embed-latest-config
 eks-a-cross-platform-embed-latest-config: ## Build cross platform dev release versions of eks-a with the latest bundle-release.yaml embedded in cluster spec config
 	curl -L $(BUNDLE_MANIFEST_URL) --output pkg/cluster/config/bundle-release.yaml
-	$(MAKE) eks-a-embed-config GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/eksctl-anywhere
-	$(MAKE) eks-a-embed-config GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/eksctl-anywhere
-	$(MAKE) eks-a-embed-config GO_OS=darwin GO_ARCH=arm64 OUTPUT_FILE=bin/darwin/eksctl-anywhere
-	$(MAKE) eks-a-embed-config GO_OS=linux GO_ARCH=arm64 OUTPUT_FILE=bin/linux/eksctl-anywhere
+	$(MAKE) eks-a-embed-config GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/amd64/eksctl-anywhere
+	$(MAKE) eks-a-embed-config GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/amd64/eksctl-anywhere
+	$(MAKE) eks-a-embed-config GO_OS=darwin GO_ARCH=arm64 OUTPUT_FILE=bin/darwin/arm64/eksctl-anywhere
+	$(MAKE) eks-a-embed-config GO_OS=linux GO_ARCH=arm64 OUTPUT_FILE=bin/linux/arm64/eksctl-anywhere
 	rm pkg/cluster/config/bundle-release.yaml
 
 .PHONY: eks-a
@@ -98,31 +122,51 @@ eks-a-release: ## Generate a release binary
 	$(MAKE) eks-a-binary GO_OS=linux GO_ARCH=amd64 LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'
 
 .PHONY: eks-a-cross-platform
-eks-a-cross-platform: ## Generate binaries for Linux and MacOS
-	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/eksctl-anywhere
-	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/eksctl-anywhere
-	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) GO_OS=darwin GO_ARCH=arm64 OUTPUT_FILE=bin/darwin/eksctl-anywhere
-	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) GO_OS=linux GO_ARCH=arm64 OUTPUT_FILE=bin/linux/eksctl-anywhere
+eks-a-cross-platform: $(EKS_A_CROSS_PLATFORMS)
+
+.PHONY: eks-a-cross-platform-%
+eks-a-cross-platform-%: ## Generate binaries for Linux and MacOS
+eks-a-cross-platform-%: GO_OS = $(firstword $(subst -, ,$*))
+eks-a-cross-platform-%: GO_ARCH = $(lastword $(subst -, ,$*))
+eks-a-cross-platform-%:
+	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) GO_OS=$(GO_OS) GO_ARCH=$(GO_ARCH) OUTPUT_FILE=bin/$(GO_OS)/$(GO_ARCH)/eksctl-anywhere
 
 .PHONY: eks-a-release-cross-platform
-eks-a-release-cross-platform: ## Generate binaries for Linux and MacOS
-	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/eksctl-anywhere LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'
-	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/eksctl-anywhere LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'
-	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) GO_OS=darwin GO_ARCH=arm64 OUTPUT_FILE=bin/darwin/eksctl-anywhere LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'
-	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) GO_OS=linux GO_ARCH=arm64 OUTPUT_FILE=bin/linux/eksctl-anywhere LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'
+eks-a-release-cross-platform: $(EKS_A_RELEASE_CROSS_PLATFORMS)
+
+.PHONY: eks-a-release-cross-platform-%
+eks-a-release-cross-platform-%: ## Generate binaries for Linux and MacOS
+eks-a-release-cross-platform-%: GO_OS = $(firstword $(subst -, ,$*))
+eks-a-release-cross-platform-%: GO_ARCH = $(lastword $(subst -, ,$*))
+eks-a-release-cross-platform-%:
+	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) GO_OS=$(GO_OS) GO_ARCH=$(GO_ARCH) OUTPUT_FILE=bin/$(GO_OS)/$(GO_ARCH)/eksctl-anywhere LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'
+
+$(OUTPUT_DIR):
+	mkdir -p $(OUTPUT_DIR)
+
+$(OUTPUT_BIN_DIR): $(OUTPUT_DIR)
+	mkdir -p $(OUTPUT_BIN_DIR)
+
+$(KUSTOMIZE_OUTPUT_BIN_DIR): $(OUTPUT_DIR)
+	mkdir -p $(KUSTOMIZE_OUTPUT_BIN_DIR)
+
+$(CONTROLLER_MANIFEST_OUTPUT_DIR):
+	mkdir -p $(CONTROLLER_MANIFEST_OUTPUT_DIR)
 
 $(TOOLS_BIN_DIR):
 	mkdir -p $(TOOLS_BIN_DIR)
 
-$(KUSTOMIZE): $(TOOLS_BIN_DIR)
+$(KUSTOMIZE): $(TOOLS_BIN_DIR) $(KUSTOMIZE_OUTPUT_BIN_DIR)
+	-rm $(TOOLS_BIN_DIR)/kustomize
 	cd $(TOOLS_BIN_DIR) && curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash -s $(KUSTOMIZE_VERSION)
+	cp $(TOOLS_BIN_DIR)/kustomize $(KUSTOMIZE_OUTPUT_BIN_DIR)
 
 $(KUBEBUILDER): $(TOOLS_BIN_DIR)
 	cd $(TOOLS_BIN_DIR) && curl -L -o kubebuilder https://github.com/kubernetes-sigs/kubebuilder/releases/download/$(KUBEBUILDER_VERSION)/kubebuilder_$(GO_OS)_$(GO_ARCH)
 	chmod +x $(KUBEBUILDER)
 
 $(CONTROLLER_GEN): $(TOOLS_BIN_DIR)
-	cd $(TOOLS_BIN_DIR); go build -tags=tools -o $(CONTROLLER_GEN_BIN) sigs.k8s.io/controller-tools/cmd/controller-gen
+	cd $(TOOLS_BIN_DIR); $(GO) build -tags=tools -o $(CONTROLLER_GEN_BIN) sigs.k8s.io/controller-tools/cmd/controller-gen
 
 .PHONY: lint
 lint: bin/golangci-lint ## Run golangci-lint
@@ -138,16 +182,16 @@ build-cross-platform: eks-a-cross-platform
 
 .PHONY: eks-a-tool
 eks-a-tool: ## Build eks-a-tool
-	go build -o bin/eks-a-tool github.com/aws/eks-anywhere/cmd/eks-a-tool
+	$(GO) build -o bin/eks-a-tool github.com/aws/eks-anywhere/cmd/eks-a-tool
 
 .PHONY: eks-a-cluster-controller
 eks-a-cluster-controller: ## Build eks-a-cluster-controller
-	go build -ldflags "-s -w -buildid='' -extldflags -static" -o bin/manager ./controllers
+	$(GO) build -ldflags "-s -w -buildid='' -extldflags -static" -o bin/manager ./controllers
 
 # This target will copy LICENSE file from root to the release submodule
 # when fetching licenses for cluster-controller
 .PHONY: copy-license-cluster-controller
-copy-license-cluster-controller: SHELL := /bin/bash
+copy-license-cluster-controller:
 copy-license-cluster-controller:
 	source scripts/attribution_helpers.sh && build::fix_licenses
 
@@ -167,9 +211,21 @@ release-upload-cluster-controller: release-cluster-controller upload-artifacts
 upload-artifacts:
 	controllers/build/upload_artifacts.sh $(TAR_PATH) $(ARTIFACTS_BUCKET) $(PROJECT_PATH) $(CODEBUILD_BUILD_NUMBER) $(CODEBUILD_RESOLVED_SOURCE_VERSION)
 
+.PHONY: create-cluster-controller-binaries
+create-cluster-controller-binaries: $(CREATE_CLUSTER_CONTROLLER_BINARIES)
+
+create-cluster-controller-binary-%:
+	CGO_ENABLED=0 GOOS=$(firstword $(subst -, ,$*)) GOARCH=$(lastword $(subst -, ,$*)) $(MAKE) build-cluster-controller-binaries
+	mkdir -p $(OUTPUT_BIN_DIR)/$(BINARY_NAME)/$*/
+	mv bin/manager $(OUTPUT_BIN_DIR)/$(BINARY_NAME)/$*/
+
 .PHONY: cluster-controller-binaries
-cluster-controller-binaries:
-	controllers/build/create_binaries.sh $(GOLANG_VERSION) $(BINARY_NAME) $(IMAGE_REPO) $(IMAGE_TAG)
+cluster-controller-binaries: $(OUTPUT_BIN_DIR)
+	mkdir -p $(OUTPUT_BIN_DIR)/$(BINARY_NAME)
+	$(GO) mod vendor
+	$(MAKE) create-cluster-controller-binaries
+	$(MAKE) release-manifests RELEASE_DIR=.
+	source ./scripts/common.sh && build::gather_licenses $(OUTPUT_DIR) "./controllers"
 
 .PHONY: cluster-controller-tarballs
 cluster-controller-tarballs:  cluster-controller-binaries
@@ -253,7 +309,7 @@ capd-test-%: e2e ## Run CAPD tests
 
 .PHONY: mocks
 mocks: ## Generate mocks
-	go install github.com/golang/mock/mockgen@v1.5.0
+	$(GO) install github.com/golang/mock/mockgen@v1.5.0
 	${GOPATH}/bin/mockgen -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
 	${GOPATH}/bin/mockgen -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable
 	${GOPATH}/bin/mockgen -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
@@ -314,16 +370,17 @@ eks-a-e2e:
 		fi \
 	else \
 		make check-eksa-components-override; \
+		make eks-a-cross-platform; \
 		make eks-a; \
 	fi
 
 .PHONY: e2e-tests-binary
 e2e-tests-binary:
-	go test ./test/e2e -c -o bin/e2e.test -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL)"
+	$(GO) test ./test/e2e -c -o bin/e2e.test -tags "$(E2E_TAGS)" -ldflags "-X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(DEV_GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL)"
 
 .PHONY: integration-test-binary
 integration-test-binary:
-	go build -o bin/test github.com/aws/eks-anywhere/cmd/integration_test
+	$(GO) build -o bin/test github.com/aws/eks-anywhere/cmd/integration_test
 
 .PHONY: check-eksa-components-override
 check-eksa-components-override:
@@ -333,8 +390,15 @@ check-eksa-components-override:
 help:  ## Display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[%\/0-9A-Za-z_-]+:.*?##/ { printf "  \033[36m%-45s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
+.PHONY: update-kustomization-yaml
+update-kustomization-yaml:
+	yq e ".images[] |= select(.name == \"controller\") |= .newName = \"${MANIFEST_IMAGE_NAME_OVERRIDE}\"" -i $(KUSTOMIZATION_CONFIG)
+	yq e ".images[] |= select(.name == \"controller\") |= .newTag = \"${MANIFEST_IMAGE_TAG_OVERRIDE}\"" -i $(KUSTOMIZATION_CONFIG)
+	yq e ".images[] |= select(.name == \"*kube-rbac-proxy\") |= .newName = \"${KUBE_RBAC_PROXY_IMAGE_NAME_OVERRIDE}\"" -i $(KUSTOMIZATION_CONFIG)
+	yq e ".images[] |= select(.name == \"*kube-rbac-proxy\") |= .newTag = \"${KUBE_RBAC_PROXY_IMAGE_TAG_OVERRIDE}\"" -i $(KUSTOMIZATION_CONFIG)
+
 .PHONY: generate-manifests
-generate-manifests: ## Generate manifests e.g. CRD, RBAC etc.
+generate-manifests: update-kustomization-yaml ## Generate manifests e.g. CRD, RBAC etc.
 	$(MAKE) generate-core-manifests
 
 .PHONY: generate-core-manifests
@@ -384,10 +448,11 @@ RELEASE_MANIFEST_TARGET ?= eksa-components.yaml
 $(RELEASE_DIR):
 	mkdir -p $(RELEASE_DIR)/
 
-.PHONY: release-manifests
-release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) ## Builds the manifests to publish with a release
+.PHONY: release-manifests ## Builds the manifests to publish with a release
+release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) $(CONTROLLER_MANIFEST_OUTPUT_DIR)
 	# Build core-components.
 	$(KUSTOMIZE) build config/prod > $(RELEASE_DIR)/$(RELEASE_MANIFEST_TARGET)
+	cp eksa-components.yaml $(CONTROLLER_MANIFEST_OUTPUT_DIR)
 
 .PHONY: run-controller # Run eksa controller from local repo with tilt
 run-controller:

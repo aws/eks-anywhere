@@ -23,6 +23,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+const eksAnywhereProjectPath = "projects/aws/eks-anywhere"
+
 // GetClusterControllerAssets returns the artifacts for eks-a cluster controller
 func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 	var gitTag string
@@ -59,17 +61,30 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 		releaseRepoName = "cluster-controller"
 	}
 
-	tagOptions := map[string]string{}
-	artifacts := []Artifact{}
+	tagOptions := map[string]string{
+		"gitTag":      gitTag,
+		"projectPath": eksAnywhereProjectPath,
+	}
+
+	sourceImageUri, err := r.GetSourceImageURI(name, sourceRepoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, releaseRepoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
 
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, sourceRepoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, releaseRepoName, tagOptions),
+		SourceImageURI:  sourceImageUri,
+		ReleaseImageURI: releaseImageUri,
 		Arch:            []string{"amd64"},
 		OS:              "linux",
 		GitTag:          gitTag,
+		ProjectPath:     eksAnywhereProjectPath,
 	}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
 	var imageTagOverrides []ImageTagOverride
 
@@ -84,8 +99,6 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 	}
 	imageTagOverrides = append(imageTagOverrides, imageTagOverride, kubeRbacProxyImageTagOverride)
 
-	artifacts = append(artifacts, Artifact{Image: imageArtifact})
-
 	manifest := "eksa-components.yaml"
 
 	var sourceS3Prefix string
@@ -93,7 +106,7 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 	latestPath := r.getLatestUploadDestination()
 
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
-		sourceS3Prefix = fmt.Sprintf("projects/aws/eks-anywhere/%s/manifests/cluster-controller", latestPath)
+		sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/cluster-controller", eksAnywhereProjectPath, latestPath)
 	} else {
 		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/eks-anywhere-cluster-controller/manifests/%s", r.BundleNumber, gitTag)
 	}
@@ -117,6 +130,8 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 		ReleaseS3Path:     releaseS3Path,
 		ReleaseCdnURI:     cdnURI,
 		ImageTagOverrides: imageTagOverrides,
+		GitTag:            gitTag,
+		ProjectPath:       eksAnywhereProjectPath,
 	}
 	artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 

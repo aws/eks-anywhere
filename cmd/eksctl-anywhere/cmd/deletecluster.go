@@ -56,6 +56,7 @@ func init() {
 	deleteClusterCmd.Flags().StringVarP(&dc.wConfig, "w-config", "w", "", "Kubeconfig file to use when deleting a workload cluster")
 	deleteClusterCmd.Flags().BoolVar(&dc.forceCleanup, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	deleteClusterCmd.Flags().StringVar(&dc.managementKubeconfig, "kubeconfig", "", "kubeconfig file pointing to a management cluster")
+	deleteClusterCmd.Flags().StringVar(&dc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 }
 
 func (dc *deleteClusterOptions) validate(ctx context.Context, args []string) error {
@@ -88,7 +89,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
 		WithBootstrapper().
-		WithClusterManager().
+		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck).
 		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
 		WithWriter().
