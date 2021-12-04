@@ -63,7 +63,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	}
 	deps, err := dependencies.ForSpec(ctx, newClusterSpec).
 		WithBootstrapper().
-		WithClusterManager().
+		WithClusterManager(newClusterSpec.Cluster).
 		WithFluxAddonClient(ctx, newClusterSpec.Cluster, newClusterSpec.GitOpsConfig).
 		WithCAPIManager().
 		Build(ctx)
