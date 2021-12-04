@@ -93,5 +93,6 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 		fmt.Printf("Error %v", err)
 	}
 	fmt.Println("")
+
 	return nil
 }
