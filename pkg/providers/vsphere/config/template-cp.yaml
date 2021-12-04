@@ -480,6 +480,9 @@ spec:
       - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
       - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
 {{- end }}
+{{- if .etcdCipherSuites }}
+    cipherSuites: {{.etcdCipherSuites}}
+{{- end }}
     users:
       - name: {{.etcdSshUsername}}
         sshAuthorizedKeys:

@@ -313,6 +313,7 @@ spec:
     etcdadmBuiltin: true
     cloudInitConfig:
       version: 3.4.14
+    cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: DockerMachineTemplate

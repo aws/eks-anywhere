@@ -1185,6 +1185,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"podCidrs":                             clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                         clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
 		"etcdExtraArgs":                        etcdExtraArgs.ToPartialYaml(),
+		"etcdCipherSuites":                     crypto.SecureCipherSuitesString(),
 		"apiserverExtraArgs":                   apiServerExtraArgs.ToPartialYaml(),
 		"controllermanagerExtraArgs":           sharedExtraArgs.ToPartialYaml(),
 		"schedulerExtraArgs":                   sharedExtraArgs.ToPartialYaml(),
