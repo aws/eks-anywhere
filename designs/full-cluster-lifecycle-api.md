@@ -28,8 +28,8 @@ As a Kubernetes administrator I want to:
 
 **In scope**
 
-* Cluster full lifecycle with `kubectl`
-* Cluster full lifecycle with GitOps
+* Cluster full lifecycle with `kubectl` for workload clusters
+* Cluster full lifecycle with GitOps for workload clusters
 
 **Not in scope**
 
