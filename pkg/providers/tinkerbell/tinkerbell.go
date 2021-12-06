@@ -20,9 +20,10 @@ import (
 )
 
 const (
-	tinkerbellCertURLKey  = "TINKERBELL_CERT_URL"
-	tinkerbellGRPCAuthKey = "TINKERBELL_GRPC_AUTHORITY"
-	tinkerbellIPKey       = "TINKERBELL_IP"
+	tinkerbellCertURLKey           = "TINKERBELL_CERT_URL"
+	tinkerbellGRPCAuthKey          = "TINKERBELL_GRPC_AUTHORITY"
+	tinkerbellIPKey                = "TINKERBELL_IP"
+	tinkerbellPBnJGRPCAuthorityKey = "TINKERBELL_PBNJ_GRPC_AUTHORITY"
 )
 
 //go:embed config/template-cp.yaml
@@ -37,7 +38,7 @@ var mhcTemplate []byte
 var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey}
+	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey, tinkerbellPBnJGRPCAuthorityKey}
 )
 
 type tinkerbellProvider struct {
@@ -101,6 +102,10 @@ func (p *tinkerbellProvider) DeleteResources(_ context.Context, _ *cluster.Spec)
 func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 	// TODO: Add more validations
+	err := p.validateEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
 	return nil
 }
 
@@ -363,6 +368,13 @@ func (p *tinkerbellProvider) validateEnv(ctx context.Context) error {
 		}
 	} else {
 		return fmt.Errorf("%s is not set or is empty", tinkerbellIPKey)
+	}
+	if tinkerbellPBnJGRPCAuthority, ok := os.LookupEnv(tinkerbellPBnJGRPCAuthorityKey); ok && len(tinkerbellPBnJGRPCAuthority) > 0 {
+		if err := os.Setenv(tinkerbellPBnJGRPCAuthorityKey, tinkerbellPBnJGRPCAuthority); err != nil {
+			return fmt.Errorf("unable to set %s: %v", tinkerbellPBnJGRPCAuthorityKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", tinkerbellPBnJGRPCAuthorityKey)
 	}
 	return nil
 }
