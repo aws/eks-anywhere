@@ -45,9 +45,16 @@ func (r *ReleaseConfig) GetDiagnosticCollectorAssets() ([]Artifact, error) {
 		"projectPath": eksAnywhereProjectPath,
 	}
 
-	sourceImageUri, err := r.GetSourceImageURI(name, sourceRepoName, tagOptions)
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, sourceRepoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)
+	}
+	if sourcedFromBranch != r.BuildRepoBranchName {
+		gitTag, err = r.readGitTag(eksAnywhereProjectPath, sourcedFromBranch)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+		tagOptions["gitTag"] = gitTag
 	}
 	releaseImageUri, err := r.GetReleaseImageURI(name, releaseRepoName, tagOptions)
 	if err != nil {
@@ -55,13 +62,14 @@ func (r *ReleaseConfig) GetDiagnosticCollectorAssets() ([]Artifact, error) {
 	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  sourceImageUri,
-		ReleaseImageURI: releaseImageUri,
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-		GitTag:          gitTag,
-		ProjectPath:     eksAnywhereProjectPath,
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       eksAnywhereProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 
 	artifacts := []Artifact{Artifact{Image: imageArtifact}}

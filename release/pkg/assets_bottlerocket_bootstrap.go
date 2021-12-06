@@ -34,7 +34,7 @@ func (r *ReleaseConfig) GetBottlerocketBootstrapAssets(eksDReleaseChannel, eksDR
 		"gitTag":             "non-existent",
 	}
 
-	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -44,12 +44,13 @@ func (r *ReleaseConfig) GetBottlerocketBootstrapAssets(eksDReleaseChannel, eksDR
 	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  sourceImageUri,
-		ReleaseImageURI: releaseImageUri,
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-		ProjectPath:     bottlerocketBootstrapProjectPath,
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		ProjectPath:       bottlerocketBootstrapProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 
 	artifact := Artifact{Image: imageArtifact}
