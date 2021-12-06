@@ -38,7 +38,7 @@ As a Kubernetes administrator I want to:
 **Future scope**
 
 * Reconcile (updates) GitOps configuration
-* Reconcile (updates) IDPs configuration
+* Reconcile (updates) identity providers' configuration
 * Shared objects (like machine configs) between a self-managed cluster and managed clusters
 * Managed clusters that are also management clusters
 
