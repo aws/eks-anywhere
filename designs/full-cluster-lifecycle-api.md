@@ -113,6 +113,7 @@ type ClusterStatus struct {
     SpecValid bool `json:"specValid,omitempty"`
 
     // E.g. Pending, Creating, Upgrading, Deleting, Failed etc.
+    // This should probably be an enum. We will update with final phases
     // +optional
     Phase string `json:"phase,omitempty"`
     
