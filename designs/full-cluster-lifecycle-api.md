@@ -82,7 +82,7 @@ In order to maintain some of the validations we run today in the CLI, we will ne
 
 Kubernetes offers the validation webhook for CRDs: custom code to validate objects before been accepted by the kube-api server. However, these validation are supposed to be light and fast. Most our validations require calling the vSphere API, which makes them too heavy for the validation webhook.
 
-We will implement those validations in a separate reconciler. This means that they will run after the object has already been accepted by the api server. We will store if the object has been validated or not as well as the validation error (if any) in the V`SphereDatacenterConfig` status.
+We will implement those validations in a separate reconciler. This means that they will run after the object has already been accepted by the api server. We will store if the object has been validated or not as well as the validation error (if any) in the `VSphereDatacenterConfig` status.
 
 The cluster reconciler won’t continue with the reconciliation process until `VSphereDatacenterConfig` has been marked as validated. If not valid, it will surface the error on its own status.
 
