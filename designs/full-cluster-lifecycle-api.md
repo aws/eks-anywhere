@@ -196,7 +196,7 @@ Both the controller and the vSphere credentials live in the `eksa-system` namesp
 
 In order to mitigate the third one we will add the ability to specify one (or a group) of namespaces that the controller will watch. This will reduce the attack vector, allowing cluster administrators to secure those namespaces accordingly. However this feature is not in this design’s scope and will be designed and delivered separately.
 
-It’s worth noting that, one added benefit of this design is that, workload clusters have very little vSphere access. So Ops teams can give `ClusterAdmin` access to the workload clusters to developers without risking exposing vSphere admin credentials.
+It’s worth noting that, one added benefit of this design is that, users won't need high privileges in the management cluster in order to manage workload clusters (no need to access to the `eksa-system` namespace and no need to access CAPI objects). And since workload clusters have very little vSphere access, Ops teams can give access to developers to create workload clusters and `ClusterAdmin` access to the those clusters without risking exposing vSphere admin credentials.
 
 ## Testing
 
