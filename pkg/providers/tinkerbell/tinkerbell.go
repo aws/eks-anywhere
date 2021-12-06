@@ -252,7 +252,7 @@ func (p *tinkerbellProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) 
 	// 	},
 	// }
 	// return &infraBundle
-	//TODO - remove below code when tinkerbell is added to bundle
+	// TODO - remove below code when tinkerbell is added to bundle
 	folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", "v0.1.0")
 	infraBundle := types.InfrastructureBundle{
 		FolderName: folderName,
@@ -341,6 +341,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 	}
 	return values
 }
+
 func (p *tinkerbellProvider) validateEnv(ctx context.Context) error {
 	if tinkerbellCertURL, ok := os.LookupEnv(tinkerbellCertURLKey); ok && len(tinkerbellCertURL) > 0 {
 		if err := os.Setenv(tinkerbellCertURLKey, tinkerbellCertURL); err != nil {
