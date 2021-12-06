@@ -51,5 +51,8 @@ func vsphereRmVms(ctx context.Context, clusterName string, dryRun bool) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	tmpWriter, _ := filewriter.NewWriter("rmvms")
-	return executableBuilder.BuildGovcExecutable(tmpWriter).CleanupVms(ctx, clusterName, dryRun)
+	govc := executableBuilder.BuildGovcExecutable(tmpWriter)
+	defer govc.Close(ctx)
+
+	return govc.CleanupVms(ctx, clusterName, dryRun)
 }

@@ -39,16 +39,16 @@ func (r *ReleaseConfig) GetEksACliArtifacts() ([]Artifact, error) {
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
 			sourceS3Key = fmt.Sprintf("eksctl-anywhere-%s-%s.tar.gz", os, arch)
-			sourceS3Prefix = fmt.Sprintf("eks-a-cli/latest/%s", os)
+			sourceS3Prefix = fmt.Sprintf("eks-a-cli/latest/%s/%s", os, arch)
 		} else {
 			sourceS3Key = fmt.Sprintf("eksctl-anywhere-%s-%s-%s.tar.gz", r.ReleaseVersion, os, arch)
-			sourceS3Prefix = fmt.Sprintf("releases/eks-a/%d/artifacts/eks-a/%s/%s", r.ReleaseNumber, r.ReleaseVersion, os)
+			sourceS3Prefix = fmt.Sprintf("releases/eks-a/%d/artifacts/eks-a/%s/%s/%s", r.ReleaseNumber, r.ReleaseVersion, os, arch)
 		}
 
 		if r.DevRelease {
-			releaseS3Path = fmt.Sprintf("eks-anywhere/%s/eks-a-cli/%s", r.DevReleaseUriVersion, os)
+			releaseS3Path = fmt.Sprintf("eks-anywhere/%s/eks-a-cli/%s/%s", r.DevReleaseUriVersion, os, arch)
 		} else {
-			releaseS3Path = fmt.Sprintf("releases/eks-a/%d/artifacts/eks-a/%s/%s", r.ReleaseNumber, r.ReleaseVersion, os)
+			releaseS3Path = fmt.Sprintf("releases/eks-a/%d/artifacts/eks-a/%s/%s/%s", r.ReleaseNumber, r.ReleaseVersion, os, arch)
 		}
 
 		cdnURI, err := r.GetURI(filepath.Join(releaseS3Path, releaseName))
@@ -73,10 +73,11 @@ func (r *ReleaseConfig) GetEksACliArtifacts() ([]Artifact, error) {
 }
 
 func (r *ReleaseConfig) GetEksARelease() (anywherev1alpha1.EksARelease, error) {
-	artifacts, err := r.GetEksACliArtifacts()
-	if err != nil {
-		return anywherev1alpha1.EksARelease{}, errors.Cause(err)
-	}
+	fmt.Println("\n==========================================================")
+	fmt.Println("               EKS-A Release Spec Generation")
+	fmt.Println("==========================================================")
+
+	artifacts := r.EksAArtifactsTable["eks-a-cli"]
 
 	var bundleManifestUrl string
 	bundleArchiveArtifacts := map[string]anywherev1alpha1.Archive{}
@@ -121,6 +122,8 @@ func (r *ReleaseConfig) GetEksARelease() (anywherev1alpha1.EksARelease, error) {
 		},
 		BundleManifestUrl: bundleManifestUrl,
 	}
+
+	fmt.Printf("%s Successfully generated EKS-A release spec\n", SuccessIcon)
 
 	return eksARelease, nil
 }

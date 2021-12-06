@@ -10,7 +10,16 @@ import (
 
 func buildKubectl(t *testing.T) *executables.Kubectl {
 	ctx := context.Background()
-	return executableBuilder(t, ctx).BuildKubectlExecutable()
+	kubectl := executableBuilder(t, ctx).BuildKubectlExecutable()
+	t.Cleanup(func() {
+		kubectl.Close(ctx)
+	})
+
+	return kubectl
+}
+
+func buildLocalKubectl() *executables.Kubectl {
+	return executables.NewLocalExecutableBuilder().BuildKubectlExecutable()
 }
 
 func buildLocalKubectl() *executables.Kubectl {
@@ -32,7 +41,12 @@ func buildGovc(t *testing.T) *executables.Govc {
 	if err != nil {
 		t.Fatalf("Error creating tmp writer")
 	}
-	return executableBuilder(t, ctx).BuildGovcExecutable(tmpWriter)
+	govc := executableBuilder(t, ctx).BuildGovcExecutable(tmpWriter)
+	t.Cleanup(func() {
+		govc.Close(ctx)
+	})
+
+	return govc
 }
 
 func buildDocker(t *testing.T) *executables.Docker {

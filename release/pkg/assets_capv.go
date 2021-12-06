@@ -21,9 +21,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+const capvProjectPath = "projects/kubernetes-sigs/cluster-api-provider-vsphere"
+
 // GetCapvAssets returns the eks-a artifacts for CAPV
 func (r *ReleaseConfig) GetCapvAssets() ([]Artifact, error) {
-	gitTag, err := r.getCapvGitTag()
+	gitTag, err := r.readGitTag(capvProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -31,19 +33,37 @@ func (r *ReleaseConfig) GetCapvAssets() ([]Artifact, error) {
 	name := "cluster-api-vsphere-controller"
 	repoName := "kubernetes-sigs/cluster-api-provider-vsphere/release/manager"
 	tagOptions := map[string]string{
-		"gitTag": gitTag,
+		"gitTag":      gitTag,
+		"projectPath": capvProjectPath,
 	}
 
-	artifacts := []Artifact{}
-	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, repoName, tagOptions),
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-		GitTag:          gitTag,
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
 	}
-	artifacts = append(artifacts, Artifact{Image: imageArtifact})
+	if sourcedFromBranch != r.BuildRepoBranchName {
+		gitTag, err = r.readGitTag(capvProjectPath, sourcedFromBranch)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+		tagOptions["gitTag"] = gitTag
+	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+
+	imageArtifact := &ImageArtifact{
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       capvProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
+	}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
 	var imageTagOverrides []ImageTagOverride
 
@@ -67,10 +87,10 @@ func (r *ReleaseConfig) GetCapvAssets() ([]Artifact, error) {
 	for _, manifest := range manifestList {
 		var sourceS3Prefix string
 		var releaseS3Path string
-		latestPath := r.getLatestUploadDestination()
+		latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
-			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api-provider-vsphere/%s/manifests/infrastructure-vsphere/%s", latestPath, gitTag)
+			sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/infrastructure-vsphere/%s", capvProjectPath, latestPath, gitTag)
 		} else {
 			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cluster-api-provider-vsphere/manifests/infrastructure-vsphere/%s", r.BundleNumber, gitTag)
 		}
@@ -96,20 +116,11 @@ func (r *ReleaseConfig) GetCapvAssets() ([]Artifact, error) {
 			ReleaseS3Path:     releaseS3Path,
 			ReleaseCdnURI:     cdnURI,
 			ImageTagOverrides: imageTagOverrides,
+			GitTag:            gitTag,
+			ProjectPath:       capvProjectPath,
 		}
 		artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 	}
 
 	return artifacts, nil
-}
-
-func (r *ReleaseConfig) getCapvGitTag() (string, error) {
-	projectSource := "projects/kubernetes-sigs/cluster-api-provider-vsphere"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-
-	return gitTag, nil
 }

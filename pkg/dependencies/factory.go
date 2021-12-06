@@ -18,6 +18,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/networking"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/factory"
+	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 type Dependencies struct {
@@ -44,10 +45,21 @@ type Dependencies struct {
 	ResourceSetManager        *clusterapi.ResourceSetManager
 }
 
+func (d *Dependencies) Close(ctx context.Context) error {
+	closers := []types.Closer{d.Govc, d.DockerClient, d.Kubectl, d.Kind, d.Clusterctl, d.Flux, d.Troubleshoot}
+	for _, c := range closers {
+		if err := c.Close(ctx); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
 	return NewFactory().
-		WithExecutableBuilder(ctx, clusterSpec.UseImageMirror(eksaToolsImage.VersionedImage())).
+		WithExecutableImage(clusterSpec.UseImageMirror(eksaToolsImage.VersionedImage())).
 		WithWriterFolder(clusterSpec.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
 }
@@ -55,29 +67,32 @@ func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 type Factory struct {
 	executableBuilder        *executables.ExecutableBuilder
 	providerFactory          *factory.ProviderFactory
+	executablesImage         string
+	executablesMountDirs     []string
 	writerFolder             string
 	diagnosticCollectorImage string
-	buildSteps               []func() error
+	buildSteps               []buildStep
 	dependencies             Dependencies
 }
 
+type buildStep func(ctx context.Context) error
+
 func NewFactory() *Factory {
 	return &Factory{
-		executableBuilder: executables.NewLocalExecutableBuilder(),
-		writerFolder:      "./",
-		buildSteps:        make([]func() error, 0),
+		writerFolder: "./",
+		buildSteps:   make([]buildStep, 0),
 	}
 }
 
-func (f *Factory) Build() (*Dependencies, error) {
+func (f *Factory) Build(ctx context.Context) (*Dependencies, error) {
 	for _, step := range f.buildSteps {
-		if err := step(); err != nil {
+		if err := step(ctx); err != nil {
 			return nil, err
 		}
 	}
 
 	// clean up stack
-	f.buildSteps = make([]func() error, 0)
+	f.buildSteps = make([]buildStep, 0)
 
 	// Make copy of dependencies since its attributes are public
 	d := f.dependencies
@@ -90,9 +105,23 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 	return f
 }
 
-func (f *Factory) WithExecutableBuilder(ctx context.Context, image string) *Factory {
-	f.buildSteps = append(f.buildSteps, func() error {
-		b, err := executables.NewExecutableBuilder(ctx, image)
+func (f *Factory) WithExecutableImage(image string) *Factory {
+	f.executablesImage = image
+	return f
+}
+
+func (f *Factory) WithExecutableMountDirs(mountDirs ...string) *Factory {
+	f.executablesMountDirs = mountDirs
+	return f
+}
+
+func (f *Factory) WithExecutableBuilder() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.executableBuilder != nil {
+			return nil
+		}
+
+		b, err := executables.NewExecutableBuilder(ctx, f.executablesImage, f.executablesMountDirs...)
 		if err != nil {
 			return err
 		}
@@ -107,7 +136,7 @@ func (f *Factory) WithExecutableBuilder(ctx context.Context, image string) *Fact
 func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool) *Factory {
 	f.WithProviderFactory()
 
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Provider != nil {
 			return nil
 		}
@@ -127,7 +156,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 func (f *Factory) WithProviderFactory() *Factory {
 	f.WithDocker().WithKubectl().WithGovc().WithCmk().WithWriter().WithCAPIClusterResourceSetManager()
 
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.providerFactory != nil {
 			return nil
 		}
@@ -150,7 +179,9 @@ func (f *Factory) WithProviderFactory() *Factory {
 }
 
 func (f *Factory) WithClusterAwsCli() *Factory {
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.WithExecutableBuilder()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ClusterAwsCli != nil {
 			return nil
 		}
@@ -163,7 +194,9 @@ func (f *Factory) WithClusterAwsCli() *Factory {
 }
 
 func (f *Factory) WithDocker() *Factory {
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.WithExecutableBuilder()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.DockerClient != nil {
 			return nil
 		}
@@ -176,7 +209,9 @@ func (f *Factory) WithDocker() *Factory {
 }
 
 func (f *Factory) WithKubectl() *Factory {
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.WithExecutableBuilder()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Kubectl != nil {
 			return nil
 		}
@@ -189,9 +224,9 @@ func (f *Factory) WithKubectl() *Factory {
 }
 
 func (f *Factory) WithGovc() *Factory {
-	f.WithWriter()
+	f.WithExecutableBuilder().WithWriter()
 
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Govc != nil {
 			return nil
 		}
@@ -219,7 +254,7 @@ func (f *Factory) WithCmk() *Factory {
 }
 
 func (f *Factory) WithWriter() *Factory {
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Writer != nil {
 			return nil
 		}
@@ -237,9 +272,9 @@ func (f *Factory) WithWriter() *Factory {
 }
 
 func (f *Factory) WithKind() *Factory {
-	f.WithWriter()
+	f.WithExecutableBuilder().WithWriter()
 
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Kind != nil {
 			return nil
 		}
@@ -252,9 +287,9 @@ func (f *Factory) WithKind() *Factory {
 }
 
 func (f *Factory) WithClusterctl() *Factory {
-	f.WithWriter()
+	f.WithExecutableBuilder().WithWriter()
 
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Clusterctl != nil {
 			return nil
 		}
@@ -267,7 +302,9 @@ func (f *Factory) WithClusterctl() *Factory {
 }
 
 func (f *Factory) WithFlux() *Factory {
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.WithExecutableBuilder()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Flux != nil {
 			return nil
 		}
@@ -280,7 +317,9 @@ func (f *Factory) WithFlux() *Factory {
 }
 
 func (f *Factory) WithTroubleshoot() *Factory {
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.WithExecutableBuilder()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Troubleshoot != nil {
 			return nil
 		}
@@ -292,13 +331,16 @@ func (f *Factory) WithTroubleshoot() *Factory {
 	return f
 }
 
-func (f *Factory) WithNetworking() *Factory {
-	f.buildSteps = append(f.buildSteps, func() error {
+func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Networking != nil {
 			return nil
 		}
-
-		f.dependencies.Networking = networking.NewCilium()
+		if clusterConfig.Spec.ClusterNetwork.CNI == v1alpha1.Kindnetd {
+			f.dependencies.Networking = networking.NewKindnetd()
+		} else {
+			f.dependencies.Networking = networking.NewCilium()
+		}
 		return nil
 	})
 
@@ -306,7 +348,7 @@ func (f *Factory) WithNetworking() *Factory {
 }
 
 func (f *Factory) WithAwsIamAuth() *Factory {
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.AwsIamAuth != nil {
 			return nil
 		}
@@ -326,7 +368,7 @@ type bootstrapperClient struct {
 func (f *Factory) WithBootstrapper() *Factory {
 	f.WithKind().WithKubectl()
 
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Bootstrapper != nil {
 			return nil
 		}
@@ -343,10 +385,10 @@ type clusterManagerClient struct {
 	*executables.Kubectl
 }
 
-func (f *Factory) WithClusterManager() *Factory {
-	f.WithClusterctl().WithKubectl().WithNetworking().WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth()
+func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
+	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth()
 
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ClusterManager != nil {
 			return nil
 		}
@@ -370,7 +412,7 @@ func (f *Factory) WithClusterManager() *Factory {
 func (f *Factory) WithFluxAddonClient(ctx context.Context, clusterConfig *v1alpha1.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) *Factory {
 	f.WithWriter().WithFlux().WithKubectl()
 
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.FluxAddonClient != nil {
 			return nil
 		}
@@ -396,7 +438,7 @@ func (f *Factory) WithFluxAddonClient(ctx context.Context, clusterConfig *v1alph
 
 func (f *Factory) WithDiagnosticBundleFactory() *Factory {
 	f.WithWriter().WithTroubleshoot().WithCollectorFactory().WithAnalyzerFactory().WithKubectl()
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.DignosticCollectorFactory != nil {
 			return nil
 		}
@@ -417,7 +459,7 @@ func (f *Factory) WithDiagnosticBundleFactory() *Factory {
 }
 
 func (f *Factory) WithAnalyzerFactory() *Factory {
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.AnalyzerFactory != nil {
 			return nil
 		}
@@ -435,7 +477,7 @@ func (f *Factory) WithDiagnosticCollectorImage(diagnosticCollectorImage string) 
 }
 
 func (f *Factory) WithCollectorFactory() *Factory {
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.CollectorFactory != nil {
 			return nil
 		}
@@ -455,7 +497,7 @@ func (f *Factory) WithCAPIManager() *Factory {
 	f.WithClusterctl()
 	f.WithKubectl()
 
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.CAPIManager != nil {
 			return nil
 		}
@@ -470,7 +512,7 @@ func (f *Factory) WithCAPIManager() *Factory {
 func (f *Factory) WithCAPIClusterResourceSetManager() *Factory {
 	f.WithKubectl()
 
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ResourceSetManager != nil {
 			return nil
 		}

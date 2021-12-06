@@ -4,7 +4,7 @@ env:
   variables:
     INTEGRATION_TEST_MAX_EC2_COUNT: 60
     T_VSPHERE_CIDR: "198.18.128.0/17"
-    T_VSPHERE_PRIVATE_NETWORK_CIDR: "10.1.128.0/17"
+    T_VSPHERE_PRIVATE_NETWORK_CIDR: "197.18.128.0/17"
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
     EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
@@ -71,9 +71,11 @@ phases:
     - >
       ./cmd/integration_test/build/script/upload_artifacts.sh
       $ARTIFACTS_BUCKET
+      $CODEBUILD_SRC_DIR
       "eks-a-cli"
       $CODEBUILD_BUILD_NUMBER
       $GIT_HASH
+      false
     - >
       ./bin/test e2e cleanup vsphere
       -n i-

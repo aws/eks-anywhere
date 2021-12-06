@@ -2,6 +2,8 @@ package e2e
 
 import (
 	"fmt"
+	"os"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -84,12 +86,12 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 }
 
 type instanceRunConf struct {
-	amiId, instanceProfileName, storageBucket, jobId, parentJobId, subnetId, regex, instanceId string
-	bundlesOverride                                                                            bool
+	amiId, instanceProfileName, storageBucket, jobId, parentJobId, subnetId, regex, instanceId, controlPlaneIP string
+	bundlesOverride                                                                                            bool
 }
 
 func RunTests(conf instanceRunConf) (testInstanceID, commandId string, err error) {
-	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.jobId, conf.subnetId, conf.bundlesOverride)
+	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.jobId, conf.subnetId, conf.controlPlaneIP, conf.bundlesOverride)
 	if err != nil {
 		return "", "", err
 	}
@@ -157,11 +159,21 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 		testPerInstance = 1
 	}
 
+	vsphereTestsRe := regexp.MustCompile(vsphereRegex)
+	privateNetworkTestsRe := regexp.MustCompile(`^.*(Proxy|RegistryMirror).*$`)
+
 	runConfs := make([]instanceRunConf, 0, conf.MaxInstances)
+	ipman := newE2EIPManager(os.Getenv(cidrVar), os.Getenv(privateNetworkCidrVar))
 
 	testsInCurrentInstance := make([]string, 0, testPerInstance)
 	for _, testName := range testsList {
 		testsInCurrentInstance = append(testsInCurrentInstance, testName)
+		ip := ""
+		if privateNetworkTestsRe.MatchString(testName) {
+			ip = ipman.getPrivateIP()
+		} else if vsphereTestsRe.MatchString(testName) {
+			ip = ipman.getIP()
+		}
 		if len(testsInCurrentInstance) == testPerInstance {
 			runConfs = append(runConfs, instanceRunConf{
 				amiId:               conf.AmiId,
@@ -172,6 +184,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 				subnetId:            conf.SubnetId,
 				regex:               strings.Join(testsInCurrentInstance, "|"),
 				bundlesOverride:     conf.BundlesOverride,
+				controlPlaneIP:      ip,
 			})
 
 			testsInCurrentInstance = make([]string, 0, testPerInstance)

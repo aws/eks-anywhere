@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/retrier"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -27,7 +28,10 @@ import (
 const (
 	defaultClusterConfigFile         = "cluster.yaml"
 	defaultBundleReleaseManifestFile = "bin/local-bundle-release.yaml"
+	defaultEksaBinaryLocation        = "eksctl anywhere"
 	defaultClusterName               = "eksa-test"
+	eksctlVersionEnvVar              = "EKSCTL_VERSION"
+	eksctlVersionEnvVarDummyVal      = "ham sandwich"
 	ClusterNameVar                   = "T_CLUSTER_NAME"
 	JobIdVar                         = "T_JOB_ID"
 	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
@@ -52,6 +56,7 @@ type ClusterE2ETest struct {
 	GitOpsConfig          *v1alpha1.GitOpsConfig
 	ProxyConfig           *v1alpha1.ProxyConfiguration
 	AWSIamConfig          *v1alpha1.AWSIamConfig
+	eksaBinaryLocation    string
 }
 
 type ClusterE2ETestOpt func(e *ClusterE2ETest)
@@ -64,6 +69,7 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 		ClusterName:           getClusterName(t),
 		clusterFillers:        make([]api.ClusterFiller, 0),
 		KubectlClient:         buildKubectl(t),
+		eksaBinaryLocation:    defaultEksaBinaryLocation,
 	}
 
 	for _, opt := range opts {
@@ -87,6 +93,48 @@ func WithClusterConfigLocationOverride(path string) ClusterE2ETestOpt {
 	}
 }
 
+func WithEksaVersion(version *semver.Version) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		eksaBinaryLocation, err := GetReleaseBinaryFromVersion(version)
+		if err != nil {
+			e.T.Fatal(err)
+		}
+		e.eksaBinaryLocation = eksaBinaryLocation
+		err = setEksctlVersionEnvVar()
+		if err != nil {
+			e.T.Fatal(err)
+		}
+	}
+}
+
+func WithLatestMinorReleaseFromMain() ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		eksaBinaryLocation, err := GetLatestMinorReleaseBinaryFromMain()
+		if err != nil {
+			e.T.Fatal(err)
+		}
+		e.eksaBinaryLocation = eksaBinaryLocation
+		err = setEksctlVersionEnvVar()
+		if err != nil {
+			e.T.Fatal(err)
+		}
+	}
+}
+
+func WithLatestMinorReleaseFromVersion(version *semver.Version) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		eksaBinaryLocation, err := GetLatestMinorReleaseBinaryFromVersion(version)
+		if err != nil {
+			e.T.Fatal(err)
+		}
+		e.eksaBinaryLocation = eksaBinaryLocation
+		err = setEksctlVersionEnvVar()
+		if err != nil {
+			e.T.Fatal(err)
+		}
+	}
+}
+
 type Provider interface {
 	Name() string
 	CustomizeProviderConfig(file string) []byte
@@ -94,8 +142,9 @@ type Provider interface {
 	Setup()
 }
 
-func (e *ClusterE2ETest) GenerateClusterConfig() {
-	e.RunEKSA("generate", "clusterconfig", e.ClusterName, "-p", e.Provider.Name(), ">", e.ClusterConfigLocation)
+func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
+	generateClusterConfigArgs := []string{"generate", "clusterconfig", e.ClusterName, "-p", e.Provider.Name(), ">", e.ClusterConfigLocation}
+	e.RunEKSA(generateClusterConfigArgs, opts...)
 
 	clusterFillersFromProvider := e.Provider.ClusterConfigFillers()
 	clusterConfigFillers := make([]api.ClusterFiller, 0, len(e.clusterFillers)+len(clusterFillersFromProvider))
@@ -109,26 +158,23 @@ func (e *ClusterE2ETest) GenerateClusterConfig() {
 	})
 }
 
-func (e *ClusterE2ETest) ImportImages() {
-	e.RunEKSA("import-images", "-f", e.ClusterConfigLocation)
+func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
+	importImagesArgs := []string{"import-images", "-f", e.ClusterConfigLocation}
+	e.RunEKSA(importImagesArgs, opts...)
 }
 
-func (e *ClusterE2ETest) CreateCluster() {
-	e.createCluster()
+func (e *ClusterE2ETest) CreateCluster(opts ...CommandOpt) {
+	e.createCluster(opts...)
 }
 
-func (e *ClusterE2ETest) createCluster(opts ...commandOpt) {
+func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	e.T.Logf("Creating cluster %s", e.ClusterName)
 	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "4"}
 	if getBundlesOverride() == "true" {
 		createClusterArgs = append(createClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
 	}
 
-	for _, o := range opts {
-		o(&createClusterArgs)
-	}
-
-	e.RunEKSA(createClusterArgs...)
+	e.RunEKSA(createClusterArgs, opts...)
 	e.cleanup(func() {
 		os.RemoveAll(e.ClusterName)
 	})
@@ -146,7 +192,7 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 		return nil
 	})
 	if err != nil {
-		e.T.Fatalf("%v", err)
+		e.T.Fatal(err)
 	}
 	e.T.Log("Validating cluster node version")
 	err = retrier.Retry(180, 1*time.Second, func() error {
@@ -166,12 +212,12 @@ func WithClusterUpgrade(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	}
 }
 
-func (e *ClusterE2ETest) UpgradeCluster(opts ...ClusterE2ETestOpt) {
-	e.upgradeCluster(nil, opts...)
+func (e *ClusterE2ETest) UpgradeCluster(clusterOpts []ClusterE2ETestOpt, commandOpts ...CommandOpt) {
+	e.upgradeCluster(clusterOpts, commandOpts...)
 }
 
-func (e *ClusterE2ETest) upgradeCluster(commandOpts []commandOpt, opts ...ClusterE2ETestOpt) {
-	for _, opt := range opts {
+func (e *ClusterE2ETest) upgradeCluster(clusterOpts []ClusterE2ETestOpt, commandOpts ...CommandOpt) {
+	for _, opt := range clusterOpts {
 		opt(e)
 	}
 	e.buildClusterConfigFile()
@@ -181,11 +227,7 @@ func (e *ClusterE2ETest) upgradeCluster(commandOpts []commandOpt, opts ...Cluste
 		upgradeClusterArgs = append(upgradeClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
 	}
 
-	for _, o := range commandOpts {
-		o(&upgradeClusterArgs)
-	}
-
-	e.RunEKSA(upgradeClusterArgs...)
+	e.RunEKSA(upgradeClusterArgs, commandOpts...)
 }
 
 func (e *ClusterE2ETest) buildClusterConfigFile() {
@@ -228,17 +270,16 @@ func (e *ClusterE2ETest) buildClusterConfigFile() {
 	e.ClusterConfigLocation = writtenFile
 }
 
-func (e *ClusterE2ETest) DeleteCluster() {
-	e.deleteCluster()
+func (e *ClusterE2ETest) DeleteCluster(opts ...CommandOpt) {
+	e.deleteCluster(opts...)
 }
 
-func (e *ClusterE2ETest) deleteCluster(opts ...commandOpt) {
+func (e *ClusterE2ETest) deleteCluster(opts ...CommandOpt) {
 	deleteClusterArgs := []string{"delete", "cluster", e.ClusterName, "-v", "4"}
-	for _, o := range opts {
-		o(&deleteClusterArgs)
+	if getBundlesOverride() == "true" {
+		deleteClusterArgs = append(deleteClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
 	}
-
-	e.RunEKSA(deleteClusterArgs...)
+	e.RunEKSA(deleteClusterArgs, opts...)
 }
 
 func (e *ClusterE2ETest) Run(name string, args ...string) {
@@ -265,9 +306,15 @@ func (e *ClusterE2ETest) Run(name string, args ...string) {
 	}
 }
 
-func (e *ClusterE2ETest) RunEKSA(args ...string) {
-	command := append([]string{"anywhere"}, args...)
-	e.Run("eksctl", command...)
+func (e *ClusterE2ETest) RunEKSA(args []string, opts ...CommandOpt) {
+	binaryPath := e.eksaBinaryLocation
+	for _, o := range opts {
+		err := o(&binaryPath, &args)
+		if err != nil {
+			e.T.Fatalf("Error executing EKS-A at path %s with args %s: %v", binaryPath, args, err)
+		}
+	}
+	e.Run(binaryPath, args...)
 }
 
 func (e *ClusterE2ETest) StopIfFailed() {
@@ -361,4 +408,15 @@ func getClusterName(t *testing.T) string {
 
 func getBundlesOverride() string {
 	return os.Getenv(BundlesOverrideVar)
+}
+
+func setEksctlVersionEnvVar() error {
+	eksctlVersionEnv := os.Getenv(eksctlVersionEnvVar)
+	if eksctlVersionEnv == "" {
+		err := os.Setenv(eksctlVersionEnvVar, eksctlVersionEnvVarDummyVal)
+		if err != nil {
+			return fmt.Errorf("couldn't set eksctl version env var %s to value %s", eksctlVersionEnvVar, eksctlVersionEnvVarDummyVal)
+		}
+	}
+	return nil
 }

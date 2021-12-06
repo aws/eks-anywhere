@@ -20,12 +20,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+const vsphereCloudProviderProjectPath = "projects/kubernetes/cloud-provider-vsphere"
+
 // GetVsphereCloudProviderAssets returns the eks-a artifacts for vsphere cloud provider
 func (r *ReleaseConfig) GetVsphereCloudProviderAssets(eksDReleaseChannel string) ([]Artifact, error) {
-	// Get Git tag for the project
-	projectSource := "projects/kubernetes/cloud-provider-vsphere"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, eksDReleaseChannel, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
+	gitTagFolder := filepath.Join(vsphereCloudProviderProjectPath, eksDReleaseChannel)
+	gitTag, err := r.readGitTag(gitTagFolder, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -35,17 +35,29 @@ func (r *ReleaseConfig) GetVsphereCloudProviderAssets(eksDReleaseChannel string)
 	tagOptions := map[string]string{
 		"gitTag":             gitTag,
 		"eksDReleaseChannel": eksDReleaseChannel,
+		"projectPath":        gitTagFolder,
+	}
+
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
 	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, repoName, tagOptions),
-		Arch:            []string{"amd64"},
-		OS:              "linux",
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       vsphereCloudProviderProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
-	artifact := Artifact{Image: imageArtifact}
-
-	return []Artifact{artifact}, nil
+	return artifacts, nil
 }

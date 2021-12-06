@@ -55,3 +55,11 @@ $REPO_ROOT/bin/test e2e run \
     -i ${INTEGRATION_TEST_INSTANCE_PROFILE} \
     -r ${TEST_REGEX} \
     --bundles-override=${BUNDLES_OVERRIDE}
+
+$REPO_ROOT/cmd/integration_test/build/script/upload_artifacts.sh \
+    "s3://artifacts-bucket" \
+    $REPO_ROOT \
+    "eks-a-cli" \
+    $PROW_JOB_ID \
+    $PULL_PULL_SHA \
+    true

@@ -2,8 +2,10 @@ package clusterapi
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
@@ -36,6 +38,30 @@ func AwsIamAuthExtraArgs(awsiam *v1alpha1.AWSIamConfig) ExtraArgs {
 	}
 	args.AddIfNotEmpty("authentication-token-webhook-config-file", "/etc/kubernetes/aws-iam-authenticator/kubeconfig.yaml")
 
+	return args
+}
+
+func PodIAMAuthExtraArgs(podIAMConfig *v1alpha1.PodIAMConfig) ExtraArgs {
+	if podIAMConfig == nil {
+		return nil
+	}
+	args := ExtraArgs{}
+	args.AddIfNotEmpty("service-account-issuer", podIAMConfig.ServiceAccountIssuer)
+	return args
+}
+
+// We don't need to add these once the Kubernetes components default to using the secure cipher suites
+func SecureTlsCipherSuitesExtraArgs() ExtraArgs {
+	args := ExtraArgs{}
+	cipherSuitesString := strings.Join(crypto.SecureCipherSuiteNames(), ",")
+	args.AddIfNotEmpty("tls-cipher-suites", cipherSuitesString)
+	return args
+}
+
+func SecureEtcdTlsCipherSuitesExtraArgs() ExtraArgs {
+	args := ExtraArgs{}
+	cipherSuitesString := strings.Join(crypto.SecureCipherSuiteNames(), ",")
+	args.AddIfNotEmpty("cipher-suites", cipherSuitesString)
 	return args
 }
 

@@ -1,7 +1,9 @@
 package e2e
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -32,11 +34,13 @@ type E2ESession struct {
 	jobId               string
 	subnetId            string
 	instanceId          string
+	controlPlaneIP      string
 	testEnvVars         map[string]string
 	bundlesOverride     bool
+	requiredFiles       []string
 }
 
-func newSession(amiId, instanceProfileName, storageBucket, jobId, subnetId string, bundlesOverride bool) (*E2ESession, error) {
+func newSession(amiId, instanceProfileName, storageBucket, jobId, subnetId, controlPlaneIP string, bundlesOverride bool) (*E2ESession, error) {
 	session, err := session.NewSession()
 	if err != nil {
 		return nil, fmt.Errorf("error creating session: %v", err)
@@ -49,8 +53,10 @@ func newSession(amiId, instanceProfileName, storageBucket, jobId, subnetId strin
 		storageBucket:       storageBucket,
 		jobId:               jobId,
 		subnetId:            subnetId,
+		controlPlaneIP:      controlPlaneIP,
 		testEnvVars:         make(map[string]string),
 		bundlesOverride:     bundlesOverride,
+		requiredFiles:       requiredFiles,
 	}
 
 	return e, nil
@@ -140,9 +146,17 @@ func (e *E2ESession) uploadRequiredFile(file string) error {
 
 func (e *E2ESession) uploadRequiredFiles() error {
 	if e.bundlesOverride {
-		requiredFiles = append(requiredFiles, bundlesReleaseManifestFile, eksAComponentsManifestFile)
+		e.requiredFiles = append(e.requiredFiles, bundlesReleaseManifestFile)
+		if _, err := os.Stat(fmt.Sprintf("bin/%s", eksAComponentsManifestFile)); err == nil {
+			e.requiredFiles = append(e.requiredFiles, eksAComponentsManifestFile)
+		} else if errors.Is(err, os.ErrNotExist) {
+			logger.V(0).Info("WARNING: no components manifest override found, but bundle override is present. " +
+				"If the EKS-A components have changed be sure to provide a components override!")
+		} else {
+			return err
+		}
 	}
-	for _, file := range requiredFiles {
+	for _, file := range e.requiredFiles {
 		if file != "eksctl" {
 			err := e.uploadRequiredFile(file)
 			if err != nil {
@@ -204,16 +218,12 @@ func (e *E2ESession) generatedArtifactsBucketPath() string {
 }
 
 func (e *E2ESession) downloadRequiredFilesInInstance() error {
-	if e.bundlesOverride {
-		requiredFiles = append(requiredFiles, bundlesReleaseManifestFile, eksAComponentsManifestFile)
-	}
-	for _, file := range requiredFiles {
+	for _, file := range e.requiredFiles {
 		err := e.downloadRequiredFileInInstance(file)
 		if err != nil {
 			return err
 		}
 	}
-
 	return nil
 }
 

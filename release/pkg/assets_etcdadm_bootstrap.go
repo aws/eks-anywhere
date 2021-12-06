@@ -23,9 +23,11 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const etcdadmBootstrapProviderProjectPath = "projects/mrajashree/etcdadm-bootstrap-provider"
+
 // GetEtcdadmBootstrapAssets returns the eks-a artifacts for etcdadm bootstrap provider
 func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
-	gitTag, err := r.getEtcdadmBootstrapProviderGitTag()
+	gitTag, err := r.readGitTag(etcdadmBootstrapProviderProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -33,18 +35,30 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
 	name := "etcdadm-bootstrap-provider"
 	repoName := fmt.Sprintf("mrajashree/%s", name)
 	tagOptions := map[string]string{
-		"gitTag": gitTag,
+		"gitTag":      gitTag,
+		"projectPath": etcdadmBootstrapProviderProjectPath,
 	}
-	artifacts := []Artifact{}
+
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, repoName, tagOptions),
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-		GitTag:          gitTag,
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       etcdadmBootstrapProviderProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
 	var imageTagOverrides []ImageTagOverride
 
@@ -59,8 +73,6 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
 	}
 	imageTagOverrides = append(imageTagOverrides, imageTagOverride, kubeRbacProxyImageTagOverride)
 
-	artifacts = append(artifacts, Artifact{Image: imageArtifact})
-
 	manifestList := []string{
 		"bootstrap-components.yaml",
 		"metadata.yaml",
@@ -69,10 +81,10 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
 	for _, manifest := range manifestList {
 		var sourceS3Prefix string
 		var releaseS3Path string
-		latestPath := r.getLatestUploadDestination()
+		latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
-			sourceS3Prefix = fmt.Sprintf("projects/mrajashree/etcdadm-bootstrap-provider/%s/manifests/bootstrap-etcdadm-bootstrap/%s", latestPath, gitTag)
+			sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/bootstrap-etcdadm-bootstrap/%s", etcdadmBootstrapProviderProjectPath, latestPath, gitTag)
 		} else {
 			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/etcdadm-bootstrap-provider/manifests/bootstrap-etcdadm-bootstrap/%s", r.BundleNumber, gitTag)
 		}
@@ -96,6 +108,9 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
 			ReleaseS3Path:     releaseS3Path,
 			ReleaseCdnURI:     cdnURI,
 			ImageTagOverrides: imageTagOverrides,
+			GitTag:            gitTag,
+			ProjectPath:       etcdadmBootstrapProviderProjectPath,
+			SourcedFromBranch: sourcedFromBranch,
 		}
 		artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 	}
@@ -104,30 +119,29 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
 }
 
 func (r *ReleaseConfig) GetEtcdadmBootstrapBundle(imageDigests map[string]string) (anywherev1alpha1.EtcdadmBootstrapBundle, error) {
-	etcdadmBootstrapBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"etcdadm-bootstrap-provider": r.GetEtcdadmBootstrapAssets,
-		"kube-proxy":                 r.GetKubeRbacProxyAssets,
+	etcdadmBootstrapBundleArtifacts := map[string][]Artifact{
+		"etcdadm-bootstrap-provider": r.BundleArtifactsTable["etcdadm-bootstrap-provider"],
+		"kube-rbac-proxy":            r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
-	version, err := r.GenerateComponentBundleVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/mrajashree/etcdadm-bootstrap-provider")),
-	)
-	if err != nil {
-		return anywherev1alpha1.EtcdadmBootstrapBundle{}, errors.Wrapf(err, "Error getting version for etcdadm-bootstrap-provider")
-	}
+	var version string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 
-	for componentName, artifactFunc := range etcdadmBootstrapBundleArtifactsFuncs {
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.EtcdadmBootstrapBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
-
+	for componentName, artifacts := range etcdadmBootstrapBundleArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
 
+				if componentName == "etcdadm-bootstrap-provider" {
+					componentVersion, err := BuildComponentVersion(
+						newVersionerWithGITTAG(r.BuildRepoSource, etcdadmBootstrapProviderProjectPath, imageArtifact.SourcedFromBranch, r),
+					)
+					if err != nil {
+						return anywherev1alpha1.EtcdadmBootstrapBundle{}, errors.Wrapf(err, "Error getting version for etcdadm-bootstrap-provider")
+					}
+					version = componentVersion
+				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
 					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
@@ -159,15 +173,4 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapBundle(imageDigests map[string]string
 	}
 
 	return bundle, nil
-}
-
-func (r *ReleaseConfig) getEtcdadmBootstrapProviderGitTag() (string, error) {
-	projectSource := "projects/mrajashree/etcdadm-bootstrap-provider"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-
-	return gitTag, nil
 }

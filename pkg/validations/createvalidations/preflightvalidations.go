@@ -14,7 +14,14 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 		Name:           u.Opts.WorkloadCluster.Name,
 		KubeconfigFile: u.Opts.ManagementCluster.KubeconfigFile,
 	}
-	var createValidations []validations.ValidationResult
+
+	createValidations := []validations.ValidationResult{
+		validations.ValidationResult{
+			Name:        "validate taints support",
+			Remediation: "",
+			Err:         ValidateTaintsSupport(ctx, u.Opts.Spec),
+		},
+	}
 
 	if u.Opts.Spec.IsManaged() {
 		createValidations = append(

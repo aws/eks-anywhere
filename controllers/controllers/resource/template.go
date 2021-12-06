@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	etcdv1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
@@ -89,7 +89,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 			return nil, err
 		}
 		if updateEtcdTemplate {
-			etcd.SetAnnotations(map[string]string{etcdv1alpha3.UpgradeInProgressAnnotation: "true"})
+			etcd.SetAnnotations(map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"})
 			if err := r.ApplyPatch(ctx, etcd, false); err != nil {
 				return nil, err
 			}
