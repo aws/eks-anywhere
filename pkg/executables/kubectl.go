@@ -32,21 +32,111 @@ const (
 )
 
 var (
-	capiClustersResourceType          = fmt.Sprintf("clusters.%s", v1alpha3.GroupVersion.Group)
-	eksaClusterResourceType           = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
-	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaAwsResourceType               = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaGitOpsResourceType            = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaOIDCResourceType              = fmt.Sprintf("oidcconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaAwsIamResourceType            = fmt.Sprintf("awsiamconfigs.%s", v1alpha1.GroupVersion.Group)
-	etcdadmClustersResourceType       = fmt.Sprintf("etcdadmclusters.%s", etcdv1alpha3.GroupVersion.Group)
-	bundlesResourceType               = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
-	clusterResourceSetResourceType    = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
+	capiClustersResourceType             = fmt.Sprintf("clusters.%s", v1alpha3.GroupVersion.Group)
+	eksaClusterResourceType              = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
+	eksaVSphereDatacenterResourceType    = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaVSphereMachineResourceType       = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaCloudStackDeploymentResourceType = fmt.Sprintf("cloudstackdeploymentconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaCloudStackMachineResourceType    = fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaAwsResourceType                  = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaGitOpsResourceType               = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaOIDCResourceType                 = fmt.Sprintf("oidcconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaAwsIamResourceType               = fmt.Sprintf("awsiamconfigs.%s", v1alpha1.GroupVersion.Group)
+	etcdadmClustersResourceType          = fmt.Sprintf("etcdadmclusters.%s", etcdv1alpha3.GroupVersion.Group)
+	bundlesResourceType                  = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
+	clusterResourceSetResourceType       = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
 )
 
 type Kubectl struct {
 	executable Executable
+}
+
+func (k *Kubectl) GetEksaCloudStackDeploymentConfig(ctx context.Context, cloudstackDeploymentConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackDeploymentConfig, error) {
+	params := []string{"get", eksaCloudStackDeploymentResourceType, cloudstackDeploymentConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting eksa cloudstack cluster %v", err)
+	}
+
+	response := &v1alpha1.CloudStackDeploymentConfig{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing get eksa cloudstack cluster response: %v", err)
+	}
+
+	return response, nil
+}
+
+func (k *Kubectl) GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
+	params := []string{"get", eksaCloudStackMachineResourceType, cloudstackMachineConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting eksa vsphere cluster %v", err)
+	}
+
+	response := &v1alpha1.CloudStackMachineConfig{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing get eksa vsphere cluster response: %v", err)
+	}
+
+	return response, nil
+}
+
+func (k *Kubectl) SearchCloudStackMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackMachineConfig, error) {
+	params := []string{
+		"get", eksaCloudStackMachineResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error searching eksa CloudStackMachineConfigResponse: %v", err)
+	}
+
+	response := &CloudStackMachineConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing CloudStackMachineConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
+func (k *Kubectl) SearchCloudStackDeploymentConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackDeploymentConfig, error) {
+	params := []string{
+		"get", eksaCloudStackDeploymentResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	stdOut, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error searching eksa CloudStackDeploymentConfigResponse: %v", err)
+	}
+
+	response := &CloudStackDeploymentConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing CloudStackDeploymentConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
+func (k *Kubectl) DeleteEksaCloudStackDeploymentConfig(ctx context.Context, cloudstackDeploymentConfigName string, kubeconfigFile string, namespace string) error {
+	params := []string{"delete", eksaCloudStackDeploymentResourceType, cloudstackDeploymentConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error deleting cloudstackdeploymentconfig cluster %s apply: %v", cloudstackDeploymentConfigName, err)
+	}
+	return nil
+}
+
+func (k *Kubectl) DeleteEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) error {
+	params := []string{"delete", eksaCloudStackMachineResourceType, cloudstackMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+	_, err := k.executable.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error deleting cloudstackmachineconfig cluster %s apply: %v", cloudstackMachineConfigName, err)
+	}
+	return nil
 }
 
 type VersionResponse struct {
@@ -458,12 +548,20 @@ type VSphereDatacenterConfigResponse struct {
 	Items []*v1alpha1.VSphereDatacenterConfig `json:"items,omitempty"`
 }
 
+type CloudStackDeploymentConfigResponse struct {
+	Items []*v1alpha1.CloudStackDeploymentConfig `json:"items,omitempty"`
+}
+
 type IdentityProviderConfigResponse struct {
 	Items []*v1alpha1.Ref `json:"items,omitempty"`
 }
 
 type VSphereMachineConfigResponse struct {
 	Items []*v1alpha1.VSphereMachineConfig `json:"items,omitempty"`
+}
+
+type CloudStackMachineConfigResponse struct {
+	Items []*v1alpha1.CloudStackMachineConfig `json:"items,omitempty"`
 }
 
 func (k *Kubectl) ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error {

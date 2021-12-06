@@ -32,6 +32,7 @@ type CloudStackDeploymentConfigSpec struct {
 	Account               string `json:"account,omitempty"`
 	Network               string `json:"network"`
 	ManagementApiEndpoint string `json:"managementApiEndpoint"`
+	Thumbprint            string `json:"thumbprint,omitempty"`
 	Insecure              bool   `json:"insecure"`
 }
 
