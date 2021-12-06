@@ -19,7 +19,8 @@ As a Kubernetes administrator I want to:
 
 * Add multiple worker node group configurations in the `workerNodeGroupConfigurations` array in cluster specs.
 * Have the ability to point each worker node group configuration to a different machine configuration.
-* Specify separate node counts and taints information for each node group.  
+* Have the ability to point multiple worker node groups to same machine config.
+* Specify separate node counts and taints information for each node group.
 
 ### Statement of Scope
 
@@ -29,39 +30,18 @@ As a Kubernetes administrator I want to:
 
 ## Overview of Solution
 
-With this feature, a user can create a cluster config file with multiple worker node group configurations. Upon running eks-anywhere cli, these info will be fetched and be added in the capi specification file. In the cape spec, configuration details will be appended for each worker node groups one after another. Examples of each of these two files are added in the next section.
+With this feature, a user can create a cluster config file with multiple worker node group configurations. Upon running eks-anywhere cli, these info will be fetched and be added in the CAPI specification file. In the CAPI spec, configuration details will be appended for each worker node groups one after another. Examples of each of these two files are added in the next section.
  
 ## Solution Details
 
-With this feature, cluster spec file will look like below.
+With this feature, worker node specific parts of the cluster spec file will look like below.
 
 ```
-apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: Cluster
-metadata:
-  creationTimestamp: null
-  name: eksa-test
-spec:
-  clusterNetwork:
-    cni: cilium
-    pods:
-    ...
-  controlPlaneConfiguration:
-    count: 3
-    ...
-    machineGroupRef:
-      kind: VSphereMachineConfig
-      name: eksa-test-cp
-      ...
-  datacenterRef:
-    kind: VSphereDatacenterConfig
-    name: eksa-test
-  kubernetesVersion: "1.20"
   workerNodeGroupConfigurations:
   - count: 3
     machineGroupRef:
       kind: VSphereMachineConfig
-      name: eksa-test-wl-1
+      name: eksa-test-1
       Taints:
       - key: Key2
         value: value2
@@ -69,253 +49,44 @@ spec:
   - count: 3
     machineGroupRef:
       kind: VSphereMachineConfig
-      name: eksa-test-wl-2
+      name: eksa-test-2
       Taints:
       - key: Key3
         value: value3
         effect: PreferNoSchedule
 status: {}
-
----
-apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: VSphereDatacenterConfig
-metadata:
-  creationTimestamp: null
-  name: eksa-test
-spec:
-....
-status: {}
-
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereMachineConfig
 metadata:
   creationTimestamp: null
-  name: eksa-test-cp
+  name: eksa-test-1
 spec:
 ...
 status: {}
 
+---
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereMachineConfig
 metadata:
   creationTimestamp: null
-  name: eksa-test-wl-1
+  name: eksa-test-2
 spec:
 ...
 status: {}
-
----
-
----
-apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: VSphereMachineConfig
-metadata:
-  creationTimestamp: null
-  name: eksa-test-wl-2
-spec:
-...
-status: {}
-
----
 
 ---
 ```
 
-Once it is processed through cli, the generated capi spec file for worker nodes should look like below.
+Once it is processed through cli, the generated CAPI spec file should have the worker nodes specific configurations like below.
 
 ```
-apiVersion: cluster.x-k8s.io/v1alpha3
-kind: Cluster
-metadata:
-  labels:
-    cluster.x-k8s.io/cluster-name: eksa-test
-  name: eksa-test
-  namespace: eksa-system
-spec:
-  ...
-  controlPlaneRef:
-    apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
-    kind: KubeadmControlPlane
-    name: eksa-test
-  infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-    kind: VSphereCluster
-    name: eksa-test
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-kind: VSphereCluster
-metadata:
-  name: eksa-test
-  namespace: eksa-system
-spec:
-  cloudProviderConfiguration:
-  ...
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-kind: VSphereMachineTemplate
-metadata:
-  name: eksa-test-control-plane-template-1638469395664
-  namespace: eksa-system
-spec:
-  template:
-    spec:
-    ...
----
-apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
-kind: KubeadmControlPlane
-metadata:
-  name: eksa-test
-  namespace: eksa-system
-spec:
-  infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-    kind: VSphereMachineTemplate
-    name: eksa-test-control-plane-template-1638469395664
-  kubeadmConfigSpec:
-    clusterConfiguration:
-    ...
-    initConfiguration:
-      nodeRegistration:
-        criSocket: /var/run/containerd/containerd.sock
-        kubeletExtraArgs:
-          cloud-provider: external
-          tls-cipher-suites: Something
-        name: '{{ ds.meta_data.hostname }}'
-        taints: 
-          - key: key1
-            value: val1
-            effect: PreferNoSchedule
-	  ....
-    joinConfiguration:
-      pause:
-        imageRepository: public.ecr.aws/eks-distro/kubernetes/pause
-        imageTag: v1.20.7-eks-1-20-8
-      bottlerocketBootstrap:
-        imageRepository: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap
-        imageTag: v1-20-8-eks-a-v0.0.0-dev-build.579
-      nodeRegistration:
-        criSocket: /var/run/containerd/containerd.sock
-        kubeletExtraArgs:
-          cloud-provider: external
-          tls-cipher-suites: Something
-        name: '{{ ds.meta_data.hostname }}'
-        taints: 
-          - key: key1
-            value: val1
-            effect: PreferNoSchedule
-	  ...
----
-apiVersion: addons.cluster.x-k8s.io/v1alpha3
-kind: ClusterResourceSet
-metadata:
-  labels:
-    cluster.x-k8s.io/cluster-name: eksa-test
-  name: eksa-test-crs-0
-  namespace: eksa-system
-spec:
-...
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: vsphere-csi-controller
-  namespace: eksa-system
-stringData:
-  data: |
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      name: vsphere-csi-controller
-      namespace: kube-system
-type: addons.cluster.x-k8s.io/resource-set
----
-apiVersion: v1
-data:
-...
-kind: ConfigMap
-metadata:
-  name: vsphere-csi-controller-role
-  namespace: eksa-system
----
-apiVersion: v1
-data:
-  data: |
-  ...
-kind: ConfigMap
-metadata:
-  name: vsphere-csi-controller-binding
-  namespace: eksa-system
----
-apiVersion: v1
-data:
-  data: |
-  ...
-kind: ConfigMap
-metadata:
-  name: csi.vsphere.vmware.com
-  namespace: eksa-system
----
-apiVersion: v1
-data:
-  data: |
-    apiVersion: apps/v1
-    kind: DaemonSet
-    metadata:
-      name: vsphere-csi-node
-      namespace: kube-system
-    spec:
-      selector:
-        matchLabels:
-          app: vsphere-csi-node
-      template:
-        metadata:
-          labels:
-            app: vsphere-csi-node
-            role: vsphere-csi
-        spec:
-	...
-kind: ConfigMap
-metadata:
-  name: vsphere-csi-node
-  namespace: eksa-system
----
-apiVersion: v1
-data:
-  data: |
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      name: vsphere-csi-controller
-      namespace: kube-system
-    spec:
-    ...
-kind: ConfigMap
-metadata:
-  name: vsphere-csi-controller
-  namespace: eksa-system
----
-apiVersion: v1
-data:
-  data: |
-    apiVersion: v1
-    data:
-      csi-migration: "false"
-    kind: ConfigMap
-    metadata:
-      name: internal-feature-states.csi.vsphere.vmware.com
-      namespace: kube-system
-kind: ConfigMap
-metadata:
-  name: internal-feature-states.csi.vsphere.vmware.com
-  namespace: eksa-system
-
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
 kind: KubeadmConfigTemplate
 metadata:
-  name: eksa-test-md-0
+  name: eksa-test-1-md-0
   namespace: eksa-system
 spec:
   template:
@@ -340,7 +111,7 @@ kind: MachineDeployment
 metadata:
   labels:
     cluster.x-k8s.io/cluster-name: eksa-test
-  name: eksa-test-md-0
+  name: eksa-test-1-md-0
   namespace: eksa-system
 spec:
   clusterName: eksa-test
@@ -356,7 +127,7 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
           kind: KubeadmConfigTemplate
-          name: eksa-test-md-0
+          name: eksa-test-1-md-0
       clusterName: eksa-test
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
@@ -377,7 +148,7 @@ spec:
 apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
 kind: KubeadmConfigTemplate
 metadata:
-  name: eksa-test-md-1
+  name: eksa-test-2-md-0
   namespace: eksa-system
 spec:
   template:
@@ -402,7 +173,7 @@ kind: MachineDeployment
 metadata:
   labels:
     cluster.x-k8s.io/cluster-name: eksa-test
-  name: eksa-test-md-1
+  name: eksa-test-2-md-0
   namespace: eksa-system
 spec:
   clusterName: eksa-test
@@ -418,7 +189,7 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
           kind: KubeadmConfigTemplate
-          name: eksa-test-md-1
+          name: eksa-test-2-md-0
       clusterName: eksa-test
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
@@ -438,21 +209,24 @@ spec:
 ---
 ```
 
-For each worker node groups, capi spec file will continue to have the following 3 kind fields.
+For each worker node groups, CAPI spec file will continue to have the following 3 kind fields.
 
 * KubeadmConfigTemplate
 * Machime deployment
 * VSphereMachineTemplate
 
-For each group, we will append these three fields corresponding to that group in the capi spec.
+For each group, we will append these three fields corresponding to that group in the CAPI spec.
 
-Right now, the cli assumes that there will be only one group and it treats worker node group configuration array as a collection of only one element. As a result, the controller just refers to the first element of this array in different places of the code. So we need to do the same operations in loops, which includes capi spec creation, cluster spec validation etc. Once a capi spec is created with this approach, the workload cluster will be created with multiple worker nodes.
+Right now, the cli assumes that there will be only one group and it treats worker node group configuration array as a collection of only one element. As a result, the controller just refers to the first element of this array in different places of the code. So we need to do the same operations in loops, which includes CAPI spec creation, cluster spec validation etc. Once a CAPI spec is created with this approach, the workload cluster will be created with multiple worker nodes.
+
+Also, it needs to be made sure that at the least one of the worker node groups does not have `NoExecute` taint. This validation will be done at the preflight validation stage.
 
 The examples in this design are for vsphere provider. But the same strategy applies for other providers as well.
 
 ## Testing
 
-To make sure, the implementation of this feature is correct, we need to add unit tests for each providers to make sure, the capi specs are generated properly.
+To make sure that the implementation of this feature is correct, we need to add unit tests for each providers to validate the correctness of generated CAPI specs.
+
 Also, we need to add e2e tests for each providers to test the following scenarios.
 
 * Cluster creation with one worker node group
