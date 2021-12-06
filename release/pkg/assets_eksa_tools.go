@@ -16,18 +16,17 @@ package pkg
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const eksAToolsProjectPath = "projects/aws/eks-anywhere-build-tooling"
+
 // GetEksAToolsAssets returns the eks-a artifacts for eks-a-tools image
 func (r *ReleaseConfig) GetEksAToolsAssets() ([]Artifact, error) {
-	projectSource := "projects/aws/eks-anywhere-build-tooling"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
+	gitTag, err := r.readGitTag(eksAToolsProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -48,41 +47,48 @@ func (r *ReleaseConfig) GetEksAToolsAssets() ([]Artifact, error) {
 	}
 
 	tagOptions := map[string]string{
-		"gitTag": gitTag,
+		"gitTag":      gitTag,
+		"projectPath": eksAToolsProjectPath,
 	}
+
+	sourceImageUri, err := r.GetSourceImageURI(name, sourceRepoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, releaseRepoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, sourceRepoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, releaseRepoName, tagOptions),
+		SourceImageURI:  sourceImageUri,
+		ReleaseImageURI: releaseImageUri,
 		Arch:            []string{"amd64"},
 		OS:              "linux",
+		GitTag:          gitTag,
+		ProjectPath:     eksAToolsProjectPath,
 	}
 
-	artifact := Artifact{Image: imageArtifact}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
-	return []Artifact{artifact}, nil
+	return artifacts, nil
 }
 
 func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev1alpha1.EksaBundle, error) {
-	eksABundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"eks-a-tools":           r.GetEksAToolsAssets,
-		"cluster-controller":    r.GetClusterControllerAssets,
-		"diagnostic-collector:": r.GetDiagnosticCollectorAssets,
+	eksABundleArtifacts := map[string][]Artifact{
+		"eks-a-tools":          r.BundleArtifactsTable["eks-a-tools"],
+		"cluster-controller":   r.BundleArtifactsTable["cluster-controller"],
+		"diagnostic-collector": r.BundleArtifactsTable["diagnostic-collector"],
 	}
-	components := SortArtifactsFuncMap(eksABundleArtifactsFuncs)
+	components := SortArtifactsFuncMap(eksABundleArtifacts)
 
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	bundleObjects := []string{}
 
 	for _, componentName := range components {
-		artifactFunc := eksABundleArtifactsFuncs[componentName]
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.EksaBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
-
-		for _, artifact := range artifacts {
+		for _, artifact := range eksABundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
 

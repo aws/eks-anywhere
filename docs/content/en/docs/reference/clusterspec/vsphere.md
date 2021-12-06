@@ -235,4 +235,4 @@ for your VMs in the EKS Anywhere cluster. Examples of resource pool values inclu
 * The wild card option `*/Resources` also often works.
 
 ### storagePolicyName (optional)
-The storage policy name associated with your vms.
+The storage policy name associated with your VMs.

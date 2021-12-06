@@ -9,13 +9,21 @@ BUNDLE_NUMBER?=$(shell cat triggers/bundle-release/$(RELEASE_ENVIRONMENT)/BUNDLE
 RELEASE_NUMBER?=$(shell cat triggers/eks-a-release/$(RELEASE_ENVIRONMENT)/RELEASE_NUMBER)
 CLI_MIN_VERSION?=$(shell cat triggers/bundle-release/$(RELEASE_ENVIRONMENT)/CLI_MIN_VERSION)
 CLI_MAX_VERSION?=$(shell cat triggers/bundle-release/$(RELEASE_ENVIRONMENT)/CLI_MAX_VERSION)
-SOURCE_BUCKET?=my-source-bucket
-RELEASE_BUCKET?=my-s3-bucket
+SOURCE_BUCKET?=source-bucket
+RELEASE_BUCKET?=release-bucket
 SOURCE_CONTAINER_REGISTRY?=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 RELEASE_CONTAINER_REGISTRY?=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
-CDN?=https://my-s3-bucket
+CDN?=https://$(RELEASE_BUCKET)
+CLI_REPO_URL?=https://github.com/aws/eks-anywhere.git
+BUILD_REPO_URL?=https://github.com/aws/eks-anywhere-build-tooling.git
 BUILD_REPO_BRANCH_NAME?=main
 CLI_REPO_BRANCH_NAME?=main
+ifeq ($(CODEBUILD_CI),)
+DRY_RUN=true
+SOURCE_BUCKET=projectbuildpipeline-857-pipelineoutputartifactsb-10ajmk30khe3f
+else
+DRY_RUN=false
+endif
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
@@ -54,7 +62,7 @@ help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 clean: ## Cleanup resources created by make targets
-	rm -rf bin
+	rm -rf bin $(HOME)/eks-a-source downloaded-artifacts
 
 ##@ Development
 
@@ -80,7 +88,7 @@ test: manifests generate fmt vet ## Run tests.
 
 ##@ Build
 
-build: fmt vet ## Build release binary.
+build: clean fmt vet ## Build release binary.
 	go build -o bin/eks-anywhere-release main.go
 
 .PHONY: lint
@@ -98,13 +106,13 @@ run: manifests generate fmt vet ## Run a controller from your host.
 ##@ Release
 
 dev-release: build ## Perform a dev release of EKS-A bundles and CLI manifests
-	scripts/release.sh $(REPO_ROOT)/artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(BUILD_REPO_BRANCH_NAME) $(CLI_REPO_BRANCH_NAME)
+	scripts/release.sh $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(BUILD_REPO_URL) $(CLI_REPO_URL) $(BUILD_REPO_BRANCH_NAME) $(CLI_REPO_BRANCH_NAME) $(DRY_RUN)
 
 bundle-release: build ## Perform EKS-A versioned bundles release
-	scripts/bundle-release.sh $(REPO_ROOT)/artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(CLI_MIN_VERSION) $(CLI_MAX_VERSION) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(RELEASE_ENVIRONMENT) $(BUILD_REPO_BRANCH_NAME)
+	scripts/bundle-release.sh $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(CLI_MIN_VERSION) $(CLI_MAX_VERSION) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(RELEASE_ENVIRONMENT) $(BUILD_REPO_BRANCH_NAME)
 
 eks-a-release: build ## Perform EKS-A CLI release
-	scripts/eks-a-release.sh $(RELEASE_VERSION) $(REPO_ROOT)/artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(RELEASE_NUMBER) $(RELEASE_ENVIRONMENT) $(CLI_REPO_BRANCH_NAME)
+	scripts/eks-a-release.sh $(RELEASE_VERSION) $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(RELEASE_NUMBER) $(RELEASE_ENVIRONMENT) $(CLI_REPO_BRANCH_NAME)
 
 ##@ Deployment
 

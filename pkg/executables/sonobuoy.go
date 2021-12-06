@@ -12,12 +12,12 @@ import (
 const sonobuoyPath = "./sonobuoy"
 
 type Sonobuoy struct {
-	executable Executable
+	Executable
 }
 
 func NewSonobuoy(executable Executable) *Sonobuoy {
 	return &Sonobuoy{
-		executable: executable,
+		Executable: executable,
 	}
 }
 
@@ -31,7 +31,7 @@ func (k *Sonobuoy) Run(ctx context.Context, contextName string, args ...string) 
 		"--wait",
 	}
 	executionArgs = append(executionArgs, args...)
-	output, err := k.executable.Execute(ctx, executionArgs...)
+	output, err := k.Execute(ctx, executionArgs...)
 	command := strings.Join(executionArgs, " ") + "\n"
 	if err != nil {
 		return command, fmt.Errorf("error executing sonobuoy: %v", err)
@@ -47,7 +47,7 @@ func (k *Sonobuoy) GetResults(ctx context.Context, contextName string, args ...s
 		"./results",
 	}
 	var output bytes.Buffer
-	output, err := k.executable.Execute(ctx, executionArgs...)
+	output, err := k.Execute(ctx, executionArgs...)
 	if err != nil {
 		return "", fmt.Errorf("error executing sonobuoy retrieve: %v", err)
 	}
@@ -58,7 +58,7 @@ func (k *Sonobuoy) GetResults(ctx context.Context, contextName string, args ...s
 		"results",
 		outputFile,
 	}
-	output, err = k.executable.Execute(ctx, executionArgs...)
+	output, err = k.Execute(ctx, executionArgs...)
 	command := strings.Join(executionArgs, " ") + "\n"
 	if err != nil {
 		return command, fmt.Errorf("error executing sonobuoy results command: %v", err)

@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"time"
 
-	etcdv1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
-	"sigs.k8s.io/cluster-api/api/v1alpha3"
-	kubeadmnv1alpha3 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
+	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -51,9 +51,9 @@ type provider struct {
 
 type ProviderKubectlClient interface {
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
-	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error)
-	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*v1alpha3.MachineDeployment, error)
-	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error)
+	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*bootstrapv1.KubeadmControlPlane, error)
+	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
+	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 }
 
@@ -168,27 +168,33 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 
 func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
-
+	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
+	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
-		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Spec.PodIAMConfig))
+		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Spec.PodIAMConfig)).
+		Append(sharedExtraArgs)
 
 	values := map[string]interface{}{
-		"clusterName":            clusterSpec.Name,
-		"control_plane_replicas": clusterSpec.Spec.ControlPlaneConfiguration.Count,
-		"kubernetesRepository":   bundle.KubeDistro.Kubernetes.Repository,
-		"kubernetesVersion":      bundle.KubeDistro.Kubernetes.Tag,
-		"etcdRepository":         bundle.KubeDistro.Etcd.Repository,
-		"etcdVersion":            bundle.KubeDistro.Etcd.Tag,
-		"corednsRepository":      bundle.KubeDistro.CoreDNS.Repository,
-		"corednsVersion":         bundle.KubeDistro.CoreDNS.Tag,
-		"kindNodeImage":          bundle.EksD.KindNode.VersionedImage(),
-		"apiserverExtraArgs":     apiServerExtraArgs.ToPartialYaml(),
-		"externalEtcdVersion":    bundle.KubeDistro.EtcdVersion,
-		"eksaSystemNamespace":    constants.EksaSystemNamespace,
-		"auditPolicy":            common.GetAuditPolicy(),
-		"podCidrs":               clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
-		"serviceCidrs":           clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
+		"clusterName":                clusterSpec.Name,
+		"control_plane_replicas":     clusterSpec.Spec.ControlPlaneConfiguration.Count,
+		"kubernetesRepository":       bundle.KubeDistro.Kubernetes.Repository,
+		"kubernetesVersion":          bundle.KubeDistro.Kubernetes.Tag,
+		"etcdRepository":             bundle.KubeDistro.Etcd.Repository,
+		"etcdVersion":                bundle.KubeDistro.Etcd.Tag,
+		"corednsRepository":          bundle.KubeDistro.CoreDNS.Repository,
+		"corednsVersion":             bundle.KubeDistro.CoreDNS.Tag,
+		"kindNodeImage":              bundle.EksD.KindNode.VersionedImage(),
+		"etcdExtraArgs":              etcdExtraArgs.ToPartialYaml(),
+		"apiserverExtraArgs":         apiServerExtraArgs.ToPartialYaml(),
+		"controllermanagerExtraArgs": sharedExtraArgs.ToPartialYaml(),
+		"schedulerExtraArgs":         sharedExtraArgs.ToPartialYaml(),
+		"kubeletExtraArgs":           sharedExtraArgs.ToPartialYaml(),
+		"externalEtcdVersion":        bundle.KubeDistro.EtcdVersion,
+		"eksaSystemNamespace":        constants.EksaSystemNamespace,
+		"auditPolicy":                common.GetAuditPolicy(),
+		"podCidrs":                   clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
+		"serviceCidrs":               clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
 	}
 
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
@@ -208,6 +214,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 
 func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
 
 	values := map[string]interface{}{
 		"clusterName":         clusterSpec.Name,
@@ -215,6 +222,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 		"kubernetesVersion":   bundle.KubeDistro.Kubernetes.Tag,
 		"kindNodeImage":       bundle.EksD.KindNode.VersionedImage(),
 		"eksaSystemNamespace": constants.EksaSystemNamespace,
+		"kubeletExtraArgs":    kubeletExtraArgs.ToPartialYaml(),
 	}
 	return values
 }
@@ -273,7 +281,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 			so that KCP checks this annotation and does not proceed if etcd cluster is upgrading. The etcdadm controller removes this annotation once the etcd upgrade is complete.
 			*/
 			err = p.providerKubectlClient.UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", newClusterSpec.Name),
-				map[string]string{etcdv1alpha3.UpgradeInProgressAnnotation: "true"},
+				map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"},
 				executables.WithCluster(bootstrapCluster),
 				executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {

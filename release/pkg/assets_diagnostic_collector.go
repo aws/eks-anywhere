@@ -15,16 +15,12 @@
 package pkg
 
 import (
-	"path/filepath"
-
 	"github.com/pkg/errors"
 )
 
 // GetDiagnosticCollectorAssets returns the artifacts for eks-a diagnostic collector
 func (r *ReleaseConfig) GetDiagnosticCollectorAssets() ([]Artifact, error) {
-	projectSource := "projects/aws/eks-anywhere"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
+	gitTag, err := r.readGitTag(eksAnywhereProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -45,17 +41,30 @@ func (r *ReleaseConfig) GetDiagnosticCollectorAssets() ([]Artifact, error) {
 	}
 
 	tagOptions := map[string]string{
-		"gitTag": gitTag,
+		"gitTag":      gitTag,
+		"projectPath": eksAnywhereProjectPath,
 	}
+
+	sourceImageUri, err := r.GetSourceImageURI(name, sourceRepoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, releaseRepoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+
 	imageArtifact := &ImageArtifact{
 		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, sourceRepoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, releaseRepoName, tagOptions),
+		SourceImageURI:  sourceImageUri,
+		ReleaseImageURI: releaseImageUri,
 		Arch:            []string{"amd64"},
 		OS:              "linux",
+		GitTag:          gitTag,
+		ProjectPath:     eksAnywhereProjectPath,
 	}
 
-	artifact := Artifact{Image: imageArtifact}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
-	return []Artifact{artifact}, nil
+	return artifacts, nil
 }

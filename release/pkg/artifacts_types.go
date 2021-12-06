@@ -30,6 +30,7 @@ type ArchiveArtifact struct {
 	OSName         string
 	Arch           []string
 	GitTag         string
+	ProjectPath    string
 }
 
 type ImageArtifact struct {
@@ -39,6 +40,7 @@ type ImageArtifact struct {
 	OS              string
 	Arch            []string
 	GitTag          string
+	ProjectPath     string
 }
 
 type ManifestArtifact struct {
@@ -50,6 +52,8 @@ type ManifestArtifact struct {
 	ReleaseS3Path     string
 	ReleaseCdnURI     string
 	ImageTagOverrides []ImageTagOverride
+	GitTag            string
+	ProjectPath       string
 }
 
 type Artifact struct {

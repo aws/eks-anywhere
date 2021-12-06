@@ -2,6 +2,7 @@ package dependencies_test
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -20,6 +21,11 @@ type factoryTest struct {
 
 func newTest(t *testing.T) *factoryTest {
 	clusterConfigFile := "testdata/cluster_vsphere.yaml"
+	// Disable tools image executable for the tests
+	if err := os.Setenv("MR_TOOLS_DISABLE", "true"); err != nil {
+		t.Fatal(err)
+	}
+
 	return &factoryTest{
 		WithT:             NewGomegaWithT(t),
 		clusterConfigFile: clusterConfigFile,
@@ -32,7 +38,7 @@ func TestFactoryBuildWithProvider(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false).
-		Build()
+		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.Provider).NotTo(BeNil())
@@ -41,8 +47,8 @@ func TestFactoryBuildWithProvider(t *testing.T) {
 func TestFactoryBuildWithClusterManager(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
-		WithClusterManager().
-		Build()
+		WithClusterManager(tt.clusterSpec.Cluster).
+		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.ClusterManager).NotTo(BeNil())
@@ -52,7 +58,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
 		WithBootstrapper().
-		WithClusterManager().
+		WithClusterManager(tt.clusterSpec.Cluster).
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false).
 		WithFluxAddonClient(tt.ctx, tt.clusterSpec.Cluster, tt.clusterSpec.GitOpsConfig).
 		WithWriter().
@@ -61,7 +67,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithCollectorFactory().
 		WithTroubleshoot().
 		WithCAPIManager().
-		Build()
+		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.Bootstrapper).NotTo(BeNil())

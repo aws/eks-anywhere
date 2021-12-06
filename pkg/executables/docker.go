@@ -15,16 +15,16 @@ const (
 )
 
 type Docker struct {
-	executable Executable
+	Executable
 }
 
 func NewDocker(executable Executable) *Docker {
-	return &Docker{executable: executable}
+	return &Docker{Executable: executable}
 }
 
 func (d *Docker) GetDockerLBPort(ctx context.Context, clusterName string) (port string, err error) {
 	clusterLBName := fmt.Sprintf("%s-lb", clusterName)
-	if stdout, err := d.executable.Execute(ctx, "port", clusterLBName, "6443/tcp"); err != nil {
+	if stdout, err := d.Execute(ctx, "port", clusterLBName, "6443/tcp"); err != nil {
 		return "", err
 	} else {
 		return strings.Split(stdout.String(), ":")[1], nil
@@ -33,7 +33,7 @@ func (d *Docker) GetDockerLBPort(ctx context.Context, clusterName string) (port 
 
 func (d *Docker) PullImage(ctx context.Context, image string) error {
 	logger.V(2).Info("Pulling docker image", "image", image)
-	if _, err := d.executable.Execute(ctx, "pull", image); err != nil {
+	if _, err := d.Execute(ctx, "pull", image); err != nil {
 		return err
 	} else {
 		return nil
@@ -50,7 +50,7 @@ func (d *Docker) SetUpCLITools(ctx context.Context, image string) error {
 }
 
 func (d *Docker) Version(ctx context.Context) (int, error) {
-	cmdOutput, err := d.executable.Execute(ctx, "version", "--format", "{{.Client.Version}}")
+	cmdOutput, err := d.Execute(ctx, "version", "--format", "{{.Client.Version}}")
 	if err != nil {
 		return 0, fmt.Errorf("please check if docker is installed and running %v", err)
 	}
@@ -65,7 +65,7 @@ func (d *Docker) Version(ctx context.Context) (int, error) {
 }
 
 func (d *Docker) AllocatedMemory(ctx context.Context) (uint64, error) {
-	cmdOutput, err := d.executable.Execute(ctx, "info", "--format", "'{{json .MemTotal}}'")
+	cmdOutput, err := d.Execute(ctx, "info", "--format", "'{{json .MemTotal}}'")
 	if err != nil {
 		return 0, fmt.Errorf("please check if docker is installed and running %v", err)
 	}
@@ -77,7 +77,7 @@ func (d *Docker) AllocatedMemory(ctx context.Context) (uint64, error) {
 func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) error {
 	localImage := strings.ReplaceAll(image, defaultRegistry, endpoint)
 	logger.Info("Tagging image", "image", image, "local image", localImage)
-	if _, err := d.executable.Execute(ctx, "tag", image, localImage); err != nil {
+	if _, err := d.Execute(ctx, "tag", image, localImage); err != nil {
 		return err
 	}
 	return nil
@@ -86,7 +86,7 @@ func (d *Docker) TagImage(ctx context.Context, image string, endpoint string) er
 func (d *Docker) PushImage(ctx context.Context, image string, endpoint string) error {
 	localImage := strings.ReplaceAll(image, defaultRegistry, endpoint)
 	logger.Info("Pushing", "image", localImage)
-	if _, err := d.executable.Execute(ctx, "push", localImage); err != nil {
+	if _, err := d.Execute(ctx, "push", localImage); err != nil {
 		return err
 	}
 	return nil
@@ -95,6 +95,6 @@ func (d *Docker) PushImage(ctx context.Context, image string, endpoint string) e
 func (d *Docker) Login(ctx context.Context, endpoint, username, password string) error {
 	params := []string{"login", endpoint, "--username", username, "--password-stdin"}
 	logger.Info(fmt.Sprintf("Logging in to docker registry %s", endpoint))
-	_, err := d.executable.ExecuteWithStdin(ctx, []byte(password), params...)
+	_, err := d.ExecuteWithStdin(ctx, []byte(password), params...)
 	return err
 }

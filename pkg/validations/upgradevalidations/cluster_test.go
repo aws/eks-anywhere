@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"sigs.k8s.io/cluster-api/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -56,4 +56,4 @@ func TestValidateClusterPresent(t *testing.T) {
 	}
 }
 
-var capiClustersResourceType = fmt.Sprintf("clusters.%s", v1alpha3.GroupVersion.Group)
+var capiClustersResourceType = fmt.Sprintf("clusters.%s", clusterv1.GroupVersion.Group)

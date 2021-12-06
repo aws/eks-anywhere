@@ -32,5 +32,8 @@ func versions(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
-	return executableBuilder.BuildKubectlExecutable().ListCluster(ctx)
+	kubectl := executableBuilder.BuildKubectlExecutable()
+	defer kubectl.Close(ctx)
+
+	return kubectl.ListCluster(ctx)
 }

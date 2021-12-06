@@ -8,11 +8,12 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/cluster-api/api/v1alpha3"
-	kubeadmnv1alpha3 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
+	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -131,6 +132,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				s.Spec.ControlPlaneConfiguration.Count = 3
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
+				s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
 			}),
 			wantCPFile: "testdata/valid_deployment_cp_expected.yaml",
 			wantMDFile: "testdata/valid_deployment_md_expected.yaml",
@@ -146,6 +148,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				s.Spec.ControlPlaneConfiguration.Taints = taints
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
+				s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
 			}),
 			wantCPFile: "testdata/valid_deployment_cp_taints_expected.yaml",
 			wantMDFile: "testdata/valid_deployment_md_expected.yaml",
@@ -160,6 +163,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				s.Spec.ControlPlaneConfiguration.Count = 3
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
+				s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
 			}),
 			wantCPFile: "testdata/valid_deployment_custom_cidrs_cp_expected.yaml",
 			wantMDFile: "testdata/valid_deployment_custom_cidrs_md_expected.yaml",
@@ -174,6 +178,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				s.Spec.ControlPlaneConfiguration.Count = 3
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
+				s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
 
 				s.OIDCConfig = &v1alpha1.OIDCConfig{
 					Spec: v1alpha1.OIDCConfigSpec{
@@ -195,6 +200,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				s.Spec.ControlPlaneConfiguration.Count = 3
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
+				s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
 
 				s.OIDCConfig = &v1alpha1.OIDCConfig{
 					Spec: v1alpha1.OIDCConfigSpec{
@@ -233,6 +239,8 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 			bootstrapCluster := &types.Cluster{
 				Name: "bootstrap-test",
 			}
+			kubectl.EXPECT().UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", tt.clusterSpec.Name),
+				map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"}, gomock.Any(), gomock.Any())
 			cpContent, mdContent, err := p.GenerateCAPISpecForUpgrade(ctx, bootstrapCluster, cluster, currentSpec, tt.clusterSpec)
 			if err != nil {
 				t.Fatalf("provider.GenerateCAPISpecForUpgrade() error = %v, wantErr nil", err)
@@ -260,17 +268,17 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 		Name: "bootstrap-test",
 	}
 
-	cp := &kubeadmnv1alpha3.KubeadmControlPlane{
-		Spec: kubeadmnv1alpha3.KubeadmControlPlaneSpec{
+	cp := &bootstrapv1.KubeadmControlPlane{
+		Spec: bootstrapv1.KubeadmControlPlaneSpec{
 			InfrastructureTemplate: v1.ObjectReference{
 				Name: "test-control-plane-template-original",
 			},
 		},
 	}
-	md := &v1alpha3.MachineDeployment{
-		Spec: v1alpha3.MachineDeploymentSpec{
-			Template: v1alpha3.MachineTemplateSpec{
-				Spec: v1alpha3.MachineSpec{
+	md := &clusterv1.MachineDeployment{
+		Spec: clusterv1.MachineDeploymentSpec{
+			Template: clusterv1.MachineTemplateSpec{
+				Spec: clusterv1.MachineSpec{
 					InfrastructureRef: v1.ObjectReference{
 						Name: "test-worker-node-template-original",
 					},
@@ -363,6 +371,7 @@ var versionsBundle = &cluster.VersionsBundle{
 			Repository: "public.ecr.aws/eks-distro/etcd-io",
 			Tag:        "v3.4.14-eks-1-19-2",
 		},
+		EtcdVersion: "3.4.14",
 	},
 	VersionsBundle: &releasev1alpha1.VersionsBundle{
 		EksD: releasev1alpha1.EksDRelease{
@@ -433,6 +442,7 @@ func TestProviderGenerateCAPISpecForCreateWithPodIAMConfig(t *testing.T) {
 		s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
 		s.Spec.ControlPlaneConfiguration.Count = 1
 		s.VersionsBundle = versionsBundle
+		s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
 	})
 	clusterSpec.Spec.PodIAMConfig = &v1alpha1.PodIAMConfig{ServiceAccountIssuer: "https://test"}
 
@@ -450,4 +460,38 @@ func TestProviderGenerateCAPISpecForCreateWithPodIAMConfig(t *testing.T) {
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 	test.AssertContentToFile(t, string(cp), "testdata/valid_deployment_cp_pod_iam_expected.yaml")
+}
+
+func TestProviderGenerateCAPISpecForCreateWithStackedEtcd(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+	client := dockerMocks.NewMockProviderClient(mockCtrl)
+	kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
+	provider := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
+	clusterObj := &types.Cluster{
+		Name: "test-cluster",
+	}
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Name = "test-cluster"
+		s.Spec.KubernetesVersion = "1.19"
+		s.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+		s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
+		s.Spec.ControlPlaneConfiguration.Count = 1
+		s.VersionsBundle = versionsBundle
+	})
+
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, _, err := provider.GenerateCAPISpecForCreate(context.Background(), clusterObj, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+	test.AssertContentToFile(t, string(cp), "testdata/valid_deployment_cp_stacked_etcd_expected.yaml")
 }

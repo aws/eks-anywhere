@@ -24,26 +24,20 @@ import (
 )
 
 func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests map[string]string) (anywherev1alpha1.VSphereBundle, error) {
-	vsphereBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"cluster-api-provider-vsphere": r.GetCapvAssets,
-		"kube-proxy":                   r.GetKubeRbacProxyAssets,
-		"kube-vip":                     r.GetKubeVipAssets,
-		"vsphere-csi-driver":           r.GetVsphereCsiAssets,
+	vsphereBundleArtifacts := map[string][]Artifact{
+		"cluster-api-provider-vsphere": r.BundleArtifactsTable["cluster-api-provider-vsphere"],
+		"kube-rbac-proxy":              r.BundleArtifactsTable["kube-rbac-proxy"],
+		"kube-vip":                     r.BundleArtifactsTable["kube-vip"],
+		"vsphere-csi-driver":           r.BundleArtifactsTable["vsphere-csi-driver"],
 	}
-	components := SortArtifactsFuncMap(vsphereBundleArtifactsFuncs)
+	components := SortArtifactsFuncMap(vsphereBundleArtifacts)
 
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	bundleObjects := []string{}
 
 	for _, componentName := range components {
-		artifactFunc := vsphereBundleArtifactsFuncs[componentName]
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.VSphereBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
-
-		for _, artifact := range artifacts {
+		for _, artifact := range vsphereBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
 				bundleImageArtifact := anywherev1alpha1.Image{
@@ -75,10 +69,7 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 		}
 	}
 
-	vSphereCloudProviderArtifacts, err := r.GetVsphereCloudProviderAssets(eksDReleaseChannel)
-	if err != nil {
-		return anywherev1alpha1.VSphereBundle{}, errors.Wrapf(err, "Error getting artifact information for cloud-provider-vsphere for channel %s", eksDReleaseChannel)
-	}
+	vSphereCloudProviderArtifacts := r.BundleArtifactsTable[fmt.Sprintf("cloud-provider-vsphere-%s", eksDReleaseChannel)]
 
 	for _, artifact := range vSphereCloudProviderArtifacts {
 		imageArtifact := artifact.Image
@@ -97,7 +88,7 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 
 	componentChecksum := GenerateComponentChecksum(bundleObjects)
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api-provider-vsphere")),
+		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, capvProjectPath)),
 		componentChecksum,
 	)
 	if err != nil {
