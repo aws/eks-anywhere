@@ -174,7 +174,7 @@ We will revisit this once we decide to offer full cluster lifecycle support for 
 
 ## User Experience
 
-For now, the only way to create and upgrade a management cluster is through the CLI. Unlike the previous versions, upgrading a management cluster through GitOps is no longer supported.
+For now, the only way to create and upgrade a management cluster is through the CLI. Unlike the previous versions, upgrading a management cluster through GitOps is no longer supported. Performing full management cluster's upgrades through the API (with the current design) would be dangerous, since the CAPI controllers orchestrating the upgrade could stop running properly mid process (those controllers themselves depend on components that will be upgraded, like etcd or the kube api server), leaving the cluster in a unrecoverable state.
 
 After a management cluster is created, user can define a workload cluster spec with the option to specify a custom namespace to deploy the EKS-A resources (all resources need to be in the same namespace), and directly execute `kubectl apply/create -f workload-spec.yaml` in the management cluster or push the workload cluster spec to the Git repo when GitOps is enabled, to create a workload cluster. Once the cluster is in ready state, user is able to fetch the workload cluster `kubeconfig` from the management cluster through `kubectl`, or by running a CLI command.
 
