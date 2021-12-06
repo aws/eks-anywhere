@@ -17,6 +17,8 @@ package pkg
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"io/ioutil"
+	"path/filepath"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -62,7 +64,7 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
 
-				manifestContents, err := ReadHttpFile(manifestArtifact.SourceS3URI)
+				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
 				if err != nil {
 					return anywherev1alpha1.VSphereBundle{}, err
 				}

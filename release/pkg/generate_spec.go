@@ -327,16 +327,6 @@ func (r *ReleaseConfig) GetURI(path string) (string, error) {
 	return uri.String(), nil
 }
 
-func (r *ReleaseConfig) GetSourceManifestURI(path string) (string, error) {
-	bucket := fmt.Sprintf("https://%s", r.SourceBucket)
-	uri, err := url.Parse(bucket)
-	if err != nil {
-		return "", err
-	}
-	uri.Path = path
-	return uri.String(), nil
-}
-
 func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[string]string) (string, string, error) {
 	var sourceImageUri string
 	sourcedFromBranch := r.BuildRepoBranchName

@@ -108,15 +108,9 @@ func (r *ReleaseConfig) GetCapvAssets() ([]Artifact, error) {
 			return nil, errors.Cause(err)
 		}
 
-		sourceS3URI, err := r.GetSourceManifestURI(filepath.Join(sourceS3Prefix, manifest))
-		if err != nil {
-			return nil, errors.Cause(err)
-		}
-
 		manifestArtifact := &ManifestArtifact{
 			SourceS3Key:       manifest,
 			SourceS3Prefix:    sourceS3Prefix,
-			SourceS3URI:       sourceS3URI,
 			ArtifactPath:      filepath.Join(r.ArtifactDir, "capv-manifests", r.BuildRepoHead),
 			ReleaseName:       manifest,
 			ReleaseS3Path:     releaseS3Path,
