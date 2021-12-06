@@ -83,9 +83,15 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 			return nil, errors.Cause(err)
 		}
 
+		sourceS3URI, err := r.GetSourceManifestURI(filepath.Join(sourceS3Prefix, manifest))
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+
 		manifestArtifact := &ManifestArtifact{
 			SourceS3Key:    manifest,
 			SourceS3Prefix: sourceS3Prefix,
+			SourceS3URI:    sourceS3URI,
 			ArtifactPath:   filepath.Join(r.ArtifactDir, "kind-manifests", r.BuildRepoHead),
 			ReleaseName:    manifest,
 			ReleaseS3Path:  releaseS3Path,
@@ -103,6 +109,7 @@ func (r *ReleaseConfig) GetKindnetdBundle() (anywherev1alpha1.KindnetdBundle, er
 	artifacts := r.BundleArtifactsTable["kindnetd"]
 
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
+	bundleObjects := []string{}
 
 	for _, artifact := range artifacts {
 		if artifact.Manifest != nil {
@@ -112,11 +119,18 @@ func (r *ReleaseConfig) GetKindnetdBundle() (anywherev1alpha1.KindnetdBundle, er
 			}
 
 			bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+			manifestContents, err := ReadHttpFile(manifestArtifact.SourceS3URI)
+			if err != nil {
+				return anywherev1alpha1.KindnetdBundle{}, err
+			}
+			bundleObjects = append(bundleObjects, string(manifestContents[:]))
 		}
 	}
 
+	componentChecksum := GenerateComponentChecksum(bundleObjects)
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, kindProjectPath)),
+		componentChecksum,
 	)
 	if err != nil {
 		return anywherev1alpha1.KindnetdBundle{}, errors.Wrapf(err, "Error getting version for kind")
