@@ -252,6 +252,7 @@ func (p *tinkerbellProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) 
 	// 	},
 	// }
 	// return &infraBundle
+	//TODO - remove below code when tinkerbell is added to bundle
 	folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", "v0.1.0")
 	infraBundle := types.InfrastructureBundle{
 		FolderName: folderName,
@@ -267,7 +268,6 @@ func (p *tinkerbellProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) 
 			},
 		},
 	}
-
 	return &infraBundle
 }
 
