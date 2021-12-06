@@ -46,7 +46,8 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 		var sourceS3Prefix string
 		var releaseS3Path string
 		var releaseName string
-		latestPath := r.getLatestUploadDestination()
+		sourcedFromBranch := r.BuildRepoBranchName
+		latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
 			sourceS3Key = fmt.Sprintf("%s.ova", osName)
@@ -96,17 +97,18 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 		}
 
 		archiveArtifact := &ArchiveArtifact{
-			SourceS3Key:    sourceS3Key,
-			SourceS3Prefix: sourceS3Prefix,
-			ArtifactPath:   filepath.Join(r.ArtifactDir, "eks-d-ova", eksDReleaseChannel, r.BuildRepoHead),
-			ReleaseName:    releaseName,
-			ReleaseS3Path:  releaseS3Path,
-			ReleaseCdnURI:  cdnURI,
-			OS:             os,
-			OSName:         osName,
-			Arch:           []string{arch},
-			GitTag:         imageBuilderGitTag,
-			ProjectPath:    imageBuilderProjectPath,
+			SourceS3Key:       sourceS3Key,
+			SourceS3Prefix:    sourceS3Prefix,
+			ArtifactPath:      filepath.Join(r.ArtifactDir, "eks-d-ova", eksDReleaseChannel, r.BuildRepoHead),
+			ReleaseName:       releaseName,
+			ReleaseS3Path:     releaseS3Path,
+			ReleaseCdnURI:     cdnURI,
+			OS:                os,
+			OSName:            osName,
+			Arch:              []string{arch},
+			GitTag:            imageBuilderGitTag,
+			ProjectPath:       imageBuilderProjectPath,
+			SourcedFromBranch: sourcedFromBranch,
 		}
 
 		artifacts = append(artifacts, Artifact{Archive: archiveArtifact})
@@ -127,9 +129,16 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 		"gitTag":             kindGitTag,
 	}
 
-	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)
+	}
+	if sourcedFromBranch != r.BuildRepoBranchName {
+		kindGitTag, err = r.readGitTag(eksAToolsProjectPath, sourcedFromBranch)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+		tagOptions["gitTag"] = kindGitTag
 	}
 	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
 	if err != nil {
@@ -137,11 +146,14 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  sourceImageUri,
-		ReleaseImageURI: releaseImageUri,
-		Arch:            []string{"amd64"},
-		OS:              "linux",
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            kindGitTag,
+		ProjectPath:       kindProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 
 	artifacts = append(artifacts, Artifact{Image: imageArtifact})

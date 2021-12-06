@@ -39,6 +39,7 @@ func (r *ReleaseConfig) GetCapaAssets() ([]Artifact, error) {
 	}
 
 	var imageTagOverrides []ImageTagOverride
+	sourcedFromBranch := r.BuildRepoBranchName
 	artifacts := []Artifact{}
 
 	for _, image := range capaImages {
@@ -49,9 +50,16 @@ func (r *ReleaseConfig) GetCapaAssets() ([]Artifact, error) {
 			"projectPath": capaProjectPath,
 		}
 
-		sourceImageUri, err := r.GetSourceImageURI(image, repoName, tagOptions)
+		sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(image, repoName, tagOptions)
 		if err != nil {
 			return nil, errors.Cause(err)
+		}
+		if sourcedFromBranch != r.BuildRepoBranchName {
+			gitTag, err = r.readGitTag(capaProjectPath, sourcedFromBranch)
+			if err != nil {
+				return nil, errors.Cause(err)
+			}
+			tagOptions["gitTag"] = gitTag
 		}
 		releaseImageUri, err := r.GetReleaseImageURI(image, repoName, tagOptions)
 		if err != nil {
@@ -59,13 +67,14 @@ func (r *ReleaseConfig) GetCapaAssets() ([]Artifact, error) {
 		}
 
 		imageArtifact := &ImageArtifact{
-			AssetName:       image,
-			SourceImageURI:  sourceImageUri,
-			ReleaseImageURI: releaseImageUri,
-			Arch:            []string{"amd64"},
-			OS:              "linux",
-			GitTag:          gitTag,
-			ProjectPath:     capaProjectPath,
+			AssetName:         image,
+			SourceImageURI:    sourceImageUri,
+			ReleaseImageURI:   releaseImageUri,
+			Arch:              []string{"amd64"},
+			OS:                "linux",
+			GitTag:            gitTag,
+			ProjectPath:       capaProjectPath,
+			SourcedFromBranch: sourcedFromBranch,
 		}
 
 		artifacts = append(artifacts, Artifact{Image: imageArtifact})
@@ -95,7 +104,7 @@ func (r *ReleaseConfig) GetCapaAssets() ([]Artifact, error) {
 	for _, manifest := range manifestList {
 		var sourceS3Prefix string
 		var releaseS3Path string
-		latestPath := r.getLatestUploadDestination()
+		latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
 			sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/infrastructure-aws/%s", capaProjectPath, latestPath, gitTag)
@@ -132,6 +141,7 @@ func (r *ReleaseConfig) GetCapaAssets() ([]Artifact, error) {
 			ImageTagOverrides: imageTagOverrides,
 			GitTag:            gitTag,
 			ProjectPath:       capaProjectPath,
+			SourcedFromBranch: sourcedFromBranch,
 		}
 		artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 	}
@@ -146,6 +156,8 @@ func (r *ReleaseConfig) GetAwsBundle(imageDigests map[string]string) (anywherev1
 	}
 	components := SortArtifactsFuncMap(awsBundleArtifacts)
 
+	var version string
+	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	bundleObjects := []string{}
@@ -154,7 +166,9 @@ func (r *ReleaseConfig) GetAwsBundle(imageDigests map[string]string) (anywherev1
 		for _, artifact := range awsBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
-
+				if componentName == "cluster-api-provider-aws" {
+					sourceBranch = imageArtifact.SourcedFromBranch
+				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
 					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
@@ -186,7 +200,7 @@ func (r *ReleaseConfig) GetAwsBundle(imageDigests map[string]string) (anywherev1
 
 	componentChecksum := GenerateComponentChecksum(bundleObjects)
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, capaProjectPath)),
+		newVersionerWithGITTAG(r.BuildRepoSource, capaProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

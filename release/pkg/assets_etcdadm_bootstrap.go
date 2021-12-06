@@ -39,7 +39,7 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
 		"projectPath": etcdadmBootstrapProviderProjectPath,
 	}
 
-	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -49,13 +49,14 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
 	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  sourceImageUri,
-		ReleaseImageURI: releaseImageUri,
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-		GitTag:          gitTag,
-		ProjectPath:     etcdadmBootstrapProviderProjectPath,
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       etcdadmBootstrapProviderProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
@@ -80,7 +81,7 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
 	for _, manifest := range manifestList {
 		var sourceS3Prefix string
 		var releaseS3Path string
-		latestPath := r.getLatestUploadDestination()
+		latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
 			sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/bootstrap-etcdadm-bootstrap/%s", etcdadmBootstrapProviderProjectPath, latestPath, gitTag)
@@ -115,6 +116,7 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
 			ImageTagOverrides: imageTagOverrides,
 			GitTag:            gitTag,
 			ProjectPath:       etcdadmBootstrapProviderProjectPath,
+			SourcedFromBranch: sourcedFromBranch,
 		}
 		artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 	}
@@ -129,6 +131,7 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapBundle(imageDigests map[string]string
 	}
 	components := SortArtifactsFuncMap(etcdadmBootstrapBundleArtifacts)
 
+	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	bundleObjects := []string{}
@@ -138,6 +141,9 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapBundle(imageDigests map[string]string
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
 
+				if componentName == "etcdadm-bootstrap-provider" {
+					sourceBranch = imageArtifact.SourcedFromBranch
+				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
 					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
@@ -169,7 +175,7 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapBundle(imageDigests map[string]string
 
 	componentChecksum := GenerateComponentChecksum(bundleObjects)
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, etcdadmBootstrapProviderProjectPath)),
+		newVersionerWithGITTAG(r.BuildRepoSource, etcdadmBootstrapProviderProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

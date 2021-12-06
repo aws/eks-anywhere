@@ -36,7 +36,8 @@ func (r *ReleaseConfig) GetCiliumAssets() ([]Artifact, error) {
 
 	var sourceS3Prefix string
 	var releaseS3Path string
-	latestPath := r.getLatestUploadDestination()
+	sourcedFromBranch := r.BuildRepoBranchName
+	latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/cilium/%s", ciliumProjectPath, latestPath, gitTag)
@@ -67,6 +68,7 @@ func (r *ReleaseConfig) GetCiliumAssets() ([]Artifact, error) {
 		ImageTagOverrides: []ImageTagOverride{},
 		GitTag:            gitTag,
 		ProjectPath:       ciliumProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 	artifacts := []Artifact{Artifact{Manifest: manifestArtifact}}
 

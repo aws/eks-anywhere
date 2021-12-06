@@ -39,7 +39,7 @@ func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
 		"projectPath": etcdadmControllerProjectPath,
 	}
 
-	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -49,13 +49,14 @@ func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
 	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  sourceImageUri,
-		ReleaseImageURI: releaseImageUri,
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-		GitTag:          gitTag,
-		ProjectPath:     etcdadmControllerProjectPath,
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       etcdadmControllerProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
@@ -80,7 +81,7 @@ func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
 	for _, manifest := range manifestList {
 		var sourceS3Prefix string
 		var releaseS3Path string
-		latestPath := r.getLatestUploadDestination()
+		latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
 			sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/bootstrap-etcdadm-controller/%s", etcdadmControllerProjectPath, latestPath, gitTag)
@@ -129,6 +130,7 @@ func (r *ReleaseConfig) GetEtcdadmControllerBundle(imageDigests map[string]strin
 	}
 	components := SortArtifactsFuncMap(etcdadmControllerBundleArtifacts)
 
+	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	bundleObjects := []string{}
@@ -137,6 +139,9 @@ func (r *ReleaseConfig) GetEtcdadmControllerBundle(imageDigests map[string]strin
 		for _, artifact := range etcdadmControllerBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
+				if componentName == "etcdadm-controller" {
+					sourceBranch = imageArtifact.SourcedFromBranch
+				}
 
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
@@ -169,7 +174,7 @@ func (r *ReleaseConfig) GetEtcdadmControllerBundle(imageDigests map[string]strin
 
 	componentChecksum := GenerateComponentChecksum(bundleObjects)
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, etcdadmControllerProjectPath)),
+		newVersionerWithGITTAG(r.BuildRepoSource, etcdadmControllerProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

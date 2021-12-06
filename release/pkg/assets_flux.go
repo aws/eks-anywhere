@@ -16,11 +16,14 @@ package pkg
 
 import (
 	"fmt"
-	"path/filepath"
-
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+)
+
+const (
+	fluxcdRootPath   = "projects/fluxcd"
+	flux2ProjectPath = "projects/fluxcd/flux2"
 )
 
 // GetFluxAssets returns the eks-a artifacts for Flux
@@ -29,7 +32,7 @@ func (r *ReleaseConfig) GetFluxAssets() ([]Artifact, error) {
 	artifacts := []Artifact{}
 
 	for _, project := range fluxControllerProjects {
-		fluxControllerProjectPath := fmt.Sprintf("projects/fluxcd/%s", project)
+		fluxControllerProjectPath := fmt.Sprintf("%s/%s", fluxcdRootPath, project)
 		gitTag, err := r.readGitTag(fluxControllerProjectPath, r.BuildRepoBranchName)
 		if err != nil {
 			return nil, errors.Cause(err)
@@ -40,7 +43,7 @@ func (r *ReleaseConfig) GetFluxAssets() ([]Artifact, error) {
 			"projectPath": fluxControllerProjectPath,
 		}
 
-		sourceImageUri, err := r.GetSourceImageURI(project, repoName, tagOptions)
+		sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(project, repoName, tagOptions)
 		if err != nil {
 			return nil, errors.Cause(err)
 		}
@@ -50,13 +53,14 @@ func (r *ReleaseConfig) GetFluxAssets() ([]Artifact, error) {
 		}
 
 		imageArtifact := &ImageArtifact{
-			AssetName:       project,
-			SourceImageURI:  sourceImageUri,
-			ReleaseImageURI: releaseImageUri,
-			Arch:            []string{"amd64"},
-			OS:              "linux",
-			GitTag:          gitTag,
-			ProjectPath:     fluxControllerProjectPath,
+			AssetName:         project,
+			SourceImageURI:    sourceImageUri,
+			ReleaseImageURI:   releaseImageUri,
+			Arch:              []string{"amd64"},
+			OS:                "linux",
+			GitTag:            gitTag,
+			ProjectPath:       fluxControllerProjectPath,
+			SourcedFromBranch: sourcedFromBranch,
 		}
 		artifacts = append(artifacts, Artifact{Image: imageArtifact})
 	}
@@ -66,11 +70,14 @@ func (r *ReleaseConfig) GetFluxAssets() ([]Artifact, error) {
 func (r *ReleaseConfig) GetFluxBundle(imageDigests map[string]string) (anywherev1alpha1.FluxBundle, error) {
 	artifacts := r.BundleArtifactsTable["flux"]
 
+	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleObjects := []string{}
 
 	for _, artifact := range artifacts {
 		imageArtifact := artifact.Image
+		sourceBranch = imageArtifact.SourcedFromBranch
+
 		bundleImageArtifact := anywherev1alpha1.Image{
 			Name:        imageArtifact.AssetName,
 			Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
@@ -86,9 +93,11 @@ func (r *ReleaseConfig) GetFluxBundle(imageDigests map[string]string) (anywherev
 
 	componentChecksum := GenerateComponentChecksum(bundleObjects)
 	version, err := BuildComponentVersion(
-		newMultiProjectVersionerWithGITTAG(
-			filepath.Join(r.BuildRepoSource, "projects/fluxcd"),
-			filepath.Join(r.BuildRepoSource, "projects/fluxcd/flux2"),
+		newMultiProjectVersionerWithGITTAG(r.BuildRepoSource,
+			fluxcdRootPath,
+			flux2ProjectPath,
+			sourceBranch,
+			r,
 		),
 		componentChecksum,
 	)

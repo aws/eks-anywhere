@@ -37,9 +37,16 @@ func (r *ReleaseConfig) GetCapvAssets() ([]Artifact, error) {
 		"projectPath": capvProjectPath,
 	}
 
-	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)
+	}
+	if sourcedFromBranch != r.BuildRepoBranchName {
+		gitTag, err = r.readGitTag(capvProjectPath, sourcedFromBranch)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+		tagOptions["gitTag"] = gitTag
 	}
 	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
 	if err != nil {
@@ -47,13 +54,14 @@ func (r *ReleaseConfig) GetCapvAssets() ([]Artifact, error) {
 	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  sourceImageUri,
-		ReleaseImageURI: releaseImageUri,
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-		GitTag:          gitTag,
-		ProjectPath:     capvProjectPath,
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       capvProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
@@ -79,7 +87,7 @@ func (r *ReleaseConfig) GetCapvAssets() ([]Artifact, error) {
 	for _, manifest := range manifestList {
 		var sourceS3Prefix string
 		var releaseS3Path string
-		latestPath := r.getLatestUploadDestination()
+		latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
 			sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/infrastructure-vsphere/%s", capvProjectPath, latestPath, gitTag)

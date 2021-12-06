@@ -37,7 +37,7 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 		"projectPath": kindProjectPath,
 	}
 
-	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -47,13 +47,14 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  sourceImageUri,
-		ReleaseImageURI: releaseImageUri,
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-		GitTag:          gitTag,
-		ProjectPath:     kindProjectPath,
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       kindProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
@@ -64,7 +65,7 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 	for _, manifest := range manifestList {
 		var sourceS3Prefix string
 		var releaseS3Path string
-		latestPath := r.getLatestUploadDestination()
+		latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
 			sourceS3Prefix = fmt.Sprintf("%s/%s/manifests", kindProjectPath, latestPath)
@@ -89,15 +90,16 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 		}
 
 		manifestArtifact := &ManifestArtifact{
-			SourceS3Key:    manifest,
-			SourceS3Prefix: sourceS3Prefix,
-			SourceS3URI:    sourceS3URI,
-			ArtifactPath:   filepath.Join(r.ArtifactDir, "kind-manifests", r.BuildRepoHead),
-			ReleaseName:    manifest,
-			ReleaseS3Path:  releaseS3Path,
-			ReleaseCdnURI:  cdnURI,
-			GitTag:         gitTag,
-			ProjectPath:    kindProjectPath,
+			SourceS3Key:       manifest,
+			SourceS3Prefix:    sourceS3Prefix,
+			SourceS3URI:       sourceS3URI,
+			ArtifactPath:      filepath.Join(r.ArtifactDir, "kind-manifests", r.BuildRepoHead),
+			ReleaseName:       manifest,
+			ReleaseS3Path:     releaseS3Path,
+			ReleaseCdnURI:     cdnURI,
+			GitTag:            gitTag,
+			ProjectPath:       kindProjectPath,
+			SourcedFromBranch: sourcedFromBranch,
 		}
 		artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 	}
@@ -108,12 +110,15 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 func (r *ReleaseConfig) GetKindnetdBundle() (anywherev1alpha1.KindnetdBundle, error) {
 	artifacts := r.BundleArtifactsTable["kindnetd"]
 
+	var sourceBranch string
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	bundleObjects := []string{}
 
 	for _, artifact := range artifacts {
 		if artifact.Manifest != nil {
 			manifestArtifact := artifact.Manifest
+			sourceBranch = manifestArtifact.SourcedFromBranch
+
 			bundleManifestArtifact := anywherev1alpha1.Manifest{
 				URI: manifestArtifact.ReleaseCdnURI,
 			}
@@ -129,7 +134,7 @@ func (r *ReleaseConfig) GetKindnetdBundle() (anywherev1alpha1.KindnetdBundle, er
 
 	componentChecksum := GenerateComponentChecksum(bundleObjects)
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, kindProjectPath)),
+		newVersionerWithGITTAG(r.BuildRepoSource, kindProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

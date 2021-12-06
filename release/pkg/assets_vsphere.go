@@ -16,8 +16,6 @@ package pkg
 
 import (
 	"fmt"
-	"path/filepath"
-
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -32,6 +30,7 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 	}
 	components := SortArtifactsFuncMap(vsphereBundleArtifacts)
 
+	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	bundleObjects := []string{}
@@ -40,6 +39,9 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 		for _, artifact := range vsphereBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
+				if componentName == "cluster-api-provider-vsphere" {
+					sourceBranch = imageArtifact.SourcedFromBranch
+				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
 					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
@@ -88,7 +90,7 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 
 	componentChecksum := GenerateComponentChecksum(bundleObjects)
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, capvProjectPath)),
+		newVersionerWithGITTAG(r.BuildRepoSource, capvProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

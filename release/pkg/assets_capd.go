@@ -37,23 +37,32 @@ func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
 		"projectPath": capiProjectPath,
 	}
 
-	sourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
+	if sourcedFromBranch != r.BuildRepoBranchName {
+		gitTag, err = r.readGitTag(capiProjectPath, sourcedFromBranch)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+		tagOptions["gitTag"] = gitTag
+	}
+
 	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  sourceImageUri,
-		ReleaseImageURI: releaseImageUri,
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-		GitTag:          gitTag,
-		ProjectPath:     capiProjectPath,
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       capiProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
@@ -79,7 +88,7 @@ func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
 	for _, manifest := range manifestList {
 		var sourceS3Prefix string
 		var releaseS3Path string
-		latestPath := r.getLatestUploadDestination()
+		latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
 			sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/infrastructure-docker/%s", capiProjectPath, latestPath, gitTag)
@@ -113,6 +122,7 @@ func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
 			ImageTagOverrides: imageTagOverrides,
 			GitTag:            gitTag,
 			ProjectPath:       capiProjectPath,
+			SourcedFromBranch: sourcedFromBranch,
 		}
 		artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 	}
@@ -127,6 +137,7 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 	}
 	components := SortArtifactsFuncMap(dockerBundleArtifacts)
 
+	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	bundleObjects := []string{}
@@ -135,6 +146,9 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 		for _, artifact := range dockerBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
+				if componentName == "cluster-api-provider-docker" {
+					sourceBranch = imageArtifact.SourcedFromBranch
+				}
 
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
@@ -167,7 +181,7 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 
 	componentChecksum := GenerateComponentChecksum(bundleObjects)
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, capiProjectPath)),
+		newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

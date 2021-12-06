@@ -16,8 +16,6 @@ package pkg
 
 import (
 	"fmt"
-	"path/filepath"
-
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -47,9 +45,16 @@ func (r *ReleaseConfig) GetCertManagerAssets() ([]Artifact, error) {
 			"projectPath": certManagerProjectPath,
 		}
 
-		sourceImageUri, err := r.GetSourceImageURI(image, repoName, tagOptions)
+		sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(image, repoName, tagOptions)
 		if err != nil {
 			return nil, errors.Cause(err)
+		}
+		if sourcedFromBranch != r.BuildRepoBranchName {
+			gitTag, err = r.readGitTag(certManagerProjectPath, sourcedFromBranch)
+			if err != nil {
+				return nil, errors.Cause(err)
+			}
+			tagOptions["gitTag"] = gitTag
 		}
 		releaseImageUri, err := r.GetReleaseImageURI(image, repoName, tagOptions)
 		if err != nil {
@@ -57,13 +62,14 @@ func (r *ReleaseConfig) GetCertManagerAssets() ([]Artifact, error) {
 		}
 
 		imageArtifact := &ImageArtifact{
-			AssetName:       image,
-			SourceImageURI:  sourceImageUri,
-			ReleaseImageURI: releaseImageUri,
-			Arch:            []string{"amd64"},
-			OS:              "linux",
-			GitTag:          gitTag,
-			ProjectPath:     certManagerProjectPath,
+			AssetName:         image,
+			SourceImageURI:    sourceImageUri,
+			ReleaseImageURI:   releaseImageUri,
+			Arch:              []string{"amd64"},
+			OS:                "linux",
+			GitTag:            gitTag,
+			ProjectPath:       certManagerProjectPath,
+			SourcedFromBranch: sourcedFromBranch,
 		}
 		artifacts = append(artifacts, Artifact{Image: imageArtifact})
 	}
@@ -74,11 +80,14 @@ func (r *ReleaseConfig) GetCertManagerAssets() ([]Artifact, error) {
 func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (anywherev1alpha1.CertManagerBundle, error) {
 	artifacts := r.BundleArtifactsTable["cert-manager"]
 
+	var sourceBranch string
 	bundleArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleObjects := []string{}
 
 	for _, artifact := range artifacts {
 		imageArtifact := artifact.Image
+		sourceBranch = imageArtifact.SourcedFromBranch
+
 		bundleArtifact := anywherev1alpha1.Image{
 			Name:        imageArtifact.AssetName,
 			Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
@@ -94,7 +103,7 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 
 	componentChecksum := GenerateComponentChecksum(bundleObjects)
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, certManagerProjectPath)),
+		newVersionerWithGITTAG(r.BuildRepoSource, certManagerProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {

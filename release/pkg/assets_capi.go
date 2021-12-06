@@ -41,6 +41,7 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 	}
 
 	componentTagOverrideMap := map[string]ImageTagOverride{}
+	sourcedFromBranch := r.BuildRepoBranchName
 	artifacts := []Artifact{}
 	for _, image := range capiImages {
 		repoName := fmt.Sprintf("kubernetes-sigs/cluster-api/%s", image)
@@ -49,9 +50,16 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 			"projectPath": capiProjectPath,
 		}
 
-		sourceImageUri, err := r.GetSourceImageURI(image, repoName, tagOptions)
+		sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(image, repoName, tagOptions)
 		if err != nil {
 			return nil, errors.Cause(err)
+		}
+		if sourcedFromBranch != r.BuildRepoBranchName {
+			gitTag, err = r.readGitTag(capiProjectPath, sourcedFromBranch)
+			if err != nil {
+				return nil, errors.Cause(err)
+			}
+			tagOptions["gitTag"] = gitTag
 		}
 		releaseImageUri, err := r.GetReleaseImageURI(image, repoName, tagOptions)
 		if err != nil {
@@ -59,13 +67,14 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 		}
 
 		imageArtifact := &ImageArtifact{
-			AssetName:       image,
-			SourceImageURI:  sourceImageUri,
-			ReleaseImageURI: releaseImageUri,
-			Arch:            []string{"amd64"},
-			OS:              "linux",
-			GitTag:          gitTag,
-			ProjectPath:     capiProjectPath,
+			AssetName:         image,
+			SourceImageURI:    sourceImageUri,
+			ReleaseImageURI:   releaseImageUri,
+			Arch:              []string{"amd64"},
+			OS:                "linux",
+			GitTag:            gitTag,
+			ProjectPath:       capiProjectPath,
+			SourcedFromBranch: sourcedFromBranch,
 		}
 		artifacts = append(artifacts, Artifact{Image: imageArtifact})
 
@@ -95,7 +104,7 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 			var sourceS3Prefix string
 			var releaseS3Path string
 			var imageTagOverride ImageTagOverride
-			latestPath := r.getLatestUploadDestination()
+			latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 			if r.DevRelease || r.ReleaseEnvironment == "development" {
 				sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/%s/%s", capiProjectPath, latestPath, component, gitTag)
@@ -140,6 +149,7 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 				ImageTagOverrides: imageTagOverrides,
 				GitTag:            gitTag,
 				ProjectPath:       capiProjectPath,
+				SourcedFromBranch: sourcedFromBranch,
 			}
 			artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 		}
@@ -155,6 +165,7 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 	}
 	components := SortArtifactsFuncMap(coreClusterAPIBundleArtifacts)
 
+	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	bundleObjects := []string{}
@@ -167,6 +178,7 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 					if imageArtifact.AssetName != "cluster-api-controller" {
 						continue
 					}
+					sourceBranch = imageArtifact.SourcedFromBranch
 				}
 
 				bundleImageArtifact := anywherev1alpha1.Image{
@@ -204,7 +216,7 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 
 	componentChecksum := GenerateComponentChecksum(bundleObjects)
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, capiProjectPath)),
+		newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {
@@ -229,6 +241,7 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 	}
 	components := SortArtifactsFuncMap(kubeadmBootstrapBundleArtifacts)
 
+	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	bundleObjects := []string{}
@@ -241,6 +254,7 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 					if imageArtifact.AssetName != "kubeadm-bootstrap-controller" {
 						continue
 					}
+					sourceBranch = imageArtifact.SourcedFromBranch
 				}
 
 				bundleImageArtifact := anywherev1alpha1.Image{
@@ -278,7 +292,7 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 
 	componentChecksum := GenerateComponentChecksum(bundleObjects)
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, capiProjectPath)),
+		newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {
@@ -303,6 +317,7 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 	}
 	components := SortArtifactsFuncMap(kubeadmControlPlaneBundleArtifacts)
 
+	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	bundleObjects := []string{}
@@ -315,6 +330,7 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 					if imageArtifact.AssetName != "kubeadm-control-plane-controller" {
 						continue
 					}
+					sourceBranch = imageArtifact.SourcedFromBranch
 				}
 
 				bundleImageArtifact := anywherev1alpha1.Image{
@@ -352,7 +368,7 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 
 	componentChecksum := GenerateComponentChecksum(bundleObjects)
 	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, capiProjectPath)),
+		newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
 		componentChecksum,
 	)
 	if err != nil {
