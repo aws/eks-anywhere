@@ -66,9 +66,16 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 		"projectPath": eksAnywhereProjectPath,
 	}
 
-	sourceImageUri, err := r.GetSourceImageURI(name, sourceRepoName, tagOptions)
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, sourceRepoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)
+	}
+	if sourcedFromBranch != r.BuildRepoBranchName {
+		gitTag, err = r.readGitTag(eksAnywhereProjectPath, sourcedFromBranch)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+		tagOptions["gitTag"] = gitTag
 	}
 	releaseImageUri, err := r.GetReleaseImageURI(name, releaseRepoName, tagOptions)
 	if err != nil {
@@ -76,13 +83,14 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  sourceImageUri,
-		ReleaseImageURI: releaseImageUri,
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-		GitTag:          gitTag,
-		ProjectPath:     eksAnywhereProjectPath,
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       eksAnywhereProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
@@ -103,7 +111,7 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 
 	var sourceS3Prefix string
 	var releaseS3Path string
-	latestPath := r.getLatestUploadDestination()
+	latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/cluster-controller", eksAnywhereProjectPath, latestPath)

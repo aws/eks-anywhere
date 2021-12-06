@@ -328,11 +328,11 @@ func (r *ReleaseConfig) GetURI(path string) (string, error) {
 	return uri.String(), nil
 }
 
-func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[string]string) (string, error) {
+func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[string]string) (string, string, error) {
 	var sourceImageUri string
-
+	sourcedFromBranch := r.BuildRepoBranchName
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
-		latestTag := r.getLatestUploadDestination()
+		latestTag := getLatestUploadDestination(r.BuildRepoBranchName)
 		if name == "bottlerocket-bootstrap" {
 			sourceImageUri = fmt.Sprintf("%s/%s:v%s-%s-%s",
 				r.SourceContainerRegistry,
@@ -376,12 +376,13 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 					} else {
 						gitTagFromMain, err = r.readGitTag(tagOptions["projectPath"], "main")
 						if err != nil {
-							return "", errors.Cause(err)
+							return "", "", errors.Cause(err)
 						}
 					}
 					sourceImageUri = strings.NewReplacer(r.BuildRepoBranchName, "latest", tagOptions["gitTag"], gitTagFromMain).Replace(sourceImageUri)
+					sourcedFromBranch = "main"
 				} else {
-					return "", errors.Cause(err)
+					return "", "", errors.Cause(err)
 				}
 			}
 		}
@@ -433,9 +434,10 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 				r.BundleNumber,
 			)
 		}
+
 	}
 
-	return sourceImageUri, nil
+	return sourceImageUri, sourcedFromBranch, nil
 }
 
 func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map[string]string) (string, error) {
@@ -499,7 +501,7 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 
 	var semver string
 	if r.DevRelease {
-		currentSourceImageUri, err := r.GetSourceImageURI(name, repoName, tagOptions)
+		currentSourceImageUri, _, err := r.GetSourceImageURI(name, repoName, tagOptions)
 		if err != nil {
 			return "", errors.Cause(err)
 		}
@@ -522,7 +524,7 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 				semver = previousReleaseImageSemver
 				fmt.Printf("Image digest for %s image has not changed, tagging with previous dev release semver: %s\n", repoName, semver)
 			} else {
-				newSemver, err := generateNewDevReleaseVersion(previousReleaseImageSemver, "vDev")
+				newSemver, err := generateNewDevReleaseVersion(previousReleaseImageSemver, "vDev", r.BuildRepoBranchName)
 				if err != nil {
 					return "", errors.Cause(err)
 				}
@@ -593,7 +595,6 @@ func (r *ReleaseConfig) GetPreviousReleaseImageSemver(releaseImageUri string) (s
 						semver = imageUriSplit[len(imageUriSplit)-1]
 					}
 				}
-
 			}
 		}
 	}

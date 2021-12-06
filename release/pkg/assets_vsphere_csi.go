@@ -42,7 +42,7 @@ func (r *ReleaseConfig) GetVsphereCsiAssets() ([]Artifact, error) {
 			"projectPath": vSphereCsiProjectPath,
 		}
 
-		sourceImageUri, err := r.GetSourceImageURI(image, repoName, tagOptions)
+		sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(image, repoName, tagOptions)
 		if err != nil {
 			return nil, errors.Cause(err)
 		}
@@ -52,13 +52,14 @@ func (r *ReleaseConfig) GetVsphereCsiAssets() ([]Artifact, error) {
 		}
 
 		imageArtifact := &ImageArtifact{
-			AssetName:       fmt.Sprintf("vsphere-csi-%s", image),
-			SourceImageURI:  sourceImageUri,
-			ReleaseImageURI: releaseImageUri,
-			Arch:            []string{"amd64"},
-			OS:              "linux",
-			GitTag:          gitTag,
-			ProjectPath:     vSphereCsiProjectPath,
+			AssetName:         fmt.Sprintf("vsphere-csi-%s", image),
+			SourceImageURI:    sourceImageUri,
+			ReleaseImageURI:   releaseImageUri,
+			Arch:              []string{"amd64"},
+			OS:                "linux",
+			GitTag:            gitTag,
+			ProjectPath:       vSphereCsiProjectPath,
+			SourcedFromBranch: sourcedFromBranch,
 		}
 		artifacts = append(artifacts, Artifact{Image: imageArtifact})
 	}

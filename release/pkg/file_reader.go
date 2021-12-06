@@ -167,7 +167,7 @@ func (r *ReleaseConfig) GetCurrentEksADevReleaseVersion(releaseVersion string) (
 			return "", errors.Cause(err)
 		}
 		latestBuildVersion = string(latestBuildS3)
-		newDevReleaseVersion, err = generateNewDevReleaseVersion(latestBuildVersion, releaseVersion)
+		newDevReleaseVersion, err = generateNewDevReleaseVersion(latestBuildVersion, releaseVersion, r.BuildRepoBranchName)
 		if err != nil {
 			return "", errors.Cause(err)
 		}
@@ -185,14 +185,20 @@ func (r *ReleaseConfig) GetCurrentEksADevReleaseVersion(releaseVersion string) (
 	return newDevReleaseVersion, nil
 }
 
-func generateNewDevReleaseVersion(latestBuildVersion, releaseVersion string) (string, error) {
+func generateNewDevReleaseVersion(latestBuildVersion, releaseVersion, branchName string) (string, error) {
 	if releaseVersion == "vDev" { // TODO: remove when we update the pipeline
 		releaseVersion = "v0.0.0"
 	}
 
+	releaseVersionIdentifier := "dev+build"
+	if branchName != "main" {
+		releaseVersionIdentifier = fmt.Sprintf("dev-%s+build", branchName)
+	}
+
 	if !strings.Contains(latestBuildVersion, releaseVersion) && !strings.Contains(latestBuildVersion, "vDev") { // TODO: adding vDev case temporally to support old run, remove later
 		// different semver, reset build number suffix on release version
-		newReleaseVersion := releaseVersion + "-dev+build.0"
+
+		newReleaseVersion := fmt.Sprintf("%s-%s.0", releaseVersion, releaseVersionIdentifier)
 
 		return newReleaseVersion, nil
 	}
@@ -209,7 +215,7 @@ func generateNewDevReleaseVersion(latestBuildVersion, releaseVersion string) (st
 	}
 
 	newBuildNumber := lastBuildNumber + 1
-	newReleaseVersion := fmt.Sprintf("%s-dev+build.%d", releaseVersion, newBuildNumber)
+	newReleaseVersion := fmt.Sprintf("%s-%s.%d", releaseVersion, releaseVersionIdentifier, newBuildNumber)
 
 	return newReleaseVersion, nil
 }
