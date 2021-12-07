@@ -12,7 +12,7 @@ import (
 func cleanup(ctx context.Context, deps *dependencies.Dependencies, commandErr *error) {
 	close(ctx, deps)
 
-	if commandErr == nil {
+	if *commandErr == nil {
 		deps.Writer.CleanUpTemp()
 	}
 }
