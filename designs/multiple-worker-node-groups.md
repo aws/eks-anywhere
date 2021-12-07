@@ -6,7 +6,7 @@
 
 This limits the ability of a user to create worker nodes with different configurations and formulate application deployment strategy based on the configurations of the worker nodes.
 
-Also, this creates a problem while tainting a node. Unless, eks-anywhere clusters support multiple worker node groups, worker nodes can not be tainted with `NoExecute` effect, since nodes in a node group have the same configuration, setting a taint with `NoExecute` effect would essentially make the worker nodes unusable for eks-anywhere specific deployments, as the general approach for eks-anywhere is to not add tolerations on deployments.
+Also, this creates a problem while tainting a node. Unless, eks-anywhere clusters support multiple worker node groups, worker nodes can not be tainted with `NoExecute` and `NoSchedule` effects, since nodes in a node group have the same configuration, setting a taint with either `NoExecute` or `NoSchedule` effect would essentially make the worker nodes unusable for eks-anywhere specific deployments, as the general approach for eks-anywhere is to not add tolerations on deployments.
 
 
 ### Tenets
@@ -37,6 +37,9 @@ With this feature, a user can create a cluster config file with multiple worker 
 With this feature, worker node specific parts of the cluster spec file will look like below.
 
 ```
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+........
   workerNodeGroupConfigurations:
   - count: 3
     machineGroupRef:
@@ -219,7 +222,7 @@ For each group, we will append these three fields corresponding to that group in
 
 Right now, the cli assumes that there will be only one group and it treats worker node group configuration array as a collection of only one element. As a result, the controller just refers to the first element of this array in different places of the code. So we need to do the same operations in loops, which includes CAPI spec creation, cluster spec validation etc. Once a CAPI spec is created with this approach, the workload cluster will be created with multiple worker nodes.
 
-Also, it needs to be made sure that at the least one of the worker node groups does not have `NoExecute` taint. This validation will be done at the preflight validation stage.
+Also, it needs to be made sure that at the least one of the worker node groups does not have `NoExecute` or `NoSchedule` taint. This validation will be done at the preflight validation stage.
 
 The examples in this design are for vsphere provider. But the same strategy applies for other providers as well.
 
