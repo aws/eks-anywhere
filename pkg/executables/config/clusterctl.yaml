@@ -3,10 +3,12 @@ providers:
     url: "{{.dir}}/infrastructure-docker/{{.DockerProviderVersion}}/infrastructure-components-development.yaml"
     type: "InfrastructureProvider"
     version: "{{.DockerProviderVersion}}"
+    {{- if (eq .IsActiveTinkerbellProvider "true") }}
   - name: "tinkerbell"
     url: "{{.dir}}/infrastructure-tinkerbell/{{.TinkerbellProviderVersion}}/infrastructure-components.yaml"
     type: "InfrastructureProvider"
     version: "{{.TinkerbellProviderVersion}}"
+    {{- end }}
   - name: "vsphere"
     url: "{{.dir}}/infrastructure-vsphere/{{.VSphereProviderVersion}}/infrastructure-components.yaml"
     type: "InfrastructureProvider"
