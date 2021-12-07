@@ -1,0 +1,144 @@
+package tinkerbell
+
+import (
+	"context"
+	"os"
+	"path"
+	"testing"
+
+	"github.com/golang/mock/gomock"
+
+	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/providers/docker/mocks"
+	"github.com/aws/eks-anywhere/pkg/types"
+)
+
+const (
+	testDataDir                         = "testdata"
+	expectedTinkerbellIP                = "1.2.3.4"
+	expectedTinkerbellGRPCAuth          = "1.2.3.4:42113"
+	expectedTinkerbellCertURL           = "1.2.3.4:42114/cert"
+	expectedTinkerbellPBnJGRPCAuthority = "1.2.3.4:42000"
+)
+
+func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
+	return test.NewFullClusterSpec(t, path.Join(testDataDir, fileName))
+}
+
+func givenDatacenterConfig(t *testing.T, fileName string) *v1alpha1.TinkerbellDatacenterConfig {
+	datacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(path.Join(testDataDir, fileName))
+	if err != nil {
+		t.Fatalf("unable to get datacenter config from file: %v", err)
+	}
+	return datacenterConfig
+}
+
+func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.TinkerbellMachineConfig {
+	machineConfigs, err := v1alpha1.GetTinkerbellMachineConfigs(path.Join(testDataDir, fileName))
+	if err != nil {
+		t.Fatalf("unable to get machine configs from file: %v", err)
+	}
+	return machineConfigs
+}
+
+func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient) *tinkerbellProvider {
+	return newProvider(
+		t,
+		datacenterConfig,
+		machineConfigs,
+		clusterConfig,
+		kubectl,
+	)
+}
+
+func newProvider(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient) *tinkerbellProvider {
+	return NewProvider(
+		datacenterConfig,
+		machineConfigs,
+		clusterConfig,
+		kubectl,
+		test.FakeNow,
+		"some-hardware-config",
+	)
+}
+
+type testContext struct {
+	oldTinkerbellIP                  string
+	isTinkerbellIPSet                bool
+	oldTinkerbellCertURL             string
+	isTinkerbellCertURLSet           bool
+	oldtinkerbellGRPCAuth            string
+	isTinkerbellGRPCAuthSet          bool
+	oldTinkerbellPBnJGRPCAuthority   string
+	isTinkerbellPBnJGRPCAuthoritySet bool
+}
+
+func (tctx *testContext) SaveContext() {
+	tctx.oldTinkerbellIP, tctx.isTinkerbellIPSet = os.LookupEnv(tinkerbellIPKey)
+	tctx.oldTinkerbellCertURL, tctx.isTinkerbellCertURLSet = os.LookupEnv(tinkerbellCertURLKey)
+	tctx.oldtinkerbellGRPCAuth, tctx.isTinkerbellGRPCAuthSet = os.LookupEnv(tinkerbellGRPCAuthKey)
+	tctx.oldTinkerbellPBnJGRPCAuthority, tctx.isTinkerbellPBnJGRPCAuthoritySet = os.LookupEnv(tinkerbellPBnJGRPCAuthorityKey)
+	os.Setenv(tinkerbellIPKey, expectedTinkerbellIP)
+	os.Setenv(tinkerbellCertURLKey, expectedTinkerbellCertURL)
+	os.Setenv(tinkerbellGRPCAuthKey, expectedTinkerbellGRPCAuth)
+	os.Setenv(tinkerbellPBnJGRPCAuthorityKey, expectedTinkerbellPBnJGRPCAuthority)
+	os.Setenv(features.TinkerbellProviderEnvVar, "true")
+}
+
+func (tctx *testContext) RestoreContext() {
+	if tctx.isTinkerbellIPSet {
+		os.Setenv(tinkerbellIPKey, tctx.oldTinkerbellIP)
+	} else {
+		os.Unsetenv(tinkerbellIPKey)
+	}
+	if tctx.isTinkerbellCertURLSet {
+		os.Setenv(tinkerbellCertURLKey, tctx.oldTinkerbellCertURL)
+	} else {
+		os.Unsetenv(tinkerbellCertURLKey)
+	}
+	if tctx.isTinkerbellGRPCAuthSet {
+		os.Setenv(tinkerbellGRPCAuthKey, tctx.oldtinkerbellGRPCAuth)
+	} else {
+		os.Unsetenv(tinkerbellGRPCAuthKey)
+	}
+	if tctx.isTinkerbellPBnJGRPCAuthoritySet {
+		os.Setenv(tinkerbellPBnJGRPCAuthorityKey, tctx.oldTinkerbellPBnJGRPCAuthority)
+	} else {
+		os.Unsetenv(tinkerbellPBnJGRPCAuthorityKey)
+	}
+}
+
+func setupContext(t *testing.T) {
+	var tctx testContext
+	tctx.SaveContext()
+	t.Cleanup(func() {
+		tctx.RestoreContext()
+	})
+}
+
+func TestTinkerbellProviderGenerateDeploymentFile(t *testing.T) {
+	setupContext(t)
+	clusterSpecManifest := "cluster_tinkerbell.yaml"
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_cluster_tinkerbell_md.yaml")
+}
