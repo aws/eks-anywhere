@@ -32,6 +32,7 @@ func (p *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 
 	var etcdMachineConfig *anywherev1.VSphereMachineConfig
 
+	// TODO: move this to api Cluster validations
 	if len(vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
 		return errors.New("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
 	}
@@ -95,6 +96,7 @@ func (p *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 		}
 	}
 
+	// TODO: move this to api Cluster validations
 	if err := p.validateControlPlaneIp(vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
 		return err
 	}
