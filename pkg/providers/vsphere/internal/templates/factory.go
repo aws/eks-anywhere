@@ -57,7 +57,7 @@ func (f *Factory) CreateIfMissing(ctx context.Context, datacenter string, machin
 		return fmt.Errorf("error checking for template: %v", err)
 	}
 	if err == nil && len(templateFullPath) > 0 {
-		machineConfig.Spec.Template = templateFullPath
+		machineConfig.Spec.Template = templateFullPath // TODO: move this out of the factory into the defaulter, it's a side effect
 		logger.V(2).Info("Template already exists. Skipping creation", "template", machineConfig.Spec.Template)
 		return nil
 	}
