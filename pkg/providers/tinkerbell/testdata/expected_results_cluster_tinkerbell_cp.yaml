@@ -44,7 +44,7 @@ spec:
     preKubeadmCommands:
     - mkdir -p /etc/kubernetes/manifests && ctr images pull ghcr.io/kube-vip/kube-vip:latest
       && ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:latest vip /kube-vip manifest
-      pod --arp --interface $(ip -4 -j route list default | jq -r .[0].dev) --address  --controlplane
+      pod --arp --interface $(ip -4 -j route list default | jq -r .[0].dev) --address 1.2.3.4 --controlplane
       --leaderElection > /etc/kubernetes/manifests/kube-vip.yaml
     users:
     - name: tink-user

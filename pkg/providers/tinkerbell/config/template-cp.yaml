@@ -44,7 +44,7 @@ spec:
     preKubeadmCommands:
     - mkdir -p /etc/kubernetes/manifests && ctr images pull {{.kubeVipImage}}
       && ctr run --rm --net-host {{.kubeVipImage}} vip /kube-vip manifest
-      pod --arp --interface $(ip -4 -j route list default | jq -r .[0].dev) --address  --controlplane
+      pod --arp --interface $(ip -4 -j route list default | jq -r .[0].dev) --address {{.controlPlaneEndpointIp}} --controlplane
       --leaderElection > /etc/kubernetes/manifests/kube-vip.yaml
     users:
     - name: {{.controlPlaneSshUsername}}
