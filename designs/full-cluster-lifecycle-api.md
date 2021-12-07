@@ -168,7 +168,7 @@ However, we should stop modifying the fields that the user has already specified
 
 Currently, it is only possible to update a few fields through the EKSA controller (like worker node replicas). This includes self-managed clusters.
 
-As part of this design, that support for self-managed clusters will be removed. Users can still continue to modify these fields through the CLI upgrade command. This simplifies the controller and avoids confusion about the difference in upgrade capabilities between self-managed clusters and managed clusters.
+As part of this design, that support for self-managed clusters will be removed. Users can still continue to modify these fields through the CLI upgrade command. This simplifies the controller and avoids confusion about the difference in upgrade capabilities between self-managed clusters and managed clusters. Once the controller validations are implemented, we will come back to this decision and might decide to maintain support if we find a reasonable way to do it, without complicating the controller design or adding significant work.
 
 We will revisit this once we decide to offer full cluster lifecycle support for self-managed clusters.
 
