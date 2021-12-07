@@ -498,7 +498,7 @@ spec:
       datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
       diskGiB: 25
       folder: '/SDDC-Datacenter/vm'
-      memoryMiB: 4096
+      memoryMiB: 8192
       network:
         devices:
           - dhcp4: true

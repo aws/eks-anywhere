@@ -24,6 +24,7 @@ func newDefaulter(govc ProviderGovcClient) *defaulter {
 
 func (d *defaulter) setDefaults(ctx context.Context, spec *spec) error {
 	setDefaultsForDatacenterConfig(spec.datacenterConfig)
+	setDefaultsForEtcdMachineConfig(spec.etcdMachineConfig())
 	for _, m := range spec.machineConfigs() {
 		setDefaultsForMachineConfig(m)
 		if err := d.setDefaultTemplateIfMissing(ctx, spec, m); err != nil {
@@ -42,6 +43,13 @@ func setDefaultsForDatacenterConfig(datacenterConfig *anywherev1.VSphereDatacent
 	if datacenterConfig.Spec.Insecure {
 		logger.Info("Warning: VSphereDatacenterConfig configured in insecure mode")
 		datacenterConfig.Spec.Thumbprint = ""
+	}
+}
+
+func setDefaultsForEtcdMachineConfig(machineConfig *anywherev1.VSphereMachineConfig) {
+	if machineConfig != nil && machineConfig.Spec.MemoryMiB < 8192 {
+		logger.Info("Warning: VSphereMachineConfig MemoryMiB for etcd machines should not be less than 8192. Defaulting to 8192")
+		machineConfig.Spec.MemoryMiB = 8192
 	}
 }
 

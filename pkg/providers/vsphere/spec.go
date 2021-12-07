@@ -37,7 +37,7 @@ func (s *spec) firstWorkerMachineConfig() *anywherev1.VSphereMachineConfig {
 }
 
 func (s *spec) etcdMachineConfig() *anywherev1.VSphereMachineConfig {
-	if s.Cluster.Spec.ExternalEtcdConfiguration == nil {
+	if s.Cluster.Spec.ExternalEtcdConfiguration == nil || s.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
 		return nil
 	}
 	return s.machineConfigsLookup[s.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
