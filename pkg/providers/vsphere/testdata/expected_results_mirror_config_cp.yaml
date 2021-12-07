@@ -433,6 +433,7 @@ spec:
       - echo "127.0.0.1   localhost" >>/etc/hosts
       - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
       - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+    cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
       - name: capv
         sshAuthorizedKeys:
