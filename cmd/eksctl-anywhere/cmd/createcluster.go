@@ -91,7 +91,7 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer cleanup(ctx, deps, err)
+	defer cleanup(ctx, deps, &err)
 
 	createCluster := workflows.NewCreate(
 		deps.Bootstrapper,

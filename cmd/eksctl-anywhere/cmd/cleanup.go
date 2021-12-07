@@ -9,7 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-func cleanup(ctx context.Context, deps *dependencies.Dependencies, commandErr error) {
+func cleanup(ctx context.Context, deps *dependencies.Dependencies, commandErr *error) {
 	close(ctx, deps)
 
 	if commandErr == nil {

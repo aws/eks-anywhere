@@ -91,7 +91,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer cleanup(ctx, deps, err)
+	defer cleanup(ctx, deps, &err)
 
 	upgradeCluster := workflows.NewUpgrade(
 		deps.Bootstrapper,
