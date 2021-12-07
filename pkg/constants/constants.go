@@ -26,4 +26,5 @@ const (
 	DockerProviderName     = "docker"
 	AWSProviderName        = "aws"
 	TinkerbellProviderName = "tinkerbell"
+	CloudStackProviderName = "cloudstack"
 )

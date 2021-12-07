@@ -41,7 +41,7 @@ func (b *ExecutableBuilder) BuildGovcExecutable(writer filewriter.FileWriter) *G
 }
 
 func (b *ExecutableBuilder) BuildCmkExecutable(writer filewriter.FileWriter) *Cmk {
-	return NewCmk(buildExecutable(cmkPath, b.useDocker, b.image, b.mountDir), writer)
+	return NewCmk(b.buildExecutable(cmkPath), writer)
 }
 
 func (b *ExecutableBuilder) BuildAwsCli() *AwsCli {

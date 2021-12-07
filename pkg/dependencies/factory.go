@@ -241,7 +241,7 @@ func (f *Factory) WithGovc() *Factory {
 func (f *Factory) WithCmk() *Factory {
 	f.WithWriter()
 
-	f.buildSteps = append(f.buildSteps, func() error {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Cmk != nil {
 			return nil
 		}
