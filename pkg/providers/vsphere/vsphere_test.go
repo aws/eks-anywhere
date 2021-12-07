@@ -301,7 +301,6 @@ func newProviderTest(t *testing.T) *providerTest {
 func (tt *providerTest) setExpectationsForDefaultDiskGovcCalls() {
 	for _, m := range tt.machineConfigs {
 		tt.govc.EXPECT().TemplateHasSnapshot(tt.ctx, m.Spec.Template).Return(true, nil)
-		tt.govc.EXPECT().GetWorkloadAvailableSpace(tt.ctx, m).Return(10000.0, nil)
 	}
 }
 

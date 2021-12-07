@@ -146,15 +146,5 @@ func (d *defaulter) setDiskDefaults(ctx context.Context, machineConfig *anywhere
 		machineConfig.Spec.DiskGiB = 25
 	}
 
-	// TODO: not sure why these defaults need to change when we can't get the available space? Copy-paste from original checkDatastoreUsage method
-	availableSpace, err := d.govc.GetWorkloadAvailableSpace(ctx, machineConfig)
-	if err != nil {
-		return fmt.Errorf("error getting datastore details: %v", err)
-	}
-	if availableSpace == -1 {
-		logger.Info("Warning: Unable to get VSphereMachineConfig datastore available space. Using default of 25 for DiskGiBs.")
-		machineConfig.Spec.DiskGiB = 25
-	}
-
 	return nil
 }
