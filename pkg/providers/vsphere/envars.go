@@ -33,6 +33,7 @@ func setupEnvVars(datacenterConfig *anywherev1.VSphereDatacenterConfig) error {
 		return fmt.Errorf("unable to set %s: %v", expClusterResourceSetKey, err)
 	}
 
+	// TODO: move this somewhere else since it's not vSphere specific
 	if _, ok := os.LookupEnv(eksaLicense); !ok {
 		if err := os.Setenv(eksaLicense, ""); err != nil {
 			return fmt.Errorf("unable to set %s: %v", eksaLicense, err)
