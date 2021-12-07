@@ -1,18 +1,30 @@
 package features
 
 import (
+	"fmt"
 	"os"
+	"sync"
 	"testing"
 
 	. "github.com/onsi/gomega"
 )
 
-const fakeFeatureEnvVar = "fakeFeatureEnvVar"
+const (
+	fakeFeatureEnvVar = "fakeFeatureEnvVar"
+	fakeFeatureGate   = "fakeFeatureGate"
+)
 
 func fakeFeature() Feature {
 	return Feature{
 		Name:     "Core components upgrade",
-		IsActive: isActiveForEnvVar(fakeFeatureEnvVar),
+		IsActive: globalFeatures.isActiveForEnvVar(fakeFeatureEnvVar),
+	}
+}
+
+func fakeFeatureWithGate() Feature {
+	return Feature{
+		Name:     "Core components upgrade",
+		IsActive: globalFeatures.isActiveForEnvVarOrGate(fakeFeatureEnvVar, fakeFeatureGate),
 	}
 }
 
@@ -20,7 +32,8 @@ func setupContext(t *testing.T) {
 	envVarOrgValue, set := os.LookupEnv(fakeFeatureEnvVar)
 	t.Cleanup(func() {
 		// cleanup cache
-		cache = newMutexMap()
+		globalFeatures.cache = newMutexMap()
+		globalFeatures.initGates = sync.Once{}
 		if set {
 			os.Setenv(fakeFeatureEnvVar, envVarOrgValue)
 		} else {
@@ -51,4 +64,14 @@ func TestIsActiveEnvVarSetTrue(t *testing.T) {
 
 	g.Expect(os.Setenv(fakeFeatureEnvVar, "true")).To(Succeed())
 	g.Expect(IsActive(fakeFeature())).To(BeTrue())
+}
+
+func TestIsActiveWithFeatureGatesTrue(t *testing.T) {
+	g := NewWithT(t)
+	setupContext(t)
+
+	featureGates := []string{"gate1=", "gate2=false", fmt.Sprintf("%s=true", fakeFeatureGate), ""}
+	FeedGates(featureGates)
+
+	g.Expect(IsActive(fakeFeatureWithGate())).To(BeTrue())
 }
