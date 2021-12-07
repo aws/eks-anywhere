@@ -107,7 +107,7 @@ func (r *ReleaseConfig) GetKindnetdBundle() (anywherev1alpha1.KindnetdBundle, er
 
 	var sourceBranch string
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	bundleObjects := []string{}
+	artifactHashes := []string{}
 
 	for _, artifact := range artifacts {
 		if artifact.Manifest != nil {
@@ -124,11 +124,12 @@ func (r *ReleaseConfig) GetKindnetdBundle() (anywherev1alpha1.KindnetdBundle, er
 			if err != nil {
 				return anywherev1alpha1.KindnetdBundle{}, err
 			}
-			bundleObjects = append(bundleObjects, string(manifestContents[:]))
+			manifestHash := generateManifestHash(manifestContents)
+			artifactHashes = append(artifactHashes, manifestHash)
 		}
 	}
 
-	componentChecksum := GenerateComponentChecksum(bundleObjects)
+	componentChecksum := generateComponentChecksum(artifactHashes)
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, kindProjectPath, sourceBranch, r),
 		componentChecksum,

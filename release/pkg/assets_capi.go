@@ -158,12 +158,12 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
 		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
-	components := SortArtifactsFuncMap(coreClusterAPIBundleArtifacts)
+	components := sortedComponentNames(coreClusterAPIBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	bundleObjects := []string{}
+	artifactHashes := []string{}
 
 	for _, componentName := range components {
 		for _, artifact := range coreClusterAPIBundleArtifacts[componentName] {
@@ -185,7 +185,7 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
-				bundleObjects = append(bundleObjects, bundleImageArtifact.ImageDigest)
+				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -204,12 +204,13 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 				if err != nil {
 					return anywherev1alpha1.CoreClusterAPI{}, err
 				}
-				bundleObjects = append(bundleObjects, string(manifestContents[:]))
+				manifestHash := generateManifestHash(manifestContents)
+				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}
 	}
 
-	componentChecksum := GenerateComponentChecksum(bundleObjects)
+	componentChecksum := generateComponentChecksum(artifactHashes)
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
 		componentChecksum,
@@ -234,12 +235,12 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
 		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
-	components := SortArtifactsFuncMap(kubeadmBootstrapBundleArtifacts)
+	components := sortedComponentNames(kubeadmBootstrapBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	bundleObjects := []string{}
+	artifactHashes := []string{}
 
 	for _, componentName := range components {
 		for _, artifact := range kubeadmBootstrapBundleArtifacts[componentName] {
@@ -261,7 +262,7 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
-				bundleObjects = append(bundleObjects, bundleImageArtifact.ImageDigest)
+				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -280,12 +281,13 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 				if err != nil {
 					return anywherev1alpha1.KubeadmBootstrapBundle{}, err
 				}
-				bundleObjects = append(bundleObjects, string(manifestContents[:]))
+				manifestHash := generateManifestHash(manifestContents)
+				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}
 	}
 
-	componentChecksum := GenerateComponentChecksum(bundleObjects)
+	componentChecksum := generateComponentChecksum(artifactHashes)
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
 		componentChecksum,
@@ -310,12 +312,12 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
 		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
-	components := SortArtifactsFuncMap(kubeadmControlPlaneBundleArtifacts)
+	components := sortedComponentNames(kubeadmControlPlaneBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	bundleObjects := []string{}
+	artifactHashes := []string{}
 
 	for _, componentName := range components {
 		for _, artifact := range kubeadmControlPlaneBundleArtifacts[componentName] {
@@ -337,7 +339,7 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
-				bundleObjects = append(bundleObjects, bundleImageArtifact.ImageDigest)
+				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -356,12 +358,13 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 				if err != nil {
 					return anywherev1alpha1.KubeadmControlPlaneBundle{}, err
 				}
-				bundleObjects = append(bundleObjects, string(manifestContents[:]))
+				manifestHash := generateManifestHash(manifestContents)
+				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}
 	}
 
-	componentChecksum := GenerateComponentChecksum(bundleObjects)
+	componentChecksum := generateComponentChecksum(artifactHashes)
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
 		componentChecksum,

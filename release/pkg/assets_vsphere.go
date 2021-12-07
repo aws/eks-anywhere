@@ -30,12 +30,12 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 		"kube-vip":                     r.BundleArtifactsTable["kube-vip"],
 		"vsphere-csi-driver":           r.BundleArtifactsTable["vsphere-csi-driver"],
 	}
-	components := SortArtifactsFuncMap(vsphereBundleArtifacts)
+	components := sortedComponentNames(vsphereBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	bundleObjects := []string{}
+	artifactHashes := []string{}
 
 	for _, componentName := range components {
 		for _, artifact := range vsphereBundleArtifacts[componentName] {
@@ -53,7 +53,7 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
-				bundleObjects = append(bundleObjects, bundleImageArtifact.ImageDigest)
+				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -68,7 +68,8 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 				if err != nil {
 					return anywherev1alpha1.VSphereBundle{}, err
 				}
-				bundleObjects = append(bundleObjects, string(manifestContents[:]))
+				manifestHash := generateManifestHash(manifestContents)
+				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}
 	}
@@ -87,10 +88,10 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 			ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 		}
 		bundleImageArtifacts[imageArtifact.AssetName] = bundleArtifact
-		bundleObjects = append(bundleObjects, bundleArtifact.ImageDigest)
+		artifactHashes = append(artifactHashes, bundleArtifact.ImageDigest)
 	}
 
-	componentChecksum := GenerateComponentChecksum(bundleObjects)
+	componentChecksum := generateComponentChecksum(artifactHashes)
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, capvProjectPath, sourceBranch, r),
 		componentChecksum,

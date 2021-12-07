@@ -124,12 +124,12 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapBundle(imageDigests map[string]string
 		"etcdadm-bootstrap-provider": r.BundleArtifactsTable["etcdadm-bootstrap-provider"],
 		"kube-rbac-proxy":            r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
-	components := SortArtifactsFuncMap(etcdadmBootstrapBundleArtifacts)
+	components := sortedComponentNames(etcdadmBootstrapBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	bundleObjects := []string{}
+	artifactHashes := []string{}
 
 	for _, componentName := range components {
 		for _, artifact := range etcdadmBootstrapBundleArtifacts[componentName] {
@@ -148,7 +148,7 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapBundle(imageDigests map[string]string
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
-				bundleObjects = append(bundleObjects, bundleImageArtifact.ImageDigest)
+				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -163,12 +163,13 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapBundle(imageDigests map[string]string
 				if err != nil {
 					return anywherev1alpha1.EtcdadmBootstrapBundle{}, err
 				}
-				bundleObjects = append(bundleObjects, string(manifestContents[:]))
+				manifestHash := generateManifestHash(manifestContents)
+				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}
 	}
 
-	componentChecksum := GenerateComponentChecksum(bundleObjects)
+	componentChecksum := generateComponentChecksum(artifactHashes)
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, etcdadmBootstrapProviderProjectPath, sourceBranch, r),
 		componentChecksum,

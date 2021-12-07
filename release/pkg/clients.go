@@ -409,7 +409,7 @@ func ExistsInS3(bucket string, key string) bool {
 	return true
 }
 
-func SortArtifactsFuncMap(m map[string][]Artifact) []string {
+func sortedComponentNames(m map[string][]Artifact) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)

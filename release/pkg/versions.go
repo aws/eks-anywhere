@@ -88,7 +88,7 @@ func (v *cliVersioner) patchVersion() (string, error) {
 	return v.cliVersion, nil
 }
 
-func GenerateComponentChecksum(hashes []string) string {
+func generateComponentChecksum(hashes []string) string {
 	b := make([][]byte, len(hashes))
 	if hashes != nil {
 		for i, str := range hashes {
@@ -100,4 +100,10 @@ func GenerateComponentChecksum(hashes []string) string {
 	sumStr := string(sum256[:])[:4]
 
 	return sumStr
+}
+
+func generateManifestHash(contents []byte) string {
+	hash := sha256.Sum256(contents)
+	hashStr := string(hash[:])
+	return hashStr
 }

@@ -82,7 +82,7 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 
 	var sourceBranch string
 	bundleArtifacts := map[string]anywherev1alpha1.Image{}
-	bundleObjects := []string{}
+	artifactHashes := []string{}
 
 	for _, artifact := range artifacts {
 		imageArtifact := artifact.Image
@@ -98,10 +98,10 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 		}
 
 		bundleArtifacts[imageArtifact.AssetName] = bundleArtifact
-		bundleObjects = append(bundleObjects, bundleArtifact.ImageDigest)
+		artifactHashes = append(artifactHashes, bundleArtifact.ImageDigest)
 	}
 
-	componentChecksum := GenerateComponentChecksum(bundleObjects)
+	componentChecksum := generateComponentChecksum(artifactHashes)
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, certManagerProjectPath, sourceBranch, r),
 		componentChecksum,
