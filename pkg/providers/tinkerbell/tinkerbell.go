@@ -16,6 +16,14 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+)
+
+const (
+	tinkerbellCertURLKey           = "TINKERBELL_CERT_URL"
+	tinkerbellGRPCAuthKey          = "TINKERBELL_GRPC_AUTHORITY"
+	tinkerbellIPKey                = "TINKERBELL_IP"
+	tinkerbellPBnJGRPCAuthorityKey = "TINKERBELL_PBNJ_GRPC_AUTHORITY"
 )
 
 //go:embed config/template-cp.yaml
@@ -30,7 +38,7 @@ var mhcTemplate []byte
 var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	requiredEnvs                         = []string{}
+	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey, tinkerbellPBnJGRPCAuthorityKey}
 )
 
 type tinkerbellProvider struct {
@@ -94,11 +102,19 @@ func (p *tinkerbellProvider) DeleteResources(_ context.Context, _ *cluster.Spec)
 func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 	// TODO: Add more validations
+	err := p.validateEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
 	return nil
 }
 
 func (p *tinkerbellProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
 	// TODO: validations?
+	err := p.validateEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
 	return nil
 }
 
@@ -241,7 +257,23 @@ func (p *tinkerbellProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) 
 	// 	},
 	// }
 	// return &infraBundle
-	return nil
+	// TODO - remove below code when tinkerbell is added to bundle
+	folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", "v0.1.0")
+	infraBundle := types.InfrastructureBundle{
+		FolderName: folderName,
+		Manifests: []releasev1alpha1.Manifest{
+			{
+				URI: "https://github.com/tinkerbell/cluster-api-provider-tinkerbell/releases/download/v0.1.0/infrastructure-components.yaml",
+			},
+			{
+				URI: "https://github.com/tinkerbell/cluster-api-provider-tinkerbell/releases/download/v0.1.0/metadata.yaml",
+			},
+			{
+				URI: "https://github.com/tinkerbell/cluster-api-provider-tinkerbell/releases/download/v0.1.0/cluster-template.yaml",
+			},
+		},
+	}
+	return &infraBundle
 }
 
 func (p *tinkerbellProvider) DatacenterConfig() providers.DatacenterConfig {
@@ -313,4 +345,36 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
 	}
 	return values
+}
+
+func (p *tinkerbellProvider) validateEnv(ctx context.Context) error {
+	if tinkerbellCertURL, ok := os.LookupEnv(tinkerbellCertURLKey); ok && len(tinkerbellCertURL) > 0 {
+		if err := os.Setenv(tinkerbellCertURLKey, tinkerbellCertURL); err != nil {
+			return fmt.Errorf("unable to set %s: %v", tinkerbellCertURLKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", tinkerbellCertURLKey)
+	}
+	if tinkerbellGRPCAuth, ok := os.LookupEnv(tinkerbellGRPCAuthKey); ok && len(tinkerbellGRPCAuth) > 0 {
+		if err := os.Setenv(tinkerbellGRPCAuthKey, tinkerbellGRPCAuth); err != nil {
+			return fmt.Errorf("unable to set %s: %v", tinkerbellGRPCAuthKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", tinkerbellGRPCAuthKey)
+	}
+	if tinkerbellIP, ok := os.LookupEnv(tinkerbellIPKey); ok && len(tinkerbellIP) > 0 {
+		if err := os.Setenv(tinkerbellIPKey, tinkerbellIP); err != nil {
+			return fmt.Errorf("unable to set %s: %v", tinkerbellIPKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", tinkerbellIPKey)
+	}
+	if tinkerbellPBnJGRPCAuthority, ok := os.LookupEnv(tinkerbellPBnJGRPCAuthorityKey); ok && len(tinkerbellPBnJGRPCAuthority) > 0 {
+		if err := os.Setenv(tinkerbellPBnJGRPCAuthorityKey, tinkerbellPBnJGRPCAuthority); err != nil {
+			return fmt.Errorf("unable to set %s: %v", tinkerbellPBnJGRPCAuthorityKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", tinkerbellPBnJGRPCAuthorityKey)
+	}
+	return nil
 }
