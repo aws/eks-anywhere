@@ -2,8 +2,8 @@ apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   labels:
-    cluster.x-k8s.io/cluster-name: abhnvp
-  name: abhnvp
+    cluster.x-k8s.io/cluster-name: test
+  name: test
   namespace: eksa-system
 spec:
   clusterNetwork:
@@ -17,16 +17,16 @@ spec:
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
-    name: abhnvp-control-plane
+    name: test-control-plane
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: TinkerbellCluster
-    name: abhnvp
+    name: test
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
-  name: abhnvp-control-plane
+  name: test-control-plane
   namespace: eksa-system
 spec:
   kubeadmConfigSpec:
@@ -56,14 +56,14 @@ spec:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: TinkerbellMachineTemplate
-      name: abhnvp-control-plane
+      name: test-control-plane
   replicas: 1
   version: v1.21.2-eks-1-21-4
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: TinkerbellMachineTemplate
 metadata:
-  name: abhnvp-control-plane
+  name: test-control-plane
   namespace: eksa-system
 spec:
   template:
@@ -72,7 +72,7 @@ spec:
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: TinkerbellCluster
 metadata:
-  name:  abhnvp
+  name:  test
   namespace: eksa-system
 spec:
   imageLookupBaseRegistry: ""

@@ -2,6 +2,7 @@ package tinkerbell
 
 import (
 	"context"
+	"os"
 	"path"
 	"testing"
 
@@ -10,12 +11,17 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/docker/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 const (
-	testDataDir = "testdata"
+	testDataDir                         = "testdata"
+	expectedTinkerbellIP                = "1.2.3.4"
+	expectedTinkerbellGRPCAuth          = "1.2.3.4:42113"
+	expectedTinkerbellCertURL           = "1.2.3.4:42114/cert"
+	expectedTinkerbellPBnJGRPCAuthority = "1.2.3.4:42000"
 )
 
 func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
@@ -59,7 +65,62 @@ func newProvider(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterCo
 	)
 }
 
+type testContext struct {
+	oldTinkerbellIP                  string
+	isTinkerbellIPSet                bool
+	oldTinkerbellCertURL             string
+	isTinkerbellCertURLSet           bool
+	oldtinkerbellGRPCAuth            string
+	isTinkerbellGRPCAuthSet          bool
+	oldTinkerbellPBnJGRPCAuthority   string
+	isTinkerbellPBnJGRPCAuthoritySet bool
+}
+
+func (tctx *testContext) SaveContext() {
+	tctx.oldTinkerbellIP, tctx.isTinkerbellIPSet = os.LookupEnv(tinkerbellIPKey)
+	tctx.oldTinkerbellCertURL, tctx.isTinkerbellCertURLSet = os.LookupEnv(tinkerbellCertURLKey)
+	tctx.oldtinkerbellGRPCAuth, tctx.isTinkerbellGRPCAuthSet = os.LookupEnv(tinkerbellGRPCAuthKey)
+	tctx.oldTinkerbellPBnJGRPCAuthority, tctx.isTinkerbellPBnJGRPCAuthoritySet = os.LookupEnv(tinkerbellPBnJGRPCAuthorityKey)
+	os.Setenv(tinkerbellIPKey, expectedTinkerbellIP)
+	os.Setenv(tinkerbellCertURLKey, expectedTinkerbellCertURL)
+	os.Setenv(tinkerbellGRPCAuthKey, expectedTinkerbellGRPCAuth)
+	os.Setenv(tinkerbellPBnJGRPCAuthorityKey, expectedTinkerbellPBnJGRPCAuthority)
+	os.Setenv(features.TinkerbellProviderEnvVar, "true")
+}
+
+func (tctx *testContext) RestoreContext() {
+	if tctx.isTinkerbellIPSet {
+		os.Setenv(tinkerbellIPKey, tctx.oldTinkerbellIP)
+	} else {
+		os.Unsetenv(tinkerbellIPKey)
+	}
+	if tctx.isTinkerbellCertURLSet {
+		os.Setenv(tinkerbellCertURLKey, tctx.oldTinkerbellCertURL)
+	} else {
+		os.Unsetenv(tinkerbellCertURLKey)
+	}
+	if tctx.isTinkerbellGRPCAuthSet {
+		os.Setenv(tinkerbellGRPCAuthKey, tctx.oldtinkerbellGRPCAuth)
+	} else {
+		os.Unsetenv(tinkerbellGRPCAuthKey)
+	}
+	if tctx.isTinkerbellPBnJGRPCAuthoritySet {
+		os.Setenv(tinkerbellPBnJGRPCAuthorityKey, tctx.oldTinkerbellPBnJGRPCAuthority)
+	} else {
+		os.Unsetenv(tinkerbellPBnJGRPCAuthorityKey)
+	}
+}
+
+func setupContext(t *testing.T) {
+	var tctx testContext
+	tctx.SaveContext()
+	t.Cleanup(func() {
+		tctx.RestoreContext()
+	})
+}
+
 func TestTinkerbellProviderGenerateDeploymentFile(t *testing.T) {
+	setupContext(t)
 	clusterSpecManifest := "cluster_tinkerbell.yaml"
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)

@@ -1,7 +1,7 @@
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
-  name: abhnvp
+  name: test
 spec:
   clusterNetwork:
     cni: cilium
@@ -20,7 +20,7 @@ spec:
       kind: TinkerbellMachineConfig
   datacenterRef:
     kind: TinkerbellDatacenterConfig
-    name: abhnvp
+    name: test
   externalEtcdConfiguration:
     count: 1
     machineGroupRef:
@@ -28,7 +28,7 @@ spec:
       kind: TinkerbellMachineConfig
   kubernetesVersion: "1.21"
   managementCluster:
-    name: abhnvp
+    name: test
   workerNodeGroupConfigurations:
   - count: 1
     machineGroupRef:
@@ -39,7 +39,7 @@ spec:
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: TinkerbellDatacenterConfig
 metadata:
-  name: abhnvp
+  name: test
 spec: {}
 
 ---
