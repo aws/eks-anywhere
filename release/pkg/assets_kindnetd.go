@@ -129,7 +129,7 @@ func (r *ReleaseConfig) GetKindnetdBundle() (anywherev1alpha1.KindnetdBundle, er
 		}
 	}
 
-	componentChecksum := generateComponentChecksum(artifactHashes)
+	componentChecksum := generateComponentHash(artifactHashes)
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, kindProjectPath, sourceBranch, r),
 		componentChecksum,

@@ -91,7 +91,7 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 		artifactHashes = append(artifactHashes, bundleArtifact.ImageDigest)
 	}
 
-	componentChecksum := generateComponentChecksum(artifactHashes)
+	componentChecksum := generateComponentHash(artifactHashes)
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, capvProjectPath, sourceBranch, r),
 		componentChecksum,

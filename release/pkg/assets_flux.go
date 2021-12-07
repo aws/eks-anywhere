@@ -91,7 +91,7 @@ func (r *ReleaseConfig) GetFluxBundle(imageDigests map[string]string) (anywherev
 		artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 	}
 
-	componentChecksum := generateComponentChecksum(artifactHashes)
+	componentChecksum := generateComponentHash(artifactHashes)
 	version, err := BuildComponentVersion(
 		newMultiProjectVersionerWithGITTAG(r.BuildRepoSource,
 			fluxcdRootPath,

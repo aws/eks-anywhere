@@ -101,7 +101,7 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 		artifactHashes = append(artifactHashes, bundleArtifact.ImageDigest)
 	}
 
-	componentChecksum := generateComponentChecksum(artifactHashes)
+	componentChecksum := generateComponentHash(artifactHashes)
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, certManagerProjectPath, sourceBranch, r),
 		componentChecksum,

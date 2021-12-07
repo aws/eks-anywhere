@@ -210,7 +210,7 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 		}
 	}
 
-	componentChecksum := generateComponentChecksum(artifactHashes)
+	componentChecksum := generateComponentHash(artifactHashes)
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
 		componentChecksum,
@@ -287,7 +287,7 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 		}
 	}
 
-	componentChecksum := generateComponentChecksum(artifactHashes)
+	componentChecksum := generateComponentHash(artifactHashes)
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
 		componentChecksum,
@@ -364,7 +364,7 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 		}
 	}
 
-	componentChecksum := generateComponentChecksum(artifactHashes)
+	componentChecksum := generateComponentHash(artifactHashes)
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
 		componentChecksum,

@@ -3,6 +3,7 @@ package pkg
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os/exec"
 	"path/filepath"
@@ -88,7 +89,7 @@ func (v *cliVersioner) patchVersion() (string, error) {
 	return v.cliVersion, nil
 }
 
-func generateComponentChecksum(hashes []string) string {
+func generateComponentHash(hashes []string) string {
 	b := make([][]byte, len(hashes))
 	if hashes != nil {
 		for i, str := range hashes {
@@ -96,14 +97,14 @@ func generateComponentChecksum(hashes []string) string {
 		}
 	}
 	joinByteArrays := bytes.Join(b, []byte(""))
-	sum256 := sha256.Sum256(joinByteArrays)
-	sumStr := string(sum256[:])[:4]
+	hash := sha256.Sum256(joinByteArrays)
+	hashStr := hex.EncodeToString(hash[:])[:7]
 
-	return sumStr
+	return hashStr
 }
 
 func generateManifestHash(contents []byte) string {
 	hash := sha256.Sum256(contents)
-	hashStr := string(hash[:])
+	hashStr := hex.EncodeToString(hash[:])
 	return hashStr
 }
