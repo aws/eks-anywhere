@@ -148,24 +148,12 @@ func (p *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 		return err
 	}
 
-	// TODO: not sure if this makes any sense since we later validate than the two templates are the same?
-	if controlPlaneMachineConfig.Spec.Template != workerNodeGroupMachineConfig.Spec.Template {
-		if err := p.validateTemplate(ctx, vsphereClusterSpec, workerNodeGroupMachineConfig); err != nil {
-			logger.V(1).Info("Workload template validation failed.")
-			return err
-		}
-	}
-
 	if controlPlaneMachineConfig.Spec.Template != workerNodeGroupMachineConfig.Spec.Template {
 		return errors.New("control plane and worker nodes must have the same template specified")
 	}
 	logger.MarkPass("Control plane and Workload templates validated")
 
 	if etcdMachineConfig != nil {
-		if err := p.validateTemplate(ctx, vsphereClusterSpec, etcdMachineConfig); err != nil {
-			logger.V(1).Info("Etcd template validation failed.")
-			return err
-		}
 		if etcdMachineConfig.Spec.Template != controlPlaneMachineConfig.Spec.Template {
 			return errors.New("control plane and etcd machines must have the same template specified")
 		}
