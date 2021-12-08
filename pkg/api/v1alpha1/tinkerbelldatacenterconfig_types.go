@@ -9,9 +9,9 @@ import (
 // TinkerbellDatacenterConfigSpec defines the desired state of TinkerbellDatacenterConfig
 type TinkerbellDatacenterConfigSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
-	TinkerbellIP string `json:"tinkerbellIP"`
-	TinkerbellCertURL string `json:"tinkerbellCertURL"`
-	TinkerbellGRPCAuth string `json:"tinkerbellGRPCAuth"`
+	TinkerbellIP           string `json:"tinkerbellIP"`
+	TinkerbellCertURL      string `json:"tinkerbellCertURL"`
+	TinkerbellGRPCAuth     string `json:"tinkerbellGRPCAuth"`
 	TinkerbellPBnJGRPCAuth string `json:"tinkerbellPBnJGRPC"`
 }
 
