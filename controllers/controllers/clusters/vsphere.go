@@ -11,6 +11,10 @@ type VSphereReconciler struct {
 	*providerClusterReconciler
 }
 
+func NewVSphereReconciler() *VSphereReconciler {
+	return &VSphereReconciler{providerClusterReconciler: &providerClusterReconciler{}}
+}
+
 func (v *VSphereReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (reconciler.Result, error) {
 	return reconciler.Result{}, nil
 }

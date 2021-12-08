@@ -11,6 +11,10 @@ type DockerReconciler struct {
 	*providerClusterReconciler
 }
 
+func NewDockerReconciler() *DockerReconciler {
+	return &DockerReconciler{providerClusterReconciler: &providerClusterReconciler{}}
+}
+
 func (v *DockerReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (reconciler.Result, error) {
 	return reconciler.Result{}, nil
 }
