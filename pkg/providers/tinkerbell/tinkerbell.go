@@ -50,14 +50,14 @@ type tinkerbellProvider struct {
 	// etcdSshAuthKey         string
 	providerKubectlClient ProviderKubectlClient
 	templateBuilder       *TinkerbellTemplateBuilder
-	hardwareConfig        string
+	hardwareConfigFile    string
 	// TODO: Update hardwareConfig to proper type
 }
 
 // TODO: Add necessary kubectl functions here
 type ProviderKubectlClient interface{}
 
-func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, now types.NowFunc, hardwareConfig string) *tinkerbellProvider {
+func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, now types.NowFunc, hardwareConfigFile string) *tinkerbellProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
@@ -75,7 +75,7 @@ func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
 		providerKubectlClient: providerKubectlClient,
-		hardwareConfig:        hardwareConfig,
+		hardwareConfigFile:    hardwareConfigFile,
 		templateBuilder: &TinkerbellTemplateBuilder{
 			datacenterSpec:             &datacenterConfig.Spec,
 			controlPlaneMachineSpec:    controlPlaneMachineSpec,
