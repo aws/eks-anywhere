@@ -36,7 +36,8 @@ func (r *ReleaseConfig) GetCriToolsAssets() ([]Artifact, error) {
 	var sourceS3Prefix string
 	var releaseS3Path string
 	var releaseName string
-	latestPath := r.getLatestUploadDestination()
+	sourcedFromBranch := r.BuildRepoBranchName
+	latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		sourceS3Key = fmt.Sprintf("cri-tools-%s-%s-%s.tar.gz", os, arch, gitTag)
@@ -60,16 +61,17 @@ func (r *ReleaseConfig) GetCriToolsAssets() ([]Artifact, error) {
 	}
 
 	archiveArtifact := &ArchiveArtifact{
-		SourceS3Key:    sourceS3Key,
-		SourceS3Prefix: sourceS3Prefix,
-		ArtifactPath:   filepath.Join(r.ArtifactDir, "cri-tools", r.BuildRepoHead),
-		ReleaseName:    releaseName,
-		ReleaseS3Path:  releaseS3Path,
-		ReleaseCdnURI:  cdnURI,
-		OS:             os,
-		Arch:           []string{arch},
-		GitTag:         gitTag,
-		ProjectPath:    criToolsProjectPath,
+		SourceS3Key:       sourceS3Key,
+		SourceS3Prefix:    sourceS3Prefix,
+		ArtifactPath:      filepath.Join(r.ArtifactDir, "cri-tools", r.BuildRepoHead),
+		ReleaseName:       releaseName,
+		ReleaseS3Path:     releaseS3Path,
+		ReleaseCdnURI:     cdnURI,
+		OS:                os,
+		Arch:              []string{arch},
+		GitTag:            gitTag,
+		ProjectPath:       criToolsProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 	artifacts := []Artifact{Artifact{Archive: archiveArtifact}}
 

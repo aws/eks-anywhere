@@ -1,6 +1,7 @@
 package test
 
 import (
+	"bytes"
 	"flag"
 	"io/ioutil"
 	"log"
@@ -42,6 +43,16 @@ func AssertContentToFile(t *testing.T, gotContent, wantFile string) {
 	fileContent := ReadFile(t, wantFile)
 
 	if gotContent != fileContent {
+		cmd := exec.Command("diff", wantFile, "-")
+		cmd.Stdin = bytes.NewReader([]byte(gotContent))
+		result, err := cmd.Output()
+		if err != nil {
+			if exitError, ok := err.(*exec.ExitError); ok {
+				if exitError.ExitCode() == 1 {
+					t.Fatalf("Results diff expected actual:\n%s", string(result))
+				}
+			}
+		}
 		t.Fatalf("Content doesn't match file got =\n%s\n\n\nwant =\n%s\n", gotContent, fileContent)
 	}
 }

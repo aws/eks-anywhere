@@ -570,11 +570,11 @@ func IsImageNotFoundError(err error) bool {
 	return err.Error() == "Requested image not found"
 }
 
-func (r *ReleaseConfig) getLatestUploadDestination() string {
-	if r.BuildRepoBranchName == "main" {
+func getLatestUploadDestination(sourcedFromBranch string) string {
+	if sourcedFromBranch == "main" {
 		return "latest"
 	} else {
-		return r.BuildRepoBranchName
+		return sourcedFromBranch
 	}
 }
 

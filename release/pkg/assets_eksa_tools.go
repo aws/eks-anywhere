@@ -51,9 +51,16 @@ func (r *ReleaseConfig) GetEksAToolsAssets() ([]Artifact, error) {
 		"projectPath": eksAToolsProjectPath,
 	}
 
-	sourceImageUri, err := r.GetSourceImageURI(name, sourceRepoName, tagOptions)
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, sourceRepoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)
+	}
+	if sourcedFromBranch != r.BuildRepoBranchName {
+		gitTag, err = r.readGitTag(eksAToolsProjectPath, sourcedFromBranch)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+		tagOptions["gitTag"] = gitTag
 	}
 	releaseImageUri, err := r.GetReleaseImageURI(name, releaseRepoName, tagOptions)
 	if err != nil {
@@ -61,13 +68,14 @@ func (r *ReleaseConfig) GetEksAToolsAssets() ([]Artifact, error) {
 	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  sourceImageUri,
-		ReleaseImageURI: releaseImageUri,
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-		GitTag:          gitTag,
-		ProjectPath:     eksAToolsProjectPath,
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       eksAToolsProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 
 	artifacts := []Artifact{Artifact{Image: imageArtifact}}

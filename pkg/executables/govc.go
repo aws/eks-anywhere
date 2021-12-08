@@ -94,13 +94,8 @@ func (g *Govc) Logout(ctx context.Context) error {
 }
 
 func (g *Govc) SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error) {
-	envMap, err := g.getEnvMap()
-	if err != nil {
-		return "", fmt.Errorf("%v", err)
-	}
-
 	params := []string{"find", "-json", "/" + datacenter, "-type", "VirtualMachine", "-name", filepath.Base(machineConfig.Spec.Template)}
-	templateResponse, err := g.ExecuteWithEnv(ctx, envMap, params...)
+	templateResponse, err := g.exec(ctx, params...)
 	if err != nil {
 		return "", fmt.Errorf("error getting template: %v", err)
 	}
@@ -601,7 +596,7 @@ func (g *Govc) ValidateVCenterSetup(ctx context.Context, datacenterConfig *v1alp
 	return nil
 }
 
-func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfig *v1alpha1.VSphereMachineConfig, selfSigned *bool) error {
+func (g *Govc) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfig *v1alpha1.VSphereMachineConfig, _ *bool) error {
 	envMap, err := g.validateAndSetupCreds()
 	if err != nil {
 		return fmt.Errorf("failed govc validations: %v", err)

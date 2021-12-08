@@ -36,7 +36,8 @@ func (r *ReleaseConfig) GetEtcdadmAssets() ([]Artifact, error) {
 	var sourceS3Prefix string
 	var releaseS3Path string
 	var releaseName string
-	latestPath := r.getLatestUploadDestination()
+	sourcedFromBranch := r.BuildRepoBranchName
+	latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		sourceS3Key = fmt.Sprintf("etcdadm-%s-%s-%s.tar.gz", os, arch, gitTag)
@@ -60,16 +61,17 @@ func (r *ReleaseConfig) GetEtcdadmAssets() ([]Artifact, error) {
 	}
 
 	archiveArtifact := &ArchiveArtifact{
-		SourceS3Key:    sourceS3Key,
-		SourceS3Prefix: sourceS3Prefix,
-		ArtifactPath:   filepath.Join(r.ArtifactDir, "etcdadm", r.BuildRepoHead),
-		ReleaseName:    releaseName,
-		ReleaseS3Path:  releaseS3Path,
-		ReleaseCdnURI:  cdnURI,
-		OS:             os,
-		Arch:           []string{arch},
-		GitTag:         gitTag,
-		ProjectPath:    etcdadmProjectPath,
+		SourceS3Key:       sourceS3Key,
+		SourceS3Prefix:    sourceS3Prefix,
+		ArtifactPath:      filepath.Join(r.ArtifactDir, "etcdadm", r.BuildRepoHead),
+		ReleaseName:       releaseName,
+		ReleaseS3Path:     releaseS3Path,
+		ReleaseCdnURI:     cdnURI,
+		OS:                os,
+		Arch:              []string{arch},
+		GitTag:            gitTag,
+		ProjectPath:       etcdadmProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 	artifacts := []Artifact{Artifact{Archive: archiveArtifact}}
 
