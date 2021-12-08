@@ -26,6 +26,7 @@ func TestProviderFactoryBuildProvider(t *testing.T) {
 	type args struct {
 		clusterConfigFileName string
 		clusterConfig         *v1alpha1.Cluster
+		hardwareFileName      string
 	}
 	clusterSpec := &cluster.Spec{
 		VersionsBundle: &cluster.VersionsBundle{
@@ -94,7 +95,7 @@ func TestProviderFactoryBuildProvider(t *testing.T) {
 				VSphereKubectlClient: vsphereMocks.NewMockProviderKubectlClient(mockCtrl),
 				Writer:               mockswriter.NewMockFileWriter(mockCtrl),
 			}
-			got, err := p.BuildProvider(tt.args.clusterConfigFileName, tt.args.clusterConfig, false)
+			got, err := p.BuildProvider(tt.args.clusterConfigFileName, tt.args.clusterConfig, false, tt.args.hardwareFileName)
 			if err == nil {
 				if got.Name() != tt.want.kind || got.Version(clusterSpec) != tt.want.version {
 					t.Errorf("BuildProvider() got = %v, want %v", got, tt.want)

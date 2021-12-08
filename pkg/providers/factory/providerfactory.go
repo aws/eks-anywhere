@@ -10,6 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
@@ -18,6 +19,7 @@ type ProviderFactory struct {
 	DockerKubectlClient       docker.ProviderKubectlClient
 	VSphereGovcClient         vsphere.ProviderGovcClient
 	VSphereKubectlClient      vsphere.ProviderKubectlClient
+	TinkerbellKubectlClient   tinkerbell.ProviderKubectlClient
 	Writer                    filewriter.FileWriter
 	ClusterResourceSetManager vsphere.ClusterResourceSetManager
 }

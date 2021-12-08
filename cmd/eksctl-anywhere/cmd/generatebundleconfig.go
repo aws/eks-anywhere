@@ -19,7 +19,8 @@ import (
 )
 
 type generateSupportBundleOptions struct {
-	fileName string
+	fileName         string
+	hardwareFileName string
 }
 
 var gsbo = &generateSupportBundleOptions{}
@@ -92,7 +93,7 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).
-		WithProvider(f, clusterSpec.Cluster, cc.skipIpCheck).
+		WithProvider(f, clusterSpec.Cluster, cc.skipIpCheck, gsbo.hardwareFileName).
 		WithDiagnosticBundleFactory().
 		Build(ctx)
 	if err != nil {
