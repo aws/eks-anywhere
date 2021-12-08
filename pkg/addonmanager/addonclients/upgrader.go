@@ -52,18 +52,22 @@ func (f *FluxAddonClient) Upgrade(ctx context.Context, managementCluster *types.
 		return nil, fmt.Errorf("failed reconciling Flux components: %v", err)
 	}
 
-	return types.NewChangeDiff(changeDiff), nil
+	return types.NewChangeDiff(&changeDiff.ComponentReports[0]), nil
 }
 
-func FluxChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
+func FluxChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
 	oldVersion := currentSpec.VersionsBundle.Flux.Version
 	newVersion := newSpec.VersionsBundle.Flux.Version
 	if oldVersion != newVersion {
 		logger.V(1).Info("Flux change diff ", "oldVersion", oldVersion, "newVersion", newVersion)
-		return &types.ComponentChangeDiff{
-			ComponentName: "Flux",
-			NewVersion:    newVersion,
-			OldVersion:    oldVersion,
+		return &types.ChangeDiff{
+			ComponentReports: []types.ComponentChangeDiff{
+				{
+					ComponentName: "Flux",
+					NewVersion:    newVersion,
+					OldVersion:    oldVersion,
+				},
+			},
 		}
 	}
 	return nil

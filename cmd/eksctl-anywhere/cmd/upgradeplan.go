@@ -20,8 +20,8 @@ import (
 
 var upgradePlanCmd = &cobra.Command{
 	Use:          "plan",
-	Short:        "Provides recommended versions for upgrade",
-	Long:         "Provide a list of recommended target versions for upgrading the core components in the workload cluster",
+	Short:        "Provides new release versions for the next upgrade",
+	Long:         "Provides a list of target versions for upgrading the core components in the workload cluster",
 	PreRunE:      preRunUpgradePlanCluster,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -62,7 +62,6 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 		return err
 	}
 	deps, err := dependencies.ForSpec(ctx, newClusterSpec).
-		WithBootstrapper().
 		WithClusterManager(newClusterSpec.Cluster).
 		WithFluxAddonClient(ctx, newClusterSpec.Cluster, newClusterSpec.GitOpsConfig).
 		WithCAPIManager().
@@ -83,16 +82,22 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	}
 
 	eksaChangeDiff := eksaupgrader.ChangeDiff(currentSpec, newClusterSpec)
-	fluxChangeDiff := fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec)
 	w := tabwriter.NewWriter(os.Stdout, 10, 4, 3, ' ', 0)
 	fmt.Fprintln(w, "NAME\tCURRENT VERSION\tNEXT VERSION")
-	fmt.Fprintf(w, "%s\t%s\t%s\n", eksaChangeDiff.ComponentName, eksaChangeDiff.NewVersion, eksaChangeDiff.OldVersion)
-	fmt.Fprintf(w, "%s\t%s\t%s\n", fluxChangeDiff.ComponentName, fluxChangeDiff.NewVersion, fluxChangeDiff.OldVersion)
+	for i := 0; i < len(eksaChangeDiff.ComponentReports); i++ {
+		fmt.Fprintf(w, "%s\t%s\t%s\n", eksaChangeDiff.ComponentReports[i].ComponentName, eksaChangeDiff.ComponentReports[i].NewVersion, eksaChangeDiff.ComponentReports[0].OldVersion)
+	}
+
+	fluxChangeDiff := fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec)
+	for i := 0; i < len(fluxChangeDiff.ComponentReports); i++ {
+		fmt.Fprintf(w, "%s\t%s\t%s\n", fluxChangeDiff.ComponentReports[i].ComponentName, fluxChangeDiff.ComponentReports[i].NewVersion, fluxChangeDiff.ComponentReports[0].OldVersion)
+	}
+	// fmt.Fprintf(w, "%s\t%s\t%s\n", eksaChangeDiff.ComponentReports[0].ComponentName, eksaChangeDiff.ComponentReports[0].NewVersion, eksaChangeDiff.ComponentReports[0].OldVersion)
+	// fmt.Fprintf(w, "%s\t%s\t%s\n", fluxChangeDiff.ComponentReports[0].ComponentName, fluxChangeDiff.ComponentReports[0].NewVersion, fluxChangeDiff.ComponentReports[0].OldVersion)
 
 	if err := w.Flush(); err != nil {
 		fmt.Printf("Error %v", err)
 	}
-	fmt.Println("")
 
 	return nil
 }
