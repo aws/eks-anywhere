@@ -52,7 +52,7 @@ func (f *FluxAddonClient) Upgrade(ctx context.Context, managementCluster *types.
 		return nil, fmt.Errorf("failed reconciling Flux components: %v", err)
 	}
 
-	return types.NewChangeDiff(&changeDiff.ComponentReports[0]), nil
+	return changeDiff, nil
 }
 
 func FluxChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {

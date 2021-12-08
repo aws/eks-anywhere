@@ -81,16 +81,13 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 		return err
 	}
 
-	eksaChangeDiff := eksaupgrader.ChangeDiff(currentSpec, newClusterSpec)
+	componentChangeDiffs := eksaupgrader.ChangeDiff(currentSpec, newClusterSpec)
+	componentChangeDiffs.Append(fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec))
+
 	w := tabwriter.NewWriter(os.Stdout, 10, 4, 3, ' ', 0)
 	fmt.Fprintln(w, "NAME\tCURRENT VERSION\tNEXT VERSION")
-	for i := 0; i < len(eksaChangeDiff.ComponentReports); i++ {
-		fmt.Fprintf(w, "%s\t%s\t%s\n", eksaChangeDiff.ComponentReports[i].ComponentName, eksaChangeDiff.ComponentReports[i].NewVersion, eksaChangeDiff.ComponentReports[0].OldVersion)
-	}
-
-	fluxChangeDiff := fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec)
-	for i := 0; i < len(fluxChangeDiff.ComponentReports); i++ {
-		fmt.Fprintf(w, "%s\t%s\t%s\n", fluxChangeDiff.ComponentReports[i].ComponentName, fluxChangeDiff.ComponentReports[i].NewVersion, fluxChangeDiff.ComponentReports[0].OldVersion)
+	for i := 0; i < len(componentChangeDiffs.ComponentReports); i++ {
+		fmt.Fprintf(w, "%s\t%s\t%s\n", componentChangeDiffs.ComponentReports[i].ComponentName, componentChangeDiffs.ComponentReports[i].NewVersion, componentChangeDiffs.ComponentReports[i].OldVersion)
 	}
 
 	if err := w.Flush(); err != nil {
