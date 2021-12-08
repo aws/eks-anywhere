@@ -231,16 +231,11 @@ type datastoreUsage struct {
 // TODO: dry out implementation
 func (p *validator) validateDatastoreUsage(ctx context.Context, clusterSpec *cluster.Spec, controlPlaneMachineConfig *anywherev1.VSphereMachineConfig, workerNodeGroupMachineConfig *anywherev1.VSphereMachineConfig, etcdMachineConfig *anywherev1.VSphereMachineConfig) error {
 	usage := make(map[string]*datastoreUsage)
-	var etcdAvailableSpace float64
 	controlPlaneAvailableSpace, err := p.govc.GetWorkloadAvailableSpace(ctx, controlPlaneMachineConfig) // TODO: remove dependency on machineConfig
 	if err != nil {
 		return fmt.Errorf("error getting datastore details: %v", err)
 	}
 	workerAvailableSpace, err := p.govc.GetWorkloadAvailableSpace(ctx, workerNodeGroupMachineConfig)
-	if err != nil {
-		return fmt.Errorf("error getting datastore details: %v", err)
-	}
-	etcdAvailableSpace, err = p.govc.GetWorkloadAvailableSpace(ctx, etcdMachineConfig)
 	if err != nil {
 		return fmt.Errorf("error getting datastore details: %v", err)
 	}
@@ -262,6 +257,10 @@ func (p *validator) validateDatastoreUsage(ctx context.Context, clusterSpec *clu
 	}
 
 	if etcdMachineConfig != nil {
+		etcdAvailableSpace, err := p.govc.GetWorkloadAvailableSpace(ctx, etcdMachineConfig)
+		if err != nil {
+			return fmt.Errorf("error getting datastore details: %v", err)
+		}
 		etcdNeedGiB := etcdMachineConfig.Spec.DiskGiB * clusterSpec.Spec.ExternalEtcdConfiguration.Count
 		if _, ok := usage[etcdMachineConfig.Spec.Datastore]; ok {
 			usage[etcdMachineConfig.Spec.Datastore].needGiBSpace += etcdNeedGiB
