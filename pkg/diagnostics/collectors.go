@@ -230,6 +230,8 @@ func (c *collectorFactory) managementClusterCrdCollectors() []*Collect {
 		"clusters.cluster.x-k8s.io",
 		"machinedeployments.cluster.x-k8s.io",
 		"machines.cluster.x-k8s.io",
+		"machinehealthchecks.cluster.x-k8s.io",
+		"kubeadmcontrolplane.controlplane.cluster.x-k8s.io",
 	}
 	return c.generateCrdCollectors(mgmtCrds)
 }
