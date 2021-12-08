@@ -5,6 +5,7 @@ metadata:
 rules:
   - apiGroups:
     - cluster.x-k8s.io
+    - infrastructure.cluster.x-k8s.io
     - anywhere.eks.amazonaws.com
     resources:
     - '*'
