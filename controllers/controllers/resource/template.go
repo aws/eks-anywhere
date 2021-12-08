@@ -141,14 +141,14 @@ func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster 
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = cp.Spec.InfrastructureTemplate.Name
-		values["vsphereControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpTmc.Spec.Users)
-		values["vsphereEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdTmc.Spec.Users)
+		values["tinkerbellControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpTmc.Spec.Users)
+		values["tinkerbellEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdTmc.Spec.Users)
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 
 	workersOpt := func(values map[string]interface{}) {
 		values["workloadTemplateName"] = md.Spec.Template.Spec.InfrastructureRef.Name
-		values["vsphereWorkerSshAuthorizedKey"] = sshAuthorizedKey(workerTmc.Spec.Users)
+		values["tinkerbellWorkerSshAuthorizedKey"] = sshAuthorizedKey(workerTmc.Spec.Users)
 	}
 
 	return generateTemplateResources(templateBuilder, clusterSpec, cpOpt, workersOpt)
