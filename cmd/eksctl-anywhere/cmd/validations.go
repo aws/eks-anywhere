@@ -22,7 +22,7 @@ func commonValidation(ctx context.Context, clusterConfigFile string) (*v1alpha1.
 	}
 	clusterConfig, err := v1alpha1.ValidateClusterConfig(clusterConfigFile)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
+		return nil, fmt.Errorf("the cluster config file provided is invalid: %v", err)
 	}
 	return clusterConfig, nil
 }

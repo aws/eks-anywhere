@@ -7,7 +7,7 @@ import (
 	"net"
 	"net/url"
 	"os"
-	_ "regexp"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -155,6 +155,7 @@ func NewCluster(clusterName string) *Cluster {
 }
 
 var clusterConfigValidations = []func(*Cluster) error{
+	validateClusterConfigName,
 	validateControlPlaneReplicas,
 	validateWorkerNodeGroups,
 	validateNetworking,
@@ -254,6 +255,36 @@ func (c *Cluster) IsReconcilePaused() bool {
 		return s == "true"
 	}
 	return false
+}
+
+func ValidateClusterName(clusterName string) error {
+	// this regex will not work for AWS provider as CFN has restrictions with UPPERCASE chars;
+	// if you are using AWS provider please use only lowercase chars
+	allowedClusterNameRegex := regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9-]+$`)
+	if !allowedClusterNameRegex.MatchString(clusterName) {
+		return fmt.Errorf("%v is not a valid cluster name, cluster names must start with lowercase/uppercase letters and can include numbers and dashes. For instance 'testCluster-123' is a valid name but '123testCluster' is not. ", clusterName)
+	}
+	return nil
+}
+
+func ValidateClusterNameLength(clusterName string) error {
+	// vSphere has the maximum length for clusters to be 80 chars
+	if len(clusterName) > 80 {
+		return fmt.Errorf("number of characters in %v should be less than 81", clusterName)
+	}
+	return nil
+}
+
+func validateClusterConfigName(clusterConfig *Cluster) error {
+	err := ValidateClusterName(clusterConfig.ObjectMeta.Name)
+	if err != nil {
+		return err
+	}
+	err = ValidateClusterNameLength(clusterConfig.ObjectMeta.Name)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func validateControlPlaneReplicas(clusterConfig *Cluster) error {
