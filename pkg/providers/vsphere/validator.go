@@ -13,15 +13,27 @@ import (
 )
 
 type validator struct {
-	govc       ProviderGovcClient
-	selfSigned bool // TODO: remove/update once
+	govc ProviderGovcClient
 }
 
 func newValidator(govc ProviderGovcClient) *validator {
 	return &validator{
-		govc:       govc,
-		selfSigned: false,
+		govc: govc,
 	}
+}
+
+func (v *validator) validateVCenterAccess(ctx context.Context, server string) error {
+	if err := v.govc.ValidateVCenterConnection(ctx, server); err != nil {
+		return fmt.Errorf("failed validating connection to vCenter: %v", err)
+	}
+	logger.MarkPass("Connected to server")
+
+	if err := v.govc.ValidateVCenterAuthentication(ctx); err != nil {
+		return fmt.Errorf("failed validating credentials for vCenter: %v", err)
+	}
+	logger.MarkPass("Authenticated to vSphere")
+
+	return nil
 }
 
 // TODO: dry out machine configs validations
@@ -41,6 +53,9 @@ func (v *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 	}
 	if len(vsphereClusterSpec.datacenterConfig.Spec.Network) <= 0 {
 		return errors.New("VSphereDatacenterConfig VM network is not set or is empty")
+	}
+	if err := validatePath(networkFolderType, vsphereClusterSpec.datacenterConfig.Spec.Network, vsphereClusterSpec.datacenterConfig.Spec.Datacenter); err != nil {
+		return err
 	}
 	if vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
 		return errors.New("must specify machineGroupRef for control plane")
@@ -101,12 +116,23 @@ func (v *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 		return err
 	}
 
-	if err := v.govc.ValidateVCenterSetup(ctx, vsphereClusterSpec.datacenterConfig, &v.selfSigned); err != nil { // TODO: remove side effects from this implementation or directly move it to set defaults (try not to pass a pointer to bool to update its value, it's very difficult to follow)
-		return fmt.Errorf("error validating vCenter setup: %v", err)
+	if err := v.validateThumbprint(ctx, vsphereClusterSpec); err != nil {
+		return err
 	}
 
+	if err := v.validateDatacenter(ctx, vsphereClusterSpec); err != nil {
+		return err
+	}
+	logger.MarkPass("Datacenter validated")
+
+	if err := v.validateNetwork(ctx, vsphereClusterSpec); err != nil {
+		return err
+	}
+	logger.MarkPass("Network validated")
+
 	for _, config := range vsphereClusterSpec.machineConfigsLookup {
-		err := v.govc.ValidateVCenterSetupMachineConfig(ctx, vsphereClusterSpec.datacenterConfig, config, &v.selfSigned) // TODO: remove side effects from this implementation or directly move it to set defaults (pointer to bool is not needed)
+		var b bool                                                                                            // Temporary until we remove the need to pass a bool pointer
+		err := v.govc.ValidateVCenterSetupMachineConfig(ctx, vsphereClusterSpec.datacenterConfig, config, &b) // TODO: remove side effects from this implementation or directly move it to set defaults (pointer to bool is not needed)
 		if err != nil {
 			return fmt.Errorf("error validating vCenter setup for VSphereMachineConfig %v: %v", config.Name, err)
 		}
@@ -231,7 +257,7 @@ type datastoreUsage struct {
 // TODO: dry out implementation
 func (v *validator) validateDatastoreUsage(ctx context.Context, clusterSpec *cluster.Spec, controlPlaneMachineConfig *anywherev1.VSphereMachineConfig, workerNodeGroupMachineConfig *anywherev1.VSphereMachineConfig, etcdMachineConfig *anywherev1.VSphereMachineConfig) error {
 	usage := make(map[string]*datastoreUsage)
-	controlPlaneAvailableSpace, err := p.govc.GetWorkloadAvailableSpace(ctx, controlPlaneMachineConfig) // TODO: remove dependency on machineConfig
+	controlPlaneAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, controlPlaneMachineConfig) // TODO: remove dependency on machineConfig
 	if err != nil {
 		return fmt.Errorf("error getting datastore details: %v", err)
 	}
@@ -277,5 +303,60 @@ func (v *validator) validateDatastoreUsage(ctx context.Context, clusterSpec *clu
 			return fmt.Errorf("not enough space in datastore %v for given diskGiB and count for respective machine groups", datastore)
 		}
 	}
+	return nil
+}
+
+func (v *validator) validateThumbprint(ctx context.Context, spec *spec) error {
+	// No need to validate thumbprint in insecure mode
+	if spec.datacenterConfig.Spec.Insecure {
+		return nil
+	}
+
+	// If cert is not self signed, thumbprint is ignored
+	if !v.govc.IsCertSelfSigned(ctx) {
+		return nil
+	}
+
+	if spec.datacenterConfig.Spec.Thumbprint == "" {
+		return fmt.Errorf("thumbprint is required for secure mode with self-signed certificates")
+	}
+
+	thumbprint, err := v.govc.GetCertThumbprint(ctx)
+	if err != nil {
+		return err
+	}
+
+	if thumbprint != spec.datacenterConfig.Spec.Thumbprint {
+		return fmt.Errorf("thumbprint mismatch detected, expected: %s, actual: %s", spec.datacenterConfig.Spec.Thumbprint, thumbprint)
+	}
+
+	return nil
+}
+
+func (v *validator) validateDatacenter(ctx context.Context, spec *spec) error {
+	datacenter := spec.datacenterConfig.Spec.Datacenter
+	exists, err := v.govc.DatacenterExists(ctx, datacenter)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return fmt.Errorf("datacenter %s not found", datacenter)
+	}
+
+	return nil
+}
+
+func (v *validator) validateNetwork(ctx context.Context, spec *spec) error {
+	network := spec.datacenterConfig.Spec.Network
+	exists, err := v.govc.NetworkExists(ctx, network)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return fmt.Errorf("network %s not found", network)
+	}
+
 	return nil
 }

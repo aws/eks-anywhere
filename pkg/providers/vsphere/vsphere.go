@@ -114,8 +114,14 @@ type ProviderGovcClient interface {
 	DeleteLibraryElement(ctx context.Context, element string) error
 	TemplateHasSnapshot(ctx context.Context, template string) (bool, error)
 	GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1alpha1.VSphereMachineConfig) (float64, error)
-	ValidateVCenterSetup(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, selfSigned *bool) error
 	ValidateVCenterSetupMachineConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfig *v1alpha1.VSphereMachineConfig, selfSigned *bool) error
+	ValidateVCenterConnection(ctx context.Context, server string) error
+	ValidateVCenterAuthentication(ctx context.Context) error
+	IsCertSelfSigned(ctx context.Context) bool
+	GetCertThumbprint(ctx context.Context) (string, error)
+	ConfigureCertThumbprint(ctx context.Context, server, thumbprint string) error
+	DatacenterExists(ctx context.Context, datacenter string) (bool, error)
+	NetworkExists(ctx context.Context, network string) (bool, error)
 	CreateLibrary(ctx context.Context, datastore, library string) error
 	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, resourcePool string, resizeDisk2 bool) error
 	ImportTemplate(ctx context.Context, library, ovaURL, name string) error
@@ -366,11 +372,15 @@ func (p *vsphereProvider) DeleteResources(ctx context.Context, clusterSpec *clus
 }
 
 func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	if err := setupEnvVars(p.datacenterConfig); err != nil {
+	if err := p.setup(ctx, p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
 	vSphereClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+
+	if err := p.validator.validateVCenterAccess(ctx, vSphereClusterSpec.datacenterConfig.Spec.Server); err != nil {
+		return err
+	}
 
 	if err := p.defaulter.setDefaults(ctx, vSphereClusterSpec); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
@@ -417,11 +427,15 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 }
 
 func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	if err := setupEnvVars(p.datacenterConfig); err != nil {
+	if err := p.setup(ctx, p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
 	vSphereClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+
+	if err := p.validator.validateVCenterAccess(ctx, vSphereClusterSpec.datacenterConfig.Spec.Server); err != nil {
+		return err
+	}
 
 	if err := p.defaulter.setDefaults(ctx, vSphereClusterSpec); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
@@ -488,7 +502,7 @@ func (p *vsphereProvider) validateMachineConfigsNameUniqueness(ctx context.Conte
 
 func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
 	var contents bytes.Buffer
-	err := p.createSecret(cluster, &contents)
+	err := p.createSecret(ctx, cluster, &contents)
 	if err != nil {
 		return err
 	}
@@ -501,7 +515,7 @@ func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Clus
 }
 
 func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
-	if err := setupEnvVars(p.datacenterConfig); err != nil {
+	if err := p.setup(ctx, p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 	return nil
@@ -979,14 +993,14 @@ func (p *vsphereProvider) GenerateMHC() ([]byte, error) {
 	return mhc, nil
 }
 
-func (p *vsphereProvider) createSecret(cluster *types.Cluster, contents *bytes.Buffer) error {
+func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {
 	t, err := template.New("tmpl").Parse(defaultSecretObject)
 	if err != nil {
 		return fmt.Errorf("error creating secret object template: %v", err)
 	}
 
 	thumbprint := p.datacenterConfig.Spec.Thumbprint
-	if !p.validator.selfSigned {
+	if p.providerGovcClient.IsCertSelfSigned(ctx) {
 		thumbprint = ""
 	}
 
@@ -1010,7 +1024,7 @@ func (p *vsphereProvider) createSecret(cluster *types.Cluster, contents *bytes.B
 
 func (p *vsphereProvider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	var contents bytes.Buffer
-	err := p.createSecret(cluster, &contents)
+	err := p.createSecret(ctx, cluster, &contents)
 	if err != nil {
 		return err
 	}
