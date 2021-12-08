@@ -45,7 +45,7 @@ kind: Cluster
     machineGroupRef:
       kind: VSphereMachineConfig
       name: eksa-test-1
-      Taints:
+      taints:
       - key: Key2
         value: value2
         effect: PreferNoSchedule
@@ -53,7 +53,7 @@ kind: Cluster
     machineGroupRef:
       kind: VSphereMachineConfig
       name: eksa-test-2
-      Taints:
+      taints:
       - key: Key3
         value: value3
         effect: PreferNoSchedule
@@ -234,6 +234,7 @@ Also, we need to add e2e tests for each providers to test the following scenario
 
 * Cluster creation with one worker node group
 * Cluster creation with multiple worker node groups
+* Adding and removing worker node groups during cluster upgrade
 
 ## Conclusion
 
