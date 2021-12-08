@@ -97,9 +97,9 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 		"cluster-api":           {"core-components.yaml", "metadata.yaml"},
 		"control-plane-kubeadm": {"control-plane-components.yaml", "metadata.yaml"},
 	}
-	components := sortManifestMap(componentManifestMap)
+	sortedComponentNames := sortManifestMap(componentManifestMap)
 
-	for _, component := range components {
+	for _, component := range sortedComponentNames {
 		manifestList := componentManifestMap[component]
 		for _, manifest := range manifestList {
 			var sourceS3Prefix string
@@ -235,14 +235,14 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
 		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
-	components := sortArtifactsMap(kubeadmBootstrapBundleArtifacts)
+	sortedComponentNames := sortArtifactsMap(kubeadmBootstrapBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
-	for _, componentName := range components {
+	for _, componentName := range sortedComponentNames {
 		for _, artifact := range kubeadmBootstrapBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
@@ -312,14 +312,14 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
 		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
-	components := sortArtifactsMap(kubeadmControlPlaneBundleArtifacts)
+	sortedComponentNames := sortArtifactsMap(kubeadmControlPlaneBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
-	for _, componentName := range components {
+	for _, componentName := range sortedComponentNames {
 		for _, artifact := range kubeadmControlPlaneBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
