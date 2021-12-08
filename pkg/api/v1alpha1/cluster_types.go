@@ -451,20 +451,28 @@ func (s *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
 func (c *Cluster) MachineConfigRefs() []Ref {
 	machineConfigRefMap := make(refSet, 1)
 
-	machineConfigRefMap.add(*c.Spec.ControlPlaneConfiguration.MachineGroupRef)
+	machineConfigRefMap.addIfNotNil(c.Spec.ControlPlaneConfiguration.MachineGroupRef)
 
 	for _, m := range c.Spec.WorkerNodeGroupConfigurations {
-		machineConfigRefMap.add(*m.MachineGroupRef)
+		machineConfigRefMap.addIfNotNil(m.MachineGroupRef)
 	}
 
 	if c.Spec.ExternalEtcdConfiguration != nil {
-		machineConfigRefMap.add(*c.Spec.ExternalEtcdConfiguration.MachineGroupRef)
+		machineConfigRefMap.addIfNotNil(c.Spec.ExternalEtcdConfiguration.MachineGroupRef)
 	}
 
 	return machineConfigRefMap.toSlice()
 }
 
 type refSet map[Ref]struct{}
+
+func (r refSet) addIfNotNil(ref *Ref) bool {
+	if ref != nil {
+		return r.add(*ref)
+	}
+
+	return false
+}
 
 func (r refSet) add(ref Ref) bool {
 	if _, present := r[ref]; !present {
