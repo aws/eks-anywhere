@@ -2,6 +2,7 @@ package clusterapi_test
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -244,7 +245,7 @@ func TestSecureTlsCipherSuitesExtraArgs(t *testing.T) {
 		{
 			testName: "default",
 			want: clusterapi.ExtraArgs{
-				"tls-cipher-suites": crypto.SecureCipherSuitesString(),
+				"tls-cipher-suites": strings.Join(crypto.SecureCipherSuiteNames(), ","),
 			},
 		},
 	}
@@ -266,7 +267,7 @@ func TestSecureEtcdTlsCipherSuitesExtraArgs(t *testing.T) {
 		{
 			testName: "default",
 			want: clusterapi.ExtraArgs{
-				"cipher-suites": crypto.SecureCipherSuitesString(),
+				"cipher-suites": strings.Join(crypto.SecureCipherSuiteNames(), ","),
 			},
 		},
 	}
