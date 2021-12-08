@@ -86,7 +86,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 
 	w := tabwriter.NewWriter(os.Stdout, 10, 4, 3, ' ', 0)
 	fmt.Fprintln(w, "NAME\tCURRENT VERSION\tNEXT VERSION")
-	for i := 0; i < len(componentChangeDiffs.ComponentReports); i++ {
+	for _, i := range componentChangeDiffs.ComponentReports {
 		fmt.Fprintf(w, "%s\t%s\t%s\n", componentChangeDiffs.ComponentReports[i].ComponentName, componentChangeDiffs.ComponentReports[i].NewVersion, componentChangeDiffs.ComponentReports[i].OldVersion)
 	}
 
