@@ -92,8 +92,6 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	for i := 0; i < len(fluxChangeDiff.ComponentReports); i++ {
 		fmt.Fprintf(w, "%s\t%s\t%s\n", fluxChangeDiff.ComponentReports[i].ComponentName, fluxChangeDiff.ComponentReports[i].NewVersion, fluxChangeDiff.ComponentReports[0].OldVersion)
 	}
-	// fmt.Fprintf(w, "%s\t%s\t%s\n", eksaChangeDiff.ComponentReports[0].ComponentName, eksaChangeDiff.ComponentReports[0].NewVersion, eksaChangeDiff.ComponentReports[0].OldVersion)
-	// fmt.Fprintf(w, "%s\t%s\t%s\n", fluxChangeDiff.ComponentReports[0].ComponentName, fluxChangeDiff.ComponentReports[0].NewVersion, fluxChangeDiff.ComponentReports[0].OldVersion)
 
 	if err := w.Flush(); err != nil {
 		fmt.Printf("Error %v", err)
