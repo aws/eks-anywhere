@@ -149,14 +149,14 @@ func (r *ReleaseConfig) GetAwsBundle(imageDigests map[string]string) (anywherev1
 		"cluster-api-provider-aws": r.BundleArtifactsTable["cluster-api-provider-aws"],
 		"kube-rbac-proxy":          r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
-	components := sortedComponentNames(awsBundleArtifacts)
+	sortedComponentNames := sortArtifactsMap(awsBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
-	for _, componentName := range components {
+	for _, componentName := range sortedComponentNames {
 		for _, artifact := range awsBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image

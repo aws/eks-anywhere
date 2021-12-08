@@ -123,14 +123,14 @@ func (r *ReleaseConfig) GetEtcdadmControllerBundle(imageDigests map[string]strin
 		"etcdadm-controller": r.BundleArtifactsTable["etcdadm-controller"],
 		"kube-rbac-proxy":    r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
-	components := sortedComponentNames(etcdadmControllerBundleArtifacts)
+	sortedComponentNames := sortArtifactsMap(etcdadmControllerBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
-	for _, componentName := range components {
+	for _, componentName := range sortedComponentNames {
 		for _, artifact := range etcdadmControllerBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image

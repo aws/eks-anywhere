@@ -30,14 +30,14 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 		"kube-vip":                     r.BundleArtifactsTable["kube-vip"],
 		"vsphere-csi-driver":           r.BundleArtifactsTable["vsphere-csi-driver"],
 	}
-	components := sortedComponentNames(vsphereBundleArtifacts)
+	sortedComponentNames := sortArtifactsMap(vsphereBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
-	for _, componentName := range components {
+	for _, componentName := range sortedComponentNames {
 		for _, artifact := range vsphereBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image

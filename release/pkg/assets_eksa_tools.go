@@ -91,13 +91,13 @@ func (r *ReleaseConfig) GetEksaBundle(imageDigests map[string]string) (anywherev
 		"cluster-controller":   r.BundleArtifactsTable["cluster-controller"],
 		"diagnostic-collector": r.BundleArtifactsTable["diagnostic-collector"],
 	}
-	components := sortedComponentNames(eksABundleArtifacts)
+	sortedComponentNames := sortArtifactsMap(eksABundleArtifacts)
 
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
-	for _, componentName := range components {
+	for _, componentName := range sortedComponentNames {
 		for _, artifact := range eksABundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image

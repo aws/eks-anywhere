@@ -130,14 +130,14 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 		"cluster-api-provider-docker": r.BundleArtifactsTable["cluster-api-provider-docker"],
 		"kube-rbac-proxy":             r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
-	components := sortedComponentNames(dockerBundleArtifacts)
+	sortedComponentNames := sortArtifactsMap(dockerBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
-	for _, componentName := range components {
+	for _, componentName := range sortedComponentNames {
 		for _, artifact := range dockerBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image

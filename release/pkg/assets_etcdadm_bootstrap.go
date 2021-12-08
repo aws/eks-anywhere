@@ -124,14 +124,14 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapBundle(imageDigests map[string]string
 		"etcdadm-bootstrap-provider": r.BundleArtifactsTable["etcdadm-bootstrap-provider"],
 		"kube-rbac-proxy":            r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
-	components := sortedComponentNames(etcdadmBootstrapBundleArtifacts)
+	sortedComponentNames := sortArtifactsMap(etcdadmBootstrapBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
-	for _, componentName := range components {
+	for _, componentName := range sortedComponentNames {
 		for _, artifact := range etcdadmBootstrapBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image

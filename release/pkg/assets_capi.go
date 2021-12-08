@@ -158,14 +158,14 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
 		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
-	components := sortedComponentNames(coreClusterAPIBundleArtifacts)
+	sortedComponentNames := sortArtifactsMap(coreClusterAPIBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
-	for _, componentName := range components {
+	for _, componentName := range sortedComponentNames {
 		for _, artifact := range coreClusterAPIBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
@@ -235,7 +235,7 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
 		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
-	components := sortedComponentNames(kubeadmBootstrapBundleArtifacts)
+	components := sortArtifactsMap(kubeadmBootstrapBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
@@ -312,7 +312,7 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
 		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
-	components := sortedComponentNames(kubeadmControlPlaneBundleArtifacts)
+	components := sortArtifactsMap(kubeadmControlPlaneBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
