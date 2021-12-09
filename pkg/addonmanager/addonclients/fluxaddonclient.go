@@ -310,7 +310,12 @@ func (f *FluxAddonClient) CleanupGitRepo(ctx context.Context, clusterSpec *clust
 		return err
 	}
 
-	p := fc.path()
+	var p string
+	if clusterSpec.IsManaged() {
+		p = fc.eksaSystemDir()
+	} else {
+		p = fc.path()
+	}
 
 	if !validations.FileExists(path.Join(f.gitOpts.Writer.Dir(), p)) {
 		logger.V(3).Info("cluster dir does not exist in git, skip clean up")

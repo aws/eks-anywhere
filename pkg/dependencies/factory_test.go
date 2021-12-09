@@ -14,9 +14,10 @@ import (
 
 type factoryTest struct {
 	*WithT
-	clusterConfigFile string
-	clusterSpec       *cluster.Spec
-	ctx               context.Context
+	clusterConfigFile  string
+	clusterSpec        *cluster.Spec
+	ctx                context.Context
+	hardwareConfigFile string
 }
 
 func newTest(t *testing.T) *factoryTest {
@@ -37,7 +38,7 @@ func newTest(t *testing.T) *factoryTest {
 func TestFactoryBuildWithProvider(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -47,7 +48,7 @@ func TestFactoryBuildWithProvider(t *testing.T) {
 func TestFactoryBuildWithClusterManager(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
-		WithClusterManager().
+		WithClusterManager(tt.clusterSpec.Cluster).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -58,8 +59,8 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
 		WithBootstrapper().
-		WithClusterManager().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false).
+		WithClusterManager(tt.clusterSpec.Cluster).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile).
 		WithFluxAddonClient(tt.ctx, tt.clusterSpec.Cluster, tt.clusterSpec.GitOpsConfig).
 		WithWriter().
 		WithDiagnosticCollectorImage("public.ecr.aws/collector").

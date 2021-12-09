@@ -16,66 +16,71 @@ package pkg
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 )
 
+const kubeRbacProxyProjectPath = "projects/brancz/kube-rbac-proxy"
+
 // GetKubeRbacProxyAssets returns the eks-a artifacts for kube-rbac-proxy
 func (r *ReleaseConfig) GetKubeRbacProxyAssets() ([]Artifact, error) {
-	// Get Git tag for the project
-	gitTag, err := r.getKubeRbacProxyGitTag()
+	gitTag, err := r.readGitTag(kubeRbacProxyProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
 
 	name, repoName, tagOptions := r.getKubeRbacProxyImageAttributes(gitTag)
 
-	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, repoName, tagOptions),
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-	}
-
-	artifact := &Artifact{Image: imageArtifact}
-
-	return []Artifact{*artifact}, nil
-}
-
-func (r *ReleaseConfig) getKubeRbacProxyGitTag() (string, error) {
-	projectSource := "projects/brancz/kube-rbac-proxy"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
 	if err != nil {
-		return "", errors.Cause(err)
+		return nil, errors.Cause(err)
+	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
 	}
 
-	return gitTag, nil
+	imageArtifact := &ImageArtifact{
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       kubeRbacProxyProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
+	}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
+
+	return artifacts, nil
 }
 
 func (r *ReleaseConfig) getKubeRbacProxyImageAttributes(gitTag string) (string, string, map[string]string) {
 	name := "kube-rbac-proxy"
 	repoName := fmt.Sprintf("brancz/%s", name)
 	tagOptions := map[string]string{
-		"gitTag": gitTag,
+		"gitTag":      gitTag,
+		"projectPath": kubeRbacProxyProjectPath,
 	}
 
 	return name, repoName, tagOptions
 }
 
 func (r *ReleaseConfig) GetKubeRbacProxyImageTagOverride() (ImageTagOverride, error) {
-	gitTag, err := r.getKubeRbacProxyGitTag()
+	gitTag, err := r.readGitTag(kubeRbacProxyProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return ImageTagOverride{}, errors.Cause(err)
 	}
 
 	name, repoName, tagOptions := r.getKubeRbacProxyImageAttributes(gitTag)
 
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return ImageTagOverride{}, errors.Cause(err)
+	}
 	imageTagOverride := ImageTagOverride{
 		Repository: repoName,
-		ReleaseUri: r.GetReleaseImageURI(name, repoName, tagOptions),
+		ReleaseUri: releaseImageUri,
 	}
 
 	return imageTagOverride, nil

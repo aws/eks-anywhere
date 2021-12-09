@@ -24,6 +24,11 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const (
+	imageBuilderProjectPath = "projects/kubernetes-sigs/image-builder"
+	kindProjectPath         = "projects/kubernetes-sigs/kind"
+)
+
 // GetEksDChannelAssets returns the eks-d artifacts including OVAs and kind node image
 func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDReleaseNumber string) ([]Artifact, error) {
 	// Ova artifacts
@@ -31,17 +36,22 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 	arch := "amd64"
 	osNames := []string{"ubuntu", "bottlerocket"}
 	artifacts := []Artifact{}
+	imageBuilderGitTag, err := r.readGitTag(imageBuilderProjectPath, r.BuildRepoBranchName)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
 
 	for _, osName := range osNames {
 		var sourceS3Key string
 		var sourceS3Prefix string
 		var releaseS3Path string
 		var releaseName string
-		latestPath := r.getLatestUploadDestination()
+		sourcedFromBranch := r.BuildRepoBranchName
+		latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
 			sourceS3Key = fmt.Sprintf("%s.ova", osName)
-			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/image-builder/%s/%s", eksDReleaseChannel, latestPath)
+			sourceS3Prefix = fmt.Sprintf("%s/%s/%s", imageBuilderProjectPath, eksDReleaseChannel, latestPath)
 		} else {
 			sourceS3Key = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%d-%s.ova",
 				osName,
@@ -87,35 +97,63 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 		}
 
 		archiveArtifact := &ArchiveArtifact{
-			SourceS3Key:    sourceS3Key,
-			SourceS3Prefix: sourceS3Prefix,
-			ArtifactPath:   filepath.Join(r.ArtifactDir, "eks-d-ova", eksDReleaseChannel, r.BuildRepoHead),
-			ReleaseName:    releaseName,
-			ReleaseS3Path:  releaseS3Path,
-			ReleaseCdnURI:  cdnURI,
-			OS:             os,
-			OSName:         osName,
-			Arch:           []string{arch},
+			SourceS3Key:       sourceS3Key,
+			SourceS3Prefix:    sourceS3Prefix,
+			ArtifactPath:      filepath.Join(r.ArtifactDir, "eks-d-ova", eksDReleaseChannel, r.BuildRepoHead),
+			ReleaseName:       releaseName,
+			ReleaseS3Path:     releaseS3Path,
+			ReleaseCdnURI:     cdnURI,
+			OS:                os,
+			OSName:            osName,
+			Arch:              []string{arch},
+			GitTag:            imageBuilderGitTag,
+			ProjectPath:       imageBuilderProjectPath,
+			SourcedFromBranch: sourcedFromBranch,
 		}
 
 		artifacts = append(artifacts, Artifact{Archive: archiveArtifact})
 	}
 
-	// Add kind images
+	kindGitTag, err := r.readGitTag(kindProjectPath, r.BuildRepoBranchName)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+
 	name := "kind-node"
 	repoName := "kubernetes-sigs/kind/node"
 	tagOptions := map[string]string{
 		"eksDReleaseChannel": eksDReleaseChannel,
 		"eksDReleaseNumber":  eksDReleaseNumber,
 		"kubeVersion":        kubeVer,
+		"projectPath":        kindProjectPath,
+		"gitTag":             kindGitTag,
+	}
+
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	if sourcedFromBranch != r.BuildRepoBranchName {
+		kindGitTag, err = r.readGitTag(eksAToolsProjectPath, sourcedFromBranch)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+		tagOptions["gitTag"] = kindGitTag
+	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
 	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, repoName, tagOptions),
-		Arch:            []string{"amd64"},
-		OS:              "linux",
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            kindGitTag,
+		ProjectPath:       kindProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 
 	artifacts = append(artifacts, Artifact{Image: imageArtifact})
@@ -124,14 +162,11 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 }
 
 func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDReleaseNumber string, imageDigests map[string]string) (anywherev1alpha1.EksDRelease, error) {
-	artifacts, err := r.GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDReleaseNumber)
-	if err != nil {
-		return anywherev1alpha1.EksDRelease{}, errors.Cause(err)
-	}
+	artifacts := r.BundleArtifactsTable[fmt.Sprintf("eks-d-%s", eksDReleaseChannel)]
 
-	tarballArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"etcdadm":   r.GetEtcdadmAssets,
-		"cri-tools": r.GetCriToolsAssets,
+	tarballArtifacts := map[string][]Artifact{
+		"cri-tools": r.BundleArtifactsTable["cri-tools"],
+		"etcdadm":   r.BundleArtifactsTable["etcdadm"],
 	}
 
 	bundleArchiveArtifacts := map[string]anywherev1alpha1.Archive{}
@@ -178,11 +213,7 @@ func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDRe
 		}
 	}
 
-	for componentName, artifactFunc := range tarballArtifactsFuncs {
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.EksDRelease{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
+	for componentName, artifacts := range tarballArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Archive != nil {
 				archiveArtifact := artifact.Archive

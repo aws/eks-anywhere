@@ -132,7 +132,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 	return f
 }
 
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool) *Factory {
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string) *Factory {
 	f.WithProviderFactory()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -141,7 +141,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 		}
 
 		var err error
-		f.dependencies.Provider, err = f.providerFactory.BuildProvider(clusterConfigFile, clusterConfig, skipIpCheck)
+		f.dependencies.Provider, err = f.providerFactory.BuildProvider(clusterConfigFile, clusterConfig, skipIpCheck, hardwareConfigFile)
 		if err != nil {
 			return err
 		}
@@ -313,13 +313,16 @@ func (f *Factory) WithTroubleshoot() *Factory {
 	return f
 }
 
-func (f *Factory) WithNetworking() *Factory {
+func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Networking != nil {
 			return nil
 		}
-
-		f.dependencies.Networking = networking.NewCilium()
+		if clusterConfig.Spec.ClusterNetwork.CNI == v1alpha1.Kindnetd {
+			f.dependencies.Networking = networking.NewKindnetd()
+		} else {
+			f.dependencies.Networking = networking.NewCilium()
+		}
 		return nil
 	})
 
@@ -364,8 +367,8 @@ type clusterManagerClient struct {
 	*executables.Kubectl
 }
 
-func (f *Factory) WithClusterManager() *Factory {
-	f.WithClusterctl().WithKubectl().WithNetworking().WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth()
+func (f *Factory) WithClusterManager(clusterConfig *v1alpha1.Cluster) *Factory {
+	f.WithClusterctl().WithKubectl().WithNetworking(clusterConfig).WithWriter().WithDiagnosticBundleFactory().WithAwsIamAuth()
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.ClusterManager != nil {

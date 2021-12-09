@@ -17,6 +17,7 @@ import (
 	addonClientMocks "github.com/aws/eks-anywhere/pkg/addonmanager/addonclients/mocks"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/git"
 	gitMocks "github.com/aws/eks-anywhere/pkg/git/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -569,6 +570,35 @@ func TestFluxAddonClientCleanupGitRepo(t *testing.T) {
 	ctx := context.Background()
 	clusterConfig := v1alpha1.NewCluster("management-cluster")
 	expectedClusterPath := "clusters/management-cluster"
+	clusterSpec := newClusterSpec(clusterConfig, "")
+
+	gitProvider := gitMocks.NewMockProvider(mockCtrl)
+	gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository}, nil)
+	gitProvider.EXPECT().Clone(ctx).Return(nil)
+	gitProvider.EXPECT().Branch(clusterSpec.GitOpsConfig.Spec.Flux.Github.Branch).Return(nil)
+	gitProvider.EXPECT().Remove(expectedClusterPath).Return(nil)
+	gitProvider.EXPECT().Commit(test.OfType("string")).Return(nil)
+	gitProvider.EXPECT().Push(ctx).Return(nil)
+
+	_, w := test.NewWriter(t)
+	if _, err := w.WithDir(expectedClusterPath); err != nil {
+		t.Errorf("failed to add %s dir: %v", expectedClusterPath, err)
+	}
+	fGitOptions := &addonclients.GitOptions{Git: gitProvider, Writer: w}
+	f := addonclients.NewFluxAddonClient(nil, fGitOptions)
+
+	err := f.CleanupGitRepo(ctx, clusterSpec)
+	if err != nil {
+		t.Errorf("FluxAddonClient.CleanupGitRepo() error = %v, want nil", err)
+	}
+}
+
+func TestFluxAddonClientCleanupGitRepoWorkloadCluster(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	ctx := context.Background()
+	clusterConfig := v1alpha1.NewCluster("workload-cluster")
+	clusterConfig.SetManagedBy("management-cluster")
+	expectedClusterPath := "clusters/management-cluster/workload-cluster/" + constants.EksaSystemNamespace
 	clusterSpec := newClusterSpec(clusterConfig, "")
 
 	gitProvider := gitMocks.NewMockProvider(mockCtrl)

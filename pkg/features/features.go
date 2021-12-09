@@ -1,15 +1,16 @@
 package features
 
-import (
-	"os"
-)
-
 const (
 	AwsIamAuthenticatorEnvVar = "AWS_IAM_AUTHENTICATOR"
 	TaintsSupportEnvVar       = "TAINTS_SUPPORT"
+	TinkerbellProviderEnvVar  = "TINKERBELL_PROVIDER"
+	FullLifecycleAPIEnvVar    = "FULL_LIFECYCLE_API"
+	FullLifecycleGate         = "FullLifecycleAPI"
 )
 
-var cache = newMutexMap()
+func FeedGates(featureGates []string) {
+	globalFeatures.feedGates(featureGates)
+}
 
 type Feature struct {
 	Name     string
@@ -20,28 +21,30 @@ func IsActive(feature Feature) bool {
 	return feature.IsActive()
 }
 
-func isActiveForEnvVar(envVar string) func() bool {
-	return func() bool {
-		active, ok := cache.load(envVar)
-		if !ok {
-			active = os.Getenv(envVar) == "true"
-			cache.store(envVar, active)
-		}
-
-		return active
-	}
-}
-
 func AwsIamAuthenticator() Feature {
 	return Feature{
 		Name:     "aws-iam-authenticator identity provider",
-		IsActive: isActiveForEnvVar(AwsIamAuthenticatorEnvVar),
+		IsActive: globalFeatures.isActiveForEnvVar(AwsIamAuthenticatorEnvVar),
 	}
 }
 
 func TaintsSupport() Feature {
 	return Feature{
 		Name:     "Taints support",
-		IsActive: isActiveForEnvVar(TaintsSupportEnvVar),
+		IsActive: globalFeatures.isActiveForEnvVar(TaintsSupportEnvVar),
+	}
+}
+
+func FullLifecycleAPI() Feature {
+	return Feature{
+		Name:     "Full lifecycle API support through the EKS-A controller",
+		IsActive: globalFeatures.isActiveForEnvVarOrGate(FullLifecycleAPIEnvVar, FullLifecycleGate),
+	}
+}
+
+func TinkerbellProvider() Feature {
+	return Feature{
+		Name:     "Tinkerbell provider support",
+		IsActive: globalFeatures.isActiveForEnvVar(TinkerbellProviderEnvVar),
 	}
 }

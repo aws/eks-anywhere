@@ -58,7 +58,7 @@ fi
 
 if [[ "$CONFIG_FILES_CHANGED" != "" ]]; then
     mkdir -p $REPO_ROOT/bin
-    make release-manifests RELEASE_DIR=./bin RELEASE_MANIFEST_TARGET=local-eksa-components.yaml
+    make release-manifests RELEASE_DIR=$REPO_ROOT/bin RELEASE_MANIFEST_TARGET=local-eksa-components.yaml
     curl $BUNDLE_MANIFEST_URL -o $REPO_ROOT/bin/local-bundle-release.yaml
     CLUSTER_CONTROLLER_OVERRIDE_IMAGE=$(yq e ".spec.versionsBundles[0].eksa.clusterController.uri" $REPO_ROOT/bin/local-bundle-release.yaml)
     KUBE_RBAC_PROXY_OVERRIDE_IMAGE=$(yq e ".spec.versionsBundles[0].clusterAPI.kubeProxy.uri" $REPO_ROOT/bin/local-bundle-release.yaml)

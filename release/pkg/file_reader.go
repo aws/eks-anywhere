@@ -27,12 +27,9 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
 )
-
-var imageBuilderProjectSource = "projects/kubernetes-sigs/image-builder"
 
 func (r *ReleaseConfig) readShaSums(filename string) (string, string, error) {
 	var sha256, sha512 string
@@ -101,7 +98,7 @@ func getBottlerocketSupportedK8sVersions(r *ReleaseConfig) ([]string, error) {
 	// Read the eks-d latest release file to get all the releases
 	var bottlerocketOvaReleaseMap map[string]interface{}
 	var bottlerocketSupportedK8sVersions []string
-	bottlerocketOvaReleaseFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectSource, "BOTTLEROCKET_OVA_RELEASES")
+	bottlerocketOvaReleaseFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectPath, "BOTTLEROCKET_OVA_RELEASES")
 
 	bottlerocketOvaReleaseFile, err := ioutil.ReadFile(bottlerocketOvaReleaseFilePath)
 	if err != nil {
@@ -121,7 +118,7 @@ func getBottlerocketSupportedK8sVersions(r *ReleaseConfig) ([]string, error) {
 
 func (r *ReleaseConfig) getBottlerocketAdminContainerMetadata() (string, string, error) {
 	var bottlerocketAdminContainerMetadataMap map[string]interface{}
-	bottlerocketAdminContainerMetadataFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectSource, "BOTTLEROCKET_ADMIN_CONTAINER_METADATA")
+	bottlerocketAdminContainerMetadataFilePath := filepath.Join(r.BuildRepoSource, imageBuilderProjectPath, "BOTTLEROCKET_ADMIN_CONTAINER_METADATA")
 	metadata, err := ioutil.ReadFile(bottlerocketAdminContainerMetadataFilePath)
 	if err != nil {
 		return "", "", errors.Cause(err)
@@ -141,59 +138,68 @@ func GetEksDReleaseManifestUrl(releaseChannel, releaseNumber string) string {
 	return manifestUrl
 }
 
-func (r *ReleaseConfig) GetCurrentEksADevReleaseVersion(sourceClients *SourceClients, releaseVersion string) (string, error) {
-	if r.DryRun {
-		return "v0.0.0-dev+build.0", nil
-	}
-	s3Downloader := sourceClients.S3.Downloader
-	tempFile, err := ioutil.TempFile("", "latest-dev-release-version")
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-	defer os.Remove(tempFile.Name())
+func (r *ReleaseConfig) GetCurrentEksADevReleaseVersion(releaseVersion string) (string, error) {
+	fmt.Println("\n==========================================================")
+	fmt.Println("              Dev Release Version Computation")
+	fmt.Println("==========================================================")
+
+	var latestBuildVersion string
+	var newDevReleaseVersion string
+	tempFileName := "latest-dev-release-version"
 
 	var latestReleaseKey string
+
 	if r.BuildRepoBranchName == "main" {
 		latestReleaseKey = "LATEST_RELEASE_VERSION"
 	} else {
 		latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
 	}
 
-	exists, err := ExistsInS3(sourceClients.S3.Client, r.ReleaseBucket, latestReleaseKey)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-
-	if exists {
-		_, err = s3Downloader.Download(tempFile, &s3.GetObjectInput{Bucket: &r.ReleaseBucket, Key: &latestReleaseKey})
+	if ExistsInS3(r.ReleaseBucket, latestReleaseKey) {
+		err := downloadFileFromS3(tempFileName, r.ReleaseBucket, latestReleaseKey)
 		if err != nil {
 			return "", errors.Cause(err)
 		}
 
 		// Check if current version and latest version are the same semver
-		latestBuildS3, err := ioutil.ReadFile(tempFile.Name())
+		latestBuildS3, err := ioutil.ReadFile(tempFileName)
 		if err != nil {
 			return "", errors.Cause(err)
 		}
-		latestBuildVersion := string(latestBuildS3)
+		latestBuildVersion = string(latestBuildS3)
+		newDevReleaseVersion, err = generateNewDevReleaseVersion(latestBuildVersion, releaseVersion, r.BuildRepoBranchName)
+		if err != nil {
+			return "", errors.Cause(err)
+		}
 		fmt.Printf("Previous release version: %s\n", latestBuildVersion)
 		fmt.Printf("Current release version provided: %s\n", releaseVersion)
-
-		return generateNewDevReleaseVersion(latestBuildVersion, releaseVersion)
 	} else {
-		return "v0.0.0-dev+build.0", nil
+		newDevReleaseVersion = "v0.0.0-dev+build.0"
+		if r.BuildRepoBranchName != "main" {
+			newDevReleaseVersion = fmt.Sprintf("v0.0.0-dev-%s+build.0", r.BuildRepoBranchName)
+		}
 	}
+	fmt.Printf("New dev release release version: %s\n", newDevReleaseVersion)
+
+	fmt.Printf("%s Successfully computed current dev release version\n", SuccessIcon)
+	return newDevReleaseVersion, nil
 }
 
-func generateNewDevReleaseVersion(latestBuildVersion, releaseVersion string) (string, error) {
+func generateNewDevReleaseVersion(latestBuildVersion, releaseVersion, branchName string) (string, error) {
 	if releaseVersion == "vDev" { // TODO: remove when we update the pipeline
 		releaseVersion = "v0.0.0"
 	}
 
+	releaseVersionIdentifier := "dev+build"
+	if branchName != "main" {
+		releaseVersionIdentifier = fmt.Sprintf("dev-%s+build", branchName)
+	}
+
 	if !strings.Contains(latestBuildVersion, releaseVersion) && !strings.Contains(latestBuildVersion, "vDev") { // TODO: adding vDev case temporally to support old run, remove later
 		// different semver, reset build number suffix on release version
-		newReleaseVersion := releaseVersion + "-dev+build.0"
-		fmt.Printf("New release version will be: %s\n", newReleaseVersion)
+
+		newReleaseVersion := fmt.Sprintf("%s-%s.0", releaseVersion, releaseVersionIdentifier)
+
 		return newReleaseVersion, nil
 	}
 
@@ -209,20 +215,24 @@ func generateNewDevReleaseVersion(latestBuildVersion, releaseVersion string) (st
 	}
 
 	newBuildNumber := lastBuildNumber + 1
-	newReleaseVersion := fmt.Sprintf("%s-dev+build.%d", releaseVersion, newBuildNumber)
+	newReleaseVersion := fmt.Sprintf("%s-%s.%d", releaseVersion, releaseVersionIdentifier, newBuildNumber)
 
 	return newReleaseVersion, nil
 }
 
-func (r *ReleaseConfig) PutEksAReleaseVersion(releaseClients *ReleaseClients, version string) error {
-	s3Uploader := releaseClients.S3.Uploader
-
+func (r *ReleaseConfig) PutEksAReleaseVersion(version string) error {
 	var currentReleaseKey string
 	if r.BuildRepoBranchName == "main" {
 		currentReleaseKey = "LATEST_RELEASE_VERSION"
 	} else {
 		currentReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
 	}
+
+	err := os.MkdirAll(filepath.Dir(currentReleaseKey), 0o755)
+	if err != nil {
+		return errors.Cause(err)
+	}
+
 	f, err := os.Create(currentReleaseKey)
 	if err != nil {
 		return errors.Cause(err)
@@ -235,7 +245,7 @@ func (r *ReleaseConfig) PutEksAReleaseVersion(releaseClients *ReleaseClients, ve
 
 	// Upload the file to S3
 	fmt.Println("Uploading latest release version file")
-	err = UploadFileToS3(currentReleaseKey, aws.String(r.ReleaseBucket), aws.String(currentReleaseKey), s3Uploader)
+	err = r.UploadFileToS3(currentReleaseKey, aws.String(currentReleaseKey))
 	if err != nil {
 		return errors.Cause(err)
 	}
@@ -270,4 +280,19 @@ func GenerateRandomSha(hashType int) (string, error) {
 		shaSum = fmt.Sprintf("%x", sha512.Sum512(buff))
 	}
 	return shaSum, nil
+}
+
+func (r *ReleaseConfig) readGitTag(projectPath, branch string) (string, error) {
+	_, err := checkoutRepo(r.BuildRepoSource, branch)
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+
+	tagFile := filepath.Join(r.BuildRepoSource, projectPath, "GIT_TAG")
+	gitTag, err := readFile(tagFile)
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+
+	return gitTag, nil
 }

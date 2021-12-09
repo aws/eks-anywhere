@@ -1,0 +1,60 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: {{.clusterName}}
+    pool: {{.workerPoolName}}
+  name: {{.clusterName}}-{{.workerPoolName}}
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  clusterName: {{.clusterName}}
+  replicas: {{.workerReplicas}}
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: {{.clusterName}}
+      pool: {{.workerPoolName}}
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: {{.clusterName}}
+        pool: {{.workerPoolName}}
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: {{.clusterName}}-{{.workerPoolName}}
+      clusterName: {{.clusterName}}
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: TinkerbellMachineTemplate
+        name: {{.clusterName}}-{{.workerPoolName}}
+      version: {{.kubernetesVersion}}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: TinkerbellMachineTemplate
+metadata:
+  name: {{.clusterName}}-{{.workerPoolName}}
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  template:
+    spec: {}
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: {{.clusterName}}-{{.workerPoolName}}
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            provider-id: PROVIDER_ID
+      users:
+      - name: {{.workerSshUsername}}
+        sshAuthorizedKeys:
+        - '{{.workerSshAuthorizedKey}}'
+        sudo: ALL=(ALL) NOPASSWD:ALL
+      format: {{.format}}

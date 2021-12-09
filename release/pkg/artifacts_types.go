@@ -20,25 +20,29 @@ type ImageTagOverride struct {
 }
 
 type ArchiveArtifact struct {
-	SourceS3Prefix string // S3 uri till base to download artifact, and the checksums
-	SourceS3Key    string
-	ArtifactPath   string
-	ReleaseName    string
-	ReleaseS3Path  string
-	ReleaseCdnURI  string
-	OS             string
-	OSName         string
-	Arch           []string
-	GitTag         string
+	SourceS3Prefix    string // S3 uri till base to download artifact, and the checksums
+	SourceS3Key       string
+	ArtifactPath      string
+	ReleaseName       string
+	ReleaseS3Path     string
+	ReleaseCdnURI     string
+	OS                string
+	OSName            string
+	Arch              []string
+	GitTag            string
+	ProjectPath       string
+	SourcedFromBranch string
 }
 
 type ImageArtifact struct {
-	AssetName       string
-	SourceImageURI  string
-	ReleaseImageURI string
-	OS              string
-	Arch            []string
-	GitTag          string
+	AssetName         string
+	SourceImageURI    string
+	ReleaseImageURI   string
+	OS                string
+	Arch              []string
+	GitTag            string
+	ProjectPath       string
+	SourcedFromBranch string
 }
 
 type ManifestArtifact struct {
@@ -49,6 +53,9 @@ type ManifestArtifact struct {
 	ReleaseS3Path     string
 	ReleaseCdnURI     string
 	ImageTagOverrides []ImageTagOverride
+	GitTag            string
+	ProjectPath       string
+	SourcedFromBranch string
 }
 
 type Artifact struct {

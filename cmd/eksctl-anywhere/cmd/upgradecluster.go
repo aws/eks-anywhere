@@ -20,8 +20,9 @@ import (
 
 type upgradeClusterOptions struct {
 	clusterOptions
-	wConfig    string
-	forceClean bool
+	wConfig          string
+	forceClean       bool
+	hardwareFileName string
 }
 
 func (uc *upgradeClusterOptions) kubeConfig(clusterName string) string {
@@ -81,8 +82,8 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
 		WithBootstrapper().
-		WithClusterManager().
-		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck).
+		WithClusterManager(clusterSpec.Cluster).
+		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareFileName).
 		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
 		WithWriter().
 		WithCAPIManager().

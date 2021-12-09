@@ -8,12 +8,12 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	etcdv1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/cluster-api/api/v1alpha3"
-	kubeadmnv1alpha3 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
+	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -240,7 +240,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				Name: "bootstrap-test",
 			}
 			kubectl.EXPECT().UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", tt.clusterSpec.Name),
-				map[string]string{etcdv1alpha3.UpgradeInProgressAnnotation: "true"}, gomock.Any(), gomock.Any())
+				map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"}, gomock.Any(), gomock.Any())
 			cpContent, mdContent, err := p.GenerateCAPISpecForUpgrade(ctx, bootstrapCluster, cluster, currentSpec, tt.clusterSpec)
 			if err != nil {
 				t.Fatalf("provider.GenerateCAPISpecForUpgrade() error = %v, wantErr nil", err)
@@ -268,17 +268,17 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 		Name: "bootstrap-test",
 	}
 
-	cp := &kubeadmnv1alpha3.KubeadmControlPlane{
-		Spec: kubeadmnv1alpha3.KubeadmControlPlaneSpec{
+	cp := &bootstrapv1.KubeadmControlPlane{
+		Spec: bootstrapv1.KubeadmControlPlaneSpec{
 			InfrastructureTemplate: v1.ObjectReference{
 				Name: "test-control-plane-template-original",
 			},
 		},
 	}
-	md := &v1alpha3.MachineDeployment{
-		Spec: v1alpha3.MachineDeploymentSpec{
-			Template: v1alpha3.MachineTemplateSpec{
-				Spec: v1alpha3.MachineSpec{
+	md := &clusterv1.MachineDeployment{
+		Spec: clusterv1.MachineDeploymentSpec{
+			Template: clusterv1.MachineTemplateSpec{
+				Spec: clusterv1.MachineSpec{
 					InfrastructureRef: v1.ObjectReference{
 						Name: "test-worker-node-template-original",
 					},

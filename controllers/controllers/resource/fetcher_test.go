@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	vspherev3 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -19,7 +19,7 @@ import (
 
 func TestMapMachineTemplateToVSphereDatacenterConfigSpec(t *testing.T) {
 	type args struct {
-		vsMachineTemplate *vspherev3.VSphereMachineTemplate
+		vsMachineTemplate *vspherev1.VSphereMachineTemplate
 	}
 	tests := []struct {
 		name    string
@@ -31,11 +31,11 @@ func TestMapMachineTemplateToVSphereDatacenterConfigSpec(t *testing.T) {
 			name:    "All path are available",
 			wantErr: false,
 			args: args{
-				vsMachineTemplate: &vspherev3.VSphereMachineTemplate{
-					Spec: vspherev3.VSphereMachineTemplateSpec{
-						Template: vspherev3.VSphereMachineTemplateResource{
-							Spec: vspherev3.VSphereMachineSpec{
-								VirtualMachineCloneSpec: vspherev3.VirtualMachineCloneSpec{
+				vsMachineTemplate: &vspherev1.VSphereMachineTemplate{
+					Spec: vspherev1.VSphereMachineTemplateSpec{
+						Template: vspherev1.VSphereMachineTemplateResource{
+							Spec: vspherev1.VSphereMachineSpec{
+								VirtualMachineCloneSpec: vspherev1.VirtualMachineCloneSpec{
 									MemoryMiB:    int64(64),
 									DiskGiB:      int32(100),
 									NumCPUs:      int32(3),
@@ -46,8 +46,8 @@ func TestMapMachineTemplateToVSphereDatacenterConfigSpec(t *testing.T) {
 									Datacenter:   "daaa",
 									Datastore:    "ds-aaa",
 									Folder:       "folder/A",
-									Network: vspherev3.NetworkSpec{
-										Devices: []vspherev3.NetworkDeviceSpec{
+									Network: vspherev1.NetworkSpec{
+										Devices: []vspherev1.NetworkDeviceSpec{
 											{
 												NetworkName: "networkA",
 											},
@@ -72,11 +72,11 @@ func TestMapMachineTemplateToVSphereDatacenterConfigSpec(t *testing.T) {
 			name:    "NetworkName missing, throw error",
 			wantErr: true,
 			args: args{
-				vsMachineTemplate: &vspherev3.VSphereMachineTemplate{
-					Spec: vspherev3.VSphereMachineTemplateSpec{
-						Template: vspherev3.VSphereMachineTemplateResource{
-							Spec: vspherev3.VSphereMachineSpec{
-								VirtualMachineCloneSpec: vspherev3.VirtualMachineCloneSpec{
+				vsMachineTemplate: &vspherev1.VSphereMachineTemplate{
+					Spec: vspherev1.VSphereMachineTemplateSpec{
+						Template: vspherev1.VSphereMachineTemplateResource{
+							Spec: vspherev1.VSphereMachineSpec{
+								VirtualMachineCloneSpec: vspherev1.VirtualMachineCloneSpec{
 									MemoryMiB:    int64(64),
 									DiskGiB:      int32(100),
 									NumCPUs:      int32(3),
@@ -111,7 +111,7 @@ func TestMapMachineTemplateToVSphereDatacenterConfigSpec(t *testing.T) {
 
 func TestMapMachineTemplateToVSphereWorkerMachineConfigSpec(t *testing.T) {
 	type args struct {
-		vsMachineTemplate *vspherev3.VSphereMachineTemplate
+		vsMachineTemplate *vspherev1.VSphereMachineTemplate
 	}
 	tests := []struct {
 		name    string
@@ -123,11 +123,11 @@ func TestMapMachineTemplateToVSphereWorkerMachineConfigSpec(t *testing.T) {
 			name:    "All path are available",
 			wantErr: false,
 			args: args{
-				vsMachineTemplate: &vspherev3.VSphereMachineTemplate{
-					Spec: vspherev3.VSphereMachineTemplateSpec{
-						Template: vspherev3.VSphereMachineTemplateResource{
-							Spec: vspherev3.VSphereMachineSpec{
-								VirtualMachineCloneSpec: vspherev3.VirtualMachineCloneSpec{
+				vsMachineTemplate: &vspherev1.VSphereMachineTemplate{
+					Spec: vspherev1.VSphereMachineTemplateSpec{
+						Template: vspherev1.VSphereMachineTemplateResource{
+							Spec: vspherev1.VSphereMachineSpec{
+								VirtualMachineCloneSpec: vspherev1.VirtualMachineCloneSpec{
 									MemoryMiB:    int64(64),
 									DiskGiB:      int32(100),
 									NumCPUs:      int32(3),
@@ -138,8 +138,8 @@ func TestMapMachineTemplateToVSphereWorkerMachineConfigSpec(t *testing.T) {
 									Datacenter:   "daaa",
 									Datastore:    "ds-aaa",
 									Folder:       "folder/A",
-									Network: vspherev3.NetworkSpec{
-										Devices: []vspherev3.NetworkDeviceSpec{
+									Network: vspherev1.NetworkSpec{
+										Devices: []vspherev1.NetworkDeviceSpec{
 											{
 												NetworkName: "networkA",
 											},

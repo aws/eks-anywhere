@@ -276,6 +276,9 @@ func (e *ClusterE2ETest) DeleteCluster(opts ...CommandOpt) {
 
 func (e *ClusterE2ETest) deleteCluster(opts ...CommandOpt) {
 	deleteClusterArgs := []string{"delete", "cluster", e.ClusterName, "-v", "4"}
+	if getBundlesOverride() == "true" {
+		deleteClusterArgs = append(deleteClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
+	}
 	e.RunEKSA(deleteClusterArgs, opts...)
 }
 

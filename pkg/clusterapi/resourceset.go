@@ -5,8 +5,8 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/cluster-api/api/v1alpha3"
-	addonsalpha3 "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
+	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -38,23 +38,23 @@ func (c ClusterResourceSet) ToYaml() ([]byte, error) {
 	return marshall(append(c.buildResourceConfigMaps(), c.buildSet())...)
 }
 
-func (c ClusterResourceSet) buildSet() *addonsalpha3.ClusterResourceSet {
-	return &addonsalpha3.ClusterResourceSet{
+func (c ClusterResourceSet) buildSet() *addons.ClusterResourceSet {
+	return &addons.ClusterResourceSet{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: addonsalpha3.GroupVersion.Identifier(),
+			APIVersion: addons.GroupVersion.Identifier(),
 			Kind:       "ClusterResourceSet",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: fmt.Sprintf("%s-crs", c.clusterName),
 			Labels: map[string]string{
-				v1alpha3.ClusterLabelName: c.clusterName,
+				clusterv1.ClusterLabelName: c.clusterName,
 			},
 			Namespace: c.namespace,
 		},
-		Spec: addonsalpha3.ClusterResourceSetSpec{
+		Spec: addons.ClusterResourceSetSpec{
 			ClusterSelector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					v1alpha3.ClusterLabelName: c.clusterName,
+					clusterv1.ClusterLabelName: c.clusterName,
 				},
 			},
 			Resources: c.resourceRefs(),
@@ -62,11 +62,11 @@ func (c ClusterResourceSet) buildSet() *addonsalpha3.ClusterResourceSet {
 	}
 }
 
-func (c ClusterResourceSet) resourceRefs() []addonsalpha3.ResourceRef {
-	refs := make([]addonsalpha3.ResourceRef, 0, len(c.resources))
+func (c ClusterResourceSet) resourceRefs() []addons.ResourceRef {
+	refs := make([]addons.ResourceRef, 0, len(c.resources))
 
 	for name := range c.resources {
-		refs = append(refs, addonsalpha3.ResourceRef{Name: name, Kind: string(addonsalpha3.ConfigMapClusterResourceSetResourceKind)})
+		refs = append(refs, addons.ResourceRef{Name: name, Kind: string(addons.ConfigMapClusterResourceSetResourceKind)})
 	}
 
 	return refs
