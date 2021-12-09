@@ -1758,6 +1758,10 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
 }
 
 func TestSetupAndValidateSSHAuthorizedKeyEmptyCP(t *testing.T) {
+	if testing.Short() {
+		t.Skip("too slow for testing.Short")
+	}
+
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
@@ -1777,6 +1781,10 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyCP(t *testing.T) {
 }
 
 func TestSetupAndValidateSSHAuthorizedKeyEmptyWorker(t *testing.T) {
+	if testing.Short() {
+		t.Skip("too slow for testing.Short")
+	}
+
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
@@ -1796,6 +1804,10 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyWorker(t *testing.T) {
 }
 
 func TestSetupAndValidateSSHAuthorizedKeyEmptyEtcd(t *testing.T) {
+	if testing.Short() {
+		t.Skip("too slow for testing.Short")
+	}
+
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
@@ -1815,6 +1827,10 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyEtcd(t *testing.T) {
 }
 
 func TestSetupAndValidateSSHAuthorizedKeyEmptyAllMachineConfigs(t *testing.T) {
+	if testing.Short() {
+		t.Skip("too slow for testing.Short")
+	}
+
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
@@ -1851,6 +1867,10 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyAllMachineConfigs(t *testing.T) {
 }
 
 func TestSetupAndValidateUsersNil(t *testing.T) {
+	if testing.Short() {
+		t.Skip("too slow for testing.Short")
+	}
+
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
@@ -1871,6 +1891,10 @@ func TestSetupAndValidateUsersNil(t *testing.T) {
 }
 
 func TestSetupAndValidateSshAuthorizedKeysNil(t *testing.T) {
+	if testing.Short() {
+		t.Skip("too slow for testing.Short")
+	}
+
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
