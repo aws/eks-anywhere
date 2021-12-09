@@ -3,13 +3,17 @@ package validations
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 const (
-	recommendedTotalMemory = 6200000000
-	requiredMajorVersion   = 20
+	recommendedTotalMemory  = 6200000000
+	requiredMajorVersion    = 20
+	unsupportedMinorVersion = "4.3"
 )
 
 type DockerExecutable interface {
@@ -36,4 +40,23 @@ func CheckDockerAllocatedMemory(ctx context.Context, dockerExecutable DockerExec
 	if totalMemoryAllocated < recommendedTotalMemory {
 		logger.V(3).Info("Warning: recommended memory to be allocated for Docker is 6 GB, please be aware that not allocating enough memory can cause problems while cluster creation")
 	}
+}
+
+func CheckDockerDesktopVersion(ctx context.Context) error {
+	dockerDesktopInfoPath := "/Applications/Docker.app/Contents/Info.plist"
+	if _, err := os.Stat(dockerDesktopInfoPath); err != nil {
+		return fmt.Errorf("unable to find Docker Desktop info list")
+	}
+	cmd := exec.CommandContext(ctx, "defaults", "read", dockerDesktopInfoPath, "CFBundleShortVersionString")
+	stdout, err := cmd.Output()
+	if err != nil {
+		return err
+	}
+	dockerDesktopVersion := strings.TrimSpace(string(stdout))
+	dockerDesktopMinorRelease := dockerDesktopVersion[:strings.LastIndex(dockerDesktopVersion, ".")]
+	if dockerDesktopMinorRelease >= unsupportedMinorVersion {
+		return fmt.Errorf("EKS Anywhere does not support Docker desktop version 4.3.0 or greater on macOS")
+	}
+
+	return nil
 }

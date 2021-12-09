@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"runtime"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -14,6 +15,12 @@ func commonValidation(ctx context.Context, clusterConfigFile string) (*v1alpha1.
 	err := validations.CheckMinimumDockerVersion(ctx, docker)
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate docker: %v", err)
+	}
+	if runtime.GOOS == "darwin" {
+		err = validations.CheckDockerDesktopVersion(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to validate docker desktop: %v", err)
+		}
 	}
 	validations.CheckDockerAllocatedMemory(ctx, docker)
 	clusterConfigFileExist := validations.FileExists(clusterConfigFile)
