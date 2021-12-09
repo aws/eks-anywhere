@@ -11,7 +11,7 @@ GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git describe --tag | cut -d'-' -f1)
 GOLANG_VERSION?="1.16"
 
-## ensure local execution uses the 'main' branch bundle
+## ensure local execution uses the 'release-0.6' branch bundle
 CODEBUILD_SOURCE_VERSION?=release-0.6
 ifeq (,$(findstring $(CODEBUILD_SOURCE_VERSION),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
