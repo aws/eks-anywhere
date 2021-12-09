@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
@@ -18,8 +19,9 @@ import (
 
 type createClusterOptions struct {
 	clusterOptions
-	forceClean  bool
-	skipIpCheck bool
+	forceClean       bool
+	skipIpCheck      bool
+	hardwareFileName string
 }
 
 var cc = &createClusterOptions{}
@@ -34,7 +36,7 @@ var createClusterCmd = &cobra.Command{
 		if err := cc.validate(cmd.Context()); err != nil {
 			return err
 		}
-		if err := cc.createCluster(cmd.Context()); err != nil {
+		if err := cc.createCluster(cmd); err != nil {
 			return fmt.Errorf("failed to create cluster: %v", err)
 		}
 		return nil
@@ -44,6 +46,9 @@ var createClusterCmd = &cobra.Command{
 func init() {
 	createCmd.AddCommand(createClusterCmd)
 	createClusterCmd.Flags().StringVarP(&cc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
+	if features.IsActive(features.TinkerbellProvider()) {
+		createClusterCmd.Flags().StringVarP(&cc.hardwareFileName, "hardwarefile", "w", "", "Filename that contains datacenter hardware information")
+	}
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
 	createClusterCmd.Flags().StringVar(&cc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
@@ -75,7 +80,9 @@ func (cc *createClusterOptions) validate(ctx context.Context) error {
 	return nil
 }
 
-func (cc *createClusterOptions) createCluster(ctx context.Context) error {
+func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
+	ctx := cmd.Context()
+
 	clusterSpec, err := newClusterSpec(cc.clusterOptions)
 	if err != nil {
 		return err
@@ -84,7 +91,7 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck).
+		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareFileName).
 		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
 		WithWriter().
 		Build(ctx)
@@ -92,6 +99,20 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 		return err
 	}
 	defer cleanup(ctx, deps, err)
+
+	if features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == "tinkerbell" {
+		flag := cmd.Flags().Lookup("hardwarefile")
+		if flag == nil {
+			return fmt.Errorf("Something wrong. Flag hardwarefile not set up for provider tinkerbell")
+		}
+		if !viper.IsSet("hardwarefile") || viper.GetString("hardwarefile") == "" {
+			return fmt.Errorf("Error: required flag \"hardwarefile\" not set")
+		}
+		hardwareConfigFileExist := validations.FileExists(cc.hardwareFileName)
+		if !hardwareConfigFileExist {
+			return fmt.Errorf("Error: hardware config file %s does not exist", cc.hardwareFileName)
+		}
+	}
 
 	createCluster := workflows.NewCreate(
 		deps.Bootstrapper,

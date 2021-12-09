@@ -433,6 +433,7 @@ github.com/hashicorp/go-cleanhttp v0.5.1/go.mod h1:JpRdi6/HCYpAwUzNwuwqhbovhLtng
 github.com/hashicorp/go-immutable-radix v1.0.0/go.mod h1:0y9vanUI8NX6FsYoO3zeMjhV/C5i9g4Q3DwcSNZ4P60=
 github.com/hashicorp/go-msgpack v0.5.3/go.mod h1:ahLV/dePpqEmjfWmKiqvPkv/twdG7iPBM1vqhUKIvfM=
 github.com/hashicorp/go-multierror v1.0.0/go.mod h1:dHtQlpGsu+cZNNAkkCN/P3hoUDHhCYQXV3UM06sGGrk=
+github.com/hashicorp/go-multierror v1.1.1/go.mod h1:iw975J/qwKPdAO1clOe2L8331t/9/fmwbPZ6JB6eMoM=
 github.com/hashicorp/go-rootcerts v1.0.0/go.mod h1:K6zTfqpRlCUIjkwsN4Z+hiSfzSTQa6eBIzfwKfwNnHU=
 github.com/hashicorp/go-sockaddr v1.0.0/go.mod h1:7Xibr9yA9JjQq1JpNB2Vw7kxv8xerXegt+ozgdvDeDU=
 github.com/hashicorp/go-syslog v1.0.0/go.mod h1:qPfqrKkXGihmCqbJM2mZgkZGvKG1dFdvsLplgctolz4=
@@ -570,10 +571,12 @@ github.com/modern-go/reflect2 v1.0.1 h1:9f412s+6RmYXLWZSEzVVgPGK7C2PphHj5RJrvfx9
 github.com/modern-go/reflect2 v1.0.1/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
 github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00/go.mod h1:Pm3mSP3c5uWn86xMLZ5Sa7JB9GsEZySvHYXCTK4E9q4=
 github.com/morikuni/aec v1.0.0/go.mod h1:BbKIizmSmc5MMPqRYbxO4ZU0S0+P200+tUnFx7PXmsc=
-github.com/mrajashree/etcdadm-bootstrap-provider v0.1.1-0.20210807004059-42797f8a87fd h1:o+KUFBQAFfDMk/w/Y/e6HAgh+WwpcezI9Iv5NkkDAW0=
 github.com/mrajashree/etcdadm-bootstrap-provider v0.1.1-0.20210807004059-42797f8a87fd/go.mod h1:p5iD9Atm4c+YEWKsInhWXR1cq7l5zbiCVyZZG20vDqg=
-github.com/mrajashree/etcdadm-controller v0.1.1-0.20210807012710-3e2035176ab8 h1:Ch8wzm3C0w8y/Q1yAwH6JMypH5p8q4BGRJ5kXWoVEPc=
+github.com/mrajashree/etcdadm-bootstrap-provider v0.1.2 h1:TmQvwVlx1qTRH4ezwb4JlbyhEKpP6RwJX00BTBRZ2m4=
+github.com/mrajashree/etcdadm-bootstrap-provider v0.1.2/go.mod h1:SMu+2ncqR0ydCV0etfV0Ie+dj39glkLy3eGCR+d70O4=
 github.com/mrajashree/etcdadm-controller v0.1.1-0.20210807012710-3e2035176ab8/go.mod h1:rTm7mRb2/6ltK7+QQRkovU2OZkVytWhMX8Wi8zr6OD8=
+github.com/mrajashree/etcdadm-controller v0.1.3 h1:41U1BcU3Rgx6ccXc3S4/EqiUcGQIPysniNWyrmA7q9c=
+github.com/mrajashree/etcdadm-controller v0.1.3/go.mod h1:RwFt+XEv6wZbg+7wUsmtZjp7jIQrR7QzHT0FMJ+AtqQ=
 github.com/mrunalp/fileutils v0.5.0/go.mod h1:M1WthSahJixYnrXQl/DFQuteStB1weuxD2QJNHXfbSQ=
 github.com/munnerz/goautoneg v0.0.0-20120707110453-a547fc61f48d/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=

@@ -55,6 +55,20 @@ func (mr *MockProviderGovcClientMockRecorder) AddTag(arg0, arg1, arg2 interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTag", reflect.TypeOf((*MockProviderGovcClient)(nil).AddTag), arg0, arg1, arg2)
 }
 
+// ConfigureCertThumbprint mocks base method.
+func (m *MockProviderGovcClient) ConfigureCertThumbprint(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConfigureCertThumbprint", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ConfigureCertThumbprint indicates an expected call of ConfigureCertThumbprint.
+func (mr *MockProviderGovcClientMockRecorder) ConfigureCertThumbprint(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConfigureCertThumbprint", reflect.TypeOf((*MockProviderGovcClient)(nil).ConfigureCertThumbprint), arg0, arg1, arg2)
+}
+
 // CreateCategoryForVM mocks base method.
 func (m *MockProviderGovcClient) CreateCategoryForVM(arg0 context.Context, arg1 string) error {
 	m.ctrl.T.Helper()
@@ -97,6 +111,21 @@ func (mr *MockProviderGovcClientMockRecorder) CreateTag(arg0, arg1, arg2 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTag", reflect.TypeOf((*MockProviderGovcClient)(nil).CreateTag), arg0, arg1, arg2)
 }
 
+// DatacenterExists mocks base method.
+func (m *MockProviderGovcClient) DatacenterExists(arg0 context.Context, arg1 string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DatacenterExists", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DatacenterExists indicates an expected call of DatacenterExists.
+func (mr *MockProviderGovcClientMockRecorder) DatacenterExists(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DatacenterExists", reflect.TypeOf((*MockProviderGovcClient)(nil).DatacenterExists), arg0, arg1)
+}
+
 // DeleteLibraryElement mocks base method.
 func (m *MockProviderGovcClient) DeleteLibraryElement(arg0 context.Context, arg1 string) error {
 	m.ctrl.T.Helper()
@@ -123,6 +152,21 @@ func (m *MockProviderGovcClient) DeployTemplateFromLibrary(arg0 context.Context,
 func (mr *MockProviderGovcClientMockRecorder) DeployTemplateFromLibrary(arg0, arg1, arg2, arg3, arg4, arg5, arg6 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployTemplateFromLibrary", reflect.TypeOf((*MockProviderGovcClient)(nil).DeployTemplateFromLibrary), arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+}
+
+// GetCertThumbprint mocks base method.
+func (m *MockProviderGovcClient) GetCertThumbprint(arg0 context.Context) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCertThumbprint", arg0)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCertThumbprint indicates an expected call of GetCertThumbprint.
+func (mr *MockProviderGovcClientMockRecorder) GetCertThumbprint(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCertThumbprint", reflect.TypeOf((*MockProviderGovcClient)(nil).GetCertThumbprint), arg0)
 }
 
 // GetLibraryElementContentVersion mocks base method.
@@ -184,6 +228,20 @@ func (mr *MockProviderGovcClientMockRecorder) ImportTemplate(arg0, arg1, arg2, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ImportTemplate", reflect.TypeOf((*MockProviderGovcClient)(nil).ImportTemplate), arg0, arg1, arg2, arg3)
 }
 
+// IsCertSelfSigned mocks base method.
+func (m *MockProviderGovcClient) IsCertSelfSigned(arg0 context.Context) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsCertSelfSigned", arg0)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsCertSelfSigned indicates an expected call of IsCertSelfSigned.
+func (mr *MockProviderGovcClientMockRecorder) IsCertSelfSigned(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsCertSelfSigned", reflect.TypeOf((*MockProviderGovcClient)(nil).IsCertSelfSigned), arg0)
+}
+
 // LibraryElementExists mocks base method.
 func (m *MockProviderGovcClient) LibraryElementExists(arg0 context.Context, arg1 string) (bool, error) {
 	m.ctrl.T.Helper()
@@ -229,6 +287,21 @@ func (mr *MockProviderGovcClientMockRecorder) ListTags(arg0 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTags", reflect.TypeOf((*MockProviderGovcClient)(nil).ListTags), arg0)
 }
 
+// NetworkExists mocks base method.
+func (m *MockProviderGovcClient) NetworkExists(arg0 context.Context, arg1 string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NetworkExists", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// NetworkExists indicates an expected call of NetworkExists.
+func (mr *MockProviderGovcClientMockRecorder) NetworkExists(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NetworkExists", reflect.TypeOf((*MockProviderGovcClient)(nil).NetworkExists), arg0, arg1)
+}
+
 // SearchTemplate mocks base method.
 func (m *MockProviderGovcClient) SearchTemplate(arg0 context.Context, arg1 string, arg2 *v1alpha1.VSphereMachineConfig) (string, error) {
 	m.ctrl.T.Helper()
@@ -259,18 +332,32 @@ func (mr *MockProviderGovcClientMockRecorder) TemplateHasSnapshot(arg0, arg1 int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TemplateHasSnapshot", reflect.TypeOf((*MockProviderGovcClient)(nil).TemplateHasSnapshot), arg0, arg1)
 }
 
-// ValidateVCenterSetup mocks base method.
-func (m *MockProviderGovcClient) ValidateVCenterSetup(arg0 context.Context, arg1 *v1alpha1.VSphereDatacenterConfig, arg2 *bool) error {
+// ValidateVCenterAuthentication mocks base method.
+func (m *MockProviderGovcClient) ValidateVCenterAuthentication(arg0 context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateVCenterSetup", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "ValidateVCenterAuthentication", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// ValidateVCenterSetup indicates an expected call of ValidateVCenterSetup.
-func (mr *MockProviderGovcClientMockRecorder) ValidateVCenterSetup(arg0, arg1, arg2 interface{}) *gomock.Call {
+// ValidateVCenterAuthentication indicates an expected call of ValidateVCenterAuthentication.
+func (mr *MockProviderGovcClientMockRecorder) ValidateVCenterAuthentication(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateVCenterSetup", reflect.TypeOf((*MockProviderGovcClient)(nil).ValidateVCenterSetup), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateVCenterAuthentication", reflect.TypeOf((*MockProviderGovcClient)(nil).ValidateVCenterAuthentication), arg0)
+}
+
+// ValidateVCenterConnection mocks base method.
+func (m *MockProviderGovcClient) ValidateVCenterConnection(arg0 context.Context, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateVCenterConnection", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateVCenterConnection indicates an expected call of ValidateVCenterConnection.
+func (mr *MockProviderGovcClientMockRecorder) ValidateVCenterConnection(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateVCenterConnection", reflect.TypeOf((*MockProviderGovcClient)(nil).ValidateVCenterConnection), arg0, arg1)
 }
 
 // ValidateVCenterSetupMachineConfig mocks base method.

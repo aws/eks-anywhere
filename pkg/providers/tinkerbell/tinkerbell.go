@@ -16,6 +16,14 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+)
+
+const (
+	tinkerbellCertURLKey           = "TINKERBELL_CERT_URL"
+	tinkerbellGRPCAuthKey          = "TINKERBELL_GRPC_AUTHORITY"
+	tinkerbellIPKey                = "TINKERBELL_IP"
+	tinkerbellPBnJGRPCAuthorityKey = "TINKERBELL_PBNJ_GRPC_AUTHORITY"
 )
 
 //go:embed config/template-cp.yaml
@@ -30,25 +38,51 @@ var mhcTemplate []byte
 var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	requiredEnvs                         = []string{}
+	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey, tinkerbellPBnJGRPCAuthorityKey}
 )
 
 type tinkerbellProvider struct {
-	clusterConfig    *v1alpha1.Cluster
-	datacenterConfig *v1alpha1.TinkerbellDatacenterConfig
+	clusterConfig          *v1alpha1.Cluster
+	datacenterConfig       *v1alpha1.TinkerbellDatacenterConfig
+	machineConfigs         map[string]*v1alpha1.TinkerbellMachineConfig
+	controlPlaneSshAuthKey string
+	workerSshAuthKey       string
+	// etcdSshAuthKey         string
+	providerKubectlClient ProviderKubectlClient
+	templateBuilder       *TinkerbellTemplateBuilder
+	hardwareConfigFile    string
 	// TODO: Update hardwareConfig to proper type
-	hardwareConfig string
-	// providerKubectlClient ProviderKubectlClient
-	// templateBuilder TinkerbellTemplateBuilder
 }
 
-// type ProviderKubectlClient interface {
-// 	// TODO: Add necessary kubectl functions here
-// }
+// TODO: Add necessary kubectl functions here
+type ProviderKubectlClient interface{}
 
-func NewProvider(hardwareConfig string) *tinkerbellProvider {
+func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, now types.NowFunc, hardwareConfigFile string) *tinkerbellProvider {
+	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
+	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
+		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
+	}
+	if len(clusterConfig.Spec.WorkerNodeGroupConfigurations) > 0 && clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name] != nil {
+		workerNodeGroupMachineSpec = &machineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec
+	}
+	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
+		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
+			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
+		}
+	}
 	return &tinkerbellProvider{
-		hardwareConfig: hardwareConfig,
+		clusterConfig:         clusterConfig,
+		datacenterConfig:      datacenterConfig,
+		machineConfigs:        machineConfigs,
+		providerKubectlClient: providerKubectlClient,
+		hardwareConfigFile:    hardwareConfigFile,
+		templateBuilder: &TinkerbellTemplateBuilder{
+			datacenterSpec:             &datacenterConfig.Spec,
+			controlPlaneMachineSpec:    controlPlaneMachineSpec,
+			workerNodeGroupMachineSpec: workerNodeGroupMachineSpec,
+			etcdMachineSpec:            etcdMachineSpec,
+			now:                        now,
+		},
 	}
 }
 
@@ -93,12 +127,22 @@ func (p *tinkerbellProvider) DeleteResources(_ context.Context, _ *cluster.Spec)
 
 func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
+	p.controlPlaneSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
+	p.workerSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 	// TODO: Add more validations
+	err := p.validateEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
 	return nil
 }
 
 func (p *tinkerbellProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
 	// TODO: validations?
+	err := p.validateEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
 	return nil
 }
 
@@ -114,14 +158,16 @@ func (p *tinkerbellProvider) UpdateSecrets(ctx context.Context, cluster *types.C
 
 type TinkerbellTemplateBuilder struct {
 	controlPlaneMachineSpec    *v1alpha1.TinkerbellMachineConfigSpec
+	datacenterSpec             *v1alpha1.TinkerbellDatacenterConfigSpec
 	workerNodeGroupMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	etcdMachineSpec            *v1alpha1.TinkerbellMachineConfigSpec
 	now                        types.NowFunc
 }
 
-func NewTinkerbellTemplateBuilder(controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
+func NewTinkerbellTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterConfigSpec, controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
 	return &TinkerbellTemplateBuilder{
 		controlPlaneMachineSpec:    controlPlaneMachineSpec,
+		datacenterSpec:             datacenterSpec,
 		workerNodeGroupMachineSpec: workerNodeGroupMachineSpec,
 		etcdMachineSpec:            etcdMachineSpec,
 		now:                        now,
@@ -171,8 +217,35 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 }
 
 func (p *tinkerbellProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	// TODO: implement
-	return nil, nil, nil
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
+	}
+	return controlPlaneSpec, workersSpec, nil
+}
+
+func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	clusterName := clusterSpec.ObjectMeta.Name
+
+	cpOpt := func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = p.templateBuilder.CPMachineTemplateName(clusterName)
+		values["controlPlaneSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
+		values["etcdSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
+		values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
+	}
+	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
+	if err != nil {
+		return nil, nil, err
+	}
+	workersOpt := func(values map[string]interface{}) {
+		values["workloadTemplateName"] = p.templateBuilder.WorkerMachineTemplateName(clusterName)
+		values["workerSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
+	}
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workersOpt)
+	if err != nil {
+		return nil, nil, err
+	}
+	return controlPlaneSpec, workersSpec, nil
 }
 
 func (p *tinkerbellProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
@@ -241,7 +314,23 @@ func (p *tinkerbellProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) 
 	// 	},
 	// }
 	// return &infraBundle
-	return nil
+	// TODO - remove below code when tinkerbell is added to bundle
+	folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", "v0.1.0")
+	infraBundle := types.InfrastructureBundle{
+		FolderName: folderName,
+		Manifests: []releasev1alpha1.Manifest{
+			{
+				URI: "https://github.com/tinkerbell/cluster-api-provider-tinkerbell/releases/download/v0.1.0/infrastructure-components.yaml",
+			},
+			{
+				URI: "https://github.com/tinkerbell/cluster-api-provider-tinkerbell/releases/download/v0.1.0/metadata.yaml",
+			},
+			{
+				URI: "https://github.com/tinkerbell/cluster-api-provider-tinkerbell/releases/download/v0.1.0/cluster-template.yaml",
+			},
+		},
+	}
+	return &infraBundle
 }
 
 func (p *tinkerbellProvider) DatacenterConfig() providers.DatacenterConfig {
@@ -313,4 +402,36 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
 	}
 	return values
+}
+
+func (p *tinkerbellProvider) validateEnv(ctx context.Context) error {
+	if tinkerbellCertURL, ok := os.LookupEnv(tinkerbellCertURLKey); ok && len(tinkerbellCertURL) > 0 {
+		if err := os.Setenv(tinkerbellCertURLKey, tinkerbellCertURL); err != nil {
+			return fmt.Errorf("unable to set %s: %v", tinkerbellCertURLKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", tinkerbellCertURLKey)
+	}
+	if tinkerbellGRPCAuth, ok := os.LookupEnv(tinkerbellGRPCAuthKey); ok && len(tinkerbellGRPCAuth) > 0 {
+		if err := os.Setenv(tinkerbellGRPCAuthKey, tinkerbellGRPCAuth); err != nil {
+			return fmt.Errorf("unable to set %s: %v", tinkerbellGRPCAuthKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", tinkerbellGRPCAuthKey)
+	}
+	if tinkerbellIP, ok := os.LookupEnv(tinkerbellIPKey); ok && len(tinkerbellIP) > 0 {
+		if err := os.Setenv(tinkerbellIPKey, tinkerbellIP); err != nil {
+			return fmt.Errorf("unable to set %s: %v", tinkerbellIPKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", tinkerbellIPKey)
+	}
+	if tinkerbellPBnJGRPCAuthority, ok := os.LookupEnv(tinkerbellPBnJGRPCAuthorityKey); ok && len(tinkerbellPBnJGRPCAuthority) > 0 {
+		if err := os.Setenv(tinkerbellPBnJGRPCAuthorityKey, tinkerbellPBnJGRPCAuthority); err != nil {
+			return fmt.Errorf("unable to set %s: %v", tinkerbellPBnJGRPCAuthorityKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", tinkerbellPBnJGRPCAuthorityKey)
+	}
+	return nil
 }

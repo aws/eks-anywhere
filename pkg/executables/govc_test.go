@@ -443,46 +443,6 @@ func TestDeployTemplateFromLibraryErrorMarkAsTemplate(t *testing.T) {
 	tt.assertDeployTemplateError(t)
 }
 
-func TestGovcValidateVCenterSetup(t *testing.T) {
-	ctx := context.Background()
-	ts := newHTTPSServer(t)
-	providerConfig := v1alpha1.VSphereDatacenterConfig{
-		Spec: v1alpha1.VSphereDatacenterConfigSpec{
-			Datacenter: "SDDC Datacenter",
-			Network:    "/SDDC Datacenter/network/test network",
-			Server:     strings.TrimPrefix(ts.URL, "https://"),
-			Insecure:   true,
-		},
-	}
-	env := govcEnvironment
-	mockCtrl := gomock.NewController(t)
-	_, writer := test.NewWriter(t)
-	selfSigned := true
-
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
-
-	executable := mockexecutables.NewMockExecutable(mockCtrl)
-
-	var params []string
-	params = []string{"about", "-k"}
-	executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(bytes.Buffer{}, nil)
-
-	params = []string{"datacenter.info", providerConfig.Spec.Datacenter}
-	executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(bytes.Buffer{}, nil)
-
-	params = []string{"find", "-maxdepth=1", filepath.Dir(providerConfig.Spec.Network), "-type", "n", "-name", filepath.Base(providerConfig.Spec.Network)}
-	executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(*bytes.NewBufferString("/SDDC Datacenter/network/test network"), nil)
-
-	g := executables.NewGovc(executable, writer)
-
-	err := g.ValidateVCenterSetup(ctx, &providerConfig, &selfSigned)
-	if err != nil {
-		t.Fatalf("Govc.ValidateVCenterSetup() error: %v", err)
-	}
-}
-
 func TestGovcValidateVCenterSetupMachineConfig(t *testing.T) {
 	ctx := context.Background()
 	ts := newHTTPSServer(t)
@@ -987,8 +947,175 @@ func TestGovcLogoutSuccess(t *testing.T) {
 	g, executable, env := setup(t)
 
 	executable.EXPECT().ExecuteWithEnv(ctx, env, "session.logout").Return(*bytes.NewBufferString(""), nil)
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "session.logout", "-k").Return(*bytes.NewBufferString(""), nil)
 
 	if err := g.Logout(ctx); err != nil {
 		t.Fatalf("Govc.Logout() err = %v, want err nil", err)
+	}
+}
+
+func TestGovcValidateVCenterConnectionSuccess(t *testing.T) {
+	ctx := context.Background()
+	ts := newHTTPSServer(t)
+	g, _, _ := setup(t)
+
+	if err := g.ValidateVCenterConnection(ctx, strings.TrimPrefix(ts.URL, "https://")); err != nil {
+		t.Fatalf("Govc.ValidateVCenterConnection() err = %v, want err nil", err)
+	}
+}
+
+func TestGovcValidateVCenterAuthenticationSuccess(t *testing.T) {
+	ctx := context.Background()
+	g, executable, env := setup(t)
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "about", "-k").Return(*bytes.NewBufferString(""), nil)
+
+	if err := g.ValidateVCenterAuthentication(ctx); err != nil {
+		t.Fatalf("Govc.ValidateVCenterAuthentication() err = %v, want err nil", err)
+	}
+}
+
+func TestGovcIsCertSelfSignedTrue(t *testing.T) {
+	ctx := context.Background()
+	g, executable, env := setup(t)
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "about").Return(*bytes.NewBufferString(""), errors.New(""))
+
+	if !g.IsCertSelfSigned(ctx) {
+		t.Fatalf("Govc.IsCertSelfSigned) = false, want true")
+	}
+}
+
+func TestGovcIsCertSelfSignedFalse(t *testing.T) {
+	ctx := context.Background()
+	g, executable, env := setup(t)
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "about").Return(*bytes.NewBufferString(""), nil)
+
+	if g.IsCertSelfSigned(ctx) {
+		t.Fatalf("Govc.IsCertSelfSigned) = true, want false")
+	}
+}
+
+func TestGovcGetCertThumbprintSuccess(t *testing.T) {
+	ctx := context.Background()
+	g, executable, env := setup(t)
+	wantThumbprint := "AB:AB:AB"
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "about.cert", "-thumbprint", "-k").Return(*bytes.NewBufferString("server.com AB:AB:AB"), nil)
+
+	gotThumbprint, err := g.GetCertThumbprint(ctx)
+	if err != nil {
+		t.Fatalf("Govc.GetCertThumbprint() err = %v, want err nil", err)
+	}
+
+	if gotThumbprint != wantThumbprint {
+		t.Fatalf("Govc.GetCertThumbprint() thumbprint = %s, want %s", gotThumbprint, wantThumbprint)
+	}
+}
+
+func TestGovcGetCertThumbprintBadOutput(t *testing.T) {
+	ctx := context.Background()
+	g, executable, env := setup(t)
+	wantErr := "invalid thumbprint format"
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "about.cert", "-thumbprint", "-k").Return(*bytes.NewBufferString("server.comAB:AB:AB"), nil)
+
+	if _, err := g.GetCertThumbprint(ctx); err == nil || err.Error() != wantErr {
+		t.Fatalf("Govc.GetCertThumbprint() err = %s, want err %s", err, wantErr)
+	}
+}
+
+func TestGovcConfigureCertThumbprint(t *testing.T) {
+	ctx := context.Background()
+	g, _, _ := setup(t)
+	server := "server.com"
+	thumbprint := "AB:AB:AB"
+	wantKnownHostsContent := "server.com AB:AB:AB"
+
+	if err := g.ConfigureCertThumbprint(ctx, server, thumbprint); err != nil {
+		t.Fatalf("Govc.ConfigureCertThumbprint() err = %v, want err nil", err)
+	}
+
+	path, ok := os.LookupEnv("GOVC_TLS_KNOWN_HOSTS")
+	if !ok {
+		t.Fatal("GOVC_TLS_KNOWN_HOSTS is not set")
+	}
+
+	gotKnownHostsContent := test.ReadFile(t, path)
+	if gotKnownHostsContent != wantKnownHostsContent {
+		t.Fatalf("GOVC_TLS_KNOWN_HOSTS file content = %s, want %s", gotKnownHostsContent, wantKnownHostsContent)
+	}
+}
+
+func TestGovcDatacenterExistsTrue(t *testing.T) {
+	ctx := context.Background()
+	g, executable, env := setup(t)
+	datacenter := "datacenter_1"
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "datacenter.info", datacenter).Return(*bytes.NewBufferString(""), nil)
+
+	exists, err := g.DatacenterExists(ctx, datacenter)
+	if err != nil {
+		t.Fatalf("Govc.DatacenterExists() err = %v, want err nil", err)
+	}
+
+	if !exists {
+		t.Fatalf("Govc.DatacenterExists() = false, want true")
+	}
+}
+
+func TestGovcDatacenterExistsFalse(t *testing.T) {
+	ctx := context.Background()
+	g, executable, env := setup(t)
+	datacenter := "datacenter_1"
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "datacenter.info", datacenter).Return(*bytes.NewBufferString("datacenter_1 not found"), errors.New("exit code 1"))
+
+	exists, err := g.DatacenterExists(ctx, datacenter)
+	if err != nil {
+		t.Fatalf("Govc.DatacenterExists() err = %v, want err nil", err)
+	}
+
+	if exists {
+		t.Fatalf("Govc.DatacenterExists() = true, want false")
+	}
+}
+
+func TestGovcNetworkExistsTrue(t *testing.T) {
+	ctx := context.Background()
+	g, executable, env := setup(t)
+	network := "/Networks/network_1"
+	networkName := "network_1"
+	networkDir := "/Networks"
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "find", "-maxdepth=1", networkDir, "-type", "n", "-name", networkName).Return(*bytes.NewBufferString(network), nil)
+
+	exists, err := g.NetworkExists(ctx, network)
+	if err != nil {
+		t.Fatalf("Govc.NetworkExists() err = %v, want err nil", err)
+	}
+
+	if !exists {
+		t.Fatalf("Govc.NetworkExists() = false, want true")
+	}
+}
+
+func TestGovcNetworkExistsFalse(t *testing.T) {
+	ctx := context.Background()
+	g, executable, env := setup(t)
+	network := "/Networks/network_1"
+	networkName := "network_1"
+	networkDir := "/Networks"
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "find", "-maxdepth=1", networkDir, "-type", "n", "-name", networkName).Return(*bytes.NewBufferString(""), nil)
+
+	exists, err := g.NetworkExists(ctx, network)
+	if err != nil {
+		t.Fatalf("Govc.NetworkExistsNetworkExists() err = %v, want err nil", err)
+	}
+
+	if exists {
+		t.Fatalf("Govc.NetworkExists() = true, want false")
 	}
 }

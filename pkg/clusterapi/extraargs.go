@@ -2,7 +2,6 @@ package clusterapi
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/crypto"
@@ -53,15 +52,13 @@ func PodIAMAuthExtraArgs(podIAMConfig *v1alpha1.PodIAMConfig) ExtraArgs {
 // We don't need to add these once the Kubernetes components default to using the secure cipher suites
 func SecureTlsCipherSuitesExtraArgs() ExtraArgs {
 	args := ExtraArgs{}
-	cipherSuitesString := strings.Join(crypto.SecureCipherSuiteNames(), ",")
-	args.AddIfNotEmpty("tls-cipher-suites", cipherSuitesString)
+	args.AddIfNotEmpty("tls-cipher-suites", crypto.SecureCipherSuitesString())
 	return args
 }
 
 func SecureEtcdTlsCipherSuitesExtraArgs() ExtraArgs {
 	args := ExtraArgs{}
-	cipherSuitesString := strings.Join(crypto.SecureCipherSuiteNames(), ",")
-	args.AddIfNotEmpty("cipher-suites", cipherSuitesString)
+	args.AddIfNotEmpty("cipher-suites", crypto.SecureCipherSuitesString())
 	return args
 }
 
