@@ -79,7 +79,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.commandId, "tests", r.conf.regex, "status", passedStatus)
 		}
 		if conf.CleanupVms {
-			err := CleanUpVsphereTestResources(context.Background(), r.conf.instanceId)
+			err = CleanUpVsphereTestResources(context.Background(), r.conf.instanceId)
 			if err != nil {
 				logger.Error(err, "Failed to clean up VSphere cluster VMs", "clusterName", r.conf.instanceId)
 			}
