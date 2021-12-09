@@ -15,19 +15,18 @@ GOLANG_VERSION?="1.16"
 GO ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))/go
 GO_TEST ?= $(GO) test
 
-CODEBUILD_SOURCE_VERSION ?= main ## If in codebuild environment, use the branch-specific bundle manifest 
+CODEBUILD_SOURCE_VERSION?=main## ensure local execution uses the 'main' branch bundle
 ifeq (,$(findstring $(CODEBUILD_SOURCE_VERSION),main))
+## use the branch-specific bundle manifest if the branch is not 'main'
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${CODEBUILD_SOURCE_VERSION}/bundle-release.yaml
 $(info    Using branch-specific BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
-endif
-ifeq (,$(findstring $(CODEBUILD_SOURCE_VERSION),main))
-BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${CODEBUILD_SOURCE_VERSION}/bundle-release.yaml
-$(info    Using branch-specific BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
-endif
+else
+## use the standard bundle manifest if the branch is 'main'
+BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml
+$(info    Using stanard BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
 endif
 
 RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
-BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml
 
 DEV_GIT_VERSION:=v0.0.0-dev
 
