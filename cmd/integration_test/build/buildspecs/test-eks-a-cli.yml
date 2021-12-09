@@ -64,6 +64,7 @@ phases:
       -r 'Test'
       -v 4
       --bundles-override=${BUNDLES_OVERRIDE}
+      --cleanup-vms=true
   post_build:
     commands:
     - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
@@ -76,7 +77,3 @@ phases:
       $CODEBUILD_BUILD_NUMBER
       $GIT_HASH
       false
-    - >
-      ./bin/test e2e cleanup vsphere
-      -n i-
-      -v 4

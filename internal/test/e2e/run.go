@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -27,6 +28,7 @@ type ParallelRunConf struct {
 	Regex               string
 	TestsToSkip         []string
 	BundlesOverride     bool
+	CleanupVms          bool
 }
 
 type instanceTestsResults struct {
@@ -75,6 +77,12 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			failedInstances += 1
 		} else {
 			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.commandId, "tests", r.conf.regex, "status", passedStatus)
+		}
+		if conf.CleanupVms {
+			err := CleanUpVsphereTestResources(context.Background(), r.conf.instanceId)
+			if err != nil {
+				logger.Error(err, "Failed to clean up VSphere cluster VMs", "clusterName", r.conf.instanceId)
+			}
 		}
 	}
 
