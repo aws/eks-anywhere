@@ -2,10 +2,12 @@ package clusterapi_test
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
@@ -206,6 +208,79 @@ func TestAwsIamAuthExtraArgs(t *testing.T) {
 	}
 }
 
+func TestPodIAMConfigExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName string
+		podIAM   *v1alpha1.PodIAMConfig
+		want     clusterapi.ExtraArgs
+	}{
+		{
+			testName: "no pod IAM config",
+			podIAM:   nil,
+			want:     nil,
+		},
+		{
+			testName: "with pod IAM config",
+			podIAM:   &v1alpha1.PodIAMConfig{ServiceAccountIssuer: "https://test"},
+			want: clusterapi.ExtraArgs{
+				"service-account-issuer": "https://test",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.PodIAMAuthExtraArgs(tt.podIAM); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("PodIAMAuthExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSecureTlsCipherSuitesExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName string
+		want     clusterapi.ExtraArgs
+	}{
+		{
+			testName: "default",
+			want: clusterapi.ExtraArgs{
+				"tls-cipher-suites": strings.Join(crypto.SecureCipherSuiteNames(), ","),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.SecureTlsCipherSuitesExtraArgs(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SecureTlsCipherSuitesExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSecureEtcdTlsCipherSuitesExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName string
+		want     clusterapi.ExtraArgs
+	}{
+		{
+			testName: "default",
+			want: clusterapi.ExtraArgs{
+				"cipher-suites": strings.Join(crypto.SecureCipherSuiteNames(), ","),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SecureEtcdTlsCipherSuitesExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestAppend(t *testing.T) {
 	tests := []struct {
 		testName string
@@ -234,6 +309,16 @@ func TestAppend(t *testing.T) {
 			want: clusterapi.ExtraArgs{
 				"key1": "value1",
 				"key2": "value2",
+			},
+		},
+		{
+			testName: "append nil extraArgs",
+			e: clusterapi.ExtraArgs{
+				"key1": "value1",
+			},
+			a: nil,
+			want: clusterapi.ExtraArgs{
+				"key1": "value1",
 			},
 		},
 	}

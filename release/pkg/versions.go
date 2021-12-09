@@ -9,11 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func GetBuildComponentVersionFunc(isDevRelease bool) generateComponentBundleVersion {
-	return buildComponentVersionForDev
-}
-
-func buildComponentVersionForDev(versioner projectVersioner) (string, error) {
+func BuildComponentVersion(versioner projectVersioner) (string, error) {
 	patchVersion, err := versioner.patchVersion()
 	if err != nil {
 		return "", err
@@ -27,16 +23,8 @@ func buildComponentVersionForDev(versioner projectVersioner) (string, error) {
 	return fmt.Sprintf("%s+%s", patchVersion, metadata), nil
 }
 
-func buildComponentVersionForProd(versioner projectVersioner) (string, error) {
-	patchVersion, err := versioner.patchVersion()
-	if err != nil {
-		return "", err
-	}
-
-	return patchVersion, nil
-}
-
 type versioner struct {
+	repoSource    string
 	pathToProject string
 }
 
@@ -55,10 +43,11 @@ func (v *versioner) buildMetadata() (string, error) {
 }
 
 func (v *versioner) patchVersion() (string, error) {
-	cmd := exec.Command("git", "-C", v.pathToProject, "describe", "--tag")
+	projectSource := filepath.Join(v.repoSource, v.pathToProject)
+	cmd := exec.Command("git", "-C", projectSource, "describe", "--tag")
 	out, err := execCommand(cmd)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed executing git describe to get version in [%s]", v.pathToProject)
+		return "", errors.Wrapf(err, "failed executing git describe to get version in [%s]", projectSource)
 	}
 
 	gitVersion := strings.Split(out, "-")
@@ -69,29 +58,61 @@ func (v *versioner) patchVersion() (string, error) {
 
 type versionerWithGITTAG struct {
 	versioner
-	folderWithGITTAG string
+	folderWithGITTAG  string
+	sourcedFromBranch string
+	releaseConfig     *ReleaseConfig
 }
 
-func newVersionerWithGITTAG(pathToProject string) *versionerWithGITTAG {
+func newVersionerWithGITTAG(repoSource, pathToProject, sourcedFromBranch string, releaseConfig *ReleaseConfig) *versionerWithGITTAG {
 	return &versionerWithGITTAG{
-		folderWithGITTAG: pathToProject,
-		versioner:        versioner{pathToProject: pathToProject},
+		folderWithGITTAG:  pathToProject,
+		versioner:         versioner{repoSource: repoSource, pathToProject: pathToProject},
+		sourcedFromBranch: sourcedFromBranch,
+		releaseConfig:     releaseConfig,
 	}
 }
 
-func newMultiProjectVersionerWithGITTAG(pathToRootFolder, pathToMainProject string) *versionerWithGITTAG {
+func newMultiProjectVersionerWithGITTAG(repoSource, pathToRootFolder, pathToMainProject, sourcedFromBranch string, releaseConfig *ReleaseConfig) *versionerWithGITTAG {
 	return &versionerWithGITTAG{
-		folderWithGITTAG: pathToMainProject,
-		versioner:        versioner{pathToProject: pathToRootFolder},
+		folderWithGITTAG:  pathToMainProject,
+		versioner:         versioner{repoSource: repoSource, pathToProject: pathToRootFolder},
+		sourcedFromBranch: sourcedFromBranch,
+		releaseConfig:     releaseConfig,
 	}
 }
 
 func (v *versionerWithGITTAG) patchVersion() (string, error) {
-	tagFile := filepath.Join(v.folderWithGITTAG, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
+	return v.releaseConfig.readGitTag(v.folderWithGITTAG, v.sourcedFromBranch)
+}
+
+func (v *versionerWithGITTAG) buildMetadata() (string, error) {
+	_, err := checkoutRepo(v.repoSource, v.sourcedFromBranch)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed reading GIT_TAG file for [%s]", v.pathToProject)
+		return "", errors.Cause(err)
 	}
 
-	return gitTag, nil
+	projectSource := filepath.Join(v.repoSource, v.pathToProject)
+	cmd := exec.Command("git", "-C", projectSource, "log", "--pretty=format:%h", "-n1", projectSource)
+	out, err := execCommand(cmd)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed executing git log to get build metadata in [%s]", projectSource)
+	}
+
+	return out, nil
+}
+
+type cliVersioner struct {
+	versioner
+	cliVersion string
+}
+
+func newCliVersioner(cliVersion, pathToProject string) *cliVersioner {
+	return &cliVersioner{
+		cliVersion: cliVersion,
+		versioner:  versioner{pathToProject: pathToProject},
+	}
+}
+
+func (v *cliVersioner) patchVersion() (string, error) {
+	return v.cliVersion, nil
 }

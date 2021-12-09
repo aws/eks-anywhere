@@ -44,10 +44,9 @@ func WithFlux(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 			api.WithPersonalFluxRepository(true),
 			api.WithStringFromEnvVarGitOpsConfig(gitRepositoryVar, api.WithFluxRepository),
 			api.WithStringFromEnvVarGitOpsConfig(githubUserVar, api.WithFluxOwner),
-			api.WithStringFromEnvVarGitOpsConfig("main", api.WithFluxBranch),
-			api.WithFluxNamespace("main"),
+			api.WithFluxNamespace("default"),
 			api.WithFluxConfigurationPath("path2"),
-			api.WithFluxBranch("default"),
+			api.WithFluxBranch("main"),
 		)
 		e.clusterFillers = append(e.clusterFillers,
 			api.WithGitOpsRef(defaultClusterName),

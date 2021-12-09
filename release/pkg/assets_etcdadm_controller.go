@@ -23,9 +23,11 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const etcdadmControllerProjectPath = "projects/mrajashree/etcdadm-controller"
+
 // GetEtcdadmControllerAssets returns the eks-a artifacts for etcdadm controller
 func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
-	gitTag, err := r.getEtcdadmControllerGitTag()
+	gitTag, err := r.readGitTag(etcdadmControllerProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -33,18 +35,30 @@ func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
 	name := "etcdadm-controller"
 	repoName := fmt.Sprintf("mrajashree/%s", name)
 	tagOptions := map[string]string{
-		"gitTag": gitTag,
+		"gitTag":      gitTag,
+		"projectPath": etcdadmControllerProjectPath,
 	}
-	artifacts := []Artifact{}
+
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, repoName, tagOptions),
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-		GitTag:          gitTag,
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       etcdadmControllerProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
 	var imageTagOverrides []ImageTagOverride
 
@@ -59,8 +73,6 @@ func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
 	}
 	imageTagOverrides = append(imageTagOverrides, imageTagOverride, kubeRbacProxyImageTagOverride)
 
-	artifacts = append(artifacts, Artifact{Image: imageArtifact})
-
 	manifestList := []string{
 		"bootstrap-components.yaml",
 		"metadata.yaml",
@@ -69,10 +81,10 @@ func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
 	for _, manifest := range manifestList {
 		var sourceS3Prefix string
 		var releaseS3Path string
-		latestPath := r.getLatestUploadDestination()
+		latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
-			sourceS3Prefix = fmt.Sprintf("projects/mrajashree/etcdadm-controller/%s/manifests/bootstrap-etcdadm-controller/%s", latestPath, gitTag)
+			sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/bootstrap-etcdadm-controller/%s", etcdadmControllerProjectPath, latestPath, gitTag)
 		} else {
 			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/etcdadm-controller/manifests/bootstrap-etcdadm-controller/%s", r.BundleNumber, gitTag)
 		}
@@ -96,6 +108,8 @@ func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
 			ReleaseS3Path:     releaseS3Path,
 			ReleaseCdnURI:     cdnURI,
 			ImageTagOverrides: imageTagOverrides,
+			GitTag:            gitTag,
+			ProjectPath:       etcdadmControllerProjectPath,
 		}
 		artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 	}
@@ -104,29 +118,28 @@ func (r *ReleaseConfig) GetEtcdadmControllerAssets() ([]Artifact, error) {
 }
 
 func (r *ReleaseConfig) GetEtcdadmControllerBundle(imageDigests map[string]string) (anywherev1alpha1.EtcdadmControllerBundle, error) {
-	etcdadmControllerBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"etcdadm-controller": r.GetEtcdadmControllerAssets,
-		"kube-proxy":         r.GetKubeRbacProxyAssets,
+	etcdadmControllerBundleArtifacts := map[string][]Artifact{
+		"etcdadm-controller": r.BundleArtifactsTable["etcdadm-controller"],
+		"kube-rbac-proxy":    r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
-	version, err := r.GenerateComponentBundleVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/mrajashree/etcdadm-controller")),
-	)
-	if err != nil {
-		return anywherev1alpha1.EtcdadmControllerBundle{}, errors.Wrapf(err, "Error getting version for etcdadm-controller")
-	}
+	var version string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 
-	for componentName, artifactFunc := range etcdadmControllerBundleArtifactsFuncs {
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.EtcdadmControllerBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
-
+	for componentName, artifacts := range etcdadmControllerBundleArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
+				if componentName == "etcdadm-controller" {
+					componentVersion, err := BuildComponentVersion(
+						newVersionerWithGITTAG(r.BuildRepoSource, etcdadmControllerProjectPath, imageArtifact.SourcedFromBranch, r),
+					)
+					if err != nil {
+						return anywherev1alpha1.EtcdadmControllerBundle{}, errors.Wrapf(err, "Error getting version for etcdadm-controller")
+					}
+					version = componentVersion
+				}
 
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
@@ -159,15 +172,4 @@ func (r *ReleaseConfig) GetEtcdadmControllerBundle(imageDigests map[string]strin
 	}
 
 	return bundle, nil
-}
-
-func (r *ReleaseConfig) getEtcdadmControllerGitTag() (string, error) {
-	projectSource := "projects/mrajashree/etcdadm-controller"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-
-	return gitTag, nil
 }

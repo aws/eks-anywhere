@@ -23,7 +23,8 @@ const (
 	EtcdadmControllerProviderName           = "bootstrap-etcdadm-controller"
 
 	VSphereProviderName    = "vsphere"
-	CloudStackProviderName = "cloudstack"
 	DockerProviderName     = "docker"
 	AWSProviderName        = "aws"
+	TinkerbellProviderName = "tinkerbell"
+	CloudStackProviderName = "cloudstack"
 )

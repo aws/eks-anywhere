@@ -19,11 +19,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/ecrpublic"
@@ -46,8 +44,7 @@ type ReleaseClients struct {
 }
 
 type SourceS3Clients struct {
-	Client     *s3.S3
-	Downloader *s3manager.Downloader
+	Client *s3.S3
 }
 
 type ReleaseS3Clients struct {
@@ -68,9 +65,23 @@ type ReleaseECRPublicClient struct {
 
 // Function to create release clients for dev release
 func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClients, error) {
-	fmt.Println("Creating new dev release clients for S3, docker and ECR public")
+	fmt.Println("\n==========================================================")
+	fmt.Println("                 Dev Release Clients Creation")
+	fmt.Println("==========================================================")
+	if r.DryRun {
+		fmt.Println("Skipping clients creation in dry-run mode")
+		return nil, nil, nil
+	}
 
-	// IAD session for eks-a-build-prod-pdx, ECR-public is only on IAD
+	// PDX session for eks-a-build-prod-pdx
+	pdxSession, err := session.NewSession(&aws.Config{
+		Region: aws.String("us-west-2"),
+	})
+	if err != nil {
+		return nil, nil, errors.Cause(err)
+	}
+
+	// IAD session for eks-a-build-prod-pdx
 	iadSession, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1"),
 	})
@@ -78,35 +89,22 @@ func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClien
 		return nil, nil, errors.Cause(err)
 	}
 
-	// Get release ECR Public auth config
-	fmt.Printf("Release container registry is: %s", r.ReleaseContainerRegistry)
-	ecrPublicClient := ecrpublic.New(iadSession)
-	releaseAuthConfig, err := getEcrPublicAuthConfig(ecrPublicClient)
+	// S3 client and uploader
+	s3Client := s3.New(pdxSession)
+	uploader := s3manager.NewUploader(pdxSession)
+
+	// Get source ECR auth config
+	fmt.Printf("Source container registry is: %s\n", r.SourceContainerRegistry)
+	ecrClient := ecr.New(pdxSession)
+	sourceAuthConfig, err := getEcrAuthConfig(ecrClient)
 	if err != nil {
 		return nil, nil, errors.Cause(err)
 	}
 
-	// Check if current region is not IAD
-	currentRegionSession := iadSession
-	currentRegion := os.Getenv("AWS_REGION")
-	if currentRegion != "us-east-1" {
-		currentRegionSession, err = session.NewSession(&aws.Config{
-			Region: aws.String(currentRegion),
-		})
-		if err != nil {
-			return nil, nil, errors.Cause(err)
-		}
-	}
-
-	// S3 client and managers
-	s3Client := s3.New(currentRegionSession)
-	downloader := s3manager.NewDownloader(currentRegionSession)
-	uploader := s3manager.NewUploader(currentRegionSession)
-
-	// Get source ECR auth config
-	fmt.Printf("Source container registry is: %s", r.SourceContainerRegistry)
-	ecrClient := ecr.New(currentRegionSession)
-	sourceAuthConfig, err := getEcrAuthConfig(ecrClient)
+	// Get release ECR Public auth config
+	fmt.Printf("Release container registry is: %s\n", r.ReleaseContainerRegistry)
+	ecrPublicClient := ecrpublic.New(iadSession)
+	releaseAuthConfig, err := getEcrPublicAuthConfig(ecrPublicClient)
 	if err != nil {
 		return nil, nil, errors.Cause(err)
 	}
@@ -114,8 +112,7 @@ func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClien
 	// Constructing source clients
 	sourceClients := &SourceClients{
 		S3: &SourceS3Clients{
-			Client:     s3Client,
-			Downloader: downloader,
+			Client: s3Client,
 		},
 		ECR: &SourceECRClient{
 			EcrClient:  ecrClient,
@@ -135,12 +132,16 @@ func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClien
 		},
 	}
 
+	fmt.Printf("%s Successfully created dev release clients\n", SuccessIcon)
+
 	return sourceClients, releaseClients, nil
 }
 
 // Function to create clients for staging release
 func (r *ReleaseConfig) CreateStagingReleaseClients() (*SourceClients, *ReleaseClients, error) {
-	fmt.Println("Creating new staging release clients for S3, docker and ECR public")
+	fmt.Println("\n==========================================================")
+	fmt.Println("              Staging Release Clients Creation")
+	fmt.Println("==========================================================")
 
 	// Session for eks-a-build-prod-pdx
 	sourceSession, err := session.NewSessionWithOptions(session.Options{
@@ -163,16 +164,15 @@ func (r *ReleaseConfig) CreateStagingReleaseClients() (*SourceClients, *ReleaseC
 		return nil, nil, errors.Cause(err)
 	}
 
-	// Source S3 client and downloader
+	// Source S3 client
 	sourceS3Client := s3.New(sourceSession)
-	downloader := s3manager.NewDownloader(sourceSession)
 
 	// Release S3 client and uploader
 	releaseS3Client := s3.New(releaseSession)
 	uploader := s3manager.NewUploader(releaseSession)
 
 	// Get source ECR auth config
-	fmt.Printf("Source container registry is: %s", r.SourceContainerRegistry)
+	fmt.Printf("Source container registry is: %s\n", r.SourceContainerRegistry)
 	ecrClient := ecr.New(sourceSession)
 	sourceAuthConfig, err := getEcrAuthConfig(ecrClient)
 	if err != nil {
@@ -180,7 +180,7 @@ func (r *ReleaseConfig) CreateStagingReleaseClients() (*SourceClients, *ReleaseC
 	}
 
 	// Get release ECR Public auth config
-	fmt.Printf("Release container registry is: %s", r.ReleaseContainerRegistry)
+	fmt.Printf("Release container registry is: %s\n", r.ReleaseContainerRegistry)
 	ecrPublicClient := ecrpublic.New(releaseSession)
 	releaseAuthConfig, err := getEcrPublicAuthConfig(ecrPublicClient)
 	if err != nil {
@@ -190,8 +190,7 @@ func (r *ReleaseConfig) CreateStagingReleaseClients() (*SourceClients, *ReleaseC
 	// Constructing source clients
 	sourceClients := &SourceClients{
 		S3: &SourceS3Clients{
-			Client:     sourceS3Client,
-			Downloader: downloader,
+			Client: sourceS3Client,
 		},
 		ECR: &SourceECRClient{
 			EcrClient:  ecrClient,
@@ -211,12 +210,16 @@ func (r *ReleaseConfig) CreateStagingReleaseClients() (*SourceClients, *ReleaseC
 		},
 	}
 
+	fmt.Printf("%s Successfully created staging release clients\n", SuccessIcon)
+
 	return sourceClients, releaseClients, nil
 }
 
 // Function to create clients for production release
 func (r *ReleaseConfig) CreateProdReleaseClients() (*SourceClients, *ReleaseClients, error) {
-	fmt.Println("Creating new production release clients for S3, docker and ECR public")
+	fmt.Println("\n==========================================================")
+	fmt.Println("             Production Release Clients Creation")
+	fmt.Println("==========================================================")
 
 	// Session for eks-a-artifact-beta-iad
 	sourceSession, err := session.NewSessionWithOptions(session.Options{
@@ -240,16 +243,15 @@ func (r *ReleaseConfig) CreateProdReleaseClients() (*SourceClients, *ReleaseClie
 		return nil, nil, errors.Cause(err)
 	}
 
-	// Source S3 client and downloader
+	// Source S3 client
 	sourceS3Client := s3.New(sourceSession)
-	downloader := s3manager.NewDownloader(sourceSession)
 
 	// Release S3 client and uploader
 	releaseS3Client := s3.New(releaseSession)
 	uploader := s3manager.NewUploader(releaseSession)
 
 	// Get source ECR Public auth config
-	fmt.Printf("Source container registry is: %s", r.SourceContainerRegistry)
+	fmt.Printf("Source container registry is: %s\n", r.SourceContainerRegistry)
 	sourceEcrPublicClient := ecrpublic.New(sourceSession)
 	sourceAuthConfig, err := getEcrPublicAuthConfig(sourceEcrPublicClient)
 	if err != nil {
@@ -257,7 +259,7 @@ func (r *ReleaseConfig) CreateProdReleaseClients() (*SourceClients, *ReleaseClie
 	}
 
 	// Get release ECR Public auth config
-	fmt.Printf("Release container registry is: %s", r.ReleaseContainerRegistry)
+	fmt.Printf("Release container registry is: %s\n", r.ReleaseContainerRegistry)
 	releaseEcrPublicClient := ecrpublic.New(releaseSession)
 	releaseAuthConfig, err := getEcrPublicAuthConfig(releaseEcrPublicClient)
 	if err != nil {
@@ -267,8 +269,7 @@ func (r *ReleaseConfig) CreateProdReleaseClients() (*SourceClients, *ReleaseClie
 	// Constructing release clients
 	sourceClients := &SourceClients{
 		S3: &SourceS3Clients{
-			Client:     sourceS3Client,
-			Downloader: downloader,
+			Client: sourceS3Client,
 		},
 		ECR: &SourceECRClient{
 			EcrPublicClient: sourceEcrPublicClient,
@@ -287,6 +288,8 @@ func (r *ReleaseConfig) CreateProdReleaseClients() (*SourceClients, *ReleaseClie
 			AuthConfig: releaseAuthConfig,
 		},
 	}
+
+	fmt.Printf("%s Successfully created production release clients\n", SuccessIcon)
 
 	return sourceClients, releaseClients, nil
 }
@@ -380,7 +383,6 @@ func getEksdRelease(eksdReleaseURL string) (*eksdv1alpha1.Release, error) {
 }
 
 func ReadHttpFile(uri string) ([]byte, error) {
-	fmt.Printf("Downloading %s\n", uri)
 	resp, err := http.Get(uri)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed reading file from url [%s]", uri)
@@ -395,21 +397,13 @@ func ReadHttpFile(uri string) ([]byte, error) {
 	return data, nil
 }
 
-func ExistsInS3(s3Client *s3.S3, bucket string, key string) (bool, error) {
-	_, err := s3Client.HeadObject(&s3.HeadObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-	})
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case "NotFound":
-				return false, nil
-			default:
-				return false, err
-			}
-		}
-		return false, err
+func ExistsInS3(bucket string, key string) bool {
+	objectUrl := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", bucket, key)
+
+	resp, err := http.Head(objectUrl)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return false
 	}
-	return true, nil
+
+	return true
 }

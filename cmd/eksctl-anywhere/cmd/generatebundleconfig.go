@@ -94,10 +94,11 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).
 		WithProvider(f, clusterSpec.Cluster, cc.skipIpCheck).
 		WithDiagnosticBundleFactory().
-		Build()
+		Build(ctx)
 	if err != nil {
 		return nil, err
 	}
+	defer close(ctx, deps)
 
 	return deps.DignosticCollectorFactory.DiagnosticBundleFromSpec(clusterSpec, deps.Provider, gsbo.kubeConfig(clusterSpec.Name))
 }

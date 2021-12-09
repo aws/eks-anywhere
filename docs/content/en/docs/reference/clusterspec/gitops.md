@@ -77,6 +77,6 @@ spec:
 * __Type__: string
 
 #### __branch__ (optional)
-* __Description__: The branch to use when commiting the configuration.
+* __Description__: The branch to use when committing the configuration.
 * __Default__: `main`
 * __Type__: string

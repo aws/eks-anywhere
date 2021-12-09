@@ -95,10 +95,11 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).
 		WithProvider(csbo.fileName, clusterSpec.Cluster, cc.skipIpCheck).
 		WithDiagnosticBundleFactory().
-		Build()
+		Build(ctx)
 	if err != nil {
 		return err
 	}
+	defer close(ctx, deps)
 
 	supportBundle, err := deps.DignosticCollectorFactory.DiagnosticBundle(clusterSpec, deps.Provider, csbo.kubeConfig(clusterSpec.Name), bundleConfig)
 	if err != nil {

@@ -12,8 +12,15 @@ import (
 	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
 
+const (
+	vsphereHostVar        = "T_VSPHERE_HOST"
+	cidrVar               = "T_VSPHERE_CIDR"
+	privateNetworkCidrVar = "T_VSPHERE_PRIVATE_NETWORK_CIDR"
+	vsphereRegex          = `^.*VSphere.*$`
+)
+
 func (e *E2ESession) setupVSphereEnv(testRegex string) error {
-	re := regexp.MustCompile(`^.*VSphere.*$`)
+	re := regexp.MustCompile(vsphereRegex)
 	if !re.MatchString(testRegex) {
 		logger.V(2).Info("Not running VSphere tests, skipping Env variable setup")
 		return nil
@@ -24,6 +31,9 @@ func (e *E2ESession) setupVSphereEnv(testRegex string) error {
 		if val, ok := os.LookupEnv(eVar); ok {
 			e.testEnvVars[eVar] = val
 		}
+	}
+	if e.controlPlaneIP != "" {
+		e.testEnvVars[vsphereHostVar] = e.controlPlaneIP
 	}
 
 	return nil
@@ -36,5 +46,8 @@ func vsphereRmVms(ctx context.Context, clusterName string) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	tmpWriter, _ := filewriter.NewWriter("rmvms")
-	return executableBuilder.BuildGovcExecutable(tmpWriter).CleanupVms(ctx, clusterName, false)
+	govc := executableBuilder.BuildGovcExecutable(tmpWriter)
+	defer govc.Close(ctx)
+
+	return govc.CleanupVms(ctx, clusterName, false)
 }

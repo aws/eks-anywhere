@@ -81,16 +81,17 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 		return err
 	}
 
-	deps, err := dependencies.ForSpec(ctx, clusterSpec).
+	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
 		WithBootstrapper().
-		WithClusterManager().
+		WithClusterManager(clusterSpec.Cluster).
 		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck).
 		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
 		WithWriter().
-		Build()
+		Build(ctx)
 	if err != nil {
 		return err
 	}
+	defer cleanup(ctx, deps, err)
 
 	createCluster := workflows.NewCreate(
 		deps.Bootstrapper,
@@ -126,8 +127,5 @@ func (cc *createClusterOptions) createCluster(ctx context.Context) error {
 	createValidations := createvalidations.New(validationOpts)
 
 	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
-	if err == nil {
-		deps.Writer.CleanUpTemp()
-	}
 	return err
 }

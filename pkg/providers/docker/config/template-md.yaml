@@ -12,6 +12,9 @@ spec:
           kubeletExtraArgs:
             cgroup-driver: cgroupfs
             eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 12 }}
+{{- end }}
 ---
 apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachineDeployment

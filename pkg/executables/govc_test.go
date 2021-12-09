@@ -148,24 +148,31 @@ func newMachineConfig(t *testing.T) *v1alpha1.VSphereMachineConfig {
 	}
 }
 
+func (dt *deployTemplateTest) expectFolderInfoToReturn(err error) {
+	dt.expectations = append(
+		dt.expectations,
+		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "folder.info", dt.deployFolder).Return(*dt.fakeExecResponse, err),
+	)
+}
+
 func (dt *deployTemplateTest) expectDeployToReturn(err error) {
 	dt.expectations = append(
 		dt.expectations,
-		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "library.deploy", "-dc", dt.datacenter, "-pool", dt.resourcePool, "-folder", dt.deployFolder, "-options", test.OfType("string"), "-persist-session=false", dt.templateInLibraryPathAbs, dt.templateName).Return(*dt.fakeExecResponse, err),
+		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "library.deploy", "-dc", dt.datacenter, "-pool", dt.resourcePool, "-folder", dt.deployFolder, "-options", test.OfType("string"), dt.templateInLibraryPathAbs, dt.templateName).Return(*dt.fakeExecResponse, err),
 	)
 }
 
 func (dt *deployTemplateTest) expectCreateSnapshotToReturn(err error) {
 	dt.expectations = append(
 		dt.expectations,
-		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "snapshot.create", "-m=false", "-persist-session=false", "-vm", dt.templateName, "root").Return(*dt.fakeExecResponse, err),
+		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "snapshot.create", "-dc", dt.datacenter, "-m=false", "-vm", dt.templatePath, "root").Return(*dt.fakeExecResponse, err),
 	)
 }
 
 func (dt *deployTemplateTest) expectMarkAsTemplateToReturn(err error) {
 	dt.expectations = append(
 		dt.expectations,
-		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "vm.markastemplate", "-persist-session=false", dt.templateName).Return(*dt.fakeExecResponse, err),
+		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "vm.markastemplate", "-dc", dt.datacenter, dt.templatePath).Return(*dt.fakeExecResponse, err),
 	)
 }
 
@@ -403,6 +410,7 @@ func TestGovcGetWorkloadAvailableSpace(t *testing.T) {
 
 func TestDeployTemplateFromLibrarySuccess(t *testing.T) {
 	tt := newDeployTemplateTest(t)
+	tt.expectFolderInfoToReturn(nil)
 	tt.expectDeployToReturn(nil)
 	tt.expectCreateSnapshotToReturn(nil)
 	tt.expectMarkAsTemplateToReturn(nil)
@@ -412,12 +420,14 @@ func TestDeployTemplateFromLibrarySuccess(t *testing.T) {
 
 func TestDeployTemplateFromLibraryErrorDeploy(t *testing.T) {
 	tt := newDeployTemplateTest(t)
+	tt.expectFolderInfoToReturn(nil)
 	tt.expectDeployToReturn(errors.New("error exec"))
 	tt.assertDeployTemplateError(t)
 }
 
 func TestDeployTemplateFromLibraryErrorCreateSnapshot(t *testing.T) {
 	tt := newDeployTemplateTest(t)
+	tt.expectFolderInfoToReturn(nil)
 	tt.expectDeployToReturn(nil)
 	tt.expectCreateSnapshotToReturn(errors.New("error exec"))
 	tt.assertDeployTemplateError(t)
@@ -425,6 +435,7 @@ func TestDeployTemplateFromLibraryErrorCreateSnapshot(t *testing.T) {
 
 func TestDeployTemplateFromLibraryErrorMarkAsTemplate(t *testing.T) {
 	tt := newDeployTemplateTest(t)
+	tt.expectFolderInfoToReturn(nil)
 	tt.expectDeployToReturn(nil)
 	tt.expectCreateSnapshotToReturn(nil)
 	tt.expectMarkAsTemplateToReturn(errors.New("error exec"))
@@ -968,5 +979,16 @@ func TestDeleteTemplateDeleteVMError(t *testing.T) {
 
 	if err := g.DeleteTemplate(ctx, resourcePool, template); err == nil {
 		t.Fatal("Govc.DeleteTemplate() err = nil, want err not nil")
+	}
+}
+
+func TestGovcLogoutSuccess(t *testing.T) {
+	ctx := context.Background()
+	g, executable, env := setup(t)
+
+	executable.EXPECT().ExecuteWithEnv(ctx, env, "session.logout").Return(*bytes.NewBufferString(""), nil)
+
+	if err := g.Logout(ctx); err != nil {
+		t.Fatalf("Govc.Logout() err = %v, want err nil", err)
 	}
 }

@@ -17,12 +17,12 @@ const (
 )
 
 type Flux struct {
-	executable Executable
+	Executable
 }
 
 func NewFlux(executable Executable) *Flux {
 	return &Flux{
-		executable: executable,
+		Executable: executable,
 	}
 }
 
@@ -61,7 +61,7 @@ func (f *Flux) BootstrapToolkitsComponents(ctx context.Context, cluster *types.C
 	env := make(map[string]string)
 	env[githubTokenEnv] = token
 
-	_, err = f.executable.ExecuteWithEnv(ctx, env, params...)
+	_, err = f.ExecuteWithEnv(ctx, env, params...)
 	if err != nil {
 		return fmt.Errorf("error executing flux bootstrap: %v", err)
 	}
@@ -82,7 +82,7 @@ func (f *Flux) UninstallToolkitsComponents(ctx context.Context, cluster *types.C
 		params = append(params, "--namespace", c.FluxSystemNamespace)
 	}
 
-	_, err := f.executable.Execute(ctx, params...)
+	_, err := f.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error uninstalling flux: %v", err)
 	}
@@ -100,7 +100,7 @@ func (f *Flux) PauseKustomization(ctx context.Context, cluster *types.Cluster, g
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
 	}
 
-	_, err := f.executable.Execute(ctx, params...)
+	_, err := f.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error executing flux suspend kustomization: %v", err)
 	}
@@ -119,7 +119,7 @@ func (f *Flux) ResumeKustomization(ctx context.Context, cluster *types.Cluster, 
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
 	}
 
-	_, err := f.executable.Execute(ctx, params...)
+	_, err := f.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error executing flux resume kustomization: %v", err)
 	}
@@ -141,7 +141,7 @@ func (f *Flux) Reconcile(ctx context.Context, cluster *types.Cluster, gitOpsConf
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
 	}
 
-	if _, err := f.executable.Execute(ctx, params...); err != nil {
+	if _, err := f.Execute(ctx, params...); err != nil {
 		return fmt.Errorf("error executing flux reconcile: %v", err)
 	}
 

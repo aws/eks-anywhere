@@ -14,7 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
-	"sigs.k8s.io/cluster-api/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -30,7 +30,7 @@ const (
 	secretObjectName = "csi-vsphere-config"
 )
 
-var capiClustersResourceType = fmt.Sprintf("clusters.%s", v1alpha3.GroupVersion.Group)
+var capiClustersResourceType = fmt.Sprintf("clusters.%s", clusterv1.GroupVersion.Group)
 
 func newKubectl(t *testing.T) (*executables.Kubectl, context.Context, *types.Cluster, *mockexecutables.MockExecutable) {
 	kubeconfigFile := "c.kubeconfig"
