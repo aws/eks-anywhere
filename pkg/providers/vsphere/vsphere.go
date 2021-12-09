@@ -4,11 +4,8 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
-	"net"
 	"os"
-	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -33,7 +30,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
-	"github.com/aws/eks-anywhere/pkg/providers/vsphere/internal/templates"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -93,24 +89,22 @@ var (
 var requiredEnvs = []string{vSphereUsernameKey, vSpherePasswordKey, expClusterResourceSetKey}
 
 type vsphereProvider struct {
-	datacenterConfig            *v1alpha1.VSphereDatacenterConfig
-	machineConfigs              map[string]*v1alpha1.VSphereMachineConfig
-	clusterConfig               *v1alpha1.Cluster
-	providerGovcClient          ProviderGovcClient
-	providerKubectlClient       ProviderKubectlClient
-	writer                      filewriter.FileWriter
-	selfSigned                  bool
-	controlPlaneSshAuthKey      string
-	workerSshAuthKey            string
-	etcdSshAuthKey              string
-	netClient                   networkutils.NetClient
-	controlPlaneTemplateFactory *templates.Factory
-	workerTemplateFactory       *templates.Factory
-	etcdTemplateFactory         *templates.Factory
-	templateBuilder             *VsphereTemplateBuilder
-	skipIpCheck                 bool
-	resourceSetManager          ClusterResourceSetManager
-	Retrier                     *retrier.Retrier
+	datacenterConfig       *v1alpha1.VSphereDatacenterConfig
+	machineConfigs         map[string]*v1alpha1.VSphereMachineConfig
+	clusterConfig          *v1alpha1.Cluster
+	providerGovcClient     ProviderGovcClient
+	providerKubectlClient  ProviderKubectlClient
+	writer                 filewriter.FileWriter
+	controlPlaneSshAuthKey string
+	workerSshAuthKey       string
+	etcdSshAuthKey         string
+	netClient              networkutils.NetClient
+	templateBuilder        *VsphereTemplateBuilder
+	skipIpCheck            bool
+	resourceSetManager     ClusterResourceSetManager
+	Retrier                *retrier.Retrier
+	validator              *validator
+	defaulter              *defaulter
 }
 
 type ProviderGovcClient interface {
@@ -120,8 +114,14 @@ type ProviderGovcClient interface {
 	DeleteLibraryElement(ctx context.Context, element string) error
 	TemplateHasSnapshot(ctx context.Context, template string) (bool, error)
 	GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1alpha1.VSphereMachineConfig) (float64, error)
-	ValidateVCenterSetup(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, selfSigned *bool) error
 	ValidateVCenterSetupMachineConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfig *v1alpha1.VSphereMachineConfig, selfSigned *bool) error
+	ValidateVCenterConnection(ctx context.Context, server string) error
+	ValidateVCenterAuthentication(ctx context.Context) error
+	IsCertSelfSigned(ctx context.Context) bool
+	GetCertThumbprint(ctx context.Context) (string, error)
+	ConfigureCertThumbprint(ctx context.Context, server, thumbprint string) error
+	DatacenterExists(ctx context.Context, datacenter string) (bool, error)
+	NetworkExists(ctx context.Context, network string) (bool, error)
 	CreateLibrary(ctx context.Context, datastore, library string) error
 	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, resourcePool string, resizeDisk2 bool) error
 	ImportTemplate(ctx context.Context, library, ovaURL, name string) error
@@ -174,52 +174,26 @@ func NewProvider(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConf
 
 func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfigs map[string]*v1alpha1.VSphereMachineConfig, clusterConfig *v1alpha1.Cluster, providerGovcClient ProviderGovcClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *vsphereProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.VSphereMachineConfigSpec
-	var controlPlaneTemplateFactory, workerNodeGroupTemplateFactory, etcdTemplateFactory *templates.Factory
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
-		controlPlaneTemplateFactory = templates.NewFactory(
-			providerGovcClient,
-			datacenterConfig.Spec.Datacenter,
-			controlPlaneMachineSpec.Datastore,
-			controlPlaneMachineSpec.ResourcePool,
-			defaultTemplateLibrary,
-		)
 	}
 	if len(clusterConfig.Spec.WorkerNodeGroupConfigurations) > 0 && clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name] != nil {
 		workerNodeGroupMachineSpec = &machineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec
-		workerNodeGroupTemplateFactory = templates.NewFactory(
-			providerGovcClient,
-			datacenterConfig.Spec.Datacenter,
-			workerNodeGroupMachineSpec.Datastore,
-			workerNodeGroupMachineSpec.ResourcePool,
-			defaultTemplateLibrary,
-		)
 	}
 	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
 			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
-			etcdTemplateFactory = templates.NewFactory(
-				providerGovcClient,
-				datacenterConfig.Spec.Datacenter,
-				etcdMachineSpec.Datastore,
-				etcdMachineSpec.ResourcePool,
-				defaultTemplateLibrary,
-			)
 		}
 	}
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	return &vsphereProvider{
-		datacenterConfig:            datacenterConfig,
-		machineConfigs:              machineConfigs,
-		clusterConfig:               clusterConfig,
-		providerGovcClient:          providerGovcClient,
-		providerKubectlClient:       providerKubectlClient,
-		writer:                      writer,
-		selfSigned:                  false,
-		netClient:                   netClient,
-		controlPlaneTemplateFactory: controlPlaneTemplateFactory,
-		workerTemplateFactory:       workerNodeGroupTemplateFactory,
-		etcdTemplateFactory:         etcdTemplateFactory,
+		datacenterConfig:      datacenterConfig,
+		machineConfigs:        machineConfigs,
+		clusterConfig:         clusterConfig,
+		providerGovcClient:    providerGovcClient,
+		providerKubectlClient: providerKubectlClient,
+		writer:                writer,
+		netClient:             netClient,
 		templateBuilder: &VsphereTemplateBuilder{
 			datacenterSpec:             &datacenterConfig.Spec,
 			controlPlaneMachineSpec:    controlPlaneMachineSpec,
@@ -230,6 +204,8 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 		skipIpCheck:        skipIpCheck,
 		resourceSetManager: resourceSetManager,
 		Retrier:            retrier,
+		validator:          newValidator(providerGovcClient),
+		defaulter:          newDefaulter(providerGovcClient),
 	}
 }
 
@@ -377,15 +353,6 @@ func (p *vsphereProvider) generateSSHAuthKey(username string) (string, error) {
 	return key, nil
 }
 
-func (p *vsphereProvider) validateControlPlaneIp(ip string) error {
-	// check if controlPlaneEndpointIp is valid
-	parsedIp := net.ParseIP(ip)
-	if parsedIp == nil {
-		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s", ip)
-	}
-	return nil
-}
-
 func (p *vsphereProvider) validateControlPlaneIpUniqueness(ip string) error {
 	// check if control plane endpoint ip is unique
 	ipgen := networkutils.NewIPGenerator(p.netClient)
@@ -393,478 +360,6 @@ func (p *vsphereProvider) validateControlPlaneIpUniqueness(ip string) error {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
 	}
 	return nil
-}
-
-func (p *vsphereProvider) validateEnv(ctx context.Context) error {
-	if vSphereUsername, ok := os.LookupEnv(eksavSphereUsernameKey); ok && len(vSphereUsername) > 0 {
-		if err := os.Setenv(vSphereUsernameKey, vSphereUsername); err != nil {
-			return fmt.Errorf("unable to set %s: %v", eksavSphereUsernameKey, err)
-		}
-	} else {
-		return fmt.Errorf("%s is not set or is empty", eksavSphereUsernameKey)
-	}
-	if vSpherePassword, ok := os.LookupEnv(eksavSpherePasswordKey); ok && len(vSpherePassword) > 0 {
-		if err := os.Setenv(vSpherePasswordKey, vSpherePassword); err != nil {
-			return fmt.Errorf("unable to set %s: %v", eksavSpherePasswordKey, err)
-		}
-	} else {
-		return fmt.Errorf("%s is not set or is empty", eksavSpherePasswordKey)
-	}
-	if len(p.datacenterConfig.Spec.Server) <= 0 {
-		return errors.New("VSphereDatacenterConfig server is not set or is empty")
-	}
-	if err := os.Setenv(vSphereServerKey, p.datacenterConfig.Spec.Server); err != nil {
-		return fmt.Errorf("unable to set %s: %v", vSphereServerKey, err)
-	}
-	if err := os.Setenv(expClusterResourceSetKey, "true"); err != nil {
-		return fmt.Errorf("unable to set %s: %v", expClusterResourceSetKey, err)
-	}
-	if _, ok := os.LookupEnv(eksaLicense); !ok {
-		if err := os.Setenv(eksaLicense, ""); err != nil {
-			return fmt.Errorf("unable to set %s: %v", eksaLicense, err)
-		}
-	}
-	return nil
-}
-
-func (p *vsphereProvider) validateSSHUsername(machineConfig *v1alpha1.VSphereMachineConfig) error {
-	if len(machineConfig.Spec.Users[0].Name) <= 0 {
-		if machineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
-			machineConfig.Spec.Users[0].Name = bottlerocketDefaultUser
-		} else {
-			machineConfig.Spec.Users[0].Name = ubuntuDefaultUser
-		}
-		logger.V(1).Info(fmt.Sprintf("SSHUsername is not set or is empty for VSphereMachineConfig %v. Defaulting to %s", machineConfig.Name, machineConfig.Spec.Users[0].Name))
-	} else {
-		if machineConfig.Spec.OSFamily == v1alpha1.Bottlerocket {
-			if machineConfig.Spec.Users[0].Name != bottlerocketDefaultUser {
-				return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket", machineConfig.Spec.Users[0].Name)
-			}
-		}
-	}
-	return nil
-}
-
-func (p *vsphereProvider) setupAndValidateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	var etcdMachineConfig *v1alpha1.VSphereMachineConfig
-	if p.datacenterConfig.Spec.Insecure {
-		logger.Info("Warning: VSphereDatacenterConfig configured in insecure mode")
-		p.datacenterConfig.Spec.Thumbprint = ""
-	}
-	if err := os.Setenv(govcInsecure, strconv.FormatBool(p.datacenterConfig.Spec.Insecure)); err != nil {
-		return fmt.Errorf("unable to set %s: %v", govcInsecure, err)
-	}
-	if len(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
-		return errors.New("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
-	}
-	if len(p.datacenterConfig.Spec.Datacenter) <= 0 {
-		return errors.New("VSphereDatacenterConfig datacenter is not set or is empty")
-	}
-	if len(p.datacenterConfig.Spec.Network) <= 0 {
-		return errors.New("VSphereDatacenterConfig VM network is not set or is empty")
-	}
-	if clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
-		return errors.New("must specify machineGroupRef for control plane")
-	}
-	controlPlaneMachineConfig, ok := p.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-	if !ok {
-		return fmt.Errorf("cannot find VSphereMachineConfig %v for control plane", clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
-	}
-	if controlPlaneMachineConfig.Spec.MemoryMiB <= 0 {
-		logger.V(1).Info("VSphereMachineConfig MemoryMiB for control plane is not set or is empty. Defaulting to 8192.")
-		controlPlaneMachineConfig.Spec.MemoryMiB = 8192
-	}
-	if controlPlaneMachineConfig.Spec.MemoryMiB < 2048 {
-		logger.Info("Warning: VSphereMachineConfig MemoryMiB for control plane should not be less than 2048. Defaulting to 2048. Recommended memory is 8192.")
-		controlPlaneMachineConfig.Spec.MemoryMiB = 2048
-	}
-	if controlPlaneMachineConfig.Spec.NumCPUs <= 0 {
-		logger.V(1).Info("VSphereMachineConfig NumCPUs for control plane is not set or is empty. Defaulting to 2.")
-		controlPlaneMachineConfig.Spec.NumCPUs = 2
-	}
-	if len(controlPlaneMachineConfig.Spec.Datastore) <= 0 {
-		return errors.New("VSphereMachineConfig datastore for control plane is not set or is empty")
-	}
-	if len(controlPlaneMachineConfig.Spec.Folder) <= 0 {
-		logger.Info("VSphereMachineConfig folder for control plane is not set or is empty. Will default to root vSphere folder.")
-	}
-	if len(controlPlaneMachineConfig.Spec.ResourcePool) <= 0 {
-		return errors.New("VSphereMachineConfig VM resourcePool for control plane is not set or is empty")
-	}
-	if clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef == nil {
-		return errors.New("must specify machineGroupRef for worker nodes")
-	}
-
-	workerNodeGroupMachineConfig, ok := p.machineConfigs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
-	if !ok {
-		return fmt.Errorf("cannot find VSphereMachineConfig %v for worker nodes", clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name)
-	}
-	if workerNodeGroupMachineConfig.Spec.MemoryMiB <= 0 {
-		logger.V(1).Info("VSphereMachineConfig MemoryMiB for worker nodes is not set or is empty. Defaulting to 8192.")
-		workerNodeGroupMachineConfig.Spec.MemoryMiB = 8192
-	}
-	if workerNodeGroupMachineConfig.Spec.MemoryMiB < 2048 {
-		logger.Info("Warning: VSphereMachineConfig MemoryMiB for worker nodes should not be less than 2048. Defaulting to 2048. Recommended memory is 8192.")
-		workerNodeGroupMachineConfig.Spec.MemoryMiB = 2048
-	}
-	if workerNodeGroupMachineConfig.Spec.NumCPUs <= 0 {
-		logger.V(1).Info("VSphereMachineConfig NumCPUs for worker nodes is not set or is empty. Defaulting to 2.")
-		workerNodeGroupMachineConfig.Spec.NumCPUs = 2
-	}
-	if len(workerNodeGroupMachineConfig.Spec.Datastore) <= 0 {
-		return errors.New("VSphereMachineConfig datastore for worker nodes is not set or is empty")
-	}
-	if len(workerNodeGroupMachineConfig.Spec.Folder) <= 0 {
-		logger.Info("VSphereMachineConfig folder for worker nodes is not set or is empty. Will default to root vSphere folder.")
-	}
-	if len(workerNodeGroupMachineConfig.Spec.ResourcePool) <= 0 {
-		return errors.New("VSphereMachineConfig VM resourcePool for worker nodes is not set or is empty")
-	}
-
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
-		var ok bool
-		if clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
-			return errors.New("must specify machineGroupRef for etcd machines")
-		}
-		etcdMachineConfig, ok = p.machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-		if !ok {
-			return fmt.Errorf("cannot find VSphereMachineConfig %v for etcd machines", clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
-		}
-		if etcdMachineConfig.Spec.MemoryMiB <= 0 {
-			logger.V(1).Info("VSphereMachineConfig MemoryMiB for etcd machines is not set or is empty. Defaulting to 8192.")
-			etcdMachineConfig.Spec.MemoryMiB = 8192
-		}
-		if etcdMachineConfig.Spec.MemoryMiB < 8192 {
-			logger.Info("Warning: VSphereMachineConfig MemoryMiB for etcd machines should not be less than 8192. Defaulting to 8192")
-			etcdMachineConfig.Spec.MemoryMiB = 8192
-		}
-		if etcdMachineConfig.Spec.NumCPUs <= 0 {
-			logger.V(1).Info("VSphereMachineConfig NumCPUs for etcd machines is not set or is empty. Defaulting to 2.")
-			etcdMachineConfig.Spec.NumCPUs = 2
-		}
-		if len(etcdMachineConfig.Spec.Datastore) <= 0 {
-			return errors.New("VSphereMachineConfig datastore for etcd machines is not set or is empty")
-		}
-		if len(etcdMachineConfig.Spec.Folder) <= 0 {
-			logger.Info("VSphereMachineConfig folder for etcd machines is not set or is empty. Will default to root vSphere folder.")
-		}
-		if len(etcdMachineConfig.Spec.ResourcePool) <= 0 {
-			return errors.New("VSphereMachineConfig VM resourcePool for etcd machines is not set or is empty")
-		}
-		if len(etcdMachineConfig.Spec.Users) <= 0 {
-			etcdMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{}}
-		}
-		if len(etcdMachineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
-			etcdMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
-		}
-	}
-
-	if len(controlPlaneMachineConfig.Spec.Users) <= 0 {
-		controlPlaneMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{}}
-	}
-	if len(workerNodeGroupMachineConfig.Spec.Users) <= 0 {
-		workerNodeGroupMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{}}
-	}
-	if len(controlPlaneMachineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
-		controlPlaneMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
-	}
-	if len(workerNodeGroupMachineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
-		workerNodeGroupMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
-	}
-
-	err := p.validateControlPlaneIp(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
-	if err != nil {
-		return err
-	}
-
-	err = p.providerGovcClient.ValidateVCenterSetup(ctx, p.datacenterConfig, &p.selfSigned)
-	if err != nil {
-		return fmt.Errorf("error validating vCenter setup: %v", err)
-	}
-	for _, config := range p.machineConfigs {
-		err = p.providerGovcClient.ValidateVCenterSetupMachineConfig(ctx, p.datacenterConfig, config, &p.selfSigned)
-		if err != nil {
-			return fmt.Errorf("error validating vCenter setup for VSphereMachineConfig %v: %v", config.Name, err)
-		}
-	}
-
-	if controlPlaneMachineConfig.Spec.OSFamily != workerNodeGroupMachineConfig.Spec.OSFamily {
-		return errors.New("control plane and worker nodes must have the same osFamily specified")
-	}
-
-	if etcdMachineConfig != nil && controlPlaneMachineConfig.Spec.OSFamily != etcdMachineConfig.Spec.OSFamily {
-		return errors.New("control plane and etcd machines must have the same osFamily specified")
-	}
-	if len(string(controlPlaneMachineConfig.Spec.OSFamily)) <= 0 {
-		logger.Info("Warning: OS family not specified in cluster specification. Defaulting to Bottlerocket.")
-		controlPlaneMachineConfig.Spec.OSFamily = v1alpha1.Bottlerocket
-		workerNodeGroupMachineConfig.Spec.OSFamily = v1alpha1.Bottlerocket
-		if etcdMachineConfig != nil {
-			etcdMachineConfig.Spec.OSFamily = v1alpha1.Bottlerocket
-		}
-	}
-
-	if err := p.validateSSHUsername(controlPlaneMachineConfig); err == nil {
-		if err = p.validateSSHUsername(workerNodeGroupMachineConfig); err != nil {
-			return fmt.Errorf("error validating SSHUsername for worker node VSphereMachineConfig %v: %v", workerNodeGroupMachineConfig.Name, err)
-		}
-		if etcdMachineConfig != nil {
-			if err = p.validateSSHUsername(etcdMachineConfig); err != nil {
-				return fmt.Errorf("error validating SSHUsername for etcd VSphereMachineConfig %v: %v", etcdMachineConfig.Name, err)
-			}
-		}
-	} else {
-		return fmt.Errorf("error validating SSHUsername for control plane VSphereMachineConfig %v: %v", controlPlaneMachineConfig.Name, err)
-	}
-
-	for _, machineConfig := range p.machineConfigs {
-		if machineConfig.Namespace != clusterSpec.Namespace {
-			return errors.New("VSphereMachineConfig and Cluster objects must have the same namespace specified")
-		}
-	}
-	if p.datacenterConfig.Namespace != clusterSpec.Namespace {
-		return errors.New("VSphereDatacenterConfig and Cluster objects must have the same namespace specified")
-	}
-
-	if controlPlaneMachineConfig.Spec.Template == "" {
-		logger.V(1).Info("Control plane VSphereMachineConfig template is not set. Using default template.")
-		err := p.setupDefaultTemplate(ctx, clusterSpec, controlPlaneMachineConfig, p.controlPlaneTemplateFactory)
-		if err != nil {
-			return err
-		}
-	}
-
-	if err = p.validateTemplate(ctx, clusterSpec, controlPlaneMachineConfig); err != nil {
-		logger.V(1).Info("Control plane template validation failed.")
-		return err
-	}
-	if controlPlaneMachineConfig.Spec.Template != workerNodeGroupMachineConfig.Spec.Template {
-		if workerNodeGroupMachineConfig.Spec.Template == "" {
-			logger.V(1).Info("Worker VSphereMachineConfig template is not set. Using default template.")
-			err := p.setupDefaultTemplate(ctx, clusterSpec, workerNodeGroupMachineConfig, p.workerTemplateFactory)
-			if err != nil {
-				return err
-			}
-		}
-		if err = p.validateTemplate(ctx, clusterSpec, workerNodeGroupMachineConfig); err != nil {
-			logger.V(1).Info("Workload template validation failed.")
-			return err
-		}
-		if controlPlaneMachineConfig.Spec.Template != workerNodeGroupMachineConfig.Spec.Template {
-			return errors.New("control plane and worker nodes must have the same template specified")
-		}
-	}
-	logger.MarkPass("Control plane and Workload templates validated")
-
-	if etcdMachineConfig != nil {
-		if etcdMachineConfig.Spec.Template == "" {
-			logger.V(1).Info("Etcd VSphereMachineConfig template is not set. Using default template.")
-			err := p.setupDefaultTemplate(ctx, clusterSpec, etcdMachineConfig, p.etcdTemplateFactory)
-			if err != nil {
-				return err
-			}
-		}
-		if err = p.validateTemplate(ctx, clusterSpec, etcdMachineConfig); err != nil {
-			logger.V(1).Info("Etcd template validation failed.")
-			return err
-		}
-		if etcdMachineConfig.Spec.Template != controlPlaneMachineConfig.Spec.Template {
-			return errors.New("control plane and etcd machines must have the same template specified")
-		}
-	}
-
-	templateHasSnapshot, err := p.providerGovcClient.TemplateHasSnapshot(ctx, controlPlaneMachineConfig.Spec.Template)
-	if err != nil {
-		return fmt.Errorf("error getting template details: %v", err)
-	}
-
-	if !templateHasSnapshot {
-		logger.Info("Warning: Your VM template has no snapshots. Defaulting to FullClone mode. VM provisioning might take longer.")
-
-		if workerNodeGroupMachineConfig.Spec.DiskGiB < 20 {
-			logger.Info("Warning: VSphereMachineConfig DiskGiB for worker nodes cannot be less than 20. Defaulting to 20.")
-			workerNodeGroupMachineConfig.Spec.DiskGiB = 20
-		}
-		if controlPlaneMachineConfig.Spec.DiskGiB < 20 {
-			logger.Info("Warning: VSphereDatacenterConfig DiskGiB for control plane cannot be less than 20. Defaulting to 20.")
-			controlPlaneMachineConfig.Spec.DiskGiB = 20
-		}
-		if etcdMachineConfig != nil && etcdMachineConfig.Spec.DiskGiB < 20 {
-			logger.Info("Warning: VSphereDatacenterConfig DiskGiB for etcd machines cannot be less than 20. Defaulting to 20.")
-			etcdMachineConfig.Spec.DiskGiB = 20
-		}
-	} else if workerNodeGroupMachineConfig.Spec.DiskGiB != 25 || controlPlaneMachineConfig.Spec.DiskGiB != 25 || (etcdMachineConfig != nil && etcdMachineConfig.Spec.DiskGiB != 25) {
-		logger.Info("Warning: Your VM template includes snapshot(s). LinkedClone mode will be used. DiskGiB cannot be customizable as disks cannot be expanded when using LinkedClone mode. Using default of 25 for DiskGiBs.")
-		workerNodeGroupMachineConfig.Spec.DiskGiB = 25
-		controlPlaneMachineConfig.Spec.DiskGiB = 25
-		if etcdMachineConfig != nil {
-			etcdMachineConfig.Spec.DiskGiB = 25
-		}
-	}
-
-	return p.checkDatastoreUsage(ctx, clusterSpec, controlPlaneMachineConfig, workerNodeGroupMachineConfig, etcdMachineConfig)
-}
-
-type datastoreUsage struct {
-	availableSpace float64
-	needGiBSpace   int
-}
-
-func (p *vsphereProvider) checkDatastoreUsage(ctx context.Context, clusterSpec *cluster.Spec, controlPlaneMachineConfig *v1alpha1.VSphereMachineConfig, workerNodeGroupMachineConfig *v1alpha1.VSphereMachineConfig, etcdMachineConfig *v1alpha1.VSphereMachineConfig) error {
-	usage := make(map[string]*datastoreUsage)
-	var etcdAvailableSpace float64
-	controlPlaneAvailableSpace, err := p.providerGovcClient.GetWorkloadAvailableSpace(ctx, controlPlaneMachineConfig)
-	if err != nil {
-		return fmt.Errorf("error getting datastore details: %v", err)
-	}
-	workerAvailableSpace, err := p.providerGovcClient.GetWorkloadAvailableSpace(ctx, workerNodeGroupMachineConfig)
-	if err != nil {
-		return fmt.Errorf("error getting datastore details: %v", err)
-	}
-	if etcdMachineConfig != nil {
-		etcdAvailableSpace, err = p.providerGovcClient.GetWorkloadAvailableSpace(ctx, etcdMachineConfig)
-		if err != nil {
-			return fmt.Errorf("error getting datastore details: %v", err)
-		}
-		if etcdAvailableSpace == -1 {
-			logger.Info("Warning: Unable to get datastore available space for etcd machines. Using default of 25 for DiskGiBs.")
-			etcdMachineConfig.Spec.DiskGiB = 25
-		}
-	}
-	if controlPlaneAvailableSpace == -1 {
-		logger.Info("Warning: Unable to get control plane datastore available space. Using default of 25 for DiskGiBs.")
-		controlPlaneMachineConfig.Spec.DiskGiB = 25
-	}
-	if workerAvailableSpace == -1 {
-		logger.Info("Warning: Unable to get worker node datastore available space. Using default of 25 for DiskGiBs.")
-		workerNodeGroupMachineConfig.Spec.DiskGiB = 25
-	}
-	controlPlaneNeedGiB := controlPlaneMachineConfig.Spec.DiskGiB * clusterSpec.Spec.ControlPlaneConfiguration.Count
-	usage[controlPlaneMachineConfig.Spec.Datastore] = &datastoreUsage{
-		availableSpace: controlPlaneAvailableSpace,
-		needGiBSpace:   controlPlaneNeedGiB,
-	}
-	workerNeedGiB := workerNodeGroupMachineConfig.Spec.DiskGiB * clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count
-	_, ok := usage[workerNodeGroupMachineConfig.Spec.Datastore]
-	if ok {
-		usage[workerNodeGroupMachineConfig.Spec.Datastore].needGiBSpace += workerNeedGiB
-	} else {
-		usage[workerNodeGroupMachineConfig.Spec.Datastore] = &datastoreUsage{
-			availableSpace: workerAvailableSpace,
-			needGiBSpace:   workerNeedGiB,
-		}
-	}
-
-	if etcdMachineConfig != nil {
-		etcdNeedGiB := etcdMachineConfig.Spec.DiskGiB * clusterSpec.Spec.ExternalEtcdConfiguration.Count
-		if _, ok := usage[etcdMachineConfig.Spec.Datastore]; ok {
-			usage[etcdMachineConfig.Spec.Datastore].needGiBSpace += etcdNeedGiB
-		} else {
-			usage[etcdMachineConfig.Spec.Datastore] = &datastoreUsage{
-				availableSpace: etcdAvailableSpace,
-				needGiBSpace:   etcdNeedGiB,
-			}
-		}
-	}
-
-	for datastore, usage := range usage {
-		if float64(usage.needGiBSpace) > usage.availableSpace {
-			return fmt.Errorf("not enough space in datastore %v for given diskGiB and count for respective machine groups", datastore)
-		}
-	}
-	return nil
-}
-
-func (p *vsphereProvider) validateTemplate(ctx context.Context, clusterSpec *cluster.Spec, machineConfig *v1alpha1.VSphereMachineConfig) error {
-	if err := p.validateTemplatePresence(ctx, p.datacenterConfig.Spec.Datacenter, machineConfig); err != nil {
-		return err
-	}
-
-	if err := p.validateTemplateTags(ctx, clusterSpec, machineConfig); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (p *vsphereProvider) validateTemplatePresence(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) error {
-	templateFullPath, err := p.providerGovcClient.SearchTemplate(ctx, datacenter, machineConfig)
-	if err != nil {
-		return fmt.Errorf("error validating template: %v", err)
-	}
-
-	if len(templateFullPath) <= 0 {
-		return fmt.Errorf("template <%s> not found. Has the template been imported?", machineConfig.Spec.Template)
-	}
-
-	machineConfig.Spec.Template = templateFullPath
-
-	return nil
-}
-
-func (p *vsphereProvider) validateTemplateTags(ctx context.Context, clusterSpec *cluster.Spec, machineConfig *v1alpha1.VSphereMachineConfig) error {
-	tags, err := p.providerGovcClient.GetTags(ctx, machineConfig.Spec.Template)
-	if err != nil {
-		return fmt.Errorf("error validating template tags: %v", err)
-	}
-
-	tagsLookup := types.SliceToLookup(tags)
-	for _, t := range requiredTemplateTags(clusterSpec, machineConfig) {
-		if !tagsLookup.IsPresent(t) {
-			// TODO: maybe add help text about to how to tag a template?
-			return fmt.Errorf("template %s is missing tag %s", machineConfig.Spec.Template, t)
-		}
-	}
-
-	return nil
-}
-
-func requiredTemplateTags(clusterSpec *cluster.Spec, machineConfig *v1alpha1.VSphereMachineConfig) []string {
-	tagsByCategory := requiredTemplateTagsByCategory(clusterSpec, machineConfig)
-	tags := make([]string, 0, len(tagsByCategory))
-	for _, t := range tagsByCategory {
-		tags = append(tags, t...)
-	}
-
-	return tags
-}
-
-func requiredTemplateTagsByCategory(clusterSpec *cluster.Spec, machineConfig *v1alpha1.VSphereMachineConfig) map[string][]string {
-	osFamily := machineConfig.Spec.OSFamily
-	return map[string][]string{
-		"eksdRelease": {fmt.Sprintf("eksdRelease:%s", clusterSpec.VersionsBundle.EksD.Name)},
-		"os":          {fmt.Sprintf("os:%s", strings.ToLower(string(osFamily)))},
-	}
-}
-
-func (p *vsphereProvider) setupDefaultTemplate(ctx context.Context, clusterSpec *cluster.Spec, machineConfig *v1alpha1.VSphereMachineConfig, templateFactory *templates.Factory) error {
-	ovaURL := p.defaultTemplateForClusterSpec(clusterSpec, machineConfig)
-
-	tags := requiredTemplateTagsByCategory(clusterSpec, machineConfig)
-
-	if err := templateFactory.CreateIfMissing(ctx, p.datacenterConfig.Spec.Datacenter, machineConfig, ovaURL, tags); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (p *vsphereProvider) defaultTemplateForClusterSpec(clusterSpec *cluster.Spec, machineConfig *v1alpha1.VSphereMachineConfig) string {
-	osFamily := machineConfig.Spec.OSFamily
-	eksd := clusterSpec.VersionsBundle.EksD
-
-	var ova releasev1alpha1.OvaArchive
-
-	switch osFamily {
-	case v1alpha1.Bottlerocket:
-		ova = eksd.Ova.Bottlerocket
-	case v1alpha1.Ubuntu:
-		ova = eksd.Ova.Ubuntu
-	}
-
-	templateName := fmt.Sprintf("%s-%s-%s-%s-%s", osFamily, eksd.KubeVersion, eksd.Name, strings.Join(ova.Arch, "-"), ova.SHA256[:7])
-	machineConfig.Spec.Template = filepath.Join("/", p.datacenterConfig.Spec.Datacenter, defaultTemplatesFolder, templateName)
-	return ova.URI
 }
 
 func (p *vsphereProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
@@ -877,19 +372,29 @@ func (p *vsphereProvider) DeleteResources(ctx context.Context, clusterSpec *clus
 }
 
 func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	err := p.validateEnv(ctx)
-	if err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
-	err = p.setupAndValidateCluster(ctx, clusterSpec)
-	if err != nil {
-		return err
-	}
-	err = p.setupSSHAuthKeysForCreate()
-	if err != nil {
+	if err := p.setup(ctx, p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
+	vSphereClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+
+	if err := p.validator.validateVCenterAccess(ctx, vSphereClusterSpec.datacenterConfig.Spec.Server); err != nil {
+		return err
+	}
+
+	if err := p.defaulter.setDefaults(ctx, vSphereClusterSpec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+
+	if err := p.validator.validateCluster(ctx, vSphereClusterSpec); err != nil {
+		return err
+	}
+
+	if err := p.setupSSHAuthKeysForCreate(); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+
+	// TODO: move this to validator
 	if clusterSpec.IsManaged() {
 		for _, mc := range p.MachineConfigs() {
 			em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, mc.GetName(), clusterSpec.ManagementCluster.KubeconfigFile, mc.GetNamespace())
@@ -913,23 +418,34 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		logger.Info("Skipping check for whether control plane ip is in use")
 		return nil
 	}
-	err = p.validateControlPlaneIpUniqueness(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
-	if err != nil {
+
+	// TODO: move this to validator
+	if err := p.validateControlPlaneIpUniqueness(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	err := p.validateEnv(ctx)
-	if err != nil {
+	if err := p.setup(ctx, p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
-	err = p.setupAndValidateCluster(ctx, clusterSpec)
-	if err != nil {
+
+	vSphereClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+
+	if err := p.validator.validateVCenterAccess(ctx, vSphereClusterSpec.datacenterConfig.Spec.Server); err != nil {
 		return err
 	}
-	err = p.setupSSHAuthKeysForUpgrade()
+
+	if err := p.defaulter.setDefaults(ctx, vSphereClusterSpec); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+
+	if err := p.validator.validateCluster(ctx, vSphereClusterSpec); err != nil {
+		return err
+	}
+
+	err := p.setupSSHAuthKeysForUpgrade()
 	if err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -986,7 +502,7 @@ func (p *vsphereProvider) validateMachineConfigsNameUniqueness(ctx context.Conte
 
 func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
 	var contents bytes.Buffer
-	err := p.createSecret(cluster, &contents)
+	err := p.createSecret(ctx, cluster, &contents)
 	if err != nil {
 		return err
 	}
@@ -999,8 +515,7 @@ func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Clus
 }
 
 func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
-	err := p.validateEnv(ctx)
-	if err != nil {
+	if err := p.setup(ctx, p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 	return nil
@@ -1185,6 +700,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"podCidrs":                             clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                         clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
 		"etcdExtraArgs":                        etcdExtraArgs.ToPartialYaml(),
+		"etcdCipherSuites":                     crypto.SecureCipherSuitesString(),
 		"apiserverExtraArgs":                   apiServerExtraArgs.ToPartialYaml(),
 		"controllermanagerExtraArgs":           sharedExtraArgs.ToPartialYaml(),
 		"schedulerExtraArgs":                   sharedExtraArgs.ToPartialYaml(),
@@ -1478,14 +994,14 @@ func (p *vsphereProvider) GenerateMHC() ([]byte, error) {
 	return mhc, nil
 }
 
-func (p *vsphereProvider) createSecret(cluster *types.Cluster, contents *bytes.Buffer) error {
+func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {
 	t, err := template.New("tmpl").Parse(defaultSecretObject)
 	if err != nil {
 		return fmt.Errorf("error creating secret object template: %v", err)
 	}
 
 	thumbprint := p.datacenterConfig.Spec.Thumbprint
-	if !p.selfSigned {
+	if p.providerGovcClient.IsCertSelfSigned(ctx) {
 		thumbprint = ""
 	}
 
@@ -1509,7 +1025,7 @@ func (p *vsphereProvider) createSecret(cluster *types.Cluster, contents *bytes.B
 
 func (p *vsphereProvider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	var contents bytes.Buffer
-	err := p.createSecret(cluster, &contents)
+	err := p.createSecret(ctx, cluster, &contents)
 	if err != nil {
 		return err
 	}

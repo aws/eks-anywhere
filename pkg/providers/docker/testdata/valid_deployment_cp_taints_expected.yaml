@@ -92,11 +92,6 @@ spec:
           name: audit-log-dir
           pathType: DirectoryOrCreate
           readOnly: false
-        - hostPath: /var/log/kubernetes/api-audit.log
-          mountPath: /var/log/kubernetes/api-audit.log
-          name: audit-log
-          pathType: FileOrCreate
-          readOnly: false
       controllerManager:
         extraArgs:
           enable-hostpath-provisioner: "true"
@@ -313,6 +308,7 @@ spec:
     etcdadmBuiltin: true
     cloudInitConfig:
       version: 3.4.14
+    cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: DockerMachineTemplate
