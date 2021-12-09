@@ -4,7 +4,6 @@ phases:
   build:
     commands:
     - make e2e
-    - ${CODEBUILD_SRC_DIR}/scripts/get_bundle.sh
     - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" >> bin/githash
 
 artifacts:
