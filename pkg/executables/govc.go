@@ -82,6 +82,10 @@ func (g *Govc) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, e
 }
 
 func (g *Govc) Close(ctx context.Context) error {
+	if g == nil {
+		return nil
+	}
+
 	if err := g.Logout(ctx); err != nil {
 		return err
 	}

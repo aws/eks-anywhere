@@ -43,6 +43,7 @@ func TestFactoryBuildWithProvider(t *testing.T) {
 
 	tt.Expect(err).To(BeNil())
 	tt.Expect(deps.Provider).NotTo(BeNil())
+	tt.Expect(deps.DockerClient).To(BeNil(), "it only builds deps for vsphere")
 }
 
 func TestFactoryBuildWithClusterManager(t *testing.T) {

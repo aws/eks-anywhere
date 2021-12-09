@@ -133,7 +133,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 }
 
 func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string) *Factory {
-	f.WithProviderFactory()
+	f.WithProviderFactory(clusterConfig)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Provider != nil {
@@ -152,8 +152,13 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	return f
 }
 
-func (f *Factory) WithProviderFactory() *Factory {
-	f.WithDocker().WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
+func (f *Factory) WithProviderFactory(clusterConfig *v1alpha1.Cluster) *Factory {
+	switch clusterConfig.Spec.DatacenterRef.Kind {
+	case v1alpha1.VSphereDatacenterKind:
+		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
+	case v1alpha1.DockerDatacenterKind:
+		f.WithDocker().WithKubectl()
+	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.providerFactory != nil {
