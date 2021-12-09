@@ -15,7 +15,8 @@ GOLANG_VERSION?="1.16"
 GO ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))/go
 GO_TEST ?= $(GO) test
 
-CODEBUILD_SOURCE_VERSION?=main## ensure local execution uses the 'main' branch bundle
+## ensure local execution uses the 'main' branch bundle
+CODEBUILD_SOURCE_VERSION?=main
 ifeq (,$(findstring $(CODEBUILD_SOURCE_VERSION),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${CODEBUILD_SOURCE_VERSION}/bundle-release.yaml
