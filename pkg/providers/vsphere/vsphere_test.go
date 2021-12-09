@@ -71,8 +71,32 @@ func (pc *DummyProviderGovcClient) DeployTemplate(ctx context.Context, datacente
 	return nil
 }
 
-func (pc *DummyProviderGovcClient) ValidateVCenterSetup(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, selfSigned *bool) error {
+func (pc *DummyProviderGovcClient) ValidateVCenterConnection(ctx context.Context, server string) error {
 	return nil
+}
+
+func (pc *DummyProviderGovcClient) ValidateVCenterAuthentication(ctx context.Context) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) IsCertSelfSigned(ctx context.Context) bool {
+	return false
+}
+
+func (pc *DummyProviderGovcClient) GetCertThumbprint(ctx context.Context) (string, error) {
+	return "", nil
+}
+
+func (pc *DummyProviderGovcClient) ConfigureCertThumbprint(ctx context.Context, server, thumbprint string) error {
+	return nil
+}
+
+func (pc *DummyProviderGovcClient) DatacenterExists(ctx context.Context, datacenter string) (bool, error) {
+	return true, nil
+}
+
+func (pc *DummyProviderGovcClient) NetworkExists(ctx context.Context, network string) (bool, error) {
+	return true, nil
 }
 
 func (pc *DummyProviderGovcClient) ValidateVCenterSetupMachineConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfig *v1alpha1.VSphereMachineConfig, selfSigned *bool) error {
@@ -305,12 +329,21 @@ func (tt *providerTest) setExpectationsForDefaultDiskGovcCalls() {
 }
 
 func (tt *providerTest) setExpectationForVCenterValidation() {
-	tt.govc.EXPECT().ValidateVCenterSetup(tt.ctx, tt.datacenterConfig, &tt.provider.validator.selfSigned).Return(nil)
+	tt.govc.EXPECT().IsCertSelfSigned(tt.ctx).Return(false)
+	tt.govc.EXPECT().DatacenterExists(tt.ctx, tt.datacenterConfig.Spec.Datacenter).Return(true, nil)
+	tt.govc.EXPECT().NetworkExists(tt.ctx, tt.datacenterConfig.Spec.Network).Return(true, nil)
+}
+
+func (tt *providerTest) setExpectationForSetup() {
+	tt.govc.EXPECT().ValidateVCenterConnection(tt.ctx, tt.datacenterConfig.Spec.Server).Return(nil)
+	tt.govc.EXPECT().ValidateVCenterAuthentication(tt.ctx).Return(nil)
+	tt.govc.EXPECT().ConfigureCertThumbprint(tt.ctx, tt.datacenterConfig.Spec.Server, tt.datacenterConfig.Spec.Thumbprint).Return(nil)
 }
 
 func (tt *providerTest) setExpectationsForMachineConfigsVCenterValidation() {
 	for _, m := range tt.machineConfigs {
-		tt.govc.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, tt.datacenterConfig, m, &tt.provider.validator.selfSigned).Return(nil)
+		var b bool
+		tt.govc.EXPECT().ValidateVCenterSetupMachineConfig(tt.ctx, tt.datacenterConfig, m, &b).Return(nil)
 	}
 }
 
@@ -2036,6 +2069,7 @@ func TestSetupAndValidateCreateClusterTemplateDifferent(t *testing.T) {
 func TestSetupAndValidateCreateClusterTemplateDoesNotExist(t *testing.T) {
 	tt := newProviderTest(t)
 
+	tt.setExpectationForSetup()
 	tt.setExpectationsForDefaultDiskGovcCalls()
 	tt.setExpectationForVCenterValidation()
 	tt.setExpectationsForMachineConfigsVCenterValidation()
@@ -2050,6 +2084,7 @@ func TestSetupAndValidateCreateClusterErrorCheckingTemplate(t *testing.T) {
 	tt := newProviderTest(t)
 	errorMessage := "failed getting template"
 
+	tt.setExpectationForSetup()
 	tt.setExpectationsForDefaultDiskGovcCalls()
 	tt.setExpectationForVCenterValidation()
 	tt.setExpectationsForMachineConfigsVCenterValidation()
@@ -2065,6 +2100,7 @@ func TestSetupAndValidateCreateClusterTemplateMissingTags(t *testing.T) {
 	controlPlaneMachineConfigName := tt.clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	controlPlaneMachineConfig := tt.machineConfigs[controlPlaneMachineConfigName]
 
+	tt.setExpectationForSetup()
 	tt.setExpectationsForDefaultDiskGovcCalls()
 	tt.setExpectationForVCenterValidation()
 	tt.setExpectationsForMachineConfigsVCenterValidation()
@@ -2083,6 +2119,7 @@ func TestSetupAndValidateCreateClusterErrorGettingTags(t *testing.T) {
 	controlPlaneMachineConfigName := tt.clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	controlPlaneMachineConfig := tt.machineConfigs[controlPlaneMachineConfigName]
 
+	tt.setExpectationForSetup()
 	tt.setExpectationsForDefaultDiskGovcCalls()
 	tt.setExpectationForVCenterValidation()
 	tt.setExpectationsForMachineConfigsVCenterValidation()
