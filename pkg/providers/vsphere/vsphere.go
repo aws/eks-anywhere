@@ -26,6 +26,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -708,6 +709,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
 		"auditPolicy":                          common.GetAuditPolicy(),
 		"resourceSetName":                      resourceSetName(clusterSpec),
+		"eksaVsphereUsername":                  os.Getenv(eksavSphereUsernameKey),
+		"eksaVspherePassword":                  os.Getenv(eksavSpherePasswordKey),
 	}
 
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
@@ -766,6 +769,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 
 	if clusterSpec.AWSIamConfig != nil {
 		values["awsIamAuth"] = true
+	}
+
+	if features.IsActive(features.UseV1beta1BundleRelease()) {
+		values["deployCPI"] = true
 	}
 
 	return values
@@ -1054,8 +1061,14 @@ func (p *vsphereProvider) EnvMap() (map[string]string, error) {
 }
 
 func (p *vsphereProvider) GetDeployments() map[string][]string {
+	if features.IsActive(features.UseV1beta1BundleRelease()) {
+		return map[string][]string{
+			"capv-system": {"capv-controller-manager"},
+		}
+	}
 	return map[string][]string{
-		"capv-system": {"capv-controller-manager"},
+		"capv-system":         {"capv-controller-manager"},
+		"capi-webhook-system": {"capv-controller-manager"},
 	}
 }
 
@@ -1225,37 +1238,38 @@ func (p *vsphereProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClu
 	if err != nil {
 		return fmt.Errorf("failed updating the vsphere provider resource set post upgrade: %v", err)
 	}
+	if !features.IsActive(features.UseV1beta1BundleRelease()) {
+		// Step 2: Patch DaemonSet vsphere-cloud-controller-manager in namespace kube-system
+		// More unfortunate stuff. This DaemonSet is created by the capv controller. However, even if it's part of the reconciliation step
+		// it's never refreshed, it's only created once
+		// In new versions of the capv provider, this is not managed by the controller directly anymore but just with a ClusterResourceSet
+		// Which means that adding update capabilities to the ClusterResourceSet controller and updating our capv provider version will solve this problem
+		err = p.Retrier.Retry(
+			func() error {
+				return p.providerKubectlClient.SetDaemonSetImage(
+					ctx,
+					workloadCluster.KubeconfigFile,
+					cloudControllerDaemonSetName,
+					cloudControllerDaemonSetNamespace,
+					cloudControllerDaemonSetContainerName,
+					clusterSpec.VersionsBundle.VSphere.Manager.VersionedImage(),
+				)
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("failed updating the VSphere cloud controller manager daemonset post upgrade: %v", err)
+		}
 
-	// Step 2: Patch DaemonSet vsphere-cloud-controller-manager in namespace kube-system
-	// More unfortunate stuff. This DaemonSet is created by the capv controller. However, even if it's part of the reconciliation step
-	// it's never refreshed, it's only created once
-	// In new versions of the capv provider, this is not managed by the controller directly anymore but just with a ClusterResourceSet
-	// Which means that adding update capabilities to the ClusterResourceSet controller and updating our capv provider version will solve this problem
-	err = p.Retrier.Retry(
-		func() error {
-			return p.providerKubectlClient.SetDaemonSetImage(
-				ctx,
-				workloadCluster.KubeconfigFile,
-				cloudControllerDaemonSetName,
-				cloudControllerDaemonSetNamespace,
-				cloudControllerDaemonSetContainerName,
-				clusterSpec.VersionsBundle.VSphere.Manager.VersionedImage(),
-			)
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("failed updating the VSphere cloud controller manager daemonset post upgrade: %v", err)
-	}
-
-	// Step 2: Patch DaemonSet vsphere-cloud-controller-manager in namespace kube-system with toleration values for the taints provided in
-	// the cluster spec file
-	err = p.Retrier.Retry(
-		func() error {
-			return p.providerKubectlClient.ApplyTolerationsFromTaintsToDaemonSet(ctx, oldClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints, cloudControllerDaemonSetContainerName, workloadCluster.KubeconfigFile)
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("failed to apply tolerations on VSphere cloud controller manager daemonset post upgrade: %v", err)
+		// Step 2: Patch DaemonSet vsphere-cloud-controller-manager in namespace kube-system with toleration values for the taints provided in
+		// the cluster spec file
+		err = p.Retrier.Retry(
+			func() error {
+				return p.providerKubectlClient.ApplyTolerationsFromTaintsToDaemonSet(ctx, oldClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints, cloudControllerDaemonSetContainerName, workloadCluster.KubeconfigFile)
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("failed to apply tolerations on VSphere cloud controller manager daemonset post upgrade: %v", err)
+		}
 	}
 	return nil
 }
