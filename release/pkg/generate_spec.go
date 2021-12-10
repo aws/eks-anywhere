@@ -174,6 +174,14 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			return nil, errors.Wrapf(err, "Error getting bundle for bottlerocket bootstrap")
 		}
 
+		var tinkerbellBundle anywherev1alpha1.TinkerbellBundle
+		if r.DevRelease || r.ReleaseEnvironment == "development" {
+			tinkerbellBundle, err = r.GetTinkerbellBundle(channel, imageDigests)
+			if err != nil {
+				return nil, errors.Wrapf(err, "Error getting bundle for Tinkerbell infrastructure provider")
+			}
+		}
+
 		versionsBundle := anywherev1alpha1.VersionsBundle{
 			KubeVersion:            shortKubeVersion,
 			EksD:                   eksDReleaseBundle,
@@ -192,6 +200,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			ExternalEtcdController: etcdadmControllerBundle,
 			BottleRocketBootstrap:  bottlerocketBootstrapBundle,
 			BottleRocketAdmin:      bottlerocketAdminBundle,
+			Tinkerbell:             tinkerbellBundle,
 		}
 		versionsBundles = append(versionsBundles, versionsBundle)
 	}
@@ -220,25 +229,26 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 
 	artifactsTable := map[string][]Artifact{}
 	eksAArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"eks-a-tools":                  r.GetEksAToolsAssets,
-		"cluster-api":                  r.GetCAPIAssets,
-		"cluster-api-provider-aws":     r.GetCapaAssets,
-		"cluster-api-provider-docker":  r.GetDockerAssets,
-		"cluster-api-provider-vsphere": r.GetCapvAssets,
-		"vsphere-csi-driver":           r.GetVsphereCsiAssets,
-		"cert-manager":                 r.GetCertManagerAssets,
-		"cilium":                       r.GetCiliumAssets,
-		"local-path-provisioner":       r.GetLocalPathProvisionerAssets,
-		"kube-rbac-proxy":              r.GetKubeRbacProxyAssets,
-		"kube-vip":                     r.GetKubeVipAssets,
-		"flux":                         r.GetFluxAssets,
-		"etcdadm-bootstrap-provider":   r.GetEtcdadmBootstrapAssets,
-		"etcdadm-controller":           r.GetEtcdadmControllerAssets,
-		"cluster-controller":           r.GetClusterControllerAssets,
-		"kindnetd":                     r.GetKindnetdAssets,
-		"etcdadm":                      r.GetEtcdadmAssets,
-		"cri-tools":                    r.GetCriToolsAssets,
-		"diagnostic-collector":         r.GetDiagnosticCollectorAssets,
+		"eks-a-tools":                     r.GetEksAToolsAssets,
+		"cluster-api":                     r.GetCAPIAssets,
+		"cluster-api-provider-aws":        r.GetCapaAssets,
+		"cluster-api-provider-docker":     r.GetDockerAssets,
+		"cluster-api-provider-vsphere":    r.GetCapvAssets,
+		"cluster-api-provider-tinkerbell": r.GetCaptAssets,
+		"vsphere-csi-driver":              r.GetVsphereCsiAssets,
+		"cert-manager":                    r.GetCertManagerAssets,
+		"cilium":                          r.GetCiliumAssets,
+		"local-path-provisioner":          r.GetLocalPathProvisionerAssets,
+		"kube-rbac-proxy":                 r.GetKubeRbacProxyAssets,
+		"kube-vip":                        r.GetKubeVipAssets,
+		"flux":                            r.GetFluxAssets,
+		"etcdadm-bootstrap-provider":      r.GetEtcdadmBootstrapAssets,
+		"etcdadm-controller":              r.GetEtcdadmControllerAssets,
+		"cluster-controller":              r.GetClusterControllerAssets,
+		"kindnetd":                        r.GetKindnetdAssets,
+		"etcdadm":                         r.GetEtcdadmAssets,
+		"cri-tools":                       r.GetCriToolsAssets,
+		"diagnostic-collector":            r.GetDiagnosticCollectorAssets,
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
