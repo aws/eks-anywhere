@@ -143,7 +143,11 @@ eks-a-cross-platform-embed-latest-config: ## Build cross platform dev release ve
 
 .PHONY: eks-a
 eks-a: ## Build a dev release version of eks-a
-	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION)
+	if "${V1BETA1_BUNDLE}" = "true" ; then \
+	  $(MAKE) eks-a-v1beta1; \
+	else \
+		$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION); \
+	fi
 
 .PHONY: eks-a-release
 eks-a-release: ## Generate a release binary
