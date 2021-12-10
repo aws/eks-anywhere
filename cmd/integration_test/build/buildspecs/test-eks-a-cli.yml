@@ -76,4 +76,6 @@ phases:
       "eks-a-cli"
       $CODEBUILD_BUILD_NUMBER
       $GIT_HASH
+      "linux,darwin"
+      "amd64"
       false
