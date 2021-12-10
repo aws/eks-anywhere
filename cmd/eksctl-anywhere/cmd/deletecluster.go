@@ -98,7 +98,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer cleanup(ctx, deps, err)
+	defer cleanup(ctx, deps, &err)
 
 	deleteCluster := workflows.NewDelete(
 		deps.Bootstrapper,

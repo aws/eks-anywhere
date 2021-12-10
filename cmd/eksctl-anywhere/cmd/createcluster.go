@@ -98,7 +98,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 	if err != nil {
 		return err
 	}
-	defer cleanup(ctx, deps, err)
+	defer cleanup(ctx, deps, &err)
 
 	if features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == "tinkerbell" {
 		flag := cmd.Flags().Lookup("hardwarefile")
