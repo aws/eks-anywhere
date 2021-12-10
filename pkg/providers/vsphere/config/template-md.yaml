@@ -1,4 +1,4 @@
-apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
   name: {{.clusterName}}-md-0
@@ -42,35 +42,35 @@ spec:
 {{- end }}
           name: '{{"{{"}} ds.meta_data.hostname {{"}}"}}'
 {{- if and (ne .format "bottlerocket") (or .proxyConfig .registryMirrorConfiguration) }}
-      files:
+        files:
 {{- end }}
 {{- if and .proxyConfig (ne .format "bottlerocket") }}
-      - content: |
-          [Service]
-          Environment="HTTP_PROXY={{.httpProxy}}"
-          Environment="HTTPS_PROXY={{.httpsProxy}}"
-          Environment="NO_PROXY={{ stringsJoin .noProxy "," }}"
-        owner: root:root
-        path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+        - content: |
+            [Service]
+            Environment="HTTP_PROXY={{.httpProxy}}"
+            Environment="HTTPS_PROXY={{.httpsProxy}}"
+            Environment="NO_PROXY={{ stringsJoin .noProxy "," }}"
+          owner: root:root
+          path: /etc/systemd/system/containerd.service.d/http-proxy.conf
 {{- end }}
 {{- if (ne .format "bottlerocket") }}
 {{- if .registryCACert }}
-      - content: |
+        - content: |
 {{ .registryCACert | indent 10 }}
-        owner: root:root
-        path: "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+          owner: root:root
+          path: "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
 {{- end }}
 {{- if .registryMirrorConfiguration }}
-      - content: |
-          [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-              endpoint = ["https://{{.registryMirrorConfiguration}}"]
-            {{- if .registryCACert }}
-            [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorConfiguration}}".tls]
-              ca_file = "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
-            {{- end }}
-        owner: root:root
-        path: "/etc/containerd/config_append.toml"
+        - content: |
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+              [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+                endpoint = ["https://{{.registryMirrorConfiguration}}"]
+              {{- if .registryCACert }}
+              [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorConfiguration}}".tls]
+                ca_file = "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+              {{- end }}
+          owner: root:root
+          path: "/etc/containerd/config_append.toml"
 {{- end }}
 {{- end }}
       preKubeadmCommands:
@@ -93,7 +93,7 @@ spec:
         sudo: ALL=(ALL) NOPASSWD:ALL
       format: {{.format}}
 ---
-apiVersion: cluster.x-k8s.io/v1alpha3
+apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
   labels:
@@ -112,17 +112,17 @@ spec:
     spec:
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
           name: {{.clusterName}}-md-0
       clusterName: {{.clusterName}}
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: VSphereMachineTemplate
         name: {{.workloadTemplateName}}
       version: {{.kubernetesVersion}}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: VSphereMachineTemplate
 metadata:
   name: {{.workloadTemplateName}}
@@ -138,8 +138,8 @@ spec:
       memoryMiB: {{.workloadVMsMemoryMiB}}
       network:
         devices:
-        - dhcp4: true
-          networkName: {{.vsphereNetwork}}
+          - dhcp4: true
+            networkName: {{.vsphereNetwork}}
       numCPUs: {{.workloadVMsNumCPUs}}
       resourcePool: '{{.workerVsphereResourcePool}}'
       server: {{.vsphereServer}}
