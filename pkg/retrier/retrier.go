@@ -8,8 +8,9 @@ import (
 )
 
 type Retrier struct {
-	retryPolicy RetryPolicy
-	timeout     time.Duration
+	retryPolicy   RetryPolicy
+	timeout       time.Duration
+	backoffFactor *float32
 }
 
 type (
@@ -47,6 +48,12 @@ func WithMaxRetries(maxRetries int, backOffPeriod time.Duration) RetrierOpt {
 	}
 }
 
+func WithBackoffFactor(factor float32) RetrierOpt {
+	return func(r *Retrier) {
+		r.backoffFactor = &factor
+	}
+}
+
 func WithRetryPolicy(policy RetryPolicy) RetrierOpt {
 	return func(r *Retrier) {
 		r.retryPolicy = policy
@@ -73,7 +80,9 @@ func (r *Retrier) Retry(fn func() error) error {
 			logger.V(5).Info("Execution aborted by retry policy")
 			return err
 		}
-
+		if r.backoffFactor != nil {
+			wait = wait * time.Duration(*r.backoffFactor*float32(retries))
+		}
 		logger.V(5).Info("Sleeping before next retry", "time", wait)
 		time.Sleep(wait)
 	}
