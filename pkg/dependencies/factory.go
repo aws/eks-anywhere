@@ -2,6 +2,7 @@ package dependencies
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -47,7 +48,7 @@ type Dependencies struct {
 func (d *Dependencies) Close(ctx context.Context) error {
 	closers := []types.Closer{d.Govc, d.DockerClient, d.Kubectl, d.Kind, d.Clusterctl, d.Flux, d.Troubleshoot}
 	for _, c := range closers {
-		if c != nil {
+		if !reflect.ValueOf(c).IsNil() {
 			if err := c.Close(ctx); err != nil {
 				return err
 			}
