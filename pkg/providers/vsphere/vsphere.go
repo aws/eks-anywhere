@@ -1055,8 +1055,7 @@ func (p *vsphereProvider) EnvMap() (map[string]string, error) {
 
 func (p *vsphereProvider) GetDeployments() map[string][]string {
 	return map[string][]string{
-		"capv-system":         {"capv-controller-manager"},
-		"capi-webhook-system": {"capv-controller-manager"},
+		"capv-system": {"capv-controller-manager"},
 	}
 }
 
