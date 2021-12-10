@@ -23,3 +23,5 @@ testbin/*
 *.swp
 *.swo
 *~
+
+latest-dev-release-version
