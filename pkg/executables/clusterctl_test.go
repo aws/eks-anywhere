@@ -95,7 +95,7 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			wantExecArgs: []interface{}{
 				"init", "--core", core, "--bootstrap", bootstrap, "--control-plane", controlPlane, "--infrastructure", "aws:v0.6.4", "--config", test.OfType("string"),
 				"--bootstrap", etcdadmBootstrap, "--bootstrap", etcdadmController,
-				"--watching-namespace", constants.EksaSystemNamespace,
+				constants.EksaSystemNamespace,
 			},
 			wantConfig: "testdata/clusterctl_expected.yaml",
 		},
@@ -111,7 +111,7 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			wantExecArgs: []interface{}{
 				"init", "--core", core, "--bootstrap", bootstrap, "--control-plane", controlPlane, "--infrastructure", "vsphere:v0.7.8", "--config", test.OfType("string"),
 				"--bootstrap", etcdadmBootstrap, "--bootstrap", etcdadmController,
-				"--watching-namespace", constants.EksaSystemNamespace, "--kubeconfig", "tmp/k.kubeconfig",
+				constants.EksaSystemNamespace, "--kubeconfig", "tmp/k.kubeconfig",
 			},
 			wantConfig: "testdata/clusterctl_expected.yaml",
 		},
