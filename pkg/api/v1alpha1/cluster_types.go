@@ -114,6 +114,9 @@ type RegistryMirrorConfiguration struct {
 	// Endpoint defines the registry mirror endpoint to use for pulling images
 	Endpoint string `json:"endpoint,omitempty"`
 
+	// Port defines the port exposed for registry mirror endpoint
+	Port string `json:"port,omitempty"`
+
 	// CACertContent defines the contents registry mirror CA certificate
 	CACertContent string `json:"caCertContent,omitempty"`
 }
@@ -125,7 +128,7 @@ func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Endpoint == o.Endpoint && n.CACertContent == o.CACertContent
+	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent
 }
 
 type ControlPlaneConfiguration struct {

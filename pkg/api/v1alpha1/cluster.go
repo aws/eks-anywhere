@@ -14,8 +14,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
 const (
@@ -173,7 +175,7 @@ func GetClusterConfig(fileName string) (*Cluster, error) {
 	if err != nil {
 		return clusterConfig, err
 	}
-	if err := updateRegistryMirrorCA(clusterConfig); err != nil {
+	if err := updateRegistryMirrorConfig(clusterConfig); err != nil {
 		return clusterConfig, err
 	}
 	return clusterConfig, nil
@@ -247,7 +249,7 @@ func (c *Cluster) UseImageMirror(defaultImage string) string {
 		return defaultImage
 	}
 	imageUrl, _ := url.Parse("https://" + defaultImage)
-	return c.Spec.RegistryMirrorConfiguration.Endpoint + imageUrl.Path
+	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port) + imageUrl.Path
 }
 
 func (c *Cluster) IsReconcilePaused() bool {
@@ -419,7 +421,14 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return errors.New("no value set for ECRMirror.Endpoint")
 	}
 
-	tlsValidator := crypto.NewTlsValidator(clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint)
+	if clusterConfig.Spec.RegistryMirrorConfiguration.Port == "" {
+		clusterConfig.Spec.RegistryMirrorConfiguration.Port = constants.DefaultHttpsPort
+	}
+	if !networkutils.IsPortValid(clusterConfig.Spec.RegistryMirrorConfiguration.Port) {
+		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterConfig.Spec.RegistryMirrorConfiguration.Port)
+	}
+
+	tlsValidator := crypto.NewTlsValidator(clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint, clusterConfig.Spec.RegistryMirrorConfiguration.Port)
 	selfSigned, err := tlsValidator.HasSelfSignedCert()
 	if err != nil {
 		return fmt.Errorf("error validating registy mirror endpoint: %v", err)
@@ -451,9 +460,13 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 	return nil
 }
 
-func updateRegistryMirrorCA(clusterConfig *Cluster) error {
+func updateRegistryMirrorConfig(clusterConfig *Cluster) error {
 	if clusterConfig.Spec.RegistryMirrorConfiguration == nil {
 		return nil
+	}
+	if clusterConfig.Spec.RegistryMirrorConfiguration.Port == "" {
+		logger.V(1).Info(fmt.Sprintf("RegistryMirrorConfiguration.Port is not specified, defaulting to port: %v", constants.DefaultHttpsPort))
+		clusterConfig.Spec.RegistryMirrorConfiguration.Port = constants.DefaultHttpsPort
 	}
 	if clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent == "" {
 		if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {

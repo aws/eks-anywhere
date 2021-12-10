@@ -5,6 +5,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"net"
 	"os"
 	"reflect"
 	"strconv"
@@ -714,7 +715,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	}
 
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
-		values["registryMirrorConfiguration"] = clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
+		values["registryMirrorConfiguration"] = net.JoinHostPort(clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Spec.RegistryMirrorConfiguration.Port)
 		if len(clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
 			values["registryCACert"] = clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent
 		}
@@ -802,7 +803,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	}
 
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
-		values["registryMirrorConfiguration"] = clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
+		values["registryMirrorConfiguration"] = net.JoinHostPort(clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Spec.RegistryMirrorConfiguration.Port)
 		if len(clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
 			values["registryCACert"] = clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent
 		}
