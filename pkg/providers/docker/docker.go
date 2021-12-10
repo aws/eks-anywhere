@@ -17,7 +17,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -187,7 +186,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 		"corednsVersion":             bundle.KubeDistro.CoreDNS.Tag,
 		"kindNodeImage":              bundle.EksD.KindNode.VersionedImage(),
 		"etcdExtraArgs":              etcdExtraArgs.ToPartialYaml(),
-		"etcdCipherSuites":           crypto.SecureCipherSuitesString(),
 		"apiserverExtraArgs":         apiServerExtraArgs.ToPartialYaml(),
 		"controllermanagerExtraArgs": sharedExtraArgs.ToPartialYaml(),
 		"schedulerExtraArgs":         sharedExtraArgs.ToPartialYaml(),
