@@ -5,16 +5,16 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
-	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -224,7 +224,7 @@ func (r *capiResourceFetcher) VSphereControlPlaneMachineTemplate(ctx context.Con
 		return nil, err
 	}
 	vsphereMachineTemplate := &vspherev1.VSphereMachineTemplate{}
-	err = r.FetchObjectByName(ctx, cp.Spec.InfrastructureTemplate.Name, constants.EksaSystemNamespace, vsphereMachineTemplate)
+	err = r.FetchObjectByName(ctx, cp.Spec.MachineTemplate.InfrastructureRef.Name, constants.EksaSystemNamespace, vsphereMachineTemplate)
 	if err != nil {
 		return nil, err
 	}

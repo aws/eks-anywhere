@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
@@ -68,7 +68,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		if err != nil {
 			return nil, err
 		}
-		controlPlaneTemplateName = cp.Spec.InfrastructureTemplate.Name
+		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
 	}
 
 	var workloadTemplateName string
@@ -199,7 +199,7 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 	}
 
 	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.InfrastructureTemplate.Name
+		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 	workersOpt := func(values map[string]interface{}) {

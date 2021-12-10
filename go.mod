@@ -9,30 +9,30 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.4.0
-	github.com/golang/mock v1.5.0
+	github.com/golang/mock v1.6.0
 	github.com/google/go-github/v35 v35.2.0
-	github.com/mrajashree/etcdadm-controller v0.1.3
-	github.com/onsi/gomega v1.14.0
-	github.com/spf13/cobra v1.1.3
+	github.com/mrajashree/etcdadm-controller v1.0.0-rc3
+	github.com/onsi/gomega v1.16.0
+	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
-	github.com/spf13/viper v1.7.1
+	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
-	go.uber.org/zap v1.16.1-0.20210329175301-c23abee72d19
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
-	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	golang.org/x/sys v0.0.0-20210510120138-977fb7262007
+	go.uber.org/zap v1.19.0
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
+	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf
 	gopkg.in/square/go-jose.v2 v2.6.0
-	k8s.io/api v0.21.2
-	k8s.io/apimachinery v0.21.2
-	k8s.io/client-go v0.21.2
-	sigs.k8s.io/cluster-api v0.3.11-0.20210430210359-402a4524f006
-	sigs.k8s.io/cluster-api-provider-vsphere v0.7.8
-	sigs.k8s.io/controller-runtime v0.9.0-beta.0
-	sigs.k8s.io/yaml v1.2.0
+	k8s.io/api v0.22.2
+	k8s.io/apimachinery v0.22.2
+	k8s.io/client-go v0.22.2
+	sigs.k8s.io/cluster-api v1.0.1
+	sigs.k8s.io/cluster-api-provider-vsphere v1.0.1
+	sigs.k8s.io/controller-runtime v0.10.3
+	sigs.k8s.io/yaml v1.3.0
 )
 
-// exclude un-required transitive dependency from cluster-api-provider-vsphere v0.7.8
-exclude sigs.k8s.io/cluster-api v0.3.14
+// exclude un-required transitive dependency from cluster-api-provider-vsphere v1.0.1
+exclude sigs.k8s.io/cluster-api v0.0.0-00010101000000-000000000000
 
 // TODO: Once the repo is public, remove this so we use a versioned module
 replace (

@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"time"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -250,7 +250,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		if err != nil {
 			return nil, nil, err
 		}
-		controlPlaneTemplateName = cp.Spec.InfrastructureTemplate.Name
+		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
 	} else {
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}

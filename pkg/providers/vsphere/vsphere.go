@@ -12,11 +12,11 @@ import (
 	"text/template"
 	"time"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"golang.org/x/crypto/ssh"
 	corev1 "k8s.io/api/core/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -61,19 +61,19 @@ const (
 	backOffPeriod                         = 5 * time.Second
 )
 
-//go:embed config/template-cp.yaml
+//go:embed config-v1beta1/template-cp.yaml
 var defaultCAPIConfigCP string
 
-//go:embed config/template-md.yaml
+//go:embed config-v1beta1/template-md.yaml
 var defaultClusterConfigMD string
 
-//go:embed config/secret.yaml
+//go:embed config-v1beta1/secret.yaml
 var defaultSecretObject string
 
-//go:embed config/defaultStorageClass.yaml
+//go:embed config-v1beta1/defaultStorageClass.yaml
 var defaultStorageClass []byte
 
-//go:embed config/machine-health-check-template.yaml
+//go:embed config-v1beta1/machine-health-check-template.yaml
 var mhcTemplate []byte
 
 var (
@@ -710,6 +710,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
 		"auditPolicy":                          common.GetAuditPolicy(),
 		"resourceSetName":                      resourceSetName(clusterSpec),
+		"eksaVsphereUsername":                  os.Getenv(eksavSphereUsernameKey),
+		"eksaVspherePassword":                  os.Getenv(eksavSpherePasswordKey),
 	}
 
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
@@ -870,7 +872,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		if err != nil {
 			return nil, nil, err
 		}
-		controlPlaneTemplateName = cp.Spec.InfrastructureTemplate.Name
+		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
 	} else {
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}

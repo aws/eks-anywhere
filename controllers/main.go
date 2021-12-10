@@ -4,15 +4,22 @@ import (
 	"flag"
 	"os"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	"github.com/spf13/pflag"
+	etcdv1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	vspherev1alpha3 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
+	vspherev1alpha4 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha4"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
+	clusterv1alpha3 "sigs.k8s.io/cluster-api/api/v1alpha3"
+	clusterv1alpha4 "sigs.k8s.io/cluster-api/api/v1alpha4"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1alpha3 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	controlplanev1alpha4 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha4"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -38,9 +45,20 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	utilruntime.Must(anywherev1.AddToScheme(scheme))
 	utilruntime.Must(releasev1.AddToScheme(scheme))
+
+	utilruntime.Must(clusterv1alpha3.AddToScheme(scheme))
+	utilruntime.Must(clusterv1alpha4.AddToScheme(scheme))
 	utilruntime.Must(clusterv1.AddToScheme(scheme))
+
+	utilruntime.Must(controlplanev1alpha3.AddToScheme(scheme))
+	utilruntime.Must(controlplanev1alpha4.AddToScheme(scheme))
 	utilruntime.Must(controlplanev1.AddToScheme(scheme))
+
+	utilruntime.Must(vspherev1alpha3.AddToScheme(scheme))
+	utilruntime.Must(vspherev1alpha4.AddToScheme(scheme))
 	utilruntime.Must(vspherev1.AddToScheme(scheme))
+
+	utilruntime.Must(etcdv1alpha3.AddToScheme(scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }

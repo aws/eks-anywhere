@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
-	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
+	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"

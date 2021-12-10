@@ -14,8 +14,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -1287,7 +1287,7 @@ func TestKubectlGetClusterResourceSet(t *testing.T) {
 	resourceSetName := "Bundle-name"
 	wantResourceSet := &addons.ClusterResourceSet{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "addons.cluster.x-k8s.io/v1alpha3",
+			APIVersion: "addons.cluster.x-k8s.io/v1beta1",
 			Kind:       "ClusterResourceSet",
 		},
 		Spec: addons.ClusterResourceSetSpec{

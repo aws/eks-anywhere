@@ -16,13 +16,13 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -627,8 +627,10 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 
 	oldCP := &bootstrapv1.KubeadmControlPlane{
 		Spec: bootstrapv1.KubeadmControlPlaneSpec{
-			InfrastructureTemplate: v1.ObjectReference{
-				Name: "test-control-plane-template-original",
+			MachineTemplate: bootstrapv1.KubeadmControlPlaneMachineTemplate{
+				InfrastructureRef: v1.ObjectReference{
+					Name: "test-control-plane-template-original",
+				},
 			},
 		},
 	}
@@ -2588,7 +2590,7 @@ func TestGetMHCSuccess(t *testing.T) {
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
 
-	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1alpha3
+	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineHealthCheck
 metadata:
   name: test-node-unhealthy-5m
@@ -2608,7 +2610,7 @@ spec:
       status: "False"
       timeout: 300s
 ---
-apiVersion: cluster.x-k8s.io/v1alpha3
+apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineHealthCheck
 metadata:
   name: test-kcp-unhealthy-5m
