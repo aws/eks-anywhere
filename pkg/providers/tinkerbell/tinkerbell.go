@@ -276,9 +276,7 @@ func (p *tinkerbellProvider) UpdateKubeConfig(content *[]byte, clusterName strin
 }
 
 func (p *tinkerbellProvider) Version(clusterSpec *cluster.Spec) string {
-	// TODO: Add Tinkerbell to the bundle and add it's versions
-	// return clusterSpec.VersionsBundle.Tinkerbell.Version
-	return "tinkerbell-dev"
+	return clusterSpec.VersionsBundle.Tinkerbell.Version
 }
 
 func (p *tinkerbellProvider) EnvMap() (map[string]string, error) {
@@ -301,33 +299,15 @@ func (p *tinkerbellProvider) GetDeployments() map[string][]string {
 }
 
 func (p *tinkerbellProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	// TODO: uncomment below when tinkerbell is added to bundle
-	// bundle := clusterSpec.VersionsBundle
-	// folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", bundle.Tinkerbell.Version)
+	bundle := clusterSpec.VersionsBundle
+	folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", bundle.Tinkerbell.Version)
 
-	// infraBundle := types.InfrastructureBundle{
-	// 	FolderName: folderName,
-	// 	Manifests: []releasev1alpha1.Manifest{
-	// 		bundle.Tinkerbell.Components,
-	// 		bundle.Tinkerbell.Metadata,
-	// 		bundle.Tinkerbell.ClusterTemplate,
-	// 	},
-	// }
-	// return &infraBundle
-	// TODO - remove below code when tinkerbell is added to bundle
-	folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", "v0.1.0")
 	infraBundle := types.InfrastructureBundle{
 		FolderName: folderName,
 		Manifests: []releasev1alpha1.Manifest{
-			{
-				URI: "https://github.com/tinkerbell/cluster-api-provider-tinkerbell/releases/download/v0.1.0/infrastructure-components.yaml",
-			},
-			{
-				URI: "https://github.com/tinkerbell/cluster-api-provider-tinkerbell/releases/download/v0.1.0/metadata.yaml",
-			},
-			{
-				URI: "https://github.com/tinkerbell/cluster-api-provider-tinkerbell/releases/download/v0.1.0/cluster-template.yaml",
-			},
+			bundle.Tinkerbell.Components,
+			bundle.Tinkerbell.Metadata,
+			bundle.Tinkerbell.ClusterTemplate,
 		},
 	}
 	return &infraBundle
