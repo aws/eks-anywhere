@@ -175,7 +175,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		}
 
 		var tinkerbellBundle anywherev1alpha1.TinkerbellBundle
-		if r.DevRelease || r.ReleaseEnvironment == "development" {
+		if r.DevRelease {
 			tinkerbellBundle, err = r.GetTinkerbellBundle(channel, imageDigests)
 			if err != nil {
 				return nil, errors.Wrapf(err, "Error getting bundle for Tinkerbell infrastructure provider")
