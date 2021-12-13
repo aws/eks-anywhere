@@ -35,10 +35,10 @@ func getUniqueIP(cidr string, usedIPs map[string]bool) string {
 	ip, err := ipgen.GenerateUniqueIP(cidr)
 	for ; err != nil || usedIPs[ip]; ip, err = ipgen.GenerateUniqueIP(cidr) {
 		if err != nil {
-			logger.V(2).Info("Warning: getting unique IP for vsphere failed", err)
+			logger.V(2).Info("Warning: getting unique IP for vsphere failed", "error", err)
 		}
 		if usedIPs[ip] {
-			logger.V(2).Info("Warning: generated IP is already taken", ip)
+			logger.V(2).Info("Warning: generated IP is already taken", "IP", ip)
 		}
 	}
 	usedIPs[ip] = true
