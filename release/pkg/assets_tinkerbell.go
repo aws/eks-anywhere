@@ -22,7 +22,7 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-func (r *ReleaseConfig) GetTinkerbellBundle(eksDReleaseChannel string, imageDigests map[string]string) (anywherev1alpha1.TinkerbellBundle, error) {
+func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (anywherev1alpha1.TinkerbellBundle, error) {
 	tinkerbellBundleArtifacts := map[string][]Artifact{
 		"cluster-api-provider-tinkerbell": r.BundleArtifactsTable["cluster-api-provider-tinkerbell"],
 	}
