@@ -22,15 +22,6 @@ const upgradeFluxconfigCommitMessage = "Upgrade commit of flux configuration; ge
 
 func (f *FluxAddonClient) Upgrade(ctx context.Context, managementCluster *types.Cluster, currentSpec *cluster.Spec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
 	logger.V(1).Info("Checking for Flux upgrades")
-	if !newSpec.Cluster.IsSelfManaged() {
-		logger.V(1).Info("Skipping Flux upgrades, not a self-managed cluster")
-		return nil, nil
-	}
-
-	if newSpec.GitOpsConfig == nil {
-		logger.V(1).Info("Skipping Flux upgrades, GitOps not enabled")
-		return nil, nil
-	}
 
 	changeDiff := FluxChangeDiff(currentSpec, newSpec)
 	if changeDiff == nil {
@@ -56,10 +47,18 @@ func (f *FluxAddonClient) Upgrade(ctx context.Context, managementCluster *types.
 }
 
 func FluxChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
+	if !newSpec.Cluster.IsSelfManaged() {
+		logger.V(1).Info("Skipping Flux upgrades, not a self-managed cluster")
+		return nil
+	}
+	if currentSpec.Cluster.Spec.GitOpsRef != nil || newSpec.Cluster.Spec.GitOpsRef != nil {
+		logger.V(1).Info("Skipping Flux upgrades")
+		return nil
+	}
 	oldVersion := currentSpec.VersionsBundle.Flux.Version
 	newVersion := newSpec.VersionsBundle.Flux.Version
 	if oldVersion != newVersion {
-		logger.V(1).Info("Flux change diff ", "oldVersion", oldVersion, "newVersion", newVersion)
+		logger.V(1).Info("Flux change diff ", "oldVersion ", oldVersion, "newVersion ", newVersion)
 		return &types.ChangeDiff{
 			ComponentReports: []types.ComponentChangeDiff{
 				{
