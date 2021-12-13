@@ -42,6 +42,9 @@ BUILDKIT := $(BUILD_LIB)/buildkit.sh
 CONTROLLER_GEN_BIN := controller-gen
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)
 
+SETUP_ENVTEST_BIN := setup-envtest
+SETUP_ENVTEST := $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)
+
 BINARY_NAME=eks-anywhere-cluster-controller
 ifdef CODEBUILD_SRC_DIR
 	TAR_PATH?=$(CODEBUILD_SRC_DIR)/$(PROJECT_PATH)/$(CODEBUILD_BUILD_NUMBER)-$(CODEBUILD_RESOLVED_SOURCE_VERSION)/artifacts
@@ -82,6 +85,8 @@ EKS_A_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-cross-platf
 EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-release-cross-platform-$(platform))
 
 DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow
+
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.21.x
 
 .PHONY: default
 default: build lint
@@ -167,6 +172,9 @@ $(KUBEBUILDER): $(TOOLS_BIN_DIR)
 
 $(CONTROLLER_GEN): $(TOOLS_BIN_DIR)
 	cd $(TOOLS_BIN_DIR); $(GO) build -tags=tools -o $(CONTROLLER_GEN_BIN) sigs.k8s.io/controller-tools/cmd/controller-gen
+
+$(SETUP_ENVTEST): $(TOOLS_BIN_DIR)
+	cd $(TOOLS_BIN_DIR); $(GO) build -tags=tools -o $(SETUP_ENVTEST_BIN) sigs.k8s.io/controller-runtime/tools/setup-envtest
 
 .PHONY: lint
 lint: bin/golangci-lint ## Run golangci-lint
@@ -286,7 +294,10 @@ test: unit-test capd-test  ## Run unit and capd tests
 
 .PHONY: unit-test
 unit-test: ## Run unit tests
-	$(GO_TEST) ./... -cover -tags "$(BUILD_TAGS)"
+unit-test: $(SETUP_ENVTEST) 
+unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
+unit-test:
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) ./... -cover -tags "$(BUILD_TAGS)"
 
 .PHONY: capd-test
 capd-test: e2e ## Run default e2e capd test locally
