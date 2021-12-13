@@ -82,9 +82,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	}
 
 	componentChangeDiffs := eksaupgrader.EksaChangeDiff(currentSpec, newClusterSpec)
-	if currentSpec.Cluster.Spec.GitOpsRef != nil || newClusterSpec.Cluster.Spec.GitOpsRef != nil {
-		componentChangeDiffs.Append(fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec))
-	}
+	componentChangeDiffs.Append(fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec))
 
 	if componentChangeDiffs == nil {
 		fmt.Println("All the components are up to date with the latest versions")

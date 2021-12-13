@@ -56,10 +56,17 @@ func (f *FluxAddonClient) Upgrade(ctx context.Context, managementCluster *types.
 }
 
 func FluxChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
+	if !newSpec.Cluster.IsSelfManaged() {
+		logger.V(1).Info("Skipping Flux upgrades, not a self-managed cluster")
+		return nil
+	}
+	if currentSpec.Cluster.Spec.GitOpsRef != nil || newSpec.Cluster.Spec.GitOpsRef != nil {
+		return nil
+	}
 	oldVersion := currentSpec.VersionsBundle.Flux.Version
 	newVersion := newSpec.VersionsBundle.Flux.Version
 	if oldVersion != newVersion {
-		logger.V(1).Info("Flux change diff ", "oldVersion", oldVersion, "newVersion", newVersion)
+		logger.V(1).Info("Flux change diff ", "oldVersion ", oldVersion, "newVersion ", newVersion)
 		return &types.ChangeDiff{
 			ComponentReports: []types.ComponentChangeDiff{
 				{
