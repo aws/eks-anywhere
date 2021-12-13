@@ -20,7 +20,7 @@ import (
 )
 
 var upgradePlanCmd = &cobra.Command{
-	Use:          "plan cluster",
+	Use:          "plan",
 	Short:        "Provides new release versions for the next cluster upgrade",
 	Long:         "Provides a list of target versions for upgrading the core components in the workload cluster",
 	PreRunE:      preRunUpgradePlanCluster,
