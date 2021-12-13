@@ -12,22 +12,22 @@ require (
 	github.com/golang/mock v1.5.0
 	github.com/google/go-github/v35 v35.2.0
 	github.com/mrajashree/etcdadm-controller v0.1.3
-	github.com/onsi/gomega v1.14.0
+	github.com/onsi/gomega v1.15.0
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
-	go.uber.org/zap v1.16.1-0.20210329175301-c23abee72d19
+	go.uber.org/zap v1.19.0
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	golang.org/x/sys v0.0.0-20210510120138-977fb7262007
+	golang.org/x/sys v0.0.0-20210817190340-bfb29a6856f2
 	gopkg.in/square/go-jose.v2 v2.6.0
-	k8s.io/api v0.21.2
-	k8s.io/apimachinery v0.21.2
-	k8s.io/client-go v0.21.2
+	k8s.io/api v0.22.2
+	k8s.io/apimachinery v0.22.2
+	k8s.io/client-go v0.22.2
 	sigs.k8s.io/cluster-api v0.3.11-0.20210430210359-402a4524f006
 	sigs.k8s.io/cluster-api-provider-vsphere v0.7.8
-	sigs.k8s.io/controller-runtime v0.9.0-beta.0
+	sigs.k8s.io/controller-runtime v0.10.3
 	sigs.k8s.io/yaml v1.2.0
 )
 
