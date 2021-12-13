@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 
 	fluxupgrader "github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
+	capiupgrader "github.com/aws/eks-anywhere/pkg/clusterapi"
 	eksaupgrader "github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -63,6 +64,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	}
 	deps, err := dependencies.ForSpec(ctx, newClusterSpec).
 		WithClusterManager(newClusterSpec.Cluster).
+		WithProvider(uc.fileName, newClusterSpec.Cluster, cc.skipIpCheck, uc.hardwareFileName).
 		WithFluxAddonClient(ctx, newClusterSpec.Cluster, newClusterSpec.GitOpsConfig).
 		WithCAPIManager().
 		Build(ctx)
@@ -83,6 +85,9 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 
 	componentChangeDiffs := eksaupgrader.EksaChangeDiff(currentSpec, newClusterSpec)
 	componentChangeDiffs.Append(fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec))
+
+	capiChangeDiff := capiupgrader.CapiChangeDiff(currentSpec, newClusterSpec, deps.Provider)
+	componentChangeDiffs.Append(capiupgrader.ToChangeDiff(capiChangeDiff))
 
 	if componentChangeDiffs == nil {
 		fmt.Println("All the components are up to date with the latest versions")

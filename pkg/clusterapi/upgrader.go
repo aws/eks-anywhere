@@ -30,7 +30,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster
 		return nil, nil
 	}
 
-	capiChangeDiff := u.capiChangeDiff(currentSpec, newSpec, provider)
+	capiChangeDiff := CapiChangeDiff(currentSpec, newSpec, provider)
 	if capiChangeDiff == nil {
 		logger.V(1).Info("Nothing to upgrade for CAPI")
 		return nil, nil
@@ -41,7 +41,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster
 		return nil, fmt.Errorf("failed upgrading ClusterAPI from bundles %d to bundles %d: %v", currentSpec.Bundles.Spec.Number, newSpec.Bundles.Spec.Number, err)
 	}
 
-	return capiChangeDiff.toChangeDiff(), nil
+	return ToChangeDiff(capiChangeDiff), nil
 }
 
 type CAPIChangeDiff struct {
@@ -52,10 +52,14 @@ type CAPIChangeDiff struct {
 	InfrastructureProvider *types.ComponentChangeDiff
 }
 
-func (c *CAPIChangeDiff) toChangeDiff() *types.ChangeDiff {
-	r := make([]*types.ComponentChangeDiff, 0, 4+len(c.BootstrapProviders))
-	r = append(r, c.CertManager, c.Core, c.ControlPlane, c.InfrastructureProvider)
-	for _, bootstrapChangeDiff := range c.BootstrapProviders {
+func ToChangeDiff(capiChangeDiff *CAPIChangeDiff) *types.ChangeDiff {
+	if capiChangeDiff == nil {
+		logger.V(1).Info("Nothing to upgrade for CAPI")
+		return nil
+	}
+	r := make([]*types.ComponentChangeDiff, 0, 4+len(capiChangeDiff.BootstrapProviders))
+	r = append(r, capiChangeDiff.CertManager, capiChangeDiff.Core, capiChangeDiff.ControlPlane, capiChangeDiff.InfrastructureProvider)
+	for _, bootstrapChangeDiff := range capiChangeDiff.BootstrapProviders {
 		b := bootstrapChangeDiff
 		r = append(r, &b)
 	}
@@ -63,7 +67,7 @@ func (c *CAPIChangeDiff) toChangeDiff() *types.ChangeDiff {
 	return types.NewChangeDiff(r...)
 }
 
-func (u *Upgrader) capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider providers.Provider) *CAPIChangeDiff {
+func CapiChangeDiff(currentSpec, newSpec *cluster.Spec, provider providers.Provider) *CAPIChangeDiff {
 	changeDiff := &CAPIChangeDiff{}
 	componentChanged := false
 
