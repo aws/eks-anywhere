@@ -19,8 +19,8 @@ import (
 )
 
 var upgradePlanCmd = &cobra.Command{
-	Use:          "plan",
-	Short:        "Provides new release versions for the next upgrade",
+	Use:          "plan cluster",
+	Short:        "Provides new release versions for the next cluster upgrade",
 	Long:         "Provides a list of target versions for upgrading the core components in the workload cluster",
 	PreRunE:      preRunUpgradePlanCluster,
 	SilenceUsage: true,
@@ -91,7 +91,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 10, 4, 3, ' ', 0)
 	fmt.Fprintln(w, "NAME\tCURRENT VERSION\tNEXT VERSION")
 	for i := range componentChangeDiffs.ComponentReports {
-		fmt.Fprintf(w, "%s\t%s\t%s\n", componentChangeDiffs.ComponentReports[i].ComponentName, componentChangeDiffs.ComponentReports[i].NewVersion, componentChangeDiffs.ComponentReports[i].OldVersion)
+		fmt.Fprintf(w, "%s\t%s\t%s\n", componentChangeDiffs.ComponentReports[i].ComponentName, componentChangeDiffs.ComponentReports[i].OldVersion, componentChangeDiffs.ComponentReports[i].NewVersion)
 	}
 
 	if err := w.Flush(); err != nil {
