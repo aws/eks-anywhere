@@ -38,7 +38,7 @@ option routers 10.8.105.1;
  
 # Configure /etc/default/isc-dhcp-server
 
-Add the main interface to this file e.g: eth0 (this example uses ens160).
+Add the main NIC device interface to this file, such as eth0 (this example uses ens160).
  
 ```
 INTERFACESv4="ens160"
