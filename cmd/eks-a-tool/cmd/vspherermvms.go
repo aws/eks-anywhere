@@ -46,10 +46,11 @@ func init() {
 }
 
 func vsphereRmVms(ctx context.Context, clusterName string, dryRun bool) error {
-	executableBuilder, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
+	executableBuilder, close, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
+	defer close.CheckErr(ctx)
 	tmpWriter, _ := filewriter.NewWriter("rmvms")
 	govc := executableBuilder.BuildGovcExecutable(tmpWriter)
 	defer govc.Close(ctx)

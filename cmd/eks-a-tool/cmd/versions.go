@@ -28,12 +28,12 @@ func init() {
 }
 
 func versions(ctx context.Context) error {
-	executableBuilder, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
+	executableBuilder, close, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
+	defer close.CheckErr(ctx)
 	kubectl := executableBuilder.BuildKubectlExecutable()
-	defer kubectl.Close(ctx)
 
 	return kubectl.ListCluster(ctx)
 }

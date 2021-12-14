@@ -45,12 +45,12 @@ func init() {
 }
 
 func validateCluster(ctx context.Context, cluster *types.Cluster, clusterName string) error {
-	executableBuilder, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
+	executableBuilder, close, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
+	defer close.CheckErr(ctx)
 	kubectl := executableBuilder.BuildKubectlExecutable()
-	defer kubectl.Close(ctx)
 	err = kubectl.ValidateNodes(ctx, cluster.KubeconfigFile)
 	if err != nil {
 		return err

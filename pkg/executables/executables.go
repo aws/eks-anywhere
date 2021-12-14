@@ -26,7 +26,6 @@ type Executable interface {
 	Execute(ctx context.Context, args ...string) (stdout bytes.Buffer, err error)
 	ExecuteWithEnv(ctx context.Context, envs map[string]string, args ...string) (stdout bytes.Buffer, err error)
 	ExecuteWithStdin(ctx context.Context, in []byte, args ...string) (stdout bytes.Buffer, err error)
-	Close(ctx context.Context) error
 }
 
 // this should only be called through the executables.builder

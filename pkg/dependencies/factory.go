@@ -2,7 +2,6 @@ package dependencies
 
 import (
 	"context"
-	"reflect"
 
 	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -43,15 +42,14 @@ type Dependencies struct {
 	DignosticCollectorFactory diagnostics.DiagnosticBundleFactory
 	CAPIManager               *clusterapi.Manager
 	ResourceSetManager        *clusterapi.ResourceSetManager
+	closers                   []types.Closer
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
-	closers := []types.Closer{d.Govc, d.DockerClient, d.Kubectl, d.Kind, d.Clusterctl, d.Flux, d.Troubleshoot}
-	for _, c := range closers {
-		if !reflect.ValueOf(c).IsNil() {
-			if err := c.Close(ctx); err != nil {
-				return err
-			}
+	// Reverse the loop so we close like LIFO
+	for i := len(d.closers) - 1; i >= 0; i-- {
+		if err := d.closers[i].Close(ctx); err != nil {
+			return err
 		}
 	}
 
@@ -123,10 +121,12 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 			return nil
 		}
 
-		b, err := executables.NewExecutableBuilder(ctx, f.executablesImage, f.executablesMountDirs...)
+		b, close, err := executables.NewExecutableBuilder(ctx, f.executablesImage, f.executablesMountDirs...)
 		if err != nil {
 			return err
 		}
+
+		f.dependencies.closers = append(f.dependencies.closers, close)
 
 		f.executableBuilder = b
 		return nil
@@ -237,6 +237,8 @@ func (f *Factory) WithGovc() *Factory {
 		}
 
 		f.dependencies.Govc = f.executableBuilder.BuildGovcExecutable(f.dependencies.Writer)
+		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Govc)
+
 		return nil
 	})
 
