@@ -5,7 +5,7 @@ description: >
   Create a custom DHCP configuration for your vSphere deployment
 ---
 
-If your vSphere deployment configred with DHCP and it cannot be configured with DHCP, you may want to run your own DHCP server.
+If your vSphere deployment is not configured with DHCP, you may want to run your own DHCP server.
 It may be necessary to turn off DHCP snooping on your switch to get DHCP working across VM main-servers.
 If you are running your administration machine in vSphere, it would most likely be easiest to run the DHCP server on that machine.
 This example is are for Ubuntu.
