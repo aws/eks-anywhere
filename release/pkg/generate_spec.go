@@ -24,7 +24,6 @@ import (
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -447,7 +446,6 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 				r.BundleNumber,
 			)
 		}
-
 	}
 
 	return sourceImageUri, sourcedFromBranch, nil
@@ -591,8 +589,7 @@ func (r *ReleaseConfig) GetPreviousReleaseImageSemver(releaseImageUri string) (s
 			}
 
 			for _, versionedBundle := range bundles.Spec.VersionsBundles {
-				vb := &cluster.VersionsBundle{VersionsBundle: &versionedBundle}
-				vbImages := vb.Images()
+				vbImages := versionedBundle.Images()
 				for _, image := range vbImages {
 					if strings.Contains(image.URI, releaseImageUri) {
 						imageUri := image.URI
