@@ -31,6 +31,10 @@ func (d *defaulter) setDefaults(ctx context.Context, spec *spec) error {
 			return err
 		}
 
+		if err := d.setTemplateFullPath(ctx, spec.datacenterConfig, m); err != nil {
+			return err
+		}
+
 		if err := d.setDiskDefaults(ctx, m); err != nil {
 			return err
 		}
@@ -156,5 +160,21 @@ func (d *defaulter) setDiskDefaults(ctx context.Context, machineConfig *anywhere
 		machineConfig.Spec.DiskGiB = 25
 	}
 
+	return nil
+}
+
+func (d *defaulter) setTemplateFullPath(ctx context.Context,
+	datacenterConfig *anywherev1.VSphereDatacenterConfig,
+	machine *anywherev1.VSphereMachineConfig) error {
+	templateFullPath, err := d.govc.SearchTemplate(ctx, datacenterConfig.Spec.Datacenter, machine)
+	if err != nil {
+		return fmt.Errorf("error setting template full path: %v", err)
+	}
+
+	if len(templateFullPath) <= 0 {
+		return fmt.Errorf("template <%s> not found", machine.Spec.Template)
+	}
+
+	machine.Spec.Template = templateFullPath
 	return nil
 }

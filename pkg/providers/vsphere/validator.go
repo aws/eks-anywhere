@@ -226,8 +226,6 @@ func (v *validator) validateTemplatePresence(ctx context.Context, datacenter str
 		return fmt.Errorf("template <%s> not found. Has the template been imported?", machineConfig.Spec.Template)
 	}
 
-	machineConfig.Spec.Template = templateFullPath // TODO: this is a side effect, it should be in defaults
-
 	return nil
 }
 
