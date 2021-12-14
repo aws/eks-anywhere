@@ -85,7 +85,6 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 
 	componentChangeDiffs := eksaupgrader.EksaChangeDiff(currentSpec, newClusterSpec)
 	componentChangeDiffs.Append(fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec))
-
 	componentChangeDiffs.Append(capiupgrader.CapiChangeDiff(currentSpec, newClusterSpec, deps.Provider))
 
 	if componentChangeDiffs == nil {
@@ -97,7 +96,6 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	for i := range componentChangeDiffs.ComponentReports {
 		fmt.Fprintf(w, "%s\t%s\t%s\n", componentChangeDiffs.ComponentReports[i].ComponentName, componentChangeDiffs.ComponentReports[i].OldVersion, componentChangeDiffs.ComponentReports[i].NewVersion)
 	}
-
 	if err := w.Flush(); err != nil {
 		fmt.Printf("Error %v", err)
 	}

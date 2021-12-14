@@ -41,7 +41,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, managementCluster *types.Cluster
 		return nil, fmt.Errorf("failed upgrading ClusterAPI from bundles %d to bundles %d: %v", currentSpec.Bundles.Spec.Number, newSpec.Bundles.Spec.Number, err)
 	}
 
-	return toChangeDiff(capiChangeDiff), nil
+	return capiChangeDiff.toChangeDiff(), nil
 }
 
 type CAPIChangeDiff struct {
@@ -52,14 +52,14 @@ type CAPIChangeDiff struct {
 	InfrastructureProvider *types.ComponentChangeDiff
 }
 
-func toChangeDiff(capiChangeDiff *CAPIChangeDiff) *types.ChangeDiff {
-	if capiChangeDiff == nil {
+func (c *CAPIChangeDiff) toChangeDiff() *types.ChangeDiff {
+	if c == nil {
 		logger.V(1).Info("Nothing to upgrade for CAPI")
 		return nil
 	}
-	r := make([]*types.ComponentChangeDiff, 0, 4+len(capiChangeDiff.BootstrapProviders))
-	r = append(r, capiChangeDiff.CertManager, capiChangeDiff.Core, capiChangeDiff.ControlPlane, capiChangeDiff.InfrastructureProvider)
-	for _, bootstrapChangeDiff := range capiChangeDiff.BootstrapProviders {
+	r := make([]*types.ComponentChangeDiff, 0, 4+len(c.BootstrapProviders))
+	r = append(r, c.CertManager, c.Core, c.ControlPlane, c.InfrastructureProvider)
+	for _, bootstrapChangeDiff := range c.BootstrapProviders {
 		b := bootstrapChangeDiff
 		r = append(r, &b)
 	}
@@ -68,8 +68,7 @@ func toChangeDiff(capiChangeDiff *CAPIChangeDiff) *types.ChangeDiff {
 }
 
 func CapiChangeDiff(currentSpec, newSpec *cluster.Spec, provider providers.Provider) *types.ChangeDiff {
-	capiChangeDiff := capiChangeDiff(currentSpec, newSpec, provider)
-	return toChangeDiff(capiChangeDiff)
+	return capiChangeDiff(currentSpec, newSpec, provider).toChangeDiff()
 }
 
 func capiChangeDiff(currentSpec, newSpec *cluster.Spec, provider providers.Provider) *CAPIChangeDiff {
