@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/viper"
 
 	fluxupgrader "github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
+	capiupgrader "github.com/aws/eks-anywhere/pkg/clusterapi"
 	eksaupgrader "github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -20,7 +21,7 @@ import (
 
 var upgradePlanCmd = &cobra.Command{
 	Use:          "plan",
-	Short:        "Provides new release versions for the next upgrade",
+	Short:        "Provides new release versions for the next cluster upgrade",
 	Long:         "Provides a list of target versions for upgrading the core components in the workload cluster",
 	PreRunE:      preRunUpgradePlanCluster,
 	SilenceUsage: true,
@@ -63,6 +64,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	}
 	deps, err := dependencies.ForSpec(ctx, newClusterSpec).
 		WithClusterManager(newClusterSpec.Cluster).
+		WithProvider(uc.fileName, newClusterSpec.Cluster, cc.skipIpCheck, uc.hardwareFileName).
 		WithFluxAddonClient(ctx, newClusterSpec.Cluster, newClusterSpec.GitOpsConfig).
 		WithCAPIManager().
 		Build(ctx)
@@ -83,6 +85,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 
 	componentChangeDiffs := eksaupgrader.EksaChangeDiff(currentSpec, newClusterSpec)
 	componentChangeDiffs.Append(fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec))
+	componentChangeDiffs.Append(capiupgrader.CapiChangeDiff(currentSpec, newClusterSpec, deps.Provider))
 
 	if componentChangeDiffs == nil {
 		fmt.Println("All the components are up to date with the latest versions")
@@ -91,9 +94,8 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	w := tabwriter.NewWriter(os.Stdout, 10, 4, 3, ' ', 0)
 	fmt.Fprintln(w, "NAME\tCURRENT VERSION\tNEXT VERSION")
 	for i := range componentChangeDiffs.ComponentReports {
-		fmt.Fprintf(w, "%s\t%s\t%s\n", componentChangeDiffs.ComponentReports[i].ComponentName, componentChangeDiffs.ComponentReports[i].NewVersion, componentChangeDiffs.ComponentReports[i].OldVersion)
+		fmt.Fprintf(w, "%s\t%s\t%s\n", componentChangeDiffs.ComponentReports[i].ComponentName, componentChangeDiffs.ComponentReports[i].OldVersion, componentChangeDiffs.ComponentReports[i].NewVersion)
 	}
-
 	if err := w.Flush(); err != nil {
 		fmt.Printf("Error %v", err)
 	}
