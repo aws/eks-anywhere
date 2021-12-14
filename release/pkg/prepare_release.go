@@ -668,7 +668,6 @@ func (r *ReleaseConfig) GetManifestFilepaths(kind string) string {
 			} else {
 				manifestFilepath = "eks-a-release.yaml"
 			}
-			manifestFilepath = "eks-a-release.yaml"
 		} else {
 			manifestFilepath = "releases/eks-a/manifest.yaml"
 		}

@@ -22,17 +22,8 @@ const upgradeFluxconfigCommitMessage = "Upgrade commit of flux configuration; ge
 
 func (f *FluxAddonClient) Upgrade(ctx context.Context, managementCluster *types.Cluster, currentSpec *cluster.Spec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
 	logger.V(1).Info("Checking for Flux upgrades")
-	if !newSpec.Cluster.IsSelfManaged() {
-		logger.V(1).Info("Skipping Flux upgrades, not a self-managed cluster")
-		return nil, nil
-	}
 
-	if newSpec.GitOpsConfig == nil {
-		logger.V(1).Info("Skipping Flux upgrades, GitOps not enabled")
-		return nil, nil
-	}
-
-	changeDiff := f.fluxChangeDiff(currentSpec, newSpec)
+	changeDiff := FluxChangeDiff(currentSpec, newSpec)
 	if changeDiff == nil {
 		logger.V(1).Info("Nothing to upgrade for Flux")
 		return nil, nil
@@ -52,20 +43,31 @@ func (f *FluxAddonClient) Upgrade(ctx context.Context, managementCluster *types.
 		return nil, fmt.Errorf("failed reconciling Flux components: %v", err)
 	}
 
-	return types.NewChangeDiff(changeDiff), nil
+	return changeDiff, nil
 }
 
-func (f *FluxAddonClient) fluxChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
+func FluxChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
+	if !newSpec.Cluster.IsSelfManaged() {
+		logger.V(1).Info("Skipping Flux upgrades, not a self-managed cluster")
+		return nil
+	}
+	if currentSpec.Cluster.Spec.GitOpsRef != nil || newSpec.Cluster.Spec.GitOpsRef != nil {
+		logger.V(1).Info("Skipping Flux upgrades")
+		return nil
+	}
 	oldVersion := currentSpec.VersionsBundle.Flux.Version
 	newVersion := newSpec.VersionsBundle.Flux.Version
 	if oldVersion != newVersion {
-		logger.V(1).Info("Flux change diff ", "oldVersion", oldVersion, "newVersion", newVersion)
-		return &types.ComponentChangeDiff{
-			ComponentName: "Flux",
-			NewVersion:    newVersion,
-			OldVersion:    oldVersion,
+		logger.V(1).Info("Flux change diff ", "oldVersion ", oldVersion, "newVersion ", newVersion)
+		return &types.ChangeDiff{
+			ComponentReports: []types.ComponentChangeDiff{
+				{
+					ComponentName: "Flux",
+					NewVersion:    newVersion,
+					OldVersion:    oldVersion,
+				},
+			},
 		}
-
 	}
 	return nil
 }

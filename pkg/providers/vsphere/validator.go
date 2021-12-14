@@ -13,19 +13,31 @@ import (
 )
 
 type validator struct {
-	govc       ProviderGovcClient
-	selfSigned bool // TODO: remove/update once
+	govc ProviderGovcClient
 }
 
 func newValidator(govc ProviderGovcClient) *validator {
 	return &validator{
-		govc:       govc,
-		selfSigned: false,
+		govc: govc,
 	}
 }
 
+func (v *validator) validateVCenterAccess(ctx context.Context, server string) error {
+	if err := v.govc.ValidateVCenterConnection(ctx, server); err != nil {
+		return fmt.Errorf("failed validating connection to vCenter: %v", err)
+	}
+	logger.MarkPass("Connected to server")
+
+	if err := v.govc.ValidateVCenterAuthentication(ctx); err != nil {
+		return fmt.Errorf("failed validating credentials for vCenter: %v", err)
+	}
+	logger.MarkPass("Authenticated to vSphere")
+
+	return nil
+}
+
 // TODO: dry out machine configs validations
-func (p *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spec) error {
+func (v *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spec) error {
 	if len(vsphereClusterSpec.datacenterConfig.Spec.Server) <= 0 {
 		return errors.New("VSphereDatacenterConfig server is not set or is empty")
 	}
@@ -41,6 +53,9 @@ func (p *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 	}
 	if len(vsphereClusterSpec.datacenterConfig.Spec.Network) <= 0 {
 		return errors.New("VSphereDatacenterConfig VM network is not set or is empty")
+	}
+	if err := validatePath(networkFolderType, vsphereClusterSpec.datacenterConfig.Spec.Network, vsphereClusterSpec.datacenterConfig.Spec.Datacenter); err != nil {
+		return err
 	}
 	if vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
 		return errors.New("must specify machineGroupRef for control plane")
@@ -97,16 +112,27 @@ func (p *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 	}
 
 	// TODO: move this to api Cluster validations
-	if err := p.validateControlPlaneIp(vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
+	if err := v.validateControlPlaneIp(vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
 		return err
 	}
 
-	if err := p.govc.ValidateVCenterSetup(ctx, vsphereClusterSpec.datacenterConfig, &p.selfSigned); err != nil { // TODO: remove side effects from this implementation or directly move it to set defaults (try not to pass a pointer to bool to update its value, it's very difficult to follow)
-		return fmt.Errorf("error validating vCenter setup: %v", err)
+	if err := v.validateThumbprint(ctx, vsphereClusterSpec); err != nil {
+		return err
 	}
 
+	if err := v.validateDatacenter(ctx, vsphereClusterSpec); err != nil {
+		return err
+	}
+	logger.MarkPass("Datacenter validated")
+
+	if err := v.validateNetwork(ctx, vsphereClusterSpec); err != nil {
+		return err
+	}
+	logger.MarkPass("Network validated")
+
 	for _, config := range vsphereClusterSpec.machineConfigsLookup {
-		err := p.govc.ValidateVCenterSetupMachineConfig(ctx, vsphereClusterSpec.datacenterConfig, config, &p.selfSigned) // TODO: remove side effects from this implementation or directly move it to set defaults (pointer to bool is not needed)
+		var b bool                                                                                            // Temporary until we remove the need to pass a bool pointer
+		err := v.govc.ValidateVCenterSetupMachineConfig(ctx, vsphereClusterSpec.datacenterConfig, config, &b) // TODO: remove side effects from this implementation or directly move it to set defaults (pointer to bool is not needed)
 		if err != nil {
 			return fmt.Errorf("error validating vCenter setup for VSphereMachineConfig %v: %v", config.Name, err)
 		}
@@ -120,12 +146,12 @@ func (p *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 		return errors.New("control plane and etcd machines must have the same osFamily specified")
 	}
 
-	if err := p.validateSSHUsername(controlPlaneMachineConfig); err == nil {
-		if err = p.validateSSHUsername(workerNodeGroupMachineConfig); err != nil {
+	if err := v.validateSSHUsername(controlPlaneMachineConfig); err == nil {
+		if err = v.validateSSHUsername(workerNodeGroupMachineConfig); err != nil {
 			return fmt.Errorf("error validating SSHUsername for worker node VSphereMachineConfig %v: %v", workerNodeGroupMachineConfig.Name, err)
 		}
 		if etcdMachineConfig != nil {
-			if err = p.validateSSHUsername(etcdMachineConfig); err != nil {
+			if err = v.validateSSHUsername(etcdMachineConfig); err != nil {
 				return fmt.Errorf("error validating SSHUsername for etcd VSphereMachineConfig %v: %v", etcdMachineConfig.Name, err)
 			}
 		}
@@ -143,7 +169,7 @@ func (p *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 		return errors.New("VSphereDatacenterConfig and Cluster objects must have the same namespace specified")
 	}
 
-	if err := p.validateTemplate(ctx, vsphereClusterSpec, controlPlaneMachineConfig); err != nil {
+	if err := v.validateTemplate(ctx, vsphereClusterSpec, controlPlaneMachineConfig); err != nil {
 		logger.V(1).Info("Control plane template validation failed.")
 		return err
 	}
@@ -159,7 +185,7 @@ func (p *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 		}
 	}
 
-	return p.validateDatastoreUsage(ctx, vsphereClusterSpec.Spec, controlPlaneMachineConfig, workerNodeGroupMachineConfig, etcdMachineConfig)
+	return v.validateDatastoreUsage(ctx, vsphereClusterSpec.Spec, controlPlaneMachineConfig, workerNodeGroupMachineConfig, etcdMachineConfig)
 }
 
 func (p *validator) validateControlPlaneIp(ip string) error {
@@ -190,8 +216,8 @@ func (p *validator) validateTemplate(ctx context.Context, spec *spec, machineCon
 	return nil
 }
 
-func (p *validator) validateTemplatePresence(ctx context.Context, datacenter string, machineConfig *anywherev1.VSphereMachineConfig) error {
-	templateFullPath, err := p.govc.SearchTemplate(ctx, datacenter, machineConfig)
+func (v *validator) validateTemplatePresence(ctx context.Context, datacenter string, machineConfig *anywherev1.VSphereMachineConfig) error {
+	templateFullPath, err := v.govc.SearchTemplate(ctx, datacenter, machineConfig)
 	if err != nil {
 		return fmt.Errorf("error validating template: %v", err)
 	}
@@ -205,8 +231,8 @@ func (p *validator) validateTemplatePresence(ctx context.Context, datacenter str
 	return nil
 }
 
-func (p *validator) validateTemplateTags(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
-	tags, err := p.govc.GetTags(ctx, machineConfig.Spec.Template)
+func (v *validator) validateTemplateTags(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
+	tags, err := v.govc.GetTags(ctx, machineConfig.Spec.Template)
 	if err != nil {
 		return fmt.Errorf("error validating template tags: %v", err)
 	}
@@ -229,18 +255,13 @@ type datastoreUsage struct {
 
 // TODO: cleanup this method signature
 // TODO: dry out implementation
-func (p *validator) validateDatastoreUsage(ctx context.Context, clusterSpec *cluster.Spec, controlPlaneMachineConfig *anywherev1.VSphereMachineConfig, workerNodeGroupMachineConfig *anywherev1.VSphereMachineConfig, etcdMachineConfig *anywherev1.VSphereMachineConfig) error {
+func (v *validator) validateDatastoreUsage(ctx context.Context, clusterSpec *cluster.Spec, controlPlaneMachineConfig *anywherev1.VSphereMachineConfig, workerNodeGroupMachineConfig *anywherev1.VSphereMachineConfig, etcdMachineConfig *anywherev1.VSphereMachineConfig) error {
 	usage := make(map[string]*datastoreUsage)
-	var etcdAvailableSpace float64
-	controlPlaneAvailableSpace, err := p.govc.GetWorkloadAvailableSpace(ctx, controlPlaneMachineConfig) // TODO: remove dependency on machineConfig
+	controlPlaneAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, controlPlaneMachineConfig) // TODO: remove dependency on machineConfig
 	if err != nil {
 		return fmt.Errorf("error getting datastore details: %v", err)
 	}
-	workerAvailableSpace, err := p.govc.GetWorkloadAvailableSpace(ctx, workerNodeGroupMachineConfig)
-	if err != nil {
-		return fmt.Errorf("error getting datastore details: %v", err)
-	}
-	etcdAvailableSpace, err = p.govc.GetWorkloadAvailableSpace(ctx, etcdMachineConfig)
+	workerAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, workerNodeGroupMachineConfig)
 	if err != nil {
 		return fmt.Errorf("error getting datastore details: %v", err)
 	}
@@ -262,6 +283,10 @@ func (p *validator) validateDatastoreUsage(ctx context.Context, clusterSpec *clu
 	}
 
 	if etcdMachineConfig != nil {
+		etcdAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, etcdMachineConfig)
+		if err != nil {
+			return fmt.Errorf("error getting datastore details: %v", err)
+		}
 		etcdNeedGiB := etcdMachineConfig.Spec.DiskGiB * clusterSpec.Spec.ExternalEtcdConfiguration.Count
 		if _, ok := usage[etcdMachineConfig.Spec.Datastore]; ok {
 			usage[etcdMachineConfig.Spec.Datastore].needGiBSpace += etcdNeedGiB
@@ -278,5 +303,60 @@ func (p *validator) validateDatastoreUsage(ctx context.Context, clusterSpec *clu
 			return fmt.Errorf("not enough space in datastore %v for given diskGiB and count for respective machine groups", datastore)
 		}
 	}
+	return nil
+}
+
+func (v *validator) validateThumbprint(ctx context.Context, spec *spec) error {
+	// No need to validate thumbprint in insecure mode
+	if spec.datacenterConfig.Spec.Insecure {
+		return nil
+	}
+
+	// If cert is not self signed, thumbprint is ignored
+	if !v.govc.IsCertSelfSigned(ctx) {
+		return nil
+	}
+
+	if spec.datacenterConfig.Spec.Thumbprint == "" {
+		return fmt.Errorf("thumbprint is required for secure mode with self-signed certificates")
+	}
+
+	thumbprint, err := v.govc.GetCertThumbprint(ctx)
+	if err != nil {
+		return err
+	}
+
+	if thumbprint != spec.datacenterConfig.Spec.Thumbprint {
+		return fmt.Errorf("thumbprint mismatch detected, expected: %s, actual: %s", spec.datacenterConfig.Spec.Thumbprint, thumbprint)
+	}
+
+	return nil
+}
+
+func (v *validator) validateDatacenter(ctx context.Context, spec *spec) error {
+	datacenter := spec.datacenterConfig.Spec.Datacenter
+	exists, err := v.govc.DatacenterExists(ctx, datacenter)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return fmt.Errorf("datacenter %s not found", datacenter)
+	}
+
+	return nil
+}
+
+func (v *validator) validateNetwork(ctx context.Context, spec *spec) error {
+	network := spec.datacenterConfig.Spec.Network
+	exists, err := v.govc.NetworkExists(ctx, network)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return fmt.Errorf("network %s not found", network)
+	}
+
 	return nil
 }

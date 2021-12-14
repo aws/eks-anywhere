@@ -47,9 +47,4 @@ phases:
       -n ${INTEGRATION_TEST_SUBNET_ID}
       -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
       -r 'Test'
-  post_build:
-    commands:
-    - >
-      ./bin/test e2e cleanup vsphere
-      -n i-
-      -v 4
+      --cleanup-vms=true

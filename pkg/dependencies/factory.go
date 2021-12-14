@@ -2,6 +2,7 @@ package dependencies
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -47,8 +48,10 @@ type Dependencies struct {
 func (d *Dependencies) Close(ctx context.Context) error {
 	closers := []types.Closer{d.Govc, d.DockerClient, d.Kubectl, d.Kind, d.Clusterctl, d.Flux, d.Troubleshoot}
 	for _, c := range closers {
-		if err := c.Close(ctx); err != nil {
-			return err
+		if !reflect.ValueOf(c).IsNil() {
+			if err := c.Close(ctx); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -132,8 +135,8 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 	return f
 }
 
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool) *Factory {
-	f.WithProviderFactory()
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string) *Factory {
+	f.WithProviderFactory(clusterConfig)
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Provider != nil {
@@ -141,7 +144,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 		}
 
 		var err error
-		f.dependencies.Provider, err = f.providerFactory.BuildProvider(clusterConfigFile, clusterConfig, skipIpCheck)
+		f.dependencies.Provider, err = f.providerFactory.BuildProvider(clusterConfigFile, clusterConfig, skipIpCheck, hardwareConfigFile)
 		if err != nil {
 			return err
 		}
@@ -152,8 +155,13 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	return f
 }
 
-func (f *Factory) WithProviderFactory() *Factory {
-	f.WithDocker().WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
+func (f *Factory) WithProviderFactory(clusterConfig *v1alpha1.Cluster) *Factory {
+	switch clusterConfig.Spec.DatacenterRef.Kind {
+	case v1alpha1.VSphereDatacenterKind:
+		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
+	case v1alpha1.DockerDatacenterKind:
+		f.WithDocker().WithKubectl()
+	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.providerFactory != nil {

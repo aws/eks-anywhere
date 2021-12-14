@@ -91,6 +91,17 @@ The cluster reconciler won’t continue with the reconciliation process until `V
 
 `VSphereMachineConfig` requires similar validations to the datacenter config object. We will apply the same pattern, having a separate reconciler for `VSphereMachineConfig` , the status and only reconciling the cluster once they have been validated.
 
+### vSphere credentials
+
+Until now everything has been run from the cli, so we always used the credentials set in the local env vars.
+
+In order to interact with vCenter from the controller, we need the credentials to be available there: either injected in the controller on start up or available to be retrieved dynamically.
+We choose the later, the controller will retrieve the vSphere credentials from a secret. This secret is created by the CLI during the management cluster creation.
+
+We won't support multiple sets of credentials and the controller will always default to the same credentials used to create the management cluster.
+
+However this is a feature we can easily build on top of this design. We would have multiple secrets and open our API to be able to specify one set of credentials or the other (something like a reference to a secret). This would preserve backwards compatibility with the design we propose: if no credentials are specified, the controller will default to the ones used by the management cluster.
+
 ### New ClusterStatus 
 
 The [current Cluster Status](https://github.com/aws/eks-anywhere/blob/v0.6.0/pkg/api/v1alpha1/cluster_types.go#L287)will be modified to include extra fields and conditions. These will be used by the reconciler methods to trigger the appropriate actions and to allow users to check progress of operations.

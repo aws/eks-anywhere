@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -8,6 +9,86 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+func TestValidateClusterName(t *testing.T) {
+	tests := []struct {
+		clusterName, name string
+		wantErr           error
+	}{
+		{
+			name:        "FailureSpecialChars",
+			clusterName: "test-cluster@123_",
+			wantErr:     errors.New("test-cluster@123_ is not a valid cluster name, cluster names must start with lowercase/uppercase letters and can include numbers and dashes. For instance 'testCluster-123' is a valid name but '123testCluster' is not. "),
+		},
+		{
+			name:        "FailureDotChars",
+			clusterName: "test-cluster1.20",
+			wantErr:     errors.New("test-cluster1.20 is not a valid cluster name, cluster names must start with lowercase/uppercase letters and can include numbers and dashes. For instance 'testCluster-123' is a valid name but '123testCluster' is not. "),
+		},
+		{
+			name:        "FailureFirstCharNumeric",
+			clusterName: "123test-Cluster",
+			wantErr:     errors.New("123test-Cluster is not a valid cluster name, cluster names must start with lowercase/uppercase letters and can include numbers and dashes. For instance 'testCluster-123' is a valid name but '123testCluster' is not. "),
+		},
+		{
+			name:        "SuccessUpperCaseChars",
+			clusterName: "test-Cluster",
+			wantErr:     nil,
+		},
+		{
+			name:        "SuccessLowerCase",
+			clusterName: "test-cluster",
+			wantErr:     nil,
+		},
+		{
+			name:        "SuccessLowerCaseDashNumeric",
+			clusterName: "test-cluster123",
+			wantErr:     nil,
+		},
+		{
+			name:        "SuccessLowerCaseNumeric",
+			clusterName: "test123cluster",
+			wantErr:     nil,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			got := ValidateClusterName(tc.clusterName)
+			if !reflect.DeepEqual(tc.wantErr, got) {
+				t.Errorf("%v got = %v, want %v", tc.name, got, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestClusterNameLength(t *testing.T) {
+	tests := []struct {
+		clusterName, name string
+		wantErr           error
+	}{
+
+		{
+			name:        "SuccessClusterNameLength",
+			clusterName: "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm",
+			wantErr:     nil,
+		},
+		{
+			name:        "FailureClusterNameLength",
+			clusterName: "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm12345",
+			wantErr:     errors.New("number of characters in qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm12345 should be less than 81"),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(tt *testing.T) {
+			got := ValidateClusterNameLength(tc.clusterName)
+			if !reflect.DeepEqual(tc.wantErr, got) {
+				t.Errorf("%v got = %v, want %v", tc.name, got, tc.wantErr)
+			}
+		})
+	}
+}
 
 func TestGetAndValidateClusterConfig(t *testing.T) {
 	tests := []struct {
@@ -468,6 +549,12 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 		{
 			testName:    "invalid kind",
 			fileName:    "testdata/cluster_invalid_kinds.yaml",
+			wantCluster: nil,
+			wantErr:     true,
+		},
+		{
+			testName:    "invalid cluster name",
+			fileName:    "testdata/cluster_invalid_cluster_name.yaml",
 			wantCluster: nil,
 			wantErr:     true,
 		},

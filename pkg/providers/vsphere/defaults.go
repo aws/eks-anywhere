@@ -44,6 +44,8 @@ func setDefaultsForDatacenterConfig(datacenterConfig *anywherev1.VSphereDatacent
 		logger.Info("Warning: VSphereDatacenterConfig configured in insecure mode")
 		datacenterConfig.Spec.Thumbprint = ""
 	}
+
+	datacenterConfig.Spec.Network = generateFullVCenterPath(networkFolderType, datacenterConfig.Spec.Network, datacenterConfig.Spec.Datacenter)
 }
 
 func setDefaultsForEtcdMachineConfig(machineConfig *anywherev1.VSphereMachineConfig) {

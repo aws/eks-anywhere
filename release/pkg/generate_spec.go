@@ -24,7 +24,6 @@ import (
 	"github.com/pkg/errors"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -136,6 +135,14 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		return nil, errors.Wrapf(err, "Error getting bundle for Bottlerocket admin container")
 	}
 
+	var tinkerbellBundle anywherev1alpha1.TinkerbellBundle
+	if r.DevRelease && r.BuildRepoBranchName == "main" {
+		tinkerbellBundle, err = r.GetTinkerbellBundle(imageDigests)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting bundle for Tinkerbell infrastructure provider")
+		}
+	}
+
 	eksDReleaseMap, err := readEksDReleases(r)
 	if err != nil {
 		return nil, err
@@ -191,6 +198,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			ExternalEtcdController: etcdadmControllerBundle,
 			BottleRocketBootstrap:  bottlerocketBootstrapBundle,
 			BottleRocketAdmin:      bottlerocketAdminBundle,
+			Tinkerbell:             tinkerbellBundle,
 		}
 		versionsBundles = append(versionsBundles, versionsBundle)
 	}
@@ -238,6 +246,10 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		"etcdadm":                      r.GetEtcdadmAssets,
 		"cri-tools":                    r.GetCriToolsAssets,
 		"diagnostic-collector":         r.GetDiagnosticCollectorAssets,
+	}
+
+	if r.DevRelease && r.BuildRepoBranchName == "main" {
+		eksAArtifactsFuncs["cluster-api-provider-tinkerbell"] = r.GetCaptAssets
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
@@ -576,8 +588,7 @@ func (r *ReleaseConfig) GetPreviousReleaseImageSemver(releaseImageUri string) (s
 			}
 
 			for _, versionedBundle := range bundles.Spec.VersionsBundles {
-				vb := &cluster.VersionsBundle{VersionsBundle: &versionedBundle}
-				vbImages := vb.Images()
+				vbImages := versionedBundle.Images()
 				for _, image := range vbImages {
 					if strings.Contains(image.URI, releaseImageUri) {
 						imageUri := image.URI

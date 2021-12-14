@@ -75,6 +75,7 @@ type VersionsBundle struct {
 	BottleRocketAdmin      BottlerocketAdminBundle     `json:"bottlerocketAdmin"`
 	ExternalEtcdBootstrap  EtcdadmBootstrapBundle      `json:"etcdadmBootstrap"`
 	ExternalEtcdController EtcdadmControllerBundle     `json:"etcdadmController"`
+	Tinkerbell             TinkerbellBundle            `json:"tinkerbell"`
 }
 
 type EksDRelease struct {
@@ -229,4 +230,12 @@ type EtcdadmControllerBundle struct {
 	KubeProxy  Image    `json:"kubeProxy"`
 	Components Manifest `json:"components"`
 	Metadata   Manifest `json:"metadata"`
+}
+
+type TinkerbellBundle struct {
+	Version              string   `json:"version"`
+	ClusterAPIController Image    `json:"clusterAPIController"`
+	Components           Manifest `json:"components"`
+	Metadata             Manifest `json:"metadata"`
+	ClusterTemplate      Manifest `json:"clusterTemplate"`
 }

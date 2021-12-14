@@ -10,7 +10,9 @@ REPO_ROOT="${2?Specify second argument - repo root directory}"
 PROJECT_PATH="${3? Specify third argument - project path}"
 BUILD_IDENTIFIER="${4? Specify fourth argument - build identifier}"
 GIT_HASH="${5?Specify fifth argument - git hash of the tar builds}"
-DRY_RUN="${6?Specify sixth argument - Dry run upload}"
+OS_LIST_CSV="${6?Specify sixth argument - comma-separated list of operating systems for CLI build}"
+ARCH_LIST_CSV="${7?Specify fifth argument - comma-separated list of architectures for CLI build}"
+DRY_RUN="${8?Specify sixth argument - Dry run upload}"
 
 REPO="eksctl-anywhere"
 BINARY_PATH="bin"
@@ -98,21 +100,19 @@ function build::cli::upload() {
   fi
 }
 
-SUPPORTED_PLATFORMS=(
-  "linux/amd64"
-  "darwin/amd64"
-)
+OS_LIST=($(echo $OS_LIST_CSV | tr "," "\n"))
+ARCH_LIST=($(echo $ARCH_LIST_CSV | tr "," "\n"))
 
-for platform in "${SUPPORTED_PLATFORMS[@]}"; do
-  OS="$(cut -d '/' -f1 <<< ${platform})"
-  ARCH="$(cut -d '/' -f2 <<< ${platform})"
-  TAR_FILE="${REPO}-${OS}-${ARCH}.tar.gz"
-  CLI_ARTIFACTS_PATH="cli-artifacts/${OS}/${ARCH}"
-  mkdir -p $TAR_PATH/$OS/$ARCH
-  mkdir -p $CLI_ARTIFACTS_PATH
+for OS in "${OS_LIST[@]}"; do
+  for ARCH in "${ARCH_LIST[@]}"; do
+    TAR_FILE="${REPO}-${OS}-${ARCH}.tar.gz"
+    CLI_ARTIFACTS_PATH="cli-artifacts/${OS}/${ARCH}"
+    mkdir -p $TAR_PATH/$OS/$ARCH
+    mkdir -p $CLI_ARTIFACTS_PATH
 
-  build::cli::move_artifacts $OS $ARCH $CLI_ARTIFACTS_PATH
-  build::cli::create_tarball $OS $ARCH $TAR_FILE $TAR_PATH $CLI_ARTIFACTS_PATH
-  build::cli::generate_shasum $TAR_PATH $OS $ARCH
+    build::cli::move_artifacts $OS $ARCH $CLI_ARTIFACTS_PATH
+    build::cli::create_tarball $OS $ARCH $TAR_FILE $TAR_PATH $CLI_ARTIFACTS_PATH
+    build::cli::generate_shasum $TAR_PATH $OS $ARCH
+  done
 done
 build::cli::upload ${TAR_PATH} ${ARTIFACTS_BUCKET} ${PROJECT_PATH} ${BUILD_IDENTIFIER} ${GIT_HASH}

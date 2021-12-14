@@ -17,8 +17,9 @@ import (
 
 type deleteClusterOptions struct {
 	clusterOptions
-	wConfig      string
-	forceCleanup bool
+	wConfig          string
+	forceCleanup     bool
+	hardwareFileName string
 }
 
 var dc = &deleteClusterOptions{}
@@ -90,14 +91,14 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck).
+		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName).
 		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
 		WithWriter().
 		Build(ctx)
 	if err != nil {
 		return err
 	}
-	defer cleanup(ctx, deps, err)
+	defer cleanup(ctx, deps, &err)
 
 	deleteCluster := workflows.NewDelete(
 		deps.Bootstrapper,
