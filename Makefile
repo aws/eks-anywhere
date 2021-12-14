@@ -171,7 +171,7 @@ $(KUBEBUILDER): $(TOOLS_BIN_DIR)
 	chmod +x $(KUBEBUILDER)
 
 $(CONTROLLER_GEN): $(TOOLS_BIN_DIR)
-	cd $(TOOLS_BIN_DIR); $(GO) build -tags=tools -o $(CONTROLLER_GEN_BIN) sigs.k8s.io/controller-tools/cmd/controller-gen
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1)
 
 $(SETUP_ENVTEST): $(TOOLS_BIN_DIR)
 	cd $(TOOLS_BIN_DIR); $(GO) build -tags=tools -o $(SETUP_ENVTEST_BIN) sigs.k8s.io/controller-runtime/tools/setup-envtest
@@ -467,3 +467,18 @@ release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) $(CONTROLLER_M
 .PHONY: run-controller # Run eksa controller from local repo with tilt
 run-controller:
 	tilt up --file controllers/Tiltfile
+
+# go-get-tool will 'go get' any package $2 and install it to $1.
+# originally copied from kubebuilder
+define go-get-tool
+@[ -f $(1) ] || { \
+set -e ;\
+BIN_PATH=$$(realpath $$(dirname $(1))) ;\
+PKG_BIN_NAME=$$(echo "$(2)" | sed 's,^.*/\(.*\)@v.*$$,\1,') ;\
+BIN_NAME=$$(basename $(1)) ;\
+echo "Install dir $$BIN_PATH" ;\
+echo "Downloading $(2)" ;\
+GOBIN=$$BIN_PATH go install $(2) ;\
+[[ $$PKG_BIN_NAME == $$BIN_NAME ]] || mv -f $$BIN_PATH/$$PKG_BIN_NAME $$BIN_PATH/$$BIN_NAME ;\
+}
+endef
