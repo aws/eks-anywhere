@@ -7,7 +7,7 @@ description: >
   How to license your cluster.
 ---
 
-If you are are licensing an existing cluster, apply the following secret to your cluster:
+If you are are licensing an existing cluster, apply the following secret to your cluster (replacing `my-license-here` with your license):
 
    ```bash
    kubectl apply -f - <<EOF 
