@@ -16,6 +16,7 @@ package pkg
 
 import (
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -148,23 +149,19 @@ func (r *ReleaseConfig) GetAwsBundle(imageDigests map[string]string) (anywherev1
 		"cluster-api-provider-aws": r.BundleArtifactsTable["cluster-api-provider-aws"],
 		"kube-rbac-proxy":          r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
+	sortedComponentNames := sortArtifactsMap(awsBundleArtifacts)
 
-	var version string
+	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
+	artifactHashes := []string{}
 
-	for componentName, artifacts := range awsBundleArtifacts {
-		for _, artifact := range artifacts {
+	for _, componentName := range sortedComponentNames {
+		for _, artifact := range awsBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
 				if componentName == "cluster-api-provider-aws" {
-					componentVersion, err := BuildComponentVersion(
-						newVersionerWithGITTAG(r.BuildRepoSource, capaProjectPath, imageArtifact.SourcedFromBranch, r),
-					)
-					if err != nil {
-						return anywherev1alpha1.AwsBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-aws")
-					}
-					version = componentVersion
+					sourceBranch = imageArtifact.SourcedFromBranch
 				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
@@ -175,6 +172,7 @@ func (r *ReleaseConfig) GetAwsBundle(imageDigests map[string]string) (anywherev1
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -184,8 +182,24 @@ func (r *ReleaseConfig) GetAwsBundle(imageDigests map[string]string) (anywherev1
 				}
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+
+				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+				if err != nil {
+					return anywherev1alpha1.AwsBundle{}, err
+				}
+				manifestHash := generateManifestHash(manifestContents)
+				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}
+	}
+
+	componentChecksum := generateComponentHash(artifactHashes)
+	version, err := BuildComponentVersion(
+		newVersionerWithGITTAG(r.BuildRepoSource, capaProjectPath, sourceBranch, r),
+		componentChecksum,
+	)
+	if err != nil {
+		return anywherev1alpha1.AwsBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-aws")
 	}
 
 	bundle := anywherev1alpha1.AwsBundle{

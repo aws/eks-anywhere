@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -406,4 +407,14 @@ func ExistsInS3(bucket string, key string) bool {
 	}
 
 	return true
+}
+
+func sortArtifactsMap(m map[string][]Artifact) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	return keys
 }

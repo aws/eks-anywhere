@@ -16,8 +16,9 @@ package pkg
 
 import (
 	"fmt"
-
 	"github.com/pkg/errors"
+	"io/ioutil"
+	"path/filepath"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -29,22 +30,19 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 		"kube-vip":                     r.BundleArtifactsTable["kube-vip"],
 		"vsphere-csi-driver":           r.BundleArtifactsTable["vsphere-csi-driver"],
 	}
+	sortedComponentNames := sortArtifactsMap(vsphereBundleArtifacts)
 
-	var version string
+	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifacts := range vsphereBundleArtifacts {
-		for _, artifact := range artifacts {
+	artifactHashes := []string{}
+
+	for _, componentName := range sortedComponentNames {
+		for _, artifact := range vsphereBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
 				if componentName == "cluster-api-provider-vsphere" {
-					componentVersion, err := BuildComponentVersion(
-						newVersionerWithGITTAG(r.BuildRepoSource, capvProjectPath, imageArtifact.SourcedFromBranch, r),
-					)
-					if err != nil {
-						return anywherev1alpha1.VSphereBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-vsphere")
-					}
-					version = componentVersion
+					sourceBranch = imageArtifact.SourcedFromBranch
 				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
@@ -55,6 +53,7 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -64,6 +63,13 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 				}
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+
+				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+				if err != nil {
+					return anywherev1alpha1.VSphereBundle{}, err
+				}
+				manifestHash := generateManifestHash(manifestContents)
+				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}
 	}
@@ -82,6 +88,16 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 			ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 		}
 		bundleImageArtifacts[imageArtifact.AssetName] = bundleArtifact
+		artifactHashes = append(artifactHashes, bundleArtifact.ImageDigest)
+	}
+
+	componentChecksum := generateComponentHash(artifactHashes)
+	version, err := BuildComponentVersion(
+		newVersionerWithGITTAG(r.BuildRepoSource, capvProjectPath, sourceBranch, r),
+		componentChecksum,
+	)
+	if err != nil {
+		return anywherev1alpha1.VSphereBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-vsphere")
 	}
 
 	bundle := anywherev1alpha1.VSphereBundle{

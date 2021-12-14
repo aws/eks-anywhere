@@ -16,7 +16,6 @@ package pkg
 
 import (
 	"fmt"
-
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -71,22 +70,13 @@ func (r *ReleaseConfig) GetFluxAssets() ([]Artifact, error) {
 func (r *ReleaseConfig) GetFluxBundle(imageDigests map[string]string) (anywherev1alpha1.FluxBundle, error) {
 	artifacts := r.BundleArtifactsTable["flux"]
 
-	var version string
+	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
+	artifactHashes := []string{}
+
 	for _, artifact := range artifacts {
 		imageArtifact := artifact.Image
-		componentVersion, err := BuildComponentVersion(
-			newMultiProjectVersionerWithGITTAG(r.BuildRepoSource,
-				fluxcdRootPath,
-				flux2ProjectPath,
-				imageArtifact.SourcedFromBranch,
-				r,
-			),
-		)
-		if err != nil {
-			return anywherev1alpha1.FluxBundle{}, errors.Wrap(err, "failed generating version for flux bundle")
-		}
-		version = componentVersion
+		sourceBranch = imageArtifact.SourcedFromBranch
 
 		bundleImageArtifact := anywherev1alpha1.Image{
 			Name:        imageArtifact.AssetName,
@@ -98,6 +88,21 @@ func (r *ReleaseConfig) GetFluxBundle(imageDigests map[string]string) (anywherev
 		}
 
 		bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+		artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
+	}
+
+	componentChecksum := generateComponentHash(artifactHashes)
+	version, err := BuildComponentVersion(
+		newMultiProjectVersionerWithGITTAG(r.BuildRepoSource,
+			fluxcdRootPath,
+			flux2ProjectPath,
+			sourceBranch,
+			r,
+		),
+		componentChecksum,
+	)
+	if err != nil {
+		return anywherev1alpha1.FluxBundle{}, errors.Wrap(err, "failed generating version for flux bundle")
 	}
 
 	bundle := anywherev1alpha1.FluxBundle{

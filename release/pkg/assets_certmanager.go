@@ -16,7 +16,6 @@ package pkg
 
 import (
 	"fmt"
-
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -81,18 +80,13 @@ func (r *ReleaseConfig) GetCertManagerAssets() ([]Artifact, error) {
 func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (anywherev1alpha1.CertManagerBundle, error) {
 	artifacts := r.BundleArtifactsTable["cert-manager"]
 
-	var version string
+	var sourceBranch string
 	bundleArtifacts := map[string]anywherev1alpha1.Image{}
+	artifactHashes := []string{}
 
 	for _, artifact := range artifacts {
 		imageArtifact := artifact.Image
-		componentVersion, err := BuildComponentVersion(
-			newVersionerWithGITTAG(r.BuildRepoSource, certManagerProjectPath, imageArtifact.SourcedFromBranch, r),
-		)
-		if err != nil {
-			return anywherev1alpha1.CertManagerBundle{}, errors.Wrapf(err, "Error getting version for cert-manager")
-		}
-		version = componentVersion
+		sourceBranch = imageArtifact.SourcedFromBranch
 
 		bundleArtifact := anywherev1alpha1.Image{
 			Name:        imageArtifact.AssetName,
@@ -104,6 +98,16 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 		}
 
 		bundleArtifacts[imageArtifact.AssetName] = bundleArtifact
+		artifactHashes = append(artifactHashes, bundleArtifact.ImageDigest)
+	}
+
+	componentChecksum := generateComponentHash(artifactHashes)
+	version, err := BuildComponentVersion(
+		newVersionerWithGITTAG(r.BuildRepoSource, certManagerProjectPath, sourceBranch, r),
+		componentChecksum,
+	)
+	if err != nil {
+		return anywherev1alpha1.CertManagerBundle{}, errors.Wrapf(err, "Error getting version for cert-manager")
 	}
 
 	bundle := anywherev1alpha1.CertManagerBundle{

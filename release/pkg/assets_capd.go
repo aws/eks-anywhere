@@ -16,6 +16,7 @@ package pkg
 
 import (
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -129,22 +130,19 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 		"cluster-api-provider-docker": r.BundleArtifactsTable["cluster-api-provider-docker"],
 		"kube-rbac-proxy":             r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
+	sortedComponentNames := sortArtifactsMap(dockerBundleArtifacts)
 
-	var version string
+	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifacts := range dockerBundleArtifacts {
-		for _, artifact := range artifacts {
+	artifactHashes := []string{}
+
+	for _, componentName := range sortedComponentNames {
+		for _, artifact := range dockerBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
 				if componentName == "cluster-api-provider-docker" {
-					componentVersion, err := BuildComponentVersion(
-						newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, imageArtifact.SourcedFromBranch, r),
-					)
-					if err != nil {
-						return anywherev1alpha1.DockerBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-docker")
-					}
-					version = componentVersion
+					sourceBranch = imageArtifact.SourcedFromBranch
 				}
 
 				bundleImageArtifact := anywherev1alpha1.Image{
@@ -156,6 +154,7 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -165,8 +164,24 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 				}
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+
+				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+				if err != nil {
+					return anywherev1alpha1.DockerBundle{}, err
+				}
+				manifestHash := generateManifestHash(manifestContents)
+				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}
+	}
+
+	componentChecksum := generateComponentHash(artifactHashes)
+	version, err := BuildComponentVersion(
+		newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
+		componentChecksum,
+	)
+	if err != nil {
+		return anywherev1alpha1.DockerBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")
 	}
 
 	bundle := anywherev1alpha1.DockerBundle{

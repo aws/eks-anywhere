@@ -63,7 +63,6 @@ type ReleaseConfig struct {
 
 type projectVersioner interface {
 	patchVersion() (string, error)
-	buildMetadata() (string, error)
 }
 
 // GetVersionsBundles will build the entire bundle manifest from the
