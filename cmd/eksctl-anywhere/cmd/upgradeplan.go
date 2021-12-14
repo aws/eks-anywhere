@@ -86,8 +86,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	componentChangeDiffs := eksaupgrader.EksaChangeDiff(currentSpec, newClusterSpec)
 	componentChangeDiffs.Append(fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec))
 
-	capiChangeDiff := capiupgrader.CapiChangeDiff(currentSpec, newClusterSpec, deps.Provider)
-	componentChangeDiffs.Append(capiupgrader.ToChangeDiff(capiChangeDiff))
+	componentChangeDiffs.Append(capiupgrader.CapiChangeDiff(currentSpec, newClusterSpec, deps.Provider))
 
 	if componentChangeDiffs == nil {
 		fmt.Println("All the components are up to date with the latest versions")
