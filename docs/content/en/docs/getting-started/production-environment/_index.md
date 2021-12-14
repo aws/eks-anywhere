@@ -56,7 +56,7 @@ Make sure you use single quotes around the values so that your shell does not in
 
 1. Set License Environment Variable
 
-   If you are creating a licensed cluster, set and export the license variable:
+   If you are creating a licensed cluster, set and export the license variable (see [License cluster]({{< relref "/docs/tasks/cluster/cluster-license" >}}) for an example of a cluster license secret):
 
    ```bash
    export EKSA_LICENSE='my-license-here'
