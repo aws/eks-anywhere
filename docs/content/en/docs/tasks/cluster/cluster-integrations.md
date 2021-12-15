@@ -19,14 +19,14 @@ The solutions listed on this page have not been tested by AWS and are not covere
 
 | Feature                       | Example third-party tools                 |
 |-------------------------------|-------------------------------------------|
-| Ingress controller            | [Emissary-ingress](https://www.getambassador.io/products/api-gateway/) (previously Ambassador)          |
+| Ingress controller            | [Gloo Edge](https://www.solo.io/products/gloo-edge/), [Emissary-ingress](https://www.getambassador.io/products/api-gateway/) (previously Ambassador)          |
 | Service type load balancer    | [KubeVip]({{< relref "../workload/loadbalance/kubevip/_index.md#current-recommendation-kube-vip" >}}) or [MetalLB]({{< relref "../workload/loadbalance/metallb.md#alternatives" >}})|
 | Local container repository    | [Harbor](https://goharbor.io/)                                    |
 | Monitoring                    | [Prometheus](https://sysdig.com/products/monitor/prometheus-monitoring/), [Grafana](https://grafana.com/), [Datadog](https://www.datadoghq.com/blog/monitoring-kubernetes-with-datadog/), or [NewRelic](https://newrelic.com/platform/kubernetes/monitoring-guide) |
 | Logging                 | [Splunk](https://www.splunk.com/en_us/blog/platform/introducing-the-splunk-operator-for-kubernetes.html) or [Fluentbit](https://fluentbit.io/kubernetes/)                                    |
 | Secret management             | [Hashi Vault](https://www.vaultproject.io/docs/platform/k8s)                               |
 | Policy agent                  | [Open Policy Agent](https://www.openpolicyagent.org/docs/latest/kubernetes-introduction/)                                       |
-| Service mesh                  | [Linkerd](https://linkerd.io/) or [Istio](https://istio.io/)                         |
+| Service mesh                  | [Istio](https://istio.io/), [Gloo Mesh](https://www.solo.io/products/gloo-mesh/), or [Linkerd](https://linkerd.io/)                         |
 | Cost management               | [KubeCost](https://www.kubecost.com/)                                  |
 | Etcd backup and restore       | [Velero](https://velero.io/)                                    |
 | Storage                       | Default storage class, any compatible CSI |
