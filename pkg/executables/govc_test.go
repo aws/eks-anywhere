@@ -379,11 +379,7 @@ func TestGovcGetWorkloadAvailableSpace(t *testing.T) {
 			_, writer := test.NewWriter(t)
 			fileContent := test.ReadFile(t, tt.jsonResponseFile)
 			env := govcEnvironment
-			providerConfig := &v1alpha1.VSphereMachineConfig{
-				Spec: v1alpha1.VSphereMachineConfigSpec{
-					Datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore",
-				},
-			}
+			datastore := "/SDDC-Datacenter/datastore/WorkloadDatastore"
 
 			ctx := context.Background()
 			mockCtrl := gomock.NewController(t)
@@ -393,10 +389,10 @@ func TestGovcGetWorkloadAvailableSpace(t *testing.T) {
 			defer tctx.RestoreContext()
 
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
-			params := []string{"datastore.info", "-json=true", providerConfig.Spec.Datastore}
+			params := []string{"datastore.info", "-json=true", datastore}
 			executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(*bytes.NewBufferString(fileContent), nil)
 			g := executables.NewGovc(executable, writer)
-			freeSpace, err := g.GetWorkloadAvailableSpace(ctx, providerConfig)
+			freeSpace, err := g.GetWorkloadAvailableSpace(ctx, datastore)
 			if err != nil {
 				t.Fatalf("Govc.GetWorkloadAvailableSpace() error: %v", err)
 			}

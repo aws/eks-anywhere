@@ -63,7 +63,7 @@ func (pc *DummyProviderGovcClient) TemplateHasSnapshot(ctx context.Context, temp
 	return false, nil
 }
 
-func (pc *DummyProviderGovcClient) GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1alpha1.VSphereMachineConfig) (float64, error) {
+func (pc *DummyProviderGovcClient) GetWorkloadAvailableSpace(ctx context.Context, datastore string) (float64, error) {
 	return math.MaxFloat64, nil
 }
 

@@ -257,11 +257,11 @@ type datastoreUsage struct {
 // TODO: dry out implementation
 func (v *validator) validateDatastoreUsage(ctx context.Context, clusterSpec *cluster.Spec, controlPlaneMachineConfig *anywherev1.VSphereMachineConfig, workerNodeGroupMachineConfig *anywherev1.VSphereMachineConfig, etcdMachineConfig *anywherev1.VSphereMachineConfig) error {
 	usage := make(map[string]*datastoreUsage)
-	controlPlaneAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, controlPlaneMachineConfig) // TODO: remove dependency on machineConfig
+	controlPlaneAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, controlPlaneMachineConfig.Spec.Datastore) // TODO: remove dependency on machineConfig
 	if err != nil {
 		return fmt.Errorf("error getting datastore details: %v", err)
 	}
-	workerAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, workerNodeGroupMachineConfig)
+	workerAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, workerNodeGroupMachineConfig.Spec.Datastore)
 	if err != nil {
 		return fmt.Errorf("error getting datastore details: %v", err)
 	}
@@ -283,7 +283,7 @@ func (v *validator) validateDatastoreUsage(ctx context.Context, clusterSpec *clu
 	}
 
 	if etcdMachineConfig != nil {
-		etcdAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, etcdMachineConfig)
+		etcdAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, etcdMachineConfig.Spec.Datastore)
 		if err != nil {
 			return fmt.Errorf("error getting datastore details: %v", err)
 		}

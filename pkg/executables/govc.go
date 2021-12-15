@@ -235,13 +235,13 @@ type datastoreResponse struct {
 	Datastores []types.Datastores `json:"Datastores"`
 }
 
-func (g *Govc) GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1alpha1.VSphereMachineConfig) (float64, error) {
+func (g *Govc) GetWorkloadAvailableSpace(ctx context.Context, datastore string) (float64, error) {
 	envMap, err := g.validateAndSetupCreds()
 	if err != nil {
 		return 0, fmt.Errorf("failed govc validations: %v", err)
 	}
 
-	params := []string{"datastore.info", "-json=true", machineConfig.Spec.Datastore}
+	params := []string{"datastore.info", "-json=true", datastore}
 	result, err := g.ExecuteWithEnv(ctx, envMap, params...)
 	if err != nil {
 		return 0, fmt.Errorf("error getting datastore info: %v", err)

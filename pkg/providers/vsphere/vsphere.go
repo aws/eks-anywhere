@@ -113,7 +113,7 @@ type ProviderGovcClient interface {
 	GetLibraryElementContentVersion(ctx context.Context, element string) (string, error)
 	DeleteLibraryElement(ctx context.Context, element string) error
 	TemplateHasSnapshot(ctx context.Context, template string) (bool, error)
-	GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1alpha1.VSphereMachineConfig) (float64, error)
+	GetWorkloadAvailableSpace(ctx context.Context, datastore string) (float64, error)
 	ValidateVCenterSetupMachineConfig(ctx context.Context, datacenterConfig *v1alpha1.VSphereDatacenterConfig, machineConfig *v1alpha1.VSphereMachineConfig, selfSigned *bool) error
 	ValidateVCenterConnection(ctx context.Context, server string) error
 	ValidateVCenterAuthentication(ctx context.Context) error

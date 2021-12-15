@@ -200,7 +200,7 @@ func (mr *MockProviderGovcClientMockRecorder) GetTags(arg0, arg1 interface{}) *g
 }
 
 // GetWorkloadAvailableSpace mocks base method.
-func (m *MockProviderGovcClient) GetWorkloadAvailableSpace(arg0 context.Context, arg1 *v1alpha1.VSphereMachineConfig) (float64, error) {
+func (m *MockProviderGovcClient) GetWorkloadAvailableSpace(arg0 context.Context, arg1 string) (float64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetWorkloadAvailableSpace", arg0, arg1)
 	ret0, _ := ret[0].(float64)
