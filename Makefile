@@ -12,7 +12,7 @@ GIT_TAG?=$(shell git describe --tag | cut -d'-' -f1)
 GOLANG_VERSION?="1.16"
 
 ## ensure local execution uses the 'main' branch bundle
-BRANCH_NAME?=main
+BRANCH_NAME?=release-0.6
 ifeq (,$(findstring $(BRANCH_NAME),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${BRANCH_NAME}/bundle-release.yaml
