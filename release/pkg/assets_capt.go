@@ -65,6 +65,13 @@ func (r *ReleaseConfig) GetCaptAssets() ([]Artifact, error) {
 	}
 	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
+	imageTagOverrides := []ImageTagOverride{
+		{
+			Repository: repoName,
+			ReleaseUri: imageArtifact.ReleaseImageURI,
+		},
+	}
+
 	manifestList := []string{
 		"infrastructure-components.yaml",
 		"cluster-template.yaml",
@@ -102,7 +109,7 @@ func (r *ReleaseConfig) GetCaptAssets() ([]Artifact, error) {
 			ReleaseName:       manifest,
 			ReleaseS3Path:     releaseS3Path,
 			ReleaseCdnURI:     cdnURI,
-			ImageTagOverrides: []ImageTagOverride{},
+			ImageTagOverrides: imageTagOverrides,
 			GitTag:            gitTag,
 			ProjectPath:       captProjectPath,
 		}
