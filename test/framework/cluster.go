@@ -401,7 +401,7 @@ func getClusterName(t *testing.T) string {
 		testNameHash := fmt.Sprintf("%x", h.Sum(nil))
 		// Append hash to make each cluster name unique per test. Using the testname will be too long
 		// and would fail validations
-		return fmt.Sprintf("%s-%s", testNameHash[:7], defaultClusterName)
+		return fmt.Sprintf("%s-%s", defaultClusterName, testNameHash[:7])
 	}
 	return value
 }
