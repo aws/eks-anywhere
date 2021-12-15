@@ -5,11 +5,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
+
+	"github.com/aws/eks-anywhere/release/pkg/git"
 )
 
 func BuildComponentVersion(versioner projectVersioner, componentCheckSum string) (string, error) {
@@ -30,10 +31,18 @@ func newVersioner(pathToProject string) *versioner {
 	return &versioner{pathToProject: pathToProject}
 }
 
+func (v *versioner) buildMetadata() (string, error) {
+	out, err := git.GetLatestCommitForPath(v.pathToProject, v.pathToProject)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed executing git log to get build metadata in [%s]", v.pathToProject)
+	}
+
+	return out, nil
+}
+
 func (v *versioner) patchVersion() (string, error) {
 	projectSource := filepath.Join(v.repoSource, v.pathToProject)
-	cmd := exec.Command("git", "-C", projectSource, "describe", "--tag")
-	out, err := execCommand(cmd)
+	out, err := git.DescribeTag(projectSource)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed executing git describe to get version in [%s]", projectSource)
 	}
@@ -91,10 +100,8 @@ func (v *cliVersioner) patchVersion() (string, error) {
 
 func generateComponentHash(hashes []string) string {
 	b := make([][]byte, len(hashes))
-	if hashes != nil {
-		for i, str := range hashes {
-			b[i] = []byte(str)
-		}
+	for i, str := range hashes {
+		b[i] = []byte(str)
 	}
 	joinByteArrays := bytes.Join(b, []byte(""))
 	hash := sha256.Sum256(joinByteArrays)
