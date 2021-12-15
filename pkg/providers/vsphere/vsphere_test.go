@@ -2094,7 +2094,9 @@ func TestSetupAndValidateCreateClusterTemplateDoesNotExist(t *testing.T) {
 	tt := newProviderTest(t)
 
 	tt.setExpectationForSetup()
-	tt.govc.EXPECT().SearchTemplate(tt.ctx, gomock.Any(), gomock.Any()).Return("", nil)
+	for _, mc := range tt.machineConfigs {
+		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc).Return("", nil).MaxTimes(1)
+	}
 
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 
@@ -2106,7 +2108,9 @@ func TestSetupAndValidateCreateClusterErrorCheckingTemplate(t *testing.T) {
 	errorMessage := "failed getting template"
 
 	tt.setExpectationForSetup()
-	tt.govc.EXPECT().SearchTemplate(tt.ctx, gomock.Any(), gomock.Any()).Return("", errors.New(errorMessage))
+	for _, mc := range tt.machineConfigs {
+		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc).Return("", errors.New(errorMessage)).MaxTimes(1)
+	}
 
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 
