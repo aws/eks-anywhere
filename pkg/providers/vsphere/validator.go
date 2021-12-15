@@ -9,16 +9,19 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 type validator struct {
-	govc ProviderGovcClient
+	govc      ProviderGovcClient
+	netClient networkutils.NetClient
 }
 
-func newValidator(govc ProviderGovcClient) *validator {
+func newValidator(govc ProviderGovcClient, netClient networkutils.NetClient) *validator {
 	return &validator{
-		govc: govc,
+		govc:      govc,
+		netClient: netClient,
 	}
 }
 
@@ -358,5 +361,13 @@ func (v *validator) validateNetwork(ctx context.Context, spec *spec) error {
 		return fmt.Errorf("network %s not found", network)
 	}
 
+	return nil
+}
+
+func (v *validator) validateControlPlaneIpUniqueness(spec *spec) error {
+	ip := spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
+	if !networkutils.NewIPGenerator(v.netClient).IsIPUnique(ip) {
+		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
+	}
 	return nil
 }
