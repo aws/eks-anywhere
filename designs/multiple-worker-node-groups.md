@@ -219,7 +219,7 @@ For each worker node groups, CAPI spec file will continue to have the following 
 
 For each group, we will append these three aforementioned fields corresponding to that group in the CAPI spec.
 
-Right now, the cli assumes that there will be only one group and it treats worker node group configuration array as a collection of only one element. As a result, the controller just refers to the first element of this array in different places of the code. So we need to do the same operations in loops, which includes CAPI spec creation, cluster spec validation etc. Once a CAPI spec is created with this approach, the workload cluster will be created with multiple worker nodes. We will use an array of CAPI objects to store the worker node group configurations and then generate CAPI spec file using that array.
+Right now, the cli assumes that there will be only one group and it treats worker node group configuration array as a collection of only one element. As a result, the controller just refers to the first element of this array in different places of the code. So we need to do the same operations in loops, which includes CAPI spec creation, cluster spec validation etc. Once a CAPI spec is created with this approach, the workload cluster will be created with multiple worker nodes. We will create a struct with these three CAPI object types and use an array of that struct to store the worker node group configurations and then generate CAPI spec file using that array. The definitions of these object types can be found in CAPI and CAPV code bases.
 
 Also, it needs to be made sure that at the least one of the worker node groups does not have `NoExecute` or `NoSchedule` taint. This validation will be done at the preflight validation stage.
 
