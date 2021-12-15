@@ -32,9 +32,6 @@ func (vb *VersionsBundle) Manifests() map[string][]Manifest {
 		"cilium": {
 			vb.Cilium.Manifest,
 		},
-		"kindnetd": {
-			vb.Kindnetd.Manifest,
-		},
 		"eks-anywhere-cluster-controller": {
 			vb.Eksa.Components,
 		},

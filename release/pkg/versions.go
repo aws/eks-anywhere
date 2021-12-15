@@ -2,11 +2,12 @@ package pkg
 
 import (
 	"fmt"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
+
+	"github.com/aws/eks-anywhere/release/pkg/git"
 )
 
 func BuildComponentVersion(versioner projectVersioner) (string, error) {
@@ -33,8 +34,7 @@ func newVersioner(pathToProject string) *versioner {
 }
 
 func (v *versioner) buildMetadata() (string, error) {
-	cmd := exec.Command("git", "-C", v.pathToProject, "log", "--pretty=format:%h", "-n1", v.pathToProject)
-	out, err := execCommand(cmd)
+	out, err := git.GetLatestCommitForPath(v.pathToProject, v.pathToProject)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed executing git log to get build metadata in [%s]", v.pathToProject)
 	}
@@ -44,8 +44,7 @@ func (v *versioner) buildMetadata() (string, error) {
 
 func (v *versioner) patchVersion() (string, error) {
 	projectSource := filepath.Join(v.repoSource, v.pathToProject)
-	cmd := exec.Command("git", "-C", projectSource, "describe", "--tag")
-	out, err := execCommand(cmd)
+	out, err := git.DescribeTag(projectSource)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed executing git describe to get version in [%s]", projectSource)
 	}
@@ -86,14 +85,13 @@ func (v *versionerWithGITTAG) patchVersion() (string, error) {
 }
 
 func (v *versionerWithGITTAG) buildMetadata() (string, error) {
-	_, err := checkoutRepo(v.repoSource, v.sourcedFromBranch)
+	_, err := git.CheckoutRepo(v.repoSource, v.sourcedFromBranch)
 	if err != nil {
 		return "", errors.Cause(err)
 	}
 
 	projectSource := filepath.Join(v.repoSource, v.pathToProject)
-	cmd := exec.Command("git", "-C", projectSource, "log", "--pretty=format:%h", "-n1", projectSource)
-	out, err := execCommand(cmd)
+	out, err := git.GetLatestCommitForPath(projectSource, projectSource)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed executing git log to get build metadata in [%s]", projectSource)
 	}

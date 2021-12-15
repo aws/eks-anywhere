@@ -16,11 +16,12 @@ package pkg
 
 import (
 	"fmt"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
+
+	"github.com/aws/eks-anywhere/release/pkg/git"
 )
 
 const eksAnywhereProjectPath = "projects/aws/eks-anywhere"
@@ -30,8 +31,7 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 	var gitTag string
 	if r.DevRelease {
 		// Get git tag
-		cmd := exec.Command("git", "-C", r.CliRepoSource, "describe", "--tag")
-		out, err := execCommand(cmd)
+		out, err := git.DescribeTag(r.CliRepoSource)
 		if err != nil {
 			return nil, errors.Cause(err)
 		}
