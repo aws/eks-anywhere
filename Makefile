@@ -474,7 +474,7 @@ $(RELEASE_DIR):
 release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) $(CONTROLLER_MANIFEST_OUTPUT_DIR)
 	# Build core-components.
 	$(KUSTOMIZE) build config/prod > $(RELEASE_DIR)/$(RELEASE_MANIFEST_TARGET)
-	cp eksa-components.yaml $(CONTROLLER_MANIFEST_OUTPUT_DIR)
+	cp $(RELEASE_DIR)/$(RELEASE_MANIFEST_TARGET) $(CONTROLLER_MANIFEST_OUTPUT_DIR)
 
 .PHONY: run-controller # Run eksa controller from local repo with tilt
 run-controller:
