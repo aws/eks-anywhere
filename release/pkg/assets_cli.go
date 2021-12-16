@@ -33,13 +33,14 @@ func (r *ReleaseConfig) GetEksACliArtifacts() ([]Artifact, error) {
 	for _, os := range osList {
 		releaseName := fmt.Sprintf("eksctl-anywhere-%s-%s-%s.tar.gz", r.ReleaseVersion, os, arch)
 
+		latestPath := getLatestUploadDestination(r.CliRepoBranchName)
 		var sourceS3Key string
 		var sourceS3Prefix string
 		var releaseS3Path string
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
 			sourceS3Key = fmt.Sprintf("eksctl-anywhere-%s-%s.tar.gz", os, arch)
-			sourceS3Prefix = fmt.Sprintf("eks-a-cli/%s/%s/%s", r.CliRepoBranchName, os, arch)
+			sourceS3Prefix = fmt.Sprintf("eks-a-cli/%s/%s/%s", latestPath, os, arch)
 		} else {
 			sourceS3Key = fmt.Sprintf("eksctl-anywhere-%s-%s-%s.tar.gz", r.ReleaseVersion, os, arch)
 			sourceS3Prefix = fmt.Sprintf("releases/eks-a/%d/artifacts/eks-a/%s/%s/%s", r.ReleaseNumber, r.ReleaseVersion, os, arch)
