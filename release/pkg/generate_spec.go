@@ -22,9 +22,18 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"sigs.k8s.io/yaml"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/aws/ecr"
+	"github.com/aws/eks-anywhere/release/pkg/aws/ecrpublic"
+	"github.com/aws/eks-anywhere/release/pkg/aws/s3"
+	"github.com/aws/eks-anywhere/release/pkg/clients"
+	"github.com/aws/eks-anywhere/release/pkg/images"
+	"github.com/aws/eks-anywhere/release/pkg/utils"
 )
+
+const SuccessIcon = "✅"
 
 // ReleaseConfig contains metadata fields for a release
 type ReleaseConfig struct {
@@ -33,12 +42,14 @@ type ReleaseConfig struct {
 	BundleNumber             int
 	CliMinVersion            string
 	CliMaxVersion            string
+	CliRepoUrl               string
 	CliRepoSource            string
 	CliRepoHead              string
+	CliRepoBranchName        string
+	BuildRepoUrl             string
 	BuildRepoSource          string
 	BuildRepoHead            string
 	BuildRepoBranchName      string
-	CliRepoBranchName        string
 	ArtifactDir              string
 	SourceBucket             string
 	ReleaseBucket            string
@@ -48,7 +59,12 @@ type ReleaseConfig struct {
 	ReleaseNumber            int
 	ReleaseDate              time.Time
 	DevRelease               bool
+	DryRun                   bool
 	ReleaseEnvironment       string
+	SourceClients            *clients.SourceClients
+	ReleaseClients           *clients.ReleaseClients
+	BundleArtifactsTable     map[string][]Artifact
+	EksAArtifactsTable       map[string][]Artifact
 }
 
 type projectVersioner interface {
@@ -132,7 +148,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 	}
 
 	for channel, release := range eksDReleaseMap {
-		if channel == "latest" || !existsInList(channel, bottlerocketSupportedK8sVersions) {
+		if channel == "latest" || !utils.SliceContains(bottlerocketSupportedK8sVersions, channel) {
 			continue
 		}
 		releaseNumber := release.(map[interface{}]interface{})["number"]
@@ -182,22 +198,25 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 }
 
 func (r *ReleaseConfig) GenerateBundleSpec(bundles *anywherev1alpha1.Bundles, imageDigests map[string]string) error {
-	fmt.Println("Generating versions bundles")
+	fmt.Println("\n==========================================================")
+	fmt.Println("               Bundles Manifest Spec Generation")
+	fmt.Println("==========================================================")
 	versionsBundles, err := r.GetVersionsBundles(imageDigests)
-	fmt.Println(versionsBundles)
 	if err != nil {
 		return err
 	}
 
 	bundles.Spec.VersionsBundles = versionsBundles
+
+	fmt.Printf("%s Successfully generated bundle manifest spec\n", SuccessIcon)
 	return nil
 }
 
-// GetArtifactsData will get asset information for each component
-// This information will be used to download them (in case of dev release)
-// Rename them, create the manifest and to upload the artifacts to the
-// proper location in S3 or ECR.
-func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) {
+func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, error) {
+	fmt.Println("\n==========================================================")
+	fmt.Println("              Bundle Artifacts Table Generation")
+	fmt.Println("==========================================================")
+
 	artifactsTable := map[string][]Artifact{}
 	eksAArtifactsFuncs := map[string]func() ([]Artifact, error){
 		"eks-a-tools":                  r.GetEksAToolsAssets,
@@ -240,7 +259,7 @@ func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) 
 		return nil, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
 	}
 	for channel, release := range eksDReleaseMap {
-		if channel == "latest" || !existsInList(channel, bottlerocketSupportedK8sVersions) {
+		if channel == "latest" || !utils.SliceContains(bottlerocketSupportedK8sVersions, channel) {
 			continue
 		}
 		releaseNumber := release.(map[interface{}]interface{})["number"]
@@ -250,7 +269,7 @@ func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) 
 		kubeVersion := release.(map[interface{}]interface{})["kubeVersion"]
 		kubeVersionStr := kubeVersion.(string)
 
-		artifacts, err := r.GetEksDChannelAssets(channel, kubeVersionStr, releaseNumberStr)
+		eksDChannelArtifacts, err := r.GetEksDChannelAssets(channel, kubeVersionStr, releaseNumberStr)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", channel)
 		}
@@ -266,7 +285,7 @@ func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) 
 		}
 
 		eksDComponentName := fmt.Sprintf("eks-d-%s", channel)
-		artifactsTable[eksDComponentName] = artifacts
+		artifactsTable[eksDComponentName] = eksDChannelArtifacts
 
 		vSphereCloudProviderComponentName := fmt.Sprintf("cloud-provider-vsphere-%s", channel)
 		artifactsTable[vSphereCloudProviderComponentName] = vSphereCloudProviderArtifacts
@@ -275,10 +294,16 @@ func (r *ReleaseConfig) GetBundleArtifactsData() (map[string][]Artifact, error) 
 		artifactsTable[bottlerocketBootstrapComponentName] = bottlerocketBootstrapArtifacts
 	}
 
+	fmt.Printf("%s Successfully generated bundle artifacts table\n", SuccessIcon)
+
 	return artifactsTable, nil
 }
 
-func (r *ReleaseConfig) GetEksAArtifactsData() (map[string][]Artifact, error) {
+func (r *ReleaseConfig) GenerateEksAArtifactsTable() (map[string][]Artifact, error) {
+	fmt.Println("\n==========================================================")
+	fmt.Println("                 EKS-A Artifacts Table Generation")
+	fmt.Println("==========================================================")
+
 	artifactsTable := map[string][]Artifact{}
 	artifacts, err := r.GetEksACliArtifacts()
 	if err != nil {
@@ -286,6 +311,8 @@ func (r *ReleaseConfig) GetEksAArtifactsData() (map[string][]Artifact, error) {
 	}
 
 	artifactsTable["eks-a-cli"] = artifacts
+
+	fmt.Printf("%s Successfully generated EKS-A artifacts table\n", SuccessIcon)
 
 	return artifactsTable, nil
 }
@@ -300,10 +327,11 @@ func (r *ReleaseConfig) GetURI(path string) (string, error) {
 	return uri.String(), nil
 }
 
-func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[string]string) string {
+func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[string]string) (string, string, error) {
 	var sourceImageUri string
+	sourcedFromBranch := r.BuildRepoBranchName
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
-		latestTag := r.getLatestUploadDestination()
+		latestTag := getLatestUploadDestination(r.BuildRepoBranchName)
 		if name == "bottlerocket-bootstrap" {
 			sourceImageUri = fmt.Sprintf("%s/%s:v%s-%s-%s",
 				r.SourceContainerRegistry,
@@ -334,6 +362,28 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 				repoName,
 				latestTag,
 			)
+		}
+		if !r.DryRun {
+			sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
+			err := images.PollForExistence(r.DevRelease, sourceEcrAuthConfig, sourceImageUri, r.SourceContainerRegistry, r.ReleaseEnvironment, r.BuildRepoBranchName)
+			if err != nil {
+				if r.BuildRepoBranchName != "main" {
+					fmt.Printf("Tag corresponding to %s branch not found for %s image. Using image artifact from main\n", r.BuildRepoBranchName, repoName)
+					var gitTagFromMain string
+					if name == "bottlerocket-bootstrap" {
+						gitTagFromMain = "non-existent"
+					} else {
+						gitTagFromMain, err = r.readGitTag(tagOptions["projectPath"], "main")
+						if err != nil {
+							return "", "", errors.Cause(err)
+						}
+					}
+					sourceImageUri = strings.NewReplacer(r.BuildRepoBranchName, "latest", tagOptions["gitTag"], gitTagFromMain).Replace(sourceImageUri)
+					sourcedFromBranch = "main"
+				} else {
+					return "", "", errors.Cause(err)
+				}
+			}
 		}
 	} else if r.ReleaseEnvironment == "production" {
 		if name == "bottlerocket-bootstrap" {
@@ -385,81 +435,165 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 		}
 	}
 
-	return sourceImageUri
+	return sourceImageUri, sourcedFromBranch, nil
 }
 
-func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map[string]string) string {
+func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map[string]string) (string, error) {
 	var releaseImageUri string
-	var semVer string
-	if r.DevRelease {
-		semVer = r.DevReleaseUriVersion
-	} else {
-		semVer = fmt.Sprintf("%d", r.BundleNumber)
-	}
 
 	if name == "bottlerocket-bootstrap" {
-		releaseImageUri = fmt.Sprintf("%s/%s:v%s-%s-eks-a-%s",
+		releaseImageUri = fmt.Sprintf("%s/%s:v%s-%s-eks-a",
 			r.ReleaseContainerRegistry,
 			repoName,
 			tagOptions["eksDReleaseChannel"],
 			tagOptions["eksDReleaseNumber"],
-			semVer,
 		)
 	} else if name == "cloud-provider-vsphere" {
-		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-eks-a-%s",
+		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-eks-a",
 			r.ReleaseContainerRegistry,
 			repoName,
 			tagOptions["gitTag"],
 			tagOptions["eksDReleaseChannel"],
-			semVer,
 		)
 	} else if name == "eks-anywhere-cluster-controller" {
 		if r.DevRelease {
-			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a-%s",
+			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a",
 				r.ReleaseContainerRegistry,
 				repoName,
-				semVer,
 			)
 		} else {
-			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%s",
+			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
 				r.ReleaseContainerRegistry,
 				repoName,
 				r.ReleaseVersion,
-				semVer,
 			)
 		}
 	} else if name == "eks-anywhere-diagnostic-collector" {
 		if r.DevRelease {
-			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a-%s",
+			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a",
 				r.ReleaseContainerRegistry,
 				repoName,
-				semVer,
 			)
 		} else {
-			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%s",
+			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
 				r.ReleaseContainerRegistry,
 				repoName,
 				r.ReleaseVersion,
-				semVer,
 			)
 		}
 	} else if name == "kind-node" {
-		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-%s-eks-a-%s",
+		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-%s-eks-a",
 			r.ReleaseContainerRegistry,
 			repoName,
 			tagOptions["kubeVersion"],
 			tagOptions["eksDReleaseChannel"],
 			tagOptions["eksDReleaseNumber"],
-			semVer,
 		)
 	} else {
-		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%s",
+		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
 			r.ReleaseContainerRegistry,
 			repoName,
 			tagOptions["gitTag"],
-			semVer,
 		)
 	}
 
-	return releaseImageUri
+	var semver string
+	if r.DevRelease {
+		currentSourceImageUri, _, err := r.GetSourceImageURI(name, repoName, tagOptions)
+		if err != nil {
+			return "", errors.Cause(err)
+		}
+
+		previousReleaseImageSemver, err := r.GetPreviousReleaseImageSemver(releaseImageUri)
+		if err != nil {
+			return "", errors.Cause(err)
+		}
+		if previousReleaseImageSemver == "" {
+			semver = r.DevReleaseUriVersion
+		} else {
+			fmt.Printf("Previous release image semver for %s image: %s\n", repoName, previousReleaseImageSemver)
+			previousReleaseImageUri := fmt.Sprintf("%s-%s", releaseImageUri, previousReleaseImageSemver)
+
+			sameDigest, err := r.CompareHashWithPreviousBundle(currentSourceImageUri, previousReleaseImageUri)
+			if err != nil {
+				return "", errors.Cause(err)
+			}
+			if sameDigest {
+				semver = previousReleaseImageSemver
+				fmt.Printf("Image digest for %s image has not changed, tagging with previous dev release semver: %s\n", repoName, semver)
+			} else {
+				newSemver, err := generateNewDevReleaseVersion(previousReleaseImageSemver, "vDev", r.BuildRepoBranchName)
+				if err != nil {
+					return "", errors.Cause(err)
+				}
+				semver = strings.ReplaceAll(newSemver, "+", "-")
+				fmt.Printf("Image digest for %s image has changed, tagging with new dev release semver: %s\n", repoName, semver)
+			}
+		}
+	} else {
+		semver = fmt.Sprintf("%d", r.BundleNumber)
+	}
+
+	releaseImageUri = fmt.Sprintf("%s-%s", releaseImageUri, semver)
+
+	return releaseImageUri, nil
+}
+
+func (r *ReleaseConfig) CompareHashWithPreviousBundle(currentSourceImageUri, previousReleaseImageUri string) (bool, error) {
+	if r.DryRun {
+		return false, nil
+	}
+	fmt.Printf("Comparing digests for [%s] and [%s]\n", currentSourceImageUri, previousReleaseImageUri)
+	currentSourceImageUriDigest, err := ecr.GetImageDigest(currentSourceImageUri, r.SourceContainerRegistry, r.SourceClients.ECR.EcrClient)
+	if err != nil {
+		return false, errors.Cause(err)
+	}
+
+	previousReleaseImageUriDigest, err := ecrpublic.GetImageDigest(previousReleaseImageUri, r.ReleaseContainerRegistry, r.ReleaseClients.ECRPublic.Client)
+	if err != nil {
+		return false, errors.Cause(err)
+	}
+
+	return currentSourceImageUriDigest == previousReleaseImageUriDigest, nil
+}
+
+func (r *ReleaseConfig) GetPreviousReleaseImageSemver(releaseImageUri string) (string, error) {
+	var semver string
+	if r.DryRun {
+		semver = "v0.0.0-dev-build.0"
+	} else {
+		bundles := &anywherev1alpha1.Bundles{}
+		bundleReleaseManifestKey := utils.GetManifestFilepaths(r.DevRelease, r.BundleNumber, anywherev1alpha1.BundlesKind, r.BuildRepoBranchName)
+		bundleManifestUrl := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", r.ReleaseBucket, bundleReleaseManifestKey)
+		if s3.KeyExists(r.ReleaseBucket, bundleReleaseManifestKey) {
+			contents, err := ReadHttpFile(bundleManifestUrl)
+			if err != nil {
+				return "", fmt.Errorf("Error reading bundle manifest from S3: %v", err)
+			}
+
+			if err = yaml.Unmarshal(contents, bundles); err != nil {
+				return "", fmt.Errorf("Error unmarshaling bundles manifest from [%s]: %v", bundleManifestUrl, err)
+			}
+
+			for _, versionedBundle := range bundles.Spec.VersionsBundles {
+				vbImages := versionedBundle.Images()
+				for _, image := range vbImages {
+					if strings.Contains(image.URI, releaseImageUri) {
+						imageUri := image.URI
+						var differential int
+						if r.BuildRepoBranchName == "main" {
+							differential = 1
+						} else {
+							differential = 2
+						}
+						numDashes := strings.Count(imageUri, "-")
+						splitIndex := numDashes - strings.Count(r.BuildRepoBranchName, "-") - differential
+						imageUriSplit := strings.SplitAfterN(imageUri, "-", splitIndex)
+						semver = imageUriSplit[len(imageUriSplit)-1]
+					}
+				}
+			}
+		}
+	}
+	return semver, nil
 }

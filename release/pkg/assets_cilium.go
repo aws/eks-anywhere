@@ -23,22 +23,24 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const ciliumProjectPath = "projects/cilium/cilium"
+
 // GetCiliumAssets returns the eks-a artifacts for Cilium
 func (r *ReleaseConfig) GetCiliumAssets() ([]Artifact, error) {
-	gitTag, err := r.getCiliumGitTag()
+	gitTag, err := r.readGitTag(ciliumProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
 
 	manifestName := "cilium.yaml"
-	artifacts := []Artifact{}
 
 	var sourceS3Prefix string
 	var releaseS3Path string
-	latestPath := r.getLatestUploadDestination()
+	sourcedFromBranch := r.BuildRepoBranchName
+	latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
-		sourceS3Prefix = fmt.Sprintf("projects/cilium/cilium/%s/manifests/cilium/%s", latestPath, gitTag)
+		sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/cilium/%s", ciliumProjectPath, latestPath, gitTag)
 	} else {
 		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cilium/manifests/cilium/%s", r.BundleNumber, gitTag)
 	}
@@ -64,20 +66,20 @@ func (r *ReleaseConfig) GetCiliumAssets() ([]Artifact, error) {
 		ReleaseS3Path:     releaseS3Path,
 		ReleaseCdnURI:     cdnURI,
 		ImageTagOverrides: []ImageTagOverride{},
+		GitTag:            gitTag,
+		ProjectPath:       ciliumProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
+	artifacts := []Artifact{Artifact{Manifest: manifestArtifact}}
 
 	return artifacts, nil
 }
 
 func (r *ReleaseConfig) GetCiliumBundle() (anywherev1alpha1.CiliumBundle, error) {
-	artifacts, err := r.GetCiliumAssets()
-	if err != nil {
-		return anywherev1alpha1.CiliumBundle{}, errors.Cause(err)
-	}
+	artifacts := r.BundleArtifactsTable["cilium"]
 
 	ciliumContainerRegistry := "public.ecr.aws/isovalent"
-	ciliumGitTag, err := r.getCiliumGitTag()
+	ciliumGitTag, err := r.readGitTag(ciliumProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return anywherev1alpha1.CiliumBundle{}, errors.Cause(err)
 	}
@@ -126,17 +128,6 @@ func (r *ReleaseConfig) GetCiliumBundle() (anywherev1alpha1.CiliumBundle, error)
 	}
 
 	return bundle, nil
-}
-
-func (r *ReleaseConfig) getCiliumGitTag() (string, error) {
-	projectSource := "projects/cilium/cilium"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-
-	return gitTag, nil
 }
 
 func (r *ReleaseConfig) getCiliumImageDigest(imageName string) (string, error) {

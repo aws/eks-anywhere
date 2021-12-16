@@ -24,4 +24,6 @@ testbin/*
 *.swo
 *~
 
+# Directory of artifacts downloaded during release
+downloaded-artifacts
 latest-dev-release-version

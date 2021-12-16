@@ -21,13 +21,13 @@ import (
 	"github.com/pkg/errors"
 )
 
+const etcdadmProjectPath = "projects/kubernetes-sigs/etcdadm"
+
 // GetEtcdadmAssets returns the eks-a artifacts for etcdadm
 func (r *ReleaseConfig) GetEtcdadmAssets() ([]Artifact, error) {
 	os := "linux"
 	arch := "amd64"
-	projectSource := "projects/kubernetes-sigs/etcdadm"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
+	gitTag, err := r.readGitTag(etcdadmProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -36,11 +36,12 @@ func (r *ReleaseConfig) GetEtcdadmAssets() ([]Artifact, error) {
 	var sourceS3Prefix string
 	var releaseS3Path string
 	var releaseName string
-	latestPath := r.getLatestUploadDestination()
+	sourcedFromBranch := r.BuildRepoBranchName
+	latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		sourceS3Key = fmt.Sprintf("etcdadm-%s-%s-%s.tar.gz", os, arch, gitTag)
-		sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/etcdadm/%s", latestPath)
+		sourceS3Prefix = fmt.Sprintf("%s/%s", etcdadmProjectPath, latestPath)
 	} else {
 		sourceS3Key = fmt.Sprintf("etcdadm-%s-%s.tar.gz", os, arch)
 		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/etcdadm/%s", r.BundleNumber, gitTag)
@@ -58,19 +59,21 @@ func (r *ReleaseConfig) GetEtcdadmAssets() ([]Artifact, error) {
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
-	artifacts := []Artifact{}
 
 	archiveArtifact := &ArchiveArtifact{
-		SourceS3Key:    sourceS3Key,
-		SourceS3Prefix: sourceS3Prefix,
-		ArtifactPath:   filepath.Join(r.ArtifactDir, "etcdadm", r.BuildRepoHead),
-		ReleaseName:    releaseName,
-		ReleaseS3Path:  releaseS3Path,
-		ReleaseCdnURI:  cdnURI,
-		OS:             os,
-		Arch:           []string{arch},
+		SourceS3Key:       sourceS3Key,
+		SourceS3Prefix:    sourceS3Prefix,
+		ArtifactPath:      filepath.Join(r.ArtifactDir, "etcdadm", r.BuildRepoHead),
+		ReleaseName:       releaseName,
+		ReleaseS3Path:     releaseS3Path,
+		ReleaseCdnURI:     cdnURI,
+		OS:                os,
+		Arch:              []string{arch},
+		GitTag:            gitTag,
+		ProjectPath:       etcdadmProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts = append(artifacts, Artifact{Archive: archiveArtifact})
+	artifacts := []Artifact{Artifact{Archive: archiveArtifact}}
 
 	return artifacts, nil
 }

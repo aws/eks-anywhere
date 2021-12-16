@@ -22,6 +22,8 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const bottlerocketBootstrapProjectPath = "projects/aws/bottlerocket-boostrap"
+
 // GetBottlerocketBootstrapAssets returns the eks-a artifacts for Bottlerocket bootstrap container
 func (r *ReleaseConfig) GetBottlerocketBootstrapAssets(eksDReleaseChannel, eksDReleaseNumber string) ([]Artifact, error) {
 	name := "bottlerocket-bootstrap"
@@ -29,14 +31,26 @@ func (r *ReleaseConfig) GetBottlerocketBootstrapAssets(eksDReleaseChannel, eksDR
 	tagOptions := map[string]string{
 		"eksDReleaseChannel": eksDReleaseChannel,
 		"eksDReleaseNumber":  eksDReleaseNumber,
+		"gitTag":             "non-existent",
+	}
+
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
 	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, repoName, tagOptions),
-		Arch:            []string{"amd64"},
-		OS:              "linux",
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		ProjectPath:       bottlerocketBootstrapProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
 
 	artifact := Artifact{Image: imageArtifact}
@@ -45,10 +59,7 @@ func (r *ReleaseConfig) GetBottlerocketBootstrapAssets(eksDReleaseChannel, eksDR
 }
 
 func (r *ReleaseConfig) GetBottlerocketBootstrapBundle(eksDReleaseChannel, eksDReleaseNumber string, imageDigests map[string]string) (anywherev1alpha1.BottlerocketBootstrapBundle, error) {
-	artifacts, err := r.GetBottlerocketBootstrapAssets(eksDReleaseChannel, eksDReleaseNumber)
-	if err != nil {
-		return anywherev1alpha1.BottlerocketBootstrapBundle{}, errors.Cause(err)
-	}
+	artifacts := r.BundleArtifactsTable[fmt.Sprintf("bottlerocket-bootstrap-%s-%s", eksDReleaseChannel, eksDReleaseNumber)]
 
 	bundleArtifacts := map[string]anywherev1alpha1.Image{}
 
