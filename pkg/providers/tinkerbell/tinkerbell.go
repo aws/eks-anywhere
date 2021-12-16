@@ -55,7 +55,9 @@ type tinkerbellProvider struct {
 }
 
 // TODO: Add necessary kubectl functions here
-type ProviderKubectlClient interface{}
+type ProviderKubectlClient interface {
+	ApplyHardware(ctx context.Context, hardwareYaml string, kubeConfFile string) error
+}
 
 func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, now types.NowFunc, hardwareConfigFile string) *tinkerbellProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
@@ -105,6 +107,10 @@ func (p *tinkerbellProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClu
 
 func (p *tinkerbellProvider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO: figure out if we need something else here
+	err := p.providerKubectlClient.ApplyHardware(ctx, p.hardwareConfigFile, cluster.KubeconfigFile)
+	if err != nil {
+		return fmt.Errorf("error applying hardware yaml: %v", err)
+	}
 	return nil
 }
 
