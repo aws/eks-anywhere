@@ -25,7 +25,7 @@ Select Administration->Access Control->Global Permissions. Select the desired Us
 
 ## EKS Anywhere vSphere User Permissions
 
-Below are the permissions needed by the role assigned to an EKS Anywhere vSphere user to be able to successfully create/update/delete EKS-A clusters.
+Below are the permissions needed by the role assigned to an EKS Anywhere vSphere user to be able to successfully create/update/delete EKS Anywhere clusters.
 
 ### Content Library
 
