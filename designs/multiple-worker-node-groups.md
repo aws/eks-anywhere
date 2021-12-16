@@ -223,6 +223,8 @@ Right now, the cli assumes that there will be only one group and it treats worke
 
 Also, it needs to be made sure that at the least one of the worker node groups does not have `NoExecute` or `NoSchedule` taint. This validation will be done at the preflight validation stage.
 
+To delete a worker node group, we will first drain the worker node group and then set the replica count for that group to 0 in CAPI spec file. Upon applying the CAPI spec on the workload cluster, that node group will be deleted.
+
 The examples in this design are for vsphere provider. But the same strategy applies for other providers as well.
 
 ## Testing
