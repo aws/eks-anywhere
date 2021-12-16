@@ -320,8 +320,7 @@ func TestVSphereKubernetes120BottlerocketCreateWithLatestReleaseUpgradeWithMain(
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 	)
 	runUpgradeFlowDiffCliVersionFromMain(
 		test,
@@ -335,8 +334,7 @@ func TestVSphereKubernetes121BottlerocketCreateWithLatestReleaseUpgradeWithMain(
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 	)
 	runUpgradeFlowDiffCliVersionFromMain(
 		test,
@@ -350,8 +348,7 @@ func TestVSphereKubernetes120UbuntuCreateWithLatestReleaseUpgradeWithMain(t *tes
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 	)
 	runUpgradeFlowDiffCliVersionFromMain(
 		test,
@@ -365,8 +362,7 @@ func TestVSphereKubernetes121UbuntuCreateWithLatestReleaseUpgradeWithMain(t *tes
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 	)
 	runUpgradeFlowDiffCliVersionFromMain(
 		test,
@@ -380,8 +376,7 @@ func TestDockerKubernetes121CreateWithLatestReleaseUpgradeWithMain(t *testing.T)
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 	)
 	runUpgradeFlowDiffCliVersionFromMain(
 		test,
