@@ -16,7 +16,7 @@ Go to Administration->Access Control->Roles. Click on '+' to add a new role. Sel
 ### Modify Role Permissions
 
 In order to modify permissions on an existing role, 
-Go to Administration->Access Control->Roles. Select the desired role and click on the 'Edit role action' icon that resembles a pencil. Select the desired permissions category from the left panel, and specific permissions within the category using the checkbox items on the right panel.
+go to Administration->Access Control->Roles. Select the desired role and click on the 'Edit role action' icon that resembles a pencil. Select the desired permissions category from the left panel, and specific permissions within the category using the checkbox items on the right panel.
 
 ### Assign Role to User/Group
 
