@@ -49,28 +49,17 @@ func GetLatestMinorReleaseBinaryFromVersion(releaseBranchVersion *semver.Version
 	if err != nil {
 		return "", err
 	}
-	var latestPrevMinorRelease *releasev1alpha1.EksARelease
-	latestPrevMinorReleaseVersion, err := semver.New("0.0.0")
+	targetRelease := &releasev1alpha1.EksARelease{
+		Version:           "",
+		BundleManifestUrl: "",
+	}
+
+	release, err := getLatestPrevMinorRelease(releases, releaseBranchVersion, targetRelease)
 	if err != nil {
 		return "", err
 	}
 
-	for _, release := range releases.Spec.Releases {
-		releaseVersion, err := semver.New(release.Version)
-		if err != nil {
-			return "", err
-		}
-		if releaseVersion.LessThan(releaseBranchVersion) && releaseVersion.Minor != releaseBranchVersion.Minor && releaseVersion.GreaterThan(latestPrevMinorReleaseVersion) {
-			latestPrevMinorRelease = &release
-			latestPrevMinorReleaseVersion = releaseVersion
-		}
-	}
-
-	if latestPrevMinorRelease == nil {
-		return "", fmt.Errorf("releases manifest doesn't contain a version of the previous minor release")
-	}
-
-	binaryPath, err = getBinary(latestPrevMinorRelease)
+	binaryPath, err = getBinary(release)
 	if err != nil {
 		return "", fmt.Errorf("failed getting binary for latest previous minor release: %s", err)
 	}
@@ -86,10 +75,7 @@ func GetReleaseBinaryFromVersion(version *semver.Version) (binaryPath string, er
 
 	var targetVersion *releasev1alpha1.EksARelease
 	for _, release := range releases.Spec.Releases {
-		releaseVersion, err := semver.New(release.Version)
-		if err != nil {
-			return "", err
-		}
+		releaseVersion := newVersion(release.Version)
 		if releaseVersion == version {
 			targetVersion = &release
 		}
@@ -110,7 +96,7 @@ func getBinary(release *releasev1alpha1.EksARelease) (string, error) {
 	latestReleaseBinaryPath := filepath.Join(latestReleaseBinaryFolder, releaseBinaryName)
 
 	if !validations.FileExists(latestReleaseBinaryPath) {
-		logger.Info("Downloading binary for EKS-A release [%s] to path ./%s", r.Version, latestReleaseBinaryPath)
+		logger.Info("Downloading binary for EKS-A release", r.Version, latestReleaseBinaryPath)
 		err := os.MkdirAll(latestReleaseBinaryFolder, os.ModePerm)
 		if err != nil {
 			return "", fmt.Errorf("failed creating directory ./%s: %s", latestReleaseBinaryFolder, err)
@@ -152,4 +138,22 @@ func prodReleases() (release *releasev1alpha1.Release, err error) {
 		return nil, err
 	}
 	return releases, nil
+}
+
+func getLatestPrevMinorRelease(releases *releasev1alpha1.Release, releaseBranchVersion *semver.Version, targetRelease *releasev1alpha1.EksARelease) (*releasev1alpha1.EksARelease, error) {
+	latestPrevMinorReleaseVersion := newVersion("0.0.0")
+
+	for _, release := range releases.Spec.Releases {
+		releaseVersion := newVersion(release.Version)
+		if releaseVersion.LessThan(releaseBranchVersion) && releaseVersion.Minor != releaseBranchVersion.Minor && releaseVersion.GreaterThan(latestPrevMinorReleaseVersion) {
+			*targetRelease = release
+			latestPrevMinorReleaseVersion = releaseVersion
+		}
+	}
+
+	if targetRelease == nil {
+		return nil, fmt.Errorf("releases manifest doesn't contain a version of the previous minor release")
+	}
+
+	return targetRelease, nil
 }

@@ -18,7 +18,13 @@ func withKubeconfig(kubeconfigFile string) CommandOpt {
 func ExecuteWithEksaVersion(version *semver.Version) CommandOpt {
 	return func(binaryPath *string, args *[]string) (err error) {
 		b, err := GetReleaseBinaryFromVersion(version)
+		if err != nil {
+			return err
+		}
 		*binaryPath = b
+		if err = setEksctlVersionEnvVar(); err != nil {
+			return err
+		}
 		return err
 	}
 }
@@ -26,7 +32,13 @@ func ExecuteWithEksaVersion(version *semver.Version) CommandOpt {
 func ExecuteWithLatestMinorReleaseFromVersion(version *semver.Version) CommandOpt {
 	return func(binaryPath *string, args *[]string) (err error) {
 		b, err := GetLatestMinorReleaseBinaryFromVersion(version)
+		if err != nil {
+			return err
+		}
 		*binaryPath = b
+		if err = setEksctlVersionEnvVar(); err != nil {
+			return err
+		}
 		return err
 	}
 }
@@ -34,7 +46,13 @@ func ExecuteWithLatestMinorReleaseFromVersion(version *semver.Version) CommandOp
 func ExecuteWithLatestMinorReleaseFromMain() CommandOpt {
 	return func(binaryPath *string, args *[]string) (err error) {
 		b, err := GetLatestMinorReleaseBinaryFromMain()
+		if err != nil {
+			return err
+		}
 		*binaryPath = b
+		if err = setEksctlVersionEnvVar(); err != nil {
+			return err
+		}
 		return err
 	}
 }
