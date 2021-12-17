@@ -11,8 +11,20 @@ GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git describe --tag | cut -d'-' -f1)
 GOLANG_VERSION?="1.16"
 
-RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
+## ensure local execution uses the 'main' branch bundle
+BRANCH_NAME?=release-0.6
+ifeq (,$(findstring $(BRANCH_NAME),main))
+## use the branch-specific bundle manifest if the branch is not 'main'
+BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${BRANCH_NAME}/bundle-release.yaml
+$(info    Using branch-specific BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
+else
+## use the standard bundle manifest if the branch is 'main'
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml
+$(info    Using stanard BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
+endif
+
+RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
+
 DEV_GIT_VERSION:=v0.0.0-dev
 
 AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output text)
@@ -83,8 +95,8 @@ eks-a-embed-config: ## Build a dev release version of eks-a with embed cluster s
 .PHONY: eks-a-cross-platform-embed-latest-config
 eks-a-cross-platform-embed-latest-config: ## Build cross platform dev release versions of eks-a with the latest bundle-release.yaml embedded in cluster spec config
 	curl -L $(BUNDLE_MANIFEST_URL) --output pkg/cluster/config/bundle-release.yaml
-	$(MAKE) eks-a-embed-config GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/eksctl-anywhere
-	$(MAKE) eks-a-embed-config GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/eksctl-anywhere
+	$(MAKE) eks-a-embed-config GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/amd64/eksctl-anywhere
+	$(MAKE) eks-a-embed-config GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/amd64/eksctl-anywhere
 	rm pkg/cluster/config/bundle-release.yaml
 
 .PHONY: eks-a
@@ -97,13 +109,13 @@ eks-a-release: ## Generate a release binary
 
 .PHONY: eks-a-cross-platform
 eks-a-cross-platform: ## Generate binaries for Linux and MacOS
-	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/eksctl-anywhere
-	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/eksctl-anywhere
+	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/amd64/eksctl-anywhere
+	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION) GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/amd64/eksctl-anywhere
 
 .PHONY: eks-a-release-cross-platform
 eks-a-release-cross-platform: ## Generate binaries for Linux and MacOS
-	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/eksctl-anywhere LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'
-	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/eksctl-anywhere LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'
+	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/amd64/eksctl-anywhere LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'
+	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/amd64/eksctl-anywhere LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'
 
 $(TOOLS_BIN_DIR):
 	mkdir -p $(TOOLS_BIN_DIR)

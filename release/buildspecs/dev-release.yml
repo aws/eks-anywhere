@@ -4,7 +4,6 @@ phases:
   pre_build:
     commands:
     - ./release/scripts/setup.sh
-    - /docker.sh
 
   build:
     commands:

@@ -26,6 +26,7 @@ if [ "$TEST_ROLE_ARN" == "" ]; then
 fi
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
+BIN_FOLDER=$REPO_ROOT/bin
 TEST_REGEX="${1:-TestDockerKubernetes121SimpleFlow}"
 
 cat << EOF > config_file
@@ -45,13 +46,27 @@ export AWS_PROFILE=e2e-docker-test
 unset AWS_ROLE_ARN AWS_WEB_IDENTITY_TOKEN_FILE
 
 BUNDLES_OVERRIDE=false
-if [ -f "$REPO_ROOT/bin/local-bundle-release.yaml" ]; then
+if [ -f "$BIN_FOLDER/local-bundle-release.yaml" ]; then
     BUNDLES_OVERRIDE=true
 fi
-$REPO_ROOT/bin/test e2e run \
+$BIN_FOLDER/test e2e run \
     -a ${INTEGRATION_TEST_AL2_AMI_ID} \
     -s ${INTEGRATION_TEST_STORAGE_BUCKET} \
     -j ${JOB_ID} \
     -i ${INTEGRATION_TEST_INSTANCE_PROFILE} \
     -r ${TEST_REGEX} \
     --bundles-override=${BUNDLES_OVERRIDE}
+
+# Faking cross-platform versioned folders for dry-run
+mkdir -p $BIN_FOLDER/linux/amd64
+cp $BIN_FOLDER/eksctl-anywhere $BIN_FOLDER/linux/amd64/eksctl-anywhere
+
+$REPO_ROOT/cmd/integration_test/build/script/upload_artifacts.sh \
+    "s3://artifacts-bucket" \
+    $REPO_ROOT \
+    "eks-a-cli" \
+    $PROW_JOB_ID \
+    $PULL_PULL_SHA \
+    "linux" \
+    "amd64" \
+    true

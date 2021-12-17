@@ -16,17 +16,13 @@ package pkg
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 )
 
 // GetKindnetdAssets returns the eks-a artifacts for kindnetd
 func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
-	// Get Git tag for the project
-	projectSource := "projects/kubernetes-sigs/kind"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
+	gitTag, err := r.readGitTag(kindProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -34,21 +30,30 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 	name := "kindnetd"
 	repoName := fmt.Sprintf("kubernetes-sigs/kind/%s", name)
 	tagOptions := map[string]string{
-		"gitTag": gitTag,
+		"gitTag":      gitTag,
+		"projectPath": kindProjectPath,
 	}
 
-	artifacts := []Artifact{}
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, repoName, tagOptions),
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-		GitTag:          gitTag,
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       kindProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
-
-	artifacts = append(artifacts, Artifact{Image: imageArtifact})
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
 	return artifacts, nil
 }

@@ -24,9 +24,11 @@ import (
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const capiProjectPath = "projects/kubernetes-sigs/cluster-api"
+
 // GetCAPIAssets returns the eks-a artifacts for cluster-api
 func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
-	gitTag, err := r.getCAPIGitTag()
+	gitTag, err := r.readGitTag(capiProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -38,19 +40,40 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 	}
 
 	componentTagOverrideMap := map[string]ImageTagOverride{}
+	sourcedFromBranch := r.BuildRepoBranchName
 	artifacts := []Artifact{}
 	for _, image := range capiImages {
 		repoName := fmt.Sprintf("kubernetes-sigs/cluster-api/%s", image)
 		tagOptions := map[string]string{
-			"gitTag": gitTag,
+			"gitTag":      gitTag,
+			"projectPath": capiProjectPath,
+		}
+
+		sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(image, repoName, tagOptions)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+		if sourcedFromBranch != r.BuildRepoBranchName {
+			gitTag, err = r.readGitTag(capiProjectPath, sourcedFromBranch)
+			if err != nil {
+				return nil, errors.Cause(err)
+			}
+			tagOptions["gitTag"] = gitTag
+		}
+		releaseImageUri, err := r.GetReleaseImageURI(image, repoName, tagOptions)
+		if err != nil {
+			return nil, errors.Cause(err)
 		}
 
 		imageArtifact := &ImageArtifact{
-			AssetName:       image,
-			SourceImageURI:  r.GetSourceImageURI(image, repoName, tagOptions),
-			ReleaseImageURI: r.GetReleaseImageURI(image, repoName, tagOptions),
-			Arch:            []string{"amd64"},
-			OS:              "linux",
+			AssetName:         image,
+			SourceImageURI:    sourceImageUri,
+			ReleaseImageURI:   releaseImageUri,
+			Arch:              []string{"amd64"},
+			OS:                "linux",
+			GitTag:            gitTag,
+			ProjectPath:       capiProjectPath,
+			SourcedFromBranch: sourcedFromBranch,
 		}
 		artifacts = append(artifacts, Artifact{Image: imageArtifact})
 
@@ -78,10 +101,10 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 			var sourceS3Prefix string
 			var releaseS3Path string
 			var imageTagOverride ImageTagOverride
-			latestPath := r.getLatestUploadDestination()
+			latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 			if r.DevRelease || r.ReleaseEnvironment == "development" {
-				sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api/%s/manifests/%s/%s", latestPath, component, gitTag)
+				sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/%s/%s", capiProjectPath, latestPath, component, gitTag)
 			} else {
 				sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cluster-api/manifests/%s/%s", r.BundleNumber, component, gitTag)
 			}
@@ -115,6 +138,9 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 				ReleaseS3Path:     releaseS3Path,
 				ReleaseCdnURI:     cdnURI,
 				ImageTagOverrides: imageTagOverrides,
+				GitTag:            gitTag,
+				ProjectPath:       capiProjectPath,
+				SourcedFromBranch: sourcedFromBranch,
 			}
 			artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 		}
@@ -124,25 +150,15 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 }
 
 func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) (anywherev1alpha1.CoreClusterAPI, error) {
-	coreClusterAPIBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"cluster-api": r.GetCAPIAssets,
-		"kube-proxy":  r.GetKubeRbacProxyAssets,
+	coreClusterAPIBundleArtifacts := map[string][]Artifact{
+		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
+		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
-	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
-	)
-	if err != nil {
-		return anywherev1alpha1.CoreClusterAPI{}, errors.Wrapf(err, "Error getting version for cluster-api")
-	}
+	var version string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifactFunc := range coreClusterAPIBundleArtifactsFuncs {
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.CoreClusterAPI{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
-
+	for componentName, artifacts := range coreClusterAPIBundleArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
@@ -150,6 +166,13 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 					if imageArtifact.AssetName != "cluster-api-controller" {
 						continue
 					}
+					componentVersion, err := BuildComponentVersion(
+						newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, imageArtifact.SourcedFromBranch, r),
+					)
+					if err != nil {
+						return anywherev1alpha1.CoreClusterAPI{}, errors.Wrapf(err, "Error getting version for cluster-api")
+					}
+					version = componentVersion
 				}
 
 				bundleImageArtifact := anywherev1alpha1.Image{
@@ -190,25 +213,15 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 }
 
 func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string) (anywherev1alpha1.KubeadmBootstrapBundle, error) {
-	kubeadmBootstrapBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"cluster-api": r.GetCAPIAssets,
-		"kube-proxy":  r.GetKubeRbacProxyAssets,
+	kubeadmBootstrapBundleArtifacts := map[string][]Artifact{
+		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
+		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
-	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
-	)
-	if err != nil {
-		return anywherev1alpha1.KubeadmBootstrapBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")
-	}
+	var version string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifactFunc := range kubeadmBootstrapBundleArtifactsFuncs {
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.KubeadmBootstrapBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
-
+	for componentName, artifacts := range kubeadmBootstrapBundleArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
@@ -216,6 +229,13 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 					if imageArtifact.AssetName != "kubeadm-bootstrap-controller" {
 						continue
 					}
+					componentVersion, err := BuildComponentVersion(
+						newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, imageArtifact.SourcedFromBranch, r),
+					)
+					if err != nil {
+						return anywherev1alpha1.KubeadmBootstrapBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")
+					}
+					version = componentVersion
 				}
 
 				bundleImageArtifact := anywherev1alpha1.Image{
@@ -256,25 +276,15 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 }
 
 func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]string) (anywherev1alpha1.KubeadmControlPlaneBundle, error) {
-	kubeadmControlPlaneBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"cluster-api": r.GetCAPIAssets,
-		"kube-proxy":  r.GetKubeRbacProxyAssets,
+	kubeadmControlPlaneBundleArtifacts := map[string][]Artifact{
+		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
+		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
-	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api")),
-	)
-	if err != nil {
-		return anywherev1alpha1.KubeadmControlPlaneBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")
-	}
+	var version string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifactFunc := range kubeadmControlPlaneBundleArtifactsFuncs {
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.KubeadmControlPlaneBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
-
+	for componentName, artifacts := range kubeadmControlPlaneBundleArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
@@ -282,6 +292,13 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 					if imageArtifact.AssetName != "kubeadm-control-plane-controller" {
 						continue
 					}
+					componentVersion, err := BuildComponentVersion(
+						newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, imageArtifact.SourcedFromBranch, r),
+					)
+					if err != nil {
+						return anywherev1alpha1.KubeadmControlPlaneBundle{}, errors.Wrapf(err, "Error getting version for cluster-api")
+					}
+					version = componentVersion
 				}
 
 				bundleImageArtifact := anywherev1alpha1.Image{
@@ -319,15 +336,4 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 	}
 
 	return bundle, nil
-}
-
-func (r *ReleaseConfig) getCAPIGitTag() (string, error) {
-	projectSource := "projects/kubernetes-sigs/cluster-api"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-
-	return gitTag, nil
 }

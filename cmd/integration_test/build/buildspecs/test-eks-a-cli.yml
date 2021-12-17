@@ -71,7 +71,10 @@ phases:
     - >
       ./cmd/integration_test/build/script/upload_artifacts.sh
       $ARTIFACTS_BUCKET
+      $CODEBUILD_SRC_DIR
       "eks-a-cli"
       $CODEBUILD_BUILD_NUMBER
       $GIT_HASH
+      "linux,darwin"
+      "amd64"
       false
