@@ -22,10 +22,6 @@ func buildLocalKubectl() *executables.Kubectl {
 	return executables.NewLocalExecutableBuilder().BuildKubectlExecutable()
 }
 
-func buildLocalKubectl() *executables.Kubectl {
-	return executables.NewLocalExecutableBuilder().BuildKubectlExecutable()
-}
-
 func executableBuilder(t *testing.T, ctx context.Context) *executables.ExecutableBuilder {
 	executableBuilder, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
