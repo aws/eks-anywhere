@@ -4,7 +4,7 @@ phases:
   build:
     commands:
     - make e2e
-    - make get-override-dev-bundle
+    - make get-override-bundle
     - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" >> bin/githash
 
 artifacts:

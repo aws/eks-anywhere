@@ -408,8 +408,8 @@ integration-test-binary:
 check-eksa-components-override:
 	scripts/eksa_components_override.sh $(BUNDLE_MANIFEST_URL)
 
-.PHONY: get-override-dev-bundle
-get-override-dev-bundle:
+.PHONY: get-override-bundle
+get-override-bundle:
 	curl -L $(BUNDLE_MANIFEST_URL) --output bin/local-bundle-release.yaml
 
 .PHONY: help
