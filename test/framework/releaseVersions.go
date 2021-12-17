@@ -49,12 +49,8 @@ func GetLatestMinorReleaseBinaryFromVersion(releaseBranchVersion *semver.Version
 	if err != nil {
 		return "", err
 	}
-	targetRelease := &releasev1alpha1.EksARelease{
-		Version:           "",
-		BundleManifestUrl: "",
-	}
 
-	release, err := getLatestPrevMinorRelease(releases, releaseBranchVersion, targetRelease)
+	release, err := getLatestPrevMinorRelease(releases, releaseBranchVersion)
 	if err != nil {
 		return "", err
 	}
@@ -140,7 +136,11 @@ func prodReleases() (release *releasev1alpha1.Release, err error) {
 	return releases, nil
 }
 
-func getLatestPrevMinorRelease(releases *releasev1alpha1.Release, releaseBranchVersion *semver.Version, targetRelease *releasev1alpha1.EksARelease) (*releasev1alpha1.EksARelease, error) {
+func getLatestPrevMinorRelease(releases *releasev1alpha1.Release, releaseBranchVersion *semver.Version) (*releasev1alpha1.EksARelease, error) {
+	targetRelease := &releasev1alpha1.EksARelease{
+		Version:           "",
+		BundleManifestUrl: "",
+	}
 	latestPrevMinorReleaseVersion := newVersion("0.0.0")
 
 	for _, release := range releases.Spec.Releases {
@@ -151,7 +151,7 @@ func getLatestPrevMinorRelease(releases *releasev1alpha1.Release, releaseBranchV
 		}
 	}
 
-	if targetRelease == nil {
+	if targetRelease.Version == "" {
 		return nil, fmt.Errorf("releases manifest doesn't contain a version of the previous minor release")
 	}
 
