@@ -18,13 +18,13 @@ GO_TEST ?= $(GO) test
 ## ensure local execution uses the 'main' branch bundle
 BRANCH_NAME?=main
 ifeq (,$(findstring $(BRANCH_NAME),main))
-## use the branch-specific bundle manifest if the branch is not 'main'
+## use the branch-specific dev release bundle manifest if the branch is not 'main'
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${BRANCH_NAME}/bundle-release.yaml
-$(info    Using branch-specific BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
+$(info    Using branch-specific BUNDLE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
 else
-## use the standard bundle manifest if the branch is 'main'
+## use the standard dev release bundle manifest if the branch is 'main'
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml
-$(info    Using stanard BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
+$(info    Using stanard BUNDLE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
 endif
 
 RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
@@ -386,7 +386,6 @@ eks-a-e2e:
 		if [[ "$(CODEBUILD_BUILD_ID)" =~ "aws-staging-eks-a-build" ]]; then \
 			make eks-a-release-cross-platform GIT_VERSION=$(shell cat release/triggers/eks-a-release/development/RELEASE_VERSION) RELEASE_MANIFEST_URL=https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml; \
 			make eks-a-release GIT_VERSION=$(DEV_GIT_VERSION); \
-			scripts/get_bundle.sh; \
 		else \
 			make check-eksa-components-override; \
 			make eks-a-cross-platform; \
@@ -408,6 +407,10 @@ integration-test-binary:
 .PHONY: check-eksa-components-override
 check-eksa-components-override:
 	scripts/eksa_components_override.sh $(BUNDLE_MANIFEST_URL)
+
+.PHONY: get-override-dev-bundle
+get-override-dev-bundle:
+	curl -L $(BUNDLE_MANIFEST_URL) --output bin/local-bundle-release.yaml
 
 .PHONY: help
 help:  ## Display this help
