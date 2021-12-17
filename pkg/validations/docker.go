@@ -35,7 +35,8 @@ func CheckMinimumDockerVersion(ctx context.Context, dockerExecutable DockerExecu
 func CheckDockerAllocatedMemory(ctx context.Context, dockerExecutable DockerExecutable) {
 	totalMemoryAllocated, err := dockerExecutable.AllocatedMemory(ctx)
 	if err != nil {
-		logger.V(3).Info("Failed to validate docker memory: error while reading memory allocated to Docker %v\n", err)
+		logger.Error(err, "Failed to validate docker memory: error while reading memory allocated to Docker")
+		return
 	}
 	if totalMemoryAllocated < recommendedTotalMemory {
 		logger.V(3).Info("Warning: recommended memory to be allocated for Docker is 6 GB, please be aware that not allocating enough memory can cause problems while cluster creation")
