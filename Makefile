@@ -20,7 +20,7 @@ BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bun
 DEV_GIT_VERSION:=v0.0.0-dev
 
 AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output text)
-AWS_REGION=?us-west-2
+AWS_REGION?=us-west-2
 
 BIN_DIR := bin
 TOOLS_BIN_DIR := hack/tools/bin
