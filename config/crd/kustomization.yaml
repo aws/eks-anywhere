@@ -11,6 +11,8 @@ resources:
 - bases/anywhere.eks.amazonaws.com_gitopsconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_oidcconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_awsiamconfigs.yaml
+- bases/anywhere.eks.amazonaws.com_tinkerbelldatacenterconfigs.yaml
+- bases/anywhere.eks.amazonaws.com_tinkerbellmachineconfigs.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
