@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -81,7 +82,7 @@ func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClien
 		return nil, nil, errors.Cause(err)
 	}
 
-	// IAD session for eks-a-build-prod-pdx
+	// IAD session for eks-a-build-prod-iad
 	iadSession, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-east-1"),
 	})
@@ -89,19 +90,26 @@ func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClien
 		return nil, nil, errors.Cause(err)
 	}
 
+	// default aws region session to pdx unless region is pointing to iad
+	regionalSession := pdxSession
+	awsRegion := os.Getenv("AWS_REGION")
+	if awsRegion == "us-east-1" {
+		regionalSession = iadSession
+	}
 	// S3 client and uploader
-	s3Client := s3.New(pdxSession)
-	uploader := s3manager.NewUploader(pdxSession)
+	s3Client := s3.New(regionalSession)
+	uploader := s3manager.NewUploader(regionalSession)
 
 	// Get source ECR auth config
 	fmt.Printf("Source container registry is: %s\n", r.SourceContainerRegistry)
-	ecrClient := ecr.New(pdxSession)
+	ecrClient := ecr.New(regionalSession)
 	sourceAuthConfig, err := getEcrAuthConfig(ecrClient)
 	if err != nil {
 		return nil, nil, errors.Cause(err)
 	}
 
 	// Get release ECR Public auth config
+	// ECR-public is always on iad
 	fmt.Printf("Release container registry is: %s\n", r.ReleaseContainerRegistry)
 	ecrPublicClient := ecrpublic.New(iadSession)
 	releaseAuthConfig, err := getEcrPublicAuthConfig(ecrPublicClient)
