@@ -421,7 +421,7 @@ update-kustomization-yaml:
 	yq e ".images[] |= select(.name == \"*kube-rbac-proxy\") |= .newTag = \"${KUBE_RBAC_PROXY_IMAGE_TAG_OVERRIDE}\"" -i $(KUSTOMIZATION_CONFIG)
 
 .PHONY: generate-manifests
-generate-manifests: update-kustomization-yaml ## Generate manifests e.g. CRD, RBAC etc.
+generate-manifests: ## Generate manifests e.g. CRD, RBAC etc.
 	$(MAKE) generate-core-manifests
 
 .PHONY: generate-core-manifests
