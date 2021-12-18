@@ -242,7 +242,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
-		fmt.Printf("Preparing artifact data for %s/n", componentName)
+		fmt.Printf("Preparing artifact data for %s\n", componentName)
 		artifacts, err := artifactFunc()
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
@@ -262,6 +262,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
 	}
+	fmt.Println("Preparing artifact data for eks-d channel based artifacts")
 	for channel, release := range eksDReleaseMap {
 		if channel == "latest" || !existsInList(channel, bottlerocketSupportedK8sVersions) {
 			continue
@@ -273,16 +274,19 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		kubeVersion := release.(map[interface{}]interface{})["kubeVersion"]
 		kubeVersionStr := kubeVersion.(string)
 
+		fmt.Printf("Getting EKS-D Channel Assets for %s\n", channel)
 		eksDChannelArtifacts, err := r.GetEksDChannelAssets(channel, kubeVersionStr, releaseNumberStr)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", channel)
 		}
 
+		fmt.Printf("Getting vSphere Cloud Provider Assets for %s\n", channel)
 		vSphereCloudProviderArtifacts, err := r.GetVsphereCloudProviderAssets(channel)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", channel)
 		}
 
+		fmt.Printf("Getting Bottlerocket bootstrap Assets for %s\n", channel)
 		bottlerocketBootstrapArtifacts, err := r.GetBottlerocketBootstrapAssets(channel, releaseNumberStr)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", channel)
