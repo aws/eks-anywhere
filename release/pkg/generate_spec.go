@@ -341,11 +341,9 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
 		latestTag := getLatestUploadDestination(r.BuildRepoBranchName)
 		if name == "bottlerocket-bootstrap" {
-			sourceImageUri = fmt.Sprintf("%s/%s:v%s-%s-%s",
+			sourceImageUri = fmt.Sprintf("%s/%s:%s",
 				r.SourceContainerRegistry,
 				repoName,
-				tagOptions["eksDReleaseChannel"],
-				tagOptions["eksDReleaseNumber"],
 				latestTag,
 			)
 		} else if name == "cloud-provider-vsphere" {
