@@ -94,6 +94,7 @@ func (r *ReleaseConfig) CreateDevReleaseClients() (*SourceClients, *ReleaseClien
 	regionalSession := pdxSession
 	awsRegion := os.Getenv("AWS_REGION")
 	if awsRegion == "us-east-1" {
+		fmt.Println("Detected AWS_REGION to be us-east-1, using iad session")
 		regionalSession = iadSession
 	}
 	// S3 client and uploader

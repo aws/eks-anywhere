@@ -15,6 +15,7 @@
 package pkg
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -38,6 +39,7 @@ func (r *ReleaseConfig) GetVsphereCloudProviderAssets(eksDReleaseChannel string)
 		"projectPath":        gitTagFolder,
 	}
 
+	fmt.Println("Getting vSphereCloudProvider source image uri")
 	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)

@@ -373,6 +373,7 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 		}
 		if !r.DryRun {
 			sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
+			fmt.Println("Waiting for Source Images")
 			err := r.waitForSourceImage(sourceEcrAuthConfig, sourceImageUri)
 			if err != nil {
 				if r.BuildRepoBranchName != "main" {
