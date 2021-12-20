@@ -579,6 +579,7 @@ func getLatestUploadDestination(sourcedFromBranch string) string {
 }
 
 func (r *ReleaseConfig) waitForSourceImage(sourceAuthConfig *docker.AuthConfiguration, sourceImageUri string) error {
+	fmt.Printf("Source Image URI - %s\n", sourceImageUri)
 	sourceImageUriSplit := strings.Split(sourceImageUri, ":")
 	sourceImageName := strings.Replace(sourceImageUriSplit[0], r.SourceContainerRegistry+"/", "", -1)
 	sourceImageTag := sourceImageUriSplit[1]
@@ -621,7 +622,7 @@ func (r *ReleaseConfig) waitForSourceImage(sourceAuthConfig *docker.AuthConfigur
 
 		bodyStr := string(body)
 		if strings.Contains(bodyStr, "MANIFEST_UNKNOWN") {
-			return fmt.Errorf("Requested image not found")
+			return fmt.Errorf("Requested image not found - %s", sourceImageUri)
 		}
 
 		return nil
