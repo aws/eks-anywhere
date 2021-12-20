@@ -99,7 +99,6 @@ type vsphereProvider struct {
 	controlPlaneSshAuthKey string
 	workerSshAuthKey       string
 	etcdSshAuthKey         string
-	netClient              networkutils.NetClient
 	templateBuilder        *VsphereTemplateBuilder
 	skipIpCheck            bool
 	resourceSetManager     ClusterResourceSetManager
@@ -194,7 +193,6 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 		providerGovcClient:    providerGovcClient,
 		providerKubectlClient: providerKubectlClient,
 		writer:                writer,
-		netClient:             netClient,
 		templateBuilder: &VsphereTemplateBuilder{
 			datacenterSpec:             &datacenterConfig.Spec,
 			controlPlaneMachineSpec:    controlPlaneMachineSpec,
@@ -205,7 +203,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 		skipIpCheck:        skipIpCheck,
 		resourceSetManager: resourceSetManager,
 		Retrier:            retrier,
-		validator:          newValidator(providerGovcClient),
+		validator:          newValidator(providerGovcClient, netClient),
 		defaulter:          newDefaulter(providerGovcClient),
 	}
 }
@@ -354,15 +352,6 @@ func (p *vsphereProvider) generateSSHAuthKey(username string) (string, error) {
 	return key, nil
 }
 
-func (p *vsphereProvider) validateControlPlaneIpUniqueness(ip string) error {
-	// check if control plane endpoint ip is unique
-	ipgen := networkutils.NewIPGenerator(p.netClient)
-	if !ipgen.IsIPUnique(ip) {
-		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
-	}
-	return nil
-}
-
 func (p *vsphereProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
 	for _, mc := range p.machineConfigs {
 		if err := p.providerKubectlClient.DeleteEksaVSphereMachineConfig(ctx, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace); err != nil {
@@ -420,8 +409,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		return nil
 	}
 
-	// TODO: move this to validator
-	if err := p.validateControlPlaneIpUniqueness(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
+	if err := p.validator.validateControlPlaneIpUniqueness(vSphereClusterSpec); err != nil {
 		return err
 	}
 	return nil
