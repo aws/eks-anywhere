@@ -641,10 +641,10 @@ func copyImageFromSourceToDest(sourceAuthConfig, releaseAuthConfig *docker.AuthC
 	releaseRegistryPassword := releaseAuthConfig.Password
 	cmd := exec.Command("skopeo", "copy", "--src-creds", fmt.Sprintf("%s:%s", sourceRegistryUsername, sourceRegistryPassword), "--dest-creds", fmt.Sprintf("%s:%s", releaseRegistryUsername, releaseRegistryPassword), fmt.Sprintf("docker://%s", sourceImageUri), fmt.Sprintf("docker://%s", releaseImageUri), "-f", "oci", "--all")
 	out, err := execCommand(cmd)
+	fmt.Println(out)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	fmt.Println(out)
 
 	return nil
 }
