@@ -86,11 +86,7 @@ func (g *Govc) Close(ctx context.Context) error {
 		return nil
 	}
 
-	if err := g.Logout(ctx); err != nil {
-		return err
-	}
-
-	return g.Executable.Close(ctx)
+	return g.Logout(ctx)
 }
 
 func (g *Govc) Logout(ctx context.Context) error {

@@ -41,10 +41,11 @@ func (e *E2ESession) setupVSphereEnv(testRegex string) error {
 
 func vsphereRmVms(ctx context.Context, clusterName string) error {
 	logger.V(1).Info("Deleting vsphere vcenter vms")
-	executableBuilder, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
+	executableBuilder, close, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
+	defer close.CheckErr(ctx)
 	tmpWriter, _ := filewriter.NewWriter("rmvms")
 	govc := executableBuilder.BuildGovcExecutable(tmpWriter)
 	defer govc.Close(ctx)
