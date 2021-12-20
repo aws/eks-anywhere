@@ -3,12 +3,14 @@ package crypto_test
 import (
 	"testing"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 )
 
 const (
 	endpoint         = "unit-test.local"
 	invalid_endpoint = "invalid-endpoint.local"
+	port             = constants.DefaultHttpsPort
 	/*
 		This certificate was generated using the following commands and is valid only for `unit-test.local`
 		openssl genrsa -out ca.key 2048
@@ -50,21 +52,21 @@ invalidCert
 )
 
 func TestValidateCertValidCert(t *testing.T) {
-	tv := crypto.NewTlsValidator(endpoint)
+	tv := crypto.NewTlsValidator(endpoint, port)
 	if err := tv.ValidateCert(cert); err != nil {
 		t.Fatalf("Failed to validate cert: %v", err)
 	}
 }
 
 func TestValidateCertInvalidEndpoint(t *testing.T) {
-	tv := crypto.NewTlsValidator(invalid_endpoint)
+	tv := crypto.NewTlsValidator(invalid_endpoint, port)
 	if err := tv.ValidateCert(cert); err == nil {
 		t.Fatalf("Certificate validation passed for invalid endpoint")
 	}
 }
 
 func TestValidateCertInvalidCert(t *testing.T) {
-	tv := crypto.NewTlsValidator(endpoint)
+	tv := crypto.NewTlsValidator(endpoint, port)
 	if err := tv.ValidateCert(invalid_cert); err == nil {
 		t.Fatalf("Certificate validation passed for invalid cert")
 	}

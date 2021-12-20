@@ -34,6 +34,7 @@ spec:
         - 10.96.0.0/12
   registryMirrorConfiguration:
     endpoint: 1.2.3.4
+    port: 1234
     caCertContent: |
       -----BEGIN CERTIFICATE-----
       MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV

@@ -21,6 +21,7 @@ const (
 	LocalPathStorageNamespace               = "local-path-storage"
 	EtcdAdmBootstrapProviderName            = "bootstrap-etcdadm-bootstrap"
 	EtcdadmControllerProviderName           = "bootstrap-etcdadm-controller"
+	DefaultHttpsPort                        = "443"
 
 	VSphereProviderName    = "vsphere"
 	DockerProviderName     = "docker"
