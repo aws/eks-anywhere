@@ -349,10 +349,9 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 				latestTag,
 			)
 		} else if name == "cloud-provider-vsphere" {
-			sourceImageUri = fmt.Sprintf("%s/%s:%s-%s",
+			sourceImageUri = fmt.Sprintf("%s/%s:%s",
 				r.SourceContainerRegistry,
 				repoName,
-				tagOptions["gitTag"],
 				latestTag,
 			)
 		} else if name == "kind-node" {
