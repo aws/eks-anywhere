@@ -1,11 +1,11 @@
-package networking_test
+package cilium_test
 
 import (
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/networking"
+	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -14,7 +14,7 @@ func TestCiliumGenerateManifestSuccess(t *testing.T) {
 		s.VersionsBundle.Cilium = ciliumBundle
 	})
 
-	c := networking.NewCilium()
+	c := cilium.NewCilium()
 
 	gotFileContent, err := c.GenerateManifest(clusterSpec)
 	if err != nil {
@@ -41,7 +41,7 @@ func TestCiliumGenerateManifestWriterError(t *testing.T) {
 		s.VersionsBundle.Cilium.Manifest.URI = "testdata/missing_manifest.yaml"
 	})
 
-	c := networking.NewCilium()
+	c := cilium.NewCilium()
 
 	if _, err := c.GenerateManifest(clusterSpec); err == nil {
 		t.Fatalf("Cilium.GenerateManifestFile() error = nil, want not nil")

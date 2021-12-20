@@ -1,11 +1,11 @@
-package networking_test
+package kindnetd_test
 
 import (
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/networking"
+	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -15,7 +15,7 @@ func TestKindnetdGenerateManifestSuccess(t *testing.T) {
 		s.VersionsBundle.Kindnetd = KindnetdBundle
 	})
 
-	c := networking.NewKindnetd()
+	c := kindnetd.NewKindnetd()
 
 	gotFileContent, err := c.GenerateManifest(clusterSpec)
 	if err != nil {
@@ -36,7 +36,7 @@ func TestKindnetdGenerateManifestWriterError(t *testing.T) {
 		s.VersionsBundle.Kindnetd.Manifest.URI = "testdata/missing_manifest.yaml"
 	})
 
-	c := networking.NewKindnetd()
+	c := kindnetd.NewKindnetd()
 
 	if _, err := c.GenerateManifest(clusterSpec); err == nil {
 		t.Fatalf("Kindnetd.GenerateManifestFile() error = nil, want not nil")
