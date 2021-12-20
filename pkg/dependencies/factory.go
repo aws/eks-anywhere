@@ -16,7 +16,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/networking"
+	"github.com/aws/eks-anywhere/pkg/networking/cilium"
+	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/factory"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -330,9 +331,9 @@ func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 			return nil
 		}
 		if clusterConfig.Spec.ClusterNetwork.CNI == v1alpha1.Kindnetd {
-			f.dependencies.Networking = networking.NewKindnetd()
+			f.dependencies.Networking = kindnetd.NewKindnetd()
 		} else {
-			f.dependencies.Networking = networking.NewCilium()
+			f.dependencies.Networking = cilium.NewCilium()
 		}
 		return nil
 	})
