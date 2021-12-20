@@ -13,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -57,9 +58,13 @@ func importImages(context context.Context, spec string) error {
 		return fmt.Errorf("it is necessary to define a valid endpoint in your spec (registryMirrorConfiguration.endpoint)")
 	}
 	host := clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
-	port := constants.DefaultHttpsPort
-	if networkutils.IsPortValid(clusterSpec.Spec.RegistryMirrorConfiguration.Port) {
-		port = clusterSpec.Spec.RegistryMirrorConfiguration.Port
+	port := clusterSpec.Spec.RegistryMirrorConfiguration.Port
+	if port == "" {
+		logger.V(1).Info("RegistryMirrorConfiguration.Port is not specified, default port will be used", "Default Port", constants.DefaultHttpsPort)
+		port = constants.DefaultHttpsPort
+	}
+	if !networkutils.IsPortValid(clusterSpec.Spec.RegistryMirrorConfiguration.Port) {
+		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterSpec.Spec.RegistryMirrorConfiguration.Port)
 	}
 
 	images, err := getImages(spec)

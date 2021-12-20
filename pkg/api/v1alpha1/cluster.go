@@ -422,6 +422,7 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 	}
 
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Port == "" {
+		logger.V(1).Info("RegistryMirrorConfiguration.Port is not specified, default port will be used", "Default Port", constants.DefaultHttpsPort)
 		clusterConfig.Spec.RegistryMirrorConfiguration.Port = constants.DefaultHttpsPort
 	}
 	if !networkutils.IsPortValid(clusterConfig.Spec.RegistryMirrorConfiguration.Port) {
@@ -465,7 +466,6 @@ func updateRegistryMirrorConfig(clusterConfig *Cluster) error {
 		return nil
 	}
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Port == "" {
-		logger.V(1).Info(fmt.Sprintf("RegistryMirrorConfiguration.Port is not specified, defaulting to port: %v", constants.DefaultHttpsPort))
 		clusterConfig.Spec.RegistryMirrorConfiguration.Port = constants.DefaultHttpsPort
 	}
 	if clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent == "" {
