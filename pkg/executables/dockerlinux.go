@@ -22,34 +22,27 @@ func NewDockerExecutable(cli string, container *dockerContainer) Executable {
 	}
 }
 
-func (e *linuxDockerExecutable) Execute(ctx context.Context, args ...string) (bytes.Buffer, error) {
-	var stdout bytes.Buffer
-	if command, err := e.buildCommand(map[string]string{}, e.cli, args...); err != nil {
-		return stdout, err
-	} else {
-		return execute(ctx, "docker", nil, command...)
-	}
+func (e *linuxDockerExecutable) Execute(ctx context.Context, args ...string) (stdout bytes.Buffer, err error) {
+	return e.Command(ctx, args...).Run()
 }
 
-func (e *linuxDockerExecutable) ExecuteWithStdin(ctx context.Context, in []byte, args ...string) (bytes.Buffer, error) {
-	var stdout bytes.Buffer
-	if command, err := e.buildCommand(map[string]string{}, e.cli, args...); err != nil {
-		return stdout, err
-	} else {
-		return execute(ctx, "docker", in, command...)
-	}
+func (e *linuxDockerExecutable) ExecuteWithStdin(ctx context.Context, in []byte, args ...string) (stdout bytes.Buffer, err error) {
+	return e.Command(ctx, args...).WithStdIn(in).Run()
 }
 
-func (e *linuxDockerExecutable) ExecuteWithEnv(ctx context.Context, envs map[string]string, args ...string) (bytes.Buffer, error) {
-	var stdout bytes.Buffer
-	if command, err := e.buildCommand(envs, e.cli, args...); err != nil {
-		return stdout, err
-	} else {
-		return execute(ctx, "docker", nil, command...)
-	}
+func (e *linuxDockerExecutable) ExecuteWithEnv(ctx context.Context, envs map[string]string, args ...string) (stdout bytes.Buffer, err error) {
+	return e.Command(ctx, args...).WithEnvVars(envs).Run()
 }
 
-func (e *linuxDockerExecutable) buildCommand(envs map[string]string, cli string, args ...string) ([]string, error) {
+func (e *linuxDockerExecutable) Command(ctx context.Context, args ...string) *Command {
+	return NewCommand(ctx, e, args...)
+}
+
+func (e *linuxDockerExecutable) Run(cmd *Command) (stdout bytes.Buffer, err error) {
+	return execute(cmd.ctx, "docker", cmd.stdIn, e.buildCommand(cmd.envVars, e.cli, cmd.args...)...)
+}
+
+func (e *linuxDockerExecutable) buildCommand(envs map[string]string, cli string, args ...string) []string {
 	var envVars []string
 	for k, v := range envs {
 		envVars = append(envVars, "-e", fmt.Sprintf("%s=%s", k, v))
@@ -61,5 +54,5 @@ func (e *linuxDockerExecutable) buildCommand(envs map[string]string, cli string,
 	dockerCommands = append(dockerCommands, e.containerName, e.cli)
 	dockerCommands = append(dockerCommands, args...)
 
-	return dockerCommands, nil
+	return dockerCommands
 }

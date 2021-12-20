@@ -24,8 +24,10 @@ type executable struct {
 
 type Executable interface {
 	Execute(ctx context.Context, args ...string) (stdout bytes.Buffer, err error)
-	ExecuteWithEnv(ctx context.Context, envs map[string]string, args ...string) (stdout bytes.Buffer, err error)
-	ExecuteWithStdin(ctx context.Context, in []byte, args ...string) (stdout bytes.Buffer, err error)
+	ExecuteWithEnv(ctx context.Context, envs map[string]string, args ...string) (stdout bytes.Buffer, err error) // TODO: remove this from interface in favor of Command
+	ExecuteWithStdin(ctx context.Context, in []byte, args ...string) (stdout bytes.Buffer, err error)            // TODO: remove this from interface in favor of Command
+	Command(ctx context.Context, args ...string) *Command
+	Run(cmd *Command) (stdout bytes.Buffer, err error)
 }
 
 // this should only be called through the executables.builder
@@ -35,19 +37,27 @@ func NewExecutable(cli string) Executable {
 	}
 }
 
-func (e *executable) Execute(ctx context.Context, args ...string) (bytes.Buffer, error) {
-	return execute(ctx, e.cli, nil, args...)
+func (e *executable) Execute(ctx context.Context, args ...string) (stdout bytes.Buffer, err error) {
+	return e.Command(ctx, args...).Run()
 }
 
-func (e *executable) ExecuteWithStdin(ctx context.Context, in []byte, args ...string) (bytes.Buffer, error) {
-	return execute(ctx, e.cli, in, args...)
+func (e *executable) ExecuteWithStdin(ctx context.Context, in []byte, args ...string) (stdout bytes.Buffer, err error) {
+	return e.Command(ctx, args...).WithStdIn(in).Run()
 }
 
 func (e *executable) ExecuteWithEnv(ctx context.Context, envs map[string]string, args ...string) (stdout bytes.Buffer, err error) {
-	for k, v := range envs {
+	return e.Command(ctx, args...).WithEnvVars(envs).Run()
+}
+
+func (e *executable) Command(ctx context.Context, args ...string) *Command {
+	return NewCommand(ctx, e, args...)
+}
+
+func (e *executable) Run(cmd *Command) (stdout bytes.Buffer, err error) {
+	for k, v := range cmd.envVars {
 		os.Setenv(k, v)
 	}
-	return e.Execute(ctx, args...)
+	return execute(cmd.ctx, e.cli, cmd.stdIn, cmd.args...)
 }
 
 func (e *executable) Close(ctx context.Context) error {
@@ -68,8 +78,8 @@ func redactCreds(cmd string) string {
 	return cmd
 }
 
-func execute(ctx context.Context, cli string, in []byte, args ...string) (bytes.Buffer, error) {
-	var stdout, stderr bytes.Buffer
+func execute(ctx context.Context, cli string, in []byte, args ...string) (stdout bytes.Buffer, err error) {
+	var stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, cli, args...)
 	logger.V(6).Info("Executing command", "cmd", redactCreds(cmd.String()))
 	cmd.Stdout = &stdout
@@ -82,7 +92,7 @@ func execute(ctx context.Context, cli string, in []byte, args ...string) (bytes.
 		cmd.Stdin = bytes.NewReader(in)
 	}
 
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		if stderr.Len() > 0 {
 			return stdout, errors.New(stderr.String())
