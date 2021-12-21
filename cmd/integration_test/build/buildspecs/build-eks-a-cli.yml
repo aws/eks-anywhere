@@ -5,6 +5,17 @@ phases:
     commands:
     - make e2e
     - echo "$CODEBUILD_RESOLVED_SOURCE_VERSION" >> bin/githash
+  post_build:
+    commands:
+      - export GIT_HASH=$(cat bin/githash)
+      - >
+        ./cmd/integration_test/build/script/upload_artifacts.sh
+        $ARTIFACTS_BUCKET
+        $CODEBUILD_SRC_DIR
+        "eks-a-cli"
+        $CODEBUILD_BUILD_NUMBER
+        $GIT_HASH
+        false
 
 artifacts:
   files:
