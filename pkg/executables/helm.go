@@ -7,6 +7,10 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+var helmTemplateEnvVars = map[string]string{
+	"HELM_EXPERIMENTAL_OCI": "1",
+}
+
 type Helm struct {
 	executable Executable
 }
@@ -23,7 +27,9 @@ func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, 
 		return nil, fmt.Errorf("failed marshalling values for helm template: %v", err)
 	}
 
-	result, err := h.executable.ExecuteWithStdin(ctx, valuesYaml, "template", ociURI, "--version", version, "--namespace", namespace, "-f", "-")
+	result, err := h.executable.Command(
+		ctx, "template", ociURI, "--version", version, "--namespace", namespace, "-f", "-",
+	).WithStdIn(valuesYaml).WithEnvVars(helmTemplateEnvVars).Run()
 	if err != nil {
 		return nil, err
 	}

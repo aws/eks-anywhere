@@ -36,6 +36,7 @@ type helmTemplateTest struct {
 	valuesYaml                 []byte
 	ociURI, version, namespace string
 	wantTemplateContent        []byte
+	envVars                    map[string]string
 }
 
 func newHelmTemplateTest(t *testing.T) *helmTemplateTest {
@@ -53,14 +54,17 @@ key2: values2
 		version:             "1.1.1",
 		namespace:           "kube-system",
 		wantTemplateContent: []byte("template-content"),
+		envVars: map[string]string{
+			"HELM_EXPERIMENTAL_OCI": "1",
+		},
 	}
 }
 
 func TestHelmTemplateSuccess(t *testing.T) {
 	tt := newHelmTemplateTest(t)
-	tt.e.EXPECT().ExecuteWithStdin(
-		tt.ctx, tt.valuesYaml, "template", tt.ociURI, "--version", tt.version, "--namespace", tt.namespace, "-f", "-",
-	).Return(*bytes.NewBuffer(tt.wantTemplateContent), nil)
+	expectCommand(
+		tt.e, tt.ctx, "template", tt.ociURI, "--version", tt.version, "--namespace", tt.namespace, "-f", "-",
+	).withStdIn(tt.valuesYaml).withEnvVars(tt.envVars).to().Return(*bytes.NewBuffer(tt.wantTemplateContent), nil)
 
 	tt.Expect(tt.h.Template(tt.ctx, tt.ociURI, tt.version, tt.namespace, tt.values)).To(Equal(tt.wantTemplateContent), "helm.Template() should succeed return correct template content")
 }
