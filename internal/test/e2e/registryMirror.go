@@ -3,6 +3,7 @@ package e2e
 import (
 	"encoding/base64"
 	"fmt"
+	"net"
 	"os"
 	"regexp"
 
@@ -25,8 +26,8 @@ func (e *E2ESession) setupRegistryMirrorEnv(testRegex string) error {
 		}
 	}
 
-	if e.testEnvVars[e2etests.RegistryCACertVar] != "" && e.testEnvVars[e2etests.RegistryEndpointVar] != "" {
-		return e.mountRegistryCert(e.testEnvVars[e2etests.RegistryCACertVar], e.testEnvVars[e2etests.RegistryEndpointVar])
+	if e.testEnvVars[e2etests.RegistryCACertVar] != "" && e.testEnvVars[e2etests.RegistryEndpointVar] != "" && e.testEnvVars[e2etests.RegistryPortVar] != "" {
+		return e.mountRegistryCert(e.testEnvVars[e2etests.RegistryCACertVar], net.JoinHostPort(e.testEnvVars[e2etests.RegistryEndpointVar], e.testEnvVars[e2etests.RegistryPortVar]))
 	}
 
 	return nil
