@@ -100,7 +100,7 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			wantConfig: "testdata/clusterctl_expected.yaml",
 		},
 		{
-			testName: "with kubconfig",
+			testName: "with kubconfig vsphere",
 			cluster: &types.Cluster{
 				Name:           "cluster-name",
 				KubeconfigFile: "tmp/k.kubeconfig",
@@ -110,6 +110,22 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			env:             map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
 			wantExecArgs: []interface{}{
 				"init", "--core", core, "--bootstrap", bootstrap, "--control-plane", controlPlane, "--infrastructure", "vsphere:v0.7.8", "--config", test.OfType("string"),
+				"--bootstrap", etcdadmBootstrap, "--bootstrap", etcdadmController,
+				"--watching-namespace", constants.EksaSystemNamespace, "--kubeconfig", "tmp/k.kubeconfig",
+			},
+			wantConfig: "testdata/clusterctl_expected.yaml",
+		},
+		{
+			testName: "with kubconfig cloudstack",
+			cluster: &types.Cluster{
+				Name:           "cluster-name",
+				KubeconfigFile: "tmp/k.kubeconfig",
+			},
+			providerName:    "cloudstack",
+			providerVersion: versionBundle.CloudStack.Version,
+			env:             map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
+			wantExecArgs: []interface{}{
+				"init", "--core", core, "--bootstrap", bootstrap, "--control-plane", controlPlane, "--infrastructure", "cloudstack:v0.1.0", "--config", test.OfType("string"),
 				"--bootstrap", etcdadmBootstrap, "--bootstrap", etcdadmController,
 				"--watching-namespace", constants.EksaSystemNamespace, "--kubeconfig", "tmp/k.kubeconfig",
 			},
@@ -479,6 +495,13 @@ var versionBundle = &cluster.VersionsBundle{
 			Version: "v0.7.8",
 			ClusterAPIController: v1alpha1.Image{
 				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v0.7.8-eks-a-0.0.1.build.38",
+			},
+			KubeProxy: kubeProxyVersion08,
+		},
+		CloudStack: v1alpha1.CloudStackBundle{
+			Version: "v0.1.0",
+			ClusterAPIController: v1alpha1.Image{
+				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.1.0-eks-a-0.0.1.build.38",
 			},
 			KubeProxy: kubeProxyVersion08,
 		},

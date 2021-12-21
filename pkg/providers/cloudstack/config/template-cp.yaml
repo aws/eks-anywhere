@@ -14,9 +14,9 @@ spec:
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
     kind: KubeadmControlPlane
-    name: {{.clusterName}}
+    name: {{.clusterName}}-control-plane
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: CloudStackCluster
     name: {{.clusterName}}
 {{- if .externalEtcd }}
@@ -26,7 +26,7 @@ spec:
     name: {{.clusterName}}-etcd
 {{- end }}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: CloudStackCluster
 metadata:
   name: {{.clusterName}}
@@ -36,11 +36,9 @@ spec:
     host: {{.controlPlaneEndpointIp}}
     port: 6443
   network: {{.cloudstackNetwork}}
-  domain: {{.cloudstackDomain}}
   zone: {{.cloudstackZone}}
-  account: {{.cloudstackAccount}}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: CloudStackMachineTemplate
 metadata:
   name: {{.controlPlaneTemplateName}}
@@ -50,7 +48,6 @@ spec:
     spec:
       offering: {{.cloudstackControlPlaneComputeOffering}}
       template: {{.cloudstackControlPlaneTemplateOffering}}
-      diskOffering: {{.cloudstackControlPlaneDiskOffering}}
       details:
       {{- range $key, $value := .cloudstackControlPlaneDetails}}
         {{$key}}: {{$value}}
@@ -59,11 +56,11 @@ spec:
 apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
 metadata:
-  name: {{.clusterName}}
+  name: {{.clusterName}}-control-plane
   namespace: {{.eksaSystemNamespace}}
 spec:
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: CloudStackMachineTemplate
     name: {{.controlPlaneTemplateName}}
   kubeadmConfigSpec:
@@ -203,15 +200,16 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
-        name: '{{`{{ ds.meta_data.hostname }}`}}'
+          provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
+        name: '{{`{{ ds.meta_data.local_hostname }}`}}'
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
-        name: '{{`{{ ds.meta_data.hostname }}`}}'
+          provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
+        name: '{{`{{ ds.meta_data.local_hostname }}`}}'
     preKubeadmCommands:
+    - swapoff -a
 {{- if.registryMirrorConfiguration }}
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
 {{- end }}
@@ -219,11 +217,11 @@ spec:
     - sudo systemctl daemon-reload
     - sudo systemctl restart containerd
 {{- end }}
-    - hostname "{{`{{ ds.meta_data.hostname }}`}}"
+    - hostname "{{`{{ ds.meta_data.local_hostname }}`}}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
-    - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
+    - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
+    - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
     useExperimentalRetryJoin: true
     users:
     - name: {{.controlPlaneSshUsername}}
@@ -249,11 +247,12 @@ spec:
       version: {{.externalEtcdVersion}}
       installDir: "/usr/bin"
     preEtcdadmCommands:
-    - hostname "{{`{{ ds.meta_data.hostname }}`}}"
+    - swapoff -a
+    - hostname "{{`{{ ds.meta_data.local_hostname }}`}}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
-    - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
+    - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
+    - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
     users:
     - name: {{.etcdSshUsername}}
       sshAuthorizedKeys:
@@ -276,11 +275,11 @@ spec:
       {{- end }}
 {{- end }}
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: CloudStackMachineTemplate
     name: {{.etcdTemplateName}}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: CloudStackMachineTemplate
 metadata:
   name: {{.etcdTemplateName}}
@@ -290,7 +289,6 @@ spec:
     spec:
       offering: {{.cloudstackEtcdComputeOffering}}
       template: {{.cloudstackEtcdTemplateOffering}}
-      diskOffering: {{.cloudstackEtcdDiskOffering}}
       details:
       {{- range $key, $value := .cloudstackEtcdDetails }}
         {{$key}}: {{$value}}

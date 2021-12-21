@@ -70,6 +70,9 @@ func (c *Cmk) SearchComputeOffering(ctx context.Context, domain string, zone str
 }
 
 func (c *Cmk) SearchDiskOffering(ctx context.Context, domain string, zone string, account string, diskOffering string) (string, error) {
+	if diskOffering == "" {
+		return diskOffering, nil
+	}
 	offerings, err := c.ListDiskOfferings(ctx, diskOffering)
 	if err != nil {
 		return "", fmt.Errorf("disk offering %s not found. error: %v", diskOffering, err)

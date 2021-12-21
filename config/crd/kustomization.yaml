@@ -7,6 +7,8 @@ resources:
 - bases/anywhere.eks.amazonaws.com_dockerdatacenterconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_vspheredatacenterconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_vspheremachineconfigs.yaml
+- bases/anywhere.eks.amazonaws.com_cloudstackdeploymentconfigs.yaml
+- bases/anywhere.eks.amazonaws.com_cloudstackmachineconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_bundles.yaml
 - bases/anywhere.eks.amazonaws.com_gitopsconfigs.yaml
 - bases/anywhere.eks.amazonaws.com_oidcconfigs.yaml

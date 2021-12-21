@@ -1,12 +1,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- ../default
-
+  - ../default
 images:
-- name: controller
-  newName: public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller
-  newTag: v0.0.0-eks-a-v0.0.0-dev-build.251
-- name: gcr.io/kubebuilder/kube-rbac-proxy
-  newName: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy
-  newTag: v0.8.0-eks-a-v0.0.0-dev-build.251
+  - name: controller
+    newName: 705892286397.dkr.ecr.us-west-2.amazonaws.com/eks-anywhere-cluster-controller
+    newTag: -9139e5c5b48e7928d419b87753c5267f7584795b
+  - name: gcr.io/kubebuilder/kube-rbac-proxy
+    newName: 705892286397.dkr.ecr.us-west-2.amazonaws.com/brancz/kube-rbac-proxy
+    newTag: latest

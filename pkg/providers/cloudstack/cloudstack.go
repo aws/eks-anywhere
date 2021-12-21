@@ -42,18 +42,21 @@ import (
 )
 
 const (
-	eksaLicense               = "EKSA_LICENSE"
-	cloudStackUsernameKey     = "CLOUDSTACK_USERNAME"
-	cloudStackPasswordKey     = "CLOUDSTACK_PASSWORD"
-	eksacloudStackUsernameKey = "EKSA_CLOUDSTACK_USERNAME"
-	eksacloudStackPasswordKey = "EKSA_CLOUDSTACK_PASSWORD"
-	cloudMonkeyInsecure       = "CLOUDMONKEY_INSECURE"
-	expClusterResourceSetKey  = "EXP_CLUSTER_RESOURCE_SET"
-	credentialsObjectName     = "cloudstack-credentials"
-	privateKeyFileName        = "eks-a-id_rsa"
-	publicKeyFileName         = "eks-a-id_rsa.pub"
-	ubuntuDefaultUser         = "capc"
-	redhatDefaultUser         = "capc"
+	eksaLicense                           = "EKSA_LICENSE"
+	cloudStackUsernameKey                 = "CLOUDSTACK_USERNAME"
+	cloudStackPasswordKey                 = "CLOUDSTACK_PASSWORD"
+	eksacloudStackUsernameKey             = "EKSA_CLOUDSTACK_USERNAME"
+	eksacloudStackPasswordKey             = "EKSA_CLOUDSTACK_PASSWORD"
+	eksacloudStackCloudConfigB64SecretKey = "EKSA_CLOUDSTACK_B64ENCODED_SECRET"
+	cloudStackCloudConfigB64SecretKey     = "CLOUDSTACK_B64ENCODED_SECRET"
+	cloudMonkeyInsecure                   = "CLOUDMONKEY_INSECURE"
+	expClusterResourceSetKey              = "EXP_CLUSTER_RESOURCE_SET"
+	credentialsObjectName                 = "cloudstack-credentials"
+	privateKeyFileName                    = "eks-a-id_rsa"
+	publicKeyFileName                     = "eks-a-id_rsa.pub"
+
+	ubuntuDefaultUser = "capc"
+	redhatDefaultUser = "capc"
 )
 
 //go:embed config/template-cp.yaml
@@ -68,7 +71,7 @@ var defaultSecretObject string
 //go:embed config/machine-health-check-template.yaml
 var mhcTemplate []byte
 
-var requiredEnvs = []string{cloudStackUsernameKey, cloudStackPasswordKey}
+var requiredEnvs = []string{cloudStackUsernameKey, cloudStackPasswordKey, cloudStackCloudConfigB64SecretKey}
 
 var (
 	eksaCloudStackDeploymentResourceType = fmt.Sprintf("cloudstackdeploymentconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -101,11 +104,13 @@ type cloudstackProvider struct {
 }
 
 func (p *cloudstackProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
-	panic("implement me")
+	// panic("implement me")
+	return nil
 }
 
 func (p *cloudstackProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	panic("implement me")
+	// panic("implement me")
+	return nil
 }
 
 type ProviderCloudMonkeyClient interface {
@@ -367,10 +372,11 @@ func (p *cloudstackProvider) validateControlPlaneIp(ip string) error {
 
 func (p *cloudstackProvider) validateControlPlaneIpUniqueness(ip string) error {
 	// check if control plane endpoint ip is unique
-	ipgen := networkutils.NewIPGenerator(p.netClient)
-	if !ipgen.IsIPUnique(ip) {
-		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
-	}
+	// TODO: the ip can be existed in cloudstack when using isolated network.
+	//ipgen := networkutils.NewIPGenerator(p.netClient)
+	//if !ipgen.IsIPUnique(ip) {
+	//	return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
+	//}
 	return nil
 }
 
@@ -405,6 +411,13 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 		}
 	} else {
 		return fmt.Errorf("%s is not set or is empty", eksacloudStackPasswordKey)
+	}
+	if cloudStackB64EncodedSecret, ok := os.LookupEnv(eksacloudStackCloudConfigB64SecretKey); ok && len(cloudStackB64EncodedSecret) > 0 {
+		if err := os.Setenv(cloudStackCloudConfigB64SecretKey, cloudStackB64EncodedSecret); err != nil {
+			return fmt.Errorf("unable to set %s: %v", cloudStackCloudConfigB64SecretKey, err)
+		}
+	} else {
+		return fmt.Errorf("%s is not set or is empty", cloudStackCloudConfigB64SecretKey)
 	}
 	if len(p.deploymentConfig.Spec.ManagementApiEndpoint) <= 0 {
 		return errors.New("CloudStackDeploymentConfig managementApiEndpoint is not set or is empty")
@@ -1279,7 +1292,7 @@ func (p *cloudstackProvider) EnvMap() (map[string]string, error) {
 func (p *cloudstackProvider) GetDeployments() map[string][]string {
 	return map[string][]string{
 		"capc-system":         {"capc-controller-manager"},
-		"capi-webhook-system": {"capc-controller-manager"},
+		"capi-webhook-system": {"capi-controller-manager"},
 	}
 }
 

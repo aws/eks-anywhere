@@ -16,7 +16,7 @@ var ExternalEtcdDeployments = map[string][]string{
 	"etcdadm-bootstrap-provider-system": {"etcdadm-bootstrap-provider-controller-manager"},
 }
 
-// map between file name and the capi/v deployments
+// map between file name and the capi/v/c deployments
 var ClusterDeployments = map[string]*types.Deployment{
 	"kubeadm-bootstrap-controller-manager.log":         {Name: "capi-kubeadm-bootstrap-controller-manager", Namespace: "capi-kubeadm-bootstrap-system", Container: "manager"},
 	"kubeadm-control-plane-controller-manager.log":     {Name: "capi-kubeadm-control-plane-controller-manager", Namespace: "capi-kubeadm-control-plane-system", Container: "manager"},
@@ -31,6 +31,8 @@ var ClusterDeployments = map[string]*types.Deployment{
 	"local-path-provisioner.log":                       {Name: "local-path-provisioner", Namespace: "local-path-storage"},
 	"capv-controller-manager.log":                      {Name: "capv-controller-manager", Namespace: "capv-system", Container: "manager"},
 	"wh-capv-controller-manager.log":                   {Name: "capv-controller-manager", Namespace: "capi-webhook-system", Container: "manager"},
+	"capc-controller-manager.log":                      {Name: "capc-controller-manager", Namespace: "capc-system", Container: "manager"},
+	"wh-capc-controller-manager.log":                   {Name: "capc-controller-manager", Namespace: "capi-webhook-system", Container: "manager"},
 }
 
 var EksaDeployments = map[string][]string{

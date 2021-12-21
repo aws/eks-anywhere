@@ -200,12 +200,12 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 		}
 	}
 
-	logger.Info("Installing storage class on workload cluster")
-	err = commandContext.ClusterManager.InstallStorageClass(ctx, workloadCluster, commandContext.Provider)
-	if err != nil {
-		commandContext.SetError(err)
-		return &CollectDiagnosticsTask{}
-	}
+	//logger.Info("Installing storage class on workload cluster")
+	//err = commandContext.ClusterManager.InstallStorageClass(ctx, workloadCluster, commandContext.Provider)
+	//if err != nil {
+	//	commandContext.SetError(err)
+	//	return &CollectDiagnosticsTask{}
+	//}
 
 	if !commandContext.BootstrapCluster.ExistingManagement {
 		logger.Info("Installing cluster-api providers on workload cluster")

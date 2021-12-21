@@ -1823,6 +1823,170 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
+    controller-gen.kubebuilder.io/version: v0.6.1
+  creationTimestamp: null
+  name: cloudstackdeploymentconfigs.anywhere.eks.amazonaws.com
+spec:
+  group: anywhere.eks.amazonaws.com
+  names:
+    kind: CloudStackDeploymentConfig
+    listKind: CloudStackDeploymentConfigList
+    plural: cloudstackdeploymentconfigs
+    singular: cloudstackdeploymentconfig
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: CloudStackDeploymentConfig is the Schema for the cloudstackdeploymentconfigs
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CloudStackDeploymentConfigSpec defines the desired state
+              of CloudStackDeploymentConfig
+            properties:
+              account:
+                type: string
+              domain:
+                description: Foo is an example field of CloudStackDeploymentConfig.
+                  Edit cloudstackdeploymentconfig_types.go to remove/update
+                type: string
+              insecure:
+                type: boolean
+              managementApiEndpoint:
+                type: string
+              network:
+                type: string
+              thumbprint:
+                type: string
+              zone:
+                type: string
+            required:
+            - domain
+            - insecure
+            - managementApiEndpoint
+            - network
+            - zone
+            type: object
+          status:
+            description: CloudStackDeploymentConfigStatus defines the observed state
+              of CloudStackDeploymentConfig
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.1
+  creationTimestamp: null
+  name: cloudstackmachineconfigs.anywhere.eks.amazonaws.com
+spec:
+  group: anywhere.eks.amazonaws.com
+  names:
+    kind: CloudStackMachineConfig
+    listKind: CloudStackMachineConfigList
+    plural: cloudstackmachineconfigs
+    singular: cloudstackmachineconfig
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: CloudStackMachineConfig is the Schema for the cloudstackmachineconfigs
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: CloudStackMachineConfigSpec defines the desired state of
+              CloudStackMachineConfig
+            properties:
+              computeOffering:
+                type: string
+              details:
+                additionalProperties:
+                  type: string
+                type: object
+              diskOffering:
+                type: string
+              osFamily:
+                type: string
+              template:
+                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+                  Important: Run "make" to regenerate code after modifying this file'
+                type: string
+              users:
+                items:
+                  description: UserConfiguration defines the configuration of the
+                    user to be added to the VM
+                  properties:
+                    name:
+                      type: string
+                    sshAuthorizedKeys:
+                      items:
+                        type: string
+                      type: array
+                  required:
+                  - name
+                  - sshAuthorizedKeys
+                  type: object
+                type: array
+            required:
+            - computeOffering
+            type: object
+          status:
+            description: CloudStackMachineConfigStatus defines the observed state
+              of CloudStackMachineConfig
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
     cert-manager.io/inject-ca-from: eksa-system/eksa-serving-cert
     controller-gen.kubebuilder.io/version: v0.6.1
   name: clusters.anywhere.eks.amazonaws.com
@@ -2418,7 +2582,7 @@ spec:
               users:
                 items:
                   description: UserConfiguration defines the configuration of the
-                    user to be added to the VSphere VM
+                    user to be added to the VM
                   properties:
                     name:
                       type: string
@@ -2854,6 +3018,48 @@ webhooks:
     - UPDATE
     resources:
     - awsiamconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackdeploymentconfig
+  failurePolicy: Fail
+  name: validation.cloudstackdeploymentconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - cloudstackdeploymentconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackmachineconfig
+  failurePolicy: Fail
+  name: validation.cloudstackmachineconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - cloudstackmachineconfigs
   sideEffects: None
 - admissionReviewVersions:
   - v1
