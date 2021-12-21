@@ -46,6 +46,8 @@ spec:
 {{- end }}
           kubeletExtraArgs:
             cloud-provider: external
+            read-only-port: "0"
+            anonymous-auth: "false"
 {{- if .cgroupDriverSystemd}}
             cgroup-driver: systemd
 {{- end }}

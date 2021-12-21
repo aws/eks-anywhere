@@ -1,0 +1,103 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: vgg-test-cluster
+spec:
+  clusterNetwork:
+    cni: cilium
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 2
+    endpoint:
+      host: "198.18.100.55"
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: vgg-test-cluster-cp
+  datacenterRef:
+    kind: VSphereDatacenterConfig
+    name: vgg-test-cluster
+  externalEtcdConfiguration:
+    count: 3
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: vgg-test-cluster-etcd
+  kubernetesVersion: "1.21"
+  managementCluster:
+    name: vgg-test-cluster
+  workerNodeGroupConfigurations:
+  - count: 2
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: vgg-test-cluster
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereDatacenterConfig
+metadata:
+  name: vgg-test-cluster
+spec:
+  datacenter: "SDDC-Datacenter"
+  insecure: true
+  network: "/SDDC-Datacenter/network/sddc-cgw-network-1"
+  server: "vcenter.sddc-44-239-186-141.vmwarevmc.com"
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: vgg-test-cluster-cp
+spec:
+  datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
+  diskGiB: 25
+  folder: "/SDDC-Datacenter/vm/capv/vgg"
+  memoryMiB: 8192
+  numCPUs: 2
+  osFamily: ubuntu
+  resourcePool: "*/Resources/Compute-ResourcePool"
+  users:
+  - name: ec2-user
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDGnG3dIT8bs9zVdHYxOQjgOQ07oEIVVNJ1a3rJqi6lapfKOgx7Kd5CDmEG0iya8IPEn7HYVzZvRtbaUNDd8k1q1DgYGGk6LwejKqx2CyoiPHY5kXF8kI190ecZgFVezAKch4FlBawMA/xczJYZnkWxHGpXSGsOixMVYM5mf1sHmV7GY5oarOUF5OoNtABf2MHSplWqlq+4u7dEjS92dqqvBL1NC1vDGvU6fYV4FTU84kToeN11/J8yxvmj7kBrV+RSLtM/DHplR3LF6Ymi6yT7qO9qltgidrGuJCXG64j22tzFo0tkT5RqdimUpkYOLjkc6J3U4po7D88TyWu3F8uVdj6gEw8SC2c3drXasGeQOEgsObj4hIl+kcEiEc1PtzvWKnZVI3VAhlIBj1jpwHF6eacrfX9BldzHmhf44PxKcM8keMD/Dm+JiArLyBy4LxLUd/kyU7LNoM1CoiuFjMTcgvrFeW/GnckzxDdzUDjGP+VEb3ZyaPBCZQH8hoPDTu0= vgg@3c22fb519aad.ant.amazon.com
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: vgg-test-cluster
+spec:
+  datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
+  diskGiB: 25
+  folder: "/SDDC-Datacenter/vm/capv/vgg"
+  memoryMiB: 8192
+  numCPUs: 2
+  osFamily: ubuntu
+  resourcePool: "*/Resources/Compute-ResourcePool"
+  users:
+  - name: ec2-user
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDGnG3dIT8bs9zVdHYxOQjgOQ07oEIVVNJ1a3rJqi6lapfKOgx7Kd5CDmEG0iya8IPEn7HYVzZvRtbaUNDd8k1q1DgYGGk6LwejKqx2CyoiPHY5kXF8kI190ecZgFVezAKch4FlBawMA/xczJYZnkWxHGpXSGsOixMVYM5mf1sHmV7GY5oarOUF5OoNtABf2MHSplWqlq+4u7dEjS92dqqvBL1NC1vDGvU6fYV4FTU84kToeN11/J8yxvmj7kBrV+RSLtM/DHplR3LF6Ymi6yT7qO9qltgidrGuJCXG64j22tzFo0tkT5RqdimUpkYOLjkc6J3U4po7D88TyWu3F8uVdj6gEw8SC2c3drXasGeQOEgsObj4hIl+kcEiEc1PtzvWKnZVI3VAhlIBj1jpwHF6eacrfX9BldzHmhf44PxKcM8keMD/Dm+JiArLyBy4LxLUd/kyU7LNoM1CoiuFjMTcgvrFeW/GnckzxDdzUDjGP+VEb3ZyaPBCZQH8hoPDTu0= vgg@3c22fb519aad.ant.amazon.com
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: vgg-test-cluster-etcd
+spec:
+  datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
+  diskGiB: 25
+  folder: "/SDDC-Datacenter/vm/capv/vgg"
+  memoryMiB: 8192
+  numCPUs: 2
+  osFamily: ubuntu
+  resourcePool: "*/Resources/Compute-ResourcePool"
+  users:
+  - name: ec2-user
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDGnG3dIT8bs9zVdHYxOQjgOQ07oEIVVNJ1a3rJqi6lapfKOgx7Kd5CDmEG0iya8IPEn7HYVzZvRtbaUNDd8k1q1DgYGGk6LwejKqx2CyoiPHY5kXF8kI190ecZgFVezAKch4FlBawMA/xczJYZnkWxHGpXSGsOixMVYM5mf1sHmV7GY5oarOUF5OoNtABf2MHSplWqlq+4u7dEjS92dqqvBL1NC1vDGvU6fYV4FTU84kToeN11/J8yxvmj7kBrV+RSLtM/DHplR3LF6Ymi6yT7qO9qltgidrGuJCXG64j22tzFo0tkT5RqdimUpkYOLjkc6J3U4po7D88TyWu3F8uVdj6gEw8SC2c3drXasGeQOEgsObj4hIl+kcEiEc1PtzvWKnZVI3VAhlIBj1jpwHF6eacrfX9BldzHmhf44PxKcM8keMD/Dm+JiArLyBy4LxLUd/kyU7LNoM1CoiuFjMTcgvrFeW/GnckzxDdzUDjGP+VEb3ZyaPBCZQH8hoPDTu0= vgg@3c22fb519aad.ant.amazon.com
+
+---
+
