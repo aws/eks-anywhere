@@ -2,7 +2,7 @@
     "default": [{"type": "reject"}],
     "transports": {
             "docker": {
-                    "857151390494.dkr.ecr.us-west-2.amazonaws.com": [{"type": "insecureAcceptAnything"}],
+                    "751815209827.dkr.ecr.us-east-1.amazonaws.com": [{"type": "insecureAcceptAnything"}],
                     "public.ecr.aws": [{"type": "insecureAcceptAnything"}]
             }
     }
