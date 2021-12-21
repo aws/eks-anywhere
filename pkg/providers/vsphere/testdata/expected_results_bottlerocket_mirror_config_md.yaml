@@ -19,6 +19,8 @@ spec:
           criSocket: /var/run/containerd/containerd.sock
           kubeletExtraArgs:
             cloud-provider: external
+            read-only-port: "0"
+            anonymous-auth: "false"
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           name: '{{ ds.meta_data.hostname }}'
       preKubeadmCommands:
