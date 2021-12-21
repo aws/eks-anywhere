@@ -51,6 +51,9 @@ type ClusterManager struct {
 	awsIamAuth         AwsIamAuth
 }
 
+//go:embed network_policy_allow_all.yaml
+var networkPolicyAllowAll []byte
+
 type ClusterClient interface {
 	MoveManagement(ctx context.Context, org, target *types.Cluster) error
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
@@ -529,6 +532,16 @@ func (c *ClusterManager) waitForCAPI(ctx context.Context, cluster *types.Cluster
 }
 
 func (c *ClusterManager) InstallNetworking(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	// Install all allow networking policies from embedded config
+	// hack to be removed in support of better implementation
+	err := c.Retrier.Retry(
+		func() error {
+			return c.clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, networkPolicyAllowAll)
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("error applying networking policy: %v", err)
+	}
 	networkingManifestContent, err := c.networking.GenerateManifest(clusterSpec)
 	if err != nil {
 		return fmt.Errorf("error generating networking manifest: %v", err)

@@ -36,52 +36,6 @@ var (
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
 )
 
-func TestClusterManagerInstallNetworkingSuccess(t *testing.T) {
-	ctx := context.Background()
-	cluster := &types.Cluster{}
-
-	networkingManifest := []byte("cilium")
-	clusterSpec := test.NewClusterSpec()
-
-	c, m := newClusterManager(t)
-	m.networking.EXPECT().GenerateManifest(clusterSpec).Return(networkingManifest, nil)
-	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, networkingManifest)
-
-	if err := c.InstallNetworking(ctx, cluster, clusterSpec); err != nil {
-		t.Errorf("ClusterManager.InstallNetworking() error = %v, wantErr nil", err)
-	}
-}
-
-func TestClusterManagerInstallNetworkingNetworkingError(t *testing.T) {
-	ctx := context.Background()
-	cluster := &types.Cluster{}
-	clusterSpec := test.NewClusterSpec()
-
-	c, m := newClusterManager(t)
-	m.networking.EXPECT().GenerateManifest(clusterSpec).Return(nil, errors.New("error in networking"))
-
-	if err := c.InstallNetworking(ctx, cluster, clusterSpec); err == nil {
-		t.Errorf("ClusterManager.InstallNetworking() error = nil, wantErr not nil")
-	}
-}
-
-func TestClusterManagerInstallNetworkingClientError(t *testing.T) {
-	ctx := context.Background()
-	cluster := &types.Cluster{}
-	networkingManifest := []byte("cilium")
-	clusterSpec := test.NewClusterSpec()
-	retries := 2
-
-	c, m := newClusterManager(t)
-	m.networking.EXPECT().GenerateManifest(clusterSpec).Return(networkingManifest, nil)
-	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, networkingManifest).Return(errors.New("error from client")).Times(retries)
-
-	c.Retrier = retrier.NewWithMaxRetries(retries, 1*time.Microsecond)
-	if err := c.InstallNetworking(ctx, cluster, clusterSpec); err == nil {
-		t.Errorf("ClusterManager.InstallNetworking() error = nil, wantErr not nil")
-	}
-}
-
 func TestClusterManagerInstallStorageClassSuccess(t *testing.T) {
 	ctx := context.Background()
 	cluster := &types.Cluster{}
