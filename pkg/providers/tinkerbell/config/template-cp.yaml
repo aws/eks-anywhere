@@ -17,7 +17,7 @@ spec:
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
-    name: {{.clusterName}}-control-plane
+    name: {{.clusterName}}
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: TinkerbellCluster
@@ -26,11 +26,19 @@ spec:
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
-  name: {{.clusterName}}-control-plane
+  name: {{.clusterName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   kubeadmConfigSpec:
-    clusterConfiguration: {}
+    clusterConfiguration:
+      imageRepository: {{.kubernetesRepository}}
+      etcd:
+        local:
+          imageRepository: {{.etcdRepository}}
+          imageTag: {{.etcdImageTag}}
+      dns:
+        imageRepository: {{.corednsRepository}}
+        imageTag: {{.corednsVersion}}
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
@@ -56,14 +64,14 @@ spec:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: TinkerbellMachineTemplate
-      name: {{.clusterName}}-control-plane
+      name: {{.controlPlaneTemplateName}}
   replicas: {{.controlPlaneReplicas}}
   version: {{.kubernetesVersion}}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: TinkerbellMachineTemplate
 metadata:
-  name: {{.clusterName}}-control-plane
+  name: {{.controlPlaneTemplateName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   template:
@@ -75,4 +83,5 @@ metadata:
   name:  {{.clusterName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
+  imageLookupFormat: {{.BaseRegistry}}/{{.OSDistro}}-{{.OSVersion}}-kube-{{.KubernetesVersion}}.raw.gz
   imageLookupBaseRegistry: ""

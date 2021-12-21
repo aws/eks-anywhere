@@ -23,7 +23,7 @@ const (
 	tinkerbellCertURLKey           = "TINKERBELL_CERT_URL"
 	tinkerbellGRPCAuthKey          = "TINKERBELL_GRPC_AUTHORITY"
 	tinkerbellIPKey                = "TINKERBELL_IP"
-	tinkerbellPBnJGRPCAuthorityKey = "TINKERBELL_PBNJ_GRPC_AUTHORITY"
+	tinkerbellPBnJGRPCAuthorityKey = "PBNJ_GRPC_AUTHORITY"
 )
 
 //go:embed config/template-cp.yaml
@@ -133,13 +133,14 @@ func (p *tinkerbellProvider) DeleteResources(_ context.Context, _ *cluster.Spec)
 
 func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
+	if err := setupEnvVars(p.datacenterConfig); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 	p.controlPlaneSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 	p.workerSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 	// TODO: Add more validations
-	err := p.validateEnv(ctx)
-	if err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
+
 	return nil
 }
 
@@ -236,8 +237,6 @@ func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, clus
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = p.templateBuilder.CPMachineTemplateName(clusterName)
 		values["controlPlaneSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
-		values["etcdSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
-		values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
@@ -325,7 +324,22 @@ func (p *tinkerbellProvider) DatacenterConfig() providers.DatacenterConfig {
 
 func (p *tinkerbellProvider) MachineConfigs() []providers.MachineConfig {
 	// TODO: Figure out if something is needed here
-	return nil
+	var configs []providers.MachineConfig
+	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	workerMachineName := p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
+	if p.clusterConfig.IsManaged() {
+		p.machineConfigs[controlPlaneMachineName].SetManagement(p.clusterConfig.ManagedBy())
+	}
+
+	configs = append(configs, p.machineConfigs[controlPlaneMachineName])
+	if workerMachineName != controlPlaneMachineName {
+		configs = append(configs, p.machineConfigs[workerMachineName])
+		if p.clusterConfig.IsManaged() {
+			p.machineConfigs[workerMachineName].SetManagement(p.clusterConfig.ManagedBy())
+		}
+	}
+	return configs
 }
 
 func (p *tinkerbellProvider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
@@ -369,6 +383,15 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"kubeVipImage":                 "ghcr.io/kube-vip/kube-vip:latest",
 		"podCidrs":                     clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                 clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
+		"BaseRegistry":                 "", // TODO: need to get this values for creating template IMAGE_URL
+		"OSDistro":                     "", // TODO: need to get this values for creating template IMAGE_URL
+		"OSVersion":                    "", // TODO: need to get this values for creating template IMAGE_URL
+		"KubernetesVersion":            "", // TODO: need to get this values for creating template IMAGE_URL
+		"kubernetesRepository":         bundle.KubeDistro.Kubernetes.Repository,
+		"corednsRepository":            bundle.KubeDistro.CoreDNS.Repository,
+		"corednsVersion":               bundle.KubeDistro.CoreDNS.Tag,
+		"etcdRepository":               bundle.KubeDistro.Etcd.Repository,
+		"etcdImageTag":                 bundle.KubeDistro.Etcd.Tag,
 	}
 	return values
 }
