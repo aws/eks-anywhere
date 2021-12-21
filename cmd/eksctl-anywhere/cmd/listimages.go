@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
 
@@ -11,7 +10,7 @@ import (
 )
 
 type listImagesOptions struct {
-	fileName string
+	clusterOptions
 }
 
 var lio = &listImagesOptions{}
@@ -19,6 +18,7 @@ var lio = &listImagesOptions{}
 func init() {
 	listCmd.AddCommand(listImagesCommand)
 	listImagesCommand.Flags().StringVarP(&lio.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
+	listImagesCommand.Flags().StringVar(&lio.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	err := listImagesCommand.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking filename flag as required: %v", err)
@@ -39,12 +39,17 @@ var listImagesCommand = &cobra.Command{
 	},
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return listImages(cmd.Context(), lio.fileName)
+		return listImages()
 	},
 }
 
-func listImages(context context.Context, spec string) error {
-	images, err := getImages(spec)
+func listImages() error {
+	clusterSpec, err := newClusterSpec(lio.clusterOptions)
+	if err != nil {
+		return err
+	}
+
+	images, err := getImages(clusterSpec)
 	if err != nil {
 		return err
 	}
