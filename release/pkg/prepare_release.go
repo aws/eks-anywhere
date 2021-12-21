@@ -480,7 +480,7 @@ func GetHead(path string) (string, error) {
 func execCommand(cmd *exec.Cmd) (string, error) {
 	stdout, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", errors.Cause(err)
+		return string(stdout), errors.Cause(err)
 	}
 	return string(stdout), nil
 }
