@@ -108,7 +108,11 @@ func (e *E2ETest) GenerateClusterConfig() {
 }
 
 func (e *E2ETest) ImportImages() {
-	e.RunEKSA("anywhere", "import-images", "-f", e.ClusterConfigLocation)
+	importImagesArgs := []string{"anywhere", "import-images", "-f", e.ClusterConfigLocation}
+	if getBundlesOverride() == "true" {
+		importImagesArgs = append(importImagesArgs, "--bundles-override", defaultBundleReleaseManifestFile)
+	}
+	e.RunEKSA(importImagesArgs...)
 }
 
 func (e *E2ETest) CreateCluster() {
