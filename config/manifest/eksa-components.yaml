@@ -2085,6 +2085,10 @@ spec:
                     description: Endpoint defines the registry mirror endpoint to
                       use for pulling images
                     type: string
+                  port:
+                    description: Port defines the port exposed for registry mirror
+                      endpoint
+                    type: string
                 type: object
               workerNodeGroupConfigurations:
                 items:
