@@ -63,7 +63,7 @@ func PollForExistence(devRelease bool, authConfig *docker.AuthConfiguration, ima
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("retries exhausted waiting for source image to be available for copy: %v", err)
+		return fmt.Errorf("retries exhausted waiting for source image %s to be available for copy: %v", imageUri, err)
 	}
 
 	return nil
