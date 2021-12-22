@@ -266,14 +266,14 @@ cluster-controller-tarballs:  cluster-controller-binaries
 cluster-controller-local-images: IMAGE_PLATFORMS = linux/amd64
 cluster-controller-local-images: IMAGE_OUTPUT_TYPE = oci
 cluster-controller-local-images: IMAGE_OUTPUT = dest=/tmp/$(CLUSTER_CONTROLLER_IMAGE_NAME).tar
-cluster-controller-local-images: $(ORGANIZE_BINARIES_TARGETS)
+cluster-controller-local-images: cluster-controller-binaries $(ORGANIZE_BINARIES_TARGETS)
 	$(BUILDCTL)
 
 .PHONY: cluster-controller-images
 cluster-controller-images: IMAGE_PLATFORMS = linux/amd64,linux/arm64
 cluster-controller-images: IMAGE_OUTPUT_TYPE = image
 cluster-controller-images: IMAGE_OUTPUT = push=true
-cluster-controller-images: $(ORGANIZE_BINARIES_TARGETS)
+cluster-controller-images: cluster-controller-binaries $(ORGANIZE_BINARIES_TARGETS)
 	$(BUILDCTL)
 
 
