@@ -243,7 +243,7 @@ func (s *MoveClusterManagementTask) Run(ctx context.Context, commandContext *tas
 		return &CollectDiagnosticsTask{}
 	}
 
-	return &InstallEksaComponentsTask{}
+	return &WriteClusterConfigTask{}
 }
 
 func (s *MoveClusterManagementTask) Name() string {
