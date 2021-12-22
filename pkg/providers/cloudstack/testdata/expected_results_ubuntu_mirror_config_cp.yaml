@@ -16,7 +16,7 @@ spec:
     kind: KubeadmControlPlane
     name: test
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: CloudStackCluster
     name: test
   managedExternalEtcdRef:
@@ -24,7 +24,7 @@ spec:
     kind: EtcdadmCluster
     name: test-etcd
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: CloudStackCluster
 metadata:
   name: test
@@ -34,11 +34,9 @@ spec:
     host: 1.2.3.4
     port: 6443
   network: net1
-  domain: domain1
   zone: zone1
-  account: admin
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: CloudStackMachineTemplate
 metadata:
   name: test-control-plane-template-1234567890000
@@ -48,7 +46,6 @@ spec:
     spec:
       offering: m4-large
       template: centos7-k8s-118
-      diskOffering: ssd-100GB
       details:
         foo: bar
         key: value
@@ -60,7 +57,7 @@ metadata:
   namespace: eksa-system
 spec:
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: CloudStackMachineTemplate
     name: test-control-plane-template-1234567890000
   kubeadmConfigSpec:
@@ -289,8 +286,8 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
-        name: '{{ ds.meta_data.hostname }}'
+          provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+        name: '{{ ds.meta_data.local_hostname }}'
     joinConfiguration:
       pause:
         imageRepository: public.ecr.aws/eks-distro/kubernetes/pause
@@ -300,14 +297,15 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
-        name: '{{ ds.meta_data.hostname }}'
+          provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+        name: '{{ ds.meta_data.local_hostname }}'
     preKubeadmCommands:
-    - hostname "{{ ds.meta_data.hostname }}"
+    - swapoff -a
+    - hostname "{{ ds.meta_data.local_hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
-    - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+    - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
+    - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
     useExperimentalRetryJoin: true
     users:
     - name: capc
@@ -336,11 +334,11 @@ spec:
     registryMirror:
       endpoint: 1.2.3.4
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: CloudStackMachineTemplate
     name: test-etcd-template-1234567890000
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: CloudStackMachineTemplate
 metadata:
   name: test-etcd-template-1234567890000
@@ -350,7 +348,6 @@ spec:
     spec:
       offering: m4-large
       template: centos7-k8s-118
-      diskOffering: ssd-100GB
       details:
         foo: bar
         key: value

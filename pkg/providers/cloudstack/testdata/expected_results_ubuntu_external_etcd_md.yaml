@@ -13,14 +13,15 @@ spec:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
           kubeletExtraArgs:
-            cloud-provider: external
-          name: '{{ ds.meta_data.hostname }}'
+            provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+          name: '{{ ds.meta_data.local_hostname }}'
       preKubeadmCommands:
-      - hostname "{{ ds.meta_data.hostname }}"
+      - swapoff -a
+      - hostname "{{ ds.meta_data.local_hostname }}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
-      - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
-      - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+      - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
+      - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
       users:
       - name: capc
         sshAuthorizedKeys:
@@ -52,12 +53,12 @@ spec:
           name: test-md-0
       clusterName: test
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
         kind: CloudStackMachineTemplate
         name: test-worker-node-template-1234567890000
       version: v1.21.2-eks-1-21-4
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: CloudStackMachineTemplate
 metadata:
   name: test-worker-node-template-1234567890000
@@ -67,7 +68,6 @@ spec:
     spec:
       offering: m4-large
       template: centos7-k8s-118
-      diskOffering: ssd-100GB
       details:
         foo: bar
         key: value

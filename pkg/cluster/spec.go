@@ -235,6 +235,12 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	}
 
 	switch s.Cluster.Spec.DatacenterRef.Kind {
+	case eksav1alpha1.CloudStackDeploymentKind:
+		datacenterConfig, err := eksav1alpha1.GetCloudStackDeploymentConfig(clusterConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		s.DatacenterConfig = &datacenterConfig.ObjectMeta
 	case eksav1alpha1.VSphereDatacenterKind:
 		datacenterConfig, err := eksav1alpha1.GetVSphereDatacenterConfig(clusterConfigPath)
 		if err != nil {
@@ -597,6 +603,13 @@ func (vb *VersionsBundle) Manifests() map[string][]v1alpha1.Manifest {
 		vb.VSphere.Components,
 		vb.VSphere.ClusterTemplate,
 		vb.VSphere.Metadata,
+	}
+
+	// CAPC manifests
+	manifests["cluster-api-provider-cloudstack"] = []v1alpha1.Manifest{
+		vb.CloudStack.Components,
+		vb.CloudStack.ClusterTemplate,
+		vb.CloudStack.Metadata,
 	}
 
 	// Cilium manifest

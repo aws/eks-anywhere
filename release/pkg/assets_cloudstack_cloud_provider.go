@@ -15,17 +15,18 @@
 package pkg
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/pkg/errors"
 )
 
+const cloudstackCloudProviderProjectPath = "projects/kubernetes/cloud-provider-cloudstack"
+
 // GetCloudStackCloudProviderAssets returns the eks-a artifacts for cloudstack cloud provider
 func (r *ReleaseConfig) GetCloudStackCloudProviderAssets(eksDReleaseChannel string) ([]Artifact, error) {
-	// Get Git tag for the project
-	projectSource := "projects/kubernetes/cloud-provider-cloudstack"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, eksDReleaseChannel, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
+	gitTagFolder := filepath.Join(cloudstackCloudProviderProjectPath, eksDReleaseChannel)
+	gitTag, err := r.readGitTag(gitTagFolder, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -35,17 +36,30 @@ func (r *ReleaseConfig) GetCloudStackCloudProviderAssets(eksDReleaseChannel stri
 	tagOptions := map[string]string{
 		"gitTag":             gitTag,
 		"eksDReleaseChannel": eksDReleaseChannel,
+		"projectPath":        gitTagFolder,
+	}
+
+	fmt.Println("Getting cloudStackCloudProvider source image uri")
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
 	}
 
 	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, repoName, tagOptions),
-		Arch:            []string{"amd64"},
-		OS:              "linux",
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       cloudstackCloudProviderProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
 	}
+	artifacts := []Artifact{{Image: imageArtifact}}
 
-	artifact := Artifact{Image: imageArtifact}
-
-	return []Artifact{artifact}, nil
+	return artifacts, nil
 }

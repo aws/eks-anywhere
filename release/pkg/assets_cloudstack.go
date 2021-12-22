@@ -16,7 +16,6 @@ package pkg
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 
@@ -25,28 +24,27 @@ import (
 
 // TODO: needs to confirm vgg@ which one to use manager or cloudApiController
 func (r *ReleaseConfig) GetCloudStackBundle(eksDReleaseChannel string, imageDigests map[string]string) (anywherev1alpha1.CloudStackBundle, error) {
-	cloudstackBundleArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"cluster-api-provider-cloudstack": r.GetCapcAssets,
-		"kube-proxy":                      r.GetKubeRbacProxyAssets,
+	cloudstackBundleArtifacts := map[string][]Artifact{
+		"cluster-api-provider-cloudstack": r.BundleArtifactsTable["cluster-api-provider-cloudstack"],
+		"kube-rbac-proxy":                 r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
-	version, err := r.GenerateComponentBundleVersion(
-		newVersionerWithGITTAG(filepath.Join(r.BuildRepoSource, "projects/kubernetes-sigs/cluster-api-provider-cloudstack")),
-	)
-	if err != nil {
-		return anywherev1alpha1.CloudStackBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-cloudstack")
-	}
+	var version string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	for componentName, artifactFunc := range cloudstackBundleArtifactsFuncs {
-		artifacts, err := artifactFunc()
-		if err != nil {
-			return anywherev1alpha1.CloudStackBundle{}, errors.Wrapf(err, "Error getting artifact information for %s", componentName)
-		}
-
+	for componentName, artifacts := range cloudstackBundleArtifacts {
 		for _, artifact := range artifacts {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
+				if componentName == "cluster-api-provider-cloudstack" {
+					componentVersion, err := BuildComponentVersion(
+						newVersionerWithGITTAG(r.BuildRepoSource, capcProjectPath, imageArtifact.SourcedFromBranch, r),
+					)
+					if err != nil {
+						return anywherev1alpha1.CloudStackBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-cloudstack")
+					}
+					version = componentVersion
+				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
 					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),

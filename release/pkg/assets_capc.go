@@ -21,9 +21,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+const capcProjectPath = "projects/kubernetes-sigs/cluster-api-provider-cloudstack"
+
 // GetCapcAssets returns the eks-a artifacts for CAPC
 func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
-	gitTag, err := r.getCapcGitTag()
+	gitTag, err := r.readGitTag(capcProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -31,19 +33,37 @@ func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
 	name := "cluster-api-cloudstack-controller"
 	repoName := "kubernetes-sigs/cluster-api-provider-cloudstack/release/manager"
 	tagOptions := map[string]string{
-		"gitTag": gitTag,
+		"gitTag":      gitTag,
+		"projectPath": capcProjectPath,
 	}
 
-	artifacts := []Artifact{}
-	imageArtifact := &ImageArtifact{
-		AssetName:       name,
-		SourceImageURI:  r.GetSourceImageURI(name, repoName, tagOptions),
-		ReleaseImageURI: r.GetReleaseImageURI(name, repoName, tagOptions),
-		Arch:            []string{"amd64"},
-		OS:              "linux",
-		GitTag:          gitTag,
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
 	}
-	artifacts = append(artifacts, Artifact{Image: imageArtifact})
+	if sourcedFromBranch != r.BuildRepoBranchName {
+		gitTag, err = r.readGitTag(capcProjectPath, sourcedFromBranch)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+		tagOptions["gitTag"] = gitTag
+	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+
+	imageArtifact := &ImageArtifact{
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       capcProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
+	}
+	artifacts := []Artifact{{Image: imageArtifact}}
 
 	var imageTagOverrides []ImageTagOverride
 
@@ -67,7 +87,7 @@ func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
 	for _, manifest := range manifestList {
 		var sourceS3Prefix string
 		var releaseS3Path string
-		latestPath := r.getLatestUploadDestination()
+		latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
 			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api-provider-cloudstack/%s/manifests/infrastructure-cloudstack/%s", latestPath, gitTag)
@@ -96,20 +116,11 @@ func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
 			ReleaseS3Path:     releaseS3Path,
 			ReleaseCdnURI:     cdnURI,
 			ImageTagOverrides: imageTagOverrides,
+			GitTag:            gitTag,
+			ProjectPath:       capcProjectPath,
 		}
 		artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 	}
 
 	return artifacts, nil
-}
-
-func (r *ReleaseConfig) getCapcGitTag() (string, error) {
-	projectSource := "projects/kubernetes-sigs/cluster-api-provider-cloudstack"
-	tagFile := filepath.Join(r.BuildRepoSource, projectSource, "GIT_TAG")
-	gitTag, err := readFile(tagFile)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-
-	return gitTag, nil
 }

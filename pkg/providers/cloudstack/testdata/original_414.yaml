@@ -49,13 +49,13 @@ spec:
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
-          cloud-provider: external
-        name: '{{ local_hostname }}'
+          provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+        name: '{{ ds.meta_data.local_hostname }}'
     joinConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
-          cloud-provider: external
-        name: '{{ local_hostname }}'
+          provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+        name: '{{ ds.meta_data.local_hostname }}'
   machineTemplate:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -123,5 +123,5 @@ spec:
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
-            cloud-provider: external
-          name: '{{ local_hostname }}'
+            provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+          name: '{{ ds.meta_data.local_hostname }}'

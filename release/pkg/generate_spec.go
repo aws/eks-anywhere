@@ -493,7 +493,7 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 			tagOptions["eksDReleaseChannel"],
 		)
 	} else if name == "cloud-provider-cloudstack" {
-		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-eks-a-%s",
+		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-eks-a",
 			r.ReleaseContainerRegistry,
 			repoName,
 			tagOptions["gitTag"],
