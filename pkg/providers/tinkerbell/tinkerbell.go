@@ -23,7 +23,7 @@ const (
 	tinkerbellCertURLKey           = "TINKERBELL_CERT_URL"
 	tinkerbellGRPCAuthKey          = "TINKERBELL_GRPC_AUTHORITY"
 	tinkerbellIPKey                = "TINKERBELL_IP"
-	tinkerbellPBnJGRPCAuthorityKey = "TINKERBELL_PBNJ_GRPC_AUTHORITY"
+	tinkerbellPBnJGRPCAuthorityKey = "PBNJ_GRPC_AUTHORITY"
 )
 
 //go:embed config/template-cp.yaml
@@ -133,20 +133,19 @@ func (p *tinkerbellProvider) DeleteResources(_ context.Context, _ *cluster.Spec)
 
 func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
+	if err := setupEnvVars(p.datacenterConfig); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
 	p.controlPlaneSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 	p.workerSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 	// TODO: Add more validations
-	err := p.validateEnv(ctx)
-	if err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
+
 	return nil
 }
 
 func (p *tinkerbellProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
 	// TODO: validations?
-	err := p.validateEnv(ctx)
-	if err != nil {
+	if err := setupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 	return nil
@@ -236,8 +235,8 @@ func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, clus
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = p.templateBuilder.CPMachineTemplateName(clusterName)
 		values["controlPlaneSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
-		values["etcdSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
-		values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
+		// values["etcdSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
+		// values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
@@ -325,7 +324,22 @@ func (p *tinkerbellProvider) DatacenterConfig() providers.DatacenterConfig {
 
 func (p *tinkerbellProvider) MachineConfigs() []providers.MachineConfig {
 	// TODO: Figure out if something is needed here
-	return nil
+	var configs []providers.MachineConfig
+	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	workerMachineName := p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
+	if p.clusterConfig.IsManaged() {
+		p.machineConfigs[controlPlaneMachineName].SetManagement(p.clusterConfig.ManagedBy())
+	}
+
+	configs = append(configs, p.machineConfigs[controlPlaneMachineName])
+	if workerMachineName != controlPlaneMachineName {
+		configs = append(configs, p.machineConfigs[workerMachineName])
+		if p.clusterConfig.IsManaged() {
+			p.machineConfigs[workerMachineName].SetManagement(p.clusterConfig.ManagedBy())
+		}
+	}
+	return configs
 }
 
 func (p *tinkerbellProvider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
@@ -366,9 +380,17 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"eksaSystemNamespace":          constants.EksaSystemNamespace,
 		"format":                       format,
 		"kubernetesVersion":            bundle.KubeDistro.Kubernetes.Tag,
-		"kubeVipImage":                 "ghcr.io/kube-vip/kube-vip:latest",
+		"kubeVipImage":                 "ghcr.io/kube-vip/kube-vip:latest", // TODO: get this value from the bundle once we add it
 		"podCidrs":                     clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                 clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
+		"baseRegistry":                 "", // TODO: need to get this values for creating template IMAGE_URL
+		"osDistro":                     "", // TODO: need to get this values for creating template IMAGE_URL
+		"osVersion":                    "", // TODO: need to get this values for creating template IMAGE_URL
+		"kubernetesRepository":         bundle.KubeDistro.Kubernetes.Repository,
+		"corednsRepository":            bundle.KubeDistro.CoreDNS.Repository,
+		"corednsVersion":               bundle.KubeDistro.CoreDNS.Tag,
+		"etcdRepository":               bundle.KubeDistro.Etcd.Repository,
+		"etcdImageTag":                 bundle.KubeDistro.Etcd.Tag,
 	}
 	return values
 }
@@ -388,36 +410,4 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
 	}
 	return values
-}
-
-func (p *tinkerbellProvider) validateEnv(ctx context.Context) error {
-	if tinkerbellCertURL, ok := os.LookupEnv(tinkerbellCertURLKey); ok && len(tinkerbellCertURL) > 0 {
-		if err := os.Setenv(tinkerbellCertURLKey, tinkerbellCertURL); err != nil {
-			return fmt.Errorf("unable to set %s: %v", tinkerbellCertURLKey, err)
-		}
-	} else {
-		return fmt.Errorf("%s is not set or is empty", tinkerbellCertURLKey)
-	}
-	if tinkerbellGRPCAuth, ok := os.LookupEnv(tinkerbellGRPCAuthKey); ok && len(tinkerbellGRPCAuth) > 0 {
-		if err := os.Setenv(tinkerbellGRPCAuthKey, tinkerbellGRPCAuth); err != nil {
-			return fmt.Errorf("unable to set %s: %v", tinkerbellGRPCAuthKey, err)
-		}
-	} else {
-		return fmt.Errorf("%s is not set or is empty", tinkerbellGRPCAuthKey)
-	}
-	if tinkerbellIP, ok := os.LookupEnv(tinkerbellIPKey); ok && len(tinkerbellIP) > 0 {
-		if err := os.Setenv(tinkerbellIPKey, tinkerbellIP); err != nil {
-			return fmt.Errorf("unable to set %s: %v", tinkerbellIPKey, err)
-		}
-	} else {
-		return fmt.Errorf("%s is not set or is empty", tinkerbellIPKey)
-	}
-	if tinkerbellPBnJGRPCAuthority, ok := os.LookupEnv(tinkerbellPBnJGRPCAuthorityKey); ok && len(tinkerbellPBnJGRPCAuthority) > 0 {
-		if err := os.Setenv(tinkerbellPBnJGRPCAuthorityKey, tinkerbellPBnJGRPCAuthority); err != nil {
-			return fmt.Errorf("unable to set %s: %v", tinkerbellPBnJGRPCAuthorityKey, err)
-		}
-	} else {
-		return fmt.Errorf("%s is not set or is empty", tinkerbellPBnJGRPCAuthorityKey)
-	}
-	return nil
 }
