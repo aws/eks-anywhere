@@ -6,7 +6,6 @@ import (
 
 	v1 "k8s.io/api/apps/v1"
 
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -16,12 +15,11 @@ const (
 	ciliumPreflightDaemonSetName  = "cilium-pre-flight-check"
 	ciliumDeploymentName          = "cilium"
 	ciliumPreflightDeploymentName = "cilium-pre-flight-check"
-	namespace                     = constants.KubeSystemNamespace
 )
 
 type Client interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
-	DeleteKubeSpec(ctx context.Context, cluster *types.Cluster, data []byte) error
+	DeleteKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
 	GetDaemonSet(ctx context.Context, name, namespace, kubeconfig string) (*v1.DaemonSet, error)
 	GetDeployment(ctx context.Context, name, namespace, kubeconfig string) (*v1.Deployment, error)
 }
