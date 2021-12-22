@@ -17,6 +17,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
 	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -1161,4 +1162,35 @@ func (k *Kubectl) GetResource(ctx context.Context, resourceType string, name str
 		found = true
 	}
 	return found, err
+}
+
+func (k *Kubectl) getObject(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj client.Object) error {
+	stdOut, err := k.Execute(ctx, "get", "--namespace", namespace, resourceType, name, "-o", "json", "--kubeconfig", kubeconfig)
+	if err != nil {
+		return fmt.Errorf("error getting %s with kubectl: %v", resourceType, err)
+	}
+
+	if err = json.Unmarshal(stdOut.Bytes(), obj); err != nil {
+		return fmt.Errorf("error parsing %s response: %v", resourceType, err)
+	}
+
+	return nil
+}
+
+func (k *Kubectl) GetDeployment(ctx context.Context, name, namespace, kubeconfig string) (*appsv1.Deployment, error) {
+	obj := &appsv1.Deployment{}
+	if err := k.getObject(ctx, "deployment", name, namespace, kubeconfig, obj); err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
+func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig string) (*appsv1.DaemonSet, error) {
+	obj := &appsv1.DaemonSet{}
+	if err := k.getObject(ctx, "daemonset", name, namespace, kubeconfig, obj); err != nil {
+		return nil, err
+	}
+
+	return obj, nil
 }
