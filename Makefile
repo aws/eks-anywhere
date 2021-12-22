@@ -20,11 +20,13 @@ BRANCH_NAME?=main
 ifeq (,$(findstring $(BRANCH_NAME),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${BRANCH_NAME}/bundle-release.yaml
+LATEST=$(BRANCH_NAME)
 $(info    Using branch-specific BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
 else
 ## use the standard bundle manifest if the branch is 'main'
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml
 $(info    Using stanard BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
+LATEST=latest
 endif
 
 RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
@@ -68,12 +70,17 @@ BASE_REPO?=public.ecr.aws/eks-distro-build-tooling
 CLUSTER_CONTROLLER_BASE_IMAGE_NAME?=eks-distro-minimal-base
 CLUSTER_CONTROLLER_BASE_TAG?=$(shell cat controllers/EKS_DISTRO_MINIMAL_BASE_TAG_FILE)
 CLUSTER_CONTROLLER_BASE_IMAGE?=$(BASE_REPO)/$(CLUSTER_CONTROLLER_BASE_IMAGE_NAME):$(CLUSTER_CONTROLLER_BASE_TAG)
+DOCKERFILE_FOLDER = ./controllers/docker/linux/eks-anywhere-cluster-controller
 
-IMAGE_REPO=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
+IMAGE_REPO?=$(if $(AWS_ACCOUNT_ID),$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com,localhost:5000)
 IMAGE_TAG?=$(GIT_TAG)-$(shell git rev-parse HEAD)
 CLUSTER_CONTROLLER_IMAGE_NAME=eks-anywhere-cluster-controller
 CLUSTER_CONTROLLER_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):$(IMAGE_TAG)
-CLUSTER_CONTROLLER_LATEST_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):latest
+CLUSTER_CONTROLLER_LATEST_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):$(LATEST)
+
+# Branch builds should look at the current branch latest image for cache as well as main branch latest for cache to cover the cases
+# where its the first build from a new release branch
+IMAGE_IMPORT_CACHE = type=registry,ref=$(CLUSTER_CONTROLLER_LATEST_IMAGE) type=registry,ref=$(subst $(LATEST),latest,$(CLUSTER_CONTROLLER_LATEST_IMAGE))
 
 MANIFEST_IMAGE_NAME_OVERRIDE="$(IMAGE_REPO)/eks-anywhere-cluster-controller"
 MANIFEST_IMAGE_TAG_OVERRIDE=${IMAGE_TAG}
@@ -89,8 +96,12 @@ BUILD_TAGS := exclude_graphdriver_btrfs exclude_graphdriver_devicemapper
 GO_ARCH:=$(shell go env GOARCH)
 GO_OS:=$(shell go env GOOS)
 
+
+BINARY_DEPS_DIR = $(OUTPUT_DIR)/dependencies
 CLUSTER_CONTROLLER_PLATFORMS ?= linux-amd64 linux-arm64
 CREATE_CLUSTER_CONTROLLER_BINARIES := $(foreach platform,$(CLUSTER_CONTROLLER_PLATFORMS),create-cluster-controller-binary-$(platform))
+FETCH_BINARIES_TARGETS = eksa/vmware/govmomi
+ORGANIZE_BINARIES_TARGETS = $(addsuffix /eks-a-tools,$(addprefix $(BINARY_DEPS_DIR)/linux-,amd64 arm64))
 
 EKS_A_PLATFORMS ?= linux-amd64 linux-arm64 darwin-arm64 darwin-amd64
 EKS_A_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-cross-platform-$(platform))
@@ -252,26 +263,19 @@ cluster-controller-tarballs:  cluster-controller-binaries
 	controllers/build/create_tarballs.sh $(BINARY_NAME) $(GIT_TAG) $(TAR_PATH)
 
 .PHONY: cluster-controller-local-images
-cluster-controller-local-images: cluster-controller-binaries
-	$(BUILDKIT) \
-		build \
-		--frontend dockerfile.v0 \
-		--opt platform=linux/amd64 \
-		--opt build-arg:BASE_IMAGE=$(CLUSTER_CONTROLLER_BASE_IMAGE) \
-		--local dockerfile=./controllers/docker/linux/eks-anywhere-cluster-controller \
-		--local context=. \
-		--output type=oci,oci-mediatypes=true,\"name=$(CLUSTER_CONTROLLER_IMAGE),$(CLUSTER_CONTROLLER_LATEST_IMAGE)\",dest=/tmp/eks-anywhere-cluster-controller.tar
+cluster-controller-local-images: IMAGE_PLATFORMS = linux/amd64
+cluster-controller-local-images: IMAGE_OUTPUT_TYPE = oci
+cluster-controller-local-images: IMAGE_OUTPUT = dest=/tmp/$(CLUSTER_CONTROLLER_IMAGE_NAME).tar
+cluster-controller-local-images: $(ORGANIZE_BINARIES_TARGETS)
+	$(BUILDCTL)
 
 .PHONY: cluster-controller-images
-cluster-controller-images: cluster-controller-binaries
-	$(BUILDKIT) \
-		build \
-		--frontend dockerfile.v0 \
-		--opt platform=linux/amd64,linux/arm64 \
-		--opt build-arg:BASE_IMAGE=$(CLUSTER_CONTROLLER_BASE_IMAGE) \
-		--local dockerfile=./controllers/docker/linux/eks-anywhere-cluster-controller \
-		--local context=. \
-		--output type=image,oci-mediatypes=true,\"name=$(CLUSTER_CONTROLLER_IMAGE),$(CLUSTER_CONTROLLER_LATEST_IMAGE)\",push=true
+cluster-controller-images: IMAGE_PLATFORMS = linux/amd64,linux/arm64
+cluster-controller-images: IMAGE_OUTPUT_TYPE = image
+cluster-controller-images: IMAGE_OUTPUT = push=true
+cluster-controller-images: $(ORGANIZE_BINARIES_TARGETS)
+	$(BUILDCTL)
+
 
 .PHONY: generate-attribution
 generate-attribution: GOLANG_VERSION ?= "1.16"
@@ -495,3 +499,36 @@ GOBIN=$$BIN_PATH go install $(2) ;\
 [[ $$PKG_BIN_NAME == $$BIN_NAME ]] || mv -f $$BIN_PATH/$$PKG_BIN_NAME $$BIN_PATH/$$BIN_NAME ;\
 }
 endef
+
+define BUILDCTL
+	$(BUILDKIT) \
+		build \
+		--frontend dockerfile.v0 \
+		--opt platform=$(IMAGE_PLATFORMS) \
+		--opt build-arg:BASE_IMAGE=$(CLUSTER_CONTROLLER_BASE_IMAGE) \
+		--progress plain \
+		--local dockerfile=$(DOCKERFILE_FOLDER) \
+		--local context=. \
+		--output type=$(IMAGE_OUTPUT_TYPE),oci-mediatypes=true,\"name=$(CLUSTER_CONTROLLER_IMAGE),$(CLUSTER_CONTROLLER_LATEST_IMAGE)\",$(IMAGE_OUTPUT) \
+		$(if $(filter push=true,$(IMAGE_OUTPUT)),--export-cache type=inline,) \
+		$(foreach IMPORT_CACHE,$(IMAGE_IMPORT_CACHE),--import-cache $(IMPORT_CACHE))
+
+endef 
+
+
+## Fetch Binary Targets
+define FULL_FETCH_BINARIES_TARGETS
+	$(addprefix $(BINARY_DEPS_DIR)/linux-amd64/, $(1)) $(addprefix $(BINARY_DEPS_DIR)/linux-arm64/, $(1))
+endef
+
+$(ORGANIZE_BINARIES_TARGETS): ARTIFACTS_BUCKET = s3://projectbuildpipeline-857-pipelineoutputartifactsb-10ajmk30khe3f
+$(ORGANIZE_BINARIES_TARGETS): $(call FULL_FETCH_BINARIES_TARGETS, $(FETCH_BINARIES_TARGETS))
+	$(BUILD_LIB)/organize_binaries.sh $(BINARY_DEPS_DIR) $(lastword $(subst -, ,$(@D)))
+
+$(BINARY_DEPS_DIR)/linux-%:
+	$(BUILD_LIB)/fetch_binaries.sh $(BINARY_DEPS_DIR) $* $(ARTIFACTS_BUCKET) $(LATEST)
+
+# Do not binary deps as intermediate files
+ifneq ($(FETCH_BINARIES_TARGETS),)
+.SECONDARY: $(call FULL_FETCH_BINARIES_TARGETS, $(FETCH_BINARIES_TARGETS))
+endif
