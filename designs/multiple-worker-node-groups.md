@@ -225,7 +225,7 @@ Also, it needs to be made sure that at the least one of the worker node groups d
 
 To delete a worker node group we will perform the following steps.
 
-* We will add a name field in the cluster spec, so that a user can specify names of each group.
+* We will add a name field in the cluster spec, so that a user can specify names of each group. Since we also want to support upgrade on the existing clusters, we will assign a default name to the first node group. The default name will be <cluster name>-md-0, since this is how we name the node groups in single node group eks-anywhere clusters with existing implementation.
 * While upgrading a cluster, we will first apply the new CAPI spec file to create/modify worker node groups as specified by the user.
 * Then we will delete the machine deployments of the extra node groups.
 
