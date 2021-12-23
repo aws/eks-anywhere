@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"path/filepath"
 
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+
 	"github.com/pkg/errors"
 )
 
@@ -90,7 +92,7 @@ func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
 		latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
-			sourceS3Prefix = fmt.Sprintf("projects/kubernetes-sigs/cluster-api-provider-cloudstack/%s/manifests/infrastructure-cloudstack/%s", latestPath, gitTag)
+			sourceS3Prefix = fmt.Sprintf("projects/aws/cluster-api-provider-cloudstack-staging/%s/manifests/infrastructure-cloudstack/%s", latestPath, gitTag)
 		} else {
 			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cluster-api-provider-cloudstack/manifests/infrastructure-cloudstack/%s", r.BundleNumber, gitTag)
 		}
@@ -123,4 +125,60 @@ func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
 	}
 
 	return artifacts, nil
+}
+
+func (r *ReleaseConfig) GetCloudStackBundle(eksDReleaseChannel string, imageDigests map[string]string) (anywherev1alpha1.CloudStackBundle, error) {
+	cloudstackBundleArtifacts := map[string][]Artifact{
+		"cluster-api-provider-cloudstack": r.BundleArtifactsTable["cluster-api-provider-cloudstack"],
+		"kube-rbac-proxy":                 r.BundleArtifactsTable["kube-rbac-proxy"],
+	}
+
+	var version string
+	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
+	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
+	for componentName, artifacts := range cloudstackBundleArtifacts {
+		for _, artifact := range artifacts {
+			if artifact.Image != nil {
+				imageArtifact := artifact.Image
+				if componentName == "cluster-api-provider-cloudstack" {
+					componentVersion, err := BuildComponentVersion(
+						newVersionerWithGITTAG(r.BuildRepoSource, capcProjectPath, imageArtifact.SourcedFromBranch, r),
+					)
+					if err != nil {
+						return anywherev1alpha1.CloudStackBundle{}, errors.Wrapf(err, "Error getting version for cluster-api-provider-cloudstack")
+					}
+					version = componentVersion
+				}
+				bundleImageArtifact := anywherev1alpha1.Image{
+					Name:        imageArtifact.AssetName,
+					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
+					OS:          imageArtifact.OS,
+					Arch:        imageArtifact.Arch,
+					URI:         imageArtifact.ReleaseImageURI,
+					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+				}
+				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+			}
+
+			if artifact.Manifest != nil {
+				manifestArtifact := artifact.Manifest
+				bundleManifestArtifact := anywherev1alpha1.Manifest{
+					URI: manifestArtifact.ReleaseCdnURI,
+				}
+
+				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+			}
+		}
+	}
+
+	bundle := anywherev1alpha1.CloudStackBundle{
+		Version:         version,
+		KubeProxy:       bundleImageArtifacts["kube-rbac-proxy"],
+		Manager:         bundleImageArtifacts["cluster-api-cloudstack-controller"],
+		Components:      bundleManifestArtifacts["infrastructure-components.yaml"],
+		ClusterTemplate: bundleManifestArtifacts["cluster-template.yaml"],
+		Metadata:        bundleManifestArtifacts["metadata.yaml"],
+	}
+
+	return bundle, nil
 }

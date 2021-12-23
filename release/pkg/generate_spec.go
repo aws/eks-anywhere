@@ -293,12 +293,6 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", channel)
 		}
 
-		fmt.Printf("Getting cloudstack Cloud Provider Assets for %s\n", channel)
-		cloudStackCloudProviderArtifacts, err := r.GetCloudStackCloudProviderAssets(channel)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Error getting artifact information for %s", channel)
-		}
-
 		fmt.Printf("Getting Bottlerocket bootstrap Assets for %s\n", channel)
 		bottlerocketBootstrapArtifacts, err := r.GetBottlerocketBootstrapAssets(channel, releaseNumberStr)
 		if err != nil {
@@ -310,9 +304,6 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 
 		vSphereCloudProviderComponentName := fmt.Sprintf("cloud-provider-vsphere-%s", channel)
 		artifactsTable[vSphereCloudProviderComponentName] = vSphereCloudProviderArtifacts
-
-		cloudStackCloudProviderComponentName := fmt.Sprintf("cloud-provider-cloudstack-%s", channel)
-		artifactsTable[cloudStackCloudProviderComponentName] = cloudStackCloudProviderArtifacts
 
 		bottlerocketBootstrapComponentName := fmt.Sprintf("bottlerocket-bootstrap-%s-%s", channel, releaseNumberStr)
 		artifactsTable[bottlerocketBootstrapComponentName] = bottlerocketBootstrapArtifacts
@@ -366,13 +357,6 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 			sourceImageUri = fmt.Sprintf("%s/%s:%s",
 				r.SourceContainerRegistry,
 				repoName,
-				latestTag,
-			)
-		} else if name == "cloud-provider-cloudstack" {
-			sourceImageUri = fmt.Sprintf("%s/%s:%s-%s",
-				r.SourceContainerRegistry,
-				repoName,
-				tagOptions["gitTag"],
 				latestTag,
 			)
 		} else if name == "kind-node" {
@@ -431,14 +415,6 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 				tagOptions["eksDReleaseChannel"],
 				r.BundleNumber,
 			)
-		} else if name == "cloud-provider-cloudstack" {
-			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-eks-a-%d",
-				r.SourceContainerRegistry,
-				repoName,
-				tagOptions["gitTag"],
-				tagOptions["eksDReleaseChannel"],
-				r.BundleNumber,
-			)
 		} else if name == "eks-anywhere-cluster-controller" {
 			sourceImageUri = fmt.Sprintf("%s/%s:%s-eks-a-%d",
 				r.SourceContainerRegistry,
@@ -486,13 +462,6 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 			tagOptions["eksDReleaseNumber"],
 		)
 	} else if name == "cloud-provider-vsphere" {
-		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-eks-a",
-			r.ReleaseContainerRegistry,
-			repoName,
-			tagOptions["gitTag"],
-			tagOptions["eksDReleaseChannel"],
-		)
-	} else if name == "cloud-provider-cloudstack" {
 		releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-d-%s-eks-a",
 			r.ReleaseContainerRegistry,
 			repoName,
