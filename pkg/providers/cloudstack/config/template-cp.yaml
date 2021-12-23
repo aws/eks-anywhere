@@ -14,7 +14,7 @@ spec:
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
     kind: KubeadmControlPlane
-    name: {{.clusterName}}-control-plane
+    name: {{.clusterName}}
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: CloudStackCluster
@@ -56,7 +56,7 @@ spec:
 apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
 metadata:
-  name: {{.clusterName}}-control-plane
+  name: {{.clusterName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   infrastructureTemplate:
