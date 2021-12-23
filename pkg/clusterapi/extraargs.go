@@ -49,6 +49,15 @@ func PodIAMAuthExtraArgs(podIAMConfig *v1alpha1.PodIAMConfig) ExtraArgs {
 	return args
 }
 
+func ResolvConfExtraArgs(resolvConf *v1alpha1.ResolvConf) ExtraArgs {
+	if resolvConf == nil || resolvConf.Path == "" {
+		return nil
+	}
+	args := ExtraArgs{}
+	args.AddIfNotEmpty("resolv-conf", resolvConf.Path)
+	return args
+}
+
 // We don't need to add these once the Kubernetes components default to using the secure cipher suites
 func SecureTlsCipherSuitesExtraArgs() ExtraArgs {
 	args := ExtraArgs{}

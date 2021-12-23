@@ -649,6 +649,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	format := "cloud-config"
 	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
 	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
+	kubeletExtraArgs := sharedExtraArgs.Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf))
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Spec.PodIAMConfig)).
@@ -693,7 +694,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"apiserverExtraArgs":                   apiServerExtraArgs.ToPartialYaml(),
 		"controllermanagerExtraArgs":           sharedExtraArgs.ToPartialYaml(),
 		"schedulerExtraArgs":                   sharedExtraArgs.ToPartialYaml(),
-		"kubeletExtraArgs":                     sharedExtraArgs.ToPartialYaml(),
+		"kubeletExtraArgs":                     kubeletExtraArgs.ToPartialYaml(),
 		"format":                               format,
 		"externalEtcdVersion":                  bundle.KubeDistro.EtcdVersion,
 		"etcdImage":                            bundle.KubeDistro.EtcdImage.VersionedImage(),
@@ -766,7 +767,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphereDatacenterConfigSpec, workerNodeGroupMachineSpec v1alpha1.VSphereMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
-	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf))
 
 	values := map[string]interface{}{
 		"clusterName":                    clusterSpec.ObjectMeta.Name,
