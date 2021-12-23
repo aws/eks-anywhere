@@ -83,5 +83,5 @@ metadata:
   name:  {{.clusterName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
-  imageLookupFormat: {{.baseRegistry}}/{{.osDistro}}-{{.osVersion}}-kube-{{.kubernetesVersiont}}.raw.gz
+  imageLookupFormat: {{.baseRegistry}}/{{.osDistro}}-{{.osVersion}}-kube-{{.kubernetesVersionTemp}}.raw.gz
   imageLookupBaseRegistry: {{.baseRegistry}}/

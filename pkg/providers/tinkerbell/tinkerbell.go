@@ -387,7 +387,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"baseRegistry":                 "http://196.17.0.3:8080",
 		"osDistro":                     "ubuntu",
 		"osVersion":                    "2004",
-		"kubernetesVersiont":           "v1.20.7",
+		"kubernetesVersionTemp":        "v1.20.7",
 		"kubernetesRepository":         bundle.KubeDistro.Kubernetes.Repository,
 		"corednsRepository":            bundle.KubeDistro.CoreDNS.Repository,
 		"corednsVersion":               bundle.KubeDistro.CoreDNS.Tag,
