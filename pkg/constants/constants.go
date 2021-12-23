@@ -10,6 +10,7 @@ const (
 	CapiSystemNamespace                     = "capi-system"
 	CapiWebhookSystemNamespace              = "capi-webhook-system"
 	CapvSystemNamespace                     = "capv-system"
+	CapcSystemNamespace                     = "capc-system"
 	CapaSystemNamespace                     = "capa-system"
 	CertManagerNamespace                    = "cert-manager"
 	DefaultNamespace                        = "default"

@@ -7,6 +7,10 @@ providers:
     url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-vsphere/v0.7.8/infrastructure-components.yaml"
     type: "InfrastructureProvider"
     version: "v0.7.8"
+  - name: "cloudstack"
+    url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-cloudstack/v0.1.0/infrastructure-components.yaml"
+    type: "InfrastructureProvider"
+    version: "v0.1.0"
   - name: "aws"
     url: "{{.dir}}/cluster-name/generated/overrides/infrastructure-aws/v0.6.4/infrastructure-components.yaml"
     type: "InfrastructureProvider"
@@ -70,6 +74,9 @@ images:
   infrastructure-vsphere/manager:
     repository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release
     tag: v0.7.8-eks-a-0.0.1.build.38
+  infrastructure-cloudstack/manager:
+    repository: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release
+    tag: v0.1.0-eks-a-0.0.1.build.38
   infrastructure-vsphere/kube-rbac-proxy:
     repository: public.ecr.aws/l0g8r8j6/brancz
     tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.8.0

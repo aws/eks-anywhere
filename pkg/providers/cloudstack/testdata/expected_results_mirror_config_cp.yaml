@@ -14,9 +14,9 @@ spec:
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
     kind: KubeadmControlPlane
-    name: test
+    name: test-control-plane
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: CloudStackCluster
     name: test
   managedExternalEtcdRef:
@@ -24,7 +24,7 @@ spec:
     kind: EtcdadmCluster
     name: test-etcd
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: CloudStackCluster
 metadata:
   name: test
@@ -34,11 +34,9 @@ spec:
     host: 1.2.3.4
     port: 6443
   network: net1
-  domain: domain1
   zone: zone1
-  account: admin
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: CloudStackMachineTemplate
 metadata:
   name: test-control-plane-template-1234567890000
@@ -48,7 +46,6 @@ spec:
     spec:
       offering: m4-large
       template: centos7-k8s-118
-      diskOffering: ssd-100GB
       details:
         foo: bar
         key: value
@@ -56,11 +53,11 @@ spec:
 apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
 metadata:
-  name: test
+  name: test-control-plane
   namespace: eksa-system
 spec:
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: CloudStackMachineTemplate
     name: test-control-plane-template-1234567890000
   kubeadmConfigSpec:
@@ -277,23 +274,24 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
-        name: '{{ ds.meta_data.hostname }}'
+          provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+        name: '{{ ds.meta_data.local_hostname }}'
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
-        name: '{{ ds.meta_data.hostname }}'
+          provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+        name: '{{ ds.meta_data.local_hostname }}'
     preKubeadmCommands:
+    - swapoff -a
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
     - sudo systemctl daemon-reload
     - sudo systemctl restart containerd
-    - hostname "{{ ds.meta_data.hostname }}"
+    - hostname "{{ ds.meta_data.local_hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
-    - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+    - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
+    - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
     useExperimentalRetryJoin: true
     users:
     - name: mySshUsername
@@ -318,11 +316,12 @@ spec:
       version: 3.4.16
       installDir: "/usr/bin"
     preEtcdadmCommands:
-    - hostname "{{ ds.meta_data.hostname }}"
+    - swapoff -a
+    - hostname "{{ ds.meta_data.local_hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
-    - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
+    - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
+    - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
     users:
     - name: mySshUsername
       sshAuthorizedKeys:
@@ -331,11 +330,11 @@ spec:
     registryMirror:
       endpoint: 1.2.3.4
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: CloudStackMachineTemplate
     name: test-etcd-template-1234567890000
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: CloudStackMachineTemplate
 metadata:
   name: test-etcd-template-1234567890000
@@ -345,7 +344,6 @@ spec:
     spec:
       offering: m4-large
       template: centos7-k8s-118
-      diskOffering: ssd-100GB
       details:
         foo: bar
         key: value

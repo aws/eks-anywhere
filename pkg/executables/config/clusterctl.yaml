@@ -13,6 +13,10 @@ providers:
     url: "{{.dir}}/infrastructure-vsphere/{{.VSphereProviderVersion}}/infrastructure-components.yaml"
     type: "InfrastructureProvider"
     version: "{{.VSphereProviderVersion}}"
+  - name: "cloudstack"
+    url: "{{.dir}}/infrastructure-cloudstack/{{.CloudStackProviderVersion}}/infrastructure-components.yaml"
+    type: "InfrastructureProvider"
+    version: "{{.CloudStackProviderVersion}}"
   - name: "aws"
     url: "{{.dir}}/infrastructure-aws/{{.AwsProviderVersion}}/infrastructure-components.yaml"
     type: "InfrastructureProvider"
@@ -76,6 +80,9 @@ images:
   infrastructure-vsphere/manager:
     repository: {{ .ClusterApiVSphereControllerRepository }}
     tag: {{ .ClusterApiVSphereControllerTag }}
+  infrastructure-cloudstack/manager:
+    repository: {{ .ClusterApiCloudStackManagerRepository }}
+    tag: {{ .ClusterApiCloudStackManagerTag }}
   infrastructure-vsphere/kube-rbac-proxy:
     repository: {{ .ClusterApiVSphereKubeRbacProxyRepository }}
     tag: {{ .ClusterApiVSphereKubeRbacProxyTag }} #org one is v0.8.0

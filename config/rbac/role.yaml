@@ -15,8 +15,6 @@ rules:
   - dockerdatacenterconfigs
   - vspheredatacenterconfigs
   - vspheremachineconfigs
-  - cloudstackdeploymentconfigs
-  - cloudstackmachineconfigs
   verbs:
   - create
   - delete
@@ -34,8 +32,6 @@ rules:
   - dockerdatacenterconfigs/finalizers
   - vspheredatacenterconfigs/finalizers
   - vspheremachineconfigs/finalizers
-  - cloudstackdeploymentconfigs/finalizers
-  - cloudstackmachineconfigs/finalizers
   verbs:
   - update
 - apiGroups:
@@ -47,8 +43,6 @@ rules:
   - dockerdatacenterconfigs/status
   - vspheredatacenterconfigs/status
   - vspheremachineconfigs/status
-  - cloudstackdeploymentconfigs/status
-  - cloudstackmachineconfigs/status
   verbs:
   - get
   - patch

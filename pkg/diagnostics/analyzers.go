@@ -59,6 +59,14 @@ func (a *analyzerFactory) managementClusterDeploymentAnalyzers() []*Analyze {
 			Namespace:        constants.CapvSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
+			Name:             "capc-controller-manager",
+			Namespace:        constants.CapiWebhookSystemNamespace,
+			ExpectedReplicas: 1,
+		}, {
+			Name:             "capc-controller-manager",
+			Namespace:        constants.CapcSystemNamespace,
+			ExpectedReplicas: 1,
+		}, {
 			Name:             "cert-manager-webhook",
 			Namespace:        constants.CertManagerNamespace,
 			ExpectedReplicas: 1,

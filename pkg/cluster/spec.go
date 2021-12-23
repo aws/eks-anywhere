@@ -235,6 +235,12 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	}
 
 	switch s.Cluster.Spec.DatacenterRef.Kind {
+	case eksav1alpha1.CloudStackDeploymentKind:
+		datacenterConfig, err := eksav1alpha1.GetCloudStackDeploymentConfig(clusterConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		s.DatacenterConfig = &datacenterConfig.ObjectMeta
 	case eksav1alpha1.VSphereDatacenterKind:
 		datacenterConfig, err := eksav1alpha1.GetVSphereDatacenterConfig(clusterConfigPath)
 		if err != nil {
@@ -524,6 +530,14 @@ func (vb *VersionsBundle) VsphereImages() []v1alpha1.Image {
 	return images
 }
 
+func (vb *VersionsBundle) CloudStackImages() []v1alpha1.Image {
+	var images []v1alpha1.Image
+	images = append(images, vb.CloudStack.KubeProxy)
+	images = append(images, vb.CloudStack.Manager)
+
+	return images
+}
+
 func (vb *VersionsBundle) DockerImages() []v1alpha1.Image {
 	var images []v1alpha1.Image
 	images = append(images, vb.Docker.KubeProxy)
@@ -537,6 +551,7 @@ func (vb *VersionsBundle) Images() []v1alpha1.Image {
 	images = append(images, vb.SharedImages()...)
 	images = append(images, vb.DockerImages()...)
 	images = append(images, vb.VsphereImages()...)
+	images = append(images, vb.CloudStackImages()...)
 
 	return images
 }
@@ -590,6 +605,13 @@ func (vb *VersionsBundle) Manifests() map[string][]v1alpha1.Manifest {
 		vb.VSphere.Metadata,
 	}
 
+	// CAPC manifests
+	manifests["cluster-api-provider-cloudstack"] = []v1alpha1.Manifest{
+		vb.CloudStack.Components,
+		vb.CloudStack.ClusterTemplate,
+		vb.CloudStack.Metadata,
+	}
+
 	// Cilium manifest
 	manifests["cilium"] = []v1alpha1.Manifest{vb.Cilium.Manifest}
 
@@ -612,7 +634,7 @@ func (vb *VersionsBundle) Manifests() map[string][]v1alpha1.Manifest {
 	}
 
 	// EKS Distro release manifest
-	manifests["eks-distro"] = []v1alpha1.Manifest{v1alpha1.Manifest{URI: vb.EksD.EksDReleaseUrl}}
+	manifests["eks-distro"] = []v1alpha1.Manifest{{URI: vb.EksD.EksDReleaseUrl}}
 
 	return manifests
 }

@@ -41,6 +41,7 @@ const (
 	expectedCloudStackName        = "cloudstack"
 	expectedCloudStackUsername    = "cloudstack_username"
 	expectedCloudStackPassword    = "cloudstack_password"
+	expectedCloudStackCloudConfig = "go="
 	expectedExpClusterResourceSet = "expClusterResourceSetKey"
 	eksd119Release                = "kubernetes-1-19-eks-4"
 	eksd119ReleaseTag             = "eksdRelease:kubernetes-1-19-eks-4"
@@ -210,25 +211,27 @@ func givenCloudMonkeyMock(t *testing.T) *mocks.MockProviderCloudMonkeyClient {
 }
 
 type testContext struct {
-	oldUsername                string
-	isUsernameSet              bool
-	oldPassword                string
-	isPasswordSet              bool
-	oldServername              string
-	isServernameSet            bool
-	oldExpClusterResourceSet   string
-	isExpClusterResourceSetSet bool
+	oldUsername                          string
+	isUsernameSet                        bool
+	oldPassword                          string
+	isPasswordSet                        bool
+	oldCloudStackCloudConfigSecretName   string
+	isCloudStackCloudConfigSecretNameSet bool
+	oldExpClusterResourceSet             string
+	isExpClusterResourceSetSet           bool
 }
 
 func (tctx *testContext) SaveContext() {
 	tctx.oldUsername, tctx.isUsernameSet = os.LookupEnv(eksacloudStackUsernameKey)
 	tctx.oldPassword, tctx.isPasswordSet = os.LookupEnv(eksacloudStackPasswordKey)
-	tctx.oldServername, tctx.isServernameSet = os.LookupEnv(cloudStackPasswordKey)
+	tctx.oldCloudStackCloudConfigSecretName, tctx.isCloudStackCloudConfigSecretNameSet = os.LookupEnv(eksacloudStackCloudConfigB64SecretKey)
 	tctx.oldExpClusterResourceSet, tctx.isExpClusterResourceSetSet = os.LookupEnv(cloudStackPasswordKey)
 	os.Setenv(eksacloudStackUsernameKey, expectedCloudStackUsername)
 	os.Setenv(cloudStackUsernameKey, os.Getenv(eksacloudStackUsernameKey))
 	os.Setenv(eksacloudStackPasswordKey, expectedCloudStackPassword)
 	os.Setenv(cloudStackPasswordKey, os.Getenv(eksacloudStackPasswordKey))
+	os.Setenv(eksacloudStackCloudConfigB64SecretKey, expectedCloudStackCloudConfig)
+	os.Setenv(cloudStackCloudConfigB64SecretKey, os.Getenv(eksacloudStackCloudConfigB64SecretKey))
 	os.Setenv(expClusterResourceSetKey, expectedExpClusterResourceSet)
 }
 
@@ -1257,19 +1260,20 @@ func TestSetupAndValidateCreateClusterBogusIp(t *testing.T) {
 	thenErrorExpected(t, "cluster controlPlaneConfiguration.Endpoint.Host is invalid: bogus", err)
 }
 
-func TestSetupAndValidateCreateClusterUsedIp(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host = "255.255.255.255"
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorExpected(t, "cluster controlPlaneConfiguration.Endpoint.Host <255.255.255.255> is already in use, please provide a unique IP", err)
-}
+// Test existed ip disabled for cloudstack
+//func TestSetupAndValidateCreateClusterUsedIp(t *testing.T) {
+//	ctx := context.Background()
+//	clusterSpec := givenEmptyClusterSpec()
+//	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
+//	provider := givenProvider(t)
+//	clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host = "255.255.255.255"
+//	var tctx testContext
+//	tctx.SaveContext()
+//
+//	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+//
+//	thenErrorExpected(t, "cluster controlPlaneConfiguration.Endpoint.Host <255.255.255.255> is already in use, please provide a unique IP", err)
+//}
 
 func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidCP(t *testing.T) {
 	ctx := context.Background()
@@ -1777,12 +1781,12 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 			testName: "correct Overrides layer",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.VersionsBundle.CloudStack = releasev1alpha1.CloudStackBundle{
-					Version: "v4.14.1",
+					Version: "v0.1.0",
 					ClusterAPIController: releasev1alpha1.Image{
-						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.7.8-35f54b0a7ff0f4f3cb0b8e30a0650acd0e55496a",
+						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.1.0",
 					},
 					Manager: releasev1alpha1.Image{
-						URI: "public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-cloudstack/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
+						URI: "public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-cloudstack/cpi/manager:v0.1.0",
 					},
 					Metadata: releasev1alpha1.Manifest{
 						URI: "Metadata.yaml",
@@ -1806,7 +1810,7 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 			if infraBundle == nil {
 				t.Fatalf("provider.GetInfrastructureBundle() should have an infrastructure bundle")
 			}
-			assert.Equal(t, "infrastructure-cloudstack/v4.14.1/", infraBundle.FolderName, "Incorrect folder name")
+			assert.Equal(t, "infrastructure-cloudstack/v0.1.0/", infraBundle.FolderName, "Incorrect folder name")
 			assert.Equal(t, len(infraBundle.Manifests), 3, "Wrong number of files in the infrastructure bundle")
 			wantManifests := []releasev1alpha1.Manifest{
 				tt.clusterSpec.VersionsBundle.CloudStack.Components,
@@ -2126,16 +2130,16 @@ func TestChangeDiffNoChange(t *testing.T) {
 func TestChangeDiffWithChange(t *testing.T) {
 	provider := givenProvider(t)
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.CloudStack.Version = "v4.14"
+		s.VersionsBundle.CloudStack.Version = "v0.2.0"
 	})
 	newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.VersionsBundle.CloudStack.Version = "v4.16"
+		s.VersionsBundle.CloudStack.Version = "v0.1.0"
 	})
 
 	wantDiff := &types.ComponentChangeDiff{
 		ComponentName: "cloudstack",
-		NewVersion:    "v4.16",
-		OldVersion:    "v4.14",
+		NewVersion:    "v0.1.0",
+		OldVersion:    "v0.2.0",
 	}
 
 	assert.Equal(t, wantDiff, provider.ChangeDiff(clusterSpec, newClusterSpec))
