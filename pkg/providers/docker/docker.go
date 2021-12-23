@@ -171,7 +171,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
 	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
-	kubeletExtraArgs := clusterapi.ResolvConfExtraArgs().Append(sharedExtraArgs)
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Spec.PodIAMConfig)).
@@ -192,7 +191,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 		"apiserverExtraArgs":         apiServerExtraArgs.ToPartialYaml(),
 		"controllermanagerExtraArgs": sharedExtraArgs.ToPartialYaml(),
 		"schedulerExtraArgs":         sharedExtraArgs.ToPartialYaml(),
-		"kubeletExtraArgs":           kubeletExtraArgs.ToPartialYaml(),
+		"kubeletExtraArgs":           sharedExtraArgs.ToPartialYaml(),
 		"externalEtcdVersion":        bundle.KubeDistro.EtcdVersion,
 		"eksaSystemNamespace":        constants.EksaSystemNamespace,
 		"auditPolicy":                common.GetAuditPolicy(),
@@ -217,7 +216,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 
 func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
-	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().Append(clusterapi.ResolvConfExtraArgs())
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
 
 	values := map[string]interface{}{
 		"clusterName":         clusterSpec.Name,
