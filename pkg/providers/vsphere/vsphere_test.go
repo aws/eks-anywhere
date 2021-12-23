@@ -2013,11 +2013,8 @@ func TestSetupAndValidateCreateClusterOsFamilyInvalid(t *testing.T) {
 	provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "rhel"
 	var tctx testContext
 	tctx.SaveContext()
-
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "control plane osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
-	}
+	thenErrorExpected(t, "control plane osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
 }
 
 func TestSetupAndValidateCreateClusterOsFamilyInvalidWorkerNode(t *testing.T) {
@@ -2029,11 +2026,8 @@ func TestSetupAndValidateCreateClusterOsFamilyInvalidWorkerNode(t *testing.T) {
 	provider.machineConfigs[workerMachineConfigName].Spec.OSFamily = "rhel"
 	var tctx testContext
 	tctx.SaveContext()
-
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "worker node osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
-	}
+	thenErrorExpected(t, "worker node osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
 }
 
 func TestSetupAndValidateCreateClusterOsFamilyInvalidEtcdNode(t *testing.T) {
@@ -2045,11 +2039,8 @@ func TestSetupAndValidateCreateClusterOsFamilyInvalidEtcdNode(t *testing.T) {
 	provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily = "rhel"
 	var tctx testContext
 	tctx.SaveContext()
-
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "etcd node osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
-	}
+	thenErrorExpected(t, "etcd node osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
 }
 
 func TestSetupAndValidateCreateClusterOsFamilyDifferent(t *testing.T) {
