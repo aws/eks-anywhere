@@ -151,9 +151,9 @@ eks-a: ## Build a dev release version of eks-a
 
 .PHONY: eks-a-v1beta1
 eks-a-v1beta1:
-	curl -L https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/v1beta1-experimental/bundle-release.yaml --output pkg/cluster/config/bundle-release.yaml
+	#curl -L https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/v1beta1-experimental/bundle-release.yaml --output pkg/cluster/config/bundle-release.yaml
 	$(MAKE) eks-a-embed-config
-	rm pkg/cluster/config/bundle-release.yaml
+	#rm pkg/cluster/config/bundle-release.yaml
 
 .PHONY: eks-a-release
 eks-a-release: ## Generate a release binary

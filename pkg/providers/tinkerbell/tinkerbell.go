@@ -139,7 +139,6 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	p.controlPlaneSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 	p.workerSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 	// TODO: Add more validations
-
 	return nil
 }
 
@@ -281,7 +280,9 @@ func (p *tinkerbellProvider) UpdateKubeConfig(content *[]byte, clusterName strin
 }
 
 func (p *tinkerbellProvider) Version(clusterSpec *cluster.Spec) string {
-	return clusterSpec.VersionsBundle.Tinkerbell.Version
+	// TODO: Add Tinkerbell to the bundle and add it's versions
+	// return clusterSpec.VersionsBundle.Tinkerbell.Version
+	return "v0.1.0"
 }
 
 func (p *tinkerbellProvider) EnvMap() (map[string]string, error) {
@@ -305,7 +306,7 @@ func (p *tinkerbellProvider) GetDeployments() map[string][]string {
 
 func (p *tinkerbellProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
 	bundle := clusterSpec.VersionsBundle
-	folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", bundle.Tinkerbell.Version)
+	folderName := fmt.Sprintf("infrastructure-tinkerbell/%s/", "v0.1.0")
 
 	infraBundle := types.InfrastructureBundle{
 		FolderName: folderName,
@@ -383,9 +384,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"kubeVipImage":                 "ghcr.io/kube-vip/kube-vip:latest", // TODO: get this value from the bundle once we add it
 		"podCidrs":                     clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                 clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
-		"baseRegistry":                 "", // TODO: need to get this values for creating template IMAGE_URL
-		"osDistro":                     "", // TODO: need to get this values for creating template IMAGE_URL
-		"osVersion":                    "", // TODO: need to get this values for creating template IMAGE_URL
+		"baseRegistry":                 "http://196.17.0.3:8080",
+		"osDistro":                     "ubuntu",
+		"osVersion":                    "2004",
+		"kubernetesVersiont":           "v1.20.7",
 		"kubernetesRepository":         bundle.KubeDistro.Kubernetes.Repository,
 		"corednsRepository":            bundle.KubeDistro.CoreDNS.Repository,
 		"corednsVersion":               bundle.KubeDistro.CoreDNS.Tag,
