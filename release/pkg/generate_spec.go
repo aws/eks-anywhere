@@ -167,11 +167,13 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		releaseNumberInt := releaseNumber.(int)
 		releaseNumberStr := strconv.Itoa(releaseNumberInt)
 
-		kubeVersion := release.(map[interface{}]interface{})["kubeVersion"]
-		kubeVersionStr := kubeVersion.(string)
-		shortKubeVersion := kubeVersionStr[1:strings.LastIndex(kubeVersionStr, ".")]
+		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting kubeversion for eks-d %s-%s release", channel, releaseNumberStr)
+		}
+		shortKubeVersion := kubeVersion[1:strings.LastIndex(kubeVersion, ".")]
 
-		eksDReleaseBundle, err := r.GetEksDReleaseBundle(channel, kubeVersionStr, releaseNumberStr, imageDigests)
+		eksDReleaseBundle, err := r.GetEksDReleaseBundle(channel, kubeVersion, releaseNumberStr, imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for eks-d %s-%s release bundle", channel, releaseNumberStr)
 		}
@@ -284,10 +286,12 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		releaseNumberInt := releaseNumber.(int)
 		releaseNumberStr := strconv.Itoa(releaseNumberInt)
 
-		kubeVersion := release.(map[interface{}]interface{})["kubeVersion"]
-		kubeVersionStr := kubeVersion.(string)
+		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting kubeversion for eks-d %s-%s release", channel, releaseNumberStr)
+		}
 
-		eksDChannelArtifacts, err := r.GetEksDChannelAssets(channel, kubeVersionStr, releaseNumberStr)
+		eksDChannelArtifacts, err := r.GetEksDChannelAssets(channel, kubeVersion, releaseNumberStr)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", channel)
 		}
