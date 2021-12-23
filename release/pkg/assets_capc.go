@@ -21,7 +21,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const capcProjectPath = "projects/kubernetes-sigs/cluster-api-provider-cloudstack"
+const capcProjectPath = "projects/aws/cluster-api-provider-cloudstack-staging"
 
 // GetCapcAssets returns the eks-a artifacts for CAPC
 func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
@@ -31,7 +31,7 @@ func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
 	}
 
 	name := "cluster-api-cloudstack-controller"
-	repoName := "kubernetes-sigs/cluster-api-provider-cloudstack/release/manager"
+	repoName := "aws/cluster-api-provider-cloudstack-staging/release/manager"
 	tagOptions := map[string]string{
 		"gitTag":      gitTag,
 		"projectPath": capcProjectPath,
