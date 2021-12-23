@@ -294,13 +294,30 @@ func (r *ReleaseConfig) readGitTag(projectPath, branch string) (string, error) {
 	return gitTag, nil
 }
 
+func getEksDKubeVersion(releaseChannel, releaseNumber string) (string, error) {
+	var kubeVersion string
+	eksDReleaseManifestUrl := GetEksDReleaseManifestUrl(releaseChannel, releaseNumber)
+
+	eksDRelease, err := getEksdRelease(eksDReleaseManifestUrl)
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+
+	for _, component := range eksDRelease.Status.Components {
+		if component.Name == "kubernetes" {
+			kubeVersion = component.GitTag
+			break
+		}
+	}
+
+	return kubeVersion, nil
+}
+
 func getEksdRelease(eksdReleaseURL string) (*eksdv1alpha1.Release, error) {
 	content, err := ReadHttpFile(eksdReleaseURL)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(content))
-	fmt.Println(eksdReleaseURL)
 
 	eksd := &eksdv1alpha1.Release{}
 	if err = k8syaml.UnmarshalStrict(content, eksd); err != nil {

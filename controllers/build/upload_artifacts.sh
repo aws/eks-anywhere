@@ -23,9 +23,10 @@ ARTIFACTS_BUCKET="${2?Specify second argument - artifacts buckets}"
 PROJECT_PATH="${3? Specify third argument - project path}"
 BUILD_IDENTIFIER="${4? Specify fourth argument - build identifier}"
 GIT_HASH="${5?Specify fifth argument - git hash of the tar builds}"
+LATEST_PATH="${6?Specify sixth argument - latest S3 folder path for artifacts}"
 
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd -P)"
 source "$REPO_ROOT/scripts/common.sh"
 
-build::common::upload_artifacts $SRC_TAR_PATH $ARTIFACTS_BUCKET $PROJECT_PATH $BUILD_IDENTIFIER $GIT_HASH
+build::common::upload_artifacts $SRC_TAR_PATH $ARTIFACTS_BUCKET $PROJECT_PATH $BUILD_IDENTIFIER $GIT_HASH $LATEST_PATH
