@@ -18,7 +18,7 @@ type validator struct {
 	netClient networkutils.NetClient
 }
 
-func newValidator(govc ProviderGovcClient, netClient networkutils.NetClient) *validator {
+func NewValidator(govc ProviderGovcClient, netClient networkutils.NetClient) *validator {
 	return &validator{
 		govc:      govc,
 		netClient: netClient,
@@ -39,27 +39,52 @@ func (v *validator) validateVCenterAccess(ctx context.Context, server string) er
 	return nil
 }
 
-// TODO: dry out machine configs validations
-func (v *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spec) error {
-	if len(vsphereClusterSpec.datacenterConfig.Spec.Server) <= 0 {
+func (v *validator) ValidateVCenterConfig(ctx context.Context, datacenterConfig *anywherev1.VSphereDatacenterConfig) error {
+	if len(datacenterConfig.Spec.Server) <= 0 {
 		return errors.New("VSphereDatacenterConfig server is not set or is empty")
 	}
 
+	if err := v.validateVCenterAccess(ctx, datacenterConfig.Spec.Server); err != nil {
+		return err
+	}
+
+	if len(datacenterConfig.Spec.Datacenter) <= 0 {
+		return errors.New("VSphereDatacenterConfig datacenter is not set or is empty")
+	}
+	if len(datacenterConfig.Spec.Network) <= 0 {
+		return errors.New("VSphereDatacenterConfig VM network is not set or is empty")
+	}
+
+	if err := validatePath(networkFolderType, datacenterConfig.Spec.Network, datacenterConfig.Spec.Datacenter); err != nil {
+		return err
+	}
+
+	if err := v.validateThumbprint(ctx, datacenterConfig); err != nil {
+		return err
+	}
+
+	if err := v.validateDatacenter(ctx, datacenterConfig.Spec.Datacenter); err != nil {
+		return err
+	}
+	logger.MarkPass("Datacenter validated")
+
+	if err := v.validateNetwork(ctx, datacenterConfig.Spec.Network); err != nil {
+		return err
+	}
+	logger.MarkPass("Network validated")
+
+	return nil
+}
+
+// TODO: dry out machine configs validations
+func (v *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spec) error {
 	var etcdMachineConfig *anywherev1.VSphereMachineConfig
 
 	// TODO: move this to api Cluster validations
 	if len(vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
 		return errors.New("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
 	}
-	if len(vsphereClusterSpec.datacenterConfig.Spec.Datacenter) <= 0 {
-		return errors.New("VSphereDatacenterConfig datacenter is not set or is empty")
-	}
-	if len(vsphereClusterSpec.datacenterConfig.Spec.Network) <= 0 {
-		return errors.New("VSphereDatacenterConfig VM network is not set or is empty")
-	}
-	if err := validatePath(networkFolderType, vsphereClusterSpec.datacenterConfig.Spec.Network, vsphereClusterSpec.datacenterConfig.Spec.Datacenter); err != nil {
-		return err
-	}
+
 	if vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
 		return errors.New("must specify machineGroupRef for control plane")
 	}
@@ -118,20 +143,6 @@ func (v *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 	if err := v.validateControlPlaneIp(vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
 		return err
 	}
-
-	if err := v.validateThumbprint(ctx, vsphereClusterSpec); err != nil {
-		return err
-	}
-
-	if err := v.validateDatacenter(ctx, vsphereClusterSpec); err != nil {
-		return err
-	}
-	logger.MarkPass("Datacenter validated")
-
-	if err := v.validateNetwork(ctx, vsphereClusterSpec); err != nil {
-		return err
-	}
-	logger.MarkPass("Network validated")
 
 	for _, config := range vsphereClusterSpec.machineConfigsLookup {
 		var b bool                                                                                            // Temporary until we remove the need to pass a bool pointer
@@ -307,9 +318,9 @@ func (v *validator) validateDatastoreUsage(ctx context.Context, clusterSpec *clu
 	return nil
 }
 
-func (v *validator) validateThumbprint(ctx context.Context, spec *spec) error {
+func (v *validator) validateThumbprint(ctx context.Context, datacenterConfig *anywherev1.VSphereDatacenterConfig) error {
 	// No need to validate thumbprint in insecure mode
-	if spec.datacenterConfig.Spec.Insecure {
+	if datacenterConfig.Spec.Insecure {
 		return nil
 	}
 
@@ -318,7 +329,7 @@ func (v *validator) validateThumbprint(ctx context.Context, spec *spec) error {
 		return nil
 	}
 
-	if spec.datacenterConfig.Spec.Thumbprint == "" {
+	if datacenterConfig.Spec.Thumbprint == "" {
 		return fmt.Errorf("thumbprint is required for secure mode with self-signed certificates")
 	}
 
@@ -327,15 +338,14 @@ func (v *validator) validateThumbprint(ctx context.Context, spec *spec) error {
 		return err
 	}
 
-	if thumbprint != spec.datacenterConfig.Spec.Thumbprint {
-		return fmt.Errorf("thumbprint mismatch detected, expected: %s, actual: %s", spec.datacenterConfig.Spec.Thumbprint, thumbprint)
+	if thumbprint != datacenterConfig.Spec.Thumbprint {
+		return fmt.Errorf("thumbprint mismatch detected, expected: %s, actual: %s", datacenterConfig.Spec.Thumbprint, thumbprint)
 	}
 
 	return nil
 }
 
-func (v *validator) validateDatacenter(ctx context.Context, spec *spec) error {
-	datacenter := spec.datacenterConfig.Spec.Datacenter
+func (v *validator) validateDatacenter(ctx context.Context, datacenter string) error {
 	exists, err := v.govc.DatacenterExists(ctx, datacenter)
 	if err != nil {
 		return err
@@ -348,8 +358,7 @@ func (v *validator) validateDatacenter(ctx context.Context, spec *spec) error {
 	return nil
 }
 
-func (v *validator) validateNetwork(ctx context.Context, spec *spec) error {
-	network := spec.datacenterConfig.Spec.Network
+func (v *validator) validateNetwork(ctx context.Context, network string) error {
 	exists, err := v.govc.NetworkExists(ctx, network)
 	if err != nil {
 		return err
