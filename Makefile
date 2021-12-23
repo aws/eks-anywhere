@@ -15,8 +15,8 @@ GOLANG_VERSION?="1.16"
 GO ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))/go
 GO_TEST ?= $(GO) test
 
-RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
-BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml
+RELEASE_MANIFEST_URL?=https://dev-release-prod-iad-embargo.s3.us-east-1.amazonaws.com/eks-a-release.yaml
+BUNDLE_MANIFEST_URL?=https://dev-release-prod-iad-embargo.s3.us-east-1.amazonaws.com/bundle-release.yaml
 DEV_GIT_VERSION:=v0.0.0-dev
 
 AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output text)
