@@ -132,6 +132,11 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		return nil, errors.Wrapf(err, "Error getting bundle for external Etcdadm controller")
 	}
 
+	cloudstackBundle, err := r.GetCloudStackBundle(imageDigests)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Error getting bundle for cloudStack infrastructure provider")
+	}
+
 	bottlerocketAdminBundle, err := r.GetBottlerocketAdminBundle()
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting bundle for Bottlerocket admin container")
@@ -167,11 +172,6 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		vsphereBundle, err := r.GetVsphereBundle(channel, imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for vSphere infrastructure provider")
-		}
-
-		cloudstackBundle, err := r.GetCloudStackBundle(channel, imageDigests)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Error getting bundle for cloudStack infrastructure provider")
 		}
 
 		bottlerocketBootstrapBundle, err := r.GetBottlerocketBootstrapBundle(channel, releaseNumberStr, imageDigests)
