@@ -14,13 +14,15 @@ GOLANG_VERSION?="1.16"
 ## ensure local execution uses the 'main' branch bundle
 BRANCH_NAME?=release-0.6
 ifeq (,$(findstring $(BRANCH_NAME),main))
+LATEST=$(BRANCH_NAME)
 ## use the branch-specific bundle manifest if the branch is not 'main'
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${BRANCH_NAME}/bundle-release.yaml
 $(info    Using branch-specific BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
 else
 ## use the standard bundle manifest if the branch is 'main'
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml
-$(info    Using stanard BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
+$(info    Using standard BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
+LATEST=latest
 endif
 
 RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
@@ -61,7 +63,7 @@ IMAGE_REPO=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
 IMAGE_TAG?=$(GIT_TAG)-$(shell git rev-parse HEAD)
 CLUSTER_CONTROLLER_IMAGE_NAME=eks-anywhere-cluster-controller
 CLUSTER_CONTROLLER_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):$(IMAGE_TAG)
-CLUSTER_CONTROLLER_LATEST_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):latest
+CLUSTER_CONTROLLER_LATEST_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):$(LATEST)
 
 # This removes the compile dependency on C libraries from github.com/containers/storage which is imported by github.com/replicatedhq/troubleshoot
 BUILD_TAGS := exclude_graphdriver_btrfs exclude_graphdriver_devicemapper
@@ -171,7 +173,7 @@ release-upload-cluster-controller: release-cluster-controller upload-artifacts
 
 .PHONY: upload-artifacts
 upload-artifacts:
-	controllers/build/upload_artifacts.sh $(TAR_PATH) $(ARTIFACTS_BUCKET) $(PROJECT_PATH) $(CODEBUILD_BUILD_NUMBER) $(CODEBUILD_RESOLVED_SOURCE_VERSION)
+	controllers/build/upload_artifacts.sh $(TAR_PATH) $(ARTIFACTS_BUCKET) $(PROJECT_PATH) $(CODEBUILD_BUILD_NUMBER) $(CODEBUILD_RESOLVED_SOURCE_VERSION) $(LATEST)
 
 .PHONY: cluster-controller-binaries
 cluster-controller-binaries:
