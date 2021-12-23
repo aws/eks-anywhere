@@ -2004,6 +2004,45 @@ func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNonexistent(t *testing.
 	}
 }
 
+func TestSetupAndValidateCreateClusterOsFamilyInvalid(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenEmptyClusterSpec()
+	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
+	provider := givenProvider(t)
+	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "rhel"
+	var tctx testContext
+	tctx.SaveContext()
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	thenErrorExpected(t, "control plane osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
+}
+
+func TestSetupAndValidateCreateClusterOsFamilyInvalidWorkerNode(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenEmptyClusterSpec()
+	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
+	provider := givenProvider(t)
+	workerMachineConfigName := clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	provider.machineConfigs[workerMachineConfigName].Spec.OSFamily = "rhel"
+	var tctx testContext
+	tctx.SaveContext()
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	thenErrorExpected(t, "worker node osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
+}
+
+func TestSetupAndValidateCreateClusterOsFamilyInvalidEtcdNode(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenEmptyClusterSpec()
+	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
+	provider := givenProvider(t)
+	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+	provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily = "rhel"
+	var tctx testContext
+	tctx.SaveContext()
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	thenErrorExpected(t, "etcd node osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
+}
+
 func TestSetupAndValidateCreateClusterOsFamilyDifferent(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()

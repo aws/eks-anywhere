@@ -110,9 +110,18 @@ func (d *defaulter) setDefaultTemplateIfMissing(ctx context.Context, spec *spec,
 }
 
 func (d *defaulter) setupDefaultTemplate(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
-	ova := defaultOVAForMachineConfig(spec, machineConfig)
 	osFamily := machineConfig.Spec.OSFamily
 	eksd := spec.VersionsBundle.EksD
+	var ova releasev1.OvaArchive
+	switch osFamily {
+	case anywherev1.Bottlerocket:
+		ova = eksd.Ova.Bottlerocket
+	case anywherev1.Ubuntu:
+		ova = eksd.Ova.Ubuntu
+	default:
+		return fmt.Errorf("can not import ova for osFamily: %s, please use a valid osFamily", osFamily)
+	}
+
 	templateName := fmt.Sprintf("%s-%s-%s-%s-%s", osFamily, eksd.KubeVersion, eksd.Name, strings.Join(ova.Arch, "-"), ova.SHA256[:7])
 	machineConfig.Spec.Template = filepath.Join("/", spec.datacenterConfig.Spec.Datacenter, defaultTemplatesFolder, templateName)
 
@@ -127,20 +136,6 @@ func (d *defaulter) setupDefaultTemplate(ctx context.Context, spec *spec, machin
 	}
 
 	return nil
-}
-
-func defaultOVAForMachineConfig(spec *spec, machineConfig *anywherev1.VSphereMachineConfig) releasev1.OvaArchive {
-	osFamily := machineConfig.Spec.OSFamily
-	eksd := spec.VersionsBundle.EksD
-
-	switch osFamily {
-	case anywherev1.Bottlerocket:
-		return eksd.Ova.Bottlerocket
-	case anywherev1.Ubuntu:
-		return eksd.Ova.Ubuntu
-	default:
-		return releasev1.OvaArchive{}
-	}
 }
 
 func (d *defaulter) setDiskDefaults(ctx context.Context, machineConfig *anywherev1.VSphereMachineConfig) error {
