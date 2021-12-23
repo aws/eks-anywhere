@@ -328,15 +328,24 @@ func (f *Factory) WithTroubleshoot() *Factory {
 }
 
 func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
+	var networkingBuilder func() clustermanager.Networking
+	if clusterConfig.Spec.ClusterNetwork.CNI == v1alpha1.Kindnetd {
+		f.WithKubectl()
+		networkingBuilder = func() clustermanager.Networking {
+			return kindnetd.NewKindnetd(f.dependencies.Kubectl)
+		}
+	} else {
+		networkingBuilder = func() clustermanager.Networking {
+			return cilium.NewCilium()
+		}
+	}
+
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Networking != nil {
 			return nil
 		}
-		if clusterConfig.Spec.ClusterNetwork.CNI == v1alpha1.Kindnetd {
-			f.dependencies.Networking = kindnetd.NewKindnetd()
-		} else {
-			f.dependencies.Networking = cilium.NewCilium()
-		}
+		f.dependencies.Networking = networkingBuilder()
+
 		return nil
 	})
 

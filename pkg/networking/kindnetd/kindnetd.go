@@ -15,13 +15,21 @@ import (
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
-type Kindnetd struct{}
+type Kindnetd struct {
+	*Upgrader
+}
 
-func NewKindnetd() *Kindnetd {
-	return &Kindnetd{}
+func NewKindnetd(client Client) *Kindnetd {
+	return &Kindnetd{
+		Upgrader: NewUpgrader(client),
+	}
 }
 
 func (c *Kindnetd) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error) {
+	return generateManifest(clusterSpec)
+}
+
+func generateManifest(clusterSpec *cluster.Spec) ([]byte, error) {
 	content, err := networking.LoadManifest(clusterSpec, clusterSpec.VersionsBundle.Kindnetd.Manifest)
 	if err != nil {
 		return nil, fmt.Errorf("can't load kindnetd manifest: %v", err)
