@@ -4,8 +4,9 @@
 
 #### Prerequisites
 
-1. We need mockgen installed, `go get github.com/golang/mock/mockgen`
-2. Verify the binary was installed, `$GOPATH/bin/mockgen`
+1. Set GOPATH, `export GOPATH=${GOPATH:=$(go env GOPATH)}`  
+2. We need mockgen installed, `go get github.com/golang/mock/mockgen`
+3. Verify the binary was installed, `$GOPATH/bin/mockgen`
 
 #### Generate/Update
 
