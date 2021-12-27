@@ -10,6 +10,7 @@ import (
 	"gopkg.in/ini.v1"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -24,12 +25,13 @@ const (
 	cmkPath                       = "cmk"
 	cmkConfigFileName             = "cmk_tmp.ini"
 	cloudStackb64EncodedSecretKey = "CLOUDSTACK_B64ENCODED_SECRET"
+	cloudmonkeyInsecureKey        = "CLOUDMONKEY_INSECURE"
 )
 
 var (
 	//go:embed config/cmk.ini
 	cmkConfigTemplate string
-	requiredEnvsCmk   = []string{cloudStackb64EncodedSecretKey}
+	requiredEnvsCmk   = []string{cloudStackb64EncodedSecretKey, cloudmonkeyInsecureKey}
 )
 
 const (
@@ -297,11 +299,17 @@ func (c *Cmk) buildCmkConfigFile(envMap map[string]string) (err error) {
 	if err != nil {
 		return fmt.Errorf("failed to extract value of 'api-url' from %s: %v", cloudStackb64EncodedSecretKey, err)
 	}
+	cmkInsecure, err := strconv.ParseBool(envMap[cloudmonkeyInsecureKey])
+	if err != nil {
+		return fmt.Errorf("failed to parse boolean value from %s: %v", cloudmonkeyInsecureKey, err)
+	}
+	cmkVerifyCert := strconv.FormatBool(!cmkInsecure)
 	t := templater.New(c.writer)
 	data := map[string]string{
 		"CloudStackApiKey":        apiKey.Value(),
 		"CloudStackSecretKey":     secretKey.Value(),
 		"CloudStackManagementUrl": apiUrl.Value(),
+		"CloudMonkeyVerifyCert":   cmkVerifyCert,
 	}
 	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, data, cmkConfigFileName)
 	if err != nil {
