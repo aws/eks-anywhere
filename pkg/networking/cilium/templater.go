@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
 type Helm interface {
@@ -30,6 +31,23 @@ func (c *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *
 	manifest, err := c.helm.Template(ctx, "placeholder", spec.VersionsBundle.Cilium.Version, namespace, v) // TODO: use real oci uri
 	if err != nil {
 		return nil, fmt.Errorf("failed generating cilium upgrade preflight manifest: %v", err)
+	}
+
+	return manifest, nil
+}
+
+func (c *Templater) GenerateUpgradeManifest(ctx context.Context, currentSpec, newSpec *cluster.Spec) ([]byte, error) {
+	currentVersion, err := semver.New(currentSpec.VersionsBundle.Cilium.Version)
+	if err != nil {
+		return nil, fmt.Errorf("invalid version for Cilium in current spec: %v", err)
+	}
+
+	v := templateValues(newSpec)
+	v.set(fmt.Sprintf("%d.%d", currentVersion.Major, currentVersion.Minor), "upgradeCompatibility")
+
+	manifest, err := c.helm.Template(ctx, "placeholder", newSpec.VersionsBundle.Cilium.Version, namespace, v) // TODO: use real oci uri
+	if err != nil {
+		return nil, fmt.Errorf("failed generating cilium upgrade manifest: %v", err)
 	}
 
 	return manifest, nil
