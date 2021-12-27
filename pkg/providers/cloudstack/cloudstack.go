@@ -398,20 +398,6 @@ func getHostnameFromUrl(rawurl string) (string, error) {
 }
 
 func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
-	if cloudStackUsername, ok := os.LookupEnv(eksacloudStackUsernameKey); ok && len(cloudStackUsername) > 0 {
-		if err := os.Setenv(cloudStackUsernameKey, cloudStackUsername); err != nil {
-			return fmt.Errorf("unable to set %s: %v", cloudStackUsernameKey, err)
-		}
-	} else {
-		return fmt.Errorf("%s is not set or is empty", eksacloudStackUsernameKey)
-	}
-	if cloudStackPassword, ok := os.LookupEnv(eksacloudStackPasswordKey); ok && len(cloudStackPassword) > 0 {
-		if err := os.Setenv(cloudStackPasswordKey, cloudStackPassword); err != nil {
-			return fmt.Errorf("unable to set %s: %v", cloudStackPasswordKey, err)
-		}
-	} else {
-		return fmt.Errorf("%s is not set or is empty", eksacloudStackPasswordKey)
-	}
 	if cloudStackB64EncodedSecret, ok := os.LookupEnv(eksacloudStackCloudConfigB64SecretKey); ok && len(cloudStackB64EncodedSecret) > 0 {
 		if err := os.Setenv(cloudStackCloudConfigB64SecretKey, cloudStackB64EncodedSecret); err != nil {
 			return fmt.Errorf("unable to set %s: %v", cloudStackCloudConfigB64SecretKey, err)

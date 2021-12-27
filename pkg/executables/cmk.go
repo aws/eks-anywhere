@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
+	"gopkg.in/ini.v1"
 	"os"
 	"path/filepath"
 	"time"
@@ -19,17 +21,15 @@ import (
 )
 
 const (
-	cmkPath               = "cmk"
-	cmkConfigFileName     = "cmk_tmp.ini"
-	cloudStackUsernameKey = "EKSA_CLOUDSTACK_USERNAME"
-	cloudStackPasswordKey = "EKSA_CLOUDSTACK_PASSWORD"
-	cloudStackURLKey      = "CLOUDSTACK_URL"
+	cmkPath                       = "cmk"
+	cmkConfigFileName             = "cmk_tmp.ini"
+	cloudStackb64EncodedSecretKey = "CLOUDSTACK_B64ENCODED_SECRET"
 )
 
 var (
 	//go:embed config/cmk.ini
 	cmkConfigTemplate string
-	requiredEnvsCmk   = []string{cloudStackUsernameKey, cloudStackPasswordKey, cloudStackURLKey}
+	requiredEnvsCmk   = []string{cloudStackb64EncodedSecretKey}
 )
 
 const (
@@ -148,7 +148,7 @@ func NewCmk(executable Executable, writer filewriter.FileWriter) *Cmk {
 func (c *Cmk) ValidateCloudStackConnection(ctx context.Context) error {
 	buffer, err := c.exec(ctx, "sync")
 	if err != nil {
-		return fmt.Errorf("error validating cloudstack connection for cmk config: %s", buffer.String())
+		return fmt.Errorf("error validating cloudstack connection for cmk config %s: %v", buffer.String(), err)
 	}
 	logger.MarkPass("Connected to CloudStack server")
 	return nil
@@ -273,11 +273,35 @@ func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, er
 
 // TODO: Add support for passing in domain from Deployment Config Spec
 func (c *Cmk) buildCmkConfigFile(envMap map[string]string) (err error) {
+	decodedString, err := b64.StdEncoding.DecodeString(envMap[cloudStackb64EncodedSecretKey])
+	if err != nil {
+		return fmt.Errorf("failed to decode value for %s with base64: %v", cloudStackb64EncodedSecretKey, err)
+	}
+	cfg, err := ini.Load(decodedString)
+	if err != nil {
+		return fmt.Errorf("failed to extract values from %s with ini: %v", cloudStackb64EncodedSecretKey, err)
+	}
+	section, err := cfg.GetSection("Global")
+	if err != nil {
+		return fmt.Errorf("failed to extract section 'Global' from %s: %v", cloudStackb64EncodedSecretKey, err)
+	}
+	apiKey, err := section.GetKey("api-key")
+	if err != nil {
+		return fmt.Errorf("failed to extract value of 'api-key' from %s: %v", cloudStackb64EncodedSecretKey, err)
+	}
+	secretKey, err := section.GetKey("secret-key")
+	if err != nil {
+		return fmt.Errorf("failed to extract value of 'secret-key' from %s: %v", cloudStackb64EncodedSecretKey, err)
+	}
+	apiUrl, err := section.GetKey("api-url")
+	if err != nil {
+		return fmt.Errorf("failed to extract value of 'api-url' from %s: %v", cloudStackb64EncodedSecretKey, err)
+	}
 	t := templater.New(c.writer)
 	data := map[string]string{
-		"CloudStackUsername":      envMap[cloudStackUsernameKey],
-		"CloudStackManagementUrl": envMap[cloudStackURLKey],
-		"CloudStackPassword":      envMap[cloudStackPasswordKey],
+		"CloudStackApiKey":        apiKey.Value(),
+		"CloudStackSecretKey":     secretKey.Value(),
+		"CloudStackManagementUrl": apiUrl.Value(),
 	}
 	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, data, cmkConfigFileName)
 	if err != nil {
@@ -310,17 +334,11 @@ func (c *Cmk) setupExecConfig() {
 }
 
 func (c *Cmk) validateAndSetupCreds() (map[string]string, error) {
-	var cloudStackUsername, cloudStackPassword, cloudStackURL string
+	var cloudStackb64EncodedSecret string
 	var ok bool
 	var envMap map[string]string
-	if cloudStackUsername, ok = os.LookupEnv(cloudStackUsernameKey); !ok || len(cloudStackUsername) <= 0 {
-		return nil, fmt.Errorf("%s is not set or is empty: %t", cloudStackUsernameKey, ok)
-	}
-	if cloudStackPassword, ok = os.LookupEnv(cloudStackPasswordKey); !ok || len(cloudStackPassword) <= 0 {
-		return nil, fmt.Errorf("%s is not set or is empty: %t", cloudStackPasswordKey, ok)
-	}
-	if cloudStackURL, ok = os.LookupEnv(cloudStackURLKey); !ok || len(cloudStackURL) <= 0 {
-		return nil, fmt.Errorf("%s is not set or is empty: %t", cloudStackURLKey, ok)
+	if cloudStackb64EncodedSecret, ok = os.LookupEnv(cloudStackb64EncodedSecretKey); !ok || len(cloudStackb64EncodedSecret) <= 0 {
+		return nil, fmt.Errorf("%s is not set or is empty: %t", cloudStackb64EncodedSecretKey, ok)
 	}
 	envMap, err := c.getEnvMap()
 	if err != nil {
