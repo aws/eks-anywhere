@@ -3,8 +3,11 @@ package executables_test
 import (
 	"bytes"
 	"context"
+	_ "embed"
+	b64 "encoding/base64"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -17,9 +20,23 @@ import (
 const (
 	cmkConfigFileName = "cmk_tmp.ini"
 	resourceName      = "TEST_RESOURCE"
+	cloudStackb64EncodedSecretKey = "CLOUDSTACK_B64ENCODED_SECRET"
 )
+//go:embed testdata/cloudstack_secret_file.ini
+var cloudstackSecretFile []byte
+var cloudStackb64EncodedSecretPreviousValue string
+
+func saveAndSetEnv() {
+	cloudStackb64EncodedSecretPreviousValue = os.Getenv(cloudStackb64EncodedSecretKey)
+	os.Setenv(cloudStackb64EncodedSecretKey, b64.StdEncoding.EncodeToString(cloudstackSecretFile))
+}
+
+func restoreEnv() {
+	os.Setenv(cloudStackb64EncodedSecretKey, cloudStackb64EncodedSecretPreviousValue)
+}
 
 func TestValidateCloudStackConnectionSuccess(t *testing.T) {
+	saveAndSetEnv()
 	_, writer := test.NewWriter(t)
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
@@ -33,9 +50,11 @@ func TestValidateCloudStackConnectionSuccess(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Cmk.ValidateCloudStackConnection() error = %v, want nil", err)
 	}
+	restoreEnv()
 }
 
 func TestValidateCloudStackConnectionError(t *testing.T) {
+	saveAndSetEnv()
 	_, writer := test.NewWriter(t)
 	ctx := context.Background()
 	mockCtrl := gomock.NewController(t)
@@ -49,9 +68,11 @@ func TestValidateCloudStackConnectionError(t *testing.T) {
 	if err == nil {
 		t.Fatalf("Cmk.ValidateCloudStackConnection() didn't throw expected error")
 	}
+	restoreEnv()
 }
 
 func TestListTemplates(t *testing.T) {
+	saveAndSetEnv()
 	_, writer := test.NewWriter(t)
 	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	tests := []struct {
@@ -109,9 +130,11 @@ func TestListTemplates(t *testing.T) {
 			}
 		})
 	}
+	restoreEnv()
 }
 
 func TestListServiceOfferings(t *testing.T) {
+	saveAndSetEnv()
 	_, writer := test.NewWriter(t)
 	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	tests := []struct {
@@ -173,9 +196,11 @@ func TestListServiceOfferings(t *testing.T) {
 			}
 		})
 	}
+	restoreEnv()
 }
 
 func TestListAccounts(t *testing.T) {
+	saveAndSetEnv()
 	_, writer := test.NewWriter(t)
 	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	tests := []struct {
@@ -237,9 +262,11 @@ func TestListAccounts(t *testing.T) {
 			}
 		})
 	}
+	restoreEnv()
 }
 
 func TestListDiskOfferings(t *testing.T) {
+	saveAndSetEnv()
 	_, writer := test.NewWriter(t)
 	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	tests := []struct {
@@ -301,9 +328,11 @@ func TestListDiskOfferings(t *testing.T) {
 			}
 		})
 	}
+	restoreEnv()
 }
 
 func TestListZones(t *testing.T) {
+	saveAndSetEnv()
 	_, writer := test.NewWriter(t)
 	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
 	tests := []struct {
@@ -365,4 +394,5 @@ func TestListZones(t *testing.T) {
 			}
 		})
 	}
+	restoreEnv()
 }

@@ -720,34 +720,6 @@ func thenErrorContainsExpected(t *testing.T, expected string, err error) {
 	}
 }
 
-func TestSetupAndValidateCreateClusterNoUsername(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	provider := givenProvider(t)
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
-	os.Unsetenv(eksacloudStackUsernameKey)
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorExpected(t, "failed setup and validations: EKSA_CLOUDSTACK_USERNAME is not set or is empty", err)
-}
-
-func TestSetupAndValidateCreateClusterNoPassword(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	provider := givenProvider(t)
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
-	os.Unsetenv(eksacloudStackPasswordKey)
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorExpected(t, "failed setup and validations: EKSA_CLOUDSTACK_PASSWORD is not set or is empty", err)
-}
-
 func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 	ctx := context.Background()
 	provider := givenProvider(t)
@@ -924,19 +896,6 @@ func TestSetupAndValidateDeleteCluster(t *testing.T) {
 	}
 }
 
-func TestSetupAndValidateDeleteClusterNoPassword(t *testing.T) {
-	ctx := context.Background()
-	provider := givenProvider(t)
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
-	os.Unsetenv(eksacloudStackPasswordKey)
-
-	err := provider.SetupAndValidateDeleteCluster(ctx)
-
-	thenErrorExpected(t, "failed setup and validations: EKSA_CLOUDSTACK_PASSWORD is not set or is empty", err)
-}
-
 func TestSetupAndValidateUpgradeCluster(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
@@ -955,36 +914,6 @@ func TestSetupAndValidateUpgradeCluster(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
-}
-
-func TestSetupAndValidateUpgradeClusterNoUsername(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	provider := givenProvider(t)
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
-	os.Unsetenv(eksacloudStackUsernameKey)
-
-	cluster := &types.Cluster{}
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
-
-	thenErrorExpected(t, "failed setup and validations: EKSA_CLOUDSTACK_USERNAME is not set or is empty", err)
-}
-
-func TestSetupAndValidateUpgradeClusterNoPassword(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	provider := givenProvider(t)
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
-	os.Unsetenv(eksacloudStackPasswordKey)
-
-	cluster := &types.Cluster{}
-	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
-
-	thenErrorExpected(t, "failed setup and validations: EKSA_CLOUDSTACK_PASSWORD is not set or is empty", err)
 }
 
 func TestSetupAndValidateUpgradeClusterIpExists(t *testing.T) {
