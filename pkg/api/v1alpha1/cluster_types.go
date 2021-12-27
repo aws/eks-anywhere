@@ -296,7 +296,7 @@ type DNS struct {
 }
 
 type ResolvConf struct {
-	// Path defines the path to the file that contains the DNS resolver
+	// Path defines the path to the file that contains the DNS resolver configuration
 	Path string `json:"path,omitempty"`
 }
 

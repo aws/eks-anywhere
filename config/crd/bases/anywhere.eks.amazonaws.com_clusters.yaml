@@ -42,6 +42,16 @@ spec:
                     description: CNI specifies the CNI plugin to be installed in the
                       cluster
                     type: string
+                  dns:
+                    properties:
+                      resolvConf:
+                        properties:
+                          path:
+                            description: Path defines the path to the file that contains
+                              the DNS resolver configuration
+                            type: string
+                        type: object
+                    type: object
                   pods:
                     description: Comma-separated list of CIDR blocks to use for pod
                       and service subnets. Defaults to 192.168.0.0/16 for pod subnet.
