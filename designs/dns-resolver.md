@@ -14,9 +14,9 @@ This can be achieved by specifying the path to the custom DNS resolver file in t
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
-name: cluster-name
+  name: cluster-name
 spec:
-clusterNetwork:
+  clusterNetwork:
     cni: cilium
     dns:
       resolvConf:
@@ -27,9 +27,9 @@ clusterNetwork:
     services:                                  
       cidrBlocks:                              
       - 10.96.0.0/12                           
-controlPlaneConfiguration:   
-.
-.          
+  controlPlaneConfiguration:   
+   .
+   .          
 ```
 
 If defined, we will pull this from the cluster spec & it will be added to `kubeletExtraArgs`:
