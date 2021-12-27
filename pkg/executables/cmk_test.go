@@ -18,10 +18,11 @@ import (
 )
 
 const (
-	cmkConfigFileName = "cmk_tmp.ini"
-	resourceName      = "TEST_RESOURCE"
+	cmkConfigFileName             = "cmk_tmp.ini"
+	resourceName                  = "TEST_RESOURCE"
 	cloudStackb64EncodedSecretKey = "CLOUDSTACK_B64ENCODED_SECRET"
 )
+
 //go:embed testdata/cloudstack_secret_file.ini
 var cloudstackSecretFile []byte
 var cloudStackb64EncodedSecretPreviousValue string
