@@ -45,6 +45,7 @@ spec:
                   dns:
                     properties:
                       resolvConf:
+                        description: ResolvConf refers to the DNS resolver configuration
                         properties:
                           path:
                             description: Path defines the path to the file that contains
