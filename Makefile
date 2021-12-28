@@ -255,6 +255,7 @@ cluster-controller-binaries: $(OUTPUT_BIN_DIR)
 	mkdir -p $(OUTPUT_BIN_DIR)/$(BINARY_NAME)
 	$(GO) mod vendor
 	$(MAKE) create-cluster-controller-binaries
+	$(MAKE) update-kustomization-yaml
 	$(MAKE) release-manifests RELEASE_DIR=.
 	source ./scripts/common.sh && build::gather_licenses $(OUTPUT_DIR) "./controllers"
 
