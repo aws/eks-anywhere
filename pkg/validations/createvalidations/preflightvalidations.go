@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
+	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
 )
 
 func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error) {
@@ -19,7 +20,7 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 		validations.ValidationResult{
 			Name:        "validate taints support",
 			Remediation: "",
-			Err:         ValidateTaintsSupport(ctx, u.Opts.Spec),
+			Err:         upgradevalidations.ValidateTaintsSupport(ctx, u.Opts.Spec),
 		},
 	}
 

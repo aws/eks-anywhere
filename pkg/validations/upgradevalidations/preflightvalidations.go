@@ -22,7 +22,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		upgradeValidations,
 		validations.ValidationResult{
 			Name:        "validate taints support",
-			Remediation: "ensure TAINTS_SUPPORT env variable is set",
+			Remediation: "ensure TAINTS_SUPPORT env variable is set to true",
 			Err:         ValidateTaintsSupport(ctx, u.Opts.Spec),
 		},
 		validations.ValidationResult{

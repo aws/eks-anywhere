@@ -189,6 +189,8 @@ type WorkerNodeGroupConfiguration struct {
 	Count int `json:"count,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
+	// Taints define the set of taints to be applied on control plane nodes
+	Taints []corev1.Taint `json:"taints,omitempty"`
 }
 
 func generateWorkerNodeGroupKey(c WorkerNodeGroupConfiguration) (key string) {
@@ -216,7 +218,18 @@ func WorkerNodeGroupConfigurationsSliceEqual(a, b []WorkerNodeGroupConfiguration
 			delete(m, k)
 		}
 	}
-	return len(m) == 0
+	if len(m) != 0 {
+		return false
+	}
+
+	for index, slice := range a {
+		sameTaints := TaintsSliceEqual(slice.Taints, b[index].Taints)
+		if !sameTaints {
+			return false
+		}
+	}
+
+	return true
 }
 
 type ClusterNetwork struct {

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -240,6 +241,17 @@ func TestClusterEqualKubernetesVersion(t *testing.T) {
 }
 
 func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
+	var taints1, taints2, taints1DiffOrder, emptyTaints []corev1.Taint
+	var taint1, taint2 corev1.Taint
+
+	taint1.Key = "key1"
+	taint2.Key = "key2"
+	taints1 = append(taints1, taint1)
+	taints1 = append(taints1, taint2)
+	taints1DiffOrder = append(taints1DiffOrder, taint2)
+	taints1DiffOrder = append(taints1DiffOrder, taint1)
+	taints2 = append(taints2, taint1)
+
 	testCases := []struct {
 		testName                   string
 		cluster1Wngs, cluster2Wngs []v1alpha1.WorkerNodeGroupConfiguration
@@ -351,6 +363,88 @@ func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
 				},
 			},
 			want: false,
+		},
+		{
+			testName: "both exist, same taints",
+			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					Taints: taints1,
+				},
+			},
+			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					Taints: taints1,
+				},
+			},
+			want: true,
+		},
+		{
+			testName: "both exist, same taints in different order",
+			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					Taints: taints1,
+				},
+			},
+			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					Taints: taints1DiffOrder,
+				},
+			},
+			want: true,
+		},
+		{
+			testName: "both exist, taints diff",
+			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					Taints: taints1,
+				},
+			},
+			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					Taints: taints2,
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, one with no taints",
+			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					Taints: taints1,
+				},
+			},
+			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, one with empty taints",
+			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					Taints: taints1,
+				},
+			},
+			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					Taints: emptyTaints,
+				},
+			},
+			want: false,
+		},
+		{
+			testName: "both exist, both with empty taints",
+			cluster1Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					Taints: emptyTaints,
+				},
+			},
+			cluster2Wngs: []v1alpha1.WorkerNodeGroupConfiguration{
+				{
+					Taints: emptyTaints,
+				},
+			},
+			want: true,
 		},
 	}
 	for _, tt := range testCases {
@@ -972,6 +1066,17 @@ func TestClusterEqualManagement(t *testing.T) {
 }
 
 func TestControlPlaneConfigurationEqual(t *testing.T) {
+	var taints1, taints2, taints1DiffOrder, emptyTaints []corev1.Taint
+	var taint1, taint2 corev1.Taint
+
+	taint1.Key = "key1"
+	taint2.Key = "key2"
+	taints1 = append(taints1, taint1)
+	taints1 = append(taints1, taint2)
+	taints1DiffOrder = append(taints1DiffOrder, taint2)
+	taints1DiffOrder = append(taints1DiffOrder, taint1)
+	taints2 = append(taints2, taint1)
+
 	testCases := []struct {
 		testName                           string
 		cluster1CPConfig, cluster2CPConfig *v1alpha1.ControlPlaneConfiguration
@@ -1084,6 +1189,64 @@ func TestControlPlaneConfigurationEqual(t *testing.T) {
 			},
 			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
 				Endpoint: &v1alpha1.Endpoint{},
+			},
+			want: true,
+		},
+		{
+			testName: "both taints equal",
+			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				Taints: taints1,
+			},
+			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				Taints: taints1,
+			},
+			want: true,
+		},
+		{
+			testName: "taints in different orders",
+			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				Taints: taints1,
+			},
+			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				Taints: taints1DiffOrder,
+			},
+			want: true,
+		},
+		{
+			testName: "different taints",
+			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				Taints: taints1,
+			},
+			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				Taints: taints2,
+			},
+			want: false,
+		},
+		{
+			testName: "One taints set empty",
+			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				Taints: taints1,
+			},
+			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				Taints: emptyTaints,
+			},
+			want: false,
+		},
+		{
+			testName: "one taints set not present",
+			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				Taints: taints1,
+			},
+			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{},
+			want:             false,
+		},
+		{
+			testName: "both taints set empty",
+			cluster1CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				Taints: emptyTaints,
+			},
+			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
+				Taints: emptyTaints,
 			},
 			want: true,
 		},

@@ -28,8 +28,9 @@ func ValidateClusterObjectExists(ctx context.Context, k validations.KubectlClien
 
 func ValidateTaintsSupport(ctx context.Context, clusterSpec *cluster.Spec) error {
 	if !features.IsActive(features.TaintsSupport()) {
-		if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints) > 0 {
-			return fmt.Errorf("Taints feature is not enabled.")
+		if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints) > 0 ||
+			len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Taints) > 0 {
+			return fmt.Errorf("Taints feature is not enabled. Environment variable TAINTS_SUPPORT needs to be set to true.")
 		}
 	}
 	return nil

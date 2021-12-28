@@ -9,6 +9,7 @@ import (
 	"time"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	corev1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
 	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
 
@@ -226,6 +227,17 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 		"eksaSystemNamespace": constants.EksaSystemNamespace,
 		"kubeletExtraArgs":    kubeletExtraArgs.ToPartialYaml(),
 	}
+
+	if len(clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Taints) > 0 {
+		var taints []corev1.Taint
+		for _, taint := range clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Taints {
+			if taint.Effect != "NoExecute" && taint.Effect != "NoSchedule" {
+				taints = append(taints, taint)
+			}
+		}
+		values["workerNodeGroupTaints"] = taints
+	}
+
 	return values
 }
 

@@ -9,22 +9,15 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
-          taints: []
+          taints: 
+            - key: key1
+              value: val1
+              effect: PreferNoSchedule
           kubeletExtraArgs:
             cloud-provider: external
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           name: '{{ ds.meta_data.hostname }}'
-      files:
-      - content: |
-          [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-              endpoint = ["https://1.2.3.4:1234"]
-        owner: root:root
-        path: "/etc/containerd/config_append.toml"
       preKubeadmCommands:
-      - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
-      - sudo systemctl daemon-reload
-      - sudo systemctl restart containerd
       - hostname "{{ ds.meta_data.hostname }}"
       - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
       - echo "127.0.0.1   localhost" >>/etc/hosts
@@ -64,7 +57,7 @@ spec:
         apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
         kind: VSphereMachineTemplate
         name: test-worker-node-template-1234567890000
-      version: v1.21.2-eks-1-21-4
+      version: v1.19.8-eks-1-19-4
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereMachineTemplate

@@ -32,6 +32,18 @@ spec:
 {{- end }}
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
+{{- if .workerNodeGroupTaints }}
+          taints: {{ range .workerNodeGroupTaints}}
+            - key: {{ .Key }}
+              value: {{ .Value }}
+              effect: {{ .Effect }}
+{{- if .TimeAdded }}
+              timeAdded: {{ .TimeAdded }}
+{{- end }}
+          {{- end }}
+{{- else}}
+          taints: []
+{{- end }}
           kubeletExtraArgs:
             cloud-provider: external
 {{- if .cgroupDriverSystemd}}
