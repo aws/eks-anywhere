@@ -1381,14 +1381,14 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 		return fmt.Errorf("spec.thumbprint is immutable. Previous value %s, new value %s", oSpec.Thumbprint, nSpec.Thumbprint)
 	}
 
-	//secretChanged, err := p.secretContentsChanged(ctx, cluster)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//if secretChanged {
-	//	return fmt.Errorf("the CloudStack credentials derived from %s and %s are immutable; please use the same credentials for the upgraded cluster", cloudStackPasswordKey, cloudStackUsernameKey)
-	//}
+	secretChanged, err := p.secretContentsChanged(ctx, cluster)
+	if err != nil {
+		return err
+	}
+
+	if secretChanged {
+		return fmt.Errorf("the CloudStack credentials derived from %s and %s are immutable; please use the same credentials for the upgraded cluster", cloudStackPasswordKey, cloudStackUsernameKey)
+	}
 	return nil
 }
 
@@ -1407,10 +1407,10 @@ func (p *cloudstackProvider) validateMachineConfigImmutability(ctx context.Conte
 
 func (p *cloudstackProvider) secretContentsChanged(ctx context.Context, workloadCluster *types.Cluster) (bool, error) {
 	//nPassword := os.Getenv(cloudStackPasswordKey)
-	//oSecret, err := p.providerKubectlClient.GetSecret(ctx, credentialsObjectName, executables.WithCluster(workloadCluster), executables.WithNamespace(constants.EksaSystemNamespace))
-	//if err != nil {
-	//	return false, fmt.Errorf("error when obtaining CloudStack secret %s from workload cluster: %v", credentialsObjectName, err)
-	//}
+	_, err := p.providerKubectlClient.GetSecret(ctx, credentialsObjectName, executables.WithCluster(workloadCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+	if err != nil {
+		return false, fmt.Errorf("error when obtaining CloudStack secret %s from workload cluster: %v", credentialsObjectName, err)
+	}
 	//
 	//if string(oSecret.Data["password"]) != nPassword {
 	//	return true, nil

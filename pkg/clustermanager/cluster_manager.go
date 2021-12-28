@@ -75,10 +75,12 @@ type ClusterClient interface {
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
+	GetEksaCloudStackDeploymentConfig(ctx context.Context, cloudstackDeploymentConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackDeploymentConfig, error)
 	UpdateEnvironmentVariablesInNamespace(ctx context.Context, resourceType, resourceName string, envMap map[string]string, cluster *types.Cluster, namespace string) error
 	UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error
 	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
+	GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error)
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
@@ -484,6 +486,52 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		}
 		if cc.Spec.ExternalEtcdConfiguration != nil {
 			existingEtcdVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
+			if err != nil {
+				return false, err
+			}
+			etcdVmc := machineConfigMap[newClusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+			if !reflect.DeepEqual(existingEtcdVmc.Spec, etcdVmc.Spec) {
+				logger.V(3).Info("New etcd machine config spec is different from the existing spec")
+				return true, nil
+			}
+		}
+	case v1alpha1.CloudStackDeploymentKind:
+		machineConfigMap := make(map[string]*v1alpha1.CloudStackMachineConfig)
+
+		existingVdc, err := c.clusterClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
+		if err != nil {
+			return false, err
+		}
+		vdc := datacenterConfig.(*v1alpha1.CloudStackDeploymentConfig)
+		if !reflect.DeepEqual(existingVdc.Spec, vdc.Spec) {
+			logger.V(3).Info("New provider spec is different from the new spec")
+			return true, nil
+		}
+
+		for _, config := range machineConfigs {
+			mc := config.(*v1alpha1.CloudStackMachineConfig)
+			machineConfigMap[mc.Name] = mc
+		}
+		existingCpVmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, cc.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
+		if err != nil {
+			return false, err
+		}
+		cpVmc := machineConfigMap[newClusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+		if !reflect.DeepEqual(existingCpVmc.Spec, cpVmc.Spec) {
+			logger.V(3).Info("New control plane machine config spec is different from the existing spec")
+			return true, nil
+		}
+		existingWnVmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, cc.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
+		if err != nil {
+			return false, err
+		}
+		wnVmc := machineConfigMap[newClusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
+		if !reflect.DeepEqual(existingWnVmc.Spec, wnVmc.Spec) {
+			logger.V(3).Info("New worker node machine config spec is different from the existing spec")
+			return true, nil
+		}
+		if cc.Spec.ExternalEtcdConfiguration != nil {
+			existingEtcdVmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, cc.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
 			if err != nil {
 				return false, err
 			}

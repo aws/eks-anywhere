@@ -21,7 +21,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	golang.org/x/sys v0.0.0-20210510120138-977fb7262007
-	gopkg.in/ini.v1 v1.51.0 // indirect
+	gopkg.in/ini.v1 v1.51.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 	k8s.io/api v0.21.2
 	k8s.io/apimachinery v0.21.2
