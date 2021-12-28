@@ -384,7 +384,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"kubeVipImage":                 "ghcr.io/kube-vip/kube-vip:latest", // TODO: get this value from the bundle once we add it
 		"podCidrs":                     clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                 clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
-		"baseRegistry":                 "http://196.17.0.3:8080",
+		"baseRegistry":                 "http://10.62.2.49:8080",
 		"osDistro":                     "ubuntu",
 		"osVersion":                    "2004",
 		"kubernetesVersionTemp":        "v1.20.7",

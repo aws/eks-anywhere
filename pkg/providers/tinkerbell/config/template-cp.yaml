@@ -49,11 +49,67 @@ spec:
         - DirAvailable--etc-kubernetes-manifests
         kubeletExtraArgs:
           provider-id: PROVIDER_ID
-    preKubeadmCommands:
-    - mkdir -p /etc/kubernetes/manifests && ctr images pull {{.kubeVipImage}}
-      && ctr run --rm --net-host {{.kubeVipImage}} vip /kube-vip manifest
-      pod --arp --interface $(ip -4 -j route list default | jq -r .[0].dev) --address {{.controlPlaneEndpointIp}} --controlplane
-      --leaderElection > /etc/kubernetes/manifests/kube-vip.yaml
+    files:
+    - content: |
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          creationTimestamp: null
+          name: kube-vip
+          namespace: kube-system
+        spec:
+          containers:
+          - args:
+            - manager
+            env:
+            - name: vip_arp
+              value: "true"
+            - name: port
+              value: "6443"
+            - name: vip_interface
+              value: eno2
+            - name: vip_cidr
+              value: "32"
+            - name: cp_enable
+              value: "true"
+            - name: cp_namespace
+              value: kube-system
+            - name: vip_ddns
+              value: "false"
+            - name: vip_leaderelection
+              value: "true"
+            - name: vip_leaseduration
+              value: "5"
+            - name: vip_renewdeadline
+              value: "3"
+            - name: vip_retryperiod
+              value: "1"
+            - name: address
+              value: {{.controlPlaneEndpointIp}}
+            image: {{.kubeVipImage}}
+            imagePullPolicy: Always
+            name: kube-vip
+            resources: {}
+            securityContext:
+              capabilities:
+                add:
+                - NET_ADMIN
+                - NET_RAW
+            volumeMounts:
+            - mountPath: /etc/kubernetes/admin.conf
+              name: kubeconfig
+          hostAliases:
+          - hostnames:
+            - kubernetes
+            ip: 127.0.0.1
+          hostNetwork: true
+          volumes:
+          - hostPath:
+              path: /etc/kubernetes/admin.conf
+            name: kubeconfig
+        status: {}
+      owner: root:root
+      path: /etc/kubernetes/manifests/kube-vip.yaml
     users:
     - name: {{.controlPlaneSshUsername}}
       sshAuthorizedKeys:
