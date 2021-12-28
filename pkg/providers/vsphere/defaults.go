@@ -16,14 +16,13 @@ type defaulter struct {
 	govc ProviderGovcClient
 }
 
-func newDefaulter(govc ProviderGovcClient) *defaulter {
+func NewDefaulter(govc ProviderGovcClient) *defaulter {
 	return &defaulter{
 		govc: govc,
 	}
 }
 
-func (d *defaulter) setDefaults(ctx context.Context, spec *spec) error {
-	setDefaultsForDatacenterConfig(spec.datacenterConfig)
+func (d *defaulter) setDefaultsForMachineConfig(ctx context.Context, spec *spec) error {
 	setDefaultsForEtcdMachineConfig(spec.etcdMachineConfig())
 	for _, m := range spec.machineConfigs() {
 		setDefaultsForMachineConfig(m)
@@ -43,7 +42,7 @@ func (d *defaulter) setDefaults(ctx context.Context, spec *spec) error {
 	return nil
 }
 
-func setDefaultsForDatacenterConfig(datacenterConfig *anywherev1.VSphereDatacenterConfig) {
+func (d *defaulter) SetDefaultsForDatacenterConfig(datacenterConfig *anywherev1.VSphereDatacenterConfig) {
 	if datacenterConfig.Spec.Insecure {
 		logger.Info("Warning: VSphereDatacenterConfig configured in insecure mode")
 		datacenterConfig.Spec.Thumbprint = ""

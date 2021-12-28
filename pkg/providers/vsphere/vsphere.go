@@ -203,8 +203,8 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 		skipIpCheck:        skipIpCheck,
 		resourceSetManager: resourceSetManager,
 		Retrier:            retrier,
-		validator:          newValidator(providerGovcClient, netClient),
-		defaulter:          newDefaulter(providerGovcClient),
+		validator:          NewValidator(providerGovcClient, netClient),
+		defaulter:          NewDefaulter(providerGovcClient),
 	}
 }
 
@@ -368,12 +368,14 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 
 	vSphereClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
-	if err := p.validator.validateVCenterAccess(ctx, vSphereClusterSpec.datacenterConfig.Spec.Server); err != nil {
+	p.defaulter.SetDefaultsForDatacenterConfig(vSphereClusterSpec.datacenterConfig)
+
+	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
 		return err
 	}
 
-	if err := p.defaulter.setDefaults(ctx, vSphereClusterSpec); err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
+	if err := p.defaulter.setDefaultsForMachineConfig(ctx, vSphereClusterSpec); err != nil {
+		return fmt.Errorf("failed setting default values for vsphere machine configs: %v", err)
 	}
 
 	if err := p.validator.validateCluster(ctx, vSphereClusterSpec); err != nil {
@@ -422,12 +424,18 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 
 	vSphereClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
-	if err := p.validator.validateVCenterAccess(ctx, vSphereClusterSpec.datacenterConfig.Spec.Server); err != nil {
+	p.defaulter.SetDefaultsForDatacenterConfig(vSphereClusterSpec.datacenterConfig)
+
+	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
 		return err
 	}
 
-	if err := p.defaulter.setDefaults(ctx, vSphereClusterSpec); err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
+	if err := p.defaulter.setDefaultsForMachineConfig(ctx, vSphereClusterSpec); err != nil {
+		return fmt.Errorf("failed setting default values for vsphere machine configs: %v", err)
+	}
+
+	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
+		return err
 	}
 
 	if err := p.validator.validateCluster(ctx, vSphereClusterSpec); err != nil {

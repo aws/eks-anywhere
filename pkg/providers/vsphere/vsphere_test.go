@@ -2133,13 +2133,14 @@ func TestSetupAndValidateCreateClusterTemplateDoesNotExist(t *testing.T) {
 	tt := newProviderTest(t)
 
 	tt.setExpectationForSetup()
+	tt.setExpectationForVCenterValidation()
 	for _, mc := range tt.machineConfigs {
 		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc).Return("", nil).MaxTimes(1)
 	}
 
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 
-	thenErrorExpected(t, "failed setup and validations: template <"+testTemplate+"> not found", err)
+	thenErrorExpected(t, "failed setting default values for vsphere machine configs: template <"+testTemplate+"> not found", err)
 }
 
 func TestSetupAndValidateCreateClusterErrorCheckingTemplate(t *testing.T) {
@@ -2147,13 +2148,14 @@ func TestSetupAndValidateCreateClusterErrorCheckingTemplate(t *testing.T) {
 	errorMessage := "failed getting template"
 
 	tt.setExpectationForSetup()
+	tt.setExpectationForVCenterValidation()
 	for _, mc := range tt.machineConfigs {
 		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc).Return("", errors.New(errorMessage)).MaxTimes(1)
 	}
 
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 
-	thenErrorExpected(t, "failed setup and validations: error setting template full path: "+errorMessage, err)
+	thenErrorExpected(t, "failed setting default values for vsphere machine configs: error setting template full path: "+errorMessage, err)
 }
 
 func TestSetupAndValidateCreateClusterTemplateMissingTags(t *testing.T) {
