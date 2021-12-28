@@ -1,10 +1,10 @@
 # Support Custom DNS Resolver Configuration 
 
 
-###Problem
+## Problem
 Currently, if the customer has a custom vm image (ova, etc.) that has a custom resolv.conf file, there is no way for the customer to overwrite the default resolv.conf file with the one from the custom image.
 
-###Overview of solution
+## Overview of solution
 
 **Allow customers to provide a custom DNS resolver file**
 
@@ -63,6 +63,6 @@ dns:
     It will proceed to use the default `/etc/resolv.conf` file and it will NOT be added to `kubeletExtraArgs`.
 * If specifying a pre-existing custom DNS resolver file, the referenced file must be present on the host filesystem.
 
-### Documentation
+## Documentation
 
 We need to add `clusterNetwork.dns.resolvConf.path` as an optional configuration for the cluster spec in our EKS-A docs.
