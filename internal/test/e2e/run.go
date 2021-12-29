@@ -31,11 +31,14 @@ type ParallelRunConf struct {
 	CleanupVms          bool
 }
 
-type instanceTestsResults struct {
-	conf      instanceRunConf
-	commandId string
-	err       error
-}
+type (
+	testCommandResult    = ssm.RunOutput
+	instanceTestsResults struct {
+		conf              instanceRunConf
+		testCommandResult *testCommandResult
+		err               error
+	}
+)
 
 func RunTestsInParallel(conf ParallelRunConf) error {
 	testsList, skippedTests, err := listTests(conf.Regex, conf.TestsToSkip)
@@ -55,7 +58,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			defer wg.Done()
 			r := instanceTestsResults{conf: c}
 
-			r.conf.instanceId, r.commandId, err = RunTests(c)
+			r.conf.instanceId, r.testCommandResult, err = RunTests(c)
 			if err != nil {
 				r.err = err
 			}
@@ -73,10 +76,15 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	failedInstances := 0
 	for r := range resultCh {
 		if r.err != nil {
-			logger.Error(r.err, "An e2e instance run has failed", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.commandId, "tests", r.conf.regex, "status", failedStatus)
+			logger.Error(r.err, "Failed running e2e tests for instance", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "tests", r.conf.regex, "status", failedStatus)
+			failedInstances += 1
+		} else if !r.testCommandResult.Successful() {
+			logger.Info("An e2e instance run has failed", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", failedStatus)
+			logResult(r.testCommandResult)
 			failedInstances += 1
 		} else {
-			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.commandId, "tests", r.conf.regex, "status", passedStatus)
+			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", passedStatus)
+			logResult(r.testCommandResult)
 		}
 		if conf.CleanupVms {
 			err = CleanUpVsphereTestResources(context.Background(), r.conf.instanceId)
@@ -98,26 +106,26 @@ type instanceRunConf struct {
 	bundlesOverride                                                                                            bool
 }
 
-func RunTests(conf instanceRunConf) (testInstanceID, commandId string, err error) {
+func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *testCommandResult, err error) {
 	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.jobId, conf.subnetId, conf.controlPlaneIP, conf.bundlesOverride)
 	if err != nil {
-		return "", "", err
+		return "", nil, err
 	}
 
 	err = session.setup(conf.regex)
 	if err != nil {
-		return session.instanceId, "", err
+		return session.instanceId, nil, err
 	}
 
-	commandId, err = session.runTests(conf.regex)
+	testCommandResult, err = session.runTests(conf.regex)
 	if err != nil {
-		return session.instanceId, commandId, err
+		return session.instanceId, nil, err
 	}
 
-	return session.instanceId, commandId, nil
+	return session.instanceId, testCommandResult, nil
 }
 
-func (e *E2ESession) runTests(regex string) (commandId string, err error) {
+func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResult, err error) {
 	logger.V(1).Info("Running e2e tests", "regex", regex)
 	command := "./bin/e2e.test -test.v"
 	if regex != "" {
@@ -128,26 +136,30 @@ func (e *E2ESession) runTests(regex string) (commandId string, err error) {
 
 	opt := ssm.WithOutputToCloudwatch()
 
-	commandId, err = ssm.Run(
+	testCommandResult, err = ssm.RunCommand(
 		e.session,
 		e.instanceId,
 		command,
 		opt,
 	)
 	if err != nil {
+		return nil, fmt.Errorf("error running e2e tests on instance %s: %v", e.instanceId, err)
+	}
+
+	if !testCommandResult.Successful() {
 		e.uploadGeneratedFilesFromInstance(regex)
 		e.uploadDiagnosticArchiveFromInstance(regex)
-		return commandId, fmt.Errorf("error running e2e tests on instance %s: %v", e.instanceId, err)
+		return testCommandResult, nil
 	}
 
 	key := "Integration-Test-Done"
 	value := "TRUE"
 	err = ec2.TagInstance(e.session, e.instanceId, key, value)
 	if err != nil {
-		return commandId, fmt.Errorf("error tagging instance for e2e success: %v", err)
+		return nil, fmt.Errorf("error tagging instance for e2e success: %v", err)
 	}
 
-	return commandId, nil
+	return testCommandResult, nil
 }
 
 func (e *E2ESession) commandWithEnvVars(command string) string {
@@ -208,4 +220,10 @@ func logTestGroups(instancesConf []instanceRunConf) {
 		testGroups = append(testGroups, i.regex)
 	}
 	logger.V(1).Info("Running tests in parallel", "testsGroups", testGroups)
+}
+
+func logResult(t *testCommandResult) {
+	// Go tests send non-test log output through stderr
+	// So stderr will have the cli output
+	fmt.Println(string(t.StdErr))
 }
