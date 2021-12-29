@@ -19,6 +19,7 @@ type VSphereDatacenterConfigSpec struct {
 
 // VSphereDatacenterConfigStatus defines the observed state of VSphereDatacenterConfig
 type VSphereDatacenterConfigStatus struct { // Important: Run "make generate" to regenerate code after modifying this file
+	SpecValid bool `json:"specValid,omitempty"`
 }
 
 //+kubebuilder:object:root=true

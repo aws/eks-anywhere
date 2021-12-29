@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 
@@ -80,19 +81,22 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupReconcilers(mgr)
+	// Setup the context that's going to be used in controllers and for the manager.
+	ctx := ctrl.SetupSignalHandler()
+
+	setupReconcilers(ctx, mgr)
 	setupWebhooks(mgr)
 	//+kubebuilder:scaffold:builder
 	setupChecks(mgr)
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
 }
 
-func setupReconcilers(mgr ctrl.Manager) {
+func setupReconcilers(ctx context.Context, mgr ctrl.Manager) {
 	if features.IsActive(features.FullLifecycleAPI()) {
 		setupLog.Info("Setting up cluster controller")
 		if err := (controllers.NewClusterReconciler(
@@ -108,7 +112,7 @@ func setupReconcilers(mgr ctrl.Manager) {
 			mgr.GetClient(),
 			ctrl.Log.WithName("controllers").WithName(anywherev1.VSphereDatacenterKind),
 			mgr.GetScheme(),
-		)).SetupWithManager(mgr); err != nil {
+		)).SetupWithManager(ctx, mgr); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", anywherev1.VSphereDatacenterKind)
 			os.Exit(1)
 		}
