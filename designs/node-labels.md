@@ -4,15 +4,17 @@
 
 **Problem:** Within an EKS-A cluster, the user might want to run specific workloads only on certain nodes.
 A great way to do this is by assigning labels to the desired nodes.
-However, there is currently no way for users to add labels to their nodes.
-This limits the users from being able to add this extra level of customization when deploying applications and other workloads on their cluster.
+However, there is currently no way for users to add labels to their nodes during cluster creation.
+Users may assign labels to nodes post cluster creation, but those labels will not persist during processes like upgrading the cluster (which rolls new machines hence new nodes).
 
 ### Goals and Objectives
 
-As an EKS Anywhere user, I want to:
+As an EKS Anywhere user:
 
-* Have the ability to run specific workloads on specific nodes
-* Have the ability to assign one or more labels to a node
+* I want to have the ability to run specific workloads on specific nodes
+* I want to have the ability to assign one or more labels to a node during cluster creation
+* I want my node labels to persist during cluster operations such as upgrades
+
 
 ## Overview of Solution
 
