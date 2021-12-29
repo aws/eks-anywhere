@@ -50,7 +50,7 @@ func PodIAMAuthExtraArgs(podIAMConfig *v1alpha1.PodIAMConfig) ExtraArgs {
 }
 
 func ResolvConfExtraArgs(resolvConf *v1alpha1.ResolvConf) ExtraArgs {
-	if resolvConf == nil || resolvConf.Path == "" {
+	if resolvConf == nil {
 		return nil
 	}
 	args := ExtraArgs{}
