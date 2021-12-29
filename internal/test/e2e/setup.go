@@ -177,8 +177,8 @@ func (e *E2ESession) downloadRequiredFileInInstance(file string) error {
 	} else {
 		command = fmt.Sprintf("aws s3 cp s3://%s/%s/%[3]s ./bin/ && chmod 645 ./bin/%[3]s", e.storageBucket, e.jobId, file)
 	}
-	_, err := ssm.Run(e.session, e.instanceId, command)
-	if err != nil {
+
+	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
 		return fmt.Errorf("error downloading file in instance: %v", err)
 	}
 	logger.V(1).Info("Successfully downloaded file")
@@ -191,8 +191,7 @@ func (e *E2ESession) uploadGeneratedFilesFromInstance(testName string) {
 	command := fmt.Sprintf("aws s3 cp /home/e2e/%s/ %s/%s/ --recursive",
 		e.instanceId, e.generatedArtifactsBucketPath(), testName)
 
-	_, err := ssm.Run(e.session, e.instanceId, command)
-	if err != nil {
+	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
 		logger.Error(err, "error uploading log files from instance")
 	} else {
 		logger.V(1).Info("Successfully uploaded log files to S3")
@@ -205,8 +204,7 @@ func (e *E2ESession) uploadDiagnosticArchiveFromInstance(testName string) {
 	command := fmt.Sprintf("aws s3 cp /home/e2e/ %s/%s/ --recursive --exclude \"*\" --include \"%s\"",
 		e.generatedArtifactsBucketPath(), testName, bundleNameFormat)
 
-	_, err := ssm.Run(e.session, e.instanceId, command)
-	if err != nil {
+	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
 		logger.Error(err, "error uploading diagnostic bundle from instance")
 	} else {
 		logger.V(1).Info("Successfully uploaded diagnostic bundle files to S3")
@@ -229,8 +227,8 @@ func (e *E2ESession) downloadRequiredFilesInInstance() error {
 
 func (e *E2ESession) createTestNameFile(testName string) error {
 	command := fmt.Sprintf("echo %s > %s", testName, testNameFile)
-	_, err := ssm.Run(e.session, e.instanceId, command)
-	if err != nil {
+
+	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
 		return fmt.Errorf("error creating test name file in instance: %v", err)
 	}
 	logger.V(1).Info("Successfully created test name file")
