@@ -32,6 +32,18 @@ func ValidateTaintsSupport(ctx context.Context, clusterSpec *cluster.Spec) error
 			len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Taints) > 0 {
 			return fmt.Errorf("Taints feature is not enabled. Environment variable TAINTS_SUPPORT needs to be set to true.")
 		}
+	} else if len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Taints) > 0 {
+		invalidWorkerNodeGroupTaints := false
+		for _, slice := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Taints {
+			if slice.Effect == "NoExecute" || slice.Effect == "NoSchedule" {
+				invalidWorkerNodeGroupTaints = true
+				break
+			}
+		}
+
+		if invalidWorkerNodeGroupTaints {
+			return fmt.Errorf("The first worker node group does not support NoExecute or NoSchedule taints.")
+		}
 	}
 	return nil
 }

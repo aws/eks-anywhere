@@ -836,13 +836,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	}
 
 	if len(clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Taints) > 0 {
-		var taints []corev1.Taint
-		for _, taint := range clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Taints {
-			if taint.Effect != "NoExecute" && taint.Effect != "NoSchedule" {
-				taints = append(taints, taint)
-			}
-		}
-		values["workerNodeGroupTaints"] = taints
+		values["workerNodeGroupTaints"] = clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Taints
 	}
 
 	return values

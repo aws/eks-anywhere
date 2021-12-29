@@ -31,12 +31,6 @@ spec:
       - key: key1
         value: val1
         effect: PreferNoSchedule
-      - key: key2
-        value: val2
-        effect: NoSchedule
-      - key: key3
-        value: val3
-        effect: NoExecute
   externalEtcdConfiguration:
     count: 3
     machineGroupRef:
