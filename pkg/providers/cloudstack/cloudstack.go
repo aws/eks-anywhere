@@ -361,11 +361,19 @@ func (p *cloudstackProvider) generateSSHAuthKey(username string) (string, error)
 	return key, nil
 }
 
-func (p *cloudstackProvider) validateControlPlaneIp(ip string) error {
-	// check if controlPlaneEndpointIp is valid
-	parsedIp := net.ParseIP(ip)
-	if parsedIp == nil {
-		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s", ip)
+func (p *cloudstackProvider) parseControlPlaneHost(pHost *string) error {
+	_, port, err := net.SplitHostPort(*pHost)
+	if err != nil {
+		if strings.Contains(err.Error(), "missing port") {
+			*pHost = *pHost + ":6443"
+		} else {
+			return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s", *pHost)
+		}
+	} else {
+		_, err = strconv.Atoi(port)
+		if err != nil {
+			return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host has an invalid port: %s", *pHost)
+		}
 	}
 	return nil
 }
@@ -519,7 +527,7 @@ func (p *cloudstackProvider) setupAndValidateCluster(ctx context.Context, cluste
 		workerNodeGroupMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
 	}
 
-	err := p.validateControlPlaneIp(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	err := p.parseControlPlaneHost(&clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
 	if err != nil {
 		return err
 	}
@@ -938,7 +946,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 
 	values := map[string]interface{}{
 		"clusterName":                            clusterSpec.ObjectMeta.Name,
-		"controlPlaneEndpointIp":                 clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		"controlPlaneReplicas":                   clusterSpec.Spec.ControlPlaneConfiguration.Count,
 		"kubernetesRepository":                   bundle.KubeDistro.Kubernetes.Repository,
 		"kubernetesVersion":                      bundle.KubeDistro.Kubernetes.Tag,
@@ -976,6 +983,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 		"eksaSystemNamespace":                    constants.EksaSystemNamespace,
 		"auditPolicy":                            common.GetAuditPolicy(),
 	}
+
+	host, port, _ := net.SplitHostPort(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	values["controlPlaneEndpointHost"] = host
+	values["controlPlaneEndpointPort"] = port
 
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
 		values["registryMirrorConfiguration"] = clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
