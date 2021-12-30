@@ -972,8 +972,8 @@ kind: ConfigMap
 metadata:
   name: internal-feature-states.csi.vsphere.vmware.com
   namespace: {{.eksaSystemNamespace}}
----
 {{- if .deployCPI }}
+---
 apiVersion: v1
 kind: Secret
 metadata:

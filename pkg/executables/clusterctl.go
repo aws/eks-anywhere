@@ -191,6 +191,7 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, clusterSpec *cluste
 		"--bootstrap", clusterctlConfig.etcdadmControllerVersion,
 	}
 
+	// Not adding a watching namespace if we are using the V1beta1 bundle as of now
 	if !features.IsActive(features.UseV1beta1BundleRelease()) {
 		// Not supported for docker controllers at this time
 		if clusterSpec.Spec.DatacenterRef.Kind != anywherev1alpha1.DockerDatacenterKind {

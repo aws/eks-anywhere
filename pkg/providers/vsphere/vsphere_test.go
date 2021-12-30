@@ -412,6 +412,9 @@ func newProvider(t *testing.T, datacenterConfig *v1alpha1.VSphereDatacenterConfi
 }
 
 func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
+	if features.IsActive(features.UseV1beta1BundleRelease()) {
+		t.Skip("Skipping test with v1beta1 bundle feature flag because of difference in flags")
+	}
 	tests := []struct {
 		testName          string
 		clusterconfigFile string
@@ -475,6 +478,9 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 }
 
 func TestProviderGenerateCAPISpecForUpgradeOIDC(t *testing.T) {
+	if features.IsActive(features.UseV1beta1BundleRelease()) {
+		t.Skip("Skipping test with v1beta1 bundle feature flag because of difference in flags")
+	}
 	tests := []struct {
 		testName          string
 		clusterconfigFile string
@@ -540,6 +546,9 @@ func TestProviderGenerateCAPISpecForUpgradeOIDC(t *testing.T) {
 }
 
 func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *testing.T) {
+	if features.IsActive(features.UseV1beta1BundleRelease()) {
+		t.Skip("Skipping test with v1beta1 bundle feature flag because of difference in flags")
+	}
 	tests := []struct {
 		testName          string
 		clusterconfigFile string
@@ -611,6 +620,9 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *
 }
 
 func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T) {
+	if features.IsActive(features.UseV1beta1BundleRelease()) {
+		t.Skip("Skipping test with v1beta1 bundle feature flag because of difference in flags")
+	}
 	mockCtrl := gomock.NewController(t)
 	var tctx testContext
 	tctx.SaveContext()
@@ -684,6 +696,9 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 }
 
 func TestProviderGenerateCAPISpecForCreate(t *testing.T) {
+	if features.IsActive(features.UseV1beta1BundleRelease()) {
+		t.Skip("Skipping test with v1beta1 bundle feature flag because of difference in flags")
+	}
 	mockCtrl := gomock.NewController(t)
 	var tctx testContext
 	tctx.SaveContext()
@@ -725,6 +740,9 @@ func TestProviderGenerateStorageClass(t *testing.T) {
 }
 
 func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *testing.T) {
+	if features.IsActive(features.UseV1beta1BundleRelease()) {
+		t.Skip("Skipping test with v1beta1 bundle feature flag because of difference in flags")
+	}
 	clusterSpecManifest := "cluster_bottlerocket_external_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
@@ -753,6 +771,9 @@ func TestProviderGenerateCAPISpecForCreateWithBottlerocketAndExternalEtcd(t *tes
 }
 
 func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorConfig(t *testing.T) {
+	if features.IsActive(features.UseV1beta1BundleRelease()) {
+		t.Skip("Skipping test with v1beta1 bundle feature flag because of difference in flags")
+	}
 	clusterSpecManifest := "cluster_bottlerocket_mirror_config.yaml"
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
@@ -780,6 +801,9 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorConfig(t *testin
 }
 
 func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorAndCertConfig(t *testing.T) {
+	if features.IsActive(features.UseV1beta1BundleRelease()) {
+		t.Skip("Skipping test with v1beta1 bundle feature flag because of difference in flags")
+	}
 	clusterSpecManifest := "cluster_bottlerocket_mirror_with_cert_config.yaml"
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
@@ -807,6 +831,9 @@ func TestProviderGenerateDeploymentFileForBottleRocketWithMirrorAndCertConfig(t 
 }
 
 func TestProviderGenerateDeploymentFileWithMirrorConfig(t *testing.T) {
+	if features.IsActive(features.UseV1beta1BundleRelease()) {
+		t.Skip("Skipping test with v1beta1 bundle feature flag because of difference in flags")
+	}
 	clusterSpecManifest := "cluster_mirror_config.yaml"
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
@@ -834,6 +861,9 @@ func TestProviderGenerateDeploymentFileWithMirrorConfig(t *testing.T) {
 }
 
 func TestProviderGenerateDeploymentFileWithMirrorAndCertConfig(t *testing.T) {
+	if features.IsActive(features.UseV1beta1BundleRelease()) {
+		t.Skip("Skipping test with v1beta1 bundle feature flag because of difference in flags")
+	}
 	clusterSpecManifest := "cluster_mirror_with_cert_config.yaml"
 	mockCtrl := gomock.NewController(t)
 	setupContext(t)
@@ -2708,21 +2738,23 @@ func TestVsphereProviderRunPostControlPlaneUpgrade(t *testing.T) {
 	tt := newProviderTest(t)
 
 	tt.resourceSetManager.EXPECT().ForceUpdate(tt.ctx, "test-crs-0", "eksa-system", tt.managementCluster, tt.workloadCluster)
-	tt.kubectl.EXPECT().SetDaemonSetImage(
-		tt.ctx,
-		tt.workloadCluster.KubeconfigFile,
-		"vsphere-cloud-controller-manager",
-		"kube-system",
-		"vsphere-cloud-controller-manager",
-		"public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
-	)
-	tt.kubectl.EXPECT().ApplyTolerationsFromTaintsToDaemonSet(
-		tt.ctx,
-		nil,
-		nil,
-		"vsphere-cloud-controller-manager",
-		tt.workloadCluster.KubeconfigFile,
-	)
+	if !features.IsActive(features.UseV1beta1BundleRelease()) {
+		tt.kubectl.EXPECT().SetDaemonSetImage(
+			tt.ctx,
+			tt.workloadCluster.KubeconfigFile,
+			"vsphere-cloud-controller-manager",
+			"kube-system",
+			"vsphere-cloud-controller-manager",
+			"public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
+		)
+		tt.kubectl.EXPECT().ApplyTolerationsFromTaintsToDaemonSet(
+			tt.ctx,
+			nil,
+			nil,
+			"vsphere-cloud-controller-manager",
+			tt.workloadCluster.KubeconfigFile,
+		)
+	}
 	tt.Expect(tt.provider.RunPostControlPlaneUpgrade(tt.ctx, tt.clusterSpec, tt.clusterSpec, tt.workloadCluster, tt.managementCluster)).To(Succeed())
 }
 
@@ -2781,6 +2813,9 @@ func TestProviderUpgradeNeeded(t *testing.T) {
 }
 
 func TestProviderGenerateCAPISpecForCreateWithPodIAMConfig(t *testing.T) {
+	if features.IsActive(features.UseV1beta1BundleRelease()) {
+		t.Skip("Skipping test with v1beta1 bundle feature flag because of difference in flags")
+	}
 	mockCtrl := gomock.NewController(t)
 	var tctx testContext
 	tctx.SaveContext()
