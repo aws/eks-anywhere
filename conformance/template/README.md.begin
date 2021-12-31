@@ -1,0 +1,83 @@
+# Conformance testing Amazon EKS Anywhere
+
+## Setup EKS Anywhere Cluster
+
+Setup EKS Anywhere cluster according to the [EKS Anywhere documentation](https://anywhere.eks.amazonaws.com/).
+
+Create an [EKS Anywhere production cluster](https://anywhere.eks.amazonaws.com/docs/getting-started/production-environment/) to reproduce the EKS Anywhere Conformance e2e results.
+
+
+## Requirements
+Create a Kubernetes cluster on a target workload environment with EKS Anywhere run on an administrative machine.
+
+### Target Workload Environment
+
+The target workload environment will need:
+
+* A vSphere 7+ environment running vCenter
+* Capacity to deploy 6-10VMs
+* DHCP service running in vSphere environment in the primary VM network for your workload cluster
+* One network in vSphere to use for the cluster. This network must have inbound access into vCenter
+* A OVA imported into vSphere and converted into template for the workload VMs
+* User credentials to [create vms and attach networks, etc](https://anywhere.eks.amazonaws.com/docs/reference/vsphere/user-permissions/)
+
+Each VM will require:
+
+* 2 vCPU
+* 8GB RAM
+* 25GB Disk
+
+### Administrative Machine
+
+The administrative machine will need:
+
+* Docker 20.x.x
+* Mac OS (10.15) / Ubuntu (20.04.2 LTS)
+* 4 CPU cores
+* 16GB memory
+* 30GB free disk space
+
+#### Kubectl
+
+On the administrative machine, install and configure the Kubernetes command-line tool
+[kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/)
+
+#### Docker
+
+The method to [install Docker](https://docs.docker.com/get-docker/) depends on your operating system and architecture.
+If you are using Ubuntu use the [Docker CE](https://docs.docker.com/engine/install/ubuntu/) installation instructions to install Docker and not the Snap installation.
+
+#### EKS Anywhere
+
+Install [EKS Anywhere](https://anywhere.eks.amazonaws.com/docs/getting-started/install/) on your administrative machine.
+
+#### Sonobuoy
+
+Download a binary release of [sonobuoy](https://github.com/vmware-tanzu/sonobuoy/releases/).
+
+If you are on a Mac, you many need to open the Security & Privacy and approve sonobuoy for
+execution.
+
+```shell
+if [[ "$(uname)" == "Darwin" ]]
+then
+  SONOBUOY=https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.50.0/sonobuoy_0.50.0_darwin_amd64.tar.gz
+else
+  SONOBUOY=https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.50.0/sonobuoy_0.50.0_linux_386.tar.gz
+fi
+wget -qO- ${SONOBUOY} |tar -xz sonobuoy
+chmod 755 sonobuoy
+```
+
+## Create EKS Anywhere Cluster
+
+1. Generate a cluster configuration:
+
+   ```shell
+   CLUSTER_NAME=prod
+   eksctl anywhere generate clusterconfig $CLUSTER_NAME --provider vsphere >cluster.yaml
+   ```
+
+1. Populate cluster configuration. For example:
+
+   ```yaml
