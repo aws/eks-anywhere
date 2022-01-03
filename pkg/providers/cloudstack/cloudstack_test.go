@@ -1246,18 +1246,34 @@ func TestSetupAndValidateCreateClusterNoNetwork(t *testing.T) {
 	thenErrorExpected(t, "CloudStackDeploymentConfig network is not set or is empty", err)
 }
 
-func TestSetupAndValidateCreateClusterBogusIp(t *testing.T) {
+func TestSetupAndValidateCreateClusterEndpointPortNotSpecified(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
 	provider := givenProvider(t)
-	clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host = "bogus"
+	clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host = "host1"
 	var tctx testContext
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "cluster controlPlaneConfiguration.Endpoint.Host is invalid: bogus", err)
+	assert.Nil(t, err)
+	assert.Equal(t, "host1:6443", clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
+}
+
+func TestSetupAndValidateCreateClusterEndpointPortSpecified(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenEmptyClusterSpec()
+	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
+	provider := givenProvider(t)
+	clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host = "host1:443"
+	var tctx testContext
+	tctx.SaveContext()
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "host1:443", clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
 }
 
 // Test existed ip disabled for cloudstack
