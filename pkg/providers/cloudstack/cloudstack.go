@@ -944,9 +944,12 @@ func (vs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1.CloudStackDeploymentConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
+	host, port, _ := net.SplitHostPort(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
 
 	values := map[string]interface{}{
 		"clusterName":                            clusterSpec.ObjectMeta.Name,
+		"controlPlaneEndpointHost":               host,
+		"controlPlaneEndpointPort":               port,
 		"controlPlaneReplicas":                   clusterSpec.Spec.ControlPlaneConfiguration.Count,
 		"kubernetesRepository":                   bundle.KubeDistro.Kubernetes.Repository,
 		"kubernetesVersion":                      bundle.KubeDistro.Kubernetes.Tag,
@@ -984,10 +987,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 		"eksaSystemNamespace":                    constants.EksaSystemNamespace,
 		"auditPolicy":                            common.GetAuditPolicy(),
 	}
-
-	host, port, _ := net.SplitHostPort(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
-	values["controlPlaneEndpointHost"] = host
-	values["controlPlaneEndpointPort"] = port
 
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
 		values["registryMirrorConfiguration"] = clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
