@@ -14,7 +14,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
@@ -28,23 +28,20 @@ type VSphereDatacenterReconciler struct {
 	defaulter *vsphere.Defaulter
 }
 
-func NewVSphereDatacenterReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) *VSphereDatacenterReconciler {
+func NewVSphereDatacenterReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, govc *executables.Govc) *VSphereDatacenterReconciler {
+	validator := vsphere.NewValidator(govc, &networkutils.DefaultNetClient{})
+	defaulter := vsphere.NewDefaulter(govc)
+
 	return &VSphereDatacenterReconciler{
-		client: client,
-		log:    log,
+		client:    client,
+		log:       log,
+		validator: validator,
+		defaulter: defaulter,
 	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *VSphereDatacenterReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
-	deps, err := dependencies.NewFactory().WithGovc().Build(ctx)
-	if err != nil {
-		return err
-	}
-
-	r.validator = vsphere.NewValidator(deps.Govc, &networkutils.DefaultNetClient{})
-	r.defaulter = vsphere.NewDefaulter(deps.Govc)
-
+func (r *VSphereDatacenterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&anywherev1.VSphereDatacenterConfig{}).
 		Complete(r)
@@ -68,7 +65,12 @@ func (r *VSphereDatacenterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	defer func() {
 		// Always attempt to patch the object and status after each reconciliation.
-		if err := patchHelper.Patch(ctx, vsphereDatacenter); err != nil {
+		patchOpts := []patch.Option{}
+		if reterr == nil {
+			patchOpts = append(patchOpts, patch.WithStatusObservedGeneration{})
+		}
+		if err := patchHelper.Patch(ctx, vsphereDatacenter, patchOpts...); err != nil {
+			log.Error(reterr, "Failed to patch vspheredatacenterconfig")
 			reterr = kerrors.NewAggregate([]error{reterr, err})
 		}
 	}()

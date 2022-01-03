@@ -20,6 +20,7 @@ import (
 
 	"github.com/aws/eks-anywhere/controllers/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/features"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -98,6 +99,13 @@ func main() {
 
 func setupReconcilers(ctx context.Context, mgr ctrl.Manager) {
 	if features.IsActive(features.FullLifecycleAPI()) {
+		factory := dependencies.NewFactory()
+		deps, err := factory.WithGovc().Build(ctx)
+		if err != nil {
+			setupLog.Error(err, "unable to build dependencies")
+			os.Exit(1)
+		}
+
 		setupLog.Info("Setting up cluster controller")
 		if err := (controllers.NewClusterReconciler(
 			mgr.GetClient(),
@@ -108,11 +116,13 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager) {
 			os.Exit(1)
 		}
 
+		setupLog.Info("Setting up vspheredatacenter controller")
 		if err := (controllers.NewVSphereDatacenterReconciler(
 			mgr.GetClient(),
 			ctrl.Log.WithName("controllers").WithName(anywherev1.VSphereDatacenterKind),
 			mgr.GetScheme(),
-		)).SetupWithManager(ctx, mgr); err != nil {
+			deps.Govc,
+		)).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", anywherev1.VSphereDatacenterKind)
 			os.Exit(1)
 		}
