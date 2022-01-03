@@ -25,11 +25,8 @@ sonobuoy:
 	chmod 755 sonobuoy
 
 run-sonobuoy:
-	./sonobuoy run --mode=certified-conformance --wait --kube-conformance-image k8s.gcr.io/conformance:{{conformance_version}}
-	results=$(./sonobuoy retrieve)
-	mkdir $(RESULTS_DIR)
-	tar xzf $results -C $(RESULTS_DIR)
-	./sonobuoy e2e ${results}
+	./sonobuoy run --mode=certified-conformance --wait --kube-conformance-image k8s.gcr.io/conformance:$(K8S_VERSION)
+	build/lib/get_results.sh
 
 .PHONY: generate
 generate:
