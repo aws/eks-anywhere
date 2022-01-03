@@ -2,28 +2,43 @@ SHELL := /bin/bash
 GIT_TAG?=$(shell git describe --tag | cut -d'-' -f1)
 GITHUB_USER?=$(shell git config --get remote.origin.url|sed -e 's/.*://' -e 's,/.*,,')
 SONOBUOY_OSARCH?=darwin_amd64
+TARGET_RELEASE?=1.21
+TARGET_DIR=k8s-conformance/v$(TARGET_RELEASE)/eks-a
+K8S_VERSION=v1.21.5
+RESULTS_DIR=./results
 
 .PHONY: default
-default: k8s-conformance sonobuoy v1.21
+default: k8s-conformance sonobuoy run-sonobuoy generate
 
 k8s-conformance:
 	git clone git@github.com:$(GITHUB_USER)/k8s-conformance.git
 	cd k8s-conformance ; git remote add upstream https://github.com/cncf/k8s-conformance.git
 	cd k8s-conformance ; git fetch upstream
 	cd k8s-conformance ; git checkout master
-	cd k8s-conformance ; git merge upstream/master
+	cd k8s-conformance ; git reset --hard upstream/master
+	cd k8s-conformance ; git branch -D v$(TARGET_RELEASE) || true
+	cd k8s-conformance ; git checkout -b v$(TARGET_RELEASE)
 
 sonobuoy: SONOBUOY=https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.50.0/sonobuoy_0.50.0_$(SONOBUOY_OSARCH).tar.gz
 sonobuoy:
 	wget -qO- ${SONOBUOY} |tar -xz sonobuoy
 	chmod 755 sonobuoy
 
-.PHONY: v1.21
-v1.21: TARGET_DIR=k8s-conformance/v1.21/eks-a
-v1.21: K8S_VERSION=v1.21.2
-v1.21: EKSA_K8S_VERSION=1.21
-v1.21: CONFORMANCE_VERSION=v1.21.2
-v1.21:
+run-sonobuoy:
+	./sonobuoy run --mode=certified-conformance --wait --kube-conformance-image k8s.gcr.io/conformance:{{conformance_version}}
+	results=$(./sonobuoy retrieve)
+	mkdir $(RESULTS_DIR)
+	tar xzf $results -C $(RESULTS_DIR)
+	./sonobuoy e2e ${results}
+
+.PHONY: generate
+generate:
 	mkdir -p $(TARGET_DIR)
 	sed -e "s/{{k8s_version}}/$(K8S_VERSION)/" <template/PRODUCT.yaml >$(TARGET_DIR)/PRODUCT.yaml
-	build/lib/generate_readme.sh $(EKSA_K8S_VERSION) $(K8S_VERSION) $(TARGET_DIR)
+	build/lib/generate_readme.sh $(TARGET_RELEASE) $(K8S_VERSION) $(TARGET_DIR)
+	mv results/plugins/e2e/results/global/* $(TARGET_DIR)
+
+clean:
+	rm -rf k8s-conformance
+	rm -f ./sonobuoy
+	rm -f $(RESULTS_DIR)
