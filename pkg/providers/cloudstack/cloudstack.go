@@ -55,8 +55,9 @@ const (
 	privateKeyFileName                    = "eks-a-id_rsa"
 	publicKeyFileName                     = "eks-a-id_rsa.pub"
 
-	ubuntuDefaultUser = "capc"
-	redhatDefaultUser = "capc"
+	ubuntuDefaultUser          = "capc"
+	redhatDefaultUser          = "capc"
+	controlEndpointDefaultPort = "6443"
 )
 
 //go:embed config/template-cp.yaml
@@ -361,19 +362,19 @@ func (p *cloudstackProvider) generateSSHAuthKey(username string) (string, error)
 	return key, nil
 }
 
-func (p *cloudstackProvider) parseControlPlaneHost(pHost *string) error {
+func (p *cloudstackProvider) validateControlPlaneHost(pHost *string) error {
 	_, port, err := net.SplitHostPort(*pHost)
 	if err != nil {
 		if strings.Contains(err.Error(), "missing port") {
-			*pHost = *pHost + ":6443"
+			port = controlEndpointDefaultPort
+			*pHost = fmt.Sprintf("%s:%s", *pHost, port)
 		} else {
-			return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s", *pHost)
+			return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s (%s)", *pHost, err.Error())
 		}
-	} else {
-		_, err = strconv.Atoi(port)
-		if err != nil {
-			return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host has an invalid port: %s", *pHost)
-		}
+	}
+	_, err = strconv.Atoi(port)
+	if err != nil {
+		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host has an invalid port: %s (%s)", *pHost, err.Error())
 	}
 	return nil
 }
@@ -527,7 +528,7 @@ func (p *cloudstackProvider) setupAndValidateCluster(ctx context.Context, cluste
 		workerNodeGroupMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
 	}
 
-	err := p.parseControlPlaneHost(&clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	err := p.validateControlPlaneHost(&clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
 	if err != nil {
 		return err
 	}
