@@ -774,7 +774,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphereDatacenterConfigSpec, workerNodeGroupMachineSpec v1alpha1.VSphereMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
-	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().Append(clusterapi.NodeLabelsExtraArgs(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 
 	values := map[string]interface{}{
 		"clusterName":                    clusterSpec.ObjectMeta.Name,
