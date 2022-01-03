@@ -8,7 +8,7 @@ K8S_VERSION=v1.21.5
 RESULTS_DIR=./results
 
 .PHONY: default
-default: k8s-conformance sonobuoy run-sonobuoy generate
+default: k8s-conformance sonobuoy-download sonobuoy-run sonobuoy-results generate
 
 k8s-conformance:
 	git clone git@github.com:$(GITHUB_USER)/k8s-conformance.git
@@ -19,21 +19,24 @@ k8s-conformance:
 	cd k8s-conformance ; git branch -D v$(TARGET_RELEASE) || true
 	cd k8s-conformance ; git checkout -b v$(TARGET_RELEASE)
 
-sonobuoy: SONOBUOY=https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.50.0/sonobuoy_0.50.0_$(SONOBUOY_OSARCH).tar.gz
-sonobuoy:
+sonobuoy-download: SONOBUOY=https://github.com/vmware-tanzu/sonobuoy/releases/download/v0.50.0/sonobuoy_0.50.0_$(SONOBUOY_OSARCH).tar.gz
+sonobuoy-download:
 	wget -qO- ${SONOBUOY} |tar -xz sonobuoy
 	chmod 755 sonobuoy
 
-run-sonobuoy:
+sonobuoy-run:
 	./sonobuoy run --mode=certified-conformance --wait --kube-conformance-image k8s.gcr.io/conformance:$(K8S_VERSION)
-	build/lib/get_results.sh
+	build/lib/get_results.sh $(TARGET_DIR)
+
+sonobuoy-results:
+	build/lib/get_results.sh $(TARGET_DIR)
 
 .PHONY: generate
 generate:
 	mkdir -p $(TARGET_DIR)
+	rm -f $(TARGET_DIR)/*
 	sed -e "s/{{k8s_version}}/$(K8S_VERSION)/" <template/PRODUCT.yaml >$(TARGET_DIR)/PRODUCT.yaml
 	build/lib/generate_readme.sh $(TARGET_RELEASE) $(K8S_VERSION) $(TARGET_DIR)
-	mv results/plugins/e2e/results/global/* $(TARGET_DIR)
 
 clean:
 	rm -rf k8s-conformance

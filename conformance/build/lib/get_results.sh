@@ -18,11 +18,11 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+TARGET_DIR="${1?First argument is target directory}"
+
 RESULTS_DIR=$(mktemp -d results.XXXXXX)
 RESULTS=$(./sonobuoy retrieve ${RESULTS_DIR})
 tar xzf $RESULTS -C ${RESULTS_DIR}
-echo "Get files from results"
-#rm -rf ${RESULTS_DIR}
-
+mv ${RESULTS_DIR}/plugins/e2e/results/global/* ${TARGET_DIR}
 ./sonobuoy e2e ${RESULTS}
-rm -f ${RESULTS}
+rm -rf ${RESULTS_DIR}
