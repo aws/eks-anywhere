@@ -29,6 +29,7 @@ type ParallelRunConf struct {
 	TestsToSkip         []string
 	BundlesOverride     bool
 	CleanupVms          bool
+	TestReportFolder    string
 }
 
 type (
@@ -47,6 +48,12 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	}
 
 	logger.Info("Running tests", "selected", testsList, "skipped", skippedTests)
+
+	if conf.TestReportFolder != "" {
+		if err = os.MkdirAll(conf.TestReportFolder, os.ModePerm); err != nil {
+			return err
+		}
+	}
 
 	var wg sync.WaitGroup
 	resultCh := make(chan instanceTestsResults)
@@ -103,6 +110,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 
 type instanceRunConf struct {
 	amiId, instanceProfileName, storageBucket, jobId, parentJobId, subnetId, regex, instanceId, controlPlaneIP string
+	testReportFolder                                                                                           string
 	bundlesOverride                                                                                            bool
 }
 
@@ -119,6 +127,10 @@ func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *t
 
 	testCommandResult, err = session.runTests(conf.regex)
 	if err != nil {
+		return session.instanceId, nil, err
+	}
+
+	if err = conf.runPostTestsProcessing(session, testCommandResult); err != nil {
 		return session.instanceId, nil, err
 	}
 
@@ -147,22 +159,29 @@ func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResul
 		return nil, fmt.Errorf("error running e2e tests on instance %s: %v", e.instanceId, err)
 	}
 
-	e.uploadJUnitReport(regex)
+	return testCommandResult, nil
+}
+
+func (c instanceRunConf) runPostTestsProcessing(e *E2ESession, testCommandResult *testCommandResult) error {
+	e.uploadJUnitReport(c.regex)
+	if c.testReportFolder != "" {
+		e.downloadJUnitReport(c.regex, c.testReportFolder)
+	}
 
 	if !testCommandResult.Successful() {
-		e.uploadGeneratedFilesFromInstance(regex)
-		e.uploadDiagnosticArchiveFromInstance(regex)
-		return testCommandResult, nil
+		e.uploadGeneratedFilesFromInstance(c.regex)
+		e.uploadDiagnosticArchiveFromInstance(c.regex)
+		return nil
 	}
 
 	key := "Integration-Test-Done"
 	value := "TRUE"
-	err = ec2.TagInstance(e.session, e.instanceId, key, value)
+	err := ec2.TagInstance(e.session, e.instanceId, key, value)
 	if err != nil {
-		return nil, fmt.Errorf("error tagging instance for e2e success: %v", err)
+		return fmt.Errorf("error tagging instance for e2e success: %v", err)
 	}
 
-	return testCommandResult, nil
+	return nil
 }
 
 func (e *E2ESession) commandWithEnvVars(command string) string {
@@ -208,6 +227,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 				regex:               strings.Join(testsInCurrentInstance, "|"),
 				bundlesOverride:     conf.BundlesOverride,
 				controlPlaneIP:      ip,
+				testReportFolder:    conf.TestReportFolder,
 			})
 
 			testsInCurrentInstance = make([]string, 0, testPerInstance)
