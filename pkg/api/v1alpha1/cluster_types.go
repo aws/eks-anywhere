@@ -189,7 +189,7 @@ type WorkerNodeGroupConfiguration struct {
 	Count int `json:"count,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
-	// Label defines the key-value pair labels to assign to the nodes
+	// Labels define the labels to assign to the node
 	Labels map[string]string `json:"labels,omitempty"`
 }
 
