@@ -19,6 +19,11 @@ type VSphereDatacenterConfigSpec struct {
 
 // VSphereDatacenterConfigStatus defines the observed state of VSphereDatacenterConfig
 type VSphereDatacenterConfigStatus struct { // Important: Run "make generate" to regenerate code after modifying this file
+	// SpecValid is set to true if vspheredatacenterconfig is validated.
+	SpecValid bool `json:"specValid,omitempty"`
+
+	// ObservedGeneration is the latest generation observed by the controller.
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
 }
 
 //+kubebuilder:object:root=true

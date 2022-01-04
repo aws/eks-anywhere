@@ -58,6 +58,16 @@ spec:
           status:
             description: VSphereDatacenterConfigStatus defines the observed state
               of VSphereDatacenterConfig
+            properties:
+              observedGeneration:
+                description: ObservedGeneration is the latest generation observed
+                  by the controller.
+                format: int64
+                type: integer
+              specValid:
+                description: SpecValid is set to true if vspheredatacenterconfig is
+                  validated.
+                type: boolean
             type: object
         type: object
     served: true

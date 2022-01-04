@@ -38,17 +38,17 @@ import (
 )
 
 const (
+	CredentialsObjectName                 = "vsphere-credentials"
+	EksavSphereUsernameKey                = "EKSA_VSPHERE_USERNAME"
+	EksavSpherePasswordKey                = "EKSA_VSPHERE_PASSWORD"
 	eksaLicense                           = "EKSA_LICENSE"
 	vSphereUsernameKey                    = "VSPHERE_USERNAME"
 	vSpherePasswordKey                    = "VSPHERE_PASSWORD"
-	eksavSphereUsernameKey                = "EKSA_VSPHERE_USERNAME"
-	eksavSpherePasswordKey                = "EKSA_VSPHERE_PASSWORD"
 	vSphereServerKey                      = "VSPHERE_SERVER"
 	govcInsecure                          = "GOVC_INSECURE"
 	expClusterResourceSetKey              = "EXP_CLUSTER_RESOURCE_SET"
 	secretObjectType                      = "addons.cluster.x-k8s.io/resource-set"
 	secretObjectName                      = "csi-vsphere-config"
-	credentialsObjectName                 = "vsphere-credentials"
 	privateKeyFileName                    = "eks-a-id_rsa"
 	publicKeyFileName                     = "eks-a-id_rsa.pub"
 	defaultTemplateLibrary                = "eks-a-templates"
@@ -103,8 +103,8 @@ type vsphereProvider struct {
 	skipIpCheck            bool
 	resourceSetManager     ClusterResourceSetManager
 	Retrier                *retrier.Retrier
-	validator              *validator
-	defaulter              *defaulter
+	validator              *Validator
+	defaulter              *Defaulter
 }
 
 type ProviderGovcClient interface {
@@ -362,13 +362,15 @@ func (p *vsphereProvider) DeleteResources(ctx context.Context, clusterSpec *clus
 }
 
 func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	if err := p.setup(ctx, p.datacenterConfig); err != nil {
+	if err := SetupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
 	vSphereClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
-	p.defaulter.SetDefaultsForDatacenterConfig(vSphereClusterSpec.datacenterConfig)
+	if err := p.defaulter.SetDefaultsForDatacenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
+		return fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
+	}
 
 	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
 		return err
@@ -418,13 +420,15 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 }
 
 func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	if err := p.setup(ctx, p.datacenterConfig); err != nil {
+	if err := SetupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
 	vSphereClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
-	p.defaulter.SetDefaultsForDatacenterConfig(vSphereClusterSpec.datacenterConfig)
+	if err := p.defaulter.SetDefaultsForDatacenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
+		return fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
+	}
 
 	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
 		return err
@@ -432,10 +436,6 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 
 	if err := p.defaulter.setDefaultsForMachineConfig(ctx, vSphereClusterSpec); err != nil {
 		return fmt.Errorf("failed setting default values for vsphere machine configs: %v", err)
-	}
-
-	if err := p.validator.ValidateVCenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
-		return err
 	}
 
 	if err := p.validator.validateCluster(ctx, vSphereClusterSpec); err != nil {
@@ -512,7 +512,7 @@ func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Clus
 }
 
 func (p *vsphereProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
-	if err := p.setup(ctx, p.datacenterConfig); err != nil {
+	if err := SetupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 	return nil
@@ -1183,9 +1183,9 @@ func (p *vsphereProvider) validateMachineConfigImmutability(ctx context.Context,
 
 func (p *vsphereProvider) secretContentsChanged(ctx context.Context, workloadCluster *types.Cluster) (bool, error) {
 	nPassword := os.Getenv(vSpherePasswordKey)
-	oSecret, err := p.providerKubectlClient.GetSecret(ctx, credentialsObjectName, executables.WithCluster(workloadCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+	oSecret, err := p.providerKubectlClient.GetSecret(ctx, CredentialsObjectName, executables.WithCluster(workloadCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
-		return false, fmt.Errorf("error when obtaining VSphere secret %s from workload cluster: %v", credentialsObjectName, err)
+		return false, fmt.Errorf("error when obtaining VSphere secret %s from workload cluster: %v", CredentialsObjectName, err)
 	}
 
 	if string(oSecret.Data["password"]) != nPassword {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 
@@ -19,6 +20,7 @@ import (
 
 	"github.com/aws/eks-anywhere/controllers/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/features"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -80,20 +82,30 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupReconcilers(mgr)
+	// Setup the context that's going to be used in controllers and for the manager.
+	ctx := ctrl.SetupSignalHandler()
+
+	setupReconcilers(ctx, mgr)
 	setupWebhooks(mgr)
 	//+kubebuilder:scaffold:builder
 	setupChecks(mgr)
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
 }
 
-func setupReconcilers(mgr ctrl.Manager) {
+func setupReconcilers(ctx context.Context, mgr ctrl.Manager) {
 	if features.IsActive(features.FullLifecycleAPI()) {
+		factory := dependencies.NewFactory()
+		deps, err := factory.WithGovc().Build(ctx)
+		if err != nil {
+			setupLog.Error(err, "unable to build dependencies")
+			os.Exit(1)
+		}
+
 		setupLog.Info("Setting up cluster controller")
 		if err := (controllers.NewClusterReconciler(
 			mgr.GetClient(),
@@ -104,10 +116,12 @@ func setupReconcilers(mgr ctrl.Manager) {
 			os.Exit(1)
 		}
 
+		setupLog.Info("Setting up vspheredatacenter controller")
 		if err := (controllers.NewVSphereDatacenterReconciler(
 			mgr.GetClient(),
 			ctrl.Log.WithName("controllers").WithName(anywherev1.VSphereDatacenterKind),
 			mgr.GetScheme(),
+			deps.Govc,
 		)).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", anywherev1.VSphereDatacenterKind)
 			os.Exit(1)

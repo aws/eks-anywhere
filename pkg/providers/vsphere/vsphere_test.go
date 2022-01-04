@@ -234,14 +234,14 @@ type testContext struct {
 }
 
 func (tctx *testContext) SaveContext() {
-	tctx.oldUsername, tctx.isUsernameSet = os.LookupEnv(eksavSphereUsernameKey)
-	tctx.oldPassword, tctx.isPasswordSet = os.LookupEnv(eksavSpherePasswordKey)
+	tctx.oldUsername, tctx.isUsernameSet = os.LookupEnv(EksavSphereUsernameKey)
+	tctx.oldPassword, tctx.isPasswordSet = os.LookupEnv(EksavSpherePasswordKey)
 	tctx.oldServername, tctx.isServernameSet = os.LookupEnv(vSpherePasswordKey)
 	tctx.oldExpClusterResourceSet, tctx.isExpClusterResourceSetSet = os.LookupEnv(vSpherePasswordKey)
-	os.Setenv(eksavSphereUsernameKey, expectedVSphereUsername)
-	os.Setenv(vSphereUsernameKey, os.Getenv(eksavSphereUsernameKey))
-	os.Setenv(eksavSpherePasswordKey, expectedVSpherePassword)
-	os.Setenv(vSpherePasswordKey, os.Getenv(eksavSpherePasswordKey))
+	os.Setenv(EksavSphereUsernameKey, expectedVSphereUsername)
+	os.Setenv(vSphereUsernameKey, os.Getenv(EksavSphereUsernameKey))
+	os.Setenv(EksavSpherePasswordKey, expectedVSpherePassword)
+	os.Setenv(vSpherePasswordKey, os.Getenv(EksavSpherePasswordKey))
 	os.Setenv(vSphereServerKey, expectedVSphereServer)
 	os.Setenv(expClusterResourceSetKey, expectedExpClusterResourceSet)
 	os.Setenv(features.TaintsSupportEnvVar, "true")
@@ -249,14 +249,14 @@ func (tctx *testContext) SaveContext() {
 
 func (tctx *testContext) RestoreContext() {
 	if tctx.isUsernameSet {
-		os.Setenv(eksavSphereUsernameKey, tctx.oldUsername)
+		os.Setenv(EksavSphereUsernameKey, tctx.oldUsername)
 	} else {
-		os.Unsetenv(eksavSphereUsernameKey)
+		os.Unsetenv(EksavSphereUsernameKey)
 	}
 	if tctx.isPasswordSet {
-		os.Setenv(eksavSpherePasswordKey, tctx.oldPassword)
+		os.Setenv(EksavSpherePasswordKey, tctx.oldPassword)
 	} else {
-		os.Unsetenv(eksavSpherePasswordKey)
+		os.Unsetenv(EksavSpherePasswordKey)
 	}
 }
 
@@ -932,7 +932,7 @@ func TestSetupAndValidateCreateClusterNoUsername(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(eksavSphereUsernameKey)
+	os.Unsetenv(EksavSphereUsernameKey)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
@@ -946,7 +946,7 @@ func TestSetupAndValidateCreateClusterNoPassword(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(eksavSpherePasswordKey)
+	os.Unsetenv(EksavSpherePasswordKey)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
@@ -1135,7 +1135,7 @@ func TestSetupAndValidateDeleteClusterNoPassword(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(eksavSpherePasswordKey)
+	os.Unsetenv(EksavSpherePasswordKey)
 
 	err := provider.SetupAndValidateDeleteCluster(ctx)
 
@@ -1169,7 +1169,7 @@ func TestSetupAndValidateUpgradeClusterNoUsername(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(eksavSphereUsernameKey)
+	os.Unsetenv(EksavSphereUsernameKey)
 
 	cluster := &types.Cluster{}
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
@@ -1184,7 +1184,7 @@ func TestSetupAndValidateUpgradeClusterNoPassword(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(eksavSpherePasswordKey)
+	os.Unsetenv(EksavSpherePasswordKey)
 
 	cluster := &types.Cluster{}
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
@@ -2336,7 +2336,7 @@ func TestValidateNewSpecSuccess(t *testing.T) {
 	for _, config := range newMachineConfigs {
 		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
 	}
-	kubectl.EXPECT().GetSecret(gomock.Any(), credentialsObjectName, gomock.Any()).Return(clusterVsphereSecret, nil)
+	kubectl.EXPECT().GetSecret(gomock.Any(), CredentialsObjectName, gomock.Any()).Return(clusterVsphereSecret, nil)
 
 	err := provider.ValidateNewSpec(context.TODO(), c, clusterSpec)
 	assert.NoError(t, err, "No error should be returned when previous spec == new spec")
@@ -2377,7 +2377,7 @@ func TestValidateNewSpecMutableFields(t *testing.T) {
 	for _, config := range newMachineConfigs {
 		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
 	}
-	kubectl.EXPECT().GetSecret(gomock.Any(), credentialsObjectName, gomock.Any(), gomock.Any()).Return(clusterVsphereSecret, nil)
+	kubectl.EXPECT().GetSecret(gomock.Any(), CredentialsObjectName, gomock.Any(), gomock.Any()).Return(clusterVsphereSecret, nil)
 
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
 	assert.NoError(t, err, "No error should be returned when modifying mutable fields")
