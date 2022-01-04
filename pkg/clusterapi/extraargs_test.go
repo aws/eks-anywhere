@@ -280,6 +280,40 @@ func TestSecureEtcdTlsCipherSuitesExtraArgs(t *testing.T) {
 	}
 }
 
+func TestNodeLabelsExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName string
+		wnc      []v1alpha1.WorkerNodeGroupConfiguration
+		want     clusterapi.ExtraArgs
+	}{
+		{
+			testName: "no labels",
+			wnc: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Count: 3,
+			}},
+			want: nil,
+		},
+		{
+			testName: "with labels",
+			wnc: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Count:  3,
+				Labels: map[string]string{"label1": "foo", "label2": "bar"},
+			}},
+			want: clusterapi.ExtraArgs{
+				"node-labels": "label1=foo,label2=bar",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.NodeLabelsExtraArgs(tt.wnc); !reflect.DeepEqual(got["node-labels"], tt.want["node-labels"]) {
+				t.Errorf("NodeLabelsExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestAppend(t *testing.T) {
 	tests := []struct {
 		testName string
