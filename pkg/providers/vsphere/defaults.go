@@ -43,12 +43,7 @@ func (d *Defaulter) setDefaultsForMachineConfig(ctx context.Context, spec *spec)
 }
 
 func (d *Defaulter) SetDefaultsForDatacenterConfig(ctx context.Context, datacenterConfig *anywherev1.VSphereDatacenterConfig) error {
-	datacenterConfig.Spec.Network = generateFullVCenterPath(networkFolderType, datacenterConfig.Spec.Network, datacenterConfig.Spec.Datacenter)
-
-	if datacenterConfig.Spec.Insecure {
-		logger.Info("Warning: VSphereDatacenterConfig configured in insecure mode")
-		datacenterConfig.Spec.Thumbprint = ""
-	}
+	datacenterConfig.SetDefaults()
 
 	if datacenterConfig.Spec.Thumbprint != "" {
 		if err := d.govc.ConfigureCertThumbprint(ctx, datacenterConfig.Spec.Server, datacenterConfig.Spec.Thumbprint); err != nil {

@@ -1,6 +1,9 @@
 package v1alpha1
 
 import (
+	"errors"
+
+	"github.com/aws/eks-anywhere/pkg/logger"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -64,6 +67,35 @@ func (v *VSphereDatacenterConfig) ClearPauseAnnotation() {
 	if v.Annotations != nil {
 		delete(v.Annotations, pausedAnnotation)
 	}
+}
+
+func (v *VSphereDatacenterConfig) SetDefaults() {
+	v.Spec.Network = generateFullVCenterPath(networkFolderType, v.Spec.Network, v.Spec.Datacenter)
+
+	if v.Spec.Insecure {
+		logger.Info("Warning: VSphereDatacenterConfig configured in insecure mode")
+		v.Spec.Thumbprint = ""
+	}
+}
+
+func (v *VSphereDatacenterConfig) ValidateFields() error {
+	if len(v.Spec.Server) <= 0 {
+		return errors.New("VSphereDatacenterConfig server is not set or is empty")
+	}
+
+	if len(v.Spec.Datacenter) <= 0 {
+		return errors.New("VSphereDatacenterConfig datacenter is not set or is empty")
+	}
+
+	if len(v.Spec.Network) <= 0 {
+		return errors.New("VSphereDatacenterConfig VM network is not set or is empty")
+	}
+
+	if err := validatePath(networkFolderType, v.Spec.Network, v.Spec.Datacenter); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (v *VSphereDatacenterConfig) ConvertConfigToConfigGenerateStruct() *VSphereDatacenterConfigGenerate {

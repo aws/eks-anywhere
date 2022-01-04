@@ -40,22 +40,7 @@ func (v *Validator) validateVCenterAccess(ctx context.Context, server string) er
 }
 
 func (v *Validator) ValidateVCenterConfig(ctx context.Context, datacenterConfig *anywherev1.VSphereDatacenterConfig) error {
-	if len(datacenterConfig.Spec.Server) <= 0 {
-		return errors.New("VSphereDatacenterConfig server is not set or is empty")
-	}
-
 	if err := v.validateVCenterAccess(ctx, datacenterConfig.Spec.Server); err != nil {
-		return err
-	}
-
-	if len(datacenterConfig.Spec.Datacenter) <= 0 {
-		return errors.New("VSphereDatacenterConfig datacenter is not set or is empty")
-	}
-	if len(datacenterConfig.Spec.Network) <= 0 {
-		return errors.New("VSphereDatacenterConfig VM network is not set or is empty")
-	}
-
-	if err := validatePath(networkFolderType, datacenterConfig.Spec.Network, datacenterConfig.Spec.Datacenter); err != nil {
 		return err
 	}
 
