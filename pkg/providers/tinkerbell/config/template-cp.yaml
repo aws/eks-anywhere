@@ -75,7 +75,12 @@ metadata:
   namespace: {{.eksaSystemNamespace}}
 spec:
   template:
-    spec: {}
+    spec: {
+      {{- if and .controlPlanetemplateOverride (ne .format "") }}
+      templateOverride: |
+{{.controlPlanetemplateOverride | indent 12 }}
+      {{- end }}
+    }
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: TinkerbellCluster

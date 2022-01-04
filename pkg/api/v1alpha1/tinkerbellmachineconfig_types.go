@@ -8,8 +8,9 @@ import (
 
 // TinkerbellMachineConfigSpec defines the desired state of TinkerbellMachineConfig
 type TinkerbellMachineConfigSpec struct {
-	OSFamily OSFamily            `json:"osFamily"`
-	Users    []UserConfiguration `json:"users,omitempty"`
+	TemplateOverride string              `json:"templateOverride,omitempty"`
+	OSFamily         OSFamily            `json:"osFamily"`
+	Users            []UserConfiguration `json:"users,omitempty"`
 }
 
 func (c *TinkerbellMachineConfig) PauseReconcile() {
