@@ -43,7 +43,7 @@ spec:
       templateOverride: |
 {{.workertemplateOverride | indent 12 }}
       {{- end }}
-  }
+    }
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
