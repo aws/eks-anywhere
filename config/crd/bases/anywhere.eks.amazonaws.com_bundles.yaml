@@ -502,9 +502,9 @@ spec:
                             os:
                               description: Operating system of the asset
                               enum:
-                                - linux
-                                - darwin
-                                - windows
+                              - linux
+                              - darwin
+                              - windows
                               type: string
                             osName:
                               description: Name of the OS like ubuntu, bottlerocket
@@ -543,9 +543,9 @@ spec:
                             os:
                               description: Operating system of the asset
                               enum:
-                                - linux
-                                - darwin
-                                - windows
+                              - linux
+                              - darwin
+                              - windows
                               type: string
                             osName:
                               description: Name of the OS like ubuntu, bottlerocket
@@ -572,9 +572,9 @@ spec:
                             os:
                               description: Operating system of the asset
                               enum:
-                                - linux
-                                - darwin
-                                - windows
+                              - linux
+                              - darwin
+                              - windows
                               type: string
                             osName:
                               description: Name of the OS like ubuntu, bottlerocket
@@ -592,13 +592,13 @@ spec:
                         version:
                           type: string
                       required:
-                        - clusterAPIController
-                        - clusterTemplate
-                        - components
-                        - kubeProxy
-                        - manager
-                        - metadata
-                        - version
+                      - clusterAPIController
+                      - clusterTemplate
+                      - components
+                      - kubeProxy
+                      - manager
+                      - metadata
+                      - version
                       type: object
                     clusterAPI:
                       properties:
@@ -1731,6 +1731,7 @@ spec:
                   - bottlerocketBootstrap
                   - certManager
                   - cilium
+                  - cloudStack
                   - clusterAPI
                   - controlPlane
                   - docker
@@ -1742,7 +1743,6 @@ spec:
                   - kindnetd
                   - kubeVersion
                   - vSphere
-                  - cloudStack
                   type: object
                 type: array
             required:
