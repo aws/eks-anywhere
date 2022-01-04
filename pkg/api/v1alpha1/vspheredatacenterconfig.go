@@ -5,8 +5,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/aws/eks-anywhere/pkg/logger"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 const VSphereDatacenterKind = "VSphereDatacenterConfig"

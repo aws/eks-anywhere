@@ -3,8 +3,9 @@ package v1alpha1
 import (
 	"errors"
 
-	"github.com/aws/eks-anywhere/pkg/logger"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
