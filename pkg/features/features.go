@@ -52,7 +52,7 @@ func TinkerbellProvider() Feature {
 
 func UseV1beta1BundleRelease() Feature {
 	return Feature{
-		Name:     "Use tags from v1beta1 bundle-releas.yaml",
+		Name:     "Use tags from v1beta1 bundle-release.yaml",
 		IsActive: globalFeatures.isActiveForEnvVar(V1beta1BundleRelease),
 	}
 }
