@@ -10,14 +10,14 @@ spec:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
 {{- if .workerNodeGroupTaints }}
-          taints: {{ range .workerNodeGroupTaints}}
+          taints:{{ range .workerNodeGroupTaints}}
             - key: {{ .Key }}
               value: {{ .Value }}
               effect: {{ .Effect }}
 {{- if .TimeAdded }}
               timeAdded: {{ .TimeAdded }}
 {{- end }}
-          {{- end }}
+{{- end }}
 {{- else}}
           taints: []
 {{- end }}

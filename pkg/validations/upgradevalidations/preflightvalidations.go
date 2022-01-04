@@ -23,7 +23,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		validations.ValidationResult{
 			Name:        "validate taints support",
 			Remediation: "",
-			Err:         ValidateTaintsSupport(ctx, u.Opts.Spec),
+			Err:         validations.ValidateTaintsSupport(ctx, u.Opts.Spec),
 		},
 		validations.ValidationResult{
 			Name:        "control plane ready",

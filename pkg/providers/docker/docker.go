@@ -207,9 +207,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 		values["awsIamAuth"] = true
 	}
 
-	if len(clusterSpec.Spec.ControlPlaneConfiguration.Taints) > 0 {
-		values["controlPlaneTaints"] = clusterSpec.Spec.ControlPlaneConfiguration.Taints
-	}
+	values["controlPlaneTaints"] = clusterSpec.Spec.ControlPlaneConfiguration.Taints
 
 	return values
 }

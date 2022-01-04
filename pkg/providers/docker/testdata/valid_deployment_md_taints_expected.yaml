@@ -9,7 +9,7 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
-          taints: 
+          taints:
             - key: key2
               value: val2
               effect: PreferNoSchedule

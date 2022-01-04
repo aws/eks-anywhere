@@ -835,9 +835,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		values["bottlerocketBootstrapVersion"] = bundle.BottleRocketBootstrap.Bootstrap.Tag()
 	}
 
-	if len(clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Taints) > 0 {
-		values["workerNodeGroupTaints"] = clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Taints
-	}
+	values["workerNodeGroupTaints"] = clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Taints
 
 	return values
 }
