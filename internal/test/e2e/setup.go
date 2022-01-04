@@ -211,6 +211,19 @@ func (e *E2ESession) uploadDiagnosticArchiveFromInstance(testName string) {
 	}
 }
 
+func (e *E2ESession) uploadJUnitReport(testName string) {
+	junitFile := "junit-testing.xml"
+	logger.V(1).Info("Uploading JUnit report to s3 bucket")
+	command := fmt.Sprintf("aws s3 cp /home/e2e/ %s/%s/ --recursive --exclude \"*\" --include \"%s\"",
+		e.generatedArtifactsBucketPath(), testName, junitFile)
+
+	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
+		logger.Error(err, "error uploading JUnit report from instance")
+	} else {
+		logger.V(1).Info("Successfully uploaded JUnit report files to S3")
+	}
+}
+
 func (e *E2ESession) generatedArtifactsBucketPath() string {
 	return fmt.Sprintf("s3://%s/%s/generated-artifacts", e.storageBucket, e.jobId)
 }
