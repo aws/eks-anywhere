@@ -29,7 +29,7 @@ require (
 	sigs.k8s.io/cluster-api v0.3.11-0.20210430210359-402a4524f006
 	sigs.k8s.io/cluster-api-provider-vsphere v0.7.8
 	sigs.k8s.io/controller-runtime v0.10.3
-	sigs.k8s.io/yaml v1.2.0
+	sigs.k8s.io/yaml v1.3.0
 )
 
 // exclude un-required transitive dependency from cluster-api-provider-vsphere v0.7.8

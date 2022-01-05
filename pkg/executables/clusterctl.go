@@ -190,9 +190,13 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, clusterSpec *cluste
 		"--bootstrap", clusterctlConfig.etcdadmBootstrapVersion,
 		"--bootstrap", clusterctlConfig.etcdadmControllerVersion,
 	}
-	// Not supported for docker controllers at this time
-	if clusterSpec.Spec.DatacenterRef.Kind != anywherev1alpha1.DockerDatacenterKind {
-		params = append(params, "--watching-namespace", constants.EksaSystemNamespace)
+
+	// Not adding a watching namespace if we are using the V1beta1 bundle as of now
+	if !features.IsActive(features.UseV1beta1BundleRelease()) {
+		// Not supported for docker controllers at this time
+		if clusterSpec.Spec.DatacenterRef.Kind != anywherev1alpha1.DockerDatacenterKind {
+			params = append(params, "--watching-namespace", constants.EksaSystemNamespace)
+		}
 	}
 
 	if cluster.KubeconfigFile != "" {
@@ -377,9 +381,11 @@ func (c *Clusterctl) InstallEtcdadmProviders(ctx context.Context, clusterSpec *c
 		}
 	}
 
-	// Not supported for docker controllers at this time
-	if clusterSpec.Spec.DatacenterRef.Kind != anywherev1alpha1.DockerDatacenterKind {
-		params = append(params, "--watching-namespace", constants.EksaSystemNamespace)
+	if !features.IsActive(features.UseV1beta1BundleRelease()) {
+		// Not supported for docker controllers at this time
+		if clusterSpec.Spec.DatacenterRef.Kind != anywherev1alpha1.DockerDatacenterKind {
+			params = append(params, "--watching-namespace", constants.EksaSystemNamespace)
+		}
 	}
 
 	if cluster.KubeconfigFile != "" {
