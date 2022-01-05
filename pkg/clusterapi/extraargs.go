@@ -2,6 +2,7 @@ package clusterapi
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -63,14 +64,12 @@ func SecureEtcdTlsCipherSuitesExtraArgs() ExtraArgs {
 	return args
 }
 
-func NodeLabelsExtraArgs(wnc []v1alpha1.WorkerNodeGroupConfiguration) ExtraArgs {
-	args := ExtraArgs{}
-	for _, n := range wnc {
-		if n.Labels == nil {
-			return nil
-		}
-		args.AddIfNotEmpty("node-labels", labelsMapToArg(n))
+func NodeLabelsExtraArgs(wnc v1alpha1.WorkerNodeGroupConfiguration) ExtraArgs {
+	if wnc.Labels == nil {
+		return nil
 	}
+	args := ExtraArgs{}
+	args.AddIfNotEmpty("node-labels", labelsMapToArg(wnc))
 	return args
 }
 
@@ -111,6 +110,7 @@ func labelsMapToArg(n v1alpha1.WorkerNodeGroupConfiguration) string {
 		s = append(s, fmt.Sprintf("%s=%s", k, v))
 	}
 
+	sort.Strings(s)
 	r := strings.Join(s, ",")
 	return r
 }
