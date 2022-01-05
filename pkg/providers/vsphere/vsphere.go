@@ -709,8 +709,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"eksaSystemNamespace":                  constants.EksaSystemNamespace,
 		"auditPolicy":                          common.GetAuditPolicy(),
 		"resourceSetName":                      resourceSetName(clusterSpec),
-		"eksaVsphereUsername":                  os.Getenv(eksavSphereUsernameKey),
-		"eksaVspherePassword":                  os.Getenv(eksavSpherePasswordKey),
+		"eksaVsphereUsername":                  os.Getenv(EksavSphereUsernameKey),
+		"eksaVspherePassword":                  os.Getenv(EksavSpherePasswordKey),
 	}
 
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
