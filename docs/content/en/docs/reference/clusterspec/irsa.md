@@ -108,7 +108,7 @@ In order to grant certain service accounts access to the desired AWS resources, 
     ```
     "$ISSUER_HOSTPATH:aud": "sts.amazonaws.com"
     ```
-Change the line to look like the following line. Replace `aud` with `sub` and replace `KUBERNETES_ERVICE_ACCOUNT_NAMESPACE` and `KUBERNETES_SERVICE_ACCOUNT_NAME` with the name of your Kubernetes service account and the Kubernetes namespace that the account exists in.
+Change the line to look like the following line. Replace `aud` with `sub` and replace `KUBERNETES_SERVICE_ACCOUNT_NAMESPACE` and `KUBERNETES_SERVICE_ACCOUNT_NAME` with the name of your Kubernetes service account and the Kubernetes namespace that the account exists in.
     ```
     "$ISSUER_HOSTPATH:sub": "system:serviceaccount:KUBERNETES_SERVICE_ACCOUNT_NAMESPACE:KUBERNETES_SERVICE_ACCOUNT_NAME"
     ```
