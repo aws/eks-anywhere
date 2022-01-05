@@ -18,6 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack-staging/api/v1alpha3"
 	"github.com/aws/eks-anywhere/controllers/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/features"
@@ -42,6 +43,7 @@ func init() {
 	utilruntime.Must(clusterv1.AddToScheme(scheme))
 	utilruntime.Must(controlplanev1.AddToScheme(scheme))
 	utilruntime.Must(vspherev1.AddToScheme(scheme))
+	utilruntime.Must(cloudstackv1.AddToScheme(scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
