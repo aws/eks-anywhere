@@ -436,19 +436,19 @@ func (r *capiResourceFetcher) ExistingCloudStackDeploymentConfig(ctx context.Con
 }
 
 func (r *capiResourceFetcher) ExistingCloudStackControlPlaneMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error) {
-	vsMachineTemplate, err := r.CloudStackControlPlaneMachineTemplate(ctx, cs)
+	csMachineTemplate, err := r.CloudStackControlPlaneMachineTemplate(ctx, cs)
 	if err != nil {
 		return nil, err
 	}
-	return MapMachineTemplateToCloudStackMachineConfigSpec(vsMachineTemplate)
+	return MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate)
 }
 
 func (r *capiResourceFetcher) ExistingCloudStackEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error) {
-	vsMachineTemplate, err := r.CloudStackEtcdMachineTemplate(ctx, cs)
+	csMachineTemplate, err := r.CloudStackEtcdMachineTemplate(ctx, cs)
 	if err != nil {
 		return nil, err
 	}
-	return MapMachineTemplateToCloudStackMachineConfigSpec(vsMachineTemplate)
+	return MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate)
 }
 
 func (r *capiResourceFetcher) ExistingCloudStackWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error) {
