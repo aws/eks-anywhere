@@ -68,6 +68,7 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 	if err != nil {
 		return err
 	}
+	cor.Log.Info("Reconciling cluster", "DatacenterKind", cs.Spec.DatacenterRef.Kind)
 
 	switch cs.Spec.DatacenterRef.Kind {
 	case anywherev1.VSphereDatacenterKind:

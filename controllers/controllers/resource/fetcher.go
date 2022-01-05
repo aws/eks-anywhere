@@ -75,11 +75,13 @@ func (r *capiResourceFetcher) FetchObject(ctx context.Context, objectKey types.N
 }
 
 func (r *capiResourceFetcher) fetchClusterKind(ctx context.Context, objectKey types.NamespacedName) (string, error) {
-	supportedKinds := []string{anywherev1.ClusterKind, anywherev1.VSphereDatacenterKind, anywherev1.DockerDatacenterKind, anywherev1.VSphereMachineConfigKind, anywherev1.AWSIamConfigKind}
+	supportedKinds := []string{anywherev1.ClusterKind, anywherev1.VSphereDatacenterKind, anywherev1.DockerDatacenterKind, anywherev1.VSphereMachineConfigKind,
+		anywherev1.CloudStackDeploymentKind, anywherev1.CloudStackMachineConfigKind, anywherev1.AWSIamConfigKind}
 	for _, kind := range supportedKinds {
 		obj := &unstructured.Unstructured{}
 		obj.SetKind(kind)
 		obj.SetAPIVersion(anywherev1.GroupVersion.String())
+		r.log.Info("looking up resource", "objectKey", objectKey, "object", obj)
 		err := r.FetchObject(ctx, objectKey, obj)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return "", err
@@ -129,14 +131,14 @@ func (r *capiResourceFetcher) fetchClusterForRef(ctx context.Context, refId type
 		return nil, err
 	}
 	for _, c := range clusters.Items {
-		if kind == anywherev1.VSphereDatacenterKind || kind == anywherev1.DockerDatacenterKind {
+		if kind == anywherev1.VSphereDatacenterKind || kind == anywherev1.DockerDatacenterKind || kind == anywherev1.CloudStackDeploymentKind {
 			if c.Spec.DatacenterRef.Name == refId.Name {
 				if _, err := r.clusterByName(ctx, constants.EksaSystemNamespace, c.Name); err == nil { // further validates a capi cluster exists
 					return &c, nil
 				}
 			}
 		}
-		if kind == anywherev1.VSphereMachineConfigKind {
+		if kind == anywherev1.VSphereMachineConfigKind || kind == anywherev1.CloudStackMachineConfigKind {
 			for _, machineRef := range c.Spec.WorkerNodeGroupConfigurations {
 				if machineRef.MachineGroupRef != nil && machineRef.MachineGroupRef.Name == refId.Name {
 					if _, err := r.clusterByName(ctx, constants.EksaSystemNamespace, c.Name); err == nil { // further validates a capi cluster exists
@@ -251,6 +253,7 @@ func (r *capiResourceFetcher) VSphereEtcdMachineTemplate(ctx context.Context, cs
 
 func (r *capiResourceFetcher) CloudStackWorkerMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*cloudstackv1.CloudStackMachineTemplate, error) {
 	md, err := r.MachineDeployment(ctx, cs)
+	r.log.Info("Fetching CloudStackWorkerMachineTemplate", "objectKey", md.Spec.Template.Spec.InfrastructureRef.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -264,6 +267,7 @@ func (r *capiResourceFetcher) CloudStackWorkerMachineTemplate(ctx context.Contex
 
 func (r *capiResourceFetcher) CloudStackCluster(ctx context.Context, cs *anywherev1.Cluster) (*cloudstackv1.CloudStackCluster, error) {
 	md, err := r.MachineDeployment(ctx, cs)
+	r.log.Info("Fetching CloudStackCluster", "objectKey", md.Spec.ClusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -277,6 +281,7 @@ func (r *capiResourceFetcher) CloudStackCluster(ctx context.Context, cs *anywher
 
 func (r *capiResourceFetcher) CloudStackControlPlaneMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*cloudstackv1.CloudStackMachineTemplate, error) {
 	cp, err := r.ControlPlane(ctx, cs)
+	r.log.Info("Fetching CloudStackControlPlaneMachineTemplate", "objectKey", cp.Spec.InfrastructureTemplate.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -290,6 +295,7 @@ func (r *capiResourceFetcher) CloudStackControlPlaneMachineTemplate(ctx context.
 
 func (r *capiResourceFetcher) CloudStackEtcdMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*cloudstackv1.CloudStackMachineTemplate, error) {
 	etcd, err := r.Etcd(ctx, cs)
+	r.log.Info("Fetching CloudStackEtcdMachineTemplate", "objectKey", etcd.Spec.InfrastructureTemplate.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -312,6 +318,7 @@ func (r *capiResourceFetcher) bundles(ctx context.Context, name, namespace strin
 
 func (r *capiResourceFetcher) ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*bootstrapv1.KubeadmControlPlane, error) {
 	// Fetch capi cluster
+	r.log.Info("Fetching ControlPlane", "objectKey", cs.Name)
 	capiCluster := &clusterv1.Cluster{}
 	err := r.FetchObjectByName(ctx, cs.Name, constants.EksaSystemNamespace, capiCluster)
 	if err != nil {
@@ -319,6 +326,7 @@ func (r *capiResourceFetcher) ControlPlane(ctx context.Context, cs *anywherev1.C
 	}
 	cpRef := capiCluster.Spec.ControlPlaneRef
 	cp := &bootstrapv1.KubeadmControlPlane{}
+	r.log.Info("Fetching ControlPlaneRef", "objectKey", cpRef.Name)
 	err = r.FetchObjectByName(ctx, cpRef.Name, cpRef.Namespace, cp)
 	if err != nil {
 		return nil, err
