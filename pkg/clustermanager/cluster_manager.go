@@ -912,6 +912,7 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 	clusterSpec.Bundles.Name = clusterSpec.Name
 	clusterSpec.Bundles.Namespace = clusterSpec.Namespace
 	bundleObj, err := yaml.Marshal(clusterSpec.Bundles)
+	logger.V(1).Info(string(bundleObj))
 	if err != nil {
 		return fmt.Errorf("error outputting bundle yaml: %v", err)
 	}

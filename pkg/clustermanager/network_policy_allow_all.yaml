@@ -2,6 +2,11 @@
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: capc-system
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: eksa-system
 
 ---
@@ -98,6 +103,22 @@ kind: NetworkPolicy
 metadata:
   name: allow-all-capv-system
   namespace: capv-system
+spec:
+  podSelector: {}
+  ingress:
+    - {}
+  egress:
+    - {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-all-capc-system
+  namespace: capc-system
 spec:
   podSelector: {}
   ingress:

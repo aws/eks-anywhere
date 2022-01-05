@@ -1903,6 +1903,7 @@ spec:
                   - bottlerocketBootstrap
                   - certManager
                   - cilium
+                  - cloudStack
                   - clusterAPI
                   - controlPlane
                   - docker
@@ -1914,7 +1915,6 @@ spec:
                   - kindnetd
                   - kubeVersion
                   - vSphere
-                  - cloudStack
                   type: object
                 type: array
             required:
@@ -2793,6 +2793,8 @@ rules:
   resources:
   - awsiamconfigs
   - bundles
+  - cloudstackdeploymentconfigs
+  - cloudstackmachineconfigs
   - clusters
   - dockerdatacenterconfigs
   - vspheredatacenterconfigs
@@ -2810,6 +2812,8 @@ rules:
   resources:
   - awsiamconfigs/finalizers
   - bundles/finalizers
+  - cloudstackdeploymentconfigs/finalizers
+  - cloudstackmachineconfigs/finalizers
   - clusters/finalizers
   - dockerdatacenterconfigs/finalizers
   - vspheredatacenterconfigs/finalizers
@@ -2821,6 +2825,8 @@ rules:
   resources:
   - awsiamconfigs/status
   - bundles/status
+  - cloudstackdeploymentconfigs/status
+  - cloudstackmachineconfigs/status
   - clusters/status
   - dockerdatacenterconfigs/status
   - vspheredatacenterconfigs/status
@@ -2897,6 +2903,10 @@ rules:
   - vsphereclusters/status
   - vspheremachinetemplates
   - vspheremachinetemplates/status
+  - cloudstackclusters
+  - cloudstackclusters/status
+  - cloudstackmachinetemplates
+  - cloudstackmachinetemplates/status
   - dockerclusters
   - dockerclusters/status
   - dockermachinetemplates

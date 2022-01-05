@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
@@ -79,6 +80,7 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+	fmt.Println("We are in the eks-a controller!")
 
 	setupReconcilers(mgr)
 	setupWebhooks(mgr)
@@ -119,6 +121,24 @@ func setupReconcilers(mgr ctrl.Manager) {
 			mgr.GetScheme(),
 		)).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", anywherev1.VSphereMachineConfigKind)
+			os.Exit(1)
+		}
+
+		if err := (controllers.NewCloudStackDeploymentReconciler(
+			mgr.GetClient(),
+			ctrl.Log.WithName("controllers").WithName(anywherev1.CloudStackDeploymentKind),
+			mgr.GetScheme(),
+		)).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", anywherev1.CloudStackDeploymentKind)
+			os.Exit(1)
+		}
+
+		if err := (controllers.NewCloudStackMachineConfigReconciler(
+			mgr.GetClient(),
+			ctrl.Log.WithName("controllers").WithName(anywherev1.CloudStackMachineConfigKind),
+			mgr.GetScheme(),
+		)).SetupWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create controller", "controller", anywherev1.CloudStackMachineConfigKind)
 			os.Exit(1)
 		}
 	} else {

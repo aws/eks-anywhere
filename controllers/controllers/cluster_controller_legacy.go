@@ -43,10 +43,10 @@ func NewClusterReconcilerLegacy(client client.Client, log logr.Logger, scheme *r
 	}
 }
 
-//+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters;vspheredatacenterconfigs;vspheremachineconfigs;dockerdatacenterconfigs;bundles;awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters;vspheredatacenterconfigs;vspheremachineconfigs;cloudstackdeploymentconfigs;cloudstackmachineconfigs;dockerdatacenterconfigs;bundles;awsiamconfigs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=oidcconfigs,verbs=get;list
-//+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/status;vspheredatacenterconfigs/status;vspheremachineconfigs/status;dockerdatacenterconfigs/status;bundles/status;awsiamconfigs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/finalizers;vspheredatacenterconfigs/finalizers;vspheremachineconfigs/finalizers;dockerdatacenterconfigs/finalizers;bundles/finalizers;awsiamconfigs/finalizers,verbs=update
+//+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/status;vspheredatacenterconfigs/status;vspheremachineconfigs/status;cloudstackdeploymentconfigs/status;cloudstackmachineconfigs/status;dockerdatacenterconfigs/status;bundles/status;awsiamconfigs/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=anywhere.eks.amazonaws.com,resources=clusters/finalizers;vspheredatacenterconfigs/finalizers;vspheremachineconfigs/finalizers;cloudstackdeploymentconfigs/finalizers;cloudstackmachineconfigs/finalizers;dockerdatacenterconfigs/finalizers;bundles/finalizers;awsiamconfigs/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -117,6 +117,8 @@ func (r *ClusterReconcilerLegacy) SetupWithManager(mgr ctrl.Manager) error {
 		For(&anywherev1.Cluster{}).
 		Watches(&source.Kind{Type: &anywherev1.VSphereDatacenterConfig{}}, &handler.EnqueueRequestForObject{}).
 		Watches(&source.Kind{Type: &anywherev1.VSphereMachineConfig{}}, &handler.EnqueueRequestForObject{}).
+		Watches(&source.Kind{Type: &anywherev1.CloudStackDeploymentConfig{}}, &handler.EnqueueRequestForObject{}).
+		Watches(&source.Kind{Type: &anywherev1.CloudStackMachineConfig{}}, &handler.EnqueueRequestForObject{}).
 		Watches(&source.Kind{Type: &anywherev1.DockerDatacenterConfig{}}, &handler.EnqueueRequestForObject{}).
 		Watches(&source.Kind{Type: &anywherev1.AWSIamConfig{}}, &handler.EnqueueRequestForObject{}).
 		Complete(r)
