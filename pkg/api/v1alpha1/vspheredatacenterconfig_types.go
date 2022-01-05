@@ -1,7 +1,11 @@
 package v1alpha1
 
 import (
+	"errors"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -64,6 +68,35 @@ func (v *VSphereDatacenterConfig) ClearPauseAnnotation() {
 	if v.Annotations != nil {
 		delete(v.Annotations, pausedAnnotation)
 	}
+}
+
+func (v *VSphereDatacenterConfig) SetDefaults() {
+	v.Spec.Network = generateFullVCenterPath(networkFolderType, v.Spec.Network, v.Spec.Datacenter)
+
+	if v.Spec.Insecure {
+		logger.Info("Warning: VSphereDatacenterConfig configured in insecure mode")
+		v.Spec.Thumbprint = ""
+	}
+}
+
+func (v *VSphereDatacenterConfig) ValidateFields() error {
+	if len(v.Spec.Server) <= 0 {
+		return errors.New("VSphereDatacenterConfig server is not set or is empty")
+	}
+
+	if len(v.Spec.Datacenter) <= 0 {
+		return errors.New("VSphereDatacenterConfig datacenter is not set or is empty")
+	}
+
+	if len(v.Spec.Network) <= 0 {
+		return errors.New("VSphereDatacenterConfig VM network is not set or is empty")
+	}
+
+	if err := validatePath(networkFolderType, v.Spec.Network, v.Spec.Datacenter); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (v *VSphereDatacenterConfig) ConvertConfigToConfigGenerateStruct() *VSphereDatacenterConfigGenerate {
