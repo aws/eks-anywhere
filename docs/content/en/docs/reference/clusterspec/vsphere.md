@@ -142,7 +142,7 @@ The Kubernetes version you want to use for your cluster. Supported values: `1.20
 ## VSphereDatacenterConfig Fields
 
 ### datacenter (required)
-The vSphere datacenter to deploy the EKS Anywhere cluster on. For example `SDDC-Datacenter`.
+The vSphere datacenter to deploy the EKS Anywhere cluster on. For example `SDDC-Datacenter`. Note: It's required to add double quotes around the datacenter name in case it has a space in the name of it, example "datacenter one".
 
 ### network (required)
 The VM network to deploy your EKS Anywhere cluster on.
