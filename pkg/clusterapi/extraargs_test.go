@@ -239,17 +239,17 @@ func TestPodIAMConfigExtraArgs(t *testing.T) {
 func TestResolvConfExtraArgs(t *testing.T) {
 	tests := []struct {
 		testName   string
-		resolvConf *v1alpha1.ResolvConf
+		resolvConf v1alpha1.ResolvConf
 		want       clusterapi.ExtraArgs
 	}{
 		{
 			testName:   "default",
-			resolvConf: nil,
+			resolvConf: v1alpha1.ResolvConf{Path: ""},
 			want:       nil,
 		},
 		{
 			testName:   "with custom resolvConf file",
-			resolvConf: &v1alpha1.ResolvConf{Path: "mypath"},
+			resolvConf: v1alpha1.ResolvConf{Path: "mypath"},
 			want: clusterapi.ExtraArgs{
 				"resolv-conf": "mypath",
 			},

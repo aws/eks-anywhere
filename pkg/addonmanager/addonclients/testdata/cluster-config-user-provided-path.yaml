@@ -5,7 +5,8 @@ metadata:
   namespace: default
 spec:
   clusterNetwork:
-    dns: {}
+    dns:
+      resolvConf: {}
     pods: {}
     services: {}
   controlPlaneConfiguration: {}
