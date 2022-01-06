@@ -38,6 +38,7 @@ exclude sigs.k8s.io/cluster-api v0.3.14
 // TODO: Once the repo is public, remove this so we use a versioned module
 replace (
 	github.com/aws/eks-anywhere/release => ./release
+	github.com/containerd/containerd => github.com/containerd/containerd v1.5.9
 	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.0.0
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.0-rc95
 )
