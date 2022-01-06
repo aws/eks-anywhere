@@ -68,3 +68,26 @@ func GetAuthConfig(ecrPublicClient *ecrpublic.ECRPublic) (*docker.AuthConfigurat
 
 	return authConfig, nil
 }
+
+func CheckImageExistence(imageUri, imageContainerRegistry string, ecrPublicClient *ecrpublic.ECRPublic) (bool, error) {
+	repository, tag := utils.SplitImageUri(imageUri, imageContainerRegistry)
+	_, err := ecrPublicClient.DescribeImages(
+		&ecrpublic.DescribeImagesInput{
+			ImageIds: []*ecrpublic.ImageIdentifier{
+				{
+					ImageTag: aws.String(tag),
+				},
+			},
+			RepositoryName: aws.String(repository),
+		},
+	)
+	if err != nil {
+		if strings.Contains(err.Error(), ecrpublic.ErrCodeImageNotFoundException) {
+			return false, nil
+		} else {
+			return false, errors.Cause(err)
+		}
+	}
+
+	return true, nil
+}
