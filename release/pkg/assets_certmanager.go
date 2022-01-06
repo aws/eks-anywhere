@@ -16,6 +16,7 @@ package pkg
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 
@@ -73,6 +74,17 @@ func (r *ReleaseConfig) GetCertManagerAssets() ([]Artifact, error) {
 			SourcedFromBranch: sourcedFromBranch,
 		}
 		artifacts = append(artifacts, Artifact{Image: imageArtifact})
+	}
+
+	var componentsManifest = "cert-manager.yaml"
+	var sourceS3Prefix, releaseS3Path string
+	sourcedFromBranch := r.BuildRepoBranchName
+	latestPath := getLatestUploadDestination(sourcedFromBranch)
+
+	if r.DevRelease || r.ReleaseEnvironment == "development" {
+		sourceS3Prefix = fmt.Sprintf("%s/%s/assets/", certManagerProjectPath, latestPath)
+	} else {
+		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cert-manager/assets/", r.BundleNumber)
 	}
 
 	return artifacts, nil

@@ -99,4 +99,5 @@ images:
     tag: {{ .EtcdadmControllerKubeRbacProxyTag }} #org one is v0.4.0
 cert-manager:
   timeout: 30m
+  url: "{{.dir}}/cert-manager/{{.CertManagerVersion}}/cert-manager.yaml"
 cert-manager-version: {{.CertManagerVersion}}
