@@ -6,7 +6,6 @@ const (
 	TinkerbellProviderEnvVar  = "TINKERBELL_PROVIDER"
 	FullLifecycleAPIEnvVar    = "FULL_LIFECYCLE_API"
 	FullLifecycleGate         = "FullLifecycleAPI"
-	V1beta1BundleRelease      = "V1BETA1_BUNDLE"
 )
 
 func FeedGates(featureGates []string) {
@@ -47,12 +46,5 @@ func TinkerbellProvider() Feature {
 	return Feature{
 		Name:     "Tinkerbell provider support",
 		IsActive: globalFeatures.isActiveForEnvVar(TinkerbellProviderEnvVar),
-	}
-}
-
-func UseV1beta1BundleRelease() Feature {
-	return Feature{
-		Name:     "Use tags from v1beta1 bundle-release.yaml",
-		IsActive: globalFeatures.isActiveForEnvVar(V1beta1BundleRelease),
 	}
 }

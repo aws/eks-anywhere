@@ -17,7 +17,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	mockswriter "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	mockproviders "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -66,9 +65,6 @@ func (ct *clusterctlTest) expectGetProviderEnvMap() {
 }
 
 func TestClusterctlInitInfrastructure(t *testing.T) {
-	if features.IsActive(features.UseV1beta1BundleRelease()) {
-		t.Skip("Skipping test with v1beta1 bundle feature flag because of difference in flags")
-	}
 	_, writer := test.NewWriter(t)
 
 	core := "cluster-api:v0.3.19"
@@ -99,7 +95,6 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			wantExecArgs: []interface{}{
 				"init", "--core", core, "--bootstrap", bootstrap, "--control-plane", controlPlane, "--infrastructure", "vsphere:v0.7.8", "--config", test.OfType("string"),
 				"--bootstrap", etcdadmBootstrap, "--bootstrap", etcdadmController,
-				"--watching-namespace", constants.EksaSystemNamespace,
 			},
 			wantConfig: "testdata/clusterctl_expected.yaml",
 		},
@@ -115,7 +110,7 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			wantExecArgs: []interface{}{
 				"init", "--core", core, "--bootstrap", bootstrap, "--control-plane", controlPlane, "--infrastructure", "vsphere:v0.7.8", "--config", test.OfType("string"),
 				"--bootstrap", etcdadmBootstrap, "--bootstrap", etcdadmController,
-				"--watching-namespace", constants.EksaSystemNamespace, "--kubeconfig", "tmp/k.kubeconfig",
+				"--kubeconfig", "tmp/k.kubeconfig",
 			},
 			wantConfig: "testdata/clusterctl_expected.yaml",
 		},
