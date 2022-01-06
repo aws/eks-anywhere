@@ -143,17 +143,7 @@ eks-a-cross-platform-embed-latest-config: ## Build cross platform dev release ve
 
 .PHONY: eks-a
 eks-a: ## Build a dev release version of eks-a
-	if "${V1BETA1_BUNDLE}" = "true" ; then \
-		$(MAKE) eks-a-v1beta1; \
-	else \
-		$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION); \
-	fi
-
-.PHONY: eks-a-v1beta1
-eks-a-v1beta1:
-	curl -L https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/v1beta1-experimental/bundle-release.yaml --output pkg/cluster/config/bundle-release.yaml
-	$(MAKE) eks-a-embed-config
-	rm pkg/cluster/config/bundle-release.yaml
+	$(MAKE) eks-a-binary GIT_VERSION=$(DEV_GIT_VERSION)
 
 .PHONY: eks-a-release
 eks-a-release: ## Generate a release binary

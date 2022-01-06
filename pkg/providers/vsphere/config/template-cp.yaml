@@ -447,14 +447,12 @@ spec:
     name: vsphere-csi-node
   - kind: ConfigMap
     name: vsphere-csi-controller
-{{- if .deployCPI }}
   - kind: Secret
     name: cloud-controller-manager
   - kind: Secret
     name: cloud-provider-vsphere-credentials
   - kind: ConfigMap
     name: cpi-manifests
-{{- end }}
 ---
 {{- if .externalEtcd }}
 kind: EtcdadmCluster
@@ -972,7 +970,6 @@ kind: ConfigMap
 metadata:
   name: internal-feature-states.csi.vsphere.vmware.com
   namespace: {{.eksaSystemNamespace}}
-{{- if .deployCPI }}
 ---
 apiVersion: v1
 kind: Secret
@@ -1201,14 +1198,14 @@ data:
           - effect: NoSchedule
             key: node.kubernetes.io/not-ready
 {{- if .controlPlaneTaints }}
-            {{ range .controlPlaneTaints}}
+{{- range .controlPlaneTaints}}
           - key: {{ .Key }}
             value: {{ .Value }}
             effect: {{ .Effect }}
 {{- if .TimeAdded }}
             timeAdded: {{ .TimeAdded }}
 {{- end }}
-            {{- end }}
+{{- end }}
 {{- end }}
           volumes:
           - configMap:
@@ -1220,4 +1217,3 @@ kind: ConfigMap
 metadata:
   name: cpi-manifests
   namespace: {{.eksaSystemNamespace}}
-{{- end }}
