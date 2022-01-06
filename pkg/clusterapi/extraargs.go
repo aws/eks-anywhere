@@ -65,7 +65,7 @@ func SecureEtcdTlsCipherSuitesExtraArgs() ExtraArgs {
 }
 
 func NodeLabelsExtraArgs(wnc v1alpha1.WorkerNodeGroupConfiguration) ExtraArgs {
-	if len(wnc.Labels) > 0 {
+	if len(wnc.Labels) <= 0 {
 		return nil
 	}
 	args := ExtraArgs{}
