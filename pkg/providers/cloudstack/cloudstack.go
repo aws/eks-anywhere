@@ -51,7 +51,7 @@ const (
 	cloudStackCloudConfigB64SecretKey     = "CLOUDSTACK_B64ENCODED_SECRET"
 	cloudMonkeyInsecure                   = "CLOUDMONKEY_INSECURE"
 	expClusterResourceSetKey              = "EXP_CLUSTER_RESOURCE_SET"
-	credentialsObjectName                 = "cloudstack-credentials"
+	credentialsObjectName                 = "capc-cloudstack-secret"
 	privateKeyFileName                    = "eks-a-id_rsa"
 	publicKeyFileName                     = "eks-a-id_rsa.pub"
 
@@ -781,16 +781,16 @@ func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Co
 }
 
 func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
-	var contents bytes.Buffer
-	err := p.createSecret(cluster, &contents)
-	if err != nil {
-		return err
-	}
-
-	err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents.Bytes())
-	if err != nil {
-		return fmt.Errorf("error loading csi-cloudstack-secret object: %v", err)
-	}
+	//var contents bytes.Buffer
+	//err := p.createSecret(cluster, &contents)
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents.Bytes())
+	//if err != nil {
+	//	return fmt.Errorf("error loading csi-cloudstack-secret object: %v", err)
+	//}
 	return nil
 }
 
@@ -802,7 +802,7 @@ func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context) 
 	return nil
 }
 
-func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.CloudStackDeploymentConfig, oldVmc, newVmc *v1alpha1.CloudStackMachineConfig) bool {
+func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDeploymentConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
 	// Another option is to generate MachineTemplates based on the old and new eksa spec,
 	// remove the name field and compare them with DeepEqual
 	// We plan to approach this way since it's more flexible to add/remove fields and test out for validation
@@ -815,37 +815,37 @@ func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
-	return AnyImmutableFieldChanged(oldVdc, newVdc, oldVmc, newVmc)
+	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc)
 }
 
-func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.CloudStackDeploymentConfig, oldVmc, newVmc *v1alpha1.CloudStackMachineConfig) bool {
+func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDeploymentConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
 	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
 		return true
 	}
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
-	return AnyImmutableFieldChanged(oldVdc, newVdc, oldVmc, newVmc)
+	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc)
 }
 
-func NeedsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.CloudStackDeploymentConfig, oldVmc, newVmc *v1alpha1.CloudStackMachineConfig) bool {
+func NeedsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDeploymentConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
 	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
 		return true
 	}
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
-	return AnyImmutableFieldChanged(oldVdc, newVdc, oldVmc, newVmc)
+	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc)
 }
 
-func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.CloudStackDeploymentConfig, oldVmc, newVmc *v1alpha1.CloudStackMachineConfig) bool {
-	if oldVdc.Spec.Network != newVdc.Spec.Network {
+func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDeploymentConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
+	if oldCsdc.Spec.Network != newCsdc.Spec.Network {
 		return true
 	}
-	if oldVdc.Spec.Thumbprint != newVdc.Spec.Thumbprint {
+	if oldCsdc.Spec.Thumbprint != newCsdc.Spec.Thumbprint {
 		return true
 	}
-	if oldVmc.Spec.Template != newVmc.Spec.Template {
+	if oldCsmc.Spec.Template != newCsmc.Spec.Template {
 		return true
 	}
 	return false
@@ -1076,17 +1076,17 @@ func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, boo
 		return nil, nil, err
 	}
 	controlPlaneMachineConfig := p.machineConfigs[newClusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-	controlPlaneVmc, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
+	controlPlaneCsmc, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
 	if err != nil {
 		return nil, nil, err
 	}
 	workerMachineConfig := p.machineConfigs[newClusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
-	workerVmc, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, c.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
+	workerCsmc, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, c.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec, vdc, p.deploymentConfig, controlPlaneVmc, controlPlaneMachineConfig)
+	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec, vdc, p.deploymentConfig, controlPlaneCsmc, controlPlaneMachineConfig)
 	if !needsNewControlPlaneTemplate {
 		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, c.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -1097,7 +1097,7 @@ func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, boo
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}
 
-	needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, p.deploymentConfig, workerVmc, workerMachineConfig)
+	needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, p.deploymentConfig, workerCsmc, workerMachineConfig)
 	if !needsNewWorkloadTemplate {
 		md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -1110,11 +1110,11 @@ func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, boo
 
 	if newClusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineConfig := p.machineConfigs[newClusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-		etcdMachineVmc, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
+		etcdMachineCsmc, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
 		if err != nil {
 			return nil, nil, err
 		}
-		needsNewEtcdTemplate = NeedsNewEtcdTemplate(currentSpec, newClusterSpec, vdc, p.deploymentConfig, etcdMachineVmc, etcdMachineConfig)
+		needsNewEtcdTemplate = NeedsNewEtcdTemplate(currentSpec, newClusterSpec, vdc, p.deploymentConfig, etcdMachineCsmc, etcdMachineConfig)
 		if !needsNewEtcdTemplate {
 			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
@@ -1221,17 +1221,9 @@ func (p *cloudstackProvider) createSecret(cluster *types.Cluster, contents *byte
 		return fmt.Errorf("error creating secret object template: %v", err)
 	}
 
-	//thumbprint := p.deploymentConfig.Spec.Thumbprint
-	//if !p.selfSigned {
-	//	thumbprint = ""
-	//}
-
 	values := map[string]string{
 		"clusterName": cluster.Name,
 		"insecure":    strconv.FormatBool(p.deploymentConfig.Spec.Insecure),
-		//"thumbprint":         thumbprint,
-		//"cloudstackPassword": os.Getenv(cloudStackPasswordKey),
-		//"cloudstackUsername": os.Getenv(cloudStackUsernameKey),
 		"cloudstackNetwork":  p.deploymentConfig.Spec.Network,
 		"eksaLicense":        os.Getenv(eksaLicense),
 	}
@@ -1406,20 +1398,14 @@ func (p *cloudstackProvider) validateMachineConfigImmutability(ctx context.Conte
 }
 
 func (p *cloudstackProvider) secretContentsChanged(ctx context.Context, workloadCluster *types.Cluster) (bool, error) {
-	//nPassword := os.Getenv(cloudStackPasswordKey)
-	_, err := p.providerKubectlClient.GetSecret(ctx, credentialsObjectName, executables.WithCluster(workloadCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+	cloudConfig := os.Getenv(eksacloudStackCloudConfigB64SecretKey)
+	oSecret, err := p.providerKubectlClient.GetSecret(ctx, credentialsObjectName, executables.WithCluster(workloadCluster), executables.WithNamespace(constants.CapcSystemNamespace))
 	if err != nil {
 		return false, fmt.Errorf("error when obtaining CloudStack secret %s from workload cluster: %v", credentialsObjectName, err)
 	}
-	//
-	//if string(oSecret.Data["password"]) != nPassword {
-	//	return true, nil
-	//}
-	//
-	//nUser := os.Getenv(cloudStackUsernameKey)
-	//if string(oSecret.Data["username"]) != nUser {
-	//	return true, nil
-	//}
+	if string(oSecret.Data["cloud-config"]) != cloudConfig {
+		return true, nil
+	}
 	return false, nil
 }
 

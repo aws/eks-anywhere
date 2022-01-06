@@ -1046,8 +1046,6 @@ func TestProviderBootstrapSetup(t *testing.T) {
 	}
 	values := map[string]string{
 		"clusterName":        clusterConfig.Name,
-		"cloudstackPassword": expectedCloudStackUsername,
-		"cloudstackUsername": expectedCloudStackPassword,
 		"cloudstackDomain":   deploymentConfig.Spec.Domain,
 		"cloudstackZone":     deploymentConfig.Spec.Zone,
 		"cloudstackNetwork":  deploymentConfig.Spec.Network,
@@ -1057,7 +1055,7 @@ func TestProviderBootstrapSetup(t *testing.T) {
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
 
-	// kubectl.EXPECT().LoadSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any(), cluster.KubeconfigFile)
+	kubectl.EXPECT().LoadSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any(), cluster.KubeconfigFile)
 
 	template, err := template.New("test").Parse(defaultSecretObject)
 	if err != nil {
@@ -1068,7 +1066,7 @@ func TestProviderBootstrapSetup(t *testing.T) {
 		t.Fatalf("template execute error: %v", err)
 	}
 
-	err = provider.BootstrapSetup(ctx, clusterConfig, &cluster)
+	err := provider.BootstrapSetup(ctx, clusterConfig, &cluster)
 	if err != nil {
 		t.Fatalf("BootstrapSetup error %v", err)
 	}
@@ -1088,8 +1086,6 @@ func TestProviderUpdateSecret(t *testing.T) {
 	}
 	values := map[string]string{
 		"clusterName":                     clusterConfig.Name,
-		"cloudstackPassword":              expectedCloudStackUsername,
-		"cloudstackUsername":              expectedCloudStackPassword,
 		"cloudstackManagementApiEndpoint": deploymentConfig.Spec.ManagementApiEndpoint,
 		"cloudstackNetwork":               deploymentConfig.Spec.Network,
 	}

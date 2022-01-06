@@ -464,6 +464,10 @@ func MapClusterToCloudStackDeploymentConfigSpec(csCluster *cloudstackv1.CloudSta
 	csSpec.Spec.Zone = csCluster.Spec.Zone
 	csSpec.Spec.Network = csCluster.Spec.Network
 
+	//The following attributes are currently unavailable from a CAPC CloudStackCluster object - do we need them?
+	//csSpec.Spec.ManagementApiEndpoint =
+	//csSpec.Spec.Domain =
+	//csSpec.Spec.Account =
 	return csSpec, nil
 }
 
@@ -472,6 +476,11 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 	csSpec.Spec.ComputeOffering = csMachineTemplate.Spec.Spec.Spec.Offering
 	csSpec.Spec.Template = csMachineTemplate.Spec.Spec.Spec.Template
 	csSpec.Spec.Details = csMachineTemplate.Spec.Spec.Spec.Details
+
+	//The following attributes are currently unavailable from a CAPC CloudStackMachineTemplate object - do we need them? Vsphere above doesn't support osfamily/users
+	//csSpec.Spec.OSFamily =
+	//csSpec.Spec.Users =
+	//csSpec.Spec.DiskOffering =
 
 	// TODO: OSFamily, Users
 	return csSpec, nil

@@ -41,7 +41,6 @@ exclude sigs.k8s.io/cluster-api v0.3.23
 
 // TODO: Once the repo is public, remove this so we use a versioned module
 replace (
-	github.com/aws/cluster-api-provider-cloudstack-staging => ../cluster-api-provider-cloudstack-staging
 	github.com/aws/eks-anywhere/release => ./release
 	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.0.0
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.0-rc95
