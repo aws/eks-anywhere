@@ -958,6 +958,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 		"cloudstackDomain":                       deploymentConfigSpec.Domain,
 		"cloudstackZone":                         deploymentConfigSpec.Zone,
 		"cloudstackAccount":                      deploymentConfigSpec.Account,
+		"extraEndpoints":                         clusterSpec.Spec.ControlPlaneConfiguration.ExtraEndpoints,
 		"cloudstackControlPlaneComputeOffering":  controlPlaneMachineSpec.ComputeOffering,
 		"cloudstackControlPlaneTemplateOffering": controlPlaneMachineSpec.Template,
 		"cloudstackControlPlaneDiskOffering":     controlPlaneMachineSpec.DiskOffering,

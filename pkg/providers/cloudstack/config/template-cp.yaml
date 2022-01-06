@@ -83,6 +83,12 @@ spec:
         imageRepository: {{.corednsRepository}}
         imageTag: {{.corednsVersion}}
       apiServer:
+{{- if .extraEndpoints }}
+        certSANs:
+        {{- range .extraEndpoints }}
+        - {{.}}
+        {{- end }}
+{{- end }}
         extraArgs:
           cloud-provider: external
           audit-policy-file: /etc/kubernetes/audit-policy.yaml
