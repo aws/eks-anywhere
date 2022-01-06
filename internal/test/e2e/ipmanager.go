@@ -22,12 +22,28 @@ func newE2EIPManager(networkCidr, privateNetworkCidr string) *E2EIPManager {
 	return ipman
 }
 
-func (ipman *E2EIPManager) getIP() string {
+func (ipman *E2EIPManager) reserveIP() string {
 	return getUniqueIP(ipman.vspherenetworkCidr, ipman.vsphereNetworkIPs)
 }
 
-func (ipMan *E2EIPManager) getPrivateIP() string {
+func (ipMan *E2EIPManager) reservePrivateIP() string {
 	return getUniqueIP(ipMan.privateNetworkCidr, ipMan.privateNetworkIPs)
+}
+
+func (ipman *E2EIPManager) reservePrivateIPPool(count int) networkutils.IPPool {
+	pool := networkutils.NewIPPool()
+	for i := 0; i < count; i++ {
+		pool.AddIP(ipman.reservePrivateIP())
+	}
+	return pool
+}
+
+func (ipman *E2EIPManager) reserveIPPool(count int) networkutils.IPPool {
+	pool := networkutils.NewIPPool()
+	for i := 0; i < count; i++ {
+		pool.AddIP(ipman.reserveIP())
+	}
+	return pool
 }
 
 func getUniqueIP(cidr string, usedIPs map[string]bool) string {
