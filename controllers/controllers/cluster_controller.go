@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"context"
-
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -37,6 +37,8 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // TODO: add here kubebuilder permissions as neeeded
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	log := r.log.WithValues("cluster", req.NamespacedName)
+
+	log.Info("Cluster reconciliation initializing")
 
 	// Fetch the Cluster object
 	cluster := &anywherev1.Cluster{}
@@ -71,6 +73,31 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 		log.Info("Ignoring self managed cluster")
 		return ctrl.Result{}, nil
 	}
+
+	// Fetch the VsphereDatacenter object
+	dc := &anywherev1.VSphereDatacenterConfig{}
+	dcName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.DatacenterRef.Name}
+	if err := r.client.Get(ctx, dcName, dc); err != nil {
+		return ctrl.Result{}, err
+	}
+	log.Info("Using datacenter config config %v", dc)
+
+	if !dc.Status.SpecValid {
+		log.Info("Skipping cluster reconciliation because datacenter config is invalid %v", dc)
+		return ctrl.Result{}, nil
+	}
+
+	// Fetch the VsphereDatacenter object
+	mc := &anywherev1.VSphereMachineConfig{}
+	mcName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name}
+	if err := r.client.Get(ctx, mcName, mc); err != nil {
+		return ctrl.Result{}, err
+	}
+	log.Info("Using machine config %v", mc)
+
+	//Validate machine config for etcd
+
+	// repeat the process for other machine config objects
 
 	result, err := r.reconcile(ctx, cluster, log)
 	if err != nil {
