@@ -100,4 +100,4 @@ images:
 cert-manager:
   timeout: 30m
   url: "{{.dir}}/cert-manager/{{.CertManagerVersion}}/cert-manager.yaml"
-cert-manager-version: {{.CertManagerVersion}}
+  version: {{.CertManagerVersion}}
