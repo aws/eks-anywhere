@@ -2467,6 +2467,8 @@ spec:
             properties:
               osFamily:
                 type: string
+              templateOverride:
+                type: string
               users:
                 items:
                   description: UserConfiguration defines the configuration of the
