@@ -372,6 +372,12 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
+                        manifest:
+                          properties:
+                            uri:
+                              description: URI points to the manifest yaml file
+                              type: string
+                          type: object
                         version:
                           type: string
                         webhook:
@@ -407,6 +413,7 @@ spec:
                       - acmesolver
                       - cainjector
                       - controller
+                      - manifest
                       - webhook
                       type: object
                     cilium:
