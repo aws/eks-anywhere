@@ -426,7 +426,10 @@ var versionBundle = &cluster.VersionsBundle{
 			Webhook: v1alpha1.Image{
 				URI: "public.ecr.aws/l0g8r8j6/jetstack/cert-manager-webhook:v1.1.0",
 			},
-			Version: "v1.1.0+88d7476",
+			Manifest: v1alpha1.Manifest{
+				URI: "testdata/fake_manifest.yaml",
+			},
+			Version: "v1.5.3",
 		},
 		ClusterAPI: v1alpha1.CoreClusterAPI{
 			Version: "v0.3.19",
