@@ -94,4 +94,4 @@ images:
 cert-manager:
   timeout: 30m
   url: "{{.dir}}/cluster-name/generated/overrides/cert-manager/v1.5.3/cert-manager.yaml"
-cert-manager-version: v1.5.3
+  version: v1.5.3
