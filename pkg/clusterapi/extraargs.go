@@ -65,11 +65,19 @@ func SecureEtcdTlsCipherSuitesExtraArgs() ExtraArgs {
 }
 
 func NodeLabelsExtraArgs(wnc v1alpha1.WorkerNodeGroupConfiguration) ExtraArgs {
-	if len(wnc.Labels) <= 0 {
+	return nodeLabelsExtraArgs(wnc.Labels)
+}
+
+func ControlPlaneLabelsExtraArgs(cpc v1alpha1.ControlPlaneConfiguration) ExtraArgs {
+	return nodeLabelsExtraArgs(cpc.Labels)
+}
+
+func nodeLabelsExtraArgs(labels map[string]string) ExtraArgs {
+	if len(labels) <= 0 {
 		return nil
 	}
 	args := ExtraArgs{}
-	args.AddIfNotEmpty("node-labels", labelsMapToArg(wnc.Labels))
+	args.AddIfNotEmpty("node-labels", labelsMapToArg(labels))
 	return args
 }
 

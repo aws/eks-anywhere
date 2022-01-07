@@ -667,6 +667,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Spec.PodIAMConfig)).
 		Append(sharedExtraArgs)
+	kubeletExtraArgs := sharedExtraArgs.Append(clusterapi.ControlPlaneLabelsExtraArgs(clusterSpec.Spec.ControlPlaneConfiguration))
 
 	values := map[string]interface{}{
 		"clusterName":                          clusterSpec.ObjectMeta.Name,
@@ -707,7 +708,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"apiserverExtraArgs":                   apiServerExtraArgs.ToPartialYaml(),
 		"controllermanagerExtraArgs":           sharedExtraArgs.ToPartialYaml(),
 		"schedulerExtraArgs":                   sharedExtraArgs.ToPartialYaml(),
-		"kubeletExtraArgs":                     sharedExtraArgs.ToPartialYaml(),
+		"kubeletExtraArgs":                     kubeletExtraArgs.ToPartialYaml(),
 		"format":                               format,
 		"externalEtcdVersion":                  bundle.KubeDistro.EtcdVersion,
 		"etcdImage":                            bundle.KubeDistro.EtcdImage.VersionedImage(),

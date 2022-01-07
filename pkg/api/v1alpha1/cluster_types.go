@@ -140,6 +140,8 @@ type ControlPlaneConfiguration struct {
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
 	// Taints define the set of taints to be applied on control plane nodes
 	Taints []corev1.Taint `json:"taints,omitempty"`
+	// Labels define the labels to assign to the node
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
