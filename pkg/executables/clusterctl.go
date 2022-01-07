@@ -316,7 +316,6 @@ func (c *Clusterctl) Upgrade(ctx context.Context, managementCluster *types.Clust
 	upgradeCommand := []string{
 		"upgrade", "apply",
 		"--config", clusterctlConfig.configFile,
-		"--management-group", "capi-system/cluster-api",
 		"--kubeconfig", managementCluster.KubeconfigFile,
 	}
 
