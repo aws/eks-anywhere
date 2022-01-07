@@ -16,6 +16,8 @@ package pkg
 
 import (
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 
@@ -75,6 +77,46 @@ func (r *ReleaseConfig) GetCertManagerAssets() ([]Artifact, error) {
 		artifacts = append(artifacts, Artifact{Image: imageArtifact})
 	}
 
+	manifestName := "cert-manager.yaml"
+
+	var sourceS3Prefix string
+	var releaseS3Path string
+	sourcedFromBranch := r.BuildRepoBranchName
+	latestPath := getLatestUploadDestination(sourcedFromBranch)
+
+	if r.DevRelease || r.ReleaseEnvironment == "development" {
+		sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/%s", certManagerProjectPath, latestPath, gitTag)
+	} else {
+		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/cert-manager/manifests/%s", r.BundleNumber, gitTag)
+	}
+
+	if r.DevRelease {
+		releaseS3Path = fmt.Sprintf("artifacts/%s/cert-manager/manifests/%s", r.DevReleaseUriVersion, gitTag)
+	} else {
+		releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/cert-manager/manifests/%s", r.BundleNumber, gitTag)
+	}
+
+	cdnURI, err := r.GetURI(filepath.Join(
+		releaseS3Path,
+		manifestName))
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+
+	manifestArtifact := &ManifestArtifact{
+		SourceS3Key:       manifestName,
+		SourceS3Prefix:    sourceS3Prefix,
+		ArtifactPath:      filepath.Join(r.ArtifactDir, "cert-manager-manifests", r.BuildRepoHead),
+		ReleaseName:       manifestName,
+		ReleaseS3Path:     releaseS3Path,
+		ReleaseCdnURI:     cdnURI,
+		ImageTagOverrides: []ImageTagOverride{},
+		GitTag:            gitTag,
+		ProjectPath:       certManagerProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
+	}
+	artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
+
 	return artifacts, nil
 }
 
@@ -82,24 +124,42 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 	artifacts := r.BundleArtifactsTable["cert-manager"]
 
 	var sourceBranch string
-	bundleArtifacts := map[string]anywherev1alpha1.Image{}
+	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
+	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
 
 	for _, artifact := range artifacts {
-		imageArtifact := artifact.Image
-		sourceBranch = imageArtifact.SourcedFromBranch
+		if artifact.Image != nil {
+			imageArtifact := artifact.Image
+			sourceBranch = imageArtifact.SourcedFromBranch
 
-		bundleArtifact := anywherev1alpha1.Image{
-			Name:        imageArtifact.AssetName,
-			Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
-			OS:          imageArtifact.OS,
-			Arch:        imageArtifact.Arch,
-			URI:         imageArtifact.ReleaseImageURI,
-			ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+			bundleArtifact := anywherev1alpha1.Image{
+				Name:        imageArtifact.AssetName,
+				Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
+				OS:          imageArtifact.OS,
+				Arch:        imageArtifact.Arch,
+				URI:         imageArtifact.ReleaseImageURI,
+				ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+			}
+
+			bundleImageArtifacts[imageArtifact.AssetName] = bundleArtifact
+			artifactHashes = append(artifactHashes, bundleArtifact.ImageDigest)
 		}
+		if artifact.Manifest != nil {
+			manifestArtifact := artifact.Manifest
+			bundleManifestArtifact := anywherev1alpha1.Manifest{
+				URI: manifestArtifact.ReleaseCdnURI,
+			}
 
-		bundleArtifacts[imageArtifact.AssetName] = bundleArtifact
-		artifactHashes = append(artifactHashes, bundleArtifact.ImageDigest)
+			bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+
+			manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+			if err != nil {
+				return anywherev1alpha1.CertManagerBundle{}, err
+			}
+			manifestHash := generateManifestHash(manifestContents)
+			artifactHashes = append(artifactHashes, manifestHash)
+		}
 	}
 
 	componentChecksum := generateComponentHash(artifactHashes)
@@ -113,10 +173,11 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 
 	bundle := anywherev1alpha1.CertManagerBundle{
 		Version:    version,
-		Acmesolver: bundleArtifacts["cert-manager-acmesolver"],
-		Cainjector: bundleArtifacts["cert-manager-cainjector"],
-		Controller: bundleArtifacts["cert-manager-controller"],
-		Webhook:    bundleArtifacts["cert-manager-webhook"],
+		Acmesolver: bundleImageArtifacts["cert-manager-acmesolver"],
+		Cainjector: bundleImageArtifacts["cert-manager-cainjector"],
+		Controller: bundleImageArtifacts["cert-manager-controller"],
+		Webhook:    bundleImageArtifacts["cert-manager-webhook"],
+		Manifest:   bundleManifestArtifacts["cert-manager.yaml"],
 	}
 
 	return bundle, nil
