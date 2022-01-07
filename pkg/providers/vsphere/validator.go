@@ -62,7 +62,7 @@ func (v *Validator) ValidateVCenterConfig(ctx context.Context, datacenterConfig 
 }
 
 // TODO: dry out machine configs validations
-func (v *Validator) validateCluster(ctx context.Context, vsphereClusterSpec *spec) error {
+func (v *Validator) ValidateCluster(ctx context.Context, vsphereClusterSpec *Spec) error {
 	var etcdMachineConfig *anywherev1.VSphereMachineConfig
 
 	// TODO: move this to api Cluster validations
@@ -214,7 +214,7 @@ func (v *Validator) validateSSHUsername(machineConfig *anywherev1.VSphereMachine
 	return nil
 }
 
-func (v *Validator) validateTemplate(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
+func (v *Validator) validateTemplate(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
 	if err := v.validateTemplatePresence(ctx, spec.datacenterConfig.Spec.Datacenter, machineConfig); err != nil {
 		return err
 	}
@@ -239,7 +239,7 @@ func (v *Validator) validateTemplatePresence(ctx context.Context, datacenter str
 	return nil
 }
 
-func (v *Validator) validateTemplateTags(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
+func (v *Validator) validateTemplateTags(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
 	tags, err := v.govc.GetTags(ctx, machineConfig.Spec.Template)
 	if err != nil {
 		return fmt.Errorf("error validating template tags: %v", err)
@@ -367,7 +367,7 @@ func (v *Validator) validateNetwork(ctx context.Context, network string) error {
 	return nil
 }
 
-func (v *Validator) validateControlPlaneIpUniqueness(spec *spec) error {
+func (v *Validator) validateControlPlaneIpUniqueness(spec *Spec) error {
 	ip := spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
 	if !networkutils.NewIPGenerator(v.netClient).IsIPUnique(ip) {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)

@@ -22,7 +22,7 @@ func NewDefaulter(govc ProviderGovcClient) *Defaulter {
 	}
 }
 
-func (d *Defaulter) setDefaultsForMachineConfig(ctx context.Context, spec *spec) error {
+func (d *Defaulter) setDefaultsForMachineConfig(ctx context.Context, spec *Spec) error {
 	setDefaultsForEtcdMachineConfig(spec.etcdMachineConfig())
 	for _, m := range spec.machineConfigs() {
 		setDefaultsForMachineConfig(m)
@@ -100,7 +100,7 @@ func setDefaultsForMachineConfig(machineConfig *anywherev1.VSphereMachineConfig)
 	}
 }
 
-func (d *Defaulter) setDefaultTemplateIfMissing(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
+func (d *Defaulter) setDefaultTemplateIfMissing(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
 	if machineConfig.Spec.Template == "" {
 		logger.V(1).Info("Control plane VSphereMachineConfig template is not set. Using default template.")
 		if err := d.setupDefaultTemplate(ctx, spec, machineConfig); err != nil {
@@ -111,7 +111,7 @@ func (d *Defaulter) setDefaultTemplateIfMissing(ctx context.Context, spec *spec,
 	return nil
 }
 
-func (d *Defaulter) setupDefaultTemplate(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
+func (d *Defaulter) setupDefaultTemplate(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
 	osFamily := machineConfig.Spec.OSFamily
 	eksd := spec.VersionsBundle.EksD
 	var ova releasev1.OvaArchive

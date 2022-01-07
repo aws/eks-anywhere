@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -12,18 +13,28 @@ import (
 
 	"github.com/aws/eks-anywhere/controllers/controllers/clusters"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
+	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
 // ClusterReconciler reconciles a Cluster object
 type ClusterReconciler struct {
-	client client.Client
-	log    logr.Logger
+	client    client.Client
+	log       logr.Logger
+	validator *vsphere.Validator
+	defaulter *vsphere.Defaulter
 }
 
-func NewClusterReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme) *ClusterReconciler {
+func NewClusterReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, govc *executables.Govc) *ClusterReconciler {
+	validator := vsphere.NewValidator(govc, &networkutils.DefaultNetClient{})
+	defaulter := vsphere.NewDefaulter(govc)
+
 	return &ClusterReconciler{
-		client: client,
-		log:    log,
+		client:    client,
+		log:       log,
+		validator: validator,
+		defaulter: defaulter,
 	}
 }
 
@@ -37,9 +48,6 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // TODO: add here kubebuilder permissions as neeeded
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	log := r.log.WithValues("cluster", req.NamespacedName)
-
-	log.Info("Cluster reconciliation initializing")
-
 	// Fetch the Cluster object
 	cluster := &anywherev1.Cluster{}
 	if err := r.client.Get(ctx, req.NamespacedName, cluster); err != nil {
@@ -80,24 +88,12 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 	if err := r.client.Get(ctx, dcName, dc); err != nil {
 		return ctrl.Result{}, err
 	}
-	log.Info("Using datacenter config config %v", dc)
+	log.Info("Using data center config config", "datacenter", dc)
 
 	if !dc.Status.SpecValid {
-		log.Info("Skipping cluster reconciliation because datacenter config is invalid %v", dc)
+		log.Info("Skipping cluster reconciliation because data center config is invalid %v", dc)
 		return ctrl.Result{}, nil
 	}
-
-	// Fetch the VsphereDatacenter object
-	mc := &anywherev1.VSphereMachineConfig{}
-	mcName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name}
-	if err := r.client.Get(ctx, mcName, mc); err != nil {
-		return ctrl.Result{}, err
-	}
-	log.Info("Using machine config %v", mc)
-
-	//Validate machine config for etcd
-
-	// repeat the process for other machine config objects
 
 	result, err := r.reconcile(ctx, cluster, log)
 	if err != nil {
@@ -107,7 +103,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 }
 
 func (r *ClusterReconciler) reconcile(ctx context.Context, cluster *anywherev1.Cluster, log logr.Logger) (ctrl.Result, error) {
-	clusterProviderReconciler, err := clusters.BuildProviderReconciler(cluster.Spec.DatacenterRef.Kind)
+	clusterProviderReconciler, err := clusters.BuildProviderReconciler(cluster.Spec.DatacenterRef.Kind, r.client, r.log, r.validator, r.defaulter)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
