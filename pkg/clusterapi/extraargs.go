@@ -2,6 +2,8 @@ package clusterapi
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/crypto"
@@ -62,6 +64,15 @@ func SecureEtcdTlsCipherSuitesExtraArgs() ExtraArgs {
 	return args
 }
 
+func NodeLabelsExtraArgs(wnc v1alpha1.WorkerNodeGroupConfiguration) ExtraArgs {
+	if len(wnc.Labels) <= 0 {
+		return nil
+	}
+	args := ExtraArgs{}
+	args.AddIfNotEmpty("node-labels", labelsMapToArg(wnc.Labels))
+	return args
+}
+
 func (e ExtraArgs) AddIfNotEmpty(k, v string) {
 	if v != "" {
 		logger.V(5).Info("Adding extraArgs", k, v)
@@ -91,4 +102,15 @@ func requiredClaimToArg(r *v1alpha1.OIDCConfigRequiredClaim) string {
 	}
 
 	return fmt.Sprintf("%s=%s", r.Claim, r.Value)
+}
+
+func labelsMapToArg(m map[string]string) string {
+	labels := make([]string, 0, len(m))
+	for k, v := range m {
+		labels = append(labels, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	sort.Strings(labels)
+	labelStr := strings.Join(labels, ",")
+	return labelStr
 }
