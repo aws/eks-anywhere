@@ -29,6 +29,7 @@ type ParallelRunConf struct {
 	TestsToSkip         []string
 	BundlesOverride     bool
 	CleanupVms          bool
+	TestReportFolder    string
 }
 
 type (
@@ -47,6 +48,12 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	}
 
 	logger.Info("Running tests", "selected", testsList, "skipped", skippedTests)
+
+	if conf.TestReportFolder != "" {
+		if err = os.MkdirAll(conf.TestReportFolder, os.ModePerm); err != nil {
+			return err
+		}
+	}
 
 	var wg sync.WaitGroup
 	resultCh := make(chan instanceTestsResults)
@@ -103,6 +110,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 
 type instanceRunConf struct {
 	amiId, instanceProfileName, storageBucket, jobId, parentJobId, subnetId, regex, instanceId, controlPlaneIP string
+	testReportFolder                                                                                           string
 	bundlesOverride                                                                                            bool
 }
 
@@ -122,12 +130,17 @@ func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *t
 		return session.instanceId, nil, err
 	}
 
+	if err = conf.runPostTestsProcessing(session, testCommandResult); err != nil {
+		return session.instanceId, nil, err
+	}
+
 	return session.instanceId, testCommandResult, nil
 }
 
 func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResult, err error) {
 	logger.V(1).Info("Running e2e tests", "regex", regex)
-	command := "./bin/e2e.test -test.v"
+	command := "GOVERSION=go1.16.6 gotestsum --junitfile=junit-testing.xml --raw-command --format=standard-verbose --ignore-non-json-output-lines -- test2json -t -p e2e ./bin/e2e.test -test.v"
+
 	if regex != "" {
 		command = fmt.Sprintf("%s -test.run %s", command, regex)
 	}
@@ -146,20 +159,29 @@ func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResul
 		return nil, fmt.Errorf("error running e2e tests on instance %s: %v", e.instanceId, err)
 	}
 
+	return testCommandResult, nil
+}
+
+func (c instanceRunConf) runPostTestsProcessing(e *E2ESession, testCommandResult *testCommandResult) error {
+	e.uploadJUnitReport(c.regex)
+	if c.testReportFolder != "" {
+		e.downloadJUnitReport(c.regex, c.testReportFolder)
+	}
+
 	if !testCommandResult.Successful() {
-		e.uploadGeneratedFilesFromInstance(regex)
-		e.uploadDiagnosticArchiveFromInstance(regex)
-		return testCommandResult, nil
+		e.uploadGeneratedFilesFromInstance(c.regex)
+		e.uploadDiagnosticArchiveFromInstance(c.regex)
+		return nil
 	}
 
 	key := "Integration-Test-Done"
 	value := "TRUE"
-	err = ec2.TagInstance(e.session, e.instanceId, key, value)
+	err := ec2.TagInstance(e.session, e.instanceId, key, value)
 	if err != nil {
-		return nil, fmt.Errorf("error tagging instance for e2e success: %v", err)
+		return fmt.Errorf("error tagging instance for e2e success: %v", err)
 	}
 
-	return testCommandResult, nil
+	return nil
 }
 
 func (e *E2ESession) commandWithEnvVars(command string) string {
@@ -205,6 +227,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 				regex:               strings.Join(testsInCurrentInstance, "|"),
 				bundlesOverride:     conf.BundlesOverride,
 				controlPlaneIP:      ip,
+				testReportFolder:    conf.TestReportFolder,
 			})
 
 			testsInCurrentInstance = make([]string, 0, testPerInstance)
@@ -223,7 +246,7 @@ func logTestGroups(instancesConf []instanceRunConf) {
 }
 
 func logResult(t *testCommandResult) {
-	// Go tests send non-test log output through stderr
-	// So stderr will have the cli output
-	fmt.Println(string(t.StdErr))
+	// Because of the way we run tests with gotestsum and test2json
+	// both cli output and test logs get conveniently combined in stdout
+	fmt.Println(string(t.StdOut))
 }
