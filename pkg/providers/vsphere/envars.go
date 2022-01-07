@@ -8,21 +8,21 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
-func setupEnvVars(datacenterConfig *anywherev1.VSphereDatacenterConfig) error {
-	if vSphereUsername, ok := os.LookupEnv(eksavSphereUsernameKey); ok && len(vSphereUsername) > 0 {
+func SetupEnvVars(datacenterConfig *anywherev1.VSphereDatacenterConfig) error {
+	if vSphereUsername, ok := os.LookupEnv(EksavSphereUsernameKey); ok && len(vSphereUsername) > 0 {
 		if err := os.Setenv(vSphereUsernameKey, vSphereUsername); err != nil {
-			return fmt.Errorf("unable to set %s: %v", eksavSphereUsernameKey, err)
+			return fmt.Errorf("unable to set %s: %v", EksavSphereUsernameKey, err)
 		}
 	} else {
-		return fmt.Errorf("%s is not set or is empty", eksavSphereUsernameKey)
+		return fmt.Errorf("%s is not set or is empty", EksavSphereUsernameKey)
 	}
 
-	if vSpherePassword, ok := os.LookupEnv(eksavSpherePasswordKey); ok && len(vSpherePassword) > 0 {
+	if vSpherePassword, ok := os.LookupEnv(EksavSpherePasswordKey); ok && len(vSpherePassword) > 0 {
 		if err := os.Setenv(vSpherePasswordKey, vSpherePassword); err != nil {
-			return fmt.Errorf("unable to set %s: %v", eksavSpherePasswordKey, err)
+			return fmt.Errorf("unable to set %s: %v", EksavSpherePasswordKey, err)
 		}
 	} else {
-		return fmt.Errorf("%s is not set or is empty", eksavSpherePasswordKey)
+		return fmt.Errorf("%s is not set or is empty", EksavSpherePasswordKey)
 	}
 
 	if err := os.Setenv(vSphereServerKey, datacenterConfig.Spec.Server); err != nil {

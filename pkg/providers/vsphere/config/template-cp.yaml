@@ -447,6 +447,12 @@ spec:
     name: vsphere-csi-node
   - kind: ConfigMap
     name: vsphere-csi-controller
+  - kind: Secret
+    name: cloud-controller-manager
+  - kind: Secret
+    name: cloud-provider-vsphere-credentials
+  - kind: ConfigMap
+    name: cpi-manifests
 ---
 {{- if .externalEtcd }}
 kind: EtcdadmCluster
@@ -963,4 +969,251 @@ data:
 kind: ConfigMap
 metadata:
   name: internal-feature-states.csi.vsphere.vmware.com
+  namespace: {{.eksaSystemNamespace}}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloud-controller-manager
+  namespace: {{.eksaSystemNamespace}}
+stringData:
+  data: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: cloud-controller-manager
+      namespace: kube-system
+type: addons.cluster.x-k8s.io/resource-set
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloud-provider-vsphere-credentials
+  namespace: {{.eksaSystemNamespace}}
+stringData:
+  data: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: cloud-provider-vsphere-credentials
+      namespace: kube-system
+    stringData:
+      {{.vsphereServer}}.password: "{{.eksaVspherePassword}}"
+      {{.vsphereServer}}.username: "{{.eksaVsphereUsername}}"
+    type: Opaque
+type: addons.cluster.x-k8s.io/resource-set
+---
+apiVersion: v1
+data:
+  data: |
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      name: system:cloud-controller-manager
+    rules:
+    - apiGroups:
+      - ""
+      resources:
+      - events
+      verbs:
+      - create
+      - patch
+      - update
+    - apiGroups:
+      - ""
+      resources:
+      - nodes
+      verbs:
+      - '*'
+    - apiGroups:
+      - ""
+      resources:
+      - nodes/status
+      verbs:
+      - patch
+    - apiGroups:
+      - ""
+      resources:
+      - services
+      verbs:
+      - list
+      - patch
+      - update
+      - watch
+    - apiGroups:
+      - ""
+      resources:
+      - serviceaccounts
+      verbs:
+      - create
+      - get
+      - list
+      - watch
+      - update
+    - apiGroups:
+      - ""
+      resources:
+      - persistentvolumes
+      verbs:
+      - get
+      - list
+      - watch
+      - update
+    - apiGroups:
+      - ""
+      resources:
+      - endpoints
+      verbs:
+      - create
+      - get
+      - list
+      - watch
+      - update
+    - apiGroups:
+      - ""
+      resources:
+      - secrets
+      verbs:
+      - get
+      - list
+      - watch
+    - apiGroups:
+      - coordination.k8s.io
+      resources:
+      - leases
+      verbs:
+      - get
+      - watch
+      - list
+      - delete
+      - update
+      - create
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: system:cloud-controller-manager
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: system:cloud-controller-manager
+    subjects:
+    - kind: ServiceAccount
+      name: cloud-controller-manager
+      namespace: kube-system
+    - kind: User
+      name: cloud-controller-manager
+    ---
+    apiVersion: v1
+    data:
+      vsphere.conf: |
+        global:
+          secretName: cloud-provider-vsphere-credentials
+          secretNamespace: kube-system
+          thumbprint: "{{.thumbprint}}"
+        vcenter:
+          {{.vsphereServer}}:
+            datacenters:
+            - '{{.vsphereDatacenter}}'
+            secretName: cloud-provider-vsphere-credentials
+            secretNamespace: kube-system
+            server: '{{.vsphereServer}}'
+            thumbprint: '{{.thumbprint}}'
+    kind: ConfigMap
+    metadata:
+      name: vsphere-cloud-config
+      namespace: kube-system
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: servicecatalog.k8s.io:apiserver-authentication-reader
+      namespace: kube-system
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: Role
+      name: extension-apiserver-authentication-reader
+    subjects:
+    - kind: ServiceAccount
+      name: cloud-controller-manager
+      namespace: kube-system
+    - kind: User
+      name: cloud-controller-manager
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        component: cloud-controller-manager
+      name: cloud-controller-manager
+      namespace: kube-system
+    spec:
+      ports:
+      - port: 443
+        protocol: TCP
+        targetPort: 43001
+      selector:
+        component: cloud-controller-manager
+      type: NodePort
+    ---
+    apiVersion: apps/v1
+    kind: DaemonSet
+    metadata:
+      labels:
+        k8s-app: vsphere-cloud-controller-manager
+      name: vsphere-cloud-controller-manager
+      namespace: kube-system
+    spec:
+      selector:
+        matchLabels:
+          k8s-app: vsphere-cloud-controller-manager
+      template:
+        metadata:
+          labels:
+            k8s-app: vsphere-cloud-controller-manager
+        spec:
+          containers:
+          - args:
+            - --v=2
+            - --cloud-provider=vsphere
+            - --cloud-config=/etc/cloud/vsphere.conf
+            image: {{.managerImage}}
+            name: vsphere-cloud-controller-manager
+            resources:
+              requests:
+                cpu: 200m
+            volumeMounts:
+            - mountPath: /etc/cloud
+              name: vsphere-config-volume
+              readOnly: true
+          hostNetwork: true
+          serviceAccountName: cloud-controller-manager
+          tolerations:
+          - effect: NoSchedule
+            key: node.cloudprovider.kubernetes.io/uninitialized
+            value: "true"
+          - effect: NoSchedule
+            key: node-role.kubernetes.io/master
+          - effect: NoSchedule
+            key: node.kubernetes.io/not-ready
+{{- if .controlPlaneTaints }}
+{{- range .controlPlaneTaints}}
+          - key: {{ .Key }}
+            value: {{ .Value }}
+            effect: {{ .Effect }}
+{{- if .TimeAdded }}
+            timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- end }}
+          volumes:
+          - configMap:
+              name: vsphere-cloud-config
+            name: vsphere-config-volume
+      updateStrategy:
+        type: RollingUpdate
+kind: ConfigMap
+metadata:
+  name: cpi-manifests
   namespace: {{.eksaSystemNamespace}}

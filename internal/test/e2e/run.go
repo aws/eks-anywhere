@@ -29,13 +29,17 @@ type ParallelRunConf struct {
 	TestsToSkip         []string
 	BundlesOverride     bool
 	CleanupVms          bool
+	TestReportFolder    string
 }
 
-type instanceTestsResults struct {
-	conf      instanceRunConf
-	commandId string
-	err       error
-}
+type (
+	testCommandResult    = ssm.RunOutput
+	instanceTestsResults struct {
+		conf              instanceRunConf
+		testCommandResult *testCommandResult
+		err               error
+	}
+)
 
 func RunTestsInParallel(conf ParallelRunConf) error {
 	testsList, skippedTests, err := listTests(conf.Regex, conf.TestsToSkip)
@@ -44,6 +48,12 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	}
 
 	logger.Info("Running tests", "selected", testsList, "skipped", skippedTests)
+
+	if conf.TestReportFolder != "" {
+		if err = os.MkdirAll(conf.TestReportFolder, os.ModePerm); err != nil {
+			return err
+		}
+	}
 
 	var wg sync.WaitGroup
 	resultCh := make(chan instanceTestsResults)
@@ -55,7 +65,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			defer wg.Done()
 			r := instanceTestsResults{conf: c}
 
-			r.conf.instanceId, r.commandId, err = RunTests(c)
+			r.conf.instanceId, r.testCommandResult, err = RunTests(c)
 			if err != nil {
 				r.err = err
 			}
@@ -73,10 +83,15 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	failedInstances := 0
 	for r := range resultCh {
 		if r.err != nil {
-			logger.Error(r.err, "An e2e instance run has failed", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.commandId, "tests", r.conf.regex, "status", failedStatus)
+			logger.Error(r.err, "Failed running e2e tests for instance", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "tests", r.conf.regex, "status", failedStatus)
+			failedInstances += 1
+		} else if !r.testCommandResult.Successful() {
+			logger.Info("An e2e instance run has failed", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", failedStatus)
+			logResult(r.testCommandResult)
 			failedInstances += 1
 		} else {
-			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.commandId, "tests", r.conf.regex, "status", passedStatus)
+			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", passedStatus)
+			logResult(r.testCommandResult)
 		}
 		if conf.CleanupVms {
 			err = CleanUpVsphereTestResources(context.Background(), r.conf.instanceId)
@@ -95,31 +110,37 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 
 type instanceRunConf struct {
 	amiId, instanceProfileName, storageBucket, jobId, parentJobId, subnetId, regex, instanceId, controlPlaneIP string
+	testReportFolder                                                                                           string
 	bundlesOverride                                                                                            bool
 }
 
-func RunTests(conf instanceRunConf) (testInstanceID, commandId string, err error) {
+func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *testCommandResult, err error) {
 	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.jobId, conf.subnetId, conf.controlPlaneIP, conf.bundlesOverride)
 	if err != nil {
-		return "", "", err
+		return "", nil, err
 	}
 
 	err = session.setup(conf.regex)
 	if err != nil {
-		return session.instanceId, "", err
+		return session.instanceId, nil, err
 	}
 
-	commandId, err = session.runTests(conf.regex)
+	testCommandResult, err = session.runTests(conf.regex)
 	if err != nil {
-		return session.instanceId, commandId, err
+		return session.instanceId, nil, err
 	}
 
-	return session.instanceId, commandId, nil
+	if err = conf.runPostTestsProcessing(session, testCommandResult); err != nil {
+		return session.instanceId, nil, err
+	}
+
+	return session.instanceId, testCommandResult, nil
 }
 
-func (e *E2ESession) runTests(regex string) (commandId string, err error) {
+func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResult, err error) {
 	logger.V(1).Info("Running e2e tests", "regex", regex)
-	command := "./bin/e2e.test -test.v"
+	command := "GOVERSION=go1.16.6 gotestsum --junitfile=junit-testing.xml --raw-command --format=standard-verbose --ignore-non-json-output-lines -- test2json -t -p e2e ./bin/e2e.test -test.v"
+
 	if regex != "" {
 		command = fmt.Sprintf("%s -test.run %s", command, regex)
 	}
@@ -128,26 +149,39 @@ func (e *E2ESession) runTests(regex string) (commandId string, err error) {
 
 	opt := ssm.WithOutputToCloudwatch()
 
-	commandId, err = ssm.Run(
+	testCommandResult, err = ssm.RunCommand(
 		e.session,
 		e.instanceId,
 		command,
 		opt,
 	)
 	if err != nil {
-		e.uploadGeneratedFilesFromInstance(regex)
-		e.uploadDiagnosticArchiveFromInstance(regex)
-		return commandId, fmt.Errorf("error running e2e tests on instance %s: %v", e.instanceId, err)
+		return nil, fmt.Errorf("error running e2e tests on instance %s: %v", e.instanceId, err)
+	}
+
+	return testCommandResult, nil
+}
+
+func (c instanceRunConf) runPostTestsProcessing(e *E2ESession, testCommandResult *testCommandResult) error {
+	e.uploadJUnitReport(c.regex)
+	if c.testReportFolder != "" {
+		e.downloadJUnitReport(c.regex, c.testReportFolder)
+	}
+
+	if !testCommandResult.Successful() {
+		e.uploadGeneratedFilesFromInstance(c.regex)
+		e.uploadDiagnosticArchiveFromInstance(c.regex)
+		return nil
 	}
 
 	key := "Integration-Test-Done"
 	value := "TRUE"
-	err = ec2.TagInstance(e.session, e.instanceId, key, value)
+	err := ec2.TagInstance(e.session, e.instanceId, key, value)
 	if err != nil {
-		return commandId, fmt.Errorf("error tagging instance for e2e success: %v", err)
+		return fmt.Errorf("error tagging instance for e2e success: %v", err)
 	}
 
-	return commandId, nil
+	return nil
 }
 
 func (e *E2ESession) commandWithEnvVars(command string) string {
@@ -193,6 +227,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 				regex:               strings.Join(testsInCurrentInstance, "|"),
 				bundlesOverride:     conf.BundlesOverride,
 				controlPlaneIP:      ip,
+				testReportFolder:    conf.TestReportFolder,
 			})
 
 			testsInCurrentInstance = make([]string, 0, testPerInstance)
@@ -208,4 +243,10 @@ func logTestGroups(instancesConf []instanceRunConf) {
 		testGroups = append(testGroups, i.regex)
 	}
 	logger.V(1).Info("Running tests in parallel", "testsGroups", testGroups)
+}
+
+func logResult(t *testCommandResult) {
+	// Because of the way we run tests with gotestsum and test2json
+	// both cli output and test logs get conveniently combined in stdout
+	fmt.Println(string(t.StdOut))
 }

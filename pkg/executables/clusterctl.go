@@ -9,7 +9,6 @@ import (
 	"path"
 	"path/filepath"
 
-	anywherev1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -74,6 +73,12 @@ func buildOverridesLayer(clusterSpec *cluster.Spec, clusterName string, provider
 	prefix := filepath.Join(clusterName, generatedDir, overridesDir)
 
 	infraBundles := []types.InfrastructureBundle{
+		{
+			FolderName: filepath.Join("cert-manager", bundle.CertManager.Version),
+			Manifests: []v1alpha1.Manifest{
+				bundle.CertManager.Manifest,
+			},
+		},
 		{
 			FolderName: filepath.Join("bootstrap-kubeadm", bundle.Bootstrap.Version),
 			Manifests: []v1alpha1.Manifest{
@@ -189,10 +194,6 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, clusterSpec *cluste
 		"--config", clusterctlConfig.configFile,
 		"--bootstrap", clusterctlConfig.etcdadmBootstrapVersion,
 		"--bootstrap", clusterctlConfig.etcdadmControllerVersion,
-	}
-	// Not supported for docker controllers at this time
-	if clusterSpec.Spec.DatacenterRef.Kind != anywherev1alpha1.DockerDatacenterKind {
-		params = append(params, "--watching-namespace", constants.EksaSystemNamespace)
 	}
 
 	if cluster.KubeconfigFile != "" {
@@ -375,11 +376,6 @@ func (c *Clusterctl) InstallEtcdadmProviders(ctx context.Context, clusterSpec *c
 		default:
 			return fmt.Errorf("unrecognized capi provider %s", provider)
 		}
-	}
-
-	// Not supported for docker controllers at this time
-	if clusterSpec.Spec.DatacenterRef.Kind != anywherev1alpha1.DockerDatacenterKind {
-		params = append(params, "--watching-namespace", constants.EksaSystemNamespace)
 	}
 
 	if cluster.KubeconfigFile != "" {

@@ -12,18 +12,17 @@ import (
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-type defaulter struct {
+type Defaulter struct {
 	govc ProviderGovcClient
 }
 
-func newDefaulter(govc ProviderGovcClient) *defaulter {
-	return &defaulter{
+func NewDefaulter(govc ProviderGovcClient) *Defaulter {
+	return &Defaulter{
 		govc: govc,
 	}
 }
 
-func (d *defaulter) setDefaults(ctx context.Context, spec *spec) error {
-	setDefaultsForDatacenterConfig(spec.datacenterConfig)
+func (d *Defaulter) setDefaultsForMachineConfig(ctx context.Context, spec *spec) error {
 	setDefaultsForEtcdMachineConfig(spec.etcdMachineConfig())
 	for _, m := range spec.machineConfigs() {
 		setDefaultsForMachineConfig(m)
@@ -43,13 +42,16 @@ func (d *defaulter) setDefaults(ctx context.Context, spec *spec) error {
 	return nil
 }
 
-func setDefaultsForDatacenterConfig(datacenterConfig *anywherev1.VSphereDatacenterConfig) {
-	if datacenterConfig.Spec.Insecure {
-		logger.Info("Warning: VSphereDatacenterConfig configured in insecure mode")
-		datacenterConfig.Spec.Thumbprint = ""
+func (d *Defaulter) SetDefaultsForDatacenterConfig(ctx context.Context, datacenterConfig *anywherev1.VSphereDatacenterConfig) error {
+	datacenterConfig.SetDefaults()
+
+	if datacenterConfig.Spec.Thumbprint != "" {
+		if err := d.govc.ConfigureCertThumbprint(ctx, datacenterConfig.Spec.Server, datacenterConfig.Spec.Thumbprint); err != nil {
+			return fmt.Errorf("failed configuring govc cert thumbprint: %v", err)
+		}
 	}
 
-	datacenterConfig.Spec.Network = generateFullVCenterPath(networkFolderType, datacenterConfig.Spec.Network, datacenterConfig.Spec.Datacenter)
+	return nil
 }
 
 func setDefaultsForEtcdMachineConfig(machineConfig *anywherev1.VSphereMachineConfig) {
@@ -98,7 +100,7 @@ func setDefaultsForMachineConfig(machineConfig *anywherev1.VSphereMachineConfig)
 	}
 }
 
-func (d *defaulter) setDefaultTemplateIfMissing(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
+func (d *Defaulter) setDefaultTemplateIfMissing(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
 	if machineConfig.Spec.Template == "" {
 		logger.V(1).Info("Control plane VSphereMachineConfig template is not set. Using default template.")
 		if err := d.setupDefaultTemplate(ctx, spec, machineConfig); err != nil {
@@ -109,10 +111,19 @@ func (d *defaulter) setDefaultTemplateIfMissing(ctx context.Context, spec *spec,
 	return nil
 }
 
-func (d *defaulter) setupDefaultTemplate(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
-	ova := defaultOVAForMachineConfig(spec, machineConfig)
+func (d *Defaulter) setupDefaultTemplate(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
 	osFamily := machineConfig.Spec.OSFamily
 	eksd := spec.VersionsBundle.EksD
+	var ova releasev1.OvaArchive
+	switch osFamily {
+	case anywherev1.Bottlerocket:
+		ova = eksd.Ova.Bottlerocket
+	case anywherev1.Ubuntu:
+		ova = eksd.Ova.Ubuntu
+	default:
+		return fmt.Errorf("can not import ova for osFamily: %s, please use a valid osFamily", osFamily)
+	}
+
 	templateName := fmt.Sprintf("%s-%s-%s-%s-%s", osFamily, eksd.KubeVersion, eksd.Name, strings.Join(ova.Arch, "-"), ova.SHA256[:7])
 	machineConfig.Spec.Template = filepath.Join("/", spec.datacenterConfig.Spec.Datacenter, defaultTemplatesFolder, templateName)
 
@@ -129,21 +140,7 @@ func (d *defaulter) setupDefaultTemplate(ctx context.Context, spec *spec, machin
 	return nil
 }
 
-func defaultOVAForMachineConfig(spec *spec, machineConfig *anywherev1.VSphereMachineConfig) releasev1.OvaArchive {
-	osFamily := machineConfig.Spec.OSFamily
-	eksd := spec.VersionsBundle.EksD
-
-	switch osFamily {
-	case anywherev1.Bottlerocket:
-		return eksd.Ova.Bottlerocket
-	case anywherev1.Ubuntu:
-		return eksd.Ova.Ubuntu
-	default:
-		return releasev1.OvaArchive{}
-	}
-}
-
-func (d *defaulter) setDiskDefaults(ctx context.Context, machineConfig *anywherev1.VSphereMachineConfig) error {
+func (d *Defaulter) setDiskDefaults(ctx context.Context, machineConfig *anywherev1.VSphereMachineConfig) error {
 	templateHasSnapshot, err := d.govc.TemplateHasSnapshot(ctx, machineConfig.Spec.Template)
 	if err != nil {
 		return fmt.Errorf("error getting template details: %v", err)
@@ -163,7 +160,7 @@ func (d *defaulter) setDiskDefaults(ctx context.Context, machineConfig *anywhere
 	return nil
 }
 
-func (d *defaulter) setTemplateFullPath(ctx context.Context,
+func (d *Defaulter) setTemplateFullPath(ctx context.Context,
 	datacenterConfig *anywherev1.VSphereDatacenterConfig,
 	machine *anywherev1.VSphereMachineConfig) error {
 	templateFullPath, err := d.govc.SearchTemplate(ctx, datacenterConfig.Spec.Datacenter, machine)

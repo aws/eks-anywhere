@@ -1,10 +1,13 @@
 package framework
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"crypto/sha1"
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -294,14 +297,32 @@ func (e *ClusterE2ETest) Run(name string, args ...string) {
 	if err != nil {
 		e.T.Fatalf("Error finding current directory: %v", err)
 	}
+	var stdoutAndErr bytes.Buffer
 
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s/bin:%s", workDir, envPath))
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
+	cmd.Stderr = io.MultiWriter(os.Stderr, &stdoutAndErr)
+	cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutAndErr)
 
-	err = cmd.Run()
-	if err != nil {
+	if err = cmd.Run(); err != nil {
+		scanner := bufio.NewScanner(&stdoutAndErr)
+		var errorMessage string
+		// Look for the last line of the out put that starts with 'Error:'
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.HasPrefix(line, "Error:") {
+				errorMessage = line
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			e.T.Fatalf("Failed reading command output looking for error message: %v", err)
+		}
+
+		if errorMessage != "" {
+			e.T.Fatalf("Command %s %v failed with error: %v: %s", name, args, err, errorMessage)
+		}
+
 		e.T.Fatalf("Error running command %s %v: %v", name, args, err)
 	}
 }

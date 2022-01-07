@@ -13,19 +13,19 @@ import (
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-type validator struct {
+type Validator struct {
 	govc      ProviderGovcClient
 	netClient networkutils.NetClient
 }
 
-func newValidator(govc ProviderGovcClient, netClient networkutils.NetClient) *validator {
-	return &validator{
+func NewValidator(govc ProviderGovcClient, netClient networkutils.NetClient) *Validator {
+	return &Validator{
 		govc:      govc,
 		netClient: netClient,
 	}
 }
 
-func (v *validator) validateVCenterAccess(ctx context.Context, server string) error {
+func (v *Validator) validateVCenterAccess(ctx context.Context, server string) error {
 	if err := v.govc.ValidateVCenterConnection(ctx, server); err != nil {
 		return fmt.Errorf("failed validating connection to vCenter: %v", err)
 	}
@@ -39,27 +39,37 @@ func (v *validator) validateVCenterAccess(ctx context.Context, server string) er
 	return nil
 }
 
-// TODO: dry out machine configs validations
-func (v *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spec) error {
-	if len(vsphereClusterSpec.datacenterConfig.Spec.Server) <= 0 {
-		return errors.New("VSphereDatacenterConfig server is not set or is empty")
+func (v *Validator) ValidateVCenterConfig(ctx context.Context, datacenterConfig *anywherev1.VSphereDatacenterConfig) error {
+	if err := v.validateVCenterAccess(ctx, datacenterConfig.Spec.Server); err != nil {
+		return err
 	}
 
+	if err := v.validateThumbprint(ctx, datacenterConfig); err != nil {
+		return err
+	}
+
+	if err := v.validateDatacenter(ctx, datacenterConfig.Spec.Datacenter); err != nil {
+		return err
+	}
+	logger.MarkPass("Datacenter validated")
+
+	if err := v.validateNetwork(ctx, datacenterConfig.Spec.Network); err != nil {
+		return err
+	}
+	logger.MarkPass("Network validated")
+
+	return nil
+}
+
+// TODO: dry out machine configs validations
+func (v *Validator) validateCluster(ctx context.Context, vsphereClusterSpec *spec) error {
 	var etcdMachineConfig *anywherev1.VSphereMachineConfig
 
 	// TODO: move this to api Cluster validations
 	if len(vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
 		return errors.New("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
 	}
-	if len(vsphereClusterSpec.datacenterConfig.Spec.Datacenter) <= 0 {
-		return errors.New("VSphereDatacenterConfig datacenter is not set or is empty")
-	}
-	if len(vsphereClusterSpec.datacenterConfig.Spec.Network) <= 0 {
-		return errors.New("VSphereDatacenterConfig VM network is not set or is empty")
-	}
-	if err := validatePath(networkFolderType, vsphereClusterSpec.datacenterConfig.Spec.Network, vsphereClusterSpec.datacenterConfig.Spec.Datacenter); err != nil {
-		return err
-	}
+
 	if vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
 		return errors.New("must specify machineGroupRef for control plane")
 	}
@@ -119,26 +129,23 @@ func (v *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 		return err
 	}
 
-	if err := v.validateThumbprint(ctx, vsphereClusterSpec); err != nil {
-		return err
-	}
-
-	if err := v.validateDatacenter(ctx, vsphereClusterSpec); err != nil {
-		return err
-	}
-	logger.MarkPass("Datacenter validated")
-
-	if err := v.validateNetwork(ctx, vsphereClusterSpec); err != nil {
-		return err
-	}
-	logger.MarkPass("Network validated")
-
 	for _, config := range vsphereClusterSpec.machineConfigsLookup {
 		var b bool                                                                                            // Temporary until we remove the need to pass a bool pointer
 		err := v.govc.ValidateVCenterSetupMachineConfig(ctx, vsphereClusterSpec.datacenterConfig, config, &b) // TODO: remove side effects from this implementation or directly move it to set defaults (pointer to bool is not needed)
 		if err != nil {
 			return fmt.Errorf("error validating vCenter setup for VSphereMachineConfig %v: %v", config.Name, err)
 		}
+	}
+	if controlPlaneMachineConfig.Spec.OSFamily != anywherev1.Bottlerocket && controlPlaneMachineConfig.Spec.OSFamily != anywherev1.Ubuntu {
+		return fmt.Errorf("control plane osFamily: %s is not supported, please use one of the following: %s, %s", controlPlaneMachineConfig.Spec.OSFamily, anywherev1.Bottlerocket, anywherev1.Ubuntu)
+	}
+
+	if workerNodeGroupMachineConfig.Spec.OSFamily != anywherev1.Bottlerocket && workerNodeGroupMachineConfig.Spec.OSFamily != anywherev1.Ubuntu {
+		return fmt.Errorf("worker node osFamily: %s is not supported, please use one of the following: %s, %s", workerNodeGroupMachineConfig.Spec.OSFamily, anywherev1.Bottlerocket, anywherev1.Ubuntu)
+	}
+
+	if etcdMachineConfig != nil && etcdMachineConfig.Spec.OSFamily != anywherev1.Bottlerocket && etcdMachineConfig.Spec.OSFamily != anywherev1.Ubuntu {
+		return fmt.Errorf("etcd node osFamily: %s is not supported, please use one of the following: %s, %s", etcdMachineConfig.Spec.OSFamily, anywherev1.Bottlerocket, anywherev1.Ubuntu)
 	}
 
 	if controlPlaneMachineConfig.Spec.OSFamily != workerNodeGroupMachineConfig.Spec.OSFamily {
@@ -191,7 +198,7 @@ func (v *validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 	return v.validateDatastoreUsage(ctx, vsphereClusterSpec.Spec, controlPlaneMachineConfig, workerNodeGroupMachineConfig, etcdMachineConfig)
 }
 
-func (p *validator) validateControlPlaneIp(ip string) error {
+func (v *Validator) validateControlPlaneIp(ip string) error {
 	// check if controlPlaneEndpointIp is valid
 	parsedIp := net.ParseIP(ip)
 	if parsedIp == nil {
@@ -200,26 +207,26 @@ func (p *validator) validateControlPlaneIp(ip string) error {
 	return nil
 }
 
-func (p *validator) validateSSHUsername(machineConfig *anywherev1.VSphereMachineConfig) error {
+func (v *Validator) validateSSHUsername(machineConfig *anywherev1.VSphereMachineConfig) error {
 	if machineConfig.Spec.OSFamily == anywherev1.Bottlerocket && machineConfig.Spec.Users[0].Name != bottlerocketDefaultUser {
 		return fmt.Errorf("SSHUsername %s is invalid. Please use 'ec2-user' for Bottlerocket", machineConfig.Spec.Users[0].Name)
 	}
 	return nil
 }
 
-func (p *validator) validateTemplate(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
-	if err := p.validateTemplatePresence(ctx, spec.datacenterConfig.Spec.Datacenter, machineConfig); err != nil {
+func (v *Validator) validateTemplate(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
+	if err := v.validateTemplatePresence(ctx, spec.datacenterConfig.Spec.Datacenter, machineConfig); err != nil {
 		return err
 	}
 
-	if err := p.validateTemplateTags(ctx, spec, machineConfig); err != nil {
+	if err := v.validateTemplateTags(ctx, spec, machineConfig); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (v *validator) validateTemplatePresence(ctx context.Context, datacenter string, machineConfig *anywherev1.VSphereMachineConfig) error {
+func (v *Validator) validateTemplatePresence(ctx context.Context, datacenter string, machineConfig *anywherev1.VSphereMachineConfig) error {
 	templateFullPath, err := v.govc.SearchTemplate(ctx, datacenter, machineConfig)
 	if err != nil {
 		return fmt.Errorf("error validating template: %v", err)
@@ -232,7 +239,7 @@ func (v *validator) validateTemplatePresence(ctx context.Context, datacenter str
 	return nil
 }
 
-func (v *validator) validateTemplateTags(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
+func (v *Validator) validateTemplateTags(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
 	tags, err := v.govc.GetTags(ctx, machineConfig.Spec.Template)
 	if err != nil {
 		return fmt.Errorf("error validating template tags: %v", err)
@@ -256,7 +263,7 @@ type datastoreUsage struct {
 
 // TODO: cleanup this method signature
 // TODO: dry out implementation
-func (v *validator) validateDatastoreUsage(ctx context.Context, clusterSpec *cluster.Spec, controlPlaneMachineConfig *anywherev1.VSphereMachineConfig, workerNodeGroupMachineConfig *anywherev1.VSphereMachineConfig, etcdMachineConfig *anywherev1.VSphereMachineConfig) error {
+func (v *Validator) validateDatastoreUsage(ctx context.Context, clusterSpec *cluster.Spec, controlPlaneMachineConfig *anywherev1.VSphereMachineConfig, workerNodeGroupMachineConfig *anywherev1.VSphereMachineConfig, etcdMachineConfig *anywherev1.VSphereMachineConfig) error {
 	usage := make(map[string]*datastoreUsage)
 	controlPlaneAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, controlPlaneMachineConfig.Spec.Datastore) // TODO: remove dependency on machineConfig
 	if err != nil {
@@ -307,9 +314,9 @@ func (v *validator) validateDatastoreUsage(ctx context.Context, clusterSpec *clu
 	return nil
 }
 
-func (v *validator) validateThumbprint(ctx context.Context, spec *spec) error {
+func (v *Validator) validateThumbprint(ctx context.Context, datacenterConfig *anywherev1.VSphereDatacenterConfig) error {
 	// No need to validate thumbprint in insecure mode
-	if spec.datacenterConfig.Spec.Insecure {
+	if datacenterConfig.Spec.Insecure {
 		return nil
 	}
 
@@ -318,7 +325,7 @@ func (v *validator) validateThumbprint(ctx context.Context, spec *spec) error {
 		return nil
 	}
 
-	if spec.datacenterConfig.Spec.Thumbprint == "" {
+	if datacenterConfig.Spec.Thumbprint == "" {
 		return fmt.Errorf("thumbprint is required for secure mode with self-signed certificates")
 	}
 
@@ -327,15 +334,14 @@ func (v *validator) validateThumbprint(ctx context.Context, spec *spec) error {
 		return err
 	}
 
-	if thumbprint != spec.datacenterConfig.Spec.Thumbprint {
-		return fmt.Errorf("thumbprint mismatch detected, expected: %s, actual: %s", spec.datacenterConfig.Spec.Thumbprint, thumbprint)
+	if thumbprint != datacenterConfig.Spec.Thumbprint {
+		return fmt.Errorf("thumbprint mismatch detected, expected: %s, actual: %s", datacenterConfig.Spec.Thumbprint, thumbprint)
 	}
 
 	return nil
 }
 
-func (v *validator) validateDatacenter(ctx context.Context, spec *spec) error {
-	datacenter := spec.datacenterConfig.Spec.Datacenter
+func (v *Validator) validateDatacenter(ctx context.Context, datacenter string) error {
 	exists, err := v.govc.DatacenterExists(ctx, datacenter)
 	if err != nil {
 		return err
@@ -348,8 +354,7 @@ func (v *validator) validateDatacenter(ctx context.Context, spec *spec) error {
 	return nil
 }
 
-func (v *validator) validateNetwork(ctx context.Context, spec *spec) error {
-	network := spec.datacenterConfig.Spec.Network
+func (v *Validator) validateNetwork(ctx context.Context, network string) error {
 	exists, err := v.govc.NetworkExists(ctx, network)
 	if err != nil {
 		return err
@@ -362,7 +367,7 @@ func (v *validator) validateNetwork(ctx context.Context, spec *spec) error {
 	return nil
 }
 
-func (v *validator) validateControlPlaneIpUniqueness(spec *spec) error {
+func (v *Validator) validateControlPlaneIpUniqueness(spec *spec) error {
 	ip := spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
 	if !networkutils.NewIPGenerator(v.netClient).IsIPUnique(ip) {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)

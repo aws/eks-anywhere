@@ -379,9 +379,15 @@ func (r *ReleaseConfig) UploadArtifacts(eksArtifacts map[string][]Artifact) erro
 				releaseImageUri := artifact.Image.ReleaseImageURI
 				fmt.Printf("Source Image - %s\n", sourceImageUri)
 				fmt.Printf("Destination Image - %s\n", releaseImageUri)
-				err := images.CopyToDestination(sourceEcrAuthConfig, releaseEcrAuthConfig, sourceImageUri, releaseImageUri)
+				exists, err := ecrpublic.CheckImageExistence(releaseImageUri, r.ReleaseContainerRegistry, r.ReleaseClients.ECRPublic.Client)
 				if err != nil {
 					return errors.Cause(err)
+				}
+				if !exists {
+					err := images.CopyToDestination(sourceEcrAuthConfig, releaseEcrAuthConfig, sourceImageUri, releaseImageUri)
+					if err != nil {
+						return errors.Cause(err)
+					}
 				}
 			}
 		}

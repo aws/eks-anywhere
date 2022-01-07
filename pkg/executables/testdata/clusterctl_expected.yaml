@@ -93,4 +93,5 @@ images:
     tag: v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244 #org one is v0.4.0
 cert-manager:
   timeout: 30m
-cert-manager-version: v1.1.0+88d7476
+  url: "{{.dir}}/cluster-name/generated/overrides/cert-manager/v1.5.3/cert-manager.yaml"
+  version: v1.5.3

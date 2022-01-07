@@ -49,7 +49,6 @@ func NewClusterReconciler(resourceFetcher ResourceFetcher, resourceUpdater Resou
 }
 
 func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.NamespacedName, dryRun bool) error {
-	cor.Log.Info("TEMP: Testing to see if this log message shows up")
 	var resources []*unstructured.Unstructured
 	cs, err := cor.FetchCluster(ctx, objectKey)
 	if err != nil {

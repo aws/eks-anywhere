@@ -2108,6 +2108,11 @@ spec:
                       description: Count defines the number of desired worker nodes.
                         Defaults to 1.
                       type: integer
+                    labels:
+                      additionalProperties:
+                        type: string
+                      description: Labels define the labels to assign to the node
+                      type: object
                     machineGroupRef:
                       description: MachineGroupRef defines the machine group configuration
                         for the worker nodes.
@@ -2566,6 +2571,16 @@ spec:
           status:
             description: VSphereDatacenterConfigStatus defines the observed state
               of VSphereDatacenterConfig
+            properties:
+              observedGeneration:
+                description: ObservedGeneration is the latest generation observed
+                  by the controller.
+                format: int64
+                type: integer
+              specValid:
+                description: SpecValid is set to true if vspheredatacenterconfig is
+                  validated.
+                type: boolean
             type: object
         type: object
     served: true

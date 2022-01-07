@@ -89,13 +89,12 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 				Name:           "cluster-name",
 				KubeconfigFile: "",
 			},
-			providerName:    "aws",
-			providerVersion: versionBundle.Aws.Version,
+			providerName:    "vsphere",
+			providerVersion: versionBundle.VSphere.Version,
 			env:             map[string]string{"ENV_VAR1": "VALUE1", "ENV_VAR2": "VALUE2"},
 			wantExecArgs: []interface{}{
-				"init", "--core", core, "--bootstrap", bootstrap, "--control-plane", controlPlane, "--infrastructure", "aws:v0.6.4", "--config", test.OfType("string"),
+				"init", "--core", core, "--bootstrap", bootstrap, "--control-plane", controlPlane, "--infrastructure", "vsphere:v0.7.8", "--config", test.OfType("string"),
 				"--bootstrap", etcdadmBootstrap, "--bootstrap", etcdadmController,
-				"--watching-namespace", constants.EksaSystemNamespace,
 			},
 			wantConfig: "testdata/clusterctl_expected.yaml",
 		},
@@ -111,7 +110,7 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			wantExecArgs: []interface{}{
 				"init", "--core", core, "--bootstrap", bootstrap, "--control-plane", controlPlane, "--infrastructure", "vsphere:v0.7.8", "--config", test.OfType("string"),
 				"--bootstrap", etcdadmBootstrap, "--bootstrap", etcdadmController,
-				"--watching-namespace", constants.EksaSystemNamespace, "--kubeconfig", "tmp/k.kubeconfig",
+				"--kubeconfig", "tmp/k.kubeconfig",
 			},
 			wantConfig: "testdata/clusterctl_expected.yaml",
 		},
@@ -427,7 +426,10 @@ var versionBundle = &cluster.VersionsBundle{
 			Webhook: v1alpha1.Image{
 				URI: "public.ecr.aws/l0g8r8j6/jetstack/cert-manager-webhook:v1.1.0",
 			},
-			Version: "v1.1.0+88d7476",
+			Manifest: v1alpha1.Manifest{
+				URI: "testdata/fake_manifest.yaml",
+			},
+			Version: "v1.5.3",
 		},
 		ClusterAPI: v1alpha1.CoreClusterAPI{
 			Version: "v0.3.19",

@@ -60,7 +60,18 @@ func (r *VSphereDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereDataCenterConfig but got a %T", old))
 	}
 
+	if oldDatacenterConfig.IsReconcilePaused() {
+		vspheredatacenterconfiglog.Info("Reconciliation is paused")
+		return nil
+	}
+
+	r.SetDefaults()
+
 	var allErrs field.ErrorList
+
+	if err := r.ValidateFields(); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec"), r.Spec, err.Error()))
+	}
 
 	allErrs = append(allErrs, validateImmutableFieldsVSphereCluster(r, oldDatacenterConfig)...)
 
@@ -72,11 +83,6 @@ func (r *VSphereDatacenterConfig) ValidateUpdate(old runtime.Object) error {
 }
 
 func validateImmutableFieldsVSphereCluster(new, old *VSphereDatacenterConfig) field.ErrorList {
-	if old.IsReconcilePaused() {
-		vspheredatacenterconfiglog.Info("Reconciliation is paused")
-		return nil
-	}
-
 	var allErrs field.ErrorList
 
 	if old.Spec.Server != new.Spec.Server {

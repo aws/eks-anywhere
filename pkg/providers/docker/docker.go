@@ -217,7 +217,9 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 
 func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
-	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf))
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+    Append(clusterapi.NodeLabelsExtraArgs(clusterSpec.Spec.WorkerNodeGroupConfigurations[0])).
+    Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf))
 
 	values := map[string]interface{}{
 		"clusterName":         clusterSpec.Name,
