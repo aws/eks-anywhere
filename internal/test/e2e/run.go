@@ -163,9 +163,9 @@ func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResul
 }
 
 func (c instanceRunConf) runPostTestsProcessing(e *E2ESession, testCommandResult *testCommandResult) error {
-	e.uploadJUnitReport(c.regex)
+	e.uploadJUnitReportFromInstance(c.regex)
 	if c.testReportFolder != "" {
-		e.downloadJUnitReport(c.regex, c.testReportFolder)
+		e.downloadJUnitReportToLocalDisk(c.regex, c.testReportFolder)
 	}
 
 	if !testCommandResult.Successful() {

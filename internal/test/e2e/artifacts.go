@@ -9,10 +9,15 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
+const e2eHomeFolder = "/home/e2e/"
+
 func (e *E2ESession) uploadGeneratedFilesFromInstance(testName string) {
 	logger.V(1).Info("Uploading log files to s3 bucket")
-	command := fmt.Sprintf("aws s3 cp /home/e2e/%s/ %s/%s/ --recursive",
-		e.instanceId, e.generatedArtifactsBucketPath(), testName)
+	command := newCopyCommand().from(
+		e2eHomeFolder, e.instanceId,
+	).to(
+		e.generatedArtifactsBucketPath(), testName,
+	).recursive().String()
 
 	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
 		logger.Error(err, "error uploading log files from instance")
@@ -24,8 +29,9 @@ func (e *E2ESession) uploadGeneratedFilesFromInstance(testName string) {
 func (e *E2ESession) uploadDiagnosticArchiveFromInstance(testName string) {
 	bundleNameFormat := "support-bundle-*.tar.gz"
 	logger.V(1).Info("Uploading diagnostic bundle to s3 bucket")
-	command := fmt.Sprintf("aws s3 cp /home/e2e/ %s/%s/ --recursive --exclude \"*\" --include \"%s\"",
-		e.generatedArtifactsBucketPath(), testName, bundleNameFormat)
+	command := newCopyCommand().from(e2eHomeFolder).to(
+		e.generatedArtifactsBucketPath(), testName,
+	).recursive().exclude("*").include(bundleNameFormat).String()
 
 	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
 		logger.Error(err, "error uploading diagnostic bundle from instance")
@@ -34,11 +40,12 @@ func (e *E2ESession) uploadDiagnosticArchiveFromInstance(testName string) {
 	}
 }
 
-func (e *E2ESession) uploadJUnitReport(testName string) {
+func (e *E2ESession) uploadJUnitReportFromInstance(testName string) {
 	junitFile := "junit-testing.xml"
 	logger.V(1).Info("Uploading JUnit report to s3 bucket")
-	command := fmt.Sprintf("aws s3 cp /home/e2e/ %s/%s/ --recursive --exclude \"*\" --include \"%s\"",
-		e.generatedArtifactsBucketPath(), testName, junitFile)
+	command := newCopyCommand().from(e2eHomeFolder).to(
+		e.generatedArtifactsBucketPath(), testName,
+	).recursive().exclude("*").include(junitFile).String()
 
 	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
 		logger.Error(err, "error uploading JUnit report from instance")
@@ -47,7 +54,7 @@ func (e *E2ESession) uploadJUnitReport(testName string) {
 	}
 }
 
-func (e *E2ESession) downloadJUnitReport(testName, destinationFolder string) {
+func (e *E2ESession) downloadJUnitReportToLocalDisk(testName, destinationFolder string) {
 	junitFile := "junit-testing.xml"
 	key := filepath.Join(e.generatedArtifactsPath(), testName, junitFile)
 	dst := filepath.Join(destinationFolder, fmt.Sprintf("junit-testing-%s.xml", testName))
