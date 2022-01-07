@@ -16,12 +16,14 @@ When you create a cluster with IAM Authenticator enabled, EKS Anywhere
 * Configures the Kubernetes API Server to communicate with iam authenticator using a [token authentication webhook](https://kubernetes.io/docs/admin/authentication/#webhook-token-authentication).
 * Creates the necessary ConfigMaps based on user options.
 
->**_NOTE:_** Enabling IAM Authenticator needs to be done during cluster creation.
+{{% alert title="Note" color="primary" %}}
+Enabling IAM Authenticator needs to be done during cluster creation.
+{{% /alert %}}
 
 ### Create IAM Authenticator enabled cluster
 Generate your cluster configuration and add the necessary IAM Authenticator configuration. For a full spec reference check [AWSIamConfig]({{< relref "../../reference/clusterspec/iamauth" >}}).
 
-1. Create an EKS Anywhere cluster.
+Create an EKS Anywhere cluster as follows:
 
     ```bash
     CLUSTER_NAME=my-cluster-name
@@ -64,7 +66,9 @@ spec:
     partition: aws
 ```
 
->**_NOTE:_** When using backend mode `CRD` the `mapRoles` and `mapUsers` are not required. For more details on configuring CRD mode, refer [CRD](https://github.com/kubernetes-sigs/aws-iam-authenticator#crd-alpha)
+{{% alert title="Note" color="primary" %}}
+When using backend mode `CRD`, the `mapRoles` and `mapUsers` are not required. For more details on configuring CRD mode, refer to [CRD](https://github.com/kubernetes-sigs/aws-iam-authenticator#crd-alpha).
+{{% /alert %}}
 
 ### Authenticating with IAM Authenticator
 After your cluster is created you may now use the mapped IAM ARNs to authenticate to the cluster. 
@@ -103,9 +107,9 @@ ${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-aws.kubeconfig
 EKS Anywhere supports modifying IAM ARNs that are mapped on the cluster. The mappings can be modified by either running the `upgrade cluster` command or using `GitOps`.
 
 #### upgrade command
-The `mapRoles` and `mapUsers` lists in `AWSIamConfig` can be modified when running `upgrade cluster` command from EKS Anywhere.
+The `mapRoles` and `mapUsers` lists in `AWSIamConfig` can be modified when running the `upgrade cluster` command from EKS Anywhere.
 
-As an example, lets add another IAM user to the above example configuration.
+As an example, let's add another IAM user to the above example configuration.
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: AWSIamConfig
@@ -130,7 +134,7 @@ eksctl anywhere upgrade cluster -f ${CLUSTER_NAME}.yaml
 EKS Anywhere now updates the role mappings for IAM authenticator in the cluster and a new user gains access to the cluster.
 
 #### GitOps
-If the cluster created has GitOps configured, then `mapRoles` and `mapUsers` list in `AWSIamConfig` can be modified by the GitOps controller. For GitOps configuration details refer [Manage Cluster with GitOps]({{< relref "../../tasks/cluster/cluster-flux" >}}).
+If the cluster created has GitOps configured, then the `mapRoles` and `mapUsers` list in `AWSIamConfig` can be modified by the GitOps controller. For GitOps configuration details refer to [Manage Cluster with GitOps]({{< relref "../../tasks/cluster/cluster-flux" >}}).
 
 1. Clone your git repo and modify the cluster specification.
    The default path for the cluster file is:

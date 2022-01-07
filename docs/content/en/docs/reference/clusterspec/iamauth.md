@@ -7,7 +7,7 @@ description: >
 ---
 
 ## AWS IAM Authenticator support (optional)
-EKS Anywhere can create clusters that support AWS IAM Authenticator based api server authentication.
+EKS Anywhere can create clusters that support AWS IAM Authenticator-based api server authentication.
 In order to add IAM Authenticator support, you need to configure your cluster by updating the configuration file before creating the cluster.
 This is a generic template with detailed descriptions below for reference:
 ```yaml
@@ -56,11 +56,11 @@ This would include a reference to the `AWSIamConfig` object with the configurati
 * __Type__: string
 
 ### __backendMode__ (required)
-* __Description__: backendMode configures the IAM authenticator server’s backend mode i.e. where to source mappings from. We support [EKSConfigMap](https://github.com/kubernetes-sigs/aws-iam-authenticator#eksconfigmap) and [CRD](https://github.com/kubernetes-sigs/aws-iam-authenticator#crd-alpha) modes supported by AWS IAM Authenticator, for more details refer [backendMode](https://github.com/kubernetes-sigs/aws-iam-authenticator#4-create-iam-roleuser-to-kubernetes-usergroup-mappings)
+* __Description__: backendMode configures the IAM authenticator server’s backend mode (i.e. where to source mappings from). We support [EKSConfigMap](https://github.com/kubernetes-sigs/aws-iam-authenticator#eksconfigmap) and [CRD](https://github.com/kubernetes-sigs/aws-iam-authenticator#crd-alpha) modes supported by AWS IAM Authenticator, for more details refer to [backendMode](https://github.com/kubernetes-sigs/aws-iam-authenticator#4-create-iam-roleuser-to-kubernetes-usergroup-mappings)
 * __Type__: string
 
 ### __mapRoles__,  __mapUsers__ (recommended for `EKSConfigMap` backend)
-* __Description__: When using `EKSConfigMap` `backendMode`, we recommend providing either `mapRoles` or `mapUsers` to set the IAM role mappings at the time of creation. This input is added to an EKS style ConfigMap. For more details refer [EKS IAM](https://docs.aws.amazon.com/eks/latest/userguide/add-user-role.html)
+* __Description__: When using `EKSConfigMap` `backendMode`, we recommend providing either `mapRoles` or `mapUsers` to set the IAM role mappings at the time of creation. This input is added to an EKS style ConfigMap. For more details refer to [EKS IAM](https://docs.aws.amazon.com/eks/latest/userguide/add-user-role.html)
 * __Type__: list object
 
   #### __roleARN__, __userARN__ (required)
@@ -68,7 +68,7 @@ This would include a reference to the `AWSIamConfig` object with the configurati
   * __Type__: string
 
   #### __username__ (required)
-  * __Description__: The kubernetes username the IAM ARN is mapped to in the cluster. The ARN gets mapped to the kubernetes cluster permissions associated with the username.
+  * __Description__: The Kubernetes username the IAM ARN is mapped to in the cluster. The ARN gets mapped to the Kubernetes cluster permissions associated with the username.
   * __Type__: string
 
   #### __groups__
