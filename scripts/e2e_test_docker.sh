@@ -55,7 +55,11 @@ $BIN_FOLDER/test e2e run \
     -j ${JOB_ID} \
     -i ${INTEGRATION_TEST_INSTANCE_PROFILE} \
     -r ${TEST_REGEX} \
-    --bundles-override=${BUNDLES_OVERRIDE}
+    --bundles-override=${BUNDLES_OVERRIDE} \
+    # in order to be uploaded from the sidecar and used by the junit lens
+    # the junit reports need to be in /logs/*/junit*.xml
+    --test-report-folder=/logs/artifacts \
+    -v 4
 
 # Faking cross-platform versioned folders for dry-run
 mkdir -p $BIN_FOLDER/linux/amd64
