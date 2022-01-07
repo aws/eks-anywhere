@@ -51,8 +51,8 @@ func FluxChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
 		logger.V(1).Info("Skipping Flux upgrades, not a self-managed cluster")
 		return nil
 	}
-	if currentSpec.Cluster.Spec.GitOpsRef != nil || newSpec.Cluster.Spec.GitOpsRef != nil {
-		logger.V(1).Info("Skipping Flux upgrades")
+	if currentSpec.Cluster.Spec.GitOpsRef == nil || newSpec.Cluster.Spec.GitOpsRef == nil {
+		logger.V(1).Info("Skipping Flux upgrades, GitOps not enabled")
 		return nil
 	}
 	oldVersion := currentSpec.VersionsBundle.Flux.Version
