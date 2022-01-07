@@ -2,8 +2,11 @@ package cilium
 
 import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	networking "github.com/aws/eks-anywhere/pkg/networking/internal"
 )
+
+const namespace = constants.KubeSystemNamespace
 
 type Cilium struct{}
 
