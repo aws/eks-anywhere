@@ -66,6 +66,7 @@ phases:
       -v 4
       --bundles-override=${BUNDLES_OVERRIDE}
       --cleanup-vms=true
+      --test-report-folder=reports
   post_build:
     commands:
     - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
@@ -80,3 +81,8 @@ phases:
       "linux,darwin"
       "amd64"
       false
+reports:
+  e2e-reports:
+    files:
+      - reports/junit-testing-*.xml
+    file-format: "JUNITXML"
