@@ -328,7 +328,6 @@ func TestClusterctlUpgradeAllProvidersSucess(t *testing.T) {
 	tt.e.EXPECT().ExecuteWithEnv(tt.ctx, tt.providerEnvMap,
 		"upgrade", "apply",
 		"--config", test.OfType("string"),
-		"--management-group", "capi-system/cluster-api",
 		"--kubeconfig", tt.cluster.KubeconfigFile,
 		"--control-plane", "capi-kubeadm-control-plane-system/kubeadm:v0.3.19",
 		"--core", "capi-system/cluster-api:v0.3.19",
@@ -356,7 +355,6 @@ func TestClusterctlUpgradeInfrastructureProvidersSucess(t *testing.T) {
 	tt.e.EXPECT().ExecuteWithEnv(tt.ctx, tt.providerEnvMap,
 		"upgrade", "apply",
 		"--config", test.OfType("string"),
-		"--management-group", "capi-system/cluster-api",
 		"--kubeconfig", tt.cluster.KubeconfigFile,
 		"--infrastructure", "capv-system/vsphere:v0.4.1",
 	)
@@ -379,7 +377,6 @@ func TestClusterctlUpgradeInfrastructureProvidersError(t *testing.T) {
 	tt.e.EXPECT().ExecuteWithEnv(tt.ctx, tt.providerEnvMap,
 		"upgrade", "apply",
 		"--config", test.OfType("string"),
-		"--management-group", "capi-system/cluster-api",
 		"--kubeconfig", tt.cluster.KubeconfigFile,
 		"--infrastructure", "capv-system/vsphere:v0.4.1",
 	).Return(bytes.Buffer{}, errors.New("error in exec"))
