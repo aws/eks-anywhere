@@ -245,7 +245,7 @@ func TestResolvConfExtraArgs(t *testing.T) {
 		{
 			testName:   "default",
 			resolvConf: v1alpha1.ResolvConf{Path: ""},
-			want:       nil,
+			want:       map[string]string{},
 		},
 		{
 			testName:   "with custom resolvConf file",

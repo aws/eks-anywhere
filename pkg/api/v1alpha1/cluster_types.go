@@ -240,7 +240,7 @@ func (n *ClusterNetwork) Equal(o *ClusterNetwork) bool {
 	}
 	return SliceEqual(n.Pods.CidrBlocks, o.Pods.CidrBlocks) &&
 		SliceEqual(n.Services.CidrBlocks, o.Services.CidrBlocks) &&
-		n.CNI == o.CNI && n.DNS.ResolvConf.Equal(o.DNS.ResolvConf)
+		n.CNI == o.CNI && n.DNS == o.DNS
 }
 
 func SliceEqual(a, b []string) bool {
@@ -301,10 +301,6 @@ type DNS struct {
 type ResolvConf struct {
 	// Path defines the path to the file that contains the DNS resolver configuration
 	Path string `json:"path,omitempty"`
-}
-
-func (n ResolvConf) Equal(o ResolvConf) bool {
-	return n.Path == o.Path
 }
 
 type KubernetesVersion string
