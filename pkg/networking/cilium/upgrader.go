@@ -52,7 +52,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentS
 		return nil, fmt.Errorf("failed deleting cilium preflight check: %v", err)
 	}
 
-	upgradeManifest, err := u.templater.GenerateManifest(ctx, newSpec)
+	upgradeManifest, err := u.templater.GenerateUpgradeManifest(ctx, currentSpec, newSpec)
 	if err != nil {
 		return nil, err
 	}
