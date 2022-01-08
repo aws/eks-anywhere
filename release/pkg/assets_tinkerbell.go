@@ -27,6 +27,7 @@ import (
 func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (anywherev1alpha1.TinkerbellBundle, error) {
 	tinkerbellBundleArtifacts := map[string][]Artifact{
 		"cluster-api-provider-tinkerbell": r.BundleArtifactsTable["cluster-api-provider-tinkerbell"],
+		"kube-vip":                        r.BundleArtifactsTable["kube-vip"],
 	}
 	sortedComponentNames := sortArtifactsMap(tinkerbellBundleArtifacts)
 
@@ -84,6 +85,7 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 	bundle := anywherev1alpha1.TinkerbellBundle{
 		Version:              version,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-provider-tinkerbell"],
+		KubeVip:              bundleImageArtifacts["kube-vip"],
 		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
 		ClusterTemplate:      bundleManifestArtifacts["cluster-template.yaml"],
 		Metadata:             bundleManifestArtifacts["metadata.yaml"],

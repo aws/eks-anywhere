@@ -236,6 +236,7 @@ type EtcdadmControllerBundle struct {
 type TinkerbellBundle struct {
 	Version              string   `json:"version"`
 	ClusterAPIController Image    `json:"clusterAPIController"`
+	KubeVip              Image    `json:"kubeVip"`
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
 	ClusterTemplate      Manifest `json:"clusterTemplate"`
