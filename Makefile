@@ -32,6 +32,7 @@ endif
 RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
 
 DEV_GIT_VERSION:=v0.0.0-dev
+CUSTOM_GIT_VERSION:=v0.0.0-custom
 
 AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output text)
 AWS_REGION=us-west-2
@@ -140,6 +141,32 @@ eks-a-cross-platform-embed-latest-config: ## Build cross platform dev release ve
 	$(MAKE) eks-a-embed-config GO_OS=darwin GO_ARCH=arm64 OUTPUT_FILE=bin/darwin/arm64/eksctl-anywhere
 	$(MAKE) eks-a-embed-config GO_OS=linux GO_ARCH=arm64 OUTPUT_FILE=bin/linux/arm64/eksctl-anywhere
 	rm pkg/cluster/config/bundle-release.yaml
+
+.PHONY: eks-a-custom-embed-config
+eks-a-custom-embed-config:
+	$(MAKE) eks-a-binary GIT_VERSION=$(CUSTOM_GIT_VERSION) RELEASE_MANIFEST_URL=embed:///config/releases.yaml LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true' BUILD_TAGS='$(BUILD_TAGS) spec_embed_config'
+
+.PHONY: eks-a-cross-platform-custom-embed-latest-config
+eks-a-cross-platform-custom-embed-latest-config: ## Build custom binary with latest dev release bundle that embeds config and builds it as a release binary for linux/amd64
+	curl -L $(BUNDLE_MANIFEST_URL) --output pkg/cluster/config/bundle-release.yaml
+	$(MAKE) eks-a-custom-embed-config GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/amd64/eksctl-anywhere
+	$(MAKE) eks-a-custom-embed-config GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/amd64/eksctl-anywhere
+	$(MAKE) eks-a-custom-embed-config GO_OS=darwin GO_ARCH=arm64 OUTPUT_FILE=bin/darwin/arm64/eksctl-anywhere
+	$(MAKE) eks-a-custom-embed-config GO_OS=linux GO_ARCH=arm64 OUTPUT_FILE=bin/linux/arm64/eksctl-anywhere
+	rm pkg/cluster/config/bundle-release.yaml
+
+.PHONY: eks-a-custom-release-zip
+eks-a-custom-release-zip: eks-a-cross-platform-custom-embed-latest-config ## Build from linux/amd64
+	rm -f bin/eksctl-anywhere.zip ## Remove previous zip
+	zip -j bin/eksctl-anywhere.zip bin/linux/amd64/eksctl-anywhere
+
+.PHONY: eks-a-cross-platform-custom-release-zip
+eks-a-cross-platform-custom-release-zip: eks-a-cross-platform-custom-embed-latest-config
+	rm -f bin/eksctl-anywhere-darwin-amd64.zip bin/eksctl-anywhere-linux-amd64.zip bin/eksctl-anywhere-darwin-arm64.zip bin/eksctl-anywhere-linux-arm64.zip
+	zip -j bin/eksctl-anywhere-darwin-amd64.zip bin/darwin/amd64/eksctl-anywhere
+	zip -j bin/eksctl-anywhere-linux-amd64.zip bin/linux/amd64/eksctl-anywhere
+	zip -j bin/eksctl-anywhere-darwin-arm64.zip bin/darwin/arm64/eksctl-anywhere
+	zip -j bin/eksctl-anywhere-linux-arm64.zip bin/linux/arm64/eksctl-anywhere
 
 .PHONY: eks-a
 eks-a: ## Build a dev release version of eks-a
