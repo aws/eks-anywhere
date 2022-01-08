@@ -380,7 +380,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"eksaSystemNamespace":          constants.EksaSystemNamespace,
 		"format":                       format,
 		"kubernetesVersion":            bundle.KubeDistro.Kubernetes.Tag,
-		"kubeVipImage":                 "ghcr.io/kube-vip/kube-vip:latest", // TODO: get this value from the bundle once we add it
+		"kubeVipImage":                 bundle.Tinkerbell.KubeVip.VersionedImage(),
 		"podCidrs":                     clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                 clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
 		"baseRegistry":                 "", // TODO: need to get this values for creating template IMAGE_URL
