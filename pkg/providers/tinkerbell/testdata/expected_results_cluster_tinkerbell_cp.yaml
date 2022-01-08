@@ -86,7 +86,7 @@ spec:
                 value: "1"
               - name: address
                 value: 1.2.3.4
-              image: ghcr.io/kube-vip/kube-vip:latest
+              image: 
               imagePullPolicy: Always
               name: kube-vip
               resources: {}
