@@ -369,6 +369,18 @@ spec:
       sourceController:
         uri: public.ecr.aws/l0g8r8j6/fluxcd/source-controller:v0.12.1-8539f509df046a4f567d2182dde824b957136599
     kubeVersion: "1.20"
+    tinkerbell:
+      clusterAPIController:
+        uri: public.ecr.aws/l0g8r8j6/tinkerbell/cluster-api-provider-tinkerbell:v0.1.0-eks-a-v0.0.0-dev-build.952
+      clusterTemplate:
+        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/cluster-template.yaml
+      components:
+        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/infrastructure-components.yaml
+      kubeVip:
+        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
+      metadata:
+        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/metadata.yaml
+      version: v0.1.0+210860f
     vSphere:
       clusterAPIController:
         uri: public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v0.7.8-eks-a-0.0.1.build.38
@@ -688,6 +700,18 @@ spec:
         os: linux
         uri: public.ecr.aws/l0g8r8j6/fluxcd/source-controller:v0.12.1-eks-a-v0.0.0-dev-build.158
     kubeVersion: "1.21"
+    tinkerbell:
+      clusterAPIController:
+        uri: public.ecr.aws/l0g8r8j6/tinkerbell/cluster-api-provider-tinkerbell:v0.1.0-eks-a-v0.0.0-dev-build.952
+      clusterTemplate:
+        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/cluster-template.yaml
+      components:
+        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/infrastructure-components.yaml
+      kubeVip:
+        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
+      metadata:
+        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.952/cluster-api-provider-tinkerbell/manifests/infrastructure-tinkerbell/v0.1.0/metadata.yaml
+      version: v0.1.0+210860f
     vSphere:
       clusterAPIController:
         arch:
