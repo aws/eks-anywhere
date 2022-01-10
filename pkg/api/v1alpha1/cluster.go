@@ -312,9 +312,6 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	if len(clusterConfig.Spec.WorkerNodeGroupConfigurations) <= 0 {
 		return errors.New("worker node group must be specified")
 	}
-	if len(clusterConfig.Spec.WorkerNodeGroupConfigurations) > 1 {
-		return errors.New("only one worker node group is supported at this time")
-	}
 	return nil
 }
 
