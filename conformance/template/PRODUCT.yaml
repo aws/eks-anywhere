@@ -1,0 +1,9 @@
+vendor: Amazon Web Services
+name: Amazon Elastic Kubernetes Service Anywhere (Amazon EKS Anywhere)
+version: {{k8s_version}}
+website_url: https://aws.amazon.com/eks/eks-anywhere
+repo_url: https://github.com/aws/eks-anywhere
+documentation_url: https://anywhere.eks.amazonaws.com/
+product_logo_url: https://a0.awsstatic.com/libra-css/images/logos/aws_logo_smile_1200x630.png
+type: installer
+description: Amazon EKS Anywhere is a new deployment option for Amazon EKS that allows customers to create and operate Kubernetes clusters on customer-managed infrastructure, supported by AWS.
