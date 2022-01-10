@@ -81,7 +81,6 @@ func (r *capiResourceFetcher) fetchClusterKind(ctx context.Context, objectKey ty
 		obj := &unstructured.Unstructured{}
 		obj.SetKind(kind)
 		obj.SetAPIVersion(anywherev1.GroupVersion.String())
-		r.log.Info("looking up resource", "objectKey", objectKey, "object", obj)
 		err := r.FetchObject(ctx, objectKey, obj)
 		if err != nil && !apierrors.IsNotFound(err) {
 			return "", err
@@ -94,7 +93,6 @@ func (r *capiResourceFetcher) fetchClusterKind(ctx context.Context, objectKey ty
 }
 
 func (r *capiResourceFetcher) FetchCluster(ctx context.Context, objectKey types.NamespacedName) (*anywherev1.Cluster, error) {
-	r.log.Info("looking up resource", "objectKey", objectKey)
 	kind, err := r.fetchClusterKind(ctx, objectKey)
 	if err != nil {
 		return nil, err
@@ -464,10 +462,7 @@ func MapClusterToCloudStackDeploymentConfigSpec(csCluster *cloudstackv1.CloudSta
 	csSpec.Spec.Zone = csCluster.Spec.Zone
 	csSpec.Spec.Network = csCluster.Spec.Network
 
-	//The following attributes are currently unavailable from a CAPC CloudStackCluster object - do we need them?
-	//csSpec.Spec.ManagementApiEndpoint =
-	//csSpec.Spec.Domain =
-	//csSpec.Spec.Account =
+	// TODO: Add ManagementApiEndpoint, Domain, Account
 	return csSpec, nil
 }
 
@@ -477,11 +472,6 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 	csSpec.Spec.Template = csMachineTemplate.Spec.Spec.Spec.Template
 	csSpec.Spec.Details = csMachineTemplate.Spec.Spec.Spec.Details
 
-	//The following attributes are currently unavailable from a CAPC CloudStackMachineTemplate object - do we need them? Vsphere above doesn't support osfamily/users
-	//csSpec.Spec.OSFamily =
-	//csSpec.Spec.Users =
-	//csSpec.Spec.DiskOffering =
-
-	// TODO: OSFamily, Users
+	// TODO: OSFamily, Users, DiskOffering
 	return csSpec, nil
 }

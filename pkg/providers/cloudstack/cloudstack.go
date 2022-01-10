@@ -1382,7 +1382,7 @@ func (p *cloudstackProvider) validateMachineConfigImmutability(ctx context.Conte
 
 func (p *cloudstackProvider) secretContentsChanged(ctx context.Context, workloadCluster *types.Cluster) (bool, error) {
 	cloudConfig := os.Getenv(eksacloudStackCloudConfigB64SecretKey)
-	oSecret, err := p.providerKubectlClient.GetSecret(ctx, credentialsObjectName, executables.WithCluster(workloadCluster), executables.WithNamespace(constants.CapcSystemNamespace))
+	oSecret, err := p.providerKubectlClient.GetSecret(ctx, credentialsObjectName, executables.WithCluster(workloadCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return false, fmt.Errorf("error when obtaining CloudStack secret %s from workload cluster: %v", credentialsObjectName, err)
 	}

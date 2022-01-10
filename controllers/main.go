@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
@@ -82,7 +81,6 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
-	fmt.Println("We are in the eks-a controller!")
 
 	setupReconcilers(mgr)
 	setupWebhooks(mgr)
