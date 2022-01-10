@@ -498,12 +498,12 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 	case v1alpha1.CloudStackDeploymentKind:
 		machineConfigMap := make(map[string]*v1alpha1.CloudStackMachineConfig)
 
-		existingVdc, err := c.clusterClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
+		existingCsdc, err := c.clusterClient.GetEksaCloudStackDeploymentConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
 		if err != nil {
 			return false, err
 		}
-		vdc := datacenterConfig.(*v1alpha1.CloudStackDeploymentConfig)
-		if !reflect.DeepEqual(existingVdc.Spec, vdc.Spec) {
+		csDc := datacenterConfig.(*v1alpha1.CloudStackDeploymentConfig)
+		if !reflect.DeepEqual(existingCsdc.Spec, csDc.Spec) {
 			logger.V(3).Info("New provider spec is different from the new spec")
 			return true, nil
 		}
@@ -512,31 +512,31 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 			mc := config.(*v1alpha1.CloudStackMachineConfig)
 			machineConfigMap[mc.Name] = mc
 		}
-		existingCpVmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, cc.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
+		existingCpCsmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, cc.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
 		if err != nil {
 			return false, err
 		}
-		cpVmc := machineConfigMap[newClusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-		if !reflect.DeepEqual(existingCpVmc.Spec, cpVmc.Spec) {
+		cpCsmc := machineConfigMap[newClusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+		if !reflect.DeepEqual(existingCpCsmc.Spec, cpCsmc.Spec) {
 			logger.V(3).Info("New control plane machine config spec is different from the existing spec")
 			return true, nil
 		}
-		existingWnVmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, cc.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
+		existingWnCsmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, cc.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
 		if err != nil {
 			return false, err
 		}
-		wnVmc := machineConfigMap[newClusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
-		if !reflect.DeepEqual(existingWnVmc.Spec, wnVmc.Spec) {
+		wnCsmc := machineConfigMap[newClusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
+		if !reflect.DeepEqual(existingWnCsmc.Spec, wnCsmc.Spec) {
 			logger.V(3).Info("New worker node machine config spec is different from the existing spec")
 			return true, nil
 		}
 		if cc.Spec.ExternalEtcdConfiguration != nil {
-			existingEtcdVmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, cc.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
+			existingEtcdCsmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, cc.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
 			if err != nil {
 				return false, err
 			}
-			etcdVmc := machineConfigMap[newClusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-			if !reflect.DeepEqual(existingEtcdVmc.Spec, etcdVmc.Spec) {
+			etcdCsmc := machineConfigMap[newClusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+			if !reflect.DeepEqual(existingEtcdCsmc.Spec, etcdCsmc.Spec) {
 				logger.V(3).Info("New etcd machine config spec is different from the existing spec")
 				return true, nil
 			}
@@ -912,7 +912,6 @@ func (c *ClusterManager) ApplyBundles(ctx context.Context, clusterSpec *cluster.
 	clusterSpec.Bundles.Name = clusterSpec.Name
 	clusterSpec.Bundles.Namespace = clusterSpec.Namespace
 	bundleObj, err := yaml.Marshal(clusterSpec.Bundles)
-	logger.V(1).Info(string(bundleObj))
 	if err != nil {
 		return fmt.Errorf("error outputting bundle yaml: %v", err)
 	}

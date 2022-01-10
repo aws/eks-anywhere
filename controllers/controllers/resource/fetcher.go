@@ -318,7 +318,7 @@ func (r *capiResourceFetcher) bundles(ctx context.Context, name, namespace strin
 
 func (r *capiResourceFetcher) ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*bootstrapv1.KubeadmControlPlane, error) {
 	// Fetch capi cluster
-	r.log.Info("Fetching ControlPlane", "objectKey", cs.Name)
+	r.log.Info("Fetching CAPI cluster", "objectKey", cs.Name)
 	capiCluster := &clusterv1.Cluster{}
 	err := r.FetchObjectByName(ctx, cs.Name, constants.EksaSystemNamespace, capiCluster)
 	if err != nil {
@@ -326,7 +326,7 @@ func (r *capiResourceFetcher) ControlPlane(ctx context.Context, cs *anywherev1.C
 	}
 	cpRef := capiCluster.Spec.ControlPlaneRef
 	cp := &bootstrapv1.KubeadmControlPlane{}
-	r.log.Info("Fetching ControlPlaneRef", "objectKey", cpRef.Name)
+	r.log.Info("Fetching KubeadmControlPlane", "objectKey", cpRef.Name)
 	err = r.FetchObjectByName(ctx, cpRef.Name, cpRef.Namespace, cp)
 	if err != nil {
 		return nil, err

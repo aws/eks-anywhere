@@ -1,7 +1,6 @@
 package cloudstack
 
 import (
-	"bytes"
 	"context"
 	_ "embed"
 	"errors"
@@ -12,7 +11,6 @@ import (
 	"path"
 	"strings"
 	"testing"
-	"text/template"
 	"time"
 
 	"github.com/golang/mock/gomock"
@@ -20,8 +18,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"sigs.k8s.io/cluster-api/api/v1alpha3"
 	kubeadmnv1alpha3 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
 
@@ -1032,85 +1028,6 @@ func TestVersion(t *testing.T) {
 	}
 }
 
-func TestProviderBootstrapSetup(t *testing.T) {
-	ctx := context.Background()
-	deploymentConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-	mockCtrl := gomock.NewController(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider := newProviderWithKubectl(t, deploymentConfig, machineConfigs, clusterConfig, kubectl)
-	cluster := types.Cluster{
-		Name:           "test",
-		KubeconfigFile: "",
-	}
-	values := map[string]string{
-		"clusterName":        clusterConfig.Name,
-		"cloudstackDomain":   deploymentConfig.Spec.Domain,
-		"cloudstackZone":     deploymentConfig.Spec.Zone,
-		"cloudstackNetwork":  deploymentConfig.Spec.Network,
-	}
-
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
-
-	kubectl.EXPECT().LoadSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any(), cluster.KubeconfigFile)
-
-	template, err := template.New("test").Parse(defaultSecretObject)
-	if err != nil {
-		t.Fatalf("template create error: %v", err)
-	}
-	err = template.Execute(&bytes.Buffer{}, values)
-	if err != nil {
-		t.Fatalf("template execute error: %v", err)
-	}
-
-	err := provider.BootstrapSetup(ctx, clusterConfig, &cluster)
-	if err != nil {
-		t.Fatalf("BootstrapSetup error %v", err)
-	}
-}
-
-func TestProviderUpdateSecret(t *testing.T) {
-	ctx := context.Background()
-	deploymentConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	mockCtrl := gomock.NewController(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider := newProviderWithKubectl(t, deploymentConfig, machineConfigs, clusterConfig, kubectl)
-	cluster := types.Cluster{
-		Name:           "test",
-		KubeconfigFile: "",
-	}
-	values := map[string]string{
-		"clusterName":                     clusterConfig.Name,
-		"cloudstackManagementApiEndpoint": deploymentConfig.Spec.ManagementApiEndpoint,
-		"cloudstackNetwork":               deploymentConfig.Spec.Network,
-	}
-
-	var tctx testContext
-	tctx.SaveContext()
-	defer tctx.RestoreContext()
-
-	kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any())
-
-	template, err := template.New("test").Parse(defaultSecretObject)
-	if err != nil {
-		t.Fatalf("template create error: %v", err)
-	}
-	err = template.Execute(&bytes.Buffer{}, values)
-	if err != nil {
-		t.Fatalf("template execute error: %v", err)
-	}
-
-	err = provider.UpdateSecrets(ctx, &cluster)
-	if err != nil {
-		t.Fatalf("UpdateSecrets error %v", err)
-	}
-}
-
 func TestSetupAndValidateCreateClusterInsecure(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
@@ -1768,14 +1685,6 @@ func TestValidateNewSpecSuccess(t *testing.T) {
 	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 
-	clusterCloudStackSecret := &v1.Secret{
-		TypeMeta:   metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{},
-		Data: map[string][]byte{
-			"username": []byte("cloudstack_username"),
-			"password": []byte("cloudstack_password"),
-		},
-	}
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
 		s.Cluster = clusterConfig
@@ -1787,48 +1696,10 @@ func TestValidateNewSpecSuccess(t *testing.T) {
 	for _, config := range newMachineConfigs {
 		kubectl.EXPECT().GetEksaCloudStackMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
 	}
-	kubectl.EXPECT().GetSecret(gomock.Any(), credentialsObjectName, gomock.Any()).Return(clusterCloudStackSecret, nil)
 
 	err := provider.ValidateNewSpec(context.TODO(), c, clusterSpec)
 	assert.NoError(t, err, "No error should be returned when previous spec == new spec")
 }
-
-// TODO: confirm if secret is mutable
-//func TestValidateNewSpecMutableFields(t *testing.T) {
-//	mockCtrl := gomock.NewController(t)
-//	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-//
-//	provider := givenProvider(t)
-//	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-//	provider.providerKubectlClient = kubectl
-//
-//	newDatacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-//	newClouStackMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-//	clusterCloudStackSecret := &v1.Secret{
-//		TypeMeta:   metav1.TypeMeta{},
-//		ObjectMeta: metav1.ObjectMeta{},
-//		Data: map[string][]byte{
-//			"username": []byte("cloudstack_username"),
-//			"password": []byte("cloudstack_password"),
-//		},
-//	}
-//
-//	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-//		s.Namespace = "test-namespace"
-//		s.Cluster = clusterConfig
-//	})
-//
-//	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-//	kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(newDatacenterConfig, nil)
-//
-//	for _, machineConfigRef := range clusterSpec.MachineConfigRefs() {
-//		kubectl.EXPECT().GetEksaCloudStackMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), gomock.Any()).Return(newClouStackMachineConfigs[machineConfigRef.Name], nil)
-//	}
-//	kubectl.EXPECT().GetSecret(gomock.Any(), credentialsObjectName, gomock.Any(), gomock.Any()).Return(clusterCloudStackSecret, nil)
-//
-//	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
-//	assert.NoError(t, err, "No error should be returned when modifying mutable fields")
-//}
 
 func TestValidateNewSpecDatacenterImmutable(t *testing.T) {
 	mockCtrl := gomock.NewController(t)

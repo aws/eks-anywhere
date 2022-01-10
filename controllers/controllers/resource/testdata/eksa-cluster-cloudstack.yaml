@@ -1,0 +1,61 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: test_cluster
+spec:
+  controlPlaneConfiguration:
+    count: 3
+    endpoint:
+      host: "198.18.40.234"
+    machineGroupRef:
+      name: test_cluster
+      kind: CloudStackMachineConfig
+  kubernetesVersion: "1.19"
+  workerNodeGroupConfigurations:
+    - count: 4
+      machineGroupRef:
+        name: test_cluster
+        kind: CloudStackMachineConfig
+  datacenterRef:
+    kind: CloudStackDeployment
+    name: test_cluster
+  clusterNetwork:
+    cni: "cilium"
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackMachineConfig
+metadata:
+  creationTimestamp: null
+  name: test_cluster
+spec:
+  computeoffering: large
+  diskoffering: small
+  osFamily: ubuntu
+  template: rhel8-1.20
+  details:
+    foo: bar
+  users:
+    - name: capc
+      sshAuthorizedKeys:
+        - "ssh-rsa ssh_key_value"
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackDeploymentConfig
+metadata:
+  creationTimestamp: null
+  name: test_cluster
+spec:
+  domain: domain1
+  network: isolated1
+  account: account1
+  zone: zone1
+  thumbprint: ""
+  insecure: false
+  ManagementAPIEndpoint: 1.1.1.1:8080/client/api
+status: {}

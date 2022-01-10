@@ -781,16 +781,6 @@ func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Co
 }
 
 func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
-	//var contents bytes.Buffer
-	//err := p.createSecret(cluster, &contents)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents.Bytes())
-	//if err != nil {
-	//	return fmt.Errorf("error loading csi-cloudstack-secret object: %v", err)
-	//}
 	return nil
 }
 
@@ -1372,15 +1362,8 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 	if nSpec.Thumbprint != oSpec.Thumbprint {
 		return fmt.Errorf("spec.thumbprint is immutable. Previous value %s, new value %s", oSpec.Thumbprint, nSpec.Thumbprint)
 	}
+	// TODO: Add support for changing cloudstack credentials
 
-	secretChanged, err := p.secretContentsChanged(ctx, cluster)
-	if err != nil {
-		return err
-	}
-
-	if secretChanged {
-		return fmt.Errorf("the CloudStack credentials derived from %s and %s are immutable; please use the same credentials for the upgraded cluster", cloudStackPasswordKey, cloudStackUsernameKey)
-	}
 	return nil
 }
 
