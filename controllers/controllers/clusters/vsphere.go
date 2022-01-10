@@ -18,45 +18,49 @@ import (
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+// Struct that holds common methods and properties
 type VSphereReconciler struct {
-	*providerClusterReconciler
+	Client    client.Client
+	Log       logr.Logger
+	Validator *vsphere.Validator
+	Defaulter *vsphere.Defaulter
+}
 
-	client    client.Client
-	log       logr.Logger
-	validator *vsphere.Validator
-	defaulter *vsphere.Defaulter
+type VSphereClusterReconciler struct {
+	VSphereReconciler
+	*providerClusterReconciler
 
 	capiResourceFetcher *resource.CapiResourceFetcher
 }
 
-func NewVSphereReconciler(client client.Client, log logr.Logger, validator *vsphere.Validator, defaulter *vsphere.Defaulter) *VSphereReconciler {
+func NewVSphereReconciler(client client.Client, log logr.Logger, validator *vsphere.Validator, defaulter *vsphere.Defaulter) *VSphereClusterReconciler {
 	capiResourceFetcher := resource.NewCAPIResourceFetcher(client, log)
-	return &VSphereReconciler{
+	return &VSphereClusterReconciler{
+		VSphereReconciler: VSphereReconciler{
+			Client:    client,
+			Log:       log,
+			Validator: validator,
+			Defaulter: defaulter,
+		},
 		providerClusterReconciler: &providerClusterReconciler{},
-		client:                    client,
-		log:                       log,
-		validator:                 validator,
-		defaulter:                 defaulter,
 		capiResourceFetcher:       capiResourceFetcher,
 	}
 }
 
-// TODO remove code
-func (v *VSphereReconciler) vsphereCredentials(ctx context.Context) (*apiv1.Secret, error) {
+func (v *VSphereReconciler) VsphereCredentials(ctx context.Context) (*apiv1.Secret, error) {
 	secret := &apiv1.Secret{}
 	secretKey := client.ObjectKey{
 		Namespace: "eksa-system",
 		Name:      vsphere.CredentialsObjectName,
 	}
-	if err := v.client.Get(ctx, secretKey, secret); err != nil {
+	if err := v.Client.Get(ctx, secretKey, secret); err != nil {
 		return nil, err
 	}
 	return secret, nil
 }
 
-// TODO remove code
-func (v *VSphereReconciler) setupEnvsAndDefaults(ctx context.Context, vsphereDatacenter *anywherev1.VSphereDatacenterConfig) error {
-	secret, err := v.vsphereCredentials(ctx)
+func (v *VSphereReconciler) SetupEnvsAndDefaults(ctx context.Context, vsphereDatacenter *anywherev1.VSphereDatacenterConfig) error {
+	secret, err := v.VsphereCredentials(ctx)
 	if err != nil {
 		return fmt.Errorf("failed getting vsphere credentials secret: %v", err)
 	}
@@ -76,14 +80,14 @@ func (v *VSphereReconciler) setupEnvsAndDefaults(ctx context.Context, vsphereDat
 		return fmt.Errorf("failed setting env vars: %v", err)
 	}
 
-	if err := v.defaulter.SetDefaultsForDatacenterConfig(ctx, vsphereDatacenter); err != nil {
+	if err := v.Defaulter.SetDefaultsForDatacenterConfig(ctx, vsphereDatacenter); err != nil {
 		return fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
 	}
 
 	return nil
 }
 
-func (v *VSphereReconciler) bundles(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
+func (v *VSphereClusterReconciler) bundles(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
 	clusterBundle := &releasev1alpha1.Bundles{}
 	err := v.capiResourceFetcher.FetchObjectByName(ctx, name, namespace, clusterBundle)
 	if err != nil {
@@ -92,19 +96,19 @@ func (v *VSphereReconciler) bundles(ctx context.Context, name, namespace string)
 	return clusterBundle, nil
 }
 
-func (v *VSphereReconciler) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*c.Spec, error) {
+func (v *VSphereClusterReconciler) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*c.Spec, error) {
 	return c.BuildSpecForCluster(ctx, cs, v.bundles, nil)
 }
 
-func (v *VSphereReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (reconciler.Result, error) {
+func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (reconciler.Result, error) {
 	dc := &anywherev1.VSphereDatacenterConfig{}
 	dcName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.DatacenterRef.Name}
-	if err := v.client.Get(ctx, dcName, dc); err != nil {
+	if err := v.Client.Get(ctx, dcName, dc); err != nil {
 		return reconciler.Result{}, err
 	}
 	// Set up envs for executing Govc cmd and default values for datacenter config
-	if err := v.setupEnvsAndDefaults(ctx, dc); err != nil {
-		v.log.Error(err, "Failed to set up env vars and default values for VsphereDatacenterConfig")
+	if err := v.SetupEnvsAndDefaults(ctx, dc); err != nil {
+		v.Log.Error(err, "Failed to set up env vars and default values for VsphereDatacenterConfig")
 		return reconciler.Result{}, err
 	}
 
@@ -113,27 +117,27 @@ func (v *VSphereReconciler) Reconcile(ctx context.Context, cluster *anywherev1.C
 	if cluster.Spec.ExternalEtcdConfiguration != nil {
 		mc := &anywherev1.VSphereMachineConfig{}
 		mcName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name}
-		if err := v.client.Get(ctx, mcName, mc); err != nil {
+		if err := v.Client.Get(ctx, mcName, mc); err != nil {
 			return reconciler.Result{}, err
 		}
-		v.log.V(4).Info("Using etcd machine config %v", mc)
+		v.Log.V(4).Info("Using etcd machine config %v", mc)
 		mcMap[cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] = mc
 	}
 
 	cpMachine := &anywherev1.VSphereMachineConfig{}
 	cpMachineNameName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name}
-	if err := v.client.Get(ctx, cpMachineNameName, cpMachine); err != nil {
+	if err := v.Client.Get(ctx, cpMachineNameName, cpMachine); err != nil {
 		return reconciler.Result{}, err
 	}
-	v.log.V(4).Info("Using cp machine config %v", cpMachine)
+	v.Log.V(4).Info("Using cp machine config %v", cpMachine)
 	mcMap[cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] = cpMachine
 
 	wnMachine := &anywherev1.VSphereMachineConfig{}
 	wnMachineName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name}
-	if err := v.client.Get(ctx, wnMachineName, wnMachine); err != nil {
+	if err := v.Client.Get(ctx, wnMachineName, wnMachine); err != nil {
 		return reconciler.Result{}, err
 	}
-	v.log.V(4).Info("Using wn machine config %v", wnMachine)
+	v.Log.V(4).Info("Using wn machine config %v", wnMachine)
 	mcMap[cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name] = wnMachine
 
 	cs, err := v.FetchAppliedSpec(ctx, cluster)
@@ -142,7 +146,7 @@ func (v *VSphereReconciler) Reconcile(ctx context.Context, cluster *anywherev1.C
 	}
 	vs := vsphere.NewSpec(cs, mcMap, dc)
 
-	if err := v.validator.ValidateCluster(ctx, vs); err != nil {
+	if err := v.Validator.ValidateCluster(ctx, vs); err != nil {
 		return reconciler.Result{}, err
 	}
 
