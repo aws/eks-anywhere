@@ -101,18 +101,18 @@ func (v *VSphereClusterReconciler) FetchAppliedSpec(ctx context.Context, cs *any
 }
 
 func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (reconciler.Result, error) {
-	dc := &anywherev1.VSphereDatacenterConfig{}
-	dcName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.DatacenterRef.Name}
-	if err := v.Client.Get(ctx, dcName, dc); err != nil {
+	dataCenterConfig := &anywherev1.VSphereDatacenterConfig{}
+	dataCenterName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.DatacenterRef.Name}
+	if err := v.Client.Get(ctx, dataCenterName, dataCenterConfig); err != nil {
 		return reconciler.Result{}, err
 	}
 	// Set up envs for executing Govc cmd and default values for datacenter config
-	if err := v.SetupEnvsAndDefaults(ctx, dc); err != nil {
+	if err := v.SetupEnvsAndDefaults(ctx, dataCenterConfig); err != nil {
 		v.Log.Error(err, "Failed to set up env vars and default values for VsphereDatacenterConfig")
 		return reconciler.Result{}, err
 	}
 
-	mcMap := map[string]*anywherev1.VSphereMachineConfig{}
+	machineConfigMap := map[string]*anywherev1.VSphereMachineConfig{}
 
 	if cluster.Spec.ExternalEtcdConfiguration != nil {
 		mc := &anywherev1.VSphereMachineConfig{}
@@ -121,32 +121,32 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 			return reconciler.Result{}, err
 		}
 		v.Log.V(4).Info("Using etcd machine config %v", mc)
-		mcMap[cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] = mc
+		machineConfigMap[cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] = mc
 	}
 
-	cpMachine := &anywherev1.VSphereMachineConfig{}
-	cpMachineNameName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name}
-	if err := v.Client.Get(ctx, cpMachineNameName, cpMachine); err != nil {
+	controlplaneMachine := &anywherev1.VSphereMachineConfig{}
+	controlplaneMachineNameName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name}
+	if err := v.Client.Get(ctx, controlplaneMachineNameName, controlplaneMachine); err != nil {
 		return reconciler.Result{}, err
 	}
-	v.Log.V(4).Info("Using cp machine config %v", cpMachine)
-	mcMap[cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] = cpMachine
+	v.Log.V(4).Info("Using cp machine config %v", controlplaneMachine)
+	machineConfigMap[cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] = controlplaneMachine
 
-	wnMachine := &anywherev1.VSphereMachineConfig{}
-	wnMachineName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name}
-	if err := v.Client.Get(ctx, wnMachineName, wnMachine); err != nil {
+	workerNodeMachine := &anywherev1.VSphereMachineConfig{}
+	workerNodeMachineName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name}
+	if err := v.Client.Get(ctx, workerNodeMachineName, workerNodeMachine); err != nil {
 		return reconciler.Result{}, err
 	}
-	v.Log.V(4).Info("Using wn machine config %v", wnMachine)
-	mcMap[cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name] = wnMachine
+	v.Log.V(4).Info("Using wn machine config %v", workerNodeMachine)
+	machineConfigMap[cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name] = workerNodeMachine
 
-	cs, err := v.FetchAppliedSpec(ctx, cluster)
+	clusterSpec, err := v.FetchAppliedSpec(ctx, cluster)
 	if err != nil {
 		return reconciler.Result{}, err
 	}
-	vs := vsphere.NewSpec(cs, mcMap, dc)
+	vshepreClusterSpec := vsphere.NewSpec(clusterSpec, machineConfigMap, dataCenterConfig)
 
-	if err := v.Validator.ValidateCluster(ctx, vs); err != nil {
+	if err := v.Validator.ValidateCluster(ctx, vshepreClusterSpec); err != nil {
 		return reconciler.Result{}, err
 	}
 

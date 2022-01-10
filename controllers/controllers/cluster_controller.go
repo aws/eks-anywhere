@@ -83,15 +83,15 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 	}
 
 	// Fetch the VsphereDatacenter object
-	dc := &anywherev1.VSphereDatacenterConfig{}
-	dcName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.DatacenterRef.Name}
-	if err := r.client.Get(ctx, dcName, dc); err != nil {
+	dataCenterConfig := &anywherev1.VSphereDatacenterConfig{}
+	dataCenterName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.DatacenterRef.Name}
+	if err := r.client.Get(ctx, dataCenterName, dataCenterConfig); err != nil {
 		return ctrl.Result{}, err
 	}
-	log.Info("Using data center config config", "datacenter", dc)
+	log.Info("Using data center config config", "datacenter", dataCenterConfig)
 
-	if !dc.Status.SpecValid {
-		log.Info("Skipping cluster reconciliation because data center config is invalid %v", dc)
+	if !dataCenterConfig.Status.SpecValid {
+		log.Info("Skipping cluster reconciliation because data center config is invalid %v", dataCenterConfig)
 		return ctrl.Result{}, nil
 	}
 
