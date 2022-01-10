@@ -52,6 +52,9 @@ spec:
       {{- range $key, $value := .cloudstackControlPlaneDetails}}
         {{$key}}: {{$value}}
       {{- end}}
+{{- if .affinityGroupIds }}
+      affinitygroupids: {{.affinityGroupIds}}
+{{- end }}
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
@@ -293,5 +296,8 @@ spec:
       {{- range $key, $value := .cloudstackEtcdDetails }}
         {{$key}}: {{$value}}
       {{- end }}
+{{- if .cloudstackEtcdAffinityGroupIds }}
+      affinitygroupids: {{.cloudstackEtcdAffinityGroupIds}}
+{{- end }}
 ---
 {{- end}}
