@@ -118,13 +118,13 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 
 	machineConfigMap := map[string]*anywherev1.VSphereMachineConfig{}
 
-	for _, workNodeConfig := range cluster.Spec.WorkerNodeGroupConfigurations {
+	for _, ref := range cluster.MachineConfigRefs() {
 		machineConfig := &anywherev1.VSphereMachineConfig{}
-		machineConfigName := types.NamespacedName{Namespace: cluster.Namespace, Name: workNodeConfig.MachineGroupRef.Name}
+		machineConfigName := types.NamespacedName{Namespace: cluster.Namespace, Name: ref.Name}
 		if err := v.Client.Get(ctx, machineConfigName, machineConfig); err != nil {
 			return reconciler.Result{}, err
 		}
-		machineConfigMap[workNodeConfig.MachineGroupRef.Name] = machineConfig
+		machineConfigMap[ref.Name] = machineConfig
 	}
 
 	clusterSpec, err := v.FetchAppliedSpec(ctx, cluster)
