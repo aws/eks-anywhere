@@ -88,6 +88,7 @@ type ClusterClient interface {
 
 type Networking interface {
 	GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
+	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 }
 
 type AwsIamAuth interface {
@@ -542,6 +543,10 @@ func (c *ClusterManager) InstallNetworking(ctx context.Context, cluster *types.C
 		return fmt.Errorf("error applying networking manifest spec: %v", err)
 	}
 	return nil
+}
+
+func (c *ClusterManager) UpgradeNetworking(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
+	return c.networking.Upgrade(ctx, cluster, currentSpec, newSpec)
 }
 
 func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types.Cluster, provider providers.Provider) error {

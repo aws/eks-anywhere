@@ -6,6 +6,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -181,6 +182,15 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 	target := getManagementCluster(commandContext)
 
 	logger.Info("Upgrading core components")
+	if features.IsActive(features.NetworkingUpgrade()) {
+		changeDiff, err := commandContext.ClusterManager.UpgradeNetworking(ctx, target, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+		if err != nil {
+			commandContext.SetError(err)
+			return &CollectDiagnosticsTask{}
+		}
+		commandContext.UpgradeChangeDiff.Append(changeDiff)
+	}
+
 	changeDiff, err := commandContext.CAPIManager.Upgrade(ctx, target, commandContext.Provider, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)

@@ -6,6 +6,7 @@ const (
 	TinkerbellProviderEnvVar  = "TINKERBELL_PROVIDER"
 	FullLifecycleAPIEnvVar    = "FULL_LIFECYCLE_API"
 	FullLifecycleGate         = "FullLifecycleAPI"
+	NetworkingUpgradeEnvVar   = "NETWORKING_UPGRADE"
 )
 
 func FeedGates(featureGates []string) {
@@ -46,5 +47,12 @@ func TinkerbellProvider() Feature {
 	return Feature{
 		Name:     "Tinkerbell provider support",
 		IsActive: globalFeatures.isActiveForEnvVar(TinkerbellProviderEnvVar),
+	}
+}
+
+func NetworkingUpgrade() Feature {
+	return Feature{
+		Name:     "Upgrade CNI during cluster upgrades",
+		IsActive: globalFeatures.isActiveForEnvVar(NetworkingUpgradeEnvVar),
 	}
 }
