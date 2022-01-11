@@ -49,7 +49,8 @@ spec:
       details:
         foo: bar
         key: value
-      affinitygroupids: control-plane-anti-affinity
+      affinitygroupids:
+      - control-plane-anti-affinity
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
@@ -337,5 +338,6 @@ spec:
       details:
         foo: bar
         key: value
-      affinitygroupids: etcd-affinity
+      affinitygroupids:
+      - etcd-affinity
 ---

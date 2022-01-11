@@ -64,7 +64,8 @@ spec:
   details:
     foo: "bar"
     key: "value"
-  affinityGroupIds: control-plane-anti-affinity
+  affinityGroupIds:
+  - control-plane-anti-affinity
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: CloudStackMachineConfig
@@ -83,7 +84,8 @@ spec:
   details:
     foo: "bar"
     key: "value"
-  affinityGroupIds: worker-affinity
+  affinityGroupIds:
+  - worker-affinity
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: CloudStackMachineConfig
@@ -102,5 +104,6 @@ spec:
   details:
     foo: "bar"
     key: "value"
-  affinityGroupIds: etcd-affinity
+  affinityGroupIds:
+  - etcd-affinity
 ---

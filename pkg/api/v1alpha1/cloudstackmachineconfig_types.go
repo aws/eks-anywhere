@@ -31,7 +31,7 @@ type CloudStackMachineConfigSpec struct {
 	OSFamily         OSFamily            `json:"osFamily,omitempty"`
 	Details          map[string]string   `json:"details,omitempty"`
 	Users            []UserConfiguration `json:"users,omitempty"`
-	AffinityGroupIds string              `json:"affinityGroupIds,omitempty"` // comma separated list of affinity groups ids that are going to be applied to the virtual machine
+	AffinityGroupIds []string            `json:"affinityGroupIds,omitempty"`
 }
 
 func (c *CloudStackMachineConfig) PauseReconcile() {

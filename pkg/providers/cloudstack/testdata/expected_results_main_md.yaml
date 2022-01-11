@@ -68,4 +68,5 @@ spec:
       details:
         foo: bar
         key: value
-      affinitygroupids: worker-affinity
+      affinitygroupids:
+      - worker-affinity
