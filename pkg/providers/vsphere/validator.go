@@ -62,7 +62,7 @@ func (v *Validator) ValidateVCenterConfig(ctx context.Context, datacenterConfig 
 }
 
 // TODO: dry out machine configs validations
-func (v *Validator) ValidateCluster(ctx context.Context, vsphereClusterSpec *Spec) error {
+func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereClusterSpec *Spec) error {
 	var etcdMachineConfig *anywherev1.VSphereMachineConfig
 
 	// TODO: move this to api Cluster validations

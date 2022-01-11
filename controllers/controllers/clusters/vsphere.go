@@ -150,7 +150,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	}
 	vshepreClusterSpec := vsphere.NewSpec(clusterSpec, machineConfigMap, dataCenterConfig)
 
-	if err := v.Validator.ValidateCluster(ctx, vshepreClusterSpec); err != nil {
+	if err := v.Validator.ValidateClusterMachineConfigs(ctx, vshepreClusterSpec); err != nil {
 		return reconciler.Result{}, err
 	}
 
