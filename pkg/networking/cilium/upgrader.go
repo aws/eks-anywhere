@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -32,35 +33,44 @@ func NewUpgrader(client Client, helm Helm) *Upgrader {
 func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
 	diff := ciliumChangeDiff(currentSpec, newSpec)
 	if diff == nil {
+		logger.V(1).Info("Nothing to upgrade for Cilium, skipping")
 		return nil, nil
 	}
 
+	logger.V(1).Info("Upgrading Cilium", "oldVersion", diff.OldVersion, "newVersion", diff.NewVersion)
+	logger.V(4).Info("Generating Cilium upgrade preflight manifest")
 	preflight, err := u.templater.GenerateUpgradePreflightManifest(ctx, newSpec)
 	if err != nil {
 		return nil, err
 	}
 
+	logger.V(2).Info("Installing Cilium upgrade preflight manifest")
 	if err := u.client.Apply(ctx, cluster, preflight); err != nil {
 		return nil, fmt.Errorf("failed applying cilium preflight check: %v", err)
 	}
 
+	logger.V(3).Info("Waiting for Cilium upgrade preflight checks to be up")
 	if err := u.waitForPreflight(ctx, cluster); err != nil {
 		return nil, err
 	}
 
+	logger.V(3).Info("Deleting Cilium upgrade preflight")
 	if err := u.client.DeleteKubeSpecFromBytes(ctx, cluster, preflight); err != nil {
 		return nil, fmt.Errorf("failed deleting cilium preflight check: %v", err)
 	}
 
+	logger.V(3).Info("Generating Cilium upgrade manifest")
 	upgradeManifest, err := u.templater.GenerateUpgradeManifest(ctx, currentSpec, newSpec)
 	if err != nil {
 		return nil, err
 	}
 
+	logger.V(2).Info("Installing new Cilium version")
 	if err := u.client.Apply(ctx, cluster, upgradeManifest); err != nil {
 		return nil, fmt.Errorf("failed applying cilium upgrade: %v", err)
 	}
 
+	logger.V(3).Info("Waiting for upgraded Cilium to be ready")
 	if err := u.waitForCilium(ctx, cluster); err != nil {
 		return nil, err
 	}
