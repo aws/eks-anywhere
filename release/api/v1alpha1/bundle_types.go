@@ -190,11 +190,10 @@ type DockerBundle struct {
 }
 
 type CiliumBundle struct {
-	Version   string   `json:"version,omitempty"`
-	Cilium    Image    `json:"cilium"`
-	Operator  Image    `json:"operator"`
-	Manifest  Manifest `json:"manifest"`
-	HelmChart Image    `json:"helmChart,omitempty"`
+	Version  string   `json:"version,omitempty"`
+	Cilium   Image    `json:"cilium"`
+	Operator Image    `json:"operator"`
+	Manifest Manifest `json:"manifest"`
 }
 
 type KindnetdBundle struct {
