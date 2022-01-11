@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -79,19 +78,6 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 
 	if cluster.IsSelfManaged() {
 		log.Info("Ignoring self managed cluster")
-		return ctrl.Result{}, nil
-	}
-
-	// Fetch the VsphereDatacenter object
-	dataCenterConfig := &anywherev1.VSphereDatacenterConfig{}
-	dataCenterName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.DatacenterRef.Name}
-	if err := r.client.Get(ctx, dataCenterName, dataCenterConfig); err != nil {
-		return ctrl.Result{}, err
-	}
-	log.Info("Using data center config config", "datacenter", dataCenterConfig)
-
-	if !dataCenterConfig.Status.SpecValid {
-		log.Info("Skipping cluster reconciliation because data center config is invalid %v", dataCenterConfig)
 		return ctrl.Result{}, nil
 	}
 

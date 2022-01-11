@@ -111,6 +111,10 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		v.Log.Error(err, "Failed to set up env vars and default values for VsphereDatacenterConfig")
 		return reconciler.Result{}, err
 	}
+	if !dataCenterConfig.Status.SpecValid {
+		v.Log.Info("Skipping cluster reconciliation because data center config is invalid %v", dataCenterConfig)
+		return reconciler.Result{}, nil
+	}
 
 	machineConfigMap := map[string]*anywherev1.VSphereMachineConfig{}
 
