@@ -238,6 +238,11 @@ type TinkerbellBundle struct {
 	Version              string   `json:"version"`
 	ClusterAPIController Image    `json:"clusterAPIController"`
 	KubeVip              Image    `json:"kubeVip"`
+	TinkServer           Image    `json:"tinkServer"`
+	TinkWorker           Image    `json:"tinkWorker"`
+	TinkCli              Image    `json:"tinkCli"`
+	Hegel                Image    `json:"hegel"`
+	Cfssl                Image    `json:"cfssl"`
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
 	ClusterTemplate      Manifest `json:"clusterTemplate"`
