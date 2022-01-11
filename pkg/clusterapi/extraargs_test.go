@@ -236,6 +236,35 @@ func TestPodIAMConfigExtraArgs(t *testing.T) {
 	}
 }
 
+func TestResolvConfExtraArgs(t *testing.T) {
+	tests := []struct {
+		testName   string
+		resolvConf v1alpha1.ResolvConf
+		want       clusterapi.ExtraArgs
+	}{
+		{
+			testName:   "default",
+			resolvConf: v1alpha1.ResolvConf{Path: ""},
+			want:       map[string]string{},
+		},
+		{
+			testName:   "with custom resolvConf file",
+			resolvConf: v1alpha1.ResolvConf{Path: "mypath"},
+			want: clusterapi.ExtraArgs{
+				"resolv-conf": "mypath",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			if got := clusterapi.ResolvConfExtraArgs(tt.resolvConf); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ResolvConfExtraArgs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestSecureTlsCipherSuitesExtraArgs(t *testing.T) {
 	tests := []struct {
 		testName string
