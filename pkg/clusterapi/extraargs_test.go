@@ -291,7 +291,7 @@ func TestNodeLabelsExtraArgs(t *testing.T) {
 			wnc: v1alpha1.WorkerNodeGroupConfiguration{
 				Count: 3,
 			},
-			want: nil,
+			want: clusterapi.ExtraArgs{},
 		},
 		{
 			testName: "with labels",
@@ -307,8 +307,8 @@ func TestNodeLabelsExtraArgs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			if got := clusterapi.NodeLabelsExtraArgs(tt.wnc); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NodeLabelsExtraArgs() = %v, want %v", got, tt.want)
+			if got := clusterapi.WorkerNodeLabelsExtraArgs(tt.wnc); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("WorkerNodeLabelsExtraArgs() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -325,7 +325,7 @@ func TestCpNodeLabelsExtraArgs(t *testing.T) {
 			cpc: v1alpha1.ControlPlaneConfiguration{
 				Count: 3,
 			},
-			want: nil,
+			want: clusterapi.ExtraArgs{},
 		},
 		{
 			testName: "with labels",
@@ -341,8 +341,8 @@ func TestCpNodeLabelsExtraArgs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			if got := clusterapi.ControlPlaneLabelsExtraArgs(tt.cpc); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NodeLabelsExtraArgs() = %v, want %v", got, tt.want)
+			if got := clusterapi.ControlPlaneNodeLabelsExtraArgs(tt.cpc); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("WorkerNodeLabelsExtraArgs() = %v, want %v", got, tt.want)
 			}
 		})
 	}

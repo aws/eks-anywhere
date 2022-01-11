@@ -663,7 +663,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	format := "cloud-config"
 	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
 	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
-	kubeletExtraArgs := clusterapi.ControlPlaneLabelsExtraArgs(clusterSpec.Spec.ControlPlaneConfiguration).Append(sharedExtraArgs)
+	kubeletExtraArgs := clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Spec.ControlPlaneConfiguration).Append(sharedExtraArgs)
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Spec.PodIAMConfig)).
@@ -783,7 +783,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphereDatacenterConfigSpec, workerNodeGroupMachineSpec v1alpha1.VSphereMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
-	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().Append(clusterapi.NodeLabelsExtraArgs(clusterSpec.Spec.WorkerNodeGroupConfigurations[0]))
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().Append(clusterapi.WorkerNodeLabelsExtraArgs(clusterSpec.Spec.WorkerNodeGroupConfigurations[0]))
 
 	values := map[string]interface{}{
 		"clusterName":                    clusterSpec.ObjectMeta.Name,

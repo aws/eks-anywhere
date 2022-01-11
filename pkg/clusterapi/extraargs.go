@@ -64,11 +64,11 @@ func SecureEtcdTlsCipherSuitesExtraArgs() ExtraArgs {
 	return args
 }
 
-func NodeLabelsExtraArgs(wnc v1alpha1.WorkerNodeGroupConfiguration) ExtraArgs {
+func WorkerNodeLabelsExtraArgs(wnc v1alpha1.WorkerNodeGroupConfiguration) ExtraArgs {
 	return nodeLabelsExtraArgs(wnc.Labels)
 }
 
-func ControlPlaneLabelsExtraArgs(cpc v1alpha1.ControlPlaneConfiguration) ExtraArgs {
+func ControlPlaneNodeLabelsExtraArgs(cpc v1alpha1.ControlPlaneConfiguration) ExtraArgs {
 	return nodeLabelsExtraArgs(cpc.Labels)
 }
 
