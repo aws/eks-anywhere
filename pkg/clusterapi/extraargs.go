@@ -73,9 +73,6 @@ func ControlPlaneLabelsExtraArgs(cpc v1alpha1.ControlPlaneConfiguration) ExtraAr
 }
 
 func nodeLabelsExtraArgs(labels map[string]string) ExtraArgs {
-	if len(labels) <= 0 {
-		return nil
-	}
 	args := ExtraArgs{}
 	args.AddIfNotEmpty("node-labels", labelsMapToArg(labels))
 	return args

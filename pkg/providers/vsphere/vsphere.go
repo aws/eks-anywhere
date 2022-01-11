@@ -663,11 +663,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 	format := "cloud-config"
 	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
 	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
+	kubeletExtraArgs := clusterapi.ControlPlaneLabelsExtraArgs(clusterSpec.Spec.ControlPlaneConfiguration).Append(sharedExtraArgs)
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Spec.PodIAMConfig)).
 		Append(sharedExtraArgs)
-	kubeletExtraArgs := sharedExtraArgs.Append(clusterapi.ControlPlaneLabelsExtraArgs(clusterSpec.Spec.ControlPlaneConfiguration))
 
 	values := map[string]interface{}{
 		"clusterName":                          clusterSpec.ObjectMeta.Name,
