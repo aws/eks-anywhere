@@ -3,6 +3,7 @@ package cilium
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/semver"
@@ -25,10 +26,14 @@ func NewTemplater(helm Helm) *Templater {
 func (c *Templater) GenerateUpgradePreflightManifest(ctx context.Context, spec *cluster.Spec) ([]byte, error) {
 	v := templateValues(spec)
 	v.set(true, "preflight", "enabled")
+	v.set(spec.VersionsBundle.Cilium.Cilium.Image(), "preflight", "image", "repository")
+	v.set(spec.VersionsBundle.Cilium.Cilium.Tag(), "preflight", "image", "tag")
 	v.set(false, "agent")
 	v.set(false, "operator", "enabled")
 
-	manifest, err := c.helm.Template(ctx, "placeholder", spec.VersionsBundle.Cilium.Version, namespace, v) // TODO: use real oci uri
+	uri, version := getChartUriAndVersion(spec)
+
+	manifest, err := c.helm.Template(ctx, uri, version, namespace, v)
 	if err != nil {
 		return nil, fmt.Errorf("failed generating cilium upgrade preflight manifest: %v", err)
 	}
@@ -45,7 +50,9 @@ func (c *Templater) GenerateUpgradeManifest(ctx context.Context, currentSpec, ne
 	v := templateValues(newSpec)
 	v.set(fmt.Sprintf("%d.%d", currentVersion.Major, currentVersion.Minor), "upgradeCompatibility")
 
-	manifest, err := c.helm.Template(ctx, "placeholder", newSpec.VersionsBundle.Cilium.Version, namespace, v) // TODO: use real oci uri
+	uri, version := getChartUriAndVersion(newSpec)
+
+	manifest, err := c.helm.Template(ctx, uri, version, namespace, v)
 	if err != nil {
 		return nil, fmt.Errorf("failed generating cilium upgrade manifest: %v", err)
 	}
@@ -56,7 +63,9 @@ func (c *Templater) GenerateUpgradeManifest(ctx context.Context, currentSpec, ne
 func (c *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec) ([]byte, error) {
 	v := templateValues(spec)
 
-	manifest, err := c.helm.Template(ctx, "placeholder", spec.VersionsBundle.Cilium.Version, namespace, v) // TODO: use real oci uri
+	uri, version := getChartUriAndVersion(spec)
+
+	manifest, err := c.helm.Template(ctx, uri, version, namespace, v)
 	if err != nil {
 		return nil, fmt.Errorf("failed generating cilium manifest: %v", err)
 	}
@@ -99,7 +108,9 @@ func templateValues(spec *cluster.Spec) values {
 		},
 		"operator": values{
 			"image": values{
-				"repository": spec.VersionsBundle.Cilium.Operator.Image(),
+				// The chart expects an "incomplete" repository
+				// and will add the necessary suffix ("-generic" in our case)
+				"repository": strings.TrimSuffix(spec.VersionsBundle.Cilium.Operator.Image(), "-generic"),
 				"tag":        spec.VersionsBundle.Cilium.Operator.Tag(),
 			},
 			"prometheus": values{
@@ -107,4 +118,11 @@ func templateValues(spec *cluster.Spec) values {
 			},
 		},
 	}
+}
+
+func getChartUriAndVersion(spec *cluster.Spec) (uri, version string) {
+	chart := spec.VersionsBundle.Cilium.HelmChart
+	uri = fmt.Sprintf("oci://%s", chart.Image())
+	version = chart.Tag()
+	return uri, version
 }
