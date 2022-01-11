@@ -13,7 +13,7 @@ import (
 const (
 	ciliumDaemonSetName           = "cilium"
 	ciliumPreflightDaemonSetName  = "cilium-pre-flight-check"
-	ciliumDeploymentName          = "cilium"
+	ciliumDeploymentName          = "cilium-operator"
 	ciliumPreflightDeploymentName = "cilium-pre-flight-check"
 )
 
