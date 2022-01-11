@@ -118,31 +118,14 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 
 	machineConfigMap := map[string]*anywherev1.VSphereMachineConfig{}
 
-	if cluster.Spec.ExternalEtcdConfiguration != nil {
-		mc := &anywherev1.VSphereMachineConfig{}
-		mcName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name}
-		if err := v.Client.Get(ctx, mcName, mc); err != nil {
+	for _, workNodeConfig := range cluster.Spec.WorkerNodeGroupConfigurations {
+		machineConfig := &anywherev1.VSphereMachineConfig{}
+		machineConfigName := types.NamespacedName{Namespace: cluster.Namespace, Name: workNodeConfig.MachineGroupRef.Name}
+		if err := v.Client.Get(ctx, machineConfigName, machineConfig); err != nil {
 			return reconciler.Result{}, err
 		}
-		v.Log.V(4).Info("Using etcd machine config %v", mc)
-		machineConfigMap[cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] = mc
+		machineConfigMap[workNodeConfig.MachineGroupRef.Name] = machineConfig
 	}
-
-	controlplaneMachine := &anywherev1.VSphereMachineConfig{}
-	controlplaneMachineNameName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name}
-	if err := v.Client.Get(ctx, controlplaneMachineNameName, controlplaneMachine); err != nil {
-		return reconciler.Result{}, err
-	}
-	v.Log.V(4).Info("Using cp machine config %v", controlplaneMachine)
-	machineConfigMap[cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] = controlplaneMachine
-
-	workerNodeMachine := &anywherev1.VSphereMachineConfig{}
-	workerNodeMachineName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name}
-	if err := v.Client.Get(ctx, workerNodeMachineName, workerNodeMachine); err != nil {
-		return reconciler.Result{}, err
-	}
-	v.Log.V(4).Info("Using wn machine config %v", workerNodeMachine)
-	machineConfigMap[cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name] = workerNodeMachine
 
 	clusterSpec, err := v.FetchAppliedSpec(ctx, cluster)
 	if err != nil {
