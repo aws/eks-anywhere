@@ -38,26 +38,25 @@ import (
 )
 
 const (
-	CredentialsObjectName                 = "vsphere-credentials"
-	EksavSphereUsernameKey                = "EKSA_VSPHERE_USERNAME"
-	EksavSpherePasswordKey                = "EKSA_VSPHERE_PASSWORD"
-	eksaLicense                           = "EKSA_LICENSE"
-	vSphereUsernameKey                    = "VSPHERE_USERNAME"
-	vSpherePasswordKey                    = "VSPHERE_PASSWORD"
-	vSphereServerKey                      = "VSPHERE_SERVER"
-	govcInsecure                          = "GOVC_INSECURE"
-	expClusterResourceSetKey              = "EXP_CLUSTER_RESOURCE_SET"
-	secretObjectType                      = "addons.cluster.x-k8s.io/resource-set"
-	secretObjectName                      = "csi-vsphere-config"
-	privateKeyFileName                    = "eks-a-id_rsa"
-	publicKeyFileName                     = "eks-a-id_rsa.pub"
-	defaultTemplateLibrary                = "eks-a-templates"
-	defaultTemplatesFolder                = "vm/Templates"
-	bottlerocketDefaultUser               = "ec2-user"
-	ubuntuDefaultUser                     = "capv"
-	cloudControllerDaemonSetContainerName = "vsphere-cloud-controller-manager"
-	maxRetries                            = 30
-	backOffPeriod                         = 5 * time.Second
+	CredentialsObjectName    = "vsphere-credentials"
+	EksavSphereUsernameKey   = "EKSA_VSPHERE_USERNAME"
+	EksavSpherePasswordKey   = "EKSA_VSPHERE_PASSWORD"
+	eksaLicense              = "EKSA_LICENSE"
+	vSphereUsernameKey       = "VSPHERE_USERNAME"
+	vSpherePasswordKey       = "VSPHERE_PASSWORD"
+	vSphereServerKey         = "VSPHERE_SERVER"
+	govcInsecure             = "GOVC_INSECURE"
+	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
+	secretObjectType         = "addons.cluster.x-k8s.io/resource-set"
+	secretObjectName         = "csi-vsphere-config"
+	privateKeyFileName       = "eks-a-id_rsa"
+	publicKeyFileName        = "eks-a-id_rsa.pub"
+	defaultTemplateLibrary   = "eks-a-templates"
+	defaultTemplatesFolder   = "vm/Templates"
+	bottlerocketDefaultUser  = "ec2-user"
+	ubuntuDefaultUser        = "capv"
+	maxRetries               = 30
+	backOffPeriod            = 5 * time.Second
 )
 
 //go:embed config/template-cp.yaml
@@ -1253,11 +1252,5 @@ func (p *vsphereProvider) UpgradeNeeded(_ context.Context, newSpec, currentSpec 
 }
 
 func (p *vsphereProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	// Use retrier so that cluster creation does not fail due to any intermittent failure while connecting to kube-api server
-	err := p.Retrier.Retry(
-		func() error {
-			return p.providerKubectlClient.ApplyTolerationsFromTaintsToDaemonSet(ctx, nil, clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints, cloudControllerDaemonSetContainerName, cluster.KubeconfigFile)
-		},
-	)
-	return err
+	return nil
 }
