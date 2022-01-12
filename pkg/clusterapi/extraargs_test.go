@@ -371,7 +371,7 @@ func TestCpNodeLabelsExtraArgs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
 			if got := clusterapi.ControlPlaneNodeLabelsExtraArgs(tt.cpc); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("WorkerNodeLabelsExtraArgs() = %v, want %v", got, tt.want)
+				t.Errorf("ControlPlaneNodeLabelsExtraArgs() = %v, want %v", got, tt.want)
 			}
 		})
 	}
