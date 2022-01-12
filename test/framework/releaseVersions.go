@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/aws/eks-anywhere/internal/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -17,12 +18,38 @@ import (
 const (
 	prodReleasesManifest = "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml"
 	releaseBinaryName    = "eksctl-anywhere"
+	branchNameEnvVar     = "T_BRANCH_NAME"
+	defaultTestBranch    = "main"
 )
 
+func GetLatestMinorReleaseBinaryFromTestBranch() (binaryPath string, err error) {
+	return getBinaryFromRelease(GetLatestMinorReleaseFromTestBranch())
+}
+
+func GetLatestMinorReleaseFromTestBranch() (*releasev1alpha1.EksARelease, error) {
+	testBranch := getEnvWithDefault(branchNameEnvVar, defaultTestBranch)
+	if testBranch == "main" {
+		return GetLatestMinorReleaseFromMain()
+	}
+
+	majorMinor := getMajorMinorFromTestBranch(testBranch)
+	testBranchFirstVersion := fmt.Sprintf("%s.0", majorMinor)
+	testBranchFirstSemver, err := semver.New(testBranchFirstVersion)
+	if err != nil {
+		return nil, fmt.Errorf("can't extract semver from release branch [%s]: %v", testBranch, err)
+	}
+
+	return GetLatestMinorReleaseFromVersion(testBranchFirstSemver)
+}
+
 func GetLatestMinorReleaseBinaryFromMain() (binaryPath string, err error) {
+	return getBinaryFromRelease(GetLatestMinorReleaseFromMain())
+}
+
+func GetLatestMinorReleaseFromMain() (*releasev1alpha1.EksARelease, error) {
 	releases, err := prodReleases()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	var latestRelease *releasev1alpha1.EksARelease
 	for _, release := range releases.Spec.Releases {
@@ -33,34 +60,28 @@ func GetLatestMinorReleaseBinaryFromMain() (binaryPath string, err error) {
 	}
 
 	if latestRelease == nil {
-		return "", fmt.Errorf("releases manifest doesn't contain latest release %s", releases.Spec.LatestVersion)
+		return nil, fmt.Errorf("releases manifest doesn't contain latest release %s", releases.Spec.LatestVersion)
 	}
 
-	binaryPath, err = getBinary(latestRelease)
-	if err != nil {
-		return "", fmt.Errorf("failed getting binary for latest release: %s", err)
-	}
-
-	return binaryPath, nil
+	return latestRelease, nil
 }
 
 func GetLatestMinorReleaseBinaryFromVersion(releaseBranchVersion *semver.Version) (binaryPath string, err error) {
+	return getBinaryFromRelease(GetLatestMinorReleaseFromVersion(releaseBranchVersion))
+}
+
+func GetLatestMinorReleaseFromVersion(releaseBranchVersion *semver.Version) (*releasev1alpha1.EksARelease, error) {
 	releases, err := prodReleases()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	release, err := getLatestPrevMinorRelease(releases, releaseBranchVersion)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	binaryPath, err = getBinary(release)
-	if err != nil {
-		return "", fmt.Errorf("failed getting binary for latest previous minor release: %s", err)
-	}
-
-	return binaryPath, nil
+	return release, nil
 }
 
 func GetReleaseBinaryFromVersion(version *semver.Version) (binaryPath string, err error) {
@@ -110,6 +131,19 @@ func getBinary(release *releasev1alpha1.EksARelease) (string, error) {
 	return latestReleaseBinaryPath, nil
 }
 
+func getBinaryFromRelease(release *releasev1alpha1.EksARelease, chainedErr error) (binaryPath string, err error) {
+	if chainedErr != nil {
+		return "", err
+	}
+
+	binaryPath, err = getBinary(release)
+	if err != nil {
+		return "", fmt.Errorf("failed getting binary for release [%s]: %v", release.Version, err)
+	}
+
+	return binaryPath, nil
+}
+
 type platformAwareRelease struct {
 	*releasev1alpha1.EksARelease
 }
@@ -156,4 +190,8 @@ func getLatestPrevMinorRelease(releases *releasev1alpha1.Release, releaseBranchV
 	}
 
 	return targetRelease, nil
+}
+
+func getMajorMinorFromTestBranch(testBranch string) string {
+	return strings.TrimPrefix(testBranch, "release-")
 }
