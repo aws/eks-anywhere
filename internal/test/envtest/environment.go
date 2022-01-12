@@ -3,7 +3,9 @@ package envtest
 import (
 	"context"
 	"fmt"
+	"path"
 	"path/filepath"
+	goruntime "runtime"
 	"strings"
 	"testing"
 
@@ -87,7 +89,7 @@ func RunWithEnvironment(m *testing.M, opts ...EnvironmentOpt) int {
 }
 
 func newEnvironment(ctx context.Context) (*Environment, error) {
-	root := filepath.Join("..", "..", "..")
+	root := getRootPath()
 	crdDirectoryPaths := make([]string, 0, len(packages)+1)
 	crdDirectoryPaths = append(crdDirectoryPaths, filepath.Join(root, "config", "crd", "bases"))
 	extraCRDPaths, err := getPathsToPackagesCRDs(root, packages...)
@@ -183,4 +185,9 @@ func (e *Environment) CreateNamespaceForTest(ctx context.Context, t *testing.T) 
 	})
 
 	return namespace.Name
+}
+
+func getRootPath() string {
+	_, currentFilePath, _, _ := goruntime.Caller(0)
+	return path.Join(path.Dir(currentFilePath), "..", "..", "..")
 }
