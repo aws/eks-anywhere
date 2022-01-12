@@ -32,15 +32,6 @@ func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 	test.DeleteCluster()
 }
 
-func runUpgradeFlowDiffCliVersionFromMain(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
-	test.GenerateClusterConfig(framework.ExecuteWithLatestMinorReleaseFromMain())
-	test.CreateCluster(framework.ExecuteWithLatestMinorReleaseFromMain())
-	test.UpgradeCluster(clusterOpts)
-	test.ValidateCluster(updateVersion)
-	test.StopIfFailed()
-	test.DeleteCluster()
-}
-
 func TestVSphereKubernetes120UbuntuTo121Upgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu120())
 	test := framework.NewClusterE2ETest(
@@ -311,75 +302,5 @@ func TestVSphereKubernetes120BottlerocketTo121StackedEtcdUpgrade(t *testing.T) {
 		v1alpha1.Kube121,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate121()),
-	)
-}
-
-func TestVSphereKubernetes120BottlerocketCreateWithLatestReleaseUpgradeWithMain(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithBottleRocket120())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-	)
-	runUpgradeFlowDiffCliVersionFromMain(
-		test,
-		v1alpha1.Kube120,
-	)
-}
-
-func TestVSphereKubernetes121BottlerocketCreateWithLatestReleaseUpgradeWithMain(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithBottleRocket121())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-	)
-	runUpgradeFlowDiffCliVersionFromMain(
-		test,
-		v1alpha1.Kube121,
-	)
-}
-
-func TestVSphereKubernetes120UbuntuCreateWithLatestReleaseUpgradeWithMain(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu120())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-	)
-	runUpgradeFlowDiffCliVersionFromMain(
-		test,
-		v1alpha1.Kube120,
-	)
-}
-
-func TestVSphereKubernetes121UbuntuCreateWithLatestReleaseUpgradeWithMain(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu121())
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-	)
-	runUpgradeFlowDiffCliVersionFromMain(
-		test,
-		v1alpha1.Kube121,
-	)
-}
-
-func TestDockerKubernetes121CreateWithLatestReleaseUpgradeWithMain(t *testing.T) {
-	provider := framework.NewDocker(t)
-	test := framework.NewClusterE2ETest(
-		t,
-		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-	)
-	runUpgradeFlowDiffCliVersionFromMain(
-		test,
-		v1alpha1.Kube121,
 	)
 }
