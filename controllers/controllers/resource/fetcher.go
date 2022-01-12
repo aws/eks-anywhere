@@ -25,7 +25,7 @@ import (
 
 type ResourceFetcher interface {
 	MachineDeployments(ctx context.Context, cs *anywherev1.Cluster) ([]*clusterv1.MachineDeployment, error)
-	VSphereWorkerMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) ([]vspherev1.VSphereMachineTemplate, error)
+	VSphereWorkerMachineTemplates(ctx context.Context, cs *anywherev1.Cluster) ([]vspherev1.VSphereMachineTemplate, error)
 	FetchObject(ctx context.Context, objectKey types.NamespacedName, obj client.Object) error
 	FetchObjectByName(ctx context.Context, name string, namespace string, obj client.Object) error
 	Fetch(ctx context.Context, name string, namespace string, kind string, apiVersion string) (*unstructured.Unstructured, error)
@@ -205,7 +205,7 @@ func (r *capiResourceFetcher) Fetch(ctx context.Context, name string, namespace 
 	return us, nil
 }
 
-func (r *capiResourceFetcher) VSphereWorkerMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) ([]vspherev1.VSphereMachineTemplate, error) {
+func (r *capiResourceFetcher) VSphereWorkerMachineTemplates(ctx context.Context, cs *anywherev1.Cluster) ([]vspherev1.VSphereMachineTemplate, error) {
 	md, err := r.MachineDeployments(ctx, cs)
 	if err != nil {
 		return nil, err
@@ -306,7 +306,7 @@ func (r *capiResourceFetcher) FetchAppliedSpec(ctx context.Context, cs *anywhere
 }
 
 func (r *capiResourceFetcher) ExistingVSphereDatacenterConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereDatacenterConfig, error) {
-	vsMachineTemplates, err := r.VSphereWorkerMachineTemplate(ctx, cs)
+	vsMachineTemplates, err := r.VSphereWorkerMachineTemplates(ctx, cs)
 	if err != nil {
 		return nil, err
 	}
@@ -330,7 +330,7 @@ func (r *capiResourceFetcher) ExistingVSphereEtcdMachineConfig(ctx context.Conte
 }
 
 func (r *capiResourceFetcher) ExistingVSphereWorkerMachineConfigs(ctx context.Context, cs *anywherev1.Cluster) (map[string]anywherev1.VSphereMachineConfig, error) {
-	vsMachineTemplates, err := r.VSphereWorkerMachineTemplate(ctx, cs)
+	vsMachineTemplates, err := r.VSphereWorkerMachineTemplates(ctx, cs)
 	if err != nil {
 		return nil, err
 	}

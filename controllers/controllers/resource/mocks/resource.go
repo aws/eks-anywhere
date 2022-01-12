@@ -251,19 +251,19 @@ func (mr *MockResourceFetcherMockRecorder) OIDCConfig(arg0, arg1, arg2 interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OIDCConfig", reflect.TypeOf((*MockResourceFetcher)(nil).OIDCConfig), arg0, arg1, arg2)
 }
 
-// VSphereWorkerMachineTemplate mocks base method.
-func (m *MockResourceFetcher) VSphereWorkerMachineTemplate(arg0 context.Context, arg1 *v1alpha1.Cluster) ([]v1alpha30.VSphereMachineTemplate, error) {
+// VSphereWorkerMachineTemplates mocks base method.
+func (m *MockResourceFetcher) VSphereWorkerMachineTemplates(arg0 context.Context, arg1 *v1alpha1.Cluster) ([]v1alpha30.VSphereMachineTemplate, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VSphereWorkerMachineTemplate", arg0, arg1)
+	ret := m.ctrl.Call(m, "VSphereWorkerMachineTemplates", arg0, arg1)
 	ret0, _ := ret[0].([]v1alpha30.VSphereMachineTemplate)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// VSphereWorkerMachineTemplate indicates an expected call of VSphereWorkerMachineTemplate.
-func (mr *MockResourceFetcherMockRecorder) VSphereWorkerMachineTemplate(arg0, arg1 interface{}) *gomock.Call {
+// VSphereWorkerMachineTemplates indicates an expected call of VSphereWorkerMachineTemplates.
+func (mr *MockResourceFetcherMockRecorder) VSphereWorkerMachineTemplates(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VSphereWorkerMachineTemplate", reflect.TypeOf((*MockResourceFetcher)(nil).VSphereWorkerMachineTemplate), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VSphereWorkerMachineTemplates", reflect.TypeOf((*MockResourceFetcher)(nil).VSphereWorkerMachineTemplates), arg0, arg1)
 }
 
 // MockResourceUpdater is a mock of ResourceUpdater interface.
