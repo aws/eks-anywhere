@@ -49,7 +49,26 @@ type BuildMapOption func(map[string]interface{})
 
 type TemplateBuilder interface {
 	GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...BuildMapOption) (content []byte, err error)
-	GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, buildOptions ...BuildMapOption) (content []byte, err error)
+	GenerateCAPISpecWorkers(clusterSpec *cluster.Spec) (content []byte, err error)
+	GenerateCAPISpecWorkersUpgrade(clusterSpec *cluster.Spec, templateNames []string) (content []byte, err error)
+	WorkerMachineTemplateName(clusterName string) string
+	CPMachineTemplateName(clusterName string) string
+	EtcdMachineTemplateName(clusterName string) string
+}
+
+type DockerTemplateBuilder interface {
+	GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...BuildMapOption) (content []byte, err error)
+	GenerateCAPISpecWorkers(clusterSpec *cluster.Spec) (content []byte, err error)
+	GenerateCAPISpecWorkersUpgrade(clusterSpec *cluster.Spec, templateNames []string) (content []byte, err error)
+	WorkerMachineTemplateName(clusterName string) string
+	CPMachineTemplateName(clusterName string) string
+	EtcdMachineTemplateName(clusterName string) string
+}
+
+type TinkerbellTemplateBuilder interface {
+	GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...BuildMapOption) (content []byte, err error)
+	GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig) (content []byte, err error)
+	GenerateCAPISpecWorkersUpgrade(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, templateNames []string) (content []byte, err error)
 	WorkerMachineTemplateName(clusterName string) string
 	CPMachineTemplateName(clusterName string) string
 	EtcdMachineTemplateName(clusterName string) string

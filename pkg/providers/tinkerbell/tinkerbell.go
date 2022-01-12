@@ -64,8 +64,12 @@ func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
 	}
-	if len(clusterConfig.Spec.WorkerNodeGroupConfigurations) > 0 && clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name] != nil {
-		workerNodeGroupMachineSpec = &machineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec
+	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.TinkerbellMachineConfigSpec, len(machineConfigs))
+	for _, wnConfig := range clusterConfig.Spec.WorkerNodeGroupConfigurations {
+		if wnConfig.MachineGroupRef != nil && machineConfigs[wnConfig.MachineGroupRef.Name] != nil {
+			workerNodeGroupMachineSpec = &machineConfigs[wnConfig.MachineGroupRef.Name].Spec
+			workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = *workerNodeGroupMachineSpec
+		}
 	}
 	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
@@ -79,11 +83,11 @@ func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 		providerKubectlClient: providerKubectlClient,
 		hardwareConfigFile:    hardwareConfigFile,
 		templateBuilder: &TinkerbellTemplateBuilder{
-			datacenterSpec:             &datacenterConfig.Spec,
-			controlPlaneMachineSpec:    controlPlaneMachineSpec,
-			workerNodeGroupMachineSpec: workerNodeGroupMachineSpec,
-			etcdMachineSpec:            etcdMachineSpec,
-			now:                        now,
+			datacenterSpec:              &datacenterConfig.Spec,
+			controlPlaneMachineSpec:     controlPlaneMachineSpec,
+			workerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
+			etcdMachineSpec:             etcdMachineSpec,
+			now:                         now,
 		},
 	}
 }
@@ -162,20 +166,20 @@ func (p *tinkerbellProvider) UpdateSecrets(ctx context.Context, cluster *types.C
 }
 
 type TinkerbellTemplateBuilder struct {
-	controlPlaneMachineSpec    *v1alpha1.TinkerbellMachineConfigSpec
-	datacenterSpec             *v1alpha1.TinkerbellDatacenterConfigSpec
-	workerNodeGroupMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
-	etcdMachineSpec            *v1alpha1.TinkerbellMachineConfigSpec
-	now                        types.NowFunc
+	controlPlaneMachineSpec     *v1alpha1.TinkerbellMachineConfigSpec
+	datacenterSpec              *v1alpha1.TinkerbellDatacenterConfigSpec
+	workerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec
+	etcdMachineSpec             *v1alpha1.TinkerbellMachineConfigSpec
+	now                         types.NowFunc
 }
 
-func NewTinkerbellTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterConfigSpec, controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
+func NewTinkerbellTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec, workerNodeGroupMachineSpecs map[string]v1alpha1.TinkerbellMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
 	return &TinkerbellTemplateBuilder{
-		controlPlaneMachineSpec:    controlPlaneMachineSpec,
-		datacenterSpec:             datacenterSpec,
-		workerNodeGroupMachineSpec: workerNodeGroupMachineSpec,
-		etcdMachineSpec:            etcdMachineSpec,
-		now:                        now,
+		controlPlaneMachineSpec:     controlPlaneMachineSpec,
+		datacenterSpec:              datacenterSpec,
+		workerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
+		etcdMachineSpec:             etcdMachineSpec,
+		now:                         now,
 	}
 }
 
@@ -206,19 +210,39 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	return bytes, nil
 }
 
-func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	values := buildTemplateMapMD(clusterSpec, *vs.workerNodeGroupMachineSpec)
+func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec) (content []byte, err error) {
+	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		values := buildTemplateMapMD(clusterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name])
+		values["workloadTemplateName"] = vs.WorkerMachineTemplateName(workerNodeGroupConfiguration.MachineGroupRef.Name)
+		values["workerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
 
-	for _, buildOption := range buildOptions {
-		buildOption(values)
+		bytes, err := templater.Execute(defaultClusterConfigMD, values)
+		if err != nil {
+			return nil, err
+		}
+		workerSpecs = append(workerSpecs, bytes)
+	}
+	return templater.AppendYamlResources(workerSpecs...), nil
+}
+
+func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkersUpgrade(clusterSpec *cluster.Spec, templateNames []string) (content []byte, err error) {
+	var workerSpecs [][]byte
+	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		values := buildTemplateMapMD(clusterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name])
+		for _, templateName := range templateNames {
+			values["workloadTemplateName"] = templateName
+		}
+		values["workerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
+
+		bytes, err := templater.Execute(defaultClusterConfigMD, values)
+		if err != nil {
+			return nil, err
+		}
+		workerSpecs = append(workerSpecs, bytes)
 	}
 
-	bytes, err := templater.Execute(defaultClusterConfigMD, values)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes, nil
+	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
 func (p *tinkerbellProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
@@ -242,11 +266,7 @@ func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, clus
 	if err != nil {
 		return nil, nil, err
 	}
-	workersOpt := func(values map[string]interface{}) {
-		values["workloadTemplateName"] = p.templateBuilder.WorkerMachineTemplateName(clusterName)
-		values["workerSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
-	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workersOpt)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec)
 	if err != nil {
 		return nil, nil, err
 	}
