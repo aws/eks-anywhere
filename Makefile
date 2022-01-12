@@ -92,7 +92,7 @@ KUSTOMIZATION_CONFIG=./config/prod/kustomization.yaml
 CONTROLLER_MANIFEST_OUTPUT_DIR=$(OUTPUT_DIR)/manifests/cluster-controller
 
 # This removes the compile dependency on C libraries from github.com/containers/storage which is imported by github.com/replicatedhq/troubleshoot
-BUILD_TAGS := exclude_graphdriver_btrfs exclude_graphdriver_devicemapper
+BUILD_TAGS :=
 
 GO_ARCH:=$(shell go env GOARCH)
 GO_OS:=$(shell go env GOOS)
