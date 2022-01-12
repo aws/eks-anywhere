@@ -87,6 +87,11 @@ spec:
                     required:
                     - host
                     type: object
+                  labels:
+                    additionalProperties:
+                      type: string
+                    description: Labels define the labels to assign to the node
+                    type: object
                   machineGroupRef:
                     description: MachineGroupRef defines the machine group configuration
                       for the control plane.
@@ -126,11 +131,6 @@ spec:
                       - key
                       type: object
                     type: array
-                  labels:
-                    additionalProperties:
-                      type: string
-                    description: Labels define the labels to assign to the node
-                    type: object
                 type: object
               datacenterRef:
                 properties:

@@ -2192,6 +2192,11 @@ spec:
                     required:
                     - host
                     type: object
+                  labels:
+                    additionalProperties:
+                      type: string
+                    description: Labels define the labels to assign to the node
+                    type: object
                   machineGroupRef:
                     description: MachineGroupRef defines the machine group configuration
                       for the control plane.
@@ -2231,11 +2236,6 @@ spec:
                       - key
                       type: object
                     type: array
-                  labels:
-                    additionalProperties:
-                      type: string
-                    description: Labels define the labels to assign to the node
-                    type: object
                 type: object
               datacenterRef:
                 properties:
@@ -2795,6 +2795,10 @@ spec:
             description: VSphereDatacenterConfigStatus defines the observed state
               of VSphereDatacenterConfig
             properties:
+              failureMessage:
+                description: FailureMessage indicates that there is a fatal problem
+                  reconciling the state, and will be set to a descriptive error message.
+                type: string
               observedGeneration:
                 description: ObservedGeneration is the latest generation observed
                   by the controller.
