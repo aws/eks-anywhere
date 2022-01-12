@@ -75,10 +75,6 @@ func (v *VSphereReconciler) SetupEnvsAndDefaults(ctx context.Context, vsphereDat
 		return fmt.Errorf("failed setting env vars: %v", err)
 	}
 
-	if err := v.Defaulter.SetDefaultsForDatacenterConfig(ctx, vsphereDatacenter); err != nil {
-		return fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
-	}
-
 	return nil
 }
 

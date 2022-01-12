@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -88,6 +89,9 @@ func (r *VSphereDatacenterReconciler) reconcile(ctx context.Context, vsphereData
 	if err := r.SetupEnvsAndDefaults(ctx, vsphereDatacenter); err != nil {
 		log.Error(err, "Failed to set up env vars and default values for VsphereDatacenterConfig")
 		return ctrl.Result{}, err
+	}
+	if err := r.Defaulter.SetDefaultsForDatacenterConfig(ctx, vsphereDatacenter); err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
 	}
 	// Determine if VsphereDatacenterConfig is valid
 	if err := r.Validator.ValidateVCenterConfig(ctx, vsphereDatacenter); err != nil {
