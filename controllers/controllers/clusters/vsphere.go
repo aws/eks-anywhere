@@ -42,20 +42,20 @@ func NewVSphereReconciler(client client.Client, log logr.Logger, validator *vsph
 	}
 }
 
-func (v *VSphereReconciler) VsphereCredentials(ctx context.Context) (*apiv1.Secret, error) {
+func VsphereCredentials(ctx context.Context, cli client.Client) (*apiv1.Secret, error) {
 	secret := &apiv1.Secret{}
 	secretKey := client.ObjectKey{
 		Namespace: "eksa-system",
 		Name:      vsphere.CredentialsObjectName,
 	}
-	if err := v.Client.Get(ctx, secretKey, secret); err != nil {
+	if err := cli.Get(ctx, secretKey, secret); err != nil {
 		return nil, err
 	}
 	return secret, nil
 }
 
-func (v *VSphereReconciler) SetupEnvVars(ctx context.Context, vsphereDatacenter *anywherev1.VSphereDatacenterConfig) error {
-	secret, err := v.VsphereCredentials(ctx)
+func SetupEnvVars(ctx context.Context, vsphereDatacenter *anywherev1.VSphereDatacenterConfig, cli client.Client) error {
+	secret, err := VsphereCredentials(ctx, cli)
 	if err != nil {
 		return fmt.Errorf("failed getting vsphere credentials secret: %v", err)
 	}
@@ -100,7 +100,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return reconciler.Result{}, err
 	}
 	// Set up envs for executing Govc cmd and default values for datacenter config
-	if err := v.SetupEnvVars(ctx, dataCenterConfig); err != nil {
+	if err := SetupEnvVars(ctx, dataCenterConfig, v.Client); err != nil {
 		v.Log.Error(err, "Failed to set up env vars and default values for VsphereDatacenterConfig")
 		return reconciler.Result{}, err
 	}
