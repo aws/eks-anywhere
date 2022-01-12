@@ -11,7 +11,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/controllers/controllers/reconciler"
-	"github.com/aws/eks-anywhere/controllers/controllers/resource"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -29,12 +28,9 @@ type VSphereReconciler struct {
 type VSphereClusterReconciler struct {
 	VSphereReconciler
 	*providerClusterReconciler
-
-	capiResourceFetcher *resource.CapiResourceFetcher
 }
 
 func NewVSphereReconciler(client client.Client, log logr.Logger, validator *vsphere.Validator, defaulter *vsphere.Defaulter) *VSphereClusterReconciler {
-	capiResourceFetcher := resource.NewCAPIResourceFetcher(client, log)
 	return &VSphereClusterReconciler{
 		VSphereReconciler: VSphereReconciler{
 			Client:    client,
@@ -43,7 +39,6 @@ func NewVSphereReconciler(client client.Client, log logr.Logger, validator *vsph
 			Defaulter: defaulter,
 		},
 		providerClusterReconciler: &providerClusterReconciler{},
-		capiResourceFetcher:       capiResourceFetcher,
 	}
 }
 
@@ -89,10 +84,12 @@ func (v *VSphereReconciler) SetupEnvsAndDefaults(ctx context.Context, vsphereDat
 
 func (v *VSphereClusterReconciler) bundles(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
 	clusterBundle := &releasev1alpha1.Bundles{}
-	err := v.capiResourceFetcher.FetchObjectByName(ctx, name, namespace, clusterBundle)
-	if err != nil {
+	bundleName := types.NamespacedName{Namespace: namespace, Name: name}
+
+	if err := v.Client.Get(ctx, bundleName, clusterBundle); err != nil {
 		return nil, err
 	}
+
 	return clusterBundle, nil
 }
 
