@@ -23,6 +23,11 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: capc-system
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: capi-webhook-system
 ---
 apiVersion: v1

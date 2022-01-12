@@ -55,8 +55,9 @@ const (
 	privateKeyFileName                    = "eks-a-id_rsa"
 	publicKeyFileName                     = "eks-a-id_rsa.pub"
 
-	ubuntuDefaultUser = "capc"
-	redhatDefaultUser = "capc"
+	ubuntuDefaultUser          = "capc"
+	redhatDefaultUser          = "capc"
+	controlEndpointDefaultPort = "6443"
 )
 
 //go:embed config/template-cp.yaml
@@ -361,11 +362,19 @@ func (p *cloudstackProvider) generateSSHAuthKey(username string) (string, error)
 	return key, nil
 }
 
-func (p *cloudstackProvider) validateControlPlaneIp(ip string) error {
-	// check if controlPlaneEndpointIp is valid
-	parsedIp := net.ParseIP(ip)
-	if parsedIp == nil {
-		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s", ip)
+func (p *cloudstackProvider) validateControlPlaneHost(pHost *string) error {
+	_, port, err := net.SplitHostPort(*pHost)
+	if err != nil {
+		if strings.Contains(err.Error(), "missing port") {
+			port = controlEndpointDefaultPort
+			*pHost = fmt.Sprintf("%s:%s", *pHost, port)
+		} else {
+			return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s (%s)", *pHost, err.Error())
+		}
+	}
+	_, err = strconv.Atoi(port)
+	if err != nil {
+		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host has an invalid port: %s (%s)", *pHost, err.Error())
 	}
 	return nil
 }
@@ -505,7 +514,7 @@ func (p *cloudstackProvider) setupAndValidateCluster(ctx context.Context, cluste
 		workerNodeGroupMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
 	}
 
-	err := p.validateControlPlaneIp(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	err := p.validateControlPlaneHost(&clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
 	if err != nil {
 		return err
 	}
@@ -911,10 +920,12 @@ func (vs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1.CloudStackDeploymentConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
+	host, port, _ := net.SplitHostPort(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
 
 	values := map[string]interface{}{
 		"clusterName":                            clusterSpec.ObjectMeta.Name,
-		"controlPlaneEndpointIp":                 clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
+		"controlPlaneEndpointHost":               host,
+		"controlPlaneEndpointPort":               port,
 		"controlPlaneReplicas":                   clusterSpec.Spec.ControlPlaneConfiguration.Count,
 		"kubernetesRepository":                   bundle.KubeDistro.Kubernetes.Repository,
 		"kubernetesVersion":                      bundle.KubeDistro.Kubernetes.Tag,
