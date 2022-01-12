@@ -17,6 +17,7 @@ package pkg
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 
@@ -27,7 +28,10 @@ const (
 	ciliumProjectPath       = "projects/cilium/cilium"
 	ciliumImageName         = "cilium"
 	ciliumOperatorImageName = "operator-generic"
-	ciliumHelmChartName     = "cilium"
+	ciliumHelmChartName     = "cilium-chart"
+	ciliumHelmChart         = "cilium"
+	ciliumImage             = "cilium"
+	ciliumOperatorImage     = "operator-generic"
 )
 
 // GetCiliumAssets returns the eks-a artifacts for Cilium
@@ -89,11 +93,11 @@ func (r *ReleaseConfig) GetCiliumBundle() (anywherev1alpha1.CiliumBundle, error)
 		return anywherev1alpha1.CiliumBundle{}, errors.Cause(err)
 	}
 	ciliumImages := []imageDefinition{
-		containerImage(ciliumImageName, ciliumContainerRegistry, ciliumGitTag),
-		containerImage(ciliumOperatorImageName, ciliumContainerRegistry, ciliumGitTag),
+		containerImage(ciliumImageName, ciliumImage, ciliumContainerRegistry, ciliumGitTag),
+		containerImage(ciliumOperatorImageName, ciliumOperatorImage, ciliumContainerRegistry, ciliumGitTag),
 		// Helm charts are in the same repository and have the same
 		// sem version as the corresponding container image but omiting the initial "v"
-		// chart(ciliumHelmChartName, ciliumContainerRegistry, strings.TrimPrefix(ciliumGitTag, "v")),
+		chart(ciliumHelmChartName, ciliumHelmChart, ciliumContainerRegistry, strings.TrimPrefix(ciliumGitTag, "v")),
 	}
 
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
@@ -120,11 +124,11 @@ func (r *ReleaseConfig) GetCiliumBundle() (anywherev1alpha1.CiliumBundle, error)
 	}
 
 	bundle := anywherev1alpha1.CiliumBundle{
-		Version:  ciliumGitTag,
-		Cilium:   bundleImageArtifacts[ciliumImageName],
-		Operator: bundleImageArtifacts[ciliumOperatorImageName],
-		Manifest: bundleManifestArtifacts["cilium.yaml"],
-		// HelmChart: bundleImageArtifacts[ciliumHelmChartName],
+		Version:   ciliumGitTag,
+		Cilium:    bundleImageArtifacts[ciliumImageName],
+		Operator:  bundleImageArtifacts[ciliumOperatorImageName],
+		Manifest:  bundleManifestArtifacts["cilium.yaml"],
+		HelmChart: bundleImageArtifacts[ciliumHelmChartName],
 	}
 
 	return bundle, nil
@@ -143,15 +147,16 @@ func (r *ReleaseConfig) getCiliumImageDigest(imageName string) (string, error) {
 }
 
 type imageDefinition struct {
-	name, registry, tag string
-	builder             imageBuilder
+	name, image, registry, tag string
+	builder                    imageBuilder
 }
 
 type imageBuilder func(digest string) anywherev1alpha1.Image
 
-func containerImage(name, registry, tag string) imageDefinition {
+func containerImage(name, image, registry, tag string) imageDefinition {
 	return imageDefinition{
 		name:     name,
+		image:    image,
 		registry: registry,
 		tag:      tag,
 		builder: func(digest string) anywherev1alpha1.Image {
@@ -160,23 +165,24 @@ func containerImage(name, registry, tag string) imageDefinition {
 				Description: fmt.Sprintf("Container image for %s image", name),
 				OS:          "linux",
 				Arch:        []string{"amd64"},
-				URI:         fmt.Sprintf("%s/%s:%s", registry, name, tag),
+				URI:         fmt.Sprintf("%s/%s:%s", registry, image, tag),
 				ImageDigest: digest,
 			}
 		},
 	}
 }
 
-func chart(name, registry, tag string) imageDefinition {
+func chart(name, image, registry, tag string) imageDefinition {
 	return imageDefinition{
 		name:     name,
+		image:    image,
 		registry: registry,
 		tag:      tag,
 		builder: func(digest string) anywherev1alpha1.Image {
 			return anywherev1alpha1.Image{
 				Name:        name,
 				Description: fmt.Sprintf("Helm chart for %s", name),
-				URI:         fmt.Sprintf("%s/%s:%s", registry, name, tag),
+				URI:         fmt.Sprintf("%s/%s:%s", registry, image, tag),
 				ImageDigest: digest,
 			}
 		},
