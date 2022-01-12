@@ -172,6 +172,22 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 			wantMDFile: "testdata/valid_deployment_node_labels_md_expected.yaml",
 		},
 		{
+			testName: "valid config with cp node labels",
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Name = "test-cluster"
+				s.Spec.KubernetesVersion = "1.19"
+				s.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+				s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
+				s.Spec.ControlPlaneConfiguration.Count = 3
+				s.Spec.ControlPlaneConfiguration.Labels = nodeLabels
+				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+				s.VersionsBundle = versionsBundle
+				s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+			}),
+			wantCPFile: "testdata/valid_deployment_node_labels_cp_expected.yaml",
+			wantMDFile: "testdata/valid_deployment_md_expected.yaml",
+		},
+		{
 			testName: "valid config with cidrs and custom resolv.conf",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Name = "test-cluster"

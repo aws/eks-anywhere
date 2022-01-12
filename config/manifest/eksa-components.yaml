@@ -2231,6 +2231,11 @@ spec:
                       - key
                       type: object
                     type: array
+                  labels:
+                    additionalProperties:
+                      type: string
+                    description: Labels define the labels to assign to the node
+                    type: object
                 type: object
               datacenterRef:
                 properties:

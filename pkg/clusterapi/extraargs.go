@@ -70,12 +70,17 @@ func SecureEtcdTlsCipherSuitesExtraArgs() ExtraArgs {
 	return args
 }
 
-func NodeLabelsExtraArgs(wnc v1alpha1.WorkerNodeGroupConfiguration) ExtraArgs {
-	if len(wnc.Labels) <= 0 {
-		return nil
-	}
+func WorkerNodeLabelsExtraArgs(wnc v1alpha1.WorkerNodeGroupConfiguration) ExtraArgs {
+	return nodeLabelsExtraArgs(wnc.Labels)
+}
+
+func ControlPlaneNodeLabelsExtraArgs(cpc v1alpha1.ControlPlaneConfiguration) ExtraArgs {
+	return nodeLabelsExtraArgs(cpc.Labels)
+}
+
+func nodeLabelsExtraArgs(labels map[string]string) ExtraArgs {
 	args := ExtraArgs{}
-	args.AddIfNotEmpty("node-labels", labelsMapToArg(wnc.Labels))
+	args.AddIfNotEmpty("node-labels", labelsMapToArg(labels))
 	return args
 }
 
