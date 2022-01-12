@@ -86,7 +86,7 @@ func (r *VSphereDatacenterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 func (r *VSphereDatacenterReconciler) reconcile(ctx context.Context, vsphereDatacenter *anywherev1.VSphereDatacenterConfig, log logr.Logger) (_ ctrl.Result, reterr error) {
 	// Set up envs for executing Govc cmd and default values for datacenter config
-	if err := r.SetupEnvsAndDefaults(ctx, vsphereDatacenter); err != nil {
+	if err := r.SetupEnvVars(ctx, vsphereDatacenter); err != nil {
 		log.Error(err, "Failed to set up env vars and default values for VsphereDatacenterConfig")
 		return ctrl.Result{}, err
 	}

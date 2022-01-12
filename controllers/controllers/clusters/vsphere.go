@@ -54,7 +54,7 @@ func (v *VSphereReconciler) VsphereCredentials(ctx context.Context) (*apiv1.Secr
 	return secret, nil
 }
 
-func (v *VSphereReconciler) SetupEnvsAndDefaults(ctx context.Context, vsphereDatacenter *anywherev1.VSphereDatacenterConfig) error {
+func (v *VSphereReconciler) SetupEnvVars(ctx context.Context, vsphereDatacenter *anywherev1.VSphereDatacenterConfig) error {
 	secret, err := v.VsphereCredentials(ctx)
 	if err != nil {
 		return fmt.Errorf("failed getting vsphere credentials secret: %v", err)
@@ -100,7 +100,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return reconciler.Result{}, err
 	}
 	// Set up envs for executing Govc cmd and default values for datacenter config
-	if err := v.SetupEnvsAndDefaults(ctx, dataCenterConfig); err != nil {
+	if err := v.SetupEnvVars(ctx, dataCenterConfig); err != nil {
 		v.Log.Error(err, "Failed to set up env vars and default values for VsphereDatacenterConfig")
 		return reconciler.Result{}, err
 	}
