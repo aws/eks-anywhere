@@ -24,6 +24,7 @@ func NewCloudStackMachineConfigGenerate(name string) *CloudStackMachineConfigGen
 		Spec: CloudStackMachineConfigSpec{
 			ComputeOffering: "",
 			OSFamily:        Ubuntu,
+			Template:        "",
 			Users: []UserConfiguration{{
 				Name:              "capc",
 				SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},

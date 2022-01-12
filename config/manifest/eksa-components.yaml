@@ -1966,6 +1966,7 @@ spec:
                 type: array
             required:
             - computeOffering
+            - template
             type: object
           status:
             description: CloudStackMachineConfigStatus defines the observed state
