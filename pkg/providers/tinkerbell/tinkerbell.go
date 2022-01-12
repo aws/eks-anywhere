@@ -57,6 +57,8 @@ type tinkerbellProvider struct {
 // TODO: Add necessary kubectl functions here
 type ProviderKubectlClient interface {
 	ApplyHardware(ctx context.Context, hardwareYaml string, kubeConfFile string) error
+	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType string, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) error
+	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType string, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) error
 }
 
 func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, now types.NowFunc, hardwareConfigFile string) *tinkerbellProvider {
@@ -126,9 +128,13 @@ func (p *tinkerbellProvider) MachineResourceType() string {
 	return eksaTinkerbellMachineResourceType
 }
 
-func (p *tinkerbellProvider) DeleteResources(_ context.Context, _ *cluster.Spec) error {
-	// TODO: Add delete resource logic
-	return nil
+func (p *tinkerbellProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
+	for _, mc := range p.machineConfigs {
+		if err := p.providerKubectlClient.DeleteEksaMachineConfig(ctx, eksaTinkerbellDatacenterResourceType, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace); err != nil {
+			return err
+		}
+	}
+	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx, eksaTinkerbellMachineResourceType, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
 }
 
 func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {

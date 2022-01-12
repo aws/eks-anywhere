@@ -197,20 +197,20 @@ func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, f
 	return nil
 }
 
-func (k *Kubectl) DeleteEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) error {
-	params := []string{"delete", eksaVSphereDatacenterResourceType, vsphereDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+func (k *Kubectl) DeleteEksaDatacenterConfig(ctx context.Context, eksaDatacenterResourceType string, eksaDatacenterConfigName string, kubeconfigFile string, namespace string) error {
+	params := []string{"delete", eksaDatacenterResourceType, eksaDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error deleting vspheredatacenterconfig cluster %s apply: %v", vsphereDatacenterConfigName, err)
+		return fmt.Errorf("error deleting %s cluster %s apply: %v", eksaDatacenterResourceType, eksaDatacenterConfigName, err)
 	}
 	return nil
 }
 
-func (k *Kubectl) DeleteEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) error {
-	params := []string{"delete", eksaVSphereMachineResourceType, vsphereMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+func (k *Kubectl) DeleteEksaMachineConfig(ctx context.Context, eksaMachineConfigResourceType string, eksaMachineConfigName string, kubeconfigFile string, namespace string) error {
+	params := []string{"delete", eksaMachineConfigResourceType, eksaMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error deleting vspheremachineconfig cluster %s apply: %v", vsphereMachineConfigName, err)
+		return fmt.Errorf("error deleting %s cluster %s apply: %v", eksaMachineConfigResourceType, eksaMachineConfigName, err)
 	}
 	return nil
 }
