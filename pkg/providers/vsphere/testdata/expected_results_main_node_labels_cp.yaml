@@ -346,7 +346,7 @@ spec:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
-          resolv-conf: /etc/my-custom-resolv.conf
+          node-labels: label1=foo,label2=bar
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.hostname }}'
         taints: []
@@ -355,7 +355,7 @@ spec:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
-          resolv-conf: /etc/my-custom-resolv.conf
+          node-labels: label1=foo,label2=bar
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.hostname }}'
         taints: []
