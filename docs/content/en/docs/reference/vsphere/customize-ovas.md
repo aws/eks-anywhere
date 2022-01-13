@@ -97,7 +97,17 @@ Once the VM is powered on and fetches an IP address, ssh into the VM using your 
 ssh -i <private-key-file> username@<VM-IP>
 ```
 
-Make desired config changes on the VM 
+Make desired config changes on the VM
+
+### Reset the machine-id and power off the VM
+
+This step in needed because of a [known issue in Ubuntu](https://kb.vmware.com/s/article/82229) which results in the clone VMs getting the same DHCP IP
+
+```
+echo -n > /etc/machine-id
+rm /var/lib/dbus/machine-id
+ln -s /etc/machine-id /var/lib/dbus/machine-id
+```
 
 Power the VM down
 
@@ -105,13 +115,18 @@ Power the VM down
 govc vm.power -off "$VM"
 ```
 
-Take a snapshot of the VM (It is highly recommended that you snapshot the VM. This will reduce the time it takes to provision machines and cluster creation will be faster. If you prefer not to take snapshot, skip this step. If you do not snapshot the VM, you will not be able to customize the disk size on your cluster VMs)
+### Take a snapshot of the VM 
+
+It is recommended to take a snapshot the VM as it reduces the provisioning time for the machines and makes cluster creation faster.
+
+If you do snapshot the VM, you will not be able to customize the disk size of your cluster VMs. If you prefer not to take a snapshot, skip this step.
+
 
 ```
 govc snapshot.create -vm "$VM" root
 ```
 
-Convert VM to template
+### Convert VM to template
 
 ```
 govc vm.markastemplate $VM
