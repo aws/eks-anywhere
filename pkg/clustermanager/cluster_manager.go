@@ -729,14 +729,16 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 		return nil
 	}
 
-	timeout := time.Duration(clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count) * c.machineMaxWait
-	if timeout <= c.machinesMinWait {
-		timeout = c.machinesMinWait
-	}
+	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		timeout := time.Duration(workerNodeGroupConfiguration.Count) * c.machineMaxWait
+		if timeout <= c.machinesMinWait {
+			timeout = c.machinesMinWait
+		}
 
-	r := retrier.New(timeout)
-	if err := r.Retry(isMdReady); err != nil {
-		return fmt.Errorf("retries exhausted waiting for machinedeployment replicas to be ready: %v", err)
+		r := retrier.New(timeout)
+		if err := r.Retry(isMdReady); err != nil {
+			return fmt.Errorf("retries exhausted waiting for machinedeployment replicas to be ready: %v", err)
+		}
 	}
 	return nil
 }

@@ -648,6 +648,7 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.S
 		values := buildTemplateMapMD(clusterSpec, *vs.datacenterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name])
 		values["workloadTemplateName"] = vs.WorkerMachineTemplateName(workerNodeGroupConfiguration.MachineGroupRef.Name)
 		values["vsphereWorkerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
+		values["workerReplicas"] = workerNodeGroupConfiguration.Count
 
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
@@ -661,12 +662,11 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.S
 
 func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkersUpgrade(clusterSpec *cluster.Spec, templateNames []string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
-	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+	for i, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec, *vs.datacenterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name])
-		for _, templateName := range templateNames {
-			values["workloadTemplateName"] = templateName
-		}
+		values["workloadTemplateName"] = templateNames[i]
 		values["vsphereWorkerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
+		values["workerReplicas"] = workerNodeGroupConfiguration.Count
 
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
@@ -821,7 +821,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"vsphereServer":                  datacenterSpec.Server,
 		"workerVsphereStoragePolicyName": workerNodeGroupMachineSpec.StoragePolicyName,
 		"vsphereTemplate":                workerNodeGroupMachineSpec.Template,
-		"workerReplicas":                 clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count,
 		"workloadVMsMemoryMiB":           workerNodeGroupMachineSpec.MemoryMiB,
 		"workloadVMsNumCPUs":             workerNodeGroupMachineSpec.NumCPUs,
 		"workloadDiskGiB":                workerNodeGroupMachineSpec.DiskGiB,
@@ -1117,27 +1116,31 @@ func (p *vsphereProvider) DatacenterConfig() providers.DatacenterConfig {
 func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
 	var configs []providers.MachineConfig
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	workerMachineName := p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
 	if p.clusterConfig.IsManaged() {
 		p.machineConfigs[controlPlaneMachineName].SetManagement(p.clusterConfig.ManagedBy())
 	}
-
 	configs = append(configs, p.machineConfigs[controlPlaneMachineName])
-	if workerMachineName != controlPlaneMachineName {
-		configs = append(configs, p.machineConfigs[workerMachineName])
-		if p.clusterConfig.IsManaged() {
-			p.machineConfigs[workerMachineName].SetManagement(p.clusterConfig.ManagedBy())
-		}
-	}
+
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
-		if etcdMachineName != controlPlaneMachineName && etcdMachineName != workerMachineName {
+		if etcdMachineName != controlPlaneMachineName {
 			configs = append(configs, p.machineConfigs[etcdMachineName])
 			p.machineConfigs[etcdMachineName].SetManagement(p.clusterConfig.ManagedBy())
 		}
 	}
+
+	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
+		workerMachineName := workerNodeGroupConfiguration.MachineGroupRef.Name
+		if !containsConfig(configs, p.machineConfigs[workerMachineName]) {
+			configs = append(configs, p.machineConfigs[workerMachineName])
+			if p.clusterConfig.IsManaged() {
+				p.machineConfigs[workerMachineName].SetManagement(p.clusterConfig.ManagedBy())
+			}
+		}
+	}
+
 	return configs
 }
 
@@ -1285,4 +1288,13 @@ func (p *vsphereProvider) RunPostControlPlaneCreation(ctx context.Context, clust
 		},
 	)
 	return err
+}
+
+func containsConfig(configs []providers.MachineConfig, c providers.MachineConfig) bool {
+	for _, config := range configs {
+		if config == c {
+			return true
+		}
+	}
+	return false
 }

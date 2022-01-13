@@ -117,7 +117,7 @@ metadata:
   namespace: eksa-system
 spec:
   clusterName: test
-  replicas: 3
+  replicas: 2
   selector:
     matchLabels: {}
   template:

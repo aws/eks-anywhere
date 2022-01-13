@@ -158,6 +158,7 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec)
 		values["workloadTemplateName"] = d.WorkerMachineTemplateName(workerNodeGroupConfiguration.MachineGroupRef.Name)
+		values["worker_replicas"] = workerNodeGroupConfiguration.Count
 
 		bytes, err := templater.Execute(defaultCAPIConfigMD, values)
 		if err != nil {
@@ -171,9 +172,10 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 
 func (d *DockerTemplateBuilder) GenerateCAPISpecWorkersUpgrade(clusterSpec *cluster.Spec, templateNames []string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
-	for _, templateName := range templateNames {
+	for i, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec)
-		values["workloadTemplateName"] = templateName
+		values["workloadTemplateName"] = templateNames[i]
+		values["worker_replicas"] = workerNodeGroupConfiguration.Count
 
 		bytes, err := templater.Execute(defaultCAPIConfigMD, values)
 		if err != nil {
@@ -243,7 +245,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 
 	values := map[string]interface{}{
 		"clusterName":         clusterSpec.Name,
-		"worker_replicas":     clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count,
 		"kubernetesVersion":   bundle.KubeDistro.Kubernetes.Tag,
 		"kindNodeImage":       bundle.EksD.KindNode.VersionedImage(),
 		"eksaSystemNamespace": constants.EksaSystemNamespace,
