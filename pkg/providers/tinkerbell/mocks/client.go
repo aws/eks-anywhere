@@ -47,3 +47,31 @@ func (mr *MockProviderKubectlClientMockRecorder) ApplyHardware(arg0, arg1, arg2 
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyHardware", reflect.TypeOf((*MockProviderKubectlClient)(nil).ApplyHardware), arg0, arg1, arg2)
 }
+
+// DeleteEksaDatacenterConfig mocks base method.
+func (m *MockProviderKubectlClient) DeleteEksaDatacenterConfig(arg0 context.Context, arg1, arg2, arg3, arg4 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteEksaDatacenterConfig", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteEksaDatacenterConfig indicates an expected call of DeleteEksaDatacenterConfig.
+func (mr *MockProviderKubectlClientMockRecorder) DeleteEksaDatacenterConfig(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEksaDatacenterConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).DeleteEksaDatacenterConfig), arg0, arg1, arg2, arg3, arg4)
+}
+
+// DeleteEksaMachineConfig mocks base method.
+func (m *MockProviderKubectlClient) DeleteEksaMachineConfig(arg0 context.Context, arg1, arg2, arg3, arg4 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteEksaMachineConfig", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteEksaMachineConfig indicates an expected call of DeleteEksaMachineConfig.
+func (mr *MockProviderKubectlClientMockRecorder) DeleteEksaMachineConfig(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEksaMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).DeleteEksaMachineConfig), arg0, arg1, arg2, arg3, arg4)
+}

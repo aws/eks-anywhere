@@ -59,6 +59,10 @@ spec:
             description: VSphereDatacenterConfigStatus defines the observed state
               of VSphereDatacenterConfig
             properties:
+              failureMessage:
+                description: FailureMessage indicates that there is a fatal problem
+                  reconciling the state, and will be set to a descriptive error message.
+                type: string
               observedGeneration:
                 description: ObservedGeneration is the latest generation observed
                   by the controller.

@@ -181,7 +181,15 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 	target := getManagementCluster(commandContext)
 
 	logger.Info("Upgrading core components")
-	changeDiff, err := commandContext.CAPIManager.Upgrade(ctx, target, commandContext.Provider, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+
+	changeDiff, err := commandContext.ClusterManager.UpgradeNetworking(ctx, target, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	if err != nil {
+		commandContext.SetError(err)
+		return &CollectDiagnosticsTask{}
+	}
+	commandContext.UpgradeChangeDiff.Append(changeDiff)
+
+	changeDiff, err = commandContext.CAPIManager.Upgrade(ctx, target, commandContext.Provider, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}

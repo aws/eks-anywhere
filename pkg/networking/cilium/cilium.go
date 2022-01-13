@@ -8,10 +8,14 @@ import (
 
 const namespace = constants.KubeSystemNamespace
 
-type Cilium struct{}
+type Cilium struct {
+	*Upgrader
+}
 
-func NewCilium() *Cilium {
-	return &Cilium{}
+func NewCilium(client Client, helm Helm) *Cilium {
+	return &Cilium{
+		Upgrader: NewUpgrader(client, helm),
+	}
 }
 
 func (c *Cilium) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error) {

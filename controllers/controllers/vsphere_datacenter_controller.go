@@ -88,21 +88,28 @@ func (r *VSphereDatacenterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 }
 
 func (r *VSphereDatacenterReconciler) reconcile(ctx context.Context, vsphereDatacenter *anywherev1.VSphereDatacenterConfig, log logr.Logger) (_ ctrl.Result, reterr error) {
-	// Set up envs for executing Govc cmd and default values for datacenter config
-	if err := r.setupEnvsAndDefaults(ctx, vsphereDatacenter); err != nil {
-		log.Error(err, "Failed to set up env vars and default values for VsphereDatacenterConfig")
-		return ctrl.Result{}, err
-	}
-	// Determine if VsphereDatacenterConfig is valid
-	if err := r.validator.ValidateVCenterConfig(ctx, vsphereDatacenter); err != nil {
-		log.Error(err, "Failed to validate VsphereDatacenterConfig")
+	if err := r.validateConfig(ctx, vsphereDatacenter); err != nil {
 		vsphereDatacenter.Status.SpecValid = false
+		failureMessage := err.Error()
+		vsphereDatacenter.Status.FailureMessage = &failureMessage
 		return ctrl.Result{}, err
 	}
 
 	vsphereDatacenter.Status.SpecValid = true
 
 	return ctrl.Result{}, nil
+}
+
+func (r *VSphereDatacenterReconciler) validateConfig(ctx context.Context, vsphereDatacenter *anywherev1.VSphereDatacenterConfig) error {
+	// Set up envs for executing Govc cmd and default values for datacenter config
+	if err := r.setupEnvsAndDefaults(ctx, vsphereDatacenter); err != nil {
+		return fmt.Errorf("failed to set up env vars and default values for VsphereDatacenterConfig: %v", err)
+	}
+	// Determine if VsphereDatacenterConfig is valid
+	if err := r.validator.ValidateVCenterConfig(ctx, vsphereDatacenter); err != nil {
+		return fmt.Errorf("failed to validate VsphereDatacenterConfig: %v", err)
+	}
+	return nil
 }
 
 func (r *VSphereDatacenterReconciler) vsphereCredentials(ctx context.Context) (*apiv1.Secret, error) {
