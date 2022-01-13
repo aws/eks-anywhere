@@ -101,7 +101,7 @@ Make desired config changes on the VM
 
 ### Reset the machine-id and power off the VM
 
-This step in needed because of a [known issue in Ubuntu](https://kb.vmware.com/s/article/82229) which results in the clone VMs getting the same DHCP IP
+This step is needed because of a [known issue in Ubuntu](https://kb.vmware.com/s/article/82229) which results in the clone VMs getting the same DHCP IP
 
 ```
 echo -n > /etc/machine-id
