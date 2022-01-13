@@ -607,7 +607,7 @@ func TestClusterManagerMoveCAPISuccess(t *testing.T) {
 	m.client.EXPECT().GetClusters(ctx, to).Return(clusters, nil)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", capiClusterName)
 	m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
-	m.client.EXPECT().ValidateWorkerNodes(ctx, to, "test-wn")
+	m.client.EXPECT().ValidateWorkerNodes(ctx, to, clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name)
 	m.client.EXPECT().GetMachines(ctx, to, to.Name)
 
 	if err := c.MoveCAPI(ctx, from, to, to.Name, clusterSpec); err != nil {
@@ -708,7 +708,7 @@ func TestClusterManagerMoveCAPIErrorGetMachines(t *testing.T) {
 	m.client.EXPECT().MoveManagement(ctx, from, to)
 	m.client.EXPECT().GetClusters(ctx, to)
 	m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
-	m.client.EXPECT().ValidateWorkerNodes(ctx, to, "test-wn")
+	m.client.EXPECT().ValidateWorkerNodes(ctx, to, clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name)
 	m.client.EXPECT().GetMachines(ctx, to, from.Name).Return(nil, errors.New("error getting machines")).AnyTimes()
 
 	if err := c.MoveCAPI(ctx, from, to, from.Name, clusterSpec); err == nil {
