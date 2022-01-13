@@ -1,10 +1,11 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -18,6 +19,15 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
+
+const (
+	outputFlagName = "output"
+	outputDefault  = outputText
+	outputText     = "text"
+	outputJson     = "json"
+)
+
+var output string
 
 var upgradePlanCmd = &cobra.Command{
 	Use:          "plan",
@@ -47,6 +57,7 @@ func init() {
 	upgradeCmd.AddCommand(upgradePlanCmd)
 	upgradePlanCmd.Flags().StringVarP(&uc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	upgradePlanCmd.Flags().StringVar(&uc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
+	upgradePlanCmd.Flags().StringVarP(&output, outputFlagName, "o", outputDefault, "Output format: text|json")
 	err := upgradePlanCmd.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -87,18 +98,54 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	componentChangeDiffs.Append(fluxupgrader.FluxChangeDiff(currentSpec, newClusterSpec))
 	componentChangeDiffs.Append(capiupgrader.CapiChangeDiff(currentSpec, newClusterSpec, deps.Provider))
 
-	if componentChangeDiffs == nil {
-		fmt.Println("All the components are up to date with the latest versions")
-		return nil
+	serializedDiff, err := serialize(componentChangeDiffs, output)
+	if err != nil {
+		return err
 	}
-	w := tabwriter.NewWriter(os.Stdout, 10, 4, 3, ' ', 0)
+
+	fmt.Print(serializedDiff)
+
+	return nil
+}
+
+func serialize(componentChangeDiffs *types.ChangeDiff, outputFormat string) (string, error) {
+	switch outputFormat {
+	case outputText:
+		return serializeToText(componentChangeDiffs)
+	case outputJson:
+		return serializeToJson(componentChangeDiffs)
+	default:
+		return "", fmt.Errorf("invalid output format [%s]", outputFormat)
+	}
+}
+
+func serializeToText(componentChangeDiffs *types.ChangeDiff) (string, error) {
+	if componentChangeDiffs == nil {
+		return "All the components are up to date with the latest versions", nil
+	}
+
+	buffer := bytes.Buffer{}
+	w := tabwriter.NewWriter(&buffer, 10, 4, 3, ' ', 0)
 	fmt.Fprintln(w, "NAME\tCURRENT VERSION\tNEXT VERSION")
 	for i := range componentChangeDiffs.ComponentReports {
 		fmt.Fprintf(w, "%s\t%s\t%s\n", componentChangeDiffs.ComponentReports[i].ComponentName, componentChangeDiffs.ComponentReports[i].OldVersion, componentChangeDiffs.ComponentReports[i].NewVersion)
 	}
 	if err := w.Flush(); err != nil {
-		fmt.Printf("Error %v", err)
+		return "", fmt.Errorf("failed flushing table writer: %v", err)
 	}
 
-	return nil
+	return buffer.String(), nil
+}
+
+func serializeToJson(componentChangeDiffs *types.ChangeDiff) (string, error) {
+	if componentChangeDiffs == nil {
+		componentChangeDiffs = &types.ChangeDiff{ComponentReports: []types.ComponentChangeDiff{}}
+	}
+
+	jsonDiff, err := json.Marshal(componentChangeDiffs)
+	if err != nil {
+		return "", fmt.Errorf("failed serializing the components diff to json: %v", err)
+	}
+
+	return string(jsonDiff), nil
 }
