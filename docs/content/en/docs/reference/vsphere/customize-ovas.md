@@ -117,7 +117,7 @@ govc vm.power -off "$VM"
 
 ### Take a snapshot of the VM 
 
-It is recommended to take a snapshot the VM as it reduces the provisioning time for the machines and makes cluster creation faster.
+It is recommended to take a snapshot of the VM as it reduces the provisioning time for the machines and makes cluster creation faster.
 
 If you do snapshot the VM, you will not be able to customize the disk size of your cluster VMs. If you prefer not to take a snapshot, skip this step.
 
