@@ -720,16 +720,15 @@ func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, m
 }
 
 func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	isMdReady := func() error {
-		return c.clusterClient.ValidateWorkerNodes(ctx, managementCluster, clusterSpec.Name)
-	}
-
-	err := isMdReady()
-	if err == nil {
-		return nil
-	}
-
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		isMdReady := func() error {
+			return c.clusterClient.ValidateWorkerNodes(ctx, managementCluster, workerNodeGroupConfiguration.MachineGroupRef.Name)
+		}
+		err := isMdReady()
+		if err == nil {
+			return nil
+		}
+
 		timeout := time.Duration(workerNodeGroupConfiguration.Count) * c.machineMaxWait
 		if timeout <= c.machinesMinWait {
 			timeout = c.machinesMinWait
@@ -901,16 +900,20 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 		if err != nil {
 			return fmt.Errorf("error updating annotation when pausing control plane machineconfig reconciliation: %v", err)
 		}
-		if clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name != clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name {
-			err := c.Retrier.Retry(
-				func() error {
-					return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
-				},
-			)
-			if err != nil {
-				return fmt.Errorf("error updating annotation when pausing worker node machineconfig reconciliation: %v", err)
+
+		for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+			if clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name != workerNodeGroupConfiguration.MachineGroupRef.Name {
+				err := c.Retrier.Retry(
+					func() error {
+						return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), workerNodeGroupConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
+					},
+				)
+				if err != nil {
+					return fmt.Errorf("error updating annotation when pausing worker node machineconfig reconciliation: %v", err)
+				}
 			}
 		}
+
 		if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 			if clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name != clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name {
 				// etcd machines have a separate machineGroupRef which hasn't been paused yet, so apply pause annotation

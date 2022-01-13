@@ -1,7 +1,7 @@
 apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
 kind: KubeadmConfigTemplate
 metadata:
-  name: test-md-0
+  name: test-wn-md-0
   namespace: eksa-system
 spec:
   template:
@@ -39,7 +39,7 @@ kind: MachineDeployment
 metadata:
   labels:
     cluster.x-k8s.io/cluster-name: test
-  name: test-md-0
+  name: test-wn-md-0
   namespace: eksa-system
 spec:
   clusterName: test
@@ -55,7 +55,7 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
           kind: KubeadmConfigTemplate
-          name: test-md-0
+          name: test-wn-md-0
       clusterName: test
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3

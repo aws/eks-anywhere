@@ -649,6 +649,7 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.S
 		values["workloadTemplateName"] = vs.WorkerMachineTemplateName(workerNodeGroupConfiguration.MachineGroupRef.Name)
 		values["vsphereWorkerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
+		values["workerMachineGroupRefName"] = workerNodeGroupConfiguration.MachineGroupRef.Name
 
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
@@ -667,6 +668,7 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkersUpgrade(clusterSpec *cl
 		values["workloadTemplateName"] = templateNames[i]
 		values["vsphereWorkerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
+		values["workerMachineGroupRefName"] = workerNodeGroupConfiguration.MachineGroupRef.Name
 
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
