@@ -58,6 +58,10 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 	if err != nil {
 		return nil, err
 	}
+	oldWorkerVmcs, err := r.ExistingVSphereWorkerMachineConfigs(ctx, eksaCluster)
+	if err != nil {
+		return nil, err
+	}
 
 	var controlPlaneTemplateName string
 	updateControlPlaneTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, oldCpVmc, &cpVmc)
@@ -71,7 +75,24 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		controlPlaneTemplateName = cp.Spec.InfrastructureTemplate.Name
 	}
 
-	// TODO: Support upgrade with multiple worker node groups
+	var workloadTemplateNames []string
+	for _, vmc := range workerVmc {
+		oldVmc := oldWorkerVmcs[vmc.Name]
+		updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, &oldVmc, vmc)
+		if updateWorkloadTemplate {
+			workloadTemplateName := templateBuilder.WorkerMachineTemplateName(clusterName)
+			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
+		} else {
+			mcDeployments, err := r.MachineDeployments(ctx, eksaCluster)
+			if err != nil {
+				return nil, err
+			}
+			for _, mcd := range mcDeployments {
+				workloadTemplateName := mcd.Spec.Template.Spec.InfrastructureRef.Name
+				workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
+			}
+		}
+	}
 
 	var etcdTemplateName string
 	if eksaCluster.Spec.ExternalEtcdConfiguration != nil {
@@ -102,7 +123,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 
-	return generateTemplateResources(templateBuilder, clusterSpec, cpOpt)
+	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, cpOpt)
 }
 
 func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, tdc anywherev1.TinkerbellDatacenterConfig, cpTmc, etcdTmc anywherev1.TinkerbellMachineConfig, workerTmc map[string]anywherev1.TinkerbellMachineConfig) ([]*unstructured.Unstructured, error) {
@@ -110,6 +131,7 @@ func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster 
 	for _, wnConfig := range workerTmc {
 		workerNodeGroupMachineSpecs[wnConfig.Name] = wnConfig.Spec
 	}
+	var workerTemplateNames []string
 	templateBuilder := tinkerbell.NewTinkerbellTemplateBuilder(&tdc.Spec, &cpTmc.Spec, &etcdTmc.Spec, workerNodeGroupMachineSpecs, r.now)
 	cp, err := r.ControlPlane(ctx, eksaCluster)
 	if err != nil {
@@ -131,10 +153,10 @@ func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster 
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 
-	return generateTemplateResources(templateBuilder, clusterSpec, cpOpt)
+	return generateTemplateResources(templateBuilder, clusterSpec, workerTemplateNames, cpOpt)
 }
 
-func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *cluster.Spec, cpOpt providers.BuildMapOption) ([]*unstructured.Unstructured, error) {
+func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *cluster.Spec, templateNames []string, cpOpt providers.BuildMapOption) ([]*unstructured.Unstructured, error) {
 	cp, err := builder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, err
@@ -159,6 +181,7 @@ func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *c
 }
 
 func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec) ([]*unstructured.Unstructured, error) {
+	var workerTemplateNames []string
 	templateBuilder := docker.NewDockerTemplateBuilder(r.now)
 	kubeadmControlPlane, err := r.ControlPlane(ctx, eksaCluster)
 	if err != nil {
@@ -178,7 +201,7 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.InfrastructureTemplate.Name
 		values["etcdTemplateName"] = etcdTemplateName
 	}
-	return generateTemplateResources(templateBuilder, clusterSpec, cpOpt)
+	return generateTemplateResources(templateBuilder, clusterSpec, workerTemplateNames, cpOpt)
 }
 
 func sshAuthorizedKey(users []anywherev1.UserConfiguration) string {
