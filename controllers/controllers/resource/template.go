@@ -58,10 +58,6 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 	if err != nil {
 		return nil, err
 	}
-	oldWorkerVmcs, err := r.ExistingVSphereWorkerMachineConfigs(ctx, eksaCluster)
-	if err != nil {
-		return nil, err
-	}
 
 	var controlPlaneTemplateName string
 	updateControlPlaneTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, oldCpVmc, &cpVmc)
@@ -75,25 +71,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		controlPlaneTemplateName = cp.Spec.InfrastructureTemplate.Name
 	}
 
-	var workloadTemplateNames []string
-	for _, vmc := range workerVmc {
-		oldVmc := oldWorkerVmcs[vmc.Name]
-		updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, &oldVmc, vmc)
-		if updateWorkloadTemplate {
-			workloadTemplateName := templateBuilder.WorkerMachineTemplateName(clusterName)
-			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
-		} else {
-			mcDeployments, err := r.MachineDeployments(ctx, eksaCluster)
-			if err != nil {
-				return nil, err
-			}
-			for _, mcd := range mcDeployments {
-				workloadTemplateName := mcd.Spec.Template.Spec.InfrastructureRef.Name
-				workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
-			}
-
-		}
-	}
+	// TODO: Support upgrade with multiple worker node groups
 
 	var etcdTemplateName string
 	if eksaCluster.Spec.ExternalEtcdConfiguration != nil {
