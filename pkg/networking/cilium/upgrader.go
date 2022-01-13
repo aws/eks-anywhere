@@ -113,3 +113,7 @@ func ciliumChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChange
 		NewVersion:    newSpec.VersionsBundle.Cilium.Version,
 	}
 }
+
+func ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
+	return types.NewChangeDiff(ciliumChangeDiff(currentSpec, newSpec))
+}
