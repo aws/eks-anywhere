@@ -1,13 +1,13 @@
 package types
 
 type ChangeDiff struct {
-	ComponentReports []ComponentChangeDiff
+	ComponentReports []ComponentChangeDiff `json:"components"`
 }
 
 type ComponentChangeDiff struct {
-	ComponentName string
-	OldVersion    string
-	NewVersion    string
+	ComponentName string `json:"name"`
+	OldVersion    string `json:"oldVersion"`
+	NewVersion    string `json:"newVersion"`
 }
 
 func NewChangeDiff(componentReports ...*ComponentChangeDiff) *ChangeDiff {
