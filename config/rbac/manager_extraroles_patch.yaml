@@ -193,6 +193,7 @@
       - ""
     resources:
       - serviceaccounts
+      - endpoints
     verbs:
       - create
       - get
@@ -207,19 +208,6 @@
     resources:
       - persistentvolumes
     verbs:
-      - get
-      - list
-      - watch
-      - update
-- op: add
-  path: /rules/-
-  value:
-    apiGroups:
-      - ""
-    resources:
-      - endpoints
-    verbs:
-      - create
       - get
       - list
       - watch
