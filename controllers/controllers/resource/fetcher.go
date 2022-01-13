@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack-staging/api/v1alpha3"
+	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1alpha3"
 	"github.com/go-logr/logr"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"

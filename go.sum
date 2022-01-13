@@ -102,8 +102,8 @@ github.com/aws/aws-sdk-go v1.38.40 h1:VVqBFV24tGgXR11tFXPjmR+0ItbnUepbuQjdmhgu3U
 github.com/aws/aws-sdk-go v1.38.40/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2zKMmprdro=
 github.com/aws/aws-sdk-go-v2 v0.18.0/go.mod h1:JWVYvqSMppoMJC0x5wdwiImzgXTI9FuZwxzkQq9wy+g=
 github.com/aws/aws-sdk-go-v2 v1.5.0/go.mod h1:tI4KhsR5VkzlUa2DZAdwx7wCAYGwkZZ1H31PYrBFx1w=
-github.com/aws/cluster-api-provider-cloudstack-staging v0.2.1-renamed-module h1:P5+kIWhkFqNJxgmVaMLRJidsyvR2syOIO2r1BoENul4=
-github.com/aws/cluster-api-provider-cloudstack-staging v0.2.1-renamed-module/go.mod h1:LSV88m0nhjEkafbW3nNzleI7i97HX7iVzUvUa09bcwI=
+github.com/aws/cluster-api-provider-cloudstack v0.2.1-named-module h1:gQmKbqEbcB6ihcoNd32WcUswLpFA/9etFxKKDP5O14M=
+github.com/aws/cluster-api-provider-cloudstack v0.2.1-named-module/go.mod h1:nYh7rmXzyE6Nqw6CkyS0NQPGCWIChX8rSMiNNh/bnV4=
 github.com/aws/eks-anywhere v0.6.2-0.20211130214857-f40ef7755a29/go.mod h1:kcUEYj1OOj6RBqowATMFHv4bfBvJtfTGkQwyNcHevX4=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e h1:GB6Cn9yKEt31mDF7RrVWyM9WoppNkGYth8zBPIJGJ+w=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e/go.mod h1:p/KHVJAMv3kofnUnShkZ6pUnZYzm+LK2G7bIi8nnTKA=

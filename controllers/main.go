@@ -17,7 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack-staging/api/v1alpha3"
+	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1alpha3"
 	"github.com/aws/eks-anywhere/controllers/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/features"
