@@ -14,7 +14,7 @@ spec:
   workerNodeGroupConfigurations:
     - count: 4
       machineGroupRef:
-        name: test_cluster
+        name: testMachineGroupRef
         kind: VSphereMachineConfig
   datacenterRef:
     kind: VSphereDatacenter

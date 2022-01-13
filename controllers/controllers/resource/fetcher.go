@@ -211,7 +211,7 @@ func (r *capiResourceFetcher) VSphereWorkerMachineTemplates(ctx context.Context,
 		return nil, err
 	}
 	vsphereMachineTemplate := &vspherev1.VSphereMachineTemplate{}
-	var workerMachineTemplates []vspherev1.VSphereMachineTemplate
+	workerMachineTemplates := make([]vspherev1.VSphereMachineTemplate, 0, len(cs.Spec.WorkerNodeGroupConfigurations))
 	for _, d := range md {
 		err = r.FetchObjectByName(ctx, d.Spec.Template.Spec.InfrastructureRef.Name, constants.EksaSystemNamespace, vsphereMachineTemplate)
 		if err != nil {

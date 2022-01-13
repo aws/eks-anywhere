@@ -78,3 +78,4 @@ spec:
       server: vsphere_server
       template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
       thumbprint: 'ABCDEFG'
+---

@@ -64,6 +64,8 @@ spec:
   diskGiB: 25
   datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
   folder: "/SDDC-Datacenter/vm"
+  memoryMiB: 8192
+  numCPUs: 2
   osFamily: bottlerocket
   resourcePool: "*/Resources"
   storagePolicyName: "vSAN Default Storage Policy"

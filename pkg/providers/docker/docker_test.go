@@ -135,6 +135,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
 				s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+				s.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 3, MachineGroupRef: &v1alpha1.Ref{Name: "test-cluster"}}}
 			}),
 			wantCPFile: "testdata/valid_deployment_cp_expected.yaml",
 			wantMDFile: "testdata/valid_deployment_md_expected.yaml",
@@ -151,6 +152,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
 				s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+				s.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 3, MachineGroupRef: &v1alpha1.Ref{Name: "test-cluster"}}}
 			}),
 			wantCPFile: "testdata/valid_deployment_cp_taints_expected.yaml",
 			wantMDFile: "testdata/valid_deployment_md_expected.yaml",
@@ -164,9 +166,9 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
 				s.Spec.ControlPlaneConfiguration.Count = 3
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
-				s.Spec.WorkerNodeGroupConfigurations[0].Labels = nodeLabels
 				s.VersionsBundle = versionsBundle
 				s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+				s.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 3, MachineGroupRef: &v1alpha1.Ref{Name: "test-cluster"}, Labels: nodeLabels}}
 			}),
 			wantCPFile: "testdata/valid_deployment_cp_expected.yaml",
 			wantMDFile: "testdata/valid_deployment_node_labels_md_expected.yaml",
@@ -182,6 +184,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
 				s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+				s.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 3, MachineGroupRef: &v1alpha1.Ref{Name: "test-cluster"}}}
 			}),
 			wantCPFile: "testdata/valid_deployment_custom_cidrs_cp_expected.yaml",
 			wantMDFile: "testdata/valid_deployment_custom_cidrs_md_expected.yaml",
@@ -197,6 +200,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
 				s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+				s.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 3, MachineGroupRef: &v1alpha1.Ref{Name: "test-cluster"}}}
 
 				s.OIDCConfig = &v1alpha1.OIDCConfig{
 					Spec: v1alpha1.OIDCConfigSpec{
@@ -219,7 +223,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle
 				s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
-
+				s.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 3, MachineGroupRef: &v1alpha1.Ref{Name: "test-cluster"}}}
 				s.OIDCConfig = &v1alpha1.OIDCConfig{
 					Spec: v1alpha1.OIDCConfigSpec{
 						ClientId:     "my-client-id",
@@ -277,6 +281,7 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 	clusterSpec := test.NewClusterSpec()
 	clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
 	clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
+	clusterSpec.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 0, MachineGroupRef: &v1alpha1.Ref{Name: "fluxAddonTestCluster"}}}
 	p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
 	cluster := &types.Cluster{
 		Name: "test",
@@ -461,6 +466,7 @@ func TestProviderGenerateCAPISpecForCreateWithPodIAMConfig(t *testing.T) {
 		s.Spec.ControlPlaneConfiguration.Count = 1
 		s.VersionsBundle = versionsBundle
 		s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+		s.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 3, MachineGroupRef: &v1alpha1.Ref{Name: "test-cluster"}}}
 	})
 	clusterSpec.Spec.PodIAMConfig = &v1alpha1.PodIAMConfig{ServiceAccountIssuer: "https://test"}
 
@@ -496,6 +502,7 @@ func TestProviderGenerateCAPISpecForCreateWithStackedEtcd(t *testing.T) {
 		s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
 		s.Spec.ControlPlaneConfiguration.Count = 1
 		s.VersionsBundle = versionsBundle
+		s.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 3, MachineGroupRef: &v1alpha1.Ref{Name: "test-cluster"}}}
 	})
 
 	if provider == nil {

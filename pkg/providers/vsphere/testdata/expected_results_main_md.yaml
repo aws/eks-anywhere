@@ -52,13 +52,13 @@ spec:
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
         kind: VSphereMachineTemplate
-        name: test-worker-node-template-1234567890000
+        name: test-wn-worker-node-template-1234567890000
       version: v1.19.8-eks-1-19-4
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereMachineTemplate
 metadata:
-  name: test-worker-node-template-1234567890000
+  name: test-wn-worker-node-template-1234567890000
   namespace: eksa-system
 spec:
   template:
@@ -79,3 +79,4 @@ spec:
       storagePolicyName: "vSAN Default Storage Policy"
       template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
       thumbprint: 'ABCDEFG'
+---
