@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1alpha3"
 	"github.com/go-logr/logr"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -34,6 +35,10 @@ type ResourceFetcher interface {
 	ExistingVSphereControlPlaneMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
 	ExistingVSphereEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
 	ExistingVSphereWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
+	ExistingCloudStackDeploymentConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackDeploymentConfig, error)
+	ExistingCloudStackControlPlaneMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error)
+	ExistingCloudStackEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error)
+	ExistingCloudStackWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error)
 	ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*bootstrapv1.KubeadmControlPlane, error)
 	Etcd(ctx context.Context, cs *anywherev1.Cluster) (*etcdv1.EtcdadmCluster, error)
 	FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error)
@@ -70,7 +75,8 @@ func (r *capiResourceFetcher) FetchObject(ctx context.Context, objectKey types.N
 }
 
 func (r *capiResourceFetcher) fetchClusterKind(ctx context.Context, objectKey types.NamespacedName) (string, error) {
-	supportedKinds := []string{anywherev1.ClusterKind, anywherev1.VSphereDatacenterKind, anywherev1.DockerDatacenterKind, anywherev1.VSphereMachineConfigKind, anywherev1.AWSIamConfigKind}
+	supportedKinds := []string{anywherev1.ClusterKind, anywherev1.VSphereDatacenterKind, anywherev1.DockerDatacenterKind, anywherev1.VSphereMachineConfigKind,
+		anywherev1.CloudStackDeploymentKind, anywherev1.CloudStackMachineConfigKind, anywherev1.AWSIamConfigKind}
 	for _, kind := range supportedKinds {
 		obj := &unstructured.Unstructured{}
 		obj.SetKind(kind)
@@ -87,7 +93,6 @@ func (r *capiResourceFetcher) fetchClusterKind(ctx context.Context, objectKey ty
 }
 
 func (r *capiResourceFetcher) FetchCluster(ctx context.Context, objectKey types.NamespacedName) (*anywherev1.Cluster, error) {
-	r.log.Info("looking up resource", "objectKey", objectKey)
 	kind, err := r.fetchClusterKind(ctx, objectKey)
 	if err != nil {
 		return nil, err
@@ -124,14 +129,14 @@ func (r *capiResourceFetcher) fetchClusterForRef(ctx context.Context, refId type
 		return nil, err
 	}
 	for _, c := range clusters.Items {
-		if kind == anywherev1.VSphereDatacenterKind || kind == anywherev1.DockerDatacenterKind {
+		if kind == anywherev1.VSphereDatacenterKind || kind == anywherev1.DockerDatacenterKind || kind == anywherev1.CloudStackDeploymentKind {
 			if c.Spec.DatacenterRef.Name == refId.Name {
 				if _, err := r.clusterByName(ctx, constants.EksaSystemNamespace, c.Name); err == nil { // further validates a capi cluster exists
 					return &c, nil
 				}
 			}
 		}
-		if kind == anywherev1.VSphereMachineConfigKind {
+		if kind == anywherev1.VSphereMachineConfigKind || kind == anywherev1.CloudStackMachineConfigKind {
 			for _, machineRef := range c.Spec.WorkerNodeGroupConfigurations {
 				if machineRef.MachineGroupRef != nil && machineRef.MachineGroupRef.Name == refId.Name {
 					if _, err := r.clusterByName(ctx, constants.EksaSystemNamespace, c.Name); err == nil { // further validates a capi cluster exists
@@ -244,6 +249,62 @@ func (r *capiResourceFetcher) VSphereEtcdMachineTemplate(ctx context.Context, cs
 	return vsphereMachineTemplate, nil
 }
 
+func (r *capiResourceFetcher) CloudStackWorkerMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*cloudstackv1.CloudStackMachineTemplate, error) {
+	md, err := r.MachineDeployment(ctx, cs)
+	r.log.Info("Fetching CloudStackWorkerMachineTemplate", "objectKey", md.Spec.Template.Spec.InfrastructureRef.Name)
+	if err != nil {
+		return nil, err
+	}
+	cloudStackMachineTemplate := &cloudstackv1.CloudStackMachineTemplate{}
+	err = r.FetchObjectByName(ctx, md.Spec.Template.Spec.InfrastructureRef.Name, constants.EksaSystemNamespace, cloudStackMachineTemplate)
+	if err != nil {
+		return nil, err
+	}
+	return cloudStackMachineTemplate, nil
+}
+
+func (r *capiResourceFetcher) CloudStackCluster(ctx context.Context, cs *anywherev1.Cluster) (*cloudstackv1.CloudStackCluster, error) {
+	md, err := r.MachineDeployment(ctx, cs)
+	r.log.Info("Fetching CloudStackCluster", "objectKey", md.Spec.ClusterName)
+	if err != nil {
+		return nil, err
+	}
+	cloudStackCluster := &cloudstackv1.CloudStackCluster{}
+	err = r.FetchObjectByName(ctx, md.Spec.ClusterName, constants.EksaSystemNamespace, cloudStackCluster)
+	if err != nil {
+		return nil, err
+	}
+	return cloudStackCluster, nil
+}
+
+func (r *capiResourceFetcher) CloudStackControlPlaneMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*cloudstackv1.CloudStackMachineTemplate, error) {
+	cp, err := r.ControlPlane(ctx, cs)
+	r.log.Info("Fetching CloudStackControlPlaneMachineTemplate", "objectKey", cp.Spec.InfrastructureTemplate.Name)
+	if err != nil {
+		return nil, err
+	}
+	cloudStackMachineTemplate := &cloudstackv1.CloudStackMachineTemplate{}
+	err = r.FetchObjectByName(ctx, cp.Spec.InfrastructureTemplate.Name, constants.EksaSystemNamespace, cloudStackMachineTemplate)
+	if err != nil {
+		return nil, err
+	}
+	return cloudStackMachineTemplate, nil
+}
+
+func (r *capiResourceFetcher) CloudStackEtcdMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*cloudstackv1.CloudStackMachineTemplate, error) {
+	etcd, err := r.Etcd(ctx, cs)
+	r.log.Info("Fetching CloudStackEtcdMachineTemplate", "objectKey", etcd.Spec.InfrastructureTemplate.Name)
+	if err != nil {
+		return nil, err
+	}
+	cloudStackMachineTemplate := &cloudstackv1.CloudStackMachineTemplate{}
+	err = r.FetchObjectByName(ctx, etcd.Spec.InfrastructureTemplate.Name, constants.EksaSystemNamespace, cloudStackMachineTemplate)
+	if err != nil {
+		return nil, err
+	}
+	return cloudStackMachineTemplate, nil
+}
+
 func (r *capiResourceFetcher) bundles(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
 	clusterBundle := &releasev1alpha1.Bundles{}
 	err := r.FetchObjectByName(ctx, name, namespace, clusterBundle)
@@ -255,6 +316,7 @@ func (r *capiResourceFetcher) bundles(ctx context.Context, name, namespace strin
 
 func (r *capiResourceFetcher) ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*bootstrapv1.KubeadmControlPlane, error) {
 	// Fetch capi cluster
+	r.log.Info("Fetching CAPI cluster", "objectKey", cs.Name)
 	capiCluster := &clusterv1.Cluster{}
 	err := r.FetchObjectByName(ctx, cs.Name, constants.EksaSystemNamespace, capiCluster)
 	if err != nil {
@@ -262,6 +324,7 @@ func (r *capiResourceFetcher) ControlPlane(ctx context.Context, cs *anywherev1.C
 	}
 	cpRef := capiCluster.Spec.ControlPlaneRef
 	cp := &bootstrapv1.KubeadmControlPlane{}
+	r.log.Info("Fetching KubeadmControlPlane", "objectKey", cpRef.Name)
 	err = r.FetchObjectByName(ctx, cpRef.Name, cpRef.Namespace, cp)
 	if err != nil {
 		return nil, err
@@ -360,4 +423,55 @@ func MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate *vspherev1.V
 
 	// TODO: OSFamily, Users
 	return vsSpec, nil
+}
+
+func (r *capiResourceFetcher) ExistingCloudStackDeploymentConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackDeploymentConfig, error) {
+	csCluster, err := r.CloudStackCluster(ctx, cs)
+	if err != nil {
+		return nil, err
+	}
+	return MapClusterToCloudStackDeploymentConfigSpec(csCluster)
+}
+
+func (r *capiResourceFetcher) ExistingCloudStackControlPlaneMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error) {
+	csMachineTemplate, err := r.CloudStackControlPlaneMachineTemplate(ctx, cs)
+	if err != nil {
+		return nil, err
+	}
+	return MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate)
+}
+
+func (r *capiResourceFetcher) ExistingCloudStackEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error) {
+	csMachineTemplate, err := r.CloudStackEtcdMachineTemplate(ctx, cs)
+	if err != nil {
+		return nil, err
+	}
+	return MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate)
+}
+
+func (r *capiResourceFetcher) ExistingCloudStackWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error) {
+	csMachineTemplate, err := r.CloudStackWorkerMachineTemplate(ctx, cs)
+	if err != nil {
+		return nil, err
+	}
+	return MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate)
+}
+
+func MapClusterToCloudStackDeploymentConfigSpec(csCluster *cloudstackv1.CloudStackCluster) (*anywherev1.CloudStackDeploymentConfig, error) {
+	csSpec := &anywherev1.CloudStackDeploymentConfig{}
+	csSpec.Spec.Zone = csCluster.Spec.Zone
+	csSpec.Spec.Network = csCluster.Spec.Network
+
+	// TODO: Add ManagementApiEndpoint, Domain, Account
+	return csSpec, nil
+}
+
+func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate) (*anywherev1.CloudStackMachineConfig, error) {
+	csSpec := &anywherev1.CloudStackMachineConfig{}
+	csSpec.Spec.ComputeOffering = csMachineTemplate.Spec.Spec.Spec.Offering
+	csSpec.Spec.Template = csMachineTemplate.Spec.Spec.Spec.Template
+	csSpec.Spec.Details = csMachineTemplate.Spec.Spec.Spec.Details
+
+	// TODO: OSFamily, Users, DiskOffering
+	return csSpec, nil
 }

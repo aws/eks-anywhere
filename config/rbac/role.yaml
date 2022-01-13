@@ -11,6 +11,8 @@ rules:
   resources:
   - awsiamconfigs
   - bundles
+  - cloudstackdeploymentconfigs
+  - cloudstackmachineconfigs
   - clusters
   - dockerdatacenterconfigs
   - vspheredatacenterconfigs
@@ -28,6 +30,8 @@ rules:
   resources:
   - awsiamconfigs/finalizers
   - bundles/finalizers
+  - cloudstackdeploymentconfigs/finalizers
+  - cloudstackmachineconfigs/finalizers
   - clusters/finalizers
   - dockerdatacenterconfigs/finalizers
   - vspheredatacenterconfigs/finalizers
@@ -39,6 +43,8 @@ rules:
   resources:
   - awsiamconfigs/status
   - bundles/status
+  - cloudstackdeploymentconfigs/status
+  - cloudstackmachineconfigs/status
   - clusters/status
   - dockerdatacenterconfigs/status
   - vspheredatacenterconfigs/status

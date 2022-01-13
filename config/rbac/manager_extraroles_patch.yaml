@@ -77,6 +77,10 @@
       - vsphereclusters/status
       - vspheremachinetemplates
       - vspheremachinetemplates/status
+      - cloudstackclusters
+      - cloudstackclusters/status
+      - cloudstackmachinetemplates
+      - cloudstackmachinetemplates/status
       - dockerclusters
       - dockerclusters/status
       - dockermachinetemplates

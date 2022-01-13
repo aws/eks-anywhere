@@ -17,6 +17,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1alpha3"
 	"github.com/aws/eks-anywhere/controllers/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/features"
@@ -41,6 +42,7 @@ func init() {
 	utilruntime.Must(clusterv1.AddToScheme(scheme))
 	utilruntime.Must(controlplanev1.AddToScheme(scheme))
 	utilruntime.Must(vspherev1.AddToScheme(scheme))
+	utilruntime.Must(cloudstackv1.AddToScheme(scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
@@ -149,6 +151,14 @@ func setupWebhooks(mgr ctrl.Manager) {
 	}
 	if err := (&anywherev1.VSphereMachineConfig{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.VSphereMachineConfigKind)
+		os.Exit(1)
+	}
+	if err := (&anywherev1.CloudStackDeploymentConfig{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.CloudStackDeploymentKind)
+		os.Exit(1)
+	}
+	if err := (&anywherev1.CloudStackMachineConfig{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.CloudStackMachineConfigKind)
 		os.Exit(1)
 	}
 
