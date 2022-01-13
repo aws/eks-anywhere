@@ -25,7 +25,7 @@ import (
 type CloudStackMachineConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Template        string              `json:"template,omitempty"`
+	Template        string              `json:"template"`
 	ComputeOffering string              `json:"computeOffering"`
 	DiskOffering    string              `json:"diskOffering,omitempty"`
 	OSFamily        OSFamily            `json:"osFamily,omitempty"`

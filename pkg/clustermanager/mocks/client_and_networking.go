@@ -226,6 +226,36 @@ func (mr *MockClusterClientMockRecorder) GetClusters(arg0, arg1 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusters", reflect.TypeOf((*MockClusterClient)(nil).GetClusters), arg0, arg1)
 }
 
+// GetEksaCloudStackDeploymentConfig mocks base method.
+func (m *MockClusterClient) GetEksaCloudStackDeploymentConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.CloudStackDeploymentConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaCloudStackDeploymentConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha1.CloudStackDeploymentConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaCloudStackDeploymentConfig indicates an expected call of GetEksaCloudStackDeploymentConfig.
+func (mr *MockClusterClientMockRecorder) GetEksaCloudStackDeploymentConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCloudStackDeploymentConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaCloudStackDeploymentConfig), arg0, arg1, arg2, arg3)
+}
+
+// GetEksaCloudStackMachineConfig mocks base method.
+func (m *MockClusterClient) GetEksaCloudStackMachineConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.CloudStackMachineConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaCloudStackMachineConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha1.CloudStackMachineConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaCloudStackMachineConfig indicates an expected call of GetEksaCloudStackMachineConfig.
+func (mr *MockClusterClientMockRecorder) GetEksaCloudStackMachineConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaCloudStackMachineConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaCloudStackMachineConfig), arg0, arg1, arg2, arg3)
+}
+
 // GetEksaCluster mocks base method.
 func (m *MockClusterClient) GetEksaCluster(arg0 context.Context, arg1 *types.Cluster, arg2 string) (*v1alpha1.Cluster, error) {
 	m.ctrl.T.Helper()
