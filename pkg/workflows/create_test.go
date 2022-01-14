@@ -105,6 +105,7 @@ func (c *createTestSetup) expectCreateWorkload() {
 		c.clusterManager.EXPECT().InstallCAPI(
 			c.ctx, c.clusterSpec, c.workloadCluster, c.provider,
 		),
+		c.provider.EXPECT().UpdateSecrets(c.ctx, c.workloadCluster),
 	)
 }
 
@@ -124,6 +125,7 @@ func (c *createTestSetup) expectCreateWorkloadSkipCAPI() {
 	c.clusterManager.EXPECT().InstallCAPI(
 		c.ctx, c.clusterSpec, c.workloadCluster, c.provider,
 	).Times(0)
+	c.provider.EXPECT().UpdateSecrets(c.ctx, c.workloadCluster).Times(0)
 }
 
 func (c *createTestSetup) expectMoveManagement() {

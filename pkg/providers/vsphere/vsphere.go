@@ -8,7 +8,6 @@ import (
 	"net"
 	"os"
 	"reflect"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -47,8 +46,6 @@ const (
 	vSphereServerKey         = "VSPHERE_SERVER"
 	govcInsecure             = "GOVC_INSECURE"
 	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
-	secretObjectType         = "addons.cluster.x-k8s.io/resource-set"
-	secretObjectName         = "csi-vsphere-config"
 	privateKeyFileName       = "eks-a-id_rsa"
 	publicKeyFileName        = "eks-a-id_rsa.pub"
 	defaultTemplateLibrary   = "eks-a-templates"
@@ -132,6 +129,7 @@ type ProviderGovcClient interface {
 
 type ProviderKubectlClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
+	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	LoadSecret(ctx context.Context, secretObject string, secretObjType string, secretObjectName string, kubeConfFile string) error
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
@@ -511,7 +509,7 @@ func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Clus
 
 	err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents.Bytes())
 	if err != nil {
-		return fmt.Errorf("error loading csi-vsphere-secret object: %v", err)
+		return fmt.Errorf("error loading secrets object: %v", err)
 	}
 	return nil
 }
@@ -1004,26 +1002,21 @@ func (p *vsphereProvider) GenerateMHC() ([]byte, error) {
 }
 
 func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {
+	if err := p.providerKubectlClient.GetNamespace(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
+		if err := p.providerKubectlClient.CreateNamespace(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
+			return err
+		}
+	}
 	t, err := template.New("tmpl").Parse(defaultSecretObject)
 	if err != nil {
 		return fmt.Errorf("error creating secret object template: %v", err)
 	}
 
-	thumbprint := p.datacenterConfig.Spec.Thumbprint
-	if p.providerGovcClient.IsCertSelfSigned(ctx) {
-		thumbprint = ""
-	}
-
 	values := map[string]string{
-		"clusterName":       cluster.Name,
-		"insecure":          strconv.FormatBool(p.datacenterConfig.Spec.Insecure),
-		"thumbprint":        thumbprint,
-		"vspherePassword":   os.Getenv(vSpherePasswordKey),
-		"vsphereUsername":   os.Getenv(vSphereUsernameKey),
-		"vsphereServer":     p.datacenterConfig.Spec.Server,
-		"vsphereDatacenter": p.datacenterConfig.Spec.Datacenter,
-		"vsphereNetwork":    p.datacenterConfig.Spec.Network,
-		"eksaLicense":       os.Getenv(eksaLicense),
+		"vspherePassword":     os.Getenv(vSpherePasswordKey),
+		"vsphereUsername":     os.Getenv(vSphereUsernameKey),
+		"eksaLicense":         os.Getenv(eksaLicense),
+		"eksaSystemNamespace": constants.EksaSystemNamespace,
 	}
 	err = t.Execute(contents, values)
 	if err != nil {
@@ -1033,19 +1026,6 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 }
 
 func (p *vsphereProvider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
-	var contents bytes.Buffer
-	err := p.createSecret(ctx, cluster, &contents)
-	if err != nil {
-		return err
-	}
-
-	var loadContents bytes.Buffer
-	loadContents.WriteString("data=")
-	loadContents.WriteString(contents.String())
-	err = p.providerKubectlClient.LoadSecret(ctx, loadContents.String(), secretObjectType, secretObjectName, cluster.KubeconfigFile)
-	if err != nil {
-		return fmt.Errorf("error loading csi-vsphere-secret object: %v", err)
-	}
 	return nil
 }
 
