@@ -97,8 +97,6 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	dataCenterConfig := &anywherev1.VSphereDatacenterConfig{}
 	dataCenterName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.DatacenterRef.Name}
 	if err := v.Client.Get(ctx, dataCenterName, dataCenterConfig); err != nil {
-		failureMessage := fmt.Sprintf("Error reconciling Vsphere cluster: %v", err)
-		cluster.Status.FailureMessage = &failureMessage
 		return reconciler.Result{}, err
 	}
 	// Set up envs for executing Govc cmd and default values for datacenter config

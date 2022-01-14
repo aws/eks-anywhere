@@ -90,6 +90,8 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 
 	result, err := r.reconcile(ctx, cluster, log)
 	if err != nil {
+		failureMessage := err.Error()
+		cluster.Status.FailureMessage = &failureMessage
 		log.Error(err, "Failed to reconcile Cluster")
 	}
 	return result, err
