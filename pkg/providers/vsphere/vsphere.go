@@ -46,8 +46,6 @@ const (
 	vSphereServerKey         = "VSPHERE_SERVER"
 	govcInsecure             = "GOVC_INSECURE"
 	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
-	secretObjectType         = "addons.cluster.x-k8s.io/resource-set"
-	secretObjectName         = "csi-vsphere-config"
 	privateKeyFileName       = "eks-a-id_rsa"
 	publicKeyFileName        = "eks-a-id_rsa.pub"
 	defaultTemplateLibrary   = "eks-a-templates"
