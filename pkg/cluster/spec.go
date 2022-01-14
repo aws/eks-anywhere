@@ -12,7 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -214,15 +213,11 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 			}
 			s.OIDCConfig = oidcConfig
 		case eksav1alpha1.AWSIamConfigKind:
-			if features.IsActive(features.AwsIamAuthenticator()) {
-				awsIamConfig, err := eksav1alpha1.GetAndValidateAWSIamConfig(clusterConfigPath, identityProvider.Name, clusterConfig)
-				if err != nil {
-					return nil, err
-				}
-				s.AWSIamConfig = awsIamConfig
-			} else {
-				return nil, fmt.Errorf("unsupported IdentityProviderRef kind: %s", eksav1alpha1.AWSIamConfigKind)
+			awsIamConfig, err := eksav1alpha1.GetAndValidateAWSIamConfig(clusterConfigPath, identityProvider.Name, clusterConfig)
+			if err != nil {
+				return nil, err
 			}
+			s.AWSIamConfig = awsIamConfig
 		}
 	}
 
