@@ -1013,10 +1013,12 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 	}
 
 	values := map[string]string{
-		"vspherePassword":     os.Getenv(vSpherePasswordKey),
-		"vsphereUsername":     os.Getenv(vSphereUsernameKey),
-		"eksaLicense":         os.Getenv(eksaLicense),
-		"eksaSystemNamespace": constants.EksaSystemNamespace,
+		"vspherePassword":        os.Getenv(vSpherePasswordKey),
+		"vsphereUsername":        os.Getenv(vSphereUsernameKey),
+		"eksaLicense":            os.Getenv(eksaLicense),
+		"eksaSystemNamespace":    constants.EksaSystemNamespace,
+		"vsphereCredentialsName": constants.VSphereCredentialsName,
+		"eksaLicenseName":        constants.EksaLicenseName,
 	}
 	err = t.Execute(contents, values)
 	if err != nil {
