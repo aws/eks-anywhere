@@ -1,4 +1,4 @@
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1alpha3
 kind: Cluster
 metadata:
   labels:
@@ -12,36 +12,54 @@ spec:
     services:
       cidrBlocks: {{.serviceCidrs}}
   controlPlaneRef:
-    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
     kind: KubeadmControlPlane
     name: {{.clusterName}}
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: VSphereCluster
     name: {{.clusterName}}
 {{- if .externalEtcd }}
   managedExternalEtcdRef:
-    apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+    apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
     kind: EtcdadmCluster
     name: {{.clusterName}}-etcd
 {{- end }}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereCluster
 metadata:
   name: {{.clusterName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
+  cloudProviderConfiguration:
+    global:
+      secretName: cloud-provider-vsphere-credentials
+      secretNamespace: kube-system
+      thumbprint: '{{.thumbprint}}'
+      insecure: {{.insecure}}
+    network:
+      name: {{.vsphereNetwork}}
+    providerConfig:
+      cloud:
+        controllerImage: {{.managerImage}}
+    virtualCenter:
+      {{.vsphereServer}}:
+        datacenters: {{.vsphereDatacenter}}
+        thumbprint: '{{.thumbprint}}'
+    workspace:
+      datacenter: {{.vsphereDatacenter}}
+      datastore: {{.controlPlaneVsphereDatastore}}
+      folder: '{{.controlPlaneVsphereFolder}}'
+      resourcePool: '{{.controlPlaneVsphereResourcePool}}'
+      server: {{.vsphereServer}}
   controlPlaneEndpoint:
     host: {{.controlPlaneEndpointIp}}
     port: 6443
-  identityRef:
-    kind: Secret
-    name: {{.clusterName}}-vsphere-credentials
   server: {{.vsphereServer}}
   thumbprint: '{{.thumbprint}}'
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereMachineTemplate
 metadata:
   name: {{.controlPlaneTemplateName}}
@@ -68,17 +86,16 @@ spec:
       template: {{.vsphereTemplate}}
       thumbprint: '{{.thumbprint}}'
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
 kind: KubeadmControlPlane
 metadata:
   name: {{.clusterName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
-  machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: VSphereMachineTemplate
-      name: {{.controlPlaneTemplateName}}
+  infrastructureTemplate:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    kind: VSphereMachineTemplate
+    name: {{.controlPlaneTemplateName}}
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: {{.kubernetesRepository}}
@@ -105,6 +122,7 @@ spec:
 {{- end }}
 {{- end }}
       dns:
+        type: CoreDNS
         imageRepository: {{.corednsRepository}}
         imageTag: {{.corednsVersion}}
 {{- if (eq .format "bottlerocket") }}
@@ -325,8 +343,7 @@ spec:
 {{- end }}
         name: '{{`{{ ds.meta_data.hostname }}`}}'
 {{- if .controlPlaneTaints }}
-        taints:
-{{- range .controlPlaneTaints}}
+        taints: {{ range .controlPlaneTaints}}
           - key: {{ .Key }}
             value: {{ .Value }}
             effect: {{ .Effect }}
@@ -370,8 +387,7 @@ spec:
 {{- end }}
         name: '{{`{{ ds.meta_data.hostname }}`}}'
 {{- if .controlPlaneTaints }}
-        taints:
-{{- range .controlPlaneTaints}}
+        taints: {{ range .controlPlaneTaints}}
           - key: {{ .Key }}
             value: {{ .Value }}
             effect: {{ .Effect }}
@@ -405,7 +421,7 @@ spec:
   replicas: {{.controlPlaneReplicas}}
   version: {{.kubernetesVersion}}
 ---
-apiVersion: addons.cluster.x-k8s.io/v1beta1
+apiVersion: addons.cluster.x-k8s.io/v1alpha3
 kind: ClusterResourceSet
 metadata:
   labels:
@@ -440,7 +456,7 @@ spec:
 ---
 {{- if .externalEtcd }}
 kind: EtcdadmCluster
-apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
 metadata:
   name: {{.clusterName}}-etcd
   namespace: {{.eksaSystemNamespace}}
@@ -490,11 +506,11 @@ spec:
       {{- end }}
 {{- end }}
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: VSphereMachineTemplate
     name: {{.etcdTemplateName}}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: VSphereMachineTemplate
 metadata:
   name: {{.etcdTemplateName}}
@@ -525,15 +541,6 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: {{.clusterName}}-vsphere-credentials
-  namespace: {{.eksaSystemNamespace}}
-stringData:
-  username: "{{.eksaVsphereUsername}}"
-  password: "{{.eksaVspherePassword}}"
----
-apiVersion: v1
-kind: Secret
-metadata:
   name: vsphere-csi-controller
   namespace: {{.eksaSystemNamespace}}
 stringData:
@@ -543,35 +550,6 @@ stringData:
     metadata:
       name: vsphere-csi-controller
       namespace: kube-system
-type: addons.cluster.x-k8s.io/resource-set
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: csi-vsphere-config
-  namespace: {{.eksaSystemNamespace}}
-stringData:
-  data: |
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      name: csi-vsphere-config
-      namespace: kube-system
-    stringData:
-      csi-vsphere.conf: |+
-        [Global]
-        cluster-id = "default/{{.clusterName}}"
-        thumbprint = "{{.thumbprint}}"
-
-        [VirtualCenter "{{.vsphereServer}}"]
-        user = "{{.eksaVsphereUsername}}"
-        password = "{{.eksaVspherePassword}}"
-        datacenters = "{{.vsphereDatacenter}}"
-        insecure-flag = "{{.insecure}}"
-
-        [Network]
-        public-network = "{{.vsphereNetwork}}"
-    type: Opaque
 type: addons.cluster.x-k8s.io/resource-set
 ---
 apiVersion: v1
