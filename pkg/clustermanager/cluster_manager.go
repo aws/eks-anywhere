@@ -162,7 +162,8 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	}
 
 	logger.V(3).Info("Waiting for workload cluster machine deployment replicas to be ready after move")
-	err = c.waitForMachineDeploymentReplicasReady(ctx, to, clusterSpec)
+	replicasCount := c.countMDReplicas(clusterSpec)
+	err = c.waitForMachineDeploymentReplicasReady(ctx, to, clusterSpec, replicasCount)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster machinedeployment replicas to be ready: %v", err)
 	}
@@ -398,7 +399,8 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for workload cluster machine deployment replicas to be ready after upgrade")
-	err = c.waitForMachineDeploymentReplicasReady(ctx, managementCluster, newClusterSpec)
+	replicasCount := c.countMDReplicas(newClusterSpec)
+	err = c.waitForMachineDeploymentReplicasReady(ctx, managementCluster, newClusterSpec, replicasCount)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster machinedeployment replicas to be ready: %v", err)
 	}
@@ -719,25 +721,24 @@ func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, m
 	return nil
 }
 
-func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		isMdReady := func() error {
-			return c.clusterClient.ValidateWorkerNodes(ctx, managementCluster, clusterSpec.Name)
-		}
-		err := isMdReady()
-		if err == nil {
-			return nil
-		}
+func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, count int) error {
+	isMdReady := func() error {
+		return c.clusterClient.ValidateWorkerNodes(ctx, managementCluster, clusterSpec.Name)
+	}
 
-		timeout := time.Duration(workerNodeGroupConfiguration.Count) * c.machineMaxWait
-		if timeout <= c.machinesMinWait {
-			timeout = c.machinesMinWait
-		}
+	err := isMdReady()
+	if err == nil {
+		return nil
+	}
 
-		r := retrier.New(timeout)
-		if err := r.Retry(isMdReady); err != nil {
-			return fmt.Errorf("retries exhausted waiting for machinedeployment replicas to be ready: %v", err)
-		}
+	timeout := time.Duration(count) * c.machineMaxWait
+	if timeout <= c.machinesMinWait {
+		timeout = c.machinesMinWait
+	}
+
+	r := retrier.New(timeout)
+	if err := r.Retry(isMdReady); err != nil {
+		return fmt.Errorf("retries exhausted waiting for machinedeployment replicas to be ready: %v", err)
 	}
 	return nil
 }
@@ -809,6 +810,13 @@ func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster 
 		}
 	}
 	return ready, total, nil
+}
+
+func (c *ClusterManager) countMDReplicas(clusterSpec *cluster.Spec) (total int) {
+	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		total += workerNodeGroupConfiguration.Count
+	}
+	return total
 }
 
 func (c *ClusterManager) waitForAllControlPlanes(ctx context.Context, cluster *types.Cluster, waitForCluster time.Duration) error {
