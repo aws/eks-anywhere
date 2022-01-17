@@ -139,7 +139,7 @@ type ProviderKubectlClient interface {
 	GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
 	GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*bootstrapv1.KubeadmControlPlane, error)
-	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
+	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName, workerNodeGroupName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
@@ -608,9 +608,9 @@ type VsphereTemplateBuilder struct {
 	now                         types.NowFunc
 }
 
-func (vs *VsphereTemplateBuilder) WorkerMachineTemplateName(clusterName string) string {
+func (vs *VsphereTemplateBuilder) WorkerMachineTemplateName(clusterName, workerNodeGroupName string) string {
 	t := vs.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-worker-node-template-%d", clusterName, t)
+	return fmt.Sprintf("%s-%s-worker-node-template-%d", clusterName, workerNodeGroupName, t)
 }
 
 func (vs *VsphereTemplateBuilder) CPMachineTemplateName(clusterName string) string {
@@ -646,10 +646,10 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.S
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec, *vs.datacenterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name])
-		values["workloadTemplateName"] = vs.WorkerMachineTemplateName(workerNodeGroupConfiguration.MachineGroupRef.Name)
+		values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		values["vsphereWorkerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
-		values["workerMachineGroupRefName"] = workerNodeGroupConfiguration.MachineGroupRef.Name
+		values["workerNodeGroupName"] = workerNodeGroupConfiguration.Name
 
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
@@ -668,7 +668,7 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkersUpgrade(clusterSpec *cl
 		values["workloadTemplateName"] = templateNames[i]
 		values["vsphereWorkerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
-		values["workerMachineGroupRefName"] = workerNodeGroupConfiguration.MachineGroupRef.Name
+		values["workerNodeGroupName"] = workerNodeGroupConfiguration.Name
 
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
@@ -911,14 +911,14 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 
 		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, workerVmc, workerMachineConfig)
 		if !needsNewWorkloadTemplate {
-			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, workerNodeGroupConfiguration.MachineGroupRef.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, newClusterSpec.Name, workerNodeGroupConfiguration.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
 				return nil, nil, err
 			}
 			workloadTemplateName = md.Spec.Template.Spec.InfrastructureRef.Name
 			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
 		} else {
-			workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(workerNodeGroupConfiguration.MachineGroupRef.Name)
+			workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
 			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
 		}
 	}

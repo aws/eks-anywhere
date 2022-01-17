@@ -189,9 +189,9 @@ func NewTinkerbellTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterC
 	}
 }
 
-func (vs *TinkerbellTemplateBuilder) WorkerMachineTemplateName(clusterName string) string {
+func (vs *TinkerbellTemplateBuilder) WorkerMachineTemplateName(clusterName, workerNodeGroupName string) string {
 	t := vs.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-worker-node-template-%d", clusterName, t)
+	return fmt.Sprintf("%s-%s-worker-node-template-%d", clusterName, workerNodeGroupName, t)
 }
 
 func (vs *TinkerbellTemplateBuilder) CPMachineTemplateName(clusterName string) string {
@@ -220,7 +220,7 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name])
-		values["workloadTemplateName"] = vs.WorkerMachineTemplateName(workerNodeGroupConfiguration.MachineGroupRef.Name)
+		values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		values["workerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
 

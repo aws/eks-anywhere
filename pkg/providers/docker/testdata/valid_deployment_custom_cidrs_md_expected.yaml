@@ -37,14 +37,14 @@ spec:
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
         kind: DockerMachineTemplate
-        name: test-cluster-worker-node-template-1234567890000
+        name: test-cluster-md-0-worker-node-template-1234567890000
         namespace: eksa-system
       version: v1.19.6-eks-1-19-2
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: DockerMachineTemplate
 metadata:
-  name: test-cluster-worker-node-template-1234567890000
+  name: test-cluster-md-0-worker-node-template-1234567890000
   namespace: eksa-system
 spec:
   template:

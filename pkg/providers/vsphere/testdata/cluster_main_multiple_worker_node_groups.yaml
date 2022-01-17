@@ -17,10 +17,12 @@ spec:
       machineGroupRef:
         name: test-wn
         kind: VSphereMachineConfig
+      name: md-0
     - count: 2
       machineGroupRef:
         name: test-wn
         kind: VSphereMachineConfig
+      name: md-1
   externalEtcdConfiguration:
     count: 3
     machineGroupRef:

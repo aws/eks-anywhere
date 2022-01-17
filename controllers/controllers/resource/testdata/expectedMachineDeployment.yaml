@@ -3,7 +3,7 @@ kind: MachineDeployment
 metadata:
   labels:
     cluster.x-k8s.io/cluster-name: test_cluster
-  name: testMachineGroupRef-md-0
+  name: test_cluster-md-0
   namespace: eksa-system
 spec:
   clusterName: test_cluster
@@ -19,10 +19,10 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
           kind: KubeadmConfigTemplate
-          name: testMachineGroupRef-md-0
+          name: test_cluster-md-0
       clusterName: test_cluster
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
         kind: VSphereMachineTemplate
-        name: testMachineGroupRef-worker-node-template-1234567890000
+        name: test_cluster-md-0-worker-node-template-1234567890000
       version: v1.19.8-eks-1-19-4

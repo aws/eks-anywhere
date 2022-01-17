@@ -722,7 +722,7 @@ func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, m
 func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		isMdReady := func() error {
-			return c.clusterClient.ValidateWorkerNodes(ctx, managementCluster, workerNodeGroupConfiguration.MachineGroupRef.Name)
+			return c.clusterClient.ValidateWorkerNodes(ctx, managementCluster, clusterSpec.Name)
 		}
 		err := isMdReady()
 		if err == nil {

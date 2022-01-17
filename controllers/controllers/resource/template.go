@@ -80,7 +80,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		oldVmc := oldWorkerVmcs[vmc.Name]
 		updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, &oldVmc, vmc)
 		if updateWorkloadTemplate {
-			workloadTemplateName := templateBuilder.WorkerMachineTemplateName(clusterName)
+			workloadTemplateName := templateBuilder.WorkerMachineTemplateName(clusterName, clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Name)
 			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
 		} else {
 			mcDeployments, err := r.MachineDeployments(ctx, eksaCluster)

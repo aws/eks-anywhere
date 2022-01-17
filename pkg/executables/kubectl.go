@@ -339,7 +339,7 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 
 func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error {
 	logger.V(6).Info("waiting for nodes", "cluster", clusterName)
-	md, err := k.GetMachineDeployment(ctx, cluster, clusterName, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
+	md, err := k.GetMachineDeployment(ctx, cluster, clusterName, "md-0", WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return err
 	}
@@ -680,8 +680,8 @@ func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Clu
 	return response, nil
 }
 
-func (k *Kubectl) GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*clusterv1.MachineDeployment, error) {
-	params := []string{"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), fmt.Sprintf("%s-md-0", clusterName), "-o", "json"}
+func (k *Kubectl) GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName, workerNodeGroupName string, opts ...KubectlOpt) (*clusterv1.MachineDeployment, error) {
+	params := []string{"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), fmt.Sprintf("%s-%s", clusterName, workerNodeGroupName), "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {

@@ -53,7 +53,7 @@ type provider struct {
 type ProviderKubectlClient interface {
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*bootstrapv1.KubeadmControlPlane, error)
-	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
+	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName, workerNodeGroupName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 }
@@ -124,9 +124,9 @@ type DockerTemplateBuilder struct {
 	now types.NowFunc
 }
 
-func (d *DockerTemplateBuilder) WorkerMachineTemplateName(clusterName string) string {
+func (d *DockerTemplateBuilder) WorkerMachineTemplateName(clusterName, workerNodeGroupName string) string {
 	t := d.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-worker-node-template-%d", clusterName, t)
+	return fmt.Sprintf("%s-%s-worker-node-template-%d", clusterName, workerNodeGroupName, t)
 }
 
 func (d *DockerTemplateBuilder) CPMachineTemplateName(clusterName string) string {
@@ -157,8 +157,9 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec)
-		values["workloadTemplateName"] = d.WorkerMachineTemplateName(workerNodeGroupConfiguration.MachineGroupRef.Name)
+		values["workloadTemplateName"] = d.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		values["worker_replicas"] = workerNodeGroupConfiguration.Count
+		values["workerNodeGroupName"] = workerNodeGroupConfiguration.Name
 
 		bytes, err := templater.Execute(defaultCAPIConfigMD, values)
 		if err != nil {
@@ -176,6 +177,7 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkersUpgrade(clusterSpec *clus
 		values := buildTemplateMapMD(clusterSpec)
 		values["workloadTemplateName"] = templateNames[i]
 		values["worker_replicas"] = workerNodeGroupConfiguration.Count
+		values["workerNodeGroupName"] = workerNodeGroupConfiguration.Name
 
 		bytes, err := templater.Execute(defaultCAPIConfigMD, values)
 		if err != nil {
@@ -285,14 +287,14 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 	for _, workerNodeGroupConfiguration := range newClusterSpec.Spec.WorkerNodeGroupConfigurations {
 		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec)
 		if !needsNewWorkloadTemplate {
-			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, workerNodeGroupConfiguration.MachineGroupRef.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, newClusterSpec.Name, workerNodeGroupConfiguration.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
 				return nil, nil, err
 			}
 			workloadTemplateName = md.Spec.Template.Spec.InfrastructureRef.Name
 			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
 		} else {
-			workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(workerNodeGroupConfiguration.MachineGroupRef.Name)
+			workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
 			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
 		}
 	}

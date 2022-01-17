@@ -152,7 +152,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				fetcher.EXPECT().ExistingVSphereDatacenterConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereDatacenterConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereEtcdMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
-				fetcher.EXPECT().ExistingVSphereWorkerMachineConfigs(ctx, gomock.Any()).Return(map[string]anywherev1.VSphereMachineConfig{"testMachineGroupRef": {}}, nil)
+				fetcher.EXPECT().ExistingVSphereWorkerMachineConfigs(ctx, gomock.Any()).Return(map[string]anywherev1.VSphereMachineConfig{"test_cluster": {}}, nil)
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))
 
 				resourceUpdater.EXPECT().ApplyPatch(ctx, gomock.Any(), false).Return(nil)
@@ -241,7 +241,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				existingVSMachine := &anywherev1.VSphereMachineConfig{}
 				existingVSMachine.Spec = machineSpec.Spec
 				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
-				fetcher.EXPECT().ExistingVSphereWorkerMachineConfigs(ctx, gomock.Any()).Return(map[string]anywherev1.VSphereMachineConfig{"testMachineGroupRef": {}}, nil)
+				fetcher.EXPECT().ExistingVSphereWorkerMachineConfigs(ctx, gomock.Any()).Return(map[string]anywherev1.VSphereMachineConfig{"test_cluster": {}}, nil)
 
 				kubeAdmControlPlane := &bootstrapv1.KubeadmControlPlane{}
 				if err := yaml.Unmarshal([]byte(kubeadmcontrolplaneFile), kubeAdmControlPlane); err != nil {
