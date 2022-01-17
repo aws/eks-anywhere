@@ -91,8 +91,8 @@ func (v *Validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 	if workerNodeGroupConfigs[0].MachineGroupRef == nil {
 		return errors.New("must specify machineGroupRef for worker nodes")
 	}
-	if len(workerNodeGroupConfigs) == 1 && workerNodeGroupConfigs[0].Name != "md-0" {
-		logger.Info("One worker node group must be named md-0. Will default name to md-0.")
+	if workerNodeGroupConfigs[0].Name != "md-0" {
+		logger.Info("First worker node group must be named md-0. Will default name to md-0.")
 		vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "md-0"
 	}
 	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
