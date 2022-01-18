@@ -9,6 +9,7 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
+          taints: []
           kubeletExtraArgs:
             cloud-provider: external
             node-labels: label1=foo,label2=bar
