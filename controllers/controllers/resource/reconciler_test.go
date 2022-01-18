@@ -9,6 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -121,8 +122,8 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 						t.Errorf("unmarshal failed: %v", err)
 					}
 					cluster := obj.(*anywherev1.VSphereMachineConfig)
-					cluster.SetName(objectKey.Name)
-					cluster.SetNamespace(objectKey.Namespace)
+					cluster.SetName(name)
+					cluster.SetNamespace(namespace)
 					cluster.Spec = clusterSpec.Spec
 					assert.Equal(t, objectKey.Name, "testMachineGroupRef", "expected Name to be testMachineGroupRef")
 				}).Return(nil)
@@ -153,6 +154,9 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereEtcdMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereWorkerMachineConfigs(ctx, gomock.Any()).Return(map[string]anywherev1.VSphereMachineConfig{"test_cluster": {}}, nil)
+				fetcher.EXPECT().VSphereCredentials(ctx).Return(&corev1.Secret{
+					Data: map[string][]byte{"username": []byte("username"), "password": []byte("password")},
+				}, nil)
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))
 
 				resourceUpdater.EXPECT().ApplyPatch(ctx, gomock.Any(), false).Return(nil)
@@ -232,8 +236,8 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					cluster := obj.(*anywherev1.VSphereMachineConfig)
-					cluster.SetName(objectKey.Name)
-					cluster.SetNamespace(objectKey.Namespace)
+					cluster.SetName(name)
+					cluster.SetNamespace(namespace)
 					cluster.Spec = machineSpec.Spec
 					assert.Equal(t, objectKey.Name, "testMachineGroupRef", "expected Name to be testMachineGroupRef")
 				}).Return(nil)
@@ -253,6 +257,10 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 					t.Errorf("unmarshal failed: %v", err)
 				}
 
+				fetcher.EXPECT().MachineDeployment(ctx, gomock.Any()).Return(mcDeployment, nil)
+				fetcher.EXPECT().VSphereCredentials(ctx).Return(&corev1.Secret{
+					Data: map[string][]byte{"username": []byte("username"), "password": []byte("password")},
+				}, nil)
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))
 
 				resourceUpdater.EXPECT().ForceApplyTemplate(ctx, gomock.Any(), gomock.Any()).Do(func(ctx context.Context, template *unstructured.Unstructured, dryRun bool) {

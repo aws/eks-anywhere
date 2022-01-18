@@ -12,6 +12,7 @@ import (
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	gomock "github.com/golang/mock/gomock"
 	v1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	v1 "k8s.io/api/core/v1"
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	types "k8s.io/apimachinery/pkg/types"
 	v1alpha30 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
@@ -264,6 +265,21 @@ func (m *MockResourceFetcher) VSphereWorkerMachineTemplates(arg0 context.Context
 func (mr *MockResourceFetcherMockRecorder) VSphereWorkerMachineTemplates(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VSphereWorkerMachineTemplates", reflect.TypeOf((*MockResourceFetcher)(nil).VSphereWorkerMachineTemplates), arg0, arg1)
+}
+
+/ VSphereCredentials mocks base method.
+func (m *MockResourceFetcher) VSphereCredentials(arg0 context.Context) (*v1.Secret, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VSphereCredentials", arg0)
+	ret0, _ := ret[0].(*v1.Secret)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// VSphereCredentials indicates an expected call of VSphereCredentials.
+func (mr *MockResourceFetcherMockRecorder) VSphereCredentials(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VSphereCredentials", reflect.TypeOf((*MockResourceFetcher)(nil).VSphereCredentials), arg0)
 }
 
 // MockResourceUpdater is a mock of ResourceUpdater interface.
