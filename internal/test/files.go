@@ -49,7 +49,7 @@ func AssertContentToFile(t *testing.T, gotContent, wantFile string) {
 		if err != nil {
 			if exitError, ok := err.(*exec.ExitError); ok {
 				if exitError.ExitCode() == 1 {
-					t.Fatalf("Results diff expected actual:\n%s", string(result))
+					t.Fatalf("Results diff expected actual for %s:\n%s", wantFile, string(result))
 				}
 			}
 		}

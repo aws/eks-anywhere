@@ -254,6 +254,9 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		"etcdadm":                      r.GetEtcdadmAssets,
 		"cri-tools":                    r.GetCriToolsAssets,
 		"diagnostic-collector":         r.GetDiagnosticCollectorAssets,
+		"tink":                         r.GetTinkAssets,
+		"hegel":                        r.GetHegelAssets,
+		"cfssl":                        r.GetCfsslAssets,
 	}
 
 	if r.DevRelease && r.BuildRepoBranchName == "main" {

@@ -57,6 +57,8 @@ type tinkerbellProvider struct {
 // TODO: Add necessary kubectl functions here
 type ProviderKubectlClient interface {
 	ApplyHardware(ctx context.Context, hardwareYaml string, kubeConfFile string) error
+	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType string, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) error
+	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType string, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) error
 }
 
 func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, now types.NowFunc, hardwareConfigFile string) *tinkerbellProvider {
@@ -126,9 +128,13 @@ func (p *tinkerbellProvider) MachineResourceType() string {
 	return eksaTinkerbellMachineResourceType
 }
 
-func (p *tinkerbellProvider) DeleteResources(_ context.Context, _ *cluster.Spec) error {
-	// TODO: Add delete resource logic
-	return nil
+func (p *tinkerbellProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
+	for _, mc := range p.machineConfigs {
+		if err := p.providerKubectlClient.DeleteEksaMachineConfig(ctx, eksaTinkerbellDatacenterResourceType, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace); err != nil {
+			return err
+		}
+	}
+	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx, eksaTinkerbellMachineResourceType, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
 }
 
 func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
@@ -380,7 +386,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"eksaSystemNamespace":          constants.EksaSystemNamespace,
 		"format":                       format,
 		"kubernetesVersion":            bundle.KubeDistro.Kubernetes.Tag,
-		"kubeVipImage":                 "ghcr.io/kube-vip/kube-vip:latest", // TODO: get this value from the bundle once we add it
+		"kubeVipImage":                 bundle.Tinkerbell.KubeVip.VersionedImage(),
 		"podCidrs":                     clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                 clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
 		"baseRegistry":                 "", // TODO: need to get this values for creating template IMAGE_URL
@@ -391,6 +397,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"corednsVersion":               bundle.KubeDistro.CoreDNS.Tag,
 		"etcdRepository":               bundle.KubeDistro.Etcd.Repository,
 		"etcdImageTag":                 bundle.KubeDistro.Etcd.Tag,
+		"controlPlanetemplateOverride": controlPlaneMachineSpec.TemplateOverride,
 	}
 	return values
 }
@@ -408,6 +415,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"workerPoolName":         "md-0",
 		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys,
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
+		"workertemplateOverride": workerNodeGroupMachineSpec.TemplateOverride,
 	}
 	return values
 }

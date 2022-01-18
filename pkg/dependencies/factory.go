@@ -33,6 +33,7 @@ type Dependencies struct {
 	Clusterctl                *executables.Clusterctl
 	Flux                      *executables.Flux
 	Troubleshoot              *executables.Troubleshoot
+	Helm                      *executables.Helm
 	Networking                clustermanager.Networking
 	AwsIamAuth                clustermanager.AwsIamAuth
 	ClusterManager            *clustermanager.ClusterManager
@@ -327,16 +328,41 @@ func (f *Factory) WithTroubleshoot() *Factory {
 	return f
 }
 
+func (f *Factory) WithHelm() *Factory {
+	f.WithExecutableBuilder()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.Helm != nil {
+			return nil
+		}
+
+		f.dependencies.Helm = f.executableBuilder.BuildHelmExecutable()
+		return nil
+	})
+
+	return f
+}
+
 func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
+	var networkingBuilder func() clustermanager.Networking
+	if clusterConfig.Spec.ClusterNetwork.CNI == v1alpha1.Kindnetd {
+		f.WithKubectl()
+		networkingBuilder = func() clustermanager.Networking {
+			return kindnetd.NewKindnetd(f.dependencies.Kubectl)
+		}
+	} else {
+		f.WithKubectl().WithHelm()
+		networkingBuilder = func() clustermanager.Networking {
+			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.Helm)
+		}
+	}
+
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Networking != nil {
 			return nil
 		}
-		if clusterConfig.Spec.ClusterNetwork.CNI == v1alpha1.Kindnetd {
-			f.dependencies.Networking = kindnetd.NewKindnetd()
-		} else {
-			f.dependencies.Networking = cilium.NewCilium()
-		}
+		f.dependencies.Networking = networkingBuilder()
+
 		return nil
 	})
 

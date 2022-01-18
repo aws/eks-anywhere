@@ -2,13 +2,20 @@ package cilium
 
 import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	networking "github.com/aws/eks-anywhere/pkg/networking/internal"
 )
 
-type Cilium struct{}
+const namespace = constants.KubeSystemNamespace
 
-func NewCilium() *Cilium {
-	return &Cilium{}
+type Cilium struct {
+	*Upgrader
+}
+
+func NewCilium(client Client, helm Helm) *Cilium {
+	return &Cilium{
+		Upgrader: NewUpgrader(client, helm),
+	}
 }
 
 func (c *Cilium) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error) {

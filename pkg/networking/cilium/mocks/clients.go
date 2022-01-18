@@ -50,18 +50,18 @@ func (mr *MockClientMockRecorder) ApplyKubeSpecFromBytes(ctx, cluster, data inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytes", reflect.TypeOf((*MockClient)(nil).ApplyKubeSpecFromBytes), ctx, cluster, data)
 }
 
-// DeleteKubeSpec mocks base method.
-func (m *MockClient) DeleteKubeSpec(ctx context.Context, cluster *types.Cluster, data []byte) error {
+// DeleteKubeSpecFromBytes mocks base method.
+func (m *MockClient) DeleteKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteKubeSpec", ctx, cluster, data)
+	ret := m.ctrl.Call(m, "DeleteKubeSpecFromBytes", ctx, cluster, data)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteKubeSpec indicates an expected call of DeleteKubeSpec.
-func (mr *MockClientMockRecorder) DeleteKubeSpec(ctx, cluster, data interface{}) *gomock.Call {
+// DeleteKubeSpecFromBytes indicates an expected call of DeleteKubeSpecFromBytes.
+func (mr *MockClientMockRecorder) DeleteKubeSpecFromBytes(ctx, cluster, data interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteKubeSpec", reflect.TypeOf((*MockClient)(nil).DeleteKubeSpec), ctx, cluster, data)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteKubeSpecFromBytes", reflect.TypeOf((*MockClient)(nil).DeleteKubeSpecFromBytes), ctx, cluster, data)
 }
 
 // GetDaemonSet mocks base method.

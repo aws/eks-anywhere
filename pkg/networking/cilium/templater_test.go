@@ -24,7 +24,7 @@ type templaterTest struct {
 	h                       *mocks.MockHelm
 	manifest                []byte
 	uri, version, namespace string
-	spec                    *cluster.Spec
+	spec, currentSpec       *cluster.Spec
 }
 
 func newtemplaterTest(t *testing.T) *templaterTest {
@@ -36,13 +36,20 @@ func newtemplaterTest(t *testing.T) *templaterTest {
 		h:         h,
 		t:         cilium.NewTemplater(h),
 		manifest:  []byte("manifestContent"),
-		uri:       "placeholder",
-		version:   "v1.9.11-eksa.1",
+		uri:       "oci://public.ecr.aws/isovalent/cilium",
+		version:   "1.9.11-eksa.1",
 		namespace: "kube-system",
+		currentSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+			s.VersionsBundle.Cilium.Version = "v1.9.10-eksa.1"
+			s.VersionsBundle.Cilium.Cilium.URI = "public.ecr.aws/isovalent/cilium:v1.9.10-eksa.1"
+			s.VersionsBundle.Cilium.Operator.URI = "public.ecr.aws/isovalent/operator-generic:v1.9.10-eksa.1"
+			s.VersionsBundle.Cilium.HelmChart.URI = "public.ecr.aws/isovalent/cilium:1.9.10-eksa.1"
+		}),
 		spec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.VersionsBundle.Cilium.Version = "v1.9.11-eksa.1"
 			s.VersionsBundle.Cilium.Cilium.URI = "public.ecr.aws/isovalent/cilium:v1.9.11-eksa.1"
-			s.VersionsBundle.Cilium.Operator.URI = "public.ecr.aws/isovalent/operator:v1.9.11-eksa.1"
+			s.VersionsBundle.Cilium.Operator.URI = "public.ecr.aws/isovalent/operator-generic:v1.9.11-eksa.1"
+			s.VersionsBundle.Cilium.HelmChart.URI = "public.ecr.aws/isovalent/cilium:1.9.11-eksa.1"
 		}),
 	}
 }
@@ -109,6 +116,10 @@ func TestTemplaterGenerateUpgradePreflightManifestSuccess(t *testing.T) {
 		},
 		"preflight": map[string]interface{}{
 			"enabled": true,
+			"image": map[string]interface{}{
+				"repository": "public.ecr.aws/isovalent/cilium",
+				"tag":        "v1.9.11-eksa.1",
+			},
 		},
 		"agent": false,
 	}
@@ -169,5 +180,50 @@ func TestTemplaterGenerateManifestError(t *testing.T) {
 
 	_, err := tt.t.GenerateManifest(tt.ctx, tt.spec)
 	tt.Expect(err).To(HaveOccurred(), "templater.GenerateManifest() should fail")
+	tt.Expect(err).To(MatchError(ContainSubstring("error from helm")))
+}
+
+func TestTemplaterGenerateUpgradeManifestSuccess(t *testing.T) {
+	wantValues := map[string]interface{}{
+		"cni": map[string]interface{}{
+			"chainingMode": "portmap",
+		},
+		"ipam": map[string]interface{}{
+			"mode": "kubernetes",
+		},
+		"identityAllocationMode": "crd",
+		"prometheus": map[string]interface{}{
+			"enabled": true,
+		},
+		"rollOutCiliumPods": true,
+		"tunnel":            "geneve",
+		"image": map[string]interface{}{
+			"repository": "public.ecr.aws/isovalent/cilium",
+			"tag":        "v1.9.11-eksa.1",
+		},
+		"operator": map[string]interface{}{
+			"image": map[string]interface{}{
+				"repository": "public.ecr.aws/isovalent/operator",
+				"tag":        "v1.9.11-eksa.1",
+			},
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+			},
+		},
+		"upgradeCompatibility": "1.9",
+	}
+
+	tt := newtemplaterTest(t)
+	tt.expectHelmTemplateWith(eqMap(wantValues)).Return(tt.manifest, nil)
+
+	tt.Expect(tt.t.GenerateUpgradeManifest(tt.ctx, tt.currentSpec, tt.spec)).To(Equal(tt.manifest), "templater.GenerateUpgradeManifest() should return right manifest")
+}
+
+func TestTemplaterGenerateUpgradeManifestError(t *testing.T) {
+	tt := newtemplaterTest(t)
+	tt.expectHelmTemplateWith(gomock.Any()).Return(nil, errors.New("error from helm")) // Using any because we only want to test the returned error
+
+	_, err := tt.t.GenerateUpgradeManifest(tt.ctx, tt.currentSpec, tt.spec)
+	tt.Expect(err).To(HaveOccurred(), "templater.GenerateUpgradeManifest() should fail")
 	tt.Expect(err).To(MatchError(ContainSubstring("error from helm")))
 }

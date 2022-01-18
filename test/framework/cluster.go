@@ -1,10 +1,13 @@
 package framework
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"crypto/sha1"
 	_ "embed"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -143,6 +146,26 @@ type Provider interface {
 }
 
 func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
+	e.GenerateClusterConfigForVersion("", opts...)
+}
+
+func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion string, opts ...CommandOpt) {
+	e.generateClusterConfigObjects(opts...)
+	if eksaVersion != "" {
+		var err error
+		e.ClusterConfigB, err = cleanUpClusterForVersion(e.ClusterConfigB, eksaVersion)
+		if err != nil {
+			e.T.Fatal(err)
+		}
+	}
+
+	e.buildClusterConfigFile()
+	e.cleanup(func() {
+		os.Remove(e.ClusterConfigLocation)
+	})
+}
+
+func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
 	generateClusterConfigArgs := []string{"generate", "clusterconfig", e.ClusterName, "-p", e.Provider.Name(), ">", e.ClusterConfigLocation}
 	e.RunEKSA(generateClusterConfigArgs, opts...)
 
@@ -152,10 +175,6 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 	clusterConfigFillers = append(clusterConfigFillers, clusterFillersFromProvider...)
 	e.ClusterConfigB = e.customizeClusterConfig(clusterConfigFillers...)
 	e.ProviderConfigB = e.Provider.CustomizeProviderConfig(e.ClusterConfigLocation)
-	e.buildClusterConfigFile()
-	e.cleanup(func() {
-		os.Remove(e.ClusterConfigLocation)
-	})
 }
 
 func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {
@@ -294,14 +313,32 @@ func (e *ClusterE2ETest) Run(name string, args ...string) {
 	if err != nil {
 		e.T.Fatalf("Error finding current directory: %v", err)
 	}
+	var stdoutAndErr bytes.Buffer
 
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s/bin:%s", workDir, envPath))
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
+	cmd.Stderr = io.MultiWriter(os.Stderr, &stdoutAndErr)
+	cmd.Stdout = io.MultiWriter(os.Stdout, &stdoutAndErr)
 
-	err = cmd.Run()
-	if err != nil {
+	if err = cmd.Run(); err != nil {
+		scanner := bufio.NewScanner(&stdoutAndErr)
+		var errorMessage string
+		// Look for the last line of the out put that starts with 'Error:'
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.HasPrefix(line, "Error:") {
+				errorMessage = line
+			}
+		}
+
+		if err := scanner.Err(); err != nil {
+			e.T.Fatalf("Failed reading command output looking for error message: %v", err)
+		}
+
+		if errorMessage != "" {
+			e.T.Fatalf("Command %s %v failed with error: %v: %s", name, args, err, errorMessage)
+		}
+
 		e.T.Fatalf("Error running command %s %v: %v", name, args, err)
 	}
 }

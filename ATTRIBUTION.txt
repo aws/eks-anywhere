@@ -833,7 +833,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** github.com/google/uuid; version v1.1.2 --
+** github.com/google/uuid; version v1.2.0 --
 https://github.com/google/uuid
 
 Copyright (c) 2009,2014 Google Inc. All rights reserved.
@@ -1033,7 +1033,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** google.golang.org/protobuf; version v1.26.0 --
+** google.golang.org/protobuf; version v1.27.1 --
 https://go.googlesource.com/protobuf
 
 Copyright (c) 2018 The Go Authors. All rights reserved.
@@ -1127,7 +1127,7 @@ Copyright (c) 2013 Mitchell Hashimoto
 https://github.com/onsi/gomega
 Copyright (c) 2013-2014 Onsi Fakhouri
 
-** github.com/pelletier/go-toml; version v1.8.0 --
+** github.com/pelletier/go-toml; version v1.8.1 --
 https://github.com/pelletier/go-toml
 Copyright (c) 2013 - 2017 Thomas Pelletier, Eric Anderton
 
@@ -1310,7 +1310,7 @@ limitations under the License.
 
 ------
 
-** sigs.k8s.io/yaml; version v1.2.0 --
+** sigs.k8s.io/yaml; version v1.3.0 --
 https://github.com/kubernetes-sigs/yaml
 Copyright (c) 2014 Sam Ghods
 Copyright (c) 2012 The Go Authors. All rights reserved.

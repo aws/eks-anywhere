@@ -104,9 +104,9 @@ However this is a feature we can easily build on top of this design. We would ha
 
 ### New ClusterStatus 
 
-The [current Cluster Status](https://github.com/aws/eks-anywhere/blob/v0.6.0/pkg/api/v1alpha1/cluster_types.go#L287)will be modified to include extra fields and conditions. These will be used by the reconciler methods to trigger the appropriate actions and to allow users to check progress of operations.
+The [current Cluster Status](https://github.com/aws/eks-anywhere/blob/v0.6.0/pkg/api/v1alpha1/cluster_types.go#L287) will be modified to include extra fields and conditions. These will be used by the reconciler methods to trigger the appropriate actions and to allow users to check progress of operations.
 
-If an error occurs controllers will set `spec.ClusterStatus.FailureReason` and `spec.ClusterStatus.FailureMessage`.
+If an error occurs controllers will set `ClusterStatus.FailureReason` and `ClusterStatus.FailureMessage`.
 
 
 ```
@@ -150,6 +150,29 @@ type ClusterStatus struct {
 
 Note: this status format is not final and might change during implementation.
 
+### New VSphereDatacenterConfigStatus
+
+Similar to ClusterStatus, The [VSphereDatacenterConfig Status](https://github.com/aws/eks-anywhere/blob/v0.6.0/pkg/api/v1alpha1/vspheredatacenterconfig_types.go#L21) will be modified to include extra fields and conditions. These determines whether to trigger the actual cluster reconciling process.
+
+If an error occurs controllers will set `VSphereDatacenterConfigStatus.FailureReason` and `VSphereDatacenterConfigStatus.FailureMessage`.
+
+
+```
+type VSphereDatacenterConfigStatus struct {
+    
+    // +optional
+    FailureReason *v1alpha.VSphereDatacenterConfigStatusError `json:"failureReason,omitempty"`
+
+    // Message to help administrators understand why an operation failed 
+    // +optional
+    FailureMessage *string `json:"failureMessage,omitempty"`
+
+    // Spec has been validated
+    // +optional
+    SpecValid bool `json:"specValid,omitempty"`
+
+}
+```
 
 ### GitOps
 

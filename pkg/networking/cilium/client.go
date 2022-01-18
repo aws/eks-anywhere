@@ -6,7 +6,6 @@ import (
 
 	v1 "k8s.io/api/apps/v1"
 
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -14,14 +13,13 @@ import (
 const (
 	ciliumDaemonSetName           = "cilium"
 	ciliumPreflightDaemonSetName  = "cilium-pre-flight-check"
-	ciliumDeploymentName          = "cilium"
+	ciliumDeploymentName          = "cilium-operator"
 	ciliumPreflightDeploymentName = "cilium-pre-flight-check"
-	namespace                     = constants.KubeSystemNamespace
 )
 
 type Client interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
-	DeleteKubeSpec(ctx context.Context, cluster *types.Cluster, data []byte) error
+	DeleteKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
 	GetDaemonSet(ctx context.Context, name, namespace, kubeconfig string) (*v1.DaemonSet, error)
 	GetDeployment(ctx context.Context, name, namespace, kubeconfig string) (*v1.Deployment, error)
 }
@@ -34,7 +32,7 @@ type retrierClient struct {
 func newRetrier(client Client) *retrierClient {
 	return &retrierClient{
 		Client:  client,
-		Retrier: retrier.New(1 * time.Minute),
+		Retrier: retrier.New(5 * time.Minute),
 	}
 }
 

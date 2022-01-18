@@ -7,6 +7,10 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const (
+	helmPath = "helm"
+)
+
 var helmTemplateEnvVars = map[string]string{
 	"HELM_EXPERIMENTAL_OCI": "1",
 }

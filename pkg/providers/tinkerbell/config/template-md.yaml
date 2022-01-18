@@ -38,7 +38,14 @@ metadata:
   namespace: {{.eksaSystemNamespace}}
 spec:
   template:
+    {{- if and .workertemplateOverride (ne .format "")}}
+    spec:
+      templateOverride: |
+{{.workertemplateOverride | indent 8}}
+    {{- end}}
+    {{- if (eq .workertemplateOverride "") }}
     spec: {}
+    {{- end }}
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate

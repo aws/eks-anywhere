@@ -27,6 +27,10 @@ import (
 func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (anywherev1alpha1.TinkerbellBundle, error) {
 	tinkerbellBundleArtifacts := map[string][]Artifact{
 		"cluster-api-provider-tinkerbell": r.BundleArtifactsTable["cluster-api-provider-tinkerbell"],
+		"kube-vip":                        r.BundleArtifactsTable["kube-vip"],
+		"tink":                            r.BundleArtifactsTable["tink"],
+		"hegel":                           r.BundleArtifactsTable["hegel"],
+		"cfssl":                           r.BundleArtifactsTable["cfssl"],
 	}
 	sortedComponentNames := sortArtifactsMap(tinkerbellBundleArtifacts)
 
@@ -84,6 +88,12 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 	bundle := anywherev1alpha1.TinkerbellBundle{
 		Version:              version,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-provider-tinkerbell"],
+		KubeVip:              bundleImageArtifacts["kube-vip"],
+		TinkServer:           bundleImageArtifacts["tink-server"],
+		TinkWorker:           bundleImageArtifacts["tink-worker"],
+		TinkCli:              bundleImageArtifacts["tink-cli"],
+		Hegel:                bundleImageArtifacts["hegel"],
+		Cfssl:                bundleImageArtifacts["cfssl"],
 		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
 		ClusterTemplate:      bundleManifestArtifacts["cluster-template.yaml"],
 		Metadata:             bundleManifestArtifacts["metadata.yaml"],
