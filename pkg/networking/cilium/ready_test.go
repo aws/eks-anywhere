@@ -16,6 +16,21 @@ func TestCheckDaemonSetReady(t *testing.T) {
 		wantErr   error
 	}{
 		{
+			name: "old status",
+			daemonSet: &v1.DaemonSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "ds",
+					Generation: 2,
+				},
+				Status: v1.DaemonSetStatus{
+					ObservedGeneration:     1,
+					DesiredNumberScheduled: 5,
+					NumberReady:            5,
+				},
+			},
+			wantErr: errors.New("daemonSet ds status needs to be refreshed: observed generation is 1, want 2"),
+		},
+		{
 			name: "ready",
 			daemonSet: &v1.DaemonSet{
 				ObjectMeta: metav1.ObjectMeta{
@@ -60,6 +75,54 @@ func TestCheckPreflightDaemonSetReady(t *testing.T) {
 		cilium, preflight *v1.DaemonSet
 		wantErr           error
 	}{
+		{
+			name: "cilium old status",
+			cilium: &v1.DaemonSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "ds",
+					Generation: 2,
+				},
+				Status: v1.DaemonSetStatus{
+					ObservedGeneration:     1,
+					DesiredNumberScheduled: 5,
+					NumberReady:            5,
+				},
+			},
+			preflight: &v1.DaemonSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ds-pre",
+				},
+				Status: v1.DaemonSetStatus{
+					DesiredNumberScheduled: 5,
+					NumberReady:            5,
+				},
+			},
+			wantErr: errors.New("daemonSet ds status needs to be refreshed: observed generation is 1, want 2"),
+		},
+		{
+			name: "pre-check old status",
+			cilium: &v1.DaemonSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ds",
+				},
+				Status: v1.DaemonSetStatus{
+					DesiredNumberScheduled: 5,
+					NumberReady:            5,
+				},
+			},
+			preflight: &v1.DaemonSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "ds-pre",
+					Generation: 2,
+				},
+				Status: v1.DaemonSetStatus{
+					ObservedGeneration:     1,
+					DesiredNumberScheduled: 5,
+					NumberReady:            5,
+				},
+			},
+			wantErr: errors.New("daemonSet ds-pre status needs to be refreshed: observed generation is 1, want 2"),
+		},
 		{
 			name: "ready",
 			cilium: &v1.DaemonSet{
@@ -123,6 +186,21 @@ func TestCheckDeploymentReady(t *testing.T) {
 		deployment *v1.Deployment
 		wantErr    error
 	}{
+		{
+			name: "old status",
+			deployment: &v1.Deployment{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       "dep",
+					Generation: 2,
+				},
+				Status: v1.DeploymentStatus{
+					Replicas:           5,
+					ReadyReplicas:      5,
+					ObservedGeneration: 1,
+				},
+			},
+			wantErr: errors.New("deployment dep status needs to be refreshed: observed generation is 1, want 2"),
+		},
 		{
 			name: "ready",
 			deployment: &v1.Deployment{
