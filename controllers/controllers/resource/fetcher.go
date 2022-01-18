@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-logr/logr"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -26,6 +27,7 @@ import (
 type ResourceFetcher interface {
 	MachineDeployments(ctx context.Context, cs *anywherev1.Cluster) ([]*clusterv1.MachineDeployment, error)
 	VSphereWorkerMachineTemplates(ctx context.Context, cs *anywherev1.Cluster) ([]vspherev1.VSphereMachineTemplate, error)
+	VSphereCredentials(ctx context.Context) (*corev1.Secret, error)
 	FetchObject(ctx context.Context, objectKey types.NamespacedName, obj client.Object) error
 	FetchObjectByName(ctx context.Context, name string, namespace string, obj client.Object) error
 	Fetch(ctx context.Context, name string, namespace string, kind string, apiVersion string) (*unstructured.Unstructured, error)
@@ -246,6 +248,15 @@ func (r *capiResourceFetcher) VSphereEtcdMachineTemplate(ctx context.Context, cs
 		return nil, err
 	}
 	return vsphereMachineTemplate, nil
+}
+
+func (r *capiResourceFetcher) VSphereCredentials(ctx context.Context) (*corev1.Secret, error) {
+	secret := &corev1.Secret{}
+	err := r.FetchObjectByName(ctx, constants.VSphereCredentialsName, constants.EksaSystemNamespace, secret)
+	if err != nil {
+		return nil, err
+	}
+	return secret, nil
 }
 
 func (r *capiResourceFetcher) bundles(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {

@@ -146,6 +146,26 @@ type Provider interface {
 }
 
 func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
+	e.GenerateClusterConfigForVersion("", opts...)
+}
+
+func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion string, opts ...CommandOpt) {
+	e.generateClusterConfigObjects(opts...)
+	if eksaVersion != "" {
+		var err error
+		e.ClusterConfigB, err = cleanUpClusterForVersion(e.ClusterConfigB, eksaVersion)
+		if err != nil {
+			e.T.Fatal(err)
+		}
+	}
+
+	e.buildClusterConfigFile()
+	e.cleanup(func() {
+		os.Remove(e.ClusterConfigLocation)
+	})
+}
+
+func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
 	generateClusterConfigArgs := []string{"generate", "clusterconfig", e.ClusterName, "-p", e.Provider.Name(), ">", e.ClusterConfigLocation}
 	e.RunEKSA(generateClusterConfigArgs, opts...)
 
@@ -155,10 +175,6 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 	clusterConfigFillers = append(clusterConfigFillers, clusterFillersFromProvider...)
 	e.ClusterConfigB = e.customizeClusterConfig(clusterConfigFillers...)
 	e.ProviderConfigB = e.Provider.CustomizeProviderConfig(e.ClusterConfigLocation)
-	e.buildClusterConfigFile()
-	e.cleanup(func() {
-		os.Remove(e.ClusterConfigLocation)
-	})
 }
 
 func (e *ClusterE2ETest) ImportImages(opts ...CommandOpt) {

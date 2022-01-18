@@ -27,4 +27,7 @@ const (
 	DockerProviderName     = "docker"
 	AWSProviderName        = "aws"
 	TinkerbellProviderName = "tinkerbell"
+
+	VSphereCredentialsName = "vsphere-credentials"
+	EksaLicenseName        = "eksa-license"
 )

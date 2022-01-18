@@ -32,7 +32,7 @@ type retrierClient struct {
 func newRetrier(client Client) *retrierClient {
 	return &retrierClient{
 		Client:  client,
-		Retrier: retrier.New(1 * time.Minute),
+		Retrier: retrier.New(5 * time.Minute),
 	}
 }
 

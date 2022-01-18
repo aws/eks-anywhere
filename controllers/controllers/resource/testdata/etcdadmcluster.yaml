@@ -1,5 +1,5 @@
 kind: EtcdadmCluster
-apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
+apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
 metadata:
   name: test_cluster-etcd
   namespace: eksa-system
@@ -23,6 +23,6 @@ users:
       - 'ssh-rsa ssh_key_value'
     sudo: ALL=(ALL) NOPASSWD:ALL
 infrastructureTemplate:
-  apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+  apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
   kind: VSphereMachineTemplate
   name: test_cluster-etcd-template-v1.19.8-eks-1-19-4
