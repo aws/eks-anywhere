@@ -343,22 +343,17 @@ func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, cluster *types.Cluste
 	if err != nil {
 		return err
 	}
-	for _, deployment := range deployments {
-		md, err := k.GetMachineDeployment(ctx, cluster, deployment.Name, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
-		if err != nil {
-			return err
+	for _, machineDeployment := range deployments {
+		if machineDeployment.Status.Phase != "Running" {
+			return fmt.Errorf("machine deployment is in %s phase", machineDeployment.Status.Phase)
 		}
 
-		if md.Status.Phase != "Running" {
-			return fmt.Errorf("machine deployment is in %s phase", md.Status.Phase)
+		if machineDeployment.Status.UnavailableReplicas != 0 {
+			return fmt.Errorf("%v machine deployment replicas are unavailable", machineDeployment.Status.UnavailableReplicas)
 		}
 
-		if md.Status.UnavailableReplicas != 0 {
-			return fmt.Errorf("%v machine deployment replicas are unavailable", md.Status.UnavailableReplicas)
-		}
-
-		if md.Status.ReadyReplicas != md.Status.Replicas {
-			return fmt.Errorf("%v machine deployment replicas are not ready", md.Status.Replicas-md.Status.ReadyReplicas)
+		if machineDeployment.Status.ReadyReplicas != machineDeployment.Status.Replicas {
+			return fmt.Errorf("%v machine deployment replicas are not ready", machineDeployment.Status.Replicas-machineDeployment.Status.ReadyReplicas)
 		}
 	}
 	return nil

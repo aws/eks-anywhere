@@ -162,8 +162,7 @@ func (c *ClusterManager) MoveCAPI(ctx context.Context, from, to *types.Cluster, 
 	}
 
 	logger.V(3).Info("Waiting for workload cluster machine deployment replicas to be ready after move")
-	replicasCount := c.countMDReplicas(clusterSpec)
-	err = c.waitForMachineDeploymentReplicasReady(ctx, to, clusterSpec, replicasCount)
+	err = c.waitForMachineDeploymentReplicasReady(ctx, to, clusterSpec)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster machinedeployment replicas to be ready: %v", err)
 	}
@@ -399,8 +398,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	}
 
 	logger.V(3).Info("Waiting for workload cluster machine deployment replicas to be ready after upgrade")
-	replicasCount := c.countMDReplicas(newClusterSpec)
-	err = c.waitForMachineDeploymentReplicasReady(ctx, managementCluster, newClusterSpec, replicasCount)
+	err = c.waitForMachineDeploymentReplicasReady(ctx, managementCluster, newClusterSpec)
 	if err != nil {
 		return fmt.Errorf("error waiting for workload cluster machinedeployment replicas to be ready: %v", err)
 	}
@@ -721,7 +719,12 @@ func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, m
 	return nil
 }
 
-func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec, count int) error {
+func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	var machineDeploymentReplicasCount int
+	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		machineDeploymentReplicasCount += workerNodeGroupConfiguration.Count
+	}
+
 	isMdReady := func() error {
 		return c.clusterClient.ValidateWorkerNodes(ctx, managementCluster, clusterSpec.Name)
 	}
@@ -731,7 +734,7 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 		return nil
 	}
 
-	timeout := time.Duration(count) * c.machineMaxWait
+	timeout := time.Duration(machineDeploymentReplicasCount) * c.machineMaxWait
 	if timeout <= c.machinesMinWait {
 		timeout = c.machinesMinWait
 	}
@@ -810,13 +813,6 @@ func (c *ClusterManager) countNodesReady(ctx context.Context, managementCluster 
 		}
 	}
 	return ready, total, nil
-}
-
-func (c *ClusterManager) countMDReplicas(clusterSpec *cluster.Spec) (total int) {
-	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		total += workerNodeGroupConfiguration.Count
-	}
-	return total
 }
 
 func (c *ClusterManager) waitForAllControlPlanes(ctx context.Context, cluster *types.Cluster, waitForCluster time.Duration) error {
@@ -900,39 +896,15 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 		if clusterSpec.Spec.ExternalEtcdConfiguration != nil && clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
 			return fmt.Errorf("machineGroupRef for etcd machines is not defined")
 		}
-		err := c.Retrier.Retry(
-			func() error {
-				return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
-			},
-		)
-		if err != nil {
-			return fmt.Errorf("error updating annotation when pausing control plane machineconfig reconciliation: %v", err)
-		}
 
-		for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-			if clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name != workerNodeGroupConfiguration.MachineGroupRef.Name {
-				err := c.Retrier.Retry(
-					func() error {
-						return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), workerNodeGroupConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
-					},
-				)
-				if err != nil {
-					return fmt.Errorf("error updating annotation when pausing worker node machineconfig reconciliation: %v", err)
-				}
-			}
-		}
-
-		if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
-			if clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name != clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name {
-				// etcd machines have a separate machineGroupRef which hasn't been paused yet, so apply pause annotation
-				err := c.Retrier.Retry(
-					func() error {
-						return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
-					},
-				)
-				if err != nil {
-					return fmt.Errorf("error updating annotation when pausing etcd machineconfig reconciliation: %v", err)
-				}
+		for _, machineConfigRef := range clusterSpec.MachineConfigRefs() {
+			err := c.Retrier.Retry(
+				func() error {
+					return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
+				},
+			)
+			if err != nil {
+				return fmt.Errorf("error updating annotation when pausing reconciliation for machine config %s: %v", machineConfigRef.Name, err)
 			}
 		}
 	}

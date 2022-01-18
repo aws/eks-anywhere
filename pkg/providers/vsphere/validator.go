@@ -91,7 +91,7 @@ func (v *Validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 	if workerNodeGroupConfigs[0].MachineGroupRef == nil {
 		return errors.New("must specify machineGroupRef for worker nodes")
 	}
-	if err := v.validateWorkerNodeGroupName(vsphereClusterSpec, workerNodeGroupConfigs); err != nil {
+	if err := validateWorkerNodeGroupNames(vsphereClusterSpec, workerNodeGroupConfigs); err != nil {
 		return err
 	}
 	workerNodeGroupMachineConfig := vsphereClusterSpec.firstWorkerMachineConfig()
@@ -210,9 +210,9 @@ func (v *Validator) validateControlPlaneIp(ip string) error {
 	return nil
 }
 
-func (v *Validator) validateWorkerNodeGroupName(spec *spec, workerNodeGroupConfigs []anywherev1.WorkerNodeGroupConfiguration) error {
-	if workerNodeGroupConfigs[0].Name != "md-0" {
-		logger.Info("First worker node group must be named md-0. Will default name to md-0.")
+func validateWorkerNodeGroupNames(spec *spec, workerNodeGroupConfigs []anywherev1.WorkerNodeGroupConfiguration) error {
+	if len(workerNodeGroupConfigs) == 1 && workerNodeGroupConfigs[0].Name == "" {
+		logger.Info("Worker node group name not specified. Defaulting name to md-0.")
 		spec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "md-0"
 	}
 	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {

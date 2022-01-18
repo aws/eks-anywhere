@@ -158,7 +158,7 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec)
 		values["workloadTemplateName"] = d.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
-		values["worker_replicas"] = workerNodeGroupConfiguration.Count
+		values["workerReplicas"] = workerNodeGroupConfiguration.Count
 		values["workerNodeGroupName"] = workerNodeGroupConfiguration.Name
 
 		bytes, err := templater.Execute(defaultCAPIConfigMD, values)
@@ -176,7 +176,7 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkersUpgrade(clusterSpec *clus
 	for i, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec)
 		values["workloadTemplateName"] = templateNames[i]
-		values["worker_replicas"] = workerNodeGroupConfiguration.Count
+		values["workerReplicas"] = workerNodeGroupConfiguration.Count
 		values["workerNodeGroupName"] = workerNodeGroupConfiguration.Name
 
 		bytes, err := templater.Execute(defaultCAPIConfigMD, values)

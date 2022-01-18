@@ -23,7 +23,7 @@ metadata:
   namespace: {{.eksaSystemNamespace}}
 spec:
   clusterName: {{.clusterName}}
-  replicas: {{.worker_replicas}}
+  replicas: {{.workerReplicas}}
   selector:
     matchLabels: null
   template:
