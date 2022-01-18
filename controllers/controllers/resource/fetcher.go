@@ -206,14 +206,14 @@ func (r *capiResourceFetcher) Fetch(ctx context.Context, name string, namespace 
 }
 
 func (r *capiResourceFetcher) VSphereWorkerMachineTemplates(ctx context.Context, cs *anywherev1.Cluster) ([]vspherev1.VSphereMachineTemplate, error) {
-	md, err := r.MachineDeployments(ctx, cs)
+	machineDeployments, err := r.MachineDeployments(ctx, cs)
 	if err != nil {
 		return nil, err
 	}
 	vsphereMachineTemplate := &vspherev1.VSphereMachineTemplate{}
 	workerMachineTemplates := make([]vspherev1.VSphereMachineTemplate, 0, len(cs.Spec.WorkerNodeGroupConfigurations))
-	for _, d := range md {
-		err = r.FetchObjectByName(ctx, d.Spec.Template.Spec.InfrastructureRef.Name, constants.EksaSystemNamespace, vsphereMachineTemplate)
+	for _, md := range machineDeployments {
+		err = r.FetchObjectByName(ctx, md.Spec.Template.Spec.InfrastructureRef.Name, constants.EksaSystemNamespace, vsphereMachineTemplate)
 		if err != nil {
 			return nil, err
 		}

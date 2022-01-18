@@ -91,16 +91,9 @@ func (v *Validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 	if workerNodeGroupConfigs[0].MachineGroupRef == nil {
 		return errors.New("must specify machineGroupRef for worker nodes")
 	}
-	if workerNodeGroupConfigs[0].Name != "md-0" {
-		logger.Info("First worker node group must be named md-0. Will default name to md-0.")
-		vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "md-0"
+	if err := v.validateWorkerNodeGroupName(vsphereClusterSpec, workerNodeGroupConfigs); err != nil {
+		return err
 	}
-	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
-		if workerNodeGroupConfig.Name == "" {
-			return errors.New("must specify name for worker nodes")
-		}
-	}
-
 	workerNodeGroupMachineConfig := vsphereClusterSpec.firstWorkerMachineConfig()
 	if workerNodeGroupMachineConfig == nil {
 		return fmt.Errorf("cannot find VSphereMachineConfig %v for worker nodes", vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name)
@@ -213,6 +206,19 @@ func (v *Validator) validateControlPlaneIp(ip string) error {
 	parsedIp := net.ParseIP(ip)
 	if parsedIp == nil {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s", ip)
+	}
+	return nil
+}
+
+func (v *Validator) validateWorkerNodeGroupName(spec *spec, workerNodeGroupConfigs []anywherev1.WorkerNodeGroupConfiguration) error {
+	if workerNodeGroupConfigs[0].Name != "md-0" {
+		logger.Info("First worker node group must be named md-0. Will default name to md-0.")
+		spec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "md-0"
+	}
+	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
+		if workerNodeGroupConfig.Name == "" {
+			return errors.New("must specify name for worker nodes")
+		}
 	}
 	return nil
 }

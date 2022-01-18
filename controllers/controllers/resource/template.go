@@ -87,8 +87,8 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 			if err != nil {
 				return nil, err
 			}
-			for _, mcd := range mcDeployments {
-				workloadTemplateName := mcd.Spec.Template.Spec.InfrastructureRef.Name
+			for _, md := range mcDeployments {
+				workloadTemplateName := md.Spec.Template.Spec.InfrastructureRef.Name
 				workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
 			}
 		}
