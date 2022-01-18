@@ -2,7 +2,6 @@ package dependencies
 
 import (
 	"context"
-	"reflect"
 
 	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -16,7 +15,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/networking"
+	"github.com/aws/eks-anywhere/pkg/networking/cilium"
+	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/factory"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -33,6 +33,7 @@ type Dependencies struct {
 	Clusterctl                *executables.Clusterctl
 	Flux                      *executables.Flux
 	Troubleshoot              *executables.Troubleshoot
+	Helm                      *executables.Helm
 	Networking                clustermanager.Networking
 	AwsIamAuth                clustermanager.AwsIamAuth
 	ClusterManager            *clustermanager.ClusterManager
@@ -43,15 +44,14 @@ type Dependencies struct {
 	DignosticCollectorFactory diagnostics.DiagnosticBundleFactory
 	CAPIManager               *clusterapi.Manager
 	ResourceSetManager        *clusterapi.ResourceSetManager
+	closers                   []types.Closer
 }
 
 func (d *Dependencies) Close(ctx context.Context) error {
-	closers := []types.Closer{d.Govc, d.DockerClient, d.Kubectl, d.Kind, d.Clusterctl, d.Flux, d.Troubleshoot}
-	for _, c := range closers {
-		if !reflect.ValueOf(c).IsNil() {
-			if err := c.Close(ctx); err != nil {
-				return err
-			}
+	// Reverse the loop so we close like LIFO
+	for i := len(d.closers) - 1; i >= 0; i-- {
+		if err := d.closers[i].Close(ctx); err != nil {
+			return err
 		}
 	}
 
@@ -123,10 +123,12 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 			return nil
 		}
 
-		b, err := executables.NewExecutableBuilder(ctx, f.executablesImage, f.executablesMountDirs...)
+		b, close, err := executables.NewExecutableBuilder(ctx, f.executablesImage, f.executablesMountDirs...)
 		if err != nil {
 			return err
 		}
+
+		f.dependencies.closers = append(f.dependencies.closers, close)
 
 		f.executableBuilder = b
 		return nil
@@ -161,6 +163,8 @@ func (f *Factory) WithProviderFactory(clusterConfig *v1alpha1.Cluster) *Factory 
 		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
+	case v1alpha1.TinkerbellDatacenterKind:
+		f.WithKubectl()
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -173,6 +177,7 @@ func (f *Factory) WithProviderFactory(clusterConfig *v1alpha1.Cluster) *Factory 
 			DockerKubectlClient:       f.dependencies.Kubectl,
 			VSphereGovcClient:         f.dependencies.Govc,
 			VSphereKubectlClient:      f.dependencies.Kubectl,
+			TinkerbellKubectlClient:   f.dependencies.Kubectl,
 			Writer:                    f.dependencies.Writer,
 			ClusterResourceSetManager: f.dependencies.ResourceSetManager,
 		}
@@ -237,6 +242,8 @@ func (f *Factory) WithGovc() *Factory {
 		}
 
 		f.dependencies.Govc = f.executableBuilder.BuildGovcExecutable(f.dependencies.Writer)
+		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Govc)
+
 		return nil
 	})
 
@@ -321,16 +328,41 @@ func (f *Factory) WithTroubleshoot() *Factory {
 	return f
 }
 
+func (f *Factory) WithHelm() *Factory {
+	f.WithExecutableBuilder()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.Helm != nil {
+			return nil
+		}
+
+		f.dependencies.Helm = f.executableBuilder.BuildHelmExecutable()
+		return nil
+	})
+
+	return f
+}
+
 func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
+	var networkingBuilder func() clustermanager.Networking
+	if clusterConfig.Spec.ClusterNetwork.CNI == v1alpha1.Kindnetd {
+		f.WithKubectl()
+		networkingBuilder = func() clustermanager.Networking {
+			return kindnetd.NewKindnetd(f.dependencies.Kubectl)
+		}
+	} else {
+		f.WithKubectl().WithHelm()
+		networkingBuilder = func() clustermanager.Networking {
+			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.Helm)
+		}
+	}
+
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Networking != nil {
 			return nil
 		}
-		if clusterConfig.Spec.ClusterNetwork.CNI == v1alpha1.Kindnetd {
-			f.dependencies.Networking = networking.NewKindnetd()
-		} else {
-			f.dependencies.Networking = networking.NewCilium()
-		}
+		f.dependencies.Networking = networkingBuilder()
+
 		return nil
 	})
 

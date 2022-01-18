@@ -66,5 +66,6 @@ func (c Cloudwatch) getLogs(logGroupName string, logStreamName string, nextToken
 		LogGroupName:  aws.String(logGroupName),
 		LogStreamName: aws.String(logStreamName),
 		NextToken:     nextToken,
+		StartFromHead: aws.Bool(true),
 	})
 }

@@ -102,6 +102,7 @@ type deployTemplateTest struct {
 	mockExecutable           *mockexecutables.MockExecutable
 	env                      map[string]string
 	datacenter               string
+	datastore                string
 	resourcePool             string
 	templatePath             string
 	ovaURL                   string
@@ -121,6 +122,7 @@ func newDeployTemplateTest(t *testing.T) *deployTemplateTest {
 		mockExecutable:           exec,
 		env:                      env,
 		datacenter:               "SDDC-Datacenter",
+		datastore:                "/SDDC-Datacenter/datastore/WorkloadDatastore",
 		resourcePool:             "*/Resources/Compute-ResourcePool",
 		templatePath:             "/SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6",
 		ovaURL:                   "https://aws.com/ova",
@@ -158,7 +160,7 @@ func (dt *deployTemplateTest) expectFolderInfoToReturn(err error) {
 func (dt *deployTemplateTest) expectDeployToReturn(err error) {
 	dt.expectations = append(
 		dt.expectations,
-		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "library.deploy", "-dc", dt.datacenter, "-pool", dt.resourcePool, "-folder", dt.deployFolder, "-options", test.OfType("string"), dt.templateInLibraryPathAbs, dt.templateName).Return(*dt.fakeExecResponse, err),
+		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "library.deploy", "-dc", dt.datacenter, "-ds", dt.datastore, "-pool", dt.resourcePool, "-folder", dt.deployFolder, "-options", test.OfType("string"), dt.templateInLibraryPathAbs, dt.templateName).Return(*dt.fakeExecResponse, err),
 	)
 }
 
@@ -178,7 +180,7 @@ func (dt *deployTemplateTest) expectMarkAsTemplateToReturn(err error) {
 
 func (dt *deployTemplateTest) DeployTemplateFromLibrary() error {
 	gomock.InOrder(dt.expectations...)
-	return dt.govc.DeployTemplateFromLibrary(dt.ctx, dt.deployFolder, dt.templateName, templateLibrary, dt.datacenter, dt.resourcePool, dt.resizeDisk2)
+	return dt.govc.DeployTemplateFromLibrary(dt.ctx, dt.deployFolder, dt.templateName, templateLibrary, dt.datacenter, dt.datastore, dt.resourcePool, dt.resizeDisk2)
 }
 
 func (dt *deployTemplateTest) assertDeployTemplateSuccess(t *testing.T) {
@@ -379,11 +381,7 @@ func TestGovcGetWorkloadAvailableSpace(t *testing.T) {
 			_, writer := test.NewWriter(t)
 			fileContent := test.ReadFile(t, tt.jsonResponseFile)
 			env := govcEnvironment
-			providerConfig := &v1alpha1.VSphereMachineConfig{
-				Spec: v1alpha1.VSphereMachineConfigSpec{
-					Datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore",
-				},
-			}
+			datastore := "/SDDC-Datacenter/datastore/WorkloadDatastore"
 
 			ctx := context.Background()
 			mockCtrl := gomock.NewController(t)
@@ -393,10 +391,10 @@ func TestGovcGetWorkloadAvailableSpace(t *testing.T) {
 			defer tctx.RestoreContext()
 
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
-			params := []string{"datastore.info", "-json=true", providerConfig.Spec.Datastore}
+			params := []string{"datastore.info", "-json=true", datastore}
 			executable.EXPECT().ExecuteWithEnv(ctx, env, params).Return(*bytes.NewBufferString(fileContent), nil)
 			g := executables.NewGovc(executable, writer)
-			freeSpace, err := g.GetWorkloadAvailableSpace(ctx, providerConfig)
+			freeSpace, err := g.GetWorkloadAvailableSpace(ctx, datastore)
 			if err != nil {
 				t.Fatalf("Govc.GetWorkloadAvailableSpace() error: %v", err)
 			}

@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"strings"
 	"testing"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -33,12 +35,14 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 	kubeConfigFile := "test_cluster.kind.kubeconfig"
 	kindImage := "public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind/node:v1.20.2"
 	registryMirror := "registry-mirror.test"
-	kindImageMirror := "registry-mirror.test/l0g8r8j6/kubernetes-sigs/kind/node:v1.20.2"
+	registryMirrorWithPort := net.JoinHostPort(registryMirror, constants.DefaultHttpsPort)
+	kindImageMirror := fmt.Sprintf("%s/l0g8r8j6/kubernetes-sigs/kind/node:v1.20.2", registryMirrorWithPort)
 	clusterSpecWithMirror := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Name = clusterName
 		s.VersionsBundle = versionBundle
 		s.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
 			Endpoint: registryMirror,
+			Port:     constants.DefaultHttpsPort,
 		}
 	})
 
@@ -138,7 +142,7 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 			wantKubeconfig: kubeConfigFile,
 			options: []testKindOption{
 				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
-					return k.WithRegistryMirror(registryMirror, "")
+					return k.WithRegistryMirror(registryMirrorWithPort, "")
 				},
 			},
 			env:                map[string]string{},
@@ -150,7 +154,7 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 			wantKubeconfig: kubeConfigFile,
 			options: []testKindOption{
 				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
-					return k.WithRegistryMirror(registryMirror, "ca.crt")
+					return k.WithRegistryMirror(registryMirrorWithPort, "ca.crt")
 				},
 			},
 			env:                map[string]string{},

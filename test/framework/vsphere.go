@@ -90,6 +90,10 @@ func UpdateBottlerocketTemplate121() api.VSphereFiller {
 	return api.WithStringFromEnvVar(vsphereTemplateBR121Var, api.WithTemplate)
 }
 
+func UpdateBottlerocketTemplate120() api.VSphereFiller {
+	return api.WithStringFromEnvVar(vsphereTemplateBR120Var, api.WithTemplate)
+}
+
 func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 	checkRequiredEnvVars(t, requiredEnvVars)
 	c := buildGovc(t)

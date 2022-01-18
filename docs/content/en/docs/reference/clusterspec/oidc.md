@@ -40,7 +40,6 @@ spec:
 ```
 ### identityProviderRefs (Under Cluster)
 List of identity providers you want configured for the Cluster.
-Right now, only 1 provider of type `OIDCConfig` is supported.
 This would include a reference to the `OIDCConfig` object with the configuration below.
 
 ### clientId (required)

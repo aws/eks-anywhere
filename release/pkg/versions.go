@@ -1,26 +1,25 @@
 package pkg
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
+
+	"github.com/aws/eks-anywhere/release/pkg/git"
 )
 
-func BuildComponentVersion(versioner projectVersioner) (string, error) {
+func BuildComponentVersion(versioner projectVersioner, componentCheckSum string) (string, error) {
 	patchVersion, err := versioner.patchVersion()
 	if err != nil {
 		return "", err
 	}
 
-	metadata, err := versioner.buildMetadata()
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%s+%s", patchVersion, metadata), nil
+	return fmt.Sprintf("%s+%s", patchVersion, componentCheckSum), nil
 }
 
 type versioner struct {
@@ -33,8 +32,7 @@ func newVersioner(pathToProject string) *versioner {
 }
 
 func (v *versioner) buildMetadata() (string, error) {
-	cmd := exec.Command("git", "-C", v.pathToProject, "log", "--pretty=format:%h", "-n1", v.pathToProject)
-	out, err := execCommand(cmd)
+	out, err := git.GetLatestCommitForPath(v.pathToProject, v.pathToProject)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed executing git log to get build metadata in [%s]", v.pathToProject)
 	}
@@ -44,8 +42,7 @@ func (v *versioner) buildMetadata() (string, error) {
 
 func (v *versioner) patchVersion() (string, error) {
 	projectSource := filepath.Join(v.repoSource, v.pathToProject)
-	cmd := exec.Command("git", "-C", projectSource, "describe", "--tag")
-	out, err := execCommand(cmd)
+	out, err := git.DescribeTag(projectSource)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed executing git describe to get version in [%s]", projectSource)
 	}
@@ -85,22 +82,6 @@ func (v *versionerWithGITTAG) patchVersion() (string, error) {
 	return v.releaseConfig.readGitTag(v.folderWithGITTAG, v.sourcedFromBranch)
 }
 
-func (v *versionerWithGITTAG) buildMetadata() (string, error) {
-	_, err := checkoutRepo(v.repoSource, v.sourcedFromBranch)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-
-	projectSource := filepath.Join(v.repoSource, v.pathToProject)
-	cmd := exec.Command("git", "-C", projectSource, "log", "--pretty=format:%h", "-n1", projectSource)
-	out, err := execCommand(cmd)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed executing git log to get build metadata in [%s]", projectSource)
-	}
-
-	return out, nil
-}
-
 type cliVersioner struct {
 	versioner
 	cliVersion string
@@ -115,4 +96,22 @@ func newCliVersioner(cliVersion, pathToProject string) *cliVersioner {
 
 func (v *cliVersioner) patchVersion() (string, error) {
 	return v.cliVersion, nil
+}
+
+func generateComponentHash(hashes []string) string {
+	b := make([][]byte, len(hashes))
+	for i, str := range hashes {
+		b[i] = []byte(str)
+	}
+	joinByteArrays := bytes.Join(b, []byte(""))
+	hash := sha256.Sum256(joinByteArrays)
+	hashStr := hex.EncodeToString(hash[:])[:7]
+
+	return hashStr
+}
+
+func generateManifestHash(contents []byte) string {
+	hash := sha256.Sum256(contents)
+	hashStr := hex.EncodeToString(hash[:])
+	return hashStr
 }

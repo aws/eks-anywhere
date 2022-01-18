@@ -2,6 +2,7 @@ package clusterapi
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -50,18 +51,36 @@ func PodIAMAuthExtraArgs(podIAMConfig *v1alpha1.PodIAMConfig) ExtraArgs {
 	return args
 }
 
+func ResolvConfExtraArgs(resolvConf v1alpha1.ResolvConf) ExtraArgs {
+	args := ExtraArgs{}
+	args.AddIfNotEmpty("resolv-conf", resolvConf.Path)
+	return args
+}
+
 // We don't need to add these once the Kubernetes components default to using the secure cipher suites
 func SecureTlsCipherSuitesExtraArgs() ExtraArgs {
 	args := ExtraArgs{}
-	cipherSuitesString := strings.Join(crypto.SecureCipherSuiteNames(), ",")
-	args.AddIfNotEmpty("tls-cipher-suites", cipherSuitesString)
+	args.AddIfNotEmpty("tls-cipher-suites", crypto.SecureCipherSuitesString())
 	return args
 }
 
 func SecureEtcdTlsCipherSuitesExtraArgs() ExtraArgs {
 	args := ExtraArgs{}
-	cipherSuitesString := strings.Join(crypto.SecureCipherSuiteNames(), ",")
-	args.AddIfNotEmpty("cipher-suites", cipherSuitesString)
+	args.AddIfNotEmpty("cipher-suites", crypto.SecureCipherSuitesString())
+	return args
+}
+
+func WorkerNodeLabelsExtraArgs(wnc v1alpha1.WorkerNodeGroupConfiguration) ExtraArgs {
+	return nodeLabelsExtraArgs(wnc.Labels)
+}
+
+func ControlPlaneNodeLabelsExtraArgs(cpc v1alpha1.ControlPlaneConfiguration) ExtraArgs {
+	return nodeLabelsExtraArgs(cpc.Labels)
+}
+
+func nodeLabelsExtraArgs(labels map[string]string) ExtraArgs {
+	args := ExtraArgs{}
+	args.AddIfNotEmpty("node-labels", labelsMapToArg(labels))
 	return args
 }
 
@@ -94,4 +113,15 @@ func requiredClaimToArg(r *v1alpha1.OIDCConfigRequiredClaim) string {
 	}
 
 	return fmt.Sprintf("%s=%s", r.Claim, r.Value)
+}
+
+func labelsMapToArg(m map[string]string) string {
+	labels := make([]string, 0, len(m))
+	for k, v := range m {
+		labels = append(labels, fmt.Sprintf("%s=%s", k, v))
+	}
+
+	sort.Strings(labels)
+	labelStr := strings.Join(labels, ",")
+	return labelStr
 }

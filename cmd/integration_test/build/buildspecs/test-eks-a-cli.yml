@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    INTEGRATION_TEST_MAX_EC2_COUNT: 60
+    INTEGRATION_TEST_MAX_EC2_COUNT: 65
     T_VSPHERE_CIDR: "198.18.128.0/17"
     T_VSPHERE_PRIVATE_NETWORK_CIDR: "197.18.128.0/17"
   secrets-manager:
@@ -35,6 +35,7 @@ env:
     T_HTTPS_PROXY: "proxy-config-data:httpsProxy"
     T_NO_PROXY: "proxy-config-data:noProxy"
     T_REGISTRY_MIRROR_ENDPOINT: "harbor-registry-data:endpoint"
+    T_REGISTRY_MIRROR_PORT: "harbor-registry-data:port"
     T_REGISTRY_MIRROR_USERNAME: "harbor-registry-data:username"
     T_REGISTRY_MIRROR_PASSWORD: "harbor-registry-data:password"
     T_REGISTRY_MIRROR_CA_CERT: "harbor-registry-data:caCert"
@@ -65,6 +66,7 @@ phases:
       -v 4
       --bundles-override=${BUNDLES_OVERRIDE}
       --cleanup-vms=true
+      --test-report-folder=reports
   post_build:
     commands:
     - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
@@ -79,3 +81,8 @@ phases:
       "linux,darwin"
       "amd64"
       false
+reports:
+  e2e-reports:
+    files:
+      - reports/junit-testing-*.xml
+    file-format: "JUNITXML"

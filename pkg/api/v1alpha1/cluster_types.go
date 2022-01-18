@@ -114,6 +114,9 @@ type RegistryMirrorConfiguration struct {
 	// Endpoint defines the registry mirror endpoint to use for pulling images
 	Endpoint string `json:"endpoint,omitempty"`
 
+	// Port defines the port exposed for registry mirror endpoint
+	Port string `json:"port,omitempty"`
+
 	// CACertContent defines the contents registry mirror CA certificate
 	CACertContent string `json:"caCertContent,omitempty"`
 }
@@ -125,7 +128,7 @@ func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Endpoint == o.Endpoint && n.CACertContent == o.CACertContent
+	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent
 }
 
 type ControlPlaneConfiguration struct {
@@ -137,6 +140,8 @@ type ControlPlaneConfiguration struct {
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
 	// Taints define the set of taints to be applied on control plane nodes
 	Taints []corev1.Taint `json:"taints,omitempty"`
+	// Labels define the labels to assign to the node
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
@@ -186,6 +191,8 @@ type WorkerNodeGroupConfiguration struct {
 	Count int `json:"count,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
+	// Labels define the labels to assign to the node
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 func generateWorkerNodeGroupKey(c WorkerNodeGroupConfiguration) (key string) {
@@ -223,6 +230,7 @@ type ClusterNetwork struct {
 	Services Services `json:"services,omitempty"`
 	// CNI specifies the CNI plugin to be installed in the cluster
 	CNI CNI `json:"cni,omitempty"`
+	DNS DNS `json:"dns,omitempty"`
 }
 
 func (n *ClusterNetwork) Equal(o *ClusterNetwork) bool {
@@ -234,7 +242,7 @@ func (n *ClusterNetwork) Equal(o *ClusterNetwork) bool {
 	}
 	return SliceEqual(n.Pods.CidrBlocks, o.Pods.CidrBlocks) &&
 		SliceEqual(n.Services.CidrBlocks, o.Services.CidrBlocks) &&
-		n.CNI == o.CNI
+		n.CNI == o.CNI && n.DNS == o.DNS
 }
 
 func SliceEqual(a, b []string) bool {
@@ -285,6 +293,16 @@ type Pods struct {
 
 type Services struct {
 	CidrBlocks []string `json:"cidrBlocks,omitempty"`
+}
+
+type DNS struct {
+	// ResolvConf refers to the DNS resolver configuration
+	ResolvConf ResolvConf `json:"resolvConf,omitempty"`
+}
+
+type ResolvConf struct {
+	// Path defines the path to the file that contains the DNS resolver configuration
+	Path string `json:"path,omitempty"`
 }
 
 type KubernetesVersion string

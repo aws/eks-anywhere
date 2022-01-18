@@ -25,6 +25,12 @@ import (
 	"sigs.k8s.io/yaml"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/aws/ecr"
+	"github.com/aws/eks-anywhere/release/pkg/aws/ecrpublic"
+	"github.com/aws/eks-anywhere/release/pkg/aws/s3"
+	"github.com/aws/eks-anywhere/release/pkg/clients"
+	"github.com/aws/eks-anywhere/release/pkg/images"
+	"github.com/aws/eks-anywhere/release/pkg/utils"
 )
 
 const SuccessIcon = "✅"
@@ -55,15 +61,14 @@ type ReleaseConfig struct {
 	DevRelease               bool
 	DryRun                   bool
 	ReleaseEnvironment       string
-	SourceClients            *SourceClients
-	ReleaseClients           *ReleaseClients
+	SourceClients            *clients.SourceClients
+	ReleaseClients           *clients.ReleaseClients
 	BundleArtifactsTable     map[string][]Artifact
 	EksAArtifactsTable       map[string][]Artifact
 }
 
 type projectVersioner interface {
 	patchVersion() (string, error)
-	buildMetadata() (string, error)
 }
 
 // GetVersionsBundles will build the entire bundle manifest from the
@@ -155,18 +160,20 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 	}
 
 	for channel, release := range eksDReleaseMap {
-		if channel == "latest" || !existsInList(channel, bottlerocketSupportedK8sVersions) {
+		if channel == "latest" || !utils.SliceContains(bottlerocketSupportedK8sVersions, channel) {
 			continue
 		}
 		releaseNumber := release.(map[interface{}]interface{})["number"]
 		releaseNumberInt := releaseNumber.(int)
 		releaseNumberStr := strconv.Itoa(releaseNumberInt)
 
-		kubeVersion := release.(map[interface{}]interface{})["kubeVersion"]
-		kubeVersionStr := kubeVersion.(string)
-		shortKubeVersion := kubeVersionStr[1:strings.LastIndex(kubeVersionStr, ".")]
+		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting kubeversion for eks-d %s-%s release", channel, releaseNumberStr)
+		}
+		shortKubeVersion := kubeVersion[1:strings.LastIndex(kubeVersion, ".")]
 
-		eksDReleaseBundle, err := r.GetEksDReleaseBundle(channel, kubeVersionStr, releaseNumberStr, imageDigests)
+		eksDReleaseBundle, err := r.GetEksDReleaseBundle(channel, kubeVersion, releaseNumberStr, imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for eks-d %s-%s release bundle", channel, releaseNumberStr)
 		}
@@ -247,6 +254,9 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		"etcdadm":                      r.GetEtcdadmAssets,
 		"cri-tools":                    r.GetCriToolsAssets,
 		"diagnostic-collector":         r.GetDiagnosticCollectorAssets,
+		"tink":                         r.GetTinkAssets,
+		"hegel":                        r.GetHegelAssets,
+		"cfssl":                        r.GetCfsslAssets,
 	}
 
 	if r.DevRelease && r.BuildRepoBranchName == "main" {
@@ -272,17 +282,19 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		return nil, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
 	}
 	for channel, release := range eksDReleaseMap {
-		if channel == "latest" || !existsInList(channel, bottlerocketSupportedK8sVersions) {
+		if channel == "latest" || !utils.SliceContains(bottlerocketSupportedK8sVersions, channel) {
 			continue
 		}
 		releaseNumber := release.(map[interface{}]interface{})["number"]
 		releaseNumberInt := releaseNumber.(int)
 		releaseNumberStr := strconv.Itoa(releaseNumberInt)
 
-		kubeVersion := release.(map[interface{}]interface{})["kubeVersion"]
-		kubeVersionStr := kubeVersion.(string)
+		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting kubeversion for eks-d %s-%s release", channel, releaseNumberStr)
+		}
 
-		eksDChannelArtifacts, err := r.GetEksDChannelAssets(channel, kubeVersionStr, releaseNumberStr)
+		eksDChannelArtifacts, err := r.GetEksDChannelAssets(channel, kubeVersion, releaseNumberStr)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", channel)
 		}
@@ -378,7 +390,7 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 		}
 		if !r.DryRun {
 			sourceEcrAuthConfig := r.SourceClients.ECR.AuthConfig
-			err := r.waitForSourceImage(sourceEcrAuthConfig, sourceImageUri)
+			err := images.PollForExistence(r.DevRelease, sourceEcrAuthConfig, sourceImageUri, r.SourceContainerRegistry, r.ReleaseEnvironment, r.BuildRepoBranchName)
 			if err != nil {
 				if r.BuildRepoBranchName != "main" {
 					fmt.Printf("Tag corresponding to %s branch not found for %s image. Using image artifact from main\n", r.BuildRepoBranchName, repoName)
@@ -557,12 +569,12 @@ func (r *ReleaseConfig) CompareHashWithPreviousBundle(currentSourceImageUri, pre
 		return false, nil
 	}
 	fmt.Printf("Comparing digests for [%s] and [%s]\n", currentSourceImageUri, previousReleaseImageUri)
-	currentSourceImageUriDigest, err := r.GetECRImageDigest(currentSourceImageUri)
+	currentSourceImageUriDigest, err := ecr.GetImageDigest(currentSourceImageUri, r.SourceContainerRegistry, r.SourceClients.ECR.EcrClient)
 	if err != nil {
 		return false, errors.Cause(err)
 	}
 
-	previousReleaseImageUriDigest, err := r.GetECRPublicImageDigest(previousReleaseImageUri)
+	previousReleaseImageUriDigest, err := ecrpublic.GetImageDigest(previousReleaseImageUri, r.ReleaseContainerRegistry, r.ReleaseClients.ECRPublic.Client)
 	if err != nil {
 		return false, errors.Cause(err)
 	}
@@ -576,9 +588,9 @@ func (r *ReleaseConfig) GetPreviousReleaseImageSemver(releaseImageUri string) (s
 		semver = "v0.0.0-dev-build.0"
 	} else {
 		bundles := &anywherev1alpha1.Bundles{}
-		bundleReleaseManifestKey := r.GetManifestFilepaths(anywherev1alpha1.BundlesKind)
+		bundleReleaseManifestKey := utils.GetManifestFilepaths(r.DevRelease, r.BundleNumber, anywherev1alpha1.BundlesKind, r.BuildRepoBranchName)
 		bundleManifestUrl := fmt.Sprintf("https://%s.s3.amazonaws.com/%s", r.ReleaseBucket, bundleReleaseManifestKey)
-		if ExistsInS3(r.ReleaseBucket, bundleReleaseManifestKey) {
+		if s3.KeyExists(r.ReleaseBucket, bundleReleaseManifestKey) {
 			contents, err := ReadHttpFile(bundleManifestUrl)
 			if err != nil {
 				return "", fmt.Errorf("Error reading bundle manifest from S3: %v", err)

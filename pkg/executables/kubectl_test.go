@@ -11,11 +11,13 @@ import (
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -47,23 +49,27 @@ func newKubectl(t *testing.T) (*executables.Kubectl, context.Context, *types.Clu
 }
 
 type kubectlTest struct {
+	t *testing.T
 	*WithT
-	k         *executables.Kubectl
-	ctx       context.Context
-	cluster   *types.Cluster
-	e         *mockexecutables.MockExecutable
-	namespace string
+	k          *executables.Kubectl
+	ctx        context.Context
+	cluster    *types.Cluster
+	e          *mockexecutables.MockExecutable
+	namespace  string
+	kubeconfig string
 }
 
 func newKubectlTest(t *testing.T) *kubectlTest {
 	k, ctx, cluster, e := newKubectl(t)
 	return &kubectlTest{
-		k:         k,
-		ctx:       ctx,
-		cluster:   cluster,
-		e:         e,
-		WithT:     NewWithT(t),
-		namespace: "namespace",
+		t:          t,
+		k:          k,
+		ctx:        ctx,
+		cluster:    cluster,
+		e:          e,
+		WithT:      NewWithT(t),
+		namespace:  "namespace",
+		kubeconfig: cluster.KubeconfigFile,
 	}
 }
 
@@ -1391,4 +1397,89 @@ func TestKubectlCheckCAPIProviderExistsInstalled(t *testing.T) {
 		[]string{"get", "provider", "--namespace", providerNs, fmt.Sprintf("--field-selector=metadata.name=%s", providerName), "--kubeconfig", tt.cluster.KubeconfigFile})
 
 	tt.Expect(tt.k.CheckProviderExists(tt.ctx, tt.cluster.KubeconfigFile, providerName, providerNs))
+}
+
+func TestKubectlGetDeploymentSuccess(t *testing.T) {
+	var replicas int32 = 2
+	newKubectlGetterTest(t).withResourceType(
+		"deployment",
+	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
+		return tt.k.GetDeployment(tt.ctx, tt.name, tt.namespace, tt.kubeconfig)
+	}).withJsonFromFile(
+		"testdata/kubectl_deployment.json",
+	).andWant(
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "coredns",
+				Namespace: "kube-system",
+			},
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "apps/v1",
+				Kind:       "Deployment",
+			},
+			Spec: appsv1.DeploymentSpec{
+				Replicas: &replicas,
+				Template: corev1.PodTemplateSpec{
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Image: "k8s.gcr.io/coredns:1.7.0",
+								Name:  "coredns",
+							},
+						},
+					},
+				},
+			},
+		},
+	).testSuccess()
+}
+
+func TestKubectlGetDeploymentError(t *testing.T) {
+	newKubectlGetterTest(t).withResourceType(
+		"deployment",
+	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
+		return tt.k.GetDeployment(tt.ctx, tt.name, tt.namespace, tt.kubeconfig)
+	}).testError()
+}
+
+func TestKubectlGetDaemonSetSuccess(t *testing.T) {
+	newKubectlGetterTest(t).withResourceType(
+		"daemonset",
+	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
+		return tt.k.GetDaemonSet(tt.ctx, tt.name, tt.namespace, tt.kubeconfig)
+	}).withJsonFromFile(
+		"testdata/kubectl_daemonset.json",
+	).andWant(
+		&appsv1.DaemonSet{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "cilium",
+				Namespace: "kube-system",
+			},
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "apps/v1",
+				Kind:       "DaemonSet",
+			},
+			Spec: appsv1.DaemonSetSpec{
+				Template: corev1.PodTemplateSpec{
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{
+							{
+								Command: []string{"cilium-agent"},
+								Image:   "public.ecr.aws/isovalent/cilium:v1.9.11-eksa.1",
+								Name:    "cilium-agent",
+							},
+						},
+					},
+				},
+			},
+		},
+	).testSuccess()
+}
+
+func TestKubectlGetDaemonSetError(t *testing.T) {
+	newKubectlGetterTest(t).withResourceType(
+		"daemonset",
+	).withGetter(func(tt *kubectlGetterTest) (client.Object, error) {
+		return tt.k.GetDaemonSet(tt.ctx, tt.name, tt.namespace, tt.kubeconfig)
+	}).testError()
 }

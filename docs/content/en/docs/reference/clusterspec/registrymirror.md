@@ -19,6 +19,7 @@ spec:
    ...
   registryMirrorConfiguration:
     endpoint: <private registry IP or hostname>
+    port: <private registry port>
     caCertContent: |
       -----BEGIN CERTIFICATE-----
       MIIF1DCCA...
@@ -35,6 +36,11 @@ spec:
 * __Description__: IP address or hostname of the private registry for pulling images
 * __Type__: string
 * __Example__: ```endpoint: 192.168.0.1```
+### __port__ (optional)
+* __Description__: Port for the private registry. This is an optional field. If a port
+  is not specified, the default HTTPS port `443` is used
+* __Type__: string
+* __Example__: ```port: 443```
 ### __caCertContent__ (optional)
 * __Description__: Certificate Authority (CA) Certificate for the private registry . When using 
   self-signed certificates it is necessary to pass this parameter in the cluster spec.<br/>

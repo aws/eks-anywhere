@@ -65,7 +65,7 @@ func (d *dockerContainer) init(ctx context.Context) error {
 	return err
 }
 
-func (d *dockerContainer) Close(ctx context.Context) error {
+func (d *dockerContainer) close(ctx context.Context) error {
 	if d == nil {
 		return nil
 	}

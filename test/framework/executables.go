@@ -11,9 +11,6 @@ import (
 func buildKubectl(t *testing.T) *executables.Kubectl {
 	ctx := context.Background()
 	kubectl := executableBuilder(t, ctx).BuildKubectlExecutable()
-	t.Cleanup(func() {
-		kubectl.Close(ctx)
-	})
 
 	return kubectl
 }
@@ -23,10 +20,15 @@ func buildLocalKubectl() *executables.Kubectl {
 }
 
 func executableBuilder(t *testing.T, ctx context.Context) *executables.ExecutableBuilder {
-	executableBuilder, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
+	executableBuilder, close, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
 	if err != nil {
 		t.Fatalf("Unable initialize executable builder: %v", err)
 	}
+	t.Cleanup(func() {
+		if err := close(ctx); err != nil {
+			t.Fatal(err)
+		}
+	})
 
 	return executableBuilder
 }

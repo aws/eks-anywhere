@@ -86,11 +86,7 @@ func (g *Govc) Close(ctx context.Context) error {
 		return nil
 	}
 
-	if err := g.Logout(ctx); err != nil {
-		return err
-	}
-
-	return g.Executable.Close(ctx)
+	return g.Logout(ctx)
 }
 
 func (g *Govc) Logout(ctx context.Context) error {
@@ -235,13 +231,13 @@ type datastoreResponse struct {
 	Datastores []types.Datastores `json:"Datastores"`
 }
 
-func (g *Govc) GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1alpha1.VSphereMachineConfig) (float64, error) {
+func (g *Govc) GetWorkloadAvailableSpace(ctx context.Context, datastore string) (float64, error) {
 	envMap, err := g.validateAndSetupCreds()
 	if err != nil {
 		return 0, fmt.Errorf("failed govc validations: %v", err)
 	}
 
-	params := []string{"datastore.info", "-json=true", machineConfig.Spec.Datastore}
+	params := []string{"datastore.info", "-json=true", datastore}
 	result, err := g.ExecuteWithEnv(ctx, envMap, params...)
 	if err != nil {
 		return 0, fmt.Errorf("error getting datastore info: %v", err)
@@ -267,9 +263,9 @@ func (g *Govc) CreateLibrary(ctx context.Context, datastore, library string) err
 	return nil
 }
 
-func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, resourcePool string, resizeDisk2 bool) error {
+func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, resourcePool string, resizeDisk2 bool) error {
 	logger.V(4).Info("Deploying template", "dir", templateDir, "templateName", templateName)
-	if err := g.deployTemplate(ctx, library, templateName, templateDir, datacenter, resourcePool); err != nil {
+	if err := g.deployTemplate(ctx, library, templateName, templateDir, datacenter, datastore, resourcePool); err != nil {
 		return err
 	}
 
@@ -319,7 +315,7 @@ func (g *Govc) ImportTemplate(ctx context.Context, library, ovaURL, name string)
 	return nil
 }
 
-func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deployFolder, datacenter, resourcePool string) error {
+func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deployFolder, datacenter, datastore, resourcePool string) error {
 	envMap, err := g.validateAndSetupCreds()
 	if err != nil {
 		return fmt.Errorf("failed govc validations: %v", err)
@@ -367,6 +363,7 @@ func (g *Govc) deployTemplate(ctx context.Context, library, templateName, deploy
 	params = []string{
 		"library.deploy",
 		"-dc", datacenter,
+		"-ds", datastore,
 		"-pool", resourcePool,
 		"-folder", deployFolder,
 		"-options", deployOptsPath,

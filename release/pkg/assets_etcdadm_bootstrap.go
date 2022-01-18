@@ -16,6 +16,7 @@ package pkg
 
 import (
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -123,24 +124,20 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapBundle(imageDigests map[string]string
 		"etcdadm-bootstrap-provider": r.BundleArtifactsTable["etcdadm-bootstrap-provider"],
 		"kube-rbac-proxy":            r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
+	sortedComponentNames := sortArtifactsMap(etcdadmBootstrapBundleArtifacts)
 
-	var version string
+	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
+	artifactHashes := []string{}
 
-	for componentName, artifacts := range etcdadmBootstrapBundleArtifacts {
-		for _, artifact := range artifacts {
+	for _, componentName := range sortedComponentNames {
+		for _, artifact := range etcdadmBootstrapBundleArtifacts[componentName] {
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
 
 				if componentName == "etcdadm-bootstrap-provider" {
-					componentVersion, err := BuildComponentVersion(
-						newVersionerWithGITTAG(r.BuildRepoSource, etcdadmBootstrapProviderProjectPath, imageArtifact.SourcedFromBranch, r),
-					)
-					if err != nil {
-						return anywherev1alpha1.EtcdadmBootstrapBundle{}, errors.Wrapf(err, "Error getting version for etcdadm-bootstrap-provider")
-					}
-					version = componentVersion
+					sourceBranch = imageArtifact.SourcedFromBranch
 				}
 				bundleImageArtifact := anywherev1alpha1.Image{
 					Name:        imageArtifact.AssetName,
@@ -151,6 +148,7 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapBundle(imageDigests map[string]string
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
+				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
@@ -160,8 +158,24 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapBundle(imageDigests map[string]string
 				}
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+
+				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+				if err != nil {
+					return anywherev1alpha1.EtcdadmBootstrapBundle{}, err
+				}
+				manifestHash := generateManifestHash(manifestContents)
+				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}
+	}
+
+	componentChecksum := generateComponentHash(artifactHashes)
+	version, err := BuildComponentVersion(
+		newVersionerWithGITTAG(r.BuildRepoSource, etcdadmBootstrapProviderProjectPath, sourceBranch, r),
+		componentChecksum,
+	)
+	if err != nil {
+		return anywherev1alpha1.EtcdadmBootstrapBundle{}, errors.Wrapf(err, "Error getting version for etcdadm-bootstrap-provider")
 	}
 
 	bundle := anywherev1alpha1.EtcdadmBootstrapBundle{

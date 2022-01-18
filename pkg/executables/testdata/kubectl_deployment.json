@@ -1,0 +1,21 @@
+{
+	"apiVersion": "apps/v1",
+	"kind": "Deployment",
+	"metadata": {
+		"name": "coredns",
+		"namespace": "kube-system"
+	},
+	"spec": {
+		"replicas": 2,
+		"template": {
+			"spec": {
+				"containers": [
+					{
+						"image": "k8s.gcr.io/coredns:1.7.0",
+						"name": "coredns"
+					}
+				]
+			}
+		}
+	}
+}

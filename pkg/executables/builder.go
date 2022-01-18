@@ -52,6 +52,10 @@ func (b *ExecutableBuilder) BuildTroubleshootExecutable() *Troubleshoot {
 	return NewTroubleshoot(b.buildExecutable(troubleshootPath))
 }
 
+func (b *ExecutableBuilder) BuildHelmExecutable() *Helm {
+	return NewHelm(b.buildExecutable(helmPath))
+}
+
 func (b *ExecutableBuilder) Close(ctx context.Context) *Troubleshoot {
 	return NewTroubleshoot(b.buildExecutable(troubleshootPath))
 }
@@ -85,10 +89,10 @@ func checkMRToolsDisabled() bool {
 	return false
 }
 
-func NewExecutableBuilder(ctx context.Context, image string, mountDirs ...string) (*ExecutableBuilder, error) {
+func NewExecutableBuilder(ctx context.Context, image string, mountDirs ...string) (*ExecutableBuilder, Closer, error) {
 	currentDir, err := os.Getwd()
 	if err != nil {
-		return nil, fmt.Errorf("error getting current directory: %v", err)
+		return nil, nil, fmt.Errorf("error getting current directory: %v", err)
 	}
 
 	mountDirs = append(mountDirs, currentDir)
@@ -105,12 +109,23 @@ func NewExecutableBuilder(ctx context.Context, image string, mountDirs ...string
 		// We build, init and store the container in the builder so we reuse the same one for all the executables
 		container := newDockerContainer(image, e.workingDir, e.mountDirs, BuildDockerExecutable())
 		if err := container.init(ctx); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		e.container = container
 	}
 
-	return e, nil
+	return e, e.closer(), nil
+}
+
+func (e *ExecutableBuilder) closer() Closer {
+	c := e.container
+
+	return func(ctx context.Context) error {
+		if c != nil {
+			return c.close(ctx)
+		}
+		return nil
+	}
 }
 
 func NewLocalExecutableBuilder() *ExecutableBuilder {
@@ -122,4 +137,19 @@ func NewLocalExecutableBuilder() *ExecutableBuilder {
 
 func DefaultEksaImage() string {
 	return defaultEksaImage
+}
+
+type Closer func(ctx context.Context) error
+
+// Close implements interface types.Closer
+func (c Closer) Close(ctx context.Context) error {
+	return c(ctx)
+}
+
+// CheckErr just calls the closer and logs an error if present
+// It's mostly a helper for defering the close in a oneliner without ignoring the error
+func (c Closer) CheckErr(ctx context.Context) {
+	if err := c(ctx); err != nil {
+		logger.Error(err, "Failed closing container for executables")
+	}
 }

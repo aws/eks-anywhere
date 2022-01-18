@@ -1,4 +1,4 @@
-package networking
+package kindnetd
 
 import (
 	"errors"
@@ -11,17 +11,26 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	networking "github.com/aws/eks-anywhere/pkg/networking/internal"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
-type Kindnetd struct{}
+type Kindnetd struct {
+	*Upgrader
+}
 
-func NewKindnetd() *Kindnetd {
-	return &Kindnetd{}
+func NewKindnetd(client Client) *Kindnetd {
+	return &Kindnetd{
+		Upgrader: NewUpgrader(client),
+	}
 }
 
 func (c *Kindnetd) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error) {
-	content, err := loadManifest(clusterSpec, clusterSpec.VersionsBundle.Kindnetd.Manifest)
+	return generateManifest(clusterSpec)
+}
+
+func generateManifest(clusterSpec *cluster.Spec) ([]byte, error) {
+	content, err := networking.LoadManifest(clusterSpec, clusterSpec.VersionsBundle.Kindnetd.Manifest)
 	if err != nil {
 		return nil, fmt.Errorf("can't load kindnetd manifest: %v", err)
 	}

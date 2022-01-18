@@ -116,6 +116,8 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 	taints = append(taints, v1.Taint{Key: "key2", Value: "val2", Effect: "PreferNoSchedule", TimeAdded: nil})
 	taints = append(taints, v1.Taint{Key: "key3", Value: "val3", Effect: "NoExecute", TimeAdded: nil})
 
+	nodeLabels := map[string]string{"label1": "foo", "label2": "bar"}
+
 	tests := []struct {
 		testName    string
 		clusterSpec *cluster.Spec
@@ -154,12 +156,45 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 			wantMDFile: "testdata/valid_deployment_md_expected.yaml",
 		},
 		{
-			testName: "valid config with cidrs",
+			testName: "valid config with node labels",
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Name = "test-cluster"
+				s.Spec.KubernetesVersion = "1.19"
+				s.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+				s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
+				s.Spec.ControlPlaneConfiguration.Count = 3
+				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+				s.Spec.WorkerNodeGroupConfigurations[0].Labels = nodeLabels
+				s.VersionsBundle = versionsBundle
+				s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+			}),
+			wantCPFile: "testdata/valid_deployment_cp_expected.yaml",
+			wantMDFile: "testdata/valid_deployment_node_labels_md_expected.yaml",
+		},
+		{
+			testName: "valid config with cp node labels",
+			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
+				s.Name = "test-cluster"
+				s.Spec.KubernetesVersion = "1.19"
+				s.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
+				s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.128.0.0/12"}
+				s.Spec.ControlPlaneConfiguration.Count = 3
+				s.Spec.ControlPlaneConfiguration.Labels = nodeLabels
+				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+				s.VersionsBundle = versionsBundle
+				s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 3}
+			}),
+			wantCPFile: "testdata/valid_deployment_node_labels_cp_expected.yaml",
+			wantMDFile: "testdata/valid_deployment_md_expected.yaml",
+		},
+		{
+			testName: "valid config with cidrs and custom resolv.conf",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Name = "test-cluster"
 				s.Spec.KubernetesVersion = "1.19"
 				s.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"10.10.0.0/24", "10.128.0.0/12"}
 				s.Spec.ClusterNetwork.Services.CidrBlocks = []string{"192.168.0.0/16", "10.10.0.0/16"}
+				s.Spec.ClusterNetwork.DNS.ResolvConf.Path = "/etc/my-custom-resolv.conf"
 				s.Spec.ControlPlaneConfiguration.Count = 3
 				s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
 				s.VersionsBundle = versionsBundle

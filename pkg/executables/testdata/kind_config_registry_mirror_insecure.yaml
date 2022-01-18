@@ -18,6 +18,6 @@ containerdConfigPatches:
   - |
     [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
       [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-        endpoint = ["https://registry-mirror.test"]
-      [plugins."io.containerd.grpc.v1.cri".registry.configs."registry-mirror.test".tls]
+        endpoint = ["https://registry-mirror.test:443"]
+      [plugins."io.containerd.grpc.v1.cri".registry.configs."registry-mirror.test:443".tls]
         insecure_skip_verify = true

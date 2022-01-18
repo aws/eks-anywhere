@@ -54,6 +54,14 @@ Make sure you use single quotes around the values so that your shell does not in
    export EKSA_VSPHERE_PASSWORD='t0p$ecret'
    ```
 
+1. Set License Environment Variable
+
+   If you are creating a licensed cluster, set and export the license variable (see [License cluster]({{< relref "/docs/tasks/cluster/cluster-license" >}}) if you are licensing an existing cluster):
+
+   ```bash
+   export EKSA_LICENSE='my-license-here'
+   ```
+
 1. Create a management cluster
 
    After you have created your `eksa-mgmt-cluster.yaml` and set your credential environment variables, you will be ready to create a management cluster:

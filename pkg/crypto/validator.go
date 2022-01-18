@@ -5,10 +5,12 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"net"
 )
 
 type DefaultTlsValidator struct {
-	url string
+	host string
+	port string
 }
 
 type TlsValidator interface {
@@ -16,9 +18,10 @@ type TlsValidator interface {
 	HasSelfSignedCert() (bool, error)
 }
 
-func NewTlsValidator(url string) TlsValidator {
+func NewTlsValidator(host string, port string) TlsValidator {
 	return &DefaultTlsValidator{
-		url: url,
+		host: host,
+		port: port,
 	}
 }
 
@@ -28,7 +31,7 @@ func (tv *DefaultTlsValidator) HasSelfSignedCert() (bool, error) {
 		InsecureSkipVerify: false,
 	}
 
-	_, err := tls.Dial("tcp", tv.url+":443", conf)
+	_, err := tls.Dial("tcp", net.JoinHostPort(tv.host, tv.port), conf)
 	if err != nil {
 		// If the error is x509.UnknownAuthorityError, this means the url is using self-signed certs
 		if err.Error() == (x509.UnknownAuthorityError{}).Error() {
@@ -54,7 +57,7 @@ func (tv *DefaultTlsValidator) ValidateCert(cert string) error {
 	roots := x509.NewCertPool()
 	roots.AddCert(providedCert)
 	opts := x509.VerifyOptions{
-		DNSName: tv.url,
+		DNSName: tv.host,
 		Roots:   roots,
 	}
 

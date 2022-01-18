@@ -9,6 +9,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	executables "github.com/aws/eks-anywhere/pkg/executables"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -35,18 +36,23 @@ func (m *MockExecutable) EXPECT() *MockExecutableMockRecorder {
 	return m.recorder
 }
 
-// Close mocks base method.
-func (m *MockExecutable) Close(arg0 context.Context) error {
+// Command mocks base method.
+func (m *MockExecutable) Command(arg0 context.Context, arg1 ...string) *executables.Command {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Close", arg0)
-	ret0, _ := ret[0].(error)
+	varargs := []interface{}{arg0}
+	for _, a := range arg1 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Command", varargs...)
+	ret0, _ := ret[0].(*executables.Command)
 	return ret0
 }
 
-// Close indicates an expected call of Close.
-func (mr *MockExecutableMockRecorder) Close(arg0 interface{}) *gomock.Call {
+// Command indicates an expected call of Command.
+func (mr *MockExecutableMockRecorder) Command(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockExecutable)(nil).Close), arg0)
+	varargs := append([]interface{}{arg0}, arg1...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Command", reflect.TypeOf((*MockExecutable)(nil).Command), varargs...)
 }
 
 // Execute mocks base method.
@@ -107,4 +113,19 @@ func (mr *MockExecutableMockRecorder) ExecuteWithStdin(arg0, arg1 interface{}, a
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteWithStdin", reflect.TypeOf((*MockExecutable)(nil).ExecuteWithStdin), varargs...)
+}
+
+// Run mocks base method.
+func (m *MockExecutable) Run(arg0 *executables.Command) (bytes.Buffer, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Run", arg0)
+	ret0, _ := ret[0].(bytes.Buffer)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Run indicates an expected call of Run.
+func (mr *MockExecutableMockRecorder) Run(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Run", reflect.TypeOf((*MockExecutable)(nil).Run), arg0)
 }

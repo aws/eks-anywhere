@@ -126,11 +126,12 @@ type BottlerocketAdminBundle struct {
 }
 
 type CertManagerBundle struct {
-	Version    string `json:"version,omitempty"`
-	Acmesolver Image  `json:"acmesolver"`
-	Cainjector Image  `json:"cainjector"`
-	Controller Image  `json:"controller"`
-	Webhook    Image  `json:"webhook"`
+	Version    string   `json:"version,omitempty"`
+	Acmesolver Image    `json:"acmesolver"`
+	Cainjector Image    `json:"cainjector"`
+	Controller Image    `json:"controller"`
+	Webhook    Image    `json:"webhook"`
+	Manifest   Manifest `json:"manifest"`
 }
 
 type CoreClusterAPI struct {
@@ -189,10 +190,11 @@ type DockerBundle struct {
 }
 
 type CiliumBundle struct {
-	Version  string   `json:"version,omitempty"`
-	Cilium   Image    `json:"cilium"`
-	Operator Image    `json:"operator"`
-	Manifest Manifest `json:"manifest"`
+	Version   string   `json:"version,omitempty"`
+	Cilium    Image    `json:"cilium"`
+	Operator  Image    `json:"operator"`
+	Manifest  Manifest `json:"manifest"`
+	HelmChart Image    `json:"helmChart,omitempty"`
 }
 
 type KindnetdBundle struct {
@@ -235,6 +237,12 @@ type EtcdadmControllerBundle struct {
 type TinkerbellBundle struct {
 	Version              string   `json:"version"`
 	ClusterAPIController Image    `json:"clusterAPIController"`
+	KubeVip              Image    `json:"kubeVip"`
+	TinkServer           Image    `json:"tinkServer"`
+	TinkWorker           Image    `json:"tinkWorker"`
+	TinkCli              Image    `json:"tinkCli"`
+	Hegel                Image    `json:"hegel"`
+	Cfssl                Image    `json:"cfssl"`
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
 	ClusterTemplate      Manifest `json:"clusterTemplate"`

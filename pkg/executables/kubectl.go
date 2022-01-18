@@ -17,6 +17,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
 	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -89,6 +90,16 @@ func (k *Kubectl) LoadSecret(ctx context.Context, secretObject string, secretObj
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error loading secret: %v", err)
+	}
+	return nil
+}
+
+func (k *Kubectl) ApplyHardware(ctx context.Context, hardwareYaml string, kubeConfFile string) error {
+	params := []string{"apply", "-f", hardwareYaml}
+	params = append(params, "--kubeconfig", kubeConfFile)
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error executing hardware yaml apply: %v", err)
 	}
 	return nil
 }
@@ -186,20 +197,20 @@ func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, f
 	return nil
 }
 
-func (k *Kubectl) DeleteEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) error {
-	params := []string{"delete", eksaVSphereDatacenterResourceType, vsphereDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+func (k *Kubectl) DeleteEksaDatacenterConfig(ctx context.Context, eksaDatacenterResourceType string, eksaDatacenterConfigName string, kubeconfigFile string, namespace string) error {
+	params := []string{"delete", eksaDatacenterResourceType, eksaDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error deleting vspheredatacenterconfig cluster %s apply: %v", vsphereDatacenterConfigName, err)
+		return fmt.Errorf("error deleting %s cluster %s apply: %v", eksaDatacenterResourceType, eksaDatacenterConfigName, err)
 	}
 	return nil
 }
 
-func (k *Kubectl) DeleteEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) error {
-	params := []string{"delete", eksaVSphereMachineResourceType, vsphereMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+func (k *Kubectl) DeleteEksaMachineConfig(ctx context.Context, eksaMachineConfigResourceType string, eksaMachineConfigName string, kubeconfigFile string, namespace string) error {
+	params := []string{"delete", eksaMachineConfigResourceType, eksaMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error deleting vspheremachineconfig cluster %s apply: %v", vsphereMachineConfigName, err)
+		return fmt.Errorf("error deleting %s cluster %s apply: %v", eksaMachineConfigResourceType, eksaMachineConfigName, err)
 	}
 	return nil
 }
@@ -653,7 +664,7 @@ func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOp
 
 func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*bootstrapv1.KubeadmControlPlane, error) {
 	logger.V(6).Info("Getting KubeadmControlPlane CRDs", "cluster", clusterName)
-	params := []string{"get", fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group), clusterName, "-o", "json"}
+	params := []string{"get", fmt.Sprintf("kubeadmcontrolplanes.%s.controlplane.%s", clusterv1.GroupVersion.Version, clusterv1.GroupVersion.Group), clusterName, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -1151,4 +1162,35 @@ func (k *Kubectl) GetResource(ctx context.Context, resourceType string, name str
 		found = true
 	}
 	return found, err
+}
+
+func (k *Kubectl) getObject(ctx context.Context, resourceType, name, namespace, kubeconfig string, obj client.Object) error {
+	stdOut, err := k.Execute(ctx, "get", "--namespace", namespace, resourceType, name, "-o", "json", "--kubeconfig", kubeconfig)
+	if err != nil {
+		return fmt.Errorf("error getting %s with kubectl: %v", resourceType, err)
+	}
+
+	if err = json.Unmarshal(stdOut.Bytes(), obj); err != nil {
+		return fmt.Errorf("error parsing %s response: %v", resourceType, err)
+	}
+
+	return nil
+}
+
+func (k *Kubectl) GetDeployment(ctx context.Context, name, namespace, kubeconfig string) (*appsv1.Deployment, error) {
+	obj := &appsv1.Deployment{}
+	if err := k.getObject(ctx, "deployment", name, namespace, kubeconfig, obj); err != nil {
+		return nil, err
+	}
+
+	return obj, nil
+}
+
+func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig string) (*appsv1.DaemonSet, error) {
+	obj := &appsv1.DaemonSet{}
+	if err := k.getObject(ctx, "daemonset", name, namespace, kubeconfig, obj); err != nil {
+		return nil, err
+	}
+
+	return obj, nil
 }

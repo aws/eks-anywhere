@@ -36,6 +36,11 @@ func newUpgraderTest(t *testing.T) *upgraderTest {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "management-cluster",
 			},
+			Spec: v1alpha1.ClusterSpec{
+				GitOpsRef: &v1alpha1.Ref{
+					Name: "testGitOpsRef",
+				},
+			},
 		}
 	})
 

@@ -537,6 +537,21 @@ func (mr *MockNetworkingMockRecorder) GenerateManifest(arg0 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifest", reflect.TypeOf((*MockNetworking)(nil).GenerateManifest), arg0)
 }
 
+// Upgrade mocks base method.
+func (m *MockNetworking) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*types.ChangeDiff)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Upgrade indicates an expected call of Upgrade.
+func (mr *MockNetworkingMockRecorder) Upgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockNetworking)(nil).Upgrade), arg0, arg1, arg2, arg3)
+}
+
 // MockAwsIamAuth is a mock of AwsIamAuth interface.
 type MockAwsIamAuth struct {
 	ctrl     *gomock.Controller

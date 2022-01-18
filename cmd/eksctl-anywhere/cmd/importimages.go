@@ -4,13 +4,17 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
@@ -53,14 +57,22 @@ func importImages(context context.Context, spec string) error {
 	if clusterSpec.Spec.RegistryMirrorConfiguration == nil || clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint == "" {
 		return fmt.Errorf("it is necessary to define a valid endpoint in your spec (registryMirrorConfiguration.endpoint)")
 	}
-	endpoint := clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
+	host := clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
+	port := clusterSpec.Spec.RegistryMirrorConfiguration.Port
+	if port == "" {
+		logger.V(1).Info("RegistryMirrorConfiguration.Port is not specified, default port will be used", "Default Port", constants.DefaultHttpsPort)
+		port = constants.DefaultHttpsPort
+	}
+	if !networkutils.IsPortValid(clusterSpec.Spec.RegistryMirrorConfiguration.Port) {
+		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterSpec.Spec.RegistryMirrorConfiguration.Port)
+	}
 
 	images, err := getImages(spec)
 	if err != nil {
 		return err
 	}
 	for _, image := range images {
-		if err := importImage(context, de, image.URI, endpoint); err != nil {
+		if err := importImage(context, de, image.URI, net.JoinHostPort(host, port)); err != nil {
 			return fmt.Errorf("error importing image %s: %v", image.URI, err)
 		}
 	}

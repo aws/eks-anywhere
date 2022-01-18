@@ -1,4 +1,4 @@
-apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
   name: test-md-0
@@ -33,13 +33,13 @@ spec:
           9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
           -----END CERTIFICATE-----
         owner: root:root
-        path: "/etc/containerd/certs.d/1.2.3.4/ca.crt"
+        path: "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
       - content: |
           [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
             [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-              endpoint = ["https://1.2.3.4"]
-            [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4".tls]
-              ca_file = "/etc/containerd/certs.d/1.2.3.4/ca.crt"
+              endpoint = ["https://1.2.3.4:1234"]
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:1234".tls]
+              ca_file = "/etc/containerd/certs.d/1.2.3.4:1234/ca.crt"
         owner: root:root
         path: "/etc/containerd/config_append.toml"
       preKubeadmCommands:
@@ -58,7 +58,7 @@ spec:
         sudo: ALL=(ALL) NOPASSWD:ALL
       format: cloud-config
 ---
-apiVersion: cluster.x-k8s.io/v1alpha3
+apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
   labels:
@@ -77,17 +77,17 @@ spec:
     spec:
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
           name: test-md-0
       clusterName: test
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: VSphereMachineTemplate
         name: test-worker-node-template-1234567890000
       version: v1.21.2-eks-1-21-4
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: VSphereMachineTemplate
 metadata:
   name: test-worker-node-template-1234567890000

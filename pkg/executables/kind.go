@@ -6,6 +6,10 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net"
+	"os"
+	"path/filepath"
 
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -42,7 +46,7 @@ type kindExecConfig struct {
 	CorednsVersion         string
 	KubernetesVersion      string
 	RegistryMirrorEndpoint string
-	RegistryCACert         string
+	RegistryCACertPath     string
 	DockerExtraMounts      bool
 	DisableDefaultCNI      bool
 }
@@ -162,7 +166,7 @@ func (k *Kind) WithRegistryMirror(endpoint string, caCertFile string) bootstrapp
 		}
 
 		k.execConfig.RegistryMirrorEndpoint = endpoint
-		k.execConfig.RegistryCACert = caCertFile
+		k.execConfig.RegistryCACertPath = caCertFile
 
 		return nil
 	}
@@ -191,13 +195,16 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 		env:                  make(map[string]string),
 	}
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
-		k.execConfig.RegistryMirrorEndpoint = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
+		k.execConfig.RegistryMirrorEndpoint = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Spec.RegistryMirrorConfiguration.Port)
 		if clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent != "" {
-			path, err := k.writer.Write("ca.crt", []byte(clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent))
-			if err != nil {
+			path := filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d", k.execConfig.RegistryMirrorEndpoint)
+			if err := os.MkdirAll(path, os.ModePerm); err != nil {
+				return err
+			}
+			if err := ioutil.WriteFile(filepath.Join(path, "ca.crt"), []byte(clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent), 0o644); err != nil {
 				return errors.New("error writing the registry certification file")
 			}
-			k.execConfig.RegistryCACert = path
+			k.execConfig.RegistryCACertPath = filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d")
 		}
 	}
 	return nil

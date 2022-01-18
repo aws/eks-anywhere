@@ -266,6 +266,7 @@ spec:
         kubeletExtraArgs:
           cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          resolv-conf: /etc/my-custom-resolv.conf
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         taints: []
     joinConfiguration:
@@ -274,6 +275,7 @@ spec:
         kubeletExtraArgs:
           cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          resolv-conf: /etc/my-custom-resolv.conf
           tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         taints: []
   replicas: 3
@@ -290,6 +292,7 @@ spec:
     etcdadmBuiltin: true
     cloudInitConfig:
       version: 3.4.14
+    cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
   infrastructureTemplate:
     apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
     kind: DockerMachineTemplate

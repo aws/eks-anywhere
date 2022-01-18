@@ -80,11 +80,47 @@ func TestVSphereDatacenterValidateUpdateInvalidType(t *testing.T) {
 	g.Expect(c.ValidateUpdate(vOld)).NotTo(Succeed())
 }
 
+func TestVSphereDatacenterValidateUpdateInvalidServer(t *testing.T) {
+	vOld := vsphereDatacenterConfig()
+	c := vOld.DeepCopy()
+	vOld.Spec.Server = ""
+	c.Spec.Server = ""
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestVSphereDatacenterValidateUpdateInvalidDatacenter(t *testing.T) {
+	vOld := vsphereDatacenterConfig()
+	c := vOld.DeepCopy()
+	vOld.Spec.Datacenter = ""
+	c.Spec.Datacenter = ""
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestVSphereDatacenterValidateUpdateInvalidNetwork(t *testing.T) {
+	vOld := vsphereDatacenterConfig()
+	c := vOld.DeepCopy()
+	vOld.Spec.Network = ""
+	c.Spec.Network = ""
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
 func vsphereDatacenterConfig() v1alpha1.VSphereDatacenterConfig {
 	return v1alpha1.VSphereDatacenterConfig{
 		TypeMeta:   metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string, 1)},
-		Spec:       v1alpha1.VSphereDatacenterConfigSpec{},
-		Status:     v1alpha1.VSphereDatacenterConfigStatus{},
+		Spec: v1alpha1.VSphereDatacenterConfigSpec{
+			Datacenter: "datacenter",
+			Network:    "/datacenter/network-1",
+			Server:     "vcenter.com",
+			Insecure:   false,
+			Thumbprint: "abc",
+		},
+		Status: v1alpha1.VSphereDatacenterConfigStatus{},
 	}
 }

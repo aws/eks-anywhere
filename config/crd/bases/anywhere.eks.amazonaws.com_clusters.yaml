@@ -42,6 +42,17 @@ spec:
                     description: CNI specifies the CNI plugin to be installed in the
                       cluster
                     type: string
+                  dns:
+                    properties:
+                      resolvConf:
+                        description: ResolvConf refers to the DNS resolver configuration
+                        properties:
+                          path:
+                            description: Path defines the path to the file that contains
+                              the DNS resolver configuration
+                            type: string
+                        type: object
+                    type: object
                   pods:
                     description: Comma-separated list of CIDR blocks to use for pod
                       and service subnets. Defaults to 192.168.0.0/16 for pod subnet.
@@ -75,6 +86,11 @@ spec:
                         type: string
                     required:
                     - host
+                    type: object
+                  labels:
+                    additionalProperties:
+                      type: string
+                    description: Labels define the labels to assign to the node
                     type: object
                   machineGroupRef:
                     description: MachineGroupRef defines the machine group configuration
@@ -196,6 +212,10 @@ spec:
                     description: Endpoint defines the registry mirror endpoint to
                       use for pulling images
                     type: string
+                  port:
+                    description: Port defines the port exposed for registry mirror
+                      endpoint
+                    type: string
                 type: object
               workerNodeGroupConfigurations:
                 items:
@@ -204,6 +224,11 @@ spec:
                       description: Count defines the number of desired worker nodes.
                         Defaults to 1.
                       type: integer
+                    labels:
+                      additionalProperties:
+                        type: string
+                      description: Labels define the labels to assign to the node
+                      type: object
                     machineGroupRef:
                       description: MachineGroupRef defines the machine group configuration
                         for the worker nodes.

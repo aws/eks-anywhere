@@ -90,9 +90,10 @@ func (l *testLogFetcher) FetchLogs(opts ...FetchLogsOpt) error {
 			return fmt.Errorf("failed to get latest build for project: %v", err)
 		}
 		config.buildId = *p.Id
+		logger.Info("Using latest build for selected project", "buildID", config.buildId, "project", config.project)
 	}
 
-	failedTests, err := l.GetBuildProjectLogs(config.project)
+	failedTests, err := l.GetBuildProjectLogs(config.project, config.buildId)
 	if err != nil {
 		return err
 	}
@@ -104,15 +105,15 @@ func (l *testLogFetcher) FetchLogs(opts ...FetchLogsOpt) error {
 	return nil
 }
 
-func (l *testLogFetcher) GetBuildProjectLogs(project string) (failed []testResult, err error) {
+func (l *testLogFetcher) GetBuildProjectLogs(project string, buildId string) (failed []testResult, err error) {
 	logger.Info("Fetching build project logs...")
-	latestBuild, err := l.buildAccountCodebuildClient.FetchLatestBuildForProject(project)
+	build, err := l.buildAccountCodebuildClient.FetchBuildForProject(buildId)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching build project logs for project %s: %v", project, err)
 	}
 
-	g := latestBuild.Logs.GroupName
-	s := latestBuild.Logs.StreamName
+	g := build.Logs.GroupName
+	s := build.Logs.StreamName
 
 	logs, err := l.buildAccountCwClient.GetLogs(*g, *s)
 	if err != nil {
@@ -124,7 +125,7 @@ func (l *testLogFetcher) GetBuildProjectLogs(project string) (failed []testResul
 		return nil, err
 	}
 
-	_, err = l.writer.Write(constants.BuildDescriptionFile, []byte(latestBuild.String()), filewriter.PersistentFile)
+	_, err = l.writer.Write(constants.BuildDescriptionFile, []byte(build.String()), filewriter.PersistentFile)
 	if err != nil {
 		return nil, fmt.Errorf("error when writing build description: %v", err)
 	}
@@ -145,8 +146,8 @@ func (l *testLogFetcher) GetBuildProjectLogs(project string) (failed []testResul
 func (l *testLogFetcher) FetchTestLogs(tests []testResult) error {
 	logger.Info("Fetching individual test logs...")
 	for _, test := range tests {
-		stderr := fmt.Sprintf(ssmCommandExecutionLogStreamTemplate, test.CommandId, test.InstanceId, "stderr")
-		logs, err := l.testAccountCwClient.GetLogs(constants.E2eIndividualTestLogGroup, stderr)
+		stdout := fmt.Sprintf(ssmCommandExecutionLogStreamTemplate, test.CommandId, test.InstanceId, "stdout")
+		logs, err := l.testAccountCwClient.GetLogs(constants.E2eIndividualTestLogGroup, stdout)
 		if err != nil {
 			logger.Info("error when fetching cloudwatch logs", "error", err)
 			return err

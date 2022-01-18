@@ -63,7 +63,7 @@ func (pc *DummyProviderGovcClient) TemplateHasSnapshot(ctx context.Context, temp
 	return false, nil
 }
 
-func (pc *DummyProviderGovcClient) GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1alpha1.VSphereMachineConfig) (float64, error) {
+func (pc *DummyProviderGovcClient) GetWorkloadAvailableSpace(ctx context.Context, datastore string) (float64, error) {
 	return math.MaxFloat64, nil
 }
 
@@ -123,7 +123,7 @@ func (pc *DummyProviderGovcClient) CreateLibrary(ctx context.Context, datastore,
 	return nil
 }
 
-func (pc *DummyProviderGovcClient) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, resourcePool string, resizeDisk2 bool) error {
+func (pc *DummyProviderGovcClient) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, resourcePool string, resizeDisk2 bool) error {
 	return nil
 }
 
@@ -234,14 +234,14 @@ type testContext struct {
 }
 
 func (tctx *testContext) SaveContext() {
-	tctx.oldUsername, tctx.isUsernameSet = os.LookupEnv(eksavSphereUsernameKey)
-	tctx.oldPassword, tctx.isPasswordSet = os.LookupEnv(eksavSpherePasswordKey)
+	tctx.oldUsername, tctx.isUsernameSet = os.LookupEnv(EksavSphereUsernameKey)
+	tctx.oldPassword, tctx.isPasswordSet = os.LookupEnv(EksavSpherePasswordKey)
 	tctx.oldServername, tctx.isServernameSet = os.LookupEnv(vSpherePasswordKey)
 	tctx.oldExpClusterResourceSet, tctx.isExpClusterResourceSetSet = os.LookupEnv(vSpherePasswordKey)
-	os.Setenv(eksavSphereUsernameKey, expectedVSphereUsername)
-	os.Setenv(vSphereUsernameKey, os.Getenv(eksavSphereUsernameKey))
-	os.Setenv(eksavSpherePasswordKey, expectedVSpherePassword)
-	os.Setenv(vSpherePasswordKey, os.Getenv(eksavSpherePasswordKey))
+	os.Setenv(EksavSphereUsernameKey, expectedVSphereUsername)
+	os.Setenv(vSphereUsernameKey, os.Getenv(EksavSphereUsernameKey))
+	os.Setenv(EksavSpherePasswordKey, expectedVSpherePassword)
+	os.Setenv(vSpherePasswordKey, os.Getenv(EksavSpherePasswordKey))
 	os.Setenv(vSphereServerKey, expectedVSphereServer)
 	os.Setenv(expClusterResourceSetKey, expectedExpClusterResourceSet)
 	os.Setenv(features.TaintsSupportEnvVar, "true")
@@ -249,14 +249,14 @@ func (tctx *testContext) SaveContext() {
 
 func (tctx *testContext) RestoreContext() {
 	if tctx.isUsernameSet {
-		os.Setenv(eksavSphereUsernameKey, tctx.oldUsername)
+		os.Setenv(EksavSphereUsernameKey, tctx.oldUsername)
 	} else {
-		os.Unsetenv(eksavSphereUsernameKey)
+		os.Unsetenv(EksavSphereUsernameKey)
 	}
 	if tctx.isPasswordSet {
-		os.Setenv(eksavSpherePasswordKey, tctx.oldPassword)
+		os.Setenv(EksavSpherePasswordKey, tctx.oldPassword)
 	} else {
-		os.Unsetenv(eksavSpherePasswordKey)
+		os.Unsetenv(EksavSpherePasswordKey)
 	}
 }
 
@@ -469,6 +469,7 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 			}
 
 			test.AssertContentToFile(t, string(cp), tt.wantCPFile)
+
 			test.AssertContentToFile(t, string(md), tt.wantMDFile)
 		})
 	}
@@ -556,6 +557,18 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *
 			testName:          "main_with_taints",
 			clusterconfigFile: "cluster_main_with_taints.yaml",
 			wantCPFile:        "testdata/expected_results_main_with_taints_cp.yaml",
+			wantMDFile:        "testdata/expected_results_main_md.yaml",
+		},
+		{
+			testName:          "main with node labels",
+			clusterconfigFile: "cluster_main_with_node_labels.yaml",
+			wantCPFile:        "testdata/expected_results_main_cp.yaml",
+			wantMDFile:        "testdata/expected_results_main_node_labels_md.yaml",
+		},
+		{
+			testName:          "main with cp node labels",
+			clusterconfigFile: "cluster_main_with_cp_node_labels.yaml",
+			wantCPFile:        "testdata/expected_results_main_node_labels_cp.yaml",
 			wantMDFile:        "testdata/expected_results_main_md.yaml",
 		},
 	}
@@ -932,7 +945,7 @@ func TestSetupAndValidateCreateClusterNoUsername(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(eksavSphereUsernameKey)
+	os.Unsetenv(EksavSphereUsernameKey)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
@@ -946,7 +959,7 @@ func TestSetupAndValidateCreateClusterNoPassword(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(eksavSpherePasswordKey)
+	os.Unsetenv(EksavSpherePasswordKey)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
@@ -1135,7 +1148,7 @@ func TestSetupAndValidateDeleteClusterNoPassword(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(eksavSpherePasswordKey)
+	os.Unsetenv(EksavSpherePasswordKey)
 
 	err := provider.SetupAndValidateDeleteCluster(ctx)
 
@@ -1169,7 +1182,7 @@ func TestSetupAndValidateUpgradeClusterNoUsername(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(eksavSphereUsernameKey)
+	os.Unsetenv(EksavSphereUsernameKey)
 
 	cluster := &types.Cluster{}
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
@@ -1184,7 +1197,7 @@ func TestSetupAndValidateUpgradeClusterNoPassword(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
-	os.Unsetenv(eksavSpherePasswordKey)
+	os.Unsetenv(EksavSpherePasswordKey)
 
 	cluster := &types.Cluster{}
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
@@ -1300,8 +1313,6 @@ func TestProviderBootstrapSetup(t *testing.T) {
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
 
-	kubectl.EXPECT().LoadSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any(), cluster.KubeconfigFile)
-
 	template, err := template.New("test").Parse(defaultSecretObject)
 	if err != nil {
 		t.Fatalf("template create error: %v", err)
@@ -1330,18 +1341,18 @@ func TestProviderUpdateSecret(t *testing.T) {
 		KubeconfigFile: "",
 	}
 	values := map[string]string{
-		"clusterName":       clusterConfig.Name,
-		"vspherePassword":   expectedVSphereUsername,
-		"vsphereUsername":   expectedVSpherePassword,
-		"vsphereServer":     datacenterConfig.Spec.Server,
-		"vsphereDatacenter": datacenterConfig.Spec.Datacenter,
-		"vsphereNetwork":    datacenterConfig.Spec.Network,
+		"vspherePassword":     expectedVSphereUsername,
+		"vsphereUsername":     expectedVSpherePassword,
+		"eksaLicense":         "",
+		"eksaSystemNamespace": constants.EksaSystemNamespace,
 	}
 
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
 
+	kubectl.EXPECT().GetNamespace(ctx, gomock.Any(), constants.EksaSystemNamespace).Return(errors.New("test"))
+	kubectl.EXPECT().CreateNamespace(ctx, gomock.Any(), constants.EksaSystemNamespace)
 	kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any())
 
 	template, err := template.New("test").Parse(defaultSecretObject)
@@ -2004,6 +2015,45 @@ func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNonexistent(t *testing.
 	}
 }
 
+func TestSetupAndValidateCreateClusterOsFamilyInvalid(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenEmptyClusterSpec()
+	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
+	provider := givenProvider(t)
+	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "rhel"
+	var tctx testContext
+	tctx.SaveContext()
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	thenErrorExpected(t, "control plane osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
+}
+
+func TestSetupAndValidateCreateClusterOsFamilyInvalidWorkerNode(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenEmptyClusterSpec()
+	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
+	provider := givenProvider(t)
+	workerMachineConfigName := clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	provider.machineConfigs[workerMachineConfigName].Spec.OSFamily = "rhel"
+	var tctx testContext
+	tctx.SaveContext()
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	thenErrorExpected(t, "worker node osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
+}
+
+func TestSetupAndValidateCreateClusterOsFamilyInvalidEtcdNode(t *testing.T) {
+	ctx := context.Background()
+	clusterSpec := givenEmptyClusterSpec()
+	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
+	provider := givenProvider(t)
+	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+	provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily = "rhel"
+	var tctx testContext
+	tctx.SaveContext()
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	thenErrorExpected(t, "etcd node osFamily: rhel is not supported, please use one of the following: bottlerocket, ubuntu", err)
+}
+
 func TestSetupAndValidateCreateClusterOsFamilyDifferent(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
@@ -2094,14 +2144,14 @@ func TestSetupAndValidateCreateClusterTemplateDoesNotExist(t *testing.T) {
 	tt := newProviderTest(t)
 
 	tt.setExpectationForSetup()
-	tt.setExpectationsForDefaultDiskGovcCalls()
 	tt.setExpectationForVCenterValidation()
-	tt.setExpectationsForMachineConfigsVCenterValidation()
-	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, tt.machineConfigs[tt.clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]).Return("", nil)
+	for _, mc := range tt.machineConfigs {
+		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc).Return("", nil).MaxTimes(1)
+	}
 
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 
-	thenErrorExpected(t, "template <"+testTemplate+"> not found. Has the template been imported?", err)
+	thenErrorExpected(t, "failed setting default values for vsphere machine configs: template <"+testTemplate+"> not found", err)
 }
 
 func TestSetupAndValidateCreateClusterErrorCheckingTemplate(t *testing.T) {
@@ -2109,25 +2159,30 @@ func TestSetupAndValidateCreateClusterErrorCheckingTemplate(t *testing.T) {
 	errorMessage := "failed getting template"
 
 	tt.setExpectationForSetup()
-	tt.setExpectationsForDefaultDiskGovcCalls()
 	tt.setExpectationForVCenterValidation()
-	tt.setExpectationsForMachineConfigsVCenterValidation()
-	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, tt.machineConfigs[tt.clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]).Return("", errors.New(errorMessage))
+	for _, mc := range tt.machineConfigs {
+		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc).Return("", errors.New(errorMessage)).MaxTimes(1)
+	}
 
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 
-	thenErrorExpected(t, "error validating template: failed getting template", err)
+	thenErrorExpected(t, "failed setting default values for vsphere machine configs: error setting template full path: "+errorMessage, err)
 }
 
 func TestSetupAndValidateCreateClusterTemplateMissingTags(t *testing.T) {
 	tt := newProviderTest(t)
-	controlPlaneMachineConfigName := tt.clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	controlPlaneMachineConfig := tt.machineConfigs[controlPlaneMachineConfigName]
 
 	tt.setExpectationForSetup()
 	tt.setExpectationsForDefaultDiskGovcCalls()
 	tt.setExpectationForVCenterValidation()
 	tt.setExpectationsForMachineConfigsVCenterValidation()
+
+	for _, mc := range tt.machineConfigs {
+		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc).Return(mc.Spec.Template, nil)
+	}
+	controlPlaneMachineConfigName := tt.clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	controlPlaneMachineConfig := tt.machineConfigs[controlPlaneMachineConfigName]
+
 	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, controlPlaneMachineConfig).Return(controlPlaneMachineConfig.Spec.Template, nil)
 	tt.govc.EXPECT().GetTags(tt.ctx, controlPlaneMachineConfig.Spec.Template).Return(nil, nil)
 
@@ -2147,6 +2202,9 @@ func TestSetupAndValidateCreateClusterErrorGettingTags(t *testing.T) {
 	tt.setExpectationsForDefaultDiskGovcCalls()
 	tt.setExpectationForVCenterValidation()
 	tt.setExpectationsForMachineConfigsVCenterValidation()
+	for _, mc := range tt.machineConfigs {
+		tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, mc).Return(mc.Spec.Template, nil)
+	}
 	tt.govc.EXPECT().SearchTemplate(tt.ctx, tt.datacenterConfig.Spec.Datacenter, controlPlaneMachineConfig).Return(controlPlaneMachineConfig.Spec.Template, nil)
 	tt.govc.EXPECT().GetTags(tt.ctx, controlPlaneMachineConfig.Spec.Template).Return(nil, errors.New(errorMessage))
 
@@ -2289,7 +2347,7 @@ func TestValidateNewSpecSuccess(t *testing.T) {
 	for _, config := range newMachineConfigs {
 		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
 	}
-	kubectl.EXPECT().GetSecret(gomock.Any(), credentialsObjectName, gomock.Any()).Return(clusterVsphereSecret, nil)
+	kubectl.EXPECT().GetSecret(gomock.Any(), CredentialsObjectName, gomock.Any()).Return(clusterVsphereSecret, nil)
 
 	err := provider.ValidateNewSpec(context.TODO(), c, clusterSpec)
 	assert.NoError(t, err, "No error should be returned when previous spec == new spec")
@@ -2330,7 +2388,7 @@ func TestValidateNewSpecMutableFields(t *testing.T) {
 	for _, config := range newMachineConfigs {
 		kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
 	}
-	kubectl.EXPECT().GetSecret(gomock.Any(), credentialsObjectName, gomock.Any(), gomock.Any()).Return(clusterVsphereSecret, nil)
+	kubectl.EXPECT().GetSecret(gomock.Any(), CredentialsObjectName, gomock.Any(), gomock.Any()).Return(clusterVsphereSecret, nil)
 
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
 	assert.NoError(t, err, "No error should be returned when modifying mutable fields")
@@ -2588,7 +2646,7 @@ func TestGetMHCSuccess(t *testing.T) {
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
 
-	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1alpha3
+	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineHealthCheck
 metadata:
   name: test-node-unhealthy-5m
@@ -2608,7 +2666,7 @@ spec:
       status: "False"
       timeout: 300s
 ---
-apiVersion: cluster.x-k8s.io/v1alpha3
+apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineHealthCheck
 metadata:
   name: test-kcp-unhealthy-5m
@@ -2661,21 +2719,6 @@ func TestVsphereProviderRunPostControlPlaneUpgrade(t *testing.T) {
 	tt := newProviderTest(t)
 
 	tt.resourceSetManager.EXPECT().ForceUpdate(tt.ctx, "test-crs-0", "eksa-system", tt.managementCluster, tt.workloadCluster)
-	tt.kubectl.EXPECT().SetDaemonSetImage(
-		tt.ctx,
-		tt.workloadCluster.KubeconfigFile,
-		"vsphere-cloud-controller-manager",
-		"kube-system",
-		"vsphere-cloud-controller-manager",
-		"public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
-	)
-	tt.kubectl.EXPECT().ApplyTolerationsFromTaintsToDaemonSet(
-		tt.ctx,
-		nil,
-		nil,
-		"vsphere-cloud-controller-manager",
-		tt.workloadCluster.KubeconfigFile,
-	)
 	tt.Expect(tt.provider.RunPostControlPlaneUpgrade(tt.ctx, tt.clusterSpec, tt.clusterSpec, tt.workloadCluster, tt.managementCluster)).To(Succeed())
 }
 
@@ -2763,4 +2806,36 @@ func TestProviderGenerateCAPISpecForCreateWithPodIAMConfig(t *testing.T) {
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_pod_iam_config.yaml")
+}
+
+func TestProviderGenerateCAPISpecForCreateWithCustomResolvConf(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	var tctx testContext
+	tctx.SaveContext()
+	defer tctx.RestoreContext()
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
+	clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf.Path = "/etc/my-custom-resolv.conf"
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, _, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_custom_resolv_conf.yaml")
 }

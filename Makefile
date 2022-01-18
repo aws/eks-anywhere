@@ -15,9 +15,24 @@ GOLANG_VERSION?="1.16"
 GO ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))/go
 GO_TEST ?= $(GO) test
 
-RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
+## ensure local execution uses the 'main' branch bundle
+BRANCH_NAME?=main
+ifeq (,$(findstring $(BRANCH_NAME),main))
+## use the branch-specific bundle manifest if the branch is not 'main'
+BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${BRANCH_NAME}/bundle-release.yaml
+LATEST=$(BRANCH_NAME)
+$(info    Using branch-specific BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
+else
+## use the standard bundle manifest if the branch is 'main'
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml
+$(info    Using stanard BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
+LATEST=latest
+endif
+
+RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
+
 DEV_GIT_VERSION:=v0.0.0-dev
+CUSTOM_GIT_VERSION:=v0.0.0-custom
 
 AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output text)
 AWS_REGION=us-west-2
@@ -42,6 +57,9 @@ BUILDKIT := $(BUILD_LIB)/buildkit.sh
 CONTROLLER_GEN_BIN := controller-gen
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)
 
+SETUP_ENVTEST_BIN := setup-envtest
+SETUP_ENVTEST := $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)
+
 BINARY_NAME=eks-anywhere-cluster-controller
 ifdef CODEBUILD_SRC_DIR
 	TAR_PATH?=$(CODEBUILD_SRC_DIR)/$(PROJECT_PATH)/$(CODEBUILD_BUILD_NUMBER)-$(CODEBUILD_RESOLVED_SOURCE_VERSION)/artifacts
@@ -53,12 +71,17 @@ BASE_REPO?=public.ecr.aws/eks-distro-build-tooling
 CLUSTER_CONTROLLER_BASE_IMAGE_NAME?=eks-distro-minimal-base
 CLUSTER_CONTROLLER_BASE_TAG?=$(shell cat controllers/EKS_DISTRO_MINIMAL_BASE_TAG_FILE)
 CLUSTER_CONTROLLER_BASE_IMAGE?=$(BASE_REPO)/$(CLUSTER_CONTROLLER_BASE_IMAGE_NAME):$(CLUSTER_CONTROLLER_BASE_TAG)
+DOCKERFILE_FOLDER = ./controllers/docker/linux/eks-anywhere-cluster-controller
 
-IMAGE_REPO=$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com
+IMAGE_REPO?=$(if $(AWS_ACCOUNT_ID),$(AWS_ACCOUNT_ID).dkr.ecr.$(AWS_REGION).amazonaws.com,localhost:5000)
 IMAGE_TAG?=$(GIT_TAG)-$(shell git rev-parse HEAD)
 CLUSTER_CONTROLLER_IMAGE_NAME=eks-anywhere-cluster-controller
 CLUSTER_CONTROLLER_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):$(IMAGE_TAG)
-CLUSTER_CONTROLLER_LATEST_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):latest
+CLUSTER_CONTROLLER_LATEST_IMAGE=$(IMAGE_REPO)/$(CLUSTER_CONTROLLER_IMAGE_NAME):$(LATEST)
+
+# Branch builds should look at the current branch latest image for cache as well as main branch latest for cache to cover the cases
+# where its the first build from a new release branch
+IMAGE_IMPORT_CACHE = type=registry,ref=$(CLUSTER_CONTROLLER_LATEST_IMAGE) type=registry,ref=$(subst $(LATEST),latest,$(CLUSTER_CONTROLLER_LATEST_IMAGE))
 
 MANIFEST_IMAGE_NAME_OVERRIDE="$(IMAGE_REPO)/eks-anywhere-cluster-controller"
 MANIFEST_IMAGE_TAG_OVERRIDE=${IMAGE_TAG}
@@ -69,19 +92,25 @@ KUSTOMIZATION_CONFIG=./config/prod/kustomization.yaml
 CONTROLLER_MANIFEST_OUTPUT_DIR=$(OUTPUT_DIR)/manifests/cluster-controller
 
 # This removes the compile dependency on C libraries from github.com/containers/storage which is imported by github.com/replicatedhq/troubleshoot
-BUILD_TAGS := exclude_graphdriver_btrfs exclude_graphdriver_devicemapper
+BUILD_TAGS :=
 
 GO_ARCH:=$(shell go env GOARCH)
 GO_OS:=$(shell go env GOOS)
 
+
+BINARY_DEPS_DIR = $(OUTPUT_DIR)/dependencies
 CLUSTER_CONTROLLER_PLATFORMS ?= linux-amd64 linux-arm64
 CREATE_CLUSTER_CONTROLLER_BINARIES := $(foreach platform,$(CLUSTER_CONTROLLER_PLATFORMS),create-cluster-controller-binary-$(platform))
+FETCH_BINARIES_TARGETS = eksa/vmware/govmomi
+ORGANIZE_BINARIES_TARGETS = $(addsuffix /eks-a-tools,$(addprefix $(BINARY_DEPS_DIR)/linux-,amd64 arm64))
 
 EKS_A_PLATFORMS ?= linux-amd64 linux-arm64 darwin-arm64 darwin-amd64
 EKS_A_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-cross-platform-$(platform))
 EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-release-cross-platform-$(platform))
 
 DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow
+
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.21.x
 
 .PHONY: default
 default: build lint
@@ -112,6 +141,32 @@ eks-a-cross-platform-embed-latest-config: ## Build cross platform dev release ve
 	$(MAKE) eks-a-embed-config GO_OS=darwin GO_ARCH=arm64 OUTPUT_FILE=bin/darwin/arm64/eksctl-anywhere
 	$(MAKE) eks-a-embed-config GO_OS=linux GO_ARCH=arm64 OUTPUT_FILE=bin/linux/arm64/eksctl-anywhere
 	rm pkg/cluster/config/bundle-release.yaml
+
+.PHONY: eks-a-custom-embed-config
+eks-a-custom-embed-config:
+	$(MAKE) eks-a-binary GIT_VERSION=$(CUSTOM_GIT_VERSION) RELEASE_MANIFEST_URL=embed:///config/releases.yaml LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true' BUILD_TAGS='$(BUILD_TAGS) spec_embed_config'
+
+.PHONY: eks-a-cross-platform-custom-embed-latest-config
+eks-a-cross-platform-custom-embed-latest-config: ## Build custom binary with latest dev release bundle that embeds config and builds it as a release binary for all os/arch
+	curl -L $(BUNDLE_MANIFEST_URL) --output pkg/cluster/config/bundle-release.yaml
+	$(MAKE) eks-a-custom-embed-config GO_OS=darwin GO_ARCH=amd64 OUTPUT_FILE=bin/darwin/amd64/eksctl-anywhere
+	$(MAKE) eks-a-custom-embed-config GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/amd64/eksctl-anywhere
+	$(MAKE) eks-a-custom-embed-config GO_OS=darwin GO_ARCH=arm64 OUTPUT_FILE=bin/darwin/arm64/eksctl-anywhere
+	$(MAKE) eks-a-custom-embed-config GO_OS=linux GO_ARCH=arm64 OUTPUT_FILE=bin/linux/arm64/eksctl-anywhere
+	rm pkg/cluster/config/bundle-release.yaml
+
+.PHONY: eks-a-custom-release-zip
+eks-a-custom-release-zip: eks-a-cross-platform-custom-embed-latest-config ## Build from linux/amd64
+	rm -f bin/eksctl-anywhere.zip ## Remove previous zip
+	zip -j bin/eksctl-anywhere.zip bin/linux/amd64/eksctl-anywhere
+
+.PHONY: eks-a-cross-platform-custom-release-zip
+eks-a-cross-platform-custom-release-zip: eks-a-cross-platform-custom-embed-latest-config
+	rm -f bin/eksctl-anywhere-darwin-amd64.zip bin/eksctl-anywhere-linux-amd64.zip bin/eksctl-anywhere-darwin-arm64.zip bin/eksctl-anywhere-linux-arm64.zip
+	zip -j bin/eksctl-anywhere-darwin-amd64.zip bin/darwin/amd64/eksctl-anywhere
+	zip -j bin/eksctl-anywhere-linux-amd64.zip bin/linux/amd64/eksctl-anywhere
+	zip -j bin/eksctl-anywhere-darwin-arm64.zip bin/darwin/arm64/eksctl-anywhere
+	zip -j bin/eksctl-anywhere-linux-arm64.zip bin/linux/arm64/eksctl-anywhere
 
 .PHONY: eks-a
 eks-a: ## Build a dev release version of eks-a
@@ -166,7 +221,10 @@ $(KUBEBUILDER): $(TOOLS_BIN_DIR)
 	chmod +x $(KUBEBUILDER)
 
 $(CONTROLLER_GEN): $(TOOLS_BIN_DIR)
-	cd $(TOOLS_BIN_DIR); $(GO) build -tags=tools -o $(CONTROLLER_GEN_BIN) sigs.k8s.io/controller-tools/cmd/controller-gen
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1)
+
+$(SETUP_ENVTEST): $(TOOLS_BIN_DIR)
+	cd $(TOOLS_BIN_DIR); $(GO) build -tags=tools -o $(SETUP_ENVTEST_BIN) sigs.k8s.io/controller-runtime/tools/setup-envtest
 
 .PHONY: lint
 lint: bin/golangci-lint ## Run golangci-lint
@@ -209,7 +267,7 @@ release-upload-cluster-controller: release-cluster-controller upload-artifacts
 
 .PHONY: upload-artifacts
 upload-artifacts:
-	controllers/build/upload_artifacts.sh $(TAR_PATH) $(ARTIFACTS_BUCKET) $(PROJECT_PATH) $(CODEBUILD_BUILD_NUMBER) $(CODEBUILD_RESOLVED_SOURCE_VERSION)
+	controllers/build/upload_artifacts.sh $(TAR_PATH) $(ARTIFACTS_BUCKET) $(PROJECT_PATH) $(CODEBUILD_BUILD_NUMBER) $(CODEBUILD_RESOLVED_SOURCE_VERSION) $(LATEST)
 
 .PHONY: create-cluster-controller-binaries
 create-cluster-controller-binaries: $(CREATE_CLUSTER_CONTROLLER_BINARIES)
@@ -224,6 +282,7 @@ cluster-controller-binaries: $(OUTPUT_BIN_DIR)
 	mkdir -p $(OUTPUT_BIN_DIR)/$(BINARY_NAME)
 	$(GO) mod vendor
 	$(MAKE) create-cluster-controller-binaries
+	$(MAKE) update-kustomization-yaml
 	$(MAKE) release-manifests RELEASE_DIR=.
 	source ./scripts/common.sh && build::gather_licenses $(OUTPUT_DIR) "./controllers"
 
@@ -232,26 +291,19 @@ cluster-controller-tarballs:  cluster-controller-binaries
 	controllers/build/create_tarballs.sh $(BINARY_NAME) $(GIT_TAG) $(TAR_PATH)
 
 .PHONY: cluster-controller-local-images
-cluster-controller-local-images: cluster-controller-binaries
-	$(BUILDKIT) \
-		build \
-		--frontend dockerfile.v0 \
-		--opt platform=linux/amd64 \
-		--opt build-arg:BASE_IMAGE=$(CLUSTER_CONTROLLER_BASE_IMAGE) \
-		--local dockerfile=./controllers/docker/linux/eks-anywhere-cluster-controller \
-		--local context=. \
-		--output type=oci,oci-mediatypes=true,\"name=$(CLUSTER_CONTROLLER_IMAGE),$(CLUSTER_CONTROLLER_LATEST_IMAGE)\",dest=/tmp/eks-anywhere-cluster-controller.tar
+cluster-controller-local-images: IMAGE_PLATFORMS = linux/amd64
+cluster-controller-local-images: IMAGE_OUTPUT_TYPE = oci
+cluster-controller-local-images: IMAGE_OUTPUT = dest=/tmp/$(CLUSTER_CONTROLLER_IMAGE_NAME).tar
+cluster-controller-local-images: cluster-controller-binaries $(ORGANIZE_BINARIES_TARGETS)
+	$(BUILDCTL)
 
 .PHONY: cluster-controller-images
-cluster-controller-images: cluster-controller-binaries
-	$(BUILDKIT) \
-		build \
-		--frontend dockerfile.v0 \
-		--opt platform=linux/amd64,linux/arm64 \
-		--opt build-arg:BASE_IMAGE=$(CLUSTER_CONTROLLER_BASE_IMAGE) \
-		--local dockerfile=./controllers/docker/linux/eks-anywhere-cluster-controller \
-		--local context=. \
-		--output type=image,oci-mediatypes=true,\"name=$(CLUSTER_CONTROLLER_IMAGE),$(CLUSTER_CONTROLLER_LATEST_IMAGE)\",push=true
+cluster-controller-images: IMAGE_PLATFORMS = linux/amd64,linux/arm64
+cluster-controller-images: IMAGE_OUTPUT_TYPE = image
+cluster-controller-images: IMAGE_OUTPUT = push=true
+cluster-controller-images: cluster-controller-binaries $(ORGANIZE_BINARIES_TARGETS)
+	$(BUILDCTL)
+
 
 .PHONY: generate-attribution
 generate-attribution: GOLANG_VERSION ?= "1.16"
@@ -286,7 +338,10 @@ test: unit-test capd-test  ## Run unit and capd tests
 
 .PHONY: unit-test
 unit-test: ## Run unit tests
-	$(GO_TEST) ./... -cover -tags "$(BUILD_TAGS)"
+unit-test: $(SETUP_ENVTEST) 
+unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
+unit-test:
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) ./... -cover -tags "$(BUILD_TAGS)"
 
 .PHONY: capd-test
 capd-test: e2e ## Run default e2e capd test locally
@@ -313,6 +368,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
 	${GOPATH}/bin/mockgen -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable
 	${GOPATH}/bin/mockgen -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
+	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell" ProviderKubectlClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere" ProviderGovcClient,ProviderKubectlClient,ClusterResourceSetManager
 	${GOPATH}/bin/mockgen -destination=pkg/filewriter/mocks/filewriter.go -package=mocks "github.com/aws/eks-anywhere/pkg/filewriter" FileWriter
 	${GOPATH}/bin/mockgen -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth
@@ -334,6 +390,11 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/capiclient.go -package=mocks -source "pkg/clusterapi/manager.go" CAPIClient,KubectlClient
 	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/client.go -package=mocks -source "pkg/clusterapi/resourceset_manager.go" Client
 	${GOPATH}/bin/mockgen -destination=pkg/crypto/mocks/crypto.go -package=mocks -source "pkg/crypto/certificategen.go" CertificateGenerator
+	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/clients.go -package=mocks -source "pkg/networking/cilium/client.go" 
+	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/helm.go -package=mocks -source "pkg/networking/cilium/templater.go"
+	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/upgrader.go -package=mocks -source "pkg/networking/cilium/upgrader.go"
+	${GOPATH}/bin/mockgen -destination=pkg/networking/kindnetd/mocks/client.go -package=mocks -source "pkg/networking/kindnetd/upgrader.go"
+	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/cilium.go -package=mocks -source "pkg/networking/cilium/cilium.go"
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
@@ -397,7 +458,7 @@ update-kustomization-yaml:
 	yq e ".images[] |= select(.name == \"*kube-rbac-proxy\") |= .newTag = \"${KUBE_RBAC_PROXY_IMAGE_TAG_OVERRIDE}\"" -i $(KUSTOMIZATION_CONFIG)
 
 .PHONY: generate-manifests
-generate-manifests: update-kustomization-yaml ## Generate manifests e.g. CRD, RBAC etc.
+generate-manifests: ## Generate manifests e.g. CRD, RBAC etc.
 	$(MAKE) generate-core-manifests
 
 .PHONY: generate-core-manifests
@@ -451,8 +512,56 @@ $(RELEASE_DIR):
 release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) $(CONTROLLER_MANIFEST_OUTPUT_DIR)
 	# Build core-components.
 	$(KUSTOMIZE) build config/prod > $(RELEASE_DIR)/$(RELEASE_MANIFEST_TARGET)
-	cp eksa-components.yaml $(CONTROLLER_MANIFEST_OUTPUT_DIR)
+	cp $(RELEASE_DIR)/$(RELEASE_MANIFEST_TARGET) $(CONTROLLER_MANIFEST_OUTPUT_DIR)
 
 .PHONY: run-controller # Run eksa controller from local repo with tilt
 run-controller:
 	tilt up --file controllers/Tiltfile
+
+# go-get-tool will 'go get' any package $2 and install it to $1.
+# originally copied from kubebuilder
+define go-get-tool
+@[ -f $(1) ] || { \
+set -e ;\
+BIN_PATH=$$(realpath $$(dirname $(1))) ;\
+PKG_BIN_NAME=$$(echo "$(2)" | sed 's,^.*/\(.*\)@v.*$$,\1,') ;\
+BIN_NAME=$$(basename $(1)) ;\
+echo "Install dir $$BIN_PATH" ;\
+echo "Downloading $(2)" ;\
+GOBIN=$$BIN_PATH go install $(2) ;\
+[[ $$PKG_BIN_NAME == $$BIN_NAME ]] || mv -f $$BIN_PATH/$$PKG_BIN_NAME $$BIN_PATH/$$BIN_NAME ;\
+}
+endef
+
+define BUILDCTL
+	$(BUILDKIT) \
+		build \
+		--frontend dockerfile.v0 \
+		--opt platform=$(IMAGE_PLATFORMS) \
+		--opt build-arg:BASE_IMAGE=$(CLUSTER_CONTROLLER_BASE_IMAGE) \
+		--progress plain \
+		--local dockerfile=$(DOCKERFILE_FOLDER) \
+		--local context=. \
+		--output type=$(IMAGE_OUTPUT_TYPE),oci-mediatypes=true,\"name=$(CLUSTER_CONTROLLER_IMAGE),$(CLUSTER_CONTROLLER_LATEST_IMAGE)\",$(IMAGE_OUTPUT) \
+		$(if $(filter push=true,$(IMAGE_OUTPUT)),--export-cache type=inline,) \
+		$(foreach IMPORT_CACHE,$(IMAGE_IMPORT_CACHE),--import-cache $(IMPORT_CACHE))
+
+endef 
+
+
+## Fetch Binary Targets
+define FULL_FETCH_BINARIES_TARGETS
+	$(addprefix $(BINARY_DEPS_DIR)/linux-amd64/, $(1)) $(addprefix $(BINARY_DEPS_DIR)/linux-arm64/, $(1))
+endef
+
+$(ORGANIZE_BINARIES_TARGETS): ARTIFACTS_BUCKET = s3://projectbuildpipeline-857-pipelineoutputartifactsb-10ajmk30khe3f
+$(ORGANIZE_BINARIES_TARGETS): $(call FULL_FETCH_BINARIES_TARGETS, $(FETCH_BINARIES_TARGETS))
+	$(BUILD_LIB)/organize_binaries.sh $(BINARY_DEPS_DIR) $(lastword $(subst -, ,$(@D)))
+
+$(BINARY_DEPS_DIR)/linux-%:
+	$(BUILD_LIB)/fetch_binaries.sh $(BINARY_DEPS_DIR) $* $(ARTIFACTS_BUCKET) $(LATEST)
+
+# Do not binary deps as intermediate files
+ifneq ($(FETCH_BINARIES_TARGETS),)
+.SECONDARY: $(call FULL_FETCH_BINARIES_TARGETS, $(FETCH_BINARIES_TARGETS))
+endif

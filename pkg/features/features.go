@@ -1,11 +1,10 @@
 package features
 
 const (
-	AwsIamAuthenticatorEnvVar = "AWS_IAM_AUTHENTICATOR"
-	TaintsSupportEnvVar       = "TAINTS_SUPPORT"
-	TinkerbellProviderEnvVar  = "TINKERBELL_PROVIDER"
-	FullLifecycleAPIEnvVar    = "FULL_LIFECYCLE_API"
-	FullLifecycleGate         = "FullLifecycleAPI"
+	TaintsSupportEnvVar      = "TAINTS_SUPPORT"
+	TinkerbellProviderEnvVar = "TINKERBELL_PROVIDER"
+	FullLifecycleAPIEnvVar   = "FULL_LIFECYCLE_API"
+	FullLifecycleGate        = "FullLifecycleAPI"
 )
 
 func FeedGates(featureGates []string) {
@@ -19,13 +18,6 @@ type Feature struct {
 
 func IsActive(feature Feature) bool {
 	return feature.IsActive()
-}
-
-func AwsIamAuthenticator() Feature {
-	return Feature{
-		Name:     "aws-iam-authenticator identity provider",
-		IsActive: globalFeatures.isActiveForEnvVar(AwsIamAuthenticatorEnvVar),
-	}
 }
 
 func TaintsSupport() Feature {

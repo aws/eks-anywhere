@@ -12,7 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/features"
-	"github.com/aws/eks-anywhere/pkg/providers/docker/mocks"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 

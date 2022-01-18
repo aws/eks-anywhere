@@ -21,14 +21,20 @@ import (
 	"fmt"
 	"io/ioutil"
 	mrand "math/rand"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/pkg/errors"
 	yaml "gopkg.in/yaml.v2"
+	k8syaml "sigs.k8s.io/yaml"
+
+	"github.com/aws/eks-anywhere/release/pkg/aws/s3"
+	"github.com/aws/eks-anywhere/release/pkg/git"
 )
 
 func (r *ReleaseConfig) readShaSums(filename string) (string, string, error) {
@@ -155,8 +161,8 @@ func (r *ReleaseConfig) GetCurrentEksADevReleaseVersion(releaseVersion string) (
 		latestReleaseKey = fmt.Sprintf("%s/LATEST_RELEASE_VERSION", r.BuildRepoBranchName)
 	}
 
-	if ExistsInS3(r.ReleaseBucket, latestReleaseKey) {
-		err := downloadFileFromS3(tempFileName, r.ReleaseBucket, latestReleaseKey)
+	if s3.KeyExists(r.ReleaseBucket, latestReleaseKey) {
+		err := s3.DownloadFile(tempFileName, r.ReleaseBucket, latestReleaseKey)
 		if err != nil {
 			return "", errors.Cause(err)
 		}
@@ -245,20 +251,11 @@ func (r *ReleaseConfig) PutEksAReleaseVersion(version string) error {
 
 	// Upload the file to S3
 	fmt.Println("Uploading latest release version file")
-	err = r.UploadFileToS3(currentReleaseKey, aws.String(currentReleaseKey))
+	err = s3.UploadFile(currentReleaseKey, aws.String(r.ReleaseBucket), aws.String(currentReleaseKey), r.ReleaseClients.S3.Uploader)
 	if err != nil {
 		return errors.Cause(err)
 	}
 	return nil
-}
-
-func existsInList(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
 }
 
 func GenerateRandomSha(hashType int) (string, error) {
@@ -283,7 +280,7 @@ func GenerateRandomSha(hashType int) (string, error) {
 }
 
 func (r *ReleaseConfig) readGitTag(projectPath, branch string) (string, error) {
-	_, err := checkoutRepo(r.BuildRepoSource, branch)
+	_, err := git.CheckoutRepo(r.BuildRepoSource, branch)
 	if err != nil {
 		return "", errors.Cause(err)
 	}
@@ -295,4 +292,52 @@ func (r *ReleaseConfig) readGitTag(projectPath, branch string) (string, error) {
 	}
 
 	return gitTag, nil
+}
+
+func getEksDKubeVersion(releaseChannel, releaseNumber string) (string, error) {
+	var kubeVersion string
+	eksDReleaseManifestUrl := GetEksDReleaseManifestUrl(releaseChannel, releaseNumber)
+
+	eksDRelease, err := getEksdRelease(eksDReleaseManifestUrl)
+	if err != nil {
+		return "", errors.Cause(err)
+	}
+
+	for _, component := range eksDRelease.Status.Components {
+		if component.Name == "kubernetes" {
+			kubeVersion = component.GitTag
+			break
+		}
+	}
+
+	return kubeVersion, nil
+}
+
+func getEksdRelease(eksdReleaseURL string) (*eksdv1alpha1.Release, error) {
+	content, err := ReadHttpFile(eksdReleaseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	eksd := &eksdv1alpha1.Release{}
+	if err = k8syaml.UnmarshalStrict(content, eksd); err != nil {
+		return nil, errors.Wrapf(err, "failed to unmarshal eksd manifest")
+	}
+
+	return eksd, nil
+}
+
+func ReadHttpFile(uri string) ([]byte, error) {
+	resp, err := http.Get(uri)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed reading file from url [%s]", uri)
+	}
+	defer resp.Body.Close()
+
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed reading file from url [%s]", uri)
+	}
+
+	return data, nil
 }

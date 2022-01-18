@@ -29,6 +29,9 @@ import (
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	"github.com/aws/eks-anywhere/release/pkg"
+	"github.com/aws/eks-anywhere/release/pkg/aws/s3"
+	"github.com/aws/eks-anywhere/release/pkg/clients"
+	"github.com/aws/eks-anywhere/release/pkg/utils"
 )
 
 var (
@@ -110,28 +113,31 @@ var releaseCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		var sourceClients *pkg.SourceClients
-		var releaseClients *pkg.ReleaseClients
+		var sourceClients *clients.SourceClients
+		var releaseClients *clients.ReleaseClients
 		if devRelease {
-			sourceClients, releaseClients, err = releaseConfig.CreateDevReleaseClients()
+			sourceClients, releaseClients, err = clients.CreateDevReleaseClients(dryRun)
 			if err != nil {
 				fmt.Printf("Error creating clients: %v\n", err)
 				os.Exit(1)
 			}
+			fmt.Printf("%s Successfully created dev release clients\n", pkg.SuccessIcon)
 		}
 		if releaseEnvironment == "development" {
-			sourceClients, releaseClients, err = releaseConfig.CreateStagingReleaseClients()
+			sourceClients, releaseClients, err = clients.CreateStagingReleaseClients()
 			if err != nil {
 				fmt.Printf("Error creating clients: %v\n", err)
 				os.Exit(1)
 			}
+			fmt.Printf("%s Successfully created staging release clients\n", pkg.SuccessIcon)
 		}
 		if releaseEnvironment == "production" {
-			sourceClients, releaseClients, err = releaseConfig.CreateProdReleaseClients()
+			sourceClients, releaseClients, err = clients.CreateProdReleaseClients()
 			if err != nil {
 				fmt.Printf("Error creating clients: %v\n", err)
 				os.Exit(1)
 			}
+			fmt.Printf("%s Successfully created dev release clients\n", pkg.SuccessIcon)
 		}
 
 		releaseConfig.SourceClients = sourceClients
@@ -206,8 +212,8 @@ var releaseCmd = &cobra.Command{
 					os.Exit(1)
 				}
 
-				bundleReleaseManifestKey := releaseConfig.GetManifestFilepaths(anywherev1alpha1.BundlesKind)
-				err = releaseConfig.UploadFileToS3(bundleReleaseManifestFile, aws.String(bundleReleaseManifestKey))
+				bundleReleaseManifestKey := utils.GetManifestFilepaths(releaseConfig.DevRelease, releaseConfig.BundleNumber, anywherev1alpha1.BundlesKind, releaseConfig.BuildRepoBranchName)
+				err = s3.UploadFile(bundleReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(bundleReleaseManifestKey), releaseConfig.ReleaseClients.S3.Uploader)
 				if err != nil {
 					fmt.Printf("Error uploading bundle manifest to release bucket: %+v", err)
 					os.Exit(1)
@@ -218,7 +224,7 @@ var releaseCmd = &cobra.Command{
 		}
 
 		if devRelease || !bundleRelease {
-			eksAReleaseManifestKey := releaseConfig.GetManifestFilepaths(anywherev1alpha1.ReleaseKind)
+			eksAReleaseManifestKey := utils.GetManifestFilepaths(releaseConfig.DevRelease, releaseConfig.BundleNumber, anywherev1alpha1.ReleaseKind, releaseConfig.BuildRepoBranchName)
 			release, err := releaseConfig.GetPreviousReleaseIfExists()
 			if err != nil {
 				fmt.Printf("Error getting previous EKS-A releases: %v\n", err)
@@ -284,7 +290,7 @@ var releaseCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			err = releaseConfig.UploadFileToS3(eksAReleaseManifestFile, aws.String(eksAReleaseManifestKey))
+			err = s3.UploadFile(eksAReleaseManifestFile, aws.String(releaseConfig.ReleaseBucket), aws.String(eksAReleaseManifestKey), releaseConfig.ReleaseClients.S3.Uploader)
 			if err != nil {
 				fmt.Printf("Error uploading EKS-A release manifest to release bucket: %v", err)
 				os.Exit(1)

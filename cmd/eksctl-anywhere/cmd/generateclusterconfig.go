@@ -111,11 +111,12 @@ func generateClusterConfig(clusterName string) error {
 		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml, etcdMcYaml)
 	case constants.TinkerbellProviderName:
 		if features.IsActive(features.TinkerbellProvider()) {
+			clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithClusterEndpoint())
 			datacenterConfig := v1alpha1.NewTinkerbellDatacenterConfigGenerate(clusterName)
 			clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))
 			clusterConfigOpts = append(clusterConfigOpts,
-				v1alpha1.ControlPlaneConfigCount(2),
-				v1alpha1.WorkerNodeConfigCount(2),
+				v1alpha1.ControlPlaneConfigCount(1),
+				v1alpha1.WorkerNodeConfigCount(1),
 			)
 			dcyaml, err := yaml.Marshal(datacenterConfig)
 			if err != nil {

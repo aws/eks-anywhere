@@ -1,0 +1,31 @@
+   ```
+   
+1. Set credential environment variables
+
+   ```shell
+   export EKSA_VSPHERE_USERNAME='billy'
+   export EKSA_VSPHERE_PASSWORD='t0p$ecret'
+   ```
+   
+1. Create a cluster
+
+   ```shell
+   eksctl anywhere create cluster -f cluster.yaml -v 4
+   ```
+
+
+## Run Sonobuoy e2e
+```
+./sonobuoy run --mode=certified-conformance --wait --kube-conformance-image k8s.gcr.io/conformance:{{conformance_version}}
+results=$(./sonobuoy retrieve)
+mkdir ./results
+tar xzf $results -C ./results
+./sonobuoy e2e ${results}
+mv results/plugins/e2e/results/global/* .
+```
+
+## Cleanup
+```shell
+eksctl anywhere delete cluster prod -v 4
+rm -rf cluster.yaml prod *tar.gz results
+```

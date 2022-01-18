@@ -19,3 +19,11 @@ func setKubeconfigEnvVar(t *testing.T, clusterName string) {
 		t.Fatalf("Error setting KUBECONFIG env var: %v", err)
 	}
 }
+
+func getEnvWithDefault(key, defaultValue string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+
+	return defaultValue
+}

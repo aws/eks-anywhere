@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -170,6 +171,9 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
 	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf)).
+		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Spec.ControlPlaneConfiguration))
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
 		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Spec.PodIAMConfig)).
@@ -186,10 +190,11 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 		"corednsVersion":             bundle.KubeDistro.CoreDNS.Tag,
 		"kindNodeImage":              bundle.EksD.KindNode.VersionedImage(),
 		"etcdExtraArgs":              etcdExtraArgs.ToPartialYaml(),
+		"etcdCipherSuites":           crypto.SecureCipherSuitesString(),
 		"apiserverExtraArgs":         apiServerExtraArgs.ToPartialYaml(),
 		"controllermanagerExtraArgs": sharedExtraArgs.ToPartialYaml(),
 		"schedulerExtraArgs":         sharedExtraArgs.ToPartialYaml(),
-		"kubeletExtraArgs":           sharedExtraArgs.ToPartialYaml(),
+		"kubeletExtraArgs":           kubeletExtraArgs.ToPartialYaml(),
 		"externalEtcdVersion":        bundle.KubeDistro.EtcdVersion,
 		"eksaSystemNamespace":        constants.EksaSystemNamespace,
 		"auditPolicy":                common.GetAuditPolicy(),
@@ -214,7 +219,9 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 
 func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
-	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.WorkerNodeLabelsExtraArgs(clusterSpec.Spec.WorkerNodeGroupConfigurations[0])).
+		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf))
 
 	values := map[string]interface{}{
 		"clusterName":         clusterSpec.Name,

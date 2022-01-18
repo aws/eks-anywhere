@@ -17,7 +17,7 @@ spec:
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
-    name: test-control-plane
+    name: test
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: TinkerbellCluster
@@ -26,11 +26,19 @@ spec:
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
-  name: test-control-plane
+  name: test
   namespace: eksa-system
 spec:
   kubeadmConfigSpec:
-    clusterConfiguration: {}
+    clusterConfiguration:
+      imageRepository: public.ecr.aws/eks-distro/kubernetes
+      etcd:
+        local:
+          imageRepository: public.ecr.aws/eks-distro/etcd-io
+          imageTag: v3.4.16-eks-1-21-4
+      dns:
+        imageRepository: public.ecr.aws/eks-distro/coredns
+        imageTag: v1.8.3-eks-1-21-4
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
@@ -41,11 +49,67 @@ spec:
         - DirAvailable--etc-kubernetes-manifests
         kubeletExtraArgs:
           provider-id: PROVIDER_ID
-    preKubeadmCommands:
-    - mkdir -p /etc/kubernetes/manifests && ctr images pull ghcr.io/kube-vip/kube-vip:latest
-      && ctr run --rm --net-host ghcr.io/kube-vip/kube-vip:latest vip /kube-vip manifest
-      pod --arp --interface $(ip -4 -j route list default | jq -r .[0].dev) --address 1.2.3.4 --controlplane
-      --leaderElection > /etc/kubernetes/manifests/kube-vip.yaml
+    files:
+      - content: |
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            creationTimestamp: null
+            name: kube-vip
+            namespace: kube-system
+          spec:
+            containers:
+            - args:
+              - manager
+              env:
+              - name: vip_arp
+                value: "true"
+              - name: port
+                value: "6443"
+              - name: vip_interface
+                value: eno2
+              - name: vip_cidr
+                value: "32"
+              - name: cp_enable
+                value: "true"
+              - name: cp_namespace
+                value: kube-system
+              - name: vip_ddns
+                value: "false"
+              - name: vip_leaderelection
+                value: "true"
+              - name: vip_leaseduration
+                value: "5"
+              - name: vip_renewdeadline
+                value: "3"
+              - name: vip_retryperiod
+                value: "1"
+              - name: address
+                value: 1.2.3.4
+              image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
+              imagePullPolicy: Always
+              name: kube-vip
+              resources: {}
+              securityContext:
+                capabilities:
+                  add:
+                  - NET_ADMIN
+                  - NET_RAW
+              volumeMounts:
+              - mountPath: /etc/kubernetes/admin.conf
+                name: kubeconfig
+            hostAliases:
+            - hostnames:
+              - kubernetes
+              ip: 127.0.0.1
+            hostNetwork: true
+            volumes:
+            - hostPath:
+                path: /etc/kubernetes/admin.conf
+              name: kubeconfig
+          status: {}
+        owner: root:root
+        path: /etc/kubernetes/manifests/kube-vip.yaml
     users:
     - name: tink-user
       sshAuthorizedKeys:
@@ -56,14 +120,14 @@ spec:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: TinkerbellMachineTemplate
-      name: test-control-plane
+      name: test-control-plane-template-1234567890000
   replicas: 1
   version: v1.21.2-eks-1-21-4
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: TinkerbellMachineTemplate
 metadata:
-  name: test-control-plane
+  name: test-control-plane-template-1234567890000
   namespace: eksa-system
 spec:
   template:
@@ -75,4 +139,5 @@ metadata:
   name:  test
   namespace: eksa-system
 spec:
-  imageLookupBaseRegistry: ""
+  imageLookupFormat: --kube-v1.21.2-eks-1-21-4.raw.gz
+  imageLookupBaseRegistry: /

@@ -16,6 +16,7 @@ package pkg
 
 import (
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -104,26 +105,37 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 func (r *ReleaseConfig) GetKindnetdBundle() (anywherev1alpha1.KindnetdBundle, error) {
 	artifacts := r.BundleArtifactsTable["kindnetd"]
 
-	var version string
+	var sourceBranch string
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
+	artifactHashes := []string{}
 
 	for _, artifact := range artifacts {
 		if artifact.Manifest != nil {
 			manifestArtifact := artifact.Manifest
-			componentVersion, err := BuildComponentVersion(
-				newVersionerWithGITTAG(r.BuildRepoSource, kindProjectPath, manifestArtifact.SourcedFromBranch, r),
-			)
-			if err != nil {
-				return anywherev1alpha1.KindnetdBundle{}, errors.Wrapf(err, "Error getting version for kind")
-			}
-			version = componentVersion
+			sourceBranch = manifestArtifact.SourcedFromBranch
 
 			bundleManifestArtifact := anywherev1alpha1.Manifest{
 				URI: manifestArtifact.ReleaseCdnURI,
 			}
 
 			bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
+
+			manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
+			if err != nil {
+				return anywherev1alpha1.KindnetdBundle{}, err
+			}
+			manifestHash := generateManifestHash(manifestContents)
+			artifactHashes = append(artifactHashes, manifestHash)
 		}
+	}
+
+	componentChecksum := generateComponentHash(artifactHashes)
+	version, err := BuildComponentVersion(
+		newVersionerWithGITTAG(r.BuildRepoSource, kindProjectPath, sourceBranch, r),
+		componentChecksum,
+	)
+	if err != nil {
+		return anywherev1alpha1.KindnetdBundle{}, errors.Wrapf(err, "Error getting version for kind")
 	}
 
 	bundle := anywherev1alpha1.KindnetdBundle{

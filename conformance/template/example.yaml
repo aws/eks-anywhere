@@ -1,0 +1,98 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: prod
+spec:
+  clusterNetwork:
+    cni: cilium
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 2
+    endpoint:
+      host: "198.18.100.79"
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: prod-cp
+  datacenterRef:
+    kind: VSphereDatacenterConfig
+    name: prod
+  externalEtcdConfiguration:
+    count: 3
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: prod-etcd
+  kubernetesVersion: "1.21"
+  managementCluster:
+    name: prod
+  workerNodeGroupConfigurations:
+  - count: 2
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: prod
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereDatacenterConfig
+metadata:
+  name: prod
+spec:
+  datacenter: "SDDC-Datacenter"
+  insecure: false
+  network: "/SDDC-Datacenter/network/sddc-cgw-network-1"
+  server: "vcenter.sddc-44-239-186-141.vmwarevmc.com"
+  thumbprint: ""
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: prod-cp
+spec:
+  datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
+  diskGiB: 25
+  folder: "/SDDC-Datacenter/vm/capv/prod"
+  memoryMiB: 8192
+  numCPUs: 2
+  osFamily: bottlerocket
+  resourcePool: "*/Resources/Compute-ResourcePool"
+  users:
+  - name: ec2-user
+    sshAuthorizedKeys:
+    - "ssh-rsa AAAA..."
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: prod
+spec:
+  datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
+  diskGiB: 25
+  folder: "/SDDC-Datacenter/vm/capv/prod"
+  memoryMiB: 8192
+  numCPUs: 2
+  osFamily: bottlerocket
+  resourcePool: "*/Resources/Compute-ResourcePool"
+  users:
+  - name: ec2-user
+    sshAuthorizedKeys:
+    - "ssh-rsa AAAA..."
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: prod-etcd
+spec:
+  datastore: "/SDDC-Datacenter/datastore/WorkloadDatastore"
+  diskGiB: 25
+  folder: "/SDDC-Datacenter/vm/capv/prod"
+  memoryMiB: 8192
+  numCPUs: 2
+  osFamily: bottlerocket
+  resourcePool: "*/Resources/Compute-ResourcePool"
+  users:
+  - name: ec2-user
+    sshAuthorizedKeys:
+    - "ssh-rsa AAAA..."

@@ -3,6 +3,7 @@ package workflows_test
 import (
 	"context"
 	"errors"
+	"os"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -40,6 +41,7 @@ type upgradeTestSetup struct {
 }
 
 func newUpgradeTest(t *testing.T) *upgradeTestSetup {
+	featureEnvVars := []string{}
 	mockCtrl := gomock.NewController(t)
 	bootstrapper := mocks.NewMockBootstrapper(mockCtrl)
 	clusterManager := mocks.NewMockClusterManager(mockCtrl)
@@ -51,6 +53,20 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 	capiUpgrader := mocks.NewMockCAPIManager(mockCtrl)
 	machineConfigs := []providers.MachineConfig{&v1alpha1.VSphereMachineConfig{}}
 	workflow := workflows.NewUpgrade(bootstrapper, provider, capiUpgrader, clusterManager, addonManager, writer)
+
+	for _, e := range featureEnvVars {
+		if err := os.Setenv(e, "true"); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	t.Cleanup(func() {
+		for _, e := range featureEnvVars {
+			if err := os.Unsetenv(e); err != nil {
+				t.Fatal(err)
+			}
+		}
+	})
 
 	return &upgradeTestSetup{
 		t:                t,
@@ -89,6 +105,11 @@ func (c *upgradeTestSetup) expectEnsureEtcdCAPIComponentsExistTask(expectedClust
 
 func (c *upgradeTestSetup) expectUpgradeCoreComponents(expectedCluster *types.Cluster) {
 	currentSpec := c.currentClusterSpec
+	networkingChangeDiff := types.NewChangeDiff(&types.ComponentChangeDiff{
+		ComponentName: "cilium",
+		OldVersion:    "v0.0.1",
+		NewVersion:    "v0.0.2",
+	})
 	capiChangeDiff := types.NewChangeDiff(&types.ComponentChangeDiff{
 		ComponentName: "vsphere",
 		OldVersion:    "v0.0.1",
@@ -106,6 +127,7 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(expectedCluster *types.Cl
 	})
 	gomock.InOrder(
 		c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, expectedCluster, c.newClusterSpec.Name).Return(currentSpec, nil),
+		c.clusterManager.EXPECT().UpgradeNetworking(c.ctx, expectedCluster, currentSpec, c.newClusterSpec).Return(networkingChangeDiff, nil),
 		c.capiManager.EXPECT().Upgrade(c.ctx, expectedCluster, c.provider, currentSpec, c.newClusterSpec).Return(capiChangeDiff, nil),
 		c.addonManager.EXPECT().UpdateLegacyFileStructure(c.ctx, currentSpec, c.newClusterSpec),
 		c.addonManager.EXPECT().Upgrade(c.ctx, expectedCluster, currentSpec, c.newClusterSpec).Return(fluxChangeDiff, nil),
