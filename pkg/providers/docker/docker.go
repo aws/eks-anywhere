@@ -230,9 +230,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 		"kubeletExtraArgs":    kubeletExtraArgs.ToPartialYaml(),
 	}
 
-	if len(clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Taints) > 0 {
-		values["workerNodeGroupTaints"] = clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Taints
-	}
+	values["workerNodeGroupTaints"] = clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Taints
 
 	return values
 }
