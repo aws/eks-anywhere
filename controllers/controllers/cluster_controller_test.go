@@ -15,6 +15,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	_ "github.com/aws/eks-anywhere/internal/test/envtest"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -39,12 +40,6 @@ func TestClusterReconcilerSkipManagement(t *testing.T) {
 	machineConfigWN := createWNMachineConfig()
 
 	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN}
-
-	s := scheme.Scheme
-	s.AddKnownTypes(anywherev1.GroupVersion, cluster)
-	s.AddKnownTypes(anywherev1.GroupVersion, datacenterConfig)
-	s.AddKnownTypes(anywherev1.GroupVersion, bundle)
-	s.AddKnownTypes(anywherev1.GroupVersion, machineConfigCP)
 
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
@@ -102,12 +97,6 @@ func TestClusterReconcilerSuccess(t *testing.T) {
 	machineConfigWN := createWNMachineConfig()
 
 	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN}
-
-	s := scheme.Scheme
-	s.AddKnownTypes(anywherev1.GroupVersion, cluster)
-	s.AddKnownTypes(anywherev1.GroupVersion, datacenterConfig)
-	s.AddKnownTypes(anywherev1.GroupVersion, bundle)
-	s.AddKnownTypes(anywherev1.GroupVersion, machineConfigCP)
 
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
