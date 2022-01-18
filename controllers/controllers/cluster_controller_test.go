@@ -84,7 +84,7 @@ func TestClusterReconcilerSkipManagement(t *testing.T) {
 		t.Fatalf("get cluster: (%v)", err)
 	}
 	if apiCluster.Status.FailureMessage != nil {
-		t.Errorf("Expected failure message to be nil")
+		t.Errorf("Expected failure message to be nil. FailureMessage:%s", *apiCluster.Status.FailureMessage)
 	}
 }
 
