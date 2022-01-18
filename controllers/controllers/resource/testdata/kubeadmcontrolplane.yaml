@@ -1,13 +1,14 @@
-apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
   name: test_cluster
   namespace: default
 spec:
-  infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-    kind: VSphereMachineTemplate
-    name: test_cluster-control-plane-template-v1.19.8-eks-1-19-4
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: VSphereMachineTemplate
+      name: test_cluster-control-plane-template-v1.19.8-eks-1-19-4
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
@@ -16,7 +17,6 @@ spec:
           imageRepository: public.ecr.aws/eks-distro/etcd-io
           imageTag: v3.4.14-eks-1-19-4
       dns:
-        type: CoreDNS
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.0-eks-1-19-4
       apiServer:

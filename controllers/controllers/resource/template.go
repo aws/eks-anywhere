@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
@@ -105,11 +106,27 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		}
 	}
 
+	// Get vsphere credentials so that the template can apply correctly instead of with empty values
+	credSecret, err := r.VSphereCredentials(ctx)
+	if err != nil {
+		return nil, err
+	}
+	usernameBytes, ok := credSecret.Data["username"]
+	if !ok {
+		return nil, fmt.Errorf("unable to retrieve username from secret")
+	}
+	passwordBytes, ok := credSecret.Data["password"]
+	if !ok {
+		return nil, fmt.Errorf("unable to retrieve password from secret")
+	}
+
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
 		values["vsphereControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpVmc.Spec.Users)
 		values["vsphereEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdVmc.Spec.Users)
 		values["etcdTemplateName"] = etcdTemplateName
+		values["eksaVsphereUsername"] = string(usernameBytes)
+		values["eksaVspherePassword"] = string(passwordBytes)
 	}
 
 	workersOpt := func(values map[string]interface{}) {
