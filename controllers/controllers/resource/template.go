@@ -42,9 +42,9 @@ type TinkerbellTemplate struct {
 	now anywhereTypes.NowFunc
 }
 
-func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdc anywherev1.VSphereDatacenterConfig, cpVmc, etcdVmc anywherev1.VSphereMachineConfig, workerVmc []*anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
-	workerNodeGroupMachineSpecs := make(map[string]anywherev1.VSphereMachineConfigSpec, len(workerVmc))
-	for _, wnConfig := range workerVmc {
+func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdc anywherev1.VSphereDatacenterConfig, cpVmc, etcdVmc anywherev1.VSphereMachineConfig, workerVmcs map[string]*anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
+	workerNodeGroupMachineSpecs := make(map[string]anywherev1.VSphereMachineConfigSpec, len(workerVmcs))
+	for _, wnConfig := range workerVmcs {
 		workerNodeGroupMachineSpecs[wnConfig.Name] = wnConfig.Spec
 	}
 	// control plane and etcd updates are prohibited in controller so those specs should not change
@@ -77,19 +77,21 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 	}
 
 	var workloadTemplateNames []string
-	for _, vmc := range workerVmc {
-		oldVmc := oldWorkerVmcs[vmc.Name]
+	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		oldVmc := oldWorkerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		vmc := workerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, &oldVmc, vmc)
 		if updateWorkloadTemplate {
-			workloadTemplateName := templateBuilder.WorkerMachineTemplateName(clusterName, clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Name)
+			workloadTemplateName := templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
 			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
 		} else {
 			mcDeployments, err := r.MachineDeployments(ctx, eksaCluster)
 			if err != nil {
 				return nil, err
 			}
-			for _, md := range mcDeployments {
-				workloadTemplateName := md.Spec.Template.Spec.InfrastructureRef.Name
+			mdName := fmt.Sprintf("%s-%s", clusterName, workerNodeGroupConfiguration.Name)
+			if _, ok := mcDeployments[mdName]; ok {
+				workloadTemplateName := mcDeployments[mdName].Spec.Template.Spec.InfrastructureRef.Name
 				workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
 			}
 		}

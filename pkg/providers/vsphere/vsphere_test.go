@@ -650,7 +650,7 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 			Template: clusterv1.MachineTemplateSpec{
 				Spec: clusterv1.MachineSpec{
 					InfrastructureRef: v1.ObjectReference{
-						Name: "test-md-0-worker-node-template-original",
+						Name: "test-md-0-original",
 					},
 				},
 			},

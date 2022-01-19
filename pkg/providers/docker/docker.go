@@ -126,7 +126,7 @@ type DockerTemplateBuilder struct {
 
 func (d *DockerTemplateBuilder) WorkerMachineTemplateName(clusterName, workerNodeGroupName string) string {
 	t := d.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-%s-worker-node-template-%d", clusterName, workerNodeGroupName, t)
+	return fmt.Sprintf("%s-%s-%d", clusterName, workerNodeGroupName, t)
 }
 
 func (d *DockerTemplateBuilder) CPMachineTemplateName(clusterName string) string {
@@ -159,7 +159,7 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 		values := buildTemplateMapMD(clusterSpec)
 		values["workloadTemplateName"] = d.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
-		values["workerNodeGroupName"] = workerNodeGroupConfiguration.Name
+		values["workerNodeGroupName"] = fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name)
 
 		bytes, err := templater.Execute(defaultCAPIConfigMD, values)
 		if err != nil {
@@ -177,7 +177,7 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkersUpgrade(clusterSpec *clus
 		values := buildTemplateMapMD(clusterSpec)
 		values["workloadTemplateName"] = templateNames[i]
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
-		values["workerNodeGroupName"] = workerNodeGroupConfiguration.Name
+		values["workerNodeGroupName"] = fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name)
 
 		bytes, err := templater.Execute(defaultCAPIConfigMD, values)
 		if err != nil {

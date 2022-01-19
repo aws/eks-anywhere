@@ -223,10 +223,10 @@ func (mr *MockResourceFetcherMockRecorder) FetchObjectByName(arg0, arg1, arg2, a
 }
 
 // MachineDeployments mocks base method.
-func (m *MockResourceFetcher) MachineDeployments(arg0 context.Context, arg1 *v1alpha1.Cluster) ([]*v1alpha31.MachineDeployment, error) {
+func (m *MockResourceFetcher) MachineDeployments(arg0 context.Context, arg1 *v1alpha1.Cluster) (map[string]*v1alpha31.MachineDeployment, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "MachineDeployments", arg0, arg1)
-	ret0, _ := ret[0].([]*v1alpha31.MachineDeployment)
+	ret0, _ := ret[0].(map[string]*v1alpha31.MachineDeployment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -252,6 +252,21 @@ func (mr *MockResourceFetcherMockRecorder) OIDCConfig(arg0, arg1, arg2 interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OIDCConfig", reflect.TypeOf((*MockResourceFetcher)(nil).OIDCConfig), arg0, arg1, arg2)
 }
 
+// VSphereCredentials mocks base method.
+func (m *MockResourceFetcher) VSphereCredentials(arg0 context.Context) (*v1.Secret, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VSphereCredentials", arg0)
+	ret0, _ := ret[0].(*v1.Secret)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// VSphereCredentials indicates an expected call of VSphereCredentials.
+func (mr *MockResourceFetcherMockRecorder) VSphereCredentials(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VSphereCredentials", reflect.TypeOf((*MockResourceFetcher)(nil).VSphereCredentials), arg0)
+}
+
 // VSphereWorkerMachineTemplates mocks base method.
 func (m *MockResourceFetcher) VSphereWorkerMachineTemplates(arg0 context.Context, arg1 *v1alpha1.Cluster) ([]v1alpha30.VSphereMachineTemplate, error) {
 	m.ctrl.T.Helper()
@@ -265,21 +280,6 @@ func (m *MockResourceFetcher) VSphereWorkerMachineTemplates(arg0 context.Context
 func (mr *MockResourceFetcherMockRecorder) VSphereWorkerMachineTemplates(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VSphereWorkerMachineTemplates", reflect.TypeOf((*MockResourceFetcher)(nil).VSphereWorkerMachineTemplates), arg0, arg1)
-}
-
-/ VSphereCredentials mocks base method.
-func (m *MockResourceFetcher) VSphereCredentials(arg0 context.Context) (*v1.Secret, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VSphereCredentials", arg0)
-	ret0, _ := ret[0].(*v1.Secret)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// VSphereCredentials indicates an expected call of VSphereCredentials.
-func (mr *MockResourceFetcherMockRecorder) VSphereCredentials(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VSphereCredentials", reflect.TypeOf((*MockResourceFetcher)(nil).VSphereCredentials), arg0)
 }
 
 // MockResourceUpdater is a mock of ResourceUpdater interface.

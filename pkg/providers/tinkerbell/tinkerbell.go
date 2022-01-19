@@ -191,7 +191,7 @@ func NewTinkerbellTemplateBuilder(datacenterSpec *v1alpha1.TinkerbellDatacenterC
 
 func (vs *TinkerbellTemplateBuilder) WorkerMachineTemplateName(clusterName, workerNodeGroupName string) string {
 	t := vs.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-%s-worker-node-template-%d", clusterName, workerNodeGroupName, t)
+	return fmt.Sprintf("%s-%s-%d", clusterName, workerNodeGroupName, t)
 }
 
 func (vs *TinkerbellTemplateBuilder) CPMachineTemplateName(clusterName string) string {

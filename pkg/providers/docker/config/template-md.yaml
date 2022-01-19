@@ -1,7 +1,7 @@
 apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
 kind: KubeadmConfigTemplate
 metadata:
-  name: {{.clusterName}}-{{.workerNodeGroupName}}
+  name: {{.workerNodeGroupName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   template:
@@ -19,7 +19,7 @@ spec:
 apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachineDeployment
 metadata:
-  name: {{.clusterName}}-{{.workerNodeGroupName}}
+  name: {{.workerNodeGroupName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   clusterName: {{.clusterName}}
@@ -32,7 +32,7 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
           kind: KubeadmConfigTemplate
-          name: {{.clusterName}}-{{.workerNodeGroupName}}
+          name: {{.workerNodeGroupName}}
           namespace: {{.eksaSystemNamespace}}
       clusterName: {{.clusterName}}
       infrastructureRef:

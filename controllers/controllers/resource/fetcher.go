@@ -25,7 +25,7 @@ import (
 )
 
 type ResourceFetcher interface {
-	MachineDeployments(ctx context.Context, cs *anywherev1.Cluster) ([]*clusterv1.MachineDeployment, error)
+	MachineDeployments(ctx context.Context, cs *anywherev1.Cluster) (map[string]*clusterv1.MachineDeployment, error)
 	VSphereWorkerMachineTemplates(ctx context.Context, cs *anywherev1.Cluster) ([]vspherev1.VSphereMachineTemplate, error)
 	VSphereCredentials(ctx context.Context) (*corev1.Secret, error)
 	FetchObject(ctx context.Context, objectKey types.NamespacedName, obj client.Object) error
@@ -165,7 +165,7 @@ func (r *capiResourceFetcher) fetchClusterForRef(ctx context.Context, refId type
 	return nil, fmt.Errorf("eksa cluster not found for datacenterRef %v", refId)
 }
 
-func (r *capiResourceFetcher) machineDeployments(ctx context.Context, c *anywherev1.Cluster) ([]*clusterv1.MachineDeployment, error) {
+func (r *capiResourceFetcher) machineDeployments(ctx context.Context, c *anywherev1.Cluster) (map[string]*clusterv1.MachineDeployment, error) {
 	machineDeployments := &clusterv1.MachineDeploymentList{}
 	req, err := labels.NewRequirement(clusterv1.ClusterLabelName, selection.Equals, []string{c.Name})
 	if err != nil {
@@ -176,14 +176,14 @@ func (r *capiResourceFetcher) machineDeployments(ctx context.Context, c *anywher
 	if err != nil {
 		return nil, err
 	}
-	deployments := make([]*clusterv1.MachineDeployment, 0, len(machineDeployments.Items))
+	deployments := make(map[string]*clusterv1.MachineDeployment, len(machineDeployments.Items))
 	for _, md := range machineDeployments.Items {
-		deployments = append(deployments, &md)
+		deployments[md.Name] = &md
 	}
 	return deployments, nil
 }
 
-func (r *capiResourceFetcher) MachineDeployments(ctx context.Context, cs *anywherev1.Cluster) ([]*clusterv1.MachineDeployment, error) {
+func (r *capiResourceFetcher) MachineDeployments(ctx context.Context, cs *anywherev1.Cluster) (map[string]*clusterv1.MachineDeployment, error) {
 	deployments, err := r.machineDeployments(ctx, cs)
 	if err != nil {
 		return nil, err
@@ -373,7 +373,7 @@ func MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate *vspherev1.V
 	vsSpec.Spec.Folder = vsMachineTemplate.Spec.Template.Spec.Folder
 	vsSpec.Spec.StoragePolicyName = vsMachineTemplate.Spec.Template.Spec.StoragePolicyName
 
-	// TODO: OSFamily, Users
+	// TODO: OSFamily, Users (these fields are immutable)
 	return vsSpec, nil
 }
 
@@ -392,6 +392,6 @@ func MapMachineTemplateToVSphereMachineConfigSpecWorkers(vsMachineTemplates []vs
 		vsSpecs[vsMachineTemplate.Name] = *vsSpec
 	}
 
-	// TODO: OSFamily, Users
+	// TODO: OSFamily, Users (these fields are immutable)
 	return vsSpecs, nil
 }

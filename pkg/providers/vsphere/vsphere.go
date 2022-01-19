@@ -607,7 +607,7 @@ type VsphereTemplateBuilder struct {
 
 func (vs *VsphereTemplateBuilder) WorkerMachineTemplateName(clusterName, workerNodeGroupName string) string {
 	t := vs.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-%s-worker-node-template-%d", clusterName, workerNodeGroupName, t)
+	return fmt.Sprintf("%s-%s-%d", clusterName, workerNodeGroupName, t)
 }
 
 func (vs *VsphereTemplateBuilder) CPMachineTemplateName(clusterName string) string {
@@ -646,7 +646,7 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.S
 		values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		values["vsphereWorkerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
-		values["workerNodeGroupName"] = workerNodeGroupConfiguration.Name
+		values["workerNodeGroupName"] = fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name)
 
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
@@ -665,7 +665,7 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkersUpgrade(clusterSpec *cl
 		values["workloadTemplateName"] = templateNames[i]
 		values["vsphereWorkerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
-		values["workerNodeGroupName"] = workerNodeGroupConfiguration.Name
+		values["workerNodeGroupName"] = fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name)
 
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {

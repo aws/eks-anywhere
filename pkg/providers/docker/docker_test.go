@@ -320,7 +320,7 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 			Template: clusterv1.MachineTemplateSpec{
 				Spec: clusterv1.MachineSpec{
 					InfrastructureRef: v1.ObjectReference{
-						Name: "test-worker-node-template-original",
+						Name: "test-md-0-original",
 					},
 				},
 			},
