@@ -43,7 +43,7 @@ type ResourceFetcher interface {
 	OIDCConfig(ctx context.Context, ref *anywherev1.Ref, namespace string) (*anywherev1.OIDCConfig, error)
 }
 
-type capiResourceFetcher struct {
+type CapiResourceFetcher struct {
 	client client.Reader
 	log    logr.Logger
 }

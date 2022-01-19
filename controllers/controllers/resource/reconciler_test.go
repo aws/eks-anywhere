@@ -247,7 +247,6 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 					t.Errorf("unmarshal failed: %v", err)
 				}
 
-				fetcher.EXPECT().MachineDeployment(ctx, gomock.Any()).Return(mcDeployment, nil)
 				fetcher.EXPECT().VSphereCredentials(ctx).Return(&corev1.Secret{
 					Data: map[string][]byte{"username": []byte("username"), "password": []byte("password")},
 				}, nil)
