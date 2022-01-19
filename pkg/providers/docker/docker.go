@@ -153,29 +153,15 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluste
 	return bytes, nil
 }
 
-func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec) (content []byte, err error) {
+func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, templateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec)
-		values["workloadTemplateName"] = d.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
-		values["workerReplicas"] = workerNodeGroupConfiguration.Count
-		values["workerNodeGroupName"] = fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name)
-
-		bytes, err := templater.Execute(defaultCAPIConfigMD, values)
-		if err != nil {
-			return nil, err
+		if templateNames != nil {
+			values["workloadTemplateName"] = templateNames[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		} else {
+			values["workloadTemplateName"] = d.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		}
-		workerSpecs = append(workerSpecs, bytes)
-	}
-
-	return templater.AppendYamlResources(workerSpecs...), nil
-}
-
-func (d *DockerTemplateBuilder) GenerateCAPISpecWorkersUpgrade(clusterSpec *cluster.Spec, templateNames []string) (content []byte, err error) {
-	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
-	for i, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec)
-		values["workloadTemplateName"] = templateNames[i]
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
 		values["workerNodeGroupName"] = fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name)
 
@@ -283,7 +269,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}
 
-	workloadTemplateNames := make([]string, 0, len(newClusterSpec.Spec.WorkerNodeGroupConfigurations))
+	workloadTemplateNames := make(map[string]string, len(newClusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range newClusterSpec.Spec.WorkerNodeGroupConfigurations {
 		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec)
 		if !needsNewWorkloadTemplate {
@@ -293,10 +279,10 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 				return nil, nil, err
 			}
 			workloadTemplateName = md.Spec.Template.Spec.InfrastructureRef.Name
-			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
+			workloadTemplateNames[workerNodeGroupConfiguration.MachineGroupRef.Name] = workloadTemplateName
 		} else {
 			workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
-			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
+			workloadTemplateNames[workerNodeGroupConfiguration.MachineGroupRef.Name] = workloadTemplateName
 		}
 	}
 
@@ -334,7 +320,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		return nil, nil, err
 	}
 
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkersUpgrade(newClusterSpec, workloadTemplateNames)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workloadTemplateNames)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -352,7 +338,7 @@ func (p *provider) generateCAPISpecForCreate(ctx context.Context, cluster *types
 	if err != nil {
 		return nil, nil, err
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, nil)
 	if err != nil {
 		return nil, nil, err
 	}

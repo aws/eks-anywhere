@@ -216,11 +216,15 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	return bytes, nil
 }
 
-func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec) (content []byte, err error) {
+func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, templateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name])
-		values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
+		if templateNames != nil {
+			values["workloadTemplateName"] = templateNames[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		} else {
+			values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
+		}
 		values["workerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
 
@@ -230,24 +234,6 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 		}
 		workerSpecs = append(workerSpecs, bytes)
 	}
-	return templater.AppendYamlResources(workerSpecs...), nil
-}
-
-func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkersUpgrade(clusterSpec *cluster.Spec, templateNames []string) (content []byte, err error) {
-	var workerSpecs [][]byte
-	for i, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name])
-		values["workloadTemplateName"] = templateNames[i]
-		values["workerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
-		values["workerReplicas"] = workerNodeGroupConfiguration.Count
-
-		bytes, err := templater.Execute(defaultClusterConfigMD, values)
-		if err != nil {
-			return nil, err
-		}
-		workerSpecs = append(workerSpecs, bytes)
-	}
-
 	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
@@ -272,7 +258,7 @@ func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, clus
 	if err != nil {
 		return nil, nil, err
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, nil)
 	if err != nil {
 		return nil, nil, err
 	}

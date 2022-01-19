@@ -49,8 +49,7 @@ type BuildMapOption func(map[string]interface{})
 
 type TemplateBuilder interface {
 	GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...BuildMapOption) (content []byte, err error)
-	GenerateCAPISpecWorkers(clusterSpec *cluster.Spec) (content []byte, err error)
-	GenerateCAPISpecWorkersUpgrade(clusterSpec *cluster.Spec, templateNames []string) (content []byte, err error)
+	GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, templateNames map[string]string) (content []byte, err error)
 	WorkerMachineTemplateName(clusterName, workerNodeGroupName string) string
 	CPMachineTemplateName(clusterName string) string
 	EtcdMachineTemplateName(clusterName string) string

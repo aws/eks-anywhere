@@ -180,7 +180,7 @@ func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *c
 	if err != nil {
 		return nil, err
 	}
-	md, err := builder.GenerateCAPISpecWorkers(clusterSpec)
+	md, err := builder.GenerateCAPISpecWorkers(clusterSpec, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -639,30 +639,15 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *clus
 	return bytes, nil
 }
 
-func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec) (content []byte, err error) {
+func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, templateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec, *vs.datacenterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name])
-		values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
-		values["vsphereWorkerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
-		values["workerReplicas"] = workerNodeGroupConfiguration.Count
-		values["workerNodeGroupName"] = fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name)
-
-		bytes, err := templater.Execute(defaultClusterConfigMD, values)
-		if err != nil {
-			return nil, err
+		if templateNames != nil {
+			values["workloadTemplateName"] = templateNames[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		} else {
+			values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		}
-		workerSpecs = append(workerSpecs, bytes)
-	}
-
-	return templater.AppendYamlResources(workerSpecs...), nil
-}
-
-func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkersUpgrade(clusterSpec *cluster.Spec, templateNames []string) (content []byte, err error) {
-	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
-	for i, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec, *vs.datacenterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name])
-		values["workloadTemplateName"] = templateNames[i]
 		values["vsphereWorkerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
 		values["workerNodeGroupName"] = fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name)
@@ -898,7 +883,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}
 
-	workloadTemplateNames := make([]string, 0, len(newClusterSpec.Spec.WorkerNodeGroupConfigurations))
+	workloadTemplateNames := make(map[string]string, len(newClusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range newClusterSpec.Spec.WorkerNodeGroupConfigurations {
 		workerMachineConfig := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		workerVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, workerNodeGroupConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
@@ -914,10 +899,10 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 				return nil, nil, err
 			}
 			workloadTemplateName = md.Spec.Template.Spec.InfrastructureRef.Name
-			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
+			workloadTemplateNames[workerNodeGroupConfiguration.MachineGroupRef.Name] = workloadTemplateName
 		} else {
 			workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
-			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
+			workloadTemplateNames[workerNodeGroupConfiguration.MachineGroupRef.Name] = workloadTemplateName
 		}
 	}
 
@@ -964,7 +949,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 	for _, machineConfig := range p.machineConfigs {
 		p.templateBuilder.workerNodeGroupMachineSpecs[machineConfig.Name] = p.machineConfigs[machineConfig.Name].Spec
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkersUpgrade(newClusterSpec, workloadTemplateNames)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workloadTemplateNames)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -987,7 +972,7 @@ func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster
 	for _, machineConfig := range p.machineConfigs {
 		p.templateBuilder.workerNodeGroupMachineSpecs[machineConfig.Name] = p.machineConfigs[machineConfig.Name].Spec
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, nil)
 	if err != nil {
 		return nil, nil, err
 	}
