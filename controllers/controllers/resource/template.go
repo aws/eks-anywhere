@@ -42,7 +42,7 @@ type TinkerbellTemplate struct {
 	now anywhereTypes.NowFunc
 }
 
-func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdc anywherev1.VSphereDatacenterConfig, cpVmc, etcdVmc anywherev1.VSphereMachineConfig, workerVmcs map[string]*anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
+func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdc anywherev1.VSphereDatacenterConfig, cpVmc, etcdVmc anywherev1.VSphereMachineConfig, workerVmcs map[string]anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
 	workerNodeGroupMachineSpecs := make(map[string]anywherev1.VSphereMachineConfigSpec, len(workerVmcs))
 	for _, wnConfig := range workerVmcs {
 		workerNodeGroupMachineSpecs[wnConfig.Name] = wnConfig.Spec
@@ -80,7 +80,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		oldVmc := oldWorkerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		vmc := workerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
-		updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, &oldVmc, vmc)
+		updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, &oldVmc, &vmc)
 		if updateWorkloadTemplate {
 			workloadTemplateName := templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
 			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)

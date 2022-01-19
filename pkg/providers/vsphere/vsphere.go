@@ -904,6 +904,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 			workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
 			workloadTemplateNames[workerNodeGroupConfiguration.MachineGroupRef.Name] = workloadTemplateName
 		}
+		p.templateBuilder.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
 	}
 
 	if newClusterSpec.Spec.ExternalEtcdConfiguration != nil {
@@ -946,9 +947,6 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		return nil, nil, err
 	}
 
-	for _, machineConfig := range p.machineConfigs {
-		p.templateBuilder.workerNodeGroupMachineSpecs[machineConfig.Name] = p.machineConfigs[machineConfig.Name].Spec
-	}
 	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workloadTemplateNames)
 	if err != nil {
 		return nil, nil, err
@@ -969,8 +967,8 @@ func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster
 	if err != nil {
 		return nil, nil, err
 	}
-	for _, machineConfig := range p.machineConfigs {
-		p.templateBuilder.workerNodeGroupMachineSpecs[machineConfig.Name] = p.machineConfigs[machineConfig.Name].Spec
+	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		p.templateBuilder.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
 	}
 	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, nil)
 	if err != nil {
