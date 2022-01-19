@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterapiv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
+	clusterapiv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/controllers/controllers/reconciler"
@@ -25,7 +25,7 @@ func TestReconcileYaml(t *testing.T) {
 	}{
 		{
 			name: "new object",
-			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1alpha3
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   name: cluster-1
@@ -43,7 +43,7 @@ spec:
 		},
 		{
 			name: "existing object",
-			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1alpha3
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   name: cluster-1
@@ -59,7 +59,7 @@ spec:
 		},
 		{
 			name: "new and existing object",
-			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1alpha3
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   name: cluster-1
@@ -67,7 +67,7 @@ metadata:
 spec:
   paused: true
 ---
-apiVersion: cluster.x-k8s.io/v1alpha3
+apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   name: cluster-2

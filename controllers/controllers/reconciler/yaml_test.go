@@ -19,7 +19,7 @@ func TestYamlToClientObjects(t *testing.T) {
 	}{
 		{
 			name: "two objects",
-			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1alpha3
+			yaml: []byte(`apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   name: cluster-1
@@ -27,7 +27,7 @@ metadata:
 spec:
   paused: true
 ---
-apiVersion: cluster.x-k8s.io/v1alpha3
+apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   name: cluster-2
@@ -39,7 +39,7 @@ spec:
 			want: map[string]client.Object{
 				"cluster-1": &unstructured.Unstructured{
 					Object: map[string]interface{}{
-						"apiVersion": "cluster.x-k8s.io/v1alpha3",
+						"apiVersion": "cluster.x-k8s.io/v1beta1",
 						"kind":       "Cluster",
 						"metadata": map[string]interface{}{
 							"name":      "cluster-1",
@@ -52,7 +52,7 @@ spec:
 				},
 				"cluster-2": &unstructured.Unstructured{
 					Object: map[string]interface{}{
-						"apiVersion": "cluster.x-k8s.io/v1alpha3",
+						"apiVersion": "cluster.x-k8s.io/v1beta1",
 						"kind":       "Cluster",
 						"metadata": map[string]interface{}{
 							"name":      "cluster-2",

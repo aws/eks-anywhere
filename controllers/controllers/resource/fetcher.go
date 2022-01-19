@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,9 +13,9 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
-	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -36,7 +36,7 @@ type ResourceFetcher interface {
 	ExistingVSphereControlPlaneMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
 	ExistingVSphereEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
 	ExistingVSphereWorkerMachineConfigs(ctx context.Context, cs *anywherev1.Cluster) (map[string]anywherev1.VSphereMachineConfig, error)
-	ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*bootstrapv1.KubeadmControlPlane, error)
+	ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error)
 	Etcd(ctx context.Context, cs *anywherev1.Cluster) (*etcdv1.EtcdadmCluster, error)
 	FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error)
 	AWSIamConfig(ctx context.Context, ref *anywherev1.Ref, namespace string) (*anywherev1.AWSIamConfig, error)
@@ -233,7 +233,7 @@ func (r *CapiResourceFetcher) VSphereControlPlaneMachineTemplate(ctx context.Con
 		return nil, err
 	}
 	vsphereMachineTemplate := &vspherev1.VSphereMachineTemplate{}
-	err = r.FetchObjectByName(ctx, cp.Spec.InfrastructureTemplate.Name, constants.EksaSystemNamespace, vsphereMachineTemplate)
+	err = r.FetchObjectByName(ctx, cp.Spec.MachineTemplate.InfrastructureRef.Name, constants.EksaSystemNamespace, vsphereMachineTemplate)
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +271,7 @@ func (r *CapiResourceFetcher) bundles(ctx context.Context, name, namespace strin
 	return clusterBundle, nil
 }
 
-func (r *CapiResourceFetcher) ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*bootstrapv1.KubeadmControlPlane, error) {
+func (r *CapiResourceFetcher) ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error) {
 	// Fetch capi cluster
 	capiCluster := &clusterv1.Cluster{}
 	err := r.FetchObjectByName(ctx, cs.Name, constants.EksaSystemNamespace, capiCluster)
@@ -279,7 +279,7 @@ func (r *CapiResourceFetcher) ControlPlane(ctx context.Context, cs *anywherev1.C
 		return nil, err
 	}
 	cpRef := capiCluster.Spec.ControlPlaneRef
-	cp := &bootstrapv1.KubeadmControlPlane{}
+	cp := &controlplanev1.KubeadmControlPlane{}
 	err = r.FetchObjectByName(ctx, cpRef.Name, cpRef.Namespace, cp)
 	if err != nil {
 		return nil, err
