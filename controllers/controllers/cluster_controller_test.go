@@ -181,10 +181,9 @@ func TestClusterReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 			Namespace: namespace,
 		},
 	}
-
 	ctx := context.Background()
 	govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, datacenterConfig, machineConfigCP, gomock.Any()).Return(fmt.Errorf("error"))
-	govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, datacenterConfig, machineConfigWN, gomock.Any()).Return(nil).Times(0)
+	govcClient.EXPECT().ValidateVCenterSetupMachineConfig(ctx, datacenterConfig, machineConfigWN, gomock.Any()).Return(nil).MaxTimes(1)
 	govcClient.EXPECT().SearchTemplate(ctx, datacenterConfig.Spec.Datacenter, machineConfigCP).Return("test", nil).Times(0)
 	govcClient.EXPECT().GetTags(ctx, machineConfigCP.Spec.Template).Return([]string{"os:ubuntu", fmt.Sprintf("eksdRelease:%s", bundle.Spec.VersionsBundles[0].EksD.Name)}, nil).Times(0)
 	govcClient.EXPECT().GetWorkloadAvailableSpace(ctx, machineConfigCP.Spec.Datastore).Return(100.0, nil).Times(0)
