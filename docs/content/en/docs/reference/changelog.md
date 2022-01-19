@@ -16,14 +16,15 @@ menu:
 - Support for node [labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) on EKS-A control plane and worker nodes [#486](https://github.com/aws/eks-anywhere/issues/486)
 - EKS-A users can now use the IAM Role for Service Account (IRSA) feature [#601](https://github.com/aws/eks-anywhere/issues/601)
 - New command `upgrade plan cluster` lists core component changes affected by `upgrade` [#499](https://github.com/aws/eks-anywhere/issues/499)
-- Automated git repository structure changes during Flux component `upgrade` workflow [#577](https://github.com/aws/eks-anywhere/issues/577)
 
 ### Changed
-
+- EKS-A now uses Cluster API (CAPI) v1.0.1, upgrading from v0.3.23.
 - Kubernetes components and etcd now use TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 as the
   configured TLS cipher suite [#657](https://github.com/aws/eks-anywhere/pull/657), 
   [#759](https://github.com/aws/eks-anywhere/pull/759)
 - Cilium CNI will now be upgraded by the `upgrade cluster` command [#326](https://github.com/aws/eks-anywhere/issues/326)
+- Automated git repository structure changes during Flux component `upgrade` workflow [#577](https://github.com/aws/eks-anywhere/issues/577)
+  - Upgrading a Flux managed cluster previously required manual steps. These steps have now been automated.
 
 ## v0.6.0 - 2021-10-29
 
