@@ -6,10 +6,8 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"net"
 	"net/url"
 	"os"
-	"reflect"
 	"strconv"
 	"strings"
 	"text/template"
@@ -361,12 +359,8 @@ func (p *cloudstackProvider) generateSSHAuthKey(username string) (string, error)
 	return key, nil
 }
 
+// since control plane host can be FQDN or ip, there is no need to parse and confirm it is a valid IP address
 func (p *cloudstackProvider) validateControlPlaneIp(ip string) error {
-	// check if controlPlaneEndpointIp is valid
-	parsedIp := net.ParseIP(ip)
-	if parsedIp == nil {
-		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s", ip)
-	}
 	return nil
 }
 
@@ -760,7 +754,7 @@ func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Co
 			return err
 		}
 		if len(em) > 0 {
-			return fmt.Errorf("worker nodes VSphereMachineConfig %s already exists", workerMachineConfigName)
+			return fmt.Errorf("worker nodes CloudStackMachineConfig %s already exists", workerMachineConfigName)
 		}
 	}
 
@@ -836,6 +830,9 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDeploymentCon
 		return true
 	}
 	if oldCsmc.Spec.Template != newCsmc.Spec.Template {
+		return true
+	}
+	if oldCsmc.Spec.ComputeOffering != newCsmc.Spec.ComputeOffering {
 		return true
 	}
 	return false
@@ -1368,15 +1365,7 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 }
 
 func (p *cloudstackProvider) validateMachineConfigImmutability(ctx context.Context, cluster *types.Cluster, newConfig *v1alpha1.CloudStackMachineConfig, clusterSpec *cluster.Spec) error {
-	prevMachineConfig, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, newConfig.Name, cluster.KubeconfigFile, clusterSpec.Namespace)
-	if err != nil {
-		return err
-	}
-
-	if !reflect.DeepEqual(newConfig.Spec.Users, prevMachineConfig.Spec.Users) {
-		return fmt.Errorf("cloudstackMachineConfig %s users are immutable; new user: %v; old user: %v", newConfig.Name, newConfig.Spec.Users, prevMachineConfig.Spec.Users)
-	}
-
+	// allow template, compute offering, details, users to mutate
 	return nil
 }
 

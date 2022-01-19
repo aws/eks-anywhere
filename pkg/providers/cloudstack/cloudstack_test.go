@@ -1088,34 +1088,21 @@ func TestSetupAndValidateCreateClusterNoNetwork(t *testing.T) {
 	thenErrorExpected(t, "CloudStackDeploymentConfig network is not set or is empty", err)
 }
 
-func TestSetupAndValidateCreateClusterBogusIp(t *testing.T) {
+func TestSetupAndValidateCreateClusterSupportDNS(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
 	provider := givenProvider(t)
-	clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host = "bogus"
+	clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host = "load-balancer.com"
 	var tctx testContext
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "cluster controlPlaneConfiguration.Endpoint.Host is invalid: bogus", err)
+	if err != nil {
+		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
+	}
 }
-
-// Test existed ip disabled for cloudstack
-//func TestSetupAndValidateCreateClusterUsedIp(t *testing.T) {
-//	ctx := context.Background()
-//	clusterSpec := givenEmptyClusterSpec()
-//	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-//	provider := givenProvider(t)
-//	clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host = "255.255.255.255"
-//	var tctx testContext
-//	tctx.SaveContext()
-//
-//	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-//
-//	thenErrorExpected(t, "cluster controlPlaneConfiguration.Endpoint.Host <255.255.255.255> is already in use, please provide a unique IP", err)
-//}
 
 func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidCP(t *testing.T) {
 	ctx := context.Background()
@@ -1683,7 +1670,6 @@ func TestValidateNewSpecSuccess(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
@@ -1693,9 +1679,6 @@ func TestValidateNewSpecSuccess(t *testing.T) {
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
 	kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	for _, config := range newMachineConfigs {
-		kubectl.EXPECT().GetEksaCloudStackMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
-	}
 
 	err := provider.ValidateNewSpec(context.TODO(), c, clusterSpec)
 	assert.NoError(t, err, "No error should be returned when previous spec == new spec")
@@ -1712,7 +1695,7 @@ func TestValidateNewSpecDatacenterImmutable(t *testing.T) {
 	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	newProviderConfig.Spec.ManagementApiEndpoint = newProviderConfig.Spec.ManagementApiEndpoint + "-new"
 
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+	//newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
@@ -1722,9 +1705,6 @@ func TestValidateNewSpecDatacenterImmutable(t *testing.T) {
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
 	kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
 	// kubectl.EXPECT().GetSecret(gomock.Any(), credentialsObjectName, gomock.Any(), gomock.Any()).Return(clusterCloudStackSecret, nil)
-	for _, config := range newMachineConfigs {
-		kubectl.EXPECT().GetEksaCloudStackMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
-	}
 
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
 	assert.Error(t, err, "spec.managementApiEndpoint is immutable. Previous value https://127.0.0.1:8080/client/api-new, new value https://127.0.0.1:8080/client/api")
@@ -1766,9 +1746,6 @@ func TestValidateNewSpecTLSInsecureImmutable(t *testing.T) {
 
 	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	newProviderConfig.Spec.Insecure = !newProviderConfig.Spec.Insecure
-
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
 		s.Cluster = clusterConfig
@@ -1776,9 +1753,6 @@ func TestValidateNewSpecTLSInsecureImmutable(t *testing.T) {
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
 	kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	for _, config := range newMachineConfigs {
-		kubectl.EXPECT().GetEksaCloudStackMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
-	}
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
 	assert.Error(t, err, "Insecure should be immutable")
 }
@@ -1794,8 +1768,6 @@ func TestValidateNewSpecTLSThumbprintImmutable(t *testing.T) {
 	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	newProviderConfig.Spec.Thumbprint = "new-" + newProviderConfig.Spec.Thumbprint
 
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
 		s.Cluster = clusterConfig
@@ -1803,9 +1775,6 @@ func TestValidateNewSpecTLSThumbprintImmutable(t *testing.T) {
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
 	kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	for _, config := range newMachineConfigs {
-		kubectl.EXPECT().GetEksaCloudStackMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(config, nil)
-	}
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
 	assert.Error(t, err, "Thumbprint should be immutable")
 }
@@ -1830,7 +1799,6 @@ func TestValidateNewSpecMachineConfigSshUsersImmutable(t *testing.T) {
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
 	kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	kubectl.EXPECT().GetEksaCloudStackMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(newMachineConfigs["test-cp"], nil)
 
 	newMachineConfigs["test-cp"].Spec.Users[0].Name = "newNameShouldNotBeAllowed"
 
@@ -1849,8 +1817,6 @@ func TestValidateNewSpecMachineConfigSshAuthKeysImmutable(t *testing.T) {
 	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	newProviderConfig.Spec.ManagementApiEndpoint = newProviderConfig.Spec.ManagementApiEndpoint + "-new"
 
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
 		s.Cluster = clusterConfig
@@ -1858,8 +1824,6 @@ func TestValidateNewSpecMachineConfigSshAuthKeysImmutable(t *testing.T) {
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
 	kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	kubectl.EXPECT().GetEksaCloudStackMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(newMachineConfigs["test-cp"], nil)
-	newMachineConfigs["test-cp"].Spec.Users[0].SshAuthorizedKeys = []string{"rsa ssh-asd;lfajsfl;asjdfl;asjdlfajsdlfjasl;djf"}
 
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
 	assert.Error(t, err, "SSH Authorized Keys should be immutable")
