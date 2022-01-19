@@ -243,6 +243,11 @@ spec:
             type: object
           status:
             description: ClusterStatus defines the observed state of Cluster
+            properties:
+              failureMessage:
+                description: Descriptive message about a fatal problem while reconciling
+                  a cluster
+                type: string
             type: object
         type: object
     served: true
