@@ -15,12 +15,11 @@ import (
 	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
 
-var requiredFiles = []string{cliBinary, e2eBinary, eksctlBinary}
+var requiredFiles = []string{cliBinary, e2eBinary}
 
 const (
 	cliBinary                  = "eksctl-anywhere"
 	e2eBinary                  = "e2e.test"
-	eksctlBinary               = "eksctl"
 	bundlesReleaseManifestFile = "local-bundle-release.yaml"
 	eksAComponentsManifestFile = "local-eksa-components.yaml"
 	testNameFile               = "e2e-test-name"
@@ -157,11 +156,9 @@ func (e *E2ESession) uploadRequiredFiles() error {
 		}
 	}
 	for _, file := range e.requiredFiles {
-		if file != "eksctl" {
-			err := e.uploadRequiredFile(file)
-			if err != nil {
-				return err
-			}
+		err := e.uploadRequiredFile(file)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -171,13 +168,7 @@ func (e *E2ESession) uploadRequiredFiles() error {
 func (e *E2ESession) downloadRequiredFileInInstance(file string) error {
 	logger.V(1).Info("Downloading from s3 in instance", "file", file)
 
-	var command string
-	if file == "eksctl" {
-		command = fmt.Sprintf("aws s3 cp s3://%s/eksctl/%[2]s ./bin/ && chmod 645 ./bin/%[2]s", e.storageBucket, file)
-	} else {
-		command = fmt.Sprintf("aws s3 cp s3://%s/%s/%[3]s ./bin/ && chmod 645 ./bin/%[3]s", e.storageBucket, e.jobId, file)
-	}
-
+	command := fmt.Sprintf("aws s3 cp s3://%s/%s/%[3]s ./bin/ && chmod 645 ./bin/%[3]s", e.storageBucket, e.jobId, file)
 	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
 		return fmt.Errorf("error downloading file in instance: %v", err)
 	}
