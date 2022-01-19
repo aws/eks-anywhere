@@ -15,8 +15,8 @@ menu:
 - Support for [node taints](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/) on EKS-A control plane and worker nodes [#189](https://github.com/aws/eks-anywhere/issues/189)
 - Support for node [labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) on EKS-A control plane and worker nodes [#486](https://github.com/aws/eks-anywhere/issues/486)
 - EKS-A users can now use the IAM Role for Service Account (IRSA) feature [#601](https://github.com/aws/eks-anywhere/issues/601)
-- New command `upgrade plan cluster` lists core component changes affected by `upgrade`
-- Automated git repository structure changes during `upgrade` workflow
+- New command `upgrade plan cluster` lists core component changes affected by `upgrade` [#499](https://github.com/aws/eks-anywhere/issues/499)
+- Automated git repository structure changes during Flux component `upgrade` workflow [#577](https://github.com/aws/eks-anywhere/issues/577)
 
 ### Changed
 
