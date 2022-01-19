@@ -111,7 +111,7 @@ eks-a-cross-platform-embed-latest-config: ## Build cross platform dev release ve
 	$(MAKE) eks-a-embed-config GO_OS=linux GO_ARCH=amd64 OUTPUT_FILE=bin/linux/amd64/eksctl-anywhere
 	$(MAKE) eks-a-embed-config GO_OS=darwin GO_ARCH=arm64 OUTPUT_FILE=bin/darwin/arm64/eksctl-anywhere
 	$(MAKE) eks-a-embed-config GO_OS=linux GO_ARCH=arm64 OUTPUT_FILE=bin/linux/arm64/eksctl-anywhere
-	#rm pkg/cluster/config/bundle-release.yaml
+	rm pkg/cluster/config/bundle-release.yaml
 
 .PHONY: eks-a
 eks-a: ## Build a dev release version of eks-a
