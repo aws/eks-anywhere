@@ -57,12 +57,12 @@ spec:
       imageRepository: 
       etcd:
         local:
-          imageRepository:
+          imageRepository: 
           imageTag: 
           extraArgs:
             cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       dns:
-        imageRepository:
+        imageRepository: 
         imageTag: 
       apiServer:
         certSANs:
