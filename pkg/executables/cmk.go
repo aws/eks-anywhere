@@ -158,8 +158,7 @@ func (c *Cmk) ValidateCloudStackConnection(ctx context.Context) error {
 
 // TODO: Add support for domain, account filtering
 func (c *Cmk) ListTemplates(ctx context.Context, template string) ([]types.CmkTemplate, error) {
-	templateNameFilterArg := fmt.Sprintf("name=\"%s\"", template)
-	result, err := c.exec(ctx, "list", "templates", "templatefilter=all", "listall=true", templateNameFilterArg)
+	result, err := c.execWithNameAndIdFilters(ctx, template, "list", "templates", "templatefilter=all", "listall=true")
 	if err != nil {
 		return make([]types.CmkTemplate, 0), fmt.Errorf("error getting templates info: %v", err)
 	}
@@ -179,8 +178,7 @@ func (c *Cmk) ListTemplates(ctx context.Context, template string) ([]types.CmkTe
 
 // TODO: Add support for domain, account filtering
 func (c *Cmk) ListServiceOfferings(ctx context.Context, offering string) ([]types.CmkServiceOffering, error) {
-	templateNameFilterArg := fmt.Sprintf("name=\"%s\"", offering)
-	result, err := c.exec(ctx, "list", "serviceofferings", templateNameFilterArg)
+	result, err := c.execWithNameAndIdFilters(ctx, offering, "list", "serviceofferings")
 	if err != nil {
 		return make([]types.CmkServiceOffering, 0), fmt.Errorf("error getting service offerings info: %v", err)
 	}
@@ -200,8 +198,7 @@ func (c *Cmk) ListServiceOfferings(ctx context.Context, offering string) ([]type
 
 // TODO: Add support for domain, account filtering
 func (c *Cmk) ListDiskOfferings(ctx context.Context, offering string) ([]types.CmkDiskOffering, error) {
-	templateNameFilterArg := fmt.Sprintf("name=\"%s\"", offering)
-	result, err := c.exec(ctx, "list", "diskofferings", templateNameFilterArg)
+	result, err := c.execWithNameAndIdFilters(ctx, offering, "list", "diskofferings")
 	if err != nil {
 		return make([]types.CmkDiskOffering, 0), fmt.Errorf("error getting disk offerings info: %v", err)
 	}
@@ -221,8 +218,7 @@ func (c *Cmk) ListDiskOfferings(ctx context.Context, offering string) ([]types.C
 
 // TODO: Add support for domain, account filtering
 func (c *Cmk) ListZones(ctx context.Context, offering string) ([]types.CmkZone, error) {
-	nameFilterArg := fmt.Sprintf("name=\"%s\"", offering)
-	result, err := c.exec(ctx, "list", "zones", nameFilterArg)
+	result, err := c.execWithNameAndIdFilters(ctx, offering, "list", "zones")
 	if err != nil {
 		return make([]types.CmkZone, 0), fmt.Errorf("error getting zones info: %v", err)
 	}
@@ -241,9 +237,8 @@ func (c *Cmk) ListZones(ctx context.Context, offering string) ([]types.CmkZone, 
 }
 
 // TODO: Add support for domain filtering
-func (c *Cmk) ListAccounts(ctx context.Context, accountName string) ([]types.CmkAccount, error) {
-	nameFilterArg := fmt.Sprintf("name=\"%s\"", accountName)
-	result, err := c.exec(ctx, "list", "accounts", nameFilterArg)
+func (c *Cmk) ListAccounts(ctx context.Context, account string) ([]types.CmkAccount, error) {
+	result, err := c.execWithNameAndIdFilters(ctx, account, "list", "accounts")
 	if err != nil {
 		return make([]types.CmkAccount, 0), fmt.Errorf("error getting accounts info: %v", err)
 	}
@@ -259,6 +254,24 @@ func (c *Cmk) ListAccounts(ctx context.Context, accountName string) ([]types.Cmk
 		return make([]types.CmkAccount, 0), fmt.Errorf("failed to parse response into json: %v", err)
 	}
 	return response.CmkAccounts, nil
+}
+
+func (c *Cmk) execWithNameAndIdFilters(ctx context.Context, parameterValue string, genericArgs ...string) (stdout bytes.Buffer, err error) {
+	argsWithNameFilterArg := append(genericArgs, fmt.Sprintf("name=\"%s\"", parameterValue))
+	argsWithIdFilterArg := append(genericArgs, fmt.Sprintf("id=\"%s\"", parameterValue))
+	result, err := c.exec(ctx, argsWithNameFilterArg...)
+	if err != nil {
+		return result, fmt.Errorf("error getting resource info filtering by id %s: %v", parameterValue, err)
+	}
+	if result.Len() == 0 {
+		msg := fmt.Sprintf("No resources found with name %s. Trying again filtering by id instead", parameterValue)
+		logger.V(6).Info(msg)
+		result, err = c.exec(ctx, argsWithIdFilterArg...)
+		if err != nil {
+			return result, fmt.Errorf("error getting resource info filtering by id %s: %v", parameterValue, err)
+		}
+	}
+	return result, nil
 }
 
 func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, err error) {

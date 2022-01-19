@@ -23,7 +23,7 @@ func NewCloudStackMachineConfigGenerate(name string) *CloudStackMachineConfigGen
 		},
 		Spec: CloudStackMachineConfigSpec{
 			ComputeOffering: "",
-			OSFamily:        Ubuntu,
+			OSFamily:        Redhat,
 			Template:        "",
 			Users: []UserConfiguration{{
 				Name:              "capc",

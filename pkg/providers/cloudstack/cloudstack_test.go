@@ -1571,14 +1571,14 @@ func TestSetupAndValidateCreateClusterOsFamilyEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
 	}
-	if provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily != v1alpha1.Ubuntu {
-		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Ubuntu)
+	if provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily != v1alpha1.Redhat {
+		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Redhat)
 	}
-	if provider.machineConfigs[workerNodeMachineConfigName].Spec.OSFamily != v1alpha1.Ubuntu {
-		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Ubuntu)
+	if provider.machineConfigs[workerNodeMachineConfigName].Spec.OSFamily != v1alpha1.Redhat {
+		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Redhat)
 	}
-	if provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily != v1alpha1.Ubuntu {
-		t.Fatalf("got osFamily for etcd machine as %v, want %v", provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily, v1alpha1.Ubuntu)
+	if provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily != v1alpha1.Redhat {
+		t.Fatalf("got osFamily for etcd machine as %v, want %v", provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily, v1alpha1.Redhat)
 	}
 }
 
