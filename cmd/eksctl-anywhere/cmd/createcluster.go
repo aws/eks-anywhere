@@ -100,7 +100,11 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 	}
 	defer cleanup(ctx, deps, &err)
 
-	if features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == "tinkerbell" {
+	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == "tinkerbell" {
+		return fmt.Errorf("Error: provider tinkerbell is not supported in this release")
+	}
+
+	if deps.Provider.Name() == "tinkerbell" {
 		flag := cmd.Flags().Lookup("hardwarefile")
 		if flag == nil {
 			return fmt.Errorf("Something wrong. Flag hardwarefile not set up for provider tinkerbell")
