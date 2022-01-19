@@ -10,8 +10,10 @@ menu:
 
 ### Added
 
-- aws-iam-authenticator support
-- Allow the retention of node taints during an upgrade
+- Support for [`aws-iam-authenticator`](https://github.com/kubernetes-sigs/aws-iam-authenticator) as an authentication option in EKS-A clusters [#90](https://github.com/aws/eks-anywhere/issues/90)
+- Support for multiple workder node groups in EKS-A clusters [#840](https://github.com/aws/eks-anywhere/issues/840)
+- Support for [node taints](https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/) on EKS-A control plane and worker nodes [#189](https://github.com/aws/eks-anywhere/issues/189)
+- Support for node [labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) on EKS-A control plane and worker nodes [#486](https://github.com/aws/eks-anywhere/issues/486)
 
 ### Changed
 
