@@ -16,8 +16,13 @@ spec:
       machineGroupRef:
         name: test_cluster
         kind: VSphereMachineConfig
+  externalEtcdConfiguration:
+    count: 3
+    machineGroupRef:
+      name: test_cluster
+      kind: VSphereMachineConfig
   datacenterRef:
-    kind: VSphereDatacenter
+    kind: VSphereDatacenterConfig
     name: test_cluster
   clusterNetwork:
     cni: "cilium"
