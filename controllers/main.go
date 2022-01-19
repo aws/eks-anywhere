@@ -111,6 +111,7 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager) {
 			mgr.GetClient(),
 			ctrl.Log.WithName("controllers").WithName(anywherev1.ClusterKind),
 			mgr.GetScheme(),
+			deps.Govc,
 		)).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", anywherev1.ClusterKind)
 			os.Exit(1)

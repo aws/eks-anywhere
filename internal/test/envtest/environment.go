@@ -25,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -41,6 +42,7 @@ func init() {
 	utilruntime.Must(vspherev1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(admissionv1beta1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(anywherev1.AddToScheme(scheme.Scheme))
 }
 
 var packages = mustBuildPackagesWithCRDs(capiPackage, capvPackage)

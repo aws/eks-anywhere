@@ -330,7 +330,11 @@ var validCNIs = map[CNI]struct{}{
 }
 
 // ClusterStatus defines the observed state of Cluster
-type ClusterStatus struct{}
+type ClusterStatus struct {
+	// Descriptive message about a fatal problem while reconciling a cluster
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
+}
 
 type Ref struct {
 	Kind string `json:"kind,omitempty"`

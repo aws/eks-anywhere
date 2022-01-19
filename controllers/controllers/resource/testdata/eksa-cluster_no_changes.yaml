@@ -18,7 +18,7 @@ spec:
         kind: VSphereMachineConfig
       name: md-0
   datacenterRef:
-    kind: VSphereDatacenter
+    kind: VSphereDatacenterConfig
     name: test_cluster
   clusterNetwork:
     cni: "cilium"
