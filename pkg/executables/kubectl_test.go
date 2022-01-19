@@ -782,7 +782,7 @@ func TestKubectlGetEKSAClusters(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			fileContent := test.ReadFile(t, tt.jsonResponseFile)
 			k, ctx, cluster, e := newKubectl(t)
-			e.EXPECT().Execute(ctx, []string{"get", "clusters", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + tt.clusterName}).Return(*bytes.NewBufferString(fileContent), nil)
+			e.EXPECT().Execute(ctx, []string{"get", "clusters.anywhere.eks.amazonaws.com", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + tt.clusterName}).Return(*bytes.NewBufferString(fileContent), nil)
 
 			gotCluster, err := k.GetEksaCluster(ctx, cluster, tt.clusterName)
 			if err != nil {

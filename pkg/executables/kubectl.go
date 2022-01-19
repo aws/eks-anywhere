@@ -323,6 +323,12 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 		return err
 	}
 
+	observedGeneration := cp.Status.ObservedGeneration
+	generation := cp.Generation
+	if observedGeneration != generation {
+		return fmt.Errorf("kubeadm control plane %s status needs to be refreshed: observed generation is %d, want %d", cp.Name, observedGeneration, generation)
+	}
+
 	if !cp.Status.Ready {
 		return errors.New("control plane is not ready")
 	}
@@ -763,7 +769,7 @@ func (k *Kubectl) RemoveAnnotationInNamespace(ctx context.Context, resourceType,
 }
 
 func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error) {
-	params := []string{"get", "clusters", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + clusterName}
+	params := []string{"get", eksaClusterResourceType, "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + clusterName}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa cluster: %v", err)
