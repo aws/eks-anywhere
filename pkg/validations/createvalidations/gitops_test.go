@@ -143,7 +143,7 @@ func TestValidateGitopsForWorkloadClustersPath(t *testing.T) {
 
 			e.EXPECT().Execute(
 				ctx, []string{
-					"get", "clusters", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig",
+					"get", "clusters.anywhere.eks.amazonaws.com", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig",
 					cluster.KubeconfigFile,
 					"--field-selector=metadata.name=management-cluster",
 				}).Return(*bytes.NewBufferString(eksaClusterContent), nil)
