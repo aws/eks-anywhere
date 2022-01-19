@@ -538,11 +538,11 @@ func (p *cloudstackProvider) setupAndValidateCluster(ctx context.Context, cluste
 		return errors.New("control plane and etcd machines must have the same osFamily specified")
 	}
 	if len(string(controlPlaneMachineConfig.Spec.OSFamily)) <= 0 {
-		logger.Info("Warning: OS family not specified in cluster specification. Defaulting to Ubuntu.")
-		controlPlaneMachineConfig.Spec.OSFamily = v1alpha1.Ubuntu
-		workerNodeGroupMachineConfig.Spec.OSFamily = v1alpha1.Ubuntu
+		logger.Info("Warning: OS family not specified in cluster specification. Defaulting to Redhat.")
+		controlPlaneMachineConfig.Spec.OSFamily = v1alpha1.Redhat
+		workerNodeGroupMachineConfig.Spec.OSFamily = v1alpha1.Redhat
 		if etcdMachineConfig != nil {
-			etcdMachineConfig.Spec.OSFamily = v1alpha1.Ubuntu
+			etcdMachineConfig.Spec.OSFamily = v1alpha1.Redhat
 		}
 	}
 
