@@ -17,13 +17,22 @@ package pkg
 import (
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
-const ciliumProjectPath = "projects/cilium/cilium"
+const (
+	ciliumProjectPath       = "projects/cilium/cilium"
+	ciliumImageName         = "cilium"
+	ciliumOperatorImageName = "operator-generic"
+	ciliumHelmChartName     = "cilium-chart"
+	ciliumHelmChart         = "cilium"
+	ciliumImage             = "cilium"
+	ciliumOperatorImage     = "operator-generic"
+)
 
 // GetCiliumAssets returns the eks-a artifacts for Cilium
 func (r *ReleaseConfig) GetCiliumAssets() ([]Artifact, error) {
@@ -83,30 +92,24 @@ func (r *ReleaseConfig) GetCiliumBundle() (anywherev1alpha1.CiliumBundle, error)
 	if err != nil {
 		return anywherev1alpha1.CiliumBundle{}, errors.Cause(err)
 	}
-	ciliumImageTagMap := map[string]string{
-		"cilium":           ciliumGitTag,
-		"operator-generic": ciliumGitTag,
+	ciliumImages := []imageDefinition{
+		containerImage(ciliumImageName, ciliumImage, ciliumContainerRegistry, ciliumGitTag),
+		containerImage(ciliumOperatorImageName, ciliumOperatorImage, ciliumContainerRegistry, ciliumGitTag),
+		// Helm charts are in the same repository and have the same
+		// sem version as the corresponding container image but omiting the initial "v"
+		chart(ciliumHelmChartName, ciliumHelmChart, ciliumContainerRegistry, strings.TrimPrefix(ciliumGitTag, "v")),
 	}
 
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 
-	for image, tag := range ciliumImageTagMap {
-		imageDigest, err := r.getCiliumImageDigest(image)
+	for _, imageDef := range ciliumImages {
+		imageDigest, err := r.getCiliumImageDigest(imageDef.name)
 		if err != nil {
 			return anywherev1alpha1.CiliumBundle{}, errors.Cause(err)
 		}
 
-		bundleImageArtifact := anywherev1alpha1.Image{
-			Name:        image,
-			Description: fmt.Sprintf("Container image for %s image", image),
-			OS:          "linux",
-			Arch:        []string{"amd64"},
-			URI:         fmt.Sprintf("%s/%s:%s", ciliumContainerRegistry, image, tag),
-			ImageDigest: imageDigest,
-		}
-
-		bundleImageArtifacts[image] = bundleImageArtifact
+		bundleImageArtifacts[imageDef.name] = imageDef.builder(imageDigest)
 	}
 
 	for _, artifact := range artifacts {
@@ -121,10 +124,11 @@ func (r *ReleaseConfig) GetCiliumBundle() (anywherev1alpha1.CiliumBundle, error)
 	}
 
 	bundle := anywherev1alpha1.CiliumBundle{
-		Version:  ciliumGitTag,
-		Cilium:   bundleImageArtifacts["cilium"],
-		Operator: bundleImageArtifacts["operator-generic"],
-		Manifest: bundleManifestArtifacts["cilium.yaml"],
+		Version:   ciliumGitTag,
+		Cilium:    bundleImageArtifacts[ciliumImageName],
+		Operator:  bundleImageArtifacts[ciliumOperatorImageName],
+		Manifest:  bundleManifestArtifacts["cilium.yaml"],
+		HelmChart: bundleImageArtifacts[ciliumHelmChartName],
 	}
 
 	return bundle, nil
@@ -140,4 +144,47 @@ func (r *ReleaseConfig) getCiliumImageDigest(imageName string) (string, error) {
 	}
 
 	return imageDigest, nil
+}
+
+type imageDefinition struct {
+	name, image, registry, tag string
+	builder                    imageBuilder
+}
+
+type imageBuilder func(digest string) anywherev1alpha1.Image
+
+func containerImage(name, image, registry, tag string) imageDefinition {
+	return imageDefinition{
+		name:     name,
+		image:    image,
+		registry: registry,
+		tag:      tag,
+		builder: func(digest string) anywherev1alpha1.Image {
+			return anywherev1alpha1.Image{
+				Name:        name,
+				Description: fmt.Sprintf("Container image for %s image", name),
+				OS:          "linux",
+				Arch:        []string{"amd64"},
+				URI:         fmt.Sprintf("%s/%s:%s", registry, image, tag),
+				ImageDigest: digest,
+			}
+		},
+	}
+}
+
+func chart(name, image, registry, tag string) imageDefinition {
+	return imageDefinition{
+		name:     name,
+		image:    image,
+		registry: registry,
+		tag:      tag,
+		builder: func(digest string) anywherev1alpha1.Image {
+			return anywherev1alpha1.Image{
+				Name:        name,
+				Description: fmt.Sprintf("Helm chart for %s", name),
+				URI:         fmt.Sprintf("%s/%s:%s", registry, image, tag),
+				ImageDigest: digest,
+			}
+		},
+	}
 }

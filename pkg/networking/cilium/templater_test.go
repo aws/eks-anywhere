@@ -36,18 +36,20 @@ func newtemplaterTest(t *testing.T) *templaterTest {
 		h:         h,
 		t:         cilium.NewTemplater(h),
 		manifest:  []byte("manifestContent"),
-		uri:       "placeholder",
-		version:   "v1.9.11-eksa.1",
+		uri:       "oci://public.ecr.aws/isovalent/cilium",
+		version:   "1.9.11-eksa.1",
 		namespace: "kube-system",
 		currentSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.VersionsBundle.Cilium.Version = "v1.9.10-eksa.1"
 			s.VersionsBundle.Cilium.Cilium.URI = "public.ecr.aws/isovalent/cilium:v1.9.10-eksa.1"
-			s.VersionsBundle.Cilium.Operator.URI = "public.ecr.aws/isovalent/operator:v1.9.10-eksa.1"
+			s.VersionsBundle.Cilium.Operator.URI = "public.ecr.aws/isovalent/operator-generic:v1.9.10-eksa.1"
+			s.VersionsBundle.Cilium.HelmChart.URI = "public.ecr.aws/isovalent/cilium:1.9.10-eksa.1"
 		}),
 		spec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.VersionsBundle.Cilium.Version = "v1.9.11-eksa.1"
 			s.VersionsBundle.Cilium.Cilium.URI = "public.ecr.aws/isovalent/cilium:v1.9.11-eksa.1"
-			s.VersionsBundle.Cilium.Operator.URI = "public.ecr.aws/isovalent/operator:v1.9.11-eksa.1"
+			s.VersionsBundle.Cilium.Operator.URI = "public.ecr.aws/isovalent/operator-generic:v1.9.11-eksa.1"
+			s.VersionsBundle.Cilium.HelmChart.URI = "public.ecr.aws/isovalent/cilium:1.9.11-eksa.1"
 		}),
 	}
 }
@@ -114,6 +116,10 @@ func TestTemplaterGenerateUpgradePreflightManifestSuccess(t *testing.T) {
 		},
 		"preflight": map[string]interface{}{
 			"enabled": true,
+			"image": map[string]interface{}{
+				"repository": "public.ecr.aws/isovalent/cilium",
+				"tag":        "v1.9.11-eksa.1",
+			},
 		},
 		"agent": false,
 	}

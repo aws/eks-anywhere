@@ -197,20 +197,20 @@ func (k *Kubectl) Wait(ctx context.Context, kubeconfig string, timeout string, f
 	return nil
 }
 
-func (k *Kubectl) DeleteEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) error {
-	params := []string{"delete", eksaVSphereDatacenterResourceType, vsphereDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+func (k *Kubectl) DeleteEksaDatacenterConfig(ctx context.Context, eksaDatacenterResourceType string, eksaDatacenterConfigName string, kubeconfigFile string, namespace string) error {
+	params := []string{"delete", eksaDatacenterResourceType, eksaDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error deleting vspheredatacenterconfig cluster %s apply: %v", vsphereDatacenterConfigName, err)
+		return fmt.Errorf("error deleting %s cluster %s apply: %v", eksaDatacenterResourceType, eksaDatacenterConfigName, err)
 	}
 	return nil
 }
 
-func (k *Kubectl) DeleteEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) error {
-	params := []string{"delete", eksaVSphereMachineResourceType, vsphereMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+func (k *Kubectl) DeleteEksaMachineConfig(ctx context.Context, eksaMachineConfigResourceType string, eksaMachineConfigName string, kubeconfigFile string, namespace string) error {
+	params := []string{"delete", eksaMachineConfigResourceType, eksaMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error deleting vspheremachineconfig cluster %s apply: %v", vsphereMachineConfigName, err)
+		return fmt.Errorf("error deleting %s cluster %s apply: %v", eksaMachineConfigResourceType, eksaMachineConfigName, err)
 	}
 	return nil
 }
@@ -323,6 +323,12 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 		return err
 	}
 
+	observedGeneration := cp.Status.ObservedGeneration
+	generation := cp.Generation
+	if observedGeneration != generation {
+		return fmt.Errorf("kubeadm control plane %s status needs to be refreshed: observed generation is %d, want %d", cp.Name, observedGeneration, generation)
+	}
+
 	if !cp.Status.Ready {
 		return errors.New("control plane is not ready")
 	}
@@ -339,21 +345,22 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 
 func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error {
 	logger.V(6).Info("waiting for nodes", "cluster", clusterName)
-	md, err := k.GetMachineDeployment(ctx, cluster, clusterName, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
+	deployments, err := k.GetMachineDeployments(ctx, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return err
 	}
+	for _, machineDeployment := range deployments {
+		if machineDeployment.Status.Phase != "Running" {
+			return fmt.Errorf("machine deployment is in %s phase", machineDeployment.Status.Phase)
+		}
 
-	if md.Status.Phase != "Running" {
-		return fmt.Errorf("machine deployment is in %s phase", md.Status.Phase)
-	}
+		if machineDeployment.Status.UnavailableReplicas != 0 {
+			return fmt.Errorf("%v machine deployment replicas are unavailable", machineDeployment.Status.UnavailableReplicas)
+		}
 
-	if md.Status.UnavailableReplicas != 0 {
-		return fmt.Errorf("%v machine deployment replicas are unavailable", md.Status.UnavailableReplicas)
-	}
-
-	if md.Status.ReadyReplicas != md.Status.Replicas {
-		return fmt.Errorf("%v machine deployment replicas are not ready", md.Status.Replicas-md.Status.ReadyReplicas)
+		if machineDeployment.Status.ReadyReplicas != machineDeployment.Status.Replicas {
+			return fmt.Errorf("%v machine deployment replicas are not ready", machineDeployment.Status.Replicas-machineDeployment.Status.ReadyReplicas)
+		}
 	}
 	return nil
 }
@@ -680,8 +687,8 @@ func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Clu
 	return response, nil
 }
 
-func (k *Kubectl) GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*clusterv1.MachineDeployment, error) {
-	params := []string{"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), fmt.Sprintf("%s-md-0", clusterName), "-o", "json"}
+func (k *Kubectl) GetMachineDeployment(ctx context.Context, cluster *types.Cluster, workerNodeGroupName string, opts ...KubectlOpt) (*clusterv1.MachineDeployment, error) {
+	params := []string{"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), workerNodeGroupName, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -763,7 +770,7 @@ func (k *Kubectl) RemoveAnnotationInNamespace(ctx context.Context, resourceType,
 }
 
 func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error) {
-	params := []string{"get", "clusters", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + clusterName}
+	params := []string{"get", eksaClusterResourceType, "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + clusterName}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa cluster: %v", err)

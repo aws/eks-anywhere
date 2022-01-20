@@ -88,6 +88,7 @@ type ClusterClient interface {
 
 type Networking interface {
 	GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
+	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 }
 
 type AwsIamAuth interface {
@@ -544,6 +545,10 @@ func (c *ClusterManager) InstallNetworking(ctx context.Context, cluster *types.C
 	return nil
 }
 
+func (c *ClusterManager) UpgradeNetworking(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
+	return c.networking.Upgrade(ctx, cluster, currentSpec, newSpec)
+}
+
 func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types.Cluster, provider providers.Provider) error {
 	storageClass := provider.GenerateStorageClass()
 	if storageClass == nil {
@@ -715,6 +720,11 @@ func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, m
 }
 
 func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Context, managementCluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	var machineDeploymentReplicasCount int
+	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		machineDeploymentReplicasCount += workerNodeGroupConfiguration.Count
+	}
+
 	isMdReady := func() error {
 		return c.clusterClient.ValidateWorkerNodes(ctx, managementCluster, clusterSpec.Name)
 	}
@@ -724,7 +734,7 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 		return nil
 	}
 
-	timeout := time.Duration(clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count) * c.machineMaxWait
+	timeout := time.Duration(machineDeploymentReplicasCount) * c.machineMaxWait
 	if timeout <= c.machinesMinWait {
 		timeout = c.machinesMinWait
 	}
@@ -886,35 +896,15 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 		if clusterSpec.Spec.ExternalEtcdConfiguration != nil && clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
 			return fmt.Errorf("machineGroupRef for etcd machines is not defined")
 		}
-		err := c.Retrier.Retry(
-			func() error {
-				return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
-			},
-		)
-		if err != nil {
-			return fmt.Errorf("error updating annotation when pausing control plane machineconfig reconciliation: %v", err)
-		}
-		if clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name != clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name {
+
+		for _, machineConfigRef := range clusterSpec.MachineConfigRefs() {
 			err := c.Retrier.Retry(
 				func() error {
-					return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
+					return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 				},
 			)
 			if err != nil {
-				return fmt.Errorf("error updating annotation when pausing worker node machineconfig reconciliation: %v", err)
-			}
-		}
-		if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
-			if clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name != clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name {
-				// etcd machines have a separate machineGroupRef which hasn't been paused yet, so apply pause annotation
-				err := c.Retrier.Retry(
-					func() error {
-						return c.clusterClient.UpdateAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
-					},
-				)
-				if err != nil {
-					return fmt.Errorf("error updating annotation when pausing etcd machineconfig reconciliation: %v", err)
-				}
+				return fmt.Errorf("error updating annotation when pausing reconciliation for machine config %s: %v", machineConfigRef.Name, err)
 			}
 		}
 	}

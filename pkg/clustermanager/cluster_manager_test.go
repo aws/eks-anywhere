@@ -595,7 +595,7 @@ func TestClusterManagerMoveCAPISuccess(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Name = to.Name
 		s.Spec.ControlPlaneConfiguration.Count = 3
-		s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+		s.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 3, MachineGroupRef: &v1alpha1.Ref{Name: "test-wn"}}}
 	})
 	ctx := context.Background()
 
@@ -699,7 +699,7 @@ func TestClusterManagerMoveCAPIErrorGetMachines(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Name = to.Name
 		s.Spec.ControlPlaneConfiguration.Count = 3
-		s.Spec.WorkerNodeGroupConfigurations[0].Count = 3
+		s.Spec.WorkerNodeGroupConfigurations = []v1alpha1.WorkerNodeGroupConfiguration{{Count: 3, MachineGroupRef: &v1alpha1.Ref{Name: "test-wn"}}}
 	})
 	ctx := context.Background()
 

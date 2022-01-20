@@ -42,6 +42,17 @@ spec:
                     description: CNI specifies the CNI plugin to be installed in the
                       cluster
                     type: string
+                  dns:
+                    properties:
+                      resolvConf:
+                        description: ResolvConf refers to the DNS resolver configuration
+                        properties:
+                          path:
+                            description: Path defines the path to the file that contains
+                              the DNS resolver configuration
+                            type: string
+                        type: object
+                    type: object
                   pods:
                     description: Comma-separated list of CIDR blocks to use for pod
                       and service subnets. Defaults to 192.168.0.0/16 for pod subnet.
@@ -75,6 +86,11 @@ spec:
                         type: string
                     required:
                     - host
+                    type: object
+                  labels:
+                    additionalProperties:
+                      type: string
+                    description: Labels define the labels to assign to the node
                     type: object
                   machineGroupRef:
                     description: MachineGroupRef defines the machine group configuration
@@ -222,11 +238,19 @@ spec:
                         name:
                           type: string
                       type: object
+                    name:
+                      description: Name refers to the name of the worker node group
+                      type: string
                   type: object
                 type: array
             type: object
           status:
             description: ClusterStatus defines the observed state of Cluster
+            properties:
+              failureMessage:
+                description: Descriptive message about a fatal problem while reconciling
+                  a cluster
+                type: string
             type: object
         type: object
     served: true

@@ -62,7 +62,7 @@ func (v *Validator) ValidateVCenterConfig(ctx context.Context, datacenterConfig 
 }
 
 // TODO: dry out machine configs validations
-func (v *Validator) validateCluster(ctx context.Context, vsphereClusterSpec *spec) error {
+func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereClusterSpec *Spec) error {
 	var etcdMachineConfig *anywherev1.VSphereMachineConfig
 
 	// TODO: move this to api Cluster validations
@@ -89,6 +89,17 @@ func (v *Validator) validateCluster(ctx context.Context, vsphereClusterSpec *spe
 	}
 	if controlPlaneMachineConfig.Spec.OSFamily != anywherev1.Bottlerocket && controlPlaneMachineConfig.Spec.OSFamily != anywherev1.Ubuntu {
 		return fmt.Errorf("control plane osFamily: %s is not supported, please use one of the following: %s, %s", controlPlaneMachineConfig.Spec.OSFamily, anywherev1.Bottlerocket, anywherev1.Ubuntu)
+	}
+
+	workerNodeGroupConfigs := vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations
+	if len(workerNodeGroupConfigs) == 1 && workerNodeGroupConfigs[0].Name == "" {
+		logger.V(1).Info("Worker node group name not specified. Defaulting name to md-0.")
+		workerNodeGroupConfigs[0].Name = "md-0"
+	}
+	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
+		if workerNodeGroupConfig.Name == "" {
+			return errors.New("must specify name for worker nodes")
+		}
 	}
 
 	var workerNodeGroupMachineConfigs []*anywherev1.VSphereMachineConfig
@@ -216,7 +227,7 @@ func (v *Validator) validateSSHUsername(machineConfig *anywherev1.VSphereMachine
 	return nil
 }
 
-func (v *Validator) validateTemplate(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
+func (v *Validator) validateTemplate(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
 	if err := v.validateTemplatePresence(ctx, spec.datacenterConfig.Spec.Datacenter, machineConfig); err != nil {
 		return err
 	}
@@ -241,7 +252,7 @@ func (v *Validator) validateTemplatePresence(ctx context.Context, datacenter str
 	return nil
 }
 
-func (v *Validator) validateTemplateTags(ctx context.Context, spec *spec, machineConfig *anywherev1.VSphereMachineConfig) error {
+func (v *Validator) validateTemplateTags(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
 	tags, err := v.govc.GetTags(ctx, machineConfig.Spec.Template)
 	if err != nil {
 		return fmt.Errorf("error validating template tags: %v", err)
@@ -375,7 +386,7 @@ func (v *Validator) validateNetwork(ctx context.Context, network string) error {
 	return nil
 }
 
-func (v *Validator) validateControlPlaneIpUniqueness(spec *spec) error {
+func (v *Validator) validateControlPlaneIpUniqueness(spec *Spec) error {
 	ip := spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
 	if !networkutils.NewIPGenerator(v.netClient).IsIPUnique(ip) {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)

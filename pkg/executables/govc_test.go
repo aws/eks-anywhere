@@ -102,6 +102,7 @@ type deployTemplateTest struct {
 	mockExecutable           *mockexecutables.MockExecutable
 	env                      map[string]string
 	datacenter               string
+	datastore                string
 	resourcePool             string
 	templatePath             string
 	ovaURL                   string
@@ -121,6 +122,7 @@ func newDeployTemplateTest(t *testing.T) *deployTemplateTest {
 		mockExecutable:           exec,
 		env:                      env,
 		datacenter:               "SDDC-Datacenter",
+		datastore:                "/SDDC-Datacenter/datastore/WorkloadDatastore",
 		resourcePool:             "*/Resources/Compute-ResourcePool",
 		templatePath:             "/SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.19.6",
 		ovaURL:                   "https://aws.com/ova",
@@ -158,7 +160,7 @@ func (dt *deployTemplateTest) expectFolderInfoToReturn(err error) {
 func (dt *deployTemplateTest) expectDeployToReturn(err error) {
 	dt.expectations = append(
 		dt.expectations,
-		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "library.deploy", "-dc", dt.datacenter, "-pool", dt.resourcePool, "-folder", dt.deployFolder, "-options", test.OfType("string"), dt.templateInLibraryPathAbs, dt.templateName).Return(*dt.fakeExecResponse, err),
+		dt.mockExecutable.EXPECT().ExecuteWithEnv(dt.ctx, dt.env, "library.deploy", "-dc", dt.datacenter, "-ds", dt.datastore, "-pool", dt.resourcePool, "-folder", dt.deployFolder, "-options", test.OfType("string"), dt.templateInLibraryPathAbs, dt.templateName).Return(*dt.fakeExecResponse, err),
 	)
 }
 
@@ -178,7 +180,7 @@ func (dt *deployTemplateTest) expectMarkAsTemplateToReturn(err error) {
 
 func (dt *deployTemplateTest) DeployTemplateFromLibrary() error {
 	gomock.InOrder(dt.expectations...)
-	return dt.govc.DeployTemplateFromLibrary(dt.ctx, dt.deployFolder, dt.templateName, templateLibrary, dt.datacenter, dt.resourcePool, dt.resizeDisk2)
+	return dt.govc.DeployTemplateFromLibrary(dt.ctx, dt.deployFolder, dt.templateName, templateLibrary, dt.datacenter, dt.datastore, dt.resourcePool, dt.resizeDisk2)
 }
 
 func (dt *deployTemplateTest) assertDeployTemplateSuccess(t *testing.T) {

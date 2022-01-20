@@ -159,8 +159,8 @@ func TestRetrierClientWaitForCiliumDaemonSetError(t *testing.T) {
 
 func TestRetrierClientWaitForCiliumDeploymentSuccess(t *testing.T) {
 	tt := newWaitForCiliumTest(t)
-	tt.c.EXPECT().GetDeployment(tt.ctx, "cilium", "kube-system", tt.cluster.KubeconfigFile).Return(nil, errors.New("error in get")).Times(5)
-	tt.c.EXPECT().GetDeployment(tt.ctx, "cilium", "kube-system", tt.cluster.KubeconfigFile).Return(tt.ciliumDeployment, nil)
+	tt.c.EXPECT().GetDeployment(tt.ctx, "cilium-operator", "kube-system", tt.cluster.KubeconfigFile).Return(nil, errors.New("error in get")).Times(5)
+	tt.c.EXPECT().GetDeployment(tt.ctx, "cilium-operator", "kube-system", tt.cluster.KubeconfigFile).Return(tt.ciliumDeployment, nil)
 
 	tt.Expect(tt.r.WaitForCiliumDeployment(tt.ctx, tt.cluster)).To(Succeed(), "retrierClient.waitForCiliumDeployment() should succeed after 6 tries")
 }
@@ -168,8 +168,8 @@ func TestRetrierClientWaitForCiliumDeploymentSuccess(t *testing.T) {
 func TestRetrierClientWaitForCiliumDeploymentError(t *testing.T) {
 	tt := newWaitForCiliumTest(t)
 	tt.r.Retrier = retrier.NewWithMaxRetries(5, 0)
-	tt.c.EXPECT().GetDeployment(tt.ctx, "cilium", "kube-system", tt.cluster.KubeconfigFile).Return(nil, errors.New("error in get")).Times(5)
-	tt.c.EXPECT().GetDeployment(tt.ctx, "cilium", "kube-system", tt.cluster.KubeconfigFile).Return(tt.ciliumDeployment, nil).AnyTimes()
+	tt.c.EXPECT().GetDeployment(tt.ctx, "cilium-operator", "kube-system", tt.cluster.KubeconfigFile).Return(nil, errors.New("error in get")).Times(5)
+	tt.c.EXPECT().GetDeployment(tt.ctx, "cilium-operator", "kube-system", tt.cluster.KubeconfigFile).Return(tt.ciliumDeployment, nil).AnyTimes()
 
 	tt.Expect(tt.r.WaitForCiliumDeployment(tt.ctx, tt.cluster)).To(MatchError(ContainSubstring("error in get")), "retrierClient.waitForCiliumDeployment() should fail after 5 tries")
 }

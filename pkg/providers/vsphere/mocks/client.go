@@ -141,17 +141,17 @@ func (mr *MockProviderGovcClientMockRecorder) DeleteLibraryElement(arg0, arg1 in
 }
 
 // DeployTemplateFromLibrary mocks base method.
-func (m *MockProviderGovcClient) DeployTemplateFromLibrary(arg0 context.Context, arg1, arg2, arg3, arg4, arg5 string, arg6 bool) error {
+func (m *MockProviderGovcClient) DeployTemplateFromLibrary(arg0 context.Context, arg1, arg2, arg3, arg4, arg5, arg6 string, arg7 bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeployTemplateFromLibrary", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	ret := m.ctrl.Call(m, "DeployTemplateFromLibrary", arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeployTemplateFromLibrary indicates an expected call of DeployTemplateFromLibrary.
-func (mr *MockProviderGovcClientMockRecorder) DeployTemplateFromLibrary(arg0, arg1, arg2, arg3, arg4, arg5, arg6 interface{}) *gomock.Call {
+func (mr *MockProviderGovcClientMockRecorder) DeployTemplateFromLibrary(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployTemplateFromLibrary", reflect.TypeOf((*MockProviderGovcClient)(nil).DeployTemplateFromLibrary), arg0, arg1, arg2, arg3, arg4, arg5, arg6)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployTemplateFromLibrary", reflect.TypeOf((*MockProviderGovcClient)(nil).DeployTemplateFromLibrary), arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7)
 }
 
 // GetCertThumbprint mocks base method.
@@ -439,32 +439,32 @@ func (mr *MockProviderKubectlClientMockRecorder) CreateNamespace(arg0, arg1, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNamespace", reflect.TypeOf((*MockProviderKubectlClient)(nil).CreateNamespace), arg0, arg1, arg2)
 }
 
-// DeleteEksaVSphereDatacenterConfig mocks base method.
-func (m *MockProviderKubectlClient) DeleteEksaVSphereDatacenterConfig(arg0 context.Context, arg1, arg2, arg3 string) error {
+// DeleteEksaDatacenterConfig mocks base method.
+func (m *MockProviderKubectlClient) DeleteEksaDatacenterConfig(arg0 context.Context, arg1, arg2, arg3, arg4 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteEksaVSphereDatacenterConfig", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "DeleteEksaDatacenterConfig", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteEksaVSphereDatacenterConfig indicates an expected call of DeleteEksaVSphereDatacenterConfig.
-func (mr *MockProviderKubectlClientMockRecorder) DeleteEksaVSphereDatacenterConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+// DeleteEksaDatacenterConfig indicates an expected call of DeleteEksaDatacenterConfig.
+func (mr *MockProviderKubectlClientMockRecorder) DeleteEksaDatacenterConfig(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEksaVSphereDatacenterConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).DeleteEksaVSphereDatacenterConfig), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEksaDatacenterConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).DeleteEksaDatacenterConfig), arg0, arg1, arg2, arg3, arg4)
 }
 
-// DeleteEksaVSphereMachineConfig mocks base method.
-func (m *MockProviderKubectlClient) DeleteEksaVSphereMachineConfig(arg0 context.Context, arg1, arg2, arg3 string) error {
+// DeleteEksaMachineConfig mocks base method.
+func (m *MockProviderKubectlClient) DeleteEksaMachineConfig(arg0 context.Context, arg1, arg2, arg3, arg4 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteEksaVSphereMachineConfig", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "DeleteEksaMachineConfig", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteEksaVSphereMachineConfig indicates an expected call of DeleteEksaVSphereMachineConfig.
-func (mr *MockProviderKubectlClientMockRecorder) DeleteEksaVSphereMachineConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+// DeleteEksaMachineConfig indicates an expected call of DeleteEksaMachineConfig.
+func (mr *MockProviderKubectlClientMockRecorder) DeleteEksaMachineConfig(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEksaVSphereMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).DeleteEksaVSphereMachineConfig), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEksaMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).DeleteEksaMachineConfig), arg0, arg1, arg2, arg3, arg4)
 }
 
 // GetEksaCluster mocks base method.
@@ -570,6 +570,20 @@ func (mr *MockProviderKubectlClientMockRecorder) GetMachineDeployment(arg0, arg1
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1, arg2}, arg3...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineDeployment", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetMachineDeployment), varargs...)
+}
+
+// GetNamespace mocks base method.
+func (m *MockProviderKubectlClient) GetNamespace(arg0 context.Context, arg1, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetNamespace", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GetNamespace indicates an expected call of GetNamespace.
+func (mr *MockProviderKubectlClientMockRecorder) GetNamespace(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNamespace", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetNamespace), arg0, arg1, arg2)
 }
 
 // GetSecret mocks base method.

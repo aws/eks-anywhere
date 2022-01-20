@@ -3,7 +3,9 @@ package envtest
 import (
 	"context"
 	"fmt"
+	"path"
 	"path/filepath"
+	goruntime "runtime"
 	"strings"
 	"testing"
 
@@ -23,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -39,6 +42,7 @@ func init() {
 	utilruntime.Must(vspherev1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(admissionv1beta1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(anywherev1.AddToScheme(scheme.Scheme))
 }
 
 var packages = mustBuildPackagesWithCRDs(capiPackage, capvPackage)
@@ -87,7 +91,7 @@ func RunWithEnvironment(m *testing.M, opts ...EnvironmentOpt) int {
 }
 
 func newEnvironment(ctx context.Context) (*Environment, error) {
-	root := filepath.Join("..", "..", "..")
+	root := getRootPath()
 	crdDirectoryPaths := make([]string, 0, len(packages)+1)
 	crdDirectoryPaths = append(crdDirectoryPaths, filepath.Join(root, "config", "crd", "bases"))
 	extraCRDPaths, err := getPathsToPackagesCRDs(root, packages...)
@@ -183,4 +187,9 @@ func (e *Environment) CreateNamespaceForTest(ctx context.Context, t *testing.T) 
 	})
 
 	return namespace.Name
+}
+
+func getRootPath() string {
+	_, currentFilePath, _, _ := goruntime.Caller(0)
+	return path.Join(path.Dir(currentFilePath), "..", "..", "..")
 }

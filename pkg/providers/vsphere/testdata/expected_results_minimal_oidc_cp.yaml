@@ -1,4 +1,4 @@
-apiVersion: cluster.x-k8s.io/v1alpha3
+apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   labels:
@@ -12,48 +12,30 @@ spec:
     services:
       cidrBlocks: [10.96.0.0/12]
   controlPlaneRef:
-    apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
     name: test
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: VSphereCluster
     name: test
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: VSphereCluster
 metadata:
   name: test
   namespace: eksa-system
 spec:
-  cloudProviderConfiguration:
-    global:
-      secretName: cloud-provider-vsphere-credentials
-      secretNamespace: kube-system
-      thumbprint: 'ABCDEFG'
-      insecure: false
-    network:
-      name: /SDDC-Datacenter/network/sddc-cgw-network-1
-    providerConfig:
-      cloud:
-        controllerImage: public.ecr.aws/l0g8r8j6/kubernetes/cloud-provider-vsphere/cpi/manager:v1.18.1-2093eaeda5a4567f0e516d652e0b25b1d7abc774
-    virtualCenter:
-      vsphere_server:
-        datacenters: SDDC-Datacenter
-        thumbprint: 'ABCDEFG'
-    workspace:
-      datacenter: SDDC-Datacenter
-      datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
-      folder: '/SDDC-Datacenter/vm'
-      resourcePool: '*/Resources'
-      server: vsphere_server
   controlPlaneEndpoint:
     host: 1.2.3.4
     port: 6443
+  identityRef:
+    kind: Secret
+    name: test-vsphere-credentials
   server: vsphere_server
   thumbprint: 'ABCDEFG'
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: VSphereMachineTemplate
 metadata:
   name: test-control-plane-template-1234567890000
@@ -78,16 +60,17 @@ spec:
       template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
       thumbprint: 'ABCDEFG'
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
   name: test
   namespace: eksa-system
 spec:
-  infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-    kind: VSphereMachineTemplate
-    name: test-control-plane-template-1234567890000
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: VSphereMachineTemplate
+      name: test-control-plane-template-1234567890000
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
@@ -98,7 +81,6 @@ spec:
           extraArgs:
             cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       dns:
-        type: CoreDNS
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.0-eks-1-19-4
       apiServer:
@@ -371,7 +353,7 @@ spec:
   replicas: 3
   version: v1.19.8-eks-1-19-4
 ---
-apiVersion: addons.cluster.x-k8s.io/v1alpha3
+apiVersion: addons.cluster.x-k8s.io/v1beta1
 kind: ClusterResourceSet
 metadata:
   labels:
@@ -407,6 +389,15 @@ spec:
 apiVersion: v1
 kind: Secret
 metadata:
+  name: test-vsphere-credentials
+  namespace: eksa-system
+stringData:
+  username: "vsphere_username"
+  password: "vsphere_password"
+---
+apiVersion: v1
+kind: Secret
+metadata:
   name: vsphere-csi-controller
   namespace: eksa-system
 stringData:
@@ -416,6 +407,35 @@ stringData:
     metadata:
       name: vsphere-csi-controller
       namespace: kube-system
+type: addons.cluster.x-k8s.io/resource-set
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: csi-vsphere-config
+  namespace: eksa-system
+stringData:
+  data: |
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: csi-vsphere-config
+      namespace: kube-system
+    stringData:
+      csi-vsphere.conf: |+
+        [Global]
+        cluster-id = "default/test"
+        thumbprint = "ABCDEFG"
+
+        [VirtualCenter "vsphere_server"]
+        user = "vsphere_username"
+        password = "vsphere_password"
+        datacenters = "SDDC-Datacenter"
+        insecure-flag = "false"
+
+        [Network]
+        public-network = "/SDDC-Datacenter/network/sddc-cgw-network-1"
+    type: Opaque
 type: addons.cluster.x-k8s.io/resource-set
 ---
 apiVersion: v1

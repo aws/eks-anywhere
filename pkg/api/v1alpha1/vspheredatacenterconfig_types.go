@@ -28,6 +28,10 @@ type VSphereDatacenterConfigStatus struct { // Important: Run "make generate" to
 
 	// ObservedGeneration is the latest generation observed by the controller.
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// FailureMessage indicates that there is a fatal problem reconciling the
+	// state, and will be set to a descriptive error message.
+	FailureMessage *string `json:"failureMessage,omitempty"`
 }
 
 //+kubebuilder:object:root=true

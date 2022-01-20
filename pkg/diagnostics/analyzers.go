@@ -52,10 +52,6 @@ func (a *analyzerFactory) managementClusterDeploymentAnalyzers() []*Analyze {
 	d := []eksaDeployment{
 		{
 			Name:             "capv-controller-manager",
-			Namespace:        constants.CapiWebhookSystemNamespace,
-			ExpectedReplicas: 1,
-		}, {
-			Name:             "capv-controller-manager",
 			Namespace:        constants.CapvSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
@@ -69,18 +65,6 @@ func (a *analyzerFactory) managementClusterDeploymentAnalyzers() []*Analyze {
 		}, {
 			Name:             "cert-manager",
 			Namespace:        constants.CertManagerNamespace,
-			ExpectedReplicas: 1,
-		}, {
-			Name:             "capi-kubeadm-control-plane-controller-manager",
-			Namespace:        constants.CapiWebhookSystemNamespace,
-			ExpectedReplicas: 1,
-		}, {
-			Name:             "capi-kubeadm-bootstrap-controller-manager",
-			Namespace:        constants.CapiWebhookSystemNamespace,
-			ExpectedReplicas: 1,
-		}, {
-			Name:             "capi-controller-manager",
-			Namespace:        constants.CapiWebhookSystemNamespace,
 			ExpectedReplicas: 1,
 		}, {
 			Name:             "capi-controller-manager",
