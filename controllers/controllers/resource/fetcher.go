@@ -214,12 +214,15 @@ func (r *CapiResourceFetcher) VSphereWorkerMachineTemplates(ctx context.Context,
 	}
 	vsphereMachineTemplate := &vspherev1.VSphereMachineTemplate{}
 	workerMachineTemplates := make([]vspherev1.VSphereMachineTemplate, 0, len(cs.Spec.WorkerNodeGroupConfigurations))
-	for _, md := range machineDeployments {
-		err = r.FetchObjectByName(ctx, md.Spec.Template.Spec.InfrastructureRef.Name, constants.EksaSystemNamespace, vsphereMachineTemplate)
-		if err != nil {
-			return nil, err
+	for _, workerNodeGroupConfiguration := range cs.Spec.WorkerNodeGroupConfigurations {
+		mdName := fmt.Sprintf("%s-%s", cs.Name, workerNodeGroupConfiguration.Name)
+		if _, ok := machineDeployments[mdName]; ok {
+			err = r.FetchObjectByName(ctx, machineDeployments[mdName].Spec.Template.Spec.InfrastructureRef.Name, constants.EksaSystemNamespace, vsphereMachineTemplate)
+			if err != nil {
+				return nil, err
+			}
+			workerMachineTemplates = append(workerMachineTemplates, *vsphereMachineTemplate)
 		}
-		workerMachineTemplates = append(workerMachineTemplates, *vsphereMachineTemplate)
 	}
 	return workerMachineTemplates, nil
 }

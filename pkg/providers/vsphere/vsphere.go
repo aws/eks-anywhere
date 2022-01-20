@@ -1081,34 +1081,33 @@ func (p *vsphereProvider) DatacenterConfig() providers.DatacenterConfig {
 }
 
 func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
-	var configs []providers.MachineConfig
+	configs := make(map[string]providers.MachineConfig, len(p.machineConfigs))
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
 	if p.clusterConfig.IsManaged() {
 		p.machineConfigs[controlPlaneMachineName].SetManagement(p.clusterConfig.ManagedBy())
 	}
-	configs = append(configs, p.machineConfigs[controlPlaneMachineName])
+	configs[controlPlaneMachineName] = p.machineConfigs[controlPlaneMachineName]
 
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
 		if etcdMachineName != controlPlaneMachineName {
-			configs = append(configs, p.machineConfigs[etcdMachineName])
+			configs[etcdMachineName] = p.machineConfigs[etcdMachineName]
 			p.machineConfigs[etcdMachineName].SetManagement(p.clusterConfig.ManagedBy())
 		}
 	}
 
 	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
 		workerMachineName := workerNodeGroupConfiguration.MachineGroupRef.Name
-		if !containsConfig(configs, p.machineConfigs[workerMachineName]) {
-			configs = append(configs, p.machineConfigs[workerMachineName])
+		if _, ok := configs[workerMachineName]; !ok {
+			configs[workerMachineName] = p.machineConfigs[workerMachineName]
 			if p.clusterConfig.IsManaged() {
 				p.machineConfigs[workerMachineName].SetManagement(p.clusterConfig.ManagedBy())
 			}
 		}
 	}
-
-	return configs
+	return configsMapToSlice(configs)
 }
 
 func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
@@ -1251,11 +1250,11 @@ func (p *vsphereProvider) RunPostControlPlaneCreation(ctx context.Context, clust
 	return nil
 }
 
-func containsConfig(configs []providers.MachineConfig, c providers.MachineConfig) bool {
-	for _, config := range configs {
-		if config == c {
-			return true
-		}
+func configsMapToSlice(c map[string]providers.MachineConfig) []providers.MachineConfig {
+	configs := make([]providers.MachineConfig, 0, len(c))
+	for _, config := range c {
+		configs = append(configs, config)
 	}
-	return false
+
+	return configs
 }
