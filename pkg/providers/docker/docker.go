@@ -98,6 +98,16 @@ func (p *provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	if clusterSpec.Spec.ControlPlaneConfiguration.Endpoint != nil && clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host != "" {
 		return fmt.Errorf("specifying endpoint host configuration in Cluster is not supported")
 	}
+	workerNodeGroupConfigs := clusterSpec.Spec.WorkerNodeGroupConfigurations
+	if len(workerNodeGroupConfigs) == 1 && workerNodeGroupConfigs[0].Name == "" {
+		logger.V(1).Info("Worker node group name not specified. Defaulting name to md-0.")
+		workerNodeGroupConfigs[0].Name = "md-0"
+	}
+	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
+		if workerNodeGroupConfig.Name == "" {
+			return fmt.Errorf("must specify name for worker nodes")
+		}
+	}
 	return nil
 }
 
