@@ -115,23 +115,23 @@ func TestMapClusterToCloudStackDeploymentConfigSpec(t *testing.T) {
 		csCluster *cloudstackv1.CloudStackCluster
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    *anywherev1.CloudStackDeploymentConfig
+		name string
+		args args
+		want *anywherev1.CloudStackDeploymentConfig
 	}{
 		{
-			name:    "All path are available",
+			name: "All path are available",
 			args: args{
 				csCluster: &cloudstackv1.CloudStackCluster{
 					Spec: cloudstackv1.CloudStackClusterSpec{
-						Zone: "zone",
+						Zone:    "zone",
 						Network: "network",
 					},
 				},
 			},
 			want: &anywherev1.CloudStackDeploymentConfig{
 				Spec: anywherev1.CloudStackDeploymentConfigSpec{
-					Zone: "zone",
+					Zone:    "zone",
 					Network: "network",
 				},
 			},
@@ -236,7 +236,8 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 							Spec: cloudstackv1.CloudStackMachineSpec{
 								Offering: "Large",
 								Template: "rhel8-1.20",
-								Details: map[string]string{"a": "b"},
+								Details:  map[string]string{"a": "b"},
+								AffinityGroupIds: []string{"c", "d"},
 							},
 						},
 					},
@@ -244,9 +245,10 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 			},
 			want: &anywherev1.CloudStackMachineConfig{
 				Spec: anywherev1.CloudStackMachineConfigSpec{
-					Template:     "rhel8-1.20",
+					Template:        "rhel8-1.20",
 					ComputeOffering: "Large",
-					Details: map[string]string{"a": "b"},
+					Details:         map[string]string{"a": "b"},
+					AffinityGroupIds: []string{"c", "d"},
 				},
 			},
 		},

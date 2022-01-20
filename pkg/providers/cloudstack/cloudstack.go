@@ -1227,10 +1227,10 @@ func (p *cloudstackProvider) createSecret(cluster *types.Cluster, contents *byte
 	}
 
 	values := map[string]string{
-		"clusterName": cluster.Name,
-		"insecure":    strconv.FormatBool(p.deploymentConfig.Spec.Insecure),
-		"cloudstackNetwork":  p.deploymentConfig.Spec.Network,
-		"eksaLicense":        os.Getenv(eksaLicense),
+		"clusterName":       cluster.Name,
+		"insecure":          strconv.FormatBool(p.deploymentConfig.Spec.Insecure),
+		"cloudstackNetwork": p.deploymentConfig.Spec.Network,
+		"eksaLicense":       os.Getenv(eksaLicense),
 	}
 	err = t.Execute(contents, values)
 	if err != nil {

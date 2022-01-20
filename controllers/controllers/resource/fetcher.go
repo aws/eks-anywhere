@@ -471,6 +471,7 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 	csSpec.Spec.ComputeOffering = csMachineTemplate.Spec.Spec.Spec.Offering
 	csSpec.Spec.Template = csMachineTemplate.Spec.Spec.Spec.Template
 	csSpec.Spec.Details = csMachineTemplate.Spec.Spec.Spec.Details
+	csSpec.Spec.AffinityGroupIds = csMachineTemplate.Spec.Spec.Spec.AffinityGroupIds
 
 	// TODO: OSFamily, Users, DiskOffering
 	return csSpec, nil

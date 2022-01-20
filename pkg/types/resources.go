@@ -77,6 +77,12 @@ type CmkDiskOffering struct {
 	Name     string `json:"name"`
 }
 
+type CmkAffinityGroup struct {
+	Type string `json:"type"`
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
 type CmkZone struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
