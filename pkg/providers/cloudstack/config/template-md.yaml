@@ -11,6 +11,8 @@ spec:
           criSocket: /var/run/containerd/containerd.sock
           kubeletExtraArgs:
             provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
+            read-only-port: "0"
+            anonymous-auth: "false"
 {{- if .cgroupDriverSystemd}}
             cgroup-driver: systemd
 {{- end }}
