@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"fmt"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -59,9 +60,7 @@ func validateImmutableFieldsCloudStackMachineConfig(new, old *CloudStackMachineC
 		return nil
 	}
 
-	var allErrs field.ErrorList
-
-	return allErrs
+	return nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
