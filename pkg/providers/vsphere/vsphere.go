@@ -8,16 +8,15 @@ import (
 	"net"
 	"os"
 	"reflect"
-	"strconv"
 	"strings"
 	"text/template"
 	"time"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"golang.org/x/crypto/ssh"
 	corev1 "k8s.io/api/core/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -47,8 +46,6 @@ const (
 	vSphereServerKey         = "VSPHERE_SERVER"
 	govcInsecure             = "GOVC_INSECURE"
 	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
-	secretObjectType         = "addons.cluster.x-k8s.io/resource-set"
-	secretObjectName         = "csi-vsphere-config"
 	privateKeyFileName       = "eks-a-id_rsa"
 	publicKeyFileName        = "eks-a-id_rsa.pub"
 	defaultTemplateLibrary   = "eks-a-templates"
@@ -132,13 +129,14 @@ type ProviderGovcClient interface {
 
 type ProviderKubectlClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
+	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	LoadSecret(ctx context.Context, secretObject string, secretObjType string, secretObjectName string, kubeConfFile string) error
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
 	GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
-	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*bootstrapv1.KubeadmControlPlane, error)
 	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
+	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1.KubeadmControlPlane, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
@@ -363,7 +361,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
-	vSphereClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+	vSphereClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
 	if err := p.defaulter.SetDefaultsForDatacenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
@@ -381,7 +379,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		return fmt.Errorf("failed setting default values for vsphere machine configs: %v", err)
 	}
 
-	if err := p.validator.validateCluster(ctx, vSphereClusterSpec); err != nil {
+	if err := p.validator.ValidateClusterMachineConfigs(ctx, vSphereClusterSpec); err != nil {
 		return err
 	}
 
@@ -425,7 +423,7 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
-	vSphereClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+	vSphereClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
 	if err := p.defaulter.SetDefaultsForDatacenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
@@ -443,7 +441,7 @@ func (p *vsphereProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cl
 		return fmt.Errorf("failed setting default values for vsphere machine configs: %v", err)
 	}
 
-	if err := p.validator.validateCluster(ctx, vSphereClusterSpec); err != nil {
+	if err := p.validator.ValidateClusterMachineConfigs(ctx, vSphereClusterSpec); err != nil {
 		return err
 	}
 
@@ -511,7 +509,7 @@ func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Clus
 
 	err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents.Bytes())
 	if err != nil {
-		return fmt.Errorf("error loading csi-vsphere-secret object: %v", err)
+		return fmt.Errorf("error loading secrets object: %v", err)
 	}
 	return nil
 }
@@ -882,7 +880,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		if err != nil {
 			return nil, nil, err
 		}
-		controlPlaneTemplateName = cp.Spec.InfrastructureTemplate.Name
+		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
 	} else {
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}
@@ -1006,26 +1004,23 @@ func (p *vsphereProvider) GenerateMHC() ([]byte, error) {
 }
 
 func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Cluster, contents *bytes.Buffer) error {
+	if err := p.providerKubectlClient.GetNamespace(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
+		if err := p.providerKubectlClient.CreateNamespace(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace); err != nil {
+			return err
+		}
+	}
 	t, err := template.New("tmpl").Parse(defaultSecretObject)
 	if err != nil {
 		return fmt.Errorf("error creating secret object template: %v", err)
 	}
 
-	thumbprint := p.datacenterConfig.Spec.Thumbprint
-	if p.providerGovcClient.IsCertSelfSigned(ctx) {
-		thumbprint = ""
-	}
-
 	values := map[string]string{
-		"clusterName":       cluster.Name,
-		"insecure":          strconv.FormatBool(p.datacenterConfig.Spec.Insecure),
-		"thumbprint":        thumbprint,
-		"vspherePassword":   os.Getenv(vSpherePasswordKey),
-		"vsphereUsername":   os.Getenv(vSphereUsernameKey),
-		"vsphereServer":     p.datacenterConfig.Spec.Server,
-		"vsphereDatacenter": p.datacenterConfig.Spec.Datacenter,
-		"vsphereNetwork":    p.datacenterConfig.Spec.Network,
-		"eksaLicense":       os.Getenv(eksaLicense),
+		"vspherePassword":        os.Getenv(vSpherePasswordKey),
+		"vsphereUsername":        os.Getenv(vSphereUsernameKey),
+		"eksaLicense":            os.Getenv(eksaLicense),
+		"eksaSystemNamespace":    constants.EksaSystemNamespace,
+		"vsphereCredentialsName": constants.VSphereCredentialsName,
+		"eksaLicenseName":        constants.EksaLicenseName,
 	}
 	err = t.Execute(contents, values)
 	if err != nil {
@@ -1035,19 +1030,6 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 }
 
 func (p *vsphereProvider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
-	var contents bytes.Buffer
-	err := p.createSecret(ctx, cluster, &contents)
-	if err != nil {
-		return err
-	}
-
-	var loadContents bytes.Buffer
-	loadContents.WriteString("data=")
-	loadContents.WriteString(contents.String())
-	err = p.providerKubectlClient.LoadSecret(ctx, loadContents.String(), secretObjectType, secretObjectName, cluster.KubeconfigFile)
-	if err != nil {
-		return fmt.Errorf("error loading csi-vsphere-secret object: %v", err)
-	}
 	return nil
 }
 

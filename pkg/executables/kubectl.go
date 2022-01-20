@@ -9,14 +9,14 @@ import (
 	"sort"
 	"strings"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/version"
-	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
-	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -321,6 +321,12 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 	cp, err := k.GetKubeadmControlPlane(ctx, cluster, clusterName, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return err
+	}
+
+	observedGeneration := cp.Status.ObservedGeneration
+	generation := cp.Generation
+	if observedGeneration != generation {
+		return fmt.Errorf("kubeadm control plane %s status needs to be refreshed: observed generation is %d, want %d", cp.Name, observedGeneration, generation)
 	}
 
 	if !cp.Status.Ready {
@@ -645,7 +651,7 @@ func (k *Kubectl) GetSecret(ctx context.Context, secretObjectName string, opts .
 	return response, err
 }
 
-func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOpt) ([]bootstrapv1.KubeadmControlPlane, error) {
+func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOpt) ([]controlplanev1.KubeadmControlPlane, error) {
 	params := []string{"get", fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group), "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
@@ -653,7 +659,7 @@ func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOp
 		return nil, fmt.Errorf("error getting kubeadmcontrolplanes: %v", err)
 	}
 
-	response := &bootstrapv1.KubeadmControlPlaneList{}
+	response := &controlplanev1.KubeadmControlPlaneList{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing get kubeadmcontrolplanes response: %v", err)
@@ -662,7 +668,7 @@ func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOp
 	return response.Items, nil
 }
 
-func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*bootstrapv1.KubeadmControlPlane, error) {
+func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*controlplanev1.KubeadmControlPlane, error) {
 	logger.V(6).Info("Getting KubeadmControlPlane CRDs", "cluster", clusterName)
 	params := []string{"get", fmt.Sprintf("kubeadmcontrolplanes.%s.controlplane.%s", clusterv1.GroupVersion.Version, clusterv1.GroupVersion.Group), clusterName, "-o", "json"}
 	applyOpts(&params, opts...)
@@ -671,7 +677,7 @@ func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Clu
 		return nil, fmt.Errorf("error getting kubeadmcontrolplane: %v", err)
 	}
 
-	response := &bootstrapv1.KubeadmControlPlane{}
+	response := &controlplanev1.KubeadmControlPlane{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing get kubeadmcontrolplane response: %v", err)
@@ -763,7 +769,7 @@ func (k *Kubectl) RemoveAnnotationInNamespace(ctx context.Context, resourceType,
 }
 
 func (k *Kubectl) GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error) {
-	params := []string{"get", "clusters", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + clusterName}
+	params := []string{"get", eksaClusterResourceType, "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + clusterName}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa cluster: %v", err)

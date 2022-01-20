@@ -16,13 +16,13 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -638,10 +638,12 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 	}
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 
-	oldCP := &bootstrapv1.KubeadmControlPlane{
-		Spec: bootstrapv1.KubeadmControlPlaneSpec{
-			InfrastructureTemplate: v1.ObjectReference{
-				Name: "test-control-plane-template-original",
+	oldCP := &controlplanev1.KubeadmControlPlane{
+		Spec: controlplanev1.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
+				InfrastructureRef: v1.ObjectReference{
+					Name: "test-control-plane-template-original",
+				},
 			},
 		},
 	}
@@ -1313,8 +1315,6 @@ func TestProviderBootstrapSetup(t *testing.T) {
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
 
-	kubectl.EXPECT().LoadSecret(ctx, gomock.Any(), gomock.Any(), gomock.Any(), cluster.KubeconfigFile)
-
 	template, err := template.New("test").Parse(defaultSecretObject)
 	if err != nil {
 		t.Fatalf("template create error: %v", err)
@@ -1343,18 +1343,18 @@ func TestProviderUpdateSecret(t *testing.T) {
 		KubeconfigFile: "",
 	}
 	values := map[string]string{
-		"clusterName":       clusterConfig.Name,
-		"vspherePassword":   expectedVSphereUsername,
-		"vsphereUsername":   expectedVSpherePassword,
-		"vsphereServer":     datacenterConfig.Spec.Server,
-		"vsphereDatacenter": datacenterConfig.Spec.Datacenter,
-		"vsphereNetwork":    datacenterConfig.Spec.Network,
+		"vspherePassword":     expectedVSphereUsername,
+		"vsphereUsername":     expectedVSpherePassword,
+		"eksaLicense":         "",
+		"eksaSystemNamespace": constants.EksaSystemNamespace,
 	}
 
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
 
+	kubectl.EXPECT().GetNamespace(ctx, gomock.Any(), constants.EksaSystemNamespace).Return(errors.New("test"))
+	kubectl.EXPECT().CreateNamespace(ctx, gomock.Any(), constants.EksaSystemNamespace)
 	kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any())
 
 	template, err := template.New("test").Parse(defaultSecretObject)
@@ -2648,7 +2648,7 @@ func TestGetMHCSuccess(t *testing.T) {
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
 
-	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1alpha3
+	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineHealthCheck
 metadata:
   name: test-node-unhealthy-5m
@@ -2668,7 +2668,7 @@ spec:
       status: "False"
       timeout: 300s
 ---
-apiVersion: cluster.x-k8s.io/v1alpha3
+apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineHealthCheck
 metadata:
   name: test-kcp-unhealthy-5m

@@ -23,6 +23,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 // log is for logging in this package.
@@ -46,7 +48,13 @@ func (r *Cluster) ValidateCreate() error {
 		clusterlog.Info("cluster is paused, so allowing create", "name", r.Name)
 		return nil
 	}
-	return apierrors.NewBadRequest("Creating new cluster on existing cluster is not supported")
+	if !features.IsActive(features.FullLifecycleAPI()) {
+		return apierrors.NewBadRequest("Creating new cluster on existing cluster is not supported")
+	}
+	if r.IsSelfManaged() {
+		return apierrors.NewBadRequest("Creating new cluster on existing cluster is not supported")
+	}
+	return nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type

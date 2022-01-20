@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -17,14 +17,15 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
-	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -41,6 +42,7 @@ func init() {
 	utilruntime.Must(vspherev1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(admissionv1beta1.AddToScheme(scheme.Scheme))
+	utilruntime.Must(anywherev1.AddToScheme(scheme.Scheme))
 }
 
 var packages = mustBuildPackagesWithCRDs(capiPackage, capvPackage)

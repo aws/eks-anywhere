@@ -1,0 +1,69 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Release
+metadata:
+  creationTimestamp: null
+spec:
+  channel: "test"
+  number: 1
+  buildRepoCommit: "test"
+status:
+  date: ""
+  components:
+    - name: "test"
+      gitCommit: "test"
+      assets:
+        - name: "node-driver-registrar-image"
+          type: "test"
+          description: "test"
+          os: "ubuntu"
+          image:
+            URI: "node-driver-registrar-image"
+        - name: "livenessprobe-image"
+          type: "test"
+          description: "test"
+          os: "ubuntu"
+          image:
+            URI: "livenessprobe-image"
+        - name: "external-attacher-image"
+          type: "test"
+          description: "test"
+          os: "ubuntu"
+          image:
+            URI: "external-attacher-image"
+        - name: "external-provisioner-image"
+          type: "test"
+          description: "test"
+          os: "ubuntu"
+          image:
+            URI: "external-provisioner-image"
+        - name: "pause-image"
+          type: "test"
+          description: "test"
+          os: "ubuntu"
+          image:
+            URI: "pause-image"
+        - name: "aws-iam-authenticator-image"
+          type: "test"
+          description: "test"
+          os: "ubuntu"
+          image:
+            URI: "aws-iam-authenticator-image"
+        - name: "etcd-image"
+          type: "test"
+          description: "test"
+          os: "ubuntu"
+          image:
+            URI: "etcd-image"
+        - name: "coredns-image"
+          type: "test"
+          description: "test"
+          os: "ubuntu"
+          image:
+            URI: "coredns-image"
+        - name: "kube-apiserver-image"
+          type: "test"
+          description: "test"
+          os: "ubuntu"
+          image:
+            URI: "kube-apiserver-image"
+

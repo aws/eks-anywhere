@@ -90,6 +90,7 @@ func (l *testLogFetcher) FetchLogs(opts ...FetchLogsOpt) error {
 			return fmt.Errorf("failed to get latest build for project: %v", err)
 		}
 		config.buildId = *p.Id
+		logger.Info("Using latest build for selected project", "buildID", config.buildId, "project", config.project)
 	}
 
 	failedTests, err := l.GetBuildProjectLogs(config.project, config.buildId)
@@ -145,8 +146,8 @@ func (l *testLogFetcher) GetBuildProjectLogs(project string, buildId string) (fa
 func (l *testLogFetcher) FetchTestLogs(tests []testResult) error {
 	logger.Info("Fetching individual test logs...")
 	for _, test := range tests {
-		stderr := fmt.Sprintf(ssmCommandExecutionLogStreamTemplate, test.CommandId, test.InstanceId, "stderr")
-		logs, err := l.testAccountCwClient.GetLogs(constants.E2eIndividualTestLogGroup, stderr)
+		stdout := fmt.Sprintf(ssmCommandExecutionLogStreamTemplate, test.CommandId, test.InstanceId, "stdout")
+		logs, err := l.testAccountCwClient.GetLogs(constants.E2eIndividualTestLogGroup, stdout)
 		if err != nil {
 			logger.Info("error when fetching cloudwatch logs", "error", err)
 			return err

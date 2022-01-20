@@ -15,8 +15,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/version"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -782,7 +782,7 @@ func TestKubectlGetEKSAClusters(t *testing.T) {
 		t.Run(tt.testName, func(t *testing.T) {
 			fileContent := test.ReadFile(t, tt.jsonResponseFile)
 			k, ctx, cluster, e := newKubectl(t)
-			e.EXPECT().Execute(ctx, []string{"get", "clusters", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + tt.clusterName}).Return(*bytes.NewBufferString(fileContent), nil)
+			e.EXPECT().Execute(ctx, []string{"get", "clusters.anywhere.eks.amazonaws.com", "-A", "-o", "jsonpath={.items[0]}", "--kubeconfig", cluster.KubeconfigFile, "--field-selector=metadata.name=" + tt.clusterName}).Return(*bytes.NewBufferString(fileContent), nil)
 
 			gotCluster, err := k.GetEksaCluster(ctx, cluster, tt.clusterName)
 			if err != nil {
@@ -1293,7 +1293,7 @@ func TestKubectlGetClusterResourceSet(t *testing.T) {
 	resourceSetName := "Bundle-name"
 	wantResourceSet := &addons.ClusterResourceSet{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "addons.cluster.x-k8s.io/v1alpha3",
+			APIVersion: "addons.cluster.x-k8s.io/v1beta1",
 			Kind:       "ClusterResourceSet",
 		},
 		Spec: addons.ClusterResourceSetSpec{

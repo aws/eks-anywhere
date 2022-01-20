@@ -2,9 +2,10 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
@@ -68,7 +69,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		if err != nil {
 			return nil, err
 		}
-		controlPlaneTemplateName = cp.Spec.InfrastructureTemplate.Name
+		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
 	}
 
 	var workloadTemplateName string
@@ -105,11 +106,27 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		}
 	}
 
+	// Get vsphere credentials so that the template can apply correctly instead of with empty values
+	credSecret, err := r.VSphereCredentials(ctx)
+	if err != nil {
+		return nil, err
+	}
+	usernameBytes, ok := credSecret.Data["username"]
+	if !ok {
+		return nil, fmt.Errorf("unable to retrieve username from secret")
+	}
+	passwordBytes, ok := credSecret.Data["password"]
+	if !ok {
+		return nil, fmt.Errorf("unable to retrieve password from secret")
+	}
+
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
 		values["vsphereControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpVmc.Spec.Users)
 		values["vsphereEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdVmc.Spec.Users)
 		values["etcdTemplateName"] = etcdTemplateName
+		values["eksaVsphereUsername"] = string(usernameBytes)
+		values["eksaVspherePassword"] = string(passwordBytes)
 	}
 
 	workersOpt := func(values map[string]interface{}) {
@@ -140,7 +157,7 @@ func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster 
 	}
 
 	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = cp.Spec.InfrastructureTemplate.Name
+		values["controlPlaneTemplateName"] = cp.Spec.MachineTemplate.InfrastructureRef.Name
 		values["tinkerbellControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpTmc.Spec.Users)
 		values["tinkerbellEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdTmc.Spec.Users)
 		values["etcdTemplateName"] = etcdTemplateName
@@ -199,7 +216,7 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 	}
 
 	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.InfrastructureTemplate.Name
+		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 	workersOpt := func(values map[string]interface{}) {

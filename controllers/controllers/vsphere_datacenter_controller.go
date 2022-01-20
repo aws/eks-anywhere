@@ -3,16 +3,15 @@ package controllers
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/go-logr/logr"
-	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/aws/eks-anywhere/controllers/controllers/clusters"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -21,11 +20,7 @@ import (
 
 // VSphereDatacenterReconciler reconciles a VSphereDatacenterConfig object
 type VSphereDatacenterReconciler struct {
-	client client.Client
-	log    logr.Logger
-
-	validator *vsphere.Validator
-	defaulter *vsphere.Defaulter
+	clusters.VSphereReconciler
 }
 
 func NewVSphereDatacenterReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, govc *executables.Govc) *VSphereDatacenterReconciler {
@@ -33,10 +28,12 @@ func NewVSphereDatacenterReconciler(client client.Client, log logr.Logger, schem
 	defaulter := vsphere.NewDefaulter(govc)
 
 	return &VSphereDatacenterReconciler{
-		client:    client,
-		log:       log,
-		validator: validator,
-		defaulter: defaulter,
+		clusters.VSphereReconciler{
+			Client:    client,
+			Log:       log,
+			Validator: validator,
+			Defaulter: defaulter,
+		},
 	}
 }
 
@@ -49,16 +46,16 @@ func (r *VSphereDatacenterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 // TODO: add here kubebuilder permissions as neeeded
 func (r *VSphereDatacenterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	log := r.log.WithValues("vsphereDatacenter", req.NamespacedName)
+	log := r.Log.WithValues("vsphereDatacenter", req.NamespacedName)
 
 	// Fetch the VsphereDatacenter object
 	vsphereDatacenter := &anywherev1.VSphereDatacenterConfig{}
-	if err := r.client.Get(ctx, req.NamespacedName, vsphereDatacenter); err != nil {
+	if err := r.Client.Get(ctx, req.NamespacedName, vsphereDatacenter); err != nil {
 		return ctrl.Result{}, err
 	}
 
 	// Initialize the patch helper
-	patchHelper, err := patch.NewHelper(vsphereDatacenter, r.client)
+	patchHelper, err := patch.NewHelper(vsphereDatacenter, r.Client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -88,68 +85,23 @@ func (r *VSphereDatacenterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 }
 
 func (r *VSphereDatacenterReconciler) reconcile(ctx context.Context, vsphereDatacenter *anywherev1.VSphereDatacenterConfig, log logr.Logger) (_ ctrl.Result, reterr error) {
-	if err := r.validateConfig(ctx, vsphereDatacenter); err != nil {
-		vsphereDatacenter.Status.SpecValid = false
-		failureMessage := err.Error()
-		vsphereDatacenter.Status.FailureMessage = &failureMessage
+	// Set up envs for executing Govc cmd and default values for datacenter config
+	if err := clusters.SetupEnvVars(ctx, vsphereDatacenter, r.Client); err != nil {
+		log.Error(err, "Failed to set up env vars and default values for VsphereDatacenterConfig")
+		return ctrl.Result{}, err
+	}
+	if err := r.Defaulter.SetDefaultsForDatacenterConfig(ctx, vsphereDatacenter); err != nil {
+		return ctrl.Result{}, fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
+	}
+	// Determine if VsphereDatacenterConfig is valid
+	if err := r.Validator.ValidateVCenterConfig(ctx, vsphereDatacenter); err != nil {
+		log.Error(err, "Failed to validate VsphereDatacenterConfig")
 		return ctrl.Result{}, err
 	}
 
 	vsphereDatacenter.Status.SpecValid = true
 
 	return ctrl.Result{}, nil
-}
-
-func (r *VSphereDatacenterReconciler) validateConfig(ctx context.Context, vsphereDatacenter *anywherev1.VSphereDatacenterConfig) error {
-	// Set up envs for executing Govc cmd and default values for datacenter config
-	if err := r.setupEnvsAndDefaults(ctx, vsphereDatacenter); err != nil {
-		return fmt.Errorf("failed to set up env vars and default values for VsphereDatacenterConfig: %v", err)
-	}
-	// Determine if VsphereDatacenterConfig is valid
-	if err := r.validator.ValidateVCenterConfig(ctx, vsphereDatacenter); err != nil {
-		return fmt.Errorf("failed to validate VsphereDatacenterConfig: %v", err)
-	}
-	return nil
-}
-
-func (r *VSphereDatacenterReconciler) vsphereCredentials(ctx context.Context) (*apiv1.Secret, error) {
-	secret := &apiv1.Secret{}
-	secretKey := client.ObjectKey{
-		Namespace: "eksa-system",
-		Name:      vsphere.CredentialsObjectName,
-	}
-	if err := r.client.Get(ctx, secretKey, secret); err != nil {
-		return nil, err
-	}
-	return secret, nil
-}
-
-func (r *VSphereDatacenterReconciler) setupEnvsAndDefaults(ctx context.Context, vsphereDatacenter *anywherev1.VSphereDatacenterConfig) error {
-	secret, err := r.vsphereCredentials(ctx)
-	if err != nil {
-		return fmt.Errorf("failed getting vsphere credentials secret: %v", err)
-	}
-
-	vsphereUsername := secret.Data["username"]
-	vspherePassword := secret.Data["password"]
-
-	if err := os.Setenv(vsphere.EksavSphereUsernameKey, string(vsphereUsername)); err != nil {
-		return fmt.Errorf("failed setting env %s: %v", vsphere.EksavSphereUsernameKey, err)
-	}
-
-	if err := os.Setenv(vsphere.EksavSpherePasswordKey, string(vspherePassword)); err != nil {
-		return fmt.Errorf("failed setting env %s: %v", vsphere.EksavSpherePasswordKey, err)
-	}
-
-	if err := vsphere.SetupEnvVars(vsphereDatacenter); err != nil {
-		return fmt.Errorf("failed setting env vars: %v", err)
-	}
-
-	if err := r.defaulter.SetDefaultsForDatacenterConfig(ctx, vsphereDatacenter); err != nil {
-		return fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
-	}
-
-	return nil
 }
 
 func (r *VSphereDatacenterReconciler) reconcileDelete(ctx context.Context, vsphereDatacenter *anywherev1.VSphereDatacenterConfig, log logr.Logger) (ctrl.Result, error) {

@@ -1,6 +1,7 @@
 package v1alpha1_test
 
 import (
+	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -894,4 +895,43 @@ func TestClusterValidateUpdateSuccess(t *testing.T) {
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
+func TestClusterCreateManagementCluster(t *testing.T) {
+	os.Setenv("FULL_LIFECYCLE_API", "true")
+	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: 5})
+	cluster := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			WorkerNodeGroupConfigurations: workerConfiguration,
+			KubernetesVersion:             v1alpha1.Kube119,
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
+			},
+			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{Count: 3},
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(cluster.ValidateCreate()).NotTo(Succeed())
+	os.Unsetenv("FULL_LIFECYCLE_API")
+}
+
+func TestClusterCreateWorkloadCluster(t *testing.T) {
+	os.Setenv("FULL_LIFECYCLE_API", "true")
+	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: 5})
+	cluster := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			WorkerNodeGroupConfigurations: workerConfiguration,
+			KubernetesVersion:             v1alpha1.Kube119,
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
+			},
+			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{Count: 3},
+		},
+	}
+	cluster.Spec.ManagementCluster.Name = "management-cluster"
+
+	g := NewWithT(t)
+	g.Expect(cluster.ValidateCreate()).To(Succeed())
+	os.Unsetenv("FULL_LIFECYCLE_API")
 }
