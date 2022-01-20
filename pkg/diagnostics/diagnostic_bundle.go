@@ -29,6 +29,7 @@ const (
 	generatedAnalysisNameFormat = "%s-%s-analysis.yaml"
 	maxRetries                  = 5
 	backOffPeriod               = 5 * time.Second
+	defaultClusterName          = "eksa-cluster"
 )
 
 type EksaDiagnosticBundle struct {
@@ -372,5 +373,8 @@ func ParseTimeOptions(since string, sinceTime string) (*time.Time, error) {
 }
 
 func (e *EksaDiagnosticBundle) clusterName() string {
-	return e.bundle.Name
+	if e.bundle != nil {
+		return e.bundle.Name
+	}
+	return defaultClusterName
 }
