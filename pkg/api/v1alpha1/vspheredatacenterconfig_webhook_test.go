@@ -1,6 +1,7 @@
 package v1alpha1_test
 
 import (
+	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -123,4 +124,17 @@ func vsphereDatacenterConfig() v1alpha1.VSphereDatacenterConfig {
 		},
 		Status: v1alpha1.VSphereDatacenterConfigStatus{},
 	}
+}
+
+func TestVSphereDatacenterValidateCreateFullManagementCycleOn(t *testing.T) {
+	os.Setenv("FULL_LIFECYCLE_API", "true")
+	dataCenterConfig := vsphereDatacenterConfig()
+	dataCenterConfig.Spec.Network = "Network"
+	c := dataCenterConfig.DeepCopy()
+
+	c.Spec.Network = "Network"
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).To(Succeed())
+	os.Unsetenv("FULL_LIFECYCLE_API")
 }

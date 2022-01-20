@@ -29,6 +29,7 @@ const (
 	generatedAnalysisNameFormat = "%s-%s-analysis.yaml"
 	maxRetries                  = 5
 	backOffPeriod               = 5 * time.Second
+	defaultClusterName          = "eksa-cluster"
 )
 
 type EksaDiagnosticBundle struct {
@@ -137,7 +138,7 @@ func newDiagnosticBundleDefault(af AnalyzerFactory, cf CollectorFactory) *EksaDi
 	return b.WithDefaultAnalyzers().WithDefaultCollectors().WithManagementCluster(true)
 }
 
-func newDiagnosticBundleCustom(af AnalyzerFactory, cf CollectorFactory, client BundleClient, kubectl *executables.Kubectl, bundlePath string, kubeconfig string) *EksaDiagnosticBundle {
+func newDiagnosticBundleCustom(af AnalyzerFactory, cf CollectorFactory, client BundleClient, kubectl *executables.Kubectl, bundlePath string, kubeconfig string, writer filewriter.FileWriter) *EksaDiagnosticBundle {
 	return &EksaDiagnosticBundle{
 		bundlePath:       bundlePath,
 		analyzerFactory:  af,
@@ -146,6 +147,7 @@ func newDiagnosticBundleCustom(af AnalyzerFactory, cf CollectorFactory, client B
 		kubeconfig:       kubeconfig,
 		kubectl:          kubectl,
 		retrier:          retrier.NewWithMaxRetries(maxRetries, backOffPeriod),
+		writer:           writer,
 	}
 }
 
@@ -372,5 +374,8 @@ func ParseTimeOptions(since string, sinceTime string) (*time.Time, error) {
 }
 
 func (e *EksaDiagnosticBundle) clusterName() string {
-	return e.bundle.Name
+	if e.bundle != nil {
+		return e.bundle.Name
+	}
+	return defaultClusterName
 }

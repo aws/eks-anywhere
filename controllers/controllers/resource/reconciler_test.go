@@ -7,15 +7,15 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -132,7 +132,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
 
-				kubeAdmControlPlane := &bootstrapv1.KubeadmControlPlane{}
+				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}
 				if err := yaml.Unmarshal([]byte(kubeadmcontrolplaneFile), kubeAdmControlPlane); err != nil {
 					t.Errorf("unmarshal failed: %v", err)
 				}
@@ -237,7 +237,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any()).Return(existingVSMachine, nil)
 
-				kubeAdmControlPlane := &bootstrapv1.KubeadmControlPlane{}
+				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}
 				if err := yaml.Unmarshal([]byte(kubeadmcontrolplaneFile), kubeAdmControlPlane); err != nil {
 					t.Errorf("unmarshal failed: %v", err)
 				}

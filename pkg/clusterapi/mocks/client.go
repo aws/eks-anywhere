@@ -11,7 +11,7 @@ import (
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
 	v1 "k8s.io/api/core/v1"
-	v1alpha3 "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
+	v1beta1 "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 )
 
 // MockClient is a mock of Client interface.
@@ -52,10 +52,10 @@ func (mr *MockClientMockRecorder) ApplyKubeSpecFromBytes(ctx, cluster, data inte
 }
 
 // GetClusterResourceSet mocks base method.
-func (m *MockClient) GetClusterResourceSet(ctx context.Context, kubeconfigFile, name, namespace string) (*v1alpha3.ClusterResourceSet, error) {
+func (m *MockClient) GetClusterResourceSet(ctx context.Context, kubeconfigFile, name, namespace string) (*v1beta1.ClusterResourceSet, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClusterResourceSet", ctx, kubeconfigFile, name, namespace)
-	ret0, _ := ret[0].(*v1alpha3.ClusterResourceSet)
+	ret0, _ := ret[0].(*v1beta1.ClusterResourceSet)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
