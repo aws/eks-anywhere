@@ -93,6 +93,8 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 			if _, ok := mcDeployments[mdName]; ok {
 				workloadTemplateName := mcDeployments[mdName].Spec.Template.Spec.InfrastructureRef.Name
 				workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
+			} else {
+				return nil, fmt.Errorf("no machine deployment named %s", mdName)
 			}
 		}
 	}
