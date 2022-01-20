@@ -31,7 +31,7 @@ const (
 	backOffPeriod     = 5 * time.Second
 	machineMaxWait    = 10 * time.Minute
 	machineBackoff    = 1 * time.Second
-	machinesMinWait   = 60 * time.Minute
+	machinesMinWait   = 30 * time.Minute
 	moveCAPIWait      = 15 * time.Minute
 	ctrlPlaneWaitStr  = "60m"
 	etcdWaitStr       = "60m"
@@ -768,8 +768,7 @@ func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, m
 		timeout = c.machinesMinWait
 	}
 
-	r := retrier.NewWithRetryPolicy(timeout, retrier.WithFixedWaitPolicy(10*time.Second))
-	//r := retrier.New(timeout)
+	r := retrier.NewWithRetryPolicy(timeout, retrier.WithFixedWaitPolicy(machineBackoff))
 	if err := r.Retry(isCpReady); err != nil {
 		return fmt.Errorf("retries exhausted waiting for controlplane replicas to be ready: %v", err)
 	}
@@ -806,7 +805,6 @@ func (c *ClusterManager) waitForNodesReady(ctx context.Context, managementCluste
 
 	areNodesReady := func() error {
 		var err error
-
 		readyNodes, totalNodes, err = c.countNodesReady(ctx, managementCluster, clusterName, labels, checkers...)
 		if err != nil {
 			return err

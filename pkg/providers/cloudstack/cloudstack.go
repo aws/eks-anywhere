@@ -375,7 +375,6 @@ func (p *cloudstackProvider) validateControlPlaneHost(pHost *string) error {
 	if err != nil {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host has an invalid port: %s (%s)", *pHost, err.Error())
 	}
-
 	return nil
 }
 
