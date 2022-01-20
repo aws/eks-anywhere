@@ -25,8 +25,8 @@ import (
 )
 
 type ResourceFetcher interface {
-	MachineDeployments(ctx context.Context, cs *anywherev1.Cluster) (map[string]*clusterv1.MachineDeployment, error)
-	VSphereWorkerMachineTemplates(ctx context.Context, cs *anywherev1.Cluster) ([]vspherev1.VSphereMachineTemplate, error)
+	MachineDeployment(ctx context.Context, cs *anywherev1.Cluster) (*clusterv1.MachineDeployment, error)
+	VSphereWorkerMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*vspherev1.VSphereMachineTemplate, error)
 	VSphereCredentials(ctx context.Context) (*corev1.Secret, error)
 	FetchObject(ctx context.Context, objectKey types.NamespacedName, obj client.Object) error
 	FetchObjectByName(ctx context.Context, name string, namespace string, obj client.Object) error
@@ -35,7 +35,7 @@ type ResourceFetcher interface {
 	ExistingVSphereDatacenterConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereDatacenterConfig, error)
 	ExistingVSphereControlPlaneMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
 	ExistingVSphereEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
-	ExistingVSphereWorkerMachineConfigs(ctx context.Context, cs *anywherev1.Cluster) (map[string]anywherev1.VSphereMachineConfig, error)
+	ExistingVSphereWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
 	ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error)
 	Etcd(ctx context.Context, cs *anywherev1.Cluster) (*etcdv1.EtcdadmCluster, error)
 	FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error)
@@ -165,7 +165,7 @@ func (r *CapiResourceFetcher) fetchClusterForRef(ctx context.Context, refId type
 	return nil, fmt.Errorf("eksa cluster not found for datacenterRef %v", refId)
 }
 
-func (r *CapiResourceFetcher) machineDeployments(ctx context.Context, c *anywherev1.Cluster) (map[string]*clusterv1.MachineDeployment, error) {
+func (r *CapiResourceFetcher) machineDeployments(ctx context.Context, c *anywherev1.Cluster) ([]*clusterv1.MachineDeployment, error) {
 	machineDeployments := &clusterv1.MachineDeploymentList{}
 	req, err := labels.NewRequirement(clusterv1.ClusterLabelName, selection.Equals, []string{c.Name})
 	if err != nil {
@@ -176,14 +176,14 @@ func (r *CapiResourceFetcher) machineDeployments(ctx context.Context, c *anywher
 	if err != nil {
 		return nil, err
 	}
-	deployments := make(map[string]*clusterv1.MachineDeployment, len(machineDeployments.Items))
+	deployments := make([]*clusterv1.MachineDeployment, 0, len(machineDeployments.Items))
 	for _, md := range machineDeployments.Items {
-		deployments[md.Name] = &md
+		deployments = append(deployments, &md)
 	}
 	return deployments, nil
 }
 
-func (r *CapiResourceFetcher) MachineDeployments(ctx context.Context, cs *anywherev1.Cluster) (map[string]*clusterv1.MachineDeployment, error) {
+func (r *CapiResourceFetcher) MachineDeployment(ctx context.Context, cs *anywherev1.Cluster) (*clusterv1.MachineDeployment, error) {
 	deployments, err := r.machineDeployments(ctx, cs)
 	if err != nil {
 		return nil, err
@@ -193,7 +193,7 @@ func (r *CapiResourceFetcher) MachineDeployments(ctx context.Context, cs *anywhe
 		return nil, fmt.Errorf("no machine deployments found for cluster %s", cs.Name)
 	}
 
-	return deployments, nil
+	return deployments[0], nil
 }
 
 func (r *CapiResourceFetcher) Fetch(ctx context.Context, name string, namespace string, kind string, apiVersion string) (*unstructured.Unstructured, error) {
@@ -207,24 +207,17 @@ func (r *CapiResourceFetcher) Fetch(ctx context.Context, name string, namespace 
 	return us, nil
 }
 
-func (r *CapiResourceFetcher) VSphereWorkerMachineTemplates(ctx context.Context, cs *anywherev1.Cluster) ([]vspherev1.VSphereMachineTemplate, error) {
-	machineDeployments, err := r.MachineDeployments(ctx, cs)
+func (r *CapiResourceFetcher) VSphereWorkerMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*vspherev1.VSphereMachineTemplate, error) {
+	md, err := r.MachineDeployment(ctx, cs)
 	if err != nil {
 		return nil, err
 	}
 	vsphereMachineTemplate := &vspherev1.VSphereMachineTemplate{}
-	workerMachineTemplates := make([]vspherev1.VSphereMachineTemplate, 0, len(cs.Spec.WorkerNodeGroupConfigurations))
-	for _, workerNodeGroupConfiguration := range cs.Spec.WorkerNodeGroupConfigurations {
-		mdName := fmt.Sprintf("%s-%s", cs.Name, workerNodeGroupConfiguration.Name)
-		if _, ok := machineDeployments[mdName]; ok {
-			err = r.FetchObjectByName(ctx, machineDeployments[mdName].Spec.Template.Spec.InfrastructureRef.Name, constants.EksaSystemNamespace, vsphereMachineTemplate)
-			if err != nil {
-				return nil, err
-			}
-			workerMachineTemplates = append(workerMachineTemplates, *vsphereMachineTemplate)
-		}
+	err = r.FetchObjectByName(ctx, md.Spec.Template.Spec.InfrastructureRef.Name, constants.EksaSystemNamespace, vsphereMachineTemplate)
+	if err != nil {
+		return nil, err
 	}
-	return workerMachineTemplates, nil
+	return vsphereMachineTemplate, nil
 }
 
 func (r *CapiResourceFetcher) VSphereControlPlaneMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*vspherev1.VSphereMachineTemplate, error) {
@@ -320,11 +313,11 @@ func (r *CapiResourceFetcher) FetchAppliedSpec(ctx context.Context, cs *anywhere
 }
 
 func (r *CapiResourceFetcher) ExistingVSphereDatacenterConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereDatacenterConfig, error) {
-	vsMachineTemplates, err := r.VSphereWorkerMachineTemplates(ctx, cs)
+	vsMachineTemplate, err := r.VSphereWorkerMachineTemplate(ctx, cs)
 	if err != nil {
 		return nil, err
 	}
-	return MapMachineTemplateToVSphereDatacenterConfigSpec(&vsMachineTemplates[0])
+	return MapMachineTemplateToVSphereDatacenterConfigSpec(vsMachineTemplate)
 }
 
 func (r *CapiResourceFetcher) ExistingVSphereControlPlaneMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error) {
@@ -343,12 +336,12 @@ func (r *CapiResourceFetcher) ExistingVSphereEtcdMachineConfig(ctx context.Conte
 	return MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate)
 }
 
-func (r *CapiResourceFetcher) ExistingVSphereWorkerMachineConfigs(ctx context.Context, cs *anywherev1.Cluster) (map[string]anywherev1.VSphereMachineConfig, error) {
-	vsMachineTemplates, err := r.VSphereWorkerMachineTemplates(ctx, cs)
+func (r *CapiResourceFetcher) ExistingVSphereWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error) {
+	vsMachineTemplate, err := r.VSphereWorkerMachineTemplate(ctx, cs)
 	if err != nil {
 		return nil, err
 	}
-	return MapMachineTemplateToVSphereMachineConfigSpecWorkers(vsMachineTemplates)
+	return MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate)
 }
 
 func MapMachineTemplateToVSphereDatacenterConfigSpec(vsMachineTemplate *vspherev1.VSphereMachineTemplate) (*anywherev1.VSphereDatacenterConfig, error) {
@@ -376,7 +369,7 @@ func MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate *vspherev1.V
 	vsSpec.Spec.Folder = vsMachineTemplate.Spec.Template.Spec.Folder
 	vsSpec.Spec.StoragePolicyName = vsMachineTemplate.Spec.Template.Spec.StoragePolicyName
 
-	// TODO: OSFamily, Users (these fields are immutable)
+	// TODO: OSFamily, Users
 	return vsSpec, nil
 }
 

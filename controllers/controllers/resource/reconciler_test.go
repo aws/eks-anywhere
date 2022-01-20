@@ -146,7 +146,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				fetcher.EXPECT().ExistingVSphereDatacenterConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereDatacenterConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereEtcdMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
-				fetcher.EXPECT().ExistingVSphereWorkerMachineConfigs(ctx, gomock.Any()).Return(map[string]anywherev1.VSphereMachineConfig{"test_cluster": {}}, nil)
+				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().VSphereCredentials(ctx).Return(&corev1.Secret{
 					Data: map[string][]byte{"username": []byte("username"), "password": []byte("password")},
 				}, nil)
@@ -235,7 +235,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				existingVSMachine := &anywherev1.VSphereMachineConfig{}
 				existingVSMachine.Spec = machineSpec.Spec
 				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
-				fetcher.EXPECT().ExistingVSphereWorkerMachineConfigs(ctx, gomock.Any()).Return(map[string]anywherev1.VSphereMachineConfig{"test_cluster": {}}, nil)
+				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any()).Return(existingVSMachine, nil)
 
 				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}
 				if err := yaml.Unmarshal([]byte(kubeadmcontrolplaneFile), kubeAdmControlPlane); err != nil {
@@ -247,6 +247,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 					t.Errorf("unmarshal failed: %v", err)
 				}
 
+				fetcher.EXPECT().MachineDeployment(ctx, gomock.Any()).Return(mcDeployment, nil)
 				fetcher.EXPECT().VSphereCredentials(ctx).Return(&corev1.Secret{
 					Data: map[string][]byte{"username": []byte("username"), "password": []byte("password")},
 				}, nil)

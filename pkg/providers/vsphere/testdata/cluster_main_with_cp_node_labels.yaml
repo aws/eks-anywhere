@@ -20,7 +20,6 @@ spec:
       machineGroupRef:
         name: test-wn
         kind: VSphereMachineConfig
-      name: md-0
   externalEtcdConfiguration:
     count: 3
     machineGroupRef:
