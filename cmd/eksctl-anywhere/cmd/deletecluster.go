@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/workflows"
@@ -99,6 +100,10 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 		return err
 	}
 	defer cleanup(ctx, deps, &err)
+
+	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == "tinkerbell" {
+		return fmt.Errorf("Error: provider tinkerbell is not supported in this release")
+	}
 
 	deleteCluster := workflows.NewDelete(
 		deps.Bootstrapper,
