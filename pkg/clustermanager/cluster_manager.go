@@ -768,7 +768,7 @@ func (c *ClusterManager) waitForControlPlaneReplicasReady(ctx context.Context, m
 		timeout = c.machinesMinWait
 	}
 
-	r := retrier.New(timeout)
+	r := retrier.NewWithRetryPolicy(timeout, retrier.WithFixedWaitPolicy(machineBackoff))
 	if err := r.Retry(isCpReady); err != nil {
 		return fmt.Errorf("retries exhausted waiting for controlplane replicas to be ready: %v", err)
 	}

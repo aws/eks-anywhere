@@ -33,6 +33,18 @@ func New(timeout time.Duration, opts ...RetrierOpt) *Retrier {
 	return r
 }
 
+func NewWithRetryPolicy(timeout time.Duration, policy RetryPolicy, opts ...RetrierOpt) *Retrier {
+	r := &Retrier{
+		timeout:     timeout,
+		retryPolicy: policy,
+	}
+	for _, o := range opts {
+		o(r)
+	}
+
+	return r
+}
+
 // NewWithMaxRetries creates a new retrier with no global timeout and a max retries policy
 func NewWithMaxRetries(maxRetries int, backOffPeriod time.Duration) *Retrier {
 	// this value is roughly 292 years, so in practice there is no timeout
@@ -91,6 +103,12 @@ func Retry(maxRetries int, backOffPeriod time.Duration, fn func() error) error {
 
 func zeroWaitPolicy(_ int, _ error) (retry bool, wait time.Duration) {
 	return true, 0
+}
+
+func WithFixedWaitPolicy(waitDuration time.Duration) RetryPolicy {
+	return func(totalRetries int, err error) (retry bool, wait time.Duration) {
+		return true, waitDuration
+	}
 }
 
 func maxRetriesPolicy(maxRetries int, backOffPeriod time.Duration) RetryPolicy {
