@@ -2,8 +2,6 @@ package v1alpha1
 
 import (
 	"fmt"
-	"reflect"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -62,50 +60,6 @@ func validateImmutableFieldsCloudStackMachineConfig(new, old *CloudStackMachineC
 	}
 
 	var allErrs field.ErrorList
-
-	if old.Spec.OSFamily != new.Spec.OSFamily {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "osFamily"), new.Spec.OSFamily, "field is immutable"),
-		)
-	}
-
-	if !reflect.DeepEqual(old.Spec.Users, new.Spec.Users) {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "users"), new.Spec.Users, "field is immutable"),
-		)
-	}
-
-	if old.Spec.Template != new.Spec.Template {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "template"), new.Spec.Template, "field is immutable"),
-		)
-	}
-
-	cloudstackmachineconfiglog.Info("Machine config is associated with control plane or etcd")
-
-	if old.Spec.ComputeOffering != new.Spec.ComputeOffering {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "computeOffering"), new.Spec.ComputeOffering, "field is immutable"),
-		)
-	}
-
-	if old.Spec.DiskOffering != new.Spec.DiskOffering {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "diskOffering"), new.Spec.DiskOffering, "field is immutable"),
-		)
-	}
-
-	if !reflect.DeepEqual(old.Spec.Details, new.Spec.Details) {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "details"), new.Spec.Details, "field is immutable"),
-		)
-	}
 
 	return allErrs
 }

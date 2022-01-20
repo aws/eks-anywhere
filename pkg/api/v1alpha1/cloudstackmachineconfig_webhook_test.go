@@ -9,7 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
-func TestCPCloudStackMachineValidateUpdateTemplateImmutable(t *testing.T) {
+func TestCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Template = "oldTemplate"
@@ -17,20 +17,20 @@ func TestCPCloudStackMachineValidateUpdateTemplateImmutable(t *testing.T) {
 
 	c.Spec.Template = "newTemplate"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestWorkersCPCloudStackMachineValidateUpdateTemplateImmutable(t *testing.T) {
+func TestWorkersCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.Spec.Template = "oldTemplate"
 	c := vOld.DeepCopy()
 
 	c.Spec.Template = "newTemplate"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestCPCloudStackMachineValidateUpdateComputeOfferingImmutable(t *testing.T) {
+func TestCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.ComputeOffering = "oldComputeOffering"
@@ -38,20 +38,20 @@ func TestCPCloudStackMachineValidateUpdateComputeOfferingImmutable(t *testing.T)
 
 	c.Spec.ComputeOffering = "newComputeOffering"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestWorkersCPCloudStackMachineValidateUpdateComputeOfferingImmutable(t *testing.T) {
+func TestWorkersCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.Spec.ComputeOffering = "oldComputeOffering"
 	c := vOld.DeepCopy()
 
 	c.Spec.ComputeOffering = "newComputeOffering"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestCPCloudStackMachineValidateUpdateDiskOfferingImmutable(t *testing.T) {
+func TestCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.DiskOffering = "oldDiskOffering"
@@ -59,20 +59,20 @@ func TestCPCloudStackMachineValidateUpdateDiskOfferingImmutable(t *testing.T) {
 
 	c.Spec.DiskOffering = "newDiskOffering"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestWorkersCPCloudStackMachineValidateUpdateDiskOfferingImmutable(t *testing.T) {
+func TestWorkersCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.Spec.DiskOffering = "oldDiskOffering"
 	c := vOld.DeepCopy()
 
 	c.Spec.DiskOffering = "newDiskOffering"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestManagementCloudStackMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
+func TestManagementCloudStackMachineValidateUpdateSshAuthorizedKeyMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.SetManagement("test-cluster")
@@ -82,10 +82,10 @@ func TestManagementCloudStackMachineValidateUpdateSshAuthorizedKeyImmutable(t *t
 
 	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestWorkloadCloudStackMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
+func TestWorkloadCloudStackMachineValidateUpdateSshAuthorizedKeyMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
@@ -94,10 +94,10 @@ func TestWorkloadCloudStackMachineValidateUpdateSshAuthorizedKeyImmutable(t *tes
 
 	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestManagementCloudStackMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
+func TestManagementCloudStackMachineValidateUpdateSshUsernameMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.SetManagement("test-cluster")
@@ -106,10 +106,10 @@ func TestManagementCloudStackMachineValidateUpdateSshUsernameImmutable(t *testin
 
 	c.Spec.Users[0].Name = "Andy"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestWorkloadCloudStackMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
+func TestWorkloadCloudStackMachineValidateUpdateSshUsernameMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
@@ -117,10 +117,10 @@ func TestWorkloadCloudStackMachineValidateUpdateSshUsernameImmutable(t *testing.
 
 	c.Spec.Users[0].Name = "Andy"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestCPCloudStackMachineValidateUpdateDetailsImmutable(t *testing.T) {
+func TestCPCloudStackMachineValidateUpdateDetailsMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Details = map[string]string{
@@ -134,10 +134,10 @@ func TestCPCloudStackMachineValidateUpdateDetailsImmutable(t *testing.T) {
 		"k2": "v1",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestCloudStackMachineValidateUpdateDetailsImmutable(t *testing.T) {
+func TestCloudStackMachineValidateUpdateDetailsMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.Spec.Details = map[string]string{
 		"k1": "v1",
@@ -150,7 +150,7 @@ func TestCloudStackMachineValidateUpdateDetailsImmutable(t *testing.T) {
 		"k2": "v1",
 	}
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
 func TestCloudStackMachineValidateUpdateInvalidType(t *testing.T) {
