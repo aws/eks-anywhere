@@ -38,6 +38,10 @@ spec:
             description: CloudStackMachineConfigSpec defines the desired state of
               CloudStackMachineConfig
             properties:
+              affinityGroupIds:
+                items:
+                  type: string
+                type: array
               computeOffering:
                 type: string
               details:

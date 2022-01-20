@@ -326,12 +326,16 @@ spec:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
+          read-only-port: "0"
+          anonymous-auth: "false"
         name: '{{ ds.meta_data.hostname }}'
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
+          read-only-port: "0"
+          anonymous-auth: "false"
         name: '{{ ds.meta_data.hostname }}'
     preKubeadmCommands:
     - hostname "{{ ds.meta_data.hostname }}"
@@ -361,6 +365,8 @@ spec:
           criSocket: /var/run/containerd/containerd.sock
           kubeletExtraArgs:
             cloud-provider: external
+            read-only-port: "0"
+            anonymous-auth: "false"
           name: '{{ ds.meta_data.hostname }}'
       preKubeadmCommands:
       - hostname "{{ ds.meta_data.hostname }}"

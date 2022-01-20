@@ -34,6 +34,8 @@ spec:
           criSocket: /var/run/containerd/containerd.sock
           kubeletExtraArgs:
             cloud-provider: external
+            read-only-port: "0"
+            anonymous-auth: "false"
 {{- if .cgroupDriverSystemd}}
             cgroup-driver: systemd
 {{- end }}

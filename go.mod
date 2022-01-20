@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/aws/aws-sdk-go v1.38.40
-	github.com/aws/cluster-api-provider-cloudstack v0.2.1-named-module
+	github.com/aws/cluster-api-provider-cloudstack v0.3.0-alpha
 	github.com/aws/eks-anywhere/release v0.0.0-20211130194657-f6e9593c6551
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
 	github.com/go-git/go-git/v5 v5.4.2
@@ -13,7 +13,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/go-github/v35 v35.2.0
 	github.com/mrajashree/etcdadm-controller v0.1.3
-	github.com/onsi/gomega v1.16.0
+	github.com/onsi/gomega v1.17.0
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1

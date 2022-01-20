@@ -77,7 +77,7 @@ func TestValidateCloudStackConnectionError(t *testing.T) {
 	restoreEnv()
 }
 
-func TestListTemplates(t *testing.T) {
+func TestCmkListOperations(t *testing.T) {
 	saveAndSetEnv()
 	_, writer := test.NewWriter(t)
 	configFilePath, _ := filepath.Abs(filepath.Join(writer.Dir(), "generated", cmkConfigFileName))
@@ -403,6 +403,48 @@ func TestListTemplates(t *testing.T) {
 			shouldSecondCallOccur: false,
 			wantResultCount:       0,
 		},
+		{
+			testName:          "listaffinitygroups success on id filter",
+			jsonResponseFile1: "testdata/cmk_list_affinitygroup_singular.json",
+			argumentsExecCall1: []string{"-c", configFilePath,
+				"list", "affinitygroups", fmt.Sprintf("id=\"%s\"", resourceName)},
+			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
+				response, err := cmk.ListAffinityGroupsById(ctx, resourceName)
+				return len(response), err
+			},
+			cmkResponseError:      nil,
+			wantErr:               false,
+			shouldSecondCallOccur: false,
+			wantResultCount:       1,
+		},
+		{
+			testName:          "listaffinitygroups no results",
+			jsonResponseFile1: "testdata/cmk_list_empty_response.json",
+			argumentsExecCall1: []string{"-c", configFilePath,
+				"list", "affinitygroups", fmt.Sprintf("id=\"%s\"", resourceName)},
+			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
+				response, err := cmk.ListAffinityGroupsById(ctx, resourceName)
+				return len(response), err
+			},
+			cmkResponseError:      nil,
+			wantErr:               false,
+			shouldSecondCallOccur: false,
+			wantResultCount:       0,
+		},
+		{
+			testName:          "listaffinitygroups json parse exception",
+			jsonResponseFile1: "testdata/cmk_non_json_response.txt",
+			argumentsExecCall1: []string{"-c", configFilePath,
+				"list", "affinitygroups", fmt.Sprintf("id=\"%s\"", resourceName)},
+			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
+				response, err := cmk.ListAffinityGroupsById(ctx, resourceName)
+				return len(response), err
+			},
+			cmkResponseError:      nil,
+			wantErr:               true,
+			shouldSecondCallOccur: false,
+			wantResultCount:       0,
+		},
 	}
 
 	for _, tt := range tests {
@@ -448,4 +490,5 @@ type TestCmkClient interface {
 	ListDiskOfferings(ctx context.Context, offering string) ([]types.CmkDiskOffering, error)
 	ListZones(ctx context.Context, offering string) ([]types.CmkZone, error)
 	ListAccounts(ctx context.Context, accountName string) ([]types.CmkAccount, error)
+	ListAffinityGroupsById(ctx context.Context, affinityGroupId string) ([]types.CmkAffinityGroup, error)
 }

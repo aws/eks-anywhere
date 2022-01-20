@@ -86,6 +86,20 @@ func (c *Cmk) SearchDiskOffering(ctx context.Context, domain string, zone string
 	return offerings[0].Name, nil
 }
 
+func (c *Cmk) SearchAffinityGroups(ctx context.Context, domain string, zone string, account string, affinityGroupIds []string) error {
+	for _, affinityGroupId := range affinityGroupIds {
+		affinityGroup, err := c.ListAffinityGroupsById(ctx, affinityGroupId)
+		if err != nil {
+			return fmt.Errorf("affinity group %s not found. error: %v", affinityGroupId, err)
+		} else if len(affinityGroup) > 1 {
+			return fmt.Errorf("duplicate affinity group %s found", affinityGroupId)
+		} else if len(affinityGroup) == 0 {
+			return fmt.Errorf("affinity group %s not found", affinityGroupId)
+		}
+	}
+	return nil
+}
+
 // TODO: Add support for network checking
 func (c *Cmk) ValidateCloudStackSetup(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, selfSigned *bool) error {
 	errConnection := c.ValidateCloudStackConnection(ctx)
@@ -126,6 +140,10 @@ func (c *Cmk) ValidateCloudStackSetupMachineConfig(ctx context.Context, deployme
 		return err
 	} else {
 		machineConfig.Spec.DiskOffering = diskOffering
+	}
+
+	if err := c.SearchAffinityGroups(ctx, domain, zone, account, machineConfig.Spec.AffinityGroupIds); err != nil {
+		return err
 	}
 
 	return nil
@@ -254,6 +272,26 @@ func (c *Cmk) ListAccounts(ctx context.Context, account string) ([]types.CmkAcco
 		return make([]types.CmkAccount, 0), fmt.Errorf("failed to parse response into json: %v", err)
 	}
 	return response.CmkAccounts, nil
+}
+
+func (c *Cmk) ListAffinityGroupsById(ctx context.Context, affinityGroupId string) ([]types.CmkAffinityGroup, error) {
+	idFilterParam := fmt.Sprintf("id=\"%s\"", affinityGroupId)
+	result, err := c.exec(ctx, "list", "affinitygroups", idFilterParam)
+	if err != nil {
+		return make([]types.CmkAffinityGroup, 0), fmt.Errorf("error getting affinity group info: %v", err)
+	}
+	if result.Len() == 0 {
+		return make([]types.CmkAffinityGroup, 0), nil
+	}
+
+	response := struct {
+		CmkAffinityGroups []types.CmkAffinityGroup `json:"affinitygroup"`
+	}{}
+	err = json.Unmarshal(result.Bytes(), &response)
+	if err != nil {
+		return make([]types.CmkAffinityGroup, 0), fmt.Errorf("failed to parse response into json: %v", err)
+	}
+	return response.CmkAffinityGroups, nil
 }
 
 func (c *Cmk) execWithNameAndIdFilters(ctx context.Context, parameterValue string, genericArgs ...string) (stdout bytes.Buffer, err error) {
