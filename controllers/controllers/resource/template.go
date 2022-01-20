@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
@@ -73,7 +73,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		if err != nil {
 			return nil, err
 		}
-		controlPlaneTemplateName = cp.Spec.InfrastructureTemplate.Name
+		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
 	}
 
 	var workloadTemplateNames []string
@@ -168,7 +168,7 @@ func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster 
 	}
 
 	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = cp.Spec.InfrastructureTemplate.Name
+		values["controlPlaneTemplateName"] = cp.Spec.MachineTemplate.InfrastructureRef.Name
 		values["tinkerbellControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpTmc.Spec.Users)
 		values["tinkerbellEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdTmc.Spec.Users)
 		values["etcdTemplateName"] = etcdTemplateName
@@ -219,7 +219,7 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 	}
 
 	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.InfrastructureTemplate.Name
+		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 	return generateTemplateResources(templateBuilder, clusterSpec, workerTemplateNames, cpOpt)
