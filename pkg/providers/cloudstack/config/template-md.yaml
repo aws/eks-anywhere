@@ -109,3 +109,9 @@ spec:
       {{- range $key, $value := .cloudstackDetails}}
         {{$key}}: {{$value}}
       {{- end}}
+{{- if .cloudstackAffinityGroupIds }}
+      affinitygroupids:
+      {{- range .cloudstackAffinityGroupIds}}
+      - {{.}}
+      {{- end }}
+{{- end }}
