@@ -11,6 +11,8 @@ spec:
           criSocket: /var/run/containerd/containerd.sock
           kubeletExtraArgs:
             provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+            read-only-port: "0"
+            anonymous-auth: "false"
           name: '{{ ds.meta_data.local_hostname }}'
       preKubeadmCommands:
       - swapoff -a
