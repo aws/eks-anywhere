@@ -345,22 +345,21 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 
 func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error {
 	logger.V(6).Info("waiting for nodes", "cluster", clusterName)
-	deployments, err := k.GetMachineDeployments(ctx, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
+	md, err := k.GetMachineDeployment(ctx, cluster, clusterName, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return err
 	}
-	for _, machineDeployment := range deployments {
-		if machineDeployment.Status.Phase != "Running" {
-			return fmt.Errorf("machine deployment is in %s phase", machineDeployment.Status.Phase)
-		}
 
-		if machineDeployment.Status.UnavailableReplicas != 0 {
-			return fmt.Errorf("%v machine deployment replicas are unavailable", machineDeployment.Status.UnavailableReplicas)
-		}
+	if md.Status.Phase != "Running" {
+		return fmt.Errorf("machine deployment is in %s phase", md.Status.Phase)
+	}
 
-		if machineDeployment.Status.ReadyReplicas != machineDeployment.Status.Replicas {
-			return fmt.Errorf("%v machine deployment replicas are not ready", machineDeployment.Status.Replicas-machineDeployment.Status.ReadyReplicas)
-		}
+	if md.Status.UnavailableReplicas != 0 {
+		return fmt.Errorf("%v machine deployment replicas are unavailable", md.Status.UnavailableReplicas)
+	}
+
+	if md.Status.ReadyReplicas != md.Status.Replicas {
+		return fmt.Errorf("%v machine deployment replicas are not ready", md.Status.Replicas-md.Status.ReadyReplicas)
 	}
 	return nil
 }
@@ -687,8 +686,8 @@ func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Clu
 	return response, nil
 }
 
-func (k *Kubectl) GetMachineDeployment(ctx context.Context, cluster *types.Cluster, workerNodeGroupName string, opts ...KubectlOpt) (*clusterv1.MachineDeployment, error) {
-	params := []string{"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), workerNodeGroupName, "-o", "json"}
+func (k *Kubectl) GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*clusterv1.MachineDeployment, error) {
+	params := []string{"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), fmt.Sprintf("%s-md-0", clusterName), "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
