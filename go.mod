@@ -33,7 +33,7 @@ require (
 )
 
 // exclude un-required transitive dependency from cluster-api-provider-vsphere v1.0.1
-exclude sigs.k8s.io/cluster-api v0.0.0-00010101000000-000000000000
+exclude sigs.k8s.io/cluster-api/test v1.0.0
 
 // TODO: Once the repo is public, remove this so we use a versioned module
 replace (
