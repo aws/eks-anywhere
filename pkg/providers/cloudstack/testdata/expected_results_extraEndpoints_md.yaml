@@ -16,7 +16,7 @@ spec:
             anonymous-auth: "false"
             node-labels: label1=foo,label2=bar
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-          name: '{{ ds.meta_data.hostname }}'
+          name: '{{ ds.meta_data.local_hostname }}'
       preKubeadmCommands:
       - swapoff -a
       - hostname "{{ ds.meta_data.local_hostname }}"
