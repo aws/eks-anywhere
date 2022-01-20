@@ -11,13 +11,13 @@ import (
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	gomock "github.com/golang/mock/gomock"
-	v1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	v1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	types "k8s.io/apimachinery/pkg/types"
-	v1alpha30 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
-	v1alpha31 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	v1alpha32 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	v1beta10 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
+	v1beta11 "sigs.k8s.io/cluster-api/api/v1beta1"
+	v1beta12 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -60,10 +60,10 @@ func (mr *MockResourceFetcherMockRecorder) AWSIamConfig(arg0, arg1, arg2 interfa
 }
 
 // ControlPlane mocks base method.
-func (m *MockResourceFetcher) ControlPlane(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha32.KubeadmControlPlane, error) {
+func (m *MockResourceFetcher) ControlPlane(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1beta12.KubeadmControlPlane, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ControlPlane", arg0, arg1)
-	ret0, _ := ret[0].(*v1alpha32.KubeadmControlPlane)
+	ret0, _ := ret[0].(*v1beta12.KubeadmControlPlane)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -75,10 +75,10 @@ func (mr *MockResourceFetcherMockRecorder) ControlPlane(arg0, arg1 interface{}) 
 }
 
 // Etcd mocks base method.
-func (m *MockResourceFetcher) Etcd(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha3.EtcdadmCluster, error) {
+func (m *MockResourceFetcher) Etcd(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1beta1.EtcdadmCluster, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Etcd", arg0, arg1)
-	ret0, _ := ret[0].(*v1alpha3.EtcdadmCluster)
+	ret0, _ := ret[0].(*v1beta1.EtcdadmCluster)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -223,10 +223,10 @@ func (mr *MockResourceFetcherMockRecorder) FetchObjectByName(arg0, arg1, arg2, a
 }
 
 // MachineDeployment mocks base method.
-func (m *MockResourceFetcher) MachineDeployment(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha31.MachineDeployment, error) {
+func (m *MockResourceFetcher) MachineDeployment(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1beta11.MachineDeployment, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "MachineDeployment", arg0, arg1)
-	ret0, _ := ret[0].(*v1alpha31.MachineDeployment)
+	ret0, _ := ret[0].(*v1beta11.MachineDeployment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -268,10 +268,10 @@ func (mr *MockResourceFetcherMockRecorder) VSphereCredentials(arg0 interface{}) 
 }
 
 // VSphereWorkerMachineTemplate mocks base method.
-func (m *MockResourceFetcher) VSphereWorkerMachineTemplate(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha30.VSphereMachineTemplate, error) {
+func (m *MockResourceFetcher) VSphereWorkerMachineTemplate(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1beta10.VSphereMachineTemplate, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "VSphereWorkerMachineTemplate", arg0, arg1)
-	ret0, _ := ret[0].(*v1alpha30.VSphereMachineTemplate)
+	ret0, _ := ret[0].(*v1beta10.VSphereMachineTemplate)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
