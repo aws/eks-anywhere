@@ -45,6 +45,9 @@ func setRegistryMirrorConfigDefaults(clusterConfig *Cluster) error {
 }
 
 func setWorkerNodeGroupDefaults(cluster *Cluster) error {
-	// TODO: add default worker node group name when it becomes available
+	if len(cluster.Spec.WorkerNodeGroupConfigurations) == 1 && cluster.Spec.WorkerNodeGroupConfigurations[0].Name == "" {
+		logger.Info("Worker node group name not specified. Defaulting name to md-0.")
+		cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "md-0"
+	}
 	return nil
 }

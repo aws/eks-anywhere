@@ -307,11 +307,17 @@ func validateControlPlaneReplicas(clusterConfig *Cluster) error {
 }
 
 func validateWorkerNodeGroups(clusterConfig *Cluster) error {
-	if len(clusterConfig.Spec.WorkerNodeGroupConfigurations) <= 0 {
+	workerNodeGroupConfigs := clusterConfig.Spec.WorkerNodeGroupConfigurations
+	if len(workerNodeGroupConfigs) <= 0 {
 		return errors.New("worker node group must be specified")
 	}
-	if len(clusterConfig.Spec.WorkerNodeGroupConfigurations) > 1 {
+	if len(workerNodeGroupConfigs) > 1 {
 		return errors.New("only one worker node group is supported at this time")
+	}
+	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
+		if workerNodeGroupConfig.Name == "" {
+			return errors.New("must specify name for worker nodes")
+		}
 	}
 	return nil
 }
