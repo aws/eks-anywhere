@@ -65,7 +65,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateTemplateImmutable(t *testing.
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkloadEtcdVSphereMachineValidateUpdateTemplateImmutable(t *testing.T) {
+func TestWorkloadEtcdVSphereMachineValidateUpdateTemplateSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetEtcd()
 	vOld.Spec.Template = "oldTemplate"
@@ -73,7 +73,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateTemplateImmutable(t *testing.T)
 
 	c.Spec.Template = "newTemplate"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
 func TestVSphereMachineValidateUpdateOSFamilyImmutable(t *testing.T) {
@@ -143,7 +143,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateMemoryMiBImmutable(t *testing
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkloadEtcdVSphereMachineValidateUpdateMemoryMiBImmutable(t *testing.T) {
+func TestWorkloadEtcdVSphereMachineValidateUpdateMemoryMiBSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetEtcd()
 	vOld.Spec.MemoryMiB = 2
@@ -151,7 +151,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateMemoryMiBImmutable(t *testing.T
 
 	c.Spec.MemoryMiB = 2000000
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
 func TestManagementCPVSphereMachineValidateUpdateNumCPUsImmutable(t *testing.T) {
@@ -210,7 +210,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateNumCPUsImmutable(t *testing.T
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkloadEtcdVSphereMachineValidateUpdateNumCPUsImmutable(t *testing.T) {
+func TestWorkloadEtcdVSphereMachineValidateUpdateNumCPUsSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetEtcd()
 	vOld.Spec.NumCPUs = 1
@@ -218,7 +218,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateNumCPUsImmutable(t *testing.T) 
 
 	c.Spec.NumCPUs = 16
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
 func TestManagementCPVSphereMachineValidateUpdateDiskGiBImmutable(t *testing.T) {
@@ -278,7 +278,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateDiskGiBImmutable(t *testing.T
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkloadEtcdVSphereMachineValidateUpdateDiskGiBImmutable(t *testing.T) {
+func TestWorkloadEtcdVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetEtcd()
 	vOld.Spec.DiskGiB = 1
@@ -286,7 +286,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateDiskGiBImmutable(t *testing.T) 
 
 	c.Spec.DiskGiB = 160
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
 func TestManagementSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
@@ -407,7 +407,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateDatastoreImmutable(t *testing
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkloadEtcdVSphereMachineValidateUpdateDatastoreImmutable(t *testing.T) {
+func TestWorkloadEtcdVSphereMachineValidateUpdateDatastoreSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetEtcd()
 	vOld.Spec.Datastore = "OldDataStore"
@@ -415,7 +415,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateDatastoreImmutable(t *testing.T
 
 	c.Spec.Datastore = "NewDataStore"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
 func TestManagementWorkersVSphereMachineValidateUpdateDatastoreSuccess(t *testing.T) {
@@ -474,7 +474,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateFolderImmutable(t *testing.T)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkloadEtcdVSphereMachineValidateUpdateFolderImmutable(t *testing.T) {
+func TestWorkloadEtcdVSphereMachineValidateUpdateFolderSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetEtcd()
 	vOld.Spec.Folder = "/dev/null"
@@ -482,7 +482,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateFolderImmutable(t *testing.T) {
 
 	c.Spec.Folder = "/tmp"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
 func TestManagementWorkersVSphereMachineValidateUpdateFolderSuccess(t *testing.T) {
@@ -541,7 +541,7 @@ func TestManagementEtcdVSphereMachineValidateUpdateResourcePoolImmutable(t *test
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkloadEtcdVSphereMachineValidateUpdateResourcePoolImmutable(t *testing.T) {
+func TestWorkloadEtcdVSphereMachineValidateUpdateResourcePoolSuccess(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetEtcd()
 	vOld.Spec.ResourcePool = "AbovegroundPool"
@@ -549,7 +549,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateResourcePoolImmutable(t *testin
 
 	c.Spec.ResourcePool = "IngroundPool"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
 func TestManagementWorkersVSphereMachineValidateUpdateResourcePoolSuccess(t *testing.T) {
