@@ -335,14 +335,14 @@ func (p *tinkerbellProvider) MachineConfigs() []providers.MachineConfig {
 	workerMachineName := p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
 	if p.clusterConfig.IsManaged() {
-		p.machineConfigs[controlPlaneMachineName].SetManagement(p.clusterConfig.ManagedBy())
+		p.machineConfigs[controlPlaneMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
 	}
 
 	configs = append(configs, p.machineConfigs[controlPlaneMachineName])
 	if workerMachineName != controlPlaneMachineName {
 		configs = append(configs, p.machineConfigs[workerMachineName])
 		if p.clusterConfig.IsManaged() {
-			p.machineConfigs[workerMachineName].SetManagement(p.clusterConfig.ManagedBy())
+			p.machineConfigs[workerMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
 		}
 	}
 	return configs
