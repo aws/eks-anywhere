@@ -1,4 +1,4 @@
-apiVersion: cluster.x-k8s.io/v1alpha3
+apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   name: fluxAddonTestCluster
@@ -11,23 +11,23 @@ spec:
     services:
       cidrBlocks: [10.128.0.0/12]
   controlPlaneRef:
-    apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
     name: fluxAddonTestCluster
     namespace: eksa-system
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: DockerCluster
     name: fluxAddonTestCluster
     namespace: eksa-system
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: DockerCluster
 metadata:
   name: fluxAddonTestCluster
   namespace: eksa-system
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: DockerMachineTemplate
 metadata:
   name: test-control-plane-template-original
@@ -40,17 +40,18 @@ spec:
         hostPath: /var/run/docker.sock
       customImage: 
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
   name: fluxAddonTestCluster
   namespace: eksa-system
 spec:
-  infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-    kind: DockerMachineTemplate
-    name: test-control-plane-template-original
-    namespace: eksa-system
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: DockerMachineTemplate
+      name: test-control-plane-template-original
+      namespace: eksa-system
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: 
@@ -61,7 +62,6 @@ spec:
           extraArgs:
             cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       dns:
-        type: CoreDNS
         imageRepository: 
         imageTag: 
       apiServer:

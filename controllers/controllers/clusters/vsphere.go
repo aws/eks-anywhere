@@ -105,7 +105,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return reconciler.Result{}, err
 	}
 	if !dataCenterConfig.Status.SpecValid {
-		v.Log.Info("Skipping cluster reconciliation because data center config is invalid %v", dataCenterConfig)
+		v.Log.Info("Skipping cluster reconciliation because data center config is invalid", "data center", dataCenterConfig.Name)
 		return reconciler.Result{}, nil
 	}
 

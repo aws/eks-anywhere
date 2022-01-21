@@ -527,6 +527,8 @@ kind: Secret
 metadata:
   name: {{.clusterName}}-vsphere-credentials
   namespace: {{.eksaSystemNamespace}}
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
 stringData:
   username: "{{.eksaVsphereUsername}}"
   password: "{{.eksaVspherePassword}}"

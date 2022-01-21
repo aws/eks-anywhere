@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1alpha3"
+	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clusterapi/mocks"
@@ -54,7 +54,7 @@ func newResourceSetManagerTest(t *testing.T) *resourceSetManagerTest {
 		namespace:       "eksa-system",
 		resourceSet: &addons.ClusterResourceSet{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "addons.cluster.x-k8s.io/v1alpha3",
+				APIVersion: "addons.cluster.x-k8s.io/v1beta1",
 				Kind:       "ClusterResourceSet",
 			},
 			Spec: addons.ClusterResourceSetSpec{
