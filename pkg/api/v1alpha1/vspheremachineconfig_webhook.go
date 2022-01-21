@@ -85,16 +85,16 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 	}
 
 	if old.IsManaged() {
-		vspheremachineconfiglog.Info("Machine config is associated with workload cluster")
+		vspheremachineconfiglog.Info("Machine config is associated with workload cluster", "name", old.Name)
 		return allErrs
 	}
 
 	if !old.IsEtcd() && !old.IsControlPlane() {
-		vspheremachineconfiglog.Info("Machine config is associated with management cluster's worker nodes")
+		vspheremachineconfiglog.Info("Machine config is associated with management cluster's worker nodes", "name", old.Name)
 		return allErrs
 	}
 
-	vspheremachineconfiglog.Info("Machine config is associated with management cluster's control plane or etcd")
+	vspheremachineconfiglog.Info("Machine config is associated with management cluster's control plane or etcd", "name", old.Name)
 
 	if old.Spec.Template != new.Spec.Template {
 		allErrs = append(
