@@ -644,7 +644,8 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.S
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec, *vs.datacenterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name])
-		if templateNames != nil {
+		_, ok := templateNames[workerNodeGroupConfiguration.Name]
+		if templateNames != nil && ok {
 			values["workloadTemplateName"] = templateNames[workerNodeGroupConfiguration.Name]
 		} else {
 			values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
