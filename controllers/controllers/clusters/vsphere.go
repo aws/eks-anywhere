@@ -120,12 +120,6 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		machineConfigMap[ref.Name] = machineConfig
 	}
 
-	managementCluster := &anywherev1.Cluster{}
-	managementClusterName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.ManagementCluster.Name}
-	if err := v.Client.Get(ctx, managementClusterName, managementCluster); err != nil {
-		return reconciler.Result{}, err
-	}
-
 	bundles, err := v.bundles(ctx, cluster.Spec.ManagementCluster.Name, cluster.Namespace)
 	if err != nil {
 		return reconciler.Result{}, err
