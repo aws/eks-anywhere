@@ -219,7 +219,7 @@ func (c *upgradeTestSetup) expectNotToMoveManagementToWorkload() {
 func (c *upgradeTestSetup) expectPauseEKSAControllerReconcile(expectedCluster *types.Cluster) {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().PauseEKSAControllerReconcile(
-			c.ctx, expectedCluster, c.newClusterSpec, c.provider,
+			c.ctx, expectedCluster, c.currentClusterSpec, c.provider,
 		),
 	)
 }
@@ -227,7 +227,7 @@ func (c *upgradeTestSetup) expectPauseEKSAControllerReconcile(expectedCluster *t
 func (c *upgradeTestSetup) expectResumeEKSAControllerReconcile(expecteCluster *types.Cluster) {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().ResumeEKSAControllerReconcile(
-			c.ctx, expecteCluster, c.newClusterSpec, c.provider,
+			c.ctx, expecteCluster, c.currentClusterSpec, c.provider,
 		),
 	)
 }

@@ -156,14 +156,12 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluste
 func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, templateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec)
+		values := buildTemplateMapMD(clusterSpec, workerNodeGroupConfiguration)
 		if templateNames != nil {
 			values["workloadTemplateName"] = templateNames[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		} else {
 			values["workloadTemplateName"] = d.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		}
-		values["workerReplicas"] = workerNodeGroupConfiguration.Count
-		values["workerNodeGroupName"] = fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name)
 
 		bytes, err := templater.Execute(defaultCAPIConfigMD, values)
 		if err != nil {
@@ -225,10 +223,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	return values
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
-		Append(clusterapi.WorkerNodeLabelsExtraArgs(clusterSpec.Spec.WorkerNodeGroupConfigurations[0])).
+		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)).
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf))
 
 	values := map[string]interface{}{
@@ -237,6 +235,8 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 		"kindNodeImage":       bundle.EksD.KindNode.VersionedImage(),
 		"eksaSystemNamespace": constants.EksaSystemNamespace,
 		"kubeletExtraArgs":    kubeletExtraArgs.ToPartialYaml(),
+		"workerReplicas":      workerNodeGroupConfiguration.Count,
+		"workerNodeGroupName": fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name),
 	}
 	return values
 }
