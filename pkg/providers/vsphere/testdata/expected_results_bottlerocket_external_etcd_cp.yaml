@@ -474,6 +474,8 @@ kind: Secret
 metadata:
   name: test-vsphere-credentials
   namespace: eksa-system
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
 stringData:
   username: "vsphere_username"
   password: "vsphere_password"
