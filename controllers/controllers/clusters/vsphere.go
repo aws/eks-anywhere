@@ -126,12 +126,12 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return reconciler.Result{}, err
 	}
 
-	clusterSpec, err := v.FetchAppliedSpec(ctx, managementCluster)
+	bundles, err := v.bundles(ctx, cluster.Spec.ManagementCluster.Name, cluster.Namespace)
 	if err != nil {
 		return reconciler.Result{}, err
 	}
 
-	specWithBundles, err := c.BuildSpecFromBundles(cluster, clusterSpec.Bundles)
+	specWithBundles, err := c.BuildSpecFromBundles(cluster, bundles)
 	if err != nil {
 		return reconciler.Result{}, err
 	}
