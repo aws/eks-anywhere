@@ -120,11 +120,22 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		machineConfigMap[ref.Name] = machineConfig
 	}
 
-	clusterSpec, err := v.FetchAppliedSpec(ctx, cluster)
+	managementCluster := &anywherev1.Cluster{}
+	managementClusterName := types.NamespacedName{Namespace: cluster.Namespace, Name: cluster.Spec.ManagementCluster.Name}
+	if err := v.Client.Get(ctx, managementClusterName, managementCluster); err != nil {
+		return reconciler.Result{}, err
+	}
+
+	clusterSpec, err := v.FetchAppliedSpec(ctx, managementCluster)
 	if err != nil {
 		return reconciler.Result{}, err
 	}
-	vshepreClusterSpec := vsphere.NewSpec(clusterSpec, machineConfigMap, dataCenterConfig)
+
+	specWithBundles, err := c.BuildSpecFromBundles(cluster,clusterSpec.Bundles)
+	if err != nil {
+		return reconciler.Result{}, err
+	}
+	vshepreClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
 
 	if err := v.Validator.ValidateClusterMachineConfigs(ctx, vshepreClusterSpec); err != nil {
 		return reconciler.Result{}, err

@@ -88,15 +88,17 @@ func TestClusterReconcilerSuccess(t *testing.T) {
 	govcClient := mocks.NewMockProviderGovcClient(ctrl)
 
 	secret := createSecret()
+	managementCluster := createCluster()
+	managementCluster.Name = "management-cluster"
 	cluster := createCluster()
 	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
 
 	datacenterConfig := createDataCenter(cluster)
-	bundle := createBundle(cluster)
+	bundle := createBundle(managementCluster)
 	machineConfigCP := createCPMachineConfig()
 	machineConfigWN := createWNMachineConfig()
 
-	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN}
+	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN, managementCluster}
 
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
@@ -146,15 +148,17 @@ func TestClusterReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 	govcClient := mocks.NewMockProviderGovcClient(ctrl)
 
 	secret := createSecret()
+	managementCluster := createCluster()
+	managementCluster.Name = "management-cluster"
 	cluster := createCluster()
 	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
 
 	datacenterConfig := createDataCenter(cluster)
-	bundle := createBundle(cluster)
+	bundle := createBundle(managementCluster)
 	machineConfigCP := createCPMachineConfig()
 	machineConfigWN := createWNMachineConfig()
 
-	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN}
+	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN, managementCluster}
 
 	s := scheme.Scheme
 	s.AddKnownTypes(anywherev1.GroupVersion, cluster)
