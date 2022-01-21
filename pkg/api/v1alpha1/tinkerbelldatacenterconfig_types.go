@@ -39,46 +39,46 @@ func (v *TinkerbellDatacenterConfig) ExpectedKind() string {
 	return TinkerbellDatacenterKind
 }
 
-func (v *TinkerbellDatacenterConfig) PauseReconcile() {
-	if v.Annotations == nil {
-		v.Annotations = map[string]string{}
+func (t *TinkerbellDatacenterConfig) PauseReconcile() {
+	if t.Annotations == nil {
+		t.Annotations = map[string]string{}
 	}
-	v.Annotations[pausedAnnotation] = "true"
+	t.Annotations[pausedAnnotation] = "true"
 }
 
-func (v *TinkerbellDatacenterConfig) IsReconcilePaused() bool {
-	if s, ok := v.Annotations[pausedAnnotation]; ok {
+func (t *TinkerbellDatacenterConfig) IsReconcilePaused() bool {
+	if s, ok := t.Annotations[pausedAnnotation]; ok {
 		return s == "true"
 	}
 	return false
 }
 
-func (v *TinkerbellDatacenterConfig) ClearPauseAnnotation() {
-	if v.Annotations != nil {
-		delete(v.Annotations, pausedAnnotation)
+func (t *TinkerbellDatacenterConfig) ClearPauseAnnotation() {
+	if t.Annotations != nil {
+		delete(t.Annotations, pausedAnnotation)
 	}
 }
 
-func (v *TinkerbellDatacenterConfig) ConvertConfigToConfigGenerateStruct() *TinkerbellDatacenterConfigGenerate {
+func (t *TinkerbellDatacenterConfig) ConvertConfigToConfigGenerateStruct() *TinkerbellDatacenterConfigGenerate {
 	namespace := defaultEksaNamespace
-	if v.Namespace != "" {
-		namespace = v.Namespace
+	if t.Namespace != "" {
+		namespace = t.Namespace
 	}
 	config := &TinkerbellDatacenterConfigGenerate{
-		TypeMeta: v.TypeMeta,
+		TypeMeta: t.TypeMeta,
 		ObjectMeta: ObjectMeta{
-			Name:        v.Name,
-			Annotations: v.Annotations,
+			Name:        t.Name,
+			Annotations: t.Annotations,
 			Namespace:   namespace,
 		},
-		Spec: v.Spec,
+		Spec: t.Spec,
 	}
 
 	return config
 }
 
-func (v *TinkerbellDatacenterConfig) Marshallable() Marshallable {
-	return v.ConvertConfigToConfigGenerateStruct()
+func (t *TinkerbellDatacenterConfig) Marshallable() Marshallable {
+	return t.ConvertConfigToConfigGenerateStruct()
 }
 
 // +kubebuilder:object:generate=false

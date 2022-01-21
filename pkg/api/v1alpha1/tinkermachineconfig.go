@@ -11,6 +11,7 @@ import (
 
 const (
 	TinkerbellMachineConfigKind = "TinkerbellMachineConfig"
+	// TODO: convert this into struct
 	TinkerbellDefaultTemplate   = `version: "0.1"
 name: %s-test
 global_timeout: 6000
@@ -26,7 +27,7 @@ tasks:
         image: image2disk:v1.0.0
         timeout: 360
         environment:
-          IMG_URL: "http://10.62.2.49:8080/ubuntu-2004-kube-v1.20.11.gz"
+          IMG_URL: "http://10.62.2.49:8080/ubuntu-2004-kube-v1.21.5.gz"
           DEST_DISK: /dev/sda
           COMPRESSED: true
       - name: "install-openssl"
@@ -130,11 +131,12 @@ func NewTinkerbellMachineConfigGenerate(name string) *TinkerbellMachineConfigGen
 			Name: name,
 		},
 		Spec: TinkerbellMachineConfigSpec{
-			OSFamily: Bottlerocket,
+			OSFamily: Ubuntu,
 			Users: []UserConfiguration{{
 				Name:              "ec2-user",
 				SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},
 			}},
+			// TODO:
 			TemplateOverride: fmt.Sprintf(TinkerbellDefaultTemplate, name, name),
 		},
 	}
