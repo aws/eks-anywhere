@@ -472,19 +472,6 @@ func (p *vsphereProvider) validateMachineConfigsNameUniqueness(ctx context.Conte
 		}
 	}
 
-	for i, prevMachineConfig := range prevSpec.Spec.WorkerNodeGroupConfigurations {
-		workerMachineConfigName := clusterSpec.Spec.WorkerNodeGroupConfigurations[i].MachineGroupRef.Name
-		if prevMachineConfig.MachineGroupRef.Name != workerMachineConfigName {
-			em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, workerMachineConfigName, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.GetNamespace())
-			if err != nil {
-				return err
-			}
-			if len(em) > 0 {
-				return fmt.Errorf("worker nodes VSphereMachineConfig %s already exists", workerMachineConfigName)
-			}
-		}
-	}
-
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil && prevSpec.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 		if prevSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name != etcdMachineConfigName {
