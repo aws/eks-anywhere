@@ -108,10 +108,6 @@ spec:
                 items:
                   type: string
                 type: array
-              clusterID:
-                description: ClusterID is a unique-per-cluster identifier for aws-iam-authenticator
-                  server
-                type: string
               mapRoles:
                 items:
                   description: MapRoles defines IAM role to a username and set of
@@ -2348,6 +2344,11 @@ spec:
             type: object
           status:
             description: ClusterStatus defines the observed state of Cluster
+            properties:
+              failureMessage:
+                description: Descriptive message about a fatal problem while reconciling
+                  a cluster
+                type: string
             type: object
         type: object
     served: true
@@ -3106,12 +3107,93 @@ rules:
   - configmaps/status
   - namespaces
   - namespaces/status
+  - services
+  - services/status
   verbs:
   - get
   - list
   - patch
   - update
   - watch
+  - create
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterroles
+  - clusterroles/status
+  - clusterrolebindings
+  - clusterrolebindings/status
+  - rolebindings
+  - rolebindings/status
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+  - create
+- apiGroups:
+  - apps
+  resources:
+  - daemonsets
+  - daemonsets/status
+  verbs:
+  - get
+  - list
+  - patch
+  - update
+  - watch
+  - create
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - nodes/status
+  verbs:
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  - endpoints
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - watch
+  - list
+  - delete
+  - update
   - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1

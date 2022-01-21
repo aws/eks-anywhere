@@ -12,9 +12,6 @@ type AWSIamConfigSpec struct {
 	// BackendMode defines multiple backends for aws-iam-authenticator server
 	// The server searches for mappings in order
 	BackendMode []string `json:"backendMode"`
-	// ClusterID is a unique-per-cluster identifier for aws-iam-authenticator server
-	// +kubebuilder:validation:Optional
-	ClusterID string `json:"clusterID,omitempty"`
 	// +kubebuilder:validation:Optional
 	MapRoles []MapRoles `json:"mapRoles,omitempty"`
 	// +kubebuilder:validation:Optional
@@ -47,9 +44,6 @@ func (e *AWSIamConfigSpec) Equal(n *AWSIamConfigSpec) bool {
 		return false
 	}
 	if e.AWSRegion != n.AWSRegion {
-		return false
-	}
-	if e.ClusterID != n.ClusterID {
 		return false
 	}
 	if e.Partition != n.Partition {
