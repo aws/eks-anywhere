@@ -143,10 +143,10 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				}
 
 				fetcher.EXPECT().Etcd(ctx, gomock.Any()).Return(etcdadmCluster, nil)
-				fetcher.EXPECT().ExistingVSphereDatacenterConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereDatacenterConfig{}, nil)
+				fetcher.EXPECT().ExistingVSphereDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.VSphereDatacenterConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereEtcdMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
-				fetcher.EXPECT().ExistingVSphereWorkerMachineConfigs(ctx, gomock.Any()).Return(map[string]anywherev1.VSphereMachineConfig{"test_cluster": {}}, nil)
+				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().VSphereCredentials(ctx).Return(&corev1.Secret{
 					Data: map[string][]byte{"username": []byte("username"), "password": []byte("password")},
 				}, nil)
@@ -210,7 +210,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 
 				existingVSDatacenter := &anywherev1.VSphereDatacenterConfig{}
 				existingVSDatacenter.Spec = datacenterSpec.Spec
-				fetcher.EXPECT().ExistingVSphereDatacenterConfig(ctx, gomock.Any()).Return(existingVSDatacenter, nil)
+				fetcher.EXPECT().ExistingVSphereDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(existingVSDatacenter, nil)
 
 				machineSpec := &anywherev1.VSphereMachineConfig{}
 				if err := yaml.Unmarshal([]byte(vsphereMachineConfigSpecPath), machineSpec); err != nil {
@@ -235,7 +235,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				existingVSMachine := &anywherev1.VSphereMachineConfig{}
 				existingVSMachine.Spec = machineSpec.Spec
 				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
-				fetcher.EXPECT().ExistingVSphereWorkerMachineConfigs(ctx, gomock.Any()).Return(map[string]anywherev1.VSphereMachineConfig{"test_cluster": {}}, nil)
+				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 
 				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}
 				if err := yaml.Unmarshal([]byte(kubeadmcontrolplaneFile), kubeAdmControlPlane); err != nil {

@@ -44,22 +44,18 @@ type TinkerbellTemplate struct {
 
 func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdc anywherev1.VSphereDatacenterConfig, cpVmc, etcdVmc anywherev1.VSphereMachineConfig, workerVmcs map[string]anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
 	workerNodeGroupMachineSpecs := make(map[string]anywherev1.VSphereMachineConfigSpec, len(workerVmcs))
-	for _, wnConfig := range workerVmcs {
-		workerNodeGroupMachineSpecs[wnConfig.Name] = wnConfig.Spec
+	for _, wnConfig := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = workerVmcs[wnConfig.MachineGroupRef.Name].Spec
 	}
 	// control plane and etcd updates are prohibited in controller so those specs should not change
 	templateBuilder := vsphere.NewVsphereTemplateBuilder(&vdc.Spec, &cpVmc.Spec, &etcdVmc.Spec, workerNodeGroupMachineSpecs, r.now)
 	clusterName := clusterSpec.ObjectMeta.Name
 
-	oldVdc, err := r.ExistingVSphereDatacenterConfig(ctx, eksaCluster)
+	oldVdc, err := r.ExistingVSphereDatacenterConfig(ctx, eksaCluster, clusterSpec.Spec.WorkerNodeGroupConfigurations[0])
 	if err != nil {
 		return nil, err
 	}
 	oldCpVmc, err := r.ExistingVSphereControlPlaneMachineConfig(ctx, eksaCluster)
-	if err != nil {
-		return nil, err
-	}
-	oldWorkerVmcs, err := r.ExistingVSphereWorkerMachineConfigs(ctx, eksaCluster)
 	if err != nil {
 		return nil, err
 	}
@@ -78,24 +74,22 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 
 	var workloadTemplateNames []string
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		oldVmc := oldWorkerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		oldVmc, err := r.ExistingVSphereWorkerMachineConfig(ctx, eksaCluster, workerNodeGroupConfiguration)
+		if err != nil {
+			return nil, err
+		}
 		vmc := workerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
-		updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, &oldVmc, &vmc)
+		updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, oldVmc, &vmc)
 		if updateWorkloadTemplate {
 			workloadTemplateName := templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
 			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
 		} else {
-			mcDeployments, err := r.MachineDeployments(ctx, eksaCluster)
+			mcDeployment, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
 			if err != nil {
 				return nil, err
 			}
-			mdName := fmt.Sprintf("%s-%s", clusterName, workerNodeGroupConfiguration.Name)
-			if _, ok := mcDeployments[mdName]; ok {
-				workloadTemplateName := mcDeployments[mdName].Spec.Template.Spec.InfrastructureRef.Name
-				workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
-			} else {
-				return nil, fmt.Errorf("no machine deployment named %s", mdName)
-			}
+			workloadTemplateName := mcDeployment.Spec.Template.Spec.InfrastructureRef.Name
+			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
 		}
 	}
 
