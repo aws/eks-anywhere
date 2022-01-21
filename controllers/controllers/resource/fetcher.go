@@ -178,7 +178,7 @@ func (r *CapiResourceFetcher) machineDeploymentsMap(ctx context.Context, c *anyw
 	}
 	deployments := make(map[string]*clusterv1.MachineDeployment, len(machineDeployments.Items))
 	for _, md := range machineDeployments.Items {
-		deployments[md.Name] = &md
+		deployments[md.Name] = md.DeepCopy()
 	}
 	return deployments, nil
 }
