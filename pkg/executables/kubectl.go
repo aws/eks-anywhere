@@ -44,6 +44,7 @@ var (
 	etcdadmClustersResourceType       = fmt.Sprintf("etcdadmclusters.%s", etcdv1.GroupVersion.Group)
 	bundlesResourceType               = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
 	clusterResourceSetResourceType    = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
+	kubeadmControlPlaneResourceType   = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
 )
 
 type Kubectl struct {
@@ -652,7 +653,7 @@ func (k *Kubectl) GetSecret(ctx context.Context, secretObjectName string, opts .
 }
 
 func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOpt) ([]controlplanev1.KubeadmControlPlane, error) {
-	params := []string{"get", fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group), "-o", "json"}
+	params := []string{"get", kubeadmControlPlaneResourceType, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
@@ -670,7 +671,7 @@ func (k *Kubectl) GetKubeadmControlPlanes(ctx context.Context, opts ...KubectlOp
 
 func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...KubectlOpt) (*controlplanev1.KubeadmControlPlane, error) {
 	logger.V(6).Info("Getting KubeadmControlPlane CRDs", "cluster", clusterName)
-	params := []string{"get", fmt.Sprintf("kubeadmcontrolplanes.%s.controlplane.%s", clusterv1.GroupVersion.Version, clusterv1.GroupVersion.Group), clusterName, "-o", "json"}
+	params := []string{"get", kubeadmControlPlaneResourceType, clusterName, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
