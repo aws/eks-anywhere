@@ -53,7 +53,7 @@ func (c *TinkerbellMachineConfig) SetManagedBy(clusterName string) {
 	c.Annotations[managementAnnotation] = clusterName
 }
 
-func (c *TinkerbellMachineConfig) IsSelfManaged() bool {
+func (c *TinkerbellMachineConfig) IsManaged() bool {
 	if s, ok := c.Annotations[managementAnnotation]; ok {
 		return s != ""
 	}
