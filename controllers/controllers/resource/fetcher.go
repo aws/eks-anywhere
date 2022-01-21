@@ -199,7 +199,6 @@ func (r *CapiResourceFetcher) MachineDeployment(ctx context.Context, cs *anywher
 	} else {
 		return nil, fmt.Errorf("no machine deployment named %s", mdName)
 	}
-
 }
 
 func (r *CapiResourceFetcher) Fetch(ctx context.Context, name string, namespace string, kind string, apiVersion string) (*unstructured.Unstructured, error) {
