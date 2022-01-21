@@ -16,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
 )
@@ -106,6 +107,17 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		}
 	}
 
+	// pin cgroupDriver to systemd for k8s >= 1.21
+	cgroupDriverSystemd := false
+	bundle := clusterSpec.VersionsBundle
+	k8sVersion, err := semver.New(bundle.KubeDistro.Kubernetes.Tag)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing kubernetes version %v: %v", bundle.KubeDistro.Kubernetes.Tag, err)
+	}
+	if k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
+		cgroupDriverSystemd = true
+	}
+
 	// Get vsphere credentials so that the template can apply correctly instead of with empty values
 	credSecret, err := r.VSphereCredentials(ctx)
 	if err != nil {
@@ -131,6 +143,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 
 	workersOpt := func(values map[string]interface{}) {
 		values["workloadTemplateName"] = workloadTemplateName
+		values["cgroupDriverSystemd"] = cgroupDriverSystemd
 		values["vsphereWorkerSshAuthorizedKey"] = sshAuthorizedKey(workerVmc.Spec.Users)
 	}
 
