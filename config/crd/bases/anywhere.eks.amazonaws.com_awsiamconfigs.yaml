@@ -45,10 +45,6 @@ spec:
                 items:
                   type: string
                 type: array
-              clusterID:
-                description: ClusterID is a unique-per-cluster identifier for aws-iam-authenticator
-                  server
-                type: string
               mapRoles:
                 items:
                   description: MapRoles defines IAM role to a username and set of

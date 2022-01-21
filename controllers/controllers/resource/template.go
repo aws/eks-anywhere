@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
@@ -20,7 +21,10 @@ import (
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
 )
 
-const ConfigMapKind = "ConfigMap"
+const (
+	ConfigMapKind       = "ConfigMap"
+	EKSIamConfigMapName = "aws-auth"
+)
 
 type DockerTemplate struct {
 	ResourceFetcher
@@ -235,7 +239,7 @@ func sshAuthorizedKey(users []anywherev1.UserConfiguration) string {
 func (r *AWSIamConfigTemplate) TemplateResources(ctx context.Context, clusterSpec *cluster.Spec) ([]*unstructured.Unstructured, error) {
 	var resources []*unstructured.Unstructured
 	templateBuilder := awsiamauth.NewAwsIamAuthTemplateBuilder()
-	content, err := templateBuilder.GenerateManifest(clusterSpec)
+	content, err := templateBuilder.GenerateManifest(clusterSpec, uuid.Nil)
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +249,9 @@ func (r *AWSIamConfigTemplate) TemplateResources(ctx context.Context, clusterSpe
 		if err := yaml.Unmarshal([]byte(template), u); err != nil {
 			continue
 		}
-		if u.GetKind() == ConfigMapKind {
+
+		// Only reconcile IAM role mappings ConfigMap
+		if u.GetKind() == ConfigMapKind && u.GetName() == EKSIamConfigMapName {
 			resources = append(resources, u)
 		}
 	}

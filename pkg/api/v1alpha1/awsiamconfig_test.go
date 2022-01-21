@@ -69,41 +69,6 @@ func TestGetAndValidateAWSIamConfig(t *testing.T) {
 			wantErr:          true,
 		},
 		{
-			testName: "valid AWSIamConfig default cluster id",
-			fileName: "testdata/cluster_1_21_awsiam_no_clusterid.yaml",
-			refName:  "eksa-unit-test",
-			wantAWSIamConfig: &AWSIamConfig{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "AWSIamConfig",
-					APIVersion: SchemeBuilder.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "eksa-unit-test",
-				},
-				Spec: AWSIamConfigSpec{
-					AWSRegion:   "test-region",
-					BackendMode: []string{"mode1", "mode2"},
-					ClusterID:   "eksa-unit-test-cluster",
-					MapRoles: []MapRoles{
-						{
-							RoleARN:  "test-role-arn",
-							Username: "test",
-							Groups:   []string{"group1", "group2"},
-						},
-					},
-					MapUsers: []MapUsers{
-						{
-							UserARN:  "test-user-arn",
-							Username: "test",
-							Groups:   []string{"group1", "group2"},
-						},
-					},
-					Partition: "aws",
-				},
-			},
-			wantErr: false,
-		},
-		{
 			testName: "valid AWSIamConfig no mapping eksconfigmap backend",
 			fileName: "testdata/cluster_1_21_awsiam_no_mapping_eksconfigmap.yaml",
 			refName:  "eksa-unit-test",
@@ -118,7 +83,6 @@ func TestGetAndValidateAWSIamConfig(t *testing.T) {
 				Spec: AWSIamConfigSpec{
 					AWSRegion:   "test-region",
 					BackendMode: []string{"EKSConfigMap"},
-					ClusterID:   "eksa-unit-test",
 					Partition:   "aws",
 				},
 			},
@@ -139,7 +103,6 @@ func TestGetAndValidateAWSIamConfig(t *testing.T) {
 				Spec: AWSIamConfigSpec{
 					AWSRegion:   "test-region",
 					BackendMode: []string{"mode1", "mode2"},
-					ClusterID:   "eksa-unit-test",
 					MapRoles: []MapRoles{
 						{
 							RoleARN:  "test-role-arn",

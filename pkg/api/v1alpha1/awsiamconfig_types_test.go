@@ -24,20 +24,6 @@ func TestEqual(t *testing.T) {
 			wantEqual: false,
 		},
 		{
-			testName: "clusterID changed",
-			aiOld: &AWSIamConfig{
-				Spec: AWSIamConfigSpec{
-					ClusterID: "oldClusterID",
-				},
-			},
-			aiNew: &AWSIamConfig{
-				Spec: AWSIamConfigSpec{
-					ClusterID: "newClusterID",
-				},
-			},
-			wantEqual: false,
-		},
-		{
 			testName: "partition changed",
 			aiOld: &AWSIamConfig{
 				Spec: AWSIamConfigSpec{
