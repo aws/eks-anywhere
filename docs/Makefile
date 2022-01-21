@@ -1,5 +1,5 @@
-IMAGE_REGISTRY ?= public.ecr.aws/eks-distro-build-tooling
-CONTAINER_IMAGE   = $(IMAGE_REGISTRY)/eks-a-hugo
+#IMAGE_REGISTRY ?= public.ecr.aws/eks-distro-build-tooling
+CONTAINER_IMAGE   = klakegg/hugo
 CONTAINER_RUN     = docker run --rm --interactive --tty --volume $(CURDIR)/../:/src
 DOCS_ARCHIVE      = public.zip
 
@@ -12,7 +12,6 @@ build: submodule ## Generate the static site into the /public folder
 	npm install
 	hugo --environment production --cleanDestinationDir
 
-release: build
 
 submodule: ## initialize the docsy theme submodule
 	git submodule update --init --recursive

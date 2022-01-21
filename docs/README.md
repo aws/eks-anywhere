@@ -5,9 +5,16 @@ It uses [`hugo`](https://gohugo.io/) for static site generation with the [docsy]
 
 ## Local development
 
-To run the local documentation server you can use the provided make targets to create a container with the required dependencies.
+To run the local documentation server you can use the provided make targets to launch Hugo server via the CLI
 
 ```bash
+make build
+make submodule
+make serve
+```
+
+Or you can run the local documentation server with the provided make targets to create a container with the required dependencies.
+
 make container-build
 make container-serve
 ```
