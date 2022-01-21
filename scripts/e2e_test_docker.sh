@@ -14,6 +14,9 @@
 # limitations under the License.
 
 set -x
+set -o errexit
+set -o nounset
+set -o pipefail
 
 if [ "$AWS_ROLE_ARN" == "" ]; then
     echo "Empty AWS_ROLE_ARN, this script must be run in a postsubmit pod with IAM Roles for Service Accounts"
