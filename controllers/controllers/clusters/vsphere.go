@@ -131,7 +131,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return reconciler.Result{}, err
 	}
 
-	specWithBundles, err := c.BuildSpecFromBundles(cluster,clusterSpec.Bundles)
+	specWithBundles, err := c.BuildSpecFromBundles(cluster, clusterSpec.Bundles)
 	if err != nil {
 		return reconciler.Result{}, err
 	}
