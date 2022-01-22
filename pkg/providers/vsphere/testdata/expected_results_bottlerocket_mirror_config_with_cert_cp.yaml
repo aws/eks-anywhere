@@ -467,6 +467,7 @@ spec:
       etcdImage: public.ecr.aws/eks-distro/etcd-io/etcd:v3.4.16-eks-1-21-4
       bootstrapImage: public.ecr.aws/l0g8r8j6/bottlerocket-bootstrap:v1-21-4-eks-a-v0.0.0-dev-build.158
       pauseImage: public.ecr.aws/eks-distro/kubernetes/pause:v1.21.2-eks-1-21-4
+    cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
       - name: ec2-user
         sshAuthorizedKeys:
