@@ -51,7 +51,7 @@ type tinkerbellProvider struct {
 	providerKubectlClient ProviderKubectlClient
 	templateBuilder       *TinkerbellTemplateBuilder
 	hardwareConfigFile    string
-	validator              *Validator
+	validator             *Validator
 	// TODO: Update hardwareConfig to proper type
 }
 

@@ -43,7 +43,6 @@ func (v *Validator) ValidateTinkerbellConfig(ctx context.Context, datacenterConf
 
 // TODO: dry out machine configs validations
 func (v *Validator) validateCluster(ctx context.Context, tinkerbellClusterSpec *spec) error {
-
 	// TODO: move this to api Cluster validations
 	if len(tinkerbellClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
 		return errors.New("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
@@ -118,7 +117,6 @@ func (v *Validator) validateTemplate(ctx context.Context, spec *spec, machineCon
 }
 
 func (v *Validator) validateTinkerbellIP(ctx context.Context, TinkerbellIP string) error {
-
 	if TinkerbellIP == "" {
 		return fmt.Errorf("tinkerbellIP is required")
 	}
