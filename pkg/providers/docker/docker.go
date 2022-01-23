@@ -181,7 +181,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
 	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
-		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf)).
+		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS)).
 		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Spec.ControlPlaneConfiguration))
 	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
 		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
@@ -230,7 +230,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
 		Append(clusterapi.WorkerNodeLabelsExtraArgs(clusterSpec.Spec.WorkerNodeGroupConfigurations[0])).
-		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf))
+		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS))
 
 	values := map[string]interface{}{
 		"clusterName":         clusterSpec.Name,

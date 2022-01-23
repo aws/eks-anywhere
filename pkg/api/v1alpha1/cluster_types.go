@@ -231,8 +231,8 @@ type ClusterNetwork struct {
 	Pods     Pods     `json:"pods,omitempty"`
 	Services Services `json:"services,omitempty"`
 	// CNI specifies the CNI plugin to be installed in the cluster
-	CNI CNI `json:"cni,omitempty"`
-	DNS DNS `json:"dns,omitempty"`
+	CNI CNI  `json:"cni,omitempty"`
+	DNS *DNS `json:"dns,omitempty"`
 }
 
 func (n *ClusterNetwork) Equal(o *ClusterNetwork) bool {
@@ -244,7 +244,7 @@ func (n *ClusterNetwork) Equal(o *ClusterNetwork) bool {
 	}
 	return SliceEqual(n.Pods.CidrBlocks, o.Pods.CidrBlocks) &&
 		SliceEqual(n.Services.CidrBlocks, o.Services.CidrBlocks) &&
-		n.CNI == o.CNI && n.DNS == o.DNS
+		n.CNI == o.CNI && n.DNS.Equal(o.DNS)
 }
 
 func SliceEqual(a, b []string) bool {
@@ -300,6 +300,16 @@ type Services struct {
 type DNS struct {
 	// ResolvConf refers to the DNS resolver configuration
 	ResolvConf ResolvConf `json:"resolvConf,omitempty"`
+}
+
+func (n *DNS) Equal(o *DNS) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.ResolvConf.Path == o.ResolvConf.Path
 }
 
 type ResolvConf struct {
