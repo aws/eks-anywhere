@@ -874,13 +874,13 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}
 
-	previousMachineConfigs := sliceToMap(currentSpec.MachineConfigRefs())
+	previousWorkerNodeGroupConfigs := prevWorkerNodeGroups(currentSpec.Spec.WorkerNodeGroupConfigurations)
 
 	workloadTemplateNames := make(map[string]string, len(newClusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range newClusterSpec.Spec.WorkerNodeGroupConfigurations {
 		existingWorkerNodeGroup := false
 		workerMachineConfig := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
-		if _, ok := previousMachineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]; ok {
+		if _, ok := previousWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
 			existingWorkerNodeGroup = true
 			workerVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, workerNodeGroupConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
 			if err != nil {
@@ -1127,7 +1127,7 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 	oSpec := prevDatacenter.Spec
 	nSpec := datacenter.Spec
 
-	prevMachineConfigs := sliceToMap(prevSpec.MachineConfigRefs())
+	prevMachineConfigRefs := machineRefSliceToMap(prevSpec.MachineConfigRefs())
 
 	for _, machineConfigRef := range clusterSpec.MachineConfigRefs() {
 		machineConfig, ok := p.machineConfigs[machineConfigRef.Name]
@@ -1135,7 +1135,7 @@ func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cl
 			return fmt.Errorf("cannot find machine config %s in vsphere provider machine configs", machineConfigRef.Name)
 		}
 
-		if _, ok = prevMachineConfigs[machineConfig.Name]; ok {
+		if _, ok = prevMachineConfigRefs[machineConfig.Name]; ok {
 			err = p.validateMachineConfigImmutability(ctx, cluster, machineConfig, clusterSpec)
 			if err != nil {
 				return err
@@ -1264,10 +1264,18 @@ func configsMapToSlice(c map[string]providers.MachineConfig) []providers.Machine
 	return configs
 }
 
-func sliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
+func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
 	refMap := make(map[string]v1alpha1.Ref, len(machineRefs))
 	for _, ref := range machineRefs {
 		refMap[ref.Name] = ref
 	}
 	return refMap
+}
+
+func prevWorkerNodeGroups(prevWorkerNodeGroups []v1alpha1.WorkerNodeGroupConfiguration) map[string]v1alpha1.WorkerNodeGroupConfiguration {
+	prevConfigs := make(map[string]v1alpha1.WorkerNodeGroupConfiguration, len(prevWorkerNodeGroups))
+	for _, config := range prevWorkerNodeGroups {
+		prevConfigs[config.Name] = config
+	}
+	return prevConfigs
 }
