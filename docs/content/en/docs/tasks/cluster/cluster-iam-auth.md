@@ -25,10 +25,10 @@ Generate your cluster configuration and add the necessary IAM Authenticator conf
 
 Create an EKS Anywhere cluster as follows:
 
-    ```bash
-    CLUSTER_NAME=my-cluster-name
-    eksctl anywhere create cluster -f ${CLUSTER_NAME}.yaml
-    ```
+```bash
+CLUSTER_NAME=my-cluster-name
+eksctl anywhere create cluster -f ${CLUSTER_NAME}.yaml
+```
 
 #### Example AWSIamConfig configuration
 This example uses a region in the default aws partition and `EKSConfigMap` as `backendMode`. Also, the IAM ARNs are mapped to the kubernetes `system:masters` group.
@@ -50,7 +50,6 @@ metadata:
    name: aws-iam-auth-config
 spec:
     awsRegion: us-west-1
-    clusterID: my-cluster-name
     backendMode:
         - EKSConfigMap
     mapRoles:
@@ -67,7 +66,7 @@ spec:
 ```
 
 {{% alert title="Note" color="primary" %}}
-When using backend mode `CRD`, the `mapRoles` and `mapUsers` are not required. For more details on configuring CRD mode, refer to [CRD](https://github.com/kubernetes-sigs/aws-iam-authenticator#crd-alpha).
+When using backend mode `CRD`, the `mapRoles` and `mapUsers` are not required. For more details on configuring CRD mode, refer to [CRD](https://github.com/kubernetes-sigs/aws-iam-authenticator#crd-alpha)
 {{% /alert %}}
 
 ### Authenticating with IAM Authenticator

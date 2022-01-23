@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -74,7 +75,8 @@ func TestGenerateAwsIamAuthKubeconfigSuccess(t *testing.T) {
 func newAwsIamAuth(t *testing.T) (*awsiamauth.AwsIamAuth, *mocks.MockCertificateGenerator) {
 	mockCtrl := gomock.NewController(t)
 	mockCertgen := mocks.NewMockCertificateGenerator(mockCtrl)
-	return awsiamauth.NewAwsIamAuth(mockCertgen), mockCertgen
+	mockClusterId := uuid.MustParse("36db102f-9e1e-4ca4-8300-271d30b14161")
+	return awsiamauth.NewAwsIamAuth(mockCertgen, mockClusterId), mockCertgen
 }
 
 func givenClusterSpec() *cluster.Spec {
@@ -87,7 +89,6 @@ func givenClusterSpec() *cluster.Spec {
 			Spec: v1alpha1.AWSIamConfigSpec{
 				AWSRegion:   "test-region",
 				BackendMode: []string{"mode1", "mode2"},
-				ClusterID:   "test-cluster",
 				MapRoles: []v1alpha1.MapRoles{
 					{
 						RoleARN:  "test-role-arn",

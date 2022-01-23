@@ -10,7 +10,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -88,15 +87,17 @@ func TestClusterReconcilerSuccess(t *testing.T) {
 	govcClient := mocks.NewMockProviderGovcClient(ctrl)
 
 	secret := createSecret()
+	managementCluster := createCluster()
+	managementCluster.Name = "management-cluster"
 	cluster := createCluster()
 	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
 
 	datacenterConfig := createDataCenter(cluster)
-	bundle := createBundle(cluster)
+	bundle := createBundle(managementCluster)
 	machineConfigCP := createCPMachineConfig()
 	machineConfigWN := createWNMachineConfig()
 
-	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN}
+	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN, managementCluster}
 
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
@@ -146,21 +147,17 @@ func TestClusterReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 	govcClient := mocks.NewMockProviderGovcClient(ctrl)
 
 	secret := createSecret()
+	managementCluster := createCluster()
+	managementCluster.Name = "management-cluster"
 	cluster := createCluster()
 	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
 
 	datacenterConfig := createDataCenter(cluster)
-	bundle := createBundle(cluster)
+	bundle := createBundle(managementCluster)
 	machineConfigCP := createCPMachineConfig()
 	machineConfigWN := createWNMachineConfig()
 
-	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN}
-
-	s := scheme.Scheme
-	s.AddKnownTypes(anywherev1.GroupVersion, cluster)
-	s.AddKnownTypes(anywherev1.GroupVersion, datacenterConfig)
-	s.AddKnownTypes(anywherev1.GroupVersion, bundle)
-	s.AddKnownTypes(anywherev1.GroupVersion, machineConfigCP)
+	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN, managementCluster}
 
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()

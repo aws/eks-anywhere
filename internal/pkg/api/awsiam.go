@@ -37,12 +37,6 @@ func WithAWSIamBackendMode(backendMode string) AWSIamConfigOpt {
 	}
 }
 
-func WithAWSIamClusterID(clusterId string) AWSIamConfigOpt {
-	return func(c *v1alpha1.AWSIamConfig) {
-		c.Spec.ClusterID = clusterId
-	}
-}
-
 func AddAWSIamRole(arn, username string, groups []string) *v1alpha1.MapRoles {
 	return &v1alpha1.MapRoles{
 		RoleARN:  arn,
