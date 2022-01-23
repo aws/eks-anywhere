@@ -159,7 +159,7 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 		values := buildTemplateMapMD(clusterSpec, workerNodeGroupConfiguration)
 		_, ok := templateNames[workerNodeGroupConfiguration.Name]
 		if templateNames != nil && ok {
-			values["workloadTemplateName"] = templateNames[workerNodeGroupConfiguration.MachineGroupRef.Name]
+			values["workloadTemplateName"] = templateNames[workerNodeGroupConfiguration.Name]
 		} else {
 			values["workloadTemplateName"] = d.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		}
