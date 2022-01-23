@@ -342,6 +342,7 @@ func createCluster() *anywherev1.Cluster {
 						Kind: "VSphereMachineConfig",
 						Name: name + "-wn",
 					},
+					Name:   "md-0",
 					Labels: nil,
 				},
 			},

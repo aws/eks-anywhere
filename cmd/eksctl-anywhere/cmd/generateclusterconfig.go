@@ -80,6 +80,7 @@ func generateClusterConfig(clusterName string) error {
 			v1alpha1.ControlPlaneConfigCount(2),
 			v1alpha1.ExternalETCDConfigCount(3),
 			v1alpha1.WorkerNodeConfigCount(2),
+			v1alpha1.WorkerNodeConfigName("md-0"),
 		)
 		dcyaml, err := yaml.Marshal(datacenterConfig)
 		if err != nil {
