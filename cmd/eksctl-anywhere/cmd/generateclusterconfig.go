@@ -66,6 +66,7 @@ func generateClusterConfig(clusterName string) error {
 			v1alpha1.ControlPlaneConfigCount(1),
 			v1alpha1.ExternalETCDConfigCount(1),
 			v1alpha1.WorkerNodeConfigCount(1),
+			v1alpha1.WorkerNodeConfigName("md-0"),
 		)
 		dcyaml, err := yaml.Marshal(datacenterConfig)
 		if err != nil {
@@ -118,6 +119,7 @@ func generateClusterConfig(clusterName string) error {
 			clusterConfigOpts = append(clusterConfigOpts,
 				v1alpha1.ControlPlaneConfigCount(1),
 				v1alpha1.WorkerNodeConfigCount(1),
+				v1alpha1.WorkerNodeConfigName("md-0"),
 			)
 			dcyaml, err := yaml.Marshal(datacenterConfig)
 			if err != nil {
