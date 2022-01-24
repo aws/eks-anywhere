@@ -24,6 +24,7 @@ menu:
 - Cilium CNI will now be upgraded by the `upgrade cluster` command [#326](https://github.com/aws/eks-anywhere/issues/326)
 - Automated git repository structure changes during Flux component `upgrade` workflow [#577](https://github.com/aws/eks-anywhere/issues/577)
   - Upgrading a Flux managed cluster previously required manual steps. These steps have now been automated.
+  [#759](https://github.com/aws/eks-anywhere/pull/759), [#1019](https://github.com/aws/eks-anywhere/pull/1019)
 
 ## v0.6.0 - 2021-10-29
 

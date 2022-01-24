@@ -105,7 +105,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return reconciler.Result{}, err
 	}
 	if !dataCenterConfig.Status.SpecValid {
-		v.Log.Info("Skipping cluster reconciliation because data center config is invalid %v", dataCenterConfig)
+		v.Log.Info("Skipping cluster reconciliation because data center config is invalid", "data center", dataCenterConfig.Name)
 		return reconciler.Result{}, nil
 	}
 
@@ -120,11 +120,16 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		machineConfigMap[ref.Name] = machineConfig
 	}
 
-	clusterSpec, err := v.FetchAppliedSpec(ctx, cluster)
+	bundles, err := v.bundles(ctx, cluster.Spec.ManagementCluster.Name, cluster.Namespace)
 	if err != nil {
 		return reconciler.Result{}, err
 	}
-	vshepreClusterSpec := vsphere.NewSpec(clusterSpec, machineConfigMap, dataCenterConfig)
+
+	specWithBundles, err := c.BuildSpecFromBundles(cluster, bundles)
+	if err != nil {
+		return reconciler.Result{}, err
+	}
+	vshepreClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
 
 	if err := v.Validator.ValidateClusterMachineConfigs(ctx, vshepreClusterSpec); err != nil {
 		return reconciler.Result{}, err

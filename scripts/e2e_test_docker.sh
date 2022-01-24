@@ -14,6 +14,9 @@
 # limitations under the License.
 
 set -x
+set -o errexit
+set -o nounset
+set -o pipefail
 
 if [ "$AWS_ROLE_ARN" == "" ]; then
     echo "Empty AWS_ROLE_ARN, this script must be run in a postsubmit pod with IAM Roles for Service Accounts"
@@ -49,6 +52,11 @@ BUNDLES_OVERRIDE=false
 if [ -f "$BIN_FOLDER/local-bundle-release.yaml" ]; then
     BUNDLES_OVERRIDE=true
 fi
+
+# In order to be uploaded from the sidecar and used by the junit lens
+# the junit reports need to be in /logs/*/junit*.xml
+TEST_REPORT_FOLDER=/logs/artifacts
+
 $BIN_FOLDER/test e2e run \
     -a ${INTEGRATION_TEST_AL2_AMI_ID} \
     -s ${INTEGRATION_TEST_STORAGE_BUCKET} \
@@ -56,10 +64,8 @@ $BIN_FOLDER/test e2e run \
     -i ${INTEGRATION_TEST_INSTANCE_PROFILE} \
     -r ${TEST_REGEX} \
     --bundles-override=${BUNDLES_OVERRIDE} \
-    # in order to be uploaded from the sidecar and used by the junit lens
-    # the junit reports need to be in /logs/*/junit*.xml
-    --test-report-folder=/logs/artifacts \
-    -v 4
+    --test-report-folder=${TEST_REPORT_FOLDER} \
+    -v4
 
 # Faking cross-platform versioned folders for dry-run
 mkdir -p $BIN_FOLDER/linux/amd64

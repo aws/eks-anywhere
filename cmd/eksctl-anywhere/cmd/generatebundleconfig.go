@@ -69,7 +69,7 @@ func (gsbo *generateSupportBundleOptions) validateCmdInput() error {
 		if !clusterConfigFileExist {
 			return fmt.Errorf("the cluster config file %s does not exist", f)
 		}
-		_, err := v1alpha1.ValidateClusterConfig(f)
+		_, err := v1alpha1.GetAndValidateClusterConfig(f)
 		if err != nil {
 			return fmt.Errorf("unable to get cluster config from file: %v", err)
 		}
