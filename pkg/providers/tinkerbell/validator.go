@@ -42,7 +42,7 @@ func (v *Validator) ValidateTinkerbellConfig(ctx context.Context, datacenterConf
 }
 
 // TODO: dry out machine configs validations
-func (v *Validator) validateCluster(ctx context.Context, tinkerbellClusterSpec *spec) error {
+func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbellClusterSpec *spec) error {
 	// TODO: move this to api Cluster validations
 	if len(tinkerbellClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
 		return errors.New("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
@@ -111,11 +111,6 @@ func (v *Validator) validateControlPlaneIp(ip string) error {
 	return nil
 }
 
-func (v *Validator) validateTemplate(ctx context.Context, spec *spec, machineConfig *anywherev1.TinkerbellMachineConfig) error {
-	// TODO: validate tinkerbell templates
-	return nil
-}
-
 func (v *Validator) validateTinkerbellIP(ctx context.Context, TinkerbellIP string) error {
 	if TinkerbellIP == "" {
 		return fmt.Errorf("tinkerbellIP is required")
@@ -150,13 +145,5 @@ func (v *Validator) validatetinkerbellPBnJGRPCAuth(ctx context.Context, tinkerbe
 		return fmt.Errorf("tinkerbellPBnJGRPCAuth is required")
 	}
 
-	return nil
-}
-
-func (v *Validator) validateControlPlaneIpUniqueness(spec *spec) error {
-	ip := spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
-	if !networkutils.NewIPGenerator(v.netClient).IsIPUnique(ip) {
-		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
-	}
 	return nil
 }
