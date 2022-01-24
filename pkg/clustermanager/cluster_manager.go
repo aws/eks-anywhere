@@ -377,12 +377,6 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		logger.V(3).Info("no control plane upgrading")
 	}
 
-	logger.V(3).Info("Waiting for control plane to be ready")
-	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, newClusterSpec.Name)
-	if err != nil {
-		return fmt.Errorf("error waiting for workload cluster control plane to be ready: %v", err)
-	}
-
 	logger.V(3).Info("Waiting for control plane machines to be ready")
 	if err = c.waitForNodesReady(ctx, managementCluster, newClusterSpec.Name, []string{clusterv1.MachineControlPlaneLabelName}, types.WithNodeRef(), types.WithNodeHealthy()); err != nil {
 		return err
