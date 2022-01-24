@@ -32,8 +32,8 @@ func (s *Spec) controlPlaneMachineConfig() *anywherev1.VSphereMachineConfig {
 	return s.machineConfigsLookup[s.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
 }
 
-func (s *Spec) firstWorkerMachineConfig() *anywherev1.VSphereMachineConfig {
-	return s.machineConfigsLookup[s.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
+func (s *Spec) workerMachineConfig(c anywherev1.WorkerNodeGroupConfiguration) *anywherev1.VSphereMachineConfig {
+	return s.machineConfigsLookup[c.MachineGroupRef.Name]
 }
 
 func (s *Spec) etcdMachineConfig() *anywherev1.VSphereMachineConfig {

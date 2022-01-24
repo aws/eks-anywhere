@@ -251,22 +251,26 @@ func (p *vsphereProvider) setupSSHAuthKeysForCreate() error {
 		p.controlPlaneSshAuthKey = generatedKey
 		useKeyGeneratedForControlplane = true
 	}
-	workerUser := p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0]
-	p.workerSshAuthKey = workerUser.SshAuthorizedKeys[0]
-	if err := p.parseSSHAuthKey(&p.workerSshAuthKey); err != nil {
-		return err
-	}
-	if len(p.workerSshAuthKey) <= 0 {
-		if useKeyGeneratedForControlplane { // use the same key
-			p.workerSshAuthKey = p.controlPlaneSshAuthKey
-		} else {
-			generatedKey, err := p.generateSSHAuthKey(workerUser.Name)
-			if err != nil {
-				return err
-			}
-			p.workerSshAuthKey = generatedKey
-			useKeyGeneratedForWorker = true
+	controlPlaneUser.SshAuthorizedKeys[0] = p.controlPlaneSshAuthKey
+	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
+		workerUser := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users[0]
+		p.workerSshAuthKey = workerUser.SshAuthorizedKeys[0]
+		if err := p.parseSSHAuthKey(&p.workerSshAuthKey); err != nil {
+			return err
 		}
+		if len(p.workerSshAuthKey) <= 0 {
+			if useKeyGeneratedForControlplane { // use the same key
+				p.workerSshAuthKey = p.controlPlaneSshAuthKey
+			} else {
+				generatedKey, err := p.generateSSHAuthKey(workerUser.Name)
+				if err != nil {
+					return err
+				}
+				p.workerSshAuthKey = generatedKey
+				useKeyGeneratedForWorker = true
+			}
+		}
+		workerUser.SshAuthorizedKeys[0] = p.workerSshAuthKey
 	}
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		etcdUser := p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0]
@@ -289,8 +293,6 @@ func (p *vsphereProvider) setupSSHAuthKeysForCreate() error {
 		}
 		etcdUser.SshAuthorizedKeys[0] = p.etcdSshAuthKey
 	}
-	controlPlaneUser.SshAuthorizedKeys[0] = p.controlPlaneSshAuthKey
-	workerUser.SshAuthorizedKeys[0] = p.workerSshAuthKey
 	return nil
 }
 
@@ -301,12 +303,14 @@ func (p *vsphereProvider) setupSSHAuthKeysForUpgrade() error {
 		return err
 	}
 	controlPlaneUser.SshAuthorizedKeys[0] = p.controlPlaneSshAuthKey
-	workerUser := p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0]
-	p.workerSshAuthKey = workerUser.SshAuthorizedKeys[0]
-	if err := p.parseSSHAuthKey(&p.workerSshAuthKey); err != nil {
-		return err
+	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
+		workerUser := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users[0]
+		p.workerSshAuthKey = workerUser.SshAuthorizedKeys[0]
+		if err := p.parseSSHAuthKey(&p.workerSshAuthKey); err != nil {
+			return err
+		}
+		workerUser.SshAuthorizedKeys[0] = p.workerSshAuthKey
 	}
-	workerUser.SshAuthorizedKeys[0] = p.workerSshAuthKey
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		etcdUser := p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0]
 		p.etcdSshAuthKey = etcdUser.SshAuthorizedKeys[0]
@@ -470,17 +474,6 @@ func (p *vsphereProvider) validateMachineConfigsNameUniqueness(ctx context.Conte
 		}
 		if len(em) > 0 {
 			return fmt.Errorf("control plane VSphereMachineConfig %s already exists", cpMachineConfigName)
-		}
-	}
-
-	workerMachineConfigName := clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	if prevSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name != workerMachineConfigName {
-		em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, workerMachineConfigName, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.GetNamespace())
-		if err != nil {
-			return err
-		}
-		if len(em) > 0 {
-			return fmt.Errorf("worker nodes VSphereMachineConfig %s already exists", workerMachineConfigName)
 		}
 	}
 
