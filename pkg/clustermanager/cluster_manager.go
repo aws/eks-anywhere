@@ -371,7 +371,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return fmt.Errorf("error running post control plane upgrade operations: %v", err)
 	}
 
-	logger.V(3).Info("Waiting for control plane to be in progress")
+	logger.V(3).Info("Waiting for control plane upgrade to be in progress")
 	err = c.clusterClient.WaitForControlPlaneNotReady(ctx, managementCluster, ctrlPlaneInProgressStr, newClusterSpec.Name)
 	if err != nil {
 		logger.V(3).Info("no control plane upgrading")
