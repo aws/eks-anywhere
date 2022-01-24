@@ -274,9 +274,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 
 	workloadTemplateNames := make(map[string]string, len(newClusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range newClusterSpec.Spec.WorkerNodeGroupConfigurations {
-		existingWorkerNodeGroup := false
 		if _, ok := previousWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-			existingWorkerNodeGroup = true
 			needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec)
 			if !needsNewWorkloadTemplate {
 				machineDeploymentName := fmt.Sprintf("%s-%s", newClusterSpec.Name, workerNodeGroupConfiguration.Name)
@@ -290,8 +288,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 				workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
 				workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 			}
-		}
-		if !existingWorkerNodeGroup {
+		} else {
 			workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		}

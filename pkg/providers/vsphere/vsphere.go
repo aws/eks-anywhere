@@ -878,10 +878,8 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 
 	workloadTemplateNames := make(map[string]string, len(newClusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range newClusterSpec.Spec.WorkerNodeGroupConfigurations {
-		existingWorkerNodeGroup := false
 		workerMachineConfig := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		if _, ok := previousWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
-			existingWorkerNodeGroup = true
 			workerVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, workerNodeGroupConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
 			if err != nil {
 				return nil, nil, err
@@ -900,8 +898,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 				workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
 				workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 			}
-		}
-		if !existingWorkerNodeGroup {
+		} else {
 			workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		}
