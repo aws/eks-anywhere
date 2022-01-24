@@ -31,6 +31,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/retrier"
+	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -581,13 +582,14 @@ func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.VSphereDatacenterConfig, 
 	return false
 }
 
-func NewVsphereTemplateBuilder(datacenterSpec *v1alpha1.VSphereDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.VSphereMachineConfigSpec, workerNodeGroupMachineSpecs map[string]v1alpha1.VSphereMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
+func NewVsphereTemplateBuilder(datacenterSpec *v1alpha1.VSphereDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.VSphereMachineConfigSpec, workerNodeGroupMachineSpecs map[string]v1alpha1.VSphereMachineConfigSpec, now types.NowFunc, fromController bool) providers.TemplateBuilder {
 	return &VsphereTemplateBuilder{
 		datacenterSpec:              datacenterSpec,
 		controlPlaneMachineSpec:     controlPlaneMachineSpec,
 		workerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 		etcdMachineSpec:             etcdMachineSpec,
 		now:                         now,
+		fromController:              fromController,
 	}
 }
 
@@ -597,6 +599,7 @@ type VsphereTemplateBuilder struct {
 	workerNodeGroupMachineSpecs map[string]v1alpha1.VSphereMachineConfigSpec
 	etcdMachineSpec             *v1alpha1.VSphereMachineConfigSpec
 	now                         types.NowFunc
+	fromController              bool
 }
 
 func (vs *VsphereTemplateBuilder) WorkerMachineTemplateName(clusterName, workerNodeGroupName string) string {
@@ -633,7 +636,27 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *clus
 	return bytes, nil
 }
 
+func (vs *VsphereTemplateBuilder) isCgroupDriverSystemd(clusterSpec *cluster.Spec) (bool, error) {
+	bundle := clusterSpec.VersionsBundle
+	k8sVersion, err := semver.New(bundle.KubeDistro.Kubernetes.Tag)
+	if err != nil {
+		return false, fmt.Errorf("error parsing kubernetes version %v: %v", bundle.KubeDistro.Kubernetes.Tag, err)
+	}
+	if vs.fromController && k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
+		return true, nil
+	}
+	return false, nil
+}
+
 func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, templateNames map[string]string) (content []byte, err error) {
+	// pin cgroupDriver to systemd for k8s >= 1.21 when generating template in controller
+	// remove this check once the controller supports order upgrade.
+	// i.e. control plane, etcd upgrade before worker nodes.
+	cgroupDriverSystemd, err := vs.isCgroupDriverSystemd(clusterSpec)
+	if err != nil {
+		return nil, err
+	}
+
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec, *vs.datacenterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
@@ -643,6 +666,8 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.S
 		} else {
 			values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		}
+
+		values["cgroupDriverSystemd"] = cgroupDriverSystemd
 
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
@@ -1079,7 +1104,7 @@ func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
 	if p.clusterConfig.IsManaged() {
-		p.machineConfigs[controlPlaneMachineName].SetManagement(p.clusterConfig.ManagedBy())
+		p.machineConfigs[controlPlaneMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
 	}
 	configs[controlPlaneMachineName] = p.machineConfigs[controlPlaneMachineName]
 
@@ -1088,7 +1113,7 @@ func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
 		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
 		if etcdMachineName != controlPlaneMachineName {
 			configs[etcdMachineName] = p.machineConfigs[etcdMachineName]
-			p.machineConfigs[etcdMachineName].SetManagement(p.clusterConfig.ManagedBy())
+			p.machineConfigs[etcdMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
 		}
 	}
 
@@ -1097,7 +1122,7 @@ func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
 		if _, ok := configs[workerMachineName]; !ok {
 			configs[workerMachineName] = p.machineConfigs[workerMachineName]
 			if p.clusterConfig.IsManaged() {
-				p.machineConfigs[workerMachineName].SetManagement(p.clusterConfig.ManagedBy())
+				p.machineConfigs[workerMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
 			}
 		}
 	}

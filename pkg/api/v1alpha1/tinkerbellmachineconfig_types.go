@@ -46,14 +46,14 @@ func (c *TinkerbellMachineConfig) IsEtcd() bool {
 	return false
 }
 
-func (c *TinkerbellMachineConfig) SetManagement(clusterName string) {
+func (c *TinkerbellMachineConfig) SetManagedBy(clusterName string) {
 	if c.Annotations == nil {
 		c.Annotations = map[string]string{}
 	}
 	c.Annotations[managementAnnotation] = clusterName
 }
 
-func (c *TinkerbellMachineConfig) IsManagement() bool {
+func (c *TinkerbellMachineConfig) IsManaged() bool {
 	if s, ok := c.Annotations[managementAnnotation]; ok {
 		return s != ""
 	}

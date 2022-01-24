@@ -53,14 +53,15 @@ func (c *VSphereMachineConfig) IsEtcd() bool {
 	return false
 }
 
-func (c *VSphereMachineConfig) SetManagement(clusterName string) {
+func (c *VSphereMachineConfig) SetManagedBy(clusterName string) {
 	if c.Annotations == nil {
 		c.Annotations = map[string]string{}
 	}
 	c.Annotations[managementAnnotation] = clusterName
 }
 
-func (c *VSphereMachineConfig) IsManagement() bool {
+// IsManaged returns true if the vspheremachineconfig is associated with a workload cluster
+func (c *VSphereMachineConfig) IsManaged() bool {
 	if s, ok := c.Annotations[managementAnnotation]; ok {
 		return s != ""
 	}
