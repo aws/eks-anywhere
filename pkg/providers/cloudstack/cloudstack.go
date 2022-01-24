@@ -53,7 +53,6 @@ const (
 	credentialsObjectName                 = "capc-cloudstack-secret"
 	privateKeyFileName                    = "eks-a-id_rsa"
 	publicKeyFileName                     = "eks-a-id_rsa.pub"
-	postUpgradeWaitTime                   = 2 * time.Minute
 
 	ubuntuDefaultUser          = "capc"
 	redhatDefaultUser          = "capc"
