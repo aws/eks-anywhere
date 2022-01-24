@@ -3,6 +3,8 @@ package dependencies
 import (
 	"context"
 
+	"github.com/google/uuid"
+
 	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
@@ -375,7 +377,8 @@ func (f *Factory) WithAwsIamAuth() *Factory {
 			return nil
 		}
 		certgen := crypto.NewCertificateGenerator()
-		f.dependencies.AwsIamAuth = awsiamauth.NewAwsIamAuth(certgen)
+		clusterId := uuid.New()
+		f.dependencies.AwsIamAuth = awsiamauth.NewAwsIamAuth(certgen, clusterId)
 		return nil
 	})
 

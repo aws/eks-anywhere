@@ -508,8 +508,8 @@ RELEASE_MANIFEST_TARGET ?= eksa-components.yaml
 $(RELEASE_DIR):
 	mkdir -p $(RELEASE_DIR)/
 
-.PHONY: release-manifests ## Builds the manifests to publish with a release
-release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) $(CONTROLLER_MANIFEST_OUTPUT_DIR)
+.PHONY: release-manifests
+release-manifests: $(KUSTOMIZE) generate-manifests $(RELEASE_DIR) $(CONTROLLER_MANIFEST_OUTPUT_DIR) ## Builds the manifests to publish with a release
 	# Build core-components.
 	$(KUSTOMIZE) build config/prod > $(RELEASE_DIR)/$(RELEASE_MANIFEST_TARGET)
 	cp $(RELEASE_DIR)/$(RELEASE_MANIFEST_TARGET) $(CONTROLLER_MANIFEST_OUTPUT_DIR)

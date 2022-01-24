@@ -87,10 +87,19 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 	if len(controlPlaneMachineConfig.Spec.ResourcePool) <= 0 {
 		return errors.New("VSphereMachineConfig VM resourcePool for control plane is not set or is empty")
 	}
-	if vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef == nil {
+	workerNodeGroupConfigs := vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations
+	if len(workerNodeGroupConfigs) == 1 && workerNodeGroupConfigs[0].Name == "" {
+		logger.V(1).Info("Worker node group name not specified. Defaulting name to md-0.")
+		workerNodeGroupConfigs[0].Name = "md-0"
+	}
+	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
+		if workerNodeGroupConfig.Name == "" {
+			return errors.New("must specify name for worker nodes")
+		}
+	}
+	if workerNodeGroupConfigs[0].MachineGroupRef == nil {
 		return errors.New("must specify machineGroupRef for worker nodes")
 	}
-
 	workerNodeGroupMachineConfig := vsphereClusterSpec.firstWorkerMachineConfig()
 	if workerNodeGroupMachineConfig == nil {
 		return fmt.Errorf("cannot find VSphereMachineConfig %v for worker nodes", vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name)
