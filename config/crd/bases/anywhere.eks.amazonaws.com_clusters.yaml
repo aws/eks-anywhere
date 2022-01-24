@@ -268,6 +268,9 @@ spec:
                         - key
                         type: object
                       type: array
+                    name:
+                      description: Name refers to the name of the worker node group
+                      type: string
                   type: object
                 type: array
             type: object

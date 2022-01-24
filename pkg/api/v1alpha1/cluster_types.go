@@ -187,6 +187,8 @@ func (n *Endpoint) Equal(o *Endpoint) bool {
 }
 
 type WorkerNodeGroupConfiguration struct {
+	// Name refers to the name of the worker node group
+	Name string `json:"name,omitempty"`
 	// Count defines the number of desired worker nodes. Defaults to 1.
 	Count int `json:"count,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.

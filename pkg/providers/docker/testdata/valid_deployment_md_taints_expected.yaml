@@ -1,7 +1,7 @@
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
-  name: test-cluster-md-0
+  name: test-cluster-
   namespace: eksa-system
 spec:
   template:
@@ -21,7 +21,7 @@ spec:
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
-  name: test-cluster-md-0
+  name: test-cluster-
   namespace: eksa-system
 spec:
   clusterName: test-cluster
@@ -34,20 +34,20 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
-          name: test-cluster-md-0
+          name: test-cluster-
           namespace: eksa-system
       clusterName: test-cluster
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: DockerMachineTemplate
-        name: test-cluster-worker-node-template-1234567890000
+        name: test-cluster--1234567890000
         namespace: eksa-system
       version: v1.19.6-eks-1-19-2
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: DockerMachineTemplate
 metadata:
-  name: test-cluster-worker-node-template-1234567890000
+  name: test-cluster--1234567890000
   namespace: eksa-system
 spec:
   template:
@@ -56,3 +56,5 @@ spec:
       - containerPath: /var/run/docker.sock
         hostPath: /var/run/docker.sock
       customImage: public.ecr.aws/eks-distro/kubernetes-sigs/kind/node:v1.18.16-eks-1-18-4-216edda697a37f8bf16651af6c23b7e2bb7ef42f-62681885fe3a97ee4f2b110cc277e084e71230fa
+
+---

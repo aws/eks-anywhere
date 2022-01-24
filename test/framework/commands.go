@@ -1,6 +1,8 @@
 package framework
 
 import (
+	"strings"
+
 	"github.com/aws/eks-anywhere/pkg/semver"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -60,6 +62,27 @@ func executeWithBinaryCommandOpt(fetcher binaryFetcher) CommandOpt {
 		if err = setEksctlVersionEnvVar(); err != nil {
 			return err
 		}
-		return err
+
+		// When bundles override is present, the manifest belongs to the current
+		// build of the CLI and it's intended to be used only with that version
+		removeFlag("--bundles-override", args)
+
+		return nil
+	}
+}
+
+func removeFlag(flag string, args *[]string) {
+	for i, a := range *args {
+		if a == flag {
+			elementsToDelete := 1
+			// If it's not the last arg and next arg is not a flag,
+			// that means it's the value for the current flag, remove it as well
+			if i < len(*args)-1 && !strings.HasPrefix((*args)[i+1], "-") {
+				elementsToDelete = 2
+			}
+
+			*args = append((*args)[:i], (*args)[i+elementsToDelete:]...)
+			break
+		}
 	}
 }

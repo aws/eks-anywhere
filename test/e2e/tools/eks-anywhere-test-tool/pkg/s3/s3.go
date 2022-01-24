@@ -64,12 +64,13 @@ func (s *S3) ListObjects(bucket string, prefix string) (listedObjects []*s3.Obje
 			return nil, fmt.Errorf("failed to list objects: %v", err)
 		}
 		objects = append(objects, l.Contents...)
-		if l.NextContinuationToken == nil || nextToken != nil && *nextToken == *l.NextContinuationToken {
+		if !aws.BoolValue(l.IsTruncated) {
 			logger.Info("finished fetching objects", "bucket", bucket, "prefix", prefix)
 			logger.V(3).Info("token comparison", "nextToken", nextToken, "nextContinuatonToken", l.NextContinuationToken)
 			break
 		}
 		nextToken = l.NextContinuationToken
+		input.ContinuationToken = nextToken
 		logger.Info("fetched objects", "bucket", bucket, "prefix", prefix, "events", len(l.Contents))
 		logger.V(3).Info("token comparison", "nextToken", nextToken, "nextContinuatonToken", l.NextContinuationToken)
 	}

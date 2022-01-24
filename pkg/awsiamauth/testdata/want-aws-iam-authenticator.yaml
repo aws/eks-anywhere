@@ -181,7 +181,7 @@ metadata:
     k8s-app: aws-iam-authenticator
 data:
   config.yaml: |
-    clusterID: test-cluster
+    clusterID: 36db102f-9e1e-4ca4-8300-271d30b14161
 
 ---
 # EKS-Style ConfigMap: roles and users can be mapped in the same way as supported on EKS.

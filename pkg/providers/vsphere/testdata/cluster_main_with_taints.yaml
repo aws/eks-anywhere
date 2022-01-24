@@ -31,6 +31,7 @@ spec:
       - key: key1
         value: val1
         effect: PreferNoSchedule
+      name: md-0
   externalEtcdConfiguration:
     count: 3
     machineGroupRef:
