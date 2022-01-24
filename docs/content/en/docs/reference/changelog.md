@@ -15,6 +15,7 @@ menu:
 - Support for node [labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) on EKS-A control plane and worker nodes [#486](https://github.com/aws/eks-anywhere/issues/486)
 - EKS-A users can now use the IAM Role for Service Account (IRSA) feature [#601](https://github.com/aws/eks-anywhere/issues/601)
 - New command `upgrade plan cluster` lists core component changes affected by `upgrade cluster` [#499](https://github.com/aws/eks-anywhere/issues/499)
+- Support for workload cluster's control plane and etcd upgrade through GitOps [#1007](https://github.com/aws/eks-anywhere/issues/1007)
 
 ### Changed
 - EKS-A now uses Cluster API (CAPI) v1.0.1, upgrading from v0.3.23.
