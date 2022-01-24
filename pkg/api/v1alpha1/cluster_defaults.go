@@ -11,6 +11,7 @@ import (
 
 var clusterDefaults = []func(*Cluster) error{
 	setRegistryMirrorConfigDefaults,
+	setWorkerNodeGroupDefaults,
 }
 
 func setClusterDefaults(cluster *Cluster) error {
@@ -39,6 +40,14 @@ func setRegistryMirrorConfigDefaults(clusterConfig *Cluster) error {
 			logger.V(4).Info(fmt.Sprintf("%s is set, using %s as ca cert for registry", RegistryMirrorCAKey, caCert))
 			clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent = string(content)
 		}
+	}
+	return nil
+}
+
+func setWorkerNodeGroupDefaults(cluster *Cluster) error {
+	if len(cluster.Spec.WorkerNodeGroupConfigurations) == 1 && cluster.Spec.WorkerNodeGroupConfigurations[0].Name == "" {
+		logger.Info("Worker node group name not specified. Defaulting name to md-0.")
+		cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "md-0"
 	}
 	return nil
 }
