@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	"github.com/google/uuid"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
 
@@ -20,7 +21,10 @@ import (
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
 )
 
-const ConfigMapKind = "ConfigMap"
+const (
+	ConfigMapKind       = "ConfigMap"
+	EKSIamConfigMapName = "aws-auth"
+)
 
 type DockerTemplate struct {
 	ResourceFetcher
@@ -44,22 +48,18 @@ type TinkerbellTemplate struct {
 
 func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, vdc anywherev1.VSphereDatacenterConfig, cpVmc, etcdVmc anywherev1.VSphereMachineConfig, workerVmcs map[string]anywherev1.VSphereMachineConfig) ([]*unstructured.Unstructured, error) {
 	workerNodeGroupMachineSpecs := make(map[string]anywherev1.VSphereMachineConfigSpec, len(workerVmcs))
-	for _, wnConfig := range workerVmcs {
-		workerNodeGroupMachineSpecs[wnConfig.Name] = wnConfig.Spec
+	for _, wnConfig := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = workerVmcs[wnConfig.MachineGroupRef.Name].Spec
 	}
 	// control plane and etcd updates are prohibited in controller so those specs should not change
 	templateBuilder := vsphere.NewVsphereTemplateBuilder(&vdc.Spec, &cpVmc.Spec, &etcdVmc.Spec, workerNodeGroupMachineSpecs, r.now)
 	clusterName := clusterSpec.ObjectMeta.Name
 
-	oldVdc, err := r.ExistingVSphereDatacenterConfig(ctx, eksaCluster)
+	oldVdc, err := r.ExistingVSphereDatacenterConfig(ctx, eksaCluster, clusterSpec.Spec.WorkerNodeGroupConfigurations[0])
 	if err != nil {
 		return nil, err
 	}
 	oldCpVmc, err := r.ExistingVSphereControlPlaneMachineConfig(ctx, eksaCluster)
-	if err != nil {
-		return nil, err
-	}
-	oldWorkerVmcs, err := r.ExistingVSphereWorkerMachineConfigs(ctx, eksaCluster)
 	if err != nil {
 		return nil, err
 	}
@@ -73,29 +73,27 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		if err != nil {
 			return nil, err
 		}
-		controlPlaneTemplateName = cp.Spec.InfrastructureTemplate.Name
+		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
 	}
 
-	var workloadTemplateNames []string
+	workloadTemplateNames := make(map[string]string, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		oldVmc := oldWorkerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		oldVmc, err := r.ExistingVSphereWorkerMachineConfig(ctx, eksaCluster, workerNodeGroupConfiguration)
+		if err != nil {
+			return nil, err
+		}
 		vmc := workerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
-		updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, &oldVmc, &vmc)
+		updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, oldVmc, &vmc)
 		if updateWorkloadTemplate {
 			workloadTemplateName := templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
-			workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
+			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		} else {
-			mcDeployments, err := r.MachineDeployments(ctx, eksaCluster)
+			mcDeployment, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
 			if err != nil {
 				return nil, err
 			}
-			mdName := fmt.Sprintf("%s-%s", clusterName, workerNodeGroupConfiguration.Name)
-			if _, ok := mcDeployments[mdName]; ok {
-				workloadTemplateName := mcDeployments[mdName].Spec.Template.Spec.InfrastructureRef.Name
-				workloadTemplateNames = append(workloadTemplateNames, workloadTemplateName)
-			} else {
-				return nil, fmt.Errorf("no machine deployment named %s", mdName)
-			}
+			workloadTemplateName := mcDeployment.Spec.Template.Spec.InfrastructureRef.Name
+			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		}
 	}
 
@@ -152,7 +150,6 @@ func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster 
 	for _, wnConfig := range workerTmc {
 		workerNodeGroupMachineSpecs[wnConfig.Name] = wnConfig.Spec
 	}
-	var workerTemplateNames []string
 	templateBuilder := tinkerbell.NewTinkerbellTemplateBuilder(&tdc.Spec, &cpTmc.Spec, &etcdTmc.Spec, workerNodeGroupMachineSpecs, r.now)
 	cp, err := r.ControlPlane(ctx, eksaCluster)
 	if err != nil {
@@ -167,22 +164,31 @@ func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster 
 		etcdTemplateName = etcd.Spec.InfrastructureTemplate.Name
 	}
 
+	workloadTemplateNames := make(map[string]string, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		mcDeployment, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
+		if err != nil {
+			return nil, err
+		}
+		workloadTemplateNames[workerNodeGroupConfiguration.Name] = mcDeployment.Spec.Template.Spec.InfrastructureRef.Name
+	}
+
 	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = cp.Spec.InfrastructureTemplate.Name
+		values["controlPlaneTemplateName"] = cp.Spec.MachineTemplate.InfrastructureRef.Name
 		values["tinkerbellControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpTmc.Spec.Users)
 		values["tinkerbellEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdTmc.Spec.Users)
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 
-	return generateTemplateResources(templateBuilder, clusterSpec, workerTemplateNames, cpOpt)
+	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, cpOpt)
 }
 
-func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *cluster.Spec, templateNames []string, cpOpt providers.BuildMapOption) ([]*unstructured.Unstructured, error) {
+func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *cluster.Spec, templateNames map[string]string, cpOpt providers.BuildMapOption) ([]*unstructured.Unstructured, error) {
 	cp, err := builder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, err
 	}
-	md, err := builder.GenerateCAPISpecWorkers(clusterSpec, nil)
+	md, err := builder.GenerateCAPISpecWorkers(clusterSpec, templateNames)
 	if err != nil {
 		return nil, err
 	}
@@ -202,8 +208,16 @@ func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *c
 }
 
 func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec) ([]*unstructured.Unstructured, error) {
-	var workerTemplateNames []string
 	templateBuilder := docker.NewDockerTemplateBuilder(r.now)
+	workloadTemplateNames := make(map[string]string, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		mcDeployment, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
+		if err != nil {
+			return nil, err
+		}
+		workloadTemplateNames[workerNodeGroupConfiguration.Name] = mcDeployment.Spec.Template.Spec.InfrastructureRef.Name
+	}
+
 	kubeadmControlPlane, err := r.ControlPlane(ctx, eksaCluster)
 	if err != nil {
 		return nil, err
@@ -219,10 +233,10 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 	}
 
 	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.InfrastructureTemplate.Name
+		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name
 		values["etcdTemplateName"] = etcdTemplateName
 	}
-	return generateTemplateResources(templateBuilder, clusterSpec, workerTemplateNames, cpOpt)
+	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, cpOpt)
 }
 
 func sshAuthorizedKey(users []anywherev1.UserConfiguration) string {
@@ -235,7 +249,7 @@ func sshAuthorizedKey(users []anywherev1.UserConfiguration) string {
 func (r *AWSIamConfigTemplate) TemplateResources(ctx context.Context, clusterSpec *cluster.Spec) ([]*unstructured.Unstructured, error) {
 	var resources []*unstructured.Unstructured
 	templateBuilder := awsiamauth.NewAwsIamAuthTemplateBuilder()
-	content, err := templateBuilder.GenerateManifest(clusterSpec)
+	content, err := templateBuilder.GenerateManifest(clusterSpec, uuid.Nil)
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +259,9 @@ func (r *AWSIamConfigTemplate) TemplateResources(ctx context.Context, clusterSpe
 		if err := yaml.Unmarshal([]byte(template), u); err != nil {
 			continue
 		}
-		if u.GetKind() == ConfigMapKind {
+
+		// Only reconcile IAM role mappings ConfigMap
+		if u.GetKind() == ConfigMapKind && u.GetName() == EKSIamConfigMapName {
 			resources = append(resources, u)
 		}
 	}

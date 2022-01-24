@@ -12,11 +12,11 @@ import (
 	"text/template"
 	"time"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"golang.org/x/crypto/ssh"
 	corev1 "k8s.io/api/core/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -135,8 +135,8 @@ type ProviderKubectlClient interface {
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, vsphereDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
 	GetEksaVSphereMachineConfig(ctx context.Context, vsphereMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
-	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*bootstrapv1.KubeadmControlPlane, error)
 	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
+	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1.KubeadmControlPlane, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
@@ -366,6 +366,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 	}
 
 	vSphereClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+
 	if err := p.defaulter.SetDefaultsForDatacenterConfig(ctx, vSphereClusterSpec.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setting default values for vsphere datacenter config: %v", err)
 	}
@@ -636,8 +637,9 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.S
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec, *vs.datacenterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name])
-		if templateNames != nil {
-			values["workloadTemplateName"] = templateNames[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		_, ok := templateNames[workerNodeGroupConfiguration.Name]
+		if templateNames != nil && ok {
+			values["workloadTemplateName"] = templateNames[workerNodeGroupConfiguration.Name]
 		} else {
 			values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		}
@@ -871,7 +873,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		if err != nil {
 			return nil, nil, err
 		}
-		controlPlaneTemplateName = cp.Spec.InfrastructureTemplate.Name
+		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
 	} else {
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}
@@ -892,10 +894,10 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 				return nil, nil, err
 			}
 			workloadTemplateName = md.Spec.Template.Spec.InfrastructureRef.Name
-			workloadTemplateNames[workerNodeGroupConfiguration.MachineGroupRef.Name] = workloadTemplateName
+			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		} else {
 			workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
-			workloadTemplateNames[workerNodeGroupConfiguration.MachineGroupRef.Name] = workloadTemplateName
+			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		}
 		p.templateBuilder.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
 	}
