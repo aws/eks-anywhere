@@ -56,6 +56,25 @@ func TestRetrierClientApplyError(t *testing.T) {
 	tt.Expect(tt.r.Apply(tt.ctx, tt.cluster, data)).To(MatchError(ContainSubstring("error in apply")), "retrierClient.apply() should fail after 5 tries")
 }
 
+func TestRetrierClientDeleteSuccess(t *testing.T) {
+	tt := newRetrierTest(t)
+	data := []byte("data")
+	tt.c.EXPECT().DeleteKubeSpecFromBytes(tt.ctx, tt.cluster, data).Return(errors.New("error in delete")).Times(5)
+	tt.c.EXPECT().DeleteKubeSpecFromBytes(tt.ctx, tt.cluster, data).Return(nil).Times(1)
+
+	tt.Expect(tt.r.Delete(tt.ctx, tt.cluster, data)).To(Succeed(), "retrierClient.Delete() should succeed after 6 tries")
+}
+
+func TestRetrierClientDeleteError(t *testing.T) {
+	tt := newRetrierTest(t)
+	tt.r.Retrier = retrier.NewWithMaxRetries(5, 0)
+	data := []byte("data")
+	tt.c.EXPECT().DeleteKubeSpecFromBytes(tt.ctx, tt.cluster, data).Return(errors.New("error in delete")).Times(5)
+	tt.c.EXPECT().DeleteKubeSpecFromBytes(tt.ctx, tt.cluster, data).Return(nil).AnyTimes()
+
+	tt.Expect(tt.r.Delete(tt.ctx, tt.cluster, data)).To(MatchError(ContainSubstring("error in delete")), "retrierClient.Delete() should fail after 5 tries")
+}
+
 type waitForCiliumTest struct {
 	*retrierTest
 	ciliumDaemonSet, preflightDaemonSet   *v1.DaemonSet
