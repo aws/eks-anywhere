@@ -12,9 +12,9 @@ import (
 )
 
 const (
-	recommendedTotalMemory  = 6200000000
-	requiredMajorVersion    = 20
-	minUnsupportedVersion = "4.3.0"
+	recommendedTotalMemory         = 6200000000
+	requiredMajorVersion           = 20
+	minUnsupportedVersion          = "4.3.0"
 	minSupportedWithSettingVersion = "4.4.2"
 )
 
@@ -75,7 +75,7 @@ func ValidateDockerDesktopVersion(ctx context.Context, dockerExecutable DockerEx
 	if err != nil {
 		return err
 	}
-	
+
 	if dockerDesktopSemVer.LessThan(minUnsupportedSemVer) {
 		// Older versions of docker desktop are supported as is
 		return nil
@@ -91,7 +91,7 @@ func ValidateDockerDesktopVersion(ctx context.Context, dockerExecutable DockerEx
 	}
 
 	if cgroupVersion != 1 {
-		return fmt.Errorf("EKS Anywhere requires Docker desktop to be configured to use CGroups v1. " + 
+		return fmt.Errorf("EKS Anywhere requires Docker desktop to be configured to use CGroups v1. " +
 			"Please  set `deprecatedCgroupv1:true` in your `~/Library/Group\\ Containers/group.com.docker/settings.json` file")
 	}
 
