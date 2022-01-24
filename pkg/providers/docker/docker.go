@@ -165,6 +165,7 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 		}
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
 		values["workerNodeGroupName"] = fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name)
+		values["workerNodeGroupTaints"] = workerNodeGroupConfiguration.Taints
 
 		bytes, err := templater.Execute(defaultCAPIConfigMD, values)
 		if err != nil {
