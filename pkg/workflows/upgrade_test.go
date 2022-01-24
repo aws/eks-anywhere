@@ -227,7 +227,7 @@ func (c *upgradeTestSetup) expectPauseEKSAControllerReconcile(expectedCluster *t
 func (c *upgradeTestSetup) expectResumeEKSAControllerReconcile(expecteCluster *types.Cluster) {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().ResumeEKSAControllerReconcile(
-			c.ctx, expecteCluster, c.currentClusterSpec, c.provider,
+			c.ctx, expecteCluster, c.newClusterSpec, c.provider,
 		),
 	)
 }

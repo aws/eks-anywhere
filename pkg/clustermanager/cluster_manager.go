@@ -889,18 +889,6 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 		return fmt.Errorf("error updating annotation when pausing datacenterconfig reconciliation: %v", err)
 	}
 	if provider.MachineResourceType() != "" {
-		if clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
-			return fmt.Errorf("machineGroupRef for control plane is not defined")
-		}
-		for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-			if workerNodeGroupConfiguration.MachineGroupRef == nil {
-				return fmt.Errorf("machineGroupRef for worker node group %s is not defined", workerNodeGroupConfiguration.Name)
-			}
-		}
-		if clusterSpec.Spec.ExternalEtcdConfiguration != nil && clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
-			return fmt.Errorf("machineGroupRef for etcd machines is not defined")
-		}
-
 		for _, machineConfigRef := range clusterSpec.MachineConfigRefs() {
 			err := c.Retrier.Retry(
 				func() error {
@@ -935,18 +923,6 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 		return fmt.Errorf("error updating annotation when unpausing datacenterconfig reconciliation: %v", err)
 	}
 	if provider.MachineResourceType() != "" {
-		if clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
-			return fmt.Errorf("machineGroupRef for control plane is not defined")
-		}
-		for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-			if workerNodeGroupConfiguration.MachineGroupRef == nil {
-				return fmt.Errorf("machineGroupRef for worker node group %s is not defined", workerNodeGroupConfiguration.Name)
-			}
-		}
-		if clusterSpec.Spec.ExternalEtcdConfiguration != nil && clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
-			return fmt.Errorf("machineGroupRef for etcd machines is not defined")
-		}
-
 		for _, machineConfigRef := range clusterSpec.MachineConfigRefs() {
 			err := c.Retrier.Retry(
 				func() error {

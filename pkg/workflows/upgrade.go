@@ -393,7 +393,7 @@ func (s *updateClusterAndGitResources) Run(ctx context.Context, commandContext *
 	}
 
 	logger.Info("Resuming EKS-A controller reconciliation")
-	err = commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, target, commandContext.CurrentClusterSpec, commandContext.Provider)
+	err = commandContext.ClusterManager.ResumeEKSAControllerReconcile(ctx, target, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
