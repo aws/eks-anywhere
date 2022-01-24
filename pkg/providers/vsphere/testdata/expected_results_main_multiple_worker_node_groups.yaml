@@ -9,7 +9,10 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
-          taints: []
+          taints:
+            - key: key2
+              value: val2
+              effect: PreferNoSchedule
           kubeletExtraArgs:
             cloud-provider: external
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
@@ -93,7 +96,10 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
-          taints: []
+          taints:
+            - key: key2
+              value: val2
+              effect: PreferNoSchedule
           kubeletExtraArgs:
             cloud-provider: external
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256

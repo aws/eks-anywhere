@@ -18,11 +18,19 @@ spec:
         name: test-wn
         kind: VSphereMachineConfig
       name: md-0
+      taints:
+      - key: key2
+        value: val2
+        effect: PreferNoSchedule
     - count: 2
       machineGroupRef:
         name: test-wn
         kind: VSphereMachineConfig
       name: md-1
+      taints:
+      - key: key2
+        value: val2
+        effect: PreferNoSchedule
   externalEtcdConfiguration:
     count: 3
     machineGroupRef:
