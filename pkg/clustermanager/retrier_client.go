@@ -56,5 +56,11 @@ func (c *retrierClient) installCustomComponents(ctx context.Context, clusterSpec
 			return fmt.Errorf("error applying eks-a components spec: %v", err)
 		}
 	}
-	return c.waitForDeployments(ctx, internal.EksaDeployments, cluster)
+
+	err = c.Retry(
+		func() error {
+			return c.waitForDeployments(ctx, internal.EksaDeployments, cluster)
+		},
+	)
+	return err
 }

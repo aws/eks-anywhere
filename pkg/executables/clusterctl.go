@@ -8,6 +8,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"time"
+
+	"github.com/aws/eks-anywhere/pkg/retrier"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -28,6 +31,7 @@ const (
 	etcdadmBootstrapProviderName  = "etcdadm-bootstrap"
 	etcdadmControllerProviderName = "etcdadm-controller"
 	kubeadmBootstrapProviderName  = "kubeadm"
+	moveManagementRetry           = 15 * time.Minute
 )
 
 //go:embed config/clusterctl.yaml
@@ -149,11 +153,18 @@ func (c *Clusterctl) MoveManagement(ctx context.Context, from, to *types.Cluster
 	if from.KubeconfigFile != "" {
 		params = append(params, "--kubeconfig", from.KubeconfigFile)
 	}
-	_, err := c.Execute(ctx, params...)
-	if err != nil {
+
+	moveSuccess := func() error {
+		_, err := c.Execute(ctx, params...)
+		return err
+	}
+
+	r := retrier.New(moveManagementRetry)
+
+	if err := r.Retry(moveSuccess); err != nil {
 		return fmt.Errorf("failed moving management cluster: %v", err)
 	}
-	return err
+	return nil
 }
 
 func (c *Clusterctl) GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error) {
