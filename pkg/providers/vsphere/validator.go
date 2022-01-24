@@ -7,7 +7,6 @@ import (
 	"net"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -208,7 +207,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		}
 	}
 
-	return v.validateDatastoreUsage(ctx, vsphereClusterSpec.Spec, controlPlaneMachineConfig, workerNodeGroupMachineConfigs, etcdMachineConfig)
+	return v.validateDatastoreUsage(ctx, vsphereClusterSpec, controlPlaneMachineConfig, etcdMachineConfig)
 }
 
 func (v *Validator) validateControlPlaneIp(ip string) error {
@@ -276,35 +275,32 @@ type datastoreUsage struct {
 
 // TODO: cleanup this method signature
 // TODO: dry out implementation
-func (v *Validator) validateDatastoreUsage(ctx context.Context, clusterSpec *cluster.Spec, controlPlaneMachineConfig *anywherev1.VSphereMachineConfig, workerNodeGroupMachineConfigs []*anywherev1.VSphereMachineConfig, etcdMachineConfig *anywherev1.VSphereMachineConfig) error {
+func (v *Validator) validateDatastoreUsage(ctx context.Context, vsphereClusterSpec *Spec, controlPlaneMachineConfig *anywherev1.VSphereMachineConfig, etcdMachineConfig *anywherev1.VSphereMachineConfig) error {
 	usage := make(map[string]*datastoreUsage)
 	controlPlaneAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, controlPlaneMachineConfig.Spec.Datastore) // TODO: remove dependency on machineConfig
 	if err != nil {
 		return fmt.Errorf("error getting datastore details: %v", err)
 	}
-	controlPlaneNeedGiB := controlPlaneMachineConfig.Spec.DiskGiB * clusterSpec.Spec.ControlPlaneConfiguration.Count
+	controlPlaneNeedGiB := controlPlaneMachineConfig.Spec.DiskGiB * vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count
 	usage[controlPlaneMachineConfig.Spec.Datastore] = &datastoreUsage{
 		availableSpace: controlPlaneAvailableSpace,
 		needGiBSpace:   controlPlaneNeedGiB,
 	}
 
-	for _, workerMachineConfig := range workerNodeGroupMachineConfigs {
+	for _, workerNodeGroupConfiguration := range vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workerMachineConfig := vsphereClusterSpec.workerMachineConfig(workerNodeGroupConfiguration)
 		workerAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, workerMachineConfig.Spec.Datastore)
 		if err != nil {
 			return fmt.Errorf("error getting datastore details: %v", err)
 		}
-		for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-			if workerNodeGroupConfiguration.MachineGroupRef.Name == workerMachineConfig.Name {
-				workerNeedGiB := workerMachineConfig.Spec.DiskGiB * workerNodeGroupConfiguration.Count
-				_, ok := usage[workerMachineConfig.Spec.Datastore]
-				if ok {
-					usage[workerMachineConfig.Spec.Datastore].needGiBSpace += workerNeedGiB
-				} else {
-					usage[workerMachineConfig.Spec.Datastore] = &datastoreUsage{
-						availableSpace: workerAvailableSpace,
-						needGiBSpace:   workerNeedGiB,
-					}
-				}
+		workerNeedGiB := workerMachineConfig.Spec.DiskGiB * workerNodeGroupConfiguration.Count
+		_, ok := usage[workerMachineConfig.Spec.Datastore]
+		if ok {
+			usage[workerMachineConfig.Spec.Datastore].needGiBSpace += workerNeedGiB
+		} else {
+			usage[workerMachineConfig.Spec.Datastore] = &datastoreUsage{
+				availableSpace: workerAvailableSpace,
+				needGiBSpace:   workerNeedGiB,
 			}
 		}
 	}
@@ -314,7 +310,7 @@ func (v *Validator) validateDatastoreUsage(ctx context.Context, clusterSpec *clu
 		if err != nil {
 			return fmt.Errorf("error getting datastore details: %v", err)
 		}
-		etcdNeedGiB := etcdMachineConfig.Spec.DiskGiB * clusterSpec.Spec.ExternalEtcdConfiguration.Count
+		etcdNeedGiB := etcdMachineConfig.Spec.DiskGiB * vsphereClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
 		if _, ok := usage[etcdMachineConfig.Spec.Datastore]; ok {
 			usage[etcdMachineConfig.Spec.Datastore].needGiBSpace += etcdNeedGiB
 		} else {
