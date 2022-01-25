@@ -254,13 +254,13 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		"etcdadm":                      r.GetEtcdadmAssets,
 		"cri-tools":                    r.GetCriToolsAssets,
 		"diagnostic-collector":         r.GetDiagnosticCollectorAssets,
-		"tink":                         r.GetTinkAssets,
-		"hegel":                        r.GetHegelAssets,
-		"cfssl":                        r.GetCfsslAssets,
 	}
 
 	if r.DevRelease && r.BuildRepoBranchName == "main" {
 		eksAArtifactsFuncs["cluster-api-provider-tinkerbell"] = r.GetCaptAssets
+		eksAArtifactsFuncs["tink"] = r.GetTinkAssets
+		eksAArtifactsFuncs["hegel"] = r.GetHegelAssets
+		eksAArtifactsFuncs["cfssl"] = r.GetCfsslAssets
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
