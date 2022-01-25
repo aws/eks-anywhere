@@ -17,6 +17,7 @@ spec:
       machineGroupRef:
         name: eksa-unit-test
         kind: VSphereMachineConfig
+      name: "md-0"
   datacenterRef:
     kind: VSphereDatacenterConfig
     name: eksa-unit-test
