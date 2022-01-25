@@ -133,6 +133,34 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `VSphereMachineConfig.resourcePool`
 - `VSphereMachineConfig.template`
 
+EKS Anywhere `upgrade` also supports adding more worker node groups post-creation.
+To add more worker node groups, modify your cluster config file to define the additional group(s).
+Example:
+```
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: dev
+spec:
+  controlPlaneConfiguration:
+     ...
+  workerNodeGroupConfigurations:
+  - count: 2
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: my-cluster-machines
+    name: md-0
+  - count: 2
+    machineGroupRef:
+      kind: VSphereMachineConfig
+      name: my-cluster-machines
+    name: md-1
+      ...
+```
+
+Worker node groups can use the same machineGroupRef as previous groups, or you can define a new machine configuration for your new group.
+
+
 ### Troubleshooting
 
 Attempting to upgrade a cluster with more than 1 minor release will result in receiving the following error.
