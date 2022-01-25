@@ -5,6 +5,7 @@ import (
 
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -39,6 +40,13 @@ func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.Da
 		resource, err := yaml.Marshal(marshallable)
 		if err != nil {
 			return nil, fmt.Errorf("failed marshalling resource for cluster spec: %v", err)
+		}
+		if clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf == nil {
+			removeFromDefaultConfig := []string{"spec.clusterNetwork.dns"}
+			resource, err = api.CleanupPathsFromYaml(resource, removeFromDefaultConfig)
+			if err != nil {
+				return nil, fmt.Errorf("error cleaning paths from yaml: %v", err)
+			}
 		}
 		resources = append(resources, resource)
 	}
