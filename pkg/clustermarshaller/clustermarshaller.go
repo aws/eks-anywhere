@@ -5,12 +5,15 @@ import (
 
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
+
+var removeFromDefaultConfig = []string{"spec.clusterNetwork.dns"}
 
 func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) ([]byte, error) {
 	marshallables := make([]v1alpha1.Marshallable, 0, 5+len(machineConfigs))
@@ -36,9 +39,13 @@ func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.Da
 
 	resources := make([][]byte, 0, len(marshallables))
 	for _, marshallable := range marshallables {
-		resource, err := yaml.Marshal(marshallable)
+		resourceMarshal, err := yaml.Marshal(marshallable)
 		if err != nil {
 			return nil, fmt.Errorf("failed marshalling resource for cluster spec: %v", err)
+		}
+		resource, err := api.CleanupPathsFromYaml(resourceMarshal, removeFromDefaultConfig)
+		if err != nil {
+			return nil, fmt.Errorf("error cleaning paths from yaml: %v", err)
 		}
 		resources = append(resources, resource)
 	}

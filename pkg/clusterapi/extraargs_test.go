@@ -238,22 +238,18 @@ func TestPodIAMConfigExtraArgs(t *testing.T) {
 
 func TestResolvConfExtraArgs(t *testing.T) {
 	tests := []struct {
-		testName string
-		dns      *v1alpha1.DNS
-		want     clusterapi.ExtraArgs
+		testName   string
+		resolvConf v1alpha1.ResolvConf
+		want       clusterapi.ExtraArgs
 	}{
 		{
-			testName: "default",
-			dns: &v1alpha1.DNS{
-				ResolvConf: v1alpha1.ResolvConf{Path: ""},
-			},
-			want: map[string]string{},
+			testName:   "default",
+			resolvConf: v1alpha1.ResolvConf{Path: ""},
+			want:       map[string]string{},
 		},
 		{
-			testName: "with custom resolvConf file",
-			dns: &v1alpha1.DNS{
-				ResolvConf: v1alpha1.ResolvConf{Path: "mypath"},
-			},
+			testName:   "with custom resolvConf file",
+			resolvConf: v1alpha1.ResolvConf{Path: "mypath"},
 			want: clusterapi.ExtraArgs{
 				"resolv-conf": "mypath",
 			},
@@ -262,7 +258,7 @@ func TestResolvConfExtraArgs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
-			if got := clusterapi.ResolvConfExtraArgs(tt.dns); !reflect.DeepEqual(got, tt.want) {
+			if got := clusterapi.ResolvConfExtraArgs(tt.resolvConf); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ResolvConfExtraArgs() = %v, want %v", got, tt.want)
 			}
 		})
