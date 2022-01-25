@@ -91,10 +91,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 	}
 
 	workerNodeGroupConfigs := vsphereClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations
-	if len(workerNodeGroupConfigs) == 1 && workerNodeGroupConfigs[0].Name == "" {
-		logger.V(1).Info("Worker node group name not specified. Defaulting name to md-0.")
-		workerNodeGroupConfigs[0].Name = "md-0"
-	}
 	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
 		if workerNodeGroupConfig.Name == "" {
 			return errors.New("must specify name for worker nodes")

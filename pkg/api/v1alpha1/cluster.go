@@ -79,6 +79,12 @@ func WorkerNodeConfigCount(count int) ClusterGenerateOpt {
 	}
 }
 
+func WorkerNodeConfigName(name string) ClusterGenerateOpt {
+	return func(c *ClusterGenerate) {
+		c.Spec.WorkerNodeGroupConfigurations[0].Name = name
+	}
+}
+
 func WithClusterEndpoint() ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
 		c.Spec.ControlPlaneConfiguration.Endpoint = &Endpoint{Host: ""}
