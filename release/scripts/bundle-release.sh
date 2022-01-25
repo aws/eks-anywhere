@@ -33,6 +33,8 @@ SOURCE_CONTAINER_REGISTRY="${8?Specify eighth argument - source container regist
 RELEASE_CONTAINER_REGISTRY="${9?Specify ninth argument - release container registry}"
 RELEASE_ENVIRONMENT="${10?Specify tenth argument - Release environment}"
 BUILD_REPO_BRANCH_NAME="${11?Specify eleventh argument - Build repo branch name}"
+BUILD_REPO_URL="${12?Specify twelth argument - Build repo URL}"
+CLI_REPO_URL="${13?Specify thirteenth argument - CLI repo URL}"
 
 set_aws_config "$RELEASE_ENVIRONMENT"
 
@@ -51,4 +53,6 @@ ${BASE_DIRECTORY}/release/bin/eks-anywhere-release release \
     --release-container-registry "${RELEASE_CONTAINER_REGISTRY}" \
     --release-environment ${RELEASE_ENVIRONMENT} \
     --dev-release=false \
-    --bundle-release=true
+    --bundle-release=true \
+    --build-repo-url "${BUILD_REPO_URL}" \
+    --cli-repo-url "${CLI_REPO_URL}"
