@@ -38,6 +38,7 @@ func (r *ReleaseConfig) GetCertManagerAssets() ([]Artifact, error) {
 		"cert-manager-cainjector",
 		"cert-manager-controller",
 		"cert-manager-webhook",
+		"cert-manager", // helm-chart
 	}
 
 	artifacts := []Artifact{}
@@ -132,18 +133,28 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 		if artifact.Image != nil {
 			imageArtifact := artifact.Image
 			sourceBranch = imageArtifact.SourcedFromBranch
-
-			bundleArtifact := anywherev1alpha1.Image{
-				Name:        imageArtifact.AssetName,
-				Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
-				OS:          imageArtifact.OS,
-				Arch:        imageArtifact.Arch,
-				URI:         imageArtifact.ReleaseImageURI,
-				ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+			switch {
+			case imageArtifact.AssetName == "cert-manager": // cert-manager is the name of the helm chart, so don't add OS/Arch.
+				bundleArtifact := anywherev1alpha1.Image{
+					Name:        imageArtifact.AssetName,
+					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
+					URI:         fmt.Sprintf("%s-helm", imageArtifact.ReleaseImageURI), // Helm charts tags get appended with "-helm"
+					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+				}
+				bundleImageArtifacts[imageArtifact.AssetName] = bundleArtifact
+				artifactHashes = append(artifactHashes, bundleArtifact.ImageDigest)
+			default:
+				bundleArtifact := anywherev1alpha1.Image{
+					Name:        imageArtifact.AssetName,
+					Description: fmt.Sprintf("Container image for %s image", imageArtifact.AssetName),
+					OS:          imageArtifact.OS,
+					Arch:        imageArtifact.Arch,
+					URI:         imageArtifact.ReleaseImageURI,
+					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
+				}
+				bundleImageArtifacts[imageArtifact.AssetName] = bundleArtifact
+				artifactHashes = append(artifactHashes, bundleArtifact.ImageDigest)
 			}
-
-			bundleImageArtifacts[imageArtifact.AssetName] = bundleArtifact
-			artifactHashes = append(artifactHashes, bundleArtifact.ImageDigest)
 		}
 		if artifact.Manifest != nil {
 			manifestArtifact := artifact.Manifest
@@ -178,6 +189,7 @@ func (r *ReleaseConfig) GetCertManagerBundle(imageDigests map[string]string) (an
 		Controller: bundleImageArtifacts["cert-manager-controller"],
 		Webhook:    bundleImageArtifacts["cert-manager-webhook"],
 		Manifest:   bundleManifestArtifacts["cert-manager.yaml"],
+		HelmChart:  bundleImageArtifacts["cert-manager"],
 	}
 
 	return bundle, nil

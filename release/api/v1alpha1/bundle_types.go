@@ -132,6 +132,7 @@ type CertManagerBundle struct {
 	Controller Image    `json:"controller"`
 	Webhook    Image    `json:"webhook"`
 	Manifest   Manifest `json:"manifest"`
+	HelmChart  Image    `json:"helmChart,omitempty"`
 }
 
 type CoreClusterAPI struct {
