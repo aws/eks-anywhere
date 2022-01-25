@@ -35,6 +35,11 @@ func DescribeTag(gitRoot string) (string, error) {
 	return utils.ExecCommand(cmd)
 }
 
+func GetRepoTags(gitRoot string) (string, error) {
+	cmd := exec.Command("git", "-C", gitRoot, "tag")
+	return utils.ExecCommand(cmd)
+}
+
 func GetLatestCommitForPath(gitRoot, path string) (string, error) {
 	cmd := exec.Command("git", "-C", gitRoot, "log", "--pretty=format:%h", "-n1", path)
 	return utils.ExecCommand(cmd)

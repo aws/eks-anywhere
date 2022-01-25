@@ -56,6 +56,7 @@ type ManifestArtifact struct {
 	GitTag            string
 	ProjectPath       string
 	SourcedFromBranch string
+	Component         string
 }
 
 type Artifact struct {
