@@ -44,6 +44,14 @@ func (c *retrierClient) Apply(ctx context.Context, cluster *types.Cluster, data 
 	)
 }
 
+func (c *retrierClient) Delete(ctx context.Context, cluster *types.Cluster, data []byte) error {
+	return c.Retry(
+		func() error {
+			return c.DeleteKubeSpecFromBytes(ctx, cluster, data)
+		},
+	)
+}
+
 func (c *retrierClient) WaitForPreflightDaemonSet(ctx context.Context, cluster *types.Cluster) error {
 	return c.Retry(
 		func() error {
