@@ -31,8 +31,8 @@ RELEASE_CONTAINER_REGISTRY="${6?Specify sixth argument - release container regis
 BUILD_REPO_URL="${7?Specify seventh argument - Build repo URL}"
 CLI_REPO_URL="${8?Specify eighth argument - CLI repo URL}"
 BUILD_REPO_BRANCH_NAME="${9?Specify seventh argument - Build repo branch name}"
-CLI_REPO_BRANCH_NAME="${10?Specify eighth argument - CLI repo branch name}"
-DRY_RUN="${11?Specify ninth argument - Dry run}"
+CLI_REPO_BRANCH_NAME="${10?Specify tenth argument - CLI repo branch name}"
+DRY_RUN="${11?Specify eleventh argument - Dry run}"
 
 mkdir -p "${ARTIFACTS_DIR}"
 
