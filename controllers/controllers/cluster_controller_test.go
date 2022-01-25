@@ -263,7 +263,7 @@ func createBundle(cluster *anywherev1.Cluster) *v1alpha1.Bundles {
 		},
 		Spec: v1alpha1.BundlesSpec{
 			VersionsBundles: []v1alpha1.VersionsBundle{
-				v1alpha1.VersionsBundle{
+				{
 					KubeVersion: "1.21",
 					EksD: v1alpha1.EksDRelease{
 						Name:           "test",
@@ -336,7 +336,7 @@ func createCluster() *anywherev1.Cluster {
 				},
 			},
 			WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
-				anywherev1.WorkerNodeGroupConfiguration{
+				{
 					Count: 1,
 					MachineGroupRef: &anywherev1.Ref{
 						Kind: "VSphereMachineConfig",

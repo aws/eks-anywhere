@@ -16,7 +16,7 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 	}
 
 	createValidations := []validations.ValidationResult{
-		validations.ValidationResult{
+		{
 			Name:        "validate taints support",
 			Remediation: "",
 			Err:         ValidateTaintsSupport(ctx, u.Opts.Spec),
