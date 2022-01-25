@@ -299,7 +299,7 @@ type Services struct {
 
 type DNS struct {
 	// ResolvConf refers to the DNS resolver configuration
-	ResolvConf ResolvConf `json:"resolvConf,omitempty"`
+	ResolvConf *ResolvConf `json:"resolvConf,omitempty"`
 }
 
 type ResolvConf struct {
