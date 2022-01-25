@@ -13,8 +13,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
-var removeFromDefaultConfig = []string{"spec.clusterNetwork.dns"}
-
 func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) ([]byte, error) {
 	marshallables := make([]v1alpha1.Marshallable, 0, 5+len(machineConfigs))
 	marshallables = append(marshallables,
@@ -39,13 +37,16 @@ func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.Da
 
 	resources := make([][]byte, 0, len(marshallables))
 	for _, marshallable := range marshallables {
-		resourceMarshal, err := yaml.Marshal(marshallable)
+		resource, err := yaml.Marshal(marshallable)
 		if err != nil {
 			return nil, fmt.Errorf("failed marshalling resource for cluster spec: %v", err)
 		}
-		resource, err := api.CleanupPathsFromYaml(resourceMarshal, removeFromDefaultConfig)
-		if err != nil {
-			return nil, fmt.Errorf("error cleaning paths from yaml: %v", err)
+		if clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf == nil {
+			removeFromDefaultConfig := []string{"spec.clusterNetwork.dns"}
+			resource, err = api.CleanupPathsFromYaml(resource, removeFromDefaultConfig)
+			if err != nil {
+				return nil, fmt.Errorf("error cleaning paths from yaml: %v", err)
+			}
 		}
 		resources = append(resources, resource)
 	}
