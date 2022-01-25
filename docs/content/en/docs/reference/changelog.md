@@ -18,7 +18,7 @@ menu:
 - Support for workload cluster's control plane and etcd upgrade through GitOps [#1007](https://github.com/aws/eks-anywhere/issues/1007)
 
 ### Changed
-- EKS-A now uses Cluster API (CAPI) v1.0.1, upgrading from v0.3.23.
+- EKS-A now uses Cluster API (CAPI) v1.0.1 and v1beta1 manifests, upgrading from v0.3.23 and v1alpha3 manifests.
 - Kubernetes components and etcd now use TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 as the
   configured TLS cipher suite [#657](https://github.com/aws/eks-anywhere/pull/657), 
   [#759](https://github.com/aws/eks-anywhere/pull/759), [#1019](https://github.com/aws/eks-anywhere/pull/1019)
