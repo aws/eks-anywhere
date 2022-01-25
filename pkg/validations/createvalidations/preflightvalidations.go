@@ -18,8 +18,13 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 	createValidations := []validations.ValidationResult{
 		{
 			Name:        "validate taints support",
-			Remediation: "",
-			Err:         ValidateTaintsSupport(ctx, u.Opts.Spec),
+			Remediation: "ensure TAINTS_SUPPORT env variable is set",
+			Err:         ValidateTaintsSupport(u.Opts.Spec),
+		},
+		{
+			Name:        "validate taints support",
+			Remediation: "ensure NODE_LABELS_SUPPORT env variable is set",
+			Err:         ValidateNodeLabelsSupport(u.Opts.Spec),
 		},
 	}
 
