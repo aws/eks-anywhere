@@ -38,7 +38,7 @@ func ValidateTaintsSupport(clusterSpec *cluster.Spec) error {
 func ValidateNodeLabelsSupport(clusterSpec *cluster.Spec) error {
 	if !features.IsActive(features.NodeLabelsSupport()) {
 		if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Labels) > 0 {
-			return fmt.Errorf("Taints feature is not enabled. Please set the env variable TAINTS_SUPPORT.")
+			return fmt.Errorf("Node labels feature is not enabled. Please set the env variable NODE_LABELS_SUPPORT.")
 		}
 		for _, workerNodeGroup := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 			if len(workerNodeGroup.Labels) > 0 {
