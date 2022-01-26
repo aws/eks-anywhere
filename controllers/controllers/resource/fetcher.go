@@ -162,7 +162,7 @@ func (r *CapiResourceFetcher) fetchClusterForRef(ctx context.Context, refId type
 			}
 		}
 	}
-	return nil, fmt.Errorf("eksa cluster not found for datacenterRef %v", refId)
+	return nil, fmt.Errorf("eksa cluster not found for %s: %v", kind, refId)
 }
 
 func (r *CapiResourceFetcher) machineDeploymentsMap(ctx context.Context, c *anywherev1.Cluster) (map[string]*clusterv1.MachineDeployment, error) {
