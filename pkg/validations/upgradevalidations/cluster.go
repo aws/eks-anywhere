@@ -26,10 +26,24 @@ func ValidateClusterObjectExists(ctx context.Context, k validations.KubectlClien
 	return fmt.Errorf("couldn't find CAPI cluster object for cluster with name %s", cluster.Name)
 }
 
-func ValidateTaintsSupport(ctx context.Context, clusterSpec *cluster.Spec) error {
+func ValidateTaintsSupport(clusterSpec *cluster.Spec) error {
 	if !features.IsActive(features.TaintsSupport()) {
 		if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints) > 0 {
 			return fmt.Errorf("Taints feature is not enabled.")
+		}
+	}
+	return nil
+}
+
+func ValidateNodeLabelsSupport(clusterSpec *cluster.Spec) error {
+	if !features.IsActive(features.NodeLabelsSupport()) {
+		if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Labels) > 0 {
+			return fmt.Errorf("Node labels feature is not enabled. Please set the env variable NODE_LABELS_SUPPORT.")
+		}
+		for _, workerNodeGroup := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+			if len(workerNodeGroup.Labels) > 0 {
+				return fmt.Errorf("Node labels feature is not enabled. Please set the env variable NODE_LABELS_SUPPORT.")
+			}
 		}
 	}
 	return nil

@@ -23,7 +23,14 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		validations.ValidationResult{
 			Name:        "validate taints support",
 			Remediation: "ensure TAINTS_SUPPORT env variable is set",
-			Err:         ValidateTaintsSupport(ctx, u.Opts.Spec),
+			Err:         ValidateTaintsSupport(u.Opts.Spec),
+			FeatureFlag: true,
+		},
+		validations.ValidationResult{
+			Name:        "validate node labels support",
+			Remediation: "ensure NODE_LABELS_SUPPORT env variable is set",
+			Err:         ValidateNodeLabelsSupport(u.Opts.Spec),
+			FeatureFlag: true,
 		},
 		validations.ValidationResult{
 			Name:        "control plane ready",
@@ -66,7 +73,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 	for _, validation := range upgradeValidations {
 		if validation.Err != nil {
 			errs = append(errs, validation.Err.Error())
-		} else {
+		} else if !validation.FeatureFlag {
 			validation.LogPass()
 		}
 	}
