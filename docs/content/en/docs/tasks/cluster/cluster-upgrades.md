@@ -57,7 +57,7 @@ The output should appear similar to the following:
 
 ```
 Worker node group name not specified. Defaulting name to md-0.
-Warning: The recommended number fo control plane nodes is 3 or 5
+Warning: The recommended number of control plane nodes is 3 or 5
 Worker node group name not specified. Defaulting name to md-0.
 Checking new release availability...
 NAME                     CURRENT VERSION                 NEXT VERSION
@@ -69,7 +69,7 @@ kubadm                   v1.0.2+f002eae                  v1.0.2+f443dcf
 etcdadm-bootstrap        v1.0.2-rc3+54dcc82              v1.0.0-rc3+df07114
 etcdadm-controller       v1.0.2-rc3+a817792              v1.0.0-rc3+a310516
 ```
-To format output in json, add `-o json` to the end of the command line.
+To the format output in json, add `-o json` to the end of the command line.
 
 ### Performing a cluster upgrade
 
