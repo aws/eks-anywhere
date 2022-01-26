@@ -62,7 +62,7 @@ Worker node group name not specified. Defaulting name to md-0.
 Checking new release availability...
 NAME                     CURRENT VERSION                 NEXT VERSION
 EKS-A                    v0.0.0-dev+build.1000+9886ba8   v0.0.0-dev+build.1105+46598cb
-cluster-api               v1.0.2+e8c48f5                  v1.0.2+1274316
+cluster-api              v1.0.2+e8c48f5                  v1.0.2+1274316
 kubeadm                  v1.0.2+92c6d7e                  v1.0.2+aa1a03a
 vsphere                  v1.0.1+efb002c                  v1.0.1+ef26ac1
 kubadm                   v1.0.2+f002eae                  v1.0.2+f443dcf
