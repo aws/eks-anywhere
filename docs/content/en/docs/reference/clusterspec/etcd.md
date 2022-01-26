@@ -58,6 +58,7 @@ spec:
         machineGroupRef:
            kind: VSphereMachineConfig
            name: my-cluster-name
+        name: md-0
 ```
 #### externalEtcdConfiguration (under Cluster)
 This field accepts any configuration parameters for running external etcd.
