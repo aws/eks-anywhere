@@ -25,8 +25,8 @@ In the event that GitOps installation fails, EKS Anywhere cluster creation will 
 Currently, you can manage a subset of cluster properties with GitOps:
 
 `Cluster`:
-- `Cluster.workerNodeGroupConfigurations[0].count`
-- `Cluster.workerNodeGroupConfigurations[0].machineGroupRef.name`
+- `Cluster.workerNodeGroupConfigurations.count`
+- `Cluster.workerNodeGroupConfigurations.machineGroupRef.name`
 
 *Management Cluster*
 
