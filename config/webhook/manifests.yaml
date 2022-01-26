@@ -34,6 +34,48 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackdeploymentconfig
+  failurePolicy: Fail
+  name: validation.cloudstackdeploymentconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - cloudstackdeploymentconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackmachineconfig
+  failurePolicy: Fail
+  name: validation.cloudstackmachineconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - cloudstackmachineconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /validate-anywhere-eks-amazonaws-com-v1alpha1-cluster
   failurePolicy: Fail
   name: validation.cluster.anywhere.amazonaws.com

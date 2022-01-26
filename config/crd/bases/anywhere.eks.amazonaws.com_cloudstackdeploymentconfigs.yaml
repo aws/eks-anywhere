@@ -6,20 +6,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.1
   creationTimestamp: null
-  name: vspheremachineconfigs.anywhere.eks.amazonaws.com
+  name: cloudstackdeploymentconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
   names:
-    kind: VSphereMachineConfig
-    listKind: VSphereMachineConfigList
-    plural: vspheremachineconfigs
-    singular: vspheremachineconfig
+    kind: CloudStackDeploymentConfig
+    listKind: CloudStackDeploymentConfigList
+    plural: cloudstackdeploymentconfigs
+    singular: cloudstackdeploymentconfig
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: VSphereMachineConfig is the Schema for the vspheremachineconfigs
+        description: CloudStackDeploymentConfig is the Schema for the cloudstackdeploymentconfigs
           API
         properties:
           apiVersion:
@@ -35,53 +35,35 @@ spec:
           metadata:
             type: object
           spec:
-            description: VSphereMachineConfigSpec defines the desired state of VSphereMachineConfig
+            description: CloudStackDeploymentConfigSpec defines the desired state
+              of CloudStackDeploymentConfig
             properties:
-              datastore:
+              account:
                 type: string
-              diskGiB:
-                type: integer
-              folder:
+              domain:
+                description: Foo is an example field of CloudStackDeploymentConfig.
+                  Edit cloudstackdeploymentconfig_types.go to remove/update
                 type: string
-              memoryMiB:
-                type: integer
-              numCPUs:
-                type: integer
-              osFamily:
+              insecure:
+                type: boolean
+              managementApiEndpoint:
                 type: string
-              resourcePool:
+              network:
                 type: string
-              storagePolicyName:
+              thumbprint:
                 type: string
-              template:
+              zone:
                 type: string
-              users:
-                items:
-                  description: UserConfiguration defines the configuration of the
-                    user to be added to the VM
-                  properties:
-                    name:
-                      type: string
-                    sshAuthorizedKeys:
-                      items:
-                        type: string
-                      type: array
-                  required:
-                  - name
-                  - sshAuthorizedKeys
-                  type: object
-                type: array
             required:
-            - datastore
-            - folder
-            - memoryMiB
-            - numCPUs
-            - osFamily
-            - resourcePool
+            - domain
+            - insecure
+            - managementApiEndpoint
+            - network
+            - zone
             type: object
           status:
-            description: VSphereMachineConfigStatus defines the observed state of
-              VSphereMachineConfig
+            description: CloudStackDeploymentConfigStatus defines the observed state
+              of CloudStackDeploymentConfig
             type: object
         type: object
     served: true

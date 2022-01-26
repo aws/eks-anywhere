@@ -6,20 +6,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.6.1
   creationTimestamp: null
-  name: vspheremachineconfigs.anywhere.eks.amazonaws.com
+  name: cloudstackmachineconfigs.anywhere.eks.amazonaws.com
 spec:
   group: anywhere.eks.amazonaws.com
   names:
-    kind: VSphereMachineConfig
-    listKind: VSphereMachineConfigList
-    plural: vspheremachineconfigs
-    singular: vspheremachineconfig
+    kind: CloudStackMachineConfig
+    listKind: CloudStackMachineConfigList
+    plural: cloudstackmachineconfigs
+    singular: cloudstackmachineconfig
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: VSphereMachineConfig is the Schema for the vspheremachineconfigs
+        description: CloudStackMachineConfig is the Schema for the cloudstackmachineconfigs
           API
         properties:
           apiVersion:
@@ -35,25 +35,26 @@ spec:
           metadata:
             type: object
           spec:
-            description: VSphereMachineConfigSpec defines the desired state of VSphereMachineConfig
+            description: CloudStackMachineConfigSpec defines the desired state of
+              CloudStackMachineConfig
             properties:
-              datastore:
+              affinityGroupIds:
+                items:
+                  type: string
+                type: array
+              computeOffering:
                 type: string
-              diskGiB:
-                type: integer
-              folder:
+              details:
+                additionalProperties:
+                  type: string
+                type: object
+              diskOffering:
                 type: string
-              memoryMiB:
-                type: integer
-              numCPUs:
-                type: integer
               osFamily:
                 type: string
-              resourcePool:
-                type: string
-              storagePolicyName:
-                type: string
               template:
+                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+                  Important: Run "make" to regenerate code after modifying this file'
                 type: string
               users:
                 items:
@@ -72,16 +73,12 @@ spec:
                   type: object
                 type: array
             required:
-            - datastore
-            - folder
-            - memoryMiB
-            - numCPUs
-            - osFamily
-            - resourcePool
+            - computeOffering
+            - template
             type: object
           status:
-            description: VSphereMachineConfigStatus defines the observed state of
-              VSphereMachineConfig
+            description: CloudStackMachineConfigStatus defines the observed state
+              of CloudStackMachineConfig
             type: object
         type: object
     served: true

@@ -87,6 +87,10 @@ spec:
                     required:
                     - host
                     type: object
+                  extraEndpoints:
+                    items:
+                      type: string
+                    type: array
                   labels:
                     additionalProperties:
                       type: string
