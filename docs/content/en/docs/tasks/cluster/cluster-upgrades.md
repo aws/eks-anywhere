@@ -69,7 +69,7 @@ kubadm                   v1.0.2+f002eae                  v1.0.2+f443dcf
 etcdadm-bootstrap        v1.0.2-rc3+54dcc82              v1.0.0-rc3+df07114
 etcdadm-controller       v1.0.2-rc3+a817792              v1.0.0-rc3+a310516
 ```
-To format output in json, add `-o json | jq` to the end of the command line.
+To format output in json, add `-o json` to the end of the command line.
 
 ### Performing a cluster upgrade
 
