@@ -3002,3 +3002,31 @@ func TestProviderGenerateCAPISpecForCreateVersion121Controller(t *testing.T) {
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_121_cp.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_121_controller_md.yaml")
 }
+
+func TestSetupAndValidateCreateManagementDoesNotCheckIfMachineAndDataCenterExist(t *testing.T) {
+	ctx := context.Background()
+	provider := givenProvider(t)
+	clusterSpec := givenEmptyClusterSpec()
+	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
+	var tctx testContext
+	tctx.SaveContext()
+	defer tctx.RestoreContext()
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	for _, config := range newMachineConfigs {
+		kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), config.Name, gomock.Any(), config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil).Times(0)
+	}
+	kubectl.EXPECT().SearchVsphereDatacenterConfig(context.TODO(), datacenterConfig.Name, gomock.Any(), clusterSpec.Namespace).Return([]*v1alpha1.VSphereDatacenterConfig{}, nil).Times(0)
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+	assert.NoError(t, err, "No error should be returned")
+}
