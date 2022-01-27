@@ -67,6 +67,7 @@ phases:
       --bundles-override=${BUNDLES_OVERRIDE}
       --cleanup-vms=true
       --test-report-folder=reports
+      --branch-name=${BRANCH_NAME}
   post_build:
     commands:
     - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
