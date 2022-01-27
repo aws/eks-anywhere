@@ -33,6 +33,7 @@ EKS Anywhere `upgrade` also supports upgrading the following core components:
 
 * Core CAPI
 * CAPI providers
+* Cilium CNI plugin
 * Cert-manager
 * Etcdadm CAPI provider
 * EKS Anywhere controllers and CRDs
@@ -45,6 +46,30 @@ If there is a new Kubernetes version that is going to get rolled out, the core c
 version. 
 Irrespective of a Kubernetes version change, the upgrade command will always upgrade the internal EKS
 Anywhere components mentioned above to their latest available versions. All upgrade changes are backwards compatible.
+
+### Check upgrade components
+Before you perform an upgrade, check the current and new versions of components that are ready to upgrade by typing:
+
+```bash
+eksctl anywhere upgrade plan cluster -f cluster.yaml
+```
+The output should appear similar to the following:
+
+```
+Worker node group name not specified. Defaulting name to md-0.
+Warning: The recommended number of control plane nodes is 3 or 5
+Worker node group name not specified. Defaulting name to md-0.
+Checking new release availability...
+NAME                     CURRENT VERSION                 NEXT VERSION
+EKS-A                    v0.0.0-dev+build.1000+9886ba8   v0.0.0-dev+build.1105+46598cb
+cluster-api              v1.0.2+e8c48f5                  v1.0.2+1274316
+kubeadm                  v1.0.2+92c6d7e                  v1.0.2+aa1a03a
+vsphere                  v1.0.1+efb002c                  v1.0.1+ef26ac1
+kubadm                   v1.0.2+f002eae                  v1.0.2+f443dcf
+etcdadm-bootstrap        v1.0.2-rc3+54dcc82              v1.0.0-rc3+df07114
+etcdadm-controller       v1.0.2-rc3+a817792              v1.0.0-rc3+a310516
+```
+To the format output in json, add `-o json` to the end of the command line.
 
 ### Performing a cluster upgrade
 
