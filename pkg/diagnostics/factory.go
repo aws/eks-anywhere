@@ -56,5 +56,5 @@ func (f *eksaDiagnosticBundleFactory) DiagnosticBundleDefault() DiagnosticBundle
 }
 
 func (f *eksaDiagnosticBundleFactory) DiagnosticBundleCustom(kubeconfig string, bundlePath string) DiagnosticBundle {
-	return newDiagnosticBundleCustom(f.analyzerFactory, f.collectorFactory, f.client, f.kubectl, bundlePath, kubeconfig)
+	return newDiagnosticBundleCustom(f.analyzerFactory, f.collectorFactory, f.client, f.kubectl, bundlePath, kubeconfig, f.writer)
 }

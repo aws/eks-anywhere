@@ -94,6 +94,10 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	}
 	defer cleanup(ctx, deps, &err)
 
+	if deps.Provider.Name() == "tinkerbell" {
+		return fmt.Errorf("Error: upgrade operation is not supported for provider tinkerbell")
+	}
+
 	upgradeCluster := workflows.NewUpgrade(
 		deps.Bootstrapper,
 		deps.Provider,

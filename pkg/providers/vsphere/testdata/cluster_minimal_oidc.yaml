@@ -17,6 +17,7 @@ spec:
       machineGroupRef:
         name: test-wn
         kind: VSphereMachineConfig
+      name: md-0
   datacenterRef:
     kind: VSphereDatacenterConfig
     name: test

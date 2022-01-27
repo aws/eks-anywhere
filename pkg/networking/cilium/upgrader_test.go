@@ -78,7 +78,7 @@ func TestUpgraderUpgradeSuccess(t *testing.T) {
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifestPre),
 		tt.client.EXPECT().WaitForPreflightDaemonSet(tt.ctx, tt.cluster),
 		tt.client.EXPECT().WaitForPreflightDeployment(tt.ctx, tt.cluster),
-		tt.client.EXPECT().DeleteKubeSpecFromBytes(tt.ctx, tt.cluster, tt.manifestPre),
+		tt.client.EXPECT().Delete(tt.ctx, tt.cluster, tt.manifestPre),
 		tt.expectTemplateManifest(),
 		tt.client.EXPECT().Apply(tt.ctx, tt.cluster, tt.manifest),
 		tt.client.EXPECT().WaitForCiliumDaemonSet(tt.ctx, tt.cluster),

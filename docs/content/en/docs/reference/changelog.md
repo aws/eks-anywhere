@@ -17,7 +17,7 @@ menu:
 
 - Kubernetes components and etcd now use TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256 as the
   configured TLS cipher suite [#657](https://github.com/aws/eks-anywhere/pull/657), 
-  [#759](https://github.com/aws/eks-anywhere/pull/759)
+  [#759](https://github.com/aws/eks-anywhere/pull/759), [#1019](https://github.com/aws/eks-anywhere/pull/1019)
 
 ## v0.6.0 - 2021-10-29
 

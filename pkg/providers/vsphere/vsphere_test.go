@@ -16,13 +16,13 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -36,19 +36,20 @@ import (
 )
 
 const (
-	testClusterConfigMainFilename = "cluster_main.yaml"
-	testDataDir                   = "testdata"
-	expectedVSphereName           = "vsphere"
-	expectedVSphereUsername       = "vsphere_username"
-	expectedVSpherePassword       = "vsphere_password"
-	expectedVSphereServer         = "vsphere_server"
-	expectedExpClusterResourceSet = "expClusterResourceSetKey"
-	eksd119Release                = "kubernetes-1-19-eks-4"
-	eksd119ReleaseTag             = "eksdRelease:kubernetes-1-19-eks-4"
-	eksd121ReleaseTag             = "eksdRelease:kubernetes-1-21-eks-4"
-	ubuntuOSTag                   = "os:ubuntu"
-	bottlerocketOSTag             = "os:bottlerocket"
-	testTemplate                  = "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
+	testClusterConfigMainFilename    = "cluster_main.yaml"
+	testClusterConfigMain121Filename = "cluster_main_121.yaml"
+	testDataDir                      = "testdata"
+	expectedVSphereName              = "vsphere"
+	expectedVSphereUsername          = "vsphere_username"
+	expectedVSpherePassword          = "vsphere_password"
+	expectedVSphereServer            = "vsphere_server"
+	expectedExpClusterResourceSet    = "expClusterResourceSetKey"
+	eksd119Release                   = "kubernetes-1-19-eks-4"
+	eksd119ReleaseTag                = "eksdRelease:kubernetes-1-19-eks-4"
+	eksd121ReleaseTag                = "eksdRelease:kubernetes-1-21-eks-4"
+	ubuntuOSTag                      = "os:ubuntu"
+	bottlerocketOSTag                = "os:bottlerocket"
+	testTemplate                     = "/SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6"
 )
 
 type DummyProviderGovcClient struct {
@@ -540,6 +541,69 @@ func TestProviderGenerateCAPISpecForUpgradeOIDC(t *testing.T) {
 	}
 }
 
+func TestProviderGenerateCAPISpecForUpgradeMultipleWorkerNodeGroups(t *testing.T) {
+	tests := []struct {
+		testName          string
+		clusterconfigFile string
+		wantMDFile        string
+	}{
+		{
+			testName:          "adding a worker node group",
+			clusterconfigFile: "cluster_main_multiple_worker_node_groups.yaml",
+			wantMDFile:        "testdata/expected_results_minimal_add_worker_node_group.yaml",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			var tctx testContext
+			tctx.SaveContext()
+			defer tctx.RestoreContext()
+			ctx := context.Background()
+			kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+			cluster := &types.Cluster{
+				Name: "test",
+			}
+			bootstrapCluster := &types.Cluster{
+				Name: "bootstrap-test",
+			}
+			clusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
+			vsphereDatacenter := &v1alpha1.VSphereDatacenterConfig{
+				Spec: v1alpha1.VSphereDatacenterConfigSpec{},
+			}
+			vsphereMachineConfig := &v1alpha1.VSphereMachineConfig{
+				Spec: v1alpha1.VSphereMachineConfigSpec{},
+			}
+			newClusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
+			newConfig := v1alpha1.WorkerNodeGroupConfiguration{Count: 1, MachineGroupRef: &v1alpha1.Ref{Name: "test-wn", Kind: "VSphereMachineConfig"}, Name: "md-2"}
+			newClusterSpec.Spec.WorkerNodeGroupConfigurations = append(newClusterSpec.Spec.WorkerNodeGroupConfigurations, newConfig)
+
+			kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Name).Return(clusterSpec.Cluster, nil)
+			kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereDatacenter, nil)
+			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereMachineConfig, nil)
+			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereMachineConfig, nil).AnyTimes()
+			datacenterConfig := givenDatacenterConfig(t, tt.clusterconfigFile)
+			machineConfigs := givenMachineConfigs(t, tt.clusterconfigFile)
+			provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+			if provider == nil {
+				t.Fatalf("provider object is nil")
+			}
+
+			err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+			if err != nil {
+				t.Fatalf("failed to setup and validate: %v", err)
+			}
+
+			_, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, newClusterSpec)
+			if err != nil {
+				t.Fatalf("failed to generate cluster api spec contents: %v", err)
+			}
+
+			test.AssertContentToFile(t, string(md), tt.wantMDFile)
+		})
+	}
+}
+
 func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *testing.T) {
 	tests := []struct {
 		testName          string
@@ -638,10 +702,12 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 	}
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 
-	oldCP := &bootstrapv1.KubeadmControlPlane{
-		Spec: bootstrapv1.KubeadmControlPlaneSpec{
-			InfrastructureTemplate: v1.ObjectReference{
-				Name: "test-control-plane-template-original",
+	oldCP := &controlplanev1.KubeadmControlPlane{
+		Spec: controlplanev1.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
+				InfrastructureRef: v1.ObjectReference{
+					Name: "test-control-plane-template-original",
+				},
 			},
 		},
 	}
@@ -650,7 +716,7 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 			Template: clusterv1.MachineTemplateSpec{
 				Spec: clusterv1.MachineSpec{
 					InfrastructureRef: v1.ObjectReference{
-						Name: "test-worker-node-template-original",
+						Name: "test-md-0-original",
 					},
 				},
 			},
@@ -678,6 +744,7 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 
 	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	workerNodeMachineConfigName := clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	machineDeploymentName := fmt.Sprintf("%s-%s", clusterSpec.Name, clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Name)
 	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Name).Return(clusterSpec.Cluster, nil)
 	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(datacenterConfig, nil)
@@ -685,7 +752,7 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, workerNodeMachineConfigName, cluster.KubeconfigFile, clusterSpec.Namespace).Return(machineConfigs[workerNodeMachineConfigName], nil)
 	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, etcdMachineConfigName, cluster.KubeconfigFile, clusterSpec.Namespace).Return(machineConfigs[etcdMachineConfigName], nil)
 	kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, clusterSpec.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldCP, nil)
-	kubectl.EXPECT().GetMachineDeployment(ctx, cluster, clusterSpec.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldMD, nil)
+	kubectl.EXPECT().GetMachineDeployment(ctx, cluster, machineDeploymentName, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldMD, nil)
 	kubectl.EXPECT().GetEtcdadmCluster(ctx, cluster, clusterSpec.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(etcdadmCluster, nil)
 	cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, clusterSpec.DeepCopy())
 	if err != nil {
@@ -726,6 +793,37 @@ func TestProviderGenerateCAPISpecForCreate(t *testing.T) {
 	}
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_cp.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md.yaml")
+}
+
+func TestProviderGenerateCAPISpecForCreateWithMultipleWorkerNodeGroups(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	var tctx testContext
+	tctx.SaveContext()
+	defer tctx.RestoreContext()
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	clusterSpec := givenClusterSpec(t, "cluster_main_multiple_worker_node_groups.yaml")
+
+	datacenterConfig := givenDatacenterConfig(t, "cluster_main_multiple_worker_node_groups.yaml")
+	machineConfigs := givenMachineConfigs(t, "cluster_main_multiple_worker_node_groups.yaml")
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	_, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_multiple_worker_node_groups.yaml")
 }
 
 func TestProviderGenerateStorageClass(t *testing.T) {
@@ -2819,7 +2917,7 @@ func TestProviderGenerateCAPISpecForCreateWithCustomResolvConf(t *testing.T) {
 		Name: "test",
 	}
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
-	clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf.Path = "/etc/my-custom-resolv.conf"
+	clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf = &v1alpha1.ResolvConf{Path: "/etc/my-custom-resolv.conf"}
 
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
@@ -2838,4 +2936,97 @@ func TestProviderGenerateCAPISpecForCreateWithCustomResolvConf(t *testing.T) {
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_custom_resolv_conf.yaml")
+}
+
+func TestProviderGenerateCAPISpecForCreateVersion121(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	var tctx testContext
+	tctx.SaveContext()
+	defer tctx.RestoreContext()
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	clusterSpec := givenClusterSpec(t, testClusterConfigMain121Filename)
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMain121Filename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMain121Filename)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_121_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_121_md.yaml")
+}
+
+func TestProviderGenerateCAPISpecForCreateVersion121Controller(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	var tctx testContext
+	tctx.SaveContext()
+	defer tctx.RestoreContext()
+	ctx := context.Background()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{
+		Name: "test",
+	}
+	clusterSpec := givenClusterSpec(t, testClusterConfigMain121Filename)
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMain121Filename)
+	machineConfigs := givenMachineConfigs(t, testClusterConfigMain121Filename)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+
+	if provider == nil {
+		t.Fatalf("provider object is nil")
+	}
+	provider.templateBuilder.fromController = true
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_121_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_121_controller_md.yaml")
+}
+
+func TestSetupAndValidateCreateManagementDoesNotCheckIfMachineAndDataCenterExist(t *testing.T) {
+	ctx := context.Background()
+	provider := givenProvider(t)
+	clusterSpec := givenEmptyClusterSpec()
+	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
+	var tctx testContext
+	tctx.SaveContext()
+	defer tctx.RestoreContext()
+
+	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	provider.providerKubectlClient = kubectl
+
+	for _, config := range newMachineConfigs {
+		kubectl.EXPECT().SearchVsphereMachineConfig(context.TODO(), config.Name, gomock.Any(), config.Namespace).Return([]*v1alpha1.VSphereMachineConfig{}, nil).Times(0)
+	}
+	kubectl.EXPECT().SearchVsphereDatacenterConfig(context.TODO(), datacenterConfig.Name, gomock.Any(), clusterSpec.Namespace).Return([]*v1alpha1.VSphereDatacenterConfig{}, nil).Times(0)
+
+	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+	assert.NoError(t, err, "No error should be returned")
 }

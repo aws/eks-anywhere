@@ -49,18 +49,18 @@ func (mr *MockupgraderClientMockRecorder) Apply(ctx, cluster, data interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Apply", reflect.TypeOf((*MockupgraderClient)(nil).Apply), ctx, cluster, data)
 }
 
-// DeleteKubeSpecFromBytes mocks base method.
-func (m *MockupgraderClient) DeleteKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error {
+// Delete mocks base method.
+func (m *MockupgraderClient) Delete(ctx context.Context, cluster *types.Cluster, data []byte) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteKubeSpecFromBytes", ctx, cluster, data)
+	ret := m.ctrl.Call(m, "Delete", ctx, cluster, data)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// DeleteKubeSpecFromBytes indicates an expected call of DeleteKubeSpecFromBytes.
-func (mr *MockupgraderClientMockRecorder) DeleteKubeSpecFromBytes(ctx, cluster, data interface{}) *gomock.Call {
+// Delete indicates an expected call of Delete.
+func (mr *MockupgraderClientMockRecorder) Delete(ctx, cluster, data interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteKubeSpecFromBytes", reflect.TypeOf((*MockupgraderClient)(nil).DeleteKubeSpecFromBytes), ctx, cluster, data)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockupgraderClient)(nil).Delete), ctx, cluster, data)
 }
 
 // WaitForCiliumDaemonSet mocks base method.

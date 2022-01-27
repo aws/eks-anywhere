@@ -25,16 +25,28 @@ In the event that GitOps installation fails, EKS Anywhere cluster creation will 
 Currently, you can manage a subset of cluster properties with GitOps:
 
 `Cluster`:
-- `Cluster.workerNodeGroupConfigurations[0].count`
-- `Cluster.workerNodeGroupConfigurations[0].machineGroupRef.name`
+- `Cluster.workerNodeGroupConfigurations.count`
+- `Cluster.workerNodeGroupConfigurations.machineGroupRef.name`
 
-`Worker Nodes`:
-- `VSphereMachineConfig.datastore`
-- `VSphereMachineConfig.diskGiB`
-- `VSphereMachineConfig.folder`
-- `VSphereMachineConfig.memoryMiB`
-- `VSphereMachineConfig.numCPUs`
-- `VSphereMachineConfig.resourcePool`
+*Management Cluster*
+
+`WorkerNodes VSphereMachineConfig`:
+- `datastore`
+- `diskGiB`
+- `folder`
+- `memoryMiB`
+- `numCPUs`
+- `resourcePool`
+
+*Workload Cluster*
+
+`ControlPlane / Etcd / WorkerNodes VSphereMachineConfig`:
+- `datastore`
+- `diskGiB`
+- `folder`
+- `memoryMiB`
+- `numCPUs`
+- `resourcePool`
 
 Any other changes to the cluster configuration in the git repository will be ignored.
 If an immutable field has been changed in a Git repository, there are two ways to find the error message:

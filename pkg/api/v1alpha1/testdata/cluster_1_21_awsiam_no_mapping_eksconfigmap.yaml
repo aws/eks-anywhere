@@ -67,6 +67,5 @@ metadata:
    name: eksa-unit-test
 spec:
   awsRegion: test-region
-  clusterID: eksa-unit-test
   backendMode:
     - EKSConfigMap

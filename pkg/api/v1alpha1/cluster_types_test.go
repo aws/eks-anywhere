@@ -189,6 +189,62 @@ func TestClusterManagementClusterEqual(t *testing.T) {
 	}
 }
 
+func TestClusterResolvConfEqual(t *testing.T) {
+	testCases := []struct {
+		testName                               string
+		cluster1ResolvConf, cluster2ResolvConf string
+		want                                   bool
+	}{
+		{
+			testName:           "both empty",
+			cluster1ResolvConf: "",
+			cluster2ResolvConf: "",
+			want:               true,
+		},
+		{
+			testName:           "both defined",
+			cluster1ResolvConf: "my-file.conf",
+			cluster2ResolvConf: "my-file.conf",
+			want:               true,
+		},
+		{
+			testName:           "one empty, one defined",
+			cluster1ResolvConf: "",
+			cluster2ResolvConf: "my-file.conf",
+			want:               false,
+		},
+	}
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			cluster1 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					ClusterNetwork: v1alpha1.ClusterNetwork{
+						DNS: v1alpha1.DNS{
+							ResolvConf: &v1alpha1.ResolvConf{
+								Path: tt.cluster1ResolvConf,
+							},
+						},
+					},
+				},
+			}
+			cluster2 := &v1alpha1.Cluster{
+				Spec: v1alpha1.ClusterSpec{
+					ClusterNetwork: v1alpha1.ClusterNetwork{
+						DNS: v1alpha1.DNS{
+							ResolvConf: &v1alpha1.ResolvConf{
+								Path: tt.cluster2ResolvConf,
+							},
+						},
+					},
+				},
+			}
+
+			g := NewWithT(t)
+			g.Expect(cluster1.Spec.ClusterNetwork.DNS.ResolvConf.Equal(cluster2.Spec.ClusterNetwork.DNS.ResolvConf)).To(Equal(tt.want))
+		})
+	}
+}
+
 func TestClusterEqualKubernetesVersion(t *testing.T) {
 	testCases := []struct {
 		testName                         string

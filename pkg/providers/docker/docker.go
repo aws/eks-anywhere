@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"time"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -52,8 +52,8 @@ type provider struct {
 
 type ProviderKubectlClient interface {
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
-	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*bootstrapv1.KubeadmControlPlane, error)
-	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
+	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
+	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1.KubeadmControlPlane, error)
 	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 }
@@ -124,9 +124,9 @@ type DockerTemplateBuilder struct {
 	now types.NowFunc
 }
 
-func (d *DockerTemplateBuilder) WorkerMachineTemplateName(clusterName string) string {
+func (d *DockerTemplateBuilder) WorkerMachineTemplateName(clusterName, workerNodeGroupName string) string {
 	t := d.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-worker-node-template-%d", clusterName, t)
+	return fmt.Sprintf("%s-%s-%d", clusterName, workerNodeGroupName, t)
 }
 
 func (d *DockerTemplateBuilder) CPMachineTemplateName(clusterName string) string {
@@ -153,18 +153,25 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluste
 	return bytes, nil
 }
 
-func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	values := buildTemplateMapMD(clusterSpec)
-	for _, buildOption := range buildOptions {
-		buildOption(values)
+func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, templateNames map[string]string) (content []byte, err error) {
+	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		values := buildTemplateMapMD(clusterSpec, workerNodeGroupConfiguration)
+		_, ok := templateNames[workerNodeGroupConfiguration.Name]
+		if templateNames != nil && ok {
+			values["workloadTemplateName"] = templateNames[workerNodeGroupConfiguration.Name]
+		} else {
+			values["workloadTemplateName"] = d.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
+		}
+
+		bytes, err := templater.Execute(defaultCAPIConfigMD, values)
+		if err != nil {
+			return nil, err
+		}
+		workerSpecs = append(workerSpecs, bytes)
 	}
 
-	bytes, err := templater.Execute(defaultCAPIConfigMD, values)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes, nil
+	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
 func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
@@ -217,19 +224,20 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	return values
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
-		Append(clusterapi.WorkerNodeLabelsExtraArgs(clusterSpec.Spec.WorkerNodeGroupConfigurations[0])).
+		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)).
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf))
 
 	values := map[string]interface{}{
 		"clusterName":         clusterSpec.Name,
-		"worker_replicas":     clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count,
 		"kubernetesVersion":   bundle.KubeDistro.Kubernetes.Tag,
 		"kindNodeImage":       bundle.EksD.KindNode.VersionedImage(),
 		"eksaSystemNamespace": constants.EksaSystemNamespace,
 		"kubeletExtraArgs":    kubeletExtraArgs.ToPartialYaml(),
+		"workerReplicas":      workerNodeGroupConfiguration.Count,
+		"workerNodeGroupName": fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name),
 	}
 	return values
 }
@@ -257,20 +265,28 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		if err != nil {
 			return nil, nil, err
 		}
-		controlPlaneTemplateName = cp.Spec.InfrastructureTemplate.Name
+		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
 	} else {
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}
 
-	needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec)
-	if !needsNewWorkloadTemplate {
-		md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, newClusterSpec.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
-		if err != nil {
-			return nil, nil, err
+	previousWorkerNodeGroupConfigs := buildMapForWorkerNodeGroupsByName(currentSpec.Spec.WorkerNodeGroupConfigurations)
+
+	workloadTemplateNames := make(map[string]string, len(newClusterSpec.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroupConfiguration := range newClusterSpec.Spec.WorkerNodeGroupConfigurations {
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec)
+		if _, ok := previousWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok && !needsNewWorkloadTemplate {
+			machineDeploymentName := fmt.Sprintf("%s-%s", newClusterSpec.Name, workerNodeGroupConfiguration.Name)
+			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, machineDeploymentName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+			if err != nil {
+				return nil, nil, err
+			}
+			workloadTemplateName = md.Spec.Template.Spec.InfrastructureRef.Name
+			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
+		} else {
+			workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
+			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		}
-		workloadTemplateName = md.Spec.Template.Spec.InfrastructureRef.Name
-	} else {
-		workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName)
 	}
 
 	if newClusterSpec.Spec.ExternalEtcdConfiguration != nil {
@@ -307,10 +323,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		return nil, nil, err
 	}
 
-	workersOpts := func(values map[string]interface{}) {
-		values["workloadTemplateName"] = workloadTemplateName
-	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workersOpts)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workloadTemplateNames)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -328,10 +341,7 @@ func (p *provider) generateCAPISpecForCreate(ctx context.Context, cluster *types
 	if err != nil {
 		return nil, nil, err
 	}
-	workersOpts := func(values map[string]interface{}) {
-		values["workloadTemplateName"] = p.templateBuilder.WorkerMachineTemplateName(clusterName)
-	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workersOpts)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -451,4 +461,12 @@ func (p *provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec) (bool, e
 
 func (p *provider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
 	return nil
+}
+
+func buildMapForWorkerNodeGroupsByName(prevWorkerNodeGroups []v1alpha1.WorkerNodeGroupConfiguration) map[string]v1alpha1.WorkerNodeGroupConfiguration {
+	prevConfigs := make(map[string]v1alpha1.WorkerNodeGroupConfiguration, len(prevWorkerNodeGroups))
+	for _, config := range prevWorkerNodeGroups {
+		prevConfigs[config.Name] = config
+	}
+	return prevConfigs
 }

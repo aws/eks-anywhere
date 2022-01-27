@@ -1,4 +1,4 @@
-apiVersion: cluster.x-k8s.io/v1alpha3
+apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   name: test-cluster
@@ -11,28 +11,28 @@ spec:
     services:
       cidrBlocks: [10.128.0.0/12]
   controlPlaneRef:
-    apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
     name: test-cluster
     namespace: eksa-system
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: DockerCluster
     name: test-cluster
     namespace: eksa-system
   managedExternalEtcdRef:
-    apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
+    apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
     kind: EtcdadmCluster
     name: test-cluster-etcd
     namespace: eksa-system
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: DockerCluster
 metadata:
   name: test-cluster
   namespace: eksa-system
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: DockerMachineTemplate
 metadata:
   name: test-cluster-control-plane-template-1234567890000
@@ -45,17 +45,18 @@ spec:
         hostPath: /var/run/docker.sock
       customImage: public.ecr.aws/eks-distro/kubernetes-sigs/kind/node:v1.18.16-eks-1-18-4-216edda697a37f8bf16651af6c23b7e2bb7ef42f-62681885fe3a97ee4f2b110cc277e084e71230fa
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
   name: test-cluster
   namespace: eksa-system
 spec:
-  infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-    kind: DockerMachineTemplate
-    name: test-cluster-control-plane-template-1234567890000
-    namespace: eksa-system
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: DockerMachineTemplate
+      name: test-cluster-control-plane-template-1234567890000
+      namespace: eksa-system
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
@@ -66,7 +67,6 @@ spec:
           certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
           keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
       dns:
-        type: CoreDNS
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.0-eks-1-19-2
       apiServer:
@@ -298,7 +298,7 @@ spec:
   version: v1.19.6-eks-1-19-2
 ---
 kind: EtcdadmCluster
-apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
+apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
 metadata:
   name: test-cluster-etcd
   namespace: eksa-system
@@ -310,12 +310,12 @@ spec:
       version: 3.4.14
     cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: DockerMachineTemplate
     name: test-cluster-etcd-template-1234567890000
     namespace: eksa-system
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: DockerMachineTemplate
 metadata:
   name: test-cluster-etcd-template-1234567890000

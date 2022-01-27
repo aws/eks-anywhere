@@ -19,7 +19,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/pkg/errors"
 
@@ -145,6 +144,7 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 				GitTag:            gitTag,
 				ProjectPath:       capiProjectPath,
 				SourcedFromBranch: sourcedFromBranch,
+				Component:         component,
 			}
 			artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 		}
@@ -190,14 +190,13 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 
 			if artifact.Manifest != nil {
 				manifestArtifact := artifact.Manifest
-				if !strings.Contains(manifestArtifact.ReleaseName, "core") && !strings.Contains(manifestArtifact.ReleaseName, "metadata") {
+				if manifestArtifact.Component != "cluster-api" {
 					continue
 				}
 
 				bundleManifestArtifact := anywherev1alpha1.Manifest{
 					URI: manifestArtifact.ReleaseCdnURI,
 				}
-
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
 
 				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
@@ -267,14 +266,13 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 
 			if artifact.Manifest != nil {
 				manifestArtifact := artifact.Manifest
-				if !strings.Contains(manifestArtifact.ReleaseName, "bootstrap") && !strings.Contains(manifestArtifact.ReleaseName, "metadata") {
+				if manifestArtifact.Component != "bootstrap-kubeadm" {
 					continue
 				}
 
 				bundleManifestArtifact := anywherev1alpha1.Manifest{
 					URI: manifestArtifact.ReleaseCdnURI,
 				}
-
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
 
 				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
@@ -344,14 +342,13 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 
 			if artifact.Manifest != nil {
 				manifestArtifact := artifact.Manifest
-				if !strings.Contains(manifestArtifact.ReleaseName, "control-plane") && !strings.Contains(manifestArtifact.ReleaseName, "metadata") {
+				if manifestArtifact.Component != "control-plane-kubeadm" {
 					continue
 				}
 
 				bundleManifestArtifact := anywherev1alpha1.Manifest{
 					URI: manifestArtifact.ReleaseCdnURI,
 				}
-
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
 
 				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))

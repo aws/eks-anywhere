@@ -256,8 +256,8 @@ Please remember that the only fields currently supported for GitOps are:
 
 Cluster
 
-- `Cluster.workerNodeGroupConfigurations[0].count`
-- `Cluster.workerNodeGroupConfigurations[0].machineGroupRef.name`
+- `Cluster.workerNodeGroupConfigurations.count`
+- `Cluster.workerNodeGroupConfigurations.machineGroupRef.name`
 
 Worker Nodes
 
