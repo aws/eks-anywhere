@@ -380,6 +380,14 @@ func (p *tinkerbellProvider) RunPostControlPlaneCreation(ctx context.Context, cl
 	return nil
 }
 
+func (p *tinkerbellProvider) BuildMapForWorkerNodeGroupsByName(workerNodeGroups []v1alpha1.WorkerNodeGroupConfiguration) map[string]v1alpha1.WorkerNodeGroupConfiguration {
+	workerNodeGroupConfigs := make(map[string]v1alpha1.WorkerNodeGroupConfiguration, len(workerNodeGroups))
+	for _, config := range workerNodeGroups {
+		workerNodeGroupConfigs[config.Name] = config
+	}
+	return workerNodeGroupConfigs
+}
+
 func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alpha1.TinkerbellMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"

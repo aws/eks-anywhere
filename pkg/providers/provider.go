@@ -36,6 +36,7 @@ type Provider interface {
 	UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error)
 	DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error
 	RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
+	BuildMapForWorkerNodeGroupsByName(workerNodeGroups []v1alpha1.WorkerNodeGroupConfiguration) map[string]v1alpha1.WorkerNodeGroupConfiguration
 }
 
 type DatacenterConfig interface {

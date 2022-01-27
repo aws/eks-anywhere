@@ -84,6 +84,7 @@ type ClusterClient interface {
 	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
 	GetClusterCATlsCert(ctx context.Context, clusterName string, cluster *types.Cluster, namespace string) ([]byte, error)
 	KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error)
+	DeleteOldWorkerNodeGroup(ctx context.Context, kubeconfig, workerNodeGroupName, providerName string) error
 }
 
 type Networking interface {
@@ -395,6 +396,10 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	)
 	if err != nil {
 		return fmt.Errorf("error applying capi machine deployment spec: %v", err)
+	}
+
+	if err = c.removeOldWorkerNodeGroups(ctx, managementCluster, provider, currentSpec, newClusterSpec); err != nil {
+		return fmt.Errorf("error removing old worker node groups: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for workload cluster machine deployment replicas to be ready after upgrade")
@@ -827,6 +832,21 @@ func (c *ClusterManager) waitForAllControlPlanes(ctx context.Context, cluster *t
 		err = c.clusterClient.WaitForControlPlaneReady(ctx, cluster, waitForCluster.String(), clu.Metadata.Name)
 		if err != nil {
 			return fmt.Errorf("error waiting for workload cluster control plane for cluster %s to be ready: %v", clu.Metadata.Name, err)
+		}
+	}
+
+	return nil
+}
+
+func (c *ClusterManager) removeOldWorkerNodeGroups(ctx context.Context, workloadCluster *types.Cluster, provider providers.Provider, currentSpec, newSpec *cluster.Spec) error {
+	workerConfigs := provider.BuildMapForWorkerNodeGroupsByName(newSpec.Spec.WorkerNodeGroupConfigurations)
+	for _, prevWorkerNodeGroupConfig := range currentSpec.Spec.WorkerNodeGroupConfigurations {
+		if _, ok := workerConfigs[prevWorkerNodeGroupConfig.Name]; !ok {
+			workerNodeGroupName := fmt.Sprintf("%s-%s", workloadCluster.Name, prevWorkerNodeGroupConfig.Name)
+			err := c.clusterClient.DeleteOldWorkerNodeGroup(ctx, workloadCluster.KubeconfigFile, workerNodeGroupName, provider.Name())
+			if err != nil {
+				return fmt.Errorf("error removing old worker nodes from cluster: %v", err)
+			}
 		}
 	}
 

@@ -68,6 +68,20 @@ func (mr *MockProviderMockRecorder) BootstrapSetup(arg0, arg1, arg2 interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BootstrapSetup", reflect.TypeOf((*MockProvider)(nil).BootstrapSetup), arg0, arg1, arg2)
 }
 
+// BuildMapForWorkerNodeGroupsByName mocks base method.
+func (m *MockProvider) BuildMapForWorkerNodeGroupsByName(arg0 []v1alpha1.WorkerNodeGroupConfiguration) map[string]v1alpha1.WorkerNodeGroupConfiguration {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BuildMapForWorkerNodeGroupsByName", arg0)
+	ret0, _ := ret[0].(map[string]v1alpha1.WorkerNodeGroupConfiguration)
+	return ret0
+}
+
+// BuildMapForWorkerNodeGroupsByName indicates an expected call of BuildMapForWorkerNodeGroupsByName.
+func (mr *MockProviderMockRecorder) BuildMapForWorkerNodeGroupsByName(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildMapForWorkerNodeGroupsByName", reflect.TypeOf((*MockProvider)(nil).BuildMapForWorkerNodeGroupsByName), arg0)
+}
+
 // ChangeDiff mocks base method.
 func (m *MockProvider) ChangeDiff(arg0, arg1 *cluster.Spec) *types.ComponentChangeDiff {
 	m.ctrl.T.Helper()

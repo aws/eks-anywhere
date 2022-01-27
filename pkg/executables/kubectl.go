@@ -318,6 +318,27 @@ func (k *Kubectl) ValidateNodes(ctx context.Context, kubeconfig string) error {
 	return nil
 }
 
+func (k *Kubectl) DeleteOldWorkerNodeGroup(ctx context.Context, kubeconfig, workerNodeGroupName, providerName string) error {
+	md, err := k.GetMachineDeployment(ctx, workerNodeGroupName, WithKubeconfig(kubeconfig), WithNamespace(constants.EksaSystemNamespace))
+	if err != nil {
+		return err
+	}
+	providerMachineTemplateName := md.Spec.Template.Spec.InfrastructureRef.Name
+	params := []string{"delete", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), workerNodeGroupName, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
+	if _, err := k.Execute(ctx, params...); err != nil {
+		return err
+	}
+	params = []string{"delete", fmt.Sprintf("kubeadmconfigtemplates.bootstrap.%s", clusterv1.GroupVersion.Group), workerNodeGroupName, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
+	if _, err := k.Execute(ctx, params...); err != nil {
+		return err
+	}
+	params = []string{"delete", fmt.Sprintf("%smachinetemplates.infrastructure.%s", providerName, clusterv1.GroupVersion.Group), providerMachineTemplateName, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
+	if _, err := k.Execute(ctx, params...); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error {
 	cp, err := k.GetKubeadmControlPlane(ctx, cluster, clusterName, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
@@ -688,7 +709,7 @@ func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Clu
 	return response, nil
 }
 
-func (k *Kubectl) GetMachineDeployment(ctx context.Context, cluster *types.Cluster, workerNodeGroupName string, opts ...KubectlOpt) (*clusterv1.MachineDeployment, error) {
+func (k *Kubectl) GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...KubectlOpt) (*clusterv1.MachineDeployment, error) {
 	params := []string{"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), workerNodeGroupName, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)

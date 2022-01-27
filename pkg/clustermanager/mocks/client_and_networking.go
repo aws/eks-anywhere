@@ -166,6 +166,20 @@ func (mr *MockClusterClientMockRecorder) DeleteOIDCConfig(arg0, arg1, arg2, arg3
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOIDCConfig", reflect.TypeOf((*MockClusterClient)(nil).DeleteOIDCConfig), arg0, arg1, arg2, arg3)
 }
 
+// DeleteOldWorkerNodeGroup mocks base method.
+func (m *MockClusterClient) DeleteOldWorkerNodeGroup(arg0 context.Context, arg1, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteOldWorkerNodeGroup", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteOldWorkerNodeGroup indicates an expected call of DeleteOldWorkerNodeGroup.
+func (mr *MockClusterClientMockRecorder) DeleteOldWorkerNodeGroup(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOldWorkerNodeGroup", reflect.TypeOf((*MockClusterClient)(nil).DeleteOldWorkerNodeGroup), arg0, arg1, arg2, arg3)
+}
+
 // GetApiServerUrl mocks base method.
 func (m *MockClusterClient) GetApiServerUrl(arg0 context.Context, arg1 *types.Cluster) (string, error) {
 	m.ctrl.T.Helper()
