@@ -24,6 +24,8 @@ This will let you create a cluster in multiple providers for local development o
 
 > **_NOTE:_** If you are using Ubuntu use the [Docker CE](https://docs.docker.com/engine/install/ubuntu/) installation instructions to install Docker and not the Snap installation.
 
+> **_NOTE:_** If you are using Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
+
 ### Install EKS Anywhere CLI tools
 
 #### Via Homebrew (macOS and Linux)
