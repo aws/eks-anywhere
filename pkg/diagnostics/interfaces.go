@@ -18,7 +18,7 @@ type BundleClient interface {
 type DiagnosticBundleFactory interface {
 	DiagnosticBundle(spec *cluster.Spec, provider providers.Provider, kubeconfig string, bundlePath string) (DiagnosticBundle, error)
 	DiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (DiagnosticBundle, error)
-	DiagnosticBundleManagementCluster(kubeconfig string) (DiagnosticBundle, error)
+	DiagnosticBundleManagementCluster(spec *cluster.Spec, kubeconfig string) (DiagnosticBundle, error)
 	DiagnosticBundleDefault() DiagnosticBundle
 	DiagnosticBundleCustom(kubeconfig string, bundlePath string) DiagnosticBundle
 }
@@ -32,6 +32,7 @@ type DiagnosticBundle interface {
 	WithDefaultAnalyzers() *EksaDiagnosticBundle
 	WithDefaultCollectors() *EksaDiagnosticBundle
 	WithDatacenterConfig(config v1alpha1.Ref) *EksaDiagnosticBundle
+	WithProviderDeployments(config v1alpha1.Ref) *EksaDiagnosticBundle
 	WithOidcConfig(config *v1alpha1.OIDCConfig) *EksaDiagnosticBundle
 	WithExternalEtcd(config *v1alpha1.ExternalEtcdConfiguration) *EksaDiagnosticBundle
 	WithGitOpsConfig(config *v1alpha1.GitOpsConfig) *EksaDiagnosticBundle
@@ -45,6 +46,7 @@ type AnalyzerFactory interface {
 	EksaLogTextAnalyzers(collectors []*Collect) []*Analyze
 	EksaOidcAnalyzers() []*Analyze
 	EksaExternalEtcdAnalyzers() []*Analyze
+	EksaProviderDeploymentAnalyzers(datacenter v1alpha1.Ref) []*Analyze
 	DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*Analyze
 	ManagementClusterAnalyzers() []*Analyze
 }

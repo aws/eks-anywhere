@@ -45,7 +45,7 @@ func (s *CollectWorkloadClusterDiagnosticsTask) Name() string {
 
 func (s *CollectMgmtClusterDiagnosticsTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("collecting management cluster diagnostics")
-	_ = commandContext.ClusterManager.SaveLogsManagementCluster(ctx, commandContext.BootstrapCluster)
+	_ = commandContext.ClusterManager.SaveLogsManagementCluster(ctx, commandContext.ClusterSpec, commandContext.BootstrapCluster)
 	return nil
 }
 

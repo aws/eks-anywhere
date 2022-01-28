@@ -51,22 +51,6 @@ func (a *analyzerFactory) managementClusterCrdAnalyzers() []*Analyze {
 func (a *analyzerFactory) managementClusterDeploymentAnalyzers() []*Analyze {
 	d := []eksaDeployment{
 		{
-			Name:             "capv-controller-manager",
-			Namespace:        constants.CapiWebhookSystemNamespace,
-			ExpectedReplicas: 1,
-		}, {
-			Name:             "capv-controller-manager",
-			Namespace:        constants.CapvSystemNamespace,
-			ExpectedReplicas: 1,
-		}, {
-			Name:             "capc-controller-manager",
-			Namespace:        constants.CapiWebhookSystemNamespace,
-			ExpectedReplicas: 1,
-		}, {
-			Name:             "capc-controller-manager",
-			Namespace:        constants.CapcSystemNamespace,
-			ExpectedReplicas: 1,
-		}, {
 			Name:             "cert-manager-webhook",
 			Namespace:        constants.CertManagerNamespace,
 			ExpectedReplicas: 1,
@@ -140,15 +124,56 @@ func (a *analyzerFactory) EksaExternalEtcdAnalyzers() []*Analyze {
 	return a.generateDeploymentAnalyzers(deployments)
 }
 
+func (a *analyzerFactory) EksaProviderDeploymentAnalyzers(datacenter v1alpha1.Ref) []*Analyze {
+	switch datacenter.Kind {
+	case v1alpha1.VSphereDatacenterKind:
+		return a.generateDeploymentAnalyzers(a.eksaVsphereDeployments())
+	case v1alpha1.CloudStackDeploymentKind:
+		return a.generateDeploymentAnalyzers(a.eksaCloudStackDeployments())
+	default:
+		return nil
+	}
+}
+
+func (a *analyzerFactory) eksaVsphereDeployments() []eksaDeployment {
+	return []eksaDeployment{
+		{
+			Name:             "capv-controller-manager",
+			Namespace:        constants.CapvSystemNamespace,
+			ExpectedReplicas: 1,
+		},
+	}
+}
+
+func (a *analyzerFactory) eksaCloudStackDeployments() []eksaDeployment {
+	return []eksaDeployment{
+		{
+			Name:             "capc-controller-manager",
+			Namespace:        constants.CapcSystemNamespace,
+			ExpectedReplicas: 1,
+		},
+	}
+}
+
 func (a *analyzerFactory) DataCenterConfigAnalyzers(datacenter v1alpha1.Ref) []*Analyze {
 	switch datacenter.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		return a.eksaVsphereAnalyzers()
 	case v1alpha1.DockerDatacenterKind:
 		return a.eksaDockerAnalyzers()
+	case v1alpha1.CloudStackDeploymentKind:
+		return a.eksaCloudStackAnalyzers()
 	default:
 		return nil
 	}
+}
+
+func (a *analyzerFactory) eksaCloudStackAnalyzers() []*Analyze {
+	crds := []string{
+		fmt.Sprintf("cloudstackdeploymentconfigs.%s", v1alpha1.GroupVersion.Group),
+		fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group),
+	}
+	return a.generateCrdAnalyzers(crds)
 }
 
 func (a *analyzerFactory) eksaVsphereAnalyzers() []*Analyze {

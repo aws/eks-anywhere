@@ -702,7 +702,7 @@ func (c *ClusterManager) generateAwsIamAuthKubeconfig(ctx context.Context, manag
 	return nil
 }
 
-func (c *ClusterManager) SaveLogsManagementCluster(ctx context.Context, cluster *types.Cluster) error {
+func (c *ClusterManager) SaveLogsManagementCluster(ctx context.Context, spec *cluster.Spec, cluster *types.Cluster) error {
 	if cluster == nil {
 		return nil
 	}
@@ -711,7 +711,7 @@ func (c *ClusterManager) SaveLogsManagementCluster(ctx context.Context, cluster 
 		return nil
 	}
 
-	bundle, err := c.diagnosticsFactory.DiagnosticBundleManagementCluster(cluster.KubeconfigFile)
+	bundle, err := c.diagnosticsFactory.DiagnosticBundleManagementCluster(spec, cluster.KubeconfigFile)
 	if err != nil {
 		logger.V(5).Info("Error generating support bundle for bootstrap cluster", "error", err)
 		return nil

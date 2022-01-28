@@ -43,8 +43,8 @@ func (f *eksaDiagnosticBundleFactory) DiagnosticBundle(spec *cluster.Spec, provi
 	return f.DiagnosticBundleCustom(kubeconfig, bundlePath), nil
 }
 
-func (f *eksaDiagnosticBundleFactory) DiagnosticBundleManagementCluster(kubeconfig string) (DiagnosticBundle, error) {
-	return newDiagnosticBundleManagementCluster(f.analyzerFactory, f.collectorFactory, f.client, f.kubectl, kubeconfig, f.writer)
+func (f *eksaDiagnosticBundleFactory) DiagnosticBundleManagementCluster(spec *cluster.Spec, kubeconfig string) (DiagnosticBundle, error) {
+	return newDiagnosticBundleManagementCluster(f.analyzerFactory, f.collectorFactory, spec, f.client, f.kubectl, kubeconfig, f.writer)
 }
 
 func (f *eksaDiagnosticBundleFactory) DiagnosticBundleFromSpec(spec *cluster.Spec, provider providers.Provider, kubeconfig string) (DiagnosticBundle, error) {
