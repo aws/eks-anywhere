@@ -42,4 +42,5 @@ replace (
 	github.com/containerd/containerd => github.com/containerd/containerd v1.5.9
 	github.com/dgrijalva/jwt-go => github.com/golang-jwt/jwt/v4 v4.0.0
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.0-rc95
+	github.com/tinkerbell/cluster-api-provider-tinkerbell => github.com/pokearu/cluster-api-provider-tinkerbell v0.0.0-20220128001529-79d851d0861f
 )
