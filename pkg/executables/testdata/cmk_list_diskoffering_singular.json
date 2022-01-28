@@ -1,0 +1,16 @@
+{
+  "count": 1,
+  "diskoffering": [
+    {
+      "created": "2021-11-01T14:57:05-0400",
+      "disksize": 20,
+      "displayoffering": true,
+      "displaytext": "Medium Disk, 20 GB",
+      "id": "1cfbf649-b30d-462b-83dc-085f612ced70",
+      "iscustomized": false,
+      "name": "Medium",
+      "provisioningtype": "thin",
+      "storagetype": "shared"
+    }
+  ]
+}
