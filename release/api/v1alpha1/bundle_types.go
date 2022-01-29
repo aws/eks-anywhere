@@ -103,15 +103,18 @@ type EksDRelease struct {
 	KindNode Image `json:"kindNode,omitempty"`
 
 	// Ova points to a collection of Ovas built with this eks-d version
-	Ova ArchiveBundle `json:"ova,omitempty"`
+	Ova OSImageBundle `json:"ova,omitempty"`
+
+	// Raw points to a collection of Raw images built with this eks-d version
+	Raw OSImageBundle `json:"raw,omitempty"`
 }
 
-type ArchiveBundle struct {
-	Bottlerocket OvaArchive `json:"bottlerocket,omitempty"`
-	Ubuntu       OvaArchive `json:"ubuntu,omitempty"`
+type OSImageBundle struct {
+	Bottlerocket OSImage `json:"bottlerocket,omitempty"`
+	Ubuntu       OSImage `json:"ubuntu,omitempty"`
 }
 
-type OvaArchive struct {
+type OSImage struct {
 	Archive `json:",inline"`
 	Etcdadm Archive `json:"etcdadm,omitempty"`
 	Crictl  Archive `json:"crictl,omitempty"`
