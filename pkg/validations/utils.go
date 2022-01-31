@@ -10,6 +10,7 @@ type ValidationResult struct {
 	Name        string
 	Err         error
 	Remediation string
+	Silent      bool
 }
 
 func (v *ValidationResult) Report() {

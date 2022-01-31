@@ -16,10 +16,17 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 	}
 
 	createValidations := []validations.ValidationResult{
-		validations.ValidationResult{
+		{
 			Name:        "validate taints support",
-			Remediation: "",
-			Err:         validations.ValidateTaintsSupport(ctx, u.Opts.Spec),
+			Remediation: "ensure TAINTS_SUPPORT env variable is set",
+			Err:         validations.ValidateTaintsSupport(u.Opts.Spec),
+			Silent:      true,
+		},
+		{
+			Name:        "validate node labels support",
+			Remediation: "ensure NODE_LABELS_SUPPORT env variable is set",
+			Err:         validations.ValidateNodeLabelsSupport(u.Opts.Spec),
+			Silent:      true,
 		},
 	}
 
@@ -49,17 +56,5 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 		)
 	}
 
-	var errs []string
-	for _, validation := range createValidations {
-		if validation.Err != nil {
-			errs = append(errs, validation.Err.Error())
-		} else {
-			validation.LogPass()
-		}
-	}
-
-	if len(errs) > 0 {
-		return &validations.ValidationError{Errs: errs}
-	}
-	return nil
+	return validations.RunPreflightValidations(createValidations)
 }

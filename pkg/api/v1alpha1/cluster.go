@@ -79,6 +79,12 @@ func WorkerNodeConfigCount(count int) ClusterGenerateOpt {
 	}
 }
 
+func WorkerNodeConfigName(name string) ClusterGenerateOpt {
+	return func(c *ClusterGenerate) {
+		c.Spec.WorkerNodeGroupConfigurations[0].Name = name
+	}
+}
+
 func WithClusterEndpoint() ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
 		c.Spec.ControlPlaneConfiguration.Endpoint = &Endpoint{Host: ""}
@@ -310,9 +316,6 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	workerNodeGroupConfigs := clusterConfig.Spec.WorkerNodeGroupConfigurations
 	if len(workerNodeGroupConfigs) <= 0 {
 		return errors.New("worker node group must be specified")
-	}
-	if len(workerNodeGroupConfigs) > 1 {
-		return errors.New("only one worker node group is supported at this time")
 	}
 	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
 		if workerNodeGroupConfig.Name == "" {

@@ -340,7 +340,6 @@ func TestFluxResumeKustomization(t *testing.T) {
 			cluster:  &types.Cluster{},
 			fluxConfig: v1alpha1.Flux{
 				Github: v1alpha1.Github{
-
 					FluxSystemNamespace: "custom-ns",
 				},
 			},
@@ -409,7 +408,6 @@ func TestFluxReconcile(t *testing.T) {
 			cluster:  &types.Cluster{},
 			fluxConfig: v1alpha1.Flux{
 				Github: v1alpha1.Github{
-
 					FluxSystemNamespace: "custom-ns",
 				},
 			},

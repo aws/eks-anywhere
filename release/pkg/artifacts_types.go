@@ -32,6 +32,7 @@ type ArchiveArtifact struct {
 	GitTag            string
 	ProjectPath       string
 	SourcedFromBranch string
+	ImageFormat       string
 }
 
 type ImageArtifact struct {
@@ -56,6 +57,7 @@ type ManifestArtifact struct {
 	GitTag            string
 	ProjectPath       string
 	SourcedFromBranch string
+	Component         string
 }
 
 type Artifact struct {

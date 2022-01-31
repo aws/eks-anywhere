@@ -67,7 +67,6 @@ func TestClusterNameLength(t *testing.T) {
 		clusterName, name string
 		wantErr           error
 	}{
-
 		{
 			name:        "SuccessClusterNameLength",
 			clusterName: "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm",

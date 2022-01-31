@@ -471,14 +471,16 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 			logger.V(3).Info("New control plane machine config spec is different from the existing spec")
 			return true, nil
 		}
-		existingWnVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
-		if err != nil {
-			return false, err
-		}
-		wnVmc := machineConfigMap[newClusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
-		if !reflect.DeepEqual(existingWnVmc.Spec, wnVmc.Spec) {
-			logger.V(3).Info("New worker node machine config spec is different from the existing spec")
-			return true, nil
+		for _, workerNodeGroupConfiguration := range cc.Spec.WorkerNodeGroupConfigurations {
+			existingWnVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, workerNodeGroupConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
+			if err != nil {
+				return false, err
+			}
+			wnVmc := machineConfigMap[workerNodeGroupConfiguration.MachineGroupRef.Name]
+			if !reflect.DeepEqual(existingWnVmc.Spec, wnVmc.Spec) {
+				logger.V(3).Info("New worker node machine config spec is different from the existing spec")
+				return true, nil
+			}
 		}
 		if cc.Spec.ExternalEtcdConfiguration != nil {
 			existingEtcdVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
@@ -887,16 +889,6 @@ func (c *ClusterManager) PauseEKSAControllerReconcile(ctx context.Context, clust
 		return fmt.Errorf("error updating annotation when pausing datacenterconfig reconciliation: %v", err)
 	}
 	if provider.MachineResourceType() != "" {
-		if clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
-			return fmt.Errorf("machineGroupRef for control plane is not defined")
-		}
-		if len(clusterSpec.Spec.WorkerNodeGroupConfigurations) <= 0 || clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef == nil {
-			return fmt.Errorf("machineGroupRef for worker nodes is not defined")
-		}
-		if clusterSpec.Spec.ExternalEtcdConfiguration != nil && clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
-			return fmt.Errorf("machineGroupRef for etcd machines is not defined")
-		}
-
 		for _, machineConfigRef := range clusterSpec.MachineConfigRefs() {
 			err := c.Retrier.Retry(
 				func() error {
@@ -931,44 +923,14 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 		return fmt.Errorf("error updating annotation when unpausing datacenterconfig reconciliation: %v", err)
 	}
 	if provider.MachineResourceType() != "" {
-		if clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
-			return fmt.Errorf("machineGroupRef for control plane is not defined")
-		}
-		if len(clusterSpec.Spec.WorkerNodeGroupConfigurations) <= 0 || clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef == nil {
-			return fmt.Errorf("machineGroupRef for worker nodes is not defined")
-		}
-		if clusterSpec.Spec.ExternalEtcdConfiguration != nil && clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
-			return fmt.Errorf("machineGroupRef for etcd machines is not defined")
-		}
-		err := c.Retrier.Retry(
-			func() error {
-				return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
-			},
-		)
-		if err != nil {
-			return fmt.Errorf("error updating annotation when unpausing control plane machineconfig reconciliation: %v", err)
-		}
-		if clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name != clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name {
+		for _, machineConfigRef := range clusterSpec.MachineConfigRefs() {
 			err := c.Retrier.Retry(
 				func() error {
-					return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
+					return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), machineConfigRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
 				},
 			)
 			if err != nil {
-				return fmt.Errorf("error updating annotation when unpausing worker node machineconfig reconciliation: %v", err)
-			}
-		}
-		if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
-			if clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name != clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name {
-				// etcd machines have a separate machineGroupRef which hasn't been resumed yet, so apply pause annotation with false value
-				err := c.Retrier.Retry(
-					func() error {
-						return c.clusterClient.RemoveAnnotationInNamespace(ctx, provider.MachineResourceType(), clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, pausedAnnotation, cluster, clusterSpec.Namespace)
-					},
-				)
-				if err != nil {
-					return fmt.Errorf("error updating annotation when resuming etcd machineconfig reconciliation: %v", err)
-				}
+				return fmt.Errorf("error updating annotation when resuming reconciliation for machine config %s: %v", machineConfigRef.Name, err)
 			}
 		}
 	}

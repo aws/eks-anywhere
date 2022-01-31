@@ -259,7 +259,7 @@ func (s *pauseEksaAndFluxReconcile) Run(ctx context.Context, commandContext *tas
 	target := getManagementCluster(commandContext)
 
 	logger.Info("Pausing EKS-A cluster controller reconcile")
-	err := commandContext.ClusterManager.PauseEKSAControllerReconcile(ctx, target, commandContext.ClusterSpec, commandContext.Provider)
+	err := commandContext.ClusterManager.PauseEKSAControllerReconcile(ctx, target, commandContext.CurrentClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}

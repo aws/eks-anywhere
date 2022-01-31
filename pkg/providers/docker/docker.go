@@ -156,7 +156,7 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluste
 func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, templateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec)
+		values := buildTemplateMapMD(clusterSpec, workerNodeGroupConfiguration)
 		_, ok := templateNames[workerNodeGroupConfiguration.Name]
 		if templateNames != nil && ok {
 			values["workloadTemplateName"] = templateNames[workerNodeGroupConfiguration.Name]
@@ -225,10 +225,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 	return values
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
-		Append(clusterapi.WorkerNodeLabelsExtraArgs(clusterSpec.Spec.WorkerNodeGroupConfigurations[0])).
+		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)).
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf))
 
 	values := map[string]interface{}{
@@ -237,6 +237,8 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec) map[string]interface{} {
 		"kindNodeImage":       bundle.EksD.KindNode.VersionedImage(),
 		"eksaSystemNamespace": constants.EksaSystemNamespace,
 		"kubeletExtraArgs":    kubeletExtraArgs.ToPartialYaml(),
+		"workerReplicas":      workerNodeGroupConfiguration.Count,
+		"workerNodeGroupName": fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name),
 	}
 
 	return values
@@ -270,10 +272,12 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}
 
+	previousWorkerNodeGroupConfigs := buildMapForWorkerNodeGroupsByName(currentSpec.Spec.WorkerNodeGroupConfigurations)
+
 	workloadTemplateNames := make(map[string]string, len(newClusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range newClusterSpec.Spec.WorkerNodeGroupConfigurations {
 		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec)
-		if !needsNewWorkloadTemplate {
+		if _, ok := previousWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok && !needsNewWorkloadTemplate {
 			machineDeploymentName := fmt.Sprintf("%s-%s", newClusterSpec.Name, workerNodeGroupConfiguration.Name)
 			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, machineDeploymentName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
@@ -459,4 +463,12 @@ func (p *provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec) (bool, e
 
 func (p *provider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
 	return nil
+}
+
+func buildMapForWorkerNodeGroupsByName(prevWorkerNodeGroups []v1alpha1.WorkerNodeGroupConfiguration) map[string]v1alpha1.WorkerNodeGroupConfiguration {
+	prevConfigs := make(map[string]v1alpha1.WorkerNodeGroupConfiguration, len(prevWorkerNodeGroups))
+	for _, config := range prevWorkerNodeGroups {
+		prevConfigs[config.Name] = config
+	}
+	return prevConfigs
 }

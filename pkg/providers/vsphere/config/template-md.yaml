@@ -46,6 +46,9 @@ spec:
 {{- end }}
           kubeletExtraArgs:
             cloud-provider: external
+{{- if .cgroupDriverSystemd}}
+            cgroup-driver: systemd
+{{- end }}
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}

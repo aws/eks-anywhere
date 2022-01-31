@@ -10,12 +10,15 @@ import (
 	"github.com/spf13/viper"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
+
+var removeFromDefaultConfig = []string{"spec.clusterNetwork.dns"}
 
 var generateClusterConfigCmd = &cobra.Command{
 	Use:    "clusterconfig <cluster-name> (max 80 chars)",
@@ -66,6 +69,7 @@ func generateClusterConfig(clusterName string) error {
 			v1alpha1.ControlPlaneConfigCount(1),
 			v1alpha1.ExternalETCDConfigCount(1),
 			v1alpha1.WorkerNodeConfigCount(1),
+			v1alpha1.WorkerNodeConfigName(constants.DefaultWorkerNodeGroupName),
 		)
 		dcyaml, err := yaml.Marshal(datacenterConfig)
 		if err != nil {
@@ -80,6 +84,7 @@ func generateClusterConfig(clusterName string) error {
 			v1alpha1.ControlPlaneConfigCount(2),
 			v1alpha1.ExternalETCDConfigCount(3),
 			v1alpha1.WorkerNodeConfigCount(2),
+			v1alpha1.WorkerNodeConfigName(constants.DefaultWorkerNodeGroupName),
 		)
 		dcyaml, err := yaml.Marshal(datacenterConfig)
 		if err != nil {
@@ -117,6 +122,7 @@ func generateClusterConfig(clusterName string) error {
 			clusterConfigOpts = append(clusterConfigOpts,
 				v1alpha1.ControlPlaneConfigCount(1),
 				v1alpha1.WorkerNodeConfigCount(1),
+				v1alpha1.WorkerNodeConfigName(constants.DefaultWorkerNodeGroupName),
 			)
 			dcyaml, err := yaml.Marshal(datacenterConfig)
 			if err != nil {
@@ -147,9 +153,13 @@ func generateClusterConfig(clusterName string) error {
 	}
 	config := v1alpha1.NewClusterGenerate(clusterName, clusterConfigOpts...)
 
-	clusterYaml, err := yaml.Marshal(config)
+	configMarshal, err := yaml.Marshal(config)
 	if err != nil {
 		return fmt.Errorf("error outputting yaml: %v", err)
+	}
+	clusterYaml, err := api.CleanupPathsFromYaml(configMarshal, removeFromDefaultConfig)
+	if err != nil {
+		return fmt.Errorf("error cleaning paths from yaml: %v", err)
 	}
 	resources = append(resources, clusterYaml, datacenterYaml)
 	if len(machineGroupYaml) > 0 {

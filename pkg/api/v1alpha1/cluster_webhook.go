@@ -141,11 +141,11 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 	}
 
 	if !old.IsSelfManaged() {
-		clusterlog.Info("Cluster config is associated with workload cluster")
+		clusterlog.Info("Cluster config is associated with workload cluster", "name", old.Name)
 		return allErrs
 	}
 
-	clusterlog.Info("Cluster config is associated with management cluster")
+	clusterlog.Info("Cluster config is associated with management cluster", "name", old.Name)
 
 	if old.Spec.KubernetesVersion != new.Spec.KubernetesVersion {
 		allErrs = append(

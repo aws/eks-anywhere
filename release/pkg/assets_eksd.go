@@ -35,6 +35,11 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 	os := "linux"
 	arch := "amd64"
 	osNames := []string{"ubuntu", "bottlerocket"}
+	imageFormats := []string{"ova", "raw"}
+	imageExtensions := map[string]string{
+		"ova": "ova",
+		"raw": "gz",
+	}
 	artifacts := []Artifact{}
 	imageBuilderGitTag, err := r.readGitTag(imageBuilderProjectPath, r.BuildRepoBranchName)
 	if err != nil {
@@ -42,76 +47,86 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 	}
 
 	for _, osName := range osNames {
-		var sourceS3Key string
-		var sourceS3Prefix string
-		var releaseS3Path string
-		var releaseName string
-		sourcedFromBranch := r.BuildRepoBranchName
-		latestPath := getLatestUploadDestination(sourcedFromBranch)
+		for _, imageFormat := range imageFormats {
+			if osName == "bottlerocket" && imageFormat == "raw" {
+				continue
+			}
+			var sourceS3Key string
+			var sourceS3Prefix string
+			var releaseS3Path string
+			var releaseName string
+			sourcedFromBranch := r.BuildRepoBranchName
+			latestPath := getLatestUploadDestination(sourcedFromBranch)
 
-		if r.DevRelease || r.ReleaseEnvironment == "development" {
-			sourceS3Key = fmt.Sprintf("%s.ova", osName)
-			sourceS3Prefix = fmt.Sprintf("%s/%s/%s", imageBuilderProjectPath, eksDReleaseChannel, latestPath)
-		} else {
-			sourceS3Key = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%d-%s.ova",
-				osName,
-				kubeVer,
-				eksDReleaseChannel,
-				eksDReleaseNumber,
-				r.BundleNumber,
-				arch,
-			)
-			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/ova/%s", r.BundleNumber, eksDReleaseChannel)
+			if r.DevRelease || r.ReleaseEnvironment == "development" {
+				sourceS3Key = fmt.Sprintf("%s.%s", osName, imageExtensions[imageFormat])
+				sourceS3Prefix = fmt.Sprintf("%s/%s/%s/%s", imageBuilderProjectPath, eksDReleaseChannel, imageFormat, latestPath)
+			} else {
+				sourceS3Key = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%d-%s.%s",
+					osName,
+					kubeVer,
+					eksDReleaseChannel,
+					eksDReleaseNumber,
+					r.BundleNumber,
+					arch,
+					imageExtensions[imageFormat],
+				)
+				sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/%s/%s", r.BundleNumber, eksDReleaseChannel, imageFormat)
+			}
+
+			if r.DevRelease {
+				releaseName = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%s-%s.%s",
+					osName,
+					kubeVer,
+					eksDReleaseChannel,
+					eksDReleaseNumber,
+					r.DevReleaseUriVersion,
+					arch,
+					imageExtensions[imageFormat],
+				)
+				releaseS3Path = fmt.Sprintf("artifacts/%s/eks-distro/%s/%s/%s-%s",
+					r.DevReleaseUriVersion,
+					imageFormat,
+					eksDReleaseChannel,
+					eksDReleaseChannel,
+					eksDReleaseNumber,
+				)
+			} else {
+				releaseName = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%d-%s.%s",
+					osName,
+					kubeVer,
+					eksDReleaseChannel,
+					eksDReleaseNumber,
+					r.BundleNumber,
+					arch,
+					imageExtensions[imageFormat],
+				)
+				releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/%s/%s", r.BundleNumber, imageFormat, eksDReleaseChannel)
+			}
+
+			cdnURI, err := r.GetURI(filepath.Join(releaseS3Path, releaseName))
+			if err != nil {
+				return nil, errors.Cause(err)
+			}
+
+			archiveArtifact := &ArchiveArtifact{
+				SourceS3Key:       sourceS3Key,
+				SourceS3Prefix:    sourceS3Prefix,
+				ArtifactPath:      filepath.Join(r.ArtifactDir, fmt.Sprintf("eks-d-%s", imageFormat), eksDReleaseChannel, r.BuildRepoHead),
+				ReleaseName:       releaseName,
+				ReleaseS3Path:     releaseS3Path,
+				ReleaseCdnURI:     cdnURI,
+				OS:                os,
+				OSName:            osName,
+				Arch:              []string{arch},
+				GitTag:            imageBuilderGitTag,
+				ProjectPath:       imageBuilderProjectPath,
+				SourcedFromBranch: sourcedFromBranch,
+				ImageFormat:       imageFormat,
+			}
+
+			artifacts = append(artifacts, Artifact{Archive: archiveArtifact})
 		}
-
-		if r.DevRelease {
-			releaseName = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%s-%s.ova",
-				osName,
-				kubeVer,
-				eksDReleaseChannel,
-				eksDReleaseNumber,
-				r.DevReleaseUriVersion,
-				arch,
-			)
-			releaseS3Path = fmt.Sprintf("artifacts/%s/eks-distro/ova/%s/%s-%s",
-				r.DevReleaseUriVersion,
-				eksDReleaseChannel,
-				eksDReleaseChannel,
-				eksDReleaseNumber,
-			)
-		} else {
-			releaseName = fmt.Sprintf("%s-%s-eks-d-%s-%s-eks-a-%d-%s.ova",
-				osName,
-				kubeVer,
-				eksDReleaseChannel,
-				eksDReleaseNumber,
-				r.BundleNumber,
-				arch,
-			)
-			releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/ova/%s", r.BundleNumber, eksDReleaseChannel)
-		}
-
-		cdnURI, err := r.GetURI(filepath.Join(releaseS3Path, releaseName))
-		if err != nil {
-			return nil, errors.Cause(err)
-		}
-
-		archiveArtifact := &ArchiveArtifact{
-			SourceS3Key:       sourceS3Key,
-			SourceS3Prefix:    sourceS3Prefix,
-			ArtifactPath:      filepath.Join(r.ArtifactDir, "eks-d-ova", eksDReleaseChannel, r.BuildRepoHead),
-			ReleaseName:       releaseName,
-			ReleaseS3Path:     releaseS3Path,
-			ReleaseCdnURI:     cdnURI,
-			OS:                os,
-			OSName:            osName,
-			Arch:              []string{arch},
-			GitTag:            imageBuilderGitTag,
-			ProjectPath:       imageBuilderProjectPath,
-			SourcedFromBranch: sourcedFromBranch,
-		}
-
-		artifacts = append(artifacts, Artifact{Archive: archiveArtifact})
 	}
 
 	kindGitTag, err := r.readGitTag(kindProjectPath, r.BuildRepoBranchName)
@@ -177,6 +192,7 @@ func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDRe
 		if artifact.Archive != nil {
 			archiveArtifact := artifact.Archive
 			osName := archiveArtifact.OSName
+			imageFormat := archiveArtifact.ImageFormat
 
 			tarfile := filepath.Join(archiveArtifact.ArtifactPath, archiveArtifact.ReleaseName)
 			sha256, sha512, err := r.readShaSums(tarfile)
@@ -195,7 +211,7 @@ func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDRe
 				SHA512:      sha512,
 			}
 
-			bundleArchiveArtifacts[osName] = bundleArchiveArtifact
+			bundleArchiveArtifacts[fmt.Sprintf("%s-%s", osName, imageFormat)] = bundleArchiveArtifact
 		}
 
 		if artifact.Image != nil {
@@ -251,12 +267,19 @@ func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDRe
 		EksDReleaseUrl: eksDManifestUrl,
 		GitCommit:      r.BuildRepoHead,
 		KindNode:       bundleImageArtifacts["kind-node"],
-		Ova: anywherev1alpha1.ArchiveBundle{
-			Bottlerocket: anywherev1alpha1.OvaArchive{
-				Archive: bundleArchiveArtifacts["bottlerocket"],
+		Ova: anywherev1alpha1.OSImageBundle{
+			Bottlerocket: anywherev1alpha1.OSImage{
+				Archive: bundleArchiveArtifacts["bottlerocket-ova"],
 			},
-			Ubuntu: anywherev1alpha1.OvaArchive{
-				Archive: bundleArchiveArtifacts["ubuntu"],
+			Ubuntu: anywherev1alpha1.OSImage{
+				Archive: bundleArchiveArtifacts["ubuntu-ova"],
+				Etcdadm: bundleArchiveArtifacts["etcdadm"],
+				Crictl:  bundleArchiveArtifacts["cri-tools"],
+			},
+		},
+		Raw: anywherev1alpha1.OSImageBundle{
+			Ubuntu: anywherev1alpha1.OSImage{
+				Archive: bundleArchiveArtifacts["ubuntu-raw"],
 				Etcdadm: bundleArchiveArtifacts["etcdadm"],
 				Crictl:  bundleArchiveArtifacts["cri-tools"],
 			},
