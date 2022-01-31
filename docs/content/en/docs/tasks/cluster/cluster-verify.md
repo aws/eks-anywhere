@@ -21,18 +21,24 @@ capi-webhook-system                 capv-controller-manager-5668dbcd5-v5szb     
 capv-system                         capv-controller-manager-584886b7bd-f66hs                         2/2     Running   0          47m
 
 ```
-
+{{% alert title="Note" color="primary" %}}
 You may also check the status of the cluster control plane resource directly. 
 This can be especially useful to verify clusters with multiple control plane nodes after an upgrade.
+{{% /alert %}}
 ```
 kubectl get kubeadmcontrolplanes.controlplane.cluster.x-k8s.io
 NAME                       INITIALIZED   API SERVER AVAILABLE   VERSION              REPLICAS   READY   UPDATED   UNAVAILABLE
 supportbundletestcluster   true          true                   v1.20.7-eks-1-20-6   1          1       1
 ```
 
+
 To verify that the expected number of cluster worker nodes are up and running, use the `kubectl` command to show that nodes are `Ready`.
+
+{{% alert title="Note" color="primary" %}}
 This will confirm that the expected number of worker nodes are present.
 Worker nodes are named using the cluster name followed by the worker node group name (example: my-cluster-md-0)
+{{% /alert %}}
+
 ```
 kubectl get nodes
 NAME                                           STATUS   ROLES                  AGE    VERSION
