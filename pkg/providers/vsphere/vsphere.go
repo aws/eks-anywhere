@@ -666,10 +666,6 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.S
 		} else {
 			values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		}
-		values["vsphereWorkerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
-		values["workerReplicas"] = workerNodeGroupConfiguration.Count
-		values["workerNodeGroupName"] = fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name)
-		values["workerNodeGroupTaints"] = workerNodeGroupConfiguration.Taints
 
 		values["cgroupDriverSystemd"] = cgroupDriverSystemd
 
@@ -836,6 +832,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		"vsphereWorkerSshAuthorizedKey":  workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
 		"workerReplicas":                 workerNodeGroupConfiguration.Count,
 		"workerNodeGroupName":            fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name),
+		"workerNodeGroupTaints":          workerNodeGroupConfiguration.Taints,
 	}
 
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
