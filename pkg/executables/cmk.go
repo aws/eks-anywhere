@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -97,55 +96,6 @@ func (c *Cmk) SearchAffinityGroups(ctx context.Context, domain string, zone stri
 			return fmt.Errorf("affinity group %s not found", affinityGroupId)
 		}
 	}
-	return nil
-}
-
-// TODO: Add support for network checking
-func (c *Cmk) ValidateCloudStackSetup(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, selfSigned *bool) error {
-	errConnection := c.ValidateCloudStackConnection(ctx)
-	if errConnection != nil {
-		return errConnection
-	}
-
-	zones, errZone := c.ListZones(ctx, deploymentConfig.Spec.Zone)
-	if errZone != nil {
-		return fmt.Errorf("zone %s not found. error: %v", deploymentConfig.Spec.Zone, errZone)
-	} else if len(zones) > 1 {
-		return fmt.Errorf("duplicate zone %s found", deploymentConfig.Spec.Zone)
-	} else if len(zones) == 0 {
-		return fmt.Errorf("zone %s not found", deploymentConfig.Spec.Zone)
-	}
-
-	return nil
-}
-
-func (c *Cmk) ValidateCloudStackSetupMachineConfig(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, machineConfig *v1alpha1.CloudStackMachineConfig, selfSigned *bool) error {
-	domain := deploymentConfig.Spec.Domain
-	zone := deploymentConfig.Spec.Zone
-	account := deploymentConfig.Spec.Account
-
-	if template, err := c.SearchTemplate(ctx, domain, zone, account, machineConfig.Spec.Template); err != nil {
-		return err
-	} else {
-		machineConfig.Spec.Template = template
-	}
-
-	if computeOffering, err := c.SearchComputeOffering(ctx, domain, zone, account, machineConfig.Spec.ComputeOffering); err != nil {
-		return err
-	} else {
-		machineConfig.Spec.ComputeOffering = computeOffering
-	}
-
-	if diskOffering, err := c.SearchDiskOffering(ctx, domain, zone, account, machineConfig.Spec.DiskOffering); err != nil {
-		return err
-	} else {
-		machineConfig.Spec.DiskOffering = diskOffering
-	}
-
-	if err := c.SearchAffinityGroups(ctx, domain, zone, account, machineConfig.Spec.AffinityGroupIds); err != nil {
-		return err
-	}
-
 	return nil
 }
 
