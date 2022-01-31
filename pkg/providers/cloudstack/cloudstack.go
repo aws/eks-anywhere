@@ -923,6 +923,13 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 	host, port, _ := net.SplitHostPort(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
+	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
+	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
+		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
+		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Spec.PodIAMConfig)).
+		Append(sharedExtraArgs)
 
 	values := map[string]interface{}{
 		"clusterName":                            clusterSpec.ObjectMeta.Name,
@@ -961,7 +968,12 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 		"controlPlaneSshUsername":                controlPlaneMachineSpec.Users[0].Name,
 		"podCidrs":                               clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                           clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
-		"apiserverExtraArgs":                     clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).ToPartialYaml(),
+		"apiserverExtraArgs":                     apiServerExtraArgs.ToPartialYaml(),
+		"kubeletExtraArgs":                       kubeletExtraArgs.ToPartialYaml(),
+		"etcdExtraArgs":                          etcdExtraArgs.ToPartialYaml(),
+		"etcdCipherSuites":                       crypto.SecureCipherSuitesString(),
+		"controllermanagerExtraArgs":             sharedExtraArgs.ToPartialYaml(),
+		"schedulerExtraArgs":                     sharedExtraArgs.ToPartialYaml(),
 		"format":                                 format,
 		"externalEtcdVersion":                    bundle.KubeDistro.EtcdVersion,
 		"etcdImage":                              bundle.KubeDistro.EtcdImage.VersionedImage(),
@@ -1017,6 +1029,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 func buildTemplateMapMD(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1.CloudStackDeploymentConfigSpec, workerNodeGroupMachineSpec v1alpha1.CloudStackMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
 
 	values := map[string]interface{}{
 		"clusterName":                clusterSpec.ObjectMeta.Name,
@@ -1031,6 +1044,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 		"workerReplicas":             clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count,
 		"workerSshUsername":          workerNodeGroupMachineSpec.Users[0].Name,
 		"format":                     format,
+		"kubeletExtraArgs":           kubeletExtraArgs.ToPartialYaml(),
 		"eksaSystemNamespace":        constants.EksaSystemNamespace,
 	}
 
