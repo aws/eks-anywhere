@@ -137,8 +137,8 @@ func (r *ReleaseConfig) renameArtifacts(artifacts map[string][]Artifact) error {
 
 			// Change the name of the archive along with the checksum files
 			if artifact.Archive != nil {
-				if r.DryRun && strings.HasSuffix(artifact.Archive.SourceS3Key, ".ova") {
-					fmt.Println("Skipping OVA renames in dry-run mode")
+				if r.DryRun && artifact.Archive.ImageFormat != "" {
+					fmt.Println("Skipping OS image renames in dry-run mode")
 					continue
 				}
 				archiveArtifact := artifact.Archive
@@ -220,8 +220,8 @@ func (r *ReleaseConfig) downloadArtifacts(eksArtifacts map[string][]Artifact) er
 				objectKey := filepath.Join(sourceS3Prefix, sourceS3Key)
 				objectLocalFilePath := filepath.Join(artifactPath, sourceS3Key)
 				fmt.Printf("Archive - %s\n", objectKey)
-				if r.DryRun && strings.HasSuffix(sourceS3Key, ".ova") {
-					fmt.Println("Skipping OVA downloads in dry-run mode")
+				if r.DryRun && artifact.Archive.ImageFormat != "" {
+					fmt.Println("Skipping OS image downloads in dry-run mode")
 					continue
 				}
 
