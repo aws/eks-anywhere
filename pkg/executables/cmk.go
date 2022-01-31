@@ -345,6 +345,7 @@ func (c *Cmk) setupExecConfig() {
 	}
 }
 
+//nolint Currently unused to keep PR's smaller. Will be used in subsequent PR
 func (c *Cmk) validateAndSetupCreds() (map[string]string, error) {
 	var cloudStackb64EncodedSecret string
 	var ok bool

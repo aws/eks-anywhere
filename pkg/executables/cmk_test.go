@@ -11,11 +11,12 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
-	"github.com/golang/mock/gomock"
 )
 
 const (
