@@ -163,8 +163,6 @@ func (d *DockerTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spe
 		} else {
 			values["workloadTemplateName"] = d.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		}
-		values["workerReplicas"] = workerNodeGroupConfiguration.Count
-		values["workerNodeGroupName"] = fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		values["workerNodeGroupTaints"] = workerNodeGroupConfiguration.Taints
 
 		bytes, err := templater.Execute(defaultCAPIConfigMD, values)
@@ -232,13 +230,14 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf))
 
 	values := map[string]interface{}{
-		"clusterName":         clusterSpec.Name,
-		"kubernetesVersion":   bundle.KubeDistro.Kubernetes.Tag,
-		"kindNodeImage":       bundle.EksD.KindNode.VersionedImage(),
-		"eksaSystemNamespace": constants.EksaSystemNamespace,
-		"kubeletExtraArgs":    kubeletExtraArgs.ToPartialYaml(),
-		"workerReplicas":      workerNodeGroupConfiguration.Count,
-		"workerNodeGroupName": fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name),
+		"clusterName":           clusterSpec.Name,
+		"kubernetesVersion":     bundle.KubeDistro.Kubernetes.Tag,
+		"kindNodeImage":         bundle.EksD.KindNode.VersionedImage(),
+		"eksaSystemNamespace":   constants.EksaSystemNamespace,
+		"kubeletExtraArgs":      kubeletExtraArgs.ToPartialYaml(),
+		"workerReplicas":        workerNodeGroupConfiguration.Count,
+		"workerNodeGroupName":   fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name),
+		"workerNodeGroupTaints": workerNodeGroupConfiguration.Taints,
 	}
 
 	return values
