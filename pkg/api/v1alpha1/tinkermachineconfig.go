@@ -11,7 +11,7 @@ import (
 
 const (
 	TinkerbellMachineConfigKind = "TinkerbellMachineConfig"
-	// TODO: convert this into struct
+	// TODO: convert this into struct, change IMG_URL value - get it from the bundle
 	TinkerbellDefaultTemplate = `version: "0.1"
 name: %s-test
 global_timeout: 6000

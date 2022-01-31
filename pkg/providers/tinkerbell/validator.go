@@ -73,8 +73,12 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 	}
 
 	// TODO: move this to api Cluster validations
-	if err := v.validateControlPlaneIp(tinkerbellClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
-		return err
+	controlPlaneEndpointIp := tinkerbellClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
+	if controlPlaneEndpointIp == "" {
+		return fmt.Errorf("controlPlaneConfiguration.Endpoint.Host is required")
+	}
+	if err := v.validateIP(tinkerbellClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host); err != nil {
+		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s", controlPlaneEndpointIp)
 	}
 
 	if controlPlaneMachineConfig.Spec.OSFamily != anywherev1.Bottlerocket && controlPlaneMachineConfig.Spec.OSFamily != anywherev1.Ubuntu {
@@ -102,23 +106,22 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 	return nil
 }
 
-func (v *Validator) validateControlPlaneIp(ip string) error {
-	// check if controlPlaneEndpointIp is valid
-	parsedIp := net.ParseIP(ip)
-	if parsedIp == nil {
-		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s", ip)
+func (v *Validator) validateTinkerbellIP(ctx context.Context, ip string) error {
+	// check if tinkerbellIP is valid
+	if ip == "" {
+		return fmt.Errorf("tinkerbellIP is required")
+	}
+
+	if err := v.validateIP(ip); err != nil {
+		return fmt.Errorf("cluster tinkerbellDatacenterConfig.tinkerbellIP is invalid: %s", ip)
 	}
 	return nil
 }
 
-func (v *Validator) validateTinkerbellIP(ctx context.Context, TinkerbellIP string) error {
-	if TinkerbellIP == "" {
-		return fmt.Errorf("tinkerbellIP is required")
-	}
-
-	parsedIp := net.ParseIP(TinkerbellIP)
+func (v *Validator) validateIP(ip string) error {
+	parsedIp := net.ParseIP(ip)
 	if parsedIp == nil {
-		return fmt.Errorf("cluster tinkerbellDatacenterConfig.tinkerbellIP is invalid: %s", TinkerbellIP)
+		return fmt.Errorf("IP is invalid: %s", ip)
 	}
 
 	return nil
