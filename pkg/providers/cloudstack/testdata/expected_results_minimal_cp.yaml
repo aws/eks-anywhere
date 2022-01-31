@@ -31,6 +31,8 @@ spec:
     port: 6443
   network: net1
   zone: zone1
+  account: admin
+  domain: domain1
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: CloudStackMachineTemplate

@@ -37,6 +37,12 @@ spec:
     port: {{.controlPlaneEndpointPort}}
   network: {{.cloudstackNetwork}}
   zone: {{.cloudstackZone}}
+{{- if .cloudstackAccount }}
+  account: {{.cloudstackAccount}}
+{{- end }}
+{{- if .cloudstackDomain }}
+  domain: {{.cloudstackDomain}}
+{{- end }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
 kind: CloudStackMachineTemplate

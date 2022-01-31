@@ -411,7 +411,7 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 			return fmt.Errorf("unable to set %s: %v", cloudStackCloudConfigB64SecretKey, err)
 		}
 	} else {
-		return fmt.Errorf("%s is not set or is empty", cloudStackCloudConfigB64SecretKey)
+		return fmt.Errorf("%s is not set or is empty", eksacloudStackCloudConfigB64SecretKey)
 	}
 	if len(p.deploymentConfig.Spec.ManagementApiEndpoint) <= 0 {
 		return errors.New("CloudStackDeploymentConfig managementApiEndpoint is not set or is empty")

@@ -2053,6 +2053,10 @@ spec:
             description: CloudStackMachineConfigSpec defines the desired state of
               CloudStackMachineConfig
             properties:
+              affinityGroupIds:
+                items:
+                  type: string
+                type: array
               computeOffering:
                 type: string
               details:
@@ -2190,6 +2194,10 @@ spec:
                     required:
                     - host
                     type: object
+                  extraEndpoints:
+                    items:
+                      type: string
+                    type: array
                   machineGroupRef:
                     description: MachineGroupRef defines the machine group configuration
                       for the control plane.
@@ -3054,7 +3062,7 @@ spec:
         - --health-probe-bind-address=:8081
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
-        image: public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:v0.0.0-eks-a-v0.0.0-dev-build.251
+        image: public.ecr.aws/i3w0y7q3/eks-anywhere-cluster-controller:v0.0.0-eks-a-v0.0.0-dev-build.1
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
