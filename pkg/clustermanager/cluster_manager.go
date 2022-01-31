@@ -27,15 +27,16 @@ import (
 )
 
 const (
-	maxRetries        = 30
-	backOffPeriod     = 5 * time.Second
-	machineMaxWait    = 10 * time.Minute
-	machineBackoff    = 1 * time.Second
-	machinesMinWait   = 30 * time.Minute
-	moveCAPIWait      = 15 * time.Minute
-	ctrlPlaneWaitStr  = "60m"
-	etcdWaitStr       = "60m"
-	deploymentWaitStr = "30m"
+	maxRetries             = 30
+	backOffPeriod          = 5 * time.Second
+	machineMaxWait         = 10 * time.Minute
+	machineBackoff         = 1 * time.Second
+	machinesMinWait        = 30 * time.Minute
+	moveCAPIWait           = 15 * time.Minute
+	ctrlPlaneWaitStr       = "60m"
+	etcdWaitStr            = "60m"
+	deploymentWaitStr      = "30m"
+	ctrlPlaneInProgressStr = "1m"
 )
 
 type ClusterManager struct {
@@ -60,6 +61,7 @@ type ClusterClient interface {
 	ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error
 	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
 	WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
+	WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
 	GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error)
@@ -369,10 +371,10 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return fmt.Errorf("error running post control plane upgrade operations: %v", err)
 	}
 
-	logger.V(3).Info("Waiting for control plane to be ready")
-	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, newClusterSpec.Name)
+	logger.V(3).Info("Waiting for control plane upgrade to be in progress")
+	err = c.clusterClient.WaitForControlPlaneNotReady(ctx, managementCluster, ctrlPlaneInProgressStr, newClusterSpec.Name)
 	if err != nil {
-		return fmt.Errorf("error waiting for workload cluster control plane to be ready: %v", err)
+		logger.V(3).Info("no control plane upgrading")
 	}
 
 	logger.V(3).Info("Waiting for control plane machines to be ready")

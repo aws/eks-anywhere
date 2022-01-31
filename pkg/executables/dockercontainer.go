@@ -44,7 +44,7 @@ func (d *dockerContainer) init(ctx context.Context) error {
 			return
 		}
 
-		params := []string{"run", "-d", "--name", d.containerName, "--network", "host", "-w", absWorkingDir, "-v", "/var/run/docker.sock:/var/run/docker.sock", "-v", "/etc/ssl:/etc/ssl"}
+		params := []string{"run", "-d", "--name", d.containerName, "--network", "host", "-w", absWorkingDir, "-v", "/var/run/docker.sock:/var/run/docker.sock", "-v", "/etc/ssl/certs/:/etc/ssl/certs/"}
 
 		for _, m := range d.mountDirs {
 			var absMountDir string
