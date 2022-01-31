@@ -51,10 +51,6 @@ func validateAWSIamConfig(config *AWSIamConfig, refName string, clusterConfig *C
 	if config.Spec.AWSRegion == "" {
 		return fmt.Errorf("AWSIamConfig AWSRegion is a required field")
 	}
-	if config.Spec.ClusterID == "" {
-		config.Spec.ClusterID = clusterConfig.ClusterName
-		logger.V(1).Info("AWSIamConfig ClusterID is empty. Using cluster name as default")
-	}
 	if len(config.Spec.BackendMode) == 0 {
 		return fmt.Errorf("AWSIamConfig BackendMode is a required field")
 	}

@@ -187,6 +187,8 @@ func (n *Endpoint) Equal(o *Endpoint) bool {
 }
 
 type WorkerNodeGroupConfiguration struct {
+	// Name refers to the name of the worker node group
+	Name string `json:"name,omitempty"`
 	// Count defines the number of desired worker nodes. Defaults to 1.
 	Count int `json:"count,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.
@@ -242,7 +244,7 @@ func (n *ClusterNetwork) Equal(o *ClusterNetwork) bool {
 	}
 	return SliceEqual(n.Pods.CidrBlocks, o.Pods.CidrBlocks) &&
 		SliceEqual(n.Services.CidrBlocks, o.Services.CidrBlocks) &&
-		n.CNI == o.CNI && n.DNS == o.DNS
+		n.CNI == o.CNI && n.DNS.ResolvConf.Equal(o.DNS.ResolvConf)
 }
 
 func SliceEqual(a, b []string) bool {
@@ -297,12 +299,22 @@ type Services struct {
 
 type DNS struct {
 	// ResolvConf refers to the DNS resolver configuration
-	ResolvConf ResolvConf `json:"resolvConf,omitempty"`
+	ResolvConf *ResolvConf `json:"resolvConf,omitempty"`
 }
 
 type ResolvConf struct {
 	// Path defines the path to the file that contains the DNS resolver configuration
 	Path string `json:"path,omitempty"`
+}
+
+func (n *ResolvConf) Equal(o *ResolvConf) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.Path == o.Path
 }
 
 type KubernetesVersion string
@@ -328,7 +340,11 @@ var validCNIs = map[CNI]struct{}{
 }
 
 // ClusterStatus defines the observed state of Cluster
-type ClusterStatus struct{}
+type ClusterStatus struct {
+	// Descriptive message about a fatal problem while reconciling a cluster
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
+}
 
 type Ref struct {
 	Kind string `json:"kind,omitempty"`

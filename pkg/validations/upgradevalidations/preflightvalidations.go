@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
@@ -23,7 +23,14 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		validations.ValidationResult{
 			Name:        "validate taints support",
 			Remediation: "ensure TAINTS_SUPPORT env variable is set",
-			Err:         ValidateTaintsSupport(ctx, u.Opts.Spec),
+			Err:         validations.ValidateTaintsSupport(u.Opts.Spec),
+			Silent:      true,
+		},
+		validations.ValidationResult{
+			Name:        "validate node labels support",
+			Remediation: "ensure NODE_LABELS_SUPPORT env variable is set",
+			Err:         validations.ValidateNodeLabelsSupport(u.Opts.Spec),
+			Silent:      true,
 		},
 		validations.ValidationResult{
 			Name:        "control plane ready",
@@ -62,17 +69,5 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		},
 	)
 
-	var errs []string
-	for _, validation := range upgradeValidations {
-		if validation.Err != nil {
-			errs = append(errs, validation.Err.Error())
-		} else {
-			validation.LogPass()
-		}
-	}
-
-	if len(errs) > 0 {
-		return &validations.ValidationError{Errs: errs}
-	}
-	return nil
+	return validations.RunPreflightValidations(upgradeValidations)
 }

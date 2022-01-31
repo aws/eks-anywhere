@@ -2,6 +2,7 @@ package features
 
 const (
 	TaintsSupportEnvVar      = "TAINTS_SUPPORT"
+	NodeLabelsSupportEnvVar  = "NODE_LABELS_SUPPORT"
 	TinkerbellProviderEnvVar = "TINKERBELL_PROVIDER"
 	FullLifecycleAPIEnvVar   = "FULL_LIFECYCLE_API"
 	FullLifecycleGate        = "FullLifecycleAPI"
@@ -24,6 +25,13 @@ func TaintsSupport() Feature {
 	return Feature{
 		Name:     "Taints support",
 		IsActive: globalFeatures.isActiveForEnvVar(TaintsSupportEnvVar),
+	}
+}
+
+func NodeLabelsSupport() Feature {
+	return Feature{
+		Name:     "Node labels support",
+		IsActive: globalFeatures.isActiveForEnvVar(NodeLabelsSupportEnvVar),
 	}
 }
 

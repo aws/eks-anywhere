@@ -33,7 +33,6 @@ func WithAWSIam() ClusterE2ETestOpt {
 		checkRequiredEnvVars(e.T, awsIamRequiredEnvVars)
 		e.AWSIamConfig = api.NewAWSIamConfig(defaultClusterName,
 			api.WithAWSIamAWSRegion("us-west-1"),
-			api.WithAWSIamClusterID(defaultClusterName),
 			api.WithAWSIamPartition("aws"),
 			api.WithAWSIamBackendMode("EKSConfigMap"),
 			api.WithAWSIamMapRoles(api.AddAWSIamRole(withArnFromEnv(AWSIamRoleArn), "kubernetes-admin", []string{"system:masters"})),

@@ -11,7 +11,7 @@ import (
 
 type upgraderClient interface {
 	Apply(ctx context.Context, cluster *types.Cluster, data []byte) error
-	DeleteKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
+	Delete(ctx context.Context, cluster *types.Cluster, data []byte) error
 	WaitForPreflightDaemonSet(ctx context.Context, cluster *types.Cluster) error
 	WaitForPreflightDeployment(ctx context.Context, cluster *types.Cluster) error
 	WaitForCiliumDaemonSet(ctx context.Context, cluster *types.Cluster) error
@@ -55,7 +55,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentS
 	}
 
 	logger.V(3).Info("Deleting Cilium upgrade preflight")
-	if err := u.client.DeleteKubeSpecFromBytes(ctx, cluster, preflight); err != nil {
+	if err := u.client.Delete(ctx, cluster, preflight); err != nil {
 		return nil, fmt.Errorf("failed deleting cilium preflight check: %v", err)
 	}
 
@@ -112,4 +112,8 @@ func ciliumChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChange
 		OldVersion:    currentSpec.VersionsBundle.Cilium.Version,
 		NewVersion:    newSpec.VersionsBundle.Cilium.Version,
 	}
+}
+
+func ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
+	return types.NewChangeDiff(ciliumChangeDiff(currentSpec, newSpec))
 }

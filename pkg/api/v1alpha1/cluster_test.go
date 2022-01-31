@@ -67,7 +67,6 @@ func TestClusterNameLength(t *testing.T) {
 		clusterName, name string
 		wantErr           error
 	}{
-
 		{
 			name:        "SuccessClusterNameLength",
 			clusterName: "qwertyuiopasdfghjklzxcvbnmqwertyuiopasdfghjklzxcvbnm",
@@ -133,6 +132,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
 						Count: 3,
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
@@ -180,6 +180,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
 						Count: 3,
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
@@ -227,6 +228,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
 						Count: 3,
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
@@ -274,6 +276,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
 						Count: 3,
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
@@ -321,6 +324,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
 						Count: 3,
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
@@ -368,6 +372,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
 						Count: 3,
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
@@ -419,6 +424,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
 						Count: 3,
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
@@ -470,6 +476,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
 						Count: 3,
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
@@ -669,6 +676,7 @@ func TestGetClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
 						Count: 3,
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
@@ -716,6 +724,7 @@ func TestGetClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
 						Count: 3,
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
@@ -763,6 +772,7 @@ func TestGetClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
 						Count: 3,
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,
@@ -810,6 +820,7 @@ func TestGetClusterConfig(t *testing.T) {
 						},
 					},
 					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
 						Count: 3,
 						MachineGroupRef: &Ref{
 							Kind: VSphereMachineConfigKind,

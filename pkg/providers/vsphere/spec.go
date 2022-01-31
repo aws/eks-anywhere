@@ -5,13 +5,13 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 )
 
-type spec struct {
+type Spec struct {
 	*cluster.Spec
 	datacenterConfig     *anywherev1.VSphereDatacenterConfig
 	machineConfigsLookup map[string]*anywherev1.VSphereMachineConfig
 }
 
-func newSpec(clusterSpec *cluster.Spec, machineConfigs map[string]*anywherev1.VSphereMachineConfig, datacenterConfig *anywherev1.VSphereDatacenterConfig) *spec {
+func NewSpec(clusterSpec *cluster.Spec, machineConfigs map[string]*anywherev1.VSphereMachineConfig, datacenterConfig *anywherev1.VSphereDatacenterConfig) *Spec {
 	machineConfigsInCluster := map[string]*anywherev1.VSphereMachineConfig{}
 	for _, m := range clusterSpec.MachineConfigRefs() {
 		machineConfig, ok := machineConfigs[m.Name]
@@ -21,29 +21,29 @@ func newSpec(clusterSpec *cluster.Spec, machineConfigs map[string]*anywherev1.VS
 		machineConfigsInCluster[m.Name] = machineConfig
 	}
 
-	return &spec{
+	return &Spec{
 		Spec:                 clusterSpec,
 		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: machineConfigsInCluster,
 	}
 }
 
-func (s *spec) controlPlaneMachineConfig() *anywherev1.VSphereMachineConfig {
+func (s *Spec) controlPlaneMachineConfig() *anywherev1.VSphereMachineConfig {
 	return s.machineConfigsLookup[s.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
 }
 
-func (s *spec) firstWorkerMachineConfig() *anywherev1.VSphereMachineConfig {
-	return s.machineConfigsLookup[s.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
+func (s *Spec) workerMachineConfig(c anywherev1.WorkerNodeGroupConfiguration) *anywherev1.VSphereMachineConfig {
+	return s.machineConfigsLookup[c.MachineGroupRef.Name]
 }
 
-func (s *spec) etcdMachineConfig() *anywherev1.VSphereMachineConfig {
+func (s *Spec) etcdMachineConfig() *anywherev1.VSphereMachineConfig {
 	if s.Cluster.Spec.ExternalEtcdConfiguration == nil || s.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
 		return nil
 	}
 	return s.machineConfigsLookup[s.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
 }
 
-func (s *spec) machineConfigs() []*anywherev1.VSphereMachineConfig {
+func (s *Spec) machineConfigs() []*anywherev1.VSphereMachineConfig {
 	machineConfigs := make([]*anywherev1.VSphereMachineConfig, 0, len(s.machineConfigsLookup))
 	for _, m := range s.machineConfigsLookup {
 		machineConfigs = append(machineConfigs, m)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -27,12 +28,14 @@ var awsIamAuthKubeconfigTemplate string
 type AwsIamAuth struct {
 	certgen         crypto.CertificateGenerator
 	templateBuilder *AwsIamAuthTemplateBuilder
+	clusterId       uuid.UUID
 }
 
-func NewAwsIamAuth(certgen crypto.CertificateGenerator) *AwsIamAuth {
+func NewAwsIamAuth(certgen crypto.CertificateGenerator, clusterId uuid.UUID) *AwsIamAuth {
 	return &AwsIamAuth{
 		certgen:         certgen,
 		templateBuilder: &AwsIamAuthTemplateBuilder{},
+		clusterId:       clusterId,
 	}
 }
 
@@ -42,11 +45,11 @@ func NewAwsIamAuthTemplateBuilder() *AwsIamAuthTemplateBuilder {
 	return &AwsIamAuthTemplateBuilder{}
 }
 
-func (a *AwsIamAuthTemplateBuilder) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error) {
+func (a *AwsIamAuthTemplateBuilder) GenerateManifest(clusterSpec *cluster.Spec, clusterId uuid.UUID) ([]byte, error) {
 	data := map[string]string{
 		"image":       clusterSpec.VersionsBundle.KubeDistro.AwsIamAuthIamge.VersionedImage(),
 		"awsRegion":   clusterSpec.AWSIamConfig.Spec.AWSRegion,
-		"clusterID":   clusterSpec.AWSIamConfig.Spec.ClusterID,
+		"clusterID":   clusterId.String(),
 		"backendMode": strings.Join(clusterSpec.AWSIamConfig.Spec.BackendMode, ","),
 		"partition":   clusterSpec.AWSIamConfig.Spec.Partition,
 	}
@@ -68,7 +71,7 @@ func (a *AwsIamAuthTemplateBuilder) GenerateManifest(clusterSpec *cluster.Spec) 
 }
 
 func (a *AwsIamAuth) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error) {
-	return a.templateBuilder.GenerateManifest(clusterSpec)
+	return a.templateBuilder.GenerateManifest(clusterSpec, a.clusterId)
 }
 
 func (a *AwsIamAuth) GenerateCertKeyPairSecret() ([]byte, error) {
@@ -93,7 +96,7 @@ func (a *AwsIamAuth) GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, ser
 		"clusterName": clusterSpec.Cluster.Name,
 		"server":      serverUrl,
 		"cert":        tlsCert,
-		"clusterID":   clusterSpec.AWSIamConfig.Spec.ClusterID,
+		"clusterID":   a.clusterId.String(),
 	}
 	awsIamAuthKubeconfig, err := templater.Execute(awsIamAuthKubeconfigTemplate, data)
 	if err != nil {

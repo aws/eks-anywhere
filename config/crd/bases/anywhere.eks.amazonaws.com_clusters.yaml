@@ -238,11 +238,19 @@ spec:
                         name:
                           type: string
                       type: object
+                    name:
+                      description: Name refers to the name of the worker node group
+                      type: string
                   type: object
                 type: array
             type: object
           status:
             description: ClusterStatus defines the observed state of Cluster
+            properties:
+              failureMessage:
+                description: Descriptive message about a fatal problem while reconciling
+                  a cluster
+                type: string
             type: object
         type: object
     served: true

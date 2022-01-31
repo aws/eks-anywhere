@@ -1,5 +1,5 @@
 
-** cloud.google.com/go/compute/metadata; version v0.54.0 --
+** cloud.google.com/go/compute/metadata; version v0.93.3 --
 https://github.com/googleapis/google-cloud-go
 
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
@@ -20,10 +20,10 @@ https://github.com/Azure/go-autorest/logger
 ** github.com/Azure/go-autorest/tracing; version v0.6.0 --
 https://github.com/Azure/go-autorest/tracing
 
-** github.com/caddyserver/caddy/caddyfile; version v1.0.3 --
-https://github.com/caddyserver/caddy
+** github.com/coredns/caddy/caddyfile; version v1.1.0 --
+https://github.com/coredns/caddy
 
-** github.com/coredns/corefile-migration/migration; version v1.0.11 --
+** github.com/coredns/corefile-migration/migration; version v1.0.13 --
 https://github.com/coredns/corefile-migration
 
 ** github.com/docker/distribution; version v2.7.1+incompatible --
@@ -44,7 +44,7 @@ https://github.com/go-logr/zapr
 ** github.com/golang/groupcache/lru; version v0.0.0-20210331224755-41bb18bfe9da --
 https://github.com/golang/groupcache
 
-** github.com/golang/mock/gomock; version v1.5.0 --
+** github.com/golang/mock/gomock; version v1.6.0 --
 https://github.com/golang/mock
 
 ** github.com/google/gofuzz; version v1.2.0 --
@@ -62,14 +62,17 @@ https://github.com/modern-go/concurrent
 ** github.com/modern-go/reflect2; version v1.0.1 --
 https://github.com/modern-go/reflect2
 
-** github.com/mrajashree/etcdadm-bootstrap-provider/api/v1alpha3; version v0.1.2 --
+** github.com/mrajashree/etcdadm-bootstrap-provider/api/v1beta1; version v1.0.0-rc3 --
 https://github.com/mrajashree/etcdadm-bootstrap-provider
 
-** github.com/mrajashree/etcdadm-controller/api/v1alpha3; version v0.1.3 --
+** github.com/mrajashree/etcdadm-controller/api/v1beta1; version v1.0.0-rc3 --
 https://github.com/mrajashree/etcdadm-controller
 
 ** github.com/opencontainers/go-digest; version v1.0.0 --
 https://github.com/opencontainers/go-digest
+
+** github.com/pelletier/go-toml; version v1.9.4 --
+https://github.com/pelletier/go-toml
 
 ** github.com/prometheus/client_golang/prometheus; version v1.11.0 --
 https://github.com/prometheus/client_golang
@@ -83,10 +86,10 @@ https://github.com/prometheus/common
 ** github.com/prometheus/procfs; version v0.6.0 --
 https://github.com/prometheus/procfs
 
-** github.com/spf13/afero; version v1.2.2 --
+** github.com/spf13/afero; version v1.6.0 --
 https://github.com/spf13/afero
 
-** github.com/spf13/cobra; version v1.1.3 --
+** github.com/spf13/cobra; version v1.2.1 --
 https://github.com/spf13/cobra
 
 ** github.com/xanzy/ssh-agent; version v0.3.0 --
@@ -95,7 +98,7 @@ https://github.com/xanzy/ssh-agent
 ** gomodules.xyz/jsonpatch/v2; version v2.2.0 --
 https://github.com/gomodules/jsonpatch
 
-** gopkg.in/ini.v1; version v1.51.0 --
+** gopkg.in/ini.v1; version v1.63.2 --
 https://gopkg.in/ini.v1
 
 ** gopkg.in/yaml.v2; version v2.4.0 --
@@ -113,10 +116,10 @@ https://github.com/kubernetes/apimachinery
 ** k8s.io/client-go; version v0.22.2 --
 https://github.com/kubernetes/client-go
 
-** k8s.io/cluster-bootstrap/token; version v0.21.0 --
+** k8s.io/cluster-bootstrap/token; version v0.22.2 --
 https://github.com/kubernetes/cluster-bootstrap
 
-** k8s.io/component-base/config; version v0.22.2 --
+** k8s.io/component-base; version v0.22.2 --
 https://github.com/kubernetes/component-base
 
 ** k8s.io/klog/v2; version v2.9.0 --
@@ -125,13 +128,13 @@ https://github.com/kubernetes/klog
 ** k8s.io/kube-openapi/pkg/util/proto; version v0.0.0-20210421082810-95288971da7e --
 https://github.com/kubernetes/kube-openapi
 
-** k8s.io/utils; version v0.0.0-20210819203725-bdf08cb9a70a --
+** k8s.io/utils; version v0.0.0-20210930125809-cb0fa318a74b --
 https://github.com/kubernetes/utils
 
-** sigs.k8s.io/cluster-api; version v0.3.11-0.20210430210359-402a4524f006 --
+** sigs.k8s.io/cluster-api; version v1.0.2 --
 https://github.com/kubernetes-sigs/cluster-api
 
-** sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3; version v0.7.8 --
+** sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1; version v1.0.1 --
 https://github.com/kubernetes-sigs/cluster-api-provider-vsphere
 
 ** sigs.k8s.io/controller-runtime; version v0.10.3 --
@@ -464,21 +467,20 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 ------
 
-** github.com/magiconair/properties; version v1.8.1 --
+** github.com/magiconair/properties; version v1.8.5 --
 https://github.com/magiconair/properties
 
-goproperties - properties file decoder for Go
-
-Copyright (c) 2013-2018 - Frank Schroeder
+Copyright (c) 2013-2020, Frank Schroeder
 
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
-1. Redistributions of source code must retain the above copyright notice, this
+ * Redistributions of source code must retain the above copyright notice, this
    list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
+
+ * Redistributions in binary form must reproduce the above copyright notice,
    this list of conditions and the following disclaimer in the documentation
    and/or other materials provided with the distribution.
 
@@ -585,7 +587,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** github.com/fsnotify/fsnotify; version v1.4.9 --
+** github.com/fsnotify/fsnotify; version v1.5.1 --
 https://github.com/fsnotify/fsnotify
 
 Copyright (c) 2012 The Go Authors. All rights reserved.
@@ -621,9 +623,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ** github.com/go-git/gcfg; version v1.5.0 --
 https://github.com/go-git/gcfg
-
-** gopkg.in/gcfg.v1; version v1.2.3 --
-https://gopkg.in/gcfg.v1
 
 ** gopkg.in/inf.v0; version v0.9.1 --
 https://gopkg.in/inf.v0
@@ -734,7 +733,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** github.com/google/go-cmp/cmp; version v0.5.5 --
+** github.com/google/go-cmp/cmp; version v0.5.6 --
 https://github.com/google/go-cmp
 
 Copyright (c) 2017 The Go Authors. All rights reserved.
@@ -942,16 +941,16 @@ https://github.com/ProtonMail/go-crypto
 ** golang.org/go; version go1.16.12 --
 https://github.com/golang/go
 
-** golang.org/x/crypto; version v0.0.0-20210513164829-c07d793c2f9a --
+** golang.org/x/crypto; version v0.0.0-20210817164053-32db794688a5 --
 https://go.googlesource.com/crypto
 
 ** golang.org/x/net; version v0.0.0-20210520170846-37e1c6afe023 --
 https://go.googlesource.com/net
 
-** golang.org/x/oauth2; version v0.0.0-20200107190931-bf48bf16ab8d --
+** golang.org/x/oauth2; version v0.0.0-20210819190943-2bc19b11175f --
 https://go.googlesource.com/oauth2
 
-** golang.org/x/sys; version v0.0.0-20210817190340-bfb29a6856f2 --
+** golang.org/x/sys; version v0.0.0-20210823070655-63515b42dcdf --
 https://go.googlesource.com/sys
 
 ** golang.org/x/term; version v0.0.0-20210220032956-6a3ed077a48d --
@@ -1103,7 +1102,7 @@ Copyright (c) 2016 Caleb Spare
 https://github.com/form3tech-oss/jwt-go
 Copyright (c) 2012 Dave Grijalva
 
-** github.com/gobuffalo/flect; version v0.2.2 --
+** github.com/gobuffalo/flect; version v0.2.3 --
 https://github.com/gobuffalo/flect
 Copyright (c) 2019 Mark Bates
 
@@ -1115,35 +1114,35 @@ Copyright (c) 2014 Juan Batiz-Benet
 https://github.com/json-iterator/go
 Copyright (c) 2016 json-iterator
 
+** github.com/MakeNowJust/heredoc; version v1.0.0 --
+https://github.com/MakeNowJust/heredoc
+Copyright (c) 2014-2019 TSUYUSATO Kitsune
+
 ** github.com/mitchellh/go-homedir; version v1.1.0 --
 https://github.com/mitchellh/go-homedir
 Copyright (c) 2013 Mitchell Hashimoto
 
-** github.com/mitchellh/mapstructure; version v1.1.2 --
+** github.com/mitchellh/mapstructure; version v1.4.2 --
 https://github.com/mitchellh/mapstructure
 Copyright (c) 2013 Mitchell Hashimoto
 
-** github.com/onsi/gomega; version v1.15.0 --
+** github.com/onsi/gomega; version v1.16.0 --
 https://github.com/onsi/gomega
 Copyright (c) 2013-2014 Onsi Fakhouri
-
-** github.com/pelletier/go-toml; version v1.8.1 --
-https://github.com/pelletier/go-toml
-Copyright (c) 2013 - 2017 Thomas Pelletier, Eric Anderton
 
 ** github.com/sergi/go-diff/diffmatchpatch; version v1.1.0 --
 https://github.com/sergi/go-diff
 Copyright (c) 2012-2016 The go-diff Authors. All rights reserved.
 
-** github.com/spf13/cast; version v1.3.0 --
+** github.com/spf13/cast; version v1.4.1 --
 https://github.com/spf13/cast
 Copyright (c) 2014 Steve Francia
 
-** github.com/spf13/jwalterweatherman; version v1.0.0 --
+** github.com/spf13/jwalterweatherman; version v1.1.0 --
 https://github.com/spf13/jwalterweatherman
 Copyright (c) 2014 Steve Francia
 
-** github.com/spf13/viper; version v1.7.1 --
+** github.com/spf13/viper; version v1.9.0 --
 https://github.com/spf13/viper
 Copyright (c) 2014 Steve Francia
 

@@ -22,6 +22,24 @@ make container-serve
 Open http://127.0.0.1:1313 to see the local site.
 With the serve container running you can now edit the documentation in your git clone and changes will be rebuilt automatically.
 
+## Public development
+
+If you want to make a version of the docs site you can share with someone else you will need to follow these steps.
+
+1. Create an Amplify app in your AWS account
+1. Create a "main" branch in your Amplify app
+1. Deploy the app using your `$AMPLIFY_APP_ID`
+
+```
+export AWS_PROFILE=<YOUR AWS ACCOUNT INFORMATION>
+export AMPLIFY_APP_ID=$(aws amplify create-app --name eksa-docs --query 'app.appId' --output text)
+aws amplify create-branch --app-id $AMPLIFY_APP_ID --branch-name main --stage PRODUCTION
+cd docs
+make deploy
+# Get your docs URL
+echo "https://main.$(aws amplify get-app --app-id $AMPLIFY_APP_ID --query 'app.defaultDomain' --output text)"
+```
+
 ## Production site
 
 The production website is hosted on Amplify.

@@ -28,7 +28,6 @@ metadata:
    name: aws-iam-auth-config
 spec:
     awsRegion: ""
-    clusterID: ""
     backendMode:
         - ""
     mapRoles:
@@ -49,10 +48,6 @@ This would include a reference to the `AWSIamConfig` object with the configurati
 
 ### __awsRegion__ (required)
 * __Description__: awsRegion can be any region in the aws partition that the IAM roles exist in.
-* __Type__: string
-
-### __clusterID__
-* __Description__: clusterID is set as part of the role mapping config that is used by the IAM authenticator server. The default value is set to the cluster name. For more details refer [clusterID](https://github.com/kubernetes-sigs/aws-iam-authenticator#what-is-a-cluster-id).
 * __Type__: string
 
 ### __backendMode__ (required)

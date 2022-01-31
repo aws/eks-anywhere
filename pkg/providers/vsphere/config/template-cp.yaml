@@ -464,9 +464,9 @@ spec:
       - echo "127.0.0.1   localhost" >>/etc/hosts
       - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
       - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
+{{- end }}
 {{- if .etcdCipherSuites }}
     cipherSuites: {{.etcdCipherSuites}}
-{{- end }}
 {{- end }}
     users:
       - name: {{.etcdSshUsername}}
@@ -527,6 +527,8 @@ kind: Secret
 metadata:
   name: {{.clusterName}}-vsphere-credentials
   namespace: {{.eksaSystemNamespace}}
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
 stringData:
   username: "{{.eksaVsphereUsername}}"
   password: "{{.eksaVspherePassword}}"

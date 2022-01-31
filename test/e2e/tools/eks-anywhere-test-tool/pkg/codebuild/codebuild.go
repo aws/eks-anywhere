@@ -1,6 +1,7 @@
 package codebuild
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -46,8 +47,19 @@ func (c *Codebuild) FetchBuildForProject(id string) (*codebuild.Build, error) {
 
 func (c *Codebuild) FetchLatestBuildForProject(project string) (*codebuild.Build, error) {
 	builds := c.FetchBuildsForProject(project)
-	latestId := *builds.Ids[0]
-	return c.getBuildById(latestId)
+
+	// Find latest build that is not in progress
+	for _, id := range builds.Ids {
+		b, err := c.getBuildById(*id)
+		if err != nil {
+			return nil, err
+		}
+		if *b.BuildStatus != codebuild.StatusTypeInProgress {
+			return b, nil
+		}
+	}
+
+	return nil, errors.New("can't find a build for project that has already finished")
 }
 
 func (c *Codebuild) getBuildById(id string) (*codebuild.Build, error) {

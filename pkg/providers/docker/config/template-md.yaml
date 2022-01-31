@@ -1,7 +1,7 @@
-apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
-  name: {{.clusterName}}-md-0
+  name: {{.workerNodeGroupName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   template:
@@ -16,33 +16,33 @@ spec:
 {{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
 ---
-apiVersion: cluster.x-k8s.io/v1alpha3
+apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
-  name: {{.clusterName}}-md-0
+  name: {{.workerNodeGroupName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   clusterName: {{.clusterName}}
-  replicas: {{.worker_replicas}}
+  replicas: {{.workerReplicas}}
   selector:
     matchLabels: null
   template:
     spec:
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
-          name: {{.clusterName}}-md-0
+          name: {{.workerNodeGroupName}}
           namespace: {{.eksaSystemNamespace}}
       clusterName: {{.clusterName}}
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: DockerMachineTemplate
         name: {{.workloadTemplateName}}
         namespace: {{.eksaSystemNamespace}}
       version: {{.kubernetesVersion}}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: DockerMachineTemplate
 metadata:
   name: {{.workloadTemplateName}}

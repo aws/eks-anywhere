@@ -30,6 +30,7 @@ type ParallelRunConf struct {
 	BundlesOverride     bool
 	CleanupVms          bool
 	TestReportFolder    string
+	BranchName          string
 }
 
 type (
@@ -110,12 +111,12 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 
 type instanceRunConf struct {
 	amiId, instanceProfileName, storageBucket, jobId, parentJobId, subnetId, regex, instanceId, controlPlaneIP string
-	testReportFolder                                                                                           string
+	testReportFolder, branchName                                                                               string
 	bundlesOverride                                                                                            bool
 }
 
 func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *testCommandResult, err error) {
-	session, err := newSession(conf.amiId, conf.instanceProfileName, conf.storageBucket, conf.jobId, conf.subnetId, conf.controlPlaneIP, conf.bundlesOverride)
+	session, err := newSessionFromConf(conf)
 	if err != nil {
 		return "", nil, err
 	}
@@ -228,6 +229,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 				bundlesOverride:     conf.BundlesOverride,
 				controlPlaneIP:      ip,
 				testReportFolder:    conf.TestReportFolder,
+				branchName:          conf.BranchName,
 			})
 
 			testsInCurrentInstance = make([]string, 0, testPerInstance)

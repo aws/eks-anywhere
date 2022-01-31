@@ -14,7 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -77,6 +76,12 @@ func ExternalETCDConfigCount(count int) ClusterGenerateOpt {
 func WorkerNodeConfigCount(count int) ClusterGenerateOpt {
 	return func(c *ClusterGenerate) {
 		c.Spec.WorkerNodeGroupConfigurations = []WorkerNodeGroupConfiguration{{Count: count}}
+	}
+}
+
+func WorkerNodeConfigName(name string) ClusterGenerateOpt {
+	return func(c *ClusterGenerate) {
+		c.Spec.WorkerNodeGroupConfigurations[0].Name = name
 	}
 }
 
@@ -169,30 +174,24 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validatePodIAMConfig,
 }
 
+// GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
+// and sets defaults if necessary
 func GetClusterConfig(fileName string) (*Cluster, error) {
 	clusterConfig := &Cluster{}
 	err := ParseClusterConfig(fileName, clusterConfig)
 	if err != nil {
 		return clusterConfig, err
 	}
-	if err := updateRegistryMirrorConfig(clusterConfig); err != nil {
+	if err := setClusterDefaults(clusterConfig); err != nil {
 		return clusterConfig, err
 	}
 	return clusterConfig, nil
 }
 
+// GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
+// sets defaults if necessary and validates the Cluster
 func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
-	clusterConfig, err := ValidateClusterConfig(fileName)
-	if err != nil {
-		return clusterConfig, err
-	}
-
-	return GetClusterConfig(fileName)
-}
-
-func ValidateClusterConfig(fileName string) (*Cluster, error) {
-	clusterConfig := &Cluster{}
-	err := ParseClusterConfig(fileName, clusterConfig)
+	clusterConfig, err := GetClusterConfig(fileName)
 	if err != nil {
 		return nil, err
 	}
@@ -200,9 +199,12 @@ func ValidateClusterConfig(fileName string) (*Cluster, error) {
 	if err != nil {
 		return nil, err
 	}
-	return clusterConfig, err
+
+	return clusterConfig, nil
 }
 
+// ValidateClusterConfigContent validates a Cluster object without modifying it
+// Some of the validations are a bit heavy and need a network connection
 func ValidateClusterConfigContent(clusterConfig *Cluster) error {
 	for _, v := range clusterConfigValidations {
 		if err := v(clusterConfig); err != nil {
@@ -212,6 +214,8 @@ func ValidateClusterConfigContent(clusterConfig *Cluster) error {
 	return nil
 }
 
+// ParseClusterConfig unmarshalls an API object implementing the KindAccessor interface
+// from a multiobject yaml file in disk. It doesn't set defaults nor validates the object
 func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 	content, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -309,11 +313,14 @@ func validateControlPlaneReplicas(clusterConfig *Cluster) error {
 }
 
 func validateWorkerNodeGroups(clusterConfig *Cluster) error {
-	if len(clusterConfig.Spec.WorkerNodeGroupConfigurations) <= 0 {
+	workerNodeGroupConfigs := clusterConfig.Spec.WorkerNodeGroupConfigurations
+	if len(workerNodeGroupConfigs) <= 0 {
 		return errors.New("worker node group must be specified")
 	}
-	if len(clusterConfig.Spec.WorkerNodeGroupConfigurations) > 1 {
-		return errors.New("only one worker node group is supported at this time")
+	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
+		if workerNodeGroupConfig.Name == "" {
+			return errors.New("must specify name for worker nodes")
+		}
 	}
 	return nil
 }
@@ -421,10 +428,6 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return errors.New("no value set for ECRMirror.Endpoint")
 	}
 
-	if clusterConfig.Spec.RegistryMirrorConfiguration.Port == "" {
-		logger.V(1).Info("RegistryMirrorConfiguration.Port is not specified, default port will be used", "Default Port", constants.DefaultHttpsPort)
-		clusterConfig.Spec.RegistryMirrorConfiguration.Port = constants.DefaultHttpsPort
-	}
 	if !networkutils.IsPortValid(clusterConfig.Spec.RegistryMirrorConfiguration.Port) {
 		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterConfig.Spec.RegistryMirrorConfiguration.Port)
 	}
@@ -458,26 +461,6 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		}
 	}
 
-	return nil
-}
-
-func updateRegistryMirrorConfig(clusterConfig *Cluster) error {
-	if clusterConfig.Spec.RegistryMirrorConfiguration == nil {
-		return nil
-	}
-	if clusterConfig.Spec.RegistryMirrorConfiguration.Port == "" {
-		clusterConfig.Spec.RegistryMirrorConfiguration.Port = constants.DefaultHttpsPort
-	}
-	if clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent == "" {
-		if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
-			content, err := ioutil.ReadFile(caCert)
-			if err != nil {
-				return fmt.Errorf("error reading the cert file %s: %v", caCert, err)
-			}
-			logger.V(4).Info(fmt.Sprintf("%s is set, using %s as ca cert for registry", RegistryMirrorCAKey, caCert))
-			clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent = string(content)
-		}
-	}
 	return nil
 }
 

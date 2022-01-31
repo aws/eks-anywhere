@@ -717,7 +717,6 @@ func (tt *fluxTest) setupFlux() (owner, repo, path string) {
 	repo = "eksa-gitops"
 	tt.clusterSpec.GitOpsConfig = &v1alpha1.GitOpsConfig{
 		Spec: v1alpha1.GitOpsConfigSpec{
-
 			Flux: v1alpha1.Flux{
 				Github: v1alpha1.Github{
 					ClusterConfigPath: path,

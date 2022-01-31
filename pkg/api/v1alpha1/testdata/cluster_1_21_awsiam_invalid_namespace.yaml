@@ -68,7 +68,6 @@ metadata:
    namespace: different-namespace
 spec:
   awsRegion: test-region
-  clusterID: eksa-unit-test
   backendMode:
     - mode1
     - mode2

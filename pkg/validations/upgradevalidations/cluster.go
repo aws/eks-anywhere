@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -24,13 +22,4 @@ func ValidateClusterObjectExists(ctx context.Context, k validations.KubectlClien
 		}
 	}
 	return fmt.Errorf("couldn't find CAPI cluster object for cluster with name %s", cluster.Name)
-}
-
-func ValidateTaintsSupport(ctx context.Context, clusterSpec *cluster.Spec) error {
-	if !features.IsActive(features.TaintsSupport()) {
-		if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints) > 0 {
-			return fmt.Errorf("Taints feature is not enabled.")
-		}
-	}
-	return nil
 }
