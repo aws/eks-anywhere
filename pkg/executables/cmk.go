@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -32,8 +33,14 @@ type Cmk struct {
 }
 
 // TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domain, zone, account, template string) error {
-	result, err := c.execWithNameAndIdFilters(ctx, template, "list", "templates", "templatefilter=all", "listall=true")
+func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domain, zone, account string, template v1alpha1.CloudStackResourceRef) error {
+	var filterArg string
+	if template.Type == v1alpha1.Id {
+		filterArg = fmt.Sprintf("id=\"%s\"", template.Value)
+	} else {
+		filterArg = fmt.Sprintf("name=\"%s\"", template.Value)
+	}
+	result, err := c.exec(ctx, "list", "templates", "templatefilter=all", "listall=true", filterArg)
 	if err != nil {
 		return fmt.Errorf("error getting templates info: %v", err)
 	}
@@ -57,8 +64,14 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domain, zone, account
 }
 
 // TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, domain, zone, account, serviceOffering string) error {
-	result, err := c.execWithNameAndIdFilters(ctx, serviceOffering, "list", "serviceofferings")
+func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, domain, zone, account string, serviceOffering v1alpha1.CloudStackResourceRef) error {
+	var filterArg string
+	if serviceOffering.Type == v1alpha1.Id {
+		filterArg = fmt.Sprintf("id=\"%s\"", serviceOffering.Value)
+	} else {
+		filterArg = fmt.Sprintf("name=\"%s\"", serviceOffering.Value)
+	}
+	result, err := c.exec(ctx, "list", "serviceofferings", filterArg)
 	if err != nil {
 		return fmt.Errorf("error getting service offerings info: %v", err)
 	}
@@ -79,34 +92,6 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, domain, zone, 
 		return fmt.Errorf("service offering %s not found", serviceOffering)
 	}
 
-	return nil
-}
-
-// TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, domain, zone, account, diskOffering string) error {
-	if diskOffering == "" {
-		return nil
-	}
-	result, err := c.execWithNameAndIdFilters(ctx, diskOffering, "list", "diskofferings")
-	if err != nil {
-		return fmt.Errorf("error getting disk offerings info: %v", err)
-	}
-	if result.Len() == 0 {
-		return fmt.Errorf("disk offering %s not found", diskOffering)
-	}
-
-	response := struct {
-		CmkDiskOfferings []CmkDiskOffering `json:"diskoffering"`
-	}{}
-	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-		return fmt.Errorf("failed to parse response into json: %v", err)
-	}
-	offerings := response.CmkDiskOfferings
-	if len(offerings) > 1 {
-		return fmt.Errorf("duplicate disk offering %s found", diskOffering)
-	} else if len(offerings) == 0 {
-		return fmt.Errorf("disk offering %s not found", diskOffering)
-	}
 	return nil
 }
 
@@ -138,8 +123,14 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domain, zone, a
 	return nil
 }
 
-func (c *Cmk) ValidateZonePresent(ctx context.Context, zone string) error {
-	result, err := c.execWithNameAndIdFilters(ctx, zone, "list", "zones")
+func (c *Cmk) ValidateZonePresent(ctx context.Context, zone v1alpha1.CloudStackResourceRef) error {
+	var filterArg string
+	if zone.Type == v1alpha1.Id {
+		filterArg = fmt.Sprintf("id=\"%s\"", zone.Value)
+	} else {
+		filterArg = fmt.Sprintf("name=\"%s\"", zone.Value)
+	}
+	result, err := c.exec(ctx, "list", "zones", filterArg)
 	if err != nil {
 		return fmt.Errorf("error getting zones info: %v", err)
 	}
@@ -164,7 +155,7 @@ func (c *Cmk) ValidateZonePresent(ctx context.Context, zone string) error {
 
 // TODO: Add support for domain filtering
 func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string) error {
-	result, err := c.execWithNameAndIdFilters(ctx, account, "list", "accounts")
+	result, err := c.exec(ctx, "list", "accounts", fmt.Sprintf("name=\"%s\"", account))
 	if err != nil {
 		return fmt.Errorf("error getting accounts info: %v", err)
 	}
@@ -204,23 +195,6 @@ func (c *Cmk) ValidateCloudStackConnection(ctx context.Context) error {
 	}
 	logger.MarkPass("Connected to CloudStack server")
 	return nil
-}
-
-func (c *Cmk) execWithNameAndIdFilters(ctx context.Context, parameterValue string, genericArgs ...string) (stdout bytes.Buffer, err error) {
-	argsWithNameFilterArg := append(genericArgs, fmt.Sprintf("name=\"%s\"", parameterValue))
-	result, err := c.exec(ctx, argsWithNameFilterArg...)
-	if err != nil {
-		return result, fmt.Errorf("error getting resource info filtering by id %s: %v", parameterValue, err)
-	}
-	if result.Len() == 0 {
-		argsWithIdFilterArg := append(genericArgs, fmt.Sprintf("id=\"%s\"", parameterValue))
-		logger.V(6).Info("No resources found searching by name. Trying again filtering by id instead", "searchParameterValue", parameterValue)
-		result, err = c.exec(ctx, argsWithIdFilterArg...)
-		if err != nil {
-			return result, fmt.Errorf("error getting resource info filtering by id %s: %v", parameterValue, err)
-		}
-	}
-	return result, nil
 }
 
 func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, err error) {
@@ -270,12 +244,6 @@ type CmkServiceOffering struct {
 	Memory    int    `json:"memory"`
 	Id        string `json:"id"`
 	Name      string `json:"name"`
-}
-
-type CmkDiskOffering struct {
-	DiskSize int    `json:"disksize"`
-	Id       string `json:"id"`
-	Name     string `json:"name"`
 }
 
 type CmkAffinityGroup struct {
