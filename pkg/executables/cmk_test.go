@@ -27,8 +27,11 @@ const (
 
 //go:embed testdata/cloudstack_secret_file.ini
 var cloudstackSecretFile []byte
-var cloudStackb64EncodedSecretPreviousValue string
-var cloudmonkeyInsecureKeyPreviousValue string
+
+var (
+	cloudStackb64EncodedSecretPreviousValue string
+	cloudmonkeyInsecureKeyPreviousValue     string
+)
 
 func saveAndSetEnv() {
 	cloudStackb64EncodedSecretPreviousValue = os.Getenv(cloudStackb64EncodedSecretKey)
@@ -96,8 +99,10 @@ func TestCmkListOperations(t *testing.T) {
 		{
 			testName:          "listzones success",
 			jsonResponseFile1: "testdata/cmk_list_zone_singular.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListZones(ctx, resourceName)
 				return len(response), err
@@ -111,10 +116,14 @@ func TestCmkListOperations(t *testing.T) {
 			testName:          "listzones success on id filter",
 			jsonResponseFile1: "testdata/cmk_list_empty_response.json",
 			jsonResponseFile2: "testdata/cmk_list_zone_singular.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName)},
-			argumentsExecCall2: []string{"-c", configFilePath,
-				"list", "zones", fmt.Sprintf("id=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
+			argumentsExecCall2: []string{
+				"-c", configFilePath,
+				"list", "zones", fmt.Sprintf("id=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListZones(ctx, resourceName)
 				return len(response), err
@@ -128,10 +137,14 @@ func TestCmkListOperations(t *testing.T) {
 			testName:          "listzones no results",
 			jsonResponseFile1: "testdata/cmk_list_empty_response.json",
 			jsonResponseFile2: "testdata/cmk_list_empty_response.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName)},
-			argumentsExecCall2: []string{"-c", configFilePath,
-				"list", "zones", fmt.Sprintf("id=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
+			argumentsExecCall2: []string{
+				"-c", configFilePath,
+				"list", "zones", fmt.Sprintf("id=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListZones(ctx, resourceName)
 				return len(response), err
@@ -144,8 +157,10 @@ func TestCmkListOperations(t *testing.T) {
 		{
 			testName:          "listzones json parse exception",
 			jsonResponseFile1: "testdata/cmk_non_json_response.txt",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListZones(ctx, resourceName)
 				return len(response), err
@@ -158,8 +173,10 @@ func TestCmkListOperations(t *testing.T) {
 		{
 			testName:          "listdiskofferings success",
 			jsonResponseFile1: "testdata/cmk_list_diskoffering_singular.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "diskofferings", fmt.Sprintf("name=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListDiskOfferings(ctx, resourceName)
 				return len(response), err
@@ -173,10 +190,14 @@ func TestCmkListOperations(t *testing.T) {
 			testName:          "listdiskofferings success on id filter",
 			jsonResponseFile1: "testdata/cmk_list_empty_response.json",
 			jsonResponseFile2: "testdata/cmk_list_diskoffering_singular.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "diskofferings", fmt.Sprintf("name=\"%s\"", resourceName)},
-			argumentsExecCall2: []string{"-c", configFilePath,
-				"list", "diskofferings", fmt.Sprintf("id=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
+			argumentsExecCall2: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("id=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListDiskOfferings(ctx, resourceName)
 				return len(response), err
@@ -190,10 +211,14 @@ func TestCmkListOperations(t *testing.T) {
 			testName:          "listdiskofferings no results",
 			jsonResponseFile1: "testdata/cmk_list_empty_response.json",
 			jsonResponseFile2: "testdata/cmk_list_empty_response.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "diskofferings", fmt.Sprintf("name=\"%s\"", resourceName)},
-			argumentsExecCall2: []string{"-c", configFilePath,
-				"list", "diskofferings", fmt.Sprintf("id=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
+			argumentsExecCall2: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("id=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListDiskOfferings(ctx, resourceName)
 				return len(response), err
@@ -206,8 +231,10 @@ func TestCmkListOperations(t *testing.T) {
 		{
 			testName:          "listdiskofferings json parse exception",
 			jsonResponseFile1: "testdata/cmk_non_json_response.txt",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "diskofferings", fmt.Sprintf("name=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "diskofferings", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListDiskOfferings(ctx, resourceName)
 				return len(response), err
@@ -220,8 +247,10 @@ func TestCmkListOperations(t *testing.T) {
 		{
 			testName:          "listaccounts success",
 			jsonResponseFile1: "testdata/cmk_list_account_singular.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "accounts", fmt.Sprintf("name=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "accounts", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListAccounts(ctx, resourceName)
 				return len(response), err
@@ -235,10 +264,14 @@ func TestCmkListOperations(t *testing.T) {
 			testName:          "listaccounts success on id filter",
 			jsonResponseFile1: "testdata/cmk_list_empty_response.json",
 			jsonResponseFile2: "testdata/cmk_list_account_singular.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "accounts", fmt.Sprintf("name=\"%s\"", resourceName)},
-			argumentsExecCall2: []string{"-c", configFilePath,
-				"list", "accounts", fmt.Sprintf("id=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "accounts", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
+			argumentsExecCall2: []string{
+				"-c", configFilePath,
+				"list", "accounts", fmt.Sprintf("id=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListAccounts(ctx, resourceName)
 				return len(response), err
@@ -252,10 +285,14 @@ func TestCmkListOperations(t *testing.T) {
 			testName:          "listaccounts no results",
 			jsonResponseFile1: "testdata/cmk_list_empty_response.json",
 			jsonResponseFile2: "testdata/cmk_list_empty_response.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "accounts", fmt.Sprintf("name=\"%s\"", resourceName)},
-			argumentsExecCall2: []string{"-c", configFilePath,
-				"list", "accounts", fmt.Sprintf("id=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "accounts", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
+			argumentsExecCall2: []string{
+				"-c", configFilePath,
+				"list", "accounts", fmt.Sprintf("id=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListAccounts(ctx, resourceName)
 				return len(response), err
@@ -268,8 +305,10 @@ func TestCmkListOperations(t *testing.T) {
 		{
 			testName:          "listaccounts json parse exception",
 			jsonResponseFile1: "testdata/cmk_non_json_response.txt",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "accounts", fmt.Sprintf("name=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "accounts", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListAccounts(ctx, resourceName)
 				return len(response), err
@@ -282,8 +321,10 @@ func TestCmkListOperations(t *testing.T) {
 		{
 			testName:          "listserviceofferings success",
 			jsonResponseFile1: "testdata/cmk_list_serviceoffering_singular.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "serviceofferings", fmt.Sprintf("name=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "serviceofferings", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListServiceOfferings(ctx, resourceName)
 				return len(response), err
@@ -297,10 +338,14 @@ func TestCmkListOperations(t *testing.T) {
 			testName:          "listserviceofferings success on id filter",
 			jsonResponseFile1: "testdata/cmk_list_empty_response.json",
 			jsonResponseFile2: "testdata/cmk_list_serviceoffering_singular.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "serviceofferings", fmt.Sprintf("name=\"%s\"", resourceName)},
-			argumentsExecCall2: []string{"-c", configFilePath,
-				"list", "serviceofferings", fmt.Sprintf("id=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "serviceofferings", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
+			argumentsExecCall2: []string{
+				"-c", configFilePath,
+				"list", "serviceofferings", fmt.Sprintf("id=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListServiceOfferings(ctx, resourceName)
 				return len(response), err
@@ -314,10 +359,14 @@ func TestCmkListOperations(t *testing.T) {
 			testName:          "listserviceofferings no results",
 			jsonResponseFile1: "testdata/cmk_list_empty_response.json",
 			jsonResponseFile2: "testdata/cmk_list_empty_response.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "serviceofferings", fmt.Sprintf("name=\"%s\"", resourceName)},
-			argumentsExecCall2: []string{"-c", configFilePath,
-				"list", "serviceofferings", fmt.Sprintf("id=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "serviceofferings", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
+			argumentsExecCall2: []string{
+				"-c", configFilePath,
+				"list", "serviceofferings", fmt.Sprintf("id=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListServiceOfferings(ctx, resourceName)
 				return len(response), err
@@ -330,8 +379,10 @@ func TestCmkListOperations(t *testing.T) {
 		{
 			testName:          "listserviceofferings json parse exception",
 			jsonResponseFile1: "testdata/cmk_non_json_response.txt",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "serviceofferings", fmt.Sprintf("name=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "serviceofferings", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListServiceOfferings(ctx, resourceName)
 				return len(response), err
@@ -344,8 +395,10 @@ func TestCmkListOperations(t *testing.T) {
 		{
 			testName:          "listtemplates success",
 			jsonResponseFile1: "testdata/cmk_list_template_singular.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListTemplates(ctx, resourceName)
 				return len(response), err
@@ -359,10 +412,14 @@ func TestCmkListOperations(t *testing.T) {
 			testName:          "listtemplates success on id filter",
 			jsonResponseFile1: "testdata/cmk_list_empty_response.json",
 			jsonResponseFile2: "testdata/cmk_list_template_singular.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName)},
-			argumentsExecCall2: []string{"-c", configFilePath,
-				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("id=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
+			argumentsExecCall2: []string{
+				"-c", configFilePath,
+				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("id=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListTemplates(ctx, resourceName)
 				return len(response), err
@@ -376,10 +433,14 @@ func TestCmkListOperations(t *testing.T) {
 			testName:          "listtemplates no results",
 			jsonResponseFile1: "testdata/cmk_list_empty_response.json",
 			jsonResponseFile2: "testdata/cmk_list_empty_response.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName)},
-			argumentsExecCall2: []string{"-c", configFilePath,
-				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("id=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
+			argumentsExecCall2: []string{
+				"-c", configFilePath,
+				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("id=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListTemplates(ctx, resourceName)
 				return len(response), err
@@ -392,8 +453,10 @@ func TestCmkListOperations(t *testing.T) {
 		{
 			testName:          "listtemplates json parse exception",
 			jsonResponseFile1: "testdata/cmk_non_json_response.txt",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListTemplates(ctx, resourceName)
 				return len(response), err
@@ -406,8 +469,10 @@ func TestCmkListOperations(t *testing.T) {
 		{
 			testName:          "listaffinitygroups success on id filter",
 			jsonResponseFile1: "testdata/cmk_list_affinitygroup_singular.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "affinitygroups", fmt.Sprintf("id=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "affinitygroups", fmt.Sprintf("id=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListAffinityGroupsById(ctx, resourceName)
 				return len(response), err
@@ -420,8 +485,10 @@ func TestCmkListOperations(t *testing.T) {
 		{
 			testName:          "listaffinitygroups no results",
 			jsonResponseFile1: "testdata/cmk_list_empty_response.json",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "affinitygroups", fmt.Sprintf("id=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "affinitygroups", fmt.Sprintf("id=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListAffinityGroupsById(ctx, resourceName)
 				return len(response), err
@@ -434,8 +501,10 @@ func TestCmkListOperations(t *testing.T) {
 		{
 			testName:          "listaffinitygroups json parse exception",
 			jsonResponseFile1: "testdata/cmk_non_json_response.txt",
-			argumentsExecCall1: []string{"-c", configFilePath,
-				"list", "affinitygroups", fmt.Sprintf("id=\"%s\"", resourceName)},
+			argumentsExecCall1: []string{
+				"-c", configFilePath,
+				"list", "affinitygroups", fmt.Sprintf("id=\"%s\"", resourceName),
+			},
 			cmkFunc: func(cmk TestCmkClient, ctx context.Context) (responseLength int, err error) {
 				response, err := cmk.ListAffinityGroupsById(ctx, resourceName)
 				return len(response), err

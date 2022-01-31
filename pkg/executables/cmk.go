@@ -7,11 +7,12 @@ import (
 	b64 "encoding/base64"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/ini.v1"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"gopkg.in/ini.v1"
 
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -21,7 +22,6 @@ import (
 )
 
 const (
-	cmkPath                       = "cmk"
 	cmkConfigFileName             = "cmk_tmp.ini"
 	cloudStackb64EncodedSecretKey = "CLOUDSTACK_B64ENCODED_SECRET"
 	cloudmonkeyInsecureKey        = "CLOUDMONKEY_INSECURE"
@@ -265,6 +265,9 @@ func (c *Cmk) execWithNameAndIdFilters(ctx context.Context, parameterValue strin
 func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, err error) {
 	c.setupExecConfig()
 	envMap, err := c.getEnvMap()
+	if err != nil {
+		return bytes.Buffer{}, fmt.Errorf("failed get environment map: %v", err)
+	}
 	err = c.buildCmkConfigFile(envMap)
 	if err != nil {
 		return bytes.Buffer{}, fmt.Errorf("failed cmk validations: %v", err)

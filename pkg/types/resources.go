@@ -65,7 +65,7 @@ type CmkTemplate struct {
 
 type CmkServiceOffering struct {
 	CpuNumber int    `json:"cpunumber"`
-	CpuSpeed  int    `json:"cpuspeed""`
+	CpuSpeed  int    `json:"cpuspeed"`
 	Memory    int    `json:"memory"`
 	Id        string `json:"id"`
 	Name      string `json:"name"`
