@@ -2,11 +2,25 @@
   path: /rules/-
   value:
     apiGroups:
+      - etcdcluster.cluster.x-k8s.io
+    resources:
+      - '*'
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+      - update
+      - watch
+- op: add
+  path: /rules/-
+  value:
+    apiGroups:
       - cluster.x-k8s.io
     resources:
-      - clusters
-      - clusters/status
+      - '*'
     verbs:
+      - create
       - get
       - list
       - patch
@@ -20,20 +34,7 @@
     resources:
       - '*'
     verbs:
-      - get
-      - list
-      - patch
-      - update
-      - watch
-- op: add
-  path: /rules/-
-  value:
-    apiGroups:
-      - cluster.x-k8s.io
-    resources:
-      - machinedeployments
-      - machinedeployments/status
-    verbs:
+      - create
       - get
       - list
       - patch
@@ -48,6 +49,7 @@
       - kubeadmconfigtemplates
       - kubeadmconfigtemplates/status
     verbs:
+      - create
       - get
       - list
       - patch
@@ -67,6 +69,7 @@
       - patch
       - update
       - watch
+      - create
 - op: add
   path: /rules/-
   value:

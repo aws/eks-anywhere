@@ -3259,11 +3259,22 @@ rules:
   - list
   - watch
 - apiGroups:
+  - etcdcluster.cluster.x-k8s.io
+  resources:
+  - '*'
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - cluster.x-k8s.io
   resources:
-  - clusters
-  - clusters/status
+  - '*'
   verbs:
+  - create
   - get
   - list
   - patch
@@ -3274,17 +3285,7 @@ rules:
   resources:
   - '*'
   verbs:
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cluster.x-k8s.io
-  resources:
-  - machinedeployments
-  - machinedeployments/status
-  verbs:
+  - create
   - get
   - list
   - patch
@@ -3296,6 +3297,7 @@ rules:
   - kubeadmconfigtemplates
   - kubeadmconfigtemplates/status
   verbs:
+  - create
   - get
   - list
   - patch
@@ -3312,6 +3314,7 @@ rules:
   - patch
   - update
   - watch
+  - create
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
