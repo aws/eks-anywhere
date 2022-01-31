@@ -8,7 +8,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"time"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -29,7 +28,6 @@ const (
 	etcdadmBootstrapProviderName  = "etcdadm-bootstrap"
 	etcdadmControllerProviderName = "etcdadm-controller"
 	kubeadmBootstrapProviderName  = "kubeadm"
-	moveManagementRetry           = 15 * time.Minute
 )
 
 //go:embed config/clusterctl.yaml
