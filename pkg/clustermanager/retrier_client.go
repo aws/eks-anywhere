@@ -57,10 +57,5 @@ func (c *retrierClient) installCustomComponents(ctx context.Context, clusterSpec
 		}
 	}
 
-	err = c.Retry(
-		func() error {
-			return c.waitForDeployments(ctx, internal.EksaDeployments, cluster)
-		},
-	)
-	return err
+	return c.waitForDeployments(ctx, internal.EksaDeployments, cluster)
 }
