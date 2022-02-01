@@ -217,9 +217,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 		values["awsIamAuth"] = true
 	}
 
-	if len(clusterSpec.Spec.ControlPlaneConfiguration.Taints) > 0 {
-		values["controlPlaneTaints"] = clusterSpec.Spec.ControlPlaneConfiguration.Taints
-	}
+	values["controlPlaneTaints"] = clusterSpec.Spec.ControlPlaneConfiguration.Taints
 
 	return values
 }
@@ -231,14 +229,16 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupConfiguration 
 		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf))
 
 	values := map[string]interface{}{
-		"clusterName":         clusterSpec.Name,
-		"kubernetesVersion":   bundle.KubeDistro.Kubernetes.Tag,
-		"kindNodeImage":       bundle.EksD.KindNode.VersionedImage(),
-		"eksaSystemNamespace": constants.EksaSystemNamespace,
-		"kubeletExtraArgs":    kubeletExtraArgs.ToPartialYaml(),
-		"workerReplicas":      workerNodeGroupConfiguration.Count,
-		"workerNodeGroupName": fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name),
+		"clusterName":           clusterSpec.Name,
+		"kubernetesVersion":     bundle.KubeDistro.Kubernetes.Tag,
+		"kindNodeImage":         bundle.EksD.KindNode.VersionedImage(),
+		"eksaSystemNamespace":   constants.EksaSystemNamespace,
+		"kubeletExtraArgs":      kubeletExtraArgs.ToPartialYaml(),
+		"workerReplicas":        workerNodeGroupConfiguration.Count,
+		"workerNodeGroupName":   fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name),
+		"workerNodeGroupTaints": workerNodeGroupConfiguration.Taints,
 	}
+
 	return values
 }
 
@@ -247,6 +247,9 @@ func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec) bool {
 }
 
 func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec) bool {
+	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Spec.WorkerNodeGroupConfigurations, newSpec.Spec.WorkerNodeGroupConfigurations) {
+		return true
+	}
 	return (oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion) || (oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number)
 }
 

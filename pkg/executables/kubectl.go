@@ -1136,9 +1136,11 @@ func (k *Kubectl) ApplyTolerationsFromTaints(ctx context.Context, oldTaints []co
 		return err
 	}
 	var appliedTolerations []Toleration
-	err = json.Unmarshal(output.Bytes(), &appliedTolerations)
-	if err != nil {
-		return fmt.Errorf("error parsing toleration response: %v", err)
+	if len(output.String()) > 0 {
+		err = json.Unmarshal(output.Bytes(), &appliedTolerations)
+		if err != nil {
+			return fmt.Errorf("error parsing toleration response: %v", err)
+		}
 	}
 
 	oldTolerationSet := make(map[Toleration]bool)

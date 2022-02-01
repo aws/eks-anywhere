@@ -9,11 +9,12 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
-          taints: []
+          taints:
+            - key: key1
+              value: val1
+              effect: PreferNoSchedule
           kubeletExtraArgs:
             cloud-provider: external
-            read-only-port: "0"
-            anonymous-auth: "false"
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           name: '{{ ds.meta_data.hostname }}'
       preKubeadmCommands:
@@ -71,14 +72,15 @@ spec:
       datastore: /SDDC-Datacenter/datastore/WorkloadDatastore
       diskGiB: 25
       folder: '/SDDC-Datacenter/vm'
-      memoryMiB: 8192
+      memoryMiB: 4096
       network:
         devices:
         - dhcp4: true
           networkName: /SDDC-Datacenter/network/sddc-cgw-network-1
-      numCPUs: 2
+      numCPUs: 3
       resourcePool: '*/Resources'
       server: vsphere_server
+      storagePolicyName: "vSAN Default Storage Policy"
       template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
       thumbprint: 'ABCDEFG'
 
