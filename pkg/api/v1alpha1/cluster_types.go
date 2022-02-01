@@ -193,6 +193,8 @@ type WorkerNodeGroupConfiguration struct {
 	Count int `json:"count,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
+	// Taints define the set of taints to be applied on worker nodes
+	Taints []corev1.Taint `json:"taints,omitempty"`
 	// Labels define the labels to assign to the node
 	Labels map[string]string `json:"labels,omitempty"`
 }
@@ -222,7 +224,36 @@ func WorkerNodeGroupConfigurationsSliceEqual(a, b []WorkerNodeGroupConfiguration
 			delete(m, k)
 		}
 	}
-	return len(m) == 0
+	if len(m) != 0 {
+		return false
+	}
+
+	for index, wngc := range a {
+		sameTaints := TaintsSliceEqual(wngc.Taints, b[index].Taints)
+		if !sameTaints {
+			return false
+		}
+	}
+
+	return true
+}
+
+func WorkerNodeGroupConfigurationSliceTaintsEqual(a, b []WorkerNodeGroupConfiguration) bool {
+	m := make(map[string][]corev1.Taint, len(a))
+	for _, wngc := range a {
+		m[wngc.Name] = wngc.Taints
+	}
+
+	for _, wngc := range b {
+		if _, ok := m[wngc.Name]; !ok {
+			continue
+		} else {
+			if !TaintsSliceEqual(m[wngc.Name], wngc.Taints) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 type ClusterNetwork struct {

@@ -9,7 +9,10 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
-          taints: []
+          taints:
+            - key: key1
+              value: val1
+              effect: PreferNoSchedule
           kubeletExtraArgs:
             cloud-provider: external
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
@@ -54,7 +57,7 @@ spec:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: VSphereMachineTemplate
         name: test-md-0-1234567890000
-      version: v1.21.2-eks-1-21-4
+      version: v1.19.8-eks-1-19-4
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: VSphereMachineTemplate
@@ -78,7 +81,7 @@ spec:
       resourcePool: '*/Resources'
       server: vsphere_server
       storagePolicyName: "vSAN Default Storage Policy"
-      template: /SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.21.2
+      template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
       thumbprint: 'ABCDEFG'
 
 ---

@@ -1483,3 +1483,16 @@ func TestKubectlGetDaemonSetError(t *testing.T) {
 		return tt.k.GetDaemonSet(tt.ctx, tt.name, tt.namespace, tt.kubeconfig)
 	}).testError()
 }
+
+func TestApplyTolerationsFromTaints(t *testing.T) {
+	tt := newKubectlTest(t)
+	params := []string{
+		"get", "ds", "test",
+		"-o", "jsonpath={range .spec.template.spec}{.tolerations} {end}",
+		"-n", "testNs", "--kubeconfig", tt.cluster.KubeconfigFile,
+	}
+	tt.e.EXPECT().Execute(
+		tt.ctx, gomock.Eq(params)).Return(bytes.Buffer{}, nil)
+	var taints []corev1.Taint
+	tt.Expect(tt.k.ApplyTolerationsFromTaints(tt.ctx, taints, taints, "ds", "test", tt.cluster.KubeconfigFile, "testNs", "/test")).To(Succeed())
+}
