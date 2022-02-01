@@ -11,7 +11,7 @@ spec:
       gitCommit: ""
       gitTag: ""
       number: 0
-      version: v0.0.0-dev
+      version: v0.6.4-beta-fruitstand
     - bundleManifestUrl: "https://eks-anywhere-beta.s3.amazonaws.com/0.3.0/bundle-release.yaml"
       date: ""
       eksABinary: {}

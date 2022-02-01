@@ -89,6 +89,10 @@ spec:
         local:
           imageRepository: {{.etcdRepository}}
           imageTag: {{.etcdImageTag}}
+{{- if .etcdExtraArgs }}
+          extraArgs:
+{{ .etcdExtraArgs.ToYaml | indent 12 }}
+{{- end }}
 {{- end }}
       dns:
         type: CoreDNS
@@ -123,11 +127,6 @@ spec:
           name: audit-log-dir
           pathType: DirectoryOrCreate
           readOnly: false
-        - hostPath: /var/log/kubernetes/api-audit.log
-          mountPath: /var/log/kubernetes/api-audit.log
-          name: audit-log
-          pathType: FileOrCreate
-          readOnly: false
 {{- if .awsIamAuth}}
         - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
           mountPath: /etc/kubernetes/aws-iam-authenticator/
@@ -142,9 +141,15 @@ spec:
         extraArgs:
           cloud-provider: external
           profiling: "false"
+{{- if .controllermanagerExtraArgs }}
+{{ .controllermanagerExtraArgs.ToYaml | indent 10 }}
+{{- end }}
       scheduler:
         extraArgs:
           profiling: "false"
+{{- if .schedulerExtraArgs }}
+{{ .schedulerExtraArgs.ToYaml | indent 10 }}
+{{- end }}
     files:
     - content: |
 {{ .auditPolicy | indent 8 }}
@@ -221,6 +226,9 @@ spec:
           provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
           read-only-port: "0"
           anonymous-auth: "false"
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
         name: '{{`{{ ds.meta_data.local_hostname }}`}}'
     joinConfiguration:
       nodeRegistration:
@@ -229,6 +237,9 @@ spec:
           provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
           read-only-port: "0"
           anonymous-auth: "false"
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
         name: '{{`{{ ds.meta_data.local_hostname }}`}}'
     preKubeadmCommands:
     - swapoff -a
@@ -275,6 +286,9 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+{{- if .etcdCipherSuites }}
+    cipherSuites: {{.etcdCipherSuites}}
+{{- end }}
     users:
     - name: {{.etcdSshUsername}}
       sshAuthorizedKeys:
