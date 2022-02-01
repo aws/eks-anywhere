@@ -228,13 +228,31 @@ func WorkerNodeGroupConfigurationsSliceEqual(a, b []WorkerNodeGroupConfiguration
 		return false
 	}
 
-	for index, slice := range a {
-		sameTaints := TaintsSliceEqual(slice.Taints, b[index].Taints)
+	for index, wngc := range a {
+		sameTaints := TaintsSliceEqual(wngc.Taints, b[index].Taints)
 		if !sameTaints {
 			return false
 		}
 	}
 
+	return true
+}
+
+func WorkerNodeGroupConfigurationSliceTaintsEqual(a, b []WorkerNodeGroupConfiguration) bool {
+	m := make(map[string][]corev1.Taint, len(a))
+	for _, wngc := range a {
+		m[wngc.Name] = wngc.Taints
+	}
+
+	for _, wngc := range b {
+		if _, ok := m[wngc.Name]; !ok {
+			continue
+		} else {
+			if !TaintsSliceEqual(m[wngc.Name], wngc.Taints) {
+				return false
+			}
+		}
+	}
 	return true
 }
 
