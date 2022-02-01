@@ -180,7 +180,6 @@ func (c *Cmk) ValidateZonePresent(ctx context.Context, zone string) error {
 	return nil
 }
 
-
 // TODO: Add support for domain filtering
 func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string) error {
 	result, err := c.execWithNameAndIdFilters(ctx, account, "list", "accounts")

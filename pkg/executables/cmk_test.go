@@ -21,9 +21,9 @@ import (
 const (
 	cmkConfigFileName             = "cmk_tmp.ini"
 	resourceName                  = "TEST_RESOURCE"
-	zoneName					  = "zone1"
-	accountName					  = "account1"
-	domainName					  = "domain1"
+	zoneName                      = "zone1"
+	accountName                   = "account1"
+	domainName                    = "domain1"
 	cloudStackb64EncodedSecretKey = "CLOUDSTACK_B64ENCODED_SECRET"
 	cloudmonkeyInsecureKey        = "CLOUDMONKEY_INSECURE"
 )
