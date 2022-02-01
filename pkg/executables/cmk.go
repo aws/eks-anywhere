@@ -45,56 +45,165 @@ type Cmk struct {
 	execConfig *cmkExecConfig
 }
 
-func (c *Cmk) SearchTemplate(ctx context.Context, domain string, zone string, account string, template string) (string, error) {
-	templates, err := c.ListTemplates(ctx, template)
+// TODO: Add support for domain, account filtering
+func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domain, zone, account, template string) error {
+	result, err := c.execWithNameAndIdFilters(ctx, template, "list", "templates", "templatefilter=all", "listall=true")
 	if err != nil {
-		return "", fmt.Errorf("search template %s error: %v", template, err)
-	} else if len(templates) > 1 {
-		return "", fmt.Errorf("duplicate templates %s found", template)
+		return fmt.Errorf("error getting templates info: %v", err)
+	}
+	if result.Len() == 0 {
+		return fmt.Errorf("template %s not found", template)
+	}
+
+	response := struct {
+		CmkTemplates []types.CmkTemplate `json:"template"`
+	}{}
+	err = json.Unmarshal(result.Bytes(), &response)
+	if err != nil {
+		return fmt.Errorf("failed to parse response into json: %v", err)
+	}
+	templates := response.CmkTemplates
+	if len(templates) > 1 {
+		return fmt.Errorf("duplicate templates %s found", template)
 	} else if len(templates) == 0 {
-		return "", fmt.Errorf("template %s not found", template)
+		return fmt.Errorf("template %s not found", template)
 	}
-	return templates[0].Name, nil
+	return nil
 }
 
-func (c *Cmk) SearchComputeOffering(ctx context.Context, domain string, zone string, account string, computeOffering string) (string, error) {
-	offerings, err := c.ListServiceOfferings(ctx, computeOffering)
+// TODO: Add support for domain, account filtering
+func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, domain, zone, account, serviceOffering string) error {
+	result, err := c.execWithNameAndIdFilters(ctx, serviceOffering, "list", "serviceofferings")
 	if err != nil {
-		return "", fmt.Errorf("compute offering %s not found. error: %v", computeOffering, err)
-	} else if len(offerings) > 1 {
-		return "", fmt.Errorf("duplicate compute offering %s found", computeOffering)
-	} else if len(offerings) == 0 {
-		return "", fmt.Errorf("compute offering %s not found", computeOffering)
+		return fmt.Errorf("error getting service offerings info: %v", err)
+	}
+	if result.Len() == 0 {
+		return fmt.Errorf("service offering %s not found", serviceOffering)
 	}
 
-	return offerings[0].Name, nil
+	response := struct {
+		CmkServiceOfferings []types.CmkServiceOffering `json:"serviceoffering"`
+	}{}
+	err = json.Unmarshal(result.Bytes(), &response)
+	if err != nil {
+		return fmt.Errorf("failed to parse response into json: %v", err)
+	}
+	offerings := response.CmkServiceOfferings
+	if len(offerings) > 1 {
+		return fmt.Errorf("duplicate service offering %s found", serviceOffering)
+	} else if len(offerings) == 0 {
+		return fmt.Errorf("service offering %s not found", serviceOffering)
+	}
+
+	return nil
 }
 
-func (c *Cmk) SearchDiskOffering(ctx context.Context, domain string, zone string, account string, diskOffering string) (string, error) {
+// TODO: Add support for domain, account filtering
+func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, domain, zone, account, diskOffering string) error {
 	if diskOffering == "" {
-		return diskOffering, nil
+		return nil
 	}
-	offerings, err := c.ListDiskOfferings(ctx, diskOffering)
+	result, err := c.execWithNameAndIdFilters(ctx, diskOffering, "list", "diskofferings")
 	if err != nil {
-		return "", fmt.Errorf("disk offering %s not found. error: %v", diskOffering, err)
-	} else if len(offerings) > 1 {
-		return "", fmt.Errorf("duplicate disk offering %s found", diskOffering)
-	} else if len(offerings) == 0 {
-		return "", fmt.Errorf("disk offering %s not found", diskOffering)
+		return fmt.Errorf("error getting disk offerings info: %v", err)
 	}
-	return offerings[0].Name, nil
+	if result.Len() == 0 {
+		return fmt.Errorf("disk offering %s not found", diskOffering)
+	}
+
+	response := struct {
+		CmkDiskOfferings []types.CmkDiskOffering `json:"diskoffering"`
+	}{}
+	err = json.Unmarshal(result.Bytes(), &response)
+	if err != nil {
+		return fmt.Errorf("failed to parse response into json: %v", err)
+	}
+	offerings := response.CmkDiskOfferings
+	if len(offerings) > 1 {
+		return fmt.Errorf("duplicate disk offering %s found", diskOffering)
+	} else if len(offerings) == 0 {
+		return fmt.Errorf("disk offering %s not found", diskOffering)
+	}
+	return nil
 }
 
-func (c *Cmk) SearchAffinityGroups(ctx context.Context, domain string, zone string, account string, affinityGroupIds []string) error {
+// TODO: Add support for domain, account filtering
+func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domain, zone, account string, affinityGroupIds []string) error {
 	for _, affinityGroupId := range affinityGroupIds {
-		affinityGroup, err := c.ListAffinityGroupsById(ctx, affinityGroupId)
+		idFilterParam := fmt.Sprintf("id=\"%s\"", affinityGroupId)
+		result, err := c.exec(ctx, "list", "affinitygroups", idFilterParam)
 		if err != nil {
-			return fmt.Errorf("affinity group %s not found. error: %v", affinityGroupId, err)
-		} else if len(affinityGroup) > 1 {
+			return fmt.Errorf("error getting affinity group info: %v", err)
+		}
+		if result.Len() == 0 {
+			return fmt.Errorf(fmt.Sprintf("affinity group %s not found", affinityGroupId))
+		}
+
+		response := struct {
+			CmkAffinityGroups []types.CmkAffinityGroup `json:"affinitygroup"`
+		}{}
+		err = json.Unmarshal(result.Bytes(), &response)
+		if err != nil {
+			return fmt.Errorf("failed to parse response into json: %v", err)
+		}
+		affinityGroup := response.CmkAffinityGroups
+		if len(affinityGroup) > 1 {
 			return fmt.Errorf("duplicate affinity group %s found", affinityGroupId)
 		} else if len(affinityGroup) == 0 {
 			return fmt.Errorf("affinity group %s not found", affinityGroupId)
 		}
+	}
+	return nil
+}
+
+func (c *Cmk) ValidateZonePresent(ctx context.Context, zone string) error {
+	result, err := c.execWithNameAndIdFilters(ctx, zone, "list", "zones")
+	if err != nil {
+		return fmt.Errorf("error getting zones info: %v", err)
+	}
+	if result.Len() == 0 {
+		return fmt.Errorf("zone %s not found", zone)
+	}
+
+	response := struct {
+		CmkZones []types.CmkZone `json:"zone"`
+	}{}
+	err = json.Unmarshal(result.Bytes(), &response)
+	if err != nil {
+		return fmt.Errorf("failed to parse response into json: %v", err)
+	}
+	zones := response.CmkZones
+	if len(zones) > 1 {
+		return fmt.Errorf("duplicate zone %s found", zone)
+	} else if len(zones) == 0 {
+		return fmt.Errorf("zone %s not found", zone)
+	}
+	return nil
+}
+
+
+// TODO: Add support for domain filtering
+func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string) error {
+	result, err := c.execWithNameAndIdFilters(ctx, account, "list", "accounts")
+	if err != nil {
+		return fmt.Errorf("error getting accounts info: %v", err)
+	}
+	if result.Len() == 0 {
+		return fmt.Errorf("account %s not found", account)
+	}
+
+	response := struct {
+		CmkAccounts []types.CmkAccount `json:"account"`
+	}{}
+	err = json.Unmarshal(result.Bytes(), &response)
+	if err != nil {
+		return fmt.Errorf("failed to parse response into json: %v", err)
+	}
+	accounts := response.CmkAccounts
+	if len(accounts) > 1 {
+		return fmt.Errorf("duplicate account %s found", account)
+	} else if len(accounts) == 0 {
+		return fmt.Errorf("account %s not found", account)
 	}
 	return nil
 }
@@ -122,126 +231,6 @@ func (c *Cmk) ValidateCloudStackConnection(ctx context.Context) error {
 	}
 	logger.MarkPass("Connected to CloudStack server")
 	return nil
-}
-
-// TODO: Add support for domain, account filtering
-func (c *Cmk) ListTemplates(ctx context.Context, template string) ([]types.CmkTemplate, error) {
-	result, err := c.execWithNameAndIdFilters(ctx, template, "list", "templates", "templatefilter=all", "listall=true")
-	if err != nil {
-		return make([]types.CmkTemplate, 0), fmt.Errorf("error getting templates info: %v", err)
-	}
-	if result.Len() == 0 {
-		return make([]types.CmkTemplate, 0), nil
-	}
-
-	response := struct {
-		CmkTemplates []types.CmkTemplate `json:"template"`
-	}{}
-	err = json.Unmarshal(result.Bytes(), &response)
-	if err != nil {
-		return make([]types.CmkTemplate, 0), fmt.Errorf("failed to parse response into json: %v", err)
-	}
-	return response.CmkTemplates, nil
-}
-
-// TODO: Add support for domain, account filtering
-func (c *Cmk) ListServiceOfferings(ctx context.Context, offering string) ([]types.CmkServiceOffering, error) {
-	result, err := c.execWithNameAndIdFilters(ctx, offering, "list", "serviceofferings")
-	if err != nil {
-		return make([]types.CmkServiceOffering, 0), fmt.Errorf("error getting service offerings info: %v", err)
-	}
-	if result.Len() == 0 {
-		return make([]types.CmkServiceOffering, 0), nil
-	}
-
-	response := struct {
-		CmkServiceOfferings []types.CmkServiceOffering `json:"serviceoffering"`
-	}{}
-	err = json.Unmarshal(result.Bytes(), &response)
-	if err != nil {
-		return make([]types.CmkServiceOffering, 0), fmt.Errorf("failed to parse response into json: %v", err)
-	}
-	return response.CmkServiceOfferings, nil
-}
-
-// TODO: Add support for domain, account filtering
-func (c *Cmk) ListDiskOfferings(ctx context.Context, offering string) ([]types.CmkDiskOffering, error) {
-	result, err := c.execWithNameAndIdFilters(ctx, offering, "list", "diskofferings")
-	if err != nil {
-		return make([]types.CmkDiskOffering, 0), fmt.Errorf("error getting disk offerings info: %v", err)
-	}
-	if result.Len() == 0 {
-		return make([]types.CmkDiskOffering, 0), nil
-	}
-
-	response := struct {
-		CmkDiskOfferings []types.CmkDiskOffering `json:"diskoffering"`
-	}{}
-	err = json.Unmarshal(result.Bytes(), &response)
-	if err != nil {
-		return make([]types.CmkDiskOffering, 0), fmt.Errorf("failed to parse response into json: %v", err)
-	}
-	return response.CmkDiskOfferings, nil
-}
-
-// TODO: Add support for domain, account filtering
-func (c *Cmk) ListZones(ctx context.Context, offering string) ([]types.CmkZone, error) {
-	result, err := c.execWithNameAndIdFilters(ctx, offering, "list", "zones")
-	if err != nil {
-		return make([]types.CmkZone, 0), fmt.Errorf("error getting zones info: %v", err)
-	}
-	if result.Len() == 0 {
-		return make([]types.CmkZone, 0), nil
-	}
-
-	response := struct {
-		CmkZones []types.CmkZone `json:"zone"`
-	}{}
-	err = json.Unmarshal(result.Bytes(), &response)
-	if err != nil {
-		return make([]types.CmkZone, 0), fmt.Errorf("failed to parse response into json: %v", err)
-	}
-	return response.CmkZones, nil
-}
-
-// TODO: Add support for domain filtering
-func (c *Cmk) ListAccounts(ctx context.Context, account string) ([]types.CmkAccount, error) {
-	result, err := c.execWithNameAndIdFilters(ctx, account, "list", "accounts")
-	if err != nil {
-		return make([]types.CmkAccount, 0), fmt.Errorf("error getting accounts info: %v", err)
-	}
-	if result.Len() == 0 {
-		return make([]types.CmkAccount, 0), nil
-	}
-
-	response := struct {
-		CmkAccounts []types.CmkAccount `json:"account"`
-	}{}
-	err = json.Unmarshal(result.Bytes(), &response)
-	if err != nil {
-		return make([]types.CmkAccount, 0), fmt.Errorf("failed to parse response into json: %v", err)
-	}
-	return response.CmkAccounts, nil
-}
-
-func (c *Cmk) ListAffinityGroupsById(ctx context.Context, affinityGroupId string) ([]types.CmkAffinityGroup, error) {
-	idFilterParam := fmt.Sprintf("id=\"%s\"", affinityGroupId)
-	result, err := c.exec(ctx, "list", "affinitygroups", idFilterParam)
-	if err != nil {
-		return make([]types.CmkAffinityGroup, 0), fmt.Errorf("error getting affinity group info: %v", err)
-	}
-	if result.Len() == 0 {
-		return make([]types.CmkAffinityGroup, 0), nil
-	}
-
-	response := struct {
-		CmkAffinityGroups []types.CmkAffinityGroup `json:"affinitygroup"`
-	}{}
-	err = json.Unmarshal(result.Bytes(), &response)
-	if err != nil {
-		return make([]types.CmkAffinityGroup, 0), fmt.Errorf("failed to parse response into json: %v", err)
-	}
-	return response.CmkAffinityGroups, nil
 }
 
 func (c *Cmk) execWithNameAndIdFilters(ctx context.Context, parameterValue string, genericArgs ...string) (stdout bytes.Buffer, err error) {
@@ -343,21 +332,4 @@ func (c *Cmk) setupExecConfig() {
 	c.execConfig = &cmkExecConfig{
 		env: make(map[string]string),
 	}
-}
-
-//nolint Currently unused to keep PR's smaller. Will be used in subsequent PR
-// TODO: Remove nolint once this method is used
-func (c *Cmk) validateAndSetupCreds() (map[string]string, error) {
-	var cloudStackb64EncodedSecret string
-	var ok bool
-	var envMap map[string]string
-	if cloudStackb64EncodedSecret, ok = os.LookupEnv(cloudStackb64EncodedSecretKey); !ok || len(cloudStackb64EncodedSecret) <= 0 {
-		return nil, fmt.Errorf("%s is not set or is empty: %t", cloudStackb64EncodedSecretKey, ok)
-	}
-	envMap, err := c.getEnvMap()
-	if err != nil {
-		return nil, fmt.Errorf("%v", err)
-	}
-
-	return envMap, nil
 }
