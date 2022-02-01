@@ -10,9 +10,7 @@ spec:
   clusterName: test
   replicas: 1
   selector:
-    matchLabels:
-      cluster.x-k8s.io/cluster-name: test
-      pool: md-0
+    matchLabels: {}
   template:
     metadata:
       labels:
