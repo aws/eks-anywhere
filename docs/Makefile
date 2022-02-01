@@ -10,7 +10,9 @@ help: ## Show this help. Requires locally installed npm and hugo.
 
 build: submodule ## Generate the static site into the /public folder
 	npm install
+	cd themes/docsy; git am ../../patches/0001-Make-docsy-js-files-static.patch; cd ../..
 	hugo --environment production --cleanDestinationDir
+	echo git submodule foreach --recursive git reset --hard
 
 release: build
 
