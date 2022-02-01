@@ -18,7 +18,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
-	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 const (
@@ -56,7 +55,7 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domain, zone, account
 	}
 
 	response := struct {
-		CmkTemplates []types.CmkTemplate `json:"template"`
+		CmkTemplates []CmkTemplate `json:"template"`
 	}{}
 	err = json.Unmarshal(result.Bytes(), &response)
 	if err != nil {
@@ -82,7 +81,7 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, domain, zone, 
 	}
 
 	response := struct {
-		CmkServiceOfferings []types.CmkServiceOffering `json:"serviceoffering"`
+		CmkServiceOfferings []CmkServiceOffering `json:"serviceoffering"`
 	}{}
 	err = json.Unmarshal(result.Bytes(), &response)
 	if err != nil {
@@ -112,7 +111,7 @@ func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, domain, zone, acc
 	}
 
 	response := struct {
-		CmkDiskOfferings []types.CmkDiskOffering `json:"diskoffering"`
+		CmkDiskOfferings []CmkDiskOffering `json:"diskoffering"`
 	}{}
 	err = json.Unmarshal(result.Bytes(), &response)
 	if err != nil {
@@ -140,7 +139,7 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domain, zone, a
 		}
 
 		response := struct {
-			CmkAffinityGroups []types.CmkAffinityGroup `json:"affinitygroup"`
+			CmkAffinityGroups []CmkAffinityGroup `json:"affinitygroup"`
 		}{}
 		err = json.Unmarshal(result.Bytes(), &response)
 		if err != nil {
@@ -166,7 +165,7 @@ func (c *Cmk) ValidateZonePresent(ctx context.Context, zone string) error {
 	}
 
 	response := struct {
-		CmkZones []types.CmkZone `json:"zone"`
+		CmkZones []CmkZone `json:"zone"`
 	}{}
 	err = json.Unmarshal(result.Bytes(), &response)
 	if err != nil {
@@ -193,7 +192,7 @@ func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string) error 
 	}
 
 	response := struct {
-		CmkAccounts []types.CmkAccount `json:"account"`
+		CmkAccounts []CmkAccount `json:"account"`
 	}{}
 	err = json.Unmarshal(result.Bytes(), &response)
 	if err != nil {
@@ -235,13 +234,13 @@ func (c *Cmk) ValidateCloudStackConnection(ctx context.Context) error {
 
 func (c *Cmk) execWithNameAndIdFilters(ctx context.Context, parameterValue string, genericArgs ...string) (stdout bytes.Buffer, err error) {
 	argsWithNameFilterArg := append(genericArgs, fmt.Sprintf("name=\"%s\"", parameterValue))
-	argsWithIdFilterArg := append(genericArgs, fmt.Sprintf("id=\"%s\"", parameterValue))
 	result, err := c.exec(ctx, argsWithNameFilterArg...)
 	if err != nil {
 		return result, fmt.Errorf("error getting resource info filtering by id %s: %v", parameterValue, err)
 	}
 	if result.Len() == 0 {
 		msg := fmt.Sprintf("No resources found with name %s. Trying again filtering by id instead", parameterValue)
+		argsWithIdFilterArg := append(genericArgs, fmt.Sprintf("id=\"%s\"", parameterValue))
 		logger.V(6).Info(msg)
 		result, err = c.exec(ctx, argsWithIdFilterArg...)
 		if err != nil {
@@ -332,4 +331,42 @@ func (c *Cmk) setupExecConfig() {
 	c.execConfig = &cmkExecConfig{
 		env: make(map[string]string),
 	}
+}
+
+type CmkTemplate struct {
+	Id       string `json:"id"`
+	Name     string `json:"name"`
+	Zonename string `json:"zonename"`
+}
+
+type CmkServiceOffering struct {
+	CpuNumber int    `json:"cpunumber"`
+	CpuSpeed  int    `json:"cpuspeed"`
+	Memory    int    `json:"memory"`
+	Id        string `json:"id"`
+	Name      string `json:"name"`
+}
+
+type CmkDiskOffering struct {
+	DiskSize int    `json:"disksize"`
+	Id       string `json:"id"`
+	Name     string `json:"name"`
+}
+
+type CmkAffinityGroup struct {
+	Type string `json:"type"`
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type CmkZone struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type CmkAccount struct {
+	RoleType string `json:"roletype"`
+	Domain   string `json:"domain"`
+	Id       string `json:"id"`
+	Name     string `json:"name"`
 }
