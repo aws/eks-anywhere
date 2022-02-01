@@ -94,10 +94,10 @@ spec:
           name: audit-policy
           pathType: File
           readOnly: true
-        - hostPath: /var/log/kubernetes/api-audit.log
-          mountPath: /var/log/kubernetes/api-audit.log
-          name: audit-log
-          pathType: FileOrCreate
+        - hostPath: /var/log/kubernetes
+          mountPath: /var/log/kubernetes
+          name: audit-log-dir
+          pathType: DirectoryOrCreate
           readOnly: false
       controllerManager:
         extraArgs:
