@@ -10,9 +10,7 @@ spec:
   clusterName: {{.clusterName}}
   replicas: {{.workerReplicas}}
   selector:
-    matchLabels:
-      cluster.x-k8s.io/cluster-name: {{.clusterName}}
-      pool: {{.workerPoolName}}
+    matchLabels: {}
   template:
     metadata:
       labels:
