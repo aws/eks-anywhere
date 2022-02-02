@@ -16,18 +16,27 @@ As an EKS Anywhere user:
 * I want to specify the template I want to import in a simple manner
 * I want the create command to know to use the pre-imported template
 
+### Users
+
+There are two types of users who would use this functionality. 
+
+* EKS-A maintainers who are in charge of creating the cluster
+* VCenter admins who only want to import the OVA beforehand to hand off to EKS-A maintainers
+
 
 ## Overview of Solution
 
 With this feature, a user can specify to import the latest OVA template before create by
-running a command. They would specify the cluster spec as input so that there is nothing 
-new that they need to know in terms of flags or different configuration. We would be introducing new
-subcommands as follows:
+running a command. They would either specify the cluster spec or the appropriate flags as input. 
+We would be introducing new subcommands as follows:
 
 ```
-eksctl anywhere import vsphere template -f <cluster_spec.yaml>
+eksctl anywhere import vsphere template -f <cluster_spec.yaml> --name <template_name>
 ```
-
+or
+```
+eksctl anywhere import vsphere template --name <template_name> --path <vsphere_template_path> --os <os_family> --server <server_url> 
+```
 
 ### Solution Details
 
@@ -44,28 +53,33 @@ manually imported the OVA into a template in vcenter, or not specify the templat
 field empty if they want it imported via a generated name that is based on the Kubernetes
 version, OS, and hash of the build. 
 
-With this command, if a user has the template name defined, we will check to see if a template of that 
-name already exists and the appropriate tags are set. If the template does not exist, we will import the template under
-that name with the appropriate tags. If the template exists but the tags don't match the bundle 
-that the CLI is configured with, we will error saying that the appropriate tags are not set, allowing
-the user to decide if they want to manually fix the tags or delete the template first before running
-the command again. 
+If the user specifies the cluster spec as input, we will get most of the template configuration
+from there except for the name. If there is a name defined, we will throw an error mentioning
+that they have a template name defined and to remove the template name if they want to import as
+we want to get the name either from the flag. If they choose not to specify a flag for the template name,
+we will default to the name that we use in the `create` command today. This will protect the user from
+making unintended changes. 
 
-If a user does not have the template name defined, then we will do what we already do today in the `create` command, 
-which is importing the template under the name that we have predefined and setting the appropriate tags 
-for the user. 
+If the user specified the flags as input, we will get all the information from the flags themselves.
+The behavior of the import would not change otherwise, where they can choose to specify the template 
+name or not. 
 
 For both cases, we will have output saying that the template has been imported under the 
 specific name set in vcenter. If the user did not have the template name defined, the `create`
 cluster will still use the template that was imported before because the name would match.
 It would only change if the user ran `import`, upgraded the CLI (or the bundle got updated), and then 
-ran `create`.
+ran `create`. The template would also be imported with the appropriate tags with any of the options.
+
+If the user specifies both cluster spec and flags, we will throw an error mentioning to choose
+whether to specify the cluster spec or to use the flags.
 
 ### Alternatives
 
 We could also solve this by not passing in the cluster spec file and just take in all the values
 as flags, but having a consistent cluster spec driven approach for cluster related actions
-will give the user a less confusing experience when trying to interact with all the commands.
+will give the EKS-A maintainers a less confusing experience when trying to interact with all the commands.
+However, to give an option to vcenter admins, we are providing the flags as an option to, with the intention
+of bringing this flag driven functionality to the other commands in the future as well.
 
 We could also introduce a `setup` command instead to cover any other pre-create operations
 we want to support, such as creating folders or anything else that might come up in the
