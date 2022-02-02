@@ -56,7 +56,7 @@ version, OS, and hash of the build.
 If the user specifies the cluster spec as input, we will get most of the template configuration
 from there except for the name. If there is a name defined, we will throw an error mentioning
 that they have a template name defined and to remove the template name if they want to import as
-we want to get the name either from the flag. If they choose not to specify a flag for the template name,
+we want to get the name from the flag. If they choose not to specify a flag for the template name,
 we will default to the name that we use in the `create` command today. This will protect the user from
 making unintended changes. 
 
