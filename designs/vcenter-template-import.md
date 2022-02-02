@@ -20,7 +20,7 @@ As an EKS Anywhere user:
 
 There are two types of users who would use this functionality. 
 
-* EKS-A maintainers who are in charge of creating the cluster
+* EKS-A cluster admins who are in charge of creating the cluster
 * VCenter admins who only want to import the OVA beforehand to hand off to EKS-A maintainers
 
 
@@ -31,11 +31,11 @@ running a command. They would either specify the cluster spec or the appropriate
 We would be introducing new subcommands as follows:
 
 ```
-eksctl anywhere import vsphere template -f <cluster_spec.yaml> --name <template_name>
+eksctl anywhere import vsphere template -f <cluster_spec.yaml> --full-path <vsphere_template_path>
 ```
 or
 ```
-eksctl anywhere import vsphere template --name <template_name> --path <vsphere_template_path> --os <os_family> --server <server_url> 
+eksctl anywhere import vsphere template --full-path <vsphere_template_path> --os <os_family> ... 
 ```
 
 ### Solution Details
@@ -55,7 +55,7 @@ version, OS, and hash of the build.
 
 If the user specifies the cluster spec as input, we will get most of the template configuration
 from there except for the name. If there is a name defined, we will throw an error mentioning
-that they have a template name defined and to remove the template name if they want to import as
+that they have a template defined that differs from the flag and to remove the template field if they want to import as
 we want to get the name from the flag. If they choose not to specify a flag for the template name,
 we will default to the name that we use in the `create` command today. This will protect the user from
 making unintended changes. 
@@ -77,7 +77,7 @@ whether to specify the cluster spec or to use the flags.
 
 We could also solve this by not passing in the cluster spec file and just take in all the values
 as flags, but having a consistent cluster spec driven approach for cluster related actions
-will give the EKS-A maintainers a less confusing experience when trying to interact with all the commands.
+will give the EKS-A cluster admins a less confusing experience when trying to interact with all the commands.
 However, to give an option to vcenter admins, we are providing the flags as an option to, with the intention
 of bringing this flag driven functionality to the other commands in the future as well.
 
