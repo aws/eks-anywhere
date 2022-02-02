@@ -461,8 +461,10 @@ func MapClusterToCloudStackDeploymentConfigSpec(csCluster *cloudstackv1.CloudSta
 	csSpec := &anywherev1.CloudStackDeploymentConfig{}
 	csSpec.Spec.Zone = csCluster.Spec.Zone
 	csSpec.Spec.Network = csCluster.Spec.Network
+	csSpec.Spec.Domain = csCluster.Spec.Domain
+	csSpec.Spec.Account = csCluster.Spec.Account
 
-	// TODO: Add ManagementApiEndpoint, Domain, Account
+	// TODO: Add ManagementApiEndpoint
 	return csSpec, nil
 }
 

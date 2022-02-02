@@ -18,11 +18,6 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: capv-system
----
-apiVersion: v1
-kind: Namespace
-metadata:
   name: capc-system
 ---
 apiVersion: v1
@@ -106,8 +101,8 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-all-capv-system
-  namespace: capv-system
+  name: allow-all-capc-system
+  namespace: capc-system
 spec:
   podSelector: {}
   ingress:

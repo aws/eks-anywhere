@@ -63,11 +63,25 @@ func (c *collectorFactory) DataCenterConfigCollectors(datacenter v1alpha1.Ref) [
 	switch datacenter.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		return c.eksaVsphereCollectors()
+	case v1alpha1.CloudStackDeploymentKind:
+		return c.eksaCloudStackCollectors()
 	case v1alpha1.DockerDatacenterKind:
 		return c.eksaDockerCollectors()
 	default:
 		return nil
 	}
+}
+
+func (c *collectorFactory) eksaCloudStackCollectors() []*Collect {
+	cloudstackLogs := []*Collect{
+		{
+			Logs: &logs{
+				Namespace: constants.CapcSystemNamespace,
+				Name:      logpath(constants.CapcSystemNamespace),
+			},
+		},
+	}
+	return append(cloudstackLogs, c.cloudstackCrdCollectors()...)
 }
 
 func (c *collectorFactory) eksaVsphereCollectors() []*Collect {
@@ -247,6 +261,19 @@ func (c *collectorFactory) vsphereCrdCollectors() []*Collect {
 		"vspherevms.infrastructure.cluster.x-k8s.io",
 	}
 	return c.generateCrdCollectors(capvCrds)
+}
+
+func (c *collectorFactory) cloudstackCrdCollectors() []*Collect {
+	capcCrds := []string{
+		"cloudstackclusteridentities.infrastructure.cluster.x-k8s.io",
+		"cloudstackclusters.infrastructure.cluster.x-k8s.io",
+		"cloudstackdeploymentconfigs.anywhere.eks.amazonaws.com",
+		"cloudstackmachineconfigs.anywhere.eks.amazonaws.com",
+		"cloudstackmachines.infrastructure.cluster.x-k8s.io",
+		"cloudstackmachinetemplates.infrastructure.cluster.x-k8s.io",
+		"cloudstackvms.infrastructure.cluster.x-k8s.io",
+	}
+	return c.generateCrdCollectors(capcCrds)
 }
 
 func (c *collectorFactory) generateCrdCollectors(crds []string) []*Collect {

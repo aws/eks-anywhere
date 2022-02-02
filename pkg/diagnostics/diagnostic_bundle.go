@@ -45,7 +45,7 @@ type EksaDiagnosticBundle struct {
 	analysis         []*executables.SupportBundleAnalysis
 }
 
-func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactory, client BundleClient,
+func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactory, spec *cluster.Spec, client BundleClient,
 	kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter) (*EksaDiagnosticBundle, error) {
 	b := &EksaDiagnosticBundle{
 		bundle: &supportBundle{
@@ -67,7 +67,12 @@ func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactor
 		writer:           writer,
 	}
 
-	b.WithDefaultCollectors().WithDefaultAnalyzers().WithManagementCluster(true)
+	b = b.
+		WithDefaultCollectors().
+		WithDefaultAnalyzers().
+		WithManagementCluster(true).
+		WithProviderDeployments(spec.Spec.DatacenterRef).
+		WithDatacenterConfig(spec.Spec.DatacenterRef)
 
 	err := b.WriteBundleConfig()
 	if err != nil {
@@ -107,6 +112,7 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 		WithDatacenterConfig(spec.Spec.DatacenterRef).
 		WithMachineConfigs(provider.MachineConfigs()).
 		WithManagementCluster(spec.IsSelfManaged()).
+		WithProviderDeployments(spec.Spec.DatacenterRef).
 		WithDefaultAnalyzers().
 		WithDefaultCollectors().
 		WithLogTextAnalyzers()
@@ -268,6 +274,11 @@ func (e *EksaDiagnosticBundle) WithExternalEtcd(config *v1alpha1.ExternalEtcdCon
 	if config != nil {
 		e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.EksaExternalEtcdAnalyzers()...)
 	}
+	return e
+}
+
+func (e *EksaDiagnosticBundle) WithProviderDeployments(config v1alpha1.Ref) *EksaDiagnosticBundle {
+	e.bundle.Spec.Analyzers = append(e.bundle.Spec.Analyzers, e.analyzerFactory.EksaProviderDeploymentAnalyzers(config)...)
 	return e
 }
 
