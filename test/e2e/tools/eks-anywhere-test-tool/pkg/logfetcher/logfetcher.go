@@ -5,14 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	awscodebuild "github.com/aws/aws-sdk-go/service/codebuild"
 
 	"github.com/aws/eks-anywhere-test-tool/pkg/cloudwatch"
 	"github.com/aws/eks-anywhere-test-tool/pkg/codebuild"
 	"github.com/aws/eks-anywhere-test-tool/pkg/constants"
-	"github.com/aws/eks-anywhere-test-tool/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/types"
 )
 
 type FetchLogsOpt func(options *fetchLogsConfig) (err error)
@@ -56,20 +58,72 @@ func (t *testResult) OutputFileName() string {
 	return fmt.Sprintf(individualTestLogFileTemplate, t.Tests, t.InstanceId, t.JobId)
 }
 
+type (
+	testFilter        func(logs []*cloudwatchlogs.OutputLogEvent) (filteredTestsLogs *bytes.Buffer, filteredTestResults []testResult, err error)
+	codebuildConsumer func(*awscodebuild.Build) error
+	messagesConsumer  func(allMessages, filteredMessages *bytes.Buffer) error
+	testConsumer      func(testName string, logs []*cloudwatchlogs.OutputLogEvent) error
+)
+
+type LogFetcherOpt func(*testLogFetcher)
+
+func WithTestFilterByName(tests []string) LogFetcherOpt {
+	return func(l *testLogFetcher) {
+		l.filterTests = newTestFilterByName(tests)
+	}
+}
+
+func WithLogStdout() LogFetcherOpt {
+	return func(l *testLogFetcher) {
+		l.processCodebuild = func(*awscodebuild.Build) error { return nil }
+		l.processMessages = func(allMessages, filteredMessages *bytes.Buffer) error { return nil }
+		l.processTest = logTest
+	}
+}
+
 type testLogFetcher struct {
 	buildAccountCwClient        *cloudwatch.Cloudwatch
 	testAccountCwClient         *cloudwatch.Cloudwatch
 	buildAccountCodebuildClient *codebuild.Codebuild
-	writer                      filewriter.FileWriter
+	writer                      *testsWriter
+	filterTests                 testFilter
+	processCodebuild            codebuildConsumer
+	processMessages             messagesConsumer
+	processTest                 testConsumer
 }
 
-func New(buildAccountCwClient *cloudwatch.Cloudwatch, testAccountCwClient *cloudwatch.Cloudwatch, buildAccountCodebuildCient *codebuild.Codebuild, writer filewriter.FileWriter) *testLogFetcher {
-	return &testLogFetcher{
+func New(buildAccountCwClient *cloudwatch.Cloudwatch, testAccountCwClient *cloudwatch.Cloudwatch, buildAccountCodebuildClient *codebuild.Codebuild, opts ...LogFetcherOpt) *testLogFetcher {
+	l := &testLogFetcher{
 		buildAccountCwClient:        buildAccountCwClient,
 		testAccountCwClient:         testAccountCwClient,
-		buildAccountCodebuildClient: buildAccountCodebuildCient,
-		writer:                      writer,
+		buildAccountCodebuildClient: buildAccountCodebuildClient,
 	}
+	for _, o := range opts {
+		o(l)
+	}
+
+	defultOutputFolder := time.Now().Format(time.RFC3339 + "-logs")
+
+	if l.filterTests != nil {
+		l.filterTests = filterFailedTests
+	}
+
+	if l.processCodebuild != nil {
+		_ = l.ensureWriter(defultOutputFolder)
+		l.processCodebuild = l.writer.writeCodeBuild
+	}
+
+	if l.processMessages != nil {
+		_ = l.ensureWriter(defultOutputFolder)
+		l.processMessages = l.writer.writeMessages
+	}
+
+	if l.processTest != nil {
+		_ = l.ensureWriter(defultOutputFolder)
+		l.processTest = l.writer.writeTest
+	}
+
+	return l
 }
 
 func (l *testLogFetcher) FetchLogs(opts ...FetchLogsOpt) error {
@@ -105,7 +159,7 @@ func (l *testLogFetcher) FetchLogs(opts ...FetchLogsOpt) error {
 	return nil
 }
 
-func (l *testLogFetcher) GetBuildProjectLogs(project string, buildId string) (failed []testResult, err error) {
+func (l *testLogFetcher) GetBuildProjectLogs(project string, buildId string) ([]testResult, error) {
 	logger.Info("Fetching build project logs...")
 	build, err := l.buildAccountCodebuildClient.FetchBuildForProject(buildId)
 	if err != nil {
@@ -120,27 +174,21 @@ func (l *testLogFetcher) GetBuildProjectLogs(project string, buildId string) (fa
 		return nil, fmt.Errorf("error when fetching cloudwatch logs: %v", err)
 	}
 
-	allMsg, failedMsg, failedTests, err := l.extractMessagesFromLog(logs)
+	allMsg := allMessages(logs)
+	filteredMsg, filteredTests, err := l.filterTests(logs)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = l.writer.Write(constants.BuildDescriptionFile, []byte(build.String()), filewriter.PersistentFile)
-	if err != nil {
-		return nil, fmt.Errorf("error when writing build description: %v", err)
-	}
-
-	_, err = l.writer.Write(constants.FailedTestsFile, failedMsg.Bytes(), filewriter.PersistentFile)
-	if err != nil {
+	if err = l.processCodebuild(build); err != nil {
 		return nil, err
 	}
 
-	_, err = l.writer.Write(constants.LogOutputFile, allMsg.Bytes(), filewriter.PersistentFile)
-	if err != nil {
+	if err = l.processMessages(allMsg, filteredMsg); err != nil {
 		return nil, err
 	}
 
-	return failedTests, nil
+	return filteredTests, nil
 }
 
 func (l *testLogFetcher) FetchTestLogs(tests []testResult) error {
@@ -153,25 +201,31 @@ func (l *testLogFetcher) FetchTestLogs(tests []testResult) error {
 			return err
 		}
 
-		buf := new(bytes.Buffer)
-		for _, log := range logs {
-			buf.WriteString(*log.Message)
-		}
-
-		_, err = l.writer.Write(test.Tests, buf.Bytes(), filewriter.PersistentFile)
-		if err != nil {
-			return err
+		if err := l.processTest(test.Tests, logs); err != nil {
+			return nil
 		}
 	}
 	return nil
 }
 
-func (l *testLogFetcher) extractMessagesFromLog(logs []*cloudwatchlogs.OutputLogEvent) (allMessages *bytes.Buffer, failedTestMessages *bytes.Buffer, failedTestResults []testResult, err error) {
+func (l *testLogFetcher) ensureWriter(folderPath string) error {
+	if l.writer != nil {
+		return nil
+	}
+
+	var err error
+	l.writer, err = newTestsWriter(folderPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func filterFailedTests(logs []*cloudwatchlogs.OutputLogEvent) (failedTestMessages *bytes.Buffer, failedTestResults []testResult, err error) {
 	var failedTests []testResult
 	failedTestsBuf := new(bytes.Buffer)
-	buf := new(bytes.Buffer)
 	for _, event := range logs {
-		buf.WriteString(*event.Message)
 		if strings.Contains(*event.Message, constants.FailedMessage) {
 			msg := *event.Message
 			i := strings.Index(msg, "{")
@@ -180,12 +234,64 @@ func (l *testLogFetcher) extractMessagesFromLog(logs []*cloudwatchlogs.OutputLog
 			err = json.Unmarshal([]byte(subMsg), &r)
 			if err != nil {
 				logger.Info("error when unmarshalling json of test results", "error", err)
-				return nil, nil, nil, err
+				return nil, nil, err
 			}
 			failedTests = append(failedTests, r)
 			failedTestsBuf.WriteString(subMsg)
 		}
 	}
 
-	return buf, failedTestsBuf, failedTests, nil
+	return failedTestsBuf, failedTests, nil
+}
+
+func allMessages(logs []*cloudwatchlogs.OutputLogEvent) *bytes.Buffer {
+	allMsg := new(bytes.Buffer)
+	for _, event := range logs {
+		allMsg.WriteString(*event.Message)
+	}
+
+	return allMsg
+}
+
+func newTestFilterByName(tests []string) testFilter {
+	lookup := types.SliceToLookup(tests)
+	return func(logs []*cloudwatchlogs.OutputLogEvent) (filteredTestsLogs *bytes.Buffer, filteredTestResults []testResult, err error) {
+		for _, event := range logs {
+			if !isResultMessage(*event.Message) {
+				continue
+			}
+
+			msg := *event.Message
+			i := strings.Index(msg, "{")
+			subMsg := msg[i:]
+			var r testResult
+			err = json.Unmarshal([]byte(subMsg), &r)
+			if err != nil {
+				logger.Info("error when unmarshalling json of test results", "error", err)
+				return nil, nil, err
+			}
+
+			if !lookup.IsPresent(r.Tests) {
+				continue
+			}
+
+			filteredTestResults = append(filteredTestResults, r)
+			filteredTestsLogs.WriteString(subMsg)
+		}
+
+		return filteredTestsLogs, filteredTestResults, nil
+	}
+}
+
+func isResultMessage(message string) bool {
+	return strings.Contains(message, constants.FailedMessage) || strings.Contains(message, constants.SuccessMEssage)
+}
+
+func logTest(testName string, logs []*cloudwatchlogs.OutputLogEvent) error {
+	logger.Info("Test logs", "testName", testName)
+	for _, e := range logs {
+		fmt.Println(*e.Message)
+	}
+
+	return nil
 }
