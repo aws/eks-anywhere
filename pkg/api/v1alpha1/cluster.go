@@ -317,10 +317,15 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	if len(workerNodeGroupConfigs) <= 0 {
 		return errors.New("worker node group must be specified")
 	}
+	workerNodeGroupNames := make(map[string]bool, len(workerNodeGroupConfigs))
 	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
 		if workerNodeGroupConfig.Name == "" {
 			return errors.New("must specify name for worker nodes")
 		}
+		if workerNodeGroupNames[workerNodeGroupConfig.Name] {
+			return errors.New("worker node group names must be unique")
+		}
+		workerNodeGroupNames[workerNodeGroupConfig.Name] = true
 	}
 	return nil
 }
