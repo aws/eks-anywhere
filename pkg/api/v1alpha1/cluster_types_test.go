@@ -1122,7 +1122,7 @@ func TestControlPlaneConfigurationEqual(t *testing.T) {
 	taint1 := corev1.Taint{Key: "key1"}
 	taint2 := corev1.Taint{Key: "key2"}
 	taints1 := []corev1.Taint{taint1, taint2}
-	taintsOneDiffOrder := []corev1.Taint{taint2, taint1}
+	taints1DiffOrder := []corev1.Taint{taint2, taint1}
 	taints2 := []corev1.Taint{taint1}
 
 	testCases := []struct {
@@ -1256,7 +1256,7 @@ func TestControlPlaneConfigurationEqual(t *testing.T) {
 				Taints: taints1,
 			},
 			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
-				Taints: taintsOneDiffOrder,
+				Taints: taints1DiffOrder,
 			},
 			want: true,
 		},
