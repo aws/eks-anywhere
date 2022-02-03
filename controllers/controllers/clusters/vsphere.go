@@ -137,7 +137,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return reconciler.Result{}, err
 	}
 
-	workerNodeGroupMachineSpecs := make(map[string]anywherev1.VSphereMachineConfigSpec, len(machineConfigMap))
+	workerNodeGroupMachineSpecs := make(map[string]anywherev1.VSphereMachineConfigSpec, len(cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, wnConfig := range cluster.Spec.WorkerNodeGroupConfigurations {
 		workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = machineConfigMap[wnConfig.MachineGroupRef.Name].Spec
 	}
@@ -156,8 +156,12 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		values["controlPlaneTemplateName"] = templateBuilder.CPMachineTemplateName(clusterName)
 		controlPlaneUser := machineConfigMap[cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
 		values["vsphereControlPlaneSshAuthorizedKey"] = controlPlaneUser.SshAuthorizedKeys[0]
-		etcdUser := machineConfigMap[cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0]
-		values["vsphereEtcdSshAuthorizedKey"] = etcdUser.SshAuthorizedKeys[0]
+
+		if cluster.Spec.ExternalEtcdConfiguration != nil {
+			etcdUser := machineConfigMap[cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0]
+			values["vsphereEtcdSshAuthorizedKey"] = etcdUser.SshAuthorizedKeys[0]
+		}
+
 		values["etcdTemplateName"] = templateBuilder.EtcdMachineTemplateName(clusterName)
 	}
 	v.Log.Info("cluster", "name", cluster.Name)

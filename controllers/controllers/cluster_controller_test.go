@@ -83,7 +83,7 @@ func TestClusterReconcilerSkipManagement(t *testing.T) {
 }
 
 func TestClusterReconcilerSuccess(t *testing.T) {
-	t.Skip("It sill be implemented soon")
+	t.Skip("It will be implemented soon")
 
 	ctrl := gomock.NewController(t)
 	govcClient := mocks.NewMockProviderGovcClient(ctrl)
