@@ -148,9 +148,9 @@ func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
 	if len(s1) != len(s2) {
 		return false
 	}
-	taints := make(map[corev1.Taint]bool)
+	taints := make(map[corev1.Taint]struct{})
 	for _, taint := range s1 {
-		taints[taint] = true
+		taints[taint] = struct{}{}
 	}
 	for _, taint := range s2 {
 		_, ok := taints[taint]
@@ -229,14 +229,7 @@ func WorkerNodeGroupConfigurationsSliceEqual(a, b []WorkerNodeGroupConfiguration
 		return false
 	}
 
-	for index, nodeGroup := range a {
-		sameTaints := TaintsSliceEqual(nodeGroup.Taints, b[index].Taints)
-		if !sameTaints {
-			return false
-		}
-	}
-
-	return true
+	return WorkerNodeGroupConfigurationSliceTaintsEqual(a, b)
 }
 
 func WorkerNodeGroupConfigurationSliceTaintsEqual(a, b []WorkerNodeGroupConfiguration) bool {
@@ -247,6 +240,9 @@ func WorkerNodeGroupConfigurationSliceTaintsEqual(a, b []WorkerNodeGroupConfigur
 
 	for _, nodeGroup := range b {
 		if _, ok := m[nodeGroup.Name]; !ok {
+			// this method is not concerned with added/removed node groups,
+			// only with the comparison of taints on existing node groups
+			// if a node group is present in a but not b, or vise versa, it's immaterial
 			continue
 		} else {
 			if !TaintsSliceEqual(m[nodeGroup.Name], nodeGroup.Taints) {
