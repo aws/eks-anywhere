@@ -16,15 +16,13 @@ import (
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
-var (
-	//go:embed config/cmk.ini
-	cmkConfigTemplate string
-)
+//go:embed config/cmk.ini
+var cmkConfigTemplate string
 
 const (
 	cmkConfigFileName = "cmk_tmp.ini"
-	maxRetriesCmk    = 5
-	backOffPeriodCmk = 5 * time.Second
+	maxRetriesCmk     = 5
+	backOffPeriodCmk  = 5 * time.Second
 )
 
 type Cmk struct {
@@ -244,10 +242,10 @@ func (c *Cmk) exec(ctx context.Context, config CmkExecConfig, args ...string) (s
 }
 
 type CmkExecConfig struct {
-	ApiKey        string	// Api Key for CloudMonkey to access CloudStack Cluster
-	SecretKey     string	// Secret Key for CloudMonkey to access CloudStack Cluster
-	ManagementUrl string	// Management Endpoint Url for CloudMonkey to access CloudStack Cluster
-	VerifyCert    bool		// boolean indicating if CloudMonkey should verify the cert presented by the CloudStack Management Server
+	ApiKey        string // Api Key for CloudMonkey to access CloudStack Cluster
+	SecretKey     string // Secret Key for CloudMonkey to access CloudStack Cluster
+	ManagementUrl string // Management Endpoint Url for CloudMonkey to access CloudStack Cluster
+	VerifyCert    bool   // boolean indicating if CloudMonkey should verify the cert presented by the CloudStack Management Server
 }
 
 // TODO: Add support for passing in domain from Deployment Config Spec
