@@ -200,6 +200,7 @@ type WorkerNodeGroupConfiguration struct {
 }
 
 func generateWorkerNodeGroupKey(c WorkerNodeGroupConfiguration) (key string) {
+	key = c.Name
 	if c.MachineGroupRef != nil {
 		key = c.MachineGroupRef.Kind + c.MachineGroupRef.Name
 	}
