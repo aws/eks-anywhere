@@ -297,16 +297,12 @@ func TestClusterEqualKubernetesVersion(t *testing.T) {
 }
 
 func TestClusterEqualWorkerNodeGroupConfigurations(t *testing.T) {
-	var taints1, taints2, taints1DiffOrder, emptyTaints []corev1.Taint
-	var taint1, taint2 corev1.Taint
-
-	taint1.Key = "key1"
-	taint2.Key = "key2"
-	taints1 = append(taints1, taint1)
-	taints1 = append(taints1, taint2)
-	taints1DiffOrder = append(taints1DiffOrder, taint2)
-	taints1DiffOrder = append(taints1DiffOrder, taint1)
-	taints2 = append(taints2, taint1)
+	var emptyTaints []corev1.Taint
+	taint1 := corev1.Taint{Key: "key1"}
+	taint2 := corev1.Taint{Key: "key2"}
+	taints1 := []corev1.Taint{taint1, taint2}
+	taints1DiffOrder := []corev1.Taint{taint2, taint1}
+	taints2 := []corev1.Taint{taint1}
 
 	testCases := []struct {
 		testName                   string
@@ -1122,16 +1118,12 @@ func TestClusterEqualManagement(t *testing.T) {
 }
 
 func TestControlPlaneConfigurationEqual(t *testing.T) {
-	var taints1, taints2, taints1DiffOrder, emptyTaints []corev1.Taint
-	var taint1, taint2 corev1.Taint
-
-	taint1.Key = "key1"
-	taint2.Key = "key2"
-	taints1 = append(taints1, taint1)
-	taints1 = append(taints1, taint2)
-	taints1DiffOrder = append(taints1DiffOrder, taint2)
-	taints1DiffOrder = append(taints1DiffOrder, taint1)
-	taints2 = append(taints2, taint1)
+	var emptyTaints []corev1.Taint
+	taint1 := corev1.Taint{Key: "key1"}
+	taint2 := corev1.Taint{Key: "key2"}
+	taints1 := []corev1.Taint{taint1, taint2}
+	taintsOneDiffOrder := []corev1.Taint{taint2, taint1}
+	taints2 := []corev1.Taint{taint1}
 
 	testCases := []struct {
 		testName                           string
@@ -1264,7 +1256,7 @@ func TestControlPlaneConfigurationEqual(t *testing.T) {
 				Taints: taints1,
 			},
 			cluster2CPConfig: &v1alpha1.ControlPlaneConfiguration{
-				Taints: taints1DiffOrder,
+				Taints: taintsOneDiffOrder,
 			},
 			want: true,
 		},
