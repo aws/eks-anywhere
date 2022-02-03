@@ -75,7 +75,7 @@ func TestVSphereKubernetes121ThreeReplicasFiveWorkersSimpleFlow(t *testing.T) {
 func TestVSphereKubernetes121DifferentNamespaceSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu121(), framework.WithVSphereFillers(api.WithVSphereConfigNamespace(clusterNamespace))),
+		framework.NewVSphere(t, framework.WithUbuntu121(), framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace))),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
 	)
@@ -105,7 +105,7 @@ func TestVSphereKubernetes120BottleRocketThreeReplicasFiveWorkersSimpleFlow(t *t
 func TestVSphereKubernetes120BottleRocketDifferentNamespaceSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithBottleRocket120(), framework.WithVSphereFillers(api.WithVSphereConfigNamespace(clusterNamespace))),
+		framework.NewVSphere(t, framework.WithBottleRocket120(), framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace))),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
 	)
