@@ -82,12 +82,16 @@ func (v *CloudStackDeploymentConfig) ClearPauseAnnotation() {
 }
 
 func (v *CloudStackDeploymentConfig) ConvertConfigToConfigGenerateStruct() *CloudStackDeploymentConfigGenerate {
+	namespace := defaultEksaNamespace
+	if v.Namespace != "" {
+		namespace = v.Namespace
+	}
 	config := &CloudStackDeploymentConfigGenerate{
 		TypeMeta: v.TypeMeta,
 		ObjectMeta: ObjectMeta{
 			Name:        v.Name,
 			Annotations: v.Annotations,
-			Namespace:   v.Namespace,
+			Namespace:   namespace,
 		},
 		Spec: v.Spec,
 	}

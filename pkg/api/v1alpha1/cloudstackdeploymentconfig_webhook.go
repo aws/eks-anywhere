@@ -60,6 +60,11 @@ func (r *CloudStackDeploymentConfig) ValidateUpdate(old runtime.Object) error {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a CloudStackDataCenterConfig but got a %T", old))
 	}
 
+	if oldDatacenterConfig.IsReconcilePaused() {
+		cloudstackdeploymentconfiglog.Info("Reconciliation is paused")
+		return nil
+	}
+
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, validateImmutableFieldsCloudStackCluster(r, oldDatacenterConfig)...)
@@ -72,10 +77,6 @@ func (r *CloudStackDeploymentConfig) ValidateUpdate(old runtime.Object) error {
 }
 
 func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDeploymentConfig) field.ErrorList {
-	if old.IsReconcilePaused() {
-		cloudstackdeploymentconfiglog.Info("Reconciliation is paused")
-		return nil
-	}
 
 	var allErrs field.ErrorList
 
