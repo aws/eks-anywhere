@@ -14,7 +14,7 @@ import (
 
 type KubectlClient interface {
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
-	ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
+	ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfig string) error
 	ValidateNodes(ctx context.Context, kubeconfig string) error
 	ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error
 	ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cluster) error
