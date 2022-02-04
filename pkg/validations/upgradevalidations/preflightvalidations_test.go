@@ -601,7 +601,7 @@ func TestPreflightValidations(t *testing.T) {
 			provider.EXPECT().ValidateNewSpec(ctx, workloadCluster, clusterSpec).Return(nil).MaxTimes(1)
 			k.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
 			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster, clusterSpec.Name).Return(tc.cpResponse)
-			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster, workloadCluster.Name).Return(tc.workerResponse)
+			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster.Name, workloadCluster.KubeconfigFile).Return(tc.workerResponse)
 			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
 			k.EXPECT().ValidateClustersCRD(ctx, workloadCluster).Return(tc.crdResponse)
 			k.EXPECT().GetClusters(ctx, workloadCluster).Return(tc.getClusterResponse, nil)
