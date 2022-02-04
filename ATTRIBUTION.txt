@@ -1115,7 +1115,7 @@ https://github.com/json-iterator/go
 Copyright (c) 2016 json-iterator
 
 ** github.com/MakeNowJust/heredoc; version v1.0.0 --
-https://github.com/MakeNowJust/heredoc
+https://github.com/makenowjust/heredoc
 Copyright (c) 2014-2019 TSUYUSATO Kitsune
 
 ** github.com/mitchellh/go-homedir; version v1.1.0 --
