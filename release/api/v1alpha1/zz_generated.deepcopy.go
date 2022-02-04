@@ -626,6 +626,7 @@ func (in *TinkerbellBundle) DeepCopyInto(out *TinkerbellBundle) {
 	in.TinkCli.DeepCopyInto(&out.TinkCli)
 	in.Hegel.DeepCopyInto(&out.Hegel)
 	in.Cfssl.DeepCopyInto(&out.Cfssl)
+	in.Pbnj.DeepCopyInto(&out.Pbnj)
 	out.Components = in.Components
 	out.Metadata = in.Metadata
 	out.ClusterTemplate = in.ClusterTemplate
