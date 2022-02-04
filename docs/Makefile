@@ -19,6 +19,8 @@ submodule: ## initialize the docsy theme submodule
 	cd themes/docsy; git am ../../patches/0001-Make-docsy-js-files-static.patch; cd ../..
 
 submodule-reset: ## reset submodules to tracked commit
+	rm -rf themes/docsy
+	git submodule update --init --recursive
 	git submodule foreach --recursive git reset --hard
 
 zip: clean build ## Create zip file of assets to upload
