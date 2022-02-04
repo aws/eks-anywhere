@@ -73,7 +73,7 @@ You can use either a CIDR block or an IP range
 The external IP will be the one in CIDR range specified in step 4
 
     ```bash
-    EXTERNAL_IP=$(kubectl get svc hello-eks-a-lb -o jsonpath='{.spec.externalIP}')
+    EXTERNAL_IP=$(kubectl get svc hello-eks-a-lb -o jsonpath='{.spec.loadBalancerIP}')
     ```
 
 1. Ensure the load balancer is working by curl'ing the IP you got in step 8
