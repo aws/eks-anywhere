@@ -19,6 +19,8 @@ import (
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const defaultRequeueTime = time.Minute
+
 // Struct that holds common methods and properties
 type VSphereReconciler struct {
 	Client    client.Client
@@ -178,7 +180,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	if err := reconciler.ReconcileYaml(ctx, v.Client, controlPlaneSpec); err != nil {
 		return reconciler.Result{Result: &ctrl.Result{
 			Requeue:      true,
-			RequeueAfter: time.Minute,
+			RequeueAfter: defaultRequeueTime,
 		}}, err
 	}
 	if err := reconciler.ReconcileYaml(ctx, v.Client, workersSpec); err != nil {
