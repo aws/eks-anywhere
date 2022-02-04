@@ -39,24 +39,51 @@ spec:
               CloudStackMachineConfig
             properties:
               affinityGroupIds:
+                description: AffinityGroupIds allows users to pass in a list of UUIDs
+                  for previously-created Affinity Groups. Any VM’s created with this
+                  spec will be added to the affinity group, which will dictate which
+                  physical host(s) they can be placed on. Affinity groups can be type
+                  “affinity” or “anti-affinity” in CloudStack. If they are type “anti-affinity”,
+                  all VM’s in the group must be on separate physical hosts for high
+                  availability. If they are type “affinity”, all VM’s in the group
+                  must be on the same physical host for improved performance
                 items:
                   type: string
                 type: array
               computeOffering:
+                description: ComputeOffering refers to a compute offering which has
+                  been previously registered in CloudStack. It represents a VM’s instance
+                  size including number of CPU’s, memory, and CPU speed. It can either
+                  be specified as a UUID or name
                 type: string
               details:
                 additionalProperties:
                   type: string
+                description: Details represents an arbitrary mapping of strings to
+                  strings, which are passed through to the CloudStack VM. Some example
+                  details which are commonly set on the VM include cpuOvercommitRatio,
+                  memoryOvercommitRatio, Message.ReservedCapacityFreed.Flag, and rootdisksize
                 type: object
               diskOffering:
+                description: DiskOffering refers to a disk offering which has been
+                  previously registered in CloudStack. It represents a VM’s disk size
+                  and IOPS (Quality of Service) for primary data storage
                 type: string
               osFamily:
+                description: OSFamily is an EKS-A required field which represents
+                  the family of the guest OS image. Currently only “redhat“ is supported
+                  for CloudStack, which is also the default
                 type: string
               template:
-                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-                  Important: Run "make" to regenerate code after modifying this file'
+                description: Template refers to a VM image template which has been
+                  previously registered in CloudStack. It can either be specified
+                  as a UUID or name
                 type: string
               users:
+                description: Users utilizes cloud-init to configure ssh users which
+                  will be allowed to log in to the VM using private-key authentication.
+                  It consists of an array of objects containing the user name, as
+                  well as a list of their authorized public keys
                 items:
                   description: UserConfiguration defines the configuration of the
                     user to be added to the VM

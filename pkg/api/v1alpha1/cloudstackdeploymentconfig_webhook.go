@@ -77,7 +77,6 @@ func (r *CloudStackDeploymentConfig) ValidateUpdate(old runtime.Object) error {
 }
 
 func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDeploymentConfig) field.ErrorList {
-
 	var allErrs field.ErrorList
 
 	if old.Spec.Domain != new.Spec.Domain {
