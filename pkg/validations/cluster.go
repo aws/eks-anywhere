@@ -9,29 +9,17 @@ import (
 
 func ValidateTaintsSupport(clusterSpec *cluster.Spec) error {
 	if !features.IsActive(features.TaintsSupport()) {
-		wngcTaintsPresent := false
-		for _, wngc := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-			if len(wngc.Taints) > 0 {
-				wngcTaintsPresent = true
+		workerNodeGroupTaintsPresent := false
+		for _, nodeGroup := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+			if len(nodeGroup.Taints) > 0 {
+				workerNodeGroupTaintsPresent = true
 				break
 			}
 		}
 
 		if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints) > 0 ||
-			wngcTaintsPresent {
+			workerNodeGroupTaintsPresent {
 			return fmt.Errorf("Taints feature is not enabled. Please set the env variable TAINTS_SUPPORT.")
-		}
-	} else if len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Taints) > 0 {
-		invalidWorkerNodeGroupTaints := false
-		for _, slice := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Taints {
-			if slice.Effect == "NoExecute" || slice.Effect == "NoSchedule" {
-				invalidWorkerNodeGroupTaints = true
-				break
-			}
-		}
-
-		if invalidWorkerNodeGroupTaints {
-			return fmt.Errorf("The first worker node group does not support NoExecute or NoSchedule taints.")
 		}
 	}
 	return nil

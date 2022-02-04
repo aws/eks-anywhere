@@ -174,7 +174,7 @@ func TestProviderGenerateDeploymentFileSuccessUpdateMachineTemplate(t *testing.T
 			wantMDFile: "testdata/valid_deployment_md_taints_expected.yaml",
 		},
 		{
-			testName: "valid config multiple wngc with md taints",
+			testName: "valid config multiple worker node groups with machine deplyoment taints",
 			clusterSpec: test.NewClusterSpec(func(s *cluster.Spec) {
 				s.Name = "test-cluster"
 				s.Spec.KubernetesVersion = "1.19"
