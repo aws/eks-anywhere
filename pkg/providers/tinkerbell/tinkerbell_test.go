@@ -24,6 +24,16 @@ const (
 	expectedTinkerbellPBnJGRPCAuthority = "1.2.3.4:42000"
 )
 
+type DummyProviderTinkClient struct{}
+
+func NewDummyProviderTinkClient() *DummyProviderTinkClient {
+	return &DummyProviderTinkClient{}
+}
+
+func (pc *DummyProviderTinkClient) ValidateTinkerbellAccess(ctx context.Context) error {
+	return nil
+}
+
 func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
 	return test.NewFullClusterSpec(t, path.Join(testDataDir, fileName))
 }
@@ -44,22 +54,24 @@ func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.Tin
 	return machineConfigs
 }
 
-func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient) *tinkerbellProvider {
+func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, tink ProviderTinkClient) *tinkerbellProvider {
 	return newProvider(
 		t,
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
 		kubectl,
+		tink,
 	)
 }
 
-func newProvider(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient) *tinkerbellProvider {
+func newProvider(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, tink ProviderTinkClient) *tinkerbellProvider {
 	return NewProvider(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
 		kubectl,
+		tink,
 		test.FakeNow,
 		"some-hardware-config",
 	)
@@ -129,7 +141,7 @@ func TestTinkerbellProviderGenerateDeploymentFile(t *testing.T) {
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, NewDummyProviderTinkClient())
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}

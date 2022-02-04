@@ -5,14 +5,28 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/aws/eks-anywhere/pkg/logger"
+
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
-type Validator struct{}
+type Validator struct {
+	tink ProviderTinkClient
+}
+
+func NewValidator(tink ProviderTinkClient) *Validator {
+	return &Validator{
+		tink: tink,
+	}
+}
 
 func (v *Validator) ValidateTinkerbellConfig(ctx context.Context, datacenterConfig *anywherev1.TinkerbellDatacenterConfig) error {
-	// TODO: add validations for tinkerbellAccess
+	if err := v.tink.ValidateTinkerbellAccess(ctx); err != nil {
+		return err
+	}
+	logger.MarkPass("Connected to tinkerbell stack")
+
 	if err := v.validateTinkerbellIP(ctx, datacenterConfig.Spec.TinkerbellIP); err != nil {
 		return err
 	}
