@@ -248,7 +248,17 @@ type TinkerbellBundle struct {
 	Cfssl                Image    `json:"cfssl"`
 	Pbnj                 Image    `json:"pbnj"`
 	Boots                Image    `json:"boots"`
+	Actions              Actions  `json:"actions"`
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
 	ClusterTemplate      Manifest `json:"clusterTemplate"`
+}
+
+// Tinkerbell Template Actions
+type Actions struct {
+	Cexec       Image `json:"cexec"`
+	Kexec       Image `json:"kexec"`
+	ImageToDisk Image `json:"imageToDisk"`
+	OciToDisk   Image `json:"ociToDisk"`
+	WriteFile   Image `json:"writeFile"`
 }

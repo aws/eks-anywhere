@@ -263,6 +263,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		eksAArtifactsFuncs["cfssl"] = r.GetCfsslAssets
 		eksAArtifactsFuncs["pbnj"] = r.GetPbnjAssets
 		eksAArtifactsFuncs["boots"] = r.GetBootsAssets
+		eksAArtifactsFuncs["hub"] = r.GetHubAssets
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {

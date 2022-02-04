@@ -33,6 +33,7 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 		"cfssl":                           r.BundleArtifactsTable["cfssl"],
 		"pbnj":                            r.BundleArtifactsTable["pbnj"],
 		"boots":                           r.BundleArtifactsTable["boots"],
+		"hub":                             r.BundleArtifactsTable["hub"],
 	}
 	sortedComponentNames := sortArtifactsMap(tinkerbellBundleArtifacts)
 
@@ -98,9 +99,16 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 		Cfssl:                bundleImageArtifacts["cfssl"],
 		Pbnj:                 bundleImageArtifacts["pbnj"],
 		Boots:                bundleImageArtifacts["boots"],
-		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
-		ClusterTemplate:      bundleManifestArtifacts["cluster-template.yaml"],
-		Metadata:             bundleManifestArtifacts["metadata.yaml"],
+		Actions: anywherev1alpha1.Actions{
+			Cexec:       bundleImageArtifacts["cexec"],
+			Kexec:       bundleImageArtifacts["kexec"],
+			ImageToDisk: bundleImageArtifacts["image2disk"],
+			OciToDisk:   bundleImageArtifacts["oci2disk"],
+			WriteFile:   bundleImageArtifacts["writefile"],
+		},
+		Components:      bundleManifestArtifacts["infrastructure-components.yaml"],
+		ClusterTemplate: bundleManifestArtifacts["cluster-template.yaml"],
+		Metadata:        bundleManifestArtifacts["metadata.yaml"],
 	}
 
 	return bundle, nil
