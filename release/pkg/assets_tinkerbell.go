@@ -32,6 +32,7 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 		"hegel":                           r.BundleArtifactsTable["hegel"],
 		"cfssl":                           r.BundleArtifactsTable["cfssl"],
 		"pbnj":                            r.BundleArtifactsTable["pbnj"],
+		"boots":                           r.BundleArtifactsTable["boots"],
 	}
 	sortedComponentNames := sortArtifactsMap(tinkerbellBundleArtifacts)
 
@@ -96,6 +97,7 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 		Hegel:                bundleImageArtifacts["hegel"],
 		Cfssl:                bundleImageArtifacts["cfssl"],
 		Pbnj:                 bundleImageArtifacts["pbnj"],
+		Boots:                bundleImageArtifacts["boots"],
 		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
 		ClusterTemplate:      bundleManifestArtifacts["cluster-template.yaml"],
 		Metadata:             bundleManifestArtifacts["metadata.yaml"],

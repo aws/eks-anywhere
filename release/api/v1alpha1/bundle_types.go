@@ -247,6 +247,7 @@ type TinkerbellBundle struct {
 	Hegel                Image    `json:"hegel"`
 	Cfssl                Image    `json:"cfssl"`
 	Pbnj                 Image    `json:"pbnj"`
+	Boots                Image    `json:"boots"`
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
 	ClusterTemplate      Manifest `json:"clusterTemplate"`
