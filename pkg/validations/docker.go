@@ -82,7 +82,7 @@ func ValidateDockerDesktopVersion(ctx context.Context, dockerExecutable DockerEx
 	}
 
 	if dockerDesktopSemVer.LessThan(minSupportWithSettingSemVer) {
-		return fmt.Errorf("EKS Anywhere does not support Docker desktop versions between 4.3.0 and 4.4.1 on macOS")
+		return fmt.Errorf("EKS Anywhere does not support Docker desktop versions between 4.3.0 and 4.4.1 on macOS, please refer to https://github.com/aws/eks-anywhere/issues/789 for more information")
 	}
 
 	cgroupVersion, err := dockerExecutable.CgroupVersion(ctx)
