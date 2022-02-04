@@ -262,6 +262,8 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		eksAArtifactsFuncs["hegel"] = r.GetHegelAssets
 		eksAArtifactsFuncs["cfssl"] = r.GetCfsslAssets
 		eksAArtifactsFuncs["pbnj"] = r.GetPbnjAssets
+		eksAArtifactsFuncs["boots"] = r.GetBootsAssets
+		eksAArtifactsFuncs["hub"] = r.GetHubAssets
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
@@ -483,9 +485,10 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 		)
 	} else if name == "eks-anywhere-cluster-controller" {
 		if r.DevRelease {
-			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a",
+			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
 				r.ReleaseContainerRegistry,
 				repoName,
+				tagOptions["gitTag"],
 			)
 		} else {
 			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
@@ -496,9 +499,10 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 		}
 	} else if name == "eks-anywhere-diagnostic-collector" {
 		if r.DevRelease {
-			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a",
+			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
 				r.ReleaseContainerRegistry,
 				repoName,
+				tagOptions["gitTag"],
 			)
 		} else {
 			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
