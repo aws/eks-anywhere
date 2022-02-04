@@ -59,7 +59,7 @@ func validateCluster(ctx context.Context, cluster *types.Cluster, clusterName st
 	if err != nil {
 		return err
 	}
-	err = kubectl.ValidateWorkerNodes(ctx, cluster, clusterName)
+	err = kubectl.ValidateWorkerNodes(ctx, clusterName, cluster.KubeconfigFile)
 	if err != nil {
 		return err
 	}
