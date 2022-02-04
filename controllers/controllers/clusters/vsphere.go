@@ -143,13 +143,13 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	}
 
 	cp := machineConfigMap[specWithBundles.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-	var etcd *anywherev1.VSphereMachineConfigSpec
+	var etcdSpec *anywherev1.VSphereMachineConfigSpec
 	if specWithBundles.Spec.ExternalEtcdConfiguration != nil {
-		etcdSpec := machineConfigMap[specWithBundles.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-		etcd = &etcdSpec.Spec
+		etcd := machineConfigMap[specWithBundles.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+		etcdSpec = &etcd.Spec
 	}
 
-	templateBuilder := vsphere.NewVsphereTemplateBuilder(&dataCenterConfig.Spec, &cp.Spec, etcd, workerNodeGroupMachineSpecs, time.Now, true)
+	templateBuilder := vsphere.NewVsphereTemplateBuilder(&dataCenterConfig.Spec, &cp.Spec, etcdSpec, workerNodeGroupMachineSpecs, time.Now, true)
 	clusterName := cluster.ObjectMeta.Name
 
 	cpOpt := func(values map[string]interface{}) {
