@@ -9,7 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
-func TestCloudStackDeploymentValidateUpdateDomainImmutable(t *testing.T) {
+func TestCloudStackDatacenterValidateUpdateDomainImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Domain = "oldCruftyDomain"
 	c := vOld.DeepCopy()
@@ -19,7 +19,7 @@ func TestCloudStackDeploymentValidateUpdateDomainImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCloudStackDeploymentValidateUpdateZoneImmutable(t *testing.T) {
+func TestCloudStackDatacenterValidateUpdateZoneImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Zone = "oldCruftyZone"
 	c := vOld.DeepCopy()
@@ -29,7 +29,7 @@ func TestCloudStackDeploymentValidateUpdateZoneImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCloudStackDeploymentValidateUpdateAccountImmutable(t *testing.T) {
+func TestCloudStackDatacenterValidateUpdateAccountImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Account = "oldCruftyAccount"
 	c := vOld.DeepCopy()
@@ -39,7 +39,7 @@ func TestCloudStackDeploymentValidateUpdateAccountImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCloudStackDeploymentValidateUpdateNetworkImmutable(t *testing.T) {
+func TestCloudStackDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Network = "OldNet"
 	c := vOld.DeepCopy()
@@ -49,7 +49,7 @@ func TestCloudStackDeploymentValidateUpdateNetworkImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCloudStackDeploymentValidateUpdateControlPlaneEndpointImmutable(t *testing.T) {
+func TestCloudStackDatacenterValidateUpdateControlPlaneEndpointImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.ManagementApiEndpoint = "OldManagementApiEndpoint"
 	c := vOld.DeepCopy()
@@ -59,7 +59,7 @@ func TestCloudStackDeploymentValidateUpdateControlPlaneEndpointImmutable(t *test
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCloudStackDeploymentValidateUpdateTLSInsecureImmutable(t *testing.T) {
+func TestCloudStackDatacenterValidateUpdateTLSInsecureImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Insecure = true
 	c := vOld.DeepCopy()
@@ -69,7 +69,7 @@ func TestCloudStackDeploymentValidateUpdateTLSInsecureImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCloudStackDeploymentValidateUpdateWithPausedAnnotation(t *testing.T) {
+func TestCloudStackDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Network = "oldNetwork"
 	c := vOld.DeepCopy()
@@ -82,19 +82,19 @@ func TestCloudStackDeploymentValidateUpdateWithPausedAnnotation(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestCloudStackDeploymentValidateUpdateInvalidType(t *testing.T) {
+func TestCloudStackDatacenterValidateUpdateInvalidType(t *testing.T) {
 	vOld := &v1alpha1.Cluster{}
-	c := &v1alpha1.CloudStackDeploymentConfig{}
+	c := &v1alpha1.CloudStackDatacenterConfig{}
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(vOld)).NotTo(Succeed())
 }
 
-func cloudstackDatacenterConfig() v1alpha1.CloudStackDeploymentConfig {
-	return v1alpha1.CloudStackDeploymentConfig{
+func cloudstackDatacenterConfig() v1alpha1.CloudStackDatacenterConfig {
+	return v1alpha1.CloudStackDatacenterConfig{
 		TypeMeta:   metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string, 1)},
-		Spec:       v1alpha1.CloudStackDeploymentConfigSpec{},
-		Status:     v1alpha1.CloudStackDeploymentConfigStatus{},
+		Spec:       v1alpha1.CloudStackDatacenterConfigSpec{},
+		Status:     v1alpha1.CloudStackDatacenterConfigStatus{},
 	}
 }

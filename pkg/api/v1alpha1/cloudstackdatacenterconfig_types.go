@@ -21,8 +21,8 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// CloudStackDeploymentConfigSpec defines the desired state of CloudStackDeploymentConfig
-type CloudStackDeploymentConfigSpec struct {
+// CloudStackDatacenterConfigSpec defines the desired state of CloudStackDatacenterConfig
+type CloudStackDatacenterConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
@@ -38,57 +38,57 @@ type CloudStackDeploymentConfigSpec struct {
 	Insecure              bool   `json:"insecure"`
 }
 
-// CloudStackDeploymentConfigStatus defines the observed state of CloudStackDeploymentConfig
-type CloudStackDeploymentConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+// CloudStackDatacenterConfigStatus defines the observed state of CloudStackDatacenterConfig
+type CloudStackDatacenterConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// CloudStackDeploymentConfig is the Schema for the cloudstackdeploymentconfigs API
-type CloudStackDeploymentConfig struct {
+// CloudStackDatacenterConfig is the Schema for the cloudstackdatacenterconfigs API
+type CloudStackDatacenterConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   CloudStackDeploymentConfigSpec   `json:"spec,omitempty"`
-	Status CloudStackDeploymentConfigStatus `json:"status,omitempty"`
+	Spec   CloudStackDatacenterConfigSpec   `json:"spec,omitempty"`
+	Status CloudStackDatacenterConfigStatus `json:"status,omitempty"`
 }
 
-func (v *CloudStackDeploymentConfig) Kind() string {
+func (v *CloudStackDatacenterConfig) Kind() string {
 	return v.TypeMeta.Kind
 }
 
-func (v *CloudStackDeploymentConfig) ExpectedKind() string {
-	return CloudStackDeploymentKind
+func (v *CloudStackDatacenterConfig) ExpectedKind() string {
+	return CloudStackDatacenterKind
 }
 
-func (v *CloudStackDeploymentConfig) PauseReconcile() {
+func (v *CloudStackDatacenterConfig) PauseReconcile() {
 	if v.Annotations == nil {
 		v.Annotations = map[string]string{}
 	}
 	v.Annotations[pausedAnnotation] = "true"
 }
 
-func (v *CloudStackDeploymentConfig) IsReconcilePaused() bool {
+func (v *CloudStackDatacenterConfig) IsReconcilePaused() bool {
 	if s, ok := v.Annotations[pausedAnnotation]; ok {
 		return s == "true"
 	}
 	return false
 }
 
-func (v *CloudStackDeploymentConfig) ClearPauseAnnotation() {
+func (v *CloudStackDatacenterConfig) ClearPauseAnnotation() {
 	if v.Annotations != nil {
 		delete(v.Annotations, pausedAnnotation)
 	}
 }
 
-func (v *CloudStackDeploymentConfig) ConvertConfigToConfigGenerateStruct() *CloudStackDeploymentConfigGenerate {
+func (v *CloudStackDatacenterConfig) ConvertConfigToConfigGenerateStruct() *CloudStackDatacenterConfigGenerate {
 	namespace := defaultEksaNamespace
 	if v.Namespace != "" {
 		namespace = v.Namespace
 	}
-	config := &CloudStackDeploymentConfigGenerate{
+	config := &CloudStackDatacenterConfigGenerate{
 		TypeMeta: v.TypeMeta,
 		ObjectMeta: ObjectMeta{
 			Name:        v.Name,
@@ -101,29 +101,29 @@ func (v *CloudStackDeploymentConfig) ConvertConfigToConfigGenerateStruct() *Clou
 	return config
 }
 
-func (v *CloudStackDeploymentConfig) Marshallable() Marshallable {
+func (v *CloudStackDatacenterConfig) Marshallable() Marshallable {
 	return v.ConvertConfigToConfigGenerateStruct()
 }
 
 // +kubebuilder:object:generate=false
 
-// Same as CloudStackDeploymentConfig except stripped down for generation of yaml file during generate clusterconfig
-type CloudStackDeploymentConfigGenerate struct {
+// Same as CloudStackDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig
+type CloudStackDatacenterConfigGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
 
-	Spec CloudStackDeploymentConfigSpec `json:"spec,omitempty"`
+	Spec CloudStackDatacenterConfigSpec `json:"spec,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// CloudStackDeploymentConfigList contains a list of CloudStackDeploymentConfig
-type CloudStackDeploymentConfigList struct {
+// CloudStackDatacenterConfigList contains a list of CloudStackDatacenterConfig
+type CloudStackDatacenterConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []CloudStackDeploymentConfig `json:"items"`
+	Items           []CloudStackDatacenterConfig `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&CloudStackDeploymentConfig{}, &CloudStackDeploymentConfigList{})
+	SchemeBuilder.Register(&CloudStackDatacenterConfig{}, &CloudStackDatacenterConfigList{})
 }

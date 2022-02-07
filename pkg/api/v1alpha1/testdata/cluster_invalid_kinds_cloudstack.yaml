@@ -19,7 +19,7 @@ spec:
       kind: BadCloudStackMachineConfig
       name: eksa-unit-test
   datacenterRef:
-    kind: BadCloudStackDeploymentConfig
+    kind: BadCloudStackDatacenterConfig
     name: eksa-unit-test
   kubernetesVersion: "1.19"
   workerNodeGroupConfigurations:
@@ -30,7 +30,7 @@ spec:
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: BadCloudStackDeploymentConfig
+kind: BadCloudStackDatacenterConfig
 metadata:
   name: eksa-unit-test
 spec:

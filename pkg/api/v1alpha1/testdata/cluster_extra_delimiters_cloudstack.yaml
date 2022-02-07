@@ -20,7 +20,7 @@ spec:
       kind: CloudStackMachineConfig
       name: eksa-unit-test
   datacenterRef:
-    kind: CloudStackDeploymentConfig
+    kind: CloudStackDatacenterConfig
     name: eksa-unit-test
   kubernetesVersion: "1.19"
   workerNodeGroupConfigurations:
@@ -31,7 +31,7 @@ spec:
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: CloudStackDeploymentConfig
+kind: CloudStackDatacenterConfig
 metadata:
   name: eksa-unit-test
 spec:
