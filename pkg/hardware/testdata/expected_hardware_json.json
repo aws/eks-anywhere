@@ -1,11 +1,7 @@
 {
   "id": "b14d7f5b-8903-4a4c-b38d-55889ba820ba",
   "metadata": {
-    "facility": {
-      "facility_code": "onprem",
-      "plan_slug": "c2.medium.x86",
-      "plan_version_slug": ""
-    },
+    "state": "provisioning",
     "instance": {
       "id": "b14d7f5b-8903-4a4c-b38d-55889ba820ba",
       "hostname": "worker1",
@@ -17,23 +13,27 @@
         ]
       }
     },
-    "state": "provisioning"
+    "facility": {
+      "plan_slug": "c2.medium.x86",
+      "facility_code": "onprem"
+    }
   },
   "network": {
     "interfaces": [
       {
         "dhcp": {
-          "arch": "x86_64",
           "mac": "00:00:00:00:00:00",
-          "nameservers": [
+          "hostname": "worker1",
+          "name_servers": [
             "8.8.8.8",
             "8.8.4.4"
           ],
+          "arch": "x86_64",
           "uefi": true,
           "ip": {
             "address": "192.168.0.10",
-            "gateway": "192.168.0.1",
-            "netmask": "255.255.255.0"
+            "netmask": "255.255.255.0",
+            "gateway": "192.168.0.1"
           }
         },
         "netboot": {

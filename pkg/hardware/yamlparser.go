@@ -1,20 +1,29 @@
 package hardware
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	pbnjv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/pbnj/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
+
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 const (
-	yamlPath      = "hardware-manifests/hardware.yaml"
-	yamlSeparator = "---\n"
+	yamlDirectory = "hardware-manifests"
+	yamlFile      = "hardware.yaml"
+)
+
+var (
+	yamlPath      = filepath.Join(yamlDirectory, yamlFile)
+	yamlSeparator = []byte("---\n")
 )
 
 type YamlParser struct {
@@ -22,6 +31,13 @@ type YamlParser struct {
 }
 
 func NewYamlParser() (*YamlParser, error) {
+	if _, err := os.Stat(yamlDirectory); errors.Is(err, os.ErrNotExist) {
+		logger.V(4).Info("Creating directory for YamlParser", "Directory", yamlDirectory)
+		if err := os.Mkdir(yamlDirectory, os.ModePerm); err != nil {
+			return nil, fmt.Errorf("error creating directory for YamlParser: %v", err)
+		}
+	}
+
 	err := ioutil.WriteFile(yamlPath, []byte{}, 0o644)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing YamlParser: %v", err)
@@ -62,19 +78,6 @@ func (y *YamlParser) WriteHardwareYaml(id, hostname, bmcIp, vendor, username, pa
 		},
 	}
 
-	h, err := yaml.Marshal(hardware)
-	if err != nil {
-		return err
-	}
-
-	if _, err := y.file.Write(h); err != nil {
-		return fmt.Errorf("error writing hardware object: %v", err)
-	}
-
-	if _, err := y.file.WriteString(yamlSeparator); err != nil {
-		return fmt.Errorf("error writing yaml separator: %v", err)
-	}
-
 	bmc := pbnjv1alpha1.BMC{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "BMC",
@@ -97,19 +100,6 @@ func (y *YamlParser) WriteHardwareYaml(id, hostname, bmcIp, vendor, username, pa
 		},
 	}
 
-	b, err := yaml.Marshal(bmc)
-	if err != nil {
-		return err
-	}
-
-	if _, err := y.file.Write(b); err != nil {
-		return fmt.Errorf("error writing bmc object: %v", err)
-	}
-
-	if _, err := y.file.WriteString(yamlSeparator); err != nil {
-		return fmt.Errorf("error writing yaml separator: %v", err)
-	}
-
 	secret := corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
@@ -129,17 +119,30 @@ func (y *YamlParser) WriteHardwareYaml(id, hostname, bmcIp, vendor, username, pa
 		},
 	}
 
+	h, err := yaml.Marshal(hardware)
+	if err != nil {
+		return fmt.Errorf("error marshalling Hardware for %s: %v", hostname, err)
+	}
+
+	b, err := yaml.Marshal(bmc)
+	if err != nil {
+		return fmt.Errorf("error marshalling BMC for %s: %v", hostname, err)
+	}
+
 	s, err := yaml.Marshal(secret)
 	if err != nil {
-		return err
+		return fmt.Errorf("error marshalling Secret for %s: %v", hostname, err)
 	}
 
-	if _, err := y.file.Write(s); err != nil {
-		return fmt.Errorf("error writing secret object: %v", err)
+	var hardwareYaml []byte
+	for _, slice := range [][]byte{h, b, s} {
+		hardwareYaml = append(hardwareYaml, slice...)
+		hardwareYaml = append(hardwareYaml, yamlSeparator...)
 	}
 
-	if _, err := y.file.WriteString(yamlSeparator); err != nil {
-		return fmt.Errorf("error writing yaml separator: %v", err)
+	logger.V(4).Info("Writing hardware yaml for hardware", "Hardware", hostname)
+	if _, err := y.file.Write(hardwareYaml); err != nil {
+		return fmt.Errorf("error writing hardware yaml for %s: %v", hostname, err)
 	}
 
 	return nil

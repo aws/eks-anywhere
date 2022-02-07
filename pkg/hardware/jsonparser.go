@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/tinkerbell/tink/protos/hardware"
+	"github.com/tinkerbell/tink/protos/packet"
+
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 )
 
@@ -22,6 +25,12 @@ const (
 	eksaNamespace = "eksa-system"
 	jsonPath      = "hardware-manifests/json"
 )
+
+type Hardware struct {
+	Id       string                     `json:"id"`
+	Metadata *packet.Metadata           `json:"metadata"`
+	Network  *hardware.Hardware_Network `json:"network"`
+}
 
 type JsonParser struct {
 	jsonWriter filewriter.FileWriter
@@ -49,18 +58,17 @@ func (j *JsonParser) CleanUp() {
 func (j *JsonParser) GetHardwareJson(id, hostname, ipAddress, gateway, netmask, mac, nameserver string) ([]byte, error) {
 	nameservers := strings.Split(nameserver, "|")
 	hardware := &Hardware{
-		ID: id,
-		Metadata: Metadata{
-			Facility: Facility{
-				FacilityCode:    "onprem",
-				PlanSlug:        "c2.medium.x86",
-				PlanVersionSlug: "",
+		Id: id,
+		Metadata: &packet.Metadata{
+			Facility: &packet.Metadata_Facility{
+				FacilityCode: "onprem",
+				PlanSlug:     "c2.medium.x86",
 			},
-			Instance: Instance{
-				ID:       id,
+			Instance: &packet.Metadata_Instance{
+				Id:       id,
 				Hostname: hostname,
-				Storage: Storage{
-					Disks: []Disk{
+				Storage: &packet.Metadata_Instance_Storage{
+					Disks: []*packet.Metadata_Instance_Storage_Disk{
 						{
 							Device: "/dev/sda",
 						},
@@ -69,22 +77,23 @@ func (j *JsonParser) GetHardwareJson(id, hostname, ipAddress, gateway, netmask, 
 			},
 			State: "provisioning",
 		},
-		Network: Network{
-			Interfaces: []Interface{
+		Network: &hardware.Hardware_Network{
+			Interfaces: []*hardware.Hardware_Network_Interface{
 				{
-					DHCP: DHCP{
-						Arch: "x86_64",
-						IP: IP{
+					Dhcp: &hardware.Hardware_DHCP{
+						Arch:     "x86_64",
+						Hostname: hostname,
+						Ip: &hardware.Hardware_DHCP_IP{
 							Address: ipAddress,
 							Gateway: gateway,
 							Netmask: netmask,
 						},
 						Mac:         mac,
-						Nameservers: nameservers,
-						UEFI:        true,
+						NameServers: nameservers,
+						Uefi:        true,
 					},
-					Netboot: Netboot{
-						AllowPXE:      true,
+					Netboot: &hardware.Hardware_Netboot{
+						AllowPxe:      true,
 						AllowWorkflow: true,
 					},
 				},
