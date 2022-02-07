@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -26,6 +27,7 @@ import (
 
 type ResourceFetcher interface {
 	MachineDeployment(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*clusterv1.MachineDeployment, error)
+	KubeadmConfigTemplate(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*kubeadmv1.KubeadmConfigTemplate, error)
 	VSphereWorkerMachineTemplate(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*vspherev1.VSphereMachineTemplate, error)
 	VSphereCredentials(ctx context.Context) (*corev1.Secret, error)
 	FetchObject(ctx context.Context, objectKey types.NamespacedName, obj client.Object) error
@@ -249,6 +251,19 @@ func (r *CapiResourceFetcher) VSphereEtcdMachineTemplate(ctx context.Context, cs
 		return nil, err
 	}
 	return vsphereMachineTemplate, nil
+}
+
+func (r *CapiResourceFetcher) KubeadmConfigTemplate(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*kubeadmv1.KubeadmConfigTemplate, error) {
+	machineDeployment, err := r.MachineDeployment(ctx, cs, wnc)
+	if err != nil {
+		return nil, err
+	}
+	kubeadmConfigTemplate := &kubeadmv1.KubeadmConfigTemplate{}
+	err = r.FetchObjectByName(ctx, machineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef.Name, constants.EksaSystemNamespace, kubeadmConfigTemplate)
+	if err != nil {
+		return nil, err
+	}
+	return kubeadmConfigTemplate, nil
 }
 
 func (r *CapiResourceFetcher) VSphereCredentials(ctx context.Context) (*corev1.Secret, error) {
