@@ -17,7 +17,8 @@ import (
 	types "k8s.io/apimachinery/pkg/types"
 	v1beta10 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	v1beta11 "sigs.k8s.io/cluster-api/api/v1beta1"
-	v1beta12 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	v1beta12 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	v1beta13 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -60,10 +61,10 @@ func (mr *MockResourceFetcherMockRecorder) AWSIamConfig(arg0, arg1, arg2 interfa
 }
 
 // ControlPlane mocks base method.
-func (m *MockResourceFetcher) ControlPlane(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1beta12.KubeadmControlPlane, error) {
+func (m *MockResourceFetcher) ControlPlane(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1beta13.KubeadmControlPlane, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ControlPlane", arg0, arg1)
-	ret0, _ := ret[0].(*v1beta12.KubeadmControlPlane)
+	ret0, _ := ret[0].(*v1beta13.KubeadmControlPlane)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -220,6 +221,21 @@ func (m *MockResourceFetcher) FetchObjectByName(arg0 context.Context, arg1, arg2
 func (mr *MockResourceFetcherMockRecorder) FetchObjectByName(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchObjectByName", reflect.TypeOf((*MockResourceFetcher)(nil).FetchObjectByName), arg0, arg1, arg2, arg3)
+}
+
+// KubeadmConfigTemplate mocks base method.
+func (m *MockResourceFetcher) KubeadmConfigTemplate(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 v1alpha1.WorkerNodeGroupConfiguration) (*v1beta12.KubeadmConfigTemplate, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "KubeadmConfigTemplate", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*v1beta12.KubeadmConfigTemplate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// KubeadmConfigTemplate indicates an expected call of KubeadmConfigTemplate.
+func (mr *MockResourceFetcherMockRecorder) KubeadmConfigTemplate(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KubeadmConfigTemplate", reflect.TypeOf((*MockResourceFetcher)(nil).KubeadmConfigTemplate), arg0, arg1, arg2)
 }
 
 // MachineDeployment mocks base method.

@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -50,6 +51,9 @@ var vsphereDatacenterConfigSpecPath string
 
 //go:embed testdata/vsphereMachineConfigSpec.yaml
 var vsphereMachineConfigSpecPath string
+
+//go:embed testdata/kubeadmconfigTemplateSpec.yaml
+var kubeadmconfigTemplateSpecPath string
 
 func TestClusterReconcilerReconcile(t *testing.T) {
 	type args struct {
@@ -132,6 +136,12 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
 
+				existingKubeadmConfigTemplate := &v1beta1.KubeadmConfigTemplate{}
+				if err := yaml.Unmarshal([]byte(kubeadmconfigTemplateSpecPath), existingKubeadmConfigTemplate); err != nil {
+					t.Errorf("unmarshal failed: %v", err)
+				}
+				fetcher.EXPECT().KubeadmConfigTemplate(ctx, gomock.Any(), gomock.Any()).Return(existingKubeadmConfigTemplate, nil)
+
 				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}
 				if err := yaml.Unmarshal([]byte(kubeadmcontrolplaneFile), kubeAdmControlPlane); err != nil {
 					t.Errorf("unmarshal failed: %v", err)
@@ -140,6 +150,11 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				etcdadmCluster := &etcdv1.EtcdadmCluster{}
 				if err := yaml.Unmarshal([]byte(etcdadmclusterFile), etcdadmCluster); err != nil {
 					t.Errorf("unmarshal failed: %v", err)
+				}
+
+				machineDeployment := &clusterv1.MachineDeployment{}
+				if err := yaml.Unmarshal([]byte(machineDeploymentFile), machineDeployment); err != nil {
+					t.Errorf("unmarshalling machinedeployment failed: %v", err)
 				}
 
 				fetcher.EXPECT().Etcd(ctx, gomock.Any()).Return(etcdadmCluster, nil)
@@ -152,7 +167,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				}, nil)
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))
 
-				resourceUpdater.EXPECT().ApplyPatch(ctx, gomock.Any(), false).Return(nil)
+				resourceUpdater.EXPECT().ApplyPatch(ctx, gomock.Any(), false).Return(nil).Times(1)
 				resourceUpdater.EXPECT().ForceApplyTemplate(ctx, gomock.Any(), gomock.Any()).Do(func(ctx context.Context, template *unstructured.Unstructured, dryRun bool) {
 					assert.Equal(t, false, dryRun, "Expected dryRun didn't match")
 					switch template.GetKind() {
@@ -231,6 +246,12 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 					cluster.Spec = machineSpec.Spec
 					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
+
+				existingKubeadmConfigTemplate := &v1beta1.KubeadmConfigTemplate{}
+				if err := yaml.Unmarshal([]byte(kubeadmconfigTemplateSpecPath), existingKubeadmConfigTemplate); err != nil {
+					t.Errorf("unmarshal failed: %v", err)
+				}
+				fetcher.EXPECT().KubeadmConfigTemplate(ctx, gomock.Any(), gomock.Any()).Return(existingKubeadmConfigTemplate, nil)
 
 				existingVSMachine := &anywherev1.VSphereMachineConfig{}
 				existingVSMachine.Spec = machineSpec.Spec
