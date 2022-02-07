@@ -1,0 +1,59 @@
+# Embed EKS-D resources in EKS-A cluster
+
+## Introduction
+
+**Problem:** Currently, the EKS Anywhere controller pulls the EKS Distro manifest from the release URL provided in the versions bundle, which requires access to the internet.
+It would be ideal to have this manifest and its CRDs embedded in the cluster to allow the controller to operate without the requirement to make that external call.
+This will eventually be needed for air-gapped support.
+
+### Goals and Objectives
+
+As an EKS Anywhere user:
+
+* I want the EKSA controller to be able to operate without internet access
+* I want EKSD components to be supported during upgrade
+
+## Overview of Solution
+
+The EKS Distro manifest and the release CRD will be applied directly to the cluster.
+This will allow the controller to grab the EKSD release resources from within the cluster instead of reading in the EKSD manifest from the internet when fetching the applied spec.
+
+### Solution Details
+
+With this feature, the EKSD manifest & its CRD will be applied directly to the cluster.
+We will do this similarly to how we apply the EKSA components to the cluster, introducing a new task to the create workflow called `InstallEksdComponentsTask`.
+We currently don’t pull in the EKSD release CRD in the bundle, so I propose introducing a new field `crdUrl` in the EKSD Bundle to refer to the file in S3 that stores this CRD.
+
+```
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Bundles
+metadata:
+  creationTimestamp: "2022-02-01T16:41:19Z"
+spec:
+  cliMaxVersion: v0.0.0
+  cliMinVersion: v0.0.0
+  number: 1
+  versionsBundles:
+    eksD:
+      channel: 1-21
+      crdUrl: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
+      gitCommit: |
+        fcddf59a516102e20f75b6c672e3aa74cf2da877
+      kindNode:
+        arch:
+```
+
+From here, we can use `kubectl apply` to apply the content from the EKSD release URL and the CRD URL to the cluster.
+
+We will need a way to refer to the EKSD release object on the cluster.
+One way to achieve this is by adding a field to the cluster status.
+We will introduce a field named `EksdRelease` of type `*v1alpha1.Release`.
+This is how we will attain that direct access to the release object when calling it from the controller.
+
+
+### Upgrading EKSD components
+
+Now that the EKSD components are embedded in the cluster, we have to ensure that those components are supported during upgrade.
+We will update the upgrader in cluster manager to not only check for updates to EKSA, but it will also check for updates to EKSD.
+If there is a newer version, we will upgrade those components.
+
