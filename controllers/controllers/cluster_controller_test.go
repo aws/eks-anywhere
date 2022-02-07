@@ -225,7 +225,7 @@ func createWNMachineConfig() *anywherev1.VSphereMachineConfig {
 			ResourcePool:      "test",
 			StoragePolicyName: "test",
 			Template:          "test",
-			Users: []anywherev1.UserConfiguration{anywherev1.UserConfiguration{
+			Users: []anywherev1.UserConfiguration{{
 				Name:              "user",
 				SshAuthorizedKeys: []string{"ABC"},
 			}},
@@ -254,7 +254,7 @@ func createCPMachineConfig() *anywherev1.VSphereMachineConfig {
 			ResourcePool:      "test",
 			StoragePolicyName: "test",
 			Template:          "test",
-			Users: []anywherev1.UserConfiguration{anywherev1.UserConfiguration{
+			Users: []anywherev1.UserConfiguration{{
 				Name:              "user",
 				SshAuthorizedKeys: []string{"ABC"},
 			}},

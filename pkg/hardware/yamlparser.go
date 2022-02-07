@@ -17,8 +17,13 @@ import (
 )
 
 const (
-	yamlDirectory = "hardware-manifests"
-	yamlFile      = "hardware.yaml"
+	yamlDirectory        = "hardware-manifests"
+	yamlFile             = "hardware.yaml"
+	hardwareKind         = "Hardware"
+	bmcKind              = "BMC"
+	secretKind           = "Secret"
+	tinkerbellApiVersion = "tinkerbell.org/v1alpha1"
+	moveLabel            = "clusterctl.cluster.x-k8s.io/move"
 )
 
 var (
@@ -62,14 +67,14 @@ func (y *YamlParser) WriteHardwareYaml(id, hostname, bmcIp, vendor, username, pa
 	secretRef := fmt.Sprintf("%s-auth", bmcRef)
 	hardware := tinkv1alpha1.Hardware{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "Hardware",
-			APIVersion: "tinkerbell.org/v1alpha1",
+			Kind:       hardwareKind,
+			APIVersion: tinkerbellApiVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      hostname,
 			Namespace: eksaNamespace,
 			Labels: map[string]string{
-				"clusterctl.cluster.x-k8s.io/move": "true",
+				moveLabel: "true",
 			},
 		},
 		Spec: tinkv1alpha1.HardwareSpec{
@@ -80,14 +85,14 @@ func (y *YamlParser) WriteHardwareYaml(id, hostname, bmcIp, vendor, username, pa
 
 	bmc := pbnjv1alpha1.BMC{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "BMC",
-			APIVersion: "tinkerbell.org/v1alpha1",
+			Kind:       bmcKind,
+			APIVersion: tinkerbellApiVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      bmcRef,
 			Namespace: eksaNamespace,
 			Labels: map[string]string{
-				"clusterctl.cluster.x-k8s.io/move": "true",
+				moveLabel: "true",
 			},
 		},
 		Spec: pbnjv1alpha1.BMCSpec{
@@ -102,14 +107,14 @@ func (y *YamlParser) WriteHardwareYaml(id, hostname, bmcIp, vendor, username, pa
 
 	secret := corev1.Secret{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
+			Kind:       secretKind,
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretRef,
 			Namespace: eksaNamespace,
 			Labels: map[string]string{
-				"clusterctl.cluster.x-k8s.io/move": "true",
+				moveLabel: "true",
 			},
 		},
 		Type: "kubernetes.io/basic-auth",
