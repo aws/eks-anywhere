@@ -21,7 +21,6 @@ func NewCloudStackDatacenterConfigGenerate(clusterName string) *CloudStackDatace
 			Zone:                  "zone1",
 			Network:               "net1",
 			Account:               "admin",
-			ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
 			Insecure:              false,
 		},
 	}

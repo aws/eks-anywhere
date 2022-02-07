@@ -36,7 +36,6 @@ metadata:
   name: eksa-unit-test
 spec:
   account: "admin"
-  managementApiEndpoint: "https://127.0.0.1:8080/client/api"
   domain: "domain1"
   insecure: false
   network: "net1"

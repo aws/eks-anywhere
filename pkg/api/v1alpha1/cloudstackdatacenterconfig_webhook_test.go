@@ -49,16 +49,6 @@ func TestCloudStackDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCloudStackDatacenterValidateUpdateControlPlaneEndpointImmutable(t *testing.T) {
-	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.ManagementApiEndpoint = "OldManagementApiEndpoint"
-	c := vOld.DeepCopy()
-
-	c.Spec.ManagementApiEndpoint = "NewManagementApiEndpoint"
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
-}
-
 func TestCloudStackDatacenterValidateUpdateTLSInsecureImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Insecure = true

@@ -107,13 +107,6 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 		)
 	}
 
-	if old.Spec.ManagementApiEndpoint != new.Spec.ManagementApiEndpoint {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "control_plane_endpoint"), new.Spec.ManagementApiEndpoint, "field is immutable"),
-		)
-	}
-
 	if old.Spec.Insecure != new.Spec.Insecure {
 		allErrs = append(
 			allErrs,
