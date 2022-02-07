@@ -559,7 +559,9 @@ func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupC
 	existingUsers := make(map[string]map[string]struct{}, existingUserSliceLen)
 	for _, existingUser := range oldUsers {
 		for _, key := range existingUser.SSHAuthorizedKeys {
-			existingUsers[existingUser.Name][key] = struct{}{}
+			existingUsers[existingUser.Name] = map[string]struct{}{
+				key: {},
+			}
 		}
 	}
 
