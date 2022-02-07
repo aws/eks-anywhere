@@ -206,6 +206,22 @@ func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.VSp
 	return machineConfigs
 }
 
+func givenMachineDeployment() *clusterv1.MachineDeployment {
+	return &clusterv1.MachineDeployment{
+		Spec: clusterv1.MachineDeploymentSpec{
+			Template: clusterv1.MachineTemplateSpec{
+				Spec: clusterv1.MachineSpec{
+					Bootstrap: clusterv1.Bootstrap{
+						ConfigRef: &v1.ObjectReference{
+							Name: "test-md-0-kubeadmconfig-template-1234567890000",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func givenProvider(t *testing.T) *vsphereProvider {
 	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
 	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
@@ -448,6 +464,7 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 				Spec: v1alpha1.VSphereMachineConfigSpec{},
 			}
 
+			kubectl.EXPECT().GetMachineDeployment(ctx, cluster, gomock.Any(), gomock.Any(), gomock.Any()).Return(givenMachineDeployment(), nil)
 			kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Name).Return(clusterSpec.Cluster, nil)
 			kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereDatacenter, nil)
 			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereMachineConfig, nil)
@@ -515,6 +532,7 @@ func TestProviderGenerateCAPISpecForUpgradeOIDC(t *testing.T) {
 				Spec: v1alpha1.VSphereMachineConfigSpec{},
 			}
 
+			kubectl.EXPECT().GetMachineDeployment(ctx, cluster, gomock.Any(), gomock.Any(), gomock.Any()).Return(givenMachineDeployment(), nil)
 			kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Name).Return(clusterSpec.Cluster, nil)
 			kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereDatacenter, nil)
 			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereMachineConfig, nil)
@@ -578,6 +596,7 @@ func TestProviderGenerateCAPISpecForUpgradeMultipleWorkerNodeGroups(t *testing.T
 			newConfig := v1alpha1.WorkerNodeGroupConfiguration{Count: 1, MachineGroupRef: &v1alpha1.Ref{Name: "test-wn", Kind: "VSphereMachineConfig"}, Name: "md-2"}
 			newClusterSpec.Spec.WorkerNodeGroupConfigurations = append(newClusterSpec.Spec.WorkerNodeGroupConfigurations, newConfig)
 
+			kubectl.EXPECT().GetMachineDeployment(ctx, cluster, gomock.Any(), gomock.Any(), gomock.Any()).Return(givenMachineDeployment(), nil).Times(3)
 			kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Name).Return(clusterSpec.Cluster, nil)
 			kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereDatacenter, nil)
 			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereMachineConfig, nil)
@@ -661,6 +680,7 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *
 				Spec: v1alpha1.VSphereMachineConfigSpec{},
 			}
 
+			kubectl.EXPECT().GetMachineDeployment(ctx, cluster, gomock.Any(), gomock.Any(), gomock.Any()).Return(givenMachineDeployment(), nil)
 			kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Name).Return(clusterSpec.Cluster, nil)
 			kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereDatacenter, nil)
 			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereMachineConfig, nil)
@@ -721,6 +741,11 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 					InfrastructureRef: v1.ObjectReference{
 						Name: "test-md-0-original",
 					},
+					Bootstrap: clusterv1.Bootstrap{
+						ConfigRef: &v1.ObjectReference{
+							Name: "test-md-0-original",
+						},
+					},
 				},
 			},
 		},
@@ -755,7 +780,7 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, workerNodeMachineConfigName, cluster.KubeconfigFile, clusterSpec.Namespace).Return(machineConfigs[workerNodeMachineConfigName], nil)
 	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, etcdMachineConfigName, cluster.KubeconfigFile, clusterSpec.Namespace).Return(machineConfigs[etcdMachineConfigName], nil)
 	kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, clusterSpec.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldCP, nil)
-	kubectl.EXPECT().GetMachineDeployment(ctx, cluster, machineDeploymentName, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldMD, nil)
+	kubectl.EXPECT().GetMachineDeployment(ctx, cluster, machineDeploymentName, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(oldMD, nil).Times(2)
 	kubectl.EXPECT().GetEtcdadmCluster(ctx, cluster, clusterSpec.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(etcdadmCluster, nil)
 	cp, md, err := provider.GenerateCAPISpecForUpgrade(context.Background(), bootstrapCluster, cluster, clusterSpec, clusterSpec.DeepCopy())
 	if err != nil {
