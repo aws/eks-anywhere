@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -29,11 +28,12 @@ type Cmk struct {
 	writer     filewriter.FileWriter
 	executable Executable
 	retrier    *retrier.Retrier
+	config     CmkExecConfig
 }
 
 // TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateTemplatePresent(ctx context.Context, config CmkExecConfig, domain, zone, account, template string) error {
-	result, err := c.execWithNameAndIdFilters(ctx, config, template, "list", "templates", "templatefilter=all", "listall=true")
+func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domain, zone, account, template string) error {
+	result, err := c.execWithNameAndIdFilters(ctx, template, "list", "templates", "templatefilter=all", "listall=true")
 	if err != nil {
 		return fmt.Errorf("error getting templates info: %v", err)
 	}
@@ -44,8 +44,7 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, config CmkExecConfig,
 	response := struct {
 		CmkTemplates []CmkTemplate `json:"template"`
 	}{}
-	err = json.Unmarshal(result.Bytes(), &response)
-	if err != nil {
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
 		return fmt.Errorf("failed to parse response into json: %v", err)
 	}
 	templates := response.CmkTemplates
@@ -58,8 +57,8 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, config CmkExecConfig,
 }
 
 // TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, config CmkExecConfig, domain, zone, account, serviceOffering string) error {
-	result, err := c.execWithNameAndIdFilters(ctx, config, serviceOffering, "list", "serviceofferings")
+func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, domain, zone, account, serviceOffering string) error {
+	result, err := c.execWithNameAndIdFilters(ctx, serviceOffering, "list", "serviceofferings")
 	if err != nil {
 		return fmt.Errorf("error getting service offerings info: %v", err)
 	}
@@ -70,8 +69,7 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, config CmkExec
 	response := struct {
 		CmkServiceOfferings []CmkServiceOffering `json:"serviceoffering"`
 	}{}
-	err = json.Unmarshal(result.Bytes(), &response)
-	if err != nil {
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
 		return fmt.Errorf("failed to parse response into json: %v", err)
 	}
 	offerings := response.CmkServiceOfferings
@@ -85,11 +83,11 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, config CmkExec
 }
 
 // TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, config CmkExecConfig, domain, zone, account, diskOffering string) error {
+func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, domain, zone, account, diskOffering string) error {
 	if diskOffering == "" {
 		return nil
 	}
-	result, err := c.execWithNameAndIdFilters(ctx, config, diskOffering, "list", "diskofferings")
+	result, err := c.execWithNameAndIdFilters(ctx, diskOffering, "list", "diskofferings")
 	if err != nil {
 		return fmt.Errorf("error getting disk offerings info: %v", err)
 	}
@@ -100,8 +98,7 @@ func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, config CmkExecCon
 	response := struct {
 		CmkDiskOfferings []CmkDiskOffering `json:"diskoffering"`
 	}{}
-	err = json.Unmarshal(result.Bytes(), &response)
-	if err != nil {
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
 		return fmt.Errorf("failed to parse response into json: %v", err)
 	}
 	offerings := response.CmkDiskOfferings
@@ -114,10 +111,10 @@ func (c *Cmk) ValidateDiskOfferingPresent(ctx context.Context, config CmkExecCon
 }
 
 // TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, config CmkExecConfig, domain, zone, account string, affinityGroupIds []string) error {
+func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domain, zone, account string, affinityGroupIds []string) error {
 	for _, affinityGroupId := range affinityGroupIds {
 		idFilterParam := fmt.Sprintf("id=\"%s\"", affinityGroupId)
-		result, err := c.exec(ctx, config, "list", "affinitygroups", idFilterParam)
+		result, err := c.exec(ctx, "list", "affinitygroups", idFilterParam)
 		if err != nil {
 			return fmt.Errorf("error getting affinity group info: %v", err)
 		}
@@ -128,8 +125,7 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, config CmkExecC
 		response := struct {
 			CmkAffinityGroups []CmkAffinityGroup `json:"affinitygroup"`
 		}{}
-		err = json.Unmarshal(result.Bytes(), &response)
-		if err != nil {
+		if err = json.Unmarshal(result.Bytes(), &response); err != nil {
 			return fmt.Errorf("failed to parse response into json: %v", err)
 		}
 		affinityGroup := response.CmkAffinityGroups
@@ -142,8 +138,8 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, config CmkExecC
 	return nil
 }
 
-func (c *Cmk) ValidateZonePresent(ctx context.Context, config CmkExecConfig, zone string) error {
-	result, err := c.execWithNameAndIdFilters(ctx, config, zone, "list", "zones")
+func (c *Cmk) ValidateZonePresent(ctx context.Context, zone string) error {
+	result, err := c.execWithNameAndIdFilters(ctx, zone, "list", "zones")
 	if err != nil {
 		return fmt.Errorf("error getting zones info: %v", err)
 	}
@@ -154,8 +150,7 @@ func (c *Cmk) ValidateZonePresent(ctx context.Context, config CmkExecConfig, zon
 	response := struct {
 		CmkZones []CmkZone `json:"zone"`
 	}{}
-	err = json.Unmarshal(result.Bytes(), &response)
-	if err != nil {
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
 		return fmt.Errorf("failed to parse response into json: %v", err)
 	}
 	zones := response.CmkZones
@@ -168,8 +163,8 @@ func (c *Cmk) ValidateZonePresent(ctx context.Context, config CmkExecConfig, zon
 }
 
 // TODO: Add support for domain filtering
-func (c *Cmk) ValidateAccountPresent(ctx context.Context, config CmkExecConfig, account string) error {
-	result, err := c.execWithNameAndIdFilters(ctx, config, account, "list", "accounts")
+func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string) error {
+	result, err := c.execWithNameAndIdFilters(ctx, account, "list", "accounts")
 	if err != nil {
 		return fmt.Errorf("error getting accounts info: %v", err)
 	}
@@ -180,8 +175,7 @@ func (c *Cmk) ValidateAccountPresent(ctx context.Context, config CmkExecConfig, 
 	response := struct {
 		CmkAccounts []CmkAccount `json:"account"`
 	}{}
-	err = json.Unmarshal(result.Bytes(), &response)
-	if err != nil {
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
 		return fmt.Errorf("failed to parse response into json: %v", err)
 	}
 	accounts := response.CmkAccounts
@@ -193,17 +187,18 @@ func (c *Cmk) ValidateAccountPresent(ctx context.Context, config CmkExecConfig, 
 	return nil
 }
 
-func NewCmk(executable Executable, writer filewriter.FileWriter) *Cmk {
+func NewCmk(executable Executable, writer filewriter.FileWriter, config CmkExecConfig) *Cmk {
 	return &Cmk{
 		writer:     writer,
 		executable: executable,
 		retrier:    retrier.NewWithMaxRetries(maxRetriesCmk, backOffPeriodCmk),
+		config:     config,
 	}
 }
 
 // ValidateCloudStackConnection Calls `cmk sync` to ensure that the endpoint and credentials + domain are valid
-func (c *Cmk) ValidateCloudStackConnection(ctx context.Context, config CmkExecConfig) error {
-	buffer, err := c.exec(ctx, config, "sync")
+func (c *Cmk) ValidateCloudStackConnection(ctx context.Context) error {
+	buffer, err := c.exec(ctx, "sync")
 	if err != nil {
 		return fmt.Errorf("error validating cloudstack connection for cmk config %s: %v", buffer.String(), err)
 	}
@@ -211,16 +206,16 @@ func (c *Cmk) ValidateCloudStackConnection(ctx context.Context, config CmkExecCo
 	return nil
 }
 
-func (c *Cmk) execWithNameAndIdFilters(ctx context.Context, config CmkExecConfig, parameterValue string, genericArgs ...string) (stdout bytes.Buffer, err error) {
+func (c *Cmk) execWithNameAndIdFilters(ctx context.Context, parameterValue string, genericArgs ...string) (stdout bytes.Buffer, err error) {
 	argsWithNameFilterArg := append(genericArgs, fmt.Sprintf("name=\"%s\"", parameterValue))
-	result, err := c.exec(ctx, config, argsWithNameFilterArg...)
+	result, err := c.exec(ctx, argsWithNameFilterArg...)
 	if err != nil {
 		return result, fmt.Errorf("error getting resource info filtering by id %s: %v", parameterValue, err)
 	}
 	if result.Len() == 0 {
 		argsWithIdFilterArg := append(genericArgs, fmt.Sprintf("id=\"%s\"", parameterValue))
 		logger.V(6).Info("No resources found searching by name. Trying again filtering by id instead", "searchParameterValue", parameterValue)
-		result, err = c.exec(ctx, config, argsWithIdFilterArg...)
+		result, err = c.exec(ctx, argsWithIdFilterArg...)
 		if err != nil {
 			return result, fmt.Errorf("error getting resource info filtering by id %s: %v", parameterValue, err)
 		}
@@ -228,11 +223,11 @@ func (c *Cmk) execWithNameAndIdFilters(ctx context.Context, config CmkExecConfig
 	return result, nil
 }
 
-func (c *Cmk) exec(ctx context.Context, config CmkExecConfig, args ...string) (stdout bytes.Buffer, err error) {
+func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, err error) {
 	if err != nil {
 		return bytes.Buffer{}, fmt.Errorf("failed get environment map: %v", err)
 	}
-	configFile, err := c.buildCmkConfigFile(config)
+	configFile, err := c.buildCmkConfigFile()
 	if err != nil {
 		return bytes.Buffer{}, fmt.Errorf("failed cmk validations: %v", err)
 	}
@@ -241,23 +236,17 @@ func (c *Cmk) exec(ctx context.Context, config CmkExecConfig, args ...string) (s
 	return c.executable.Execute(ctx, argsWithConfigFile...)
 }
 
+// TODO: Add support for passing in domain from Deployment Config Spec
 type CmkExecConfig struct {
-	ApiKey        string // Api Key for CloudMonkey to access CloudStack Cluster
-	SecretKey     string // Secret Key for CloudMonkey to access CloudStack Cluster
-	ManagementUrl string // Management Endpoint Url for CloudMonkey to access CloudStack Cluster
-	VerifyCert    bool   // boolean indicating if CloudMonkey should verify the cert presented by the CloudStack Management Server
+	CloudStackApiKey        string // Api Key for CloudMonkey to access CloudStack Cluster
+	CloudStackSecretKey     string // Secret Key for CloudMonkey to access CloudStack Cluster
+	CloudStackManagementUrl string // Management Endpoint Url for CloudMonkey to access CloudStack Cluster
+	CloudMonkeyVerifyCert   bool   // boolean indicating if CloudMonkey should verify the cert presented by the CloudStack Management Server
 }
 
-// TODO: Add support for passing in domain from Deployment Config Spec
-func (c *Cmk) buildCmkConfigFile(config CmkExecConfig) (configFile string, err error) {
+func (c *Cmk) buildCmkConfigFile() (configFile string, err error) {
 	t := templater.New(c.writer)
-	data := map[string]string{
-		"CloudStackApiKey":        config.ApiKey,
-		"CloudStackSecretKey":     config.SecretKey,
-		"CloudStackManagementUrl": config.ManagementUrl,
-		"CloudMonkeyVerifyCert":   strconv.FormatBool(config.VerifyCert),
-	}
-	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, data, cmkConfigFileName)
+	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, c.config, cmkConfigFileName)
 	if err != nil {
 		return "", fmt.Errorf("error creating file for cmk config: %v", err)
 	}
