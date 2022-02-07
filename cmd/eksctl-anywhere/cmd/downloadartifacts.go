@@ -194,6 +194,8 @@ func createTarball(downloadDir string) error {
 		return err
 	}
 
+	tarWriter.Close()
+	gzipWriter.Close()
 	if _, err = io.Copy(tarFile, &buf); err != nil {
 		return err
 	}
