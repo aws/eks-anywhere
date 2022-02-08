@@ -396,6 +396,11 @@ func (p *tinkerbellProvider) RunPostControlPlaneCreation(ctx context.Context, cl
 	return nil
 }
 
+func machineDeploymentName(clusterName, workerPoolName string) string {
+	// TODO: Update when we decide the naming for tinkerbell MD objects
+	return fmt.Sprintf("%s-%s", clusterName, workerPoolName)
+}
+
 func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alpha1.TinkerbellMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
@@ -444,9 +449,9 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 
 func (p *tinkerbellProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
 	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
-	machineDeployments := make([]string, 0, len(currentSpec.Spec.WorkerNodeGroupConfigurations))
+	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
 	for range nodeGroupsToDelete {
-		mdName := fmt.Sprintf("%s-md-0", workloadCluster.Name)
+		mdName := machineDeploymentName(workloadCluster.Name, "md-0")
 		machineDeployments = append(machineDeployments, mdName)
 	}
 	return machineDeployments

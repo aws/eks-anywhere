@@ -279,8 +279,8 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 	for _, workerNodeGroupConfiguration := range newClusterSpec.Spec.WorkerNodeGroupConfigurations {
 		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec)
 		if _, ok := previousWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok && !needsNewWorkloadTemplate {
-			machineDeploymentName := fmt.Sprintf("%s-%s", newClusterSpec.Name, workerNodeGroupConfiguration.Name)
-			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, machineDeploymentName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+			mdName := machineDeploymentName(newClusterSpec.Name, workerNodeGroupConfiguration.Name)
+			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, mdName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
 				return nil, nil, err
 			}
@@ -466,11 +466,15 @@ func (p *provider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec 
 	return nil
 }
 
+func machineDeploymentName(clusterName, nodeGroupName string) string {
+	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
+}
+
 func (p *provider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
 	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
-	machineDeployments := make([]string, 0, len(currentSpec.Spec.WorkerNodeGroupConfigurations))
+	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
 	for _, group := range nodeGroupsToDelete {
-		mdName := fmt.Sprintf("%s-%s", workloadCluster.Name, group.Name)
+		mdName := machineDeploymentName(workloadCluster.Name, group.Name)
 		machineDeployments = append(machineDeployments, mdName)
 	}
 	return machineDeployments
