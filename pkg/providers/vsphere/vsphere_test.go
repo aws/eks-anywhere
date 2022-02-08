@@ -596,7 +596,7 @@ func TestProviderGenerateCAPISpecForUpgradeMultipleWorkerNodeGroups(t *testing.T
 			newConfig := v1alpha1.WorkerNodeGroupConfiguration{Count: 1, MachineGroupRef: &v1alpha1.Ref{Name: "test-wn", Kind: "VSphereMachineConfig"}, Name: "md-2"}
 			newClusterSpec.Spec.WorkerNodeGroupConfigurations = append(newClusterSpec.Spec.WorkerNodeGroupConfigurations, newConfig)
 
-			kubectl.EXPECT().GetMachineDeployment(ctx, cluster, gomock.Any(), gomock.Any(), gomock.Any()).Return(givenMachineDeployment(), nil).Times(3)
+			kubectl.EXPECT().GetMachineDeployment(ctx, cluster, gomock.Any(), gomock.Any(), gomock.Any()).Return(givenMachineDeployment(), nil).Times(2)
 			kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Name).Return(clusterSpec.Cluster, nil)
 			kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereDatacenter, nil)
 			kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(vsphereMachineConfig, nil)

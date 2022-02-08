@@ -393,6 +393,13 @@ func MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate *vspherev1.V
 	return vsSpec, nil
 }
 
+func MapKubeadmConfigTemplateToWorkerNodeGroupConfiguration(template kubeadmv1.KubeadmConfigTemplate) *anywherev1.WorkerNodeGroupConfiguration {
+	wnSpec := &anywherev1.WorkerNodeGroupConfiguration{}
+	wnSpec.Taints = template.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints
+	// TODO: map template.Spec.Template.Spec.JoinConfiguration.NodeRegestration.KubeletExtraArgs to wnSpec.Labels
+	return wnSpec
+}
+
 func MapMachineTemplateToVSphereMachineConfigSpecWorkers(vsMachineTemplates []vspherev1.VSphereMachineTemplate) (map[string]anywherev1.VSphereMachineConfig, error) {
 	vsSpec := &anywherev1.VSphereMachineConfig{}
 	vsSpecs := make(map[string]anywherev1.VSphereMachineConfig, len(vsMachineTemplates))

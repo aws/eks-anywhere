@@ -83,19 +83,19 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		if err != nil {
 			return nil, err
 		}
-		vmc := workerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
-		existingUsers := existingKubeadmConfigTemplate.Spec.Template.Spec.Users
-		updateWorkloadKubeadmConfigTemplate := vsphere.NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, &vmc, existingKubeadmConfigTemplate.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints, existingUsers)
-		if updateWorkloadKubeadmConfigTemplate {
+		oldWn := MapKubeadmConfigTemplateToWorkerNodeGroupConfiguration(*existingKubeadmConfigTemplate)
+		if vsphere.NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, oldWn) {
 			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = templateBuilder.KubeadmConfigTemplateName(clusterName, workerNodeGroupConfiguration.Name)
 		} else {
-			mcDeployment, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
+			md, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
 			if err != nil {
 				return nil, err
 			}
-			workloadKubeadmConfigTemplateName := mcDeployment.Spec.Template.Spec.Bootstrap.ConfigRef.Name
+			workloadKubeadmConfigTemplateName := md.Spec.Template.Spec.Bootstrap.ConfigRef.Name
 			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = workloadKubeadmConfigTemplateName
 		}
+
+		vmc := workerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		oldVmc, err := r.ExistingVSphereWorkerMachineConfig(ctx, eksaCluster, workerNodeGroupConfiguration)
 		if err != nil {
 			return nil, err
@@ -105,11 +105,11 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 			workloadTemplateName := templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		} else {
-			mcDeployment, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
+			md, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
 			if err != nil {
 				return nil, err
 			}
-			workloadTemplateName := mcDeployment.Spec.Template.Spec.InfrastructureRef.Name
+			workloadTemplateName := md.Spec.Template.Spec.InfrastructureRef.Name
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		}
 	}

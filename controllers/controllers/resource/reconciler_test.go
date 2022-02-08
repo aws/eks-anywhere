@@ -167,7 +167,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				}, nil)
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))
 
-				resourceUpdater.EXPECT().ApplyPatch(ctx, gomock.Any(), false).Return(nil).Times(1)
+				resourceUpdater.EXPECT().ApplyPatch(ctx, gomock.Any(), false).Return(nil)
 				resourceUpdater.EXPECT().ForceApplyTemplate(ctx, gomock.Any(), gomock.Any()).Do(func(ctx context.Context, template *unstructured.Unstructured, dryRun bool) {
 					assert.Equal(t, false, dryRun, "Expected dryRun didn't match")
 					switch template.GetKind() {
