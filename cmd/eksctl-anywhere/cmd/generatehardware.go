@@ -23,7 +23,7 @@ type hardwareOptions struct {
 	tinkerbellIp string
 	grpcPort     string
 	certPort     string
-	skipPush     bool
+	dryRun       bool
 }
 
 const (
@@ -50,10 +50,10 @@ var generateHardwareCmd = &cobra.Command{
 func init() {
 	generateCmd.AddCommand(generateHardwareCmd)
 	generateHardwareCmd.Flags().StringVarP(&hOpts.csvPath, "filename", "f", "", "path to csv file")
-	generateHardwareCmd.Flags().StringVar(&hOpts.tinkerbellIp, "tinkerbell-ip", "", "tinkerbell stack IP, required unless --skip-push flag is specified")
-	generateHardwareCmd.Flags().StringVar(&hOpts.grpcPort, "grpc-port", defaultGrpcPort, "tinkerbell GRPC Authority port [Default: 42113]")
-	generateHardwareCmd.Flags().StringVar(&hOpts.certPort, "cert-port", defaultCertPort, "tinkerbell Cert URL port [Default: 42114]")
-	generateHardwareCmd.Flags().BoolVar(&hOpts.skipPush, "skip-push", false, "set this flag to skip pushing Hardware to tinkerbell stack automatically")
+	generateHardwareCmd.Flags().StringVar(&hOpts.tinkerbellIp, "tinkerbell-ip", "", "Tinkerbell stack IP, required unless --dry-run flag is set")
+	generateHardwareCmd.Flags().StringVar(&hOpts.grpcPort, "grpc-port", defaultGrpcPort, "Tinkerbell GRPC Authority port")
+	generateHardwareCmd.Flags().StringVar(&hOpts.certPort, "cert-port", defaultCertPort, "Tinkerbell Cert URL port")
+	generateHardwareCmd.Flags().BoolVar(&hOpts.dryRun, "dry-run", false, "set this flag to skip pushing Hardware to tinkerbell stack automatically")
 	err := generateHardwareCmd.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -70,7 +70,7 @@ func preRunGenerateHardware(cmd *cobra.Command, args []string) {
 }
 
 func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
-	if !hOpts.skipPush && hOpts.tinkerbellIp == "" {
+	if !hOpts.dryRun && hOpts.tinkerbellIp == "" {
 		return errors.New("tinkerbell-ip is required, please specify it using --tinkerbell-ip")
 	}
 
@@ -96,7 +96,7 @@ func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
 	defer yaml.Close()
 
 	var tink *executables.Tink
-	if !hOpts.skipPush {
+	if !hOpts.dryRun {
 
 		if err := networkutils.ValidateIP(hOpts.tinkerbellIp); err != nil {
 			return fmt.Errorf("tinkerbell-ip is not valid: %v", err)
@@ -142,7 +142,7 @@ func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
 			return err
 		}
 
-		if !hOpts.skipPush {
+		if !hOpts.dryRun {
 			logger.V(4).Info("Pushing hardware", "Hardware", items[csv.MacIndex])
 			if err := tink.PushHardware(ctx, hardware); err != nil {
 				return err
