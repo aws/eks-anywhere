@@ -28,11 +28,11 @@ type CloudStackDatacenterConfigSpec struct {
 
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
 	Domain string `json:"domain"`
-	// Zone is an organizational construct typically used to represent a single datacenter, and all its physical and virtual resources exist inside that zone
+	// Zone is an organizational construct typically used to represent a single datacenter, and all its physical and virtual resources exist inside that zone. It can either be specified as a UUID or name
 	Zone string `json:"zone"`
 	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain name must also be provided.
 	Account string `json:"account,omitempty"`
-	// Network is the name or UUID of the CloudStack network in which clusters should be created. It can either be an isolated or shared network. If it doesn’t already exist in CloudStack, it’ll automatically be created by CAPC as an isolated network
+	// Network is the name or UUID of the CloudStack network in which clusters should be created. It can either be an isolated or shared network. If it doesn’t already exist in CloudStack, it’ll automatically be created by CAPC as an isolated network. It can either be specified as a UUID or name
 	Network string `json:"network"`
 	// Insecure is used by CloudMonkey for validating the server cert presented by CloudStack (if using https) against certs in "/etc/ssl/certs"
 	Insecure bool `json:"insecure"`

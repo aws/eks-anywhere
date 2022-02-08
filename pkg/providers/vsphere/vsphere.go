@@ -362,6 +362,9 @@ func (p *vsphereProvider) DeleteResources(ctx context.Context, clusterSpec *clus
 }
 
 func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
+	if clusterSpec.Spec.ControlPlaneConfiguration.CertSANs != nil {
+		return fmt.Errorf("specifying certSANs configuration in Cluster is not supported")
+	}
 	if err := SetupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}

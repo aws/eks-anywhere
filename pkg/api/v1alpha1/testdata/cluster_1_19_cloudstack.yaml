@@ -47,7 +47,6 @@ metadata:
   name: eksa-unit-test
 spec:
   computeOffering: "m4-large"
-  diskOffering: "ssd-100GB"
   users:
     - name: "mySshUsername"
       sshAuthorizedKeys:

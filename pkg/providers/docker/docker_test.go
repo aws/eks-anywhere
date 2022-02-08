@@ -361,6 +361,24 @@ func TestSetupAndValidateClusterWithEndpoint(t *testing.T) {
 	}
 }
 
+func TestSetupAndValidateClusterWithCertSANs(t *testing.T) {
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Name = "test-cluster"
+		s.Spec.ControlPlaneConfiguration.CertSANs = []string{"extraSan"}
+	})
+	mockCtrl := gomock.NewController(t)
+	client := dockerMocks.NewMockProviderClient(mockCtrl)
+	kubectl := dockerMocks.NewMockProviderKubectlClient(mockCtrl)
+	p := docker.NewProvider(&v1alpha1.DockerDatacenterConfig{}, client, kubectl, test.FakeNow)
+	ctx := context.Background()
+	err := p.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	wantErr := fmt.Errorf("specifying certSANs configuration in Cluster is not supported")
+
+	if !reflect.DeepEqual(wantErr, err) {
+		t.Errorf("got = <%v>, want = <%v>", err, wantErr)
+	}
+}
+
 func TestGetInfrastructureBundleSuccess(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 

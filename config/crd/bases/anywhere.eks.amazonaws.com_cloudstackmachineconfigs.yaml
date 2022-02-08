@@ -64,11 +64,6 @@ spec:
                   details which are commonly set on the VM include cpuOvercommitRatio,
                   memoryOvercommitRatio, Message.ReservedCapacityFreed.Flag, and rootdisksize
                 type: object
-              diskOffering:
-                description: DiskOffering refers to a disk offering which has been
-                  previously registered in CloudStack. It represents a VM’s disk size
-                  and IOPS (Quality of Service) for primary data storage
-                type: string
               osFamily:
                 description: OSFamily is an EKS-A required field which represents
                   the family of the guest OS image. Currently only “redhat“ is supported

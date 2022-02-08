@@ -135,8 +135,9 @@ type ControlPlaneConfiguration struct {
 	// Count defines the number of desired control plane nodes. Defaults to 1.
 	Count int `json:"count,omitempty"`
 	// Endpoint defines the host ip and port to use for the control plane.
-	Endpoint       *Endpoint `json:"endpoint,omitempty"`
-	ExtraEndpoints []string  `json:"extraEndpoints,omitempty"`
+	Endpoint *Endpoint `json:"endpoint,omitempty"`
+	//
+	CertSANs []string `json:"certSANs,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the control plane.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
 	// Taints define the set of taints to be applied on control plane nodes

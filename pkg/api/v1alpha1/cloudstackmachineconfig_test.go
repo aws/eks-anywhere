@@ -41,7 +41,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 					Spec: CloudStackMachineConfigSpec{
 						Template:        "centos7-k8s-119",
 						ComputeOffering: "m4-large",
-						DiskOffering:    "ssd-100GB",
 						OSFamily:        Ubuntu,
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -71,7 +70,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 					Spec: CloudStackMachineConfigSpec{
 						Template:        "centos7-k8s-118",
 						ComputeOffering: "m4-large",
-						DiskOffering:    "ssd-100GB",
 						OSFamily:        Ubuntu,
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -101,7 +99,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 					Spec: CloudStackMachineConfigSpec{
 						Template:        "centos7-k8s-120",
 						ComputeOffering: "m4-large",
-						DiskOffering:    "ssd-100GB",
 						OSFamily:        Ubuntu,
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -131,7 +128,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 					Spec: CloudStackMachineConfigSpec{
 						Template:        "centos7-k8s-118",
 						ComputeOffering: "m4-large",
-						DiskOffering:    "ssd-100GB",
 						OSFamily:        Ubuntu,
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -154,7 +150,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 					Spec: CloudStackMachineConfigSpec{
 						Template:        "centos7-k8s-118",
 						ComputeOffering: "m5-xlarge",
-						DiskOffering:    "ssd-100GB",
 						OSFamily:        Ubuntu,
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",

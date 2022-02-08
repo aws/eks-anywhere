@@ -60,12 +60,14 @@ spec:
                 description: Network is the name or UUID of the CloudStack network
                   in which clusters should be created. It can either be an isolated
                   or shared network. If it doesn’t already exist in CloudStack, it’ll
-                  automatically be created by CAPC as an isolated network
+                  automatically be created by CAPC as an isolated network. It can
+                  either be specified as a UUID or name
                 type: string
               zone:
                 description: Zone is an organizational construct typically used to
                   represent a single datacenter, and all its physical and virtual
-                  resources exist inside that zone
+                  resources exist inside that zone. It can either be specified as
+                  a UUID or name
                 type: string
             required:
             - domain

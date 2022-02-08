@@ -51,27 +51,6 @@ func TestWorkersCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testi
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
-	vOld := cloudstackMachineConfig()
-	vOld.SetControlPlane()
-	vOld.Spec.DiskOffering = "oldDiskOffering"
-	c := vOld.DeepCopy()
-
-	c.Spec.DiskOffering = "newDiskOffering"
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
-}
-
-func TestWorkersCPCloudStackMachineValidateUpdateDiskOfferingMutable(t *testing.T) {
-	vOld := cloudstackMachineConfig()
-	vOld.Spec.DiskOffering = "oldDiskOffering"
-	c := vOld.DeepCopy()
-
-	c.Spec.DiskOffering = "newDiskOffering"
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
-}
-
 func TestManagementCloudStackMachineValidateUpdateSshAuthorizedKeyMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()

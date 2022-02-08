@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 	"testing"
 	"text/template"
@@ -1013,6 +1014,14 @@ func TestSetupAndValidateCreateCluster(t *testing.T) {
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
+	}
+
+	clusterSpec.Spec.ControlPlaneConfiguration.CertSANs = []string{"CertSans"}
+	err = provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
+	wantErr := fmt.Errorf("specifying certSANs configuration in Cluster is not supported")
+
+	if !reflect.DeepEqual(wantErr, err) {
+		t.Errorf("got = <%v>, want = <%v>", err, wantErr)
 	}
 }
 
