@@ -84,7 +84,7 @@ type ClusterClient interface {
 	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
 	GetClusterCATlsCert(ctx context.Context, clusterName string, cluster *types.Cluster, namespace string) ([]byte, error)
 	KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error)
-	DeleteOldWorkerNodeGroup(ctx context.Context, kubeconfig, workerNodeGroupName, providerName string) error
+	DeleteOldWorkerNodeGroup(ctx context.Context, machineDeployment *clusterv1.MachineDeployment, kubeconfig, providerName string) error
 }
 
 type Networking interface {
@@ -839,14 +839,14 @@ func (c *ClusterManager) waitForAllControlPlanes(ctx context.Context, cluster *t
 }
 
 func (c *ClusterManager) removeOldWorkerNodeGroups(ctx context.Context, workloadCluster *types.Cluster, provider providers.Provider, currentSpec, newSpec *cluster.Spec) error {
-	workerConfigs := provider.BuildMapForWorkerNodeGroupsByName(newSpec.Spec.WorkerNodeGroupConfigurations)
-	for _, prevWorkerNodeGroupConfig := range currentSpec.Spec.WorkerNodeGroupConfigurations {
-		if _, ok := workerConfigs[prevWorkerNodeGroupConfig.Name]; !ok {
-			workerNodeGroupName := fmt.Sprintf("%s-%s", workloadCluster.Name, prevWorkerNodeGroupConfig.Name)
-			err := c.clusterClient.DeleteOldWorkerNodeGroup(ctx, workloadCluster.KubeconfigFile, workerNodeGroupName, provider.Name())
-			if err != nil {
-				return fmt.Errorf("error removing old worker nodes from cluster: %v", err)
-			}
+	machineDeployments, err := provider.NodeGroupsToDelete(ctx, workloadCluster, currentSpec, newSpec)
+	if err != nil {
+		return err
+	}
+	for _, machineDeployment := range machineDeployments {
+		err := c.clusterClient.DeleteOldWorkerNodeGroup(ctx, machineDeployment, workloadCluster.KubeconfigFile, provider.Name())
+		if err != nil {
+			return fmt.Errorf("error removing old worker nodes from cluster: %v", err)
 		}
 	}
 

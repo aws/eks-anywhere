@@ -903,7 +903,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}
 
-	previousWorkerNodeGroupConfigs := p.BuildMapForWorkerNodeGroupsByName(currentSpec.Spec.WorkerNodeGroupConfigurations)
+	previousWorkerNodeGroupConfigs := buildMapForWorkerNodeGroupsByName(currentSpec.Spec.WorkerNodeGroupConfigurations)
 
 	workloadTemplateNames := make(map[string]string, len(newClusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range newClusterSpec.Spec.WorkerNodeGroupConfigurations {
@@ -1303,10 +1303,26 @@ func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
 	return refMap
 }
 
-func (p *vsphereProvider) BuildMapForWorkerNodeGroupsByName(workerNodeGroups []v1alpha1.WorkerNodeGroupConfiguration) map[string]v1alpha1.WorkerNodeGroupConfiguration {
+func buildMapForWorkerNodeGroupsByName(workerNodeGroups []v1alpha1.WorkerNodeGroupConfiguration) map[string]v1alpha1.WorkerNodeGroupConfiguration {
 	workerNodeGroupConfigs := make(map[string]v1alpha1.WorkerNodeGroupConfiguration, len(workerNodeGroups))
 	for _, config := range workerNodeGroups {
 		workerNodeGroupConfigs[config.Name] = config
 	}
 	return workerNodeGroupConfigs
+}
+
+func (p *vsphereProvider) NodeGroupsToDelete(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) ([]*clusterv1.MachineDeployment, error) {
+	workerConfigs := buildMapForWorkerNodeGroupsByName(newSpec.Spec.WorkerNodeGroupConfigurations)
+	machineDeployments := make([]*clusterv1.MachineDeployment, 0, len(currentSpec.Spec.WorkerNodeGroupConfigurations))
+	for _, prevWorkerNodeGroupConfig := range currentSpec.Spec.WorkerNodeGroupConfigurations {
+		if _, ok := workerConfigs[prevWorkerNodeGroupConfig.Name]; !ok {
+			workerNodeGroupName := fmt.Sprintf("%s-%s", workloadCluster.Name, prevWorkerNodeGroupConfig.Name)
+			machineDeployment, err := p.providerKubectlClient.GetMachineDeployment(ctx, workerNodeGroupName, executables.WithKubeconfig(workloadCluster.KubeconfigFile), executables.WithNamespace(constants.EksaSystemNamespace))
+			if err != nil {
+				return nil, err
+			}
+			machineDeployments = append(machineDeployments, machineDeployment)
+		}
+	}
+	return machineDeployments, nil
 }

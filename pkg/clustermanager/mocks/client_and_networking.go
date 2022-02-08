@@ -15,6 +15,7 @@ import (
 	types "github.com/aws/eks-anywhere/pkg/types"
 	v1alpha10 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
+	v1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 // MockClusterClient is a mock of ClusterClient interface.
@@ -167,7 +168,7 @@ func (mr *MockClusterClientMockRecorder) DeleteOIDCConfig(arg0, arg1, arg2, arg3
 }
 
 // DeleteOldWorkerNodeGroup mocks base method.
-func (m *MockClusterClient) DeleteOldWorkerNodeGroup(arg0 context.Context, arg1, arg2, arg3 string) error {
+func (m *MockClusterClient) DeleteOldWorkerNodeGroup(arg0 context.Context, arg1 *v1beta1.MachineDeployment, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteOldWorkerNodeGroup", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)

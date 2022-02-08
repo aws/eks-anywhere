@@ -318,17 +318,14 @@ func (k *Kubectl) ValidateNodes(ctx context.Context, kubeconfig string) error {
 	return nil
 }
 
-func (k *Kubectl) DeleteOldWorkerNodeGroup(ctx context.Context, kubeconfig, workerNodeGroupName, providerName string) error {
-	md, err := k.GetMachineDeployment(ctx, workerNodeGroupName, WithKubeconfig(kubeconfig), WithNamespace(constants.EksaSystemNamespace))
-	if err != nil {
-		return err
-	}
+func (k *Kubectl) DeleteOldWorkerNodeGroup(ctx context.Context, md *clusterv1.MachineDeployment, kubeconfig, providerName string) error {
+	kubeadmConfigTemplateName := md.Spec.Template.Spec.Bootstrap.ConfigRef.Name
 	providerMachineTemplateName := md.Spec.Template.Spec.InfrastructureRef.Name
-	params := []string{"delete", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), workerNodeGroupName, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
+	params := []string{"delete", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), md.Name, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
 	if _, err := k.Execute(ctx, params...); err != nil {
 		return err
 	}
-	params = []string{"delete", fmt.Sprintf("kubeadmconfigtemplates.bootstrap.%s", clusterv1.GroupVersion.Group), workerNodeGroupName, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
+	params = []string{"delete", fmt.Sprintf("kubeadmconfigtemplates.bootstrap.%s", clusterv1.GroupVersion.Group), kubeadmConfigTemplateName, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
 	if _, err := k.Execute(ctx, params...); err != nil {
 		return err
 	}

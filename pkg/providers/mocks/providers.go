@@ -14,6 +14,7 @@ import (
 	providers "github.com/aws/eks-anywhere/pkg/providers"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
+	v1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 // MockProvider is a mock of Provider interface.
@@ -66,20 +67,6 @@ func (m *MockProvider) BootstrapSetup(arg0 context.Context, arg1 *v1alpha1.Clust
 func (mr *MockProviderMockRecorder) BootstrapSetup(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BootstrapSetup", reflect.TypeOf((*MockProvider)(nil).BootstrapSetup), arg0, arg1, arg2)
-}
-
-// BuildMapForWorkerNodeGroupsByName mocks base method.
-func (m *MockProvider) BuildMapForWorkerNodeGroupsByName(arg0 []v1alpha1.WorkerNodeGroupConfiguration) map[string]v1alpha1.WorkerNodeGroupConfiguration {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BuildMapForWorkerNodeGroupsByName", arg0)
-	ret0, _ := ret[0].(map[string]v1alpha1.WorkerNodeGroupConfiguration)
-	return ret0
-}
-
-// BuildMapForWorkerNodeGroupsByName indicates an expected call of BuildMapForWorkerNodeGroupsByName.
-func (mr *MockProviderMockRecorder) BuildMapForWorkerNodeGroupsByName(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BuildMapForWorkerNodeGroupsByName", reflect.TypeOf((*MockProvider)(nil).BuildMapForWorkerNodeGroupsByName), arg0)
 }
 
 // ChangeDiff mocks base method.
@@ -282,6 +269,21 @@ func (m *MockProvider) Name() string {
 func (mr *MockProviderMockRecorder) Name() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockProvider)(nil).Name))
+}
+
+// NodeGroupsToDelete mocks base method.
+func (m *MockProvider) NodeGroupsToDelete(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) ([]*v1beta1.MachineDeployment, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NodeGroupsToDelete", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([]*v1beta1.MachineDeployment)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// NodeGroupsToDelete indicates an expected call of NodeGroupsToDelete.
+func (mr *MockProviderMockRecorder) NodeGroupsToDelete(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NodeGroupsToDelete", reflect.TypeOf((*MockProvider)(nil).NodeGroupsToDelete), arg0, arg1, arg2, arg3)
 }
 
 // RunPostControlPlaneCreation mocks base method.

@@ -8,10 +8,13 @@ import (
 	"os"
 	"time"
 
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -59,6 +62,7 @@ type ProviderKubectlClient interface {
 	ApplyHardware(ctx context.Context, hardwareYaml string, kubeConfFile string) error
 	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType string, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType string, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) error
+	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 }
 
 func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, now types.NowFunc, hardwareConfigFile string) *tinkerbellProvider {
@@ -380,7 +384,7 @@ func (p *tinkerbellProvider) RunPostControlPlaneCreation(ctx context.Context, cl
 	return nil
 }
 
-func (p *tinkerbellProvider) BuildMapForWorkerNodeGroupsByName(workerNodeGroups []v1alpha1.WorkerNodeGroupConfiguration) map[string]v1alpha1.WorkerNodeGroupConfiguration {
+func buildMapForWorkerNodeGroupsByName(workerNodeGroups []v1alpha1.WorkerNodeGroupConfiguration) map[string]v1alpha1.WorkerNodeGroupConfiguration {
 	workerNodeGroupConfigs := make(map[string]v1alpha1.WorkerNodeGroupConfiguration, len(workerNodeGroups))
 	for _, config := range workerNodeGroups {
 		workerNodeGroupConfigs[config.Name] = config
@@ -432,4 +436,20 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"workertemplateOverride": workerNodeGroupMachineSpec.TemplateOverride,
 	}
 	return values
+}
+
+func (p *tinkerbellProvider) NodeGroupsToDelete(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) ([]*clusterv1.MachineDeployment, error) {
+	workerConfigs := buildMapForWorkerNodeGroupsByName(newSpec.Spec.WorkerNodeGroupConfigurations)
+	machineDeployments := make([]*clusterv1.MachineDeployment, 0, len(currentSpec.Spec.WorkerNodeGroupConfigurations))
+	for _, prevWorkerNodeGroupConfig := range currentSpec.Spec.WorkerNodeGroupConfigurations {
+		if _, ok := workerConfigs[prevWorkerNodeGroupConfig.Name]; !ok {
+			mdName := fmt.Sprintf("%s-md-0", workloadCluster.Name)
+			machineDeployment, err := p.providerKubectlClient.GetMachineDeployment(ctx, mdName, executables.WithKubeconfig(workloadCluster.KubeconfigFile), executables.WithNamespace(constants.EksaSystemNamespace))
+			if err != nil {
+				return nil, err
+			}
+			machineDeployments = append(machineDeployments, machineDeployment)
+		}
+	}
+	return machineDeployments, nil
 }
