@@ -67,7 +67,7 @@ Yes, you can leverage AWS services from your EKS Anywhere clusters on-premises t
 EKS Anywhere can be installed on any infrastructure with the required VMware vSphere versions.
 See EKS Anywhere [vSphere prerequisite]({{< relref "../vsphere" >}}) documentation.
 
-### Do you support multi-cluster operations?
+### How can I manage EKS Anywhere at scale?
 
 You can perform cluster life cycle and configuration management at scale through GitOps-based tools.
 EKS Anywhere offers git-driven cluster management through the integrated Flux Controller.
