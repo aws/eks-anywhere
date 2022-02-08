@@ -21,3 +21,7 @@ func (w *WorkloadCluster) DeleteCluster(opts ...CommandOpt) {
 	opts = append(opts, withKubeconfig(w.managementClusterKubeconfigFile()))
 	w.deleteCluster(opts...)
 }
+
+func (w *WorkloadCluster) UpgradeClusterThroughGitOps(clusterOpts []ClusterE2ETestOpt) {
+	w.UpgradeThroughGitOps(clusterOpts)
+}
