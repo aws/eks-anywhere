@@ -273,7 +273,7 @@ func (p *provider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapClus
 		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
 	}
 
-	previousWorkerNodeGroupConfigs := buildMapForWorkerNodeGroupsByName(currentSpec.Spec.WorkerNodeGroupConfigurations)
+	previousWorkerNodeGroupConfigs := cluster.BuildMapForWorkerNodeGroupsByName(currentSpec.Spec.WorkerNodeGroupConfigurations)
 
 	workloadTemplateNames := make(map[string]string, len(newClusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range newClusterSpec.Spec.WorkerNodeGroupConfigurations {
@@ -466,26 +466,12 @@ func (p *provider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec 
 	return nil
 }
 
-func buildMapForWorkerNodeGroupsByName(workerNodeGroups []v1alpha1.WorkerNodeGroupConfiguration) map[string]v1alpha1.WorkerNodeGroupConfiguration {
-	workerNodeGroupConfigs := make(map[string]v1alpha1.WorkerNodeGroupConfiguration, len(workerNodeGroups))
-	for _, config := range workerNodeGroups {
-		workerNodeGroupConfigs[config.Name] = config
+func (p *provider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
+	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
+	machineDeployments := make([]string, 0, len(currentSpec.Spec.WorkerNodeGroupConfigurations))
+	for _, group := range nodeGroupsToDelete {
+		mdName := fmt.Sprintf("%s-%s", workloadCluster.Name, group.Name)
+		machineDeployments = append(machineDeployments, mdName)
 	}
-	return workerNodeGroupConfigs
-}
-
-func (p *provider) NodeGroupsToDelete(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) ([]*clusterv1.MachineDeployment, error) {
-	workerConfigs := buildMapForWorkerNodeGroupsByName(newSpec.Spec.WorkerNodeGroupConfigurations)
-	machineDeployments := make([]*clusterv1.MachineDeployment, 0, len(currentSpec.Spec.WorkerNodeGroupConfigurations))
-	for _, prevWorkerNodeGroupConfig := range currentSpec.Spec.WorkerNodeGroupConfigurations {
-		if _, ok := workerConfigs[prevWorkerNodeGroupConfig.Name]; !ok {
-			workerNodeGroupName := fmt.Sprintf("%s-%s", workloadCluster.Name, prevWorkerNodeGroupConfig.Name)
-			machineDeployment, err := p.providerKubectlClient.GetMachineDeployment(ctx, workerNodeGroupName, executables.WithKubeconfig(workloadCluster.KubeconfigFile), executables.WithNamespace(constants.EksaSystemNamespace))
-			if err != nil {
-				return nil, err
-			}
-			machineDeployments = append(machineDeployments, machineDeployment)
-		}
-	}
-	return machineDeployments, nil
+	return machineDeployments
 }

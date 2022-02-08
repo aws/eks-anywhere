@@ -396,14 +396,6 @@ func (p *tinkerbellProvider) RunPostControlPlaneCreation(ctx context.Context, cl
 	return nil
 }
 
-func buildMapForWorkerNodeGroupsByName(workerNodeGroups []v1alpha1.WorkerNodeGroupConfiguration) map[string]v1alpha1.WorkerNodeGroupConfiguration {
-	workerNodeGroupConfigs := make(map[string]v1alpha1.WorkerNodeGroupConfiguration, len(workerNodeGroups))
-	for _, config := range workerNodeGroups {
-		workerNodeGroupConfigs[config.Name] = config
-	}
-	return workerNodeGroupConfigs
-}
-
 func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alpha1.TinkerbellMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
@@ -450,18 +442,12 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 	return values
 }
 
-func (p *tinkerbellProvider) NodeGroupsToDelete(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) ([]*clusterv1.MachineDeployment, error) {
-	workerConfigs := buildMapForWorkerNodeGroupsByName(newSpec.Spec.WorkerNodeGroupConfigurations)
-	machineDeployments := make([]*clusterv1.MachineDeployment, 0, len(currentSpec.Spec.WorkerNodeGroupConfigurations))
-	for _, prevWorkerNodeGroupConfig := range currentSpec.Spec.WorkerNodeGroupConfigurations {
-		if _, ok := workerConfigs[prevWorkerNodeGroupConfig.Name]; !ok {
-			mdName := fmt.Sprintf("%s-md-0", workloadCluster.Name)
-			machineDeployment, err := p.providerKubectlClient.GetMachineDeployment(ctx, mdName, executables.WithKubeconfig(workloadCluster.KubeconfigFile), executables.WithNamespace(constants.EksaSystemNamespace))
-			if err != nil {
-				return nil, err
-			}
-			machineDeployments = append(machineDeployments, machineDeployment)
-		}
+func (p *tinkerbellProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
+	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
+	machineDeployments := make([]string, 0, len(currentSpec.Spec.WorkerNodeGroupConfigurations))
+	for range nodeGroupsToDelete {
+		mdName := fmt.Sprintf("%s-md-0", workloadCluster.Name)
+		machineDeployments = append(machineDeployments, mdName)
 	}
-	return machineDeployments, nil
+	return machineDeployments
 }

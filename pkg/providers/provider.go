@@ -3,8 +3,6 @@ package providers
 import (
 	"context"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
@@ -38,7 +36,7 @@ type Provider interface {
 	UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error)
 	DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error
 	RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
-	NodeGroupsToDelete(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) ([]*clusterv1.MachineDeployment, error)
+	MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string
 }
 
 type DatacenterConfig interface {
