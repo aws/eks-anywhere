@@ -45,15 +45,28 @@ spec:
 
 From here, we can use `kubectl apply` to apply the content from the EKSD release URL and the CRD URL to the cluster.
 
-We will need a way to refer to the EKSD release object on the cluster.
-One way to achieve this is by adding a field to the cluster status.
-We will introduce a field named `EksdRelease` of type `*v1alpha1.Release`.
-This is how we will attain that direct access to the release object when calling it from the controller.
+We will need a way to refer to the EKSD release object on the cluster when calling it from the controller.
+One way to achieve this is by adding a field `EkdsReleaseRef` to the cluster status.
+```
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: test_cluster
+spec:
+  controlPlaneConfiguration:
+    ...
+status:
+  eksdReleaseRef:
+    name: "name of resource" 
+    url: "url we downloaded from"
+```
 
+From here, we can call `kubectl get release` using the `eksdReleaseRef.Name` to access the EKSD release manifest from the controller.
 
 ### Upgrading EKSD components
 
 Now that the EKSD components are embedded in the cluster, we have to ensure that those components are supported during upgrade.
-We will update the upgrader in cluster manager to not only check for updates to EKSA, but it will also check for updates to EKSD.
-If there is a newer version, we will upgrade those components.
+We will update the upgrader in cluster manager to not only check for updates to EKSA, but it will also check if updates are needed for the EKSD objects on the cluster.
+We will have a method `EksdChangeDiff` to check both the EKSD version in the bundle and the Kubernetes version in the cluster config to decide if we need to update the EKSD manifest objects that are applied to the cluster.
+
 
