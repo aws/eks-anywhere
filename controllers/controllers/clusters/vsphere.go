@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/go-logr/logr"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/aws/eks-anywhere/controllers/controllers/reconciler"
@@ -16,6 +18,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
+
+const defaultRequeueTime = time.Minute
 
 // Struct that holds common methods and properties
 type VSphereReconciler struct {
@@ -120,7 +124,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		machineConfigMap[ref.Name] = machineConfig
 	}
 
-	bundles, err := v.bundles(ctx, cluster.Spec.ManagementCluster.Name, cluster.Namespace)
+	bundles, err := v.bundles(ctx, cluster.Spec.ManagementCluster.Name, "default")
 	if err != nil {
 		return reconciler.Result{}, err
 	}
@@ -132,6 +136,54 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	vshepreClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
 
 	if err := v.Validator.ValidateClusterMachineConfigs(ctx, vshepreClusterSpec); err != nil {
+		return reconciler.Result{}, err
+	}
+
+	workerNodeGroupMachineSpecs := make(map[string]anywherev1.VSphereMachineConfigSpec, len(cluster.Spec.WorkerNodeGroupConfigurations))
+	for _, wnConfig := range cluster.Spec.WorkerNodeGroupConfigurations {
+		workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = machineConfigMap[wnConfig.MachineGroupRef.Name].Spec
+	}
+
+	cp := machineConfigMap[specWithBundles.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+	var etcdSpec *anywherev1.VSphereMachineConfigSpec
+	if specWithBundles.Spec.ExternalEtcdConfiguration != nil {
+		etcd := machineConfigMap[specWithBundles.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+		etcdSpec = &etcd.Spec
+	}
+
+	templateBuilder := vsphere.NewVsphereTemplateBuilder(&dataCenterConfig.Spec, &cp.Spec, etcdSpec, workerNodeGroupMachineSpecs, time.Now, true)
+	clusterName := cluster.ObjectMeta.Name
+
+	cpOpt := func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = templateBuilder.CPMachineTemplateName(clusterName)
+		controlPlaneUser := machineConfigMap[cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
+		values["vsphereControlPlaneSshAuthorizedKey"] = controlPlaneUser.SshAuthorizedKeys[0]
+
+		if cluster.Spec.ExternalEtcdConfiguration != nil {
+			etcdUser := machineConfigMap[cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0]
+			values["vsphereEtcdSshAuthorizedKey"] = etcdUser.SshAuthorizedKeys[0]
+		}
+
+		values["etcdTemplateName"] = templateBuilder.EtcdMachineTemplateName(clusterName)
+	}
+	v.Log.Info("cluster", "name", cluster.Name)
+	controlPlaneSpec, err := templateBuilder.GenerateCAPISpecControlPlane(specWithBundles, cpOpt)
+	if err != nil {
+		return reconciler.Result{}, err
+	}
+
+	workersSpec, err := templateBuilder.GenerateCAPISpecWorkers(specWithBundles, nil)
+	if err != nil {
+		return reconciler.Result{}, err
+	}
+
+	if err := reconciler.ReconcileYaml(ctx, v.Client, controlPlaneSpec); err != nil {
+		return reconciler.Result{Result: &ctrl.Result{
+			Requeue:      true,
+			RequeueAfter: defaultRequeueTime,
+		}}, err
+	}
+	if err := reconciler.ReconcileYaml(ctx, v.Client, workersSpec); err != nil {
 		return reconciler.Result{}, err
 	}
 

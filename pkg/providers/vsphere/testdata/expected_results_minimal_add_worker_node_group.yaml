@@ -9,6 +9,10 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
+          taints:
+            - key: key2
+              value: val2
+              effect: PreferNoSchedule
           kubeletExtraArgs:
             cloud-provider: external
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
@@ -79,6 +83,7 @@ spec:
       storagePolicyName: "vSAN Default Storage Policy"
       template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
       thumbprint: 'ABCDEFG'
+
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
@@ -91,6 +96,10 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
+          taints:
+            - key: key2
+              value: val2
+              effect: PreferNoSchedule
           kubeletExtraArgs:
             cloud-provider: external
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
@@ -161,6 +170,7 @@ spec:
       storagePolicyName: "vSAN Default Storage Policy"
       template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
       thumbprint: 'ABCDEFG'
+
 ---
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
@@ -173,6 +183,7 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
+          taints: []
           kubeletExtraArgs:
             cloud-provider: external
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
@@ -243,4 +254,5 @@ spec:
       storagePolicyName: "vSAN Default Storage Policy"
       template: /SDDC-Datacenter/vm/Templates/ubuntu-1804-kube-v1.19.6
       thumbprint: 'ABCDEFG'
+
 ---

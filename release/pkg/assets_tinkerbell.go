@@ -31,6 +31,9 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 		"tink":                            r.BundleArtifactsTable["tink"],
 		"hegel":                           r.BundleArtifactsTable["hegel"],
 		"cfssl":                           r.BundleArtifactsTable["cfssl"],
+		"pbnj":                            r.BundleArtifactsTable["pbnj"],
+		"boots":                           r.BundleArtifactsTable["boots"],
+		"hub":                             r.BundleArtifactsTable["hub"],
 	}
 	sortedComponentNames := sortArtifactsMap(tinkerbellBundleArtifacts)
 
@@ -94,9 +97,18 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 		TinkCli:              bundleImageArtifacts["tink-cli"],
 		Hegel:                bundleImageArtifacts["hegel"],
 		Cfssl:                bundleImageArtifacts["cfssl"],
-		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
-		ClusterTemplate:      bundleManifestArtifacts["cluster-template.yaml"],
-		Metadata:             bundleManifestArtifacts["metadata.yaml"],
+		Pbnj:                 bundleImageArtifacts["pbnj"],
+		Boots:                bundleImageArtifacts["boots"],
+		Actions: anywherev1alpha1.Actions{
+			Cexec:       bundleImageArtifacts["cexec"],
+			Kexec:       bundleImageArtifacts["kexec"],
+			ImageToDisk: bundleImageArtifacts["image2disk"],
+			OciToDisk:   bundleImageArtifacts["oci2disk"],
+			WriteFile:   bundleImageArtifacts["writefile"],
+		},
+		Components:      bundleManifestArtifacts["infrastructure-components.yaml"],
+		ClusterTemplate: bundleManifestArtifacts["cluster-template.yaml"],
+		Metadata:        bundleManifestArtifacts["metadata.yaml"],
 	}
 
 	return bundle, nil

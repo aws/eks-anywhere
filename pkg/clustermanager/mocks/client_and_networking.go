@@ -459,7 +459,7 @@ func (mr *MockClusterClientMockRecorder) ValidateControlPlaneNodes(arg0, arg1, a
 }
 
 // ValidateWorkerNodes mocks base method.
-func (m *MockClusterClient) ValidateWorkerNodes(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
+func (m *MockClusterClient) ValidateWorkerNodes(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateWorkerNodes", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)

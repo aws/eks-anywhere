@@ -79,7 +79,7 @@ type ClusterClient interface {
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
-	ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
+	ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfigFile string) error
 	GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error)
 	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
 	GetClusterCATlsCert(ctx context.Context, clusterName string, cluster *types.Cluster, namespace string) ([]byte, error)
@@ -733,7 +733,7 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 	}
 
 	isMdReady := func() error {
-		return c.clusterClient.ValidateWorkerNodes(ctx, managementCluster, clusterSpec.Name)
+		return c.clusterClient.ValidateWorkerNodes(ctx, clusterSpec.Name, managementCluster.KubeconfigFile)
 	}
 
 	err := isMdReady()

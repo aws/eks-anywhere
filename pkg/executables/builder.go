@@ -10,7 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
-const defaultEksaImage = "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.529"
+const defaultEksaImage = "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"
 
 type ExecutableBuilder struct {
 	useDocker  bool
@@ -38,6 +38,10 @@ func (b *ExecutableBuilder) BuildKubectlExecutable() *Kubectl {
 
 func (b *ExecutableBuilder) BuildGovcExecutable(writer filewriter.FileWriter) *Govc {
 	return NewGovc(b.buildExecutable(govcPath), writer)
+}
+
+func (b *ExecutableBuilder) BuildTinkExecutable(tinkerbellCertUrl, tinkerbellGrpcAuthority string) *Tink {
+	return NewTink(b.buildExecutable(tinkPath), tinkerbellCertUrl, tinkerbellGrpcAuthority)
 }
 
 func (b *ExecutableBuilder) BuildAwsCli() *AwsCli {

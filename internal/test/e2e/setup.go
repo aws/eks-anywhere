@@ -37,9 +37,10 @@ type E2ESession struct {
 	testEnvVars         map[string]string
 	bundlesOverride     bool
 	requiredFiles       []string
+	branchName          string
 }
 
-func newSession(amiId, instanceProfileName, storageBucket, jobId, subnetId, controlPlaneIP string, bundlesOverride bool) (*E2ESession, error) {
+func newSessionFromConf(conf instanceRunConf) (*E2ESession, error) {
 	session, err := session.NewSession()
 	if err != nil {
 		return nil, fmt.Errorf("error creating session: %v", err)
@@ -47,15 +48,16 @@ func newSession(amiId, instanceProfileName, storageBucket, jobId, subnetId, cont
 
 	e := &E2ESession{
 		session:             session,
-		amiId:               amiId,
-		instanceProfileName: instanceProfileName,
-		storageBucket:       storageBucket,
-		jobId:               jobId,
-		subnetId:            subnetId,
-		controlPlaneIP:      controlPlaneIP,
+		amiId:               conf.amiId,
+		instanceProfileName: conf.instanceProfileName,
+		storageBucket:       conf.storageBucket,
+		jobId:               conf.jobId,
+		subnetId:            conf.subnetId,
+		controlPlaneIP:      conf.controlPlaneIP,
 		testEnvVars:         make(map[string]string),
-		bundlesOverride:     bundlesOverride,
+		bundlesOverride:     conf.bundlesOverride,
 		requiredFiles:       requiredFiles,
+		branchName:          conf.branchName,
 	}
 
 	return e, nil
@@ -128,6 +130,10 @@ func (e *E2ESession) setup(regex string) error {
 	e.testEnvVars[e2etests.JobIdVar] = e.jobId
 	e.testEnvVars[e2etests.BundlesOverrideVar] = strconv.FormatBool(e.bundlesOverride)
 	e.testEnvVars[e2etests.ClusterNameVar] = instanceId
+
+	if e.branchName != "" {
+		e.testEnvVars[e2etests.BranchNameEnvVar] = e.branchName
+	}
 	return nil
 }
 

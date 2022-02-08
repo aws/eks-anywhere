@@ -18,7 +18,7 @@ import (
 const (
 	prodReleasesManifest = "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/manifest.yaml"
 	releaseBinaryName    = "eksctl-anywhere"
-	branchNameEnvVar     = "T_BRANCH_NAME"
+	BranchNameEnvVar     = "T_BRANCH_NAME"
 	defaultTestBranch    = "main"
 )
 
@@ -27,7 +27,7 @@ func GetLatestMinorReleaseBinaryFromTestBranch() (binaryPath string, err error) 
 }
 
 func GetLatestMinorReleaseFromTestBranch() (*releasev1alpha1.EksARelease, error) {
-	testBranch := getEnvWithDefault(branchNameEnvVar, defaultTestBranch)
+	testBranch := getEnvWithDefault(BranchNameEnvVar, defaultTestBranch)
 	if testBranch == "main" {
 		return GetLatestMinorReleaseFromMain()
 	}

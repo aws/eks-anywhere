@@ -480,7 +480,7 @@ func TestClusterManagerUpgradeWorkloadClusterSuccess(t *testing.T) {
 	tt.mocks.provider.EXPECT().NodeGroupsToDelete(tt.ctx, wCluster, tt.clusterSpec, tt.clusterSpec.DeepCopy()).Return([]*clusterv1.MachineDeployment{}, nil)
 	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
 	tt.mocks.client.EXPECT().ValidateControlPlaneNodes(tt.ctx, mCluster, wCluster.Name).Return(nil)
-	tt.mocks.client.EXPECT().ValidateWorkerNodes(tt.ctx, mCluster, wCluster.Name).Return(nil)
+	tt.mocks.client.EXPECT().ValidateWorkerNodes(tt.ctx, wCluster.Name, mCluster.KubeconfigFile).Return(nil)
 	tt.mocks.provider.EXPECT().GetDeployments()
 	tt.mocks.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 
@@ -579,7 +579,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForCAPITimeout(t *testing.T) {
 	tt.mocks.provider.EXPECT().NodeGroupsToDelete(tt.ctx, wCluster, tt.clusterSpec, tt.clusterSpec.DeepCopy()).Return([]*clusterv1.MachineDeployment{}, nil)
 	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).Return(errors.New("time out"))
 	tt.mocks.client.EXPECT().ValidateControlPlaneNodes(tt.ctx, mCluster, wCluster.Name).Return(nil)
-	tt.mocks.client.EXPECT().ValidateWorkerNodes(tt.ctx, mCluster, wCluster.Name).Return(nil)
+	tt.mocks.client.EXPECT().ValidateWorkerNodes(tt.ctx, wCluster.Name, mCluster.KubeconfigFile).Return(nil)
 	tt.mocks.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 
 	if err := tt.clusterManager.UpgradeCluster(tt.ctx, mCluster, wCluster, tt.clusterSpec, tt.mocks.provider); err == nil {
@@ -609,7 +609,7 @@ func TestClusterManagerMoveCAPISuccess(t *testing.T) {
 	m.client.EXPECT().GetClusters(ctx, to).Return(clusters, nil)
 	m.client.EXPECT().WaitForControlPlaneReady(ctx, to, "15m0s", capiClusterName)
 	m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
-	m.client.EXPECT().ValidateWorkerNodes(ctx, to, to.Name)
+	m.client.EXPECT().ValidateWorkerNodes(ctx, to.Name, to.KubeconfigFile)
 	m.client.EXPECT().GetMachines(ctx, to, to.Name)
 
 	if err := c.MoveCAPI(ctx, from, to, to.Name, clusterSpec); err != nil {
@@ -710,7 +710,7 @@ func TestClusterManagerMoveCAPIErrorGetMachines(t *testing.T) {
 	m.client.EXPECT().MoveManagement(ctx, from, to)
 	m.client.EXPECT().GetClusters(ctx, to)
 	m.client.EXPECT().ValidateControlPlaneNodes(ctx, to, to.Name)
-	m.client.EXPECT().ValidateWorkerNodes(ctx, to, to.Name)
+	m.client.EXPECT().ValidateWorkerNodes(ctx, to.Name, to.KubeconfigFile)
 	m.client.EXPECT().GetMachines(ctx, to, from.Name).Return(nil, errors.New("error getting machines")).AnyTimes()
 
 	if err := c.MoveCAPI(ctx, from, to, from.Name, clusterSpec); err == nil {

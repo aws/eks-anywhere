@@ -1136,6 +1136,7 @@ data:
           secretName: cloud-provider-vsphere-credentials
           secretNamespace: kube-system
           thumbprint: "{{.thumbprint}}"
+          insecureFlag: {{.insecure}}
         vcenter:
           {{.vsphereServer}}:
             datacenters:

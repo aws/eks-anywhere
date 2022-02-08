@@ -17,7 +17,7 @@ func commonValidation(ctx context.Context, clusterConfigFile string) (*v1alpha1.
 		return nil, fmt.Errorf("failed to validate docker: %v", err)
 	}
 	if runtime.GOOS == "darwin" {
-		err = validations.CheckDockerDesktopVersion(ctx)
+		err = validations.CheckDockerDesktopVersion(ctx, docker)
 		if err != nil {
 			return nil, fmt.Errorf("failed to validate docker desktop: %v", err)
 		}
