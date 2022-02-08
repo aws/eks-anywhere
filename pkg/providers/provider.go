@@ -36,6 +36,7 @@ type Provider interface {
 	UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error)
 	DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error
 	RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
+	MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string
 }
 
 type DatacenterConfig interface {

@@ -360,7 +360,7 @@ func TestProviderGenerateDeploymentFileSuccessNotUpdateMachineTemplate(t *testin
 	os.Setenv(features.TaintsSupportEnvVar, "true")
 
 	kubectl.EXPECT().GetKubeadmControlPlane(ctx, cluster, cluster.Name, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(cp, nil)
-	kubectl.EXPECT().GetMachineDeployment(ctx, cluster, machineDeploymentName, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(md, nil)
+	kubectl.EXPECT().GetMachineDeployment(ctx, machineDeploymentName, gomock.AssignableToTypeOf(executables.WithCluster(bootstrapCluster))).Return(md, nil)
 
 	cpContent, mdContent, err := p.GenerateCAPISpecForUpgrade(ctx, bootstrapCluster, cluster, currentSpec, clusterSpec)
 	if err != nil {
