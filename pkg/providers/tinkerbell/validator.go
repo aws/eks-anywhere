@@ -5,9 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/aws/eks-anywhere/pkg/logger"
-
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 

@@ -18,11 +18,6 @@ type Tink struct {
 	envMap                  map[string]string
 }
 
-func (t *Tink) Close(ctx context.Context) error {
-	// TODO: implement close/logout functionality
-	return nil
-}
-
 func NewTink(executable Executable, tinkerbellCertUrl, tinkerbellGrpcAuthority string) *Tink {
 	return &Tink{
 		Executable:              executable,
@@ -53,7 +48,7 @@ func (t *Tink) ListHardware(ctx context.Context) error {
 
 func (t *Tink) ValidateTinkerbellAccess(ctx context.Context) error {
 	if err := t.ListHardware(ctx); err != nil {
-		return fmt.Errorf("failed validating connection to tinkerbell stack")
+		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
 	}
 
 	return nil

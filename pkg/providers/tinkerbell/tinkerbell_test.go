@@ -24,16 +24,6 @@ const (
 	expectedTinkerbellPBnJGRPCAuthority = "1.2.3.4:42000"
 )
 
-type DummyProviderTinkClient struct{}
-
-func NewDummyProviderTinkClient() *DummyProviderTinkClient {
-	return &DummyProviderTinkClient{}
-}
-
-func (pc *DummyProviderTinkClient) ValidateTinkerbellAccess(ctx context.Context) error {
-	return nil
-}
-
 func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
 	return test.NewFullClusterSpec(t, path.Join(testDataDir, fileName))
 }
@@ -54,7 +44,7 @@ func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.Tin
 	return machineConfigs
 }
 
-func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, tink ProviderTinkClient) *tinkerbellProvider {
+func newProviderWithKubectlTink(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, tink ProviderTinkClient) *tinkerbellProvider {
 	return newProvider(
 		t,
 		datacenterConfig,
@@ -136,12 +126,14 @@ func TestTinkerbellProviderGenerateDeploymentFile(t *testing.T) {
 	clusterSpecManifest := "cluster_tinkerbell.yaml"
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	tinkctl := mocks.NewMockProviderTinkClient(mockCtrl)
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, NewDummyProviderTinkClient())
+	tinkctl.EXPECT().ValidateTinkerbellAccess(ctx).Return(nil)
+	provider := newProviderWithKubectlTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkctl)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
