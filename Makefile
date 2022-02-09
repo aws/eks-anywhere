@@ -98,7 +98,7 @@ KUBE_RBAC_PROXY_IMAGE_NAME_OVERRIDE="${IMAGE_REPO}/brancz/kube-rbac-proxy"
 KUBE_RBAC_PROXY_IMAGE_TAG_OVERRIDE="latest"
 KUSTOMIZATION_CONFIG=./config/prod/kustomization.yaml
 
-CONTROLLER_MANIFEST_OUTPUT_DIR=$(OUTPUT_DIR)/manifests/cluster-controller
+CONTROLLER_MANIFEST_OUTPUT_DIR=$(OUTPUT_DIR)/manifests/cluster-controller/$(GIT_TAG)
 
 BUILD_TAGS :=
 BUILD_FLAGS?=
