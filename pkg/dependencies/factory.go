@@ -141,7 +141,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 }
 
 func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string) *Factory {
-	f.WithProviderFactory(clusterConfigFile)
+	f.WithProviderFactory(clusterConfigFile, clusterConfig)
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Provider != nil {
 			return nil
@@ -159,9 +159,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	return f
 }
 
-func (f *Factory) WithProviderFactory(clusterConfigFile string) *Factory {
-	clusterConfig, _ := v1alpha1.GetClusterConfig(clusterConfigFile)
-
+func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v1alpha1.Cluster) *Factory {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
@@ -264,7 +262,7 @@ func (f *Factory) WithTink(clusterConfigFile string) *Factory {
 		}
 		tinkerbellDatacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFile)
 		if err != nil {
-			return nil
+			return err
 		}
 		f.dependencies.Tink = f.executableBuilder.BuildTinkExecutable(tinkerbellDatacenterConfig.Spec.TinkerbellCertURL, tinkerbellDatacenterConfig.Spec.TinkerbellGRPCAuth)
 

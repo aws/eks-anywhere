@@ -52,12 +52,3 @@ func TestTinkListHardware(t *testing.T) {
 		t.Errorf("Tink.ListHardware() error = %v, want nil", err)
 	}
 }
-
-func TestTinkValidateTinkerbellAccess(t *testing.T) {
-	tink, ctx, e := newTink(t)
-	expectedParam := []string{"hardware", "list"}
-	expectCommand(e, ctx, expectedParam...).withEnvVars(envMap).to().Return(bytes.Buffer{}, nil)
-	if err := tink.ValidateTinkerbellAccess(ctx); err != nil {
-		t.Errorf("Tink.ValidateTinkerbellAccess() error = %v, want nil", err)
-	}
-}

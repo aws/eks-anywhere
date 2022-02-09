@@ -132,7 +132,7 @@ func TestTinkerbellProviderGenerateDeploymentFile(t *testing.T) {
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
-	tinkctl.EXPECT().ValidateTinkerbellAccess(ctx).Return(nil)
+	tinkctl.EXPECT().ListHardware(ctx).Return(nil)
 	provider := newProviderWithKubectlTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkctl)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)

@@ -45,11 +45,3 @@ func (t *Tink) ListHardware(ctx context.Context) error {
 	}
 	return nil
 }
-
-func (t *Tink) ValidateTinkerbellAccess(ctx context.Context) error {
-	if err := t.ListHardware(ctx); err != nil {
-		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
-	}
-
-	return nil
-}

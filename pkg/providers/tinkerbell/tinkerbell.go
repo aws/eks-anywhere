@@ -68,7 +68,7 @@ type ProviderKubectlClient interface {
 }
 
 type ProviderTinkClient interface {
-	ValidateTinkerbellAccess(ctx context.Context) error
+	ListHardware(ctx context.Context) error
 }
 
 func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, now types.NowFunc, hardwareConfigFile string) *tinkerbellProvider {

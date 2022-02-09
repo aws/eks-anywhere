@@ -97,6 +97,7 @@ func (mr *MockProviderKubectlClientMockRecorder) GetMachineDeployment(arg0, arg1
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineDeployment", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetMachineDeployment), varargs...)
 }
+
 // MockProviderTinkClient is a mock of ProviderTinkClient interface.
 type MockProviderTinkClient struct {
 	ctrl     *gomock.Controller
@@ -120,16 +121,16 @@ func (m *MockProviderTinkClient) EXPECT() *MockProviderTinkClientMockRecorder {
 	return m.recorder
 }
 
-// ValidateTinkerbellAccess mocks base method.
-func (m *MockProviderTinkClient) ValidateTinkerbellAccess(arg0 context.Context) error {
+// ListHardware mocks base method.
+func (m *MockProviderTinkClient) ListHardware(arg0 context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateTinkerbellAccess", arg0)
+	ret := m.ctrl.Call(m, "ListHardware", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// ValidateTinkerbellAccess indicates an expected call of ValidateTinkerbellAccess.
-func (mr *MockProviderTinkClientMockRecorder) ValidateTinkerbellAccess(arg0 interface{}) *gomock.Call {
+// ListHardware indicates an expected call of ListHardware.
+func (mr *MockProviderTinkClientMockRecorder) ListHardware(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateTinkerbellAccess", reflect.TypeOf((*MockProviderTinkClient)(nil).ValidateTinkerbellAccess), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListHardware", reflect.TypeOf((*MockProviderTinkClient)(nil).ListHardware), arg0)
 }

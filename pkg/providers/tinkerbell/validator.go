@@ -21,7 +21,7 @@ func NewValidator(tink ProviderTinkClient) *Validator {
 }
 
 func (v *Validator) ValidateTinkerbellConfig(ctx context.Context, datacenterConfig *anywherev1.TinkerbellDatacenterConfig) error {
-	if err := v.tink.ValidateTinkerbellAccess(ctx); err != nil {
+	if err := v.validateTinkerbellAccess(ctx); err != nil {
 		return err
 	}
 	logger.MarkPass("Connected to tinkerbell stack")
@@ -104,6 +104,13 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 		return errors.New("TinkerbellDatacenterConfig and Cluster objects must have the same namespace specified")
 	}
 
+	return nil
+}
+
+func (v *Validator) validateTinkerbellAccess(ctx context.Context) error {
+	if err := v.tink.ListHardware(ctx); err != nil {
+		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
+	}
 	return nil
 }
 
