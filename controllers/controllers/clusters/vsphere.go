@@ -134,6 +134,5 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	if err := v.Validator.ValidateClusterMachineConfigs(ctx, vshepreClusterSpec); err != nil {
 		return reconciler.Result{}, err
 	}
-
 	return reconciler.Result{}, nil
 }
