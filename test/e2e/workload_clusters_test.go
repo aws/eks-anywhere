@@ -25,7 +25,7 @@ func runWorkloadClusterFlowWithGitOps(test *framework.MulticlusterE2ETest, clust
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.GenerateClusterConfig()
 		w.CreateCluster()
-		w.UpgradeClusterThroughGitOps(clusterOpts)
+		w.UpgradeClusterWithGitOps(clusterOpts)
 		w.DeleteCluster()
 	})
 	test.DeleteManagementCluster()

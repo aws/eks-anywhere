@@ -53,7 +53,3 @@ func (m *MulticlusterE2ETest) CreateManagementCluster() {
 func (m *MulticlusterE2ETest) DeleteManagementCluster() {
 	m.ManagementCluster.DeleteCluster()
 }
-
-func (m *MulticlusterE2ETest) UpgradeManagementClusterThroughGitOps(clusterOpts []ClusterE2ETestOpt) {
-	m.ManagementCluster.UpgradeThroughGitOps(clusterOpts)
-}

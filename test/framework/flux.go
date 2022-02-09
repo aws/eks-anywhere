@@ -68,9 +68,12 @@ func WithClusterUpgradeGit(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.ClusterConfigB = e.customizeClusterConfig(e.clusterConfigGitPath(), fillers...)
 
-		// TODO: the gitopsconfig object is generated from api.NewGitOpsConfig each time
-		// instead of marshalling from the file in git repo. Flux requires namespace always
-		// exist for kustomization. Need to refactor this to read gitopsconfig from file.
+		// TODO: e.GitopsConfig is defined from api.NewGitOpsConfig in WithFlux()
+		// instead of marshalling from the actual file in git repo.
+		// By default it does not include the namespace field. But Flux requires namespace always
+		// exist for all the objects managed by its kustomization controller.
+		// Need to refactor this to read gitopsconfig directly from file in git repo
+		// which always has the namespace field.
 		if e.GitOpsConfig.GetNamespace() == "" {
 			e.GitOpsConfig.SetNamespace("default")
 		}
@@ -84,11 +87,11 @@ func withFluxRepositorySuffix(suffix string) api.GitOpsConfigOpt {
 	}
 }
 
-func (e *ClusterE2ETest) UpgradeThroughGitOps(clusterOpts []ClusterE2ETestOpt) {
-	e.upgradeThroughGitOps(clusterOpts)
+func (e *ClusterE2ETest) UpgradeWithGitOps(clusterOpts []ClusterE2ETestOpt) {
+	e.upgradeWithGitOps(clusterOpts)
 }
 
-func (e *ClusterE2ETest) upgradeThroughGitOps(clusterOpts []ClusterE2ETestOpt) {
+func (e *ClusterE2ETest) upgradeWithGitOps(clusterOpts []ClusterE2ETestOpt) {
 	ctx := context.Background()
 	e.initGit(ctx)
 
@@ -131,7 +134,7 @@ func (e *ClusterE2ETest) buildClusterConfigFileForGit() {
 	b := e.generateClusterConfig()
 	_, err := e.GitWriter.Write(e.clusterConfGitPath(), b, filewriter.PersistentFile)
 	if err != nil {
-		e.T.Errorf("Error wrting cluster config file to local git folder: %v", err)
+		e.T.Errorf("Error writing cluster config file to local git folder: %v", err)
 	}
 }
 

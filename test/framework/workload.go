@@ -22,6 +22,6 @@ func (w *WorkloadCluster) DeleteCluster(opts ...CommandOpt) {
 	w.deleteCluster(opts...)
 }
 
-func (w *WorkloadCluster) UpgradeClusterThroughGitOps(clusterOpts []ClusterE2ETestOpt) {
-	w.UpgradeThroughGitOps(clusterOpts)
+func (w *WorkloadCluster) UpgradeClusterWithGitOps(clusterOpts []ClusterE2ETestOpt) {
+	w.UpgradeWithGitOps(clusterOpts)
 }
