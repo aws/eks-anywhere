@@ -11,7 +11,9 @@ As an EKS Anywhere Tinkerbell provider user, I want to:
 * Generate the required cluster configuration file with minimal customizations
 * Generate the required hardware files using CSV files that contain hardware information
 
-### State of Scope
+### Statement of Scope
+
+The scope of this document is mainly for beta release of Tinkerbell provider. Some of the details in the design will change once Tinkerbell is [migrated completely to Kubernetes](https://github.com/tinkerbell/proposals/tree/main/proposals/0026).
 
 **In Scope**
 * Explain the user configuration required for setting up an EKS Anywhere cluster using Tinkerbell
@@ -328,16 +330,16 @@ ip_address,gateway,nameservers,netmask,mac,hostname,vendor,bmc_ip,bmc_username,b
 192.168.1.11,192.168.0.1,8.8.8.8|8.8.4.4,255.255.255.0,00:00:00:00:00:01,worker2,supermicro,192.168.0.11,admin,Admin
 ```
 
-Once the CSV file is set up, users can use the `generate hardware` command to generate the hardware manifests
+Once the CSV file is set up, users can use the `setup hardware` command to generate and push the hardware manifests
 
 (Recommended) Command to generate the hardware manifests and push it to the Tinkerbell stack
 ```bash
-eksctl anywhere generate hardware -f <path-to-csv-file> --tinkerbell-ip <tinkerbell-stack-ip>
+eksctl anywhere setup hardware -f <path-to-csv-file> --tinkerbell-ip <tinkerbell-stack-ip>
 ```
 
 (NOT Recommended) Command to just generate the hardware manifests without pushing
 ```bash
-eksctl anywhere generate hardware -f <path-to-csv-file> --skip-push
+eksctl anywhere generate hardware -f <path-to-csv-file> --dry-run
 ```
 
 Running the above commands is going a create a new directory called `hardware-manifests` with the manifests. This is what the directory structure will look like:
