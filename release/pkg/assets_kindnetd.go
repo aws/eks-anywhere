@@ -69,15 +69,15 @@ func (r *ReleaseConfig) GetKindnetdAssets() ([]Artifact, error) {
 		latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 		if r.DevRelease || r.ReleaseEnvironment == "development" {
-			sourceS3Prefix = fmt.Sprintf("%s/%s/manifests", kindProjectPath, latestPath)
+			sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/kindnetd/%s", kindProjectPath, latestPath, gitTag)
 		} else {
-			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/kind/manifests", r.BundleNumber)
+			sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/kind/manifests/kindnetd/%s", r.BundleNumber, gitTag)
 		}
 
 		if r.DevRelease {
-			releaseS3Path = fmt.Sprintf("artifacts/%s/kind/manifests", r.DevReleaseUriVersion)
+			releaseS3Path = fmt.Sprintf("artifacts/%s/kind/manifests/kindnetd/%s", r.DevReleaseUriVersion, gitTag)
 		} else {
-			releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/kind/manifests", r.BundleNumber)
+			releaseS3Path = fmt.Sprintf("releases/bundles/%d/artifacts/kind/manifests/kindnetd/%s", r.BundleNumber, gitTag)
 		}
 
 		cdnURI, err := r.GetURI(filepath.Join(releaseS3Path, manifest))

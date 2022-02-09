@@ -2915,6 +2915,7 @@ spec:
                       Git repo.
                     properties:
                       branch:
+                        default: main
                         description: Git branch. Defaults to main.
                         type: string
                       clusterConfigPath:

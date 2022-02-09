@@ -50,6 +50,8 @@ spec:
         nodeRegistration:
           kubeletExtraArgs:
             provider-id: PROVIDER_ID
+            read-only-port: "0"
+            anonymous-auth: "false"
       users:
       - name: tink-user
         sshAuthorizedKeys:

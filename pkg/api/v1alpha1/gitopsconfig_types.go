@@ -26,6 +26,7 @@ type Github struct {
 	FluxSystemNamespace string `json:"fluxSystemNamespace,omitempty"`
 
 	// Git branch. Defaults to main.
+	// +kubebuilder:default:="main"
 	Branch string `json:"branch,omitempty"`
 
 	// ClusterConfigPath relative to the repository root, when specified the cluster sync will be scoped to this path.
