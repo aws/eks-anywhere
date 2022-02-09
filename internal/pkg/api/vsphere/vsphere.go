@@ -1,4 +1,4 @@
-package api
+package vsphere
 
 import (
 	"fmt"
@@ -120,6 +120,18 @@ func WithNumCPUs(value int) VSphereFiller {
 	}
 }
 
+func WithControlPlaneVMsNumCPUs(value int) VSphereFiller {
+	return func(config VSphereConfig) {
+		config.cpMachineConfig.Spec.NumCPUs = value
+	}
+}
+
+func WithWorkloadVMsNumCPUs(value int) VSphereFiller {
+	return func(config VSphereConfig) {
+		config.workerMachineConfig.Spec.NumCPUs = value
+	}
+}
+
 func WithDiskGiB(value int) VSphereFiller {
 	return func(config VSphereConfig) {
 		config.cpMachineConfig.Spec.DiskGiB = value
@@ -130,6 +142,18 @@ func WithDiskGiB(value int) VSphereFiller {
 	}
 }
 
+func WithControlPlaneDiskGiB(value int) VSphereFiller {
+	return func(config VSphereConfig) {
+		config.cpMachineConfig.Spec.DiskGiB = value
+	}
+}
+
+func WithWorkloadDiskGiB(value int) VSphereFiller {
+	return func(config VSphereConfig) {
+		config.workerMachineConfig.Spec.DiskGiB = value
+	}
+}
+
 func WithMemoryMiB(value int) VSphereFiller {
 	return func(config VSphereConfig) {
 		config.cpMachineConfig.Spec.MemoryMiB = value
@@ -137,6 +161,18 @@ func WithMemoryMiB(value int) VSphereFiller {
 		if config.etcdMachineConfig != nil {
 			config.etcdMachineConfig.Spec.MemoryMiB = value
 		}
+	}
+}
+
+func WithControlPlaneVMsMemoryMiB(value int) VSphereFiller {
+	return func(config VSphereConfig) {
+		config.cpMachineConfig.Spec.MemoryMiB = value
+	}
+}
+
+func WithWorkloadVMsMemoryMiB(value int) VSphereFiller {
+	return func(config VSphereConfig) {
+		config.workerMachineConfig.Spec.MemoryMiB = value
 	}
 }
 

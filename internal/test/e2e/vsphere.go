@@ -6,10 +6,11 @@ import (
 	"os"
 	"regexp"
 
+	e2etests "github.com/aws/eks-anywhere/test/framework/vsphere"
+
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
 
 const (

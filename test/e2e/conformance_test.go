@@ -1,9 +1,13 @@
+//go:build conformance_e2e
 // +build conformance_e2e
 
 package e2e
 
 import (
 	"testing"
+
+	"github.com/aws/eks-anywhere/test/framework/cloudstack"
+	"github.com/aws/eks-anywhere/test/framework/vsphere"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -41,7 +45,7 @@ func TestDockerKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
 func TestVSphereKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu120()),
+		vsphere.NewVSphere(t, vsphere.WithUbuntu120()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)
@@ -51,7 +55,7 @@ func TestVSphereKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
 func TestVSphereKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu121()),
+		vsphere.NewVSphere(t, vsphere.WithUbuntu121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)
@@ -61,7 +65,7 @@ func TestVSphereKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
 func TestVSphereKubernetes120BottleRocketThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithBottleRocket120()),
+		vsphere.NewVSphere(t, vsphere.WithBottleRocket120()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)
@@ -71,7 +75,27 @@ func TestVSphereKubernetes120BottleRocketThreeWorkersConformanceFlow(t *testing.
 func TestVSphereKubernetes121BottleRocketThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithBottleRocket121()),
+		vsphere.NewVSphere(t, vsphere.WithBottleRocket121()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+	)
+	runConformanceFlow(test)
+}
+
+func TestCloudStackKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		cloudstack.NewCloudStack(t, cloudstack.WithRedhat120()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+	)
+	runConformanceFlow(test)
+}
+
+func TestCloudStackKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		cloudstack.NewCloudStack(t, cloudstack.WithRedhat121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)

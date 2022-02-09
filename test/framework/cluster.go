@@ -375,6 +375,30 @@ func (e *ClusterE2ETest) GetEksaVSphereMachineConfigs() []v1alpha1.VSphereMachin
 	return machineConfigs
 }
 
+func (e *ClusterE2ETest) GetEksaCloudStackMachineConfigs() []v1alpha1.CloudStackMachineConfig {
+	clusterConfig := e.clusterConfig()
+	machineConfigNames := make([]string, 0, len(clusterConfig.Spec.WorkerNodeGroupConfigurations)+1)
+	machineConfigNames = append(machineConfigNames, clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+	for _, workerNodeConf := range clusterConfig.Spec.WorkerNodeGroupConfigurations {
+		machineConfigNames = append(machineConfigNames, workerNodeConf.MachineGroupRef.Name)
+	}
+
+	kubeconfig := e.kubeconfigFilePath()
+	ctx := context.Background()
+
+	machineConfigs := make([]v1alpha1.CloudStackMachineConfig, 0, len(machineConfigNames))
+	for _, name := range machineConfigNames {
+		m, err := e.KubectlClient.GetEksaCloudStackMachineConfig(ctx, name, kubeconfig, clusterConfig.Namespace)
+		if err != nil {
+			e.T.Fatalf("Failed getting CloudStackMachineConfig: %v", err)
+		}
+
+		machineConfigs = append(machineConfigs, *m)
+	}
+
+	return machineConfigs
+}
+
 func (e *ClusterE2ETest) clusterConfig() *v1alpha1.Cluster {
 	if e.ClusterConfig != nil {
 		return e.ClusterConfig

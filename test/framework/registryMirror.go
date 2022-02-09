@@ -19,7 +19,7 @@ var registryMirrorRequiredEnvVars = []string{RegistryEndpointVar, RegistryUserna
 
 func WithRegistryMirrorEndpointAndCert() ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		checkRequiredEnvVars(e.T, registryMirrorRequiredEnvVars)
+		CheckRequiredEnvVars(e.T, registryMirrorRequiredEnvVars)
 		endpoint := os.Getenv(RegistryEndpointVar)
 		username := os.Getenv(RegistryUsernameVar)
 		password := os.Getenv(RegistryPasswordVar)

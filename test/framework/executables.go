@@ -31,7 +31,7 @@ func executableBuilder(t *testing.T, ctx context.Context) *executables.Executabl
 	return executableBuilder
 }
 
-func buildGovc(t *testing.T) *executables.Govc {
+func BuildGovc(t *testing.T) *executables.Govc {
 	ctx := context.Background()
 	tmpWriter, err := filewriter.NewWriter("unique-ip")
 	if err != nil {

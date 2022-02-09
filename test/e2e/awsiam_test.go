@@ -1,9 +1,13 @@
+//go:build e2e
 // +build e2e
 
 package e2e
 
 import (
 	"testing"
+
+	"github.com/aws/eks-anywhere/test/framework/cloudstack"
+	"github.com/aws/eks-anywhere/test/framework/vsphere"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -39,7 +43,7 @@ func TestDockerKubernetes121AWSIamAuth(t *testing.T) {
 func TestVSphereKubernetes120AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu120()),
+		vsphere.NewVSphere(t, vsphere.WithUbuntu120()),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 	)
@@ -49,7 +53,7 @@ func TestVSphereKubernetes120AWSIamAuth(t *testing.T) {
 func TestVSphereKubernetes121AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu121()),
+		vsphere.NewVSphere(t, vsphere.WithUbuntu121()),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 	)
@@ -59,7 +63,7 @@ func TestVSphereKubernetes121AWSIamAuth(t *testing.T) {
 func TestVSphereKubernetes120BottleRocketAWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithBottleRocket120()),
+		vsphere.NewVSphere(t, vsphere.WithBottleRocket120()),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 	)
@@ -69,7 +73,27 @@ func TestVSphereKubernetes120BottleRocketAWSIamAuth(t *testing.T) {
 func TestVSphereKubernetes121BottleRocketAWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithBottleRocket121()),
+		vsphere.NewVSphere(t, vsphere.WithBottleRocket121()),
+		framework.WithAWSIam(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+	)
+	runAWSIamAuthFlow(test)
+}
+
+func TestCloudStackKubernetes120AWSIamAuth(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		cloudstack.NewCloudStack(t, cloudstack.WithRedhat120()),
+		framework.WithAWSIam(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+	)
+	runAWSIamAuthFlow(test)
+}
+
+func TestCloudStackKubernetes121AWSIamAuth(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		cloudstack.NewCloudStack(t, cloudstack.WithRedhat121()),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 	)

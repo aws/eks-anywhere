@@ -1,8 +1,11 @@
-package framework
+package vsphere
 
 import (
 	"os"
 	"testing"
+
+	"github.com/aws/eks-anywhere/internal/pkg/api/vsphere"
+	"github.com/aws/eks-anywhere/test/framework"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -63,51 +66,51 @@ var requiredEnvVars = []string{
 
 type VSphere struct {
 	t          *testing.T
-	fillers    []api.VSphereFiller
+	fillers    []vsphere.VSphereFiller
 	cidr       string
 	GovcClient *executables.Govc
 }
 
 type VSphereOpt func(*VSphere)
 
-func UpdateUbuntuTemplate118Var() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateUbuntu118Var, api.WithTemplate)
+func UpdateUbuntuTemplate118Var() vsphere.VSphereFiller {
+	return vsphere.WithStringFromEnvVar(vsphereTemplateUbuntu118Var, vsphere.WithTemplate)
 }
 
-func UpdateUbuntuTemplate119Var() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateUbuntu119Var, api.WithTemplate)
+func UpdateUbuntuTemplate119Var() vsphere.VSphereFiller {
+	return vsphere.WithStringFromEnvVar(vsphereTemplateUbuntu119Var, vsphere.WithTemplate)
 }
 
-func UpdateUbuntuTemplate120Var() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateUbuntu120Var, api.WithTemplate)
+func UpdateUbuntuTemplate120Var() vsphere.VSphereFiller {
+	return vsphere.WithStringFromEnvVar(vsphereTemplateUbuntu120Var, vsphere.WithTemplate)
 }
 
-func UpdateUbuntuTemplate121Var() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateUbuntu121Var, api.WithTemplate)
+func UpdateUbuntuTemplate121Var() vsphere.VSphereFiller {
+	return vsphere.WithStringFromEnvVar(vsphereTemplateUbuntu121Var, vsphere.WithTemplate)
 }
 
-func UpdateBottlerocketTemplate121() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateBR121Var, api.WithTemplate)
+func UpdateBottlerocketTemplate121() vsphere.VSphereFiller {
+	return vsphere.WithStringFromEnvVar(vsphereTemplateBR121Var, vsphere.WithTemplate)
 }
 
 func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
-	checkRequiredEnvVars(t, requiredEnvVars)
-	c := buildGovc(t)
+	framework.CheckRequiredEnvVars(t, requiredEnvVars)
+	c := framework.BuildGovc(t)
 	v := &VSphere{
 		t:          t,
 		GovcClient: c,
-		fillers: []api.VSphereFiller{
-			api.WithStringFromEnvVar(vsphereDatacenterVar, api.WithDatacenter),
-			api.WithStringFromEnvVar(vsphereDatastoreVar, api.WithDatastore),
-			api.WithStringFromEnvVar(vsphereFolderVar, api.WithFolder),
-			api.WithStringFromEnvVar(vsphereNetworkVar, api.WithNetwork),
-			api.WithStringFromEnvVar(vsphereResourcePoolVar, api.WithResourcePool),
-			api.WithStringFromEnvVar(vsphereServerVar, api.WithServer),
-			api.WithStringFromEnvVar(vsphereSshAuthorizedKeyVar, api.WithSSHAuthorizedKey),
-			api.WithStringFromEnvVar(vsphereStoragePolicyNameVar, api.WithStoragePolicyName),
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu119Var, api.WithTemplate),
-			api.WithBoolFromEnvVar(vsphereTlsInsecureVar, api.WithTLSInsecure),
-			api.WithStringFromEnvVar(vsphereTlsThumbprintVar, api.WithTLSThumbprint),
+		fillers: []vsphere.VSphereFiller{
+			vsphere.WithStringFromEnvVar(vsphereDatacenterVar, vsphere.WithDatacenter),
+			vsphere.WithStringFromEnvVar(vsphereDatastoreVar, vsphere.WithDatastore),
+			vsphere.WithStringFromEnvVar(vsphereFolderVar, vsphere.WithFolder),
+			vsphere.WithStringFromEnvVar(vsphereNetworkVar, vsphere.WithNetwork),
+			vsphere.WithStringFromEnvVar(vsphereResourcePoolVar, vsphere.WithResourcePool),
+			vsphere.WithStringFromEnvVar(vsphereServerVar, vsphere.WithServer),
+			vsphere.WithStringFromEnvVar(vsphereSshAuthorizedKeyVar, vsphere.WithSSHAuthorizedKey),
+			vsphere.WithStringFromEnvVar(vsphereStoragePolicyNameVar, vsphere.WithStoragePolicyName),
+			vsphere.WithStringFromEnvVar(vsphereTemplateUbuntu119Var, vsphere.WithTemplate),
+			vsphere.WithBoolFromEnvVar(vsphereTlsInsecureVar, vsphere.WithTLSInsecure),
+			vsphere.WithStringFromEnvVar(vsphereTlsThumbprintVar, vsphere.WithTLSThumbprint),
 		},
 	}
 
@@ -122,8 +125,8 @@ func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 func WithUbuntu121() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu121Var, api.WithTemplate),
-			api.WithOsFamily(v1alpha1.Ubuntu),
+			vsphere.WithStringFromEnvVar(vsphereTemplateUbuntu121Var, vsphere.WithTemplate),
+			vsphere.WithOsFamily(v1alpha1.Ubuntu),
 		)
 	}
 }
@@ -131,8 +134,8 @@ func WithUbuntu121() VSphereOpt {
 func WithUbuntu120() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu120Var, api.WithTemplate),
-			api.WithOsFamily(v1alpha1.Ubuntu),
+			vsphere.WithStringFromEnvVar(vsphereTemplateUbuntu120Var, vsphere.WithTemplate),
+			vsphere.WithOsFamily(v1alpha1.Ubuntu),
 		)
 	}
 }
@@ -140,8 +143,8 @@ func WithUbuntu120() VSphereOpt {
 func WithUbuntu119() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu119Var, api.WithTemplate),
-			api.WithOsFamily(v1alpha1.Ubuntu),
+			vsphere.WithStringFromEnvVar(vsphereTemplateUbuntu119Var, vsphere.WithTemplate),
+			vsphere.WithOsFamily(v1alpha1.Ubuntu),
 		)
 	}
 }
@@ -149,8 +152,8 @@ func WithUbuntu119() VSphereOpt {
 func WithUbuntu118() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu118Var, api.WithTemplate),
-			api.WithOsFamily(v1alpha1.Ubuntu),
+			vsphere.WithStringFromEnvVar(vsphereTemplateUbuntu118Var, vsphere.WithTemplate),
+			vsphere.WithOsFamily(v1alpha1.Ubuntu),
 		)
 	}
 }
@@ -158,8 +161,8 @@ func WithUbuntu118() VSphereOpt {
 func WithBottleRocket120() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateBR120Var, api.WithTemplate),
-			api.WithOsFamily(v1alpha1.Bottlerocket),
+			vsphere.WithStringFromEnvVar(vsphereTemplateBR120Var, vsphere.WithTemplate),
+			vsphere.WithOsFamily(v1alpha1.Bottlerocket),
 		)
 	}
 }
@@ -167,8 +170,8 @@ func WithBottleRocket120() VSphereOpt {
 func WithBottleRocket121() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateBR121Var, api.WithTemplate),
-			api.WithOsFamily(v1alpha1.Bottlerocket),
+			vsphere.WithStringFromEnvVar(vsphereTemplateBR121Var, vsphere.WithTemplate),
+			vsphere.WithOsFamily(v1alpha1.Bottlerocket),
 		)
 	}
 }
@@ -176,13 +179,13 @@ func WithBottleRocket121() VSphereOpt {
 func WithPrivateNetwork() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vspherePrivateNetworkVar, api.WithNetwork),
+			vsphere.WithStringFromEnvVar(vspherePrivateNetworkVar, vsphere.WithNetwork),
 		)
 		v.cidr = os.Getenv(privateNetworkCidrVar)
 	}
 }
 
-func WithVSphereFillers(fillers ...api.VSphereFiller) VSphereOpt {
+func WithVSphereFillers(fillers ...vsphere.VSphereFiller) VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers, fillers...)
 	}
@@ -198,16 +201,16 @@ func (v *VSphere) CustomizeProviderConfig(file string) []byte {
 	return v.customizeProviderConfig(file, v.fillers...)
 }
 
-func (v *VSphere) customizeProviderConfig(file string, fillers ...api.VSphereFiller) []byte {
-	providerOutput, err := api.AutoFillVSphereProvider(file, fillers...)
+func (v *VSphere) customizeProviderConfig(file string, fillers ...vsphere.VSphereFiller) []byte {
+	providerOutput, err := vsphere.AutoFillVSphereProvider(file, fillers...)
 	if err != nil {
 		v.t.Fatalf("Error customizing provider config from file: %v", err)
 	}
 	return providerOutput
 }
 
-func (v *VSphere) WithProviderUpgrade(fillers ...api.VSphereFiller) ClusterE2ETestOpt {
-	return func(e *ClusterE2ETest) {
+func (v *VSphere) WithProviderUpgrade(fillers ...vsphere.VSphereFiller) framework.ClusterE2ETestOpt {
+	return func(e *framework.ClusterE2ETest) {
 		e.ProviderConfigB = v.customizeProviderConfig(e.ClusterConfigLocation, fillers...)
 	}
 }
