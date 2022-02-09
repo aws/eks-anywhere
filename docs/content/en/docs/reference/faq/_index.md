@@ -10,9 +10,8 @@ description: >
 
 ### How do my applications running on EKS Anywhere authenticate with AWS services using IAM credentials?
 
-You can leverage the [IAM Role for Service Account (IRSA)](https://aws.amazon.com/blogs/opensource/introducing-fine-grained-iam-roles-service-accounts/) feature 
-by following the [special instructions for DIY Kubernetes](https://github.com/aws/amazon-eks-pod-identity-webhook/blob/master/SELF_HOSTED_SETUP.md)
-along with instructions specific to EKS-Anywhere to enable AWS authentication. Please see the [IRSA reference]({{< relref "../../reference/clusterspec/irsa.md" >}}) for details.
+You can now leverage the [IAM Role for Service Account (IRSA)](https://aws.amazon.com/blogs/opensource/introducing-fine-grained-iam-roles-service-accounts/) feature 
+by following the [IRSA reference]({{< relref "../../reference/clusterspec/irsa.md" >}}) guide for details.
 
 
 ### Does EKS Anywhere support OIDC (including Azure AD and AD FS)?
