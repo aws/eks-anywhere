@@ -26,7 +26,6 @@ func NewCloudStackMachineConfigGenerate(name string) *CloudStackMachineConfigGen
 				Value: "",
 				Type:  Id,
 			},
-			OSFamily: Redhat,
 			Template: CloudStackResourceRef{
 				Value: "",
 				Type:  Id,

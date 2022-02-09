@@ -58,7 +58,6 @@ spec:
     - name: "mySshUsername"
       sshAuthorizedKeys:
         - "mySshAuthorizedKey"
-  osFamily: "ubuntu"
   template:
     value: "centos7-k8s-118"
     type: "Name"

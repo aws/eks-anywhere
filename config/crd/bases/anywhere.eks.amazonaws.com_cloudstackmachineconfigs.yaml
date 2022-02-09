@@ -72,11 +72,6 @@ spec:
                   details which are commonly set on the VM include cpuOvercommitRatio,
                   memoryOvercommitRatio, Message.ReservedCapacityFreed.Flag, and rootdisksize
                 type: object
-              osFamily:
-                description: OSFamily is an EKS-A required field which represents
-                  the family of the guest OS image. Currently only “redhat“ is supported
-                  for CloudStack, which is also the default
-                type: string
               template:
                 description: Template refers to a VM image template which has been
                   previously registered in CloudStack. It can either be specified

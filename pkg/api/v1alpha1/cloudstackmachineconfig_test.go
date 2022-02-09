@@ -47,7 +47,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 							Value: "m4-large",
 							Type:  Name,
 						},
-						OSFamily: Ubuntu,
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -82,7 +81,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 							Value: "m4-large",
 							Type:  Name,
 						},
-						OSFamily: Ubuntu,
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -117,7 +115,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 							Value: "m4-large",
 							Type:  Name,
 						},
-						OSFamily: Ubuntu,
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -152,7 +149,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 							Value: "m4-large",
 							Type:  Name,
 						},
-						OSFamily: Ubuntu,
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -180,7 +176,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 							Value: "m5-xlarge",
 							Type:  Name,
 						},
-						OSFamily: Ubuntu,
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
