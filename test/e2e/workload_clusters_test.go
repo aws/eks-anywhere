@@ -10,7 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-func runWorkloadClusterFlow(test *framework.MulticlusterE2ETest, clusterOpts ...framework.ClusterE2ETestOpt) {
+func runWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
 	test.CreateManagementCluster()
 	test.RunInWorkloadClusters(func(w *framework.WorkloadCluster) {
 		w.GenerateClusterConfig()
