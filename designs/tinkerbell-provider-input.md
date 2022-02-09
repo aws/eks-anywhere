@@ -358,3 +358,9 @@ Once the users have created the necessary files, they can use them to create an 
 ```bash
 eksctl anywhere create cluster -f <clusterconfig> -w <hardware YAML>
 ```
+
+## Future changes
+
+Most of the design details described above are only valid for beta release of Tinkerbell provider as for beta, we are using the default installation of Tinkerbell. This default installation runs Tinkerbell components as microservices on docker containers. We have plans to eliminate Tinkerbell's dependency on docker and instead run it on Kubernetes as controllers. You can read the proposal for this [here](https://github.com/tinkerbell/proposals/tree/main/proposals/0026).
+
+Since this is a work-in-progress, we still have not finalized how our design will look like when we leverage Kubernetes backend for Tinkerbell.
