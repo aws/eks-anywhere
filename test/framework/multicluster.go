@@ -24,11 +24,6 @@ func NewMulticlusterE2ETest(t *testing.T, managementCluster *ClusterE2ETest, wor
 		c.clusterFillers = append(c.clusterFillers, api.WithManagementCluster(managementCluster.ClusterName))
 		c.ClusterName = fmt.Sprintf("%s-w-%d", managementCluster.ClusterName, i)
 
-		if c.GitOpsConfig != nil {
-			c.GitOpsConfig.SetName(c.ClusterName)
-			c.clusterFillers = append(c.clusterFillers, api.WithGitOpsRef(c.ClusterName))
-		}
-
 		m.WorkloadClusters[c.ClusterName] = &WorkloadCluster{
 			ClusterE2ETest:                  c,
 			managementClusterKubeconfigFile: managementCluster.kubeconfigFilePath,

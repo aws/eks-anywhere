@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -40,7 +41,8 @@ var fluxRequiredEnvVars = []string{
 func WithFlux(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, fluxRequiredEnvVars)
-		e.GitOpsConfig = api.NewGitOpsConfig(defaultClusterName,
+		gitOpsConfigName := gitOpsConfigName()
+		e.GitOpsConfig = api.NewGitOpsConfig(gitOpsConfigName,
 			api.WithPersonalFluxRepository(true),
 			api.WithStringFromEnvVarGitOpsConfig(gitRepositoryVar, api.WithFluxRepository),
 			api.WithStringFromEnvVarGitOpsConfig(githubUserVar, api.WithFluxOwner),
@@ -49,7 +51,7 @@ func WithFlux(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 			api.WithFluxBranch("main"),
 		)
 		e.clusterFillers = append(e.clusterFillers,
-			api.WithGitOpsRef(defaultClusterName),
+			api.WithGitOpsRef(gitOpsConfigName),
 		)
 		// apply the rest of the opts passed into the function
 		for _, opt := range opts {
@@ -85,6 +87,10 @@ func withFluxRepositorySuffix(suffix string) api.GitOpsConfigOpt {
 		repository := c.Spec.Flux.Github.Repository
 		c.Spec.Flux.Github.Repository = fmt.Sprintf("%s-%s", repository, suffix)
 	}
+}
+
+func gitOpsConfigName() string {
+	return fmt.Sprintf("%s-%s", defaultClusterName, test.RandString(5))
 }
 
 func (e *ClusterE2ETest) UpgradeWithGitOps(clusterOpts ...ClusterE2ETestOpt) {
