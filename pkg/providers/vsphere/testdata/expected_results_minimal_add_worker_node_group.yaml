@@ -15,6 +15,8 @@ spec:
               effect: PreferNoSchedule
           kubeletExtraArgs:
             cloud-provider: external
+            read-only-port: "0"
+            anonymous-auth: "false"
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           name: '{{ ds.meta_data.hostname }}'
       preKubeadmCommands:
@@ -102,6 +104,8 @@ spec:
               effect: PreferNoSchedule
           kubeletExtraArgs:
             cloud-provider: external
+            read-only-port: "0"
+            anonymous-auth: "false"
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           name: '{{ ds.meta_data.hostname }}'
       preKubeadmCommands:
@@ -186,6 +190,8 @@ spec:
           taints: []
           kubeletExtraArgs:
             cloud-provider: external
+            read-only-port: "0"
+            anonymous-auth: "false"
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           name: '{{ ds.meta_data.hostname }}'
       preKubeadmCommands:

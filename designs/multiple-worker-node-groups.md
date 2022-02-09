@@ -104,6 +104,8 @@ spec:
           criSocket: /var/run/containerd/containerd.sock
           kubeletExtraArgs:
             cloud-provider: external
+            read-only-port: "0"
+            anonymous-auth: "false"
             tls-cipher-suites: Something
           name: '{{ ds.meta_data.hostname }}'
 	  ...
@@ -166,6 +168,8 @@ spec:
           criSocket: /var/run/containerd/containerd.sock
           kubeletExtraArgs:
             cloud-provider: external
+            read-only-port: "0"
+            anonymous-auth: "false"
             tls-cipher-suites: Something
           name: '{{ ds.meta_data.hostname }}'
 	  ...
