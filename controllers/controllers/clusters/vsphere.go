@@ -172,7 +172,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return reconciler.Result{}, err
 	}
 
-	workersSpec, err := templateBuilder.GenerateCAPISpecWorkers(specWithBundles, nil)
+	workersSpec, err := templateBuilder.GenerateCAPISpecWorkers(specWithBundles, nil, nil)
 	if err != nil {
 		return reconciler.Result{}, err
 	}
