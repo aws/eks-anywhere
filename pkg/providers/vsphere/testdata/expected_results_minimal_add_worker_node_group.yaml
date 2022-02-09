@@ -1,7 +1,7 @@
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
-  name: test-md-0-kubeadmconfig-template-1234567890000
+  name: test-md-0-template-1234567890000
   namespace: eksa-system
 spec:
   template:
@@ -51,7 +51,7 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
-          name: test-md-0-kubeadmconfig-template-1234567890000
+          name: test-md-0-template-1234567890000
       clusterName: test
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -88,7 +88,7 @@ spec:
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
-  name: test-md-1-kubeadmconfig-template-1234567890000
+  name: test-md-1-template-1234567890000
   namespace: eksa-system
 spec:
   template:
@@ -138,7 +138,7 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
-          name: test-md-1-kubeadmconfig-template-1234567890000
+          name: test-md-1-template-1234567890000
       clusterName: test
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -175,7 +175,7 @@ spec:
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
-  name: test-md-2-kubeadmconfig-template-1234567890000
+  name: test-md-2-template-1234567890000
   namespace: eksa-system
 spec:
   template:
@@ -222,7 +222,7 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
-          name: test-md-2-kubeadmconfig-template-1234567890000
+          name: test-md-2-template-1234567890000
       clusterName: test
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1

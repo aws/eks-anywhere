@@ -218,7 +218,7 @@ func (vs *TinkerbellTemplateBuilder) EtcdMachineTemplateName(clusterName string)
 
 func (vs *TinkerbellTemplateBuilder) KubeadmConfigTemplateName(clusterName, workerNodeGroupName string) string {
 	t := vs.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-%s-kubeadmconfig-template-%d", clusterName, workerNodeGroupName, t)
+	return fmt.Sprintf("%s-%s-template-%d", clusterName, workerNodeGroupName, t)
 }
 
 func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
