@@ -672,20 +672,8 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.S
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec, *vs.datacenterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
-
-		_, ok := workloadTemplateNames[workerNodeGroupConfiguration.Name]
-		if ok {
-			values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
-		} else {
-			values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
-		}
-
-		_, ok = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
-		if ok {
-			values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
-		} else {
-			values["workloadkubeadmconfigTemplateName"] = vs.KubeadmConfigTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
-		}
+		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
+		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 
 		values["cgroupDriverSystemd"] = cgroupDriverSystemd
 
@@ -1026,10 +1014,15 @@ func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster
 	if err != nil {
 		return nil, nil, err
 	}
+
+	workloadTemplateNames := make(map[string]string, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
+	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		workloadTemplateNames[workerNodeGroupConfiguration.Name] = p.templateBuilder.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
+		kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = p.templateBuilder.KubeadmConfigTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		p.templateBuilder.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, nil, nil)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
 	if err != nil {
 		return nil, nil, err
 	}
