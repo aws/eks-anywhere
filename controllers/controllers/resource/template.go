@@ -79,11 +79,10 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	workloadTemplateNames := make(map[string]string, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		existingKubeadmConfigTemplate, err := r.KubeadmConfigTemplate(ctx, eksaCluster, workerNodeGroupConfiguration)
+		oldWn, err := r.ExistingWorkerNodeGroupConfig(ctx, eksaCluster, workerNodeGroupConfiguration)
 		if err != nil {
 			return nil, err
 		}
-		oldWn := MapKubeadmConfigTemplateToWorkerNodeGroupConfiguration(*existingKubeadmConfigTemplate)
 		if vsphere.NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, oldWn) {
 			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = templateBuilder.KubeadmConfigTemplateName(clusterName, workerNodeGroupConfiguration.Name)
 		} else {
@@ -254,7 +253,7 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 
-	return generateTemplateResources(templateBuilder, clusterSpec, nil, nil, cpOpt)
+	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, nil, cpOpt)
 }
 
 func sshAuthorizedKey(users []anywherev1.UserConfiguration) string {
