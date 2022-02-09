@@ -38,10 +38,16 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain:   "domain1",
-					Zone:     "zone1",
-					Account:  "admin",
-					Network:  "net1",
+					Domain: "domain1",
+					Zone: CloudStackResourceRef{
+						Value: "zone1",
+						Type:  Name,
+					},
+					Account: "admin",
+					Network: CloudStackResourceRef{
+						Value: "net1",
+						Type:  Name,
+					},
 					Insecure: false,
 				},
 			},
@@ -59,10 +65,16 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain:   "domain1",
-					Zone:     "zone1",
-					Account:  "admin",
-					Network:  "net1",
+					Domain: "domain1",
+					Zone: CloudStackResourceRef{
+						Value: "zone1",
+						Type:  Name,
+					},
+					Account: "admin",
+					Network: CloudStackResourceRef{
+						Value: "net1",
+						Type:  Name,
+					},
 					Insecure: false,
 				},
 			},
@@ -80,10 +92,16 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain:   "domain1",
-					Zone:     "zone1",
-					Account:  "admin",
-					Network:  "net1",
+					Domain: "domain1",
+					Zone: CloudStackResourceRef{
+						Value: "zone1",
+						Type:  Name,
+					},
+					Account: "admin",
+					Network: CloudStackResourceRef{
+						Value: "net1",
+						Type:  Name,
+					},
 					Insecure: false,
 				},
 			},

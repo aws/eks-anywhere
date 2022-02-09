@@ -39,9 +39,15 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					Spec: CloudStackMachineConfigSpec{
-						Template:        "centos7-k8s-119",
-						ComputeOffering: "m4-large",
-						OSFamily:        Ubuntu,
+						Template: CloudStackResourceRef{
+							Value: "centos7-k8s-119",
+							Type:  Name,
+						},
+						ComputeOffering: CloudStackResourceRef{
+							Value: "m4-large",
+							Type:  Name,
+						},
+						OSFamily: Ubuntu,
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -68,9 +74,15 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					Spec: CloudStackMachineConfigSpec{
-						Template:        "centos7-k8s-118",
-						ComputeOffering: "m4-large",
-						OSFamily:        Ubuntu,
+						Template: CloudStackResourceRef{
+							Value: "centos7-k8s-118",
+							Type:  Name,
+						},
+						ComputeOffering: CloudStackResourceRef{
+							Value: "m4-large",
+							Type:  Name,
+						},
+						OSFamily: Ubuntu,
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -97,9 +109,15 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					Spec: CloudStackMachineConfigSpec{
-						Template:        "centos7-k8s-120",
-						ComputeOffering: "m4-large",
-						OSFamily:        Ubuntu,
+						Template: CloudStackResourceRef{
+							Value: "centos7-k8s-120",
+							Type:  Name,
+						},
+						ComputeOffering: CloudStackResourceRef{
+							Value: "m4-large",
+							Type:  Name,
+						},
+						OSFamily: Ubuntu,
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -126,9 +144,15 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					Spec: CloudStackMachineConfigSpec{
-						Template:        "centos7-k8s-118",
-						ComputeOffering: "m4-large",
-						OSFamily:        Ubuntu,
+						Template: CloudStackResourceRef{
+							Value: "centos7-k8s-118",
+							Type:  Name,
+						},
+						ComputeOffering: CloudStackResourceRef{
+							Value: "m4-large",
+							Type:  Name,
+						},
+						OSFamily: Ubuntu,
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
@@ -148,9 +172,15 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						Name: "eksa-unit-test-2",
 					},
 					Spec: CloudStackMachineConfigSpec{
-						Template:        "centos7-k8s-118",
-						ComputeOffering: "m5-xlarge",
-						OSFamily:        Ubuntu,
+						Template: CloudStackResourceRef{
+							Value: "centos7-k8s-118",
+							Type:  Name,
+						},
+						ComputeOffering: CloudStackResourceRef{
+							Value: "m5-xlarge",
+							Type:  Name,
+						},
+						OSFamily: Ubuntu,
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},

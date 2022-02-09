@@ -37,8 +37,12 @@ spec:
   account: "admin"
   domain: "domain1"
   insecure: false
-  network: "net1"
-  zone: "zone1"
+  network:
+    value: "net1"
+    type: "Name"
+  zone:
+    value: "zone1"
+    type: "Name"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -46,10 +50,14 @@ kind: BadCloudStackMachineConfig
 metadata:
   name: eksa-unit-test
 spec:
-  computeOffering: "m4-large"
+  computeOffering:
+    value: "m4-large"
+    type: "Name"
   keyPairName: "cloudstack-keypair"
   OSFamily:  Ubuntu,
-  template: "centos7-k8s-119"
+  template:
+    value: "centos7-k8s-119"
+    type: "Name"
   details:
     foo: "bar"
     key: "value"

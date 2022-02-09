@@ -55,7 +55,15 @@ spec:
                   been previously registered in CloudStack. It represents a VM’s instance
                   size including number of CPU’s, memory, and CPU speed. It can either
                   be specified as a UUID or name
-                type: string
+                properties:
+                  type:
+                    type: string
+                  value:
+                    type: string
+                required:
+                - type
+                - value
+                type: object
               details:
                 additionalProperties:
                   type: string
@@ -73,12 +81,20 @@ spec:
                 description: Template refers to a VM image template which has been
                   previously registered in CloudStack. It can either be specified
                   as a UUID or name
-                type: string
+                properties:
+                  type:
+                    type: string
+                  value:
+                    type: string
+                required:
+                - type
+                - value
+                type: object
               users:
-                description: Users utilizes cloud-init to configure ssh users which
-                  will be allowed to log in to the VM using private-key authentication.
-                  It consists of an array of objects containing the user name, as
-                  well as a list of their authorized public keys
+                description: Users utilizes OS-specific startup scripts to configure
+                  ssh users which will be allowed to log in to the VM using private-key
+                  authentication. It consists of an array of objects containing the
+                  user name, as well as a list of their authorized public keys
                 items:
                   description: UserConfiguration defines the configuration of the
                     user to be added to the VM

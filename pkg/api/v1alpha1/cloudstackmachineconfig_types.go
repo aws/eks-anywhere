@@ -27,9 +27,9 @@ type CloudStackMachineConfigSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Template refers to a VM image template which has been previously registered in CloudStack. It can either be specified as a UUID or name
-	Template string `json:"template"`
+	Template CloudStackResourceRef `json:"template"`
 	// ComputeOffering refers to a compute offering which has been previously registered in CloudStack. It represents a VM’s instance size including number of CPU’s, memory, and CPU speed. It can either be specified as a UUID or name
-	ComputeOffering string `json:"computeOffering"`
+	ComputeOffering CloudStackResourceRef `json:"computeOffering"`
 	// OSFamily is an EKS-A required field which represents the family of the guest OS image. Currently only “redhat“ is supported for CloudStack, which is also the default
 	OSFamily OSFamily `json:"osFamily,omitempty"`
 	// Details represents an arbitrary mapping of strings to strings, which are passed through to the CloudStack VM. Some example details which are commonly set on the VM include cpuOvercommitRatio, memoryOvercommitRatio, Message.ReservedCapacityFreed.Flag, and rootdisksize

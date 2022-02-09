@@ -12,20 +12,32 @@ import (
 func TestCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
-	vOld.Spec.Template = "oldTemplate"
+	vOld.Spec.Template = v1alpha1.CloudStackResourceRef{
+		Value: "oldTemplate",
+		Type:  v1alpha1.Name,
+	}
 	c := vOld.DeepCopy()
 
-	c.Spec.Template = "newTemplate"
+	c.Spec.Template = v1alpha1.CloudStackResourceRef{
+		Value: "newTemplate",
+		Type:  v1alpha1.Name,
+	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
 func TestWorkersCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
-	vOld.Spec.Template = "oldTemplate"
+	vOld.Spec.Template = v1alpha1.CloudStackResourceRef{
+		Value: "oldTemplate",
+		Type:  v1alpha1.Name,
+	}
 	c := vOld.DeepCopy()
 
-	c.Spec.Template = "newTemplate"
+	c.Spec.Template = v1alpha1.CloudStackResourceRef{
+		Value: "newTemplate",
+		Type:  v1alpha1.Name,
+	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
@@ -33,20 +45,32 @@ func TestWorkersCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 func TestCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
-	vOld.Spec.ComputeOffering = "oldComputeOffering"
+	vOld.Spec.ComputeOffering = v1alpha1.CloudStackResourceRef{
+		Value: "oldComputeOffering",
+		Type:  v1alpha1.Name,
+	}
 	c := vOld.DeepCopy()
 
-	c.Spec.ComputeOffering = "newComputeOffering"
+	c.Spec.ComputeOffering = v1alpha1.CloudStackResourceRef{
+		Value: "newComputeOffering",
+		Type:  v1alpha1.Name,
+	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
 func TestWorkersCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
-	vOld.Spec.ComputeOffering = "oldComputeOffering"
+	vOld.Spec.ComputeOffering = v1alpha1.CloudStackResourceRef{
+		Value: "oldComputeOffering",
+		Type:  v1alpha1.Name,
+	}
 	c := vOld.DeepCopy()
 
-	c.Spec.ComputeOffering = "newComputeOffering"
+	c.Spec.ComputeOffering = v1alpha1.CloudStackResourceRef{
+		Value: "newComputeOffering",
+		Type:  v1alpha1.Name,
+	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }

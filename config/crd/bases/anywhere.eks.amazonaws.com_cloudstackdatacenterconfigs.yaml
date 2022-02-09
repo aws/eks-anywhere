@@ -62,13 +62,29 @@ spec:
                   or shared network. If it doesn’t already exist in CloudStack, it’ll
                   automatically be created by CAPC as an isolated network. It can
                   either be specified as a UUID or name
-                type: string
+                properties:
+                  type:
+                    type: string
+                  value:
+                    type: string
+                required:
+                - type
+                - value
+                type: object
               zone:
                 description: Zone is an organizational construct typically used to
                   represent a single datacenter, and all its physical and virtual
                   resources exist inside that zone. It can either be specified as
                   a UUID or name
-                type: string
+                properties:
+                  type:
+                    type: string
+                  value:
+                    type: string
+                required:
+                - type
+                - value
+                type: object
             required:
             - domain
             - insecure
