@@ -6,7 +6,11 @@ date: 2021-11-11
 description: >  
 ---
 
-## Overview
+## What is the purpose of this workshop?
+
+The purpose of this workshop is to provide a more perscriptive walkthrough of building, deploying, and operating an EKS Anywhere cluster. This will use existing content from the documentation, just in a more condensed format for those wishing to get started. 
+
+## EKS Anywhere Overview
 
 Amazon EKS Anywhere is a new deployment option for Amazon EKS that allows customers to create and operate Kubernetes clusters on customer-managed infrastructure, supported by AWS. Customers can now run Amazon EKS Anywhere on their own on-premises infrastructure using VMware vSphere starting today, with support for other deployment targets in the near future, including support for bare metal coming in 2022.
 
