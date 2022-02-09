@@ -150,6 +150,21 @@ func (mr *MockResourceFetcherMockRecorder) ExistingVSphereWorkerMachineConfig(ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingVSphereWorkerMachineConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingVSphereWorkerMachineConfig), arg0, arg1, arg2)
 }
 
+// ExistingWorkerNodeGroupConfig mocks base method.
+func (m *MockResourceFetcher) ExistingWorkerNodeGroupConfig(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 v1alpha1.WorkerNodeGroupConfiguration) (*v1alpha1.WorkerNodeGroupConfiguration, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistingWorkerNodeGroupConfig", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*v1alpha1.WorkerNodeGroupConfiguration)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistingWorkerNodeGroupConfig indicates an expected call of ExistingWorkerNodeGroupConfig.
+func (mr *MockResourceFetcherMockRecorder) ExistingWorkerNodeGroupConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingWorkerNodeGroupConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingWorkerNodeGroupConfig), arg0, arg1, arg2)
+}
+
 // Fetch mocks base method.
 func (m *MockResourceFetcher) Fetch(arg0 context.Context, arg1, arg2, arg3, arg4 string) (*unstructured.Unstructured, error) {
 	m.ctrl.T.Helper()
