@@ -87,7 +87,7 @@ func withFluxRepositorySuffix(suffix string) api.GitOpsConfigOpt {
 	}
 }
 
-func (e *ClusterE2ETest) UpgradeWithGitOps(clusterOpts []ClusterE2ETestOpt) {
+func (e *ClusterE2ETest) UpgradeWithGitOps(clusterOpts ...ClusterE2ETestOpt) {
 	e.upgradeWithGitOps(clusterOpts)
 }
 
