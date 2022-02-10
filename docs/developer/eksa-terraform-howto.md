@@ -19,7 +19,7 @@ how to scale your EKS-A worker nodes using the Terraform Kubernetes provider.
 
 
 ### Guide
-0. Create an EKS-A management cluster, or a self-managed stand-along cluster. 
+0. Create an EKS-A management cluster, or a self-managed stand-alone cluster. 
 - if you already have an existing EKS-A cluster, skip this step.
 - if you don't already have an existing EKS-A cluster, follow [the official instructions to create one](https://anywhere.eks.amazonaws.com/docs/getting-started/install/)
 
