@@ -163,17 +163,15 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		if channel == "latest" || !utils.SliceContains(supportedK8sVersions, channel) {
 			continue
 		}
-		releaseNumber := release.(map[interface{}]interface{})["number"]
-		releaseNumberInt := releaseNumber.(int)
-		releaseNumberStr := strconv.Itoa(releaseNumberInt)
+		releaseNumberStr, dev := getEksdReleaseValues(release)
 
-		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr)
+		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr, dev)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting kubeversion for eks-d %s-%s release", channel, releaseNumberStr)
 		}
 		shortKubeVersion := kubeVersion[1:strings.LastIndex(kubeVersion, ".")]
 
-		eksDReleaseBundle, err := r.GetEksDReleaseBundle(channel, kubeVersion, releaseNumberStr, imageDigests)
+		eksDReleaseBundle, err := r.GetEksDReleaseBundle(channel, kubeVersion, releaseNumberStr, imageDigests, dev)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for eks-d %s-%s release bundle", channel, releaseNumberStr)
 		}
@@ -288,11 +286,9 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		if channel == "latest" || !utils.SliceContains(supportedK8sVersions, channel) {
 			continue
 		}
-		releaseNumber := release.(map[interface{}]interface{})["number"]
-		releaseNumberInt := releaseNumber.(int)
-		releaseNumberStr := strconv.Itoa(releaseNumberInt)
+		releaseNumberStr, dev := getEksdReleaseValues(release)
 
-		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr)
+		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr, dev)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting kubeversion for eks-d %s-%s release", channel, releaseNumberStr)
 		}
@@ -325,6 +321,19 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 	fmt.Printf("%s Successfully generated bundle artifacts table\n", SuccessIcon)
 
 	return artifactsTable, nil
+}
+
+func getEksdReleaseValues(release interface{}) (string, bool) {
+	releaseNumber := release.(map[interface{}]interface{})["number"]
+	releaseNumberInt := releaseNumber.(int)
+	releaseNumberStr := strconv.Itoa(releaseNumberInt)
+
+	dev := false
+	devValue := release.(map[interface{}]interface{})["dev"]
+	if devValue != nil && devValue.(bool) {
+		dev = true
+	}
+	return releaseNumberStr, dev
 }
 
 func (r *ReleaseConfig) GenerateEksAArtifactsTable() (map[string][]Artifact, error) {

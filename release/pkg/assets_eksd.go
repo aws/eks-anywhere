@@ -182,7 +182,7 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 	return artifacts, nil
 }
 
-func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDReleaseNumber string, imageDigests map[string]string) (anywherev1alpha1.EksDRelease, error) {
+func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDReleaseNumber string, imageDigests map[string]string, dev bool) (anywherev1alpha1.EksDRelease, error) {
 	artifacts := r.BundleArtifactsTable[fmt.Sprintf("eks-d-%s", eksDReleaseChannel)]
 
 	tarballArtifacts := map[string][]Artifact{
@@ -193,7 +193,7 @@ func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDRe
 	bundleArchiveArtifacts := map[string]anywherev1alpha1.Archive{}
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 
-	eksDManifestUrl := GetEksDReleaseManifestUrl(eksDReleaseChannel, eksDReleaseNumber)
+	eksDManifestUrl := GetEksDReleaseManifestUrl(eksDReleaseChannel, eksDReleaseNumber, dev)
 	for _, artifact := range artifacts {
 		if artifact.Archive != nil {
 			archiveArtifact := artifact.Archive

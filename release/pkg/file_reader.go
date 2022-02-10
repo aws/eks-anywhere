@@ -152,9 +152,11 @@ func (r *ReleaseConfig) getBottlerocketAdminContainerMetadata() (string, string,
 	return tag, imageDigest, nil
 }
 
-func GetEksDReleaseManifestUrl(releaseChannel, releaseNumber string) string {
-	manifestUrl := fmt.Sprintf("https://distro.eks.amazonaws.com/kubernetes-%[1]s/kubernetes-%[1]s-eks-%s.yaml", releaseChannel, releaseNumber)
-	return manifestUrl
+func GetEksDReleaseManifestUrl(releaseChannel, releaseNumber string, dev bool) string {
+	if dev {
+		return fmt.Sprintf("https://eks-d-postsubmit-artifacts.s3.us-west-2.amazonaws.com/kubernetes-%[1]s/kubernetes-%[1]s-eks-%s.yaml", releaseChannel, releaseNumber)
+	}
+	return fmt.Sprintf("https://distro.eks.amazonaws.com/kubernetes-%[1]s/kubernetes-%[1]s-eks-%s.yaml", releaseChannel, releaseNumber)
 }
 
 func (r *ReleaseConfig) GetCurrentEksADevReleaseVersion(releaseVersion string) (string, error) {
@@ -307,9 +309,9 @@ func (r *ReleaseConfig) readGitTag(projectPath, branch string) (string, error) {
 	return gitTag, nil
 }
 
-func getEksDKubeVersion(releaseChannel, releaseNumber string) (string, error) {
+func getEksDKubeVersion(releaseChannel, releaseNumber string, dev bool) (string, error) {
 	var kubeVersion string
-	eksDReleaseManifestUrl := GetEksDReleaseManifestUrl(releaseChannel, releaseNumber)
+	eksDReleaseManifestUrl := GetEksDReleaseManifestUrl(releaseChannel, releaseNumber, dev)
 
 	eksDRelease, err := getEksdRelease(eksDReleaseManifestUrl)
 	if err != nil {
