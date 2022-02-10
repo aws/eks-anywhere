@@ -59,7 +59,7 @@ func TestVSphereKubernetes121WorkloadClusterDemo(t *testing.T) {
 	runWorkloadClusterFlow(test)
 }
 
-func TestVSphereUpgradeWorkloadClusterWithGitOps(t *testing.T) {
+func TestVSphereUpgradeWorkloadClusterWithFlux(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu120())
 	test := framework.NewMulticlusterE2ETest(
 		t,
@@ -99,7 +99,7 @@ func TestVSphereUpgradeWorkloadClusterWithGitOps(t *testing.T) {
 	)
 }
 
-func TestDockerUpgradeWorkloadClusterWithGitOps(t *testing.T) {
+func TestDockerUpgradeWorkloadClusterWithFlux(t *testing.T) {
 	provider := framework.NewDocker(t)
 	test := framework.NewMulticlusterE2ETest(
 		t,
