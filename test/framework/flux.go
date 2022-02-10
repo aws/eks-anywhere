@@ -13,6 +13,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
@@ -40,7 +41,8 @@ var fluxRequiredEnvVars = []string{
 func WithFlux(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		checkRequiredEnvVars(e.T, fluxRequiredEnvVars)
-		e.GitOpsConfig = api.NewGitOpsConfig(defaultClusterName,
+		gitOpsConfigName := gitOpsConfigName()
+		e.GitOpsConfig = api.NewGitOpsConfig(gitOpsConfigName,
 			api.WithPersonalFluxRepository(true),
 			api.WithStringFromEnvVarGitOpsConfig(gitRepositoryVar, api.WithFluxRepository),
 			api.WithStringFromEnvVarGitOpsConfig(githubUserVar, api.WithFluxOwner),
@@ -49,7 +51,7 @@ func WithFlux(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 			api.WithFluxBranch("main"),
 		)
 		e.clusterFillers = append(e.clusterFillers,
-			api.WithGitOpsRef(defaultClusterName),
+			api.WithGitOpsRef(gitOpsConfigName),
 		)
 		// apply the rest of the opts passed into the function
 		for _, opt := range opts {
@@ -64,10 +66,81 @@ func WithFlux(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 	}
 }
 
+func WithClusterUpgradeGit(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.ClusterConfigB = e.customizeClusterConfig(e.clusterConfigGitPath(), fillers...)
+
+		// TODO: e.GitopsConfig is defined from api.NewGitOpsConfig in WithFlux()
+		// instead of marshalling from the actual file in git repo.
+		// By default it does not include the namespace field. But Flux requires namespace always
+		// exist for all the objects managed by its kustomization controller.
+		// Need to refactor this to read gitopsconfig directly from file in git repo
+		// which always has the namespace field.
+		if e.GitOpsConfig.GetNamespace() == "" {
+			e.GitOpsConfig.SetNamespace("default")
+		}
+	}
+}
+
 func withFluxRepositorySuffix(suffix string) api.GitOpsConfigOpt {
 	return func(c *v1alpha1.GitOpsConfig) {
 		repository := c.Spec.Flux.Github.Repository
 		c.Spec.Flux.Github.Repository = fmt.Sprintf("%s-%s", repository, suffix)
+	}
+}
+
+func gitOpsConfigName() string {
+	return fmt.Sprintf("%s-%s", defaultClusterName, test.RandString(5))
+}
+
+func (e *ClusterE2ETest) UpgradeWithGitOps(clusterOpts ...ClusterE2ETestOpt) {
+	e.upgradeWithGitOps(clusterOpts)
+}
+
+func (e *ClusterE2ETest) upgradeWithGitOps(clusterOpts []ClusterE2ETestOpt) {
+	ctx := context.Background()
+	e.initGit(ctx)
+
+	if err := e.validateInitialFluxState(ctx); err != nil {
+		e.T.Errorf("Error validating initial state of cluster gitops system: %v", err)
+	}
+
+	for _, opt := range clusterOpts {
+		opt(e)
+	}
+
+	e.buildClusterConfigFileForGit()
+
+	if err := e.pushConfigChanges(); err != nil {
+		e.T.Errorf("Error pushing local changes to remote git repo: %v", err)
+	}
+	e.T.Logf("Successfully updated version controlled cluster configuration")
+
+	if err := e.validateWorkerNodeUpdates(ctx); err != nil {
+		e.T.Errorf("Error validating worker nodes after updating git repo: %v", err)
+	}
+}
+
+func (e *ClusterE2ETest) initGit(ctx context.Context) {
+	c := e.clusterConfig()
+	writer, err := filewriter.NewWriter(e.cluster().Name)
+	if err != nil {
+		e.T.Errorf("Error configuring filewriter for e2e test: %v", err)
+	}
+
+	g, err := e.NewGitOptions(ctx, c, e.GitOpsConfig, writer, "")
+	if err != nil {
+		e.T.Errorf("Error configuring git client for e2e test: %v", err)
+	}
+	e.GitProvider = g.Git
+	e.GitWriter = g.Writer
+}
+
+func (e *ClusterE2ETest) buildClusterConfigFileForGit() {
+	b := e.generateClusterConfig()
+	_, err := e.GitWriter.Write(e.clusterConfGitPath(), b, filewriter.PersistentFile)
+	if err != nil {
+		e.T.Errorf("Error writing cluster config file to local git folder: %v", err)
 	}
 }
 
@@ -123,6 +196,14 @@ func (e *ClusterE2ETest) CleanUpGithubRepo() {
 		e.T.Errorf("Error configuring git client for e2e test: %v", err)
 	}
 	opts := git.DeleteRepoOpts{Owner: owner, Repository: repoName}
+	repo, err := gitOptions.Git.GetRepo(ctx)
+	if err != nil {
+		e.T.Errorf("error getting Github repo %s: %v", repoName, err)
+	}
+	if repo == nil {
+		e.T.Logf("Skipped repo deletion: remote repo %s does not exist", repoName)
+		return
+	}
 	err = gitOptions.Git.DeleteRepo(ctx, opts)
 	if err != nil {
 		e.T.Errorf("error while deleting Github repo %s: %v", repoName, err)
@@ -274,7 +355,7 @@ func (e *ClusterE2ETest) validateWorkerNodeReplicaUpdates(ctx context.Context) e
 	return e.validateWorkerNodeUpdates(ctx)
 }
 
-func (e *ClusterE2ETest) validateWorkerNodeUpdates(ctx context.Context) error {
+func (e *ClusterE2ETest) validateWorkerNodeUpdates(ctx context.Context, opts ...CommandOpt) error {
 	clusterConfGitPath := e.clusterConfigGitPath()
 	clusterConfig, err := v1alpha1.GetClusterConfig(clusterConfGitPath)
 	if err != nil {
@@ -309,22 +390,20 @@ func (e *ClusterE2ETest) validateFluxDeployments(ctx context.Context) error {
 		"notification-controller": deploymentReplicas,
 		"source-controller":       deploymentReplicas,
 	}
-	return e.validateDeployments(ctx, fluxSystemNamespace, expectedDeployments)
+	return e.validateDeploymentsInManagementCluster(ctx, fluxSystemNamespace, expectedDeployments)
 }
 
 func (e *ClusterE2ETest) validateEksaSystemDeployments(ctx context.Context) error {
 	expectedDeployments := map[string]int{"eksa-controller-manager": 1}
-	return e.validateDeployments(ctx, constants.EksaSystemNamespace, expectedDeployments)
+	return e.validateDeploymentsInManagementCluster(ctx, constants.EksaSystemNamespace, expectedDeployments)
 }
 
-func (e *ClusterE2ETest) validateDeployments(ctx context.Context, namespace string, expectedeployments map[string]int) error {
+func (e *ClusterE2ETest) validateDeploymentsInManagementCluster(ctx context.Context, namespace string, expectedeployments map[string]int) error {
 	err := retrier.Retry(20, time.Second, func() error {
-		cluster := e.cluster()
-
 		e.T.Logf("Getting deployments in %s namespace...", namespace)
 		deployments, err := e.KubectlClient.GetDeployments(
 			ctx,
-			executables.WithCluster(cluster),
+			executables.WithKubeconfig(e.managementKubeconfigFilePath()),
 			executables.WithNamespace(namespace),
 		)
 		if err != nil {
@@ -411,7 +490,7 @@ func (e *ClusterE2ETest) waitForWorkerNodeValidation() error {
 	ctx := context.Background()
 	return retrier.Retry(10, time.Second*10, func() error {
 		e.T.Log("Attempting to validate worker nodes...")
-		if err := e.KubectlClient.ValidateWorkerNodes(ctx, e.ClusterConfig.Name, e.cluster().KubeconfigFile); err != nil {
+		if err := e.KubectlClient.ValidateWorkerNodes(ctx, e.ClusterConfig.Name, e.managementKubeconfigFilePath()); err != nil {
 			e.T.Logf("Worker node validation failed: %v", err)
 			return fmt.Errorf("error while validating worker nodes: %v", err)
 		}
@@ -436,7 +515,7 @@ func (e *ClusterE2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clus
 		}
 		vsphereWorkerConfig := vsphereMachineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
 		return retrier.Retry(120, time.Second*10, func() error {
-			vsMachineTemplate, err := e.KubectlClient.VsphereWorkerNodesMachineTemplate(ctx, clusterConfig.Name, e.cluster().KubeconfigFile, constants.EksaSystemNamespace)
+			vsMachineTemplate, err := e.KubectlClient.VsphereWorkerNodesMachineTemplate(ctx, clusterConfig.Name, e.managementKubeconfigFilePath(), constants.EksaSystemNamespace)
 			if err != nil {
 				return err
 			}
@@ -506,10 +585,9 @@ func (e *ClusterE2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clus
 func (e *ClusterE2ETest) waitForWorkerScaling(targetvalue int) error {
 	e.T.Logf("Waiting for worker node MachineDeployment to scale to target value %d", targetvalue)
 	ctx := context.Background()
-	cluster := e.cluster()
 	return retrier.Retry(120, time.Second*10, func() error {
 		md, err := e.KubectlClient.GetMachineDeployments(ctx,
-			executables.WithCluster(cluster),
+			executables.WithKubeconfig(e.managementKubeconfigFilePath()),
 		)
 		if err != nil {
 			return err
