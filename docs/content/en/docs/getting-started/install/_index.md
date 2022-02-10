@@ -26,6 +26,8 @@ This will let you create a cluster in multiple providers for local development o
 
 > **_NOTE:_** If you are using Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
 
+> **_NOTE:_** Currently newer versions of Ubuntu (21.10) and other linux distributions with cgroupv2 enabled are not supported.
+
 ### Install EKS Anywhere CLI tools
 
 #### Via Homebrew (macOS and Linux)
