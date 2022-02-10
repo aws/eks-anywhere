@@ -30,7 +30,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/pkg/errors"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 	k8syaml "sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/release/pkg/aws/s3"
@@ -98,6 +98,19 @@ func readEksDReleases(r *ReleaseConfig) (map[string]interface{}, error) {
 		return nil, errors.Cause(err)
 	}
 	return eksDReleaseMap, nil
+}
+
+func getSupportedK8sVersions(r *ReleaseConfig) ([]string, error) {
+	// Read the eks-d latest release file to get all the releases
+	releaseFilePath := filepath.Join(r.BuildRepoSource, releasePath, "SUPPORTED_RELEASE_BRANCHES")
+
+	releaseFile, err := ioutil.ReadFile(releaseFilePath)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	supportedK8sVersions := strings.Split(strings.TrimRight(string(releaseFile), "\n"), "\n")
+
+	return supportedK8sVersions, nil
 }
 
 func getBottlerocketSupportedK8sVersions(r *ReleaseConfig) ([]string, error) {

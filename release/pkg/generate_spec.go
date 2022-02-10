@@ -154,13 +154,13 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		return nil, err
 	}
 
-	bottlerocketSupportedK8sVersions, err := getBottlerocketSupportedK8sVersions(r)
+	supportedK8sVersions, err := getSupportedK8sVersions(r)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
 	}
 
 	for channel, release := range eksDReleaseMap {
-		if channel == "latest" || !utils.SliceContains(bottlerocketSupportedK8sVersions, channel) {
+		if channel == "latest" || !utils.SliceContains(supportedK8sVersions, channel) {
 			continue
 		}
 		releaseNumber := release.(map[interface{}]interface{})["number"]
@@ -280,12 +280,12 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		return nil, err
 	}
 
-	bottlerocketSupportedK8sVersions, err := getBottlerocketSupportedK8sVersions(r)
+	supportedK8sVersions, err := getSupportedK8sVersions(r)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
 	}
 	for channel, release := range eksDReleaseMap {
-		if channel == "latest" || !utils.SliceContains(bottlerocketSupportedK8sVersions, channel) {
+		if channel == "latest" || !utils.SliceContains(supportedK8sVersions, channel) {
 			continue
 		}
 		releaseNumber := release.(map[interface{}]interface{})["number"]

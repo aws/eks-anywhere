@@ -22,11 +22,13 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/utils"
 )
 
 const (
 	imageBuilderProjectPath = "projects/kubernetes-sigs/image-builder"
 	kindProjectPath         = "projects/kubernetes-sigs/kind"
+	releasePath             = "release"
 )
 
 // GetEksDChannelAssets returns the eks-d artifacts including OVAs and kind node image
@@ -45,10 +47,14 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
+	bottlerocketSupportedK8sVersions, err := getBottlerocketSupportedK8sVersions(r)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
 
 	for _, osName := range osNames {
 		for _, imageFormat := range imageFormats {
-			if osName == "bottlerocket" && imageFormat == "raw" {
+			if osName == "bottlerocket" && (imageFormat == "raw" || !utils.SliceContains(bottlerocketSupportedK8sVersions, eksDReleaseChannel)) {
 				continue
 			}
 			var sourceS3Key string
