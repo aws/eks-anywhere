@@ -72,10 +72,6 @@ spec:
                 type: object
               controlPlaneConfiguration:
                 properties:
-                  certSANs:
-                    items:
-                      type: string
-                    type: array
                   count:
                     description: Count defines the number of desired control plane
                       nodes. Defaults to 1.

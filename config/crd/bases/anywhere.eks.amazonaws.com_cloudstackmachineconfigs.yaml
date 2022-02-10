@@ -86,10 +86,9 @@ spec:
                 - value
                 type: object
               users:
-                description: Users utilizes OS-specific startup scripts to configure
-                  ssh users which will be allowed to log in to the VM using private-key
-                  authentication. It consists of an array of objects containing the
-                  user name, as well as a list of their authorized public keys
+                description: Users consists of an array of objects containing the
+                  username, as well as a list of their public keys. These users will
+                  be authorized to ssh into the machines
                 items:
                   description: UserConfiguration defines the configuration of the
                     user to be added to the VM

@@ -98,9 +98,6 @@ func (p *provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	if clusterSpec.Spec.ControlPlaneConfiguration.Endpoint != nil && clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host != "" {
 		return fmt.Errorf("specifying endpoint host configuration in Cluster is not supported")
 	}
-	if clusterSpec.Spec.ControlPlaneConfiguration.CertSANs != nil {
-		return fmt.Errorf("specifying certSANs configuration in Cluster is not supported")
-	}
 	return nil
 }
 

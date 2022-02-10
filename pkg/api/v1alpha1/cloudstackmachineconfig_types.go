@@ -32,7 +32,7 @@ type CloudStackMachineConfigSpec struct {
 	ComputeOffering CloudStackResourceRef `json:"computeOffering"`
 	// Details represents an arbitrary mapping of strings to strings, which are passed through to the CloudStack VM. Some example details which are commonly set on the VM include cpuOvercommitRatio, memoryOvercommitRatio, Message.ReservedCapacityFreed.Flag, and rootdisksize
 	Details map[string]string `json:"details,omitempty"`
-	// Users utilizes OS-specific startup scripts to configure ssh users which will be allowed to log in to the VM using private-key authentication. It consists of an array of objects containing the user name, as well as a list of their authorized public keys
+	// Users consists of an array of objects containing the username, as well as a list of their public keys. These users will be authorized to ssh into the machines
 	Users []UserConfiguration `json:"users,omitempty"`
 	// AffinityGroupIds allows users to pass in a list of UUIDs for previously-created Affinity Groups. Any VM’s created with this spec will be added to the affinity group, which will dictate which physical host(s) they can be placed on. Affinity groups can be type “affinity” or “anti-affinity” in CloudStack. If they are type “anti-affinity”, all VM’s in the group must be on separate physical hosts for high availability. If they are type “affinity”, all VM’s in the group must be on the same physical host for improved performance
 	AffinityGroupIds []string `json:"affinityGroupIds,omitempty"`
