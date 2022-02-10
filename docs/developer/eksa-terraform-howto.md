@@ -44,7 +44,7 @@ Your cluster manifest metadata should look like this:
     }
 ```
 
-2. Set up the Terraform Kubernetes provider, and initialize Terraform
+2. Set up the Terraform Kubernetes provider
 ```
 export KUBECONFIG=/path/to/my/kubeconfig.kubeconfig
 cat << EOF >> ./provider.tf
