@@ -15,14 +15,21 @@ As an EKS Anywhere user:
 
 ## Overview of Solution
 
-The EKS Distro manifest and the release CRD will be applied directly to the cluster.
-This will allow the controller to grab the EKSD release resources from within the cluster instead of reading in the EKSD manifest from the internet when fetching the applied spec.
-
-### Solution Details
-
 With this feature, the EKSD manifest & its CRD will be applied directly to the cluster.
+This will allow the controller to grab the EKSD release resources from within the cluster instead of reading in the EKSD manifest from the internet when fetching the applied spec.
 We will do this similarly to how we apply the EKSA components to the cluster, introducing a new task to the create workflow called `InstallEksdComponentsTask`.
-We currently don’t pull in the EKSD release CRD in the bundle, so I propose introducing a new field `crdUrl` in the EKSD Bundle to refer to the file in S3 that stores this CRD.
+In the upgrade workflow, we will also add a step to apply the EKSD resources as we update other cluster resources.
+
+#### EKS-D bundle changes
+
+We currently don’t pull in the EKSD release CRD in the bundle, but we need to apply this CRD before applying the release manifest.
+I propose introducing a new field `components` in the EKSD bundle to refer to the file in S3 that stores this CRD.
+
+While most of our bundles have a `version` field, the EKS-D bundle does not have this field.
+Instead, the version is typically decided by the `releaseChannel` and the `releaseNumber`.
+We already have the `channel` field in the EKS-D bundle, so I propose adding the `number` field to this bundle to have an effective way to check the EKS-D version during upgrades.
+
+Example bundles manifest with proposed changes:
 
 ```
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -36,14 +43,23 @@ spec:
   versionsBundles:
     eksD:
       channel: 1-21
-      crdUrl: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
+      components: https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml
       gitCommit: |
         fcddf59a516102e20f75b6c672e3aa74cf2da877
       kindNode:
         arch:
+          ...
+      kubeVersion: v1.21.5
+      manifestUrl: https://distro.eks.amazonaws.com/kubernetes-1-21/kubernetes-1-21-eks-8.yaml
+      name: kubernetes-1-21-eks-8
+      number: 8
+      ova:
+         ...
 ```
 
-From here, we can use `kubectl apply` to apply the content from the EKSD release URL and the CRD URL to the cluster.
+From here, we can use `kubectl apply` to apply the content from the EKSD release CRD & manifest to the cluster.
+
+#### Cluster status changes
 
 We will need a way to refer to the EKSD release object on the cluster when calling it from the controller.
 One way to achieve this is by adding a field `EkdsReleaseRef` to the cluster status.
@@ -57,8 +73,8 @@ spec:
     ...
 status:
   eksdReleaseRef:
+    kind: Release
     name: "name of resource" 
-    url: "url we downloaded from"
 ```
 
 From here, we can call `kubectl get release` using the `eksdReleaseRef.Name` to access the EKSD release manifest from the controller.
@@ -67,6 +83,6 @@ From here, we can call `kubectl get release` using the `eksdReleaseRef.Name` to 
 
 Now that the EKSD components are embedded in the cluster, we have to ensure that those components are supported during upgrade.
 We will update the upgrader in cluster manager to not only check for updates to EKSA, but it will also check if updates are needed for the EKSD objects on the cluster.
-We will have a method `EksdChangeDiff` to check both the EKSD version in the bundle and the Kubernetes version in the cluster config to decide if we need to update the EKSD manifest objects that are applied to the cluster.
+We will have a method `EksdChangeDiff` to check the EKSD version in the bundle to decide if we need to update the EKSD manifest objects that are applied to the cluster.
 
 
