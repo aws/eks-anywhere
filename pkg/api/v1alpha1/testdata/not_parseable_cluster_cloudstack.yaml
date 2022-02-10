@@ -53,7 +53,4 @@ spec:
       sshAuthorizedKeys:
         - "mySshAuthorizedKey"
   template: "centos7-k8s-118"
-  details:
-    foo: "bar"
-    key: "value"
   idont: "belonghere"

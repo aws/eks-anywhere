@@ -64,14 +64,6 @@ spec:
                 - type
                 - value
                 type: object
-              details:
-                additionalProperties:
-                  type: string
-                description: Details represents an arbitrary mapping of strings to
-                  strings, which are passed through to the CloudStack VM. Some example
-                  details which are commonly set on the VM include cpuOvercommitRatio,
-                  memoryOvercommitRatio, Message.ReservedCapacityFreed.Flag, and rootdisksize
-                type: object
               template:
                 description: Template refers to a VM image template which has been
                   previously registered in CloudStack. It can either be specified

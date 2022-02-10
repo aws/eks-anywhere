@@ -123,39 +123,6 @@ func TestWorkloadCloudStackMachineValidateUpdateSshUsernameMutable(t *testing.T)
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestCPCloudStackMachineValidateUpdateDetailsMutable(t *testing.T) {
-	vOld := cloudstackMachineConfig()
-	vOld.SetControlPlane()
-	vOld.Spec.Details = map[string]string{
-		"k1": "v1",
-		"k2": "v2",
-	}
-	c := vOld.DeepCopy()
-
-	c.Spec.Details = map[string]string{
-		"k1": "v2",
-		"k2": "v1",
-	}
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
-}
-
-func TestCloudStackMachineValidateUpdateDetailsMutable(t *testing.T) {
-	vOld := cloudstackMachineConfig()
-	vOld.Spec.Details = map[string]string{
-		"k1": "v1",
-		"k2": "v2",
-	}
-	c := vOld.DeepCopy()
-
-	c.Spec.Details = map[string]string{
-		"k1": "v2",
-		"k2": "v1",
-	}
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
-}
-
 func TestCloudStackMachineValidateUpdateInvalidType(t *testing.T) {
 	vOld := &v1alpha1.Cluster{}
 	c := &v1alpha1.CloudStackMachineConfig{}

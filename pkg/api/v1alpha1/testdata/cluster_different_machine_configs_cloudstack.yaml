@@ -60,9 +60,6 @@ spec:
   template:
     value: "centos7-k8s-118"
     type: "Name"
-  details:
-    foo: "bar"
-    key: "value"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -80,6 +77,3 @@ spec:
   template:
     value: "centos7-k8s-118"
     type: "Name"
-  details:
-    foo: "bar"
-    key: "value"

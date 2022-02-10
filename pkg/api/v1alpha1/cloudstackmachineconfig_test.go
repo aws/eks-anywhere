@@ -51,10 +51,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
 						}},
-						Details: map[string]string{
-							"foo": "bar",
-							"key": "value",
-						},
 					},
 				},
 			},
@@ -85,10 +81,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
 						}},
-						Details: map[string]string{
-							"foo": "bar",
-							"key": "value",
-						},
 					},
 				},
 			},
@@ -119,10 +111,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
 						}},
-						Details: map[string]string{
-							"foo": "bar",
-							"key": "value",
-						},
 					},
 				},
 			},
@@ -153,10 +141,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
 						}},
-						Details: map[string]string{
-							"foo": "bar",
-							"key": "value",
-						},
 					},
 				},
 				"eksa-unit-test-2": {
@@ -180,10 +164,6 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
 						}},
-						Details: map[string]string{
-							"foo": "bar",
-							"key": "value",
-						},
 					},
 				},
 			},

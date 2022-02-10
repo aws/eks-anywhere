@@ -60,6 +60,3 @@ spec:
   template:
     value: "centos7-k8s-119"
     type: "Name"
-  details:
-    foo: "bar"
-    key: "value"
