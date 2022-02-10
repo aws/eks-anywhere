@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -79,11 +80,13 @@ type ClusterClient interface {
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
-	ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
+	ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfigFile string) error
 	GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error)
 	GetApiServerUrl(ctx context.Context, cluster *types.Cluster) (string, error)
 	GetClusterCATlsCert(ctx context.Context, clusterName string, cluster *types.Cluster, namespace string) ([]byte, error)
 	KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error)
+	DeleteOldWorkerNodeGroup(ctx context.Context, machineDeployment *clusterv1.MachineDeployment, kubeconfig string) error
+	GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 }
 
 type Networking interface {
@@ -395,6 +398,10 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	)
 	if err != nil {
 		return fmt.Errorf("error applying capi machine deployment spec: %v", err)
+	}
+
+	if err = c.removeOldWorkerNodeGroups(ctx, managementCluster, provider, currentSpec, newClusterSpec); err != nil {
+		return fmt.Errorf("error removing old worker node groups: %v", err)
 	}
 
 	logger.V(3).Info("Waiting for workload cluster machine deployment replicas to be ready after upgrade")
@@ -728,7 +735,7 @@ func (c *ClusterManager) waitForMachineDeploymentReplicasReady(ctx context.Conte
 	}
 
 	isMdReady := func() error {
-		return c.clusterClient.ValidateWorkerNodes(ctx, managementCluster, clusterSpec.Name)
+		return c.clusterClient.ValidateWorkerNodes(ctx, clusterSpec.Name, managementCluster.KubeconfigFile)
 	}
 
 	err := isMdReady()
@@ -827,6 +834,21 @@ func (c *ClusterManager) waitForAllControlPlanes(ctx context.Context, cluster *t
 		err = c.clusterClient.WaitForControlPlaneReady(ctx, cluster, waitForCluster.String(), clu.Metadata.Name)
 		if err != nil {
 			return fmt.Errorf("error waiting for workload cluster control plane for cluster %s to be ready: %v", clu.Metadata.Name, err)
+		}
+	}
+
+	return nil
+}
+
+func (c *ClusterManager) removeOldWorkerNodeGroups(ctx context.Context, workloadCluster *types.Cluster, provider providers.Provider, currentSpec, newSpec *cluster.Spec) error {
+	machineDeployments := provider.MachineDeploymentsToDelete(workloadCluster, currentSpec, newSpec)
+	for _, machineDeploymentName := range machineDeployments {
+		machineDeployment, err := c.clusterClient.GetMachineDeployment(ctx, machineDeploymentName, executables.WithKubeconfig(workloadCluster.KubeconfigFile), executables.WithNamespace(constants.EksaSystemNamespace))
+		if err != nil {
+			return fmt.Errorf("error getting machine deployment to remove: %v", err)
+		}
+		if err := c.clusterClient.DeleteOldWorkerNodeGroup(ctx, machineDeployment, workloadCluster.KubeconfigFile); err != nil {
+			return fmt.Errorf("error removing old worker nodes from cluster: %v", err)
 		}
 	}
 

@@ -114,7 +114,7 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 	latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
-		sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/cluster-controller", eksAnywhereProjectPath, latestPath)
+		sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/cluster-controller/%s", eksAnywhereProjectPath, latestPath, gitTag)
 	} else {
 		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/eks-anywhere-cluster-controller/manifests/%s", r.BundleNumber, gitTag)
 	}

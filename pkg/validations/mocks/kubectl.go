@@ -214,17 +214,17 @@ func (mr *MockKubectlClientMockRecorder) ValidateNodes(ctx, kubeconfig interface
 }
 
 // ValidateWorkerNodes mocks base method.
-func (m *MockKubectlClient) ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error {
+func (m *MockKubectlClient) ValidateWorkerNodes(ctx context.Context, clusterName, kubeconfig string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateWorkerNodes", ctx, cluster, clusterName)
+	ret := m.ctrl.Call(m, "ValidateWorkerNodes", ctx, clusterName, kubeconfig)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ValidateWorkerNodes indicates an expected call of ValidateWorkerNodes.
-func (mr *MockKubectlClientMockRecorder) ValidateWorkerNodes(ctx, cluster, clusterName interface{}) *gomock.Call {
+func (mr *MockKubectlClientMockRecorder) ValidateWorkerNodes(ctx, clusterName, kubeconfig interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateWorkerNodes", reflect.TypeOf((*MockKubectlClient)(nil).ValidateWorkerNodes), ctx, cluster, clusterName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateWorkerNodes", reflect.TypeOf((*MockKubectlClient)(nil).ValidateWorkerNodes), ctx, clusterName, kubeconfig)
 }
 
 // Version mocks base method.

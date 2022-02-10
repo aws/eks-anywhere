@@ -154,26 +154,24 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		return nil, err
 	}
 
-	bottlerocketSupportedK8sVersions, err := getBottlerocketSupportedK8sVersions(r)
+	supportedK8sVersions, err := getSupportedK8sVersions(r)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
 	}
 
 	for channel, release := range eksDReleaseMap {
-		if channel == "latest" || !utils.SliceContains(bottlerocketSupportedK8sVersions, channel) {
+		if channel == "latest" || !utils.SliceContains(supportedK8sVersions, channel) {
 			continue
 		}
-		releaseNumber := release.(map[interface{}]interface{})["number"]
-		releaseNumberInt := releaseNumber.(int)
-		releaseNumberStr := strconv.Itoa(releaseNumberInt)
+		releaseNumberStr, dev := getEksdReleaseValues(release)
 
-		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr)
+		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr, dev)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting kubeversion for eks-d %s-%s release", channel, releaseNumberStr)
 		}
 		shortKubeVersion := kubeVersion[1:strings.LastIndex(kubeVersion, ".")]
 
-		eksDReleaseBundle, err := r.GetEksDReleaseBundle(channel, kubeVersion, releaseNumberStr, imageDigests)
+		eksDReleaseBundle, err := r.GetEksDReleaseBundle(channel, kubeVersion, releaseNumberStr, imageDigests, dev)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for eks-d %s-%s release bundle", channel, releaseNumberStr)
 		}
@@ -262,6 +260,8 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		eksAArtifactsFuncs["hegel"] = r.GetHegelAssets
 		eksAArtifactsFuncs["cfssl"] = r.GetCfsslAssets
 		eksAArtifactsFuncs["pbnj"] = r.GetPbnjAssets
+		eksAArtifactsFuncs["boots"] = r.GetBootsAssets
+		eksAArtifactsFuncs["hub"] = r.GetHubAssets
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
@@ -278,19 +278,17 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		return nil, err
 	}
 
-	bottlerocketSupportedK8sVersions, err := getBottlerocketSupportedK8sVersions(r)
+	supportedK8sVersions, err := getSupportedK8sVersions(r)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
 	}
 	for channel, release := range eksDReleaseMap {
-		if channel == "latest" || !utils.SliceContains(bottlerocketSupportedK8sVersions, channel) {
+		if channel == "latest" || !utils.SliceContains(supportedK8sVersions, channel) {
 			continue
 		}
-		releaseNumber := release.(map[interface{}]interface{})["number"]
-		releaseNumberInt := releaseNumber.(int)
-		releaseNumberStr := strconv.Itoa(releaseNumberInt)
+		releaseNumberStr, dev := getEksdReleaseValues(release)
 
-		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr)
+		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr, dev)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting kubeversion for eks-d %s-%s release", channel, releaseNumberStr)
 		}
@@ -323,6 +321,20 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 	fmt.Printf("%s Successfully generated bundle artifacts table\n", SuccessIcon)
 
 	return artifactsTable, nil
+}
+
+// Retrieve values from https://github.com/aws/eks-anywhere-build-tooling/blob/main/EKSD_LATEST_RELEASES
+func getEksdReleaseValues(release interface{}) (string, bool) {
+	releaseNumber := release.(map[interface{}]interface{})["number"]
+	releaseNumberInt := releaseNumber.(int)
+	releaseNumberStr := strconv.Itoa(releaseNumberInt)
+
+	dev := false
+	devValue := release.(map[interface{}]interface{})["dev"]
+	if devValue != nil && devValue.(bool) {
+		dev = true
+	}
+	return releaseNumberStr, dev
 }
 
 func (r *ReleaseConfig) GenerateEksAArtifactsTable() (map[string][]Artifact, error) {
@@ -483,9 +495,10 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 		)
 	} else if name == "eks-anywhere-cluster-controller" {
 		if r.DevRelease {
-			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a",
+			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
 				r.ReleaseContainerRegistry,
 				repoName,
+				tagOptions["gitTag"],
 			)
 		} else {
 			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
@@ -496,9 +509,10 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 		}
 	} else if name == "eks-anywhere-diagnostic-collector" {
 		if r.DevRelease {
-			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a",
+			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
 				r.ReleaseContainerRegistry,
 				repoName,
+				tagOptions["gitTag"],
 			)
 		} else {
 			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",

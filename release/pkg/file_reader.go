@@ -30,7 +30,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/pkg/errors"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 	k8syaml "sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/release/pkg/aws/s3"
@@ -100,6 +100,19 @@ func readEksDReleases(r *ReleaseConfig) (map[string]interface{}, error) {
 	return eksDReleaseMap, nil
 }
 
+func getSupportedK8sVersions(r *ReleaseConfig) ([]string, error) {
+	// Read the eks-d latest release file to get all the releases
+	releaseFilePath := filepath.Join(r.BuildRepoSource, releasePath, "SUPPORTED_RELEASE_BRANCHES")
+
+	releaseFile, err := ioutil.ReadFile(releaseFilePath)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	supportedK8sVersions := strings.Split(strings.TrimRight(string(releaseFile), "\n"), "\n")
+
+	return supportedK8sVersions, nil
+}
+
 func getBottlerocketSupportedK8sVersions(r *ReleaseConfig) ([]string, error) {
 	// Read the eks-d latest release file to get all the releases
 	var bottlerocketOvaReleaseMap map[string]interface{}
@@ -139,9 +152,11 @@ func (r *ReleaseConfig) getBottlerocketAdminContainerMetadata() (string, string,
 	return tag, imageDigest, nil
 }
 
-func GetEksDReleaseManifestUrl(releaseChannel, releaseNumber string) string {
-	manifestUrl := fmt.Sprintf("https://distro.eks.amazonaws.com/kubernetes-%[1]s/kubernetes-%[1]s-eks-%s.yaml", releaseChannel, releaseNumber)
-	return manifestUrl
+func GetEksDReleaseManifestUrl(releaseChannel, releaseNumber string, dev bool) string {
+	if dev {
+		return fmt.Sprintf("https://eks-d-postsubmit-artifacts.s3.us-west-2.amazonaws.com/kubernetes-%[1]s/kubernetes-%[1]s-eks-%s.yaml", releaseChannel, releaseNumber)
+	}
+	return fmt.Sprintf("https://distro.eks.amazonaws.com/kubernetes-%[1]s/kubernetes-%[1]s-eks-%s.yaml", releaseChannel, releaseNumber)
 }
 
 func (r *ReleaseConfig) GetCurrentEksADevReleaseVersion(releaseVersion string) (string, error) {
@@ -294,9 +309,9 @@ func (r *ReleaseConfig) readGitTag(projectPath, branch string) (string, error) {
 	return gitTag, nil
 }
 
-func getEksDKubeVersion(releaseChannel, releaseNumber string) (string, error) {
+func getEksDKubeVersion(releaseChannel, releaseNumber string, dev bool) (string, error) {
 	var kubeVersion string
-	eksDReleaseManifestUrl := GetEksDReleaseManifestUrl(releaseChannel, releaseNumber)
+	eksDReleaseManifestUrl := GetEksDReleaseManifestUrl(releaseChannel, releaseNumber, dev)
 
 	eksDRelease, err := getEksdRelease(eksDReleaseManifestUrl)
 	if err != nil {

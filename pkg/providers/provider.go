@@ -36,6 +36,7 @@ type Provider interface {
 	UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error)
 	DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error
 	RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
+	MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string
 }
 
 type DatacenterConfig interface {
@@ -49,9 +50,10 @@ type BuildMapOption func(map[string]interface{})
 
 type TemplateBuilder interface {
 	GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...BuildMapOption) (content []byte, err error)
-	GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, templateNames map[string]string) (content []byte, err error)
+	GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error)
 	WorkerMachineTemplateName(clusterName, workerNodeGroupName string) string
 	CPMachineTemplateName(clusterName string) string
+	KubeadmConfigTemplateName(clusterName, workerNodeGroupName string) string
 	EtcdMachineTemplateName(clusterName string) string
 }
 
