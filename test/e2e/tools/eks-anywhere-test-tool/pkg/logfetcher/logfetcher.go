@@ -104,21 +104,21 @@ func New(buildAccountCwClient *cloudwatch.Cloudwatch, testAccountCwClient *cloud
 
 	defultOutputFolder := time.Now().Format(time.RFC3339 + "-logs")
 
-	if l.filterTests != nil {
+	if l.filterTests == nil {
 		l.filterTests = filterFailedTests
 	}
 
-	if l.processCodebuild != nil {
+	if l.processCodebuild == nil {
 		_ = l.ensureWriter(defultOutputFolder)
 		l.processCodebuild = l.writer.writeCodeBuild
 	}
 
-	if l.processMessages != nil {
+	if l.processMessages == nil {
 		_ = l.ensureWriter(defultOutputFolder)
 		l.processMessages = l.writer.writeMessages
 	}
 
-	if l.processTest != nil {
+	if l.processTest == nil {
 		_ = l.ensureWriter(defultOutputFolder)
 		l.processTest = l.writer.writeTest
 	}
@@ -224,7 +224,7 @@ func (l *testLogFetcher) ensureWriter(folderPath string) error {
 
 func filterFailedTests(logs []*cloudwatchlogs.OutputLogEvent) (failedTestMessages *bytes.Buffer, failedTestResults []testResult, err error) {
 	var failedTests []testResult
-	failedTestsBuf := new(bytes.Buffer)
+	failedTestMessages = &bytes.Buffer{}
 	for _, event := range logs {
 		if strings.Contains(*event.Message, constants.FailedMessage) {
 			msg := *event.Message
@@ -237,11 +237,11 @@ func filterFailedTests(logs []*cloudwatchlogs.OutputLogEvent) (failedTestMessage
 				return nil, nil, err
 			}
 			failedTests = append(failedTests, r)
-			failedTestsBuf.WriteString(subMsg)
+			failedTestMessages.WriteString(subMsg)
 		}
 	}
 
-	return failedTestsBuf, failedTests, nil
+	return failedTestMessages, failedTests, nil
 }
 
 func allMessages(logs []*cloudwatchlogs.OutputLogEvent) *bytes.Buffer {
@@ -256,6 +256,7 @@ func allMessages(logs []*cloudwatchlogs.OutputLogEvent) *bytes.Buffer {
 func newTestFilterByName(tests []string) testFilter {
 	lookup := types.SliceToLookup(tests)
 	return func(logs []*cloudwatchlogs.OutputLogEvent) (filteredTestsLogs *bytes.Buffer, filteredTestResults []testResult, err error) {
+		filteredTestsLogs = &bytes.Buffer{}
 		for _, event := range logs {
 			if !isResultMessage(*event.Message) {
 				continue
@@ -285,13 +286,4 @@ func newTestFilterByName(tests []string) testFilter {
 
 func isResultMessage(message string) bool {
 	return strings.Contains(message, constants.FailedMessage) || strings.Contains(message, constants.SuccessMEssage)
-}
-
-func logTest(testName string, logs []*cloudwatchlogs.OutputLogEvent) error {
-	logger.Info("Test logs", "testName", testName)
-	for _, e := range logs {
-		fmt.Println(*e.Message)
-	}
-
-	return nil
 }
