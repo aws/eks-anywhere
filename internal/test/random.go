@@ -2,12 +2,12 @@ package test
 
 import "math/rand"
 
-const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const alphanumeric = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 func RandString(n int) string {
 	b := make([]byte, n)
 	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
+		b[i] = alphanumeric[rand.Intn(len(alphanumeric))]
 	}
 	return string(b)
 }
