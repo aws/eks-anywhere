@@ -323,6 +323,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 	return artifactsTable, nil
 }
 
+// Retrieve values from https://github.com/aws/eks-anywhere-build-tooling/blob/main/EKSD_LATEST_RELEASES
 func getEksdReleaseValues(release interface{}) (string, bool) {
 	releaseNumber := release.(map[interface{}]interface{})["number"]
 	releaseNumberInt := releaseNumber.(int)
