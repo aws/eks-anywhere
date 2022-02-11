@@ -9,9 +9,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
-
 	executables "github.com/aws/eks-anywhere/pkg/executables"
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockExecutable is a mock of Executable interface.
