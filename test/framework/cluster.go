@@ -36,6 +36,7 @@ const (
 	eksctlVersionEnvVar              = "EKSCTL_VERSION"
 	eksctlVersionEnvVarDummyVal      = "ham sandwich"
 	ClusterNameVar                   = "T_CLUSTER_NAME"
+	ClusterIPPoolEnvVar              = "T_CLUSTER_IP_POOL"
 	JobIdVar                         = "T_JOB_ID"
 	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
 )
