@@ -1,0 +1,63 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: BadCluster
+metadata:
+  name: eksa-unit-test
+spec:
+  clusterNetwork:
+    cni: cilium
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 3
+    endpoint:
+      host: test-ip
+    machineGroupRef:
+      kind: BadCloudStackMachineConfig
+      name: eksa-unit-test
+  datacenterRef:
+    kind: BadCloudStackDatacenterConfig
+    name: eksa-unit-test
+  kubernetesVersion: "1.19"
+  workerNodeGroupConfigurations:
+    - count: 3
+      machineGroupRef:
+        kind: BadCloudStackMachineConfig
+        name: eksa-unit-test
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: BadCloudStackDatacenterConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  account: "admin"
+  domain: "domain1"
+  insecure: false
+  network:
+    value: "net1"
+    type: "Name"
+  zone:
+    value: "zone1"
+    type: "Name"
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: BadCloudStackMachineConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  computeOffering:
+    value: "m4-large"
+    type: "Name"
+  keyPairName: "cloudstack-keypair"
+  OSFamily:  Ubuntu,
+  template:
+    value: "centos7-k8s-119"
+    type: "Name"
+  details:
+    foo: "bar"
+    key: "value"

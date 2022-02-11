@@ -45,7 +45,7 @@ spec:
               users:
                 items:
                   description: UserConfiguration defines the configuration of the
-                    user to be added to the VSphere VM
+                    user to be added to the VM
                   properties:
                     name:
                       type: string
