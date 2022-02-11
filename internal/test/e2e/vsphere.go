@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	vsphereHostVar        = "T_VSPHERE_HOST"
 	cidrVar               = "T_VSPHERE_CIDR"
 	privateNetworkCidrVar = "T_VSPHERE_PRIVATE_NETWORK_CIDR"
 	vsphereRegex          = `^.*VSphere.*$`
@@ -32,9 +31,8 @@ func (e *E2ESession) setupVSphereEnv(testRegex string) error {
 			e.testEnvVars[eVar] = val
 		}
 	}
-	if e.controlPlaneIP != "" {
-		e.testEnvVars[vsphereHostVar] = e.controlPlaneIP
-	}
+
+	e.testEnvVars[e2etests.ClusterIPPoolEnvVar] = e.ipPool.ToString()
 
 	return nil
 }
