@@ -236,6 +236,12 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 			return nil, err
 		}
 		s.DatacenterConfig = &datacenterConfig.ObjectMeta
+	case eksav1alpha1.CloudStackDatacenterKind:
+		datacenterConfig, err := eksav1alpha1.GetCloudStackDatacenterConfig(clusterConfigPath)
+		if err != nil {
+			return nil, err
+		}
+		s.DatacenterConfig = &datacenterConfig.ObjectMeta
 	case eksav1alpha1.DockerDatacenterKind:
 		datacenterConfig, err := eksav1alpha1.GetDockerDatacenterConfig(clusterConfigPath)
 		if err != nil {

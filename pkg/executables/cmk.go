@@ -28,6 +28,10 @@ type Cmk struct {
 	config     CmkExecConfig
 }
 
+func (c *Cmk) Close(ctx context.Context) error {
+	return nil
+}
+
 // TODO: Add support for domain, account filtering
 func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, template v1alpha1.CloudStackResourceRef) error {
 	var filterArg string

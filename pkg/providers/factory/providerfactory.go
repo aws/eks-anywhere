@@ -3,12 +3,14 @@ package factory
 import (
 	"errors"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -19,6 +21,8 @@ type ProviderFactory struct {
 	DockerKubectlClient       docker.ProviderKubectlClient
 	VSphereGovcClient         vsphere.ProviderGovcClient
 	VSphereKubectlClient      vsphere.ProviderKubectlClient
+	CloudStackCloudMonkeyClient cloudstack.ProviderCmkClient
+	CloudStackKubectlClient     cloudstack.ProviderKubectlClient
 	TinkerbellKubectlClient   tinkerbell.ProviderKubectlClient
 	TinkerbellTinkClient      tinkerbell.ProviderTinkClient
 	Writer                    filewriter.FileWriter
@@ -37,6 +41,19 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 			return nil, fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFileName, err)
 		}
 		return vsphere.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.VSphereGovcClient, p.VSphereKubectlClient, p.Writer, time.Now, skipIpCheck, p.ClusterResourceSetManager), nil
+	case v1alpha1.CloudStackDatacenterKind:
+		if !features.IsActive(features.CloudStackProvider()) {
+			return nil, fmt.Errorf("cloudstack provider is still in development")
+		}
+		datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(clusterConfigFileName)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get deployment config from file %s: %v", clusterConfigFileName, err)
+		}
+		machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(clusterConfigFileName)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFileName, err)
+		}
+		return cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.CloudStackCloudMonkeyClient, p.CloudStackKubectlClient, p.Writer, time.Now, skipIpCheck, p.ClusterResourceSetManager), nil
 	case v1alpha1.TinkerbellDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFileName)
 		if err != nil {

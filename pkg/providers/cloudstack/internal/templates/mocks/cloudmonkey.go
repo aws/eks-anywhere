@@ -81,7 +81,7 @@ func (mr *MockCloudMonkeyClientMockRecorder) SearchTemplate(arg0, arg1, arg2, ar
 }
 
 // ValidateCloudStackSetup mocks base method.
-func (m *MockCloudMonkeyClient) ValidateCloudStackSetup(arg0 context.Context, arg1 *v1alpha1.CloudStackDeploymentConfig, arg2 *bool) error {
+func (m *MockCloudMonkeyClient) ValidateCloudStackSetup(arg0 context.Context, arg1 *v1alpha1.CloudStackDatacenterConfig, arg2 *bool) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateCloudStackSetup", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -95,7 +95,7 @@ func (mr *MockCloudMonkeyClientMockRecorder) ValidateCloudStackSetup(arg0, arg1,
 }
 
 // ValidateCloudStackSetupMachineConfig mocks base method.
-func (m *MockCloudMonkeyClient) ValidateCloudStackSetupMachineConfig(arg0 context.Context, arg1 *v1alpha1.CloudStackDeploymentConfig, arg2 *v1alpha1.CloudStackMachineConfig, arg3 *bool) error {
+func (m *MockCloudMonkeyClient) ValidateCloudStackSetupMachineConfig(arg0 context.Context, arg1 *v1alpha1.CloudStackDatacenterConfig, arg2 *v1alpha1.CloudStackMachineConfig, arg3 *bool) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateCloudStackSetupMachineConfig", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)

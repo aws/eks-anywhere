@@ -20,7 +20,7 @@ spec:
       kind: CloudStackMachineConfig
       name: test
   datacenterRef:
-    kind: CloudStackDeploymentConfig
+    kind: CloudStackDatacenterConfig
     name: test
   kubernetesVersion: "1.21"
   workerNodeGroupConfigurations:
@@ -30,7 +30,7 @@ spec:
         name: test
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: CloudStackDeploymentConfig
+kind: CloudStackDatacenterConfig
 metadata:
   name: test
   namespace: test-namespace

@@ -40,6 +40,10 @@ func (b *ExecutableBuilder) BuildGovcExecutable(writer filewriter.FileWriter) *G
 	return NewGovc(b.buildExecutable(govcPath), writer)
 }
 
+func (b *ExecutableBuilder) BuildCmkExecutable(writer filewriter.FileWriter) *Cmk {
+	return NewCmk(b.buildExecutable(cmkPath), writer)
+}
+
 func (b *ExecutableBuilder) BuildTinkExecutable(tinkerbellCertUrl, tinkerbellGrpcAuthority string) *Tink {
 	return NewTink(b.buildExecutable(tinkPath), tinkerbellCertUrl, tinkerbellGrpcAuthority)
 }

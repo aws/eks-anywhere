@@ -4,6 +4,7 @@ package constants
 const (
 	EksaSystemNamespace                     = "eksa-system"
 	EksaDiagnosticsNamespace                = "eksa-diagnostics"
+	CapcSystemNamespace                     = "capc-system"
 	CapdSystemNamespace                     = "capd-system"
 	CapiKubeadmBootstrapSystemNamespace     = "capi-kubeadm-bootstrap-system"
 	CapiKubeadmControlPlaneSystemNamespace  = "capi-kubeadm-control-plane-system"

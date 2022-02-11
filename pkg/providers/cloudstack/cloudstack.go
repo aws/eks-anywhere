@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	b64 "encoding/base64"
 	"errors"
 	"fmt"
+	"gopkg.in/ini.v1"
 	"net"
 	"net/url"
 	"os"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"strconv"
 	"strings"
 	"text/template"
@@ -18,10 +21,9 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/crypto"
 
-	etcdv1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/cluster-api/api/v1alpha3"
-	kubeadmnv1alpha3 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	kubeadmnv1beta1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -42,7 +44,6 @@ import (
 
 const (
 	eksaLicense                           = "EKSA_LICENSE"
-	cloudStackUsernameKey                 = "CLOUDSTACK_USERNAME"
 	cloudStackPasswordKey                 = "CLOUDSTACK_PASSWORD"
 	eksacloudStackUsernameKey             = "EKSA_CLOUDSTACK_USERNAME"
 	eksacloudStackPasswordKey             = "EKSA_CLOUDSTACK_PASSWORD"
@@ -54,8 +55,6 @@ const (
 	privateKeyFileName                    = "eks-a-id_rsa"
 	publicKeyFileName                     = "eks-a-id_rsa.pub"
 
-	ubuntuDefaultUser          = "capc"
-	redhatDefaultUser          = "capc"
 	controlEndpointDefaultPort = "6443"
 )
 
@@ -74,7 +73,7 @@ var mhcTemplate []byte
 var requiredEnvs = []string{cloudStackCloudConfigB64SecretKey}
 
 var (
-	eksaCloudStackDeploymentResourceType = fmt.Sprintf("cloudstackdeploymentconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaCloudStackDeploymentResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaCloudStackMachineResourceType    = fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	noProxyDefaults                      = []string{
 		"localhost",
@@ -84,11 +83,11 @@ var (
 )
 
 type cloudstackProvider struct {
-	deploymentConfig            *v1alpha1.CloudStackDeploymentConfig
-	machineConfigs              map[string]*v1alpha1.CloudStackMachineConfig
-	clusterConfig               *v1alpha1.Cluster
-	providerCloudMonkeyClient   ProviderCloudMonkeyClient
-	providerKubectlClient       ProviderKubectlClient
+	datacenterConfig *v1alpha1.CloudStackDatacenterConfig
+	machineConfigs   map[string]*v1alpha1.CloudStackMachineConfig
+	clusterConfig         *v1alpha1.Cluster
+	providerCmkClient     ProviderCmkClient
+	providerKubectlClient ProviderKubectlClient
 	writer                      filewriter.FileWriter
 	selfSigned                  bool
 	controlPlaneSshAuthKey      string
@@ -103,22 +102,39 @@ type cloudstackProvider struct {
 	resourceSetManager          ClusterResourceSetManager
 }
 
+func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
+	return nil
+}
+
+func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	return fmt.Errorf("cloudstack provider does not support this functionality currently")
+}
+
+func (p *cloudstackProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
+	panic("implement me")
+}
+
+func (p *cloudstackProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
+	panic("implement me")
+}
+
 func (p *cloudstackProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
-	// panic("implement me")
+	// Nothing to do
 	return nil
 }
 
 func (p *cloudstackProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	// panic("implement me")
+	// Nothing to do
 	return nil
 }
 
-type ProviderCloudMonkeyClient interface {
-	SearchTemplate(ctx context.Context, domain string, zone string, account string, template string) (string, error)
-	SearchComputeOffering(ctx context.Context, domain string, zone string, account string, computeOffering string) (string, error)
-	SearchDiskOffering(ctx context.Context, domain string, zone string, account string, diskOffering string) (string, error)
-	ValidateCloudStackSetup(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, selfSigned *bool) error
-	ValidateCloudStackSetupMachineConfig(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, machineConfig *v1alpha1.CloudStackMachineConfig, selfSigned *bool) error
+type ProviderCmkClient interface {
+	ValidateCloudStackConnection(ctx context.Context) error
+	ValidateServiceOfferingPresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, serviceOffering v1alpha1.CloudStackResourceRef) error
+	ValidateTemplatePresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, template v1alpha1.CloudStackResourceRef) error
+	ValidateAffinityGroupsPresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, affinityGroupIds []string) error
+	ValidateZonePresent(ctx context.Context, zone v1alpha1.CloudStackResourceRef) error
+	ValidateAccountPresent(ctx context.Context, account string) error
 }
 
 type ProviderKubectlClient interface {
@@ -126,16 +142,16 @@ type ProviderKubectlClient interface {
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	LoadSecret(ctx context.Context, secretObject string, secretObjType string, secretObjectName string, kubeConfFile string) error
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
-	GetEksaCloudStackDeploymentConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackDeploymentConfig, error)
+	GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackDatacenterConfig, error)
 	GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error)
-	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*kubeadmnv1alpha3.KubeadmControlPlane, error)
-	GetMachineDeployment(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*v1alpha3.MachineDeployment, error)
-	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1alpha3.EtcdadmCluster, error)
+	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*kubeadmnv1beta1.KubeadmControlPlane, error)
+	GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
+	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1beta1.EtcdadmCluster, error)
 	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
 	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 	SearchCloudStackMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackMachineConfig, error)
-	SearchCloudStackDeploymentConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackDeploymentConfig, error)
-	DeleteEksaCloudStackDeploymentConfig(ctx context.Context, cloudstackDeploymentConfigName string, kubeconfigFile string, namespace string) error
+	SearchCloudStackDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackDatacenterConfig, error)
+	DeleteEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDeploymentConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) error
 }
 
@@ -143,7 +159,7 @@ type ClusterResourceSetManager interface {
 	ForceUpdate(ctx context.Context, name, namespace string, managementCluster, workloadCluster *types.Cluster) error
 }
 
-func NewProvider(deploymentConfig *v1alpha1.CloudStackDeploymentConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerCloudMonkeyClient ProviderCloudMonkeyClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *cloudstackProvider {
+func NewProvider(deploymentConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerCloudMonkeyClient ProviderCmkClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *cloudstackProvider {
 	return NewProviderCustomNet(
 		deploymentConfig,
 		machineConfigs,
@@ -158,7 +174,7 @@ func NewProvider(deploymentConfig *v1alpha1.CloudStackDeploymentConfig, machineC
 	)
 }
 
-func NewProviderCustomNet(deploymentConfig *v1alpha1.CloudStackDeploymentConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerCloudMonkeyClient ProviderCloudMonkeyClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *cloudstackProvider {
+func NewProviderCustomNet(deploymentConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerCloudMonkeyClient ProviderCmkClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, resourceSetManager ClusterResourceSetManager) *cloudstackProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec
 	var controlPlaneTemplateFactory, workerNodeGroupTemplateFactory, etcdTemplateFactory *templates.Factory
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
@@ -194,10 +210,10 @@ func NewProviderCustomNet(deploymentConfig *v1alpha1.CloudStackDeploymentConfig,
 		}
 	}
 	return &cloudstackProvider{
-		deploymentConfig:            deploymentConfig,
+		datacenterConfig:            deploymentConfig,
 		machineConfigs:              machineConfigs,
 		clusterConfig:               clusterConfig,
-		providerCloudMonkeyClient:   providerCloudMonkeyClient,
+		providerCmkClient:           providerCloudMonkeyClient,
 		providerKubectlClient:       providerKubectlClient,
 		writer:                      writer,
 		selfSigned:                  false,
@@ -224,8 +240,12 @@ func (p *cloudstackProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 
 func (p *cloudstackProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
 	env := map[string]string{}
+	execConfig, err := parseCloudStackSecret()
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse environment variable exec config: %v", err)
+	}
 	if p.clusterConfig.Spec.ProxyConfiguration != nil {
-		noProxy := fmt.Sprintf("%s,%s", p.clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host, p.deploymentConfig.Spec.ManagementApiEndpoint)
+		noProxy := fmt.Sprintf("%s,%s", p.clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host, execConfig.CloudStackManagementUrl)
 		for _, s := range p.clusterConfig.Spec.ProxyConfiguration.NoProxy {
 			if s != "" {
 				noProxy += "," + s
@@ -405,19 +425,68 @@ func getHostnameFromUrl(rawurl string) (string, error) {
 	return url.Hostname(), nil
 }
 
+type execConfig struct {
+	CloudStackApiKey        string
+	CloudStackSecretKey     string
+	CloudStackManagementUrl string
+}
+
+func parseCloudStackSecret() (*execConfig, error) {
+	cloudStackB64EncodedSecret, ok := os.LookupEnv(eksacloudStackCloudConfigB64SecretKey)
+	if !ok {
+		return nil, fmt.Errorf("%s is not set or is empty", eksacloudStackCloudConfigB64SecretKey)
+	}
+	decodedString, err := b64.StdEncoding.DecodeString(cloudStackB64EncodedSecret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode value for %s with base64: %v", eksacloudStackCloudConfigB64SecretKey, err)
+	}
+	cfg, err := ini.Load(decodedString)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract values from %s with ini: %v", eksacloudStackCloudConfigB64SecretKey, err)
+	}
+	section, err := cfg.GetSection("Global")
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract section 'Global' from %s: %v", eksacloudStackCloudConfigB64SecretKey, err)
+	}
+	apiKey, err := section.GetKey("api-key")
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract value of 'api-key' from %s: %v", eksacloudStackCloudConfigB64SecretKey, err)
+	}
+	secretKey, err := section.GetKey("secret-key")
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract value of 'secret-key' from %s: %v", eksacloudStackCloudConfigB64SecretKey, err)
+	}
+	apiUrl, err := section.GetKey("api-url")
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract value of 'api-url' from %s: %v", eksacloudStackCloudConfigB64SecretKey, err)
+	}
+	return &execConfig{
+		CloudStackApiKey:        apiKey.Value(),
+		CloudStackSecretKey:     secretKey.Value(),
+		CloudStackManagementUrl: apiUrl.Value(),
+	}, nil
+}
+
 func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
-	if cloudStackB64EncodedSecret, ok := os.LookupEnv(eksacloudStackCloudConfigB64SecretKey); ok && len(cloudStackB64EncodedSecret) > 0 {
+	var cloudStackB64EncodedSecret string
+	var ok bool
+
+	if cloudStackB64EncodedSecret, ok = os.LookupEnv(eksacloudStackCloudConfigB64SecretKey); ok && len(cloudStackB64EncodedSecret) > 0 {
 		if err := os.Setenv(cloudStackCloudConfigB64SecretKey, cloudStackB64EncodedSecret); err != nil {
 			return fmt.Errorf("unable to set %s: %v", cloudStackCloudConfigB64SecretKey, err)
 		}
 	} else {
-		return fmt.Errorf("%s is not set or is empty", cloudStackCloudConfigB64SecretKey)
+		return fmt.Errorf("%s is not set or is empty", eksacloudStackCloudConfigB64SecretKey)
 	}
-	if len(p.deploymentConfig.Spec.ManagementApiEndpoint) <= 0 {
-		return errors.New("CloudStackDeploymentConfig managementApiEndpoint is not set or is empty")
+	execConfig, err := parseCloudStackSecret()
+	if err != nil {
+		return fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
-	if err := p.validateManagementApiEndpoint(p.deploymentConfig.Spec.ManagementApiEndpoint); err != nil {
-		return errors.New("CloudStackDeploymentConfig managementApiEndpoint is invalid")
+	if len(execConfig.CloudStackManagementUrl) <= 0 {
+		return errors.New("CloudStackDatacenterConfig managementApiEndpoint is not set or is empty")
+	}
+	if err := p.validateManagementApiEndpoint(execConfig.CloudStackManagementUrl); err != nil {
+		return errors.New("CloudStackDatacenterConfig managementApiEndpoint is invalid")
 	}
 	if _, ok := os.LookupEnv(eksaLicense); !ok {
 		if err := os.Setenv(eksaLicense, ""); err != nil {
@@ -427,44 +496,25 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	return nil
 }
 
-func (p *cloudstackProvider) validateSSHUsername(machineConfig *v1alpha1.CloudStackMachineConfig) error {
-	if len(machineConfig.Spec.Users[0].Name) <= 0 {
-		if machineConfig.Spec.OSFamily == v1alpha1.Ubuntu {
-			machineConfig.Spec.Users[0].Name = ubuntuDefaultUser
-		} else {
-			machineConfig.Spec.Users[0].Name = redhatDefaultUser
-		}
-		logger.V(1).Info(fmt.Sprintf("SSHUsername is not set or is empty for CloudStackMachineConfig %v. Defaulting to %s", machineConfig.Name, machineConfig.Spec.Users[0].Name))
-	}
-	return nil
-}
-
 func (p *cloudstackProvider) setupAndValidateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	var etcdMachineConfig *v1alpha1.CloudStackMachineConfig
-	if p.deploymentConfig.Spec.Insecure {
-		logger.Info("Warning: CloudStackDeploymentConfig configured in insecure mode")
-		p.deploymentConfig.Spec.Thumbprint = ""
+	if p.datacenterConfig.Spec.Insecure {
+		logger.Info("Warning: CloudStackDatacenterConfig configured in insecure mode")
 	}
-	if err := os.Setenv(cloudMonkeyInsecure, strconv.FormatBool(p.deploymentConfig.Spec.Insecure)); err != nil {
+	if err := os.Setenv(cloudMonkeyInsecure, strconv.FormatBool(p.datacenterConfig.Spec.Insecure)); err != nil {
 		return fmt.Errorf("unable to set %s: %v", cloudMonkeyInsecure, err)
 	}
 	if len(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
 		return errors.New("cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty")
 	}
-	if len(p.deploymentConfig.Spec.Domain) <= 0 {
-		return errors.New("CloudStackDeploymentConfig domain is not set or is empty")
+	if len(p.datacenterConfig.Spec.Domain) <= 0 {
+		return errors.New("CloudStackDatacenterConfig domain is not set or is empty")
 	}
-	if len(p.deploymentConfig.Spec.Zone) <= 0 {
-		return errors.New("CloudStackDeploymentConfig zone is not set or is empty")
+	if len(p.datacenterConfig.Spec.Zone.Value) <= 0 {
+		return errors.New("CloudStackDatacenterConfig zone is not set or is empty")
 	}
-	if len(p.deploymentConfig.Spec.ManagementApiEndpoint) <= 0 {
-		return errors.New("CloudStackDeploymentConfig managementApiEndpoint is not set or is empty")
-	}
-	if err := p.validateManagementApiEndpoint(p.deploymentConfig.Spec.ManagementApiEndpoint); err != nil {
-		return errors.New("CloudStackDeploymentConfig managementApiEndpoint is invalid")
-	}
-	if len(p.deploymentConfig.Spec.Network) <= 0 {
-		return errors.New("CloudStackDeploymentConfig network is not set or is empty")
+	if len(p.datacenterConfig.Spec.Network.Value) <= 0 {
+		return errors.New("CloudStackDatacenterConfig network is not set or is empty")
 	}
 	if clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
 		return errors.New("must specify machineGroupRef for control plane")
@@ -518,61 +568,29 @@ func (p *cloudstackProvider) setupAndValidateCluster(ctx context.Context, cluste
 		return err
 	}
 
-	err = p.providerCloudMonkeyClient.ValidateCloudStackSetup(ctx, p.deploymentConfig, &p.selfSigned)
-	if err != nil {
-		return fmt.Errorf("error validating CloudStack setup: %v", err)
-	}
-	for _, config := range p.machineConfigs {
-		err = p.providerCloudMonkeyClient.ValidateCloudStackSetupMachineConfig(ctx, p.deploymentConfig, config, &p.selfSigned)
-		if err != nil {
-			return fmt.Errorf("error validating CloudStack setup for CloudStackMachineConfig %v: %v", config.Name, err)
-		}
-	}
-
-	if controlPlaneMachineConfig.Spec.OSFamily != workerNodeGroupMachineConfig.Spec.OSFamily {
-		return errors.New("control plane and worker nodes must have the same osFamily specified")
-	}
-
-	if etcdMachineConfig != nil && controlPlaneMachineConfig.Spec.OSFamily != etcdMachineConfig.Spec.OSFamily {
-		return errors.New("control plane and etcd machines must have the same osFamily specified")
-	}
-	if len(string(controlPlaneMachineConfig.Spec.OSFamily)) <= 0 {
-		logger.Info("Warning: OS family not specified in cluster specification. Defaulting to Redhat.")
-		controlPlaneMachineConfig.Spec.OSFamily = v1alpha1.Redhat
-		workerNodeGroupMachineConfig.Spec.OSFamily = v1alpha1.Redhat
-		if etcdMachineConfig != nil {
-			etcdMachineConfig.Spec.OSFamily = v1alpha1.Redhat
-		}
-	}
-
-	if err := p.validateSSHUsername(controlPlaneMachineConfig); err == nil {
-		if err = p.validateSSHUsername(workerNodeGroupMachineConfig); err != nil {
-			return fmt.Errorf("error validating SSHUsername for worker node CloudStackMachineConfig %v: %v", workerNodeGroupMachineConfig.Name, err)
-		}
-		if etcdMachineConfig != nil {
-			if err = p.validateSSHUsername(etcdMachineConfig); err != nil {
-				return fmt.Errorf("error validating SSHUsername for etcd CloudStackMachineConfig %v: %v", etcdMachineConfig.Name, err)
-			}
-		}
-	} else {
-		return fmt.Errorf("error validating SSHUsername for control plane CloudStackMachineConfig %v: %v", controlPlaneMachineConfig.Name, err)
-	}
+	// TODO: Validate CloudStack Setup
+	//err = p.providerCmkClient.ValidateCloudStackSetup(ctx, p.datacenterConfig, &p.selfSigned)
+	//if err != nil {
+	//	return fmt.Errorf("error validating CloudStack setup: %v", err)
+	//}
+	//for _, config := range p.machineConfigs {
+	//	err = p.providerCmkClient.ValidateCloudStackSetupMachineConfig(ctx, p.datacenterConfig, config, &p.selfSigned)
+	//	if err != nil {
+	//		return fmt.Errorf("error validating CloudStack setup for CloudStackMachineConfig %v: %v", config.Name, err)
+	//	}
+	//}
 
 	for _, machineConfig := range p.machineConfigs {
 		if machineConfig.Namespace != clusterSpec.Namespace {
 			return errors.New("CloudStackMachineConfig and Cluster objects must have the same namespace specified")
 		}
 	}
-	if p.deploymentConfig.Namespace != clusterSpec.Namespace {
-		return errors.New("CloudStackDeploymentConfig and Cluster objects must have the same namespace specified")
+	if p.datacenterConfig.Namespace != clusterSpec.Namespace {
+		return errors.New("CloudStackDatacenterConfig and Cluster objects must have the same namespace specified")
 	}
 
-	if controlPlaneMachineConfig.Spec.Template == "" {
-		logger.V(1).Info("Control plane CloudStackMachineConfig template is not set. Using default template.")
-		err := p.setupDefaultTemplate(ctx, clusterSpec, controlPlaneMachineConfig, p.controlPlaneTemplateFactory)
-		if err != nil {
-			return err
-		}
+	if controlPlaneMachineConfig.Spec.Template.Value == "" {
+		return fmt.Errorf("control plane CloudStackMachineConfig template is not set. Default template is not supported in CloudStack, please provide a template name")
 	}
 
 	if err = p.validateMachineConfig(ctx, clusterSpec, controlPlaneMachineConfig); err != nil {
@@ -580,12 +598,9 @@ func (p *cloudstackProvider) setupAndValidateCluster(ctx context.Context, cluste
 		return err
 	}
 	if controlPlaneMachineConfig.Spec.Template != workerNodeGroupMachineConfig.Spec.Template {
-		if workerNodeGroupMachineConfig.Spec.Template == "" {
-			logger.V(1).Info("Worker CloudStackMachineConfig template is not set. Using default template.")
-			err := p.setupDefaultTemplate(ctx, clusterSpec, workerNodeGroupMachineConfig, p.workerTemplateFactory)
-			if err != nil {
-				return err
-			}
+		if workerNodeGroupMachineConfig.Spec.Template.Value == "" {
+			return fmt.Errorf("worker CloudStackMachineConfig template is not set. Default template is not supported in CloudStack, please provide a template name")
+
 		}
 		if err = p.validateMachineConfig(ctx, clusterSpec, workerNodeGroupMachineConfig); err != nil {
 			logger.V(1).Info("Workload machine config validation failed.")
@@ -598,12 +613,9 @@ func (p *cloudstackProvider) setupAndValidateCluster(ctx context.Context, cluste
 	logger.MarkPass("Control plane and Workload templates validated")
 
 	if etcdMachineConfig != nil {
-		if etcdMachineConfig.Spec.Template == "" {
-			logger.V(1).Info("Etcd CloudStackMachineConfig template is not set. Using default template.")
-			err := p.setupDefaultTemplate(ctx, clusterSpec, etcdMachineConfig, p.etcdTemplateFactory)
-			if err != nil {
-				return err
-			}
+		if etcdMachineConfig.Spec.Template.Value == "" {
+			return fmt.Errorf("etcd CloudStackMachineConfig template is not set. Default template is not supported in CloudStack, please provide a template name")
+
 		}
 		if err = p.validateMachineConfig(ctx, clusterSpec, etcdMachineConfig); err != nil {
 			logger.V(1).Info("Etcd machine config validation failed.")
@@ -618,66 +630,39 @@ func (p *cloudstackProvider) setupAndValidateCluster(ctx context.Context, cluste
 }
 
 func (p *cloudstackProvider) validateMachineConfig(ctx context.Context, clusterSpec *cluster.Spec, machineConfig *v1alpha1.CloudStackMachineConfig) error {
-	if template, err := p.validateTemplatePresence(ctx, p.deploymentConfig, machineConfig.Spec.Template); err != nil {
+	if err := p.validateTemplatePresence(ctx, p.datacenterConfig, machineConfig.Spec.Template); err != nil {
 		return err
-	} else {
-		machineConfig.Spec.Template = template
 	}
 
-	if computeOffering, err := p.validateComputeOfferingPresence(ctx, p.deploymentConfig, machineConfig.Spec.ComputeOffering); err != nil {
+	if err := p.validateComputeOfferingPresence(ctx, p.datacenterConfig, machineConfig.Spec.ComputeOffering); err != nil {
 		return err
-	} else {
-		machineConfig.Spec.ComputeOffering = computeOffering
-	}
-
-	if diskOffering, err := p.validateDiskOfferingPresence(ctx, p.deploymentConfig, machineConfig.Spec.DiskOffering); err != nil {
-		return err
-	} else {
-		machineConfig.Spec.DiskOffering = diskOffering
 	}
 
 	return nil
 }
 
-func (p *cloudstackProvider) validateTemplatePresence(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, template string) (string, error) {
+func (p *cloudstackProvider) validateTemplatePresence(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDatacenterConfig, template v1alpha1.CloudStackResourceRef) error {
 	domain := deploymentConfig.Spec.Domain
 	zone := deploymentConfig.Spec.Zone
 	account := deploymentConfig.Spec.Account
-	templateFound, err := p.providerCloudMonkeyClient.SearchTemplate(ctx, domain, zone, account, template)
+	err := p.providerCmkClient.ValidateTemplatePresent(ctx, domain, zone, account, template)
 	if err != nil {
-		return "", fmt.Errorf("error validating template: %v", err)
+		return fmt.Errorf("error validating template: %v", err)
 	}
 
-	return templateFound, nil
+	return nil
 }
 
-func (p *cloudstackProvider) validateDiskOfferingPresence(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, diskOffering string) (string, error) {
+func (p *cloudstackProvider) validateComputeOfferingPresence(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDatacenterConfig, computeOffering v1alpha1.CloudStackResourceRef) error {
 	domain := deploymentConfig.Spec.Domain
 	zone := deploymentConfig.Spec.Zone
 	account := deploymentConfig.Spec.Account
-	diskOfferingFound, err := p.providerCloudMonkeyClient.SearchDiskOffering(ctx, domain, zone, account, diskOffering)
+	err := p.providerCmkClient.ValidateServiceOfferingPresent(ctx, domain, zone, account, computeOffering)
 	if err != nil {
-		return "", fmt.Errorf("error validating diskOffering: %v", err)
+		return fmt.Errorf("error validating computeOffering: %v", err)
 	}
 
-	return diskOfferingFound, nil
-}
-
-func (p *cloudstackProvider) validateComputeOfferingPresence(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, computeOffering string) (string, error) {
-	domain := deploymentConfig.Spec.Domain
-	zone := deploymentConfig.Spec.Zone
-	account := deploymentConfig.Spec.Account
-	computeOfferingFound, err := p.providerCloudMonkeyClient.SearchComputeOffering(ctx, domain, zone, account, computeOffering)
-	if err != nil {
-		return "", fmt.Errorf("error validating computeOffering: %v", err)
-	}
-
-	return computeOfferingFound, nil
-}
-
-func (p *cloudstackProvider) setupDefaultTemplate(ctx context.Context, clusterSpec *cluster.Spec, machineConfig *v1alpha1.CloudStackMachineConfig, templateFactory *templates.Factory) error {
-	// TODO: set up default template for cloudstack, currently template must be specified.
-	return fmt.Errorf("default template is not supported in CloudStack, please provide a template name")
+	return nil
 }
 
 func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
@@ -704,12 +689,12 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 				return fmt.Errorf("CloudStackMachineConfig %s already exists", mc.GetName())
 			}
 		}
-		existingDatacenter, err := p.providerKubectlClient.SearchCloudStackDeploymentConfig(ctx, p.deploymentConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Namespace)
+		existingDatacenter, err := p.providerKubectlClient.SearchCloudStackDatacenterConfig(ctx, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Namespace)
 		if err != nil {
 			return err
 		}
 		if len(existingDatacenter) > 0 {
-			return fmt.Errorf("CloudStackDeployment %s already exists", p.deploymentConfig.Name)
+			return fmt.Errorf("CloudStackDeployment %s already exists", p.datacenterConfig.Name)
 		}
 	}
 
@@ -725,23 +710,7 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 }
 
 func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	err := p.validateEnv(ctx)
-	if err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
-	err = p.setupAndValidateCluster(ctx, clusterSpec)
-	if err != nil {
-		return err
-	}
-	err = p.setupSSHAuthKeysForUpgrade()
-	if err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
-	err = p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
-	if err != nil {
-		return fmt.Errorf("failed validate machineconfig uniqueness: %v", err)
-	}
-	return nil
+	return fmt.Errorf("upgrade is not yet supported for CloudStack cluster!")
 }
 
 func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
@@ -788,10 +757,6 @@ func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Co
 	return nil
 }
 
-func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
-	return nil
-}
-
 func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
 	err := p.validateEnv(ctx)
 	if err != nil {
@@ -800,47 +765,8 @@ func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context) 
 	return nil
 }
 
-func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDeploymentConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
-	// Another option is to generate MachineTemplates based on the old and new eksa spec,
-	// remove the name field and compare them with DeepEqual
-	// We plan to approach this way since it's more flexible to add/remove fields and test out for validation
-	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
-		return true
-	}
-	if oldSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host != newSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host {
-		return true
-	}
-	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
-		return true
-	}
-	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc)
-}
-
-func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDeploymentConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
-	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
-		return true
-	}
-	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
-		return true
-	}
-	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc)
-}
-
-func NeedsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDeploymentConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
-	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
-		return true
-	}
-	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
-		return true
-	}
-	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc)
-}
-
-func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDeploymentConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
+func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
 	if oldCsdc.Spec.Network != newCsdc.Spec.Network {
-		return true
-	}
-	if oldCsdc.Spec.Thumbprint != newCsdc.Spec.Thumbprint {
 		return true
 	}
 	if oldCsmc.Spec.Template != newCsmc.Spec.Template {
@@ -852,18 +778,8 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDeploymentCon
 	return false
 }
 
-func NewCloudStackTemplateBuilder(cloudStackDeploymentConfigSpecSpec *v1alpha1.CloudStackDeploymentConfigSpec, controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
-	return &CloudStackTemplateBuilder{
-		deploymentConfigSpec:       cloudStackDeploymentConfigSpecSpec,
-		controlPlaneMachineSpec:    controlPlaneMachineSpec,
-		workerNodeGroupMachineSpec: workerNodeGroupMachineSpec,
-		etcdMachineSpec:            etcdMachineSpec,
-		now:                        now,
-	}
-}
-
 type CloudStackTemplateBuilder struct {
-	deploymentConfigSpec       *v1alpha1.CloudStackDeploymentConfigSpec
+	deploymentConfigSpec       *v1alpha1.CloudStackDatacenterConfigSpec
 	controlPlaneMachineSpec    *v1alpha1.CloudStackMachineConfigSpec
 	workerNodeGroupMachineSpec *v1alpha1.CloudStackMachineConfigSpec
 	etcdMachineSpec            *v1alpha1.CloudStackMachineConfigSpec
@@ -890,7 +806,11 @@ func (vs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *vs.etcdMachineSpec
 	}
-	values := buildTemplateMapCP(clusterSpec, *vs.deploymentConfigSpec, *vs.controlPlaneMachineSpec, etcdMachineSpec)
+	execConfig, err := parseCloudStackSecret()
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse environment variable exec config: %v", err)
+	}
+	values := buildTemplateMapCP(clusterSpec, *vs.deploymentConfigSpec, *vs.controlPlaneMachineSpec, etcdMachineSpec, execConfig.CloudStackManagementUrl)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -905,7 +825,11 @@ func (vs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 }
 
 func (vs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	values := buildTemplateMapMD(clusterSpec, *vs.deploymentConfigSpec, *vs.workerNodeGroupMachineSpec)
+	execConfig, err := parseCloudStackSecret()
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse environment variable exec config: %v", err)
+	}
+	values := buildTemplateMapMD(clusterSpec, *vs.deploymentConfigSpec, *vs.workerNodeGroupMachineSpec, execConfig.CloudStackManagementUrl)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -919,7 +843,7 @@ func (vs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 	return bytes, nil
 }
 
-func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1.CloudStackDeploymentConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec) map[string]interface{} {
+func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec, managementApiEndpoint string) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 	host, port, _ := net.SplitHostPort(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
@@ -939,24 +863,18 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 		"livenessProbeImage":                     bundle.KubeDistro.LivenessProbe.VersionedImage(),
 		"externalAttacherImage":                  bundle.KubeDistro.ExternalAttacher.VersionedImage(),
 		"externalProvisionerImage":               bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
-		"thumbprint":                             deploymentConfigSpec.Thumbprint,
-		"cloudstackManagementApiEndpoint":        deploymentConfigSpec.ManagementApiEndpoint,
+		"cloudstackManagementApiEndpoint":        managementApiEndpoint,
 		"managerImage":                           bundle.CloudStack.Manager.VersionedImage(),
 		"insecure":                               deploymentConfigSpec.Insecure,
-		"cloudstackNetwork":                      deploymentConfigSpec.Network,
+		"cloudstackNetwork":                      deploymentConfigSpec.Network.Value,
 		"cloudstackDomain":                       deploymentConfigSpec.Domain,
-		"cloudstackZone":                         deploymentConfigSpec.Zone,
+		"cloudstackZone":                         deploymentConfigSpec.Zone.Value,
 		"cloudstackAccount":                      deploymentConfigSpec.Account,
-		"extraEndpoints":                         clusterSpec.Spec.ControlPlaneConfiguration.ExtraEndpoints,
-		"cloudstackControlPlaneComputeOffering":  controlPlaneMachineSpec.ComputeOffering,
-		"cloudstackControlPlaneTemplateOffering": controlPlaneMachineSpec.Template,
-		"cloudstackControlPlaneDiskOffering":     controlPlaneMachineSpec.DiskOffering,
-		"cloudstackControlPlaneDetails":          controlPlaneMachineSpec.Details,
+		"cloudstackControlPlaneComputeOffering":  controlPlaneMachineSpec.ComputeOffering.Value,
+		"cloudstackControlPlaneTemplateOffering": controlPlaneMachineSpec.Template.Value,
 		"affinityGroupIds":                       controlPlaneMachineSpec.AffinityGroupIds,
-		"cloudstackEtcdComputeOffering":          etcdMachineSpec.ComputeOffering,
-		"cloudstackEtcdTemplateOffering":         etcdMachineSpec.Template,
-		"cloudstackEtcdDiskOffering":             etcdMachineSpec.DiskOffering,
-		"cloudstackEtcdDetails":                  etcdMachineSpec.Details,
+		"cloudstackEtcdComputeOffering":          etcdMachineSpec.ComputeOffering.Value,
+		"cloudstackEtcdTemplateOffering":         etcdMachineSpec.Template.Value,
 		"cloudstackEtcdAffinityGroupIds":         etcdMachineSpec.AffinityGroupIds,
 		"controlPlaneSshUsername":                controlPlaneMachineSpec.Users[0].Name,
 		"podCidrs":                               clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
@@ -988,7 +906,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, noProxyDefaults...)
-		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(deploymentConfigSpec.ManagementApiEndpoint)
+		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(managementApiEndpoint)
 		if err == nil {
 			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
 		}
@@ -1014,19 +932,16 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 	return values
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1.CloudStackDeploymentConfigSpec, workerNodeGroupMachineSpec v1alpha1.CloudStackMachineConfigSpec) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, workerNodeGroupMachineSpec v1alpha1.CloudStackMachineConfigSpec, managementApiEndpoint string) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
 	values := map[string]interface{}{
 		"clusterName":                clusterSpec.ObjectMeta.Name,
 		"kubernetesVersion":          bundle.KubeDistro.Kubernetes.Tag,
-		"thumbprint":                 deploymentConfigSpec.Thumbprint,
-		"cloudstackNetwork":          deploymentConfigSpec.Network,
-		"cloudstackTemplate":         workerNodeGroupMachineSpec.Template,
-		"cloudstackOffering":         workerNodeGroupMachineSpec.ComputeOffering,
-		"cloudstackDiskOffering":     workerNodeGroupMachineSpec.DiskOffering,
-		"cloudstackDetails":          workerNodeGroupMachineSpec.Details,
+		"cloudstackNetwork":          deploymentConfigSpec.Network.Value,
+		"cloudstackTemplate":         workerNodeGroupMachineSpec.Template.Value,
+		"cloudstackOffering":         workerNodeGroupMachineSpec.ComputeOffering.Value,
 		"cloudstackAffinityGroupIds": workerNodeGroupMachineSpec.AffinityGroupIds,
 		"workerReplicas":             clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count,
 		"workerSshUsername":          workerNodeGroupMachineSpec.Users[0].Name,
@@ -1053,7 +968,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, noProxyDefaults...)
-		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(deploymentConfigSpec.ManagementApiEndpoint)
+		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(managementApiEndpoint)
 		if err == nil {
 			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
 		}
@@ -1070,100 +985,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, deploymentConfigSpec v1alpha1
 }
 
 func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	clusterName := newClusterSpec.ObjectMeta.Name
-	var controlPlaneTemplateName, workloadTemplateName, etcdTemplateName string
-	var needsNewEtcdTemplate bool
-
-	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, newClusterSpec.Name)
-	if err != nil {
-		return nil, nil, err
-	}
-	vdc, err := p.providerKubectlClient.GetEksaCloudStackDeploymentConfig(ctx, p.deploymentConfig.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
-	if err != nil {
-		return nil, nil, err
-	}
-	controlPlaneMachineConfig := p.machineConfigs[newClusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-	controlPlaneCsmc, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
-	if err != nil {
-		return nil, nil, err
-	}
-	workerMachineConfig := p.machineConfigs[newClusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
-	workerCsmc, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, c.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec, vdc, p.deploymentConfig, controlPlaneCsmc, controlPlaneMachineConfig)
-	if !needsNewControlPlaneTemplate {
-		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, c.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
-		if err != nil {
-			return nil, nil, err
-		}
-		controlPlaneTemplateName = cp.Spec.InfrastructureTemplate.Name
-	} else {
-		controlPlaneTemplateName = p.templateBuilder.CPMachineTemplateName(clusterName)
-	}
-
-	needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, p.deploymentConfig, workerCsmc, workerMachineConfig)
-	if !needsNewWorkloadTemplate {
-		md, err := p.providerKubectlClient.GetMachineDeployment(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
-		if err != nil {
-			return nil, nil, err
-		}
-		workloadTemplateName = md.Spec.Template.Spec.InfrastructureRef.Name
-	} else {
-		workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName)
-	}
-
-	if newClusterSpec.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineConfig := p.machineConfigs[newClusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-		etcdMachineCsmc, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
-		if err != nil {
-			return nil, nil, err
-		}
-		needsNewEtcdTemplate = NeedsNewEtcdTemplate(currentSpec, newClusterSpec, vdc, p.deploymentConfig, etcdMachineCsmc, etcdMachineConfig)
-		if !needsNewEtcdTemplate {
-			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
-			if err != nil {
-				return nil, nil, err
-			}
-			etcdTemplateName = etcdadmCluster.Spec.InfrastructureTemplate.Name
-		} else {
-			/* During a cluster upgrade, etcd machines need to be upgraded first, so that the etcd machines with new spec get created and can be used by controlplane machines
-			as etcd endpoints. KCP rollout should not start until then. As a temporary solution in the absence of static etcd endpoints, we annotate the etcd cluster as "upgrading",
-			so that KCP checks this annotation and does not proceed if etcd cluster is upgrading. The etcdadm controller removes this annotation once the etcd upgrade is complete.
-			*/
-			err = p.providerKubectlClient.UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", clusterName),
-				map[string]string{etcdv1alpha3.UpgradeInProgressAnnotation: "true"},
-				executables.WithCluster(bootstrapCluster),
-				executables.WithNamespace(constants.EksaSystemNamespace))
-			if err != nil {
-				return nil, nil, err
-			}
-			etcdTemplateName = p.templateBuilder.EtcdMachineTemplateName(clusterName)
-		}
-	}
-
-	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = controlPlaneTemplateName
-		values["cloudstackControlPlaneSshAuthorizedKey"] = p.controlPlaneSshAuthKey
-		values["cloudstackEtcdSshAuthorizedKey"] = p.etcdSshAuthKey
-		values["etcdTemplateName"] = etcdTemplateName
-	}
-	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(newClusterSpec, cpOpt)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	workersOpt := func(values map[string]interface{}) {
-		values["workloadTemplateName"] = workloadTemplateName
-		values["cloudstackWorkerSshAuthorizedKey"] = p.workerSshAuthKey
-	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workersOpt)
-	if err != nil {
-		return nil, nil, err
-	}
-	return controlPlaneSpec, workersSpec, nil
+	return nil, nil, fmt.Errorf("cloudstack provider does not support upgrade yet")
 }
 
 func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
@@ -1191,11 +1013,7 @@ func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, clus
 }
 
 func (p *cloudstackProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, clusterSpec)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
-	}
-	return controlPlaneSpec, workersSpec, nil
+	return nil, nil, fmt.Errorf("cloudstack provider does not support upgrade yet")
 }
 
 func (p *cloudstackProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
@@ -1230,8 +1048,8 @@ func (p *cloudstackProvider) createSecret(cluster *types.Cluster, contents *byte
 
 	values := map[string]string{
 		"clusterName":       cluster.Name,
-		"insecure":          strconv.FormatBool(p.deploymentConfig.Spec.Insecure),
-		"cloudstackNetwork": p.deploymentConfig.Spec.Network,
+		"insecure":          strconv.FormatBool(p.datacenterConfig.Spec.Insecure),
+		"cloudstackNetwork": p.datacenterConfig.Spec.Network.Value,
 		"eksaLicense":       os.Getenv(eksaLicense),
 	}
 	err = t.Execute(contents, values)
@@ -1242,19 +1060,7 @@ func (p *cloudstackProvider) createSecret(cluster *types.Cluster, contents *byte
 }
 
 func (p *cloudstackProvider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
-	//var contents bytes.Buffer
-	//err := p.createSecret(cluster, &contents)
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//var loadContents bytes.Buffer
-	//loadContents.WriteString("data=")
-	//loadContents.WriteString(contents.String())
-	//err = p.providerKubectlClient.LoadSecret(ctx, loadContents.String(), secretObjectType, secretObjectName, cluster.KubeconfigFile)
-	//if err != nil {
-	//	return fmt.Errorf("error loading csi-cloudstack-secret object: %v", err)
-	//}
+	// Nothing to do
 	return nil
 }
 
@@ -1277,7 +1083,6 @@ func (p *cloudstackProvider) EnvMap() (map[string]string, error) {
 func (p *cloudstackProvider) GetDeployments() map[string][]string {
 	return map[string][]string{
 		"capc-system":         {"capc-controller-manager"},
-		"capi-webhook-system": {"capi-controller-manager"},
 	}
 }
 
@@ -1297,7 +1102,7 @@ func (p *cloudstackProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) 
 }
 
 func (p *cloudstackProvider) DatacenterConfig() providers.DatacenterConfig {
-	return p.deploymentConfig
+	return p.datacenterConfig
 }
 
 func (p *cloudstackProvider) MachineConfigs() []providers.MachineConfig {
@@ -1327,108 +1132,17 @@ func (p *cloudstackProvider) MachineConfigs() []providers.MachineConfig {
 	return configs
 }
 
-func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	prevSpec, err := p.providerKubectlClient.GetEksaCluster(ctx, cluster, clusterSpec.Name)
-	if err != nil {
-		return err
-	}
-
-	prevDatacenter, err := p.providerKubectlClient.GetEksaCloudStackDeploymentConfig(ctx, prevSpec.Spec.DatacenterRef.Name, cluster.KubeconfigFile, prevSpec.Namespace)
-	if err != nil {
-		return err
-	}
-
-	datacenter := p.deploymentConfig
-
-	oSpec := prevDatacenter.Spec
-	nSpec := datacenter.Spec
-
-	for _, machineConfigRef := range clusterSpec.MachineConfigRefs() {
-		machineConfig, ok := p.machineConfigs[machineConfigRef.Name]
-		if !ok {
-			return fmt.Errorf("cannot find machine config %s in cloudstack provider machine configs", machineConfigRef.Name)
-		}
-
-		err = p.validateMachineConfigImmutability(ctx, cluster, machineConfig, clusterSpec)
-		if err != nil {
-			return err
-		}
-	}
-
-	if nSpec.ManagementApiEndpoint != oSpec.ManagementApiEndpoint {
-		return fmt.Errorf("spec.managementApiEndpoint is immutable. Previous value %s, new value %s", oSpec.ManagementApiEndpoint, nSpec.ManagementApiEndpoint)
-	}
-	if nSpec.Domain != oSpec.Domain {
-		return fmt.Errorf("spec.domain is immutable. Previous value %s, new value %s", oSpec.Domain, nSpec.Domain)
-	}
-	if nSpec.Zone != oSpec.Zone {
-		return fmt.Errorf("spec.zone is immutable. Previous value %s, new value %s", oSpec.Zone, nSpec.Zone)
-	}
-	if nSpec.Account != oSpec.Account {
-		return fmt.Errorf("spec.account is immutable. Previous value %s, new value %s", oSpec.Account, nSpec.Account)
-	}
-
-	if nSpec.Network != oSpec.Network {
-		return fmt.Errorf("spec.network is immutable. Previous value %s, new value %s", oSpec.Network, nSpec.Network)
-	}
-
-	if nSpec.Insecure != oSpec.Insecure {
-		return fmt.Errorf("spec.insecure is immutable. Previous value %t, new value %t", oSpec.Insecure, nSpec.Insecure)
-	}
-
-	if nSpec.Thumbprint != oSpec.Thumbprint {
-		return fmt.Errorf("spec.thumbprint is immutable. Previous value %s, new value %s", oSpec.Thumbprint, nSpec.Thumbprint)
-	}
-	// TODO: Add support for changing cloudstack credentials
-
-	return nil
-}
-
 func (p *cloudstackProvider) validateMachineConfigImmutability(ctx context.Context, cluster *types.Cluster, newConfig *v1alpha1.CloudStackMachineConfig, clusterSpec *cluster.Spec) error {
 	// allow template, compute offering, details, users to mutate
 	return nil
 }
 
-func (p *cloudstackProvider) secretContentsChanged(ctx context.Context, workloadCluster *types.Cluster) (bool, error) {
-	cloudConfig := os.Getenv(eksacloudStackCloudConfigB64SecretKey)
-	oSecret, err := p.providerKubectlClient.GetSecret(ctx, credentialsObjectName, executables.WithCluster(workloadCluster), executables.WithNamespace(constants.EksaSystemNamespace))
-	if err != nil {
-		return false, fmt.Errorf("error when obtaining CloudStack secret %s from workload cluster: %v", credentialsObjectName, err)
-	}
-	if string(oSecret.Data["cloud-config"]) != cloudConfig {
-		return true, nil
-	}
-	return false, nil
-}
-
-func (p *cloudstackProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	if currentSpec.VersionsBundle.CloudStack.Version == newSpec.VersionsBundle.CloudStack.Version {
-		return nil
-	}
-
-	return &types.ComponentChangeDiff{
-		ComponentName: constants.CloudStackProviderName,
-		NewVersion:    newSpec.VersionsBundle.CloudStack.Version,
-		OldVersion:    currentSpec.VersionsBundle.CloudStack.Version,
-	}
-}
-
 func (p *cloudstackProvider) RunPostUpgrade(ctx context.Context, clusterSpec *cluster.Spec, managementCluster, workloadCluster *types.Cluster) error {
-	if err := p.resourceSetManager.ForceUpdate(ctx, resourceSetName(clusterSpec), constants.EksaSystemNamespace, managementCluster, workloadCluster); err != nil {
-		return fmt.Errorf("failed updating the cloudstack provider resource set post upgrade: %v", err)
-	}
-	return nil
-}
-
-func resourceSetName(clusterSpec *cluster.Spec) string {
-	return fmt.Sprintf("%s-crs-0", clusterSpec.Name)
+	return fmt.Errorf("upgrade is not supported for CloudStack provider yet")
 }
 
 func (p *cloudstackProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error) {
-	newV, oldV := newSpec.VersionsBundle.CloudStack, currentSpec.VersionsBundle.CloudStack
-
-	return newV.Manager.ImageDigest != oldV.Manager.ImageDigest, nil
-	// || newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest, nil
+	return false, fmt.Errorf("upgrade is not supported for CloudStack provider yet")
 }
 
 func (p *cloudstackProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
@@ -1437,9 +1151,9 @@ func (p *cloudstackProvider) DeleteResources(ctx context.Context, clusterSpec *c
 			return err
 		}
 	}
-	return p.providerKubectlClient.DeleteEksaCloudStackDeploymentConfig(ctx, p.deploymentConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.deploymentConfig.Namespace)
+	return p.providerKubectlClient.DeleteEksaCloudStackDatacenterConfig(ctx, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
 }
 
 func (p *cloudstackProvider) GenerateStorageClass() []byte {
-	panic("implement me")
+	return nil
 }
