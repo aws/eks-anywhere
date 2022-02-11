@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -11,9 +10,10 @@ import (
 	"github.com/aws/eks-anywhere-test-tool/pkg/awsprofiles"
 	"github.com/aws/eks-anywhere-test-tool/pkg/cloudwatch"
 	"github.com/aws/eks-anywhere-test-tool/pkg/codebuild"
-	"github.com/aws/eks-anywhere-test-tool/pkg/filewriter"
 	"github.com/aws/eks-anywhere-test-tool/pkg/logfetcher"
 )
+
+const logToStdout = "stdout"
 
 var fl = &e2eFetchOptions{}
 
@@ -38,11 +38,16 @@ var e2eFetchLogsCommand = &cobra.Command{
 			return fmt.Errorf("error when instantiating CW profile: %v", err)
 		}
 
-		now := time.Now().Format(time.RFC3339 + "-logs")
-		writer, err := filewriter.NewWriter(now)
-		if err != nil {
-			return fmt.Errorf("error when setting up writer: %v", err)
+		var fetcherOpts []logfetcher.LogFetcherOpt
+		if fl.tests != nil {
+			fetcherOpts = append(fetcherOpts, logfetcher.WithTestFilterByName(fl.tests))
 		}
+
+		if fl.logTo == logToStdout {
+			fetcherOpts = append(fetcherOpts, logfetcher.WithLogStdout())
+		}
+
+		fetcher := logfetcher.New(buildAccountCw, testAccountCw, buildAccountCodebuild, fetcherOpts...)
 
 		var opts []logfetcher.FetchLogsOpt
 		if fl.forBuildId != "" {
@@ -52,8 +57,6 @@ var e2eFetchLogsCommand = &cobra.Command{
 		if fl.forProject != "" {
 			opts = append(opts, logfetcher.WithCodebuildProject(fl.forProject))
 		}
-
-		fetcher := logfetcher.New(buildAccountCw, testAccountCw, buildAccountCodebuild, writer)
 		return fetcher.FetchLogs(opts...)
 	},
 }
@@ -62,6 +65,8 @@ func init() {
 	e2eFetchCommand.AddCommand(e2eFetchLogsCommand)
 	e2eFetchLogsCommand.Flags().StringVar(&fl.forBuildId, "buildId", "", "Build ID to fetch logs for")
 	e2eFetchLogsCommand.Flags().StringVar(&fl.forProject, "project", "", "Project to fetch builds from")
+	e2eFetchLogsCommand.Flags().StringSliceVar(&fl.tests, "tests", nil, "Filter tests by name")
+	e2eFetchLogsCommand.Flags().StringVar(&fl.logTo, "log-to", "", "Log output to")
 	err := viper.BindPFlags(e2eFetchLogsCommand.Flags())
 	if err != nil {
 		log.Fatalf("Error initializing flags: %v", err)

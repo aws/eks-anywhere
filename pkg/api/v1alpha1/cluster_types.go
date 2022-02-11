@@ -148,9 +148,9 @@ func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
 	if len(s1) != len(s2) {
 		return false
 	}
-	taints := make(map[corev1.Taint]bool)
+	taints := make(map[corev1.Taint]struct{})
 	for _, taint := range s1 {
-		taints[taint] = true
+		taints[taint] = struct{}{}
 	}
 	for _, taint := range s2 {
 		_, ok := taints[taint]
@@ -193,11 +193,14 @@ type WorkerNodeGroupConfiguration struct {
 	Count int `json:"count,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
+	// Taints define the set of taints to be applied on worker nodes
+	Taints []corev1.Taint `json:"taints,omitempty"`
 	// Labels define the labels to assign to the node
 	Labels map[string]string `json:"labels,omitempty"`
 }
 
 func generateWorkerNodeGroupKey(c WorkerNodeGroupConfiguration) (key string) {
+	key = c.Name
 	if c.MachineGroupRef != nil {
 		key = c.MachineGroupRef.Kind + c.MachineGroupRef.Name
 	}
@@ -222,7 +225,32 @@ func WorkerNodeGroupConfigurationsSliceEqual(a, b []WorkerNodeGroupConfiguration
 			delete(m, k)
 		}
 	}
-	return len(m) == 0
+	if len(m) != 0 {
+		return false
+	}
+
+	return WorkerNodeGroupConfigurationSliceTaintsEqual(a, b)
+}
+
+func WorkerNodeGroupConfigurationSliceTaintsEqual(a, b []WorkerNodeGroupConfiguration) bool {
+	m := make(map[string][]corev1.Taint, len(a))
+	for _, nodeGroup := range a {
+		m[nodeGroup.Name] = nodeGroup.Taints
+	}
+
+	for _, nodeGroup := range b {
+		if _, ok := m[nodeGroup.Name]; !ok {
+			// this method is not concerned with added/removed node groups,
+			// only with the comparison of taints on existing node groups
+			// if a node group is present in a but not b, or vise versa, it's immaterial
+			continue
+		} else {
+			if !TaintsSliceEqual(m[nodeGroup.Name], nodeGroup.Taints) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 type ClusterNetwork struct {

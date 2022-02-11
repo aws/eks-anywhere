@@ -2,6 +2,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
 metadata:
   name: test
+  namespace: test-namespace
 spec:
   clusterNetwork:
     cni: cilium
@@ -32,7 +33,7 @@ spec:
   workerNodeGroupConfigurations:
   - count: 1
     machineGroupRef:
-      name: test-cp
+      name: test-md
       kind: TinkerbellMachineConfig
 
 ---
@@ -40,7 +41,11 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: TinkerbellDatacenterConfig
 metadata:
   name: test
-spec: {}
+spec:
+  tinkerbellCertURL: "http://1.2.3.4/cert"
+  tinkerbellGRPCAuth: "1.2.3.4:0000"
+  tinkerbellIP: "1.2.3.4"
+  tinkerbellPBnJGRPCAuth: "1.2.3.4:00000"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

@@ -10,11 +10,13 @@ import (
 
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
+	executables "github.com/aws/eks-anywhere/pkg/executables"
 	filewriter "github.com/aws/eks-anywhere/pkg/filewriter"
 	providers "github.com/aws/eks-anywhere/pkg/providers"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	v1alpha10 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
+	v1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 // MockClusterClient is a mock of ClusterClient interface.
@@ -166,6 +168,20 @@ func (mr *MockClusterClientMockRecorder) DeleteOIDCConfig(arg0, arg1, arg2, arg3
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOIDCConfig", reflect.TypeOf((*MockClusterClient)(nil).DeleteOIDCConfig), arg0, arg1, arg2, arg3)
 }
 
+// DeleteOldWorkerNodeGroup mocks base method.
+func (m *MockClusterClient) DeleteOldWorkerNodeGroup(arg0 context.Context, arg1 *v1beta1.MachineDeployment, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteOldWorkerNodeGroup", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteOldWorkerNodeGroup indicates an expected call of DeleteOldWorkerNodeGroup.
+func (mr *MockClusterClientMockRecorder) DeleteOldWorkerNodeGroup(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOldWorkerNodeGroup", reflect.TypeOf((*MockClusterClient)(nil).DeleteOldWorkerNodeGroup), arg0, arg1, arg2)
+}
+
 // GetApiServerUrl mocks base method.
 func (m *MockClusterClient) GetApiServerUrl(arg0 context.Context, arg1 *types.Cluster) (string, error) {
 	m.ctrl.T.Helper()
@@ -284,6 +300,26 @@ func (m *MockClusterClient) GetEksaVSphereMachineConfig(arg0 context.Context, ar
 func (mr *MockClusterClientMockRecorder) GetEksaVSphereMachineConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereMachineConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaVSphereMachineConfig), arg0, arg1, arg2, arg3)
+}
+
+// GetMachineDeployment mocks base method.
+func (m *MockClusterClient) GetMachineDeployment(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1beta1.MachineDeployment, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetMachineDeployment", varargs...)
+	ret0, _ := ret[0].(*v1beta1.MachineDeployment)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMachineDeployment indicates an expected call of GetMachineDeployment.
+func (mr *MockClusterClientMockRecorder) GetMachineDeployment(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineDeployment", reflect.TypeOf((*MockClusterClient)(nil).GetMachineDeployment), varargs...)
 }
 
 // GetMachines mocks base method.
@@ -444,7 +480,7 @@ func (mr *MockClusterClientMockRecorder) ValidateControlPlaneNodes(arg0, arg1, a
 }
 
 // ValidateWorkerNodes mocks base method.
-func (m *MockClusterClient) ValidateWorkerNodes(arg0 context.Context, arg1 *types.Cluster, arg2 string) error {
+func (m *MockClusterClient) ValidateWorkerNodes(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateWorkerNodes", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)

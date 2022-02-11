@@ -216,6 +216,12 @@ func (v *VSphere) WithProviderUpgrade(fillers ...api.VSphereFiller) ClusterE2ETe
 	}
 }
 
+func (v *VSphere) WithProviderUpgradeGit(fillers ...api.VSphereFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.ProviderConfigB = v.customizeProviderConfig(e.clusterConfigGitPath(), fillers...)
+	}
+}
+
 func (v *VSphere) ClusterConfigFillers() []api.ClusterFiller {
 	return []api.ClusterFiller{api.WithControlPlaneEndpointIP(v.generateUniqueIp())}
 }

@@ -10,9 +10,7 @@ spec:
   clusterName: {{.clusterName}}
   replicas: {{.workerReplicas}}
   selector:
-    matchLabels:
-      cluster.x-k8s.io/cluster-name: {{.clusterName}}
-      pool: {{.workerPoolName}}
+    matchLabels: {}
   template:
     metadata:
       labels:
@@ -59,6 +57,8 @@ spec:
         nodeRegistration:
           kubeletExtraArgs:
             provider-id: PROVIDER_ID
+            read-only-port: "0"
+            anonymous-auth: "false"
       users:
       - name: {{.workerSshUsername}}
         sshAuthorizedKeys:

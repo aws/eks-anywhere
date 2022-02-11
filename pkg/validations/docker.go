@@ -8,17 +8,20 @@ import (
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/semver"
 )
 
 const (
-	recommendedTotalMemory  = 6200000000
-	requiredMajorVersion    = 20
-	unsupportedMinorVersion = "4.3"
+	recommendedTotalMemory         = 6200000000
+	requiredMajorVersion           = 20
+	minUnsupportedVersion          = "4.3.0"
+	minSupportedWithSettingVersion = "4.4.2"
 )
 
 type DockerExecutable interface {
 	Version(ctx context.Context) (int, error)
 	AllocatedMemory(ctx context.Context) (uint64, error)
+	CgroupVersion(ctx context.Context) (int, error)
 }
 
 func CheckMinimumDockerVersion(ctx context.Context, dockerExecutable DockerExecutable) error {
@@ -43,7 +46,7 @@ func CheckDockerAllocatedMemory(ctx context.Context, dockerExecutable DockerExec
 	}
 }
 
-func CheckDockerDesktopVersion(ctx context.Context) error {
+func CheckDockerDesktopVersion(ctx context.Context, dockerExecutable DockerExecutable) error {
 	dockerDesktopInfoPath := "/Applications/Docker.app/Contents/Info.plist"
 	if _, err := os.Stat(dockerDesktopInfoPath); err != nil {
 		return fmt.Errorf("unable to find Docker Desktop info list")
@@ -53,10 +56,43 @@ func CheckDockerDesktopVersion(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	dockerDesktopVersion := strings.TrimSpace(string(stdout))
-	dockerDesktopMinorRelease := dockerDesktopVersion[:strings.LastIndex(dockerDesktopVersion, ".")]
-	if dockerDesktopMinorRelease >= unsupportedMinorVersion {
-		return fmt.Errorf("EKS Anywhere does not support Docker desktop version 4.3.0 or greater on macOS")
+
+	return ValidateDockerDesktopVersion(ctx, dockerExecutable, string(stdout))
+}
+
+func ValidateDockerDesktopVersion(ctx context.Context, dockerExecutable DockerExecutable, dockerDesktopVersion string) error {
+	minUnsupportedSemVer, err := semver.New(minUnsupportedVersion)
+	if err != nil {
+		return err
+	}
+
+	minSupportWithSettingSemVer, err := semver.New(minSupportedWithSettingVersion)
+	if err != nil {
+		return err
+	}
+
+	dockerDesktopSemVer, err := semver.New(strings.TrimSpace(dockerDesktopVersion))
+	if err != nil {
+		return err
+	}
+
+	if dockerDesktopSemVer.LessThan(minUnsupportedSemVer) {
+		// Older versions of docker desktop are supported as is
+		return nil
+	}
+
+	if dockerDesktopSemVer.LessThan(minSupportWithSettingSemVer) {
+		return fmt.Errorf("EKS Anywhere does not support Docker desktop versions between 4.3.0 and 4.4.1 on macOS, please refer to https://github.com/aws/eks-anywhere/issues/789 for more information")
+	}
+
+	cgroupVersion, err := dockerExecutable.CgroupVersion(ctx)
+	if err != nil {
+		return err
+	}
+
+	if cgroupVersion != 1 {
+		return fmt.Errorf("EKS Anywhere requires Docker desktop to be configured to use CGroups v1. " +
+			"Please  set `deprecatedCgroupv1:true` in your `~/Library/Group\\ Containers/group.com.docker/settings.json` file")
 	}
 
 	return nil

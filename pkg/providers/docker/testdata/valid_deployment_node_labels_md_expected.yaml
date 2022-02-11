@@ -9,6 +9,7 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
+          taints: []
           kubeletExtraArgs:
             cgroup-driver: cgroupfs
             eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
@@ -53,4 +54,5 @@ spec:
       - containerPath: /var/run/docker.sock
         hostPath: /var/run/docker.sock
       customImage: public.ecr.aws/eks-distro/kubernetes-sigs/kind/node:v1.18.16-eks-1-18-4-216edda697a37f8bf16651af6c23b7e2bb7ef42f-62681885fe3a97ee4f2b110cc277e084e71230fa
+
 ---

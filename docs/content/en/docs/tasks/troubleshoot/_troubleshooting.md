@@ -35,6 +35,21 @@ Ensure you are running Docker 20.x.x for example:
 Docker version 20.10.6, build 370c289
 ```
 
+### Minimum requirements for docker version have not been met on Mac OS
+```
+Error: EKS Anywhere does not support Docker desktop versions between 4.3.0 and 4.4.1 on macOS
+```
+```
+Error: EKS Anywhere requires Docker desktop to be configured to use CGroups v1. Please  set `deprecatedCgroupv1:true` in your `~/Library/Group\\ Containers/group.com.docker/settings.json` file
+```
+Ensure you are running Docker Desktop 4.4.2 or newer and have set `"deprecatedCgroupv1": true` in your settings.json file
+```
+% defaults read /Applications/Docker.app/Contents/Info.plist CFBundleShortVersionString
+4.42
+% docker info --format '{{json .CgroupVersion}}' 
+"1"
+```
+
 ### ECR access denied
 
 ```
@@ -256,8 +271,8 @@ Please remember that the only fields currently supported for GitOps are:
 
 Cluster
 
-- `Cluster.workerNodeGroupConfigurations[0].count`
-- `Cluster.workerNodeGroupConfigurations[0].machineGroupRef.name`
+- `Cluster.workerNodeGroupConfigurations.count`
+- `Cluster.workerNodeGroupConfigurations.machineGroupRef.name`
 
 Worker Nodes
 

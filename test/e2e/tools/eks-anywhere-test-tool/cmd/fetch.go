@@ -11,6 +11,8 @@ import (
 type e2eFetchOptions struct {
 	forBuildId string
 	forProject string
+	tests      []string
+	logTo      string
 }
 
 var e2eFetchCommand = &cobra.Command{

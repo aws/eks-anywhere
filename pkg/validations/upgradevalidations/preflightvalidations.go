@@ -23,14 +23,14 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		validations.ValidationResult{
 			Name:        "validate taints support",
 			Remediation: "ensure TAINTS_SUPPORT env variable is set",
-			Err:         ValidateTaintsSupport(u.Opts.Spec),
-			FeatureFlag: true,
+			Err:         validations.ValidateTaintsSupport(u.Opts.Spec),
+			Silent:      true,
 		},
 		validations.ValidationResult{
 			Name:        "validate node labels support",
 			Remediation: "ensure NODE_LABELS_SUPPORT env variable is set",
-			Err:         ValidateNodeLabelsSupport(u.Opts.Spec),
-			FeatureFlag: true,
+			Err:         validations.ValidateNodeLabelsSupport(u.Opts.Spec),
+			Silent:      true,
 		},
 		validations.ValidationResult{
 			Name:        "control plane ready",
@@ -40,7 +40,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		validations.ValidationResult{
 			Name:        "worker nodes ready",
 			Remediation: fmt.Sprintf("ensure machine deployments for cluster %s are Ready", u.Opts.WorkloadCluster.Name),
-			Err:         k.ValidateWorkerNodes(ctx, targetCluster, u.Opts.Spec.Name),
+			Err:         k.ValidateWorkerNodes(ctx, u.Opts.Spec.Name, targetCluster.KubeconfigFile),
 		},
 		validations.ValidationResult{
 			Name:        "nodes ready",
@@ -69,17 +69,5 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		},
 	)
 
-	var errs []string
-	for _, validation := range upgradeValidations {
-		if validation.Err != nil {
-			errs = append(errs, validation.Err.Error())
-		} else if !validation.FeatureFlag {
-			validation.LogPass()
-		}
-	}
-
-	if len(errs) > 0 {
-		return &validations.ValidationError{Errs: errs}
-	}
-	return nil
+	return validations.RunPreflightValidations(upgradeValidations)
 }

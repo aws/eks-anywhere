@@ -43,6 +43,7 @@ spec:
      machineGroupRef:
        kind: VSphereMachineConfig
        name: my-cluster-machines
+     name: md-0
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -101,6 +102,9 @@ Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR b
 ### clusterNetwork.services.cidrBlocks[0] (required)
 Subnet used by services in CIDR notation. Please note that only 1 custom services CIDR block specification is permitted.
 
+### clusterNetwork.dns.resolvConf.path (optional)
+Path to the file with a custom DNS resolver configuration.
+
 ### controlPlaneConfiguration (required)
 Specific control plane configuration for your Kubernetes cluster.
 
@@ -118,14 +122,18 @@ range that does not conflict with other VMs.
 the control plane nodes for kube-apiserver loadbalancing. Suggestions on how to ensure this IP does not cause issues during cluster 
 creation process are [here]({{< relref "../vsphere/vsphere-prereq/#:~:text=Below%20are%20some,existent%20mac%20address." >}})
 
-### workerNodeGroupsConfiguration (required)
-This takes in a list of node groups that you can define for your workers. Please note that at this time only 1 node group is permitted.
+### workerNodeGroupConfigurations (required)
+This takes in a list of node groups that you can define for your workers.
+You may define one or more worker node groups.
 
-### workerNodeGroupsConfiguration[0].count (required)
+### workerNodeGroupConfigurations.count (required)
 Number of worker nodes
 
-### workerNodeGroupsConfiguration[0].machineGroupRef (required)
+### workerNodeGroupConfigurations.machineGroupRef (required)
 Refers to the Kubernetes object with vsphere specific configuration for your nodes. See `VSphereMachineConfig Fields` below.
+
+### workerNodeGroupConfigurations.name (required)
+Name of the worker node group (default: md-0)
 
 ### externalEtcdConfiguration.count
 Number of etcd members

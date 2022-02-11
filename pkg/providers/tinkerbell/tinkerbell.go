@@ -8,10 +8,13 @@ import (
 	"os"
 	"time"
 
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -51,6 +54,7 @@ type tinkerbellProvider struct {
 	providerKubectlClient ProviderKubectlClient
 	templateBuilder       *TinkerbellTemplateBuilder
 	hardwareConfigFile    string
+	validator             *Validator
 	// TODO: Update hardwareConfig to proper type
 }
 
@@ -59,6 +63,7 @@ type ProviderKubectlClient interface {
 	ApplyHardware(ctx context.Context, hardwareYaml string, kubeConfFile string) error
 	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType string, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType string, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) error
+	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 }
 
 func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, now types.NowFunc, hardwareConfigFile string) *tinkerbellProvider {
@@ -147,6 +152,17 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	if err := setupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
+
+	tinkerbellClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+
+	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
+		return err
+	}
+
+	if err := p.validator.ValidateClusterMachineConfigs(ctx, tinkerbellClusterSpec); err != nil {
+		return err
+	}
+
 	p.controlPlaneSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 	p.workerSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 	// TODO: Add more validations
@@ -205,6 +221,11 @@ func (vs *TinkerbellTemplateBuilder) EtcdMachineTemplateName(clusterName string)
 	return fmt.Sprintf("%s-etcd-template-%d", clusterName, t)
 }
 
+func (vs *TinkerbellTemplateBuilder) KubeadmConfigTemplateName(clusterName, workerNodeGroupName string) string {
+	t := vs.now().UnixNano() / int64(time.Millisecond)
+	return fmt.Sprintf("%s-%s-template-%d", clusterName, workerNodeGroupName, t)
+}
+
 func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	values := buildTemplateMapCP(clusterSpec, *vs.controlPlaneMachineSpec)
 	for _, buildOption := range buildOptions {
@@ -217,13 +238,13 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	return bytes, nil
 }
 
-func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, templateNames map[string]string) (content []byte, err error) {
+func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name])
-		_, ok := templateNames[workerNodeGroupConfiguration.Name]
-		if templateNames != nil && ok {
-			values["workloadTemplateName"] = templateNames[workerNodeGroupConfiguration.Name]
+		_, ok := workloadTemplateNames[workerNodeGroupConfiguration.Name]
+		if workloadTemplateNames != nil && ok {
+			values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		} else {
 			values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		}
@@ -260,7 +281,7 @@ func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, clus
 	if err != nil {
 		return nil, nil, err
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, nil)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, nil, nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -381,6 +402,11 @@ func (p *tinkerbellProvider) RunPostControlPlaneCreation(ctx context.Context, cl
 	return nil
 }
 
+func machineDeploymentName(clusterName, workerPoolName string) string {
+	// TODO: Update when we decide the naming for tinkerbell MD objects
+	return fmt.Sprintf("%s-%s", clusterName, workerPoolName)
+}
+
 func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alpha1.TinkerbellMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
@@ -425,4 +451,14 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"workertemplateOverride": workerNodeGroupMachineSpec.TemplateOverride,
 	}
 	return values
+}
+
+func (p *tinkerbellProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
+	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
+	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
+	for range nodeGroupsToDelete {
+		mdName := machineDeploymentName(workloadCluster.Name, "md-0")
+		machineDeployments = append(machineDeployments, mdName)
+	}
+	return machineDeployments
 }
