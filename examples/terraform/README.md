@@ -36,7 +36,7 @@ EOF
 2. Convert your EKS-A cluster Kubernetes manifest into Terraform HCL with `tfk8s`
 - install [tfk8s](https://github.com/jrhouston/tfk8s#install)
 ```
-export MY_EKSA_CLUSER="myClusterName"
+export MY_EKSA_CLUSTER="myClusterName"
 kubectl get cluster ${MY_EKSA_CLUSTER} -o yaml | tfk8s --strip -o ${MY_EKSA_CLUSTER}.tf
 ```
 
