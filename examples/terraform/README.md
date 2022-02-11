@@ -65,7 +65,7 @@ terraform import kubernetes_manifest.cluster_${MY_EKSA_CLUSTER} "apiVersion=anyw
 - modify the `count` value of one of your `workerNodeGroupConfigurations`, or another mutable field, in the configuration stored in `${MY_EKSA_CLUSTER}.tf` file.
 - check the expected diff between your cluster state and the modified local state via `terraform plan`
 
-you should see in the output that the worker node group configuration count field (or whichever filed you chose to modify) will be modfied by Terraform.
+You should see in the output that the worker node group configuration count field (or whichever field you chose to modify) will be modified by Terraform.
 
 5. modify the cluster using terraform
 - `terraform apply`
