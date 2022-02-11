@@ -26,9 +26,10 @@ import (
 )
 
 const (
-	imageBuilderProjectPath = "projects/kubernetes-sigs/image-builder"
-	kindProjectPath         = "projects/kubernetes-sigs/kind"
-	releasePath             = "release"
+	imageBuilderProjectPath  = "projects/kubernetes-sigs/image-builder"
+	kindProjectPath          = "projects/kubernetes-sigs/kind"
+	releasePath              = "release"
+	eksDReleaseComponentsUrl = "https://distro.eks.amazonaws.com/crds/releases.distro.eks.amazonaws.com-v1alpha1.yaml"
 )
 
 // GetEksDChannelAssets returns the eks-d artifacts including OVAs and kind node image
@@ -290,6 +291,7 @@ func (r *ReleaseConfig) GetEksDReleaseBundle(eksDReleaseChannel, kubeVer, eksDRe
 				Crictl:  bundleArchiveArtifacts["cri-tools"],
 			},
 		},
+		Components: eksDReleaseComponentsUrl,
 	}
 
 	return bundle, nil
