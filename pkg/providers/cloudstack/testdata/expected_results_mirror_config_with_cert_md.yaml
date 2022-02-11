@@ -1,0 +1,104 @@
+apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+kind: KubeadmConfigTemplate
+metadata:
+  name: test-md-0
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        nodeRegistration:
+          criSocket: /var/run/containerd/containerd.sock
+          kubeletExtraArgs:
+            provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+            read-only-port: "0"
+            anonymous-auth: "false"
+          name: '{{ ds.meta_data.local_hostname }}'
+      files:
+      - content: |
+          -----BEGIN CERTIFICATE-----
+          MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
+          BAMTCnRlc3QubG9jYWwwHhcNMjEwOTIzMjAxOTEyWhcNMzEwOTIxMjAxOTEyWjAV
+          MRMwEQYDVQQDEwp0ZXN0LmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+          CgKCAQEAwDHozKwX0kAGICTaV1XoMdJ+t+8LQsAGmzIKYhrSh+WdEcx/xc1SDJcp
+          EBFeUmVuFwI5DYX2BTvJ0AApSBuViNZn669yn1dBV7PHM27NV37/dDCFkjiqBtax
+          lOXchrL6IoZirmMgMnI/PfASdI/PCR75DNCIQFGZbwWAbEBxxLHgWPEFJ5TWP6fD
+          2s95gbc9gykI09ta/H5ITKCd3EVtiAlcQ86Ax9EZRmvJYGw5NFmPnJ0X/OmXmLXx
+          o0ggkjHTeyG8sZQpDTs6oQrX/XLfLOvrJi3suiiJXz0pNAXZoFaLu8Z0Ci+EoquM
+          cFh4NhfSAD5BJADxwf7iv7KXCWtQTwIDAQABoxkwFzAVBgNVHREEDjAMggp0ZXN0
+          LmxvY2FsMA0GCSqGSIb3DQEBBQUAA4IBAQBr4qDklaG/ZLcrkc0PBo9ylj3rtt1M
+          ar1nv+Nv8zXByTsYs9muEQYBKpzvk9SJZ4OfYVcx6qETbG7z7kdgZtDktQULw5fQ
+          hsiy0flLv+JkdD4M30rtjhDIiuNH2ew6+2JB80QaSznW7Z3Fd18BmDaE1qqLYQFX
+          iCau7fRD2aQyVluuJ0OeDOuk33jY3Vn3gyKGfnjPAnb4DxCg7v1IeazGSVK18urL
+          zkYl4nSFENRLV5sL/wox2ohjMLff2lv6gyqkMFrLNSeHSQLGu8diat4UVDk8MMza
+          9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
+          -----END CERTIFICATE-----
+        owner: root:root
+        path: "/etc/containerd/certs.d/1.2.3.4/ca.crt"
+      - content: |
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+              endpoint = ["https://1.2.3.4"]
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4".tls]
+              ca_file = "/etc/containerd/certs.d/1.2.3.4/ca.crt"
+        owner: root:root
+        path: "/etc/containerd/config_append.toml"
+      preKubeadmCommands:
+      - swapoff -a
+      - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+      - sudo systemctl daemon-reload
+      - sudo systemctl restart containerd
+      - hostname "{{ ds.meta_data.local_hostname }}"
+      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+      - echo "127.0.0.1   localhost" >>/etc/hosts
+      - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
+      - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+      users:
+      - name: mySshUsername
+        sshAuthorizedKeys:
+        - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
+        sudo: ALL=(ALL) NOPASSWD:ALL
+      format: cloud-config
+---
+apiVersion: cluster.x-k8s.io/v1alpha3
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: test
+  name: test-md-0
+  namespace: eksa-system
+spec:
+  clusterName: test
+  replicas: 3
+  selector:
+    matchLabels: {}
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: test
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+          kind: KubeadmConfigTemplate
+          name: test-md-0
+      clusterName: test
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+        kind: CloudStackMachineTemplate
+        name: test-worker-node-template-1234567890000
+      version: v1.21.2-eks-1-21-4
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: CloudStackMachineTemplate
+metadata:
+  name: test-worker-node-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      offering: m4-large
+      template: centos7-k8s-118
+      details:
+        foo: bar
+        key: value

@@ -1,0 +1,394 @@
+apiVersion: cluster.x-k8s.io/v1alpha3
+kind: Cluster
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: test
+  name: test
+  namespace: eksa-system
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: [192.168.0.0/16]
+    services:
+      cidrBlocks: [10.96.0.0/12]
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+    kind: KubeadmControlPlane
+    name: test
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    kind: CloudStackCluster
+    name: test
+  managedExternalEtcdRef:
+    apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
+    kind: EtcdadmCluster
+    name: test-etcd
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: CloudStackCluster
+metadata:
+  name: test
+  namespace: eksa-system
+spec:
+  controlPlaneEndpoint:
+    host: 1.2.3.4
+    port: 6443
+  network: net1
+  zone: zone1
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: CloudStackMachineTemplate
+metadata:
+  name: test-control-plane-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      offering: m4-large
+      template: centos7-k8s-118
+      details:
+        foo: bar
+        key: value
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+kind: KubeadmControlPlane
+metadata:
+  name: test
+  namespace: eksa-system
+spec:
+  infrastructureTemplate:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    kind: CloudStackMachineTemplate
+    name: test-control-plane-template-1234567890000
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      imageRepository: public.ecr.aws/eks-distro/kubernetes
+      etcd:
+        external:
+          endpoints: []
+          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
+          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
+          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
+      dns:
+        type: CoreDNS
+        imageRepository: public.ecr.aws/eks-distro/coredns
+        imageTag: v1.8.3-eks-1-21-4
+      apiServer:
+        extraArgs:
+          cloud-provider: external
+          audit-policy-file: /etc/kubernetes/audit-policy.yaml
+          audit-log-path: /var/log/kubernetes/api-audit.log
+          audit-log-maxage: "30"
+          audit-log-maxbackup: "10"
+          audit-log-maxsize: "512"
+          profiling: "false"
+        extraVolumes:
+        - hostPath: /etc/kubernetes/audit-policy.yaml
+          mountPath: /etc/kubernetes/audit-policy.yaml
+          name: audit-policy
+          pathType: File
+          readOnly: true
+        - hostPath: /var/log/kubernetes
+          mountPath: /var/log/kubernetes
+          name: audit-log-dir
+          pathType: DirectoryOrCreate
+          readOnly: false
+        - hostPath: /var/log/kubernetes/api-audit.log
+          mountPath: /var/log/kubernetes/api-audit.log
+          name: audit-log
+          pathType: FileOrCreate
+          readOnly: false
+      controllerManager:
+        extraArgs:
+          cloud-provider: external
+          profiling: "false"
+      scheduler:
+        extraArgs:
+          profiling: "false"
+    files:
+    - content: |
+        apiVersion: audit.k8s.io/v1beta1
+        kind: Policy
+        rules:
+        # Log aws-auth configmap changes
+        - level: RequestResponse
+          namespaces: ["kube-system"]
+          verbs: ["update", "patch", "delete"]
+          resources:
+          - group: "" # core
+            resources: ["configmaps"]
+            resourceNames: ["aws-auth"]
+          omitStages:
+          - "RequestReceived"
+        # The following requests were manually identified as high-volume and low-risk,
+        # so drop them.
+        - level: None
+          users: ["system:kube-proxy"]
+          verbs: ["watch"]
+          resources:
+          - group: "" # core
+            resources: ["endpoints", "services", "services/status"]
+        - level: None
+          users: ["kubelet"] # legacy kubelet identity
+          verbs: ["get"]
+          resources:
+          - group: "" # core
+            resources: ["nodes", "nodes/status"]
+        - level: None
+          userGroups: ["system:nodes"]
+          verbs: ["get"]
+          resources:
+          - group: "" # core
+            resources: ["nodes", "nodes/status"]
+        - level: None
+          users:
+          - system:kube-controller-manager
+          - system:kube-scheduler
+          - system:serviceaccount:kube-system:endpoint-controller
+          verbs: ["get", "update"]
+          namespaces: ["kube-system"]
+          resources:
+          - group: "" # core
+            resources: ["endpoints"]
+        - level: None
+          users: ["system:apiserver"]
+          verbs: ["get"]
+          resources:
+          - group: "" # core
+            resources: ["namespaces", "namespaces/status", "namespaces/finalize"]
+        # Don't log HPA fetching metrics.
+        - level: None
+          users:
+          - system:kube-controller-manager
+          verbs: ["get", "list"]
+          resources:
+          - group: "metrics.k8s.io"
+        # Don't log these read-only URLs.
+        - level: None
+          nonResourceURLs:
+          - /healthz*
+          - /version
+          - /swagger*
+        # Don't log events requests.
+        - level: None
+          resources:
+          - group: "" # core
+            resources: ["events"]
+        # node and pod status calls from nodes are high-volume and can be large, don't log responses for expected updates from nodes
+        - level: Request
+          users: ["kubelet", "system:node-problem-detector", "system:serviceaccount:kube-system:node-problem-detector"]
+          verbs: ["update","patch"]
+          resources:
+          - group: "" # core
+            resources: ["nodes/status", "pods/status"]
+          omitStages:
+          - "RequestReceived"
+        - level: Request
+          userGroups: ["system:nodes"]
+          verbs: ["update","patch"]
+          resources:
+          - group: "" # core
+            resources: ["nodes/status", "pods/status"]
+          omitStages:
+          - "RequestReceived"
+        # deletecollection calls can be large, don't log responses for expected namespace deletions
+        - level: Request
+          users: ["system:serviceaccount:kube-system:namespace-controller"]
+          verbs: ["deletecollection"]
+          omitStages:
+          - "RequestReceived"
+        # Secrets, ConfigMaps, and TokenReviews can contain sensitive & binary data,
+        # so only log at the Metadata level.
+        - level: Metadata
+          resources:
+          - group: "" # core
+            resources: ["secrets", "configmaps"]
+          - group: authentication.k8s.io
+            resources: ["tokenreviews"]
+          omitStages:
+            - "RequestReceived"
+        - level: Request
+          resources:
+          - group: ""
+            resources: ["serviceaccounts/token"]
+        # Get repsonses can be large; skip them.
+        - level: Request
+          verbs: ["get", "list", "watch"]
+          resources:
+          - group: "" # core
+          - group: "admissionregistration.k8s.io"
+          - group: "apiextensions.k8s.io"
+          - group: "apiregistration.k8s.io"
+          - group: "apps"
+          - group: "authentication.k8s.io"
+          - group: "authorization.k8s.io"
+          - group: "autoscaling"
+          - group: "batch"
+          - group: "certificates.k8s.io"
+          - group: "extensions"
+          - group: "metrics.k8s.io"
+          - group: "networking.k8s.io"
+          - group: "policy"
+          - group: "rbac.authorization.k8s.io"
+          - group: "scheduling.k8s.io"
+          - group: "settings.k8s.io"
+          - group: "storage.k8s.io"
+          omitStages:
+          - "RequestReceived"
+        # Default level for known APIs
+        - level: RequestResponse
+          resources:
+          - group: "" # core
+          - group: "admissionregistration.k8s.io"
+          - group: "apiextensions.k8s.io"
+          - group: "apiregistration.k8s.io"
+          - group: "apps"
+          - group: "authentication.k8s.io"
+          - group: "authorization.k8s.io"
+          - group: "autoscaling"
+          - group: "batch"
+          - group: "certificates.k8s.io"
+          - group: "extensions"
+          - group: "metrics.k8s.io"
+          - group: "networking.k8s.io"
+          - group: "policy"
+          - group: "rbac.authorization.k8s.io"
+          - group: "scheduling.k8s.io"
+          - group: "settings.k8s.io"
+          - group: "storage.k8s.io"
+          omitStages:
+          - "RequestReceived"
+        # Default level for all other requests.
+        - level: Metadata
+          omitStages:
+          - "RequestReceived"
+      owner: root:root
+      path: /etc/kubernetes/audit-policy.yaml
+    - content: |
+        -----BEGIN CERTIFICATE-----
+        MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
+        BAMTCnRlc3QubG9jYWwwHhcNMjEwOTIzMjAxOTEyWhcNMzEwOTIxMjAxOTEyWjAV
+        MRMwEQYDVQQDEwp0ZXN0LmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+        CgKCAQEAwDHozKwX0kAGICTaV1XoMdJ+t+8LQsAGmzIKYhrSh+WdEcx/xc1SDJcp
+        EBFeUmVuFwI5DYX2BTvJ0AApSBuViNZn669yn1dBV7PHM27NV37/dDCFkjiqBtax
+        lOXchrL6IoZirmMgMnI/PfASdI/PCR75DNCIQFGZbwWAbEBxxLHgWPEFJ5TWP6fD
+        2s95gbc9gykI09ta/H5ITKCd3EVtiAlcQ86Ax9EZRmvJYGw5NFmPnJ0X/OmXmLXx
+        o0ggkjHTeyG8sZQpDTs6oQrX/XLfLOvrJi3suiiJXz0pNAXZoFaLu8Z0Ci+EoquM
+        cFh4NhfSAD5BJADxwf7iv7KXCWtQTwIDAQABoxkwFzAVBgNVHREEDjAMggp0ZXN0
+        LmxvY2FsMA0GCSqGSIb3DQEBBQUAA4IBAQBr4qDklaG/ZLcrkc0PBo9ylj3rtt1M
+        ar1nv+Nv8zXByTsYs9muEQYBKpzvk9SJZ4OfYVcx6qETbG7z7kdgZtDktQULw5fQ
+        hsiy0flLv+JkdD4M30rtjhDIiuNH2ew6+2JB80QaSznW7Z3Fd18BmDaE1qqLYQFX
+        iCau7fRD2aQyVluuJ0OeDOuk33jY3Vn3gyKGfnjPAnb4DxCg7v1IeazGSVK18urL
+        zkYl4nSFENRLV5sL/wox2ohjMLff2lv6gyqkMFrLNSeHSQLGu8diat4UVDk8MMza
+        9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
+        -----END CERTIFICATE-----
+      owner: root:root
+      path: "/etc/containerd/certs.d/1.2.3.4/ca.crt"
+    - content: |
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+            endpoint = ["https://1.2.3.4"]
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4".tls]
+            ca_file = "/etc/containerd/certs.d/1.2.3.4/ca.crt"
+      owner: root:root
+      path: "/etc/containerd/config_append.toml"
+    initConfiguration:
+      nodeRegistration:
+        criSocket: /var/run/containerd/containerd.sock
+        kubeletExtraArgs:
+          provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+          read-only-port: "0"
+          anonymous-auth: "false"
+        name: '{{ ds.meta_data.local_hostname }}'
+    joinConfiguration:
+      nodeRegistration:
+        criSocket: /var/run/containerd/containerd.sock
+        kubeletExtraArgs:
+          provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+          read-only-port: "0"
+          anonymous-auth: "false"
+        name: '{{ ds.meta_data.local_hostname }}'
+    preKubeadmCommands:
+    - swapoff -a
+    - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+    - sudo systemctl daemon-reload
+    - sudo systemctl restart containerd
+    - hostname "{{ ds.meta_data.local_hostname }}"
+    - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+    - echo "127.0.0.1   localhost" >>/etc/hosts
+    - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
+    - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+    useExperimentalRetryJoin: true
+    users:
+    - name: mySshUsername
+      sshAuthorizedKeys:
+      - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
+      sudo: ALL=(ALL) NOPASSWD:ALL
+    format: cloud-config
+  replicas: 3
+  version: v1.21.2-eks-1-21-4
+---
+kind: EtcdadmCluster
+apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
+metadata:
+  name: test-etcd
+  namespace: eksa-system
+spec:
+  replicas: 3
+  etcdadmConfigSpec:
+    etcdadmBuiltin: true
+    format: cloud-config
+    cloudInitConfig:
+      version: 3.4.16
+      installDir: "/usr/bin"
+    preEtcdadmCommands:
+    - swapoff -a
+    - hostname "{{ ds.meta_data.local_hostname }}"
+    - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+    - echo "127.0.0.1   localhost" >>/etc/hosts
+    - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
+    - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+    users:
+    - name: mySshUsername
+      sshAuthorizedKeys:
+      - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
+      sudo: ALL=(ALL) NOPASSWD:ALL
+    registryMirror:
+      endpoint: 1.2.3.4
+      caCert: |
+        -----BEGIN CERTIFICATE-----
+        MIICxjCCAa6gAwIBAgIJAInAeEdpH2uNMA0GCSqGSIb3DQEBBQUAMBUxEzARBgNV
+        BAMTCnRlc3QubG9jYWwwHhcNMjEwOTIzMjAxOTEyWhcNMzEwOTIxMjAxOTEyWjAV
+        MRMwEQYDVQQDEwp0ZXN0LmxvY2FsMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+        CgKCAQEAwDHozKwX0kAGICTaV1XoMdJ+t+8LQsAGmzIKYhrSh+WdEcx/xc1SDJcp
+        EBFeUmVuFwI5DYX2BTvJ0AApSBuViNZn669yn1dBV7PHM27NV37/dDCFkjiqBtax
+        lOXchrL6IoZirmMgMnI/PfASdI/PCR75DNCIQFGZbwWAbEBxxLHgWPEFJ5TWP6fD
+        2s95gbc9gykI09ta/H5ITKCd3EVtiAlcQ86Ax9EZRmvJYGw5NFmPnJ0X/OmXmLXx
+        o0ggkjHTeyG8sZQpDTs6oQrX/XLfLOvrJi3suiiJXz0pNAXZoFaLu8Z0Ci+EoquM
+        cFh4NhfSAD5BJADxwf7iv7KXCWtQTwIDAQABoxkwFzAVBgNVHREEDjAMggp0ZXN0
+        LmxvY2FsMA0GCSqGSIb3DQEBBQUAA4IBAQBr4qDklaG/ZLcrkc0PBo9ylj3rtt1M
+        ar1nv+Nv8zXByTsYs9muEQYBKpzvk9SJZ4OfYVcx6qETbG7z7kdgZtDktQULw5fQ
+        hsiy0flLv+JkdD4M30rtjhDIiuNH2ew6+2JB80QaSznW7Z3Fd18BmDaE1qqLYQFX
+        iCau7fRD2aQyVluuJ0OeDOuk33jY3Vn3gyKGfnjPAnb4DxCg7v1IeazGSVK18urL
+        zkYl4nSFENRLV5sL/wox2ohjMLff2lv6gyqkMFrLNSeHSQLGu8diat4UVDk8MMza
+        9n5t2E4AHPen+YrGeLY1qEn9WMv0XRGWrgJyLW9VSX8T3SlWO2w3okcw
+        -----END CERTIFICATE-----
+  infrastructureTemplate:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    kind: CloudStackMachineTemplate
+    name: test-etcd-template-1234567890000
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: CloudStackMachineTemplate
+metadata:
+  name: test-etcd-template-1234567890000
+  namespace: 'eksa-system'
+spec:
+  template:
+    spec:
+      offering: m4-large
+      template: centos7-k8s-118
+      details:
+        foo: bar
+        key: value
+---

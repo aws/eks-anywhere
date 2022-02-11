@@ -1,0 +1,119 @@
+apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+kind: KubeadmConfigTemplate
+metadata:
+  name: {{.clusterName}}-md-0
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        nodeRegistration:
+          criSocket: /var/run/containerd/containerd.sock
+          kubeletExtraArgs:
+            provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
+            read-only-port: "0"
+            anonymous-auth: "false"
+{{- if .cgroupDriverSystemd}}
+            cgroup-driver: systemd
+{{- end }}
+          name: '{{`{{ ds.meta_data.local_hostname }}`}}'
+{{- if or .proxyConfig .registryMirrorConfiguration }}
+      files:
+{{- end }}
+{{- if .proxyConfig }}
+      - content: |
+          [Service]
+          Environment="HTTP_PROXY={{.httpProxy}}"
+          Environment="HTTPS_PROXY={{.httpsProxy}}"
+          Environment="NO_PROXY={{ stringsJoin .noProxy "," }}"
+        owner: root:root
+        path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+{{- end }}
+{{- if .registryCACert }}
+      - content: |
+{{ .registryCACert | indent 10 }}
+        owner: root:root
+        path: "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+{{- end }}
+{{- if .registryMirrorConfiguration }}
+      - content: |
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+            [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+              endpoint = ["https://{{.registryMirrorConfiguration}}"]
+            {{- if .registryCACert }}
+            [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorConfiguration}}".tls]
+              ca_file = "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+            {{- end }}
+        owner: root:root
+        path: "/etc/containerd/config_append.toml"
+{{- end }}
+      preKubeadmCommands:
+      - swapoff -a
+{{- if .registryMirrorConfiguration }}
+      - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+{{- end }}
+{{- if or .proxyConfig .registryMirrorConfiguration }}
+      - sudo systemctl daemon-reload
+      - sudo systemctl restart containerd
+{{- end }}
+      - hostname "{{`{{ ds.meta_data.local_hostname }}`}}"
+      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+      - echo "127.0.0.1   localhost" >>/etc/hosts
+      - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
+      - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+      users:
+      - name: {{.workerSshUsername}}
+        sshAuthorizedKeys:
+        - '{{.cloudstackWorkerSshAuthorizedKey}}'
+        sudo: ALL=(ALL) NOPASSWD:ALL
+      format: {{.format}}
+---
+apiVersion: cluster.x-k8s.io/v1alpha3
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: {{.clusterName}}
+  name: {{.clusterName}}-md-0
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  clusterName: {{.clusterName}}
+  replicas: {{.workerReplicas}}
+  selector:
+    matchLabels: {}
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: {{.clusterName}}
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
+          kind: KubeadmConfigTemplate
+          name: {{.clusterName}}-md-0
+      clusterName: {{.clusterName}}
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+        kind: CloudStackMachineTemplate
+        name: {{.workloadTemplateName}}
+      version: {{.kubernetesVersion}}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: CloudStackMachineTemplate
+metadata:
+  name: {{.workloadTemplateName}}
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  template:
+    spec:
+      offering: {{.cloudstackOffering}}
+      template: {{.cloudstackTemplate}}
+      details:
+      {{- range $key, $value := .cloudstackDetails}}
+        {{$key}}: {{$value}}
+      {{- end}}
+{{- if .cloudstackAffinityGroupIds }}
+      affinitygroupids:
+      {{- range .cloudstackAffinityGroupIds}}
+      - {{.}}
+      {{- end }}
+{{- end }}
