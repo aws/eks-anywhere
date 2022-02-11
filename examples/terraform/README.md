@@ -58,7 +58,7 @@ Your cluster manifest metadata should look like this (`generation` may be differ
 Set `metadata.generation` as a [computed field](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/manifest#computed-fields)
 - add the following to your cluster resource configuration
 ```
-computed_fields=["metadata.generated"]
+computed_fields = ["metadata.generated"]
 ```
 
 Configure the field manager to [force reconcile managed resources](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/manifest#field_manager)
