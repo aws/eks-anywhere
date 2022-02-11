@@ -4,6 +4,7 @@ const (
 	TaintsSupportEnvVar      = "TAINTS_SUPPORT"
 	NodeLabelsSupportEnvVar  = "NODE_LABELS_SUPPORT"
 	TinkerbellProviderEnvVar = "TINKERBELL_PROVIDER"
+	CloudStackProviderEnvVar = "CLOUDSTACK_PROVIDER"
 	FullLifecycleAPIEnvVar   = "FULL_LIFECYCLE_API"
 	FullLifecycleGate        = "FullLifecycleAPI"
 )
@@ -46,5 +47,12 @@ func TinkerbellProvider() Feature {
 	return Feature{
 		Name:     "Tinkerbell provider support",
 		IsActive: globalFeatures.isActiveForEnvVar(TinkerbellProviderEnvVar),
+	}
+}
+
+func CloudStackProvider() Feature {
+	return Feature{
+		Name:     "CloudStack provider support",
+		IsActive: globalFeatures.isActiveForEnvVar(CloudStackProviderEnvVar),
 	}
 }

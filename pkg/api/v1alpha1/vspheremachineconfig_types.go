@@ -80,19 +80,6 @@ func (c *VSphereMachineConfig) GetName() string {
 	return c.Name
 }
 
-type OSFamily string
-
-const (
-	Ubuntu       OSFamily = "ubuntu"
-	Bottlerocket OSFamily = "bottlerocket"
-)
-
-// UserConfiguration defines the configuration of the user to be added to the VSphere VM
-type UserConfiguration struct {
-	Name              string   `json:"name"`
-	SshAuthorizedKeys []string `json:"sshAuthorizedKeys"`
-}
-
 // VSphereMachineConfigStatus defines the observed state of VSphereMachineConfig
 type VSphereMachineConfigStatus struct{}
 
