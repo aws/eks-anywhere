@@ -29,6 +29,11 @@ func (vb *VersionsBundle) Manifests() map[string][]Manifest {
 			vb.VSphere.ClusterTemplate,
 			vb.VSphere.Metadata,
 		},
+		"cluster-api-provider-cloudstack": {
+			vb.CloudStack.Components,
+			vb.CloudStack.ClusterTemplate,
+			vb.CloudStack.Metadata,
+		},
 		"cilium": {
 			vb.Cilium.Manifest,
 		},
@@ -53,6 +58,13 @@ func (vb *VersionsBundle) Ovas() []Archive {
 	return []Archive{
 		vb.EksD.Ova.Bottlerocket.Archive,
 		vb.EksD.Ova.Ubuntu.Archive,
+	}
+}
+
+func (vb *VersionsBundle) CloudStackImages() []Image {
+	return []Image{
+		vb.CloudStack.KubeProxy,
+		vb.CloudStack.Manager,
 	}
 }
 
@@ -108,11 +120,13 @@ func (vb *VersionsBundle) Images() []Image {
 	shared := vb.SharedImages()
 	docker := vb.DockerImages()
 	vsphere := vb.VsphereImages()
+	cloudstack := vb.CloudStackImages()
 
-	images := make([]Image, 0, len(shared)+len(docker)+len(vsphere))
+	images := make([]Image, 0, len(shared)+len(docker)+len(vsphere)+len(cloudstack))
 	images = append(images, shared...)
 	images = append(images, docker...)
 	images = append(images, vsphere...)
+	images = append(images, cloudstack...)
 
 	return images
 }

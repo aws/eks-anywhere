@@ -20,7 +20,7 @@ spec:
       kind: CloudStackMachineConfig
       name: test-cp
   datacenterRef:
-    kind: CloudStackDeploymentConfig
+    kind: CloudStackDatacenterConfig
     name: test
   externalEtcdConfiguration:
     count: 3
@@ -36,7 +36,7 @@ spec:
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: CloudStackDeploymentConfig
+kind: CloudStackDatacenterConfig
 metadata:
   name: test
   namespace: test-namespace

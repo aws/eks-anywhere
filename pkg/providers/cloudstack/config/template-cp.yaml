@@ -1,4 +1,4 @@
-apiVersion: cluster.x-k8s.io/v1alpha3
+apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   labels:
@@ -12,21 +12,21 @@ spec:
     services:
       cidrBlocks: {{.serviceCidrs}}
   controlPlaneRef:
-    apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
     name: {{.clusterName}}
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: CloudStackCluster
     name: {{.clusterName}}
 {{- if .externalEtcd }}
   managedExternalEtcdRef:
-    apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
+    apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
     kind: EtcdadmCluster
     name: {{.clusterName}}-etcd
 {{- end }}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackCluster
 metadata:
   name: {{.clusterName}}
@@ -38,7 +38,7 @@ spec:
   network: {{.cloudstackNetwork}}
   zone: {{.cloudstackZone}}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate
 metadata:
   name: {{.controlPlaneTemplateName}}
@@ -59,16 +59,17 @@ spec:
       {{- end }}
 {{- end }}
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
   name: {{.clusterName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
-  infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
-    kind: CloudStackMachineTemplate
-    name: {{.controlPlaneTemplateName}}
+  machineTemplate:
+    infrastructureRef:
+      kind: CloudStackMachineTemplate
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      name: {{.controlPlaneTemplateName}}
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: {{.kubernetesRepository}}
@@ -85,16 +86,9 @@ spec:
           imageTag: {{.etcdImageTag}}
 {{- end }}
       dns:
-        type: CoreDNS
         imageRepository: {{.corednsRepository}}
         imageTag: {{.corednsVersion}}
       apiServer:
-{{- if .extraEndpoints }}
-        certSANs:
-        {{- range .extraEndpoints }}
-        - {{.}}
-        {{- end }}
-{{- end }}
         extraArgs:
           cloud-provider: external
           audit-policy-file: /etc/kubernetes/audit-policy.yaml
@@ -250,7 +244,7 @@ spec:
 ---
 {{- if .externalEtcd }}
 kind: EtcdadmCluster
-apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
+apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
 metadata:
   name: {{.clusterName}}-etcd
   namespace: {{.eksaSystemNamespace}}
@@ -291,11 +285,11 @@ spec:
       {{- end }}
 {{- end }}
   infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: CloudStackMachineTemplate
     name: {{.etcdTemplateName}}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate
 metadata:
   name: {{.etcdTemplateName}}

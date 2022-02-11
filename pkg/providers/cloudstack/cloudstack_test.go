@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"math"
 	"net"
 	"os"
 	"path"
@@ -14,12 +13,12 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	etcdv1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/cluster-api/api/v1alpha3"
-	kubeadmnv1alpha3 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -50,92 +49,32 @@ type DummyProviderCloudMonkeyClient struct {
 	osTag string
 }
 
+func (pc *DummyProviderCloudMonkeyClient) ValidateCloudStackConnection(ctx context.Context) error {
+	return nil
+}
+
+func (pc *DummyProviderCloudMonkeyClient) ValidateServiceOfferingPresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, serviceOffering v1alpha1.CloudStackResourceRef) error {
+	return nil
+}
+
+func (pc *DummyProviderCloudMonkeyClient) ValidateTemplatePresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, template v1alpha1.CloudStackResourceRef) error {
+	return nil
+}
+
+func (pc *DummyProviderCloudMonkeyClient) ValidateAffinityGroupsPresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, affinityGroupIds []string) error {
+	return nil
+}
+
+func (pc *DummyProviderCloudMonkeyClient) ValidateZonePresent(ctx context.Context, zone v1alpha1.CloudStackResourceRef) error {
+	return nil
+}
+
+func (pc *DummyProviderCloudMonkeyClient) ValidateAccountPresent(ctx context.Context, account string) error {
+	return nil
+}
+
 func NewDummyProviderCloudMonkeyClient() *DummyProviderCloudMonkeyClient {
 	return &DummyProviderCloudMonkeyClient{osTag: ubuntuOSTag}
-}
-
-func (pc *DummyProviderCloudMonkeyClient) TemplateHasSnapshot(ctx context.Context, template string) (bool, error) {
-	return false, nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) GetWorkloadAvailableSpace(ctx context.Context, machineConfig *v1alpha1.CloudStackMachineConfig) (float64, error) {
-	return math.MaxFloat64, nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) DeployTemplate(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig) error {
-	return nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) ValidateCloudStackSetup(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, selfSigned *bool) error {
-	return nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) ValidateCloudStackSetupMachineConfig(ctx context.Context, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, machineConfig *v1alpha1.CloudStackMachineConfig, selfSigned *bool) error {
-	return nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) SearchTemplate(ctx context.Context, domain string, zone string, account string, template string) (string, error) {
-	return template, nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) SearchDiskOffering(ctx context.Context, domain string, zone string, account string, diskOffering string) (string, error) {
-	return diskOffering, nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) SearchComputeOffering(ctx context.Context, domain string, zone string, account string, computeOffering string) (string, error) {
-	return computeOffering, nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) LibraryElementExists(ctx context.Context, library string) (bool, error) {
-	return true, nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) GetLibraryElementContentVersion(ctx context.Context, element string) (string, error) {
-	return "", nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) DeleteLibraryElement(ctx context.Context, element string) error {
-	return nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) CreateLibrary(ctx context.Context, datastore, library string) error {
-	return nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, resourcePool string, resizeDisk2 bool) error {
-	return nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) ResizeDisk(ctx context.Context, template, diskName string, diskSizeInGB int) error {
-	return nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) ImportTemplate(ctx context.Context, library, ovaURL, name string) error {
-	return nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) GetTags(ctx context.Context, path string) (tags []string, err error) {
-	return []string{eksd119ReleaseTag, eksd121ReleaseTag, pc.osTag}, nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) ListTags(ctx context.Context) ([]string, error) {
-	return nil, nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) CreateTag(ctx context.Context, tag, category string) error {
-	return nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) AddTag(ctx context.Context, path, tag string) error {
-	return nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) ListCategories(ctx context.Context) ([]string, error) {
-	return nil, nil
-}
-
-func (pc *DummyProviderCloudMonkeyClient) CreateCategoryForVM(ctx context.Context, name string) error {
-	return nil
 }
 
 type DummyNetClient struct{}
@@ -168,8 +107,8 @@ func fillClusterSpecWithClusterConfig(spec *cluster.Spec, clusterConfig *v1alpha
 	spec.Cluster = clusterConfig
 }
 
-func givenDatacenterConfig(t *testing.T, fileName string) *v1alpha1.CloudStackDeploymentConfig {
-	deploymentConfig, err := v1alpha1.GetCloudStackDeploymentConfig(path.Join(testDataDir, fileName))
+func givenDatacenterConfig(t *testing.T, fileName string) *v1alpha1.CloudStackDatacenterConfig {
+	deploymentConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, fileName))
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file: %v", err)
 	}
@@ -201,9 +140,9 @@ func givenProvider(t *testing.T) *cloudstackProvider {
 	return provider
 }
 
-func givenCloudMonkeyMock(t *testing.T) *mocks.MockProviderCloudMonkeyClient {
+func givenCloudMonkeyMock(t *testing.T) *mocks.MockProviderCmkClient {
 	ctrl := gomock.NewController(t)
-	return mocks.NewMockProviderCloudMonkeyClient(ctrl)
+	return mocks.NewMockProviderCmkClient(ctrl)
 }
 
 type testContext struct {
@@ -257,17 +196,17 @@ type providerTest struct {
 	provider                           *cloudstackProvider
 	cluster                            *v1alpha1.Cluster
 	clusterSpec                        *cluster.Spec
-	datacenterConfig                   *v1alpha1.CloudStackDeploymentConfig
+	datacenterConfig                   *v1alpha1.CloudStackDatacenterConfig
 	machineConfigs                     map[string]*v1alpha1.CloudStackMachineConfig
 	kubectl                            *mocks.MockProviderKubectlClient
-	govc                               *mocks.MockProviderCloudMonkeyClient
+	cmk                               *mocks.MockProviderCmkClient
 	resourceSetManager                 *mocks.MockClusterResourceSetManager
 }
 
 func newProviderTest(t *testing.T) *providerTest {
 	ctrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
-	govc := mocks.NewMockProviderCloudMonkeyClient(ctrl)
+	cmk := mocks.NewMockProviderCmkClient(ctrl)
 	resourceSetManager := mocks.NewMockClusterResourceSetManager(ctrl)
 	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
 	deploymentConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
@@ -277,7 +216,7 @@ func newProviderTest(t *testing.T) *providerTest {
 		deploymentConfig,
 		machineConfigs,
 		clusterConfig,
-		govc,
+		cmk,
 		kubectl,
 		resourceSetManager,
 	)
@@ -298,7 +237,7 @@ func newProviderTest(t *testing.T) *providerTest {
 		datacenterConfig:   deploymentConfig,
 		machineConfigs:     machineConfigs,
 		kubectl:            kubectl,
-		govc:               govc,
+		cmk:               cmk,
 		resourceSetManager: resourceSetManager,
 	}
 }
@@ -322,7 +261,7 @@ func TestNewProvider(t *testing.T) {
 	}
 }
 
-func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.CloudStackDeploymentConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient) *cloudstackProvider {
+func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient) *cloudstackProvider {
 	ctrl := gomock.NewController(t)
 	resourceSetManager := mocks.NewMockClusterResourceSetManager(ctrl)
 	return newProvider(
@@ -336,13 +275,13 @@ func newProviderWithKubectl(t *testing.T, datacenterConfig *v1alpha1.CloudStackD
 	)
 }
 
-func newProvider(t *testing.T, deploymentConfig *v1alpha1.CloudStackDeploymentConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, govc ProviderCloudMonkeyClient, kubectl ProviderKubectlClient, resourceSetManager ClusterResourceSetManager) *cloudstackProvider {
+func newProvider(t *testing.T, deploymentConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, cmk ProviderCmkClient, kubectl ProviderKubectlClient, resourceSetManager ClusterResourceSetManager) *cloudstackProvider {
 	_, writer := test.NewWriter(t)
 	return NewProviderCustomNet(
 		deploymentConfig,
 		machineConfigs,
 		clusterConfig,
-		govc,
+		cmk,
 		kubectl,
 		writer,
 		&DummyNetClient{},
@@ -381,15 +320,15 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 				Name: "bootstrap-test",
 			}
 			clusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
-			cloudstackDatacenter := &v1alpha1.CloudStackDeploymentConfig{
-				Spec: v1alpha1.CloudStackDeploymentConfigSpec{},
+			cloudstackDatacenter := &v1alpha1.CloudStackDatacenterConfig{
+				Spec: v1alpha1.CloudStackDatacenterConfigSpec{},
 			}
 			cloudstackMachineConfig := &v1alpha1.CloudStackMachineConfig{
 				Spec: v1alpha1.CloudStackMachineConfigSpec{},
 			}
 
 			kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Name).Return(clusterSpec.Cluster, nil)
-			kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(cloudstackDatacenter, nil)
+			kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(cloudstackDatacenter, nil)
 			kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(cloudstackMachineConfig, nil)
 			kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(cloudstackMachineConfig, nil)
 			deploymentConfig := givenDatacenterConfig(t, tt.clusterconfigFile)
@@ -444,15 +383,15 @@ func TestProviderGenerateExtraEndpointAsCertSANs(t *testing.T) {
 				Name: "bootstrap-test",
 			}
 			clusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
-			cloudstackDatacenter := &v1alpha1.CloudStackDeploymentConfig{
-				Spec: v1alpha1.CloudStackDeploymentConfigSpec{},
+			cloudstackDatacenter := &v1alpha1.CloudStackDatacenterConfig{
+				Spec: v1alpha1.CloudStackDatacenterConfigSpec{},
 			}
 			cloudstackMachineConfig := &v1alpha1.CloudStackMachineConfig{
 				Spec: v1alpha1.CloudStackMachineConfigSpec{},
 			}
 
 			kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Name).Return(clusterSpec.Cluster, nil)
-			kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(cloudstackDatacenter, nil)
+			kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(cloudstackDatacenter, nil)
 			kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(cloudstackMachineConfig, nil)
 			kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(cloudstackMachineConfig, nil)
 			deploymentConfig := givenDatacenterConfig(t, tt.clusterconfigFile)
@@ -507,15 +446,15 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *
 				Name: "bootstrap-test",
 			}
 			clusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
-			cloudstackDatacenter := &v1alpha1.CloudStackDeploymentConfig{
-				Spec: v1alpha1.CloudStackDeploymentConfigSpec{},
+			cloudstackDatacenter := &v1alpha1.CloudStackDatacenterConfig{
+				Spec: v1alpha1.CloudStackDatacenterConfigSpec{},
 			}
 			cloudstackMachineConfig := &v1alpha1.CloudStackMachineConfig{
 				Spec: v1alpha1.CloudStackMachineConfigSpec{},
 			}
 
 			kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Name).Return(clusterSpec.Cluster, nil)
-			kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(cloudstackDatacenter, nil)
+			kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(cloudstackDatacenter, nil)
 			kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(cloudstackMachineConfig, nil)
 			kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(cloudstackMachineConfig, nil)
 			kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(cloudstackMachineConfig, nil)
@@ -558,19 +497,26 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 	}
 	clusterSpec := givenClusterSpec(t, testClusterConfigMainFilename)
 
-	oldCP := &kubeadmnv1alpha3.KubeadmControlPlane{
-		Spec: kubeadmnv1alpha3.KubeadmControlPlaneSpec{
-			InfrastructureTemplate: v1.ObjectReference{
-				Name: "test-control-plane-template-original",
+	oldCP := &controlplanev1.KubeadmControlPlane{
+		Spec: controlplanev1.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
+				InfrastructureRef: v1.ObjectReference{
+					Name: "test-control-plane-template-original",
+				},
 			},
 		},
 	}
-	oldMD := &v1alpha3.MachineDeployment{
-		Spec: v1alpha3.MachineDeploymentSpec{
-			Template: v1alpha3.MachineTemplateSpec{
-				Spec: v1alpha3.MachineSpec{
+	oldMD := &clusterv1.MachineDeployment{
+		Spec: clusterv1.MachineDeploymentSpec{
+			Template: clusterv1.MachineTemplateSpec{
+				Spec: clusterv1.MachineSpec{
 					InfrastructureRef: v1.ObjectReference{
-						Name: "test-worker-node-template-original",
+						Name: "test-md-0-original",
+					},
+					Bootstrap: clusterv1.Bootstrap{
+						ConfigRef: &v1.ObjectReference{
+							Name: "test-md-0-template-original",
+						},
 					},
 				},
 			},
@@ -600,7 +546,7 @@ func TestProviderGenerateCAPISpecForUpgradeNotUpdateMachineTemplate(t *testing.T
 	workerNodeMachineConfigName := clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Name).Return(clusterSpec.Cluster, nil)
-	kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(deploymentConfig, nil)
+	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cluster.Name, cluster.KubeconfigFile, clusterSpec.Namespace).Return(deploymentConfig, nil)
 	kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, controlPlaneMachineConfigName, cluster.KubeconfigFile, clusterSpec.Namespace).Return(machineConfigs[controlPlaneMachineConfigName], nil)
 	kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, workerNodeMachineConfigName, cluster.KubeconfigFile, clusterSpec.Namespace).Return(machineConfigs[workerNodeMachineConfigName], nil)
 	kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, etcdMachineConfigName, cluster.KubeconfigFile, clusterSpec.Namespace).Return(machineConfigs[etcdMachineConfigName], nil)
@@ -747,16 +693,6 @@ func TestSetupAndValidateCreateCluster(t *testing.T) {
 	}
 }
 
-func thenErrorPrefixExpected(t *testing.T, expected string, err error) {
-	if err == nil {
-		t.Fatalf("Expected=<%s> actual=<nil>", expected)
-	}
-	actual := err.Error()
-	if !strings.HasPrefix(actual, expected) {
-		t.Fatalf("Expected=<%s...> actual=<%s...>", expected, actual)
-	}
-}
-
 func thenErrorExpected(t *testing.T, expected string, err error) {
 	if err == nil {
 		t.Fatalf("Expected=<%s> actual=<nil>", expected)
@@ -802,7 +738,7 @@ func TestSetupAndValidateCreateWorkloadClusterSuccess(t *testing.T) {
 	for _, config := range newMachineConfigs {
 		kubectl.EXPECT().SearchCloudStackMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{}, nil)
 	}
-	kubectl.EXPECT().SearchCloudStackDeploymentConfig(context.TODO(), datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Namespace).Return([]*v1alpha1.CloudStackDeploymentConfig{}, nil)
+	kubectl.EXPECT().SearchCloudStackDatacenterConfig(context.TODO(), datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Namespace).Return([]*v1alpha1.CloudStackDatacenterConfig{}, nil)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
@@ -904,7 +840,7 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterExists(t *testing
 	for _, config := range newMachineConfigs {
 		kubectl.EXPECT().SearchCloudStackMachineConfig(context.TODO(), config.Name, clusterSpec.ManagementCluster.KubeconfigFile, config.Namespace).Return([]*v1alpha1.CloudStackMachineConfig{}, nil)
 	}
-	kubectl.EXPECT().SearchCloudStackDeploymentConfig(context.TODO(), deploymentConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Namespace).Return([]*v1alpha1.CloudStackDeploymentConfig{deploymentConfig}, nil)
+	kubectl.EXPECT().SearchCloudStackDatacenterConfig(context.TODO(), deploymentConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Namespace).Return([]*v1alpha1.CloudStackDatacenterConfig{deploymentConfig}, nil)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
@@ -931,7 +867,7 @@ func TestSetupAndValidateSelfManagedClusterSkipDatacenterNameValidateSuccess(t *
 	}
 
 	kubectl.EXPECT().SearchCloudStackMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
-	kubectl.EXPECT().SearchCloudStackDeploymentConfig(context.TODO(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
+	kubectl.EXPECT().SearchCloudStackDatacenterConfig(context.TODO(), gomock.Any(), gomock.Any(), gomock.Any()).Times(0)
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
@@ -1094,16 +1030,13 @@ func TestSetupAndValidateCreateClusterInsecure(t *testing.T) {
 	clusterSpec := givenEmptyClusterSpec()
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
 	provider := givenProvider(t)
-	provider.deploymentConfig.Spec.Insecure = true
+	provider.datacenterConfig.Spec.Insecure = true
 	var tctx testContext
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
 		t.Fatalf("Unexpected error <%v>", err)
-	}
-	if provider.deploymentConfig.Spec.Thumbprint != "" {
-		t.Fatalf("Expected=<> actual=<%s>", provider.deploymentConfig.Spec.Thumbprint)
 	}
 }
 
@@ -1126,13 +1059,12 @@ func TestSetupAndValidateCreateClusterNoDatacenter(t *testing.T) {
 	clusterSpec := givenEmptyClusterSpec()
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
 	provider := givenProvider(t)
-	provider.deploymentConfig.Spec.ManagementApiEndpoint = ""
 	var tctx testContext
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "failed setup and validations: CloudStackDeploymentConfig managementApiEndpoint is not set or is empty", err)
+	thenErrorExpected(t, "failed setup and validations: CloudStackDatacenterConfig managementApiEndpoint is not set or is empty", err)
 }
 
 func TestSetupAndValidateCreateClusterNoNetwork(t *testing.T) {
@@ -1140,13 +1072,13 @@ func TestSetupAndValidateCreateClusterNoNetwork(t *testing.T) {
 	clusterSpec := givenEmptyClusterSpec()
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
 	provider := givenProvider(t)
-	provider.deploymentConfig.Spec.Network = ""
+	provider.datacenterConfig.Spec.Network = ""
 	var tctx testContext
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, "CloudStackDeploymentConfig network is not set or is empty", err)
+	thenErrorExpected(t, "CloudStackDatacenterConfig network is not set or is empty", err)
 }
 
 func TestSetupAndValidateCreateClusterEndpointPortNotSpecified(t *testing.T) {
@@ -1495,83 +1427,13 @@ func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNonexistent(t *testing.
 	}
 }
 
-func TestSetupAndValidateCreateClusterOsFamilyDifferent(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = "redhat"
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "control plane and worker nodes must have the same osFamily specified", err)
-	}
-}
-
-func TestSetupAndValidateCreateClusterOsFamilyDifferentForEtcd(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily = "ubuntu"
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "control plane and etcd machines must have the same osFamily specified", err)
-	}
-}
-
-func TestSetupAndValidateCreateClusterOsFamilyEmpty(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-	deploymentConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	cloudmonkey := NewDummyProviderCloudMonkeyClient()
-	cloudmonkey.osTag = ubuntuOSTag
-	provider := newProviderWithKubectl(t, deploymentConfig, machineConfigs, clusterConfig, nil)
-	provider.providerCloudMonkeyClient = cloudmonkey
-	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily = ""
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].Name = ""
-	workerNodeMachineConfigName := clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	provider.machineConfigs[workerNodeMachineConfigName].Spec.OSFamily = ""
-	provider.machineConfigs[workerNodeMachineConfigName].Spec.Users[0].Name = ""
-	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily = ""
-	provider.machineConfigs[etcdMachineConfigName].Spec.Users[0].Name = ""
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
-	}
-	if provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily != v1alpha1.Redhat {
-		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Redhat)
-	}
-	if provider.machineConfigs[workerNodeMachineConfigName].Spec.OSFamily != v1alpha1.Redhat {
-		t.Fatalf("got osFamily for control plane machine as %v, want %v", provider.machineConfigs[controlPlaneMachineConfigName].Spec.OSFamily, v1alpha1.Redhat)
-	}
-	if provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily != v1alpha1.Redhat {
-		t.Fatalf("got osFamily for etcd machine as %v, want %v", provider.machineConfigs[etcdMachineConfigName].Spec.OSFamily, v1alpha1.Redhat)
-	}
-}
-
 func TestSetupAndValidateCreateClusterTemplateDifferent(t *testing.T) {
 	ctx := context.Background()
 	clusterSpec := givenEmptyClusterSpec()
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
 	provider := givenProvider(t)
 	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Template = "test"
+	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Template = v1alpha1.CloudStackResourceRef{Value: "test", Type: "name"}
 	var tctx testContext
 	tctx.SaveContext()
 
@@ -1587,23 +1449,22 @@ func TestSetupAndValidateCreateClusterTemplateDoesNotExist(t *testing.T) {
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
 	provider := givenProvider(t)
 	cloudmonkey := givenCloudMonkeyMock(t)
-	provider.providerCloudMonkeyClient = cloudmonkey
+	provider.providerCmkClient = cloudmonkey
 	setupContext(t)
 
-	cloudmonkey.EXPECT().ValidateCloudStackSetup(ctx, provider.deploymentConfig, &provider.selfSigned).Return(nil)
-	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.deploymentConfig, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.deploymentConfig, provider.machineConfigs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.deploymentConfig, provider.machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
+	cloudmonkey.EXPECT().ValidateCloudStackSetup(ctx, provider.datacenterConfig, &provider.selfSigned).Return(nil)
+	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
+	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name], &provider.selfSigned).Return(nil)
+	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
 
 	template := provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Template
 	templateNotFoundError := fmt.Errorf("%s not found. Has the template been imported?", template)
-	cloudmonkey.EXPECT().SearchTemplate(ctx, provider.deploymentConfig.Spec.Domain, provider.deploymentConfig.Spec.Zone, provider.deploymentConfig.Spec.Account, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Template).Return("", templateNotFoundError).AnyTimes()
-	cloudmonkey.EXPECT().SearchDiskOffering(ctx, provider.deploymentConfig.Spec.Domain, provider.deploymentConfig.Spec.Zone, provider.deploymentConfig.Spec.Account, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.DiskOffering).Return("", nil).AnyTimes()
-	cloudmonkey.EXPECT().SearchComputeOffering(ctx, provider.deploymentConfig.Spec.Domain, provider.deploymentConfig.Spec.Zone, provider.deploymentConfig.Spec.Account, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.ComputeOffering).Return("", nil).AnyTimes()
+	cloudmonkey.EXPECT().ValidateTemplatePresent(ctx, provider.datacenterConfig.Spec.Domain, provider.datacenterConfig.Spec.Zone, provider.datacenterConfig.Spec.Account, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Template).Return("", templateNotFoundError).AnyTimes()
+	cloudmonkey.EXPECT().ValidateServiceOfferingPresent(ctx, provider.datacenterConfig.Spec.Domain, provider.datacenterConfig.Spec.Zone, provider.datacenterConfig.Spec.Account, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.ComputeOffering).Return("", nil).AnyTimes()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorContainsExpected(t, "error validating template: "+template+" not found. Has the template been imported?", err)
+	thenErrorContainsExpected(t, fmt.Sprintf("error validating template: %s not found. Has the template been imported?", template), err)
 }
 
 func TestSetupAndValidateCreateClusterComputeOfferingDoesNotExist(t *testing.T) {
@@ -1612,48 +1473,22 @@ func TestSetupAndValidateCreateClusterComputeOfferingDoesNotExist(t *testing.T) 
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
 	provider := givenProvider(t)
 	cloudmonkey := givenCloudMonkeyMock(t)
-	provider.providerCloudMonkeyClient = cloudmonkey
+	provider.providerCmkClient = cloudmonkey
 	setupContext(t)
 
-	cloudmonkey.EXPECT().ValidateCloudStackSetup(ctx, provider.deploymentConfig, &provider.selfSigned).Return(nil)
-	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.deploymentConfig, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.deploymentConfig, provider.machineConfigs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.deploymentConfig, provider.machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
+	cloudmonkey.EXPECT().ValidateCloudStackSetup(ctx, provider.datacenterConfig, &provider.selfSigned).Return(nil)
+	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
+	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name], &provider.selfSigned).Return(nil)
+	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
 
 	computeOffering := provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.ComputeOffering
 	computeOfferingNotFoundError := fmt.Errorf("%s not found. Has the compute offering been imported?", computeOffering)
-	cloudmonkey.EXPECT().SearchTemplate(ctx, provider.deploymentConfig.Spec.Domain, provider.deploymentConfig.Spec.Zone, provider.deploymentConfig.Spec.Account, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Template).Return("", nil).AnyTimes()
-	cloudmonkey.EXPECT().SearchDiskOffering(ctx, provider.deploymentConfig.Spec.Domain, provider.deploymentConfig.Spec.Zone, provider.deploymentConfig.Spec.Account, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.DiskOffering).Return("", nil).AnyTimes()
-	cloudmonkey.EXPECT().SearchComputeOffering(ctx, provider.deploymentConfig.Spec.Domain, provider.deploymentConfig.Spec.Zone, provider.deploymentConfig.Spec.Account, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.ComputeOffering).Return("", computeOfferingNotFoundError).AnyTimes()
+	cloudmonkey.EXPECT().ValidateTemplatePresent(ctx, provider.datacenterConfig.Spec.Domain, provider.datacenterConfig.Spec.Zone, provider.datacenterConfig.Spec.Account, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Template).Return("", nil).AnyTimes()
+	cloudmonkey.EXPECT().ValidateServiceOfferingPresent(ctx, provider.datacenterConfig.Spec.Domain, provider.datacenterConfig.Spec.Zone, provider.datacenterConfig.Spec.Account, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.ComputeOffering).Return("", computeOfferingNotFoundError).AnyTimes()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorContainsExpected(t, "error validating computeOffering: "+computeOffering+" not found. Has the compute offering been imported?", err)
-}
-
-func TestSetupAndValidateCreateClusterDiskOfferingDoesNotExist(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	cloudmonkey := givenCloudMonkeyMock(t)
-	provider.providerCloudMonkeyClient = cloudmonkey
-	setupContext(t)
-
-	cloudmonkey.EXPECT().ValidateCloudStackSetup(ctx, provider.deploymentConfig, &provider.selfSigned).Return(nil)
-	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.deploymentConfig, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.deploymentConfig, provider.machineConfigs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.deploymentConfig, provider.machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-
-	diskOffering := provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.DiskOffering
-	diskOfferingNotFoundError := fmt.Errorf("%s not found. Has the disk offering been imported?", diskOffering)
-	cloudmonkey.EXPECT().SearchTemplate(ctx, provider.deploymentConfig.Spec.Domain, provider.deploymentConfig.Spec.Zone, provider.deploymentConfig.Spec.Account, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Template).Return("", nil).AnyTimes()
-	cloudmonkey.EXPECT().SearchDiskOffering(ctx, provider.deploymentConfig.Spec.Domain, provider.deploymentConfig.Spec.Zone, provider.deploymentConfig.Spec.Account, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.DiskOffering).Return("", diskOfferingNotFoundError).AnyTimes()
-	cloudmonkey.EXPECT().SearchComputeOffering(ctx, provider.deploymentConfig.Spec.Domain, provider.deploymentConfig.Spec.Zone, provider.deploymentConfig.Spec.Account, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.ComputeOffering).Return("", nil).AnyTimes()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-
-	thenErrorContainsExpected(t, "error validating diskOffering: "+diskOffering+" not found. Has the disk offering been imported?", err)
+	thenErrorContainsExpected(t, fmt.Sprintf("error validating computeOffering: %s not found. Has the compute offering been imported?", computeOffering), err)
 }
 
 func TestSetupAndValidateCreateClusterErrorCheckingTemplate(t *testing.T) {
@@ -1662,14 +1497,14 @@ func TestSetupAndValidateCreateClusterErrorCheckingTemplate(t *testing.T) {
 	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
 	provider := givenProvider(t)
 	cloudmonkey := givenCloudMonkeyMock(t)
-	provider.providerCloudMonkeyClient = cloudmonkey
+	provider.providerCmkClient = cloudmonkey
 	setupContext(t)
 
-	cloudmonkey.EXPECT().ValidateCloudStackSetup(ctx, provider.deploymentConfig, &provider.selfSigned).Return(nil)
-	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.deploymentConfig, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.deploymentConfig, provider.machineConfigs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.deploymentConfig, provider.machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
-	cloudmonkey.EXPECT().SearchTemplate(ctx, provider.deploymentConfig.Spec.Domain, provider.deploymentConfig.Spec.Zone, provider.deploymentConfig.Spec.Account, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Template).Return("", errors.New("failed to get template"))
+	cloudmonkey.EXPECT().ValidateCloudStackSetup(ctx, provider.datacenterConfig, &provider.selfSigned).Return(nil)
+	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
+	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name], &provider.selfSigned).Return(nil)
+	cloudmonkey.EXPECT().ValidateCloudStackSetupMachineConfig(ctx, provider.datacenterConfig, provider.machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name], &provider.selfSigned).Return(nil)
+	cloudmonkey.EXPECT().ValidateTemplatePresent(ctx, provider.datacenterConfig.Spec.Domain, provider.datacenterConfig.Spec.Zone, provider.datacenterConfig.Spec.Account, provider.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Template).Return("", errors.New("failed to get template"))
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
@@ -1728,7 +1563,7 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 
 func TestGetDatacenterConfig(t *testing.T) {
 	provider := givenProvider(t)
-	provider.deploymentConfig.TypeMeta.Kind = "kind"
+	provider.datacenterConfig.TypeMeta.Kind = "kind"
 
 	providerConfig := provider.DatacenterConfig()
 	if providerConfig.Kind() != "kind" {
@@ -1753,7 +1588,7 @@ func TestValidateNewSpecSuccess(t *testing.T) {
 	c := &types.Cluster{}
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
+	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
 
 	err := provider.ValidateNewSpec(context.TODO(), c, clusterSpec)
 	assert.NoError(t, err, "No error should be returned when previous spec == new spec")
@@ -1768,7 +1603,6 @@ func TestValidateNewSpecDatacenterImmutable(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newProviderConfig.Spec.ManagementApiEndpoint = newProviderConfig.Spec.ManagementApiEndpoint + "-new"
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
@@ -1776,7 +1610,7 @@ func TestValidateNewSpecDatacenterImmutable(t *testing.T) {
 	})
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
+	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
 
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
 	assert.Error(t, err, "spec.managementApiEndpoint is immutable. Previous value https://127.0.0.1:8080/client/api-new, new value https://127.0.0.1:8080/client/api")
@@ -1791,7 +1625,6 @@ func TestValidateNewSpecMachineConfigNotFound(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newProviderConfig.Spec.ManagementApiEndpoint = newProviderConfig.Spec.ManagementApiEndpoint + "-new"
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
@@ -1802,7 +1635,7 @@ func TestValidateNewSpecMachineConfigNotFound(t *testing.T) {
 	})
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
+	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
 
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
 	assert.Errorf(t, err, "can't find machine config missing-machine-group in cloudstack provider machine configs")
@@ -1824,31 +1657,9 @@ func TestValidateNewSpecTLSInsecureImmutable(t *testing.T) {
 	})
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
+	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
 	assert.Error(t, err, "Insecure should be immutable")
-}
-
-func TestValidateNewSpecTLSThumbprintImmutable(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-
-	provider := givenProvider(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider.providerKubectlClient = kubectl
-
-	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newProviderConfig.Spec.Thumbprint = "new-" + newProviderConfig.Spec.Thumbprint
-
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Namespace = "test-namespace"
-		s.Cluster = clusterConfig
-	})
-
-	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
-	assert.Error(t, err, "Thumbprint should be immutable")
 }
 
 func TestValidateNewSpecMachineConfigSshUsersImmutable(t *testing.T) {
@@ -1860,7 +1671,6 @@ func TestValidateNewSpecMachineConfigSshUsersImmutable(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newProviderConfig.Spec.ManagementApiEndpoint = newProviderConfig.Spec.ManagementApiEndpoint + "-new"
 
 	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
 
@@ -1870,7 +1680,7 @@ func TestValidateNewSpecMachineConfigSshUsersImmutable(t *testing.T) {
 	})
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
+	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
 
 	newMachineConfigs["test-cp"].Spec.Users[0].Name = "newNameShouldNotBeAllowed"
 
@@ -1887,7 +1697,6 @@ func TestValidateNewSpecMachineConfigSshAuthKeysImmutable(t *testing.T) {
 	provider.providerKubectlClient = kubectl
 
 	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newProviderConfig.Spec.ManagementApiEndpoint = newProviderConfig.Spec.ManagementApiEndpoint + "-new"
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Namespace = "test-namespace"
@@ -1895,7 +1704,7 @@ func TestValidateNewSpecMachineConfigSshAuthKeysImmutable(t *testing.T) {
 	})
 
 	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaCloudStackDeploymentConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
+	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
 
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
 	assert.Error(t, err, "SSH Authorized Keys should be immutable")

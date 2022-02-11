@@ -138,7 +138,7 @@ func writeInfrastructureBundle(clusterSpec *cluster.Spec, rootFolder string, bun
 	for _, manifest := range bundle.Manifests {
 		m, err := clusterSpec.LoadManifest(manifest)
 		if err != nil {
-			return fmt.Errorf("can't load infrastructure bundle: %v", err)
+			return fmt.Errorf("can't load infrastructure bundle for manifest %s: %v", manifest.URI, err)
 		}
 
 		if err := ioutil.WriteFile(filepath.Join(infraFolder, m.Filename), m.Content, 0o644); err != nil {
@@ -227,6 +227,11 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		tinkerbellProvider = "true"
 	}
 
+	cloudStackProvider := "false"
+	if features.IsActive(features.CloudStackProvider()) {
+		cloudStackProvider = "true"
+	}
+
 	data := map[string]string{
 		"CertManagerInjectorRepository":                   imageRepository(bundle.CertManager.Cainjector),
 		"CertManagerInjectorTag":                          bundle.CertManager.Cainjector.Tag(),
@@ -253,8 +258,12 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		"ClusterApiAwsKubeRbacProxyTag":                   bundle.Aws.KubeProxy.Tag(),
 		"ClusterApiVSphereControllerRepository":           imageRepository(bundle.VSphere.ClusterAPIController),
 		"ClusterApiVSphereControllerTag":                  bundle.VSphere.ClusterAPIController.Tag(),
+		"ClusterApiCloudStackManagerRepository":           imageRepository(bundle.CloudStack.Manager),
+		"ClusterApiCloudStackManagerTag":                  bundle.CloudStack.Manager.Tag(),
 		"ClusterApiVSphereKubeRbacProxyRepository":        imageRepository(bundle.VSphere.KubeProxy),
 		"ClusterApiVSphereKubeRbacProxyTag":               bundle.VSphere.KubeProxy.Tag(),
+		"ClusterApiCloudStackKubeRbacProxyRepository":     imageRepository(bundle.CloudStack.KubeProxy),
+		"ClusterApiCloudStackKubeRbacProxyTag":            bundle.CloudStack.KubeProxy.Tag(),
 		"DockerKubeRbacProxyRepository":                   imageRepository(bundle.Docker.KubeProxy),
 		"DockerKubeRbacProxyTag":                          bundle.Docker.KubeProxy.Tag(),
 		"DockerManagerRepository":                         imageRepository(bundle.Docker.Manager),
@@ -269,9 +278,11 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		"EtcdadmControllerKubeRbacProxyTag":               bundle.ExternalEtcdController.KubeProxy.Tag(),
 		"DockerProviderVersion":                           bundle.Docker.Version,
 		"VSphereProviderVersion":                          bundle.VSphere.Version,
+		"CloudStackProviderVersion":                       bundle.CloudStack.Version,
 		"AwsProviderVersion":                              bundle.Aws.Version,
 		"TinkerbellProviderVersion":                       "v0.1.0", // TODO - version should come from the bundle
 		"IsActiveTinkerbellProvider":                      tinkerbellProvider,
+		"IsActiveCloudStackProvider":                      cloudStackProvider,
 		"ClusterApiProviderVersion":                       bundle.ClusterAPI.Version,
 		"KubeadmControlPlaneProviderVersion":              bundle.ControlPlane.Version,
 		"KubeadmBootstrapProviderVersion":                 bundle.Bootstrap.Version,
@@ -301,6 +312,7 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 var providerNamespaces = map[string]string{
 	constants.VSphereProviderName: constants.CapvSystemNamespace,
 	constants.DockerProviderName:  constants.CapdSystemNamespace,
+	constants.CloudStackProviderName: constants.CapcSystemNamespace,
 	constants.AWSProviderName:     constants.CapaSystemNamespace,
 	etcdadmBootstrapProviderName:  constants.EtcdAdmBootstrapProviderSystemNamespace,
 	etcdadmControllerProviderName: constants.EtcdAdmControllerSystemNamespace,
