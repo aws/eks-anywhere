@@ -3,8 +3,8 @@ kind: MachineDeployment
 metadata:
   labels:
     cluster.x-k8s.io/cluster-name: {{.clusterName}}
-    pool: {{.workerPoolName}}
-  name: {{.clusterName}}-{{.workerPoolName}}
+    pool: {{.workerNodeGroupName}}
+  name: {{.clusterName}}-{{.workerNodeGroupName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   clusterName: {{.clusterName}}
@@ -15,24 +15,24 @@ spec:
     metadata:
       labels:
         cluster.x-k8s.io/cluster-name: {{.clusterName}}
-        pool: {{.workerPoolName}}
+        pool: {{.workerNodeGroupName}}
     spec:
       bootstrap:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
-          name: {{.clusterName}}-{{.workerPoolName}}
+          name: {{.clusterName}}-{{.workerNodeGroupName}}
       clusterName: {{.clusterName}}
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: TinkerbellMachineTemplate
-        name: {{.clusterName}}-{{.workerPoolName}}
+        name: {{.clusterName}}-{{.workerNodeGroupName}}
       version: {{.kubernetesVersion}}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: TinkerbellMachineTemplate
 metadata:
-  name: {{.clusterName}}-{{.workerPoolName}}
+  name: {{.clusterName}}-{{.workerNodeGroupName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   template:
@@ -48,7 +48,7 @@ spec:
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
-  name: {{.clusterName}}-{{.workerPoolName}}
+  name: {{.clusterName}}-{{.workerNodeGroupName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   template:
