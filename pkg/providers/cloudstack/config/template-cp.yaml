@@ -1,0 +1,319 @@
+apiVersion: cluster.x-k8s.io/v1alpha3
+kind: Cluster
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: {{.clusterName}}
+  name: {{.clusterName}}
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: {{.podCidrs}}
+    services:
+      cidrBlocks: {{.serviceCidrs}}
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+    kind: KubeadmControlPlane
+    name: {{.clusterName}}
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    kind: CloudStackCluster
+    name: {{.clusterName}}
+{{- if .externalEtcd }}
+  managedExternalEtcdRef:
+    apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
+    kind: EtcdadmCluster
+    name: {{.clusterName}}-etcd
+{{- end }}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: CloudStackCluster
+metadata:
+  name: {{.clusterName}}
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  controlPlaneEndpoint:
+    host: {{.controlPlaneEndpointHost}}
+    port: {{.controlPlaneEndpointPort}}
+  network: {{.cloudstackNetwork}}
+  zone: {{.cloudstackZone}}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: CloudStackMachineTemplate
+metadata:
+  name: {{.controlPlaneTemplateName}}
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  template:
+    spec:
+      offering: {{.cloudstackControlPlaneComputeOffering}}
+      template: {{.cloudstackControlPlaneTemplateOffering}}
+      details:
+      {{- range $key, $value := .cloudstackControlPlaneDetails}}
+        {{$key}}: {{$value}}
+      {{- end}}
+{{- if .affinityGroupIds }}
+      affinitygroupids:
+      {{- range .affinityGroupIds}}
+      - {{.}}
+      {{- end }}
+{{- end }}
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1alpha3
+kind: KubeadmControlPlane
+metadata:
+  name: {{.clusterName}}
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  infrastructureTemplate:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    kind: CloudStackMachineTemplate
+    name: {{.controlPlaneTemplateName}}
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      imageRepository: {{.kubernetesRepository}}
+      etcd:
+{{- if .externalEtcd }}
+        external:
+          endpoints: []
+          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
+          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
+          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
+{{- else }}
+        local:
+          imageRepository: {{.etcdRepository}}
+          imageTag: {{.etcdImageTag}}
+{{- end }}
+      dns:
+        type: CoreDNS
+        imageRepository: {{.corednsRepository}}
+        imageTag: {{.corednsVersion}}
+      apiServer:
+{{- if .extraEndpoints }}
+        certSANs:
+        {{- range .extraEndpoints }}
+        - {{.}}
+        {{- end }}
+{{- end }}
+        extraArgs:
+          cloud-provider: external
+          audit-policy-file: /etc/kubernetes/audit-policy.yaml
+          audit-log-path: /var/log/kubernetes/api-audit.log
+          audit-log-maxage: "30"
+          audit-log-maxbackup: "10"
+          audit-log-maxsize: "512"
+          profiling: "false"
+{{- if .apiserverExtraArgs }}
+{{ .apiserverExtraArgs.ToYaml | indent 10 }}
+{{- end }}
+        extraVolumes:
+        - hostPath: /etc/kubernetes/audit-policy.yaml
+          mountPath: /etc/kubernetes/audit-policy.yaml
+          name: audit-policy
+          pathType: File
+          readOnly: true
+        - hostPath: /var/log/kubernetes
+          mountPath: /var/log/kubernetes
+          name: audit-log-dir
+          pathType: DirectoryOrCreate
+          readOnly: false
+        - hostPath: /var/log/kubernetes/api-audit.log
+          mountPath: /var/log/kubernetes/api-audit.log
+          name: audit-log
+          pathType: FileOrCreate
+          readOnly: false
+{{- if .awsIamAuth}}
+        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
+          mountPath: /etc/kubernetes/aws-iam-authenticator/
+          name: authconfig
+          readOnly: false
+        - hostPath: /var/lib/kubeadm/aws-iam-authenticator/pki/
+          mountPath: /var/aws-iam-authenticator/
+          name: awsiamcert
+          readOnly: false
+{{- end}}
+      controllerManager:
+        extraArgs:
+          cloud-provider: external
+          profiling: "false"
+      scheduler:
+        extraArgs:
+          profiling: "false"
+    files:
+    - content: |
+{{ .auditPolicy | indent 8 }}
+      owner: root:root
+      path: /etc/kubernetes/audit-policy.yaml
+{{- if .proxyConfig }}
+    - content: |
+        [Service]
+        Environment="HTTP_PROXY={{.httpProxy}}"
+        Environment="HTTPS_PROXY={{.httpsProxy}}"
+        Environment="NO_PROXY={{ stringsJoin .noProxy "," }}"
+      owner: root:root
+      path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+{{- end }}
+{{- if .registryCACert }}
+    - content: |
+{{ .registryCACert | indent 8 }}
+      owner: root:root
+      path: "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+{{- end }}
+{{- if .registryMirrorConfiguration }}
+    - content: |
+        [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+          [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+            endpoint = ["https://{{.registryMirrorConfiguration}}"]
+          {{- if .registryCACert }}
+          [plugins."io.containerd.grpc.v1.cri".registry.configs."{{.registryMirrorConfiguration}}".tls]
+            ca_file = "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
+          {{- end }}
+      owner: root:root
+      path: "/etc/containerd/config_append.toml"
+{{- end }}
+{{- if .awsIamAuth}}
+    - content: |
+        # clusters refers to the remote service.
+        clusters:
+          - name: aws-iam-authenticator
+            cluster:
+              certificate-authority: /var/aws-iam-authenticator/cert.pem
+              server: https://localhost:21362/authenticate
+        # users refers to the API Server's webhook configuration
+        # (we don't need to authenticate the API server).
+        users:
+          - name: apiserver
+        # kubeconfig files require a context. Provide one for the API Server.
+        current-context: webhook
+        contexts:
+        - name: webhook
+          context:
+            cluster: aws-iam-authenticator
+            user: apiserver
+      permissions: "0640"
+      owner: root:root
+      path: /var/lib/kubeadm/aws-iam-authenticator/kubeconfig.yaml
+    - contentFrom:
+        secret:
+          name: aws-iam-authenticator-ca
+          key: cert.pem
+      permissions: "0640"
+      owner: root:root
+      path: /var/lib/kubeadm/aws-iam-authenticator/pki/cert.pem
+    - contentFrom:
+        secret:
+          name: aws-iam-authenticator-ca
+          key: key.pem
+      permissions: "0640"
+      owner: root:root
+      path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
+{{- end}}
+    initConfiguration:
+      nodeRegistration:
+        criSocket: /var/run/containerd/containerd.sock
+        kubeletExtraArgs:
+          provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
+          read-only-port: "0"
+          anonymous-auth: "false"
+        name: '{{`{{ ds.meta_data.local_hostname }}`}}'
+    joinConfiguration:
+      nodeRegistration:
+        criSocket: /var/run/containerd/containerd.sock
+        kubeletExtraArgs:
+          provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
+          read-only-port: "0"
+          anonymous-auth: "false"
+        name: '{{`{{ ds.meta_data.local_hostname }}`}}'
+    preKubeadmCommands:
+    - swapoff -a
+{{- if.registryMirrorConfiguration }}
+    - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
+{{- end }}
+{{- if or .proxyConfig .registryMirrorConfiguration }}
+    - sudo systemctl daemon-reload
+    - sudo systemctl restart containerd
+{{- end }}
+    - hostname "{{`{{ ds.meta_data.local_hostname }}`}}"
+    - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+    - echo "127.0.0.1   localhost" >>/etc/hosts
+    - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
+    - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+    useExperimentalRetryJoin: true
+    users:
+    - name: {{.controlPlaneSshUsername}}
+      sshAuthorizedKeys:
+      - '{{.cloudstackControlPlaneSshAuthorizedKey}}'
+      sudo: ALL=(ALL) NOPASSWD:ALL
+    format: {{.format}}
+  replicas: {{.controlPlaneReplicas}}
+  version: {{.kubernetesVersion}}
+---
+{{- if .externalEtcd }}
+kind: EtcdadmCluster
+apiVersion: etcdcluster.cluster.x-k8s.io/v1alpha3
+metadata:
+  name: {{.clusterName}}-etcd
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  replicas: {{.externalEtcdReplicas}}
+  etcdadmConfigSpec:
+    etcdadmBuiltin: true
+    format: {{.format}}
+    cloudInitConfig:
+      version: {{.externalEtcdVersion}}
+      installDir: "/usr/bin"
+    preEtcdadmCommands:
+    - swapoff -a
+    - hostname "{{`{{ ds.meta_data.local_hostname }}`}}"
+    - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+    - echo "127.0.0.1   localhost" >>/etc/hosts
+    - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
+    - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+    users:
+    - name: {{.etcdSshUsername}}
+      sshAuthorizedKeys:
+      - '{{.cloudstackEtcdSshAuthorizedKey}}'
+      sudo: ALL=(ALL) NOPASSWD:ALL
+{{- if .proxyConfig }}
+    proxy:
+      httpProxy: {{ .httpProxy }}
+      httpsProxy: {{ .httpsProxy }}
+      noProxy: {{ range .noProxy }}
+        - {{ . }}
+      {{- end }}
+{{- end }}
+{{- if .registryMirrorConfiguration }}
+    registryMirror:
+      endpoint: {{.registryMirrorConfiguration}}
+      {{- if .registryCACert }}
+      caCert: |
+{{ .registryCACert | indent 8 }}
+      {{- end }}
+{{- end }}
+  infrastructureTemplate:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+    kind: CloudStackMachineTemplate
+    name: {{.etcdTemplateName}}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: CloudStackMachineTemplate
+metadata:
+  name: {{.etcdTemplateName}}
+  namespace: '{{.eksaSystemNamespace}}'
+spec:
+  template:
+    spec:
+      offering: {{.cloudstackEtcdComputeOffering}}
+      template: {{.cloudstackEtcdTemplateOffering}}
+      details:
+      {{- range $key, $value := .cloudstackEtcdDetails }}
+        {{$key}}: {{$value}}
+      {{- end }}
+{{- if .cloudstackEtcdAffinityGroupIds }}
+      affinitygroupids:
+      {{- range .cloudstackEtcdAffinityGroupIds }}
+      - {{.}}
+      {{- end }}
+{{- end }}
+---
+{{- end}}
