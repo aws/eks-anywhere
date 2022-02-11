@@ -7,8 +7,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
 const (
@@ -29,7 +27,6 @@ const (
 	vsphereTemplateBR121Var     = "T_VSPHERE_TEMPLATE_BR_1_21"
 	vsphereTlsInsecureVar       = "T_VSPHERE_TLS_INSECURE"
 	vsphereTlsThumbprintVar     = "T_VSPHERE_TLS_THUMBPRINT"
-	vsphereHost                 = "T_VSPHERE_HOST"
 	vsphereUsernameVar          = "EKSA_VSPHERE_USERNAME"
 	vspherePasswordVar          = "EKSA_VSPHERE_PASSWORD"
 	cidrVar                     = "T_VSPHERE_CIDR"
@@ -59,6 +56,7 @@ var requiredEnvVars = []string{
 	cidrVar,
 	privateNetworkCidrVar,
 	govcUrlVar,
+	ClusterIPPoolEnvVar,
 }
 
 type VSphere struct {
@@ -223,25 +221,13 @@ func (v *VSphere) WithProviderUpgradeGit(fillers ...api.VSphereFiller) ClusterE2
 }
 
 func (v *VSphere) ClusterConfigFillers() []api.ClusterFiller {
-	return []api.ClusterFiller{api.WithControlPlaneEndpointIP(v.generateUniqueIp())}
+	clusterIP, err := PopIPFromEnv(ClusterIPPoolEnvVar)
+	if err != nil {
+		v.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
+	}
+	return []api.ClusterFiller{api.WithControlPlaneEndpointIP(clusterIP)}
 }
 
 func RequiredVsphereEnvVars() []string {
 	return requiredEnvVars
-}
-
-func (v *VSphere) generateUniqueIp() string {
-	ipgen := networkutils.NewIPGenerator(&networkutils.DefaultNetClient{})
-	ip := os.Getenv(vsphereHost)
-	if len(ip) > 0 && ipgen.IsIPUnique(ip) {
-		logger.V(1).Info("Using configured ip: " + ip)
-		return ip
-	}
-	logger.V(1).Info("Generating unique IP for vsphere control plane")
-	ip, err := ipgen.GenerateUniqueIP(v.cidr)
-	if err != nil {
-		v.t.Fatalf("Error getting unique IP for vsphere: %v", err)
-	}
-	logger.V(2).Info("IP generated successfully", "ip", ip)
-	return ip
 }

@@ -16,3 +16,4 @@ eksa-test
 generated/
 eks-anywhere-downloads*
 hardware-manifests/
+*.env
