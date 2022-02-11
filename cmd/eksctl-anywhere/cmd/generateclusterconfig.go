@@ -114,6 +114,46 @@ func generateClusterConfig(clusterName string) error {
 			return fmt.Errorf("error outputting yaml: %v", err)
 		}
 		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml, etcdMcYaml)
+	case constants.CloudStackProviderName:
+		if !features.IsActive(features.CloudStackProvider()) {
+			return fmt.Errorf("The cloudstack infrastructure provider is still in development!")
+		}
+		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithClusterEndpoint())
+		datacenterConfig := v1alpha1.NewCloudStackDatacenterConfigGenerate(clusterName)
+		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))
+		clusterConfigOpts = append(clusterConfigOpts,
+			v1alpha1.ControlPlaneConfigCount(2),
+			v1alpha1.ExternalETCDConfigCount(3),
+			v1alpha1.WorkerNodeConfigCount(2),
+		)
+		dcyaml, err := yaml.Marshal(datacenterConfig)
+		if err != nil {
+			return fmt.Errorf("error outputting yaml: %v", err)
+		}
+		datacenterYaml = dcyaml
+		// need to default control plane config name to something different from the cluster name based on assumption
+		// in controller code
+		cpMachineConfig := v1alpha1.NewCloudStackMachineConfigGenerate(clusterName + "-cp")
+		workerMachineConfig := v1alpha1.NewCloudStackMachineConfigGenerate(clusterName)
+		etcdMachineConfig := v1alpha1.NewCloudStackMachineConfigGenerate(fmt.Sprintf("%s-etcd", clusterName))
+		clusterConfigOpts = append(clusterConfigOpts,
+			v1alpha1.WithCPMachineGroupRef(cpMachineConfig),
+			v1alpha1.WithWorkerMachineGroupRef(workerMachineConfig),
+			v1alpha1.WithEtcdMachineGroupRef(etcdMachineConfig),
+		)
+		cpMcYaml, err := yaml.Marshal(cpMachineConfig)
+		if err != nil {
+			return fmt.Errorf("error outputting yaml: %v", err)
+		}
+		workerMcYaml, err := yaml.Marshal(workerMachineConfig)
+		if err != nil {
+			return fmt.Errorf("error outputting yaml: %v", err)
+		}
+		etcdMcYaml, err := yaml.Marshal(etcdMachineConfig)
+		if err != nil {
+			return fmt.Errorf("error outputting yaml: %v", err)
+		}
+		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml, etcdMcYaml)
 	case constants.TinkerbellProviderName:
 		if features.IsActive(features.TinkerbellProvider()) {
 			clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithClusterEndpoint())
