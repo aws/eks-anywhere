@@ -5,6 +5,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 const (
@@ -375,6 +376,8 @@ type ClusterStatus struct {
 	FailureMessage *string `json:"failureMessage,omitempty"`
 	// EksdReleaseRef defines the properties of the EKS-D object on the cluster
 	EksdReleaseRef *EksdReleaseRef `json:"eksdReleaseRef,omitempty"`
+	// +optional
+	Conditions []clusterv1.Condition `json:"conditions,omitempty"`
 }
 
 type EksdReleaseRef struct {
@@ -457,6 +460,7 @@ func (n *PodIAMConfig) Equal(o *PodIAMConfig) bool {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 // Cluster is the Schema for the clusters API
 type Cluster struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -464,6 +468,14 @@ type Cluster struct {
 
 	Spec   ClusterSpec   `json:"spec,omitempty"`
 	Status ClusterStatus `json:"status,omitempty"`
+}
+
+func (c *Cluster) GetConditions() clusterv1.Conditions {
+	return c.Status.Conditions
+}
+
+func (c *Cluster) SetConditions(conditions clusterv1.Conditions) {
+	c.Status.Conditions = conditions
 }
 
 // +kubebuilder:object:generate=false
