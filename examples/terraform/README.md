@@ -56,7 +56,7 @@ EOF
 
 3. Import your EKS-A cluster into terraform state
 ```
-export MY_EKSA_CLUSER="myCLusterName"
+export MY_EKSA_CLUSTER="myCLusterName"
 terraform init
 terraform import kubernetes_manifest.cluster_${MY_EKA_CLUSTER} "apiVersion=anywhere.eks.amazonaws.com/v1alpha1,kind=Cluster,namespace=default,name=${MY_EKA_CLUSTER}"
 ```
