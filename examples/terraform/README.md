@@ -23,14 +23,24 @@ how to scale your EKS-A worker nodes using the Terraform Kubernetes provider.
 - if you already have an existing EKS-A cluster, skip this step.
 - if you don't already have an existing EKS-A cluster, follow [the official instructions to create one](https://anywhere.eks.amazonaws.com/docs/getting-started/install/)
 
-1. Convert your EKS-A cluster spec kubernetes manifest into Terraform HCL with `tfk8s`
+1. Set up the Terraform Kubernetes provider
+```
+export KUBECONFIG=/path/to/my/kubeconfig.kubeconfig
+cat << EOF >> ./provider.tf
+provider "kubernetes" {
+  config_path    = "${KUBECONFIG}"
+}
+EOF
+```
+
+2. Convert your EKS-A cluster kubernetes manifest into Terraform HCL with `tfk8s`
 - install [tfk8s](https://github.com/jrhouston/tfk8s#install)
 ```
 export MY_EKSA_CLUSER="myClusterName"
 kubectl get cluster ${MY_EKSA_CLUSTER} -o yaml | tfk8s --strip -o ${MY_EKSA_CLUSTER}.tf
 ```
 
-2. Configure the generated Terraform cluster resource definition
+3. Configure the Terraform cluster resource definition generated in step 2
 - add the `namespace` `default` to the `metadata` of the cluster
 
 Your cluster manifest metadata should look like this (`generation` may be different):
@@ -59,30 +69,23 @@ Configure the field manager to [force reconcile managed resources](https://regis
   }
 ```
 
-2. Set up the Terraform Kubernetes provider
-```
-export KUBECONFIG=/path/to/my/kubeconfig.kubeconfig
-cat << EOF >> ./provider.tf
-provider "kubernetes" {
-  config_path    = "${KUBECONFIG}"
-}
-EOF
-```
-
-3. Import your EKS-A cluster into terraform state
+4. Import your EKS-A cluster into terraform state
 ```
 export MY_EKSA_CLUSTER="myClusterName"
 terraform init
 terraform import kubernetes_manifest.cluster_${MY_EKSA_CLUSTER} "apiVersion=anywhere.eks.amazonaws.com/v1alpha1,kind=Cluster,namespace=default,name=${MY_EKSA_CLUSTER}"
 ```
+After you `import` your cluster, you will need to run `terraform apply` one time to ensure that the `manifest` field of your cluster resource is in-sync. 
+This will not change the state of your cluster, but is a required step after the initial import.
+The `manifest` field stores the contents of the associated kubernetes manifest, while the `object` field stores the actual state of the resource.
 
-4. Check for differences between the state and your cluster
+5. Modify Your Cluster using Terraform
 - modify the `count` value of one of your `workerNodeGroupConfigurations`, or another mutable field, in the configuration stored in `${MY_EKSA_CLUSTER}.tf` file.
 - check the expected diff between your cluster state and the modified local state via `terraform plan`
 
 You should see in the output that the worker node group configuration count field (or whichever field you chose to modify) will be modified by Terraform.
 
-5. modify the cluster using terraform
+Now, actually change your cluster to match the local configuration:
 - `terraform apply`
 - observe the change to your cluster -- `kubectl get nodes`, for example, and observe new worker nodes being created
 
