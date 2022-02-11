@@ -61,7 +61,7 @@ terraform init
 terraform import kubernetes_manifest.cluster_${MY_EKSA_CLUSTER} "apiVersion=anywhere.eks.amazonaws.com/v1alpha1,kind=Cluster,namespace=default,name=${MY_EKSA_CLUSTER}"
 ```
 
-4. check for differences between the state and your cluster
+4. Check for differences between the state and your cluster
 - modify the `count` value of one of your `workerNodeGroupConfigurations`, or another mutable field, in the configuration stored in `${MY_EKSA_CLUSTER}.tf` file.
 - check the expected diff between your cluster state and the modified local state via `terraform plan`
 
