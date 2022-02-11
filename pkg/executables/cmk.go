@@ -33,7 +33,7 @@ type Cmk struct {
 }
 
 // TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domain, zone, account string, template v1alpha1.CloudStackResourceRef) error {
+func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, template v1alpha1.CloudStackResourceRef) error {
 	var filterArg string
 	if template.Type == v1alpha1.Id {
 		filterArg = fmt.Sprintf("id=\"%s\"", template.Value)
@@ -64,7 +64,7 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domain, zone, account
 }
 
 // TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, domain, zone, account string, serviceOffering v1alpha1.CloudStackResourceRef) error {
+func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, serviceOffering v1alpha1.CloudStackResourceRef) error {
 	var filterArg string
 	if serviceOffering.Type == v1alpha1.Id {
 		filterArg = fmt.Sprintf("id=\"%s\"", serviceOffering.Value)
@@ -96,7 +96,7 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, domain, zone, 
 }
 
 // TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domain, zone, account string, affinityGroupIds []string) error {
+func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, affinityGroupIds []string) error {
 	for _, affinityGroupId := range affinityGroupIds {
 		idFilterParam := fmt.Sprintf("id=\"%s\"", affinityGroupId)
 		result, err := c.exec(ctx, "list", "affinitygroups", idFilterParam)

@@ -19,7 +19,6 @@ import (
 
 const (
 	cmkConfigFileName = "cmk_tmp.ini"
-	zoneName          = "zone1"
 	accountName       = "account1"
 	domainName        = "domain1"
 )
@@ -29,6 +28,11 @@ var execConfig = executables.CmkExecConfig{
 	CloudStackSecretKey:     "test",
 	CloudStackManagementUrl: "http://1.1.1.1:8080/client/api",
 	CloudMonkeyVerifyCert:   false,
+}
+
+var zoneName = v1alpha1.CloudStackResourceRef{
+	Type:  v1alpha1.Name,
+	Value: "zone1",
 }
 
 var resourceName = v1alpha1.CloudStackResourceRef{
