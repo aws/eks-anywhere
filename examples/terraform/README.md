@@ -33,7 +33,7 @@ provider "kubernetes" {
 EOF
 ```
 
-2. Convert your EKS-A cluster kubernetes manifest into Terraform HCL with `tfk8s`
+2. Convert your EKS-A cluster Kubernetes manifest into Terraform HCL with `tfk8s`
 - install [tfk8s](https://github.com/jrhouston/tfk8s#install)
 ```
 export MY_EKSA_CLUSER="myClusterName"
