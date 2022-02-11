@@ -53,50 +53,54 @@ type CloudStackDeploymentConfig struct {
 	Status CloudStackDeploymentConfigStatus `json:"status,omitempty"`
 }
 
-func (v *CloudStackDeploymentConfig) Kind() string {
-	return v.TypeMeta.Kind
+func (c *CloudStackDeploymentConfig) Kind() string {
+	return c.TypeMeta.Kind
 }
 
-func (v *CloudStackDeploymentConfig) ExpectedKind() string {
+func (c *CloudStackDeploymentConfig) ExpectedKind() string {
 	return CloudStackDeploymentKind
 }
 
-func (v *CloudStackDeploymentConfig) PauseReconcile() {
-	if v.Annotations == nil {
-		v.Annotations = map[string]string{}
+func (c *CloudStackDeploymentConfig) PauseReconcile() {
+	if c.Annotations == nil {
+		c.Annotations = map[string]string{}
 	}
-	v.Annotations[pausedAnnotation] = "true"
+	c.Annotations[pausedAnnotation] = "true"
 }
 
-func (v *CloudStackDeploymentConfig) IsReconcilePaused() bool {
-	if s, ok := v.Annotations[pausedAnnotation]; ok {
+func (c *CloudStackDeploymentConfig) IsReconcilePaused() bool {
+	if s, ok := c.Annotations[pausedAnnotation]; ok {
 		return s == "true"
 	}
 	return false
 }
 
-func (v *CloudStackDeploymentConfig) ClearPauseAnnotation() {
-	if v.Annotations != nil {
-		delete(v.Annotations, pausedAnnotation)
+func (c *CloudStackDeploymentConfig) ClearPauseAnnotation() {
+	if c.Annotations != nil {
+		delete(c.Annotations, pausedAnnotation)
 	}
 }
 
-func (v *CloudStackDeploymentConfig) ConvertConfigToConfigGenerateStruct() *CloudStackDeploymentConfigGenerate {
+func (c *CloudStackDeploymentConfig) ConvertConfigToConfigGenerateStruct() *CloudStackDeploymentConfigGenerate {
+	namespace := defaultEksaNamespace
+	if c.Namespace != "" {
+		namespace = c.Namespace
+	}
 	config := &CloudStackDeploymentConfigGenerate{
-		TypeMeta: v.TypeMeta,
+		TypeMeta: c.TypeMeta,
 		ObjectMeta: ObjectMeta{
-			Name:        v.Name,
-			Annotations: v.Annotations,
-			Namespace:   v.Namespace,
+			Name:        c.Name,
+			Annotations: c.Annotations,
+			Namespace:   namespace,
 		},
-		Spec: v.Spec,
+		Spec: c.Spec,
 	}
 
 	return config
 }
 
-func (v *CloudStackDeploymentConfig) Marshallable() Marshallable {
-	return v.ConvertConfigToConfigGenerateStruct()
+func (c *CloudStackDeploymentConfig) Marshallable() Marshallable {
+	return c.ConvertConfigToConfigGenerateStruct()
 }
 
 // +kubebuilder:object:generate=false
