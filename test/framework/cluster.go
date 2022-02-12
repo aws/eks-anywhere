@@ -143,7 +143,7 @@ func WithEnvVar(key, val string) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		err := os.Setenv(key, val)
 		if err != nil {
-			e.T.Fatal("couldn't set env var %s to value %s due to: %v", key, val, err)
+			e.T.Fatalf("couldn't set env var %s to value %s due to: %v", key, val, err)
 		}
 	}
 }
