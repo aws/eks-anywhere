@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/tinkerbell/tink/protos/hardware"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -68,7 +69,7 @@ type ProviderKubectlClient interface {
 }
 
 type ProviderTinkClient interface {
-	ListHardware(ctx context.Context) error
+	GetHardware(ctx context.Context) ([]*hardware.Hardware, error)
 }
 
 func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, now types.NowFunc, hardwareConfigFile string) *tinkerbellProvider {

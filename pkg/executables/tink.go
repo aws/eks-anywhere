@@ -2,7 +2,10 @@ package executables
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+
+	"github.com/tinkerbell/tink/protos/hardware"
 )
 
 const (
@@ -38,10 +41,25 @@ func (t *Tink) PushHardware(ctx context.Context, hardware []byte) error {
 	return nil
 }
 
-func (t *Tink) ListHardware(ctx context.Context) error {
-	params := []string{"hardware", "list"}
-	if _, err := t.Command(ctx, params...).WithEnvVars(t.envMap).Run(); err != nil {
-		return fmt.Errorf("error getting hardware list: %v", err)
+func (t *Tink) GetHardware(ctx context.Context) ([]*hardware.Hardware, error) {
+	params := []string{"hardware", "get", "--format", "json"}
+	data, err := t.Command(ctx, params...).WithEnvVars(t.envMap).Run()
+	if err != nil {
+		return nil, fmt.Errorf("error getting hardware list: %v", err)
 	}
-	return nil
+	var hardwareList []*hardware.Hardware
+	hardwareString := data.String()
+
+	if len(hardwareString) > 0 {
+		hardwareListData := map[string][]*hardware.Hardware{}
+
+		if err = json.Unmarshal([]byte(hardwareString), &hardwareListData); err != nil {
+			return nil, fmt.Errorf("error unmarshling json: %v", err)
+		}
+		if len(hardwareListData["data"]) > 0 {
+			hardwareList = append(hardwareList, hardwareListData["data"]...)
+		}
+	}
+
+	return hardwareList, nil
 }

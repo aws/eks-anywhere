@@ -108,7 +108,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 }
 
 func (v *Validator) validateTinkerbellAccess(ctx context.Context) error {
-	if err := v.tink.ListHardware(ctx); err != nil {
+	if _, err := v.tink.GetHardware(ctx); err != nil {
 		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
 	}
 	return nil

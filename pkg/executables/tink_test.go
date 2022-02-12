@@ -44,11 +44,11 @@ func TestTinkPushHardwareSuccess(t *testing.T) {
 	}
 }
 
-func TestTinkListHardware(t *testing.T) {
+func TestTinkGetHardware(t *testing.T) {
 	tink, ctx, e := newTink(t)
-	expectedParam := []string{"hardware", "list"}
+	expectedParam := []string{"hardware", "get", "--format", "json"}
 	expectCommand(e, ctx, expectedParam...).withEnvVars(envMap).to().Return(bytes.Buffer{}, nil)
-	if err := tink.ListHardware(ctx); err != nil {
-		t.Errorf("Tink.ListHardware() error = %v, want nil", err)
+	if _, err := tink.GetHardware(ctx); err != nil {
+		t.Errorf("Tink.GetHardware() error = %v, want nil", err)
 	}
 }

@@ -10,6 +10,7 @@ import (
 
 	executables "github.com/aws/eks-anywhere/pkg/executables"
 	gomock "github.com/golang/mock/gomock"
+	hardware "github.com/tinkerbell/tink/protos/hardware"
 	v1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
@@ -121,16 +122,17 @@ func (m *MockProviderTinkClient) EXPECT() *MockProviderTinkClientMockRecorder {
 	return m.recorder
 }
 
-// ListHardware mocks base method.
-func (m *MockProviderTinkClient) ListHardware(arg0 context.Context) error {
+// GetHardware mocks base method.
+func (m *MockProviderTinkClient) GetHardware(arg0 context.Context) ([]*hardware.Hardware, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListHardware", arg0)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "GetHardware", arg0)
+	ret0, _ := ret[0].([]*hardware.Hardware)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// ListHardware indicates an expected call of ListHardware.
-func (mr *MockProviderTinkClientMockRecorder) ListHardware(arg0 interface{}) *gomock.Call {
+// GetHardware indicates an expected call of GetHardware.
+func (mr *MockProviderTinkClientMockRecorder) GetHardware(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListHardware", reflect.TypeOf((*MockProviderTinkClient)(nil).ListHardware), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardware", reflect.TypeOf((*MockProviderTinkClient)(nil).GetHardware), arg0)
 }
