@@ -412,14 +412,14 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		}
 	}
 
-	if p.skipIpCheck {
+	if !p.skipIpCheck {
+		if err := p.validator.validateControlPlaneIpUniqueness(vSphereClusterSpec); err != nil {
+			return err
+		}
+	} else {
 		logger.Info("Skipping check for whether control plane ip is in use")
-		return nil
 	}
 
-	if err := p.validator.validateControlPlaneIpUniqueness(vSphereClusterSpec); err != nil {
-		return err
-	}
 	return nil
 }
 

@@ -64,6 +64,7 @@ func newProvider(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterCo
 		kubectl,
 		tink,
 		test.FakeNow,
+		true,
 		"some-hardware-config",
 	)
 }
