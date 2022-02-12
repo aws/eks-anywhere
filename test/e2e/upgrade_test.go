@@ -47,6 +47,21 @@ func TestVSphereKubernetes120UbuntuTo121Upgrade(t *testing.T) {
 	)
 }
 
+func TestVSphereKubernetes121UbuntuTo122Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu121())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube122,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var()),
+	)
+}
+
 func TestVSphereKubernetes120UbuntuTo121MultipleFieldsUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu120())
 	test := framework.NewClusterE2ETest(

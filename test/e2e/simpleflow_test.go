@@ -43,6 +43,15 @@ func TestDockerKubernetes121SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestDockerKubernetes122SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+	)
+	runSimpleFlow(test)
+}
+
 func TestVSphereKubernetes120SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -57,6 +66,15 @@ func TestVSphereKubernetes121SimpleFlow(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+	)
+	runSimpleFlow(test)
+}
+
+func TestVSphereKubernetes122SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu122()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 	)
 	runSimpleFlow(test)
 }
