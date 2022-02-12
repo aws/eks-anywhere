@@ -15,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -54,14 +55,14 @@ type tinkerbellProvider struct {
 	machineConfigs         map[string]*v1alpha1.TinkerbellMachineConfig
 	controlPlaneSshAuthKey string
 	workerSshAuthKey       string
-	// etcdSshAuthKey         string
-	providerKubectlClient ProviderKubectlClient
-	providerTinkClient    ProviderTinkClient
-	templateBuilder       *TinkerbellTemplateBuilder
-	skipIpCheck           bool
-	hardwareConfigFile    string
-	validator             *Validator
-	skipPowerActions      bool
+	etcdSshAuthKey         string
+	providerKubectlClient  ProviderKubectlClient
+	providerTinkClient     ProviderTinkClient
+	templateBuilder        *TinkerbellTemplateBuilder
+	skipIpCheck            bool
+	hardwareConfigFile     string
+	validator              *Validator
+	skipPowerActions       bool
 	// TODO: Update hardwareConfig to proper type
 }
 
@@ -220,6 +221,9 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 
 	p.controlPlaneSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 	p.workerSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
+	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
+		p.etcdSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
+	}
 	// TODO: Add more validations
 
 	if !p.skipIpCheck {
@@ -295,7 +299,19 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	if err != nil {
 		return nil, fmt.Errorf("failed to get Control Plane TinkerbellTemplateConfig: %v", err)
 	}
-	values := buildTemplateMapCP(clusterSpec, *vs.controlPlaneMachineSpec, cpTemplateString)
+
+	var etcdMachineSpec v1alpha1.TinkerbellMachineConfigSpec
+	var etcdTemplateString string
+	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineSpec = *vs.etcdMachineSpec
+		etcdTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[vs.etcdMachineSpec.TemplateRef.Name]
+		etcdTemplateString, err = etcdTemplateConfig.ToTemplateString()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get ETCD TinkerbellTemplateConfig: %v", err)
+		}
+	}
+	values := buildTemplateMapCP(clusterSpec, *vs.controlPlaneMachineSpec, etcdMachineSpec, cpTemplateString, etcdTemplateString)
+
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
@@ -348,8 +364,10 @@ func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, clus
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = p.templateBuilder.CPMachineTemplateName(clusterName)
 		values["controlPlaneSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
-		// values["etcdSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
-		// values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
+		if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+			values["etcdSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
+		}
+		values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
@@ -480,7 +498,7 @@ func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
 }
 
-func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alpha1.TinkerbellMachineConfigSpec, cpTemplateOverride string) map[string]interface{} {
+func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.TinkerbellMachineConfigSpec, cpTemplateOverride, etcdTemplateOverride string) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
@@ -504,8 +522,17 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"corednsVersion":               bundle.KubeDistro.CoreDNS.Tag,
 		"etcdRepository":               bundle.KubeDistro.Etcd.Repository,
 		"etcdImageTag":                 bundle.KubeDistro.Etcd.Tag,
+		"externalEtcdVersion":          bundle.KubeDistro.EtcdVersion,
+		"etcdCipherSuites":             crypto.SecureCipherSuitesString(),
 		"controlPlanetemplateOverride": cpTemplateOverride,
 	}
+	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+		values["externalEtcd"] = true
+		values["externalEtcdReplicas"] = clusterSpec.Spec.ExternalEtcdConfiguration.Count
+		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
+		values["etcdTemplateOverride"] = etcdTemplateOverride
+	}
+
 	return values
 }
 
