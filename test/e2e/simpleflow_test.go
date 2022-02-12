@@ -48,6 +48,7 @@ func TestDockerKubernetes122SimpleFlow(t *testing.T) {
 		t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar("K8S_1_22_SUPPORT", "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -75,6 +76,7 @@ func TestVSphereKubernetes122SimpleFlow(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu122()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar("K8S_1_22_SUPPORT", "true"),
 	)
 	runSimpleFlow(test)
 }
