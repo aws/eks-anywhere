@@ -21,14 +21,14 @@ func NewValidator(tink ProviderTinkClient) *Validator {
 }
 
 func (v *Validator) ValidateTinkerbellConfig(ctx context.Context, datacenterConfig *anywherev1.TinkerbellDatacenterConfig) error {
+	if err := v.validateTinkerbellIP(ctx, datacenterConfig.Spec.TinkerbellIP); err != nil {
+		return err
+	}
+
 	if err := v.validateTinkerbellAccess(ctx); err != nil {
 		return err
 	}
 	logger.MarkPass("Connected to tinkerbell stack")
-
-	if err := v.validateTinkerbellIP(ctx, datacenterConfig.Spec.TinkerbellIP); err != nil {
-		return err
-	}
 
 	if err := v.validateTinkerbellCertURL(ctx, datacenterConfig.Spec.TinkerbellCertURL); err != nil {
 		return err

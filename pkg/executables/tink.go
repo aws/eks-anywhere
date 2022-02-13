@@ -54,7 +54,7 @@ func (t *Tink) GetHardware(ctx context.Context) ([]*hardware.Hardware, error) {
 		hardwareListData := map[string][]*hardware.Hardware{}
 
 		if err = json.Unmarshal([]byte(hardwareString), &hardwareListData); err != nil {
-			return nil, fmt.Errorf("error unmarshling json: %v", err)
+			return nil, fmt.Errorf("error unmarshling hardware json: %v", err)
 		}
 		if len(hardwareListData["data"]) > 0 {
 			hardwareList = append(hardwareList, hardwareListData["data"]...)
