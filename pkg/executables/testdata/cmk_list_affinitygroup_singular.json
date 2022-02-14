@@ -1,0 +1,16 @@
+{
+  "affinitygroup": [
+    {
+      "account": "admin",
+      "domain": "ROOT",
+      "domainid": "952444be-5230-11ec-8acb-0a07ff1467d1",
+      "id": "a0d5b669-5124-4c6d-ad4f-571696f62ffc",
+      "name": "control-plane-ha",
+      "type": "host anti-affinity",
+      "virtualmachineIds": [
+        "2386e8bd-acb7-4d7b-80d3-38f9d4ed874e"
+      ]
+    }
+  ],
+  "count": 1
+}
