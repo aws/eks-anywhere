@@ -294,7 +294,7 @@ func (k *Kubectl) ListCluster(ctx context.Context) error {
 }
 
 func (k *Kubectl) GetNodes(ctx context.Context, kubeconfig string) ([]corev1.Node, error) {
-	params := []string{"get", "nodes", "--kubeconfig", kubeconfig}
+	params := []string{"get", "nodes", "-o", "json", "--kubeconfig", kubeconfig}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting nodes: %v", err)
