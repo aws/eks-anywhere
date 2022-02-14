@@ -366,7 +366,7 @@ func (e *ClusterE2ETest) StopIfFailed() {
 }
 
 func (e *ClusterE2ETest) customizeClusterConfig(clusterConfigLocation string, fillers ...api.ClusterFiller) []byte {
-	b, err := api.AutoFillCluster(clusterConfigLocation, fillers...)
+	b, err := api.AutoFillClusterFromFile(clusterConfigLocation, fillers...)
 	if err != nil {
 		e.T.Fatalf("Error filling cluster config: %v", err)
 	}

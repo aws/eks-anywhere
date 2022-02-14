@@ -4,138 +4,87 @@ import (
 	"fmt"
 	"os"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
 type VSphereConfig struct {
-	datacenterConfig    *v1alpha1.VSphereDatacenterConfig
-	cpMachineConfig     *v1alpha1.VSphereMachineConfig
-	workerMachineConfig *v1alpha1.VSphereMachineConfig
-	etcdMachineConfig   *v1alpha1.VSphereMachineConfig
+	datacenterConfig *anywherev1.VSphereDatacenterConfig
+	machineConfigs   map[string]*anywherev1.VSphereMachineConfig
 }
 
 type VSphereFiller func(config VSphereConfig)
 
 func AutoFillVSphereProvider(filename string, fillers ...VSphereFiller) ([]byte, error) {
-	var etcdMachineConfig *v1alpha1.VSphereMachineConfig
-	// only to get name of control plane and worker node machine configs
-	clusterConfig, err := v1alpha1.GetClusterConfig(filename)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
-	}
-	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
-		return nil, fmt.Errorf("no machineGroupRef defined for control plane")
-	}
-	if len(clusterConfig.Spec.WorkerNodeGroupConfigurations) == 0 {
-		return nil, fmt.Errorf("no worker nodes defined")
-	}
-	if clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef == nil {
-		return nil, fmt.Errorf("no machineGroupRef defined for worker nodes")
-	}
-	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
-			return nil, fmt.Errorf("no machineGroupRef defined for etcd machines")
-		}
-	}
-	cpName := clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	workerName := clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	vsphereDatacenterConfig, err := v1alpha1.GetVSphereDatacenterConfig(filename)
+	vsphereDatacenterConfig, err := anywherev1.GetVSphereDatacenterConfig(filename)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get vsphere datacenter config from file: %v", err)
 	}
 
-	vsphereMachineConfigs, err := v1alpha1.GetVSphereMachineConfigs(filename)
+	vsphereMachineConfigs, err := anywherev1.GetVSphereMachineConfigs(filename)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get vsphere machine config from file: %v", err)
 	}
-	cpMachineConfig, ok := vsphereMachineConfigs[cpName]
-	if !ok {
-		return nil, fmt.Errorf("unable to find vsphere control plane machine config %v", cpName)
-	}
-	workerMachineConfig, ok := vsphereMachineConfigs[workerName]
-	if !ok {
-		return nil, fmt.Errorf("unable to find vsphere worker node machine config %v", workerName)
-	}
 
 	config := VSphereConfig{
-		datacenterConfig:    vsphereDatacenterConfig,
-		cpMachineConfig:     cpMachineConfig,
-		workerMachineConfig: workerMachineConfig,
+		datacenterConfig: vsphereDatacenterConfig,
+		machineConfigs:   vsphereMachineConfigs,
 	}
 
-	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineConfig, ok = vsphereMachineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-		if !ok {
-			return nil, fmt.Errorf("unable to find vsphere etcd machine config %v", cpName)
-		}
-		config.etcdMachineConfig = etcdMachineConfig
-	}
 	for _, f := range fillers {
 		f(config)
 	}
 
-	vsphereDatacenterConfigOutput, err := yaml.Marshal(vsphereDatacenterConfig)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling vsphere datacenter config: %v", err)
+	resources := make([]interface{}, 0, len(config.machineConfigs)+1)
+	resources = append(resources, config.datacenterConfig)
+	for _, m := range config.machineConfigs {
+		resources = append(resources, m)
 	}
-	cpMachineConfigOutput, err := yaml.Marshal(cpMachineConfig)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling vsphere control plane machine config: %v", err)
-	}
-	workerMachineConfigOutput, err := yaml.Marshal(workerMachineConfig)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling vsphere worker node machine config: %v", err)
-	}
-	vsphereConfigOutput := templater.AppendYamlResources(vsphereDatacenterConfigOutput, cpMachineConfigOutput, workerMachineConfigOutput)
-	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineConfigOutput, err := yaml.Marshal(etcdMachineConfig)
+
+	yamlResources := make([][]byte, 0, len(resources))
+	for _, r := range resources {
+		yamlContent, err := yaml.Marshal(r)
 		if err != nil {
-			return nil, fmt.Errorf("error marshalling vsphere etcd machine config: %v", err)
+			return nil, fmt.Errorf("error marshalling vsphere resource: %v", err)
 		}
-		vsphereConfigOutput = templater.AppendYamlResources(vsphereConfigOutput, etcdMachineConfigOutput)
+
+		yamlResources = append(yamlResources, yamlContent)
 	}
-	return vsphereConfigOutput, nil
+
+	return templater.AppendYamlResources(yamlResources...), nil
 }
 
-func WithOsFamily(value v1alpha1.OSFamily) VSphereFiller {
+func WithOsFamilyForAllMachines(value anywherev1.OSFamily) VSphereFiller {
 	return func(config VSphereConfig) {
-		config.cpMachineConfig.Spec.OSFamily = value
-		config.workerMachineConfig.Spec.OSFamily = value
-		if config.etcdMachineConfig != nil {
-			config.etcdMachineConfig.Spec.OSFamily = value
-		}
-	}
-}
-
-func WithNumCPUs(value int) VSphereFiller {
-	return func(config VSphereConfig) {
-		config.cpMachineConfig.Spec.NumCPUs = value
-		config.workerMachineConfig.Spec.NumCPUs = value
-		if config.etcdMachineConfig != nil {
-			config.etcdMachineConfig.Spec.NumCPUs = value
+		for _, m := range config.machineConfigs {
+			m.Spec.OSFamily = value
 		}
 	}
 }
 
-func WithDiskGiB(value int) VSphereFiller {
+func WithNumCPUsForAllMachines(value int) VSphereFiller {
 	return func(config VSphereConfig) {
-		config.cpMachineConfig.Spec.DiskGiB = value
-		config.workerMachineConfig.Spec.DiskGiB = value
-		if config.etcdMachineConfig != nil {
-			config.etcdMachineConfig.Spec.DiskGiB = value
+		for _, m := range config.machineConfigs {
+			m.Spec.NumCPUs = value
 		}
 	}
 }
 
-func WithMemoryMiB(value int) VSphereFiller {
+func WithDiskGiBForAllMachines(value int) VSphereFiller {
 	return func(config VSphereConfig) {
-		config.cpMachineConfig.Spec.MemoryMiB = value
-		config.workerMachineConfig.Spec.MemoryMiB = value
-		if config.etcdMachineConfig != nil {
-			config.etcdMachineConfig.Spec.MemoryMiB = value
+		for _, m := range config.machineConfigs {
+			m.Spec.DiskGiB = value
+		}
+	}
+}
+
+func WithMemoryMiBForAllMachines(value int) VSphereFiller {
+	return func(config VSphereConfig) {
+		for _, m := range config.machineConfigs {
+			m.Spec.MemoryMiB = value
 		}
 	}
 }
@@ -152,89 +101,35 @@ func WithTLSThumbprint(value string) VSphereFiller {
 	}
 }
 
-func WithTemplate(value string) VSphereFiller {
+func WithTemplateForAllMachines(value string) VSphereFiller {
 	return func(config VSphereConfig) {
-		config.cpMachineConfig.Spec.Template = value
-		config.workerMachineConfig.Spec.Template = value
-		if config.etcdMachineConfig != nil {
-			config.etcdMachineConfig.Spec.Template = value
+		for _, m := range config.machineConfigs {
+			m.Spec.Template = value
 		}
 	}
 }
 
-func WithStoragePolicyName(value string) VSphereFiller {
+func WithStoragePolicyNameForAllMachines(value string) VSphereFiller {
 	return func(config VSphereConfig) {
-		config.cpMachineConfig.Spec.StoragePolicyName = value
-		config.workerMachineConfig.Spec.StoragePolicyName = value
-		if config.etcdMachineConfig != nil {
-			config.etcdMachineConfig.Spec.StoragePolicyName = value
+		for _, m := range config.machineConfigs {
+			m.Spec.StoragePolicyName = value
 		}
 	}
 }
 
-func WithVSphereConfigNamespace(ns string) VSphereFiller {
+func WithVSphereConfigNamespaceForAllMachinesAndDatacenter(ns string) VSphereFiller {
 	return func(config VSphereConfig) {
 		config.datacenterConfig.Namespace = ns
-		config.workerMachineConfig.Namespace = ns
-		config.cpMachineConfig.Namespace = ns
-		if config.etcdMachineConfig != nil {
-			config.etcdMachineConfig.Namespace = ns
+		for _, m := range config.machineConfigs {
+			m.Namespace = ns
 		}
 	}
 }
 
-func WithSSHUsernameAndAuthorizedKey(username string, key string) VSphereFiller {
+func WithSSHAuthorizedKeyForAllMachines(key string) VSphereFiller {
 	return func(config VSphereConfig) {
-		if len(config.cpMachineConfig.Spec.Users) == 0 {
-			config.cpMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{}}
-		}
-		if len(config.workerMachineConfig.Spec.Users) == 0 {
-			config.workerMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{}}
-		}
-		config.cpMachineConfig.Spec.Users[0] = v1alpha1.UserConfiguration{
-			Name:              username,
-			SshAuthorizedKeys: []string{key},
-		}
-		config.workerMachineConfig.Spec.Users[0] = v1alpha1.UserConfiguration{
-			Name:              username,
-			SshAuthorizedKeys: []string{key},
-		}
-		if config.etcdMachineConfig != nil {
-			if len(config.etcdMachineConfig.Spec.Users) == 0 {
-				config.etcdMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{}}
-			}
-			config.etcdMachineConfig.Spec.Users[0] = v1alpha1.UserConfiguration{
-				Name:              username,
-				SshAuthorizedKeys: []string{key},
-			}
-		}
-	}
-}
-
-func WithSSHAuthorizedKey(value string) VSphereFiller {
-	return func(config VSphereConfig) {
-		if len(config.cpMachineConfig.Spec.Users) == 0 {
-			config.cpMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{Name: "capv"}}
-		}
-		if len(config.workerMachineConfig.Spec.Users) == 0 {
-			config.workerMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{Name: "capv"}}
-		}
-		if len(config.cpMachineConfig.Spec.Users[0].SshAuthorizedKeys) == 0 {
-			config.cpMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
-		}
-		if len(config.workerMachineConfig.Spec.Users[0].SshAuthorizedKeys) == 0 {
-			config.workerMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
-		}
-		config.cpMachineConfig.Spec.Users[0].SshAuthorizedKeys[0] = value
-		config.workerMachineConfig.Spec.Users[0].SshAuthorizedKeys[0] = value
-		if config.etcdMachineConfig != nil {
-			if len(config.cpMachineConfig.Spec.Users) == 0 {
-				config.etcdMachineConfig.Spec.Users = []v1alpha1.UserConfiguration{{Name: "capv"}}
-			}
-			if len(config.etcdMachineConfig.Spec.Users[0].SshAuthorizedKeys) == 0 {
-				config.etcdMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
-			}
-			config.etcdMachineConfig.Spec.Users[0].SshAuthorizedKeys[0] = value
+		for _, m := range config.machineConfigs {
+			setSSHKeyForFirstUser(m, key)
 		}
 	}
 }
@@ -245,12 +140,10 @@ func WithServer(value string) VSphereFiller {
 	}
 }
 
-func WithResourcePool(value string) VSphereFiller {
+func WithResourcePoolForAllMachines(value string) VSphereFiller {
 	return func(config VSphereConfig) {
-		config.cpMachineConfig.Spec.ResourcePool = value
-		config.workerMachineConfig.Spec.ResourcePool = value
-		if config.etcdMachineConfig != nil {
-			config.etcdMachineConfig.Spec.ResourcePool = value
+		for _, m := range config.machineConfigs {
+			m.Spec.ResourcePool = value
 		}
 	}
 }
@@ -261,22 +154,18 @@ func WithNetwork(value string) VSphereFiller {
 	}
 }
 
-func WithFolder(value string) VSphereFiller {
+func WithFolderForAllMachines(value string) VSphereFiller {
 	return func(config VSphereConfig) {
-		config.cpMachineConfig.Spec.Folder = value
-		config.workerMachineConfig.Spec.Folder = value
-		if config.etcdMachineConfig != nil {
-			config.etcdMachineConfig.Spec.Folder = value
+		for _, m := range config.machineConfigs {
+			m.Spec.Folder = value
 		}
 	}
 }
 
-func WithDatastore(value string) VSphereFiller {
+func WithDatastoreForAllMachines(value string) VSphereFiller {
 	return func(config VSphereConfig) {
-		config.cpMachineConfig.Spec.Datastore = value
-		config.workerMachineConfig.Spec.Datastore = value
-		if config.etcdMachineConfig != nil {
-			config.etcdMachineConfig.Spec.Datastore = value
+		for _, m := range config.machineConfigs {
+			m.Spec.Datastore = value
 		}
 	}
 }
@@ -293,4 +182,24 @@ func WithStringFromEnvVar(envVar string, opt func(string) VSphereFiller) VSphere
 
 func WithBoolFromEnvVar(envVar string, opt func(bool) VSphereFiller) VSphereFiller {
 	return opt(os.Getenv(envVar) == "true")
+}
+
+func WithMachineConfig(name string, fillers ...VSphereMachineConfigFiller) VSphereFiller {
+	return func(config VSphereConfig) {
+		m, ok := config.machineConfigs[name]
+		if !ok {
+			m = &anywherev1.VSphereMachineConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       anywherev1.VSphereMachineConfigKind,
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: name,
+				},
+			}
+			config.machineConfigs[name] = m
+		}
+
+		FillVSphereMachineConfig(m, fillers...)
+	}
 }
