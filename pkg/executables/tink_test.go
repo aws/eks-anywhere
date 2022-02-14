@@ -43,3 +43,12 @@ func TestTinkPushHardwareSuccess(t *testing.T) {
 		t.Errorf("Tink.PushHardware() error = %v, want nil", err)
 	}
 }
+
+func TestTinkGetHardware(t *testing.T) {
+	tink, ctx, e := newTink(t)
+	expectedParam := []string{"hardware", "get", "--format", "json"}
+	expectCommand(e, ctx, expectedParam...).withEnvVars(envMap).to().Return(bytes.Buffer{}, nil)
+	if _, err := tink.GetHardware(ctx); err != nil {
+		t.Errorf("Tink.GetHardware() error = %v, want nil", err)
+	}
+}

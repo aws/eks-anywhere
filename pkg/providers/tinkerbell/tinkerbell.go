@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/tinkerbell/tink/protos/hardware"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -52,6 +53,7 @@ type tinkerbellProvider struct {
 	workerSshAuthKey       string
 	// etcdSshAuthKey         string
 	providerKubectlClient ProviderKubectlClient
+	providerTinkClient    ProviderTinkClient
 	templateBuilder       *TinkerbellTemplateBuilder
 	hardwareConfigFile    string
 	validator             *Validator
@@ -66,7 +68,11 @@ type ProviderKubectlClient interface {
 	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 }
 
-func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, now types.NowFunc, hardwareConfigFile string) *tinkerbellProvider {
+type ProviderTinkClient interface {
+	GetHardware(ctx context.Context) ([]*hardware.Hardware, error)
+}
+
+func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, now types.NowFunc, hardwareConfigFile string) *tinkerbellProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
@@ -88,7 +94,7 @@ func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 		datacenterConfig:      datacenterConfig,
 		machineConfigs:        machineConfigs,
 		providerKubectlClient: providerKubectlClient,
-		hardwareConfigFile:    hardwareConfigFile,
+		providerTinkClient:    providerTinkClient,
 		templateBuilder: &TinkerbellTemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
@@ -96,6 +102,8 @@ func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 			etcdMachineSpec:             etcdMachineSpec,
 			now:                         now,
 		},
+		hardwareConfigFile: hardwareConfigFile,
+		validator:          NewValidator(providerTinkClient),
 	}
 }
 
