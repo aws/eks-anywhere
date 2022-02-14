@@ -6,16 +6,29 @@ import (
 	"fmt"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
-type Validator struct{}
+type Validator struct {
+	tink ProviderTinkClient
+}
+
+func NewValidator(tink ProviderTinkClient) *Validator {
+	return &Validator{
+		tink: tink,
+	}
+}
 
 func (v *Validator) ValidateTinkerbellConfig(ctx context.Context, datacenterConfig *anywherev1.TinkerbellDatacenterConfig) error {
-	// TODO: add validations for tinkerbellAccess
 	if err := v.validateTinkerbellIP(ctx, datacenterConfig.Spec.TinkerbellIP); err != nil {
 		return err
 	}
+
+	if err := v.validateTinkerbellAccess(ctx); err != nil {
+		return err
+	}
+	logger.MarkPass("Connected to tinkerbell stack")
 
 	if err := v.validateTinkerbellCertURL(ctx, datacenterConfig.Spec.TinkerbellCertURL); err != nil {
 		return err
@@ -91,6 +104,13 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 		return errors.New("TinkerbellDatacenterConfig and Cluster objects must have the same namespace specified")
 	}
 
+	return nil
+}
+
+func (v *Validator) validateTinkerbellAccess(ctx context.Context) error {
+	if _, err := v.tink.GetHardware(ctx); err != nil {
+		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
+	}
 	return nil
 }
 
