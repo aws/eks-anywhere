@@ -372,6 +372,19 @@ type ClusterStatus struct {
 	// Descriptive message about a fatal problem while reconciling a cluster
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
+	// EksdReleaseRef defines the properties of the EKS-D object on the cluster
+	EksdReleaseRef EksdReleaseRef `json:"eksdReleaseRef,omitempty"`
+}
+
+type EksdReleaseRef struct {
+	// ApiGroup refers to the EKS-D API grouo
+	ApiGroup string `json:"apiGroup"`
+	// Kind refers to the Release kind for the EKS-D object
+	Kind string `json:"kind"`
+	// Name refers to the name of the EKS-D object on the cluster
+	Name string `json:"name"`
+	// Namespace refers to the namespace for the EKS-D release resources
+	Namespace string `json:"namespace"`
 }
 
 type Ref struct {
@@ -458,7 +471,8 @@ type ClusterGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
 
-	Spec ClusterSpec `json:"spec,omitempty"`
+	Spec   ClusterSpec   `json:"spec,omitempty"`
+	Status ClusterStatus `json:"status,omitempty"`
 }
 
 func (c *Cluster) Kind() string {

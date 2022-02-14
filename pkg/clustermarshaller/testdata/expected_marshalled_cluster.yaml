@@ -21,6 +21,12 @@ spec:
     name: mycluster
   workerNodeGroupConfigurations:
   - {}
+status:
+  eksdReleaseRef:
+    apiGroup: ""
+    kind: ""
+    name: ""
+    namespace: ""
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
