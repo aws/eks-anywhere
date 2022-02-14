@@ -188,6 +188,20 @@ func GetClusterConfig(fileName string) (*Cluster, error) {
 	return clusterConfig, nil
 }
 
+// GetClusterConfigFromContent parses a Cluster object from a multiobject yaml content
+// and sets defaults if necessary
+func GetClusterConfigFromContent(content []byte) (*Cluster, error) {
+	clusterConfig := &Cluster{}
+	err := ParseClusterConfigFromContent(content, clusterConfig)
+	if err != nil {
+		return clusterConfig, err
+	}
+	if err := setClusterDefaults(clusterConfig); err != nil {
+		return clusterConfig, err
+	}
+	return clusterConfig, nil
+}
+
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
 // sets defaults if necessary and validates the Cluster
 func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
@@ -222,9 +236,19 @@ func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 		return fmt.Errorf("unable to read file due to: %v", err)
 	}
 
+	if err = ParseClusterConfigFromContent(content, clusterConfig); err != nil {
+		return fmt.Errorf("unable to parse %s file: %v", fileName, err)
+	}
+
+	return nil
+}
+
+// ParseClusterConfigFromContent unmarshalls an API object implementing the KindAccessor interface
+// from a multiobject yaml content. It doesn't set defaults nor validates the object
+func ParseClusterConfigFromContent(content []byte, clusterConfig KindAccessor) error {
 	for _, c := range strings.Split(string(content), YamlSeparator) {
-		if err = yaml.Unmarshal([]byte(c), clusterConfig); err != nil {
-			return fmt.Errorf("unable to parse %s\nyaml: %s\n %v", fileName, c, err)
+		if err := yaml.Unmarshal([]byte(c), clusterConfig); err != nil {
+			return err
 		}
 
 		if clusterConfig.Kind() == clusterConfig.ExpectedKind() {
@@ -232,7 +256,7 @@ func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 		}
 	}
 
-	return fmt.Errorf("cluster spec file %s is invalid or does not contain kind %s", fileName, clusterConfig.ExpectedKind())
+	return fmt.Errorf("yamlop content is invalid or does not contain kind %s", clusterConfig.ExpectedKind())
 }
 
 func (c *Cluster) PauseReconcile() {

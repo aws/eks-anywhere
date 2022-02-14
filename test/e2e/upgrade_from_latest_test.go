@@ -28,8 +28,8 @@ func runUpgradeFromLatestReleaseFlow(test *framework.ClusterE2ETest, wantVersion
 
 func TestVSphereKubernetes120BottlerocketUpgradeFromLatestMinorRelease(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithVSphereFillers(
-		api.WithTemplate(""), // Use default template from bundle
-		api.WithOsFamily(anywherev1.Bottlerocket),
+		api.WithTemplateForAllMachines(""), // Use default template from bundle
+		api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
 	))
 	test := framework.NewClusterE2ETest(
 		t,
@@ -50,8 +50,8 @@ func TestVSphereKubernetes120BottlerocketUpgradeFromLatestMinorRelease(t *testin
 
 func TestVSphereKubernetes121BottlerocketUpgradeFromLatestMinorRelease(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithVSphereFillers(
-		api.WithTemplate(""), // Use default template from bundle
-		api.WithOsFamily(anywherev1.Bottlerocket),
+		api.WithTemplateForAllMachines(""), // Use default template from bundle
+		api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
 	))
 	test := framework.NewClusterE2ETest(
 		t,
@@ -72,8 +72,8 @@ func TestVSphereKubernetes121BottlerocketUpgradeFromLatestMinorRelease(t *testin
 
 func TestVSphereKubernetes120UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithVSphereFillers(
-		api.WithTemplate(""), // Use default template from bundle
-		api.WithOsFamily(anywherev1.Ubuntu),
+		api.WithTemplateForAllMachines(""), // Use default template from bundle
+		api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
 	))
 	test := framework.NewClusterE2ETest(
 		t,
@@ -94,8 +94,8 @@ func TestVSphereKubernetes120UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 
 func TestVSphereKubernetes121UbuntuUpgradeFromLatestMinorRelease(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithVSphereFillers(
-		api.WithTemplate(""), // Use default template from bundle
-		api.WithOsFamily(anywherev1.Ubuntu),
+		api.WithTemplateForAllMachines(""), // Use default template from bundle
+		api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
 	))
 	test := framework.NewClusterE2ETest(
 		t,
