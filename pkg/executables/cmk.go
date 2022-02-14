@@ -6,14 +6,11 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
-	"time"
-
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
+	"path/filepath"
 )
 
 //go:embed config/cmk.ini
@@ -21,14 +18,13 @@ var cmkConfigTemplate string
 
 const (
 	cmkConfigFileName = "cmk_tmp.ini"
-	maxRetriesCmk     = 5
-	backOffPeriodCmk  = 5 * time.Second
 )
 
+
+// Cmk this type will be used once the CloudStack provider is added to the repository
 type Cmk struct {
 	writer     filewriter.FileWriter
 	executable Executable
-	retrier    *retrier.Retrier
 	config     CmkExecConfig
 }
 
@@ -49,7 +45,7 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domain string, zone v
 	}
 
 	response := struct {
-		CmkTemplates []CmkTemplate `json:"template"`
+		CmkTemplates []cmkTemplate `json:"template"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
 		return fmt.Errorf("failed to parse response into json: %v", err)
@@ -80,7 +76,7 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, domain string,
 	}
 
 	response := struct {
-		CmkServiceOfferings []CmkServiceOffering `json:"serviceoffering"`
+		CmkServiceOfferings []cmkServiceOffering `json:"serviceoffering"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
 		return fmt.Errorf("failed to parse response into json: %v", err)
@@ -108,7 +104,7 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domain string, 
 		}
 
 		response := struct {
-			CmkAffinityGroups []CmkAffinityGroup `json:"affinitygroup"`
+			CmkAffinityGroups []cmkAffinityGroup `json:"affinitygroup"`
 		}{}
 		if err = json.Unmarshal(result.Bytes(), &response); err != nil {
 			return fmt.Errorf("failed to parse response into json: %v", err)
@@ -139,7 +135,7 @@ func (c *Cmk) ValidateZonePresent(ctx context.Context, zone v1alpha1.CloudStackR
 	}
 
 	response := struct {
-		CmkZones []CmkZone `json:"zone"`
+		CmkZones []cmkZone `json:"zone"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
 		return fmt.Errorf("failed to parse response into json: %v", err)
@@ -164,7 +160,7 @@ func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string) error 
 	}
 
 	response := struct {
-		CmkAccounts []CmkAccount `json:"account"`
+		CmkAccounts []cmkAccount `json:"account"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
 		return fmt.Errorf("failed to parse response into json: %v", err)
@@ -182,7 +178,6 @@ func NewCmk(executable Executable, writer filewriter.FileWriter, config CmkExecC
 	return &Cmk{
 		writer:     writer,
 		executable: executable,
-		retrier:    retrier.NewWithMaxRetries(maxRetriesCmk, backOffPeriodCmk),
 		config:     config,
 	}
 }
@@ -232,13 +227,13 @@ func (c *Cmk) buildCmkConfigFile() (configFile string, err error) {
 	return configFile, nil
 }
 
-type CmkTemplate struct {
+type cmkTemplate struct {
 	Id       string `json:"id"`
 	Name     string `json:"name"`
 	Zonename string `json:"zonename"`
 }
 
-type CmkServiceOffering struct {
+type cmkServiceOffering struct {
 	CpuNumber int    `json:"cpunumber"`
 	CpuSpeed  int    `json:"cpuspeed"`
 	Memory    int    `json:"memory"`
@@ -246,18 +241,18 @@ type CmkServiceOffering struct {
 	Name      string `json:"name"`
 }
 
-type CmkAffinityGroup struct {
+type cmkAffinityGroup struct {
 	Type string `json:"type"`
 	Id   string `json:"id"`
 	Name string `json:"name"`
 }
 
-type CmkZone struct {
+type cmkZone struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
 }
 
-type CmkAccount struct {
+type cmkAccount struct {
 	RoleType string `json:"roletype"`
 	Domain   string `json:"domain"`
 	Id       string `json:"id"`
