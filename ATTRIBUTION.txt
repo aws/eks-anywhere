@@ -80,7 +80,7 @@ https://github.com/prometheus/client_golang
 ** github.com/prometheus/client_model/go; version v0.2.0 --
 https://github.com/prometheus/client_model
 
-** github.com/prometheus/common; version v0.26.0 --
+** github.com/prometheus/common; version v0.30.0 --
 https://github.com/prometheus/common
 
 ** github.com/prometheus/procfs; version v0.6.0 --
@@ -92,11 +92,23 @@ https://github.com/spf13/afero
 ** github.com/spf13/cobra; version v1.2.1 --
 https://github.com/spf13/cobra
 
+** github.com/pokearu/cluster-api-provider-tinkerbell; version v0.0.0-20220128001529-79d851d0861f --
+https://github.com/pokearu/cluster-api-provider-tinkerbell
+
+** github.com/tinkerbell/tink/protos; version v0.6.0 --
+https://github.com/tinkerbell/tink
+
 ** github.com/xanzy/ssh-agent; version v0.3.0 --
 https://github.com/xanzy/ssh-agent
 
 ** gomodules.xyz/jsonpatch/v2; version v2.2.0 --
 https://github.com/gomodules/jsonpatch
+
+** google.golang.org/genproto; version v0.0.0-20210828152312-66f60bf46e71 --
+https://github.com/googleapis/go-genproto
+
+** google.golang.org/grpc; version v1.41.0 --
+https://github.com/grpc/grpc-go
 
 ** gopkg.in/ini.v1; version v1.63.2 --
 https://gopkg.in/ini.v1
@@ -122,7 +134,7 @@ https://github.com/kubernetes/cluster-bootstrap
 ** k8s.io/component-base; version v0.22.2 --
 https://github.com/kubernetes/component-base
 
-** k8s.io/klog/v2; version v2.9.0 --
+** k8s.io/klog/v2; version v2.10.0 --
 https://github.com/kubernetes/klog
 
 ** k8s.io/kube-openapi/pkg/util/proto; version v0.0.0-20210421082810-95288971da7e --
@@ -766,7 +778,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** github.com/google/go-github/v35/github; version v35.2.0 --
+** github.com/google/go-github/v35/github; version v35.3.0 --
 https://github.com/google/go-github/v35
 
 Copyright (c) 2013 The go-github AUTHORS. All rights reserved.
@@ -832,7 +844,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** github.com/google/uuid; version v1.2.0 --
+** github.com/google/uuid; version v1.3.0 --
 https://github.com/google/uuid
 
 Copyright (c) 2009,2014 Google Inc. All rights reserved.
@@ -862,6 +874,39 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+------
+
+** github.com/grpc-ecosystem/grpc-gateway; version v1.16.0 --
+https://github.com/grpc-ecosystem/grpc-gateway
+
+Copyright (c) 2015, Gengo, Inc.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimer in the documentation
+      and/or other materials provided with the distribution.
+
+    * Neither the name of Gengo, Inc. nor the names of its
+      contributors may be used to endorse or promote products derived from this
+      software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
@@ -899,7 +944,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg; version v0.26.0 --
+** github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg; version v0.30.0 --
 https://github.com/prometheus/common
 
 Copyright (c) 2011, Open Knowledge Foundation Ltd.
@@ -944,7 +989,7 @@ https://github.com/golang/go
 ** golang.org/x/crypto; version v0.0.0-20210817164053-32db794688a5 --
 https://go.googlesource.com/crypto
 
-** golang.org/x/net; version v0.0.0-20210520170846-37e1c6afe023 --
+** golang.org/x/net; version v0.0.0-20210825183410-e898025ed96a --
 https://go.googlesource.com/net
 
 ** golang.org/x/oauth2; version v0.0.0-20210819190943-2bc19b11175f --
@@ -1130,7 +1175,7 @@ Copyright (c) 2013 Mitchell Hashimoto
 https://github.com/onsi/gomega
 Copyright (c) 2013-2014 Onsi Fakhouri
 
-** github.com/sergi/go-diff/diffmatchpatch; version v1.1.0 --
+** github.com/sergi/go-diff/diffmatchpatch; version v1.2.0 --
 https://github.com/sergi/go-diff
 Copyright (c) 2012-2016 The go-diff Authors. All rights reserved.
 
@@ -1150,7 +1195,7 @@ Copyright (c) 2014 Steve Francia
 https://github.com/subosito/gotenv
 Copyright (c) 2013 Alif Rachmawadi
 
-** go.uber.org/atomic; version v1.7.0 --
+** go.uber.org/atomic; version v1.9.0 --
 https://github.com/uber-go/atomic
 Copyright (c) 2016 Uber Technologies, Inc.
 
@@ -1182,7 +1227,7 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ------
 
-** github.com/kevinburke/ssh_config; version v0.0.0-20201106050909-4977a11b4351 --
+** github.com/kevinburke/ssh_config; version v1.1.0 --
 https://github.com/kevinburke/ssh_config
 Copyright (c) 2017 Kevin Burke.
 Copyright (c) 2013 - 2017 Thomas Pelletier, Eric Anderton
