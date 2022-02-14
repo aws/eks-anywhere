@@ -6,11 +6,12 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
-	"path/filepath"
 )
 
 //go:embed config/cmk.ini
@@ -19,7 +20,6 @@ var cmkConfigTemplate string
 const (
 	cmkConfigFileName = "cmk_tmp.ini"
 )
-
 
 // Cmk this type will be used once the CloudStack provider is added to the repository
 type Cmk struct {
