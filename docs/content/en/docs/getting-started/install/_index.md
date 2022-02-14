@@ -34,7 +34,7 @@ It currently will not work on computers with Apple Silicon or Arm based processo
 {{% /alert %}}
 
 You can install `eksctl` and `eksctl-anywhere` with [homebrew](http://brew.sh/).
-This package will also install `kubectl` and the `aws-iam-authenticator` which will be helpful to test EKS clusters.
+This package will also install `kubectl` and the `aws-iam-authenticator` which will be helpful to test EKS Anywhere clusters.
 
 ```bash
 brew install aws/tap/eks-anywhere
