@@ -10,6 +10,7 @@ import (
 
 const (
 	valid_testdata                  = "testdata/valid_hardware.csv"
+	valid_testdata_with_guid        = "testdata/valid_hardware_guid.csv"
 	invalid_testdata_empty_file     = "testdata/invalid_hardware_empty_file.csv"
 	invalid_testdata_missing_file   = "testdata/invalid_hardware_missing_file.go"
 	invalid_testdata_missing_header = "testdata/invalid_hardware_missing_header.csv"
@@ -27,9 +28,37 @@ func TestNewCsvParserSuccess(t *testing.T) {
 		BmcIpIndex:       7,
 		BmcUsernameIndex: 8,
 		BmcPasswordIndex: 9,
+		GuidIndex:        hardware.HeaderNotExist,
 	}
 
 	csv, err := hardware.NewCsvParser(valid_testdata)
+	if err != nil {
+		t.Fatalf("hardware.NewCsvParser() error = %v, want nil", err)
+	}
+
+	defer csv.Close()
+
+	if !reflect.DeepEqual(csv.HeadersIndex, hi) {
+		t.Fatalf("CsvParser.HeadersIndex = %#v, want %#v", csv.HeadersIndex, hi)
+	}
+}
+
+func TestNewCsvParserSuccessWithGuid(t *testing.T) {
+	hi := hardware.HeadersIndex{
+		HostnameIndex:    6,
+		IpAddressIndex:   1,
+		GatewayIndex:     2,
+		NetmaskIndex:     4,
+		MacIndex:         5,
+		NameServerIndex:  3,
+		VendorIndex:      7,
+		BmcIpIndex:       8,
+		BmcUsernameIndex: 9,
+		BmcPasswordIndex: 10,
+		GuidIndex:        0,
+	}
+
+	csv, err := hardware.NewCsvParser(valid_testdata_with_guid)
 	if err != nil {
 		t.Fatalf("hardware.NewCsvParser() error = %v, want nil", err)
 	}
