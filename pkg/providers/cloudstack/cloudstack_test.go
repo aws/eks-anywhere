@@ -199,7 +199,7 @@ type providerTest struct {
 	datacenterConfig                   *v1alpha1.CloudStackDatacenterConfig
 	machineConfigs                     map[string]*v1alpha1.CloudStackMachineConfig
 	kubectl                            *mocks.MockProviderKubectlClient
-	cmk                               *mocks.MockProviderCmkClient
+	cmk                                *mocks.MockProviderCmkClient
 	resourceSetManager                 *mocks.MockClusterResourceSetManager
 }
 
@@ -237,7 +237,7 @@ func newProviderTest(t *testing.T) *providerTest {
 		datacenterConfig:   deploymentConfig,
 		machineConfigs:     machineConfigs,
 		kubectl:            kubectl,
-		cmk:               cmk,
+		cmk:                cmk,
 		resourceSetManager: resourceSetManager,
 	}
 }

@@ -7,15 +7,17 @@ import (
 	b64 "encoding/base64"
 	"errors"
 	"fmt"
-	"gopkg.in/ini.v1"
 	"net"
 	"net/url"
 	"os"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
+
+	"gopkg.in/ini.v1"
+
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"golang.org/x/crypto/ssh"
 
@@ -83,11 +85,11 @@ var (
 )
 
 type cloudstackProvider struct {
-	datacenterConfig *v1alpha1.CloudStackDatacenterConfig
-	machineConfigs   map[string]*v1alpha1.CloudStackMachineConfig
-	clusterConfig         *v1alpha1.Cluster
-	providerCmkClient     ProviderCmkClient
-	providerKubectlClient ProviderKubectlClient
+	datacenterConfig            *v1alpha1.CloudStackDatacenterConfig
+	machineConfigs              map[string]*v1alpha1.CloudStackMachineConfig
+	clusterConfig               *v1alpha1.Cluster
+	providerCmkClient           ProviderCmkClient
+	providerKubectlClient       ProviderKubectlClient
 	writer                      filewriter.FileWriter
 	selfSigned                  bool
 	controlPlaneSshAuthKey      string
@@ -600,7 +602,6 @@ func (p *cloudstackProvider) setupAndValidateCluster(ctx context.Context, cluste
 	if controlPlaneMachineConfig.Spec.Template != workerNodeGroupMachineConfig.Spec.Template {
 		if workerNodeGroupMachineConfig.Spec.Template.Value == "" {
 			return fmt.Errorf("worker CloudStackMachineConfig template is not set. Default template is not supported in CloudStack, please provide a template name")
-
 		}
 		if err = p.validateMachineConfig(ctx, clusterSpec, workerNodeGroupMachineConfig); err != nil {
 			logger.V(1).Info("Workload machine config validation failed.")
@@ -615,7 +616,6 @@ func (p *cloudstackProvider) setupAndValidateCluster(ctx context.Context, cluste
 	if etcdMachineConfig != nil {
 		if etcdMachineConfig.Spec.Template.Value == "" {
 			return fmt.Errorf("etcd CloudStackMachineConfig template is not set. Default template is not supported in CloudStack, please provide a template name")
-
 		}
 		if err = p.validateMachineConfig(ctx, clusterSpec, etcdMachineConfig); err != nil {
 			logger.V(1).Info("Etcd machine config validation failed.")
@@ -1082,7 +1082,7 @@ func (p *cloudstackProvider) EnvMap() (map[string]string, error) {
 
 func (p *cloudstackProvider) GetDeployments() map[string][]string {
 	return map[string][]string{
-		"capc-system":         {"capc-controller-manager"},
+		"capc-system": {"capc-controller-manager"},
 	}
 }
 

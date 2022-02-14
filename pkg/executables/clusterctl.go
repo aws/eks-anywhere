@@ -310,13 +310,13 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 }
 
 var providerNamespaces = map[string]string{
-	constants.VSphereProviderName: constants.CapvSystemNamespace,
-	constants.DockerProviderName:  constants.CapdSystemNamespace,
+	constants.VSphereProviderName:    constants.CapvSystemNamespace,
+	constants.DockerProviderName:     constants.CapdSystemNamespace,
 	constants.CloudStackProviderName: constants.CapcSystemNamespace,
-	constants.AWSProviderName:     constants.CapaSystemNamespace,
-	etcdadmBootstrapProviderName:  constants.EtcdAdmBootstrapProviderSystemNamespace,
-	etcdadmControllerProviderName: constants.EtcdAdmControllerSystemNamespace,
-	kubeadmBootstrapProviderName:  constants.CapiKubeadmBootstrapSystemNamespace,
+	constants.AWSProviderName:        constants.CapaSystemNamespace,
+	etcdadmBootstrapProviderName:     constants.EtcdAdmBootstrapProviderSystemNamespace,
+	etcdadmControllerProviderName:    constants.EtcdAdmControllerSystemNamespace,
+	kubeadmBootstrapProviderName:     constants.CapiKubeadmBootstrapSystemNamespace,
 }
 
 func (c *Clusterctl) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, newSpec *cluster.Spec, changeDiff *clusterapi.CAPIChangeDiff) error {

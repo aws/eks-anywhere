@@ -19,6 +19,7 @@ var cmkConfigTemplate string
 
 const (
 	cmkConfigFileName = "cmk_tmp.ini"
+	cmkPath = "cmk"
 )
 
 // Cmk this type will be used once the CloudStack provider is added to the repository

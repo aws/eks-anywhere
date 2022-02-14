@@ -11,7 +11,6 @@ import (
 
 const (
 	httpsScheme = "https"
-	httpScheme = "http"
 	embedScheme = "embed"
 )
 
@@ -57,8 +56,6 @@ func (r *Reader) ReadFile(uri string) ([]byte, error) {
 
 	switch url.Scheme {
 	case httpsScheme:
-		return r.readHttpFile(uri)
-	case httpScheme:
 		return r.readHttpFile(uri)
 	case embedScheme:
 		return r.readEmbedFile(url)

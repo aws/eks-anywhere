@@ -96,6 +96,8 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 			return err
 		}
 		resources = append(resources, r...)
+	case anywherev1.CloudStackDatacenterKind:
+		// Do nothing - not implemented yet
 	case anywherev1.DockerDatacenterKind:
 		r, err := cor.dockerTemplate.TemplateResources(ctx, cs, spec)
 		if err != nil {
