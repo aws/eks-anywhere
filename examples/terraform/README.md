@@ -77,7 +77,7 @@ terraform import kubernetes_manifest.cluster_${MY_EKSA_CLUSTER} "apiVersion=anyw
 ```
 After you `import` your cluster, you will need to run `terraform apply` one time to ensure that the `manifest` field of your cluster resource is in-sync. 
 This will not change the state of your cluster, but is a required step after the initial import.
-The `manifest` field stores the contents of the associated kubernetes manifest, while the `object` field stores the actual state of the resource.
+   The `manifest` field stores the contents of the associated kubernetes manifest, while the `object` field stores the actual state of the resource.
 
 5. Modify Your Cluster using Terraform
    - Modify the `count` value of one of your `workerNodeGroupConfigurations`, or another mutable field, in the configuration stored in `${MY_EKSA_CLUSTER}.tf` file.
