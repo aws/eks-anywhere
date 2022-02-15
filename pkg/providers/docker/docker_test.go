@@ -470,6 +470,11 @@ var versionsBundle = &cluster.VersionsBundle{
 				URI: "embed:///config/clusterctl/overrides/infrastructure-docker/v0.3.19/metadata.yaml",
 			},
 		},
+		Haproxy: releasev1alpha1.HaproxyBundle{
+			Image: releasev1alpha1.Image{
+				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/kind/haproxy:v0.11.1-eks-a-v0.0.0-dev-build.1464",
+			},
+		},
 	},
 }
 
