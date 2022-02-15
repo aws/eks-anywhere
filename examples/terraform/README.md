@@ -31,7 +31,6 @@ how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provi
      config_path    = "${KUBECONFIG}"
    }
    EOF
-```
 
 2. Convert your EKS-A cluster Kubernetes manifest into Terraform HCL with `tfk8s`
 - install [tfk8s](https://github.com/jrhouston/tfk8s#install)
