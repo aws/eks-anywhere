@@ -89,7 +89,7 @@ func (hc *HardwareConfig) ValidateBmcRefMapping() error {
 }
 
 func (hc *HardwareConfig) getBmcRefMap() map[string]*tinkv1alpha1.Hardware {
-	var bmcRefMap = make(map[string]*tinkv1alpha1.Hardware, len(hc.bmcList))
+	bmcRefMap := make(map[string]*tinkv1alpha1.Hardware, len(hc.bmcList))
 	for _, bmc := range hc.bmcList {
 		bmcRefMap[bmc.Name] = nil
 	}
