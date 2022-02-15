@@ -86,7 +86,8 @@ The `manifest` field stores the contents of the associated kubernetes manifest, 
    You should see in the output that the worker node group configuration count field (or whichever field you chose to modify) will be modified by Terraform.
 
 6. Now, actually change your cluster to match the local configuration:
-- `terraform apply`
+   ```bash
+   terraform apply
 7. Observe the change to your cluster. For example:
    ```bash
    kubectl get nodes
