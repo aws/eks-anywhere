@@ -76,6 +76,7 @@ type VersionsBundle struct {
 	ExternalEtcdBootstrap  EtcdadmBootstrapBundle      `json:"etcdadmBootstrap"`
 	ExternalEtcdController EtcdadmControllerBundle     `json:"etcdadmController"`
 	Tinkerbell             TinkerbellBundle            `json:"tinkerbell"`
+	Haproxy                HaproxyBundle               `json:"haproxy"`
 }
 
 type EksDRelease struct {
@@ -261,4 +262,8 @@ type Actions struct {
 	ImageToDisk Image `json:"imageToDisk"`
 	OciToDisk   Image `json:"ociToDisk"`
 	WriteFile   Image `json:"writeFile"`
+}
+
+type HaproxyBundle struct {
+	Image Image `json:"image"`
 }
