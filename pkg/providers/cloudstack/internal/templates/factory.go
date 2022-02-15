@@ -2,7 +2,6 @@ package templates
 
 import (
 	"context"
-
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 

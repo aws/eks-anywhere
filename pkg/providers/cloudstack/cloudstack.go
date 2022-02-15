@@ -7,19 +7,16 @@ import (
 	b64 "encoding/base64"
 	"errors"
 	"fmt"
+	"golang.org/x/crypto/ssh"
+	"gopkg.in/ini.v1"
 	"net"
 	"net/url"
 	"os"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
-
-	"gopkg.in/ini.v1"
-
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-
-	"golang.org/x/crypto/ssh"
 
 	"github.com/aws/eks-anywhere/pkg/crypto"
 
@@ -427,13 +424,8 @@ func getHostnameFromUrl(rawurl string) (string, error) {
 	return url.Hostname(), nil
 }
 
-type execConfig struct {
-	CloudStackApiKey        string
-	CloudStackSecretKey     string
-	CloudStackManagementUrl string
-}
-
-func parseCloudStackSecret() (*execConfig, error) {
+// The logic here is redundant with the implementation in factory.go
+func parseCloudStackSecret() (*v1alpha1.CloudStackExecConfig, error) {
 	cloudStackB64EncodedSecret, ok := os.LookupEnv(eksacloudStackCloudConfigB64SecretKey)
 	if !ok {
 		return nil, fmt.Errorf("%s is not set or is empty", eksacloudStackCloudConfigB64SecretKey)
@@ -462,7 +454,7 @@ func parseCloudStackSecret() (*execConfig, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract value of 'api-url' from %s: %v", eksacloudStackCloudConfigB64SecretKey, err)
 	}
-	return &execConfig{
+	return &v1alpha1.CloudStackExecConfig{
 		CloudStackApiKey:        apiKey.Value(),
 		CloudStackSecretKey:     secretKey.Value(),
 		CloudStackManagementUrl: apiUrl.Value(),

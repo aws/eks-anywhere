@@ -2,8 +2,11 @@ package dependencies
 
 import (
 	"context"
-
+	b64 "encoding/base64"
+	"fmt"
 	"github.com/google/uuid"
+	"gopkg.in/ini.v1"
+	"os"
 
 	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -17,12 +20,14 @@ import (
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/networking/cilium"
-	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
+ 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
+ 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/factory"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
+
+const eksacloudStackCloudConfigB64SecretKey = "EKSA_CLOUDSTACK_B64ENCODED_SECRET"
 
 type Dependencies struct {
 	Provider                  providers.Provider
@@ -166,7 +171,7 @@ func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v
 	case v1alpha1.CloudStackDatacenterKind:
 		f.WithKubectl().WithCmk().WithWriter().WithCAPIClusterResourceSetManager()
 	case v1alpha1.DockerDatacenterKind:
-		f.WithDocker().WithKubectl()
+		   f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
 		f.WithKubectl().WithTink(clusterConfigFile)
 	}
@@ -263,8 +268,12 @@ func (f *Factory) WithCmk() *Factory {
 		if f.dependencies.Cmk != nil {
 			return nil
 		}
+		csExecConfig, err := parseCloudStackSecret()
+		if err != nil {
+			return fmt.Errorf("failed to generate cloudstack exec config: %v", err)
+		}
 
-		f.dependencies.Cmk = f.executableBuilder.BuildCmkExecutable(f.dependencies.Writer)
+		f.dependencies.Cmk = f.executableBuilder.BuildCmkExecutable(f.dependencies.Writer, *csExecConfig)
 		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Cmk)
 		return nil
 	})
@@ -284,7 +293,7 @@ func (f *Factory) WithTink(clusterConfigFile string) *Factory {
 			return err
 		}
 		f.dependencies.Tink = f.executableBuilder.BuildTinkExecutable(tinkerbellDatacenterConfig.Spec.TinkerbellCertURL, tinkerbellDatacenterConfig.Spec.TinkerbellGRPCAuth)
-
+		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Cmk)
 		return nil
 	})
 
@@ -368,35 +377,35 @@ func (f *Factory) WithTroubleshoot() *Factory {
 
 	return f
 }
-
 func (f *Factory) WithHelm() *Factory {
-	f.WithExecutableBuilder()
+   f.WithExecutableBuilder()
 
-	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.Helm != nil {
-			return nil
-		}
+   f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+	   if f.dependencies.Helm != nil {
+		   return nil
+	   }
 
-		f.dependencies.Helm = f.executableBuilder.BuildHelmExecutable()
-		return nil
-	})
+	   f.dependencies.Helm = f.executableBuilder.BuildHelmExecutable()
+	   return nil
+   })
 
-	return f
+   return f
 }
 
+
 func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
-	var networkingBuilder func() clustermanager.Networking
-	if clusterConfig.Spec.ClusterNetwork.CNI == v1alpha1.Kindnetd {
-		f.WithKubectl()
-		networkingBuilder = func() clustermanager.Networking {
-			return kindnetd.NewKindnetd(f.dependencies.Kubectl)
-		}
-	} else {
-		f.WithKubectl().WithHelm()
-		networkingBuilder = func() clustermanager.Networking {
-			return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.Helm)
-		}
-	}
+   var networkingBuilder func() clustermanager.Networking
+   if clusterConfig.Spec.ClusterNetwork.CNI == v1alpha1.Kindnetd {
+	   f.WithKubectl()
+	   networkingBuilder = func() clustermanager.Networking {
+			   return kindnetd.NewKindnetd(f.dependencies.Kubectl)
+		   }
+	   } else {
+		   f.WithKubectl().WithHelm()
+		   networkingBuilder = func() clustermanager.Networking {
+			   return cilium.NewCilium(f.dependencies.Kubectl, f.dependencies.Helm)
+		   }
+	   }
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Networking != nil {
@@ -585,4 +594,40 @@ func (f *Factory) WithCAPIClusterResourceSetManager() *Factory {
 	})
 
 	return f
+}
+
+func parseCloudStackSecret() (*v1alpha1.CloudStackExecConfig, error) {
+	cloudStackB64EncodedSecret, ok := os.LookupEnv(eksacloudStackCloudConfigB64SecretKey)
+	if !ok {
+		return nil, fmt.Errorf("%s is not set or is empty", eksacloudStackCloudConfigB64SecretKey)
+	}
+	decodedString, err := b64.StdEncoding.DecodeString(cloudStackB64EncodedSecret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode value for %s with base64: %v", eksacloudStackCloudConfigB64SecretKey, err)
+	}
+	cfg, err := ini.Load(decodedString)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract values from %s with ini: %v", eksacloudStackCloudConfigB64SecretKey, err)
+	}
+	section, err := cfg.GetSection("Global")
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract section 'Global' from %s: %v", eksacloudStackCloudConfigB64SecretKey, err)
+	}
+	apiKey, err := section.GetKey("api-key")
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract value of 'api-key' from %s: %v", eksacloudStackCloudConfigB64SecretKey, err)
+	}
+	secretKey, err := section.GetKey("secret-key")
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract value of 'secret-key' from %s: %v", eksacloudStackCloudConfigB64SecretKey, err)
+	}
+	apiUrl, err := section.GetKey("api-url")
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract value of 'api-url' from %s: %v", eksacloudStackCloudConfigB64SecretKey, err)
+	}
+	return &v1alpha1.CloudStackExecConfig{
+		CloudStackApiKey:        apiKey.Value(),
+		CloudStackSecretKey:     secretKey.Value(),
+		CloudStackManagementUrl: apiUrl.Value(),
+	}, nil
 }

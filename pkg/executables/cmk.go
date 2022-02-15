@@ -26,7 +26,7 @@ const (
 type Cmk struct {
 	writer     filewriter.FileWriter
 	executable Executable
-	config     CmkExecConfig
+	config     v1alpha1.CloudStackExecConfig
 }
 
 func (c *Cmk) Close(ctx context.Context) error {
@@ -121,6 +121,7 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domain string, 
 			return fmt.Errorf("affinity group %s not found", affinityGroupId)
 		}
 	}
+
 	return nil
 }
 
@@ -179,7 +180,7 @@ func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string) error 
 	return nil
 }
 
-func NewCmk(executable Executable, writer filewriter.FileWriter, config CmkExecConfig) *Cmk {
+func NewCmk(executable Executable, writer filewriter.FileWriter, config v1alpha1.CloudStackExecConfig) *Cmk {
 	return &Cmk{
 		writer:     writer,
 		executable: executable,
@@ -210,13 +211,6 @@ func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, er
 	return c.executable.Execute(ctx, argsWithConfigFile...)
 }
 
-// TODO: Add support for passing in domain from Deployment Config Spec
-type CmkExecConfig struct {
-	CloudStackApiKey        string // Api Key for CloudMonkey to access CloudStack Cluster
-	CloudStackSecretKey     string // Secret Key for CloudMonkey to access CloudStack Cluster
-	CloudStackManagementUrl string // Management Endpoint Url for CloudMonkey to access CloudStack Cluster
-	CloudMonkeyVerifyCert   bool   // boolean indicating if CloudMonkey should verify the cert presented by the CloudStack Management Server
-}
 
 func (c *Cmk) buildCmkConfigFile() (configFile string, err error) {
 	t := templater.New(c.writer)

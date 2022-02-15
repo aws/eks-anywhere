@@ -23,7 +23,7 @@ const (
 	domainName        = "domain1"
 )
 
-var execConfig = executables.CmkExecConfig{
+var execConfig = executables.CloudStackExecConfig{
 	CloudStackApiKey:        "test",
 	CloudStackSecretKey:     "test",
 	CloudStackManagementUrl: "http://1.1.1.1:8080/client/api",

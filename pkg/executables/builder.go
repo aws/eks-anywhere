@@ -3,6 +3,7 @@ package executables
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"os"
 	"strings"
 
@@ -40,8 +41,8 @@ func (b *ExecutableBuilder) BuildGovcExecutable(writer filewriter.FileWriter) *G
 	return NewGovc(b.buildExecutable(govcPath), writer)
 }
 
-func (b *ExecutableBuilder) BuildCmkExecutable(writer filewriter.FileWriter) *Cmk {
-	return NewCmk(b.buildExecutable(cmkPath), writer)
+func (b *ExecutableBuilder) BuildCmkExecutable(writer filewriter.FileWriter, config v1alpha1.CloudStackExecConfig) *Cmk {
+	return NewCmk(b.buildExecutable(cmkPath), writer, config)
 }
 
 func (b *ExecutableBuilder) BuildTinkExecutable(tinkerbellCertUrl, tinkerbellGrpcAuthority string) *Tink {

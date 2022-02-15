@@ -43,6 +43,13 @@ type CloudStackResourceRef struct {
 	Value string                    `json:"value"`
 }
 
+type CloudStackExecConfig struct {
+	CloudStackApiKey	string
+	CloudStackSecretKey string
+	CloudStackManagementUrl string
+	CloudMonkeyVerifyCert string
+}
+
 type CloudStackResourceRefType string
 
 const (
