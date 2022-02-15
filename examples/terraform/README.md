@@ -4,7 +4,7 @@ This is a minimal guide that lays out how you can use Terraform to manage and mo
 At its heart, EKS Anywhere is a set of Kubernetes CRDs which define an EKS Anywhere cluster, 
 and a controller which moves the cluster to match these definitions. 
 These CRDs, and the EKS-A controller, live on the management cluster or
-on a self-managed cluster```
+on a self-managed cluster.
 We can manage a subset of the fields in the EKS-A CRDs with any tool that can interact with the Kubernetes API, like `kubectl` or, in this case, the Terraform Kubneretes provider.
 
 In this guide, we'll show you how to import your EKS-A cluster into Terraform state and 
