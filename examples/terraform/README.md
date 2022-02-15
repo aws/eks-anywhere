@@ -85,7 +85,7 @@ The `manifest` field stores the contents of the associated kubernetes manifest, 
 
    You should see in the output that the worker node group configuration count field (or whichever field you chose to modify) will be modified by Terraform.
 
-Now, actually change your cluster to match the local configuration:
+6. Now, actually change your cluster to match the local configuration:
 - `terraform apply`
 - observe the change to your cluster -- `kubectl get nodes`, for example, and observe new worker nodes being created
 
