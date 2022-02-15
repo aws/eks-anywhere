@@ -11,12 +11,14 @@ import (
 )
 
 type Validator struct {
-	tink ProviderTinkClient
+	tink      ProviderTinkClient
+	netClient networkutils.NetClient
 }
 
-func NewValidator(tink ProviderTinkClient) *Validator {
+func NewValidator(tink ProviderTinkClient, netClient networkutils.NetClient) *Validator {
 	return &Validator{
-		tink: tink,
+		tink:      tink,
+		netClient: netClient,
 	}
 }
 
@@ -110,6 +112,14 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 func (v *Validator) validateTinkerbellAccess(ctx context.Context) error {
 	if _, err := v.tink.GetHardware(ctx); err != nil {
 		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
+	}
+	return nil
+}
+
+func (v *Validator) validateControlPlaneIpUniqueness(tinkerBellClusterSpec *spec) error {
+	ip := tinkerBellClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
+	if !networkutils.NewIPGenerator(v.netClient).IsIPUnique(ip) {
+		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
 	}
 	return nil
 }
