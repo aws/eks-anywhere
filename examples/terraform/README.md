@@ -28,7 +28,7 @@ how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provi
    export KUBECONFIG=/path/to/my/kubeconfig.kubeconfig
 cat << EOF >> ./provider.tf
 provider "kubernetes" {
-  config_path    = "${KUBECONFIG}"
+     config_path    = "${KUBECONFIG}"
 }
 EOF
 ```
