@@ -11,7 +11,7 @@ In this guide, we'll show you how to import your EKS Anywhere cluster into Terra
 how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provider.
 
 ### Prerequisites
-- An existing `EKS-A` cluster
+- An existing EKS Anywhere cluster
 
 - the latest version of [Terraform](https://www.terraform.io/downloads)
 
