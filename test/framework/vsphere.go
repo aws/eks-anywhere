@@ -88,7 +88,7 @@ func UpdateUbuntuTemplate121Var() api.VSphereFiller {
 }
 
 func UpdateUbuntuTemplate122Var() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateUbuntu122Var, api.WithTemplate)
+	return api.WithStringFromEnvVar(vsphereTemplateUbuntu122Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateBottlerocketTemplate121() api.VSphereFiller {
@@ -136,8 +136,8 @@ func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 func WithUbuntu122() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu122Var, api.WithTemplate),
-			api.WithOsFamily(v1alpha1.Ubuntu),
+			api.WithStringFromEnvVar(vsphereTemplateUbuntu122Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
 		)
 	}
 }
