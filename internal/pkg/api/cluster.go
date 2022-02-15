@@ -170,13 +170,13 @@ func RemoveWorkerNodeGroup(name string) ClusterFiller {
 
 func WithWorkerNodeGroup(name string, fillers ...WorkerNodeGroupFiller) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
-		logger.Info("adding or updating", "name", name)
 		var nodeGroup *anywherev1.WorkerNodeGroupConfiguration
 		position := -1
 		for i, w := range c.Spec.WorkerNodeGroupConfigurations {
 			if w.Name == name {
 				nodeGroup = &w
 				position = i
+				break
 			}
 		}
 
