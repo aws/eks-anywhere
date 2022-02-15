@@ -24,7 +24,7 @@ how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provi
 - if you don't already have an existing EKS-A cluster, follow [the official instructions to create one](https://anywhere.eks.amazonaws.com/docs/getting-started/install/)
 
 1. Set up the Terraform Kubernetes provider
-```
+   ```bash
 export KUBECONFIG=/path/to/my/kubeconfig.kubeconfig
 cat << EOF >> ./provider.tf
 provider "kubernetes" {
