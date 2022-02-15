@@ -46,15 +46,15 @@ how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provi
    - Remove the `generation` field from the `metadata` of the cluster
 
    - Your cluster manifest metadata should look like this (`generation` may be different):
-  ```bash
-  manifest = {
-    "apiVersion" = "anywhere.eks.amazonaws.com/v1alpha1"
-    "kind" = "Cluster"
-    "metadata" = {
-      "name" = "MyClusterName"
-      "namespace" = "default"
+    ```bash
+    manifest = {
+      "apiVersion" = "anywhere.eks.amazonaws.com/v1alpha1"
+      "kind" = "Cluster"
+      "metadata" = {
+        "name" = "MyClusterName"
+        "namespace" = "default"
     }
-  ```
+    ```
 
    Set `metadata.generation` as a [computed field](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/manifest#computed-fields)
    - Add the following to your cluster resource configuration
