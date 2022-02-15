@@ -87,7 +87,9 @@ The `manifest` field stores the contents of the associated kubernetes manifest, 
 
 6. Now, actually change your cluster to match the local configuration:
 - `terraform apply`
-- observe the change to your cluster -- `kubectl get nodes`, for example, and observe new worker nodes being created
+7. Observe the change to your cluster. For example:
+   ```bash
+   kubectl get nodes
 
 ### Appendix
 Terraform K8s Provider https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs
