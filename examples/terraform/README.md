@@ -15,7 +15,7 @@ how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provi
 
 - the latest version of [Terraform](https://www.terraform.io/downloads)
 
-- the latest version of [tfk8s](https://github.com/jrhouston/tfk8s), a tool for converting K8s manifest files to Terraform HCL
+- the latest version of [tfk8s](https://github.com/jrhouston/tfk8s), a tool for converting Kubernetes manifest files to Terraform HCL
 
 
 ### Guide
