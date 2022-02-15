@@ -261,7 +261,7 @@ func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *an
 			return reconciler.Result{}, err
 		}
 
-		ciliumSpec, err := cilium.GenerateManifest(specWithBundles)
+		ciliumSpec, err := cilium.GenerateManifest(ctx, specWithBundles)
 		if err != nil {
 			return reconciler.Result{}, err
 		}

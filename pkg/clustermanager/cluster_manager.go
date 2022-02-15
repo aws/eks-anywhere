@@ -91,7 +91,7 @@ type ClusterClient interface {
 }
 
 type Networking interface {
-	GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
+	GenerateManifest(ctx context.Context, clusterSpec *cluster.Spec) ([]byte, error)
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 }
 
@@ -547,7 +547,7 @@ func (c *ClusterManager) waitForCAPI(ctx context.Context, cluster *types.Cluster
 }
 
 func (c *ClusterManager) InstallNetworking(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	networkingManifestContent, err := c.networking.GenerateManifest(clusterSpec)
+	networkingManifestContent, err := c.networking.GenerateManifest(ctx, clusterSpec)
 	if err != nil {
 		return fmt.Errorf("error generating networking manifest: %v", err)
 	}

@@ -574,18 +574,18 @@ func (m *MockNetworking) EXPECT() *MockNetworkingMockRecorder {
 }
 
 // GenerateManifest mocks base method.
-func (m *MockNetworking) GenerateManifest(arg0 *cluster.Spec) ([]byte, error) {
+func (m *MockNetworking) GenerateManifest(arg0 context.Context, arg1 *cluster.Spec) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateManifest", arg0)
+	ret := m.ctrl.Call(m, "GenerateManifest", arg0, arg1)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GenerateManifest indicates an expected call of GenerateManifest.
-func (mr *MockNetworkingMockRecorder) GenerateManifest(arg0 interface{}) *gomock.Call {
+func (mr *MockNetworkingMockRecorder) GenerateManifest(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifest", reflect.TypeOf((*MockNetworking)(nil).GenerateManifest), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifest", reflect.TypeOf((*MockNetworking)(nil).GenerateManifest), arg0, arg1)
 }
 
 // Upgrade mocks base method.

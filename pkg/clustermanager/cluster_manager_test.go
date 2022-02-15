@@ -44,7 +44,7 @@ func TestClusterManagerInstallNetworkingSuccess(t *testing.T) {
 	clusterSpec := test.NewClusterSpec()
 
 	c, m := newClusterManager(t)
-	m.networking.EXPECT().GenerateManifest(clusterSpec).Return(networkingManifest, nil)
+	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec).Return(networkingManifest, nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, networkingManifest)
 
 	if err := c.InstallNetworking(ctx, cluster, clusterSpec); err != nil {
@@ -58,7 +58,7 @@ func TestClusterManagerInstallNetworkingNetworkingError(t *testing.T) {
 	clusterSpec := test.NewClusterSpec()
 
 	c, m := newClusterManager(t)
-	m.networking.EXPECT().GenerateManifest(clusterSpec).Return(nil, errors.New("error in networking"))
+	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec).Return(nil, errors.New("error in networking"))
 
 	if err := c.InstallNetworking(ctx, cluster, clusterSpec); err == nil {
 		t.Errorf("ClusterManager.InstallNetworking() error = nil, wantErr not nil")
@@ -73,7 +73,7 @@ func TestClusterManagerInstallNetworkingClientError(t *testing.T) {
 	retries := 2
 
 	c, m := newClusterManager(t)
-	m.networking.EXPECT().GenerateManifest(clusterSpec).Return(networkingManifest, nil)
+	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec).Return(networkingManifest, nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, networkingManifest).Return(errors.New("error from client")).Times(retries)
 
 	c.Retrier = retrier.NewWithMaxRetries(retries, 1*time.Microsecond)
