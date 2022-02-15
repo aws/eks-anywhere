@@ -1827,8 +1827,6 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
-                        version:
-                          type: string
                       required:
                       - image
                       type: object
@@ -2524,10 +2522,8 @@ spec:
                   - etcdadmBootstrap
                   - etcdadmController
                   - flux
-                  - haproxy
                   - kindnetd
                   - kubeVersion
-                  - tinkerbell
                   - vSphere
                   type: object
                 type: array

@@ -75,8 +75,8 @@ type VersionsBundle struct {
 	BottleRocketAdmin      BottlerocketAdminBundle     `json:"bottlerocketAdmin"`
 	ExternalEtcdBootstrap  EtcdadmBootstrapBundle      `json:"etcdadmBootstrap"`
 	ExternalEtcdController EtcdadmControllerBundle     `json:"etcdadmController"`
-	Tinkerbell             TinkerbellBundle            `json:"tinkerbell"`
-	Haproxy                HaproxyBundle               `json:"haproxy"`
+	Tinkerbell             TinkerbellBundle            `json:"tinkerbell,omitempty"`
+	Haproxy                HaproxyBundle               `json:"haproxy,omitempty"`
 }
 
 type EksDRelease struct {
