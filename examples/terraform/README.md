@@ -42,6 +42,7 @@ kubectl get cluster ${MY_EKSA_CLUSTER} -o yaml | tfk8s --strip -o ${MY_EKSA_CLUS
 
 3. Configure the Terraform cluster resource definition generated in step 2
 - add the `namespace` `default` to the `metadata` of the cluster
+- remove the `generation` field from the `metadata` of the cluster
 
 Your cluster manifest metadata should look like this (`generation` may be different):
 ```
