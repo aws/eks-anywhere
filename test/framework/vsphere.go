@@ -7,6 +7,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
 const (
@@ -58,7 +59,6 @@ var requiredEnvVars = []string{
 	cidrVar,
 	privateNetworkCidrVar,
 	govcUrlVar,
-	ClusterIPPoolEnvVar,
 }
 
 type VSphere struct {
@@ -120,17 +120,21 @@ func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 	}
 
 	v.cidr = os.Getenv(cidrVar)
-	clusterIP, err := PopIPFromEnv(ClusterIPPoolEnvVar)
-	if err != nil {
-		v.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
-	}
-	v.clusterFillers = []api.ClusterFiller{api.WithControlPlaneEndpointIP(clusterIP)}
 
 	for _, opt := range opts {
 		opt(v)
 	}
 
 	return v
+}
+
+func (v *VSphere) generateUniqueIp() string {
+	ipgen := networkutils.NewIPGenerator(&networkutils.DefaultNetClient{})
+	ip, err := ipgen.GenerateUniqueIP(v.cidr)
+	if err != nil {
+		v.t.Fatalf("Error getting unique IP for vsphere: %v", err)
+	}
+	return ip
 }
 
 func WithUbuntu122() VSphereOpt {
@@ -262,6 +266,19 @@ func (v *VSphere) WithNewVSphereWorkerNodeGroup(name string, workerNodeGroup *Wo
 }
 
 func (v *VSphere) ClusterConfigFillers() []api.ClusterFiller {
+	value, ok := os.LookupEnv(ClusterIPPoolEnvVar)
+	var clusterIP string
+	var err error
+	if ok && value != "" {
+		clusterIP, err = PopIPFromEnv(ClusterIPPoolEnvVar)
+		if err != nil {
+			v.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
+		}
+	} else {
+		clusterIP = v.generateUniqueIp()
+	}
+
+	v.clusterFillers = append(v.clusterFillers, api.WithControlPlaneEndpointIP(clusterIP))
 	return v.clusterFillers
 }
 
