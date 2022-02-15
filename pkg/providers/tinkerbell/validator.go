@@ -6,19 +6,22 @@ import (
 	"fmt"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/hardware"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
 type Validator struct {
-	tink      ProviderTinkClient
-	netClient networkutils.NetClient
+	tink           ProviderTinkClient
+	netClient      networkutils.NetClient
+	hardwareConfig hardware.HardwareConfig
 }
 
-func NewValidator(tink ProviderTinkClient, netClient networkutils.NetClient) *Validator {
+func NewValidator(tink ProviderTinkClient, netClient networkutils.NetClient, hardwareConfig hardware.HardwareConfig) *Validator {
 	return &Validator{
-		tink:      tink,
-		netClient: netClient,
+		tink:           tink,
+		netClient:      netClient,
+		hardwareConfig: hardwareConfig,
 	}
 }
 
@@ -106,6 +109,19 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 		return errors.New("TinkerbellDatacenterConfig and Cluster objects must have the same namespace specified")
 	}
 
+	return nil
+}
+
+func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string) error {
+	if err := v.hardwareConfig.GetHardwareConfig(hardwareConfigFile); err != nil {
+		return fmt.Errorf("failed to get hardware Config: %v", err)
+	}
+
+	if err := v.hardwareConfig.ValidateBmcRefMapping(); err != nil {
+		return fmt.Errorf("failed validating Hardware BMC refs in hardware config: %v", err)
+	}
+
+	logger.MarkPass("Hardware Config file validated")
 	return nil
 }
 
