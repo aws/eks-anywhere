@@ -50,7 +50,6 @@ Your cluster manifest metadata should look like this (`generation` may be differ
     "apiVersion" = "anywhere.eks.amazonaws.com/v1alpha1"
     "kind" = "Cluster"
     "metadata" = {
-      "generation" = 1
       "name" = "MyClusterName"
       "namespace" = "default"
     }
