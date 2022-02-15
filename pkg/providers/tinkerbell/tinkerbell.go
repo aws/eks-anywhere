@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -55,6 +56,7 @@ type tinkerbellProvider struct {
 	providerKubectlClient ProviderKubectlClient
 	providerTinkClient    ProviderTinkClient
 	templateBuilder       *TinkerbellTemplateBuilder
+	skipIpCheck           bool
 	hardwareConfigFile    string
 	validator             *Validator
 	// TODO: Update hardwareConfig to proper type
@@ -72,7 +74,21 @@ type ProviderTinkClient interface {
 	GetHardware(ctx context.Context) ([]*hardware.Hardware, error)
 }
 
-func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, now types.NowFunc, hardwareConfigFile string) *tinkerbellProvider {
+func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
+	return NewProviderCustomNet(
+		datacenterConfig,
+		machineConfigs,
+		clusterConfig,
+		providerKubectlClient,
+		providerTinkClient,
+		&networkutils.DefaultNetClient{},
+		now,
+		skipIpCheck,
+		hardwareConfigFile,
+	)
+}
+
+func NewProviderCustomNet(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
@@ -103,7 +119,8 @@ func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 			now:                         now,
 		},
 		hardwareConfigFile: hardwareConfigFile,
-		validator:          NewValidator(providerTinkClient),
+		validator:          NewValidator(providerTinkClient, netClient),
+		skipIpCheck:        skipIpCheck,
 	}
 }
 
@@ -174,6 +191,14 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	p.controlPlaneSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 	p.workerSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 	// TODO: Add more validations
+
+	if !p.skipIpCheck {
+		if err := p.validator.validateControlPlaneIpUniqueness(tinkerbellClusterSpec); err != nil {
+			return err
+		}
+	} else {
+		logger.Info("Skipping check for whether control plane ip is in use")
+	}
 
 	return nil
 }
