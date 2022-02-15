@@ -80,7 +80,7 @@ This will not change the state of your cluster, but is a required step after the
 The `manifest` field stores the contents of the associated kubernetes manifest, while the `object` field stores the actual state of the resource.
 
 5. Modify Your Cluster using Terraform
-- modify the `count` value of one of your `workerNodeGroupConfigurations`, or another mutable field, in the configuration stored in `${MY_EKSA_CLUSTER}.tf` file.
+   - Modify the `count` value of one of your `workerNodeGroupConfigurations`, or another mutable field, in the configuration stored in `${MY_EKSA_CLUSTER}.tf` file.
    - Check the expected diff between your cluster state and the modified local state via `terraform plan`
 
    You should see in the output that the worker node group configuration count field (or whichever field you chose to modify) will be modified by Terraform.
