@@ -19,7 +19,7 @@ func ValidateTaintsSupport(clusterSpec *cluster.Spec) error {
 
 		if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints) > 0 ||
 			workerNodeGroupTaintsPresent {
-			return fmt.Errorf("Taints feature is not enabled. Please set the env variable TAINTS_SUPPORT.")
+			return fmt.Errorf("Taints feature is not enabled. Please set the env variable %v.", features.TaintsSupportEnvVar)
 		}
 	}
 	return nil
@@ -28,12 +28,21 @@ func ValidateTaintsSupport(clusterSpec *cluster.Spec) error {
 func ValidateNodeLabelsSupport(clusterSpec *cluster.Spec) error {
 	if !features.IsActive(features.NodeLabelsSupport()) {
 		if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Labels) > 0 {
-			return fmt.Errorf("Node labels feature is not enabled. Please set the env variable NODE_LABELS_SUPPORT.")
+			return fmt.Errorf("Node labels feature is not enabled. Please set the env variable %v.", features.NodeLabelsSupportEnvVar)
 		}
 		for _, workerNodeGroup := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 			if len(workerNodeGroup.Labels) > 0 {
-				return fmt.Errorf("Node labels feature is not enabled. Please set the env variable NODE_LABELS_SUPPORT.")
+				return fmt.Errorf("Node labels feature is not enabled. Please set the env variable %v.", features.NodeLabelsSupportEnvVar)
 			}
+		}
+	}
+	return nil
+}
+
+func ValidateK8s122Support(clusterSpec *cluster.Spec) error {
+	if !features.IsActive(features.K8s122Support()) {
+		if clusterSpec.Cluster.Spec.KubernetesVersion == "1.22" {
+			return fmt.Errorf("Kubernetes version 1.22 is not enabled. Please set the env variable %v.", features.K8s122SupportEnvVar)
 		}
 	}
 	return nil
