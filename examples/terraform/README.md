@@ -31,19 +31,22 @@ how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provi
      config_path    = "${KUBECONFIG}"
    }
    EOF
+   ```
 
 2. Get  `tfk8s` and use it to convert your EKS Anywhere cluster Kubernetes manifest into Terraform HCL:
    - Install [tfk8s](https://github.com/jrhouston/tfk8s#install)
    - Convert the manifest into Terraform HCL:
+   ```bash
    export MY_EKSA_CLUSTER="myClusterName"
    kubectl get cluster ${MY_EKSA_CLUSTER} -o yaml | tfk8s --strip -o ${MY_EKSA_CLUSTER}.tf
+   ``` 
 
 3. Configure the Terraform cluster resource definition generated in step 2
    - Add the `namespace` `default` to the `metadata` of the cluster
    - Remove the `generation` field from the `metadata` of the cluster
 
-   Your cluster manifest metadata should look like this (`generation` may be different):
-   ```bash
+   - Your cluster manifest metadata should look like this (`generation` may be different):
+  ```bash
   manifest = {
     "apiVersion" = "anywhere.eks.amazonaws.com/v1alpha1"
     "kind" = "Cluster"
@@ -51,6 +54,7 @@ how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provi
       "name" = "MyClusterName"
       "namespace" = "default"
     }
+  ```
 
    Set `metadata.generation` as a [computed field](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/manifest#computed-fields)
    - Add the following to your cluster resource configuration
@@ -62,12 +66,15 @@ how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provi
    field_manager {
      force_conflicts = true
    }
+   ```
 
 4. Import your EKS Anywhere cluster into terraform state:
    ```bash
    export MY_EKSA_CLUSTER="myClusterName"
    terraform init
    terraform import kubernetes_manifest.cluster_${MY_EKSA_CLUSTER} "apiVersion=anywhere.eks.amazonaws.com/v1alpha1,kind=Cluster,namespace=default,name=${MY_EKSA_CLUSTER}"
+   ```
+
    After you `import` your cluster, you will need to run `terraform apply` one time to ensure that the `manifest` field of your cluster resource is in-sync. 
    This will not change the state of your cluster, but is a required step after the initial import.
    The `manifest` field stores the contents of the associated kubernetes manifest, while the `object` field stores the actual state of the resource.
@@ -81,9 +88,12 @@ how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provi
 6. Now, actually change your cluster to match the local configuration:
    ```bash
    terraform apply
+   ```
+
 7. Observe the change to your cluster. For example:
    ```bash
    kubectl get nodes
+   ```
 
 ### Appendix
 Terraform K8s Provider https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs
