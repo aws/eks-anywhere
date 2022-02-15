@@ -8,7 +8,7 @@ on a self-managed cluster.
 We can manage a subset of the fields in the EKS Anywhere CRDs with any tool that can interact with the Kubernetes API, like `kubectl` or, in this case, the Terraform Kubernetes provider.
 
 In this guide, we'll show you how to import your EKS Anywhere cluster into Terraform state and 
-how to scale your EKS-A worker nodes using the Terraform Kubernetes provider.
+how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provider.
 
 ### Prerequisites
 - An existing `EKS-A` cluster
