@@ -24,6 +24,7 @@ env:
     T_VSPHERE_TEMPLATE_UBUNTU_1_19: "vsphere_ci_beta_connection:template_19"
     T_VSPHERE_TEMPLATE_UBUNTU_1_20: "vsphere_ci_beta_connection:template_20"
     T_VSPHERE_TEMPLATE_UBUNTU_1_21: "vsphere_ci_beta_connection:template_21"
+    T_VSPHERE_TEMPLATE_UBUNTU_1_22: "vsphere_ci_beta_connection:template_22"
     T_VSPHERE_TEMPLATE_BR_1_20: "vsphere_ci_beta_connection:template_br_20"
     T_VSPHERE_TEMPLATE_BR_1_21: "vsphere_ci_beta_connection:template_br_21"
     T_VSPHERE_TLS_INSECURE: "vsphere_ci_beta_connection:tls_insecure"
@@ -44,44 +45,44 @@ env:
 phases:
   pre_build:
     commands:
-    - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
-    - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
+      - source ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/setup_profile.sh
+      - ${CODEBUILD_SRC_DIR}/cmd/integration_test/build/script/start_docker.sh
   build:
     commands:
-    - export JOB_ID=$CODEBUILD_BUILD_ID
-    - BUNDLES_OVERRIDE=false
-    - |
-      if [ -f ./bin/local-bundle-release.yaml ]; then
-        BUNDLES_OVERRIDE=true
-      fi
-    - > 
-      ./bin/test e2e run
-      -a ${INTEGRATION_TEST_AL2_AMI_ID}
-      -s ${INTEGRATION_TEST_STORAGE_BUCKET}
-      -j ${JOB_ID}
-      -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
-      -n ${INTEGRATION_TEST_SUBNET_ID}
-      -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
-      -r 'Test'
-      -v 4
-      --bundles-override=${BUNDLES_OVERRIDE}
-      --cleanup-vms=true
-      --test-report-folder=reports
-      --branch-name=${BRANCH_NAME}
+      - export JOB_ID=$CODEBUILD_BUILD_ID
+      - BUNDLES_OVERRIDE=false
+      - |
+        if [ -f ./bin/local-bundle-release.yaml ]; then
+          BUNDLES_OVERRIDE=true
+        fi
+      - >
+        ./bin/test e2e run
+        -a ${INTEGRATION_TEST_AL2_AMI_ID}
+        -s ${INTEGRATION_TEST_STORAGE_BUCKET}
+        -j ${JOB_ID}
+        -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
+        -n ${INTEGRATION_TEST_SUBNET_ID}
+        -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
+        -r 'Test'
+        -v 4
+        --bundles-override=${BUNDLES_OVERRIDE}
+        --cleanup-vms=true
+        --test-report-folder=reports
+        --branch-name=${BRANCH_NAME}
   post_build:
     commands:
-    - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
-    - export GIT_HASH=$(cat bin/githash)
-    - >
-      ./cmd/integration_test/build/script/upload_artifacts.sh
-      $ARTIFACTS_BUCKET
-      $CODEBUILD_SRC_DIR
-      "eks-a-cli"
-      $CODEBUILD_BUILD_NUMBER
-      $GIT_HASH
-      "linux,darwin"
-      "amd64"
-      false
+      - unset AWS_SDK_LOAD_CONFIG AWS_PROFILE
+      - export GIT_HASH=$(cat bin/githash)
+      - >
+        ./cmd/integration_test/build/script/upload_artifacts.sh
+        $ARTIFACTS_BUCKET
+        $CODEBUILD_SRC_DIR
+        "eks-a-cli"
+        $CODEBUILD_BUILD_NUMBER
+        $GIT_HASH
+        "linux,darwin"
+        "amd64"
+        false
 reports:
   e2e-reports:
     files:
