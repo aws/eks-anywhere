@@ -40,7 +40,7 @@ how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provi
 
 3. Configure the Terraform cluster resource definition generated in step 2
    - Add the `namespace` `default` to the `metadata` of the cluster
-- remove the `generation` field from the `metadata` of the cluster
+   - Remove the `generation` field from the `metadata` of the cluster
 
    Your cluster manifest metadata should look like this (`generation` may be different):
    ```bash
