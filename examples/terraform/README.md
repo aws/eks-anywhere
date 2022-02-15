@@ -1,4 +1,4 @@
-## How-To: using Terraform to manage an EKS Anywhere (EKS-A) Cluster
+## Using Terraform to manage an EKS Anywhere Cluster
 A minimal guide which lays out how you can use Terraform to manage and modify an EKS-A cluster. This guide is meant for illustrative purposes only and is not meant as a definitive approach to building production systems with Terraform and EKS Anywhere.
 
 At its heart, EKS-A is a set of Kubernetes CRDs which define an EKS-A cluster, 
