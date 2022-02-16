@@ -26,7 +26,7 @@ https://github.com/coredns/caddy
 ** github.com/coredns/corefile-migration/migration; version v1.0.13 --
 https://github.com/coredns/corefile-migration
 
-** github.com/docker/distribution; version v2.7.1+incompatible --
+** github.com/docker/distribution; version v2.8.0-beta.1+incompatible --
 https://github.com/distribution/distribution
 
 ** github.com/go-git/go-billy/v5; version v5.3.1 --

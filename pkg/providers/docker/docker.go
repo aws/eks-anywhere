@@ -212,6 +212,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec) map[string]interface{} {
 		"auditPolicy":                common.GetAuditPolicy(),
 		"podCidrs":                   clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":               clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
+		"haproxyImageRepository":     getHAProxyImageRepo(bundle.Haproxy.Image),
+		"haproxyImageTag":            bundle.Haproxy.Image.Tag(),
 	}
 
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
@@ -483,4 +485,17 @@ func (p *provider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, cu
 		machineDeployments = append(machineDeployments, mdName)
 	}
 	return machineDeployments
+}
+
+func getHAProxyImageRepo(haProxyImage releasev1alpha1.Image) string {
+	var haproxyImageRepo string
+
+	regexStr := `(?P<HAProxyImageRepoPrefix>public.ecr.aws/[a-z0-9._-]+/kubernetes-sigs/kind)/haproxy`
+	regex := regexp.MustCompile(regexStr)
+	matches := regex.FindStringSubmatch(haProxyImage.Image())
+	if len(matches) > 0 {
+		haproxyImageRepo = matches[regex.SubexpIndex("HAProxyImageRepoPrefix")]
+	}
+
+	return haproxyImageRepo
 }

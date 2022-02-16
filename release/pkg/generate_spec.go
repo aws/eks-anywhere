@@ -121,6 +121,11 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		return nil, errors.Wrapf(err, "Error getting bundle for Kindnetd")
 	}
 
+	haproxyBundle, err := r.GetHaproxyBundle(imageDigests)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Error getting bundle for Haproxy")
+	}
+
 	fluxBundle, err := r.GetFluxBundle(imageDigests)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting bundle for Flux controllers")
@@ -214,6 +219,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			BottleRocketBootstrap:  bottlerocketBootstrapBundle,
 			BottleRocketAdmin:      bottlerocketAdminBundle,
 			Tinkerbell:             tinkerbellBundle,
+			Haproxy:                haproxyBundle,
 		}
 		versionsBundles = append(versionsBundles, versionsBundle)
 	}
@@ -262,6 +268,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		"etcdadm":                      r.GetEtcdadmAssets,
 		"cri-tools":                    r.GetCriToolsAssets,
 		"diagnostic-collector":         r.GetDiagnosticCollectorAssets,
+		"haproxy":                      r.GetHaproxyAssets,
 	}
 
 	if r.DevRelease && r.BuildRepoBranchName == "main" {
