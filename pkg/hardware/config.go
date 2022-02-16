@@ -12,6 +12,8 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
 type HardwareConfig struct {
@@ -88,6 +90,36 @@ func (hc *HardwareConfig) ValidateBmcRefMapping() error {
 	return nil
 }
 
+func (hc *HardwareConfig) ValidateBMC() error {
+	secretRefMap := hc.initSecretRefMap()
+	bmcIpMap := make(map[string]struct{}, len(hc.bmcList))
+	for _, bmc := range hc.bmcList {
+		if bmc.Spec.AuthSecretRef.Name == "" {
+			return fmt.Errorf("invalid authSecretRef name %s for bmc %s", bmc.Spec.AuthSecretRef.Name, bmc.Name)
+		}
+
+		if bmc.Spec.AuthSecretRef.Namespace != constants.EksaSystemNamespace {
+			return fmt.Errorf("invalid authSecretRef namespace %s for bmc %s", bmc.Spec.AuthSecretRef.Namespace, bmc.Name)
+		}
+
+		if _, ok := secretRefMap[bmc.Spec.AuthSecretRef.Name]; !ok {
+			return fmt.Errorf("bmc authSecretRef: %s not present in hardware config", bmc.Spec.AuthSecretRef.String())
+		}
+
+		if _, ok := bmcIpMap[bmc.Spec.Host]; ok {
+			return fmt.Errorf("duplicate host IP: %s for bmc %s", bmc.Spec.Host, bmc.Name)
+		} else {
+			bmcIpMap[bmc.Spec.Host] = struct{}{}
+		}
+
+		if err := networkutils.ValidateIP(bmc.Spec.Host); err != nil {
+			return fmt.Errorf("bmc host IP: %v", err)
+		}
+	}
+
+	return nil
+}
+
 func (hc *HardwareConfig) initBmcRefMap() map[string]*tinkv1alpha1.Hardware {
 	bmcRefMap := make(map[string]*tinkv1alpha1.Hardware, len(hc.bmcList))
 	for _, bmc := range hc.bmcList {
@@ -95,4 +127,13 @@ func (hc *HardwareConfig) initBmcRefMap() map[string]*tinkv1alpha1.Hardware {
 	}
 
 	return bmcRefMap
+}
+
+func (hc *HardwareConfig) initSecretRefMap() map[string]struct{} {
+	secretRefMap := make(map[string]struct{}, len(hc.secretList))
+	for _, s := range hc.secretList {
+		secretRefMap[s.Name] = struct{}{}
+	}
+
+	return secretRefMap
 }

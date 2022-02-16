@@ -121,6 +121,10 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 		return fmt.Errorf("failed validating Hardware BMC refs in hardware config: %v", err)
 	}
 
+	if err := v.hardwareConfig.ValidateBMC(); err != nil {
+		return fmt.Errorf("failed validating BMCs in hardware config: %v", err)
+	}
+
 	logger.MarkPass("Hardware Config file validated")
 	return nil
 }
