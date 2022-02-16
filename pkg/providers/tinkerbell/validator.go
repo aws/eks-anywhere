@@ -119,7 +119,7 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 		return fmt.Errorf("failed to get hardware Config: %v", err)
 	}
 
-	if err := v.hardwareConfig.ValidateBmcRefMapping(); err != nil {
+	if err := v.hardwareConfig.ValidateHardware(); err != nil {
 		return fmt.Errorf("failed validating Hardware BMC refs in hardware config: %v", err)
 	}
 

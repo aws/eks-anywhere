@@ -69,9 +69,17 @@ func (hc *HardwareConfig) setHardwareConfigFromFile(hardwareFileName string) err
 	return nil
 }
 
-func (hc *HardwareConfig) ValidateBmcRefMapping() error {
+func (hc *HardwareConfig) ValidateHardware() error {
 	bmcRefMap := hc.initBmcRefMap()
 	for _, hw := range hc.hardwareList {
+		if hw.Name == "" {
+			return fmt.Errorf("hardware name is required")
+		}
+
+		if hw.Spec.ID == "" {
+			return fmt.Errorf("hardware: %s ID is required", hw.Name)
+		}
+
 		if hw.Spec.BmcRef == "" {
 			return fmt.Errorf("bmcRef not present in hardware %s", hw.Name)
 		}
@@ -94,6 +102,10 @@ func (hc *HardwareConfig) ValidateBMC() error {
 	secretRefMap := hc.initSecretRefMap()
 	bmcIpMap := make(map[string]struct{}, len(hc.bmcList))
 	for _, bmc := range hc.bmcList {
+		if bmc.Name == "" {
+			return fmt.Errorf("bmc name is required")
+		}
+
 		if bmc.Spec.AuthSecretRef.Name == "" {
 			return fmt.Errorf("authSecretRef name required for bmc %s", bmc.Name)
 		}
@@ -114,6 +126,10 @@ func (hc *HardwareConfig) ValidateBMC() error {
 
 		if err := networkutils.ValidateIP(bmc.Spec.Host); err != nil {
 			return fmt.Errorf("bmc host IP: %v", err)
+		}
+
+		if bmc.Spec.Vendor == "" {
+			return fmt.Errorf("bmc: %s vendor is required", bmc.Name)
 		}
 	}
 
