@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/tinkerbell/tink/protos/hardware"
+	tink "github.com/tinkerbell/tink/protos/hardware"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -16,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/hardware"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -71,7 +72,7 @@ type ProviderKubectlClient interface {
 }
 
 type ProviderTinkClient interface {
-	GetHardware(ctx context.Context) ([]*hardware.Hardware, error)
+	GetHardware(ctx context.Context) ([]*tink.Hardware, error)
 }
 
 func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
@@ -119,7 +120,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
 			now:                         now,
 		},
 		hardwareConfigFile: hardwareConfigFile,
-		validator:          NewValidator(providerTinkClient, netClient),
+		validator:          NewValidator(providerTinkClient, netClient, hardware.HardwareConfig{}),
 		skipIpCheck:        skipIpCheck,
 	}
 }
@@ -198,6 +199,10 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		}
 	} else {
 		logger.Info("Skipping check for whether control plane ip is in use")
+	}
+
+	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile); err != nil {
+		return err
 	}
 
 	return nil
