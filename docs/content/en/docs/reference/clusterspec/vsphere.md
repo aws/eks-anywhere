@@ -98,9 +98,11 @@ CNI plugin to be installed in the cluster. The only supported value at the momen
 
 ### clusterNetwork.pods.cidrBlocks[0] (required)
 Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR block specification is permitted.
+This CIDR block should not conflict with the network subnet range selected for the VMs.
 
 ### clusterNetwork.services.cidrBlocks[0] (required)
 Subnet used by services in CIDR notation. Please note that only 1 custom services CIDR block specification is permitted.
+This CIDR block should not conflict with the network subnet range selected for the VMs.
 
 ### clusterNetwork.dns.resolvConf.path (optional)
 Path to the file with a custom DNS resolver configuration.
