@@ -294,7 +294,7 @@ func (f *Factory) WithTink(clusterConfigFile string) *Factory {
 			return err
 		}
 		f.dependencies.Tink = f.executableBuilder.BuildTinkExecutable(tinkerbellDatacenterConfig.Spec.TinkerbellCertURL, tinkerbellDatacenterConfig.Spec.TinkerbellGRPCAuth)
-		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Cmk)
+
 		return nil
 	})
 
@@ -388,6 +388,7 @@ func (f *Factory) WithHelm() *Factory {
 		}
 
 		f.dependencies.Helm = f.executableBuilder.BuildHelmExecutable()
+
 		return nil
 	})
 

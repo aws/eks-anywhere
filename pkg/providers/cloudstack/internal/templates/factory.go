@@ -1,8 +1,6 @@
 package templates
 
 import (
-	"context"
-
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
@@ -26,6 +24,3 @@ func NewFactory(client CloudMonkeyClient, network v1alpha1.CloudStackResourceRef
 	}
 }
 
-func (f *Factory) ValidateMachineResources(ctx context.Context, machineConfig *v1alpha1.CloudStackMachineConfig) error {
-	return nil
-}
