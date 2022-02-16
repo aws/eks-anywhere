@@ -20,15 +20,15 @@ type HardwareConfig struct {
 	secretList   []corev1.Secret
 }
 
-func (hc *HardwareConfig) GetHardwareConfig(hardwareFileName string) error {
-	err := hc.parseHardwareConfig(hardwareFileName)
+func (hc *HardwareConfig) ParseHardwareConfig(hardwareFileName string) error {
+	err := hc.setHardwareConfigFromFile(hardwareFileName)
 	if err != nil {
 		return fmt.Errorf("unable to parse hardware file %s: %v", hardwareFileName, err)
 	}
 	return nil
 }
 
-func (hc *HardwareConfig) parseHardwareConfig(hardwareFileName string) error {
+func (hc *HardwareConfig) setHardwareConfigFromFile(hardwareFileName string) error {
 	content, err := ioutil.ReadFile(hardwareFileName)
 	if err != nil {
 		return fmt.Errorf("unable to read file due to: %v", err)
@@ -68,7 +68,7 @@ func (hc *HardwareConfig) parseHardwareConfig(hardwareFileName string) error {
 }
 
 func (hc *HardwareConfig) ValidateBmcRefMapping() error {
-	bmcRefMap := hc.getBmcRefMap()
+	bmcRefMap := hc.initBmcRefMap()
 	for _, hw := range hc.hardwareList {
 		if hw.Spec.BmcRef == "" {
 			return fmt.Errorf("bmcRef not present in hardware %s", hw.Name)
@@ -88,7 +88,7 @@ func (hc *HardwareConfig) ValidateBmcRefMapping() error {
 	return nil
 }
 
-func (hc *HardwareConfig) getBmcRefMap() map[string]*tinkv1alpha1.Hardware {
+func (hc *HardwareConfig) initBmcRefMap() map[string]*tinkv1alpha1.Hardware {
 	bmcRefMap := make(map[string]*tinkv1alpha1.Hardware, len(hc.bmcList))
 	for _, bmc := range hc.bmcList {
 		bmcRefMap[bmc.Name] = nil

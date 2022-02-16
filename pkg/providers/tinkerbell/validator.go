@@ -113,7 +113,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 }
 
 func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string) error {
-	if err := v.hardwareConfig.GetHardwareConfig(hardwareConfigFile); err != nil {
+	if err := v.hardwareConfig.ParseHardwareConfig(hardwareConfigFile); err != nil {
 		return fmt.Errorf("failed to get hardware Config: %v", err)
 	}
 
