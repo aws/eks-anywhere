@@ -282,7 +282,7 @@ spec:
                   on the cluster
                 properties:
                   apiGroup:
-                    description: ApiGroup refers to the EKS-D API grouo
+                    description: ApiGroup refers to the EKS-D API group
                     type: string
                   kind:
                     description: Kind refers to the Release kind for the EKS-D object

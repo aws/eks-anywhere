@@ -15,12 +15,6 @@ spec:
   kubernetesVersion: "1.19"
   managementCluster:
     name: management-cluster
-status:
-  eksdReleaseRef:
-    apiGroup: ""
-    kind: ""
-    name: ""
-    namespace: ""
 
 ---
 kind: VSphereDatacenterConfig

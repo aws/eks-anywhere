@@ -2808,7 +2808,7 @@ spec:
                   on the cluster
                 properties:
                   apiGroup:
-                    description: ApiGroup refers to the EKS-D API grouo
+                    description: ApiGroup refers to the EKS-D API group
                     type: string
                   kind:
                     description: Kind refers to the Release kind for the EKS-D object
@@ -3188,7 +3188,7 @@ spec:
               users:
                 items:
                   description: UserConfiguration defines the configuration of the
-                    user to be added to the VSphere VM
+                    user to be added to the VM
                   properties:
                     name:
                       type: string
@@ -3363,7 +3363,7 @@ spec:
               users:
                 items:
                   description: UserConfiguration defines the configuration of the
-                    user to be added to the VSphere VM
+                    user to be added to the VM
                   properties:
                     name:
                       type: string

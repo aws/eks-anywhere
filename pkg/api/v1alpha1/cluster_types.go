@@ -377,7 +377,7 @@ type ClusterStatus struct {
 }
 
 type EksdReleaseRef struct {
-	// ApiGroup refers to the EKS-D API grouo
+	// ApiGroup refers to the EKS-D API group
 	ApiGroup string `json:"apiGroup"`
 	// Kind refers to the Release kind for the EKS-D object
 	Kind string `json:"kind"`
@@ -471,8 +471,7 @@ type ClusterGenerate struct {
 	metav1.TypeMeta `json:",inline"`
 	ObjectMeta      `json:"metadata,omitempty"`
 
-	Spec   ClusterSpec   `json:"spec,omitempty"`
-	Status ClusterStatus `json:"status,omitempty"`
+	Spec ClusterSpec `json:"spec,omitempty"`
 }
 
 func (c *Cluster) Kind() string {
