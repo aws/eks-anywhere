@@ -108,6 +108,9 @@ type EksDRelease struct {
 
 	// Raw points to a collection of Raw images built with this eks-d version
 	Raw OSImageBundle `json:"raw,omitempty"`
+
+	// Components refers to the url that points to the EKS-D release CRD
+	Components string `json:"components,omitempty"`
 }
 
 type OSImageBundle struct {
