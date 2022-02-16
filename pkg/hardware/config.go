@@ -95,11 +95,11 @@ func (hc *HardwareConfig) ValidateBMC() error {
 	bmcIpMap := make(map[string]struct{}, len(hc.bmcList))
 	for _, bmc := range hc.bmcList {
 		if bmc.Spec.AuthSecretRef.Name == "" {
-			return fmt.Errorf("invalid authSecretRef name %s for bmc %s", bmc.Spec.AuthSecretRef.Name, bmc.Name)
+			return fmt.Errorf("authSecretRef name required for bmc %s", bmc.Name)
 		}
 
 		if bmc.Spec.AuthSecretRef.Namespace != constants.EksaSystemNamespace {
-			return fmt.Errorf("invalid authSecretRef namespace %s for bmc %s", bmc.Spec.AuthSecretRef.Namespace, bmc.Name)
+			return fmt.Errorf("invalid authSecretRef namespace: %s for bmc %s", bmc.Spec.AuthSecretRef.Namespace, bmc.Name)
 		}
 
 		if _, ok := secretRefMap[bmc.Spec.AuthSecretRef.Name]; !ok {
@@ -114,6 +114,36 @@ func (hc *HardwareConfig) ValidateBMC() error {
 
 		if err := networkutils.ValidateIP(bmc.Spec.Host); err != nil {
 			return fmt.Errorf("bmc host IP: %v", err)
+		}
+	}
+
+	return nil
+}
+
+func (hc *HardwareConfig) ValidateBmcSecretRefs() error {
+	for _, s := range hc.secretList {
+		if s.Name == "" {
+			return fmt.Errorf("secret name is required")
+		}
+		if s.Namespace != constants.EksaSystemNamespace {
+			return fmt.Errorf("invalid secret namespace: %s for secret: %s expected: %s", s.Namespace, s.Name, constants.EksaSystemNamespace)
+		}
+		du, dOk := s.Data["username"]
+		sdu, sdOk := s.StringData["username"]
+		if !dOk && !sdOk {
+			return fmt.Errorf("secret: %s must contain key username", s.Name)
+		}
+		if (dOk && len(du) == 0) || (sdOk && sdu == "") {
+			return fmt.Errorf("username can not be empty for secret: %s", s.Name)
+		}
+
+		dp, dOk := s.Data["password"]
+		sdp, sdOk := s.StringData["password"]
+		if !dOk && !sdOk {
+			return fmt.Errorf("secret: %s must contain key password", s.Name)
+		}
+		if (dOk && len(dp) == 0) || (sdOk && sdp == "") {
+			return fmt.Errorf("password can not be empty for secret: %s", s.Name)
 		}
 	}
 
