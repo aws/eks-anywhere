@@ -52,6 +52,7 @@ var (
 type Kubectl struct {
 	Executable
 }
+
 func (k *Kubectl) SearchCloudStackMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackMachineConfig, error) {
 	params := []string{
 		"get", eksaCloudStackMachineResourceType, "-o", "json", "--kubeconfig",

@@ -83,7 +83,6 @@ func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
 
 	manifestList := []string{
 		"infrastructure-components.yaml",
-		"cluster-template.yaml",
 		"metadata.yaml",
 	}
 
@@ -188,7 +187,6 @@ func (r *ReleaseConfig) GetCloudStackBundle(imageDigests map[string]string) (any
 		KubeProxy:       bundleImageArtifacts["kube-rbac-proxy"],
 		Manager:         bundleImageArtifacts["cluster-api-cloudstack-controller"],
 		Components:      bundleManifestArtifacts["infrastructure-components.yaml"],
-		ClusterTemplate: bundleManifestArtifacts["cluster-template.yaml"],
 		Metadata:        bundleManifestArtifacts["metadata.yaml"],
 	}
 

@@ -23,11 +23,11 @@ const (
 	domainName        = "domain1"
 )
 
-var execConfig = executables.CloudStackExecConfig{
+var execConfig = v1alpha1.CloudStackExecConfig{
 	CloudStackApiKey:        "test",
 	CloudStackSecretKey:     "test",
 	CloudStackManagementUrl: "http://1.1.1.1:8080/client/api",
-	CloudMonkeyVerifyCert:   false,
+	CloudMonkeyVerifyCert:   "false",
 }
 
 var zoneName = v1alpha1.CloudStackResourceRef{
@@ -144,51 +144,6 @@ func TestCmkListOperations(t *testing.T) {
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
 				return cmk.ValidateZonePresent(ctx, resourceName)
-			},
-			cmkResponseError:      nil,
-			wantErr:               true,
-			shouldSecondCallOccur: false,
-			wantResultCount:       0,
-		},
-		{
-			testName:         "listaccounts success",
-			jsonResponseFile: "testdata/cmk_list_account_singular.json",
-			argumentsExecCall: []string{
-				"-c", configFilePath,
-				"list", "accounts", fmt.Sprintf("name=\"%s\"", accountName),
-			},
-			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateAccountPresent(ctx, accountName)
-			},
-			cmkResponseError:      nil,
-			wantErr:               false,
-			shouldSecondCallOccur: false,
-			wantResultCount:       1,
-		},
-		{
-			testName:         "listaccounts no results",
-			jsonResponseFile: "testdata/cmk_list_empty_response.json",
-			argumentsExecCall: []string{
-				"-c", configFilePath,
-				"list", "accounts", fmt.Sprintf("name=\"%s\"", accountName),
-			},
-			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateAccountPresent(ctx, accountName)
-			},
-			cmkResponseError:      nil,
-			wantErr:               true,
-			shouldSecondCallOccur: true,
-			wantResultCount:       0,
-		},
-		{
-			testName:         "listaccounts json parse exception",
-			jsonResponseFile: "testdata/cmk_non_json_response.txt",
-			argumentsExecCall: []string{
-				"-c", configFilePath,
-				"list", "accounts", fmt.Sprintf("name=\"%s\"", accountName),
-			},
-			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateAccountPresent(ctx, accountName)
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,

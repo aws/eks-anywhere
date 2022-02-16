@@ -133,9 +133,9 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	if err != nil {
 		return reconciler.Result{}, err
 	}
-	vshepreClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
+	vsphereClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
 
-	if err := v.Validator.ValidateClusterMachineConfigs(ctx, vshepreClusterSpec); err != nil {
+	if err := v.Validator.ValidateClusterMachineConfigs(ctx, vsphereClusterSpec); err != nil {
 		return reconciler.Result{}, err
 	}
 

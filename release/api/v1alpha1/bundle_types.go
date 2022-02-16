@@ -200,7 +200,6 @@ type CloudStackBundle struct {
     Manager              Image    `json:"manager"`
     Components           Manifest `json:"components"`
     Metadata             Manifest `json:"metadata"`
-    ClusterTemplate      Manifest `json:"clusterTemplate"`
 }
 
 type CiliumBundle struct {

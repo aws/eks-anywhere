@@ -549,12 +549,6 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
-                        clusterTemplate:
-                          properties:
-                            uri:
-                              description: URI points to the manifest yaml file
-                              type: string
-                          type: object
                         components:
                           properties:
                             uri:
@@ -629,7 +623,6 @@ spec:
                           type: string
                       required:
                       - clusterAPIController
-                      - clusterTemplate
                       - components
                       - kubeProxy
                       - manager

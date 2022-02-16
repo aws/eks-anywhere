@@ -44,10 +44,10 @@ type CloudStackResourceRef struct {
 }
 
 type CloudStackExecConfig struct {
-	CloudStackApiKey	string
-	CloudStackSecretKey string
+	CloudStackApiKey        string
+	CloudStackSecretKey     string
 	CloudStackManagementUrl string
-	CloudMonkeyVerifyCert string
+	CloudMonkeyVerifyCert   string
 }
 
 type CloudStackResourceRefType string

@@ -19,7 +19,7 @@ var cmkConfigTemplate string
 
 const (
 	cmkConfigFileName = "cmk_tmp.ini"
-	cmkPath = "cmk"
+	cmkPath           = "cmk"
 )
 
 // Cmk this type will be used once the CloudStack provider is added to the repository
@@ -155,31 +155,6 @@ func (c *Cmk) ValidateZonePresent(ctx context.Context, zone v1alpha1.CloudStackR
 	return nil
 }
 
-// TODO: Add support for domain filtering
-func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string) error {
-	result, err := c.exec(ctx, "list", "accounts", fmt.Sprintf("name=\"%s\"", account))
-	if err != nil {
-		return fmt.Errorf("error getting accounts info: %v", err)
-	}
-	if result.Len() == 0 {
-		return fmt.Errorf("account %s not found", account)
-	}
-
-	response := struct {
-		CmkAccounts []cmkAccount `json:"account"`
-	}{}
-	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-		return fmt.Errorf("failed to parse response into json: %v", err)
-	}
-	accounts := response.CmkAccounts
-	if len(accounts) > 1 {
-		return fmt.Errorf("duplicate account %s found", account)
-	} else if len(accounts) == 0 {
-		return fmt.Errorf("account %s not found", account)
-	}
-	return nil
-}
-
 func NewCmk(executable Executable, writer filewriter.FileWriter, config v1alpha1.CloudStackExecConfig) *Cmk {
 	return &Cmk{
 		writer:     writer,
@@ -210,7 +185,6 @@ func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, er
 
 	return c.executable.Execute(ctx, argsWithConfigFile...)
 }
-
 
 func (c *Cmk) buildCmkConfigFile() (configFile string, err error) {
 	t := templater.New(c.writer)
@@ -249,11 +223,4 @@ type cmkAffinityGroup struct {
 type cmkZone struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
-}
-
-type cmkAccount struct {
-	RoleType string `json:"roletype"`
-	Domain   string `json:"domain"`
-	Id       string `json:"id"`
-	Name     string `json:"name"`
 }

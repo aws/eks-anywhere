@@ -31,7 +31,6 @@ func (vb *VersionsBundle) Manifests() map[string][]Manifest {
 		},
 		"cluster-api-provider-cloudstack": {
 			vb.CloudStack.Components,
-			vb.CloudStack.ClusterTemplate,
 			vb.CloudStack.Metadata,
 		},
 		"cilium": {

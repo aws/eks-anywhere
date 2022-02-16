@@ -227,11 +227,6 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		tinkerbellProvider = "true"
 	}
 
-	cloudStackProvider := "false"
-	if features.IsActive(features.CloudStackProvider()) {
-		cloudStackProvider = "true"
-	}
-
 	data := map[string]string{
 		"CertManagerInjectorRepository":                   imageRepository(bundle.CertManager.Cainjector),
 		"CertManagerInjectorTag":                          bundle.CertManager.Cainjector.Tag(),
@@ -282,7 +277,6 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		"AwsProviderVersion":                              bundle.Aws.Version,
 		"TinkerbellProviderVersion":                       "v0.1.0", // TODO - version should come from the bundle
 		"IsActiveTinkerbellProvider":                      tinkerbellProvider,
-		"IsActiveCloudStackProvider":                      cloudStackProvider,
 		"ClusterApiProviderVersion":                       bundle.ClusterAPI.Version,
 		"KubeadmControlPlaneProviderVersion":              bundle.ControlPlane.Version,
 		"KubeadmBootstrapProviderVersion":                 bundle.Bootstrap.Version,
