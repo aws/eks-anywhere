@@ -1,0 +1,23 @@
+{
+  "count": 1,
+  "serviceoffering": [
+    {
+      "cpunumber": 1,
+      "cpuspeed": 1000,
+      "created": "2021-11-01T14:57:05-0400",
+      "defaultuse": false,
+      "displaytext": "Medium Instance",
+      "id": "0e86db5a-3053-476a-b4c5-858455f1c2c8",
+      "iscustomized": false,
+      "issystem": false,
+      "isvolatile": false,
+      "limitcpuuse": false,
+      "memory": 1024,
+      "name": "Medium Instance",
+      "offerha": false,
+      "provisioningtype": "thin",
+      "rootdisksize": 0,
+      "storagetype": "shared"
+    }
+  ]
+}

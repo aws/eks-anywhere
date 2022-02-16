@@ -31,15 +31,15 @@ func runWorkloadClusterFlowWithGitOps(test *framework.MulticlusterE2ETest, clust
 	test.DeleteManagementCluster()
 }
 
-func TestVSphereKubernetes121WorkloadClusterDemo(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu120())
+func TestVSphereKubernetes121MulticlusterWorkloadClusterDemo(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu121())
 	test := framework.NewMulticlusterE2ETest(
 		t,
 		framework.NewClusterE2ETest(
 			t,
 			provider,
 			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube120),
+				api.WithKubernetesVersion(v1alpha1.Kube121),
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
@@ -49,7 +49,7 @@ func TestVSphereKubernetes121WorkloadClusterDemo(t *testing.T) {
 			t,
 			provider,
 			framework.WithClusterFiller(
-				api.WithKubernetesVersion(v1alpha1.Kube120),
+				api.WithKubernetesVersion(v1alpha1.Kube121),
 				api.WithControlPlaneCount(1),
 				api.WithWorkerNodeCount(1),
 				api.WithStackedEtcdTopology(),
@@ -59,7 +59,7 @@ func TestVSphereKubernetes121WorkloadClusterDemo(t *testing.T) {
 	runWorkloadClusterFlow(test)
 }
 
-func TestVSphereUpgradeWorkloadClusterWithFlux(t *testing.T) {
+func TestVSphereUpgradeMulticlusterWorkloadClusterWithFlux(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu120())
 	test := framework.NewMulticlusterE2ETest(
 		t,

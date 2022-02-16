@@ -352,6 +352,7 @@ const (
 	Kube119 KubernetesVersion = "1.19"
 	Kube120 KubernetesVersion = "1.20"
 	Kube121 KubernetesVersion = "1.21"
+	Kube122 KubernetesVersion = "1.22"
 )
 
 type CNI string

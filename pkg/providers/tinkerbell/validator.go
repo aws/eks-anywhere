@@ -6,16 +6,34 @@ import (
 	"fmt"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/hardware"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
-type Validator struct{}
+type Validator struct {
+	tink           ProviderTinkClient
+	netClient      networkutils.NetClient
+	hardwareConfig hardware.HardwareConfig
+}
+
+func NewValidator(tink ProviderTinkClient, netClient networkutils.NetClient, hardwareConfig hardware.HardwareConfig) *Validator {
+	return &Validator{
+		tink:           tink,
+		netClient:      netClient,
+		hardwareConfig: hardwareConfig,
+	}
+}
 
 func (v *Validator) ValidateTinkerbellConfig(ctx context.Context, datacenterConfig *anywherev1.TinkerbellDatacenterConfig) error {
-	// TODO: add validations for tinkerbellAccess
 	if err := v.validateTinkerbellIP(ctx, datacenterConfig.Spec.TinkerbellIP); err != nil {
 		return err
 	}
+
+	if err := v.validateTinkerbellAccess(ctx); err != nil {
+		return err
+	}
+	logger.MarkPass("Connected to tinkerbell stack")
 
 	if err := v.validateTinkerbellCertURL(ctx, datacenterConfig.Spec.TinkerbellCertURL); err != nil {
 		return err
@@ -91,6 +109,34 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 		return errors.New("TinkerbellDatacenterConfig and Cluster objects must have the same namespace specified")
 	}
 
+	return nil
+}
+
+func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string) error {
+	if err := v.hardwareConfig.ParseHardwareConfig(hardwareConfigFile); err != nil {
+		return fmt.Errorf("failed to get hardware Config: %v", err)
+	}
+
+	if err := v.hardwareConfig.ValidateBmcRefMapping(); err != nil {
+		return fmt.Errorf("failed validating Hardware BMC refs in hardware config: %v", err)
+	}
+
+	logger.MarkPass("Hardware Config file validated")
+	return nil
+}
+
+func (v *Validator) validateTinkerbellAccess(ctx context.Context) error {
+	if _, err := v.tink.GetHardware(ctx); err != nil {
+		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
+	}
+	return nil
+}
+
+func (v *Validator) validateControlPlaneIpUniqueness(tinkerBellClusterSpec *spec) error {
+	ip := tinkerBellClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
+	if !networkutils.NewIPGenerator(v.netClient).IsIPUnique(ip) {
+		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
+	}
 	return nil
 }
 

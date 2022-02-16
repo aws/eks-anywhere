@@ -5,9 +5,8 @@ import (
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
@@ -25,11 +24,11 @@ const (
 	vsphereTemplateUbuntu119Var = "T_VSPHERE_TEMPLATE_UBUNTU_1_19"
 	vsphereTemplateUbuntu120Var = "T_VSPHERE_TEMPLATE_UBUNTU_1_20"
 	vsphereTemplateUbuntu121Var = "T_VSPHERE_TEMPLATE_UBUNTU_1_21"
+	vsphereTemplateUbuntu122Var = "T_VSPHERE_TEMPLATE_UBUNTU_1_22"
 	vsphereTemplateBR120Var     = "T_VSPHERE_TEMPLATE_BR_1_20"
 	vsphereTemplateBR121Var     = "T_VSPHERE_TEMPLATE_BR_1_21"
 	vsphereTlsInsecureVar       = "T_VSPHERE_TLS_INSECURE"
 	vsphereTlsThumbprintVar     = "T_VSPHERE_TLS_THUMBPRINT"
-	vsphereHost                 = "T_VSPHERE_HOST"
 	vsphereUsernameVar          = "EKSA_VSPHERE_USERNAME"
 	vspherePasswordVar          = "EKSA_VSPHERE_PASSWORD"
 	cidrVar                     = "T_VSPHERE_CIDR"
@@ -50,6 +49,7 @@ var requiredEnvVars = []string{
 	vsphereTemplateUbuntu119Var,
 	vsphereTemplateUbuntu120Var,
 	vsphereTemplateUbuntu121Var,
+	vsphereTemplateUbuntu122Var,
 	vsphereTemplateBR120Var,
 	vsphereTemplateBR121Var,
 	vsphereTlsInsecureVar,
@@ -62,36 +62,41 @@ var requiredEnvVars = []string{
 }
 
 type VSphere struct {
-	t          *testing.T
-	fillers    []api.VSphereFiller
-	cidr       string
-	GovcClient *executables.Govc
+	t              *testing.T
+	fillers        []api.VSphereFiller
+	clusterFillers []api.ClusterFiller
+	cidr           string
+	GovcClient     *executables.Govc
 }
 
 type VSphereOpt func(*VSphere)
 
 func UpdateUbuntuTemplate118Var() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateUbuntu118Var, api.WithTemplate)
+	return api.WithStringFromEnvVar(vsphereTemplateUbuntu118Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateUbuntuTemplate119Var() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateUbuntu119Var, api.WithTemplate)
+	return api.WithStringFromEnvVar(vsphereTemplateUbuntu119Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateUbuntuTemplate120Var() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateUbuntu120Var, api.WithTemplate)
+	return api.WithStringFromEnvVar(vsphereTemplateUbuntu120Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateUbuntuTemplate121Var() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateUbuntu121Var, api.WithTemplate)
+	return api.WithStringFromEnvVar(vsphereTemplateUbuntu121Var, api.WithTemplateForAllMachines)
+}
+
+func UpdateUbuntuTemplate122Var() api.VSphereFiller {
+	return api.WithStringFromEnvVar(vsphereTemplateUbuntu122Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateBottlerocketTemplate121() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateBR121Var, api.WithTemplate)
+	return api.WithStringFromEnvVar(vsphereTemplateBR121Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateBottlerocketTemplate120() api.VSphereFiller {
-	return api.WithStringFromEnvVar(vsphereTemplateBR120Var, api.WithTemplate)
+	return api.WithStringFromEnvVar(vsphereTemplateBR120Var, api.WithTemplateForAllMachines)
 }
 
 func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
@@ -102,20 +107,20 @@ func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 		GovcClient: c,
 		fillers: []api.VSphereFiller{
 			api.WithStringFromEnvVar(vsphereDatacenterVar, api.WithDatacenter),
-			api.WithStringFromEnvVar(vsphereDatastoreVar, api.WithDatastore),
-			api.WithStringFromEnvVar(vsphereFolderVar, api.WithFolder),
+			api.WithStringFromEnvVar(vsphereDatastoreVar, api.WithDatastoreForAllMachines),
+			api.WithStringFromEnvVar(vsphereFolderVar, api.WithFolderForAllMachines),
 			api.WithStringFromEnvVar(vsphereNetworkVar, api.WithNetwork),
-			api.WithStringFromEnvVar(vsphereResourcePoolVar, api.WithResourcePool),
+			api.WithStringFromEnvVar(vsphereResourcePoolVar, api.WithResourcePoolForAllMachines),
 			api.WithStringFromEnvVar(vsphereServerVar, api.WithServer),
-			api.WithStringFromEnvVar(vsphereSshAuthorizedKeyVar, api.WithSSHAuthorizedKey),
-			api.WithStringFromEnvVar(vsphereStoragePolicyNameVar, api.WithStoragePolicyName),
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu119Var, api.WithTemplate),
+			api.WithStringFromEnvVar(vsphereSshAuthorizedKeyVar, api.WithSSHAuthorizedKeyForAllMachines),
+			api.WithStringFromEnvVar(vsphereStoragePolicyNameVar, api.WithStoragePolicyNameForAllMachines),
 			api.WithBoolFromEnvVar(vsphereTlsInsecureVar, api.WithTLSInsecure),
 			api.WithStringFromEnvVar(vsphereTlsThumbprintVar, api.WithTLSThumbprint),
 		},
 	}
 
 	v.cidr = os.Getenv(cidrVar)
+
 	for _, opt := range opts {
 		opt(v)
 	}
@@ -123,11 +128,29 @@ func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
 	return v
 }
 
+func (v *VSphere) generateUniqueIp() string {
+	ipgen := networkutils.NewIPGenerator(&networkutils.DefaultNetClient{})
+	ip, err := ipgen.GenerateUniqueIP(v.cidr)
+	if err != nil {
+		v.t.Fatalf("Error getting unique IP for vsphere: %v", err)
+	}
+	return ip
+}
+
+func WithUbuntu122() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithStringFromEnvVar(vsphereTemplateUbuntu122Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
 func WithUbuntu121() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu121Var, api.WithTemplate),
-			api.WithOsFamily(v1alpha1.Ubuntu),
+			api.WithStringFromEnvVar(vsphereTemplateUbuntu121Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
 		)
 	}
 }
@@ -135,8 +158,8 @@ func WithUbuntu121() VSphereOpt {
 func WithUbuntu120() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu120Var, api.WithTemplate),
-			api.WithOsFamily(v1alpha1.Ubuntu),
+			api.WithStringFromEnvVar(vsphereTemplateUbuntu120Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
 		)
 	}
 }
@@ -144,8 +167,8 @@ func WithUbuntu120() VSphereOpt {
 func WithUbuntu119() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu119Var, api.WithTemplate),
-			api.WithOsFamily(v1alpha1.Ubuntu),
+			api.WithStringFromEnvVar(vsphereTemplateUbuntu119Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
 		)
 	}
 }
@@ -153,8 +176,8 @@ func WithUbuntu119() VSphereOpt {
 func WithUbuntu118() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateUbuntu118Var, api.WithTemplate),
-			api.WithOsFamily(v1alpha1.Ubuntu),
+			api.WithStringFromEnvVar(vsphereTemplateUbuntu118Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.Ubuntu),
 		)
 	}
 }
@@ -162,8 +185,8 @@ func WithUbuntu118() VSphereOpt {
 func WithBottleRocket120() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateBR120Var, api.WithTemplate),
-			api.WithOsFamily(v1alpha1.Bottlerocket),
+			api.WithStringFromEnvVar(vsphereTemplateBR120Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
 		)
 	}
 }
@@ -171,8 +194,8 @@ func WithBottleRocket120() VSphereOpt {
 func WithBottleRocket121() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
-			api.WithStringFromEnvVar(vsphereTemplateBR121Var, api.WithTemplate),
-			api.WithOsFamily(v1alpha1.Bottlerocket),
+			api.WithStringFromEnvVar(vsphereTemplateBR121Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
 		)
 	}
 }
@@ -183,6 +206,14 @@ func WithPrivateNetwork() VSphereOpt {
 			api.WithStringFromEnvVar(vspherePrivateNetworkVar, api.WithNetwork),
 		)
 		v.cidr = os.Getenv(privateNetworkCidrVar)
+	}
+}
+
+func WithVSphereWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.VSphereMachineConfigFiller) VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers, vSphereMachineConfig(name, fillers...))
+
+		v.clusterFillers = append(v.clusterFillers, buildVSphereWorkerNodeGroupClusterFiller(name, workerNodeGroup))
 	}
 }
 
@@ -222,26 +253,59 @@ func (v *VSphere) WithProviderUpgradeGit(fillers ...api.VSphereFiller) ClusterE2
 	}
 }
 
+func (v *VSphere) WithNewVSphereWorkerNodeGroup(name string, workerNodeGroup *WorkerNodeGroup, fillers ...api.VSphereMachineConfigFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.ProviderConfigB = v.customizeProviderConfig(e.ClusterConfigLocation, vSphereMachineConfig(name, fillers...))
+		var err error
+		// Using the ClusterConfigB instead of file in disk since it might have already been updated but not written to disk
+		e.ClusterConfigB, err = api.AutoFillClusterFromYaml(e.ClusterConfigB, buildVSphereWorkerNodeGroupClusterFiller(name, workerNodeGroup))
+		if err != nil {
+			e.T.Fatalf("Error filling cluster config: %v", err)
+		}
+	}
+}
+
 func (v *VSphere) ClusterConfigFillers() []api.ClusterFiller {
-	return []api.ClusterFiller{api.WithControlPlaneEndpointIP(v.generateUniqueIp())}
+	value, ok := os.LookupEnv(ClusterIPPoolEnvVar)
+	var clusterIP string
+	var err error
+	if ok && value != "" {
+		clusterIP, err = PopIPFromEnv(ClusterIPPoolEnvVar)
+		if err != nil {
+			v.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
+		}
+	} else {
+		clusterIP = v.generateUniqueIp()
+	}
+
+	v.clusterFillers = append(v.clusterFillers, api.WithControlPlaneEndpointIP(clusterIP))
+	return v.clusterFillers
 }
 
 func RequiredVsphereEnvVars() []string {
 	return requiredEnvVars
 }
 
-func (v *VSphere) generateUniqueIp() string {
-	ipgen := networkutils.NewIPGenerator(&networkutils.DefaultNetClient{})
-	ip := os.Getenv(vsphereHost)
-	if len(ip) > 0 && ipgen.IsIPUnique(ip) {
-		logger.V(1).Info("Using configured ip: " + ip)
-		return ip
-	}
-	logger.V(1).Info("Generating unique IP for vsphere control plane")
-	ip, err := ipgen.GenerateUniqueIP(v.cidr)
-	if err != nil {
-		v.t.Fatalf("Error getting unique IP for vsphere: %v", err)
-	}
-	logger.V(2).Info("IP generated successfully", "ip", ip)
-	return ip
+func vSphereMachineConfig(name string, fillers ...api.VSphereMachineConfigFiller) api.VSphereFiller {
+	f := make([]api.VSphereMachineConfigFiller, 0, len(fillers)+6)
+	// Need to add these because at this point the default fillers that assign these
+	// values to all machines have already ran
+	f = append(f,
+		api.WithVSphereMachineDefaultValues(),
+		api.WithDatastore(os.Getenv(vsphereDatastoreVar)),
+		api.WithFolder(os.Getenv(vsphereFolderVar)),
+		api.WithResourcePool(os.Getenv(vsphereResourcePoolVar)),
+		api.WithStoragePolicyName(os.Getenv(vsphereStoragePolicyNameVar)),
+		api.WithSSHKey(os.Getenv(vsphereSshAuthorizedKeyVar)),
+	)
+	f = append(f, fillers...)
+
+	return api.WithMachineConfig(name, f...)
+}
+
+func buildVSphereWorkerNodeGroupClusterFiller(machineConfigName string, workerNodeGroup *WorkerNodeGroup) api.ClusterFiller {
+	// Set worker node group ref to vsphere machine config
+	workerNodeGroup.MachineConfigKind = anywherev1.VSphereMachineConfigKind
+	workerNodeGroup.MachineConfigName = machineConfigName
+	return workerNodeGroup.clusterFiller()
 }

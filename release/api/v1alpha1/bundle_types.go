@@ -76,6 +76,7 @@ type VersionsBundle struct {
 	ExternalEtcdBootstrap  EtcdadmBootstrapBundle      `json:"etcdadmBootstrap"`
 	ExternalEtcdController EtcdadmControllerBundle     `json:"etcdadmController"`
 	Tinkerbell             TinkerbellBundle            `json:"tinkerbell"`
+	Haproxy                HaproxyBundle               `json:"haproxy"`
 }
 
 type EksDRelease struct {
@@ -107,6 +108,9 @@ type EksDRelease struct {
 
 	// Raw points to a collection of Raw images built with this eks-d version
 	Raw OSImageBundle `json:"raw,omitempty"`
+
+	// Components refers to the url that points to the EKS-D release CRD
+	Components string `json:"components,omitempty"`
 }
 
 type OSImageBundle struct {
@@ -261,4 +265,8 @@ type Actions struct {
 	ImageToDisk Image `json:"imageToDisk"`
 	OciToDisk   Image `json:"ociToDisk"`
 	WriteFile   Image `json:"writeFile"`
+}
+
+type HaproxyBundle struct {
+	Image Image `json:"image"`
 }

@@ -1796,6 +1796,42 @@ spec:
                       - notificationController
                       - sourceController
                       type: object
+                    haproxy:
+                      properties:
+                        image:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
+                        version:
+                          type: string
+                      required:
+                      - image
+                      type: object
                     kindnetd:
                       properties:
                         manifest:
@@ -2488,6 +2524,7 @@ spec:
                   - etcdadmBootstrap
                   - etcdadmController
                   - flux
+                  - haproxy
                   - kindnetd
                   - kubeVersion
                   - tinkerbell
@@ -3884,6 +3921,48 @@ webhooks:
     - UPDATE
     resources:
     - awsiamconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackdatacenterconfig
+  failurePolicy: Fail
+  name: validation.cloudstackdatacenterconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - cloudstackdatacenterconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackmachineconfig
+  failurePolicy: Fail
+  name: validation.cloudstackmachineconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - cloudstackmachineconfigs
   sideEffects: None
 - admissionReviewVersions:
   - v1

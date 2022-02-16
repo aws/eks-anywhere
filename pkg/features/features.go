@@ -7,6 +7,7 @@ const (
 	CloudStackProviderEnvVar = "CLOUDSTACK_PROVIDER"
 	FullLifecycleAPIEnvVar   = "FULL_LIFECYCLE_API"
 	FullLifecycleGate        = "FullLifecycleAPI"
+	K8s122SupportEnvVar      = "K8S_1_22_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
@@ -54,5 +55,12 @@ func CloudStackProvider() Feature {
 	return Feature{
 		Name:     "CloudStack provider support",
 		IsActive: globalFeatures.isActiveForEnvVar(CloudStackProviderEnvVar),
+	}
+}
+
+func K8s122Support() Feature {
+	return Feature{
+		Name:     "Kubernetes version 1.22 support",
+		IsActive: globalFeatures.isActiveForEnvVar(K8s122SupportEnvVar),
 	}
 }

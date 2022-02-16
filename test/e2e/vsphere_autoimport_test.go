@@ -44,8 +44,8 @@ func deleteTemplates(test *framework.ClusterE2ETest, provider *framework.VSphere
 func TestVSphereKubernetes120UbuntuAutoimport(t *testing.T) {
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
-			api.WithTemplate(""),
-			api.WithOsFamily(v1alpha1.Ubuntu),
+			api.WithTemplateForAllMachines(""),
+			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
 		),
 	)
 	test := framework.NewClusterE2ETest(
@@ -59,8 +59,8 @@ func TestVSphereKubernetes120UbuntuAutoimport(t *testing.T) {
 func TestVSphereKubernetes121UbuntuAutoimport(t *testing.T) {
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
-			api.WithTemplate(""),
-			api.WithOsFamily(v1alpha1.Ubuntu),
+			api.WithTemplateForAllMachines(""),
+			api.WithOsFamilyForAllMachines(v1alpha1.Ubuntu),
 		),
 	)
 	test := framework.NewClusterE2ETest(
@@ -74,8 +74,8 @@ func TestVSphereKubernetes121UbuntuAutoimport(t *testing.T) {
 func TestVSphereKubernetes120BottlerocketAutoimport(t *testing.T) {
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
-			api.WithTemplate(""),
-			api.WithOsFamily(v1alpha1.Bottlerocket),
+			api.WithTemplateForAllMachines(""),
+			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
 		),
 	)
 	test := framework.NewClusterE2ETest(
@@ -89,8 +89,8 @@ func TestVSphereKubernetes120BottlerocketAutoimport(t *testing.T) {
 func TestVSphereKubernetes121BottlerocketAutoimport(t *testing.T) {
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereFillers(
-			api.WithTemplate(""),
-			api.WithOsFamily(v1alpha1.Bottlerocket),
+			api.WithTemplateForAllMachines(""),
+			api.WithOsFamilyForAllMachines(v1alpha1.Bottlerocket),
 		),
 	)
 	test := framework.NewClusterE2ETest(
