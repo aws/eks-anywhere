@@ -774,6 +774,10 @@ spec:
                           description: Release branch of the EKS-D release like 1-19,
                             1-20
                           type: string
+                        components:
+                          description: Components refers to the url that points to
+                            the EKS-D release CRD
+                          type: string
                         gitCommit:
                           description: Git commit the component is built from, before
                             any patches
