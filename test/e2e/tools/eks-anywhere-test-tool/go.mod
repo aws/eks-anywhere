@@ -12,4 +12,4 @@ require (
 
 exclude sigs.k8s.io/cluster-api/test v1.0.0
 
-replace github.com/docker/distribution => github.com/docker/distribution v2.8.0-beta.1+incompatible
+replace github.com/docker/distribution => github.com/docker/distribution v0.0.0-20220207154021-dcf66392d606
