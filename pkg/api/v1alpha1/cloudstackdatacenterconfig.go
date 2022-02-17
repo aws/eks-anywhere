@@ -18,13 +18,9 @@ func NewCloudStackDatacenterConfigGenerate(clusterName string) *CloudStackDatace
 		},
 		Spec: CloudStackDatacenterConfigSpec{
 			Domain: "domain1",
-			Zone: CloudStackResourceRef{
-				Value: "zone1",
-				Type:  "name",
-			},
-			Network: CloudStackResourceRef{
-				Value: "net1",
-				Type:  "name",
+			Zones: []Zone{
+				{ZoneRef: CloudStackResourceRef{Type: "name", Value: "zone1"}, Network: CloudStackResourceRef{Type: "name", Value: "GuestNet1"}},
+				{ZoneRef: CloudStackResourceRef{Type: "name", Value: "zone2"}, Network: CloudStackResourceRef{Type: "name", Value: "GuestNet2"}},
 			},
 			Account:  "admin",
 			Insecure: false,

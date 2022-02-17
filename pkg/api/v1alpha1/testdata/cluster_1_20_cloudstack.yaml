@@ -37,12 +37,19 @@ spec:
   account: "admin"
   domain: "domain1"
   insecure: false
-  network:
-    value: "net1"
-    type: "Name"
-  zone:
-    value: "zone1"
-    type: "Name"
+  zones:
+  - zone:
+      value: "zone1"
+      type: "Name"
+    network:
+      value: "net1"
+      type: "Name"
+  - zone:
+      value: "zone2"
+      type: "Name"
+    network:
+      value: "net2"
+      type: "Name"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
