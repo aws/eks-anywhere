@@ -154,6 +154,14 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		}
 	}
 
+	var cloudStackBundle anywherev1alpha1.CloudStackBundle
+	if r.DevRelease && r.BuildRepoBranchName == "main" {
+		cloudStackBundle, err = r.GetCloudStackBundle(imageDigests)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting bundle for CloudStack infrastructure provider")
+		}
+	}
+
 	eksDReleaseMap, err := readEksDReleases(r)
 	if err != nil {
 		return nil, err
@@ -199,6 +207,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			ControlPlane:           kubeadmControlPlaneBundle,
 			Aws:                    awsBundle,
 			VSphere:                vsphereBundle,
+			CloudStack:             cloudStackBundle,
 			Docker:                 dockerBundle,
 			Eksa:                   eksaBundle,
 			Cilium:                 ciliumBundle,
@@ -243,6 +252,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		"cluster-api-provider-aws":     r.GetCapaAssets,
 		"cluster-api-provider-docker":  r.GetDockerAssets,
 		"cluster-api-provider-vsphere": r.GetCapvAssets,
+		"cluster-api-provider-cloudstack": r.GetCapcAssets,
 		"vsphere-csi-driver":           r.GetVsphereCsiAssets,
 		"cert-manager":                 r.GetCertManagerAssets,
 		"cilium":                       r.GetCiliumAssets,
@@ -262,6 +272,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 
 	if r.DevRelease && r.BuildRepoBranchName == "main" {
 		eksAArtifactsFuncs["cluster-api-provider-tinkerbell"] = r.GetCaptAssets
+		eksAArtifactsFuncs["cluster-api-provider-cloudstack"] = r.GetCapcAssets
 		eksAArtifactsFuncs["tink"] = r.GetTinkAssets
 		eksAArtifactsFuncs["hegel"] = r.GetHegelAssets
 		eksAArtifactsFuncs["cfssl"] = r.GetCfsslAssets
