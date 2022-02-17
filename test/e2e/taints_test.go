@@ -5,14 +5,12 @@ package e2e
 import (
 	"testing"
 
-	corev1 "k8s.io/api/core/v1"
-
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-func runTaintsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, preUpgradeNodeTaints, postUpgradeNodeTaints map[corev1.Taint]int, clusterOpts ...framework.ClusterE2ETestOpt) {
+func runTaintsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
 	test.VaidateWorkerNodeTaints()
@@ -36,7 +34,7 @@ func TestVSphereKubernetes121TaintsWorkerNodeGroups(t *testing.T) {
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
-			noScheduleWorkerNodeGroup(worker0, 2),
+			framework.NoScheduleWorkerNodeGroup(worker0, 2),
 		),
 		framework.WithVSphereWorkerNodeGroup(
 			worker1,
@@ -44,7 +42,7 @@ func TestVSphereKubernetes121TaintsWorkerNodeGroups(t *testing.T) {
 		),
 		framework.WithVSphereWorkerNodeGroup(
 			worker2,
-			preferNoScheduleWorkerNodeGroup(worker2, 1),
+			framework.PreferNoScheduleWorkerNodeGroup(worker2, 1),
 		),
 		framework.WithUbuntu121(),
 	)
@@ -59,33 +57,13 @@ func TestVSphereKubernetes121TaintsWorkerNodeGroups(t *testing.T) {
 		),
 	)
 
-	preUpgradeTaints := map[corev1.Taint]int{
-		framework.NoScheduleTaint():       2,
-		framework.PreferNoScheduleTaint(): 1,
-	}
-
-	postUpgradeTaints := map[corev1.Taint]int{
-		framework.NoExecuteTaint():  3,
-		framework.NoScheduleTaint(): 2,
-	}
-
 	runTaintsUpgradeFlow(
 		test,
 		v1alpha1.Kube121,
-		preUpgradeTaints,
-		postUpgradeTaints,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
 		),
 	)
-}
-
-func noScheduleWorkerNodeGroup(name string, count int) *framework.WorkerNodeGroup {
-	return framework.WithWorkerNodeGroup(name, api.WithCount(count), api.WithTaint(framework.NoScheduleTaint()))
-}
-
-func preferNoScheduleWorkerNodeGroup(name string, count int) *framework.WorkerNodeGroup {
-	return framework.WithWorkerNodeGroup(name, api.WithCount(count), api.WithTaint(framework.PreferNoScheduleTaint()))
 }
