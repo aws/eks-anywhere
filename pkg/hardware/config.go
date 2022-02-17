@@ -144,21 +144,21 @@ func (hc *HardwareConfig) ValidateBmcSecretRefs() error {
 		if s.Namespace != constants.EksaSystemNamespace {
 			return fmt.Errorf("invalid secret namespace: %s for secret: %s expected: %s", s.Namespace, s.Name, constants.EksaSystemNamespace)
 		}
-		du, dOk := s.Data["username"]
-		sdu, sdOk := s.StringData["username"]
+		dUsr, dOk := s.Data["username"]
+		sdUsr, sdOk := s.StringData["username"]
 		if !dOk && !sdOk {
 			return fmt.Errorf("secret: %s must contain key username", s.Name)
 		}
-		if (dOk && len(du) == 0) || (sdOk && sdu == "") {
+		if (dOk && len(dUsr) == 0) || (sdOk && sdUsr == "") {
 			return fmt.Errorf("username can not be empty for secret: %s", s.Name)
 		}
 
-		dp, dOk := s.Data["password"]
-		sdp, sdOk := s.StringData["password"]
+		dPwd, dOk := s.Data["password"]
+		sdPwd, sdOk := s.StringData["password"]
 		if !dOk && !sdOk {
 			return fmt.Errorf("secret: %s must contain key password", s.Name)
 		}
-		if (dOk && len(dp) == 0) || (sdOk && sdp == "") {
+		if (dOk && len(dPwd) == 0) || (sdOk && sdPwd == "") {
 			return fmt.Errorf("password can not be empty for secret: %s", s.Name)
 		}
 	}
