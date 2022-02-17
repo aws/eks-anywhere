@@ -630,16 +630,16 @@ func TestKubectlGetEksaCloudStackMachineConfig(t *testing.T) {
 		{
 			testName:         "no machines",
 			jsonResponseFile: "testdata/kubectl_no_cs_machineconfigs.json",
-			wantMachines:     &v1alpha1.CloudStackMachineConfig{
+			wantMachines: &v1alpha1.CloudStackMachineConfig{
 				TypeMeta: metav1.TypeMeta{APIVersion: "v1"},
 			},
 		},
 		{
 			testName:         "one machineconfig",
 			jsonResponseFile: "testdata/kubectl_eksa_cs_machineconfig.json",
-			wantMachines:     &v1alpha1.CloudStackMachineConfig{
+			wantMachines: &v1alpha1.CloudStackMachineConfig{
 				TypeMeta: metav1.TypeMeta{
-					Kind: "CloudStackMachineConfig",
+					Kind:       "CloudStackMachineConfig",
 					APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
 				},
 				ObjectMeta: metav1.ObjectMeta{Name: "test-etcd"},
@@ -654,14 +654,13 @@ func TestKubectlGetEksaCloudStackMachineConfig(t *testing.T) {
 					},
 					Users: []v1alpha1.UserConfiguration{
 						{
-							Name: "maxdrib",
+							Name:              "maxdrib",
 							SshAuthorizedKeys: []string{"ssh-rsa test123 hi"},
 						},
 					},
 				},
 			},
 		},
-
 	}
 
 	for _, tt := range tests {
@@ -697,16 +696,16 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 		{
 			testName:         "no datacenter",
 			jsonResponseFile: "testdata/kubectl_no_cs_datacenterconfigs.json",
-			wantDatacenter:     &v1alpha1.CloudStackDatacenterConfig{
+			wantDatacenter: &v1alpha1.CloudStackDatacenterConfig{
 				TypeMeta: metav1.TypeMeta{APIVersion: "v1"},
 			},
 		},
 		{
 			testName:         "one datacenter",
 			jsonResponseFile: "testdata/kubectl_eksa_cs_datacenterconfig.json",
-			wantDatacenter:     &v1alpha1.CloudStackDatacenterConfig{
+			wantDatacenter: &v1alpha1.CloudStackDatacenterConfig{
 				TypeMeta: metav1.TypeMeta{
-					Kind: "CloudStackDatacenterConfig",
+					Kind:       "CloudStackDatacenterConfig",
 					APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
 				},
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
@@ -720,7 +719,7 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 						Type:  "name",
 						Value: "testZone",
 					},
-					Domain: "testDomain",
+					Domain:  "testDomain",
 					Account: "testAccount",
 				},
 			},
