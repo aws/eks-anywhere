@@ -374,7 +374,7 @@ type ClusterStatus struct {
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
 	// EksdReleaseRef defines the properties of the EKS-D object on the cluster
-	EksdReleaseRef EksdReleaseRef `json:"eksdReleaseRef,omitempty"`
+	EksdReleaseRef *EksdReleaseRef `json:"eksdReleaseRef,omitempty"`
 }
 
 type EksdReleaseRef struct {
