@@ -41,7 +41,7 @@ VSPHERE_USERNAME
 VSPHERE_PASSWORD
 T_VSPHERE_CIDR
 GOVC_URL
-T_CLUSTER_IP_POOL
+T_CLUSTER_IP_POOL # comma-separated list of CP ip addresses
 ```
 
 # OIDC tests requisites

@@ -33,6 +33,10 @@ kind: DockerCluster
 metadata:
   name: {{.clusterName}}
   namespace: {{.eksaSystemNamespace}}
+spec:
+  loadBalancer:
+    imageRepository: {{.haproxyImageRepository}}
+    imageTag: {{.haproxyImageTag}}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: DockerMachineTemplate
