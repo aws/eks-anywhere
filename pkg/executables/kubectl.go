@@ -53,83 +53,33 @@ type Kubectl struct {
 	Executable
 }
 
-func (k *Kubectl) SearchCloudStackMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackMachineConfig, error) {
-	params := []string{
-		"get", eksaCloudStackMachineResourceType, "-o", "json", "--kubeconfig",
-		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
-	}
-	stdOut, err := k.Execute(ctx, params...)
+func (k *Kubectl) GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
+	response := &v1alpha1.CloudStackMachineConfig{}
+	err := k.getObject(ctx, eksaCloudStackMachineResourceType, cloudstackMachineConfigName, namespace, kubeconfigFile, response)
 	if err != nil {
-		return nil, fmt.Errorf("error searching eksa CloudStackMachineConfigResponse: %v", err)
+		return nil, fmt.Errorf("error getting eksa cloudstack machineconfig: %v", err)
 	}
 
-	response := &CloudStackMachineConfigResponse{}
-	err = json.Unmarshal(stdOut.Bytes(), response)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing CloudStackMachineConfigResponse response: %v", err)
-	}
-
-	return response.Items, nil
+	return response, nil
 }
 
-func (k *Kubectl) DeleteEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDeploymentConfigName string, kubeconfigFile string, namespace string) error {
-	params := []string{"delete", eksaCloudStackDatacenterResourceType, cloudstackDeploymentConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+func (k *Kubectl) DeleteEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) error {
+	params := []string{"delete", eksaCloudStackDatacenterResourceType, cloudstackDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error deleting cloudstackdeploymentconfig cluster %s apply: %v", cloudstackDeploymentConfigName, err)
+		return fmt.Errorf("error deleting cloudstackdatacenterconfig cluster %s apply: %v", cloudstackDatacenterConfigName, err)
 	}
 	return nil
 }
 
 func (k *Kubectl) GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackDatacenterConfig, error) {
-	params := []string{"get", eksaCloudStackDatacenterResourceType, cloudstackDatacenterConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
-	stdOut, err := k.Execute(ctx, params...)
-	if err != nil {
-		return nil, fmt.Errorf("error getting eksa cloudstack datacenter config: %v", err)
-	}
-
 	response := &v1alpha1.CloudStackDatacenterConfig{}
-	err = json.Unmarshal(stdOut.Bytes(), response)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing get eksa cloudstack cluster response: %v", err)
-	}
-
-	return response, nil
-}
-
-func (k *Kubectl) GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
-	params := []string{"get", eksaCloudStackMachineResourceType, cloudstackMachineConfigName, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
-	stdOut, err := k.Execute(ctx, params...)
+	err := k.getObject(ctx, eksaCloudStackDatacenterResourceType, cloudstackDatacenterConfigName, namespace, kubeconfigFile, response)
 	if err != nil {
 		return nil, fmt.Errorf("error getting eksa cloudstack machineconfig: %v", err)
 	}
 
-	response := &v1alpha1.CloudStackMachineConfig{}
-	err = json.Unmarshal(stdOut.Bytes(), response)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing get eksa cloudstack cluster response: %v", err)
-	}
-
 	return response, nil
-}
-
-func (k *Kubectl) SearchCloudStackDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackDatacenterConfig, error) {
-	params := []string{
-		"get", eksaCloudStackDatacenterResourceType, "-o", "json", "--kubeconfig",
-		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
-	}
-	stdOut, err := k.Execute(ctx, params...)
-	if err != nil {
-		return nil, fmt.Errorf("error searching eksa CloudStackDatacenterConfigResponse: %v", err)
-	}
-
-	response := &CloudStackDatacenterConfigResponse{}
-	err = json.Unmarshal(stdOut.Bytes(), response)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing CloudStackDatacenterConfigResponse response: %v", err)
-	}
-
-	return response.Items, nil
 }
 
 func (k *Kubectl) DeleteEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) error {
@@ -581,10 +531,6 @@ type GitOpsConfigResponse struct {
 	Items []*v1alpha1.GitOpsConfig `json:"items,omitempty"`
 }
 
-type CloudStackDatacenterConfigResponse struct {
-	Items []*v1alpha1.CloudStackDatacenterConfig `json:"items,omitempty"`
-}
-
 type VSphereDatacenterConfigResponse struct {
 	Items []*v1alpha1.VSphereDatacenterConfig `json:"items,omitempty"`
 }
@@ -595,10 +541,6 @@ type IdentityProviderConfigResponse struct {
 
 type VSphereMachineConfigResponse struct {
 	Items []*v1alpha1.VSphereMachineConfig `json:"items,omitempty"`
-}
-
-type CloudStackMachineConfigResponse struct {
-	Items []*v1alpha1.CloudStackMachineConfig `json:"items,omitempty"`
 }
 
 func (k *Kubectl) ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error {
