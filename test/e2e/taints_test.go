@@ -15,10 +15,10 @@ import (
 func runTaintsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, preUpgradeNodeTaints, postUpgradeNodeTaints map[corev1.Taint]int, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
-	test.ValidateNodeTaints(preUpgradeNodeTaints)
+	test.VaidateWorkerNodeTaints()
 	test.UpgradeCluster(clusterOpts)
 	test.ValidateCluster(updateVersion)
-	test.ValidateNodeTaints(postUpgradeNodeTaints)
+	test.VaidateWorkerNodeTaints()
 	test.StopIfFailed()
 	test.DeleteCluster()
 }
@@ -60,12 +60,12 @@ func TestVSphereKubernetes121TaintsWorkerNodeGroups(t *testing.T) {
 	)
 
 	preUpgradeTaints := map[corev1.Taint]int{
-		framework.NoScheduleTaint(): 2,
+		framework.NoScheduleTaint():       2,
 		framework.PreferNoScheduleTaint(): 1,
 	}
 
 	postUpgradeTaints := map[corev1.Taint]int{
-		framework.NoExecuteTaint(): 3,
+		framework.NoExecuteTaint():  3,
 		framework.NoScheduleTaint(): 2,
 	}
 
@@ -83,7 +83,7 @@ func TestVSphereKubernetes121TaintsWorkerNodeGroups(t *testing.T) {
 }
 
 func noScheduleWorkerNodeGroup(name string, count int) *framework.WorkerNodeGroup {
-		return framework.WithWorkerNodeGroup(name, api.WithCount(count), api.WithTaint(framework.NoScheduleTaint()))
+	return framework.WithWorkerNodeGroup(name, api.WithCount(count), api.WithTaint(framework.NoScheduleTaint()))
 }
 
 func preferNoScheduleWorkerNodeGroup(name string, count int) *framework.WorkerNodeGroup {

@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -495,6 +496,31 @@ func (k *Kubectl) GetMachines(ctx context.Context, cluster *types.Cluster, clust
 	return response.Items, nil
 }
 
+type machineSetResponse struct {
+	Items []clusterv1.MachineSet `json:"items,omitempty"`
+}
+
+func (k *Kubectl) GetMachineSets(ctx context.Context, machineDeploymentName string, cluster *types.Cluster) ([]clusterv1.MachineSet, error) {
+	params := []string{
+		"get", "machinesets", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
+		"--selector=cluster.x-k8s.io/deployment-name=" + machineDeploymentName,
+		"--namespace", constants.EksaSystemNamespace,
+	}
+
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting machineset associated with deployment %s: %v", machineDeploymentName, err)
+	}
+
+	response := &machineSetResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing get machinesets response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
 type ClustersResponse struct {
 	Items []types.CAPICluster `json:"items,omitempty"`
 }
@@ -750,6 +776,23 @@ func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt)
 	}
 
 	return response.Items, nil
+}
+
+func (k *Kubectl) GetKubeadmConfigTemplate(ctx context.Context, kubeadmConfigTemplateName string, opts ...KubectlOpt) (*kubeadmv1.KubeadmConfigTemplate, error) {
+	params := []string{"get", fmt.Sprintf("kubeadmconfigtemplate.%s", kubeadmv1.GroupVersion.Group), kubeadmConfigTemplateName, "-o", "json"}
+	applyOpts(&params, opts...)
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting kubeadmconfigtemplate: %v", err)
+	}
+
+	response := &kubeadmv1.KubeadmConfigTemplate{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing get kubeadmconfigtemplate response: %v", err)
+	}
+
+	return response, nil
 }
 
 func (k *Kubectl) UpdateEnvironmentVariables(ctx context.Context, resourceType, resourceName string, envMap map[string]string, opts ...KubectlOpt) error {
