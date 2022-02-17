@@ -28,7 +28,7 @@ func (e *ClusterE2ETest) ValidateNodeTaints(expectedTaints map[corev1.Taint]int)
 	}
 	for _, node := range nodes {
 		for _, taint := range node.Spec.Taints {
-			if taint == masterNodeTaint() {
+			if taint == MasterNodeTaint() {
 				continue
 			}
 			_, ok := expectedTaints[taint]
@@ -46,9 +46,33 @@ func (e *ClusterE2ETest) ValidateNodeTaints(expectedTaints map[corev1.Taint]int)
 	}
 }
 
-func masterNodeTaint() corev1.Taint {
+func MasterNodeTaint() corev1.Taint {
 	return corev1.Taint{
 		Key:    "node-role.kubernetes.io/master",
 		Effect: "NoSchedule",
+	}
+}
+
+func NoExecuteTaint() corev1.Taint {
+	return corev1.Taint{
+		Key:    "key1",
+		Value:  "value1",
+		Effect: corev1.TaintEffectNoExecute,
+	}
+}
+
+func NoScheduleTaint() corev1.Taint {
+	return corev1.Taint{
+		Key:    "key1",
+		Value:  "value1",
+		Effect: corev1.TaintEffectNoSchedule,
+	}
+}
+
+func PreferNoScheduleTaint() corev1.Taint {
+	return corev1.Taint{
+		Key:    "key1",
+		Value:  "value1",
+		Effect: corev1.TaintEffectPreferNoSchedule,
 	}
 }

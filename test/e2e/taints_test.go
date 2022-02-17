@@ -60,13 +60,13 @@ func TestVSphereKubernetes121TaintsWorkerNodeGroups(t *testing.T) {
 	)
 
 	preUpgradeTaints := map[corev1.Taint]int{
-		noScheduleTaint(): 2,
-		preferNoScheduleTaint(): 1,
+		framework.NoScheduleTaint(): 2,
+		framework.PreferNoScheduleTaint(): 1,
 	}
 
 	postUpgradeTaints := map[corev1.Taint]int{
-		noExecuteTaint(): 3,
-		noScheduleTaint(): 2,
+		framework.NoExecuteTaint(): 3,
+		framework.NoScheduleTaint(): 2,
 	}
 
 	runTaintsUpgradeFlow(
@@ -75,41 +75,17 @@ func TestVSphereKubernetes121TaintsWorkerNodeGroups(t *testing.T) {
 		preUpgradeTaints,
 		postUpgradeTaints,
 		framework.WithClusterUpgrade(
-			api.WithWorkerNodeGroup(worker0, api.WithTaint(noExecuteTaint())),
-			api.WithWorkerNodeGroup(worker1, api.WithTaint(noExecuteTaint())),
+			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
+			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
 		),
 	)
 }
 
 func noScheduleWorkerNodeGroup(name string, count int) *framework.WorkerNodeGroup {
-		return framework.WithWorkerNodeGroup(name, api.WithCount(count), api.WithTaint(noScheduleTaint()))
+		return framework.WithWorkerNodeGroup(name, api.WithCount(count), api.WithTaint(framework.NoScheduleTaint()))
 }
 
 func preferNoScheduleWorkerNodeGroup(name string, count int) *framework.WorkerNodeGroup {
-	return framework.WithWorkerNodeGroup(name, api.WithCount(count), api.WithTaint(preferNoScheduleTaint()))
-}
-
-func noExecuteTaint() corev1.Taint {
-	return corev1.Taint{
-		Key:       "key1",
-		Value:     "value1",
-		Effect:    corev1.TaintEffectNoExecute,
-	}
-}
-
-func noScheduleTaint() corev1.Taint {
-	return corev1.Taint{
-		Key:       "key1",
-		Value:     "value1",
-		Effect:    corev1.TaintEffectNoSchedule,
-	}
-}
-
-func preferNoScheduleTaint() corev1.Taint {
-	return corev1.Taint{
-		Key:       "key1",
-		Value:     "value1",
-		Effect:    corev1.TaintEffectPreferNoSchedule,
-	}
+	return framework.WithWorkerNodeGroup(name, api.WithCount(count), api.WithTaint(framework.PreferNoScheduleTaint()))
 }
