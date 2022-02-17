@@ -46,6 +46,7 @@ func (v *Validator) ValidateTinkerbellConfig(ctx context.Context, datacenterConf
 	if err := v.validatetinkerbellPBnJGRPCAuth(ctx, datacenterConfig.Spec.TinkerbellPBnJGRPCAuth); err != nil {
 		return err
 	}
+	logger.MarkPass("Tinkerbell Config is valid")
 
 	return nil
 }
@@ -108,6 +109,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 	if tinkerbellClusterSpec.datacenterConfig.Namespace != tinkerbellClusterSpec.Cluster.Namespace {
 		return errors.New("TinkerbellDatacenterConfig and Cluster objects must have the same namespace specified")
 	}
+	logger.MarkPass("Machine Configs are valid")
 
 	return nil
 }
@@ -117,11 +119,19 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 		return fmt.Errorf("failed to get hardware Config: %v", err)
 	}
 
-	if err := v.hardwareConfig.ValidateBmcRefMapping(); err != nil {
+	if err := v.hardwareConfig.ValidateHardware(); err != nil {
 		return fmt.Errorf("failed validating Hardware BMC refs in hardware config: %v", err)
 	}
 
-	logger.MarkPass("Hardware Config file validated")
+	if err := v.hardwareConfig.ValidateBMC(); err != nil {
+		return fmt.Errorf("failed validating BMCs in hardware config: %v", err)
+	}
+
+	if err := v.hardwareConfig.ValidateBmcSecretRefs(); err != nil {
+		return fmt.Errorf("failed validating Secrets in hardware config: %v", err)
+	}
+
+	logger.MarkPass("Hardware Config is valid")
 	return nil
 }
 
@@ -137,6 +147,8 @@ func (v *Validator) validateControlPlaneIpUniqueness(tinkerBellClusterSpec *spec
 	if !networkutils.NewIPGenerator(v.netClient).IsIPUnique(ip) {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
 	}
+
+	logger.MarkPass("Cluster  controlPlaneConfiguration host IP available")
 	return nil
 }
 
