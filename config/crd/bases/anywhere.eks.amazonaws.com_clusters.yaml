@@ -281,8 +281,8 @@ spec:
                 description: EksdReleaseRef defines the properties of the EKS-D object
                   on the cluster
                 properties:
-                  apiGroup:
-                    description: ApiGroup refers to the EKS-D API group
+                  apiVersion:
+                    description: ApiVersion refers to the EKS-D API version
                     type: string
                   kind:
                     description: Kind refers to the Release kind for the EKS-D object
@@ -296,7 +296,7 @@ spec:
                       resources
                     type: string
                 required:
-                - apiGroup
+                - apiVersion
                 - kind
                 - name
                 - namespace

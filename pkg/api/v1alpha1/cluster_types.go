@@ -378,8 +378,8 @@ type ClusterStatus struct {
 }
 
 type EksdReleaseRef struct {
-	// ApiGroup refers to the EKS-D API group
-	ApiGroup string `json:"apiGroup"`
+	// ApiVersion refers to the EKS-D API version
+	ApiVersion string `json:"apiVersion"`
 	// Kind refers to the Release kind for the EKS-D object
 	Kind string `json:"kind"`
 	// Name refers to the name of the EKS-D object on the cluster
