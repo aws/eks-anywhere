@@ -272,7 +272,6 @@ func (in *CloudStackBundle) DeepCopyInto(out *CloudStackBundle) {
 	*out = *in
 	in.ClusterAPIController.DeepCopyInto(&out.ClusterAPIController)
 	in.KubeProxy.DeepCopyInto(&out.KubeProxy)
-	in.Manager.DeepCopyInto(&out.Manager)
 	out.Components = in.Components
 	out.Metadata = in.Metadata
 }
