@@ -164,21 +164,20 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		return nil, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
 	}
 
-	for channel, release := range eksDReleaseMap {
-		if channel == "latest" || !utils.SliceContains(supportedK8sVersions, channel) {
-			continue
-		}
-		releaseNumberStr, dev := getEksdReleaseValues(release)
-
-		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr, dev)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Error getting kubeversion for eks-d %s-%s release", channel, releaseNumberStr)
-		}
+	for _, release := range eksDReleaseMap.Releases {
+		channel := release.Branch
+		number := strconv.Itoa(release.Number)
+		dev := release.Dev
+		kubeVersion := release.KubeVersion
 		shortKubeVersion := kubeVersion[1:strings.LastIndex(kubeVersion, ".")]
 
-		eksDReleaseBundle, err := r.GetEksDReleaseBundle(channel, kubeVersion, releaseNumberStr, imageDigests, dev)
+		if !utils.SliceContains(supportedK8sVersions, channel) {
+			continue
+		}
+
+		eksDReleaseBundle, err := r.GetEksDReleaseBundle(channel, kubeVersion, number, imageDigests, dev)
 		if err != nil {
-			return nil, errors.Wrapf(err, "Error getting bundle for eks-d %s-%s release bundle", channel, releaseNumberStr)
+			return nil, errors.Wrapf(err, "Error getting bundle for eks-d %s-%s release bundle", channel, number)
 		}
 
 		vsphereBundle, err := r.GetVsphereBundle(channel, imageDigests)
@@ -186,7 +185,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			return nil, errors.Wrapf(err, "Error getting bundle for vSphere infrastructure provider")
 		}
 
-		bottlerocketBootstrapBundle, err := r.GetBottlerocketBootstrapBundle(channel, releaseNumberStr, imageDigests)
+		bottlerocketBootstrapBundle, err := r.GetBottlerocketBootstrapBundle(channel, number, imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for bottlerocket bootstrap")
 		}
@@ -289,18 +288,17 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
 	}
-	for channel, release := range eksDReleaseMap {
-		if channel == "latest" || !utils.SliceContains(supportedK8sVersions, channel) {
+
+	for _, release := range eksDReleaseMap.Releases {
+		channel := release.Branch
+		number := strconv.Itoa(release.Number)
+		kubeVersion := release.KubeVersion
+
+		if !utils.SliceContains(supportedK8sVersions, channel) {
 			continue
 		}
-		releaseNumberStr, dev := getEksdReleaseValues(release)
 
-		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr, dev)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Error getting kubeversion for eks-d %s-%s release", channel, releaseNumberStr)
-		}
-
-		eksDChannelArtifacts, err := r.GetEksDChannelAssets(channel, kubeVersion, releaseNumberStr)
+		eksDChannelArtifacts, err := r.GetEksDChannelAssets(channel, kubeVersion, number)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", channel)
 		}
@@ -310,7 +308,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", channel)
 		}
 
-		bottlerocketBootstrapArtifacts, err := r.GetBottlerocketBootstrapAssets(channel, releaseNumberStr)
+		bottlerocketBootstrapArtifacts, err := r.GetBottlerocketBootstrapAssets(channel, number)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", channel)
 		}
@@ -321,27 +319,13 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		vSphereCloudProviderComponentName := fmt.Sprintf("cloud-provider-vsphere-%s", channel)
 		artifactsTable[vSphereCloudProviderComponentName] = vSphereCloudProviderArtifacts
 
-		bottlerocketBootstrapComponentName := fmt.Sprintf("bottlerocket-bootstrap-%s-%s", channel, releaseNumberStr)
+		bottlerocketBootstrapComponentName := fmt.Sprintf("bottlerocket-bootstrap-%s-%s", channel, number)
 		artifactsTable[bottlerocketBootstrapComponentName] = bottlerocketBootstrapArtifacts
 	}
 
 	fmt.Printf("%s Successfully generated bundle artifacts table\n", SuccessIcon)
 
 	return artifactsTable, nil
-}
-
-// Retrieve values from https://github.com/aws/eks-anywhere-build-tooling/blob/main/EKSD_LATEST_RELEASES
-func getEksdReleaseValues(release interface{}) (string, bool) {
-	releaseNumber := release.(map[interface{}]interface{})["number"]
-	releaseNumberInt := releaseNumber.(int)
-	releaseNumberStr := strconv.Itoa(releaseNumberInt)
-
-	dev := false
-	devValue := release.(map[interface{}]interface{})["dev"]
-	if devValue != nil && devValue.(bool) {
-		dev = true
-	}
-	return releaseNumberStr, dev
 }
 
 func (r *ReleaseConfig) GenerateEksAArtifactsTable() (map[string][]Artifact, error) {
