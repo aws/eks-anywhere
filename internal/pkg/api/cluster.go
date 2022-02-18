@@ -174,6 +174,7 @@ func WithWorkerNodeGroup(name string, fillers ...WorkerNodeGroupFiller) ClusterF
 		position := -1
 		for i, w := range c.Spec.WorkerNodeGroupConfigurations {
 			if w.Name == name {
+				logger.Info("Updating worker node group", "name", name)
 				nodeGroup = &w
 				position = i
 				break
@@ -181,6 +182,7 @@ func WithWorkerNodeGroup(name string, fillers ...WorkerNodeGroupFiller) ClusterF
 		}
 
 		if nodeGroup == nil {
+			logger.Info("Adding worker node group", "name", name)
 			nodeGroup = &anywherev1.WorkerNodeGroupConfiguration{Name: name}
 			c.Spec.WorkerNodeGroupConfigurations = append(c.Spec.WorkerNodeGroupConfigurations, *nodeGroup)
 			position = len(c.Spec.WorkerNodeGroupConfigurations) - 1
