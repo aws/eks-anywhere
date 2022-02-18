@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/aws/eks-anywhere/pkg/hardware"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
 const (
