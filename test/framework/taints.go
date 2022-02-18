@@ -37,15 +37,20 @@ func (e *ClusterE2ETest) VaidateWorkerNodeTaints() {
 		if err != nil {
 			e.T.Fatal(fmt.Errorf("failed to get machine sets when validating taints: %v", err))
 		}
-		if len(ms) != 1 {
+		if len(ms) == 0 {
 			e.T.Fatal(fmt.Errorf("invalid number of machine sets associated with worker node configuration %v", w.Name))
 		}
+
 		for _, node := range nodes {
 			ownerName, ok := node.Annotations[ownerAnnotation]
 			if ok {
-				if ownerName == ms[0].Name {
-					if !v1alpha1.TaintsSliceEqual(node.Spec.Taints, w.Taints) {
-						e.T.Fatal(fmt.Errorf("taints on node %v and corresponding worker node group configuration %v do not match", node.Name, w.Name))
+				// there will be multiple machineSets present on a cluster following an upgrade.
+				// find the one that is associated with this worker node, and compare the taints.
+				for _, machineSet := range ms {
+					if ownerName == machineSet.Name {
+						if !v1alpha1.TaintsSliceEqual(node.Spec.Taints, w.Taints) {
+							e.T.Fatal(fmt.Errorf("taints on node %v and corresponding worker node group configuration %v do not match", node.Name, w.Name))
+						}
 					}
 				}
 			}
