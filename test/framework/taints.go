@@ -1,62 +1,35 @@
 package framework
 
 import (
-	"context"
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 const ownerAnnotation = "cluster.x-k8s.io/owner-name"
 
-func (e *ClusterE2ETest) VaidateWorkerNodeTaints() {
-	ctx := context.Background()
-	nodes, err := e.KubectlClient.GetNodes(ctx, e.cluster().KubeconfigFile)
-	if err != nil {
-		e.T.Fatal(err)
+func ValidateControlPlaneTaints(controlPlane v1alpha1.ControlPlaneConfiguration, node corev1.Node) (err error) {
+	cpTaints := append(controlPlane.Taints, ControlPlaneTaint())
+	valid := v1alpha1.TaintsSliceEqual(cpTaints, node.Spec.Taints)
+	if !valid {
+		return fmt.Errorf("taints on control plane node %v and corresponding control plane configuration do not match; configured taints: %v; node taints: %v",
+			node.Name, controlPlane.Taints, node.Spec.Taints)
 	}
+	logger.V(4).Info("expected taints from cluster spec control plane configuration are present on corresponding node", "node", node.Name, "node taints", node.Spec.Taints, "control plane configuration taints", controlPlane.Taints)
+	return nil
+}
 
-	c, err := v1alpha1.GetClusterConfigFromContent(e.ClusterConfigB)
-	if err != nil {
-		e.T.Fatal(err)
+func ValidateWorkerNodeTaints(w v1alpha1.WorkerNodeGroupConfiguration, node corev1.Node) (err error) {
+	valid := v1alpha1.TaintsSliceEqual(node.Spec.Taints, w.Taints)
+	if !valid {
+		return fmt.Errorf("taints on node %v and corresponding worker node group configuration %v do not match", node.Name, w.Name)
 	}
-	wn := c.Spec.WorkerNodeGroupConfigurations
-	// deduce the worker node group configuration to node mapping via the machine deployment and machine set
-	for _, w := range wn {
-		mdName := fmt.Sprintf("%v-%v", e.ClusterName, w.Name)
-		md, err := e.KubectlClient.GetMachineDeployment(ctx, mdName, executables.WithKubeconfig(e.cluster().KubeconfigFile), executables.WithNamespace(constants.EksaSystemNamespace))
-		if err != nil {
-			e.T.Fatal(fmt.Errorf("failed to get machine deployment for worker node %s when validating taints: %v", w.Name, err))
-		}
-		ms, err := e.KubectlClient.GetMachineSets(ctx, md.Name, e.cluster())
-		if err != nil {
-			e.T.Fatal(fmt.Errorf("failed to get machine sets when validating taints: %v", err))
-		}
-		if len(ms) == 0 {
-			e.T.Fatal(fmt.Errorf("invalid number of machine sets associated with worker node configuration %v", w.Name))
-		}
-
-		for _, node := range nodes {
-			ownerName, ok := node.Annotations[ownerAnnotation]
-			if ok {
-				// there will be multiple machineSets present on a cluster following an upgrade.
-				// find the one that is associated with this worker node, and compare the taints.
-				for _, machineSet := range ms {
-					if ownerName == machineSet.Name {
-						if !v1alpha1.TaintsSliceEqual(node.Spec.Taints, w.Taints) {
-							e.T.Fatal(fmt.Errorf("taints on node %v and corresponding worker node group configuration %v do not match", node.Name, w.Name))
-						}
-					}
-				}
-			}
-		}
-	}
-	e.T.Log("Validated that expected taints are present on the workload cluster nodes")
+	logger.V(4).Info("expected taints from cluster spec are present on corresponding node", "worker node group", w.Name, "worker node group taints", w.Taints, "node", node.Name, "node taints", node.Spec.Taints)
+	return nil
 }
 
 func NoExecuteTaint() corev1.Taint {
@@ -80,6 +53,13 @@ func PreferNoScheduleTaint() corev1.Taint {
 		Key:    "key1",
 		Value:  "value1",
 		Effect: corev1.TaintEffectPreferNoSchedule,
+	}
+}
+
+func ControlPlaneTaint() corev1.Taint {
+	return corev1.Taint{
+		Key:    "node-role.kubernetes.io/master",
+		Effect: corev1.TaintEffectNoSchedule,
 	}
 }
 

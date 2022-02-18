@@ -306,6 +306,18 @@ func (k *Kubectl) GetNodes(ctx context.Context, kubeconfig string) ([]corev1.Nod
 	return response.Items, err
 }
 
+func (k *Kubectl) GetControlPlaneNodes(ctx context.Context, kubeconfig string) ([]corev1.Node, error) {
+	params := []string{"get", "nodes", "-o", "json", "--kubeconfig", kubeconfig, "--selector=node-role.kubernetes.io/control-plane"}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting control plane nodes: %v", err)
+	}
+	response := &corev1.NodeList{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+
+	return response.Items, err
+}
+
 func (k *Kubectl) ValidateNodes(ctx context.Context, kubeconfig string) error {
 	template := "{{range .items}}{{.metadata.name}}\n{{end}}"
 	params := []string{"get", "nodes", "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig}
