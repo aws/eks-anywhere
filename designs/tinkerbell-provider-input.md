@@ -40,10 +40,10 @@ For Tinkerbell provider, we have introduced two new CRDs:
 TinkerbellDatacenterConfig describes the configuration details for Tinkerbell stack.
 
 In this config, users must specify the following fields:
-* spec.tinkerbellIP: defines the IP of the machine running the Tinkerbell stack.
-* spec.tinkerbellCertURL: defines the endpoint where the Tinkerbell stack hosts its certificate. This is used to communicate with the stack.
-* spec.tinkerbellGRPCAuth: defines the GRPC endpoint used by Tinkerbell stack. This is also used to communicate with the stack.
-* spec.tinkerbellPBnJGRPCAuth: defines the GRPC endpoint used by PNBJ for hardware remote management. This is used to change the power state and the boot order of the servers.
+* spec.stackIp: defines the IP of the machine running the Tinkerbell stack.
+* spec.certUrl: defines the endpoint where the Tinkerbell stack hosts its certificate. This is used to communicate with the stack.
+* spec.grpcAuthority: defines the GRPC endpoint used by Tinkerbell stack. This is also used to communicate with the stack.
+* spec.pbnjGrpcAuthority: defines the GRPC endpoint used by PNBJ for hardware remote management. This is used to change the power state and the boot order of the servers.
 
 Here's an example `TinkerbellDatacenterConfig`
 
@@ -53,10 +53,10 @@ kind: TinkerbellDatacenterConfig
 metadata:
   name: eks-a-tinkerbell-cluster
 spec:
-  tinkerbellIP: "192.168.0.20"
-  tinkerbellCertURL: "http://192.168.0.20:42114/cert"
-  tinkerbellGRPCAuth: "192.168.0.20:42113"
-  tinkerbellPBnJGRPCAuth: "192.168.0.20:50051"
+  stackIp: "192.168.0.20"
+  certUrl: "http://192.168.0.20:42114/cert"
+  grpcAuthority: "192.168.0.20:42113"
+  pbnjGrpcAuthority: "192.168.0.20:50051"
 ```
 
 **TinkerbellMachineConfig**
@@ -103,7 +103,7 @@ tasks:
         image: image2disk:v1.0.0
         timeout: 360
         environment:
-          IMG_URL: "https://<some-s3-endpoint>/ubuntu-2004-kube-v1.21.5.gz"
+          IMG_URL: "https://<some-endpoint>/ubuntu-2004-kube-v1.21.5.gz"
           DEST_DISK: /dev/sda
           COMPRESSED: true
       - name: "write-netplan"
@@ -119,12 +119,6 @@ tasks:
                 renderer: networkd
                 ethernets:
                     eno1:
-                        dhcp4: true
-                    eno2:
-                        dhcp4: true
-                    eno3:
-                        dhcp4: true
-                    eno4:
                         dhcp4: true
           UID: 0
           GID: 0
@@ -181,7 +175,7 @@ tasks:
 
 Tinkerbell provider also requires hardware manifest files along with the clusterconfig to provide configuration details about the hardware. There are two hardware manifest files involved: a hardware JSON and a hardware YAML. 
 
->**_Note_**: There is some ongoing work here and this may change post-beta
+>**_Note_**: There is some ongoing work here and this may change post-beta, more details below under "Future Changes"
 
 **Hardware JSON**
 
@@ -362,5 +356,14 @@ eksctl anywhere create cluster -f <clusterconfig> -w <hardware YAML>
 ## Future changes
 
 Most of the design details described above are only valid for beta release of Tinkerbell provider as for beta, we are using the default installation of Tinkerbell. This default installation runs Tinkerbell components as microservices on docker containers. We have plans to eliminate Tinkerbell's dependency on docker and instead run it on Kubernetes as controllers. You can read the proposal for this [here](https://github.com/tinkerbell/proposals/tree/main/proposals/0026).
+
+Most of the changes are because Tinkerbell currently uses postgres as the database to store hardwares, templates and workflows but with the changes in the proposal, these will be turned into [Kubernetes CRDs](https://github.com/tinkerbell/tink/tree/main/config/crd/bases) instead. This means we will have to re-structure some of the CLI inputs as well.
+
+Based on the proposal, we expect the following things to change:
+- No pre-pushing of hardware required: The EKS Anywhere `create` command will allow users to set up tinkerbell on their management clusters. This cluster will essentially host the entire tinkerbell infrastructure as Kubernetes controllers and services. As tinkerbell will be set up during this phase, users will not have to pre-push all the hardware before cluster creation. This means that the `setup hardware` command will no longer be needed as a separate command. 
+
+- Smarter hardware scheduling: Currently, you have to provide a subset of hardware you want to use with CAPT and CAPT randomly uses them as needed. We will have to implement a smarter scheduling algorithm where CAPT reaches out to the Tinkerbell stack and gets an available hardware automatically instead. This means that users would not have to provide the hardware YAML file everytime during the `create` command.
+
+- Only one hardware definition file for a hardware: We will only have a [single hardware YAML](https://github.com/tinkerbell/tink/blob/main/config/crd/bases/tinkerbell.org_hardware.yaml) file which will have all the data the hardware JSON and YAML currently has. This means that users will only need to manage a single hardware file.
 
 Since this is a work-in-progress, we still have not finalized how our design will look like when we leverage Kubernetes backend for Tinkerbell.
