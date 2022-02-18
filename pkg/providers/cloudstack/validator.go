@@ -19,11 +19,10 @@ type Validator struct {
 	netClient networkutils.NetClient
 }
 
-func NewValidator(cmk ProviderCmkClient, machineConfigs map[string]*anywherev1.CloudStackMachineConfig, netClient networkutils.NetClient) *Validator {
+func NewValidator(cmk ProviderCmkClient, machineConfigs map[string]*anywherev1.CloudStackMachineConfig) *Validator {
 	return &Validator{
 		cmk:       cmk,
 		machineConfigs: machineConfigs,
-		netClient: netClient,
 	}
 }
 
@@ -37,10 +36,6 @@ func (v *Validator) validateCloudStackAccess(ctx context.Context) error {
 }
 
 func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error {
-	if err := v.cmk.ValidateCloudStackConnection(ctx); err != nil {
-		return fmt.Errorf("failed validating connection to cloudstack: %v", err)
-	}
-
 	if err := v.cmk.ValidateZonePresent(ctx, datacenterConfig.Spec.Zone); err != nil {
 		return err
 	}

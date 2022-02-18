@@ -152,10 +152,6 @@ type ProviderKubectlClient interface {
 	DeleteEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) error
 }
 
-type ClusterResourceSetManager interface {
-	ForceUpdate(ctx context.Context, name, namespace string, managementCluster, workloadCluster *types.Cluster) error
-}
-
 func NewProvider(deploymentConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerCloudMonkeyClient ProviderCmkClient, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
 	return NewProviderCustomNet(
 		deploymentConfig,
@@ -225,7 +221,7 @@ func NewProviderCustomNet(deploymentConfig *v1alpha1.CloudStackDatacenterConfig,
 			now:                        now,
 		},
 		skipIpCheck:        skipIpCheck,
-		validator: NewValidator(providerCloudMonkeyClient, machineConfigs, netClient),
+		validator: NewValidator(providerCloudMonkeyClient, machineConfigs),
 	}
 }
 
