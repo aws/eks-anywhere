@@ -20,6 +20,12 @@ func WithTaint(taint corev1.Taint) WorkerNodeGroupFiller {
 	}
 }
 
+func WithNoTaints() WorkerNodeGroupFiller {
+	return func(w *anywherev1.WorkerNodeGroupConfiguration) {
+		w.Taints = nil
+	}
+}
+
 func WithLabel(key, value string) WorkerNodeGroupFiller {
 	return func(w *anywherev1.WorkerNodeGroupConfiguration) {
 		w.Labels[key] = value
