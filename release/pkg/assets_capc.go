@@ -184,7 +184,6 @@ func (r *ReleaseConfig) GetCloudStackBundle(imageDigests map[string]string) (any
 
 	bundle := anywherev1alpha1.CloudStackBundle{
 		Version:              version,
-		KubeProxy:            bundleImageArtifacts["kube-rbac-proxy"],
 		ClusterAPIController: bundleImageArtifacts["cluster-api-cloudstack-controller"],
 		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
 		Metadata:             bundleManifestArtifacts["metadata.yaml"],
