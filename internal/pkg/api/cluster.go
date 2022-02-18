@@ -182,7 +182,7 @@ func WithWorkerNodeGroup(name string, fillers ...WorkerNodeGroupFiller) ClusterF
 		}
 
 		if nodeGroup == nil {
-			logger.Info("adding worker node group", "name", name)
+			logger.Info("Adding worker node group", "name", name)
 			nodeGroup = &anywherev1.WorkerNodeGroupConfiguration{Name: name}
 			c.Spec.WorkerNodeGroupConfigurations = append(c.Spec.WorkerNodeGroupConfigurations, *nodeGroup)
 			position = len(c.Spec.WorkerNodeGroupConfigurations) - 1
