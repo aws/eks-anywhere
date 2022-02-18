@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
@@ -405,8 +406,21 @@ func MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate *vspherev1.V
 func MapKubeadmConfigTemplateToWorkerNodeGroupConfiguration(template kubeadmv1.KubeadmConfigTemplate) *anywherev1.WorkerNodeGroupConfiguration {
 	wnSpec := &anywherev1.WorkerNodeGroupConfiguration{}
 	wnSpec.Taints = template.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints
-	// TODO: map template.Spec.Template.Spec.JoinConfiguration.NodeRegestration.KubeletExtraArgs to wnSpec.Labels
+	wnSpec.Labels = convertStringToLabelsMap(template.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs["node-labels"])
 	return wnSpec
+}
+
+func convertStringToLabelsMap(labels string) map[string]string {
+	if labels == "" {
+		return nil
+	}
+	labelsList := strings.Split(labels, ",")
+	labelsMap := make(map[string]string, len(labelsList))
+	for _, label := range labelsList {
+		pair := strings.Split(label, "=")
+		labelsMap[pair[0]] = pair[1]
+	}
+	return labelsMap
 }
 
 func MapMachineTemplateToVSphereMachineConfigSpecWorkers(vsMachineTemplates []vspherev1.VSphereMachineTemplate) (map[string]anywherev1.VSphereMachineConfig, error) {

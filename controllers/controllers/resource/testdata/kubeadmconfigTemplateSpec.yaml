@@ -23,6 +23,7 @@ spec:
             cgroup-driver: systemd
             cloud-provider: external
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+            node-labels: Key1=Val1
           name: '{{ ds.meta_data.hostname }}'
           taints:
             - effect: PreferNoSchedule
