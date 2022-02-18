@@ -17,9 +17,9 @@ import (
 )
 
 type HardwareConfig struct {
-	hardwareList []tinkv1alpha1.Hardware
-	bmcList      []pbnjv1alpha1.BMC
-	secretList   []corev1.Secret
+	Hardwares []tinkv1alpha1.Hardware
+	Bmcs      []pbnjv1alpha1.BMC
+	Secrets   []corev1.Secret
 }
 
 func (hc *HardwareConfig) ParseHardwareConfig(hardwareFileName string) error {
@@ -48,21 +48,21 @@ func (hc *HardwareConfig) setHardwareConfigFromFile(hardwareFileName string) err
 			if err != nil {
 				return fmt.Errorf("unable to parse hardware CRD\n%s \n%v", c, err)
 			}
-			hc.hardwareList = append(hc.hardwareList, hardware)
+			hc.Hardwares = append(hc.Hardwares, hardware)
 		case "BMC":
 			var bmc pbnjv1alpha1.BMC
 			err = yaml.UnmarshalStrict([]byte(c), &bmc)
 			if err != nil {
 				return fmt.Errorf("unable to parse bmc CRD\n%s \n%v", c, err)
 			}
-			hc.bmcList = append(hc.bmcList, bmc)
+			hc.Bmcs = append(hc.Bmcs, bmc)
 		case "Secret":
 			var secret corev1.Secret
 			err = yaml.UnmarshalStrict([]byte(c), &secret)
 			if err != nil {
 				return fmt.Errorf("unable to parse k8s secret\n%s \n%v", c, err)
 			}
-			hc.secretList = append(hc.secretList, secret)
+			hc.Secrets = append(hc.Secrets, secret)
 		}
 	}
 
@@ -71,7 +71,7 @@ func (hc *HardwareConfig) setHardwareConfigFromFile(hardwareFileName string) err
 
 func (hc *HardwareConfig) ValidateHardware() error {
 	bmcRefMap := hc.initBmcRefMap()
-	for _, hw := range hc.hardwareList {
+	for _, hw := range hc.Hardwares {
 		if hw.Name == "" {
 			return fmt.Errorf("hardware name is required")
 		}
@@ -100,8 +100,8 @@ func (hc *HardwareConfig) ValidateHardware() error {
 
 func (hc *HardwareConfig) ValidateBMC() error {
 	secretRefMap := hc.initSecretRefMap()
-	bmcIpMap := make(map[string]struct{}, len(hc.bmcList))
-	for _, bmc := range hc.bmcList {
+	bmcIpMap := make(map[string]struct{}, len(hc.Bmcs))
+	for _, bmc := range hc.Bmcs {
 		if bmc.Name == "" {
 			return fmt.Errorf("bmc name is required")
 		}
@@ -137,7 +137,7 @@ func (hc *HardwareConfig) ValidateBMC() error {
 }
 
 func (hc *HardwareConfig) ValidateBmcSecretRefs() error {
-	for _, s := range hc.secretList {
+	for _, s := range hc.Secrets {
 		if s.Name == "" {
 			return fmt.Errorf("secret name is required")
 		}
@@ -167,8 +167,8 @@ func (hc *HardwareConfig) ValidateBmcSecretRefs() error {
 }
 
 func (hc *HardwareConfig) initBmcRefMap() map[string]*tinkv1alpha1.Hardware {
-	bmcRefMap := make(map[string]*tinkv1alpha1.Hardware, len(hc.bmcList))
-	for _, bmc := range hc.bmcList {
+	bmcRefMap := make(map[string]*tinkv1alpha1.Hardware, len(hc.Bmcs))
+	for _, bmc := range hc.Bmcs {
 		bmcRefMap[bmc.Name] = nil
 	}
 
@@ -176,8 +176,8 @@ func (hc *HardwareConfig) initBmcRefMap() map[string]*tinkv1alpha1.Hardware {
 }
 
 func (hc *HardwareConfig) initSecretRefMap() map[string]struct{} {
-	secretRefMap := make(map[string]struct{}, len(hc.secretList))
-	for _, s := range hc.secretList {
+	secretRefMap := make(map[string]struct{}, len(hc.Secrets))
+	for _, s := range hc.Secrets {
 		secretRefMap[s.Name] = struct{}{}
 	}
 
