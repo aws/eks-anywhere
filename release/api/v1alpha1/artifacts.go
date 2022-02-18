@@ -62,7 +62,6 @@ func (vb *VersionsBundle) Ovas() []Archive {
 
 func (vb *VersionsBundle) CloudStackImages() []Image {
 	return []Image{
-		vb.CloudStack.KubeProxy,
 		vb.CloudStack.ClusterAPIController,
 	}
 }
