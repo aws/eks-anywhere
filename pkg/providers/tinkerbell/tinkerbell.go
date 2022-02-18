@@ -179,6 +179,12 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
+	// ValidateHardwareConfig performs a lazy load of hardware configuration. Given subsequent steps need the hardware
+	// read into memory it needs to be done first.
+	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile); err != nil {
+		return err
+	}
+
 	tinkerbellClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
 	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
@@ -187,6 +193,10 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 
 	if err := p.validator.ValidateClusterMachineConfigs(ctx, tinkerbellClusterSpec); err != nil {
 		return err
+	}
+
+	if err := p.validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(tinkerbellClusterSpec.Spec.Cluster.Spec); err != nil {
+		return fmt.Errorf("minimum hardware not available: %v", err)
 	}
 
 	p.controlPlaneSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
@@ -199,10 +209,6 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		}
 	} else {
 		logger.Info("Skipping check for whether control plane ip is in use")
-	}
-
-	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile); err != nil {
-		return err
 	}
 
 	return nil

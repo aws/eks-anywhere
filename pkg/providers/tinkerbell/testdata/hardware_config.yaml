@@ -36,6 +36,8 @@ metadata:
   name: bmc-worker1-auth
   namespace: eksa-system
 type: kubernetes.io/basic-auth
+
+
 ---
 apiVersion: tinkerbell.org/v1alpha1
 kind: Hardware
@@ -73,6 +75,88 @@ metadata:
   labels:
     clusterctl.cluster.x-k8s.io/move: "true"
   name: bmc-worker2-auth
+  namespace: eksa-system
+type: kubernetes.io/basic-auth
+
+
+---
+apiVersion: tinkerbell.org/v1alpha1
+kind: Hardware
+metadata:
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+  name: worker3
+  namespace: eksa-system
+spec:
+  bmcRef: bmc-worker3
+  id: d2c14d26-640a-48f0-baee-a737c68a75f5
+status: {}
+---
+apiVersion: tinkerbell.org/v1alpha1
+kind: BMC
+metadata:
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+  name: bmc-worker3
+  namespace: eksa-system
+spec:
+  authSecretRef:
+    name: bmc-worker3-auth
+    namespace: eksa-system
+  host: 192.168.0.12
+  vendor: supermicro
+status: {}
+---
+apiVersion: v1
+data:
+  password: QWRtaW4=
+  username: YWRtaW4=
+kind: Secret
+metadata:
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+  name: bmc-worker3-auth
+  namespace: eksa-system
+type: kubernetes.io/basic-auth
+
+
+---
+apiVersion: tinkerbell.org/v1alpha1
+kind: Hardware
+metadata:
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+  name: worker4
+  namespace: eksa-system
+spec:
+  bmcRef: bmc-worker4
+  id: 0c9d1701-f884-499e-80b8-6dcfc0973e85
+status: {}
+---
+apiVersion: tinkerbell.org/v1alpha1
+kind: BMC
+metadata:
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+  name: bmc-worker4
+  namespace: eksa-system
+spec:
+  authSecretRef:
+    name: bmc-worker4-auth
+    namespace: eksa-system
+  host: 192.168.0.13
+  vendor: supermicro
+status: {}
+---
+apiVersion: v1
+data:
+  password: QWRtaW4=
+  username: YWRtaW4=
+kind: Secret
+metadata:
+  labels:
+    clusterctl.cluster.x-k8s.io/move: "true"
+  name: bmc-worker4-auth
   namespace: eksa-system
 type: kubernetes.io/basic-auth
 ---
