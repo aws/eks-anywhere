@@ -279,7 +279,7 @@ func WorkerNodeGroupConfigurationsLabelsMapEqual(a, b []WorkerNodeGroupConfigura
 	for _, nodeGroup := range b {
 		if _, ok := m[nodeGroup.Name]; !ok {
 			// this method is not concerned with added/removed node groups,
-			// only with the comparison of taints on existing node groups
+			// only with the comparison of labels on existing node groups
 			// if a node group is present in a but not b, or vise versa, it's immaterial
 			continue
 		} else {
