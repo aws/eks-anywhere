@@ -56,7 +56,7 @@ func (e *ClusterE2ETest) VaidateWorkerNodeTaints() {
 			}
 		}
 	}
-	e.T.Log("validated that expected taints are present on the workload cluster nodes")
+	e.T.Log("Validated that expected taints are present on the workload cluster nodes")
 }
 
 func NoExecuteTaint() corev1.Taint {
