@@ -128,7 +128,12 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	}
 	if !dataCenterConfig.Status.SpecValid {
 		v.Log.Info("Skipping cluster reconciliation because data center config is invalid", "data center", dataCenterConfig.Name)
-		return reconciler.Result{}, nil
+		return reconciler.Result{
+			Result: &ctrl.Result{
+				Requeue:      true,
+				RequeueAfter: defaultRequeueTime,
+			},
+		}, nil
 	}
 
 	machineConfigMap := map[string]*anywherev1.VSphereMachineConfig{}
@@ -173,6 +178,15 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	templateBuilder := vsphere.NewVsphereTemplateBuilder(&dataCenterConfig.Spec, &cp.Spec, etcdSpec, workerNodeGroupMachineSpecs, time.Now, true)
 	clusterName := cluster.ObjectMeta.Name
 
+	kubeadmconfigTemplateNames := make(map[string]string, len(cluster.Spec.WorkerNodeGroupConfigurations))
+	workloadTemplateNames := make(map[string]string, len(cluster.Spec.WorkerNodeGroupConfigurations))
+
+	for _, wnConfig := range cluster.Spec.WorkerNodeGroupConfigurations {
+		kubeadmconfigTemplateNames[wnConfig.Name] = templateBuilder.KubeadmConfigTemplateName(cluster.Name, wnConfig.MachineGroupRef.Name)
+		workloadTemplateNames[wnConfig.Name] = templateBuilder.WorkerMachineTemplateName(cluster.Name, wnConfig.Name)
+		templateBuilder.WorkerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name]
+	}
+
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = templateBuilder.CPMachineTemplateName(clusterName)
 		controlPlaneUser := machineConfigMap[cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
@@ -191,7 +205,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return result, err
 	}
 
-	if result, err := v.reconcileWorkerNodeSpec(ctx, cluster, templateBuilder, specWithBundles); err != nil {
+	if result, err := v.reconcileWorkerNodeSpec(ctx, cluster, templateBuilder, specWithBundles, workloadTemplateNames, kubeadmconfigTemplateNames); err != nil {
 		return result, err
 	}
 
@@ -288,9 +302,12 @@ func (v *VSphereClusterReconciler) getCAPICluster(ctx context.Context, cluster *
 	return capiCluster, reconciler.Result{}, nil
 }
 
-func (v *VSphereClusterReconciler) reconcileWorkerNodeSpec(ctx context.Context, cluster *anywherev1.Cluster, templateBuilder providers.TemplateBuilder, specWithBundles *c.Spec) (reconciler.Result, error) {
+func (v *VSphereClusterReconciler) reconcileWorkerNodeSpec(
+	ctx context.Context, cluster *anywherev1.Cluster, templateBuilder providers.TemplateBuilder,
+	specWithBundles *c.Spec,workloadTemplateNames, kubeadmconfigTemplateNames map[string]string,
+	) (reconciler.Result, error) {
 	if !conditions.IsTrue(cluster, workerNodeSpecPlaneAppliedCondition) {
-		workersSpec, err := templateBuilder.GenerateCAPISpecWorkers(specWithBundles, nil, nil)
+		workersSpec, err := templateBuilder.GenerateCAPISpecWorkers(specWithBundles, workloadTemplateNames, kubeadmconfigTemplateNames)
 		if err != nil {
 			return reconciler.Result{}, err
 		}
