@@ -13,12 +13,18 @@ import (
 const ownerAnnotation = "cluster.x-k8s.io/owner-name"
 
 func ValidateControlPlaneTaints(controlPlane v1alpha1.ControlPlaneConfiguration, node corev1.Node) (err error) {
-	valid := v1alpha1.TaintsSliceEqual(controlPlane.Taints, node.Spec.Taints)
+	cpTaints := controlPlane.Taints
+	// if no taints are specified, kubeadm defaults it to a well-known control plane taint.
+	// so, we make sure to check for that well-known taint if no taints are provided in the spec.
+	if cpTaints == nil {
+		cpTaints = []corev1.Taint{ControlPlaneTaint()}
+	}
+	valid := v1alpha1.TaintsSliceEqual(cpTaints, node.Spec.Taints)
 	if !valid {
 		return fmt.Errorf("taints on control plane node %v and corresponding control plane configuration do not match; configured taints: %v; node taints: %v",
-			node.Name, controlPlane.Taints, node.Spec.Taints)
+			node.Name, cpTaints, node.Spec.Taints)
 	}
-	logger.V(4).Info("expected taints from cluster spec control plane configuration are present on corresponding node", "node", node.Name, "node taints", node.Spec.Taints, "control plane configuration taints", controlPlane.Taints)
+	logger.V(4).Info("expected taints from cluster spec control plane configuration are present on corresponding node", "node", node.Name, "node taints", node.Spec.Taints, "control plane configuration taints", cpTaints)
 	return nil
 }
 
@@ -52,6 +58,13 @@ func PreferNoScheduleTaint() corev1.Taint {
 		Key:    "key1",
 		Value:  "value1",
 		Effect: corev1.TaintEffectPreferNoSchedule,
+	}
+}
+
+func ControlPlaneTaint() corev1.Taint {
+	return corev1.Taint{
+		Key:    "node-role.kubernetes.io/master",
+		Effect: corev1.TaintEffectNoSchedule,
 	}
 }
 
