@@ -24,7 +24,7 @@ func init() {
 }
 
 var getPackageCommand = &cobra.Command{
-	Use:     "package(s)",
+	Use:     "package(s) [flags]",
 	Aliases: []string{"package", "packages"},
 	Short:   "Get package(s)",
 	Long:    "This command is used to display the installed packages",
