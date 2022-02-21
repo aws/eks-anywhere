@@ -155,6 +155,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 			allErrs = append(
 				allErrs,
 				field.Invalid(field.NewPath("spec", "IdentityProviderRefs"), new.Spec.IdentityProviderRefs, "field is immutable"))
+
 		}
 	}
 
