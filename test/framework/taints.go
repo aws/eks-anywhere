@@ -13,8 +13,7 @@ import (
 const ownerAnnotation = "cluster.x-k8s.io/owner-name"
 
 func ValidateControlPlaneTaints(controlPlane v1alpha1.ControlPlaneConfiguration, node corev1.Node) (err error) {
-	cpTaints := append(controlPlane.Taints, ControlPlaneTaint())
-	valid := v1alpha1.TaintsSliceEqual(cpTaints, node.Spec.Taints)
+	valid := v1alpha1.TaintsSliceEqual(controlPlane.Taints, node.Spec.Taints)
 	if !valid {
 		return fmt.Errorf("taints on control plane node %v and corresponding control plane configuration do not match; configured taints: %v; node taints: %v",
 			node.Name, controlPlane.Taints, node.Spec.Taints)
@@ -53,13 +52,6 @@ func PreferNoScheduleTaint() corev1.Taint {
 		Key:    "key1",
 		Value:  "value1",
 		Effect: corev1.TaintEffectPreferNoSchedule,
-	}
-}
-
-func ControlPlaneTaint() corev1.Taint {
-	return corev1.Taint{
-		Key:    "node-role.kubernetes.io/master",
-		Effect: corev1.TaintEffectNoSchedule,
 	}
 }
 

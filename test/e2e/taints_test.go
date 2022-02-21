@@ -5,6 +5,8 @@ package e2e
 import (
 	"testing"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
@@ -18,9 +20,11 @@ func runTaintsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 	test.GenerateClusterConfig()
 	test.CreateCluster()
 	test.ValidateWorkerNodes(framework.ValidateWorkerNodeTaints)
+	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneTaints)
 	test.UpgradeCluster(clusterOpts)
 	test.ValidateCluster(updateVersion)
 	test.ValidateWorkerNodes(framework.ValidateWorkerNodeTaints)
+	test.ValidateControlPlaneNodes(framework.ValidateControlPlaneTaints)
 	test.StopIfFailed()
 	test.DeleteCluster()
 }
@@ -30,7 +34,7 @@ func runTaintsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 // remove a taint from a node
 // add a taint to a node which already has another taint
 // add a taint to a node which had no taints
-func TestVSphereKubernetes121TaintsWorkerNodeGroups(t *testing.T) {
+func TestVSphereKubernetes121Taints(t *testing.T) {
 	provider := ubuntu121ProviderWithTaints(t)
 
 	test := framework.NewClusterE2ETest(
@@ -51,11 +55,12 @@ func TestVSphereKubernetes121TaintsWorkerNodeGroups(t *testing.T) {
 			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
+			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
 		),
 	)
 }
 
-func TestVSphereKubernetes121TaintsBottlerocketWorkerNodeGroups(t *testing.T) {
+func TestVSphereKubernetes121TaintsBottlerocket(t *testing.T) {
 	provider := bottlerocket121ProviderWithTaints(t)
 
 	test := framework.NewClusterE2ETest(
@@ -76,6 +81,7 @@ func TestVSphereKubernetes121TaintsBottlerocketWorkerNodeGroups(t *testing.T) {
 			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker2, api.WithNoTaints()),
+			api.WithControlPlaneTaints([]corev1.Taint{framework.PreferNoScheduleTaint()}),
 		),
 	)
 }
