@@ -2,14 +2,16 @@ package cmd
 
 import (
 	"context"
+	"fmt"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"log"
+	"os"
 )
 
 type getPackageOptions struct {
-	name   string
 	output string
 }
 
@@ -17,15 +19,14 @@ var gpo = &getPackageOptions{}
 
 func init() {
 	getCmd.AddCommand(getPackageCommand)
-	getPackageCommand.Flags().StringVar(&gpo.name, "name", "", "Package Name")
-	getPackageCommand.Flags().StringVarP(&gpo.name, "output", "o", "", "Specifies the output format (valid option: table, json, yaml) (default table)")
+	getPackageCommand.Flags().StringVarP(&gpo.output, "output", "o", "", "Specifies the output format (valid option: json, yaml)")
 }
 
 var getPackageCommand = &cobra.Command{
 	Use:     "package(s)",
 	Aliases: []string{"package", "packages"},
 	Short:   "Get package(s)",
-	Long:    "This command is used to display one  or many curated packages",
+	Long:    "This command is used to display one  or more curated packages",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 			if err := viper.BindPFlag(flag.Name, flag); err != nil {
@@ -36,12 +37,22 @@ var getPackageCommand = &cobra.Command{
 	},
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return getPackages(cmd.Context(), gpo.name, gpo.output)
+		packageInstanceName := ""
+		if len(args) > 0 {
+			packageInstanceName = args[0]
+		}
+		return getPackages(cmd.Context(), packageInstanceName, gpo.output)
 	},
 }
 
-func getPackages(context context.Context, name string, output string) error {
-	//var kube_config = "/Users/acool/Desktop/Amazon/eks-anywhere-cluster/local-v8-cluster/local-v8-cluster-eks-a-cluster.kubeconfig"
-	//getPackagesFromKubectl(context, "test", "test_ns", kube_config, "yaml")
+func getPackages(ctx context.Context, packageInstanceName string, output string) error {
+	kubeConfig := os.Getenv(kubeconfigEnvVariable)
+	executableBuilder, _, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
+	if err != nil {
+		return fmt.Errorf("unable to initialize executables: %v", err)
+	}
+	kubectl := executableBuilder.BuildKubectlExecutable()
+	packages, err := kubectl.GetPackagesFromKubectl(ctx, packageInstanceName, kubeConfig, output)
+	fmt.Println(packages)
 	return nil
 }

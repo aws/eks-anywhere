@@ -1223,31 +1223,26 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 	return obj, nil
 }
 
-func (k *Kubectl) getPackagesFromKubectl(ctx context.Context, name, namespace, kubeconfig string, output string) {
+func (k *Kubectl) GetPackagesFromKubectl(ctx context.Context, packageInstanceName, kubeconfig string, output string) (string, error) {
 	params := []string{
-		"get", "addons", "-o", "yaml", "--kubeconfig", kubeconfig,
-		"--namespace", constants.EksaPackagesName,
+		"get", "packages", "--kubeconfig", kubeconfig, "--namespace", constants.EksaPackagesName,
 	}
-	stdOut, err := k.Execute(ctx, params...)
-	fmt.Printf("stdout %v and error: %v", stdOut, err)
+	params = append(params, withPackageInstanceName(packageInstanceName)...)
+	params = append(params, withOutput(output)...)
+	stdOut, _ := k.Execute(ctx, params...)
+	return stdOut.String(), nil
 }
 
-//func (k *Kubectl) GetMachines(ctx context.Context, cluster *types.Cluster, clusterName string) ([]types.Machine, error) {
-//	params := []string{
-//		"get", "machines", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
-//		"--selector=cluster.x-k8s.io/cluster-name=" + clusterName,
-//		"--namespace", constants.EksaSystemNamespace,
-//	}
-//	stdOut, err := k.Execute(ctx, params...)
-//	if err != nil {
-//		return nil, fmt.Errorf("error getting machines: %v", err)
-//	}
-//
-//	response := &machinesResponse{}
-//	err = json.Unmarshal(stdOut.Bytes(), response)
-//	if err != nil {
-//		return nil, fmt.Errorf("error parsing get machines response: %v", err)
-//	}
-//
-//	return response.Items, nil
-//}
+func withOutput(output string) []string {
+	if output != "" {
+		return []string{"-o", output}
+	}
+	return []string{}
+}
+
+func withPackageInstanceName(packageInstanceName string) []string {
+	if packageInstanceName != "" {
+		return []string{packageInstanceName}
+	}
+	return []string{}
+}
