@@ -1,0 +1,20 @@
+{
+  "apiVersion": "anywhere.eks.amazonaws.com/v1alpha1",
+  "kind": "CloudStackDatacenterConfig",
+  "metadata": {
+    "name": "test"
+  },
+  "spec": {
+    "insecure": true,
+    "network": {
+      "value": "testNetwork",
+      "type": "name"
+    },
+    "domain": "testDomain",
+    "account": "testAccount",
+    "zone": {
+      "value": "testZone",
+      "type": "name"
+    }
+  }
+}
