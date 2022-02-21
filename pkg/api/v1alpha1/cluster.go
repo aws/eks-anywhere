@@ -308,11 +308,11 @@ func ValidateClusterNameLength(clusterName string) error {
 func validateClusterConfigName(clusterConfig *Cluster) error {
 	err := ValidateClusterName(clusterConfig.ObjectMeta.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to validate cluster config name: %v", err)
 	}
 	err = ValidateClusterNameLength(clusterConfig.ObjectMeta.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to validate cluster config name: %v", err)
 	}
 	return nil
 }
