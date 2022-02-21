@@ -53,6 +53,9 @@ func getPackages(ctx context.Context, packageInstanceName string, output string)
 	}
 	kubectl := executableBuilder.BuildKubectlExecutable()
 	packages, err := kubectl.GetPackagesFromKubectl(ctx, packageInstanceName, kubeConfig, output)
+	if err != nil {
+		return fmt.Errorf("error executing kubectl: %v", err)
+	}
 	fmt.Println(packages)
 	return nil
 }

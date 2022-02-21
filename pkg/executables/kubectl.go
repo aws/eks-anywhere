@@ -1229,8 +1229,8 @@ func (k *Kubectl) GetPackagesFromKubectl(ctx context.Context, packageInstanceNam
 	}
 	params = append(params, withPackageInstanceName(packageInstanceName)...)
 	params = append(params, withOutput(output)...)
-	stdOut, _ := k.Execute(ctx, params...)
-	return stdOut.String(), nil
+	stdOut, err := k.Execute(ctx, params...)
+	return stdOut.String(), err
 }
 
 func withOutput(output string) []string {
