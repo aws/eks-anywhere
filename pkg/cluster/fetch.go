@@ -58,6 +58,7 @@ func GetOIDCForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch Oid
 
 	for _, identityProvider := range cluster.Spec.IdentityProviderRefs {
 		if identityProvider.Kind == v1alpha1.OIDCConfigKind {
+
 			oidc, err := fetch(ctx, identityProvider.Name, cluster.Namespace)
 			if err != nil {
 				return nil, fmt.Errorf("failed fetching OIDCConfig for cluster: %v", err)
