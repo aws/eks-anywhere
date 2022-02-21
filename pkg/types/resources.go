@@ -73,9 +73,6 @@ type NowFunc func() time.Time
 
 type NodeReadyChecker func(status MachineStatus) bool
 
-type Package struct {
-}
-
 func WithNodeRef() NodeReadyChecker {
 	return func(status MachineStatus) bool {
 		return status.NodeRef != nil
