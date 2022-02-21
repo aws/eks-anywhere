@@ -44,6 +44,18 @@ func TestValidateMinimumRequiredTinkerbellHardwareAvailable_InsufficientHardware
 	assert.Error(t, validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(clusterSpec))
 }
 
+func TestValidateMinimumRequiredTinkerbellHardware_EtcdUnspecified(t *testing.T) {
+	clusterSpec := newValidClusterSpec(1, 0, 1)
+	clusterSpec.ExternalEtcdConfiguration = nil
+
+	hardwareConfig := newHardwareConfigWithHardware(3)
+
+	var validator tinkerbell.Validator
+	tinkerbell.SetValidatorHardwareConfig(&validator, hardwareConfig)
+
+	assert.NoError(t, validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(clusterSpec))
+}
+
 func newValidClusterSpec(cp, etcd, worker int) v1alpha1.ClusterSpec {
 	return v1alpha1.ClusterSpec{
 		ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
