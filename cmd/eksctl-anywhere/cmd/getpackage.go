@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -28,6 +29,9 @@ var getPackageCommand = &cobra.Command{
 	Short:   "Get package(s)",
 	Long:    "This command is used to display the installed packages",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if !features.IsActive(features.CuratedPackagesSupport()) {
+			return fmt.Errorf("curated Packages not supported in this release")
+		}
 		cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 			if err := viper.BindPFlag(flag.Name, flag); err != nil {
 				log.Fatalf("Error initializing flags: %v", err)
