@@ -5,6 +5,7 @@ const (
 	NodeLabelsSupportEnvVar  = "NODE_LABELS_SUPPORT"
 	TinkerbellProviderEnvVar = "TINKERBELL_PROVIDER"
 	CloudStackProviderEnvVar = "CLOUDSTACK_PROVIDER"
+	SnowProviderEnvVar       = "SNOW_PROVIDER"
 	FullLifecycleAPIEnvVar   = "FULL_LIFECYCLE_API"
 	FullLifecycleGate        = "FullLifecycleAPI"
 )
@@ -54,5 +55,12 @@ func CloudStackProvider() Feature {
 	return Feature{
 		Name:     "CloudStack provider support",
 		IsActive: globalFeatures.isActiveForEnvVar(CloudStackProviderEnvVar),
+	}
+}
+
+func SnowProvider() Feature {
+	return Feature{
+		Name:     "Snow provider support",
+		IsActive: globalFeatures.isActiveForEnvVar(SnowProviderEnvVar),
 	}
 }
