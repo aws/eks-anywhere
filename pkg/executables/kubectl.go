@@ -1225,7 +1225,7 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 
 func (k *Kubectl) GetPackagesFromKubectl(ctx context.Context, packageInstanceName, kubeconfig string, output string) (string, error) {
 	params := []string{
-		"get", "packages", "--kubeconfig", kubeconfig, "--namespace", constants.EksaPackagesName,
+		"get", "packages", kubeconfigFlag, kubeconfig, namespaceFlag, constants.EksaPackagesName,
 	}
 	params = append(params, withPackageInstanceName(packageInstanceName)...)
 	params = append(params, withOutput(output)...)
