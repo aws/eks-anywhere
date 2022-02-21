@@ -26,7 +26,7 @@ var getPackageCommand = &cobra.Command{
 	Use:     "package(s)",
 	Aliases: []string{"package", "packages"},
 	Short:   "Get package(s)",
-	Long:    "This command is used to display one  or more curated packages",
+	Long:    "This command is used to display the installed packages",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 			if err := viper.BindPFlag(flag.Name, flag); err != nil {
