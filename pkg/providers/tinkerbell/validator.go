@@ -147,8 +147,12 @@ func (v *Validator) ValidateMinimumRequiredTinkerbellHardwareAvailable(spec v1al
 	// isolation of io in the parsing of hardware config.
 
 	requestedNodesCount := spec.ControlPlaneConfiguration.Count +
-		spec.ExternalEtcdConfiguration.Count +
 		sumWorkerNodeCounts(spec.WorkerNodeGroupConfigurations)
+
+	// Optional external etcd configuration.
+	if spec.ExternalEtcdConfiguration != nil {
+		requestedNodesCount += spec.ExternalEtcdConfiguration.Count
+	}
 
 	if len(v.hardwareConfig.Hardwares) < requestedNodesCount {
 		return fmt.Errorf(
