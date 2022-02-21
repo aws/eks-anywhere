@@ -139,6 +139,15 @@ func WithLatestMinorReleaseFromVersion(version *semver.Version) ClusterE2ETestOp
 	}
 }
 
+func WithEnvVar(key, val string) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		err := os.Setenv(key, val)
+		if err != nil {
+			e.T.Fatalf("couldn't set env var %s to value %s due to: %v", key, val, err)
+		}
+	}
+}
+
 type Provider interface {
 	Name() string
 	CustomizeProviderConfig(file string) []byte
@@ -366,7 +375,7 @@ func (e *ClusterE2ETest) StopIfFailed() {
 }
 
 func (e *ClusterE2ETest) customizeClusterConfig(clusterConfigLocation string, fillers ...api.ClusterFiller) []byte {
-	b, err := api.AutoFillCluster(clusterConfigLocation, fillers...)
+	b, err := api.AutoFillClusterFromFile(clusterConfigLocation, fillers...)
 	if err != nil {
 		e.T.Fatalf("Error filling cluster config: %v", err)
 	}

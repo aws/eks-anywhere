@@ -6,6 +6,7 @@ import (
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -22,14 +23,20 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		upgradeValidations,
 		validations.ValidationResult{
 			Name:        "validate taints support",
-			Remediation: "ensure TAINTS_SUPPORT env variable is set",
+			Remediation: fmt.Sprintf("ensure %v env variable is set", features.TaintsSupport()),
 			Err:         validations.ValidateTaintsSupport(u.Opts.Spec),
 			Silent:      true,
 		},
 		validations.ValidationResult{
 			Name:        "validate node labels support",
-			Remediation: "ensure NODE_LABELS_SUPPORT env variable is set",
+			Remediation: fmt.Sprintf("ensure %v env variable is set", features.NodeLabelsSupportEnvVar),
 			Err:         validations.ValidateNodeLabelsSupport(u.Opts.Spec),
+			Silent:      true,
+		},
+		validations.ValidationResult{
+			Name:        "validate kubernetes version 1.22 support",
+			Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s122SupportEnvVar),
+			Err:         validations.ValidateK8s122Support(u.Opts.Spec),
 			Silent:      true,
 		},
 		validations.ValidationResult{

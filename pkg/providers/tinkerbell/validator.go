@@ -5,22 +5,27 @@ import (
 	"errors"
 	"fmt"
 
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/hardware"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
 type Validator struct {
-	tink ProviderTinkClient
+	tink           ProviderTinkClient
+	netClient      networkutils.NetClient
+	hardwareConfig hardware.HardwareConfig
 }
 
-func NewValidator(tink ProviderTinkClient) *Validator {
+func NewValidator(tink ProviderTinkClient, netClient networkutils.NetClient, hardwareConfig hardware.HardwareConfig) *Validator {
 	return &Validator{
-		tink: tink,
+		tink:           tink,
+		netClient:      netClient,
+		hardwareConfig: hardwareConfig,
 	}
 }
 
-func (v *Validator) ValidateTinkerbellConfig(ctx context.Context, datacenterConfig *anywherev1.TinkerbellDatacenterConfig) error {
+func (v *Validator) ValidateTinkerbellConfig(ctx context.Context, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig) error {
 	if err := v.validateTinkerbellIP(ctx, datacenterConfig.Spec.TinkerbellIP); err != nil {
 		return err
 	}
@@ -41,6 +46,7 @@ func (v *Validator) ValidateTinkerbellConfig(ctx context.Context, datacenterConf
 	if err := v.validatetinkerbellPBnJGRPCAuth(ctx, datacenterConfig.Spec.TinkerbellPBnJGRPCAuth); err != nil {
 		return err
 	}
+	logger.MarkPass("Tinkerbell Config is valid")
 
 	return nil
 }
@@ -82,12 +88,12 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host %s", err)
 	}
 
-	if controlPlaneMachineConfig.Spec.OSFamily != anywherev1.Ubuntu {
-		return fmt.Errorf("control plane osFamily: %s is not supported, please use %s", controlPlaneMachineConfig.Spec.OSFamily, anywherev1.Ubuntu)
+	if controlPlaneMachineConfig.Spec.OSFamily != v1alpha1.Ubuntu {
+		return fmt.Errorf("control plane osFamily: %s is not supported, please use %s", controlPlaneMachineConfig.Spec.OSFamily, v1alpha1.Ubuntu)
 	}
 
-	if workerNodeGroupMachineConfig.Spec.OSFamily != anywherev1.Ubuntu {
-		return fmt.Errorf("worker node osFamily: %s is not supported, please use %s", workerNodeGroupMachineConfig.Spec.OSFamily, anywherev1.Ubuntu)
+	if workerNodeGroupMachineConfig.Spec.OSFamily != v1alpha1.Ubuntu {
+		return fmt.Errorf("worker node osFamily: %s is not supported, please use %s", workerNodeGroupMachineConfig.Spec.OSFamily, v1alpha1.Ubuntu)
 	}
 
 	if controlPlaneMachineConfig.Spec.OSFamily != workerNodeGroupMachineConfig.Spec.OSFamily {
@@ -104,6 +110,54 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 		return errors.New("TinkerbellDatacenterConfig and Cluster objects must have the same namespace specified")
 	}
 
+	logger.MarkPass("Machine Configs are valid")
+
+	return nil
+}
+
+func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string) error {
+	if err := v.hardwareConfig.ParseHardwareConfig(hardwareConfigFile); err != nil {
+		return fmt.Errorf("failed to get hardware Config: %v", err)
+	}
+
+	if err := v.hardwareConfig.ValidateHardware(); err != nil {
+		return fmt.Errorf("failed validating Hardware BMC refs in hardware config: %v", err)
+	}
+
+	if err := v.hardwareConfig.ValidateBMC(); err != nil {
+		return fmt.Errorf("failed validating BMCs in hardware config: %v", err)
+	}
+
+	if err := v.hardwareConfig.ValidateBmcSecretRefs(); err != nil {
+		return fmt.Errorf("failed validating Secrets in hardware config: %v", err)
+	}
+
+	logger.MarkPass("Hardware Config is valid")
+	return nil
+}
+
+// ValidateMinimumRequiredTinkerbellHardwareAvailable ensures there is sufficient hardware registered relative to the
+// sum of requested control plane, etcd and worker node counts.
+// The system requires hardware >= to requested provisioning.
+// ValidateMinimumRequiredTinkerbellHardwareAvailable requires v.ValidateHardwareConfig() to be called first.
+func (v *Validator) ValidateMinimumRequiredTinkerbellHardwareAvailable(spec v1alpha1.ClusterSpec) error {
+	// ValidateMinimumRequiredTinkerbellHardwareAvailable relies on v.hardwareConfig being valid. A call to
+	// v.ValidateHardwareConfig parses the hardware config file. Consequently, we need to validate the hardware config
+	// prior to calling ValidateMinimumRequiredTinkerbellHardwareAvailable. We should decouple validation including
+	// isolation of io in the parsing of hardware config.
+
+	requestedNodesCount := spec.ControlPlaneConfiguration.Count +
+		spec.ExternalEtcdConfiguration.Count +
+		sumWorkerNodeCounts(spec.WorkerNodeGroupConfigurations)
+
+	if len(v.hardwareConfig.Hardwares) < requestedNodesCount {
+		return fmt.Errorf(
+			"have %v tinkerbell hardware; cluster spec requires >= %v hardware",
+			len(v.hardwareConfig.Hardwares),
+			requestedNodesCount,
+		)
+	}
+
 	return nil
 }
 
@@ -111,6 +165,16 @@ func (v *Validator) validateTinkerbellAccess(ctx context.Context) error {
 	if _, err := v.tink.GetHardware(ctx); err != nil {
 		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
 	}
+	return nil
+}
+
+func (v *Validator) validateControlPlaneIpUniqueness(tinkerBellClusterSpec *spec) error {
+	ip := tinkerBellClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
+	if !networkutils.NewIPGenerator(v.netClient).IsIPUnique(ip) {
+		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
+	}
+
+	logger.MarkPass("Cluster  controlPlaneConfiguration host IP available")
 	return nil
 }
 
@@ -144,4 +208,12 @@ func (v *Validator) validatetinkerbellPBnJGRPCAuth(ctx context.Context, tinkerbe
 	}
 
 	return nil
+}
+
+func sumWorkerNodeCounts(nodes []v1alpha1.WorkerNodeGroupConfiguration) int {
+	var requestedNodesCount int
+	for _, workerSpec := range nodes {
+		requestedNodesCount += workerSpec.Count
+	}
+	return requestedNodesCount
 }

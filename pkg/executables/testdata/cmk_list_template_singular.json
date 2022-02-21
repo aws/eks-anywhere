@@ -1,0 +1,47 @@
+{
+  "count": 1,
+  "template": [
+    {
+      "account": "system",
+      "bits": 0,
+      "checksum": "ed0e788280ff2912ea40f7f91ca7a249",
+      "created": "2021-11-01T15:02:10-0400",
+      "crossZones": true,
+      "deployasis": false,
+      "details": {},
+      "directdownload": false,
+      "displaytext": "CentOS 5.5(64-bit) no GUI (KVM)",
+      "domain": "ROOT",
+      "domainid": "4ab50296-3b45-11ec-a097-a8a15983abb5",
+      "downloaddetails": [
+        {
+          "datastore": "nfs://192.168.1.88:/export/secondary",
+          "downloadPercent": "100",
+          "downloadState": "DOWNLOADED"
+        }
+      ],
+      "format": "QCOW2",
+      "hypervisor": "KVM",
+      "id": "4ab79b52-3b45-11ec-a097-a8a15983abb5",
+      "isdynamicallyscalable": false,
+      "isextractable": true,
+      "isfeatured": true,
+      "ispublic": true,
+      "isready": true,
+      "name": "CentOS 5.5(64-bit) no GUI (KVM)",
+      "ostypeid": "4ac797d4-3b45-11ec-a097-a8a15983abb5",
+      "ostypename": "CentOS 5.5 (64-bit)",
+      "passwordenabled": false,
+      "physicalsize": 1769537536,
+      "requireshvm": false,
+      "size": 8589934592,
+      "sshkeyenabled": false,
+      "status": "Download Complete",
+      "tags": [],
+      "templatetype": "BUILTIN",
+      "url": "http://download.cloudstack.org/releases/2.2.0/eec2209b-9875-3c8d-92be-c001bd8a0faf.qcow2.bz2",
+      "zoneid": "4e3b338d-87a6-4189-b931-a1747edeea8f",
+      "zonename": "zone1"
+    }
+  ]
+}

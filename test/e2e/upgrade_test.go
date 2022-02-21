@@ -47,6 +47,22 @@ func TestVSphereKubernetes120UbuntuTo121Upgrade(t *testing.T) {
 	)
 }
 
+func TestVSphereKubernetes121UbuntuTo122Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu121())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube122,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar("K8S_1_22_SUPPORT", "true"),
+		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var()),
+	)
+}
+
 func TestVSphereKubernetes120UbuntuTo121MultipleFieldsUpgrade(t *testing.T) {
 	provider := framework.NewVSphere(t, framework.WithUbuntu120())
 	test := framework.NewClusterE2ETest(
@@ -60,10 +76,10 @@ func TestVSphereKubernetes120UbuntuTo121MultipleFieldsUpgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate121Var(),
-			api.WithNumCPUs(vsphereCpVmNumCpuUpdateVar),
-			api.WithMemoryMiB(vsphereCpVmMemoryUpdate),
-			api.WithDiskGiB(vsphereCpDiskGiBUpdateVar),
-			api.WithFolder(vsphereFolderUpdateVar),
+			api.WithNumCPUsForAllMachines(vsphereCpVmNumCpuUpdateVar),
+			api.WithMemoryMiBForAllMachines(vsphereCpVmMemoryUpdate),
+			api.WithDiskGiBForAllMachines(vsphereCpDiskGiBUpdateVar),
+			api.WithFolderForAllMachines(vsphereFolderUpdateVar),
 			// Uncomment once we support tests with multiple machine configs
 			/*api.WithWorkloadVMsNumCPUs(vsphereWlVmNumCpuUpdateVar),
 			api.WithWorkloadVMsMemoryMiB(vsphereWlVmMemoryUpdate),
@@ -93,7 +109,7 @@ func TestVSphereKubernetes120UbuntuTo121WithFluxUpgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes120UbuntuTo121DifferentNamespaceWithFluxUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu120(), framework.WithVSphereFillers(api.WithVSphereConfigNamespace(clusterNamespace)))
+	provider := framework.NewVSphere(t, framework.WithUbuntu120(), framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace)))
 	test := framework.NewClusterE2ETest(t,
 		provider,
 		framework.WithFlux(api.WithGitOpsNamespace(clusterNamespace)),
@@ -171,10 +187,10 @@ func TestVSphereKubernetes120BottlerocketTo121MultipleFieldsUpgrade(t *testing.T
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		provider.WithProviderUpgrade(
 			framework.UpdateBottlerocketTemplate121(),
-			api.WithNumCPUs(vsphereCpVmNumCpuUpdateVar),
-			api.WithMemoryMiB(vsphereCpVmMemoryUpdate),
-			api.WithDiskGiB(vsphereCpDiskGiBUpdateVar),
-			api.WithFolder(vsphereFolderUpdateVar),
+			api.WithNumCPUsForAllMachines(vsphereCpVmNumCpuUpdateVar),
+			api.WithMemoryMiBForAllMachines(vsphereCpVmMemoryUpdate),
+			api.WithDiskGiBForAllMachines(vsphereCpDiskGiBUpdateVar),
+			api.WithFolderForAllMachines(vsphereFolderUpdateVar),
 			// Uncomment once we support tests with multiple machine configs
 			/*api.WithWorkloadVMsNumCPUs(vsphereWlVmNumCpuUpdateVar),
 			api.WithWorkloadVMsMemoryMiB(vsphereWlVmMemoryUpdate),
@@ -204,7 +220,7 @@ func TestVSphereKubernetes120BottlerocketTo121WithFluxUpgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes120BottlerocketTo121DifferentNamespaceWithFluxUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithBottleRocket120(), framework.WithVSphereFillers(api.WithVSphereConfigNamespace(clusterNamespace)))
+	provider := framework.NewVSphere(t, framework.WithBottleRocket120(), framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace)))
 	test := framework.NewClusterE2ETest(t,
 		provider,
 		framework.WithFlux(api.WithGitOpsNamespace(clusterNamespace)),

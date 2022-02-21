@@ -942,6 +942,10 @@ spec:
                           description: Release branch of the EKS-D release like 1-19,
                             1-20
                           type: string
+                        components:
+                          description: Components refers to the url that points to
+                            the EKS-D release CRD
+                          type: string
                         gitCommit:
                           description: Git commit the component is built from, before
                             any patches
@@ -1796,6 +1800,40 @@ spec:
                       - notificationController
                       - sourceController
                       type: object
+                    haproxy:
+                      properties:
+                        image:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
+                      required:
+                      - image
+                      type: object
                     kindnetd:
                       properties:
                         manifest:
@@ -2490,7 +2528,6 @@ spec:
                   - flux
                   - kindnetd
                   - kubeVersion
-                  - tinkerbell
                   - vSphere
                   type: object
                 type: array
@@ -2803,6 +2840,30 @@ spec:
           status:
             description: ClusterStatus defines the observed state of Cluster
             properties:
+              eksdReleaseRef:
+                description: EksdReleaseRef defines the properties of the EKS-D object
+                  on the cluster
+                properties:
+                  apiVersion:
+                    description: ApiVersion refers to the EKS-D API version
+                    type: string
+                  kind:
+                    description: Kind refers to the Release kind for the EKS-D object
+                    type: string
+                  name:
+                    description: Name refers to the name of the EKS-D object on the
+                      cluster
+                    type: string
+                  namespace:
+                    description: Namespace refers to the namespace for the EKS-D release
+                      resources
+                    type: string
+                required:
+                - apiVersion
+                - kind
+                - name
+                - namespace
+                type: object
               failureMessage:
                 description: Descriptive message about a fatal problem while reconciling
                   a cluster
@@ -3164,7 +3225,7 @@ spec:
               users:
                 items:
                   description: UserConfiguration defines the configuration of the
-                    user to be added to the VSphere VM
+                    user to be added to the VM
                   properties:
                     name:
                       type: string
@@ -3339,7 +3400,7 @@ spec:
               users:
                 items:
                   description: UserConfiguration defines the configuration of the
-                    user to be added to the VSphere VM
+                    user to be added to the VM
                   properties:
                     name:
                       type: string
@@ -3860,6 +3921,48 @@ webhooks:
     - UPDATE
     resources:
     - awsiamconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackdatacenterconfig
+  failurePolicy: Fail
+  name: validation.cloudstackdatacenterconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - cloudstackdatacenterconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-cloudstackmachineconfig
+  failurePolicy: Fail
+  name: validation.cloudstackmachineconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - cloudstackmachineconfigs
   sideEffects: None
 - admissionReviewVersions:
   - v1

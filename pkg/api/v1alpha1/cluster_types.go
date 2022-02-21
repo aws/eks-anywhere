@@ -352,6 +352,7 @@ const (
 	Kube119 KubernetesVersion = "1.19"
 	Kube120 KubernetesVersion = "1.20"
 	Kube121 KubernetesVersion = "1.21"
+	Kube122 KubernetesVersion = "1.22"
 )
 
 type CNI string
@@ -372,6 +373,19 @@ type ClusterStatus struct {
 	// Descriptive message about a fatal problem while reconciling a cluster
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
+	// EksdReleaseRef defines the properties of the EKS-D object on the cluster
+	EksdReleaseRef *EksdReleaseRef `json:"eksdReleaseRef,omitempty"`
+}
+
+type EksdReleaseRef struct {
+	// ApiVersion refers to the EKS-D API version
+	ApiVersion string `json:"apiVersion"`
+	// Kind refers to the Release kind for the EKS-D object
+	Kind string `json:"kind"`
+	// Name refers to the name of the EKS-D object on the cluster
+	Name string `json:"name"`
+	// Namespace refers to the namespace for the EKS-D release resources
+	Namespace string `json:"namespace"`
 }
 
 type Ref struct {
