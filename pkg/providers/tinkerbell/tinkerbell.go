@@ -75,13 +75,18 @@ type ProviderTinkClient interface {
 	GetHardware(ctx context.Context) ([]*tink.Hardware, error)
 }
 
-func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
+type ProviderPbnjClient interface {
+	ValidateBMCSecretCreds(ctx context.Context, bmc hardware.BmcSecretConfig) error
+}
+
+func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, pbnjClient ProviderPbnjClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
 	return NewProviderCustomNet(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
 		providerKubectlClient,
 		providerTinkClient,
+		pbnjClient,
 		&networkutils.DefaultNetClient{},
 		now,
 		skipIpCheck,
@@ -89,7 +94,7 @@ func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
+func NewProviderCustomNet(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, pbnjClient ProviderPbnjClient, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
@@ -120,7 +125,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
 			now:                         now,
 		},
 		hardwareConfigFile: hardwareConfigFile,
-		validator:          NewValidator(providerTinkClient, netClient, hardware.HardwareConfig{}),
+		validator:          NewValidator(providerTinkClient, netClient, hardware.HardwareConfig{}, pbnjClient),
 		skipIpCheck:        skipIpCheck,
 	}
 }

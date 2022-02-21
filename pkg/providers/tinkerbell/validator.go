@@ -15,13 +15,15 @@ type Validator struct {
 	tink           ProviderTinkClient
 	netClient      networkutils.NetClient
 	hardwareConfig hardware.HardwareConfig
+	pbnj           ProviderPbnjClient
 }
 
-func NewValidator(tink ProviderTinkClient, netClient networkutils.NetClient, hardwareConfig hardware.HardwareConfig) *Validator {
+func NewValidator(tink ProviderTinkClient, netClient networkutils.NetClient, hardwareConfig hardware.HardwareConfig, pbnjClient ProviderPbnjClient) *Validator {
 	return &Validator{
 		tink:           tink,
 		netClient:      netClient,
 		hardwareConfig: hardwareConfig,
+		pbnj:           pbnjClient,
 	}
 }
 
@@ -132,7 +134,28 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 		return fmt.Errorf("failed validating Secrets in hardware config: %v", err)
 	}
 
-	logger.MarkPass("Hardware Config is valid")
+	if err := v.ValidateBMCSecretCreds(ctx, v.hardwareConfig); err != nil {
+		return err
+	}
+
+	logger.MarkPass("Hardware Config file validated")
+
+	return nil
+}
+
+func (v *Validator) ValidateBMCSecretCreds(ctx context.Context, hc hardware.HardwareConfig) error {
+	for index, bmc := range hc.Bmcs {
+		bmcInfo := hardware.BmcSecretConfig{
+			Host:     bmc.Spec.Host,
+			Username: string(hc.Secrets[index].Data["username"]),
+			Password: string(hc.Secrets[index].Data["password"]),
+			Vendor:   bmc.Spec.Vendor,
+		}
+		if err := v.pbnj.ValidateBMCSecretCreds(ctx, bmcInfo); err != nil {
+			return fmt.Errorf("failed validating Hardware BMC credentials for the node %v, host %v : %v", hc.Hardwares[index].Name, bmcInfo.Host, err)
+		}
+	}
+
 	return nil
 }
 

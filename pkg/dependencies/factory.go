@@ -21,6 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/factory"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -31,6 +32,7 @@ type Dependencies struct {
 	Kubectl                   *executables.Kubectl
 	Govc                      *executables.Govc
 	Tink                      *executables.Tink
+	PBNJ                      *pbnj.Pbnj
 	Writer                    filewriter.FileWriter
 	Kind                      *executables.Kind
 	Clusterctl                *executables.Clusterctl
@@ -181,6 +183,7 @@ func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v
 			VSphereKubectlClient:      f.dependencies.Kubectl,
 			TinkerbellKubectlClient:   f.dependencies.Kubectl,
 			TinkerbellTinkClient:      f.dependencies.Tink,
+			TinkerbellPbnjClient:      f.dependencies.PBNJ,
 			Writer:                    f.dependencies.Writer,
 			ClusterResourceSetManager: f.dependencies.ResourceSetManager,
 		}
@@ -266,6 +269,9 @@ func (f *Factory) WithTink(clusterConfigFile string) *Factory {
 		}
 		f.dependencies.Tink = f.executableBuilder.BuildTinkExecutable(tinkerbellDatacenterConfig.Spec.TinkerbellCertURL, tinkerbellDatacenterConfig.Spec.TinkerbellGRPCAuth)
 
+		pbnjClient, _ := pbnj.NewPBNJClient(tinkerbellDatacenterConfig.Spec.TinkerbellPBnJGRPCAuth)
+
+		f.dependencies.PBNJ = pbnjClient
 		return nil
 	})
 
