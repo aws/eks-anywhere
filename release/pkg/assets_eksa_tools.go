@@ -80,7 +80,7 @@ func (r *ReleaseConfig) GetEksAToolsAssets() ([]Artifact, error) {
 		SourcedFromBranch: sourcedFromBranch,
 	}
 
-	artifacts := []Artifact{Artifact{Image: imageArtifact}}
+	artifacts := []Artifact{{Image: imageArtifact}}
 
 	return artifacts, nil
 }

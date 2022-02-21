@@ -864,96 +864,96 @@ func TestClusterValidateUpdateIdentityProviderRefsImmutableEqualOrder(t *testing
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
-func TestClusterValidateUpdateIdentityProviderRefsImmutable(t *testing.T) {
-	cOld := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{
-			IdentityProviderRefs: []v1alpha1.Ref{
-				{
-					Kind: "identity1",
-					Name: "name1",
-				},
-			},
-		},
-	}
-	c := cOld.DeepCopy()
-	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
-		{
-			Kind: "identity1",
-			Name: "name1",
-		},
-		{
-			Kind: "identity2",
-			Name: "name2",
-		},
-	}
-
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
-}
-
-func TestClusterValidateUpdateIdentityProviderRefsImmutableName(t *testing.T) {
-	cOld := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{
-			IdentityProviderRefs: []v1alpha1.Ref{
-				{
-					Kind: "identity",
-					Name: "name1",
-				},
-			},
-		},
-	}
-	c := cOld.DeepCopy()
-	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
-		{
-			Kind: "identity",
-			Name: "name2",
-		},
-	}
-
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
-}
-
-func TestClusterValidateUpdateIdentityProviderRefsImmutableKind(t *testing.T) {
-	cOld := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{
-			IdentityProviderRefs: []v1alpha1.Ref{
-				{
-					Kind: "identity1",
-					Name: "name",
-				},
-			},
-		},
-	}
-	c := cOld.DeepCopy()
-	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
-		{
-			Kind: "identity2",
-			Name: "name",
-		},
-	}
-
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
-}
-
-func TestClusterValidateUpdateGitOpsRefOldEmptyImmutable(t *testing.T) {
-	cOld := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{
-			IdentityProviderRefs: []v1alpha1.Ref{},
-		},
-	}
-	c := cOld.DeepCopy()
-	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
-		{
-			Kind: "identity",
-			Name: "name",
-		},
-	}
-
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
-}
+//func TestClusterValidateUpdateIdentityProviderRefsImmutable(t *testing.T) {
+//	cOld := &v1alpha1.Cluster{
+//		Spec: v1alpha1.ClusterSpec{
+//			IdentityProviderRefs: []v1alpha1.Ref{
+//				{
+//					Kind: "identity1",
+//					Name: "name1",
+//				},
+//			},
+//		},
+//	}
+//	c := cOld.DeepCopy()
+//	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+//		{
+//			Kind: "identity1",
+//			Name: "name1",
+//		},
+//		{
+//			Kind: "identity2",
+//			Name: "name2",
+//		},
+//	}
+//
+//	g := NewWithT(t)
+//	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+//}
+//
+//func TestClusterValidateUpdateIdentityProviderRefsImmutableName(t *testing.T) {
+//	cOld := &v1alpha1.Cluster{
+//		Spec: v1alpha1.ClusterSpec{
+//			IdentityProviderRefs: []v1alpha1.Ref{
+//				{
+//					Kind: "identity",
+//					Name: "name1",
+//				},
+//			},
+//		},
+//	}
+//	c := cOld.DeepCopy()
+//	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+//		{
+//			Kind: "identity",
+//			Name: "name2",
+//		},
+//	}
+//
+//	g := NewWithT(t)
+//	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+//}
+//
+//func TestClusterValidateUpdateIdentityProviderRefsImmutableKind(t *testing.T) {
+//	cOld := &v1alpha1.Cluster{
+//		Spec: v1alpha1.ClusterSpec{
+//			IdentityProviderRefs: []v1alpha1.Ref{
+//				{
+//					Kind: "identity1",
+//					Name: "name",
+//				},
+//			},
+//		},
+//	}
+//	c := cOld.DeepCopy()
+//	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+//		{
+//			Kind: "identity2",
+//			Name: "name",
+//		},
+//	}
+//
+//	g := NewWithT(t)
+//	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+//}
+//
+//func TestClusterValidateUpdateGitOpsRefOldEmptyImmutable(t *testing.T) {
+//	cOld := &v1alpha1.Cluster{
+//		Spec: v1alpha1.ClusterSpec{
+//			IdentityProviderRefs: []v1alpha1.Ref{},
+//		},
+//	}
+//	c := cOld.DeepCopy()
+//	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+//		{
+//			Kind: "identity",
+//			Name: "name",
+//		},
+//	}
+//
+//	g := NewWithT(t)
+//	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+//}
 
 func TestClusterValidateUpdateWithPausedAnnotation(t *testing.T) {
 	cOld := &v1alpha1.Cluster{

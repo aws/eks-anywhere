@@ -73,7 +73,7 @@ func (r *ReleaseConfig) GetCriToolsAssets() ([]Artifact, error) {
 		ProjectPath:       criToolsProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{Artifact{Archive: archiveArtifact}}
+	artifacts := []Artifact{{Archive: archiveArtifact}}
 
 	return artifacts, nil
 }

@@ -55,7 +55,7 @@ func (r *ReleaseConfig) GetHaproxyAssets() ([]Artifact, error) {
 		ProjectPath:       kindProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{Artifact{Image: imageArtifact}}
+	artifacts := []Artifact{{Image: imageArtifact}}
 
 	return artifacts, nil
 }

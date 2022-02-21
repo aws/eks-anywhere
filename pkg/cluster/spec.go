@@ -148,6 +148,12 @@ func WithGitOpsConfig(gitOpsConfig *eksav1alpha1.GitOpsConfig) SpecOpt {
 	}
 }
 
+func WithOIDCConfig(oidcConfig *eksav1alpha1.OIDCConfig) SpecOpt {
+	return func(s *Spec) {
+		s.OIDCConfig = oidcConfig
+	}
+}
+
 func NewSpec(opts ...SpecOpt) *Spec {
 	s := &Spec{
 		releasesManifestURL: releasesManifestURL,

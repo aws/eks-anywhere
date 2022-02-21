@@ -178,25 +178,25 @@ func TestPreflightValidations(t *testing.T) {
 				s.Spec.ControlPlaneConfiguration.Endpoint.Host = "2.3.4.5"
 			},
 		},
-		{
-			name:               "ValidationIdentityProviderRefsImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
-			getClusterResponse: goodClusterResponse,
-			cpResponse:         nil,
-			workerResponse:     nil,
-			nodeResponse:       nil,
-			crdResponse:        nil,
-			wantErr:            composeError("spec.identityProviderRefs is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
-				s.Spec.IdentityProviderRefs = []v1alpha1.Ref{
-					{
-						Kind: v1alpha1.OIDCConfigKind,
-						Name: "oidc-2",
-					},
-				}
-			},
-		},
+		//{
+		//	name:               "ValidationIdentityProviderRefsImmutable",
+		//	clusterVersion:     "v1.19.16-eks-1-19-4",
+		//	upgradeVersion:     "1.19",
+		//	getClusterResponse: goodClusterResponse,
+		//	cpResponse:         nil,
+		//	workerResponse:     nil,
+		//	nodeResponse:       nil,
+		//	crdResponse:        nil,
+		//	wantErr:            composeError("spec.identityProviderRefs is immutable"),
+		//	modifyFunc: func(s *cluster.Spec) {
+		//		s.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		//			{
+		//				Kind: v1alpha1.OIDCConfigKind,
+		//				Name: "oidc-2",
+		//			},
+		//		}
+		//	},
+		//},
 		{
 			name:               "ValidationGitOpsNamespaceImmutable",
 			clusterVersion:     "v1.19.16-eks-1-19-4",
@@ -281,104 +281,104 @@ func TestPreflightValidations(t *testing.T) {
 				s.GitOpsConfig.Spec.Flux.Github.Personal = !s.GitOpsConfig.Spec.Flux.Github.Personal
 			},
 		},
-		{
-			name:               "ValidationOIDCClientIdImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
-			getClusterResponse: goodClusterResponse,
-			cpResponse:         nil,
-			workerResponse:     nil,
-			nodeResponse:       nil,
-			crdResponse:        nil,
-			wantErr:            composeError("oidc identity provider is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
-				s.OIDCConfig.Spec.ClientId = "new-client-id"
-			},
-		},
-		{
-			name:               "ValidationOIDCGroupsClaimImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
-			getClusterResponse: goodClusterResponse,
-			cpResponse:         nil,
-			workerResponse:     nil,
-			nodeResponse:       nil,
-			crdResponse:        nil,
-			wantErr:            composeError("oidc identity provider is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
-				s.OIDCConfig.Spec.GroupsClaim = "new-groups-claim"
-			},
-		},
-		{
-			name:               "ValidationOIDCGroupsPrefixImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
-			getClusterResponse: goodClusterResponse,
-			cpResponse:         nil,
-			workerResponse:     nil,
-			nodeResponse:       nil,
-			crdResponse:        nil,
-			wantErr:            composeError("oidc identity provider is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
-				s.OIDCConfig.Spec.GroupsPrefix = "new-groups-prefix"
-			},
-		},
-		{
-			name:               "ValidationOIDCIssuerUrlImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
-			getClusterResponse: goodClusterResponse,
-			cpResponse:         nil,
-			workerResponse:     nil,
-			nodeResponse:       nil,
-			crdResponse:        nil,
-			wantErr:            composeError("oidc identity provider is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
-				s.OIDCConfig.Spec.IssuerUrl = "new-issuer-url"
-			},
-		},
-		{
-			name:               "ValidationOIDCUsernameClaimImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
-			getClusterResponse: goodClusterResponse,
-			cpResponse:         nil,
-			workerResponse:     nil,
-			nodeResponse:       nil,
-			crdResponse:        nil,
-			wantErr:            composeError("oidc identity provider is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
-				s.OIDCConfig.Spec.UsernameClaim = "new-username-claim"
-			},
-		},
-		{
-			name:               "ValidationOIDCUsernamePrefixImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
-			getClusterResponse: goodClusterResponse,
-			cpResponse:         nil,
-			workerResponse:     nil,
-			nodeResponse:       nil,
-			crdResponse:        nil,
-			wantErr:            composeError("oidc identity provider is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
-				s.OIDCConfig.Spec.UsernamePrefix = "new-username-prefix"
-			},
-		},
-		{
-			name:               "ValidationOIDCRequiredClaimsImmutable",
-			clusterVersion:     "v1.19.16-eks-1-19-4",
-			upgradeVersion:     "1.19",
-			getClusterResponse: goodClusterResponse,
-			cpResponse:         nil,
-			workerResponse:     nil,
-			nodeResponse:       nil,
-			crdResponse:        nil,
-			wantErr:            composeError("oidc identity provider is immutable"),
-			modifyFunc: func(s *cluster.Spec) {
-				s.OIDCConfig.Spec.RequiredClaims[0].Claim = "new-groups-claim"
-			},
-		},
+		//{
+		//	name:               "ValidationOIDCClientIdImmutable",
+		//	clusterVersion:     "v1.19.16-eks-1-19-4",
+		//	upgradeVersion:     "1.19",
+		//	getClusterResponse: goodClusterResponse,
+		//	cpResponse:         nil,
+		//	workerResponse:     nil,
+		//	nodeResponse:       nil,
+		//	crdResponse:        nil,
+		//	wantErr:            composeError("oidc identity provider is immutable"),
+		//	modifyFunc: func(s *cluster.Spec) {
+		//		s.OIDCConfig.Spec.ClientId = "new-client-id"
+		//	},
+		//},
+		//{
+		//	name:               "ValidationOIDCGroupsClaimImmutable",
+		//	clusterVersion:     "v1.19.16-eks-1-19-4",
+		//	upgradeVersion:     "1.19",
+		//	getClusterResponse: goodClusterResponse,
+		//	cpResponse:         nil,
+		//	workerResponse:     nil,
+		//	nodeResponse:       nil,
+		//	crdResponse:        nil,
+		//	wantErr:            composeError("oidc identity provider is immutable"),
+		//	modifyFunc: func(s *cluster.Spec) {
+		//		s.OIDCConfig.Spec.GroupsClaim = "new-groups-claim"
+		//	},
+		//},
+		//{
+		//	name:               "ValidationOIDCGroupsPrefixImmutable",
+		//	clusterVersion:     "v1.19.16-eks-1-19-4",
+		//	upgradeVersion:     "1.19",
+		//	getClusterResponse: goodClusterResponse,
+		//	cpResponse:         nil,
+		//	workerResponse:     nil,
+		//	nodeResponse:       nil,
+		//	crdResponse:        nil,
+		//	wantErr:            composeError("oidc identity provider is immutable"),
+		//	modifyFunc: func(s *cluster.Spec) {
+		//		s.OIDCConfig.Spec.GroupsPrefix = "new-groups-prefix"
+		//	},
+		//},
+		//{
+		//	name:               "ValidationOIDCIssuerUrlImmutable",
+		//	clusterVersion:     "v1.19.16-eks-1-19-4",
+		//	upgradeVersion:     "1.19",
+		//	getClusterResponse: goodClusterResponse,
+		//	cpResponse:         nil,
+		//	workerResponse:     nil,
+		//	nodeResponse:       nil,
+		//	crdResponse:        nil,
+		//	wantErr:            composeError("oidc identity provider is immutable"),
+		//	modifyFunc: func(s *cluster.Spec) {
+		//		s.OIDCConfig.Spec.IssuerUrl = "new-issuer-url"
+		//	},
+		//},
+		//{
+		//	name:               "ValidationOIDCUsernameClaimImmutable",
+		//	clusterVersion:     "v1.19.16-eks-1-19-4",
+		//	upgradeVersion:     "1.19",
+		//	getClusterResponse: goodClusterResponse,
+		//	cpResponse:         nil,
+		//	workerResponse:     nil,
+		//	nodeResponse:       nil,
+		//	crdResponse:        nil,
+		//	wantErr:            composeError("oidc identity provider is immutable"),
+		//	modifyFunc: func(s *cluster.Spec) {
+		//		s.OIDCConfig.Spec.UsernameClaim = "new-username-claim"
+		//	},
+		//},
+		//{
+		//	name:               "ValidationOIDCUsernamePrefixImmutable",
+		//	clusterVersion:     "v1.19.16-eks-1-19-4",
+		//	upgradeVersion:     "1.19",
+		//	getClusterResponse: goodClusterResponse,
+		//	cpResponse:         nil,
+		//	workerResponse:     nil,
+		//	nodeResponse:       nil,
+		//	crdResponse:        nil,
+		//	wantErr:            composeError("oidc identity provider is immutable"),
+		//	modifyFunc: func(s *cluster.Spec) {
+		//		s.OIDCConfig.Spec.UsernamePrefix = "new-username-prefix"
+		//	},
+		//},
+		//{
+		//	name:               "ValidationOIDCRequiredClaimsImmutable",
+		//	clusterVersion:     "v1.19.16-eks-1-19-4",
+		//	upgradeVersion:     "1.19",
+		//	getClusterResponse: goodClusterResponse,
+		//	cpResponse:         nil,
+		//	workerResponse:     nil,
+		//	nodeResponse:       nil,
+		//	crdResponse:        nil,
+		//	wantErr:            composeError("oidc identity provider is immutable"),
+		//	modifyFunc: func(s *cluster.Spec) {
+		//		s.OIDCConfig.Spec.RequiredClaims[0].Claim = "new-groups-claim"
+		//	},
+		//},
 		{
 			name:               "ValidationClusterNetworkImmutable",
 			clusterVersion:     "v1.19.16-eks-1-19-4",

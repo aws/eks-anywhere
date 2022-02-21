@@ -12,7 +12,9 @@ type BundlesFetch func(ctx context.Context, name, namespace string) (*v1alpha1re
 
 type GitOpsFetch func(ctx context.Context, name, namespace string) (*v1alpha1.GitOpsConfig, error)
 
-func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundlesFetch BundlesFetch, gitOpsFetch GitOpsFetch) (*Spec, error) {
+type OidcFetch func(ctx context.Context, name, namespace string) (*v1alpha1.OIDCConfig, error)
+
+func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundlesFetch BundlesFetch, gitOpsFetch GitOpsFetch, oidcFetch OidcFetch) (*Spec, error) {
 	bundles, err := GetBundlesForCluster(ctx, cluster, bundlesFetch)
 	if err != nil {
 		return nil, err
@@ -21,7 +23,11 @@ func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundles
 	if err != nil {
 		return nil, err
 	}
-	return BuildSpecFromBundles(cluster, bundles, WithGitOpsConfig(gitOpsConfig))
+	oidcConfig, err := GetOIDCForCluster(ctx, cluster, oidcFetch)
+	if err != nil {
+		return nil, err
+	}
+	return BuildSpecFromBundles(cluster, bundles, WithGitOpsConfig(gitOpsConfig), WithOIDCConfig(oidcConfig))
 }
 
 func GetBundlesForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch BundlesFetch) (*v1alpha1release.Bundles, error) {
@@ -43,4 +49,25 @@ func GetGitOpsForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch G
 	}
 
 	return gitops, nil
+}
+
+func GetOIDCForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch OidcFetch) (*v1alpha1.OIDCConfig, error) {
+	if fetch == nil || cluster.Spec.IdentityProviderRefs == nil {
+		return nil, nil
+	}
+
+	for _, identityProvider := range cluster.Spec.IdentityProviderRefs {
+		switch identityProvider.Kind {
+		case v1alpha1.OIDCConfigKind:
+			oidc, err := fetch(ctx, identityProvider.Name, cluster.Namespace)
+			if err != nil {
+				return nil, fmt.Errorf("failed fetching OIDCConfig for cluster: %v", err)
+			}
+			return oidc, nil
+
+		default:
+			return nil, nil
+		}
+	}
+	return nil, nil
 }

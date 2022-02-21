@@ -65,7 +65,7 @@ func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
 		ProjectPath:       capiProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{Artifact{Image: imageArtifact}}
+	artifacts := []Artifact{{Image: imageArtifact}}
 
 	var imageTagOverrides []ImageTagOverride
 

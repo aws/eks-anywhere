@@ -79,7 +79,7 @@ func (r *ReleaseConfig) GetCiliumAssets() ([]Artifact, error) {
 		ProjectPath:       ciliumProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{Artifact{Manifest: manifestArtifact}}
+	artifacts := []Artifact{{Manifest: manifestArtifact}}
 
 	return artifacts, nil
 }
