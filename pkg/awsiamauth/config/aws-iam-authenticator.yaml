@@ -106,7 +106,7 @@ spec:
         value: {{ .Value }}
         effect: {{ .Effect }}
 {{- if .TimeAdded }}
-      timeAdded: {{ .TimeAdded }}
+        timeAdded: {{ .TimeAdded }}
 {{- end }}
 {{- end }}
 {{- end }}
