@@ -34,7 +34,7 @@ We will add two CRDs to [`anywhere.eks.amazonaws.com`](http://anywhere.eks.amazo
 
 **SnowDatacenterConfig**
 
-```
+```go
 type SnowDatacenterConfigSpec struct {}
 ```
 
@@ -144,7 +144,7 @@ azBpMAwGA1UdEwQFMAMBAf8wHQYDVR0OBBYEFL/bRcnBRuSM5+FcYFa8HfIBomdF
 
 EKS-A uses [kube-vip](https://kube-vip.chipzoller.dev/docs/) for control plane load balancing, where we create kube-vip as static pod in each control plane node instance. The kube-vip manifest template is built in as part of the EKS-D Node AMI for Snow integration specifically due to the EC2 instance user data limit of 16KB. The user specifies the control plane endpoint in the EKS-A `clusterSpec.controlPlaneConfiguration.endpoint` and EKS-A passes it down to the `kubeadmControlPlane` object as part of the pre/post KubeadmCommands. The control plane endpoint will be used as the vip_address along with the kube-vip container image when EKS-A runs the bootstrap script where it creates kube-vip pods.
 
-```
+```yaml
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
