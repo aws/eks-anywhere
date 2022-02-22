@@ -64,5 +64,4 @@ func (e *ClusterE2ETest) ValidateWorkerNodes(workerNodeValidations ...WorkerNode
 		}
 		e.StopIfFailed()
 	}
-	e.T.Log("validated that expected taints are present on the workload cluster nodes")
 }
