@@ -937,24 +937,6 @@ func TestClusterValidateUpdateIdentityProviderRefsImmutableKind(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
-func TestClusterValidateUpdateGitOpsRefOldEmptyImmutable(t *testing.T) {
-	cOld := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{
-			IdentityProviderRefs: []v1alpha1.Ref{},
-		},
-	}
-	c := cOld.DeepCopy()
-	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
-		{
-			Kind: "identity",
-			Name: "name",
-		},
-	}
-
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
-}
-
 func TestClusterValidateUpdateWithPausedAnnotation(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
