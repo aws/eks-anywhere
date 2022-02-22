@@ -217,7 +217,6 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	if !conditions.IsTrue(capiCluster, controlPlaneReadyCondition) {
 		v.Log.Info("waiting for control plane to be ready", "cluster", capiCluster.Name, "kind", capiCluster.Kind)
 		return reconciler.Result{Result: &ctrl.Result{
-			Requeue:      true,
 			RequeueAfter: defaultRequeueTime,
 		}}, err
 	}
