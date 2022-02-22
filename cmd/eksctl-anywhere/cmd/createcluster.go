@@ -22,6 +22,7 @@ type createClusterOptions struct {
 	forceClean       bool
 	skipIpCheck      bool
 	hardwareFileName string
+	skipBmcCheck     bool
 }
 
 var cc = &createClusterOptions{}
@@ -48,6 +49,7 @@ func init() {
 	createClusterCmd.Flags().StringVarP(&cc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	if features.IsActive(features.TinkerbellProvider()) {
 		createClusterCmd.Flags().StringVarP(&cc.hardwareFileName, "hardwarefile", "w", "", "Filename that contains datacenter hardware information")
+		createClusterCmd.Flags().BoolVar(&cc.skipBmcCheck, "skip-bmc-check", false, "Skip BMC information check for hardwares")
 	}
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
@@ -91,7 +93,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareFileName).
+		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareFileName, cc.skipBmcCheck).
 		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
 		WithWriter().
 		Build(ctx)

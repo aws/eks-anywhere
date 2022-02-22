@@ -118,21 +118,22 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 	return nil
 }
 
-func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string) error {
+func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string, skipBmcCheck bool) error {
 	if err := v.hardwareConfig.ParseHardwareConfig(hardwareConfigFile); err != nil {
 		return fmt.Errorf("failed to get hardware Config: %v", err)
 	}
 
-	if err := v.hardwareConfig.ValidateHardware(); err != nil {
+	if err := v.hardwareConfig.ValidateHardware(skipBmcCheck); err != nil {
 		return fmt.Errorf("failed validating Hardware BMC refs in hardware config: %v", err)
 	}
+	if !skipBmcCheck {
+		if err := v.hardwareConfig.ValidateBMC(); err != nil {
+			return fmt.Errorf("failed validating BMCs in hardware config: %v", err)
+		}
 
-	if err := v.hardwareConfig.ValidateBMC(); err != nil {
-		return fmt.Errorf("failed validating BMCs in hardware config: %v", err)
-	}
-
-	if err := v.hardwareConfig.ValidateBmcSecretRefs(); err != nil {
-		return fmt.Errorf("failed validating Secrets in hardware config: %v", err)
+		if err := v.hardwareConfig.ValidateBmcSecretRefs(); err != nil {
+			return fmt.Errorf("failed validating Secrets in hardware config: %v", err)
+		}
 	}
 
 	if err := v.ValidateBMCSecretCreds(ctx, v.hardwareConfig); err != nil {
