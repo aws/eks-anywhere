@@ -33,51 +33,6 @@ type Cmk struct {
 
 }
 
-func (c *Cmk) ValidateDatacenterConfig(ctx context.Context, datacenterConfig v1alpha1.CloudStackDatacenterConfig) error {
-	err := c.ValidateDomainPresent(ctx, datacenterConfig.Spec.Domain)
-	if err != nil {
-		return fmt.Errorf("error while checking domain %v", err)
-	}
-	err = c.ValidateAccountPresent(ctx, datacenterConfig.Spec.Account, c.domain.Id)
-	if err != nil {
-		return fmt.Errorf("error while checking account %v", err)
-	}
-	err = c.ValidateZonesPresent(ctx, datacenterConfig.Spec.Zones)
-	if err != nil {
-		return fmt.Errorf("error while checking zones %v", err)
-	}
-	for _, zone := range datacenterConfig.Spec.Zones {
-		err = c.ValidateNetworkPresent(ctx, c.domain.Id, zone, c.account.Name, len(datacenterConfig.Spec.Zones) > 1)
-		if err != nil {
-			return fmt.Errorf("error while checking network %v", err)
-		}
-	}
-	return nil
-}
-
-func (c *Cmk) ValidateMachineConfig(ctx context.Context, machineConfig v1alpha1.CloudStackMachineConfig) error {
-	domainId := c.domain.Id
-	account := c.account.Name
-	var err error
-
-	if len(machineConfig.Spec.AffinityGroupIds) > 0 {
-		if err = c.ValidateAffinityGroupsPresent(ctx, domainId, account, machineConfig.Spec.AffinityGroupIds); err != nil {
-			return fmt.Errorf("error while checking affinity groupIds %v", err)
-		}
-	}
-
-	for _, zone := range c.zones {
-		zoneId := zone.Id
-		if err = c.ValidateTemplatePresent(ctx, domainId, zoneId, account, machineConfig.Spec.Template); err != nil {
-			return fmt.Errorf("error while checking template %v", err)
-		}
-		if err = c.ValidateServiceOfferingPresent(ctx, zoneId, machineConfig.Spec.ComputeOffering); err != nil {
-			return fmt.Errorf("error while checking compute offering %v", err)
-		}
-	}
-	return nil
-}
-
 func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domainId string, zoneId string, account string, template v1alpha1.CloudStackResourceRef) error {
 	filterArgs := []string{"list", "templates", "templatefilter=all", "listall=true"}
 	if template.Type == v1alpha1.Id {
