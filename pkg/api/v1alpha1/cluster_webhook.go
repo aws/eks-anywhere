@@ -154,16 +154,10 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		)
 	}
 
-	if old.Spec.ControlPlaneConfiguration.Count != new.Spec.ControlPlaneConfiguration.Count {
+	if !old.Spec.ControlPlaneConfiguration.Equal(&new.Spec.ControlPlaneConfiguration) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "ControlPlaneConfiguration.count"), new.Spec.ControlPlaneConfiguration.Count, "field is immutable"))
-	}
-
-	if !new.Spec.ControlPlaneConfiguration.MachineGroupRef.Equal(old.Spec.ControlPlaneConfiguration.MachineGroupRef) {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "ControlPlaneConfiguration.machineGroupRef"), new.Spec.ControlPlaneConfiguration.MachineGroupRef, "field is immutable"))
+			field.Invalid(field.NewPath("spec", "ControlPlaneConfiguration"), new.Spec.ControlPlaneConfiguration, "field is immutable"))
 	}
 
 	return allErrs

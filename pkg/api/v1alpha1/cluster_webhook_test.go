@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -215,6 +216,58 @@ func TestClusterValidateUpdateControlPlaneConfigurationNewEndpointNilImmutable(t
 	c := cOld.DeepCopy()
 	c.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
 		Endpoint: nil,
+	}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
+func TestManagementClusterValidateUpdateControlPlaneConfigurationTaintsImmutable(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Taints: []v1.Taint{
+					{
+						Key:    "Key1",
+						Value:  "Val1",
+						Effect: "PreferNoSchedule",
+					},
+				},
+			},
+		},
+	}
+	cOld.SetSelfManaged()
+	c := cOld.DeepCopy()
+	c.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
+		Taints: []v1.Taint{
+			{
+				Key:    "Key2",
+				Value:  "Val2",
+				Effect: "PreferNoSchedule",
+			},
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
+func TestManagementClusterValidateUpdateControlPlaneConfigurationLabelsImmutable(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Labels: map[string]string{
+					"Key1": "Val1",
+				},
+			},
+		},
+	}
+	cOld.SetSelfManaged()
+	c := cOld.DeepCopy()
+	c.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
+		Labels: map[string]string{
+			"Key2": "Val2",
+		},
 	}
 
 	g := NewWithT(t)
