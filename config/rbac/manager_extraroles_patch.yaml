@@ -153,6 +153,7 @@
     resources:
       - daemonsets
       - daemonsets/status
+      - deployments
     verbs:
       - get
       - list
@@ -201,6 +202,7 @@
       - create
       - get
       - list
+      - patch
       - watch
       - update
 - op: add
