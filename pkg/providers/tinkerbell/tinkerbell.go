@@ -208,6 +208,11 @@ func (vs *TinkerbellTemplateBuilder) EtcdMachineTemplateName(clusterName string)
 	return fmt.Sprintf("%s-etcd-template-%d", clusterName, t)
 }
 
+func (vs *TinkerbellTemplateBuilder) KubeadmConfigTemplateName(clusterName, workerNodeGroupName string) string {
+	t := vs.now().UnixNano() / int64(time.Millisecond)
+	return fmt.Sprintf("%s-%s-template-%d", clusterName, workerNodeGroupName, t)
+}
+
 func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	values := buildTemplateMapCP(clusterSpec, *vs.controlPlaneMachineSpec)
 	for _, buildOption := range buildOptions {
@@ -220,13 +225,13 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	return bytes, nil
 }
 
-func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, templateNames map[string]string) (content []byte, err error) {
+func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		values := buildTemplateMapMD(clusterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name])
-		_, ok := templateNames[workerNodeGroupConfiguration.Name]
-		if templateNames != nil && ok {
-			values["workloadTemplateName"] = templateNames[workerNodeGroupConfiguration.Name]
+		_, ok := workloadTemplateNames[workerNodeGroupConfiguration.Name]
+		if workloadTemplateNames != nil && ok {
+			values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		} else {
 			values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		}
@@ -263,7 +268,7 @@ func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, clus
 	if err != nil {
 		return nil, nil, err
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, nil)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, nil, nil)
 	if err != nil {
 		return nil, nil, err
 	}
