@@ -9,6 +9,7 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
+          taints: []
           kubeletExtraArgs:
             cloud-provider: external
             read-only-port: "0"
@@ -82,4 +83,5 @@ spec:
       storagePolicyName: "vSAN Default Storage Policy"
       template: /SDDC-Datacenter/vm/Templates/ubuntu-2004-kube-v1.21.2
       thumbprint: 'ABCDEFG'
+
 ---
