@@ -46,6 +46,7 @@ func TestVSphereKubernetes121Taints(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
+		framework.WithEnvVar("TAINTS_SUPPORT", "true"),
 	)
 
 	runTaintsUpgradeFlow(
@@ -72,6 +73,7 @@ func TestVSphereKubernetes121TaintsBottlerocket(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
+		framework.WithEnvVar("TAINTS_SUPPORT", "true"),
 	)
 
 	runTaintsUpgradeFlow(
