@@ -152,9 +152,13 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string
 	for _, affinityGroupId := range affinityGroupIds {
 		filterArgs = []string{"list", "affinitygroups"}
 		filterArgs = append(filterArgs, fmt.Sprintf("id=\"%s\"", affinityGroupId))
-		if len(domainId) > 0 || len(account) > 0 {
+		// account must be specified within a domainId
+		// domainId can be specified without account
+		if len(domainId) > 0 {
 			filterArgs = append(filterArgs,  fmt.Sprintf("domainid=\"%s\"", domainId))
-			filterArgs = append(filterArgs,  fmt.Sprintf("account=\"%s\"", account))
+			if len(account) > 0 {
+				filterArgs = append(filterArgs,  fmt.Sprintf("account=\"%s\"", account))
+			}
 		}
 		result, err := c.exec(ctx, filterArgs...)
 		if err != nil {
@@ -229,9 +233,13 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zone 
 	if len(shared) > 0 {
 		filterArgs = append(filterArgs, fmt.Sprintf("type=\"%s\"", shared))
 	}
-	if len(domainId) > 0 || len(account) > 0 {
+	// account must be specified within a domainId
+	// domainId can be specified without account
+	if len(domainId) > 0 {
 		filterArgs = append(filterArgs, fmt.Sprintf("domainid=\"%s\"", domainId))
-		filterArgs = append(filterArgs, fmt.Sprintf("account=\"%s\"", account))
+		if len(account) > 0 {
+			filterArgs = append(filterArgs, fmt.Sprintf("account=\"%s\"", account))
+		}
 	}
 	zoneId := ""
 	if zone.ZoneRef.Type == v1alpha1.Id {
