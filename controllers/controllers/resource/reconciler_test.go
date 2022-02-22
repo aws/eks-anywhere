@@ -15,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -394,8 +393,8 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				resourceUpdater.EXPECT().ForceApplyTemplate(ctx, gomock.Any(), gomock.Any()).Do(func(ctx context.Context, template *unstructured.Unstructured, dryRun bool) {
 					assert.Equal(t, false, dryRun, "Expected dryRun didn't match")
 					switch template.GetKind() {
-					case "KubeadmconfigTemplate":
-						existingKubeadmConfigTemplate := &v1beta1.KubeadmConfigTemplate{}
+					case "KubeadmConfigTemplate":
+						existingKubeadmConfigTemplate := &unstructured.Unstructured{}
 						if err := yaml.Unmarshal([]byte(kubeadmconfigTemplateSpecPath), existingKubeadmConfigTemplate); err != nil {
 							t.Errorf("unmarshal failed: %v", err)
 						}
@@ -513,8 +512,8 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				resourceUpdater.EXPECT().ForceApplyTemplate(ctx, gomock.Any(), gomock.Any()).Do(func(ctx context.Context, template *unstructured.Unstructured, dryRun bool) {
 					assert.Equal(t, false, dryRun, "Expected dryRun didn't match")
 					switch template.GetKind() {
-					case "KubeadmconfigTemplate":
-						existingKubeadmConfigTemplate := &v1beta1.KubeadmConfigTemplate{}
+					case "KubeadmConfigTemplate":
+						existingKubeadmConfigTemplate := &unstructured.Unstructured{}
 						if err := yaml.Unmarshal([]byte(kubeadmconfigTemplateSpecPath), existingKubeadmConfigTemplate); err != nil {
 							t.Errorf("unmarshal failed: %v", err)
 						}
