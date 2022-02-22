@@ -214,6 +214,16 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return result, errCAPICLuster
 	}
 
+	// wait for etcd if necessary
+	if cluster.Spec.ExternalEtcdConfiguration != nil {
+		if !conditions.Has(capiCluster, managedEtcdReadyCondition) || conditions.IsFalse(capiCluster, managedEtcdReadyCondition) {
+			v.Log.Info("Waiting for etcd to be ready", "cluster", cluster.Name)
+			return reconciler.Result{Result: &ctrl.Result{
+				RequeueAfter: defaultRequeueTime,
+			}}, nil
+		}
+	}
+
 	if !conditions.IsTrue(capiCluster, controlPlaneReadyCondition) {
 		v.Log.Info("waiting for control plane to be ready", "cluster", capiCluster.Name, "kind", capiCluster.Kind)
 		return reconciler.Result{Result: &ctrl.Result{
@@ -225,15 +235,6 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return result, err
 	}
 
-	// wait for etcd if necessary
-	if cluster.Spec.ExternalEtcdConfiguration != nil {
-		if !conditions.Has(capiCluster, managedEtcdReadyCondition) || conditions.IsFalse(capiCluster, managedEtcdReadyCondition) {
-			v.Log.Info("Waiting for etcd to be ready", "cluster", cluster.Name)
-			return reconciler.Result{Result: &ctrl.Result{
-				RequeueAfter: defaultRequeueTime,
-			}}, nil
-		}
-	}
 	if result, err := v.reconcileCNI(ctx, cluster, capiCluster, specWithBundles); err != nil {
 		return result, err
 	}
