@@ -230,7 +230,6 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		if !conditions.Has(capiCluster, managedEtcdReadyCondition) || conditions.IsFalse(capiCluster, managedEtcdReadyCondition) {
 			v.Log.Info("Waiting for etcd to be ready", "cluster", cluster.Name)
 			return reconciler.Result{Result: &ctrl.Result{
-				Requeue:      true,
 				RequeueAfter: defaultRequeueTime,
 			}}, nil
 		}
@@ -329,7 +328,6 @@ func (v *VSphereClusterReconciler) reconcileControlPlaneSpec(ctx context.Context
 		}
 		if err := reconciler.ReconcileYaml(ctx, v.Client, controlPlaneSpec); err != nil {
 			return reconciler.Result{Result: &ctrl.Result{
-				Requeue:      true,
 				RequeueAfter: defaultRequeueTime,
 			}}, err
 		}
