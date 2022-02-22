@@ -46,13 +46,18 @@ func NewAwsIamAuthTemplateBuilder() *AwsIamAuthTemplateBuilder {
 }
 
 func (a *AwsIamAuthTemplateBuilder) GenerateManifest(clusterSpec *cluster.Spec, clusterId uuid.UUID) ([]byte, error) {
-	data := map[string]string{
+	data := map[string]interface{}{
 		"image":       clusterSpec.VersionsBundle.KubeDistro.AwsIamAuthIamge.VersionedImage(),
 		"awsRegion":   clusterSpec.AWSIamConfig.Spec.AWSRegion,
 		"clusterID":   clusterId.String(),
 		"backendMode": strings.Join(clusterSpec.AWSIamConfig.Spec.BackendMode, ","),
 		"partition":   clusterSpec.AWSIamConfig.Spec.Partition,
 	}
+
+	if clusterSpec.Spec.ControlPlaneConfiguration.Taints != nil {
+		data["controlPlaneTaints"] = clusterSpec.Spec.ControlPlaneConfiguration.Taints
+	}
+
 	mapRoles, err := a.mapRolesToYaml(clusterSpec.AWSIamConfig.Spec.MapRoles)
 	if err != nil {
 		return nil, fmt.Errorf("error generating aws-iam-authenticator manifest: %v", err)

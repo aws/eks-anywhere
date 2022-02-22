@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -60,6 +61,12 @@ func WithControlPlaneCount(r int) ClusterFiller {
 func WithControlPlaneEndpointIP(value string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		c.Spec.ControlPlaneConfiguration.Endpoint.Host = value
+	}
+}
+
+func WithControlPlaneTaints(taints []corev1.Taint) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		c.Spec.ControlPlaneConfiguration.Taints = taints
 	}
 }
 
