@@ -60,7 +60,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 	log := r.log.WithValues("cluster", req.NamespacedName)
 	// Fetch the Cluster object
 	cluster := &anywherev1.Cluster{}
-	r.log.Info("Reconciling cluster", "name", req.NamespacedName)
+	log.Info("Reconciling cluster", "name", req.NamespacedName)
 	if err := r.client.Get(ctx, req.NamespacedName, cluster); err != nil {
 		return ctrl.Result{}, err
 	}
