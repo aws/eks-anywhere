@@ -32,7 +32,7 @@ var getPackageCommand = &cobra.Command{
 	Long:    "This command is used to display the installed packages",
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if !features.IsActive(features.CuratedPackagesSupport()) {
-			return fmt.Errorf("curated Packages not supported in this release")
+			return fmt.Errorf("This command is currently not supported")
 		}
 		cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 			if err := viper.BindPFlag(flag.Name, flag); err != nil {
