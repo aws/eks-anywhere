@@ -317,10 +317,26 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	if len(workerNodeGroupConfigs) <= 0 {
 		return errors.New("worker node group must be specified")
 	}
+	workerNodeGroupNames := make(map[string]bool, len(workerNodeGroupConfigs))
+	noExecuteNoScheduleTaintedNodeGroups := make(map[string]struct{})
 	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
 		if workerNodeGroupConfig.Name == "" {
 			return errors.New("must specify name for worker nodes")
 		}
+		if workerNodeGroupNames[workerNodeGroupConfig.Name] {
+			return errors.New("worker node group names must be unique")
+		}
+		if len(workerNodeGroupConfig.Taints) != 0 {
+			for _, taint := range workerNodeGroupConfig.Taints {
+				if taint.Effect == "NoExecute" || taint.Effect == "NoSchedule" {
+					noExecuteNoScheduleTaintedNodeGroups[workerNodeGroupConfig.Name] = struct{}{}
+				}
+			}
+		}
+		workerNodeGroupNames[workerNodeGroupConfig.Name] = true
+	}
+	if len(noExecuteNoScheduleTaintedNodeGroups) == len(workerNodeGroupConfigs) {
+		return errors.New("at least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints")
 	}
 	return nil
 }
