@@ -95,7 +95,7 @@ https://github.com/spf13/cobra
 ** github.com/pokearu/cluster-api-provider-tinkerbell; version v0.0.0-20220128001529-79d851d0861f --
 https://github.com/pokearu/cluster-api-provider-tinkerbell
 
-** github.com/tinkerbell/tink/protos; version v0.6.0 --
+** github.com/tinkerbell/tink; version v0.6.0 --
 https://github.com/tinkerbell/tink
 
 ** github.com/xanzy/ssh-agent; version v0.3.0 --
