@@ -192,7 +192,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.VSphereDatacenterConfig, ma
 		templateBuilder: &VsphereTemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
-			workerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
+			WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 			etcdMachineSpec:             etcdMachineSpec,
 			now:                         now,
 		},
@@ -590,11 +590,11 @@ func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.VSphereDatacenterConfig, 
 	return false
 }
 
-func NewVsphereTemplateBuilder(datacenterSpec *v1alpha1.VSphereDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.VSphereMachineConfigSpec, workerNodeGroupMachineSpecs map[string]v1alpha1.VSphereMachineConfigSpec, now types.NowFunc, fromController bool) providers.TemplateBuilder {
+func NewVsphereTemplateBuilder(datacenterSpec *v1alpha1.VSphereDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.VSphereMachineConfigSpec, workerNodeGroupMachineSpecs map[string]v1alpha1.VSphereMachineConfigSpec, now types.NowFunc, fromController bool) *VsphereTemplateBuilder {
 	return &VsphereTemplateBuilder{
 		datacenterSpec:              datacenterSpec,
 		controlPlaneMachineSpec:     controlPlaneMachineSpec,
-		workerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
+		WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 		etcdMachineSpec:             etcdMachineSpec,
 		now:                         now,
 		fromController:              fromController,
@@ -604,7 +604,7 @@ func NewVsphereTemplateBuilder(datacenterSpec *v1alpha1.VSphereDatacenterConfigS
 type VsphereTemplateBuilder struct {
 	datacenterSpec              *v1alpha1.VSphereDatacenterConfigSpec
 	controlPlaneMachineSpec     *v1alpha1.VSphereMachineConfigSpec
-	workerNodeGroupMachineSpecs map[string]v1alpha1.VSphereMachineConfigSpec
+	WorkerNodeGroupMachineSpecs map[string]v1alpha1.VSphereMachineConfigSpec
 	etcdMachineSpec             *v1alpha1.VSphereMachineConfigSpec
 	now                         types.NowFunc
 	fromController              bool
@@ -672,7 +672,7 @@ func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.S
 
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec, *vs.datacenterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
+		values := buildTemplateMapMD(clusterSpec, *vs.datacenterSpec, vs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
 		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 
@@ -952,7 +952,7 @@ func (p *vsphereProvider) generateCAPISpecForUpgrade(ctx context.Context, bootst
 			workloadTemplateName = p.templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		}
-		p.templateBuilder.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
+		p.templateBuilder.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
 	}
 
 	if newClusterSpec.Spec.ExternalEtcdConfiguration != nil {
@@ -1021,7 +1021,7 @@ func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		workloadTemplateNames[workerNodeGroupConfiguration.Name] = p.templateBuilder.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
 		kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = p.templateBuilder.KubeadmConfigTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
-		p.templateBuilder.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
+		p.templateBuilder.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
 	}
 	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
 	if err != nil {

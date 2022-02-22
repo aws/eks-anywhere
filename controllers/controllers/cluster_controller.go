@@ -6,11 +6,10 @@ import (
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	"sigs.k8s.io/cluster-api/controllers/remote"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/aws/eks-anywhere/controllers/controllers/clusters"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -25,9 +24,10 @@ type ClusterReconciler struct {
 	log       logr.Logger
 	validator *vsphere.Validator
 	defaulter *vsphere.Defaulter
+	tracker   *remote.ClusterCacheTracker
 }
 
-func NewClusterReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, govc *executables.Govc) *ClusterReconciler {
+func NewClusterReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, govc *executables.Govc, tracker *remote.ClusterCacheTracker) *ClusterReconciler {
 	validator := vsphere.NewValidator(govc, &networkutils.DefaultNetClient{})
 	defaulter := vsphere.NewDefaulter(govc)
 
@@ -36,6 +36,7 @@ func NewClusterReconciler(client client.Client, log logr.Logger, scheme *runtime
 		log:       log,
 		validator: validator,
 		defaulter: defaulter,
+		tracker:   tracker,
 	}
 }
 
@@ -43,8 +44,8 @@ func NewClusterReconciler(client client.Client, log logr.Logger, scheme *runtime
 func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&anywherev1.Cluster{}).
-		Watches(&source.Kind{Type: &anywherev1.VSphereDatacenterConfig{}}, &handler.EnqueueRequestForObject{}).
-		Watches(&source.Kind{Type: &anywherev1.VSphereMachineConfig{}}, &handler.EnqueueRequestForObject{}).
+		// Watches(&source.Kind{Type: &anywherev1.VSphereDatacenterConfig{}}, &handler.EnqueueRequestForObject{}).
+		// Watches(&source.Kind{Type: &anywherev1.VSphereMachineConfig{}}, &handler.EnqueueRequestForObject{}).
 		Complete(r)
 }
 
@@ -59,6 +60,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 	log := r.log.WithValues("cluster", req.NamespacedName)
 	// Fetch the Cluster object
 	cluster := &anywherev1.Cluster{}
+	log.Info("Reconciling cluster", "name", req.NamespacedName)
 	if err := r.client.Get(ctx, req.NamespacedName, cluster); err != nil {
 		return ctrl.Result{}, err
 	}
@@ -101,7 +103,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 }
 
 func (r *ClusterReconciler) reconcile(ctx context.Context, cluster *anywherev1.Cluster, log logr.Logger) (ctrl.Result, error) {
-	clusterProviderReconciler, err := clusters.BuildProviderReconciler(cluster.Spec.DatacenterRef.Kind, r.client, r.log, r.validator, r.defaulter)
+	clusterProviderReconciler, err := clusters.BuildProviderReconciler(cluster.Spec.DatacenterRef.Kind, r.client, r.log, r.validator, r.defaulter, r.tracker)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
