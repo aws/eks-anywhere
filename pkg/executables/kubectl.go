@@ -15,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	addons "sigs.k8s.io/cluster-api/exp/addons/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -299,6 +298,18 @@ func (k *Kubectl) GetNodes(ctx context.Context, kubeconfig string) ([]corev1.Nod
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
 		return nil, fmt.Errorf("error getting nodes: %v", err)
+	}
+	response := &corev1.NodeList{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+
+	return response.Items, err
+}
+
+func (k *Kubectl) GetControlPlaneNodes(ctx context.Context, kubeconfig string) ([]corev1.Node, error) {
+	params := []string{"get", "nodes", "-o", "json", "--kubeconfig", kubeconfig, "--selector=node-role.kubernetes.io/control-plane"}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting control plane nodes: %v", err)
 	}
 	response := &corev1.NodeList{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
@@ -776,23 +787,6 @@ func (k *Kubectl) GetMachineDeployments(ctx context.Context, opts ...KubectlOpt)
 	}
 
 	return response.Items, nil
-}
-
-func (k *Kubectl) GetKubeadmConfigTemplate(ctx context.Context, kubeadmConfigTemplateName string, opts ...KubectlOpt) (*kubeadmv1.KubeadmConfigTemplate, error) {
-	params := []string{"get", fmt.Sprintf("kubeadmconfigtemplate.%s", kubeadmv1.GroupVersion.Group), kubeadmConfigTemplateName, "-o", "json"}
-	applyOpts(&params, opts...)
-	stdOut, err := k.Execute(ctx, params...)
-	if err != nil {
-		return nil, fmt.Errorf("error getting kubeadmconfigtemplate: %v", err)
-	}
-
-	response := &kubeadmv1.KubeadmConfigTemplate{}
-	err = json.Unmarshal(stdOut.Bytes(), response)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing get kubeadmconfigtemplate response: %v", err)
-	}
-
-	return response, nil
 }
 
 func (k *Kubectl) UpdateEnvironmentVariables(ctx context.Context, resourceType, resourceName string, envMap map[string]string, opts ...KubectlOpt) error {
