@@ -8,12 +8,15 @@ EKS Anywhere allows you to provision and manage Amazon EKS on your own infrastru
 
 This document walks you through setting up EKS Anywhere in a way that:
 
-* Deploys a management cluster on your vSphere environment
-* Deploys one or more workload clusters from the management cluster
-* Keeps the management cluster in place so you can use it later to modify, upgrade, and delete workload clusters
+* Deploys an initial cluster as a management cluster or standalone cluster on your vSphere environment
+* Deploys zero or more workload clusters from the management cluster
+
+If your initial cluster is a management cluster, it is intended to stay in place so you can use it later to modify, upgrade, and delete workload clusters.
+If you prefer, you can simply use your initial cluster to run workloads.
 
 {{% alert title="Important" color="warning" %}}
 
+Creating an EKS Anywhere management cluster is the recommended model.
 In the initial release, EKS Anywhere clusters functioned as both workload and management clusters.
 Separating management features into a separate, persistent management cluster
 provides a cleaner model for managing the lifecycle of workload clusters (to create, upgrade, and delete clusters), while workload clusters run user applications.
@@ -30,15 +33,24 @@ An EKS Anywhere deployment will also require the availability of certain
 
 ## Steps
 
+The following steps are divided into two sections:
+
+* Create a management or standalone cluster
+* Create workload clusters from the management cluster
+
+### Create a management or standalone cluster
+
+Follow these steps to create an EKS Anywhere cluster that can be used either as a management cluster or as a stalone combined management/workload cluster.
+
 <!-- this content needs to be indented so the numbers are automatically incremented -->
-1. Generate a management cluster config:
+1. Generate a management or standalone cluster config:
    ```bash
    CLUSTER_NAME=mgmt
    eksctl anywhere generate clusterconfig $CLUSTER_NAME \
       --provider vsphere > eksa-mgmt-cluster.yaml
    ```
 
-1. Modify the management cluster config (`eksa-mgmt-cluster.yaml`) as follows:
+1. Modify the management/standalone cluster config (`eksa-mgmt-cluster.yaml`) as follows:
 
    * Refer to [vsphere configuration]({{< relref "../../reference/clusterspec/vsphere" >}}) for information on configuring this cluster config for a vSphere provider.
    * Create at least two control plane nodes, three worker nodes, and three etcd nodes for a production cluster, to provide high availability and rolling upgrades.
@@ -62,19 +74,19 @@ Make sure you use single quotes around the values so that your shell does not in
    export EKSA_LICENSE='my-license-here'
    ```
 
-1. Create a management cluster
+1. Create a management or standalone cluster
 
-   After you have created your `eksa-mgmt-cluster.yaml` and set your credential environment variables, you will be ready to create a management cluster:
+   After you have created your `eksa-mgmt-cluster.yaml` and set your credential environment variables, you will be ready to create the cluster:
    ```bash
    eksctl anywhere create cluster -f eksa-mgmt-cluster.yaml
    ```
 
-1. Once the management cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
+1. Once the cluster is created you can use it with the generated `KUBECONFIG` file in your local directory:
 
    ```bash
    export KUBECONFIG=${PWD}/${CLUSTER_NAME}/${CLUSTER_NAME}-eks-a-cluster.kubeconfig
    ```
-1. Check the management cluster nodes:
+1. Check the cluster nodes:
 
    To check that the cluster completed, list the machines to see the control plane, etcd, and worker nodes:
 
@@ -93,9 +105,9 @@ Make sure you use single quotes around the values so that your shell does not in
 
    The etcd machine doesn't show the Kubernetes version because it doesn't run the kubelet service.
 
-1. Check the management cluster CRD:
+1. Check the management/standalone cluster CRD:
 
-   To ensure you are looking at the management cluster, list the CRD to see that the name of its management cluster is itself:
+   To ensure you are looking at the management/standalone cluster, list the CRD to see that the name of its management cluster is itself:
 
    ```bash
    kubectl get clusters mgmt -o yaml
@@ -113,9 +125,12 @@ Make sure you use single quotes around the values so that your shell does not in
 
    {{% alert title="Note" color="primary" %}}
    The management cluster is now ready to deploy workload clusters.
-   However, if you just want to use it for testing or demos, you can deploy pod workloads directly on the management cluster without deploying a separate workload cluster.
+   However, if you just want to use it as a combined management/workload cluster, you can deploy pod workloads directly on the management cluster without deploying a separate workload cluster.
    {{% /alert %}}
 
+### Create separate workload clusters
+
+Follow these steps if you want to use your initial cluster to create and manage separate workload clusters.
 
 1. Generate a workload cluster config:
    ```bash
@@ -125,7 +140,7 @@ Make sure you use single quotes around the values so that your shell does not in
    ```
 
    Refer to the management config described earlier for the required and optional settings.
-   The main difference is that you must have a new cluster name and cannot use the same vSphere resources.
+   The main differences are that you must have a new cluster name and cannot use the same vSphere resources.
 
 
 1. Create a workload cluster
