@@ -302,8 +302,8 @@ func (v *VSphereClusterReconciler) getCAPICluster(ctx context.Context, cluster *
 
 func (v *VSphereClusterReconciler) reconcileWorkerNodeSpec(
 	ctx context.Context, cluster *anywherev1.Cluster, templateBuilder providers.TemplateBuilder,
-	specWithBundles *c.Spec,workloadTemplateNames, kubeadmconfigTemplateNames map[string]string,
-	) (reconciler.Result, error) {
+	specWithBundles *c.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string,
+) (reconciler.Result, error) {
 	if !conditions.IsTrue(cluster, workerNodeSpecPlaneAppliedCondition) {
 		workersSpec, err := templateBuilder.GenerateCAPISpecWorkers(specWithBundles, workloadTemplateNames, kubeadmconfigTemplateNames)
 		if err != nil {
