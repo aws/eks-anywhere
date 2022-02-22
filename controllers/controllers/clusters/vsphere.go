@@ -21,7 +21,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
-	"github.com/aws/eks-anywhere/pkg/templater"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -277,13 +276,13 @@ func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *an
 func (v *VSphereClusterReconciler) reconcileExtraObjects(ctx context.Context, cluster *anywherev1.Cluster, capiCluster *clusterv1.Cluster, specWithBundles *c.Spec) (reconciler.Result, error) {
 	if !conditions.IsTrue(capiCluster, extraObjectsSpecPlaneAppliedCondition) {
 		extraObjects := c.BuildExtraObjects(specWithBundles)
-		if len(extraObjects) > 0 {
-			resourcesSpec := templater.AppendYamlResources(extraObjects.Values()...)
-			if err := reconciler.ReconcileYaml(ctx, v.Client, resourcesSpec); err != nil {
+
+		for _, spec := range extraObjects.Values() {
+			if err := reconciler.ReconcileYaml(ctx, v.Client, spec); err != nil {
 				return reconciler.Result{}, err
 			}
-			conditions.MarkTrue(cluster, extraObjectsSpecPlaneAppliedCondition)
 		}
+		conditions.MarkTrue(cluster, extraObjectsSpecPlaneAppliedCondition)
 	}
 	return reconciler.Result{}, nil
 }
