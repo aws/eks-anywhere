@@ -24,6 +24,9 @@ GOLANG_VERSION?="1.16"
 GO ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))/go
 GO_TEST ?= $(GO) test
 
+# A regular expression defining what packages to exclude from the unit-test recipe.
+UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
+
 ## ensure local execution uses the 'main' branch bundle
 BRANCH_NAME?=main
 ifeq (,$(findstring $(BRANCH_NAME),main))
@@ -351,7 +354,7 @@ unit-test: ## Run unit tests
 unit-test: $(SETUP_ENVTEST) 
 unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 unit-test:
-	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) ./... -cover -tags "$(BUILD_TAGS)"
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $$(go list ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)") -cover -tags "$(BUILD_TAGS)"
 
 .PHONY: local-e2e
 local-e2e: e2e ## Run e2e test's locally
