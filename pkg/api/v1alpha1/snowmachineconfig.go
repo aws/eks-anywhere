@@ -4,7 +4,7 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 const (
 	SnowMachineConfigKind   = "SnowMachineConfig"
-	DefaultSnowInstanceType = "sbe-c.xlarge"
+	DefaultSnowInstanceType = "sbe-c.large"
 	DefaultSnowSshKeyName   = "default"
 )
 
