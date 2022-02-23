@@ -151,7 +151,7 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 	}
 
 	for _, identityProvider := range new.Spec.IdentityProviderRefs {
-		if identityProvider.Kind == AWSDatacenterKind {
+		if identityProvider.Kind == AWSIamConfigKind {
 			allErrs = append(
 				allErrs,
 				field.Invalid(field.NewPath("spec", "IdentityProviderRefs"), new.Spec.IdentityProviderRefs, "field is immutable"))

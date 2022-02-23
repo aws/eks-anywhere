@@ -824,7 +824,7 @@ func TestClusterValidateUpdateGitOpsRefNewNilImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
-func TestClusterValidateUpdateIdentityProviderRefsImmutableEqualOrder(t *testing.T) {
+func TestClusterValidateUpdateIdentityProviderRefsMutableEqualOrder(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{
@@ -864,7 +864,7 @@ func TestClusterValidateUpdateIdentityProviderRefsImmutableEqualOrder(t *testing
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
-func TestClusterValidateUpdateIdentityProviderRefsImmutable(t *testing.T) {
+func TestClusterValidateUpdateIdentityProviderRefsMutable(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{
@@ -891,7 +891,7 @@ func TestClusterValidateUpdateIdentityProviderRefsImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
-func TestClusterValidateUpdateIdentityProviderRefsImmutableName(t *testing.T) {
+func TestClusterValidateUpdateIdentityProviderRefsMutableName(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{
@@ -914,7 +914,7 @@ func TestClusterValidateUpdateIdentityProviderRefsImmutableName(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
-func TestClusterValidateUpdateIdentityProviderRefsImmutableKind(t *testing.T) {
+func TestClusterValidateUpdateIdentityProviderRefsMutableKind(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{
