@@ -293,6 +293,30 @@ func (k *Kubectl) ListCluster(ctx context.Context) error {
 	return nil
 }
 
+func (k *Kubectl) GetNodes(ctx context.Context, kubeconfig string) ([]corev1.Node, error) {
+	params := []string{"get", "nodes", "-o", "json", "--kubeconfig", kubeconfig}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting nodes: %v", err)
+	}
+	response := &corev1.NodeList{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+
+	return response.Items, err
+}
+
+func (k *Kubectl) GetControlPlaneNodes(ctx context.Context, kubeconfig string) ([]corev1.Node, error) {
+	params := []string{"get", "nodes", "-o", "json", "--kubeconfig", kubeconfig, "--selector=node-role.kubernetes.io/control-plane"}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting control plane nodes: %v", err)
+	}
+	response := &corev1.NodeList{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+
+	return response.Items, err
+}
+
 func (k *Kubectl) ValidateNodes(ctx context.Context, kubeconfig string) error {
 	template := "{{range .items}}{{.metadata.name}}\n{{end}}"
 	params := []string{"get", "nodes", "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig}
@@ -478,6 +502,31 @@ func (k *Kubectl) GetMachines(ctx context.Context, cluster *types.Cluster, clust
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing get machines response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
+type machineSetResponse struct {
+	Items []clusterv1.MachineSet `json:"items,omitempty"`
+}
+
+func (k *Kubectl) GetMachineSets(ctx context.Context, machineDeploymentName string, cluster *types.Cluster) ([]clusterv1.MachineSet, error) {
+	params := []string{
+		"get", "machinesets", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
+		"--selector=cluster.x-k8s.io/deployment-name=" + machineDeploymentName,
+		"--namespace", constants.EksaSystemNamespace,
+	}
+
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting machineset associated with deployment %s: %v", machineDeploymentName, err)
+	}
+
+	response := &machineSetResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing get machinesets response: %v", err)
 	}
 
 	return response.Items, nil
