@@ -482,15 +482,6 @@ func (vb *VersionsBundle) Ovas() []v1alpha1.Archive {
 	return vb.VersionsBundle.Ovas()
 }
 
-func (vb *VersionsBundle) Manifests() map[string][]v1alpha1.Manifest {
-	manifests := vb.VersionsBundle.Manifests()
-
-	// EKS Distro release manifest
-	manifests["eks-distro"] = []v1alpha1.Manifest{{URI: vb.EksD.EksDReleaseUrl}}
-
-	return manifests
-}
-
 func (s *Spec) GetReleaseManifestUrl() string {
 	return s.releasesManifestURL
 }
