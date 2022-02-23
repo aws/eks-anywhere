@@ -123,8 +123,8 @@ func generateClusterConfig(clusterName string) error {
 		datacenterConfig := v1alpha1.NewSnowDatacenterConfigGenerate(clusterName)
 		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))
 		clusterConfigOpts = append(clusterConfigOpts,
-			v1alpha1.ControlPlaneConfigCount(2),
-			v1alpha1.WorkerNodeConfigCount(2),
+			v1alpha1.ControlPlaneConfigCount(3),
+			v1alpha1.WorkerNodeConfigCount(3),
 			v1alpha1.WorkerNodeConfigName(constants.DefaultWorkerNodeGroupName),
 		)
 		dcyaml, err := yaml.Marshal(datacenterConfig)
