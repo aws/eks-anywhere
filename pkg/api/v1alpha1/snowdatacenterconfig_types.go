@@ -19,3 +19,21 @@ type SnowDatacenterConfig struct {
 	Spec   SnowDatacenterConfigSpec   `json:"spec,omitempty"`
 	Status SnowDatacenterConfigStatus `json:"status,omitempty"`
 }
+
+func (s *SnowDatacenterConfig) Kind() string {
+	return s.TypeMeta.Kind
+}
+
+func (s *SnowDatacenterConfig) ExpectedKind() string {
+	return VSphereDatacenterKind
+}
+
+// +kubebuilder:object:generate=false
+
+// Same as SnowDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig
+type SnowDatacenterConfigGenerate struct {
+	metav1.TypeMeta `json:",inline"`
+	ObjectMeta      `json:"metadata,omitempty"`
+
+	Spec SnowDatacenterConfigSpec `json:"spec,omitempty"`
+}
