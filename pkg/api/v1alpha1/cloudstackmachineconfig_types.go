@@ -108,6 +108,10 @@ type CloudStackMachineConfig struct {
 	Status CloudStackMachineConfigStatus `json:"status,omitempty"`
 }
 
+func (c *CloudStackMachineConfig) OSFamily() OSFamily {
+	return ""
+}
+
 func (c *CloudStackMachineConfig) ConvertConfigToConfigGenerateStruct() *CloudStackMachineConfigGenerate {
 	config := &CloudStackMachineConfigGenerate{
 		TypeMeta: c.TypeMeta,

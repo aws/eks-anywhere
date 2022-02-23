@@ -1,0 +1,127 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: capc-cluster
+  namespace: default
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    serviceDomain: cluster.local
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: capc-cluster-control-plane
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: CloudStackCluster
+    name: capc-cluster
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: CloudStackCluster
+metadata:
+  name: capc-cluster
+  namespace: default
+spec:
+  controlPlaneEndpoint:
+    host: 192.168.1.150
+    port: 8080
+  network: GuestNet1
+  zone: zone1
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: capc-cluster-control-plane
+  namespace: default
+spec:
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      dns:
+        imageRepository: public.ecr.aws/eks-distro/coredns
+        imageTag: v1.8.3-eks-1-20-1
+      etcd:
+        local:
+          imageRepository: public.ecr.aws/eks-distro/etcd-io
+          imageTag: v3.4.15-eks-1-20-1
+      imageRepository: public.ecr.aws/eks-distro/kubernetes
+    initConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+        name: '{{ ds.meta_data.local_hostname }}'
+    joinConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+        name: '{{ ds.meta_data.local_hostname }}'
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: CloudStackMachineTemplate
+      name: capc-cluster-control-plane
+  replicas: 1
+  version: v1.20.10-eks-1-20-1
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: CloudStackMachineTemplate
+metadata:
+  name: capc-cluster-control-plane
+  namespace: default
+spec:
+  template:
+    spec:
+      offering: Large Instance
+      sshkey: cloudstack-keypair
+      template: kube-v1.20.10/ubuntu-1804
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: capc-cluster-md-0
+  namespace: default
+spec:
+  clusterName: capc-cluster
+  replicas: 0
+  selector:
+    matchLabels: null
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: capc-cluster-md-0
+      clusterName: capc-cluster
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: CloudStackMachineTemplate
+        name: capc-cluster-md-0
+      version: v1.20.10-eks-1-20-1
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: CloudStackMachineTemplate
+metadata:
+  name: capc-cluster-md-0
+  namespace: default
+spec:
+  template:
+    spec:
+      offering: Large Instance
+      sshkey: cloudstack-keypair
+      template: kube-v1.20.10/ubuntu-1804
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: capc-cluster-md-0
+  namespace: default
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+          name: '{{ ds.meta_data.local_hostname }}'
