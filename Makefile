@@ -16,7 +16,7 @@ GO ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_
 GO_TEST ?= $(GO) test
 
 ## ensure local execution uses the 'main' branch bundle
-BRANCH_NAME?=main
+BRANCH_NAME?=release-0.7
 ifeq (,$(findstring $(BRANCH_NAME),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${BRANCH_NAME}/bundle-release.yaml
@@ -565,3 +565,7 @@ $(BINARY_DEPS_DIR)/linux-%:
 ifneq ($(FETCH_BINARIES_TARGETS),)
 .SECONDARY: $(call FULL_FETCH_BINARIES_TARGETS, $(FETCH_BINARIES_TARGETS))
 endif
+
+.PHONY: get-override-bundle
+get-override-bundle:
+	curl -L $(BUNDLE_MANIFEST_URL) --output bin/local-bundle-release.yaml
