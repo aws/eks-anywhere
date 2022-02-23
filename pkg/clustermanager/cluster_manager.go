@@ -450,6 +450,13 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		return true, nil
 	}
 
+	if newClusterSpec.OIDCConfig != nil && currentClusterSpec.OIDCConfig != nil {
+		if !newClusterSpec.OIDCConfig.Spec.Equal(&currentClusterSpec.OIDCConfig.Spec) {
+			logger.V(3).Info("OIDC config changes detected")
+			return true, nil
+		}
+	}
+
 	logger.V(3).Info("Clusters are the same, checking provider spec")
 	// compare provider spec
 	switch cc.Spec.DatacenterRef.Kind {
@@ -503,11 +510,6 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		}
 	default:
 		// Run upgrade flow
-		return true, nil
-	}
-
-	if !newClusterSpec.OIDCConfig.Spec.Equal(&currentClusterSpec.OIDCConfig.Spec) {
-		logger.V(3).Info("OIDC config changes detected")
 		return true, nil
 	}
 

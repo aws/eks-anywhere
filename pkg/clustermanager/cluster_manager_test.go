@@ -1055,12 +1055,12 @@ func TestClusterManagerClusterSpecChangedEksDReleaseChanged(t *testing.T) {
 func TestClusterManagerClusterSpecChangedNoChangesDatacenterSpecChanged(t *testing.T) {
 	tt := newSpecChangedTest(t)
 	tt.newDatacenterConfig.Spec.Insecure = false
-	oldOIDCConfig := tt.clusterSpec.OIDCConfig.DeepCopy()
+	tt.clusterSpec.OIDCConfig = tt.oldOIDCConfig.DeepCopy()
 
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Name).Return(tt.oldClusterConfig, nil)
 	tt.mocks.client.EXPECT().GetBundles(tt.ctx, tt.cluster.KubeconfigFile, tt.cluster.Name, "").Return(test.Bundles(t), nil)
+	tt.mocks.client.EXPECT().GetEksaOIDCConfig(tt.ctx, tt.clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, tt.cluster.KubeconfigFile, tt.clusterSpec.Namespace).Return(tt.oldOIDCConfig, nil)
 	tt.mocks.client.EXPECT().GetEksaVSphereDatacenterConfig(tt.ctx, tt.oldClusterConfig.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(tt.oldDatacenterConfig, nil)
-	tt.mocks.client.EXPECT().GetEksaOIDCConfig(tt.ctx, tt.clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, tt.cluster.KubeconfigFile, tt.clusterSpec.Namespace).Return(oldOIDCConfig, nil)
 	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig})
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, diff, "Changes should have been detected")
@@ -1069,6 +1069,7 @@ func TestClusterManagerClusterSpecChangedNoChangesDatacenterSpecChanged(t *testi
 func TestClusterManagerClusterSpecChangedNoChangesControlPlaneMachineConfigSpecChanged(t *testing.T) {
 	tt := newSpecChangedTest(t)
 	tt.newControlPlaneMachineConfig.Spec.NumCPUs = 4
+	tt.clusterSpec.OIDCConfig = tt.oldOIDCConfig.DeepCopy()
 
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Name).Return(tt.oldClusterConfig, nil)
 	tt.mocks.client.EXPECT().GetBundles(tt.ctx, tt.cluster.KubeconfigFile, tt.cluster.Name, "").Return(test.Bundles(t), nil)
@@ -1084,6 +1085,7 @@ func TestClusterManagerClusterSpecChangedNoChangesControlPlaneMachineConfigSpecC
 func TestClusterManagerClusterSpecChangedNoChangesWorkerNodeMachineConfigSpecChanged(t *testing.T) {
 	tt := newSpecChangedTest(t)
 	tt.newWorkerMachineConfig.Spec.NumCPUs = 4
+	tt.clusterSpec.OIDCConfig = tt.oldOIDCConfig.DeepCopy()
 
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Name).Return(tt.oldClusterConfig, nil)
 	tt.mocks.client.EXPECT().GetBundles(tt.ctx, tt.cluster.KubeconfigFile, tt.cluster.Name, "").Return(test.Bundles(t), nil)

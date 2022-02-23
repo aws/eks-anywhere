@@ -93,7 +93,7 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 			if nIdentityProvider.Kind == v1alpha1.AWSIamConfigKind {
 				prevAwsIam, err := k.GetEksaAWSIamConfig(ctx, nIdentityProvider.Name, cluster.KubeconfigFile, spec.Namespace)
 				if err != nil {
-					return fmt.Errorf("aws iam identity provider is immutable, %v", err)
+					return fmt.Errorf("aws iam identity provider is immutable: %v", err)
 				}
 				if !prevAwsIam.Spec.Equal(&spec.AWSIamConfig.Spec) {
 					return fmt.Errorf("aws iam identity provider is immutable")
