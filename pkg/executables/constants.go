@@ -1,8 +1,6 @@
 package executables
 
 const (
-	generatedDir   = "generated"
-	overridesDir   = "overrides"
-	kubeconfigFlag = "--kubeconfig"
-	namespaceFlag  = "--namespace"
+	generatedDir = "generated"
+	overridesDir = "overrides"
 )

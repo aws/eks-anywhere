@@ -3,6 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"log"
 	"os"
 
@@ -10,7 +12,6 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 )
 
@@ -26,40 +27,44 @@ func init() {
 }
 
 var getPackageCommand = &cobra.Command{
-	Use:     "package(s) [flags]",
-	Aliases: []string{"package", "packages"},
-	Short:   "Get package(s)",
-	Long:    "This command is used to display the installed packages",
-	PreRunE: func(cmd *cobra.Command, args []string) error {
-		if !features.IsActive(features.CuratedPackagesSupport()) {
-			return fmt.Errorf("This command is currently not supported")
-		}
-		cmd.Flags().VisitAll(func(flag *pflag.Flag) {
-			if err := viper.BindPFlag(flag.Name, flag); err != nil {
-				log.Fatalf("Error initializing flags: %v", err)
-			}
-		})
-		return nil
-	},
+	Use:          "package(s) [flags]",
+	Aliases:      []string{"package", "packages"},
+	Short:        "Get package(s)",
+	Long:         "This command is used to display the curated packages installed in the cluster",
+	PreRunE:      preRunGetPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		packageInstanceName := ""
-		if len(args) > 0 {
-			packageInstanceName = args[0]
-		}
-		return getPackages(cmd.Context(), packageInstanceName, gpo.output)
+		return getPackages(cmd.Context(), gpo.output, args)
 	},
 }
 
-func getPackages(ctx context.Context, packageInstanceName string, output string) error {
+func preRunGetPackages(cmd *cobra.Command, args []string) error {
+	if !features.IsActive(features.CuratedPackagesSupport()) {
+		return fmt.Errorf("this command is currently not supported")
+	}
+	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
+		if err := viper.BindPFlag(flag.Name, flag); err != nil {
+			log.Fatalf("Error initializing flags: %v", err)
+		}
+	})
+	return nil
+}
+
+func getPackages(ctx context.Context, output string, args []string) error {
 	kubeConfig := os.Getenv(kubeconfigEnvVariable)
-	executableBuilder, _, err := executables.NewExecutableBuilder(ctx, executables.DefaultEksaImage())
+	deps, err := dependencies.
+		NewFactory().
+		WithExecutableImage(executables.DefaultEksaImage()).
+		WithExecutableBuilder().
+		WithKubectl().
+		Build(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
-	kubectl := executableBuilder.BuildKubectlExecutable()
-	packages, err := kubectl.GetPackagesFromKubectl(ctx, packageInstanceName, kubeConfig, output)
+	kubectl := deps.Kubectl
+	packages, err := kubectl.GetPackagesFromKubectl(ctx, kubeConfig, output, args)
 	if err != nil {
+		fmt.Printf(packages)
 		return fmt.Errorf("error executing kubectl: %v", err)
 	}
 	fmt.Println(packages)

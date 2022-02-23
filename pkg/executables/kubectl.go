@@ -1312,12 +1312,12 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 	return obj, nil
 }
 
-func (k *Kubectl) GetPackagesFromKubectl(ctx context.Context, packageInstanceName, kubeconfig string, output string) (string, error) {
+func (k *Kubectl) GetPackagesFromKubectl(ctx context.Context, kubeConfig string, output string, args []string) (string, error) {
 	params := []string{
-		"get", "packages", kubeconfigFlag, kubeconfig, namespaceFlag, constants.EksaPackagesName,
+		"get", "packages",
 	}
-	params = append(params, withPackageInstanceName(packageInstanceName)...)
 	params = append(params, withOutput(output)...)
+	applyOpts(&params, appendOpt(args...), WithKubeconfig(kubeConfig), WithNamespace(constants.EksaPackagesName))
 	stdOut, err := k.Execute(ctx, params...)
 	return stdOut.String(), err
 }
@@ -1325,13 +1325,6 @@ func (k *Kubectl) GetPackagesFromKubectl(ctx context.Context, packageInstanceNam
 func withOutput(output string) []string {
 	if output != "" {
 		return []string{"-o", output}
-	}
-	return []string{}
-}
-
-func withPackageInstanceName(packageInstanceName string) []string {
-	if packageInstanceName != "" {
-		return []string{packageInstanceName}
 	}
 	return []string{}
 }
