@@ -4,10 +4,8 @@ import (
 	"context"
 	"os"
 
-	pbnjClient "github.com/tinkerbell/cluster-api-provider-tinkerbell/pbnj/client"
-	pbnjv1 "github.com/tinkerbell/pbnj/api/v1"
-
-	"github.com/aws/eks-anywhere/pkg/hardware"
+	"github.com/tinkerbell/cluster-api-provider-tinkerbell/pbnj/client"
+	"github.com/tinkerbell/pbnj/api/v1"
 )
 
 const (
@@ -15,29 +13,36 @@ const (
 )
 
 type Pbnj struct {
-	*pbnjClient.PbnjClient
+	*client.PbnjClient
+}
+
+type BmcSecretConfig struct {
+	Host     string
+	Username string
+	Password string
+	Vendor   string
 }
 
 func NewPBNJClient(pbnjGrpcAuth string) (*Pbnj, error) {
 	os.Setenv(PbnjGrpcAuth, pbnjGrpcAuth)
 
-	conn, _ := pbnjClient.SetupConnection()
+	conn, _ := client.SetupConnection()
 
-	mClient := pbnjv1.NewMachineClient(conn)
-	tClient := pbnjv1.NewTaskClient(conn)
-	pbnjObj := &Pbnj{pbnjClient.NewPbnjClient(mClient, tClient)}
+	mClient := v1.NewMachineClient(conn)
+	tClient := v1.NewTaskClient(conn)
+	pbnjObj := &Pbnj{client.NewPbnjClient(mClient, tClient)}
 
 	os.Unsetenv(PbnjGrpcAuth)
 
 	return pbnjObj, nil
 }
 
-func (p *Pbnj) ValidateBMCSecretCreds(ctx context.Context, bmcInfo hardware.BmcSecretConfig) error {
-	powerRequest := &pbnjv1.PowerRequest{
-		Authn: &pbnjv1.Authn{
-			Authn: &pbnjv1.Authn_DirectAuthn{
-				DirectAuthn: &pbnjv1.DirectAuthn{
-					Host: &pbnjv1.Host{
+func (p *Pbnj) ValidateBMCSecretCreds(ctx context.Context, bmcInfo BmcSecretConfig) error {
+	powerRequest := &v1.PowerRequest{
+		Authn: &v1.Authn{
+			Authn: &v1.Authn_DirectAuthn{
+				DirectAuthn: &v1.DirectAuthn{
+					Host: &v1.Host{
 						Host: bmcInfo.Host,
 					},
 					Username: bmcInfo.Username,
@@ -45,10 +50,10 @@ func (p *Pbnj) ValidateBMCSecretCreds(ctx context.Context, bmcInfo hardware.BmcS
 				},
 			},
 		},
-		Vendor: &pbnjv1.Vendor{
+		Vendor: &v1.Vendor{
 			Name: bmcInfo.Vendor,
 		},
-		PowerAction: pbnjv1.PowerAction_POWER_ACTION_STATUS,
+		PowerAction: v1.PowerAction_POWER_ACTION_STATUS,
 	}
 
 	_, err := p.MachinePower(ctx, powerRequest)

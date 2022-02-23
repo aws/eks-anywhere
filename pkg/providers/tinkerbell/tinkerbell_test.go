@@ -45,26 +45,24 @@ func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.Tin
 	return machineConfigs
 }
 
-func newProviderWithKubectlTink(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, tink ProviderTinkClient, pbnjClient ProviderPbnjClient) *tinkerbellProvider {
+func newProviderWithKubectlTink(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, tinkerbellClients TinkerbellClients) *tinkerbellProvider {
 	return newProvider(
 		t,
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
 		kubectl,
-		tink,
-		pbnjClient,
+		tinkerbellClients,
 	)
 }
 
-func newProvider(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, tink ProviderTinkClient, pbnjClient ProviderPbnjClient) *tinkerbellProvider {
+func newProvider(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, tinkerbellClients TinkerbellClients) *tinkerbellProvider {
 	return NewProvider(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
 		kubectl,
-		tink,
-		pbnjClient,
+		tinkerbellClients,
 		test.FakeNow,
 		true,
 		"testdata/hardware_config.yaml",
@@ -132,6 +130,7 @@ func TestTinkerbellProviderGenerateDeploymentFile(t *testing.T) {
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	tinkctl := mocks.NewMockProviderTinkClient(mockCtrl)
 	pbnjClient := mocks.NewMockProviderPbnjClient(mockCtrl)
+	tinkerbellClients := TinkerbellClients{tinkctl, pbnjClient}
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
@@ -139,7 +138,7 @@ func TestTinkerbellProviderGenerateDeploymentFile(t *testing.T) {
 	ctx := context.Background()
 	tinkctl.EXPECT().GetHardware(ctx).Return([]*tinkHardware.Hardware{}, nil)
 
-	provider := newProviderWithKubectlTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkctl, pbnjClient)
+	provider := newProviderWithKubectlTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkerbellClients)
 	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
@@ -161,6 +160,7 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	tinkctl := mocks.NewMockProviderTinkClient(mockCtrl)
 	pbnjClient := mocks.NewMockProviderPbnjClient(mockCtrl)
+	tinkerbellClients := TinkerbellClients{tinkctl, pbnjClient}
 	cluster := &types.Cluster{Name: "test"}
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
@@ -168,7 +168,7 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 	ctx := context.Background()
 	tinkctl.EXPECT().GetHardware(ctx).Return([]*tinkHardware.Hardware{}, nil)
 	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
-	provider := newProviderWithKubectlTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkctl, pbnjClient)
+	provider := newProviderWithKubectlTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkerbellClients)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}

@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -63,6 +64,11 @@ type tinkerbellProvider struct {
 	// TODO: Update hardwareConfig to proper type
 }
 
+type TinkerbellClients struct {
+	ProviderTinkClient ProviderTinkClient
+	ProviderPbnjClient ProviderPbnjClient
+}
+
 // TODO: Add necessary kubectl functions here
 type ProviderKubectlClient interface {
 	ApplyHardware(ctx context.Context, hardwareYaml string, kubeConfFile string) error
@@ -76,17 +82,23 @@ type ProviderTinkClient interface {
 }
 
 type ProviderPbnjClient interface {
-	ValidateBMCSecretCreds(ctx context.Context, bmc hardware.BmcSecretConfig) error
+	ValidateBMCSecretCreds(ctx context.Context, bmc pbnj.BmcSecretConfig) error
 }
 
-func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, pbnjClient ProviderPbnjClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
+func NewTinkerbellClient(ProviderTinkClient ProviderTinkClient, ProviderPbnjClient ProviderPbnjClient) *TinkerbellClients {
+	return &TinkerbellClients{
+		ProviderTinkClient, ProviderPbnjClient,
+	}
+}
+
+func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkbellClient TinkerbellClients, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
 	return NewProviderCustomNet(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
 		providerKubectlClient,
-		providerTinkClient,
-		pbnjClient,
+		providerTinkbellClient.ProviderTinkClient,
+		providerTinkbellClient.ProviderPbnjClient,
 		&networkutils.DefaultNetClient{},
 		now,
 		skipIpCheck,

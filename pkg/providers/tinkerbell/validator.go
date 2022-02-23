@@ -9,6 +9,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/hardware"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 )
 
 type Validator struct {
@@ -137,22 +138,22 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 	if err := v.ValidateBMCSecretCreds(ctx, v.hardwareConfig); err != nil {
 		return err
 	}
-
 	logger.MarkPass("Hardware Config file validated")
+	logger.MarkPass("BMC connectivity validated")
 
 	return nil
 }
 
 func (v *Validator) ValidateBMCSecretCreds(ctx context.Context, hc hardware.HardwareConfig) error {
 	for index, bmc := range hc.Bmcs {
-		bmcInfo := hardware.BmcSecretConfig{
+		bmcInfo := pbnj.BmcSecretConfig{
 			Host:     bmc.Spec.Host,
 			Username: string(hc.Secrets[index].Data["username"]),
 			Password: string(hc.Secrets[index].Data["password"]),
 			Vendor:   bmc.Spec.Vendor,
 		}
 		if err := v.pbnj.ValidateBMCSecretCreds(ctx, bmcInfo); err != nil {
-			return fmt.Errorf("failed validating Hardware BMC credentials for the node %v, host %v : %v", hc.Hardwares[index].Name, bmcInfo.Host, err)
+			return fmt.Errorf("failed validating Hardware BMC credentials for the node %s, host %s : %v", hc.Hardwares[index].Name, bmcInfo.Host, err)
 		}
 	}
 

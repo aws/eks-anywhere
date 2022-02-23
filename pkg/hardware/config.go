@@ -22,13 +22,6 @@ type HardwareConfig struct {
 	Secrets   []corev1.Secret
 }
 
-type BmcSecretConfig struct {
-	Host     string
-	Username string
-	Password string
-	Vendor   string
-}
-
 func (hc *HardwareConfig) ParseHardwareConfig(hardwareFileName string) error {
 	err := hc.setHardwareConfigFromFile(hardwareFileName)
 	if err != nil {

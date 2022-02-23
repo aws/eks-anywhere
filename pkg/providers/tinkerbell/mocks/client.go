@@ -9,9 +9,9 @@ import (
 	reflect "reflect"
 
 	executables "github.com/aws/eks-anywhere/pkg/executables"
-	hardware "github.com/aws/eks-anywhere/pkg/hardware"
+	pbnj "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	gomock "github.com/golang/mock/gomock"
-	hardware0 "github.com/tinkerbell/tink/protos/hardware"
+	hardware "github.com/tinkerbell/tink/protos/hardware"
 	v1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
@@ -124,10 +124,10 @@ func (m *MockProviderTinkClient) EXPECT() *MockProviderTinkClientMockRecorder {
 }
 
 // GetHardware mocks base method.
-func (m *MockProviderTinkClient) GetHardware(arg0 context.Context) ([]*hardware0.Hardware, error) {
+func (m *MockProviderTinkClient) GetHardware(arg0 context.Context) ([]*hardware.Hardware, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetHardware", arg0)
-	ret0, _ := ret[0].([]*hardware0.Hardware)
+	ret0, _ := ret[0].([]*hardware.Hardware)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -162,7 +162,7 @@ func (m *MockProviderPbnjClient) EXPECT() *MockProviderPbnjClientMockRecorder {
 }
 
 // ValidateBMCSecretCreds mocks base method.
-func (m *MockProviderPbnjClient) ValidateBMCSecretCreds(arg0 context.Context, arg1 hardware.BmcSecretConfig) error {
+func (m *MockProviderPbnjClient) ValidateBMCSecretCreds(arg0 context.Context, arg1 pbnj.BmcSecretConfig) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateBMCSecretCreds", arg0, arg1)
 	ret0, _ := ret[0].(error)

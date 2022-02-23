@@ -11,7 +11,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
@@ -21,8 +20,7 @@ type ProviderFactory struct {
 	VSphereGovcClient         vsphere.ProviderGovcClient
 	VSphereKubectlClient      vsphere.ProviderKubectlClient
 	TinkerbellKubectlClient   tinkerbell.ProviderKubectlClient
-	TinkerbellTinkClient      tinkerbell.ProviderTinkClient
-	TinkerbellPbnjClient      *pbnj.Pbnj
+	TinkerbellClients         tinkerbell.TinkerbellClients
 	Writer                    filewriter.FileWriter
 	ClusterResourceSetManager vsphere.ClusterResourceSetManager
 }
@@ -48,7 +46,7 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 		if err != nil {
 			return nil, fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFileName, err)
 		}
-		return tinkerbell.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.TinkerbellKubectlClient, p.TinkerbellTinkClient, p.TinkerbellPbnjClient, time.Now, skipIpCheck, hardwareConfigFile), nil
+		return tinkerbell.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.TinkerbellKubectlClient, p.TinkerbellClients, time.Now, skipIpCheck, hardwareConfigFile), nil
 	case v1alpha1.DockerDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetDockerDatacenterConfig(clusterConfigFileName)
 		if err != nil {
