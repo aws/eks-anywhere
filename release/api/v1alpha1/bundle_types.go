@@ -66,6 +66,7 @@ type VersionsBundle struct {
 	ControlPlane           KubeadmControlPlaneBundle   `json:"controlPlane"`
 	Aws                    AwsBundle                   `json:"aws"`
 	VSphere                VSphereBundle               `json:"vSphere"`
+	CloudStack             CloudStackBundle            `json:"cloudStack,omitempty"`
 	Docker                 DockerBundle                `json:"docker"`
 	Eksa                   EksaBundle                  `json:"eksa"`
 	Cilium                 CiliumBundle                `json:"cilium"`
@@ -194,6 +195,13 @@ type DockerBundle struct {
 	Components      Manifest `json:"components"`
 	ClusterTemplate Manifest `json:"clusterTemplate"`
 	Metadata        Manifest `json:"metadata"`
+}
+
+type CloudStackBundle struct {
+	Version              string   `json:"version"`
+	ClusterAPIController Image    `json:"clusterAPIController"`
+	Components           Manifest `json:"components"`
+	Metadata             Manifest `json:"metadata"`
 }
 
 type CiliumBundle struct {
