@@ -115,9 +115,42 @@ func generateClusterConfig(clusterName string) error {
 			return fmt.Errorf("failed to generate cluster yaml: %v", err)
 		}
 		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml, etcdMcYaml)
+	case constants.SnowProviderName:
+		if !features.IsActive(features.SnowProvider()) {
+			return fmt.Errorf("the snow infrastructure provider is still under development")
+		}
+		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithClusterEndpoint())
+		datacenterConfig := v1alpha1.NewSnowDatacenterConfigGenerate(clusterName)
+		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))
+		clusterConfigOpts = append(clusterConfigOpts,
+			v1alpha1.ControlPlaneConfigCount(2),
+			v1alpha1.WorkerNodeConfigCount(2),
+			v1alpha1.WorkerNodeConfigName(constants.DefaultWorkerNodeGroupName),
+		)
+		dcyaml, err := yaml.Marshal(datacenterConfig)
+		if err != nil {
+			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+		}
+		datacenterYaml = dcyaml
+
+		cpMachineConfig := v1alpha1.NewSnowMachineConfigGenerate(providers.GetControlPlaneNodeName(clusterName))
+		workerMachineConfig := v1alpha1.NewSnowMachineConfigGenerate(clusterName)
+		clusterConfigOpts = append(clusterConfigOpts,
+			v1alpha1.WithCPMachineGroupRef(cpMachineConfig),
+			v1alpha1.WithWorkerMachineGroupRef(workerMachineConfig),
+		)
+		cpMcYaml, err := yaml.Marshal(cpMachineConfig)
+		if err != nil {
+			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+		}
+		workerMcYaml, err := yaml.Marshal(workerMachineConfig)
+		if err != nil {
+			return fmt.Errorf("failed to generate cluster yaml: %v", err)
+		}
+		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml)
 	case constants.CloudStackProviderName:
 		if !features.IsActive(features.CloudStackProvider()) {
-			return fmt.Errorf("The cloudstack infrastructure provider is still in development!")
+			return fmt.Errorf("the cloudstack infrastructure provider is still under development")
 		}
 		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithClusterEndpoint())
 		datacenterConfig := v1alpha1.NewCloudStackDatacenterConfigGenerate(clusterName)
@@ -193,7 +226,7 @@ func generateClusterConfig(clusterName string) error {
 			}
 			machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml)
 		} else {
-			return fmt.Errorf("The tinkerbell infrastructure provider is still in development!")
+			return fmt.Errorf("the tinkerbell infrastructure provider under still under development")
 		}
 	default:
 		return fmt.Errorf("not a valid provider")
