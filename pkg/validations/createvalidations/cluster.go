@@ -30,15 +30,6 @@ func ValidateManagementCluster(ctx context.Context, k validations.KubectlClient,
 	return k.ValidateEKSAClustersCRD(ctx, cluster)
 }
 
-func ValidateTaintsSupport(clusterSpec *cluster.Spec) error {
-	if !features.IsActive(features.TaintsSupport()) {
-		if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints) > 0 {
-			return fmt.Errorf("Taints feature is not enabled. Please set the env variable TAINTS_SUPPORT.")
-		}
-	}
-	return nil
-}
-
 func ValidateNodeLabelsSupport(clusterSpec *cluster.Spec) error {
 	if !features.IsActive(features.NodeLabelsSupport()) {
 		if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Labels) > 0 {
