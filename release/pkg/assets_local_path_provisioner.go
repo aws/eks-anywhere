@@ -55,7 +55,7 @@ func (r *ReleaseConfig) GetLocalPathProvisionerAssets() ([]Artifact, error) {
 		ProjectPath:       localPathProvisonerProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{{Image: imageArtifact}}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
 	return artifacts, nil
 }

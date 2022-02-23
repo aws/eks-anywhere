@@ -72,7 +72,7 @@ func (r *ReleaseConfig) GetDiagnosticCollectorAssets() ([]Artifact, error) {
 		SourcedFromBranch: sourcedFromBranch,
 	}
 
-	artifacts := []Artifact{{Image: imageArtifact}}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
 	return artifacts, nil
 }

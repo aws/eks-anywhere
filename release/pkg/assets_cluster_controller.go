@@ -92,7 +92,7 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 		ProjectPath:       eksAnywhereProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{{Image: imageArtifact}}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
 	var imageTagOverrides []ImageTagOverride
 

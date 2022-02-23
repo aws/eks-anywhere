@@ -55,7 +55,7 @@ func (r *ReleaseConfig) GetKubeVipAssets() ([]Artifact, error) {
 		ProjectPath:       kubeVipProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{{Image: imageArtifact}}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
 	return artifacts, nil
 }

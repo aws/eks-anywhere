@@ -57,7 +57,7 @@ func (r *ReleaseConfig) GetVsphereCloudProviderAssets(eksDReleaseChannel string)
 		ProjectPath:       vsphereCloudProviderProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{{Image: imageArtifact}}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
 	return artifacts, nil
 }

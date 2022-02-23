@@ -63,7 +63,7 @@ func (r *ReleaseConfig) GetCapvAssets() ([]Artifact, error) {
 		ProjectPath:       capvProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{{Image: imageArtifact}}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
 	var imageTagOverrides []ImageTagOverride
 

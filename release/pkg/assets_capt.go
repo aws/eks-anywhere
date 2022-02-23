@@ -63,7 +63,7 @@ func (r *ReleaseConfig) GetCaptAssets() ([]Artifact, error) {
 		ProjectPath:       captProjectPath,
 		SourcedFromBranch: sourcedFromBranch,
 	}
-	artifacts := []Artifact{{Image: imageArtifact}}
+	artifacts := []Artifact{Artifact{Image: imageArtifact}}
 
 	imageTagOverrides := []ImageTagOverride{
 		{
