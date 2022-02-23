@@ -2339,6 +2339,9 @@ spec:
                         name:
                           type: string
                       type: object
+                    name:
+                      description: Name refers to the name of the worker node group
+                      type: string
                     taints:
                       description: Taints define the set of taints to be applied on
                         worker nodes
@@ -2369,9 +2372,6 @@ spec:
                         - key
                         type: object
                       type: array
-                    name:
-                      description: Name refers to the name of the worker node group
-                      type: string
                   type: object
                 type: array
             type: object
@@ -3086,6 +3086,7 @@ rules:
   - kubeadmconfigtemplates
   - kubeadmconfigtemplates/status
   verbs:
+  - create
   - get
   - list
   - patch
