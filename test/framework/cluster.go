@@ -36,6 +36,7 @@ const (
 	eksctlVersionEnvVar              = "EKSCTL_VERSION"
 	eksctlVersionEnvVarDummyVal      = "ham sandwich"
 	ClusterNameVar                   = "T_CLUSTER_NAME"
+	ClusterIPPoolEnvVar              = "T_CLUSTER_IP_POOL"
 	JobIdVar                         = "T_JOB_ID"
 	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
 )
@@ -173,7 +174,7 @@ func (e *ClusterE2ETest) generateClusterConfigObjects(opts ...CommandOpt) {
 	clusterConfigFillers := make([]api.ClusterFiller, 0, len(e.clusterFillers)+len(clusterFillersFromProvider))
 	clusterConfigFillers = append(clusterConfigFillers, e.clusterFillers...)
 	clusterConfigFillers = append(clusterConfigFillers, clusterFillersFromProvider...)
-	e.ClusterConfigB = e.customizeClusterConfig(clusterConfigFillers...)
+	e.ClusterConfigB = e.customizeClusterConfig(e.ClusterConfigLocation, clusterConfigFillers...)
 	e.ProviderConfigB = e.Provider.CustomizeProviderConfig(e.ClusterConfigLocation)
 }
 
@@ -227,7 +228,7 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 
 func WithClusterUpgrade(fillers ...api.ClusterFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		e.ClusterConfigB = e.customizeClusterConfig(fillers...)
+		e.ClusterConfigB = e.customizeClusterConfig(e.ClusterConfigLocation, fillers...)
 	}
 }
 
@@ -249,7 +250,7 @@ func (e *ClusterE2ETest) upgradeCluster(clusterOpts []ClusterE2ETestOpt, command
 	e.RunEKSA(upgradeClusterArgs, commandOpts...)
 }
 
-func (e *ClusterE2ETest) buildClusterConfigFile() {
+func (e *ClusterE2ETest) generateClusterConfig() []byte {
 	yamlB := make([][]byte, 0, 4)
 	yamlB = append(yamlB, e.ClusterConfigB, e.ProviderConfigB)
 	if e.OIDCConfig != nil {
@@ -274,13 +275,17 @@ func (e *ClusterE2ETest) buildClusterConfigFile() {
 		yamlB = append(yamlB, gitOpsConfigB)
 	}
 
+	return templater.AppendYamlResources(yamlB...)
+}
+
+func (e *ClusterE2ETest) buildClusterConfigFile() {
+	b := e.generateClusterConfig()
+
 	clusterConfigFolder := fmt.Sprintf("%s-config", e.ClusterName)
 	writer, err := filewriter.NewWriter(clusterConfigFolder)
 	if err != nil {
 		e.T.Fatalf("Error creating writer: %v", err)
 	}
-
-	b := templater.AppendYamlResources(yamlB...)
 
 	writtenFile, err := writer.Write(filepath.Base(e.ClusterConfigLocation), b, filewriter.PersistentFile)
 	if err != nil {
@@ -360,8 +365,8 @@ func (e *ClusterE2ETest) StopIfFailed() {
 	}
 }
 
-func (e *ClusterE2ETest) customizeClusterConfig(fillers ...api.ClusterFiller) []byte {
-	b, err := api.AutoFillCluster(e.ClusterConfigLocation, fillers...)
+func (e *ClusterE2ETest) customizeClusterConfig(clusterConfigLocation string, fillers ...api.ClusterFiller) []byte {
+	b, err := api.AutoFillClusterFromFile(clusterConfigLocation, fillers...)
 	if err != nil {
 		e.T.Fatalf("Error filling cluster config: %v", err)
 	}
@@ -386,6 +391,15 @@ func (e *ClusterE2ETest) cluster() *types.Cluster {
 
 func (e *ClusterE2ETest) kubeconfigFilePath() string {
 	return filepath.Join(e.ClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", e.ClusterName))
+}
+
+func (e *ClusterE2ETest) managementKubeconfigFilePath() string {
+	clusterConfig := e.clusterConfig()
+	if clusterConfig.IsSelfManaged() {
+		return e.kubeconfigFilePath()
+	}
+	managementClusterName := e.clusterConfig().ManagedBy()
+	return filepath.Join(managementClusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", managementClusterName))
 }
 
 func (e *ClusterE2ETest) GetEksaVSphereMachineConfigs() []v1alpha1.VSphereMachineConfig {
@@ -417,8 +431,8 @@ func (e *ClusterE2ETest) clusterConfig() *v1alpha1.Cluster {
 		return e.ClusterConfig
 	}
 
-	c, err := v1alpha1.GetClusterConfig(e.ClusterConfigLocation)
-	if err != nil {
+	c := &v1alpha1.Cluster{}
+	if err := yaml.Unmarshal(e.ClusterConfigB, c); err != nil {
 		e.T.Fatalf("Error fetching cluster config from file: %v", err)
 	}
 	e.ClusterConfig = c

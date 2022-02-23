@@ -6,6 +6,15 @@ export INTEGRATION_TEST_SUBNET_ID?=integration_test_subnet_id
 export INTEGRATION_TEST_INSTANCE_TAG?=integration_test_instance_tag
 export JOB_ID?=${PROW_JOB_ID}
 
+LOCAL_ENV=.env
+
+# Include local .env file for exporting e2e test env vars locally
+# FYI, This file is git ignored
+ifneq ("$(wildcard $(LOCAL_ENV))","")
+include $(LOCAL_ENV)
+export $(shell sed 's/=.*//' $(LOCAL_ENV))
+endif
+
 SHELL := /bin/bash
 
 ARTIFACTS_BUCKET?=my-s3-bucket
@@ -109,6 +118,7 @@ EKS_A_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-cross-platf
 EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-release-cross-platform-$(platform))
 
 DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow
+LOCAL_E2E_TESTS ?= $(DOCKER_E2E_TEST)
 
 export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.21.x
 
@@ -343,9 +353,13 @@ unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path 
 unit-test:
 	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) ./... -cover -tags "$(BUILD_TAGS)"
 
+.PHONY: local-e2e
+local-e2e: e2e ## Run e2e test's locally
+	./bin/e2e.test -test.v -test.run $(LOCAL_E2E_TESTS)
+
 .PHONY: capd-test
-capd-test: e2e ## Run default e2e capd test locally
-	./bin/e2e.test -test.v -test.run $(DOCKER_E2E_TEST)
+capd-test: ## Run default e2e capd test locally
+	$(MAKE) local-e2e LOCAL_E2E_TESTS=$(DOCKER_E2E_TEST)
 
 .PHONY: docker-e2e-test
 docker-e2e-test: e2e ## Run docker integration test in new ec2 instance

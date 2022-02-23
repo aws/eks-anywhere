@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/s3"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -33,7 +34,7 @@ type E2ESession struct {
 	jobId               string
 	subnetId            string
 	instanceId          string
-	controlPlaneIP      string
+	ipPool              networkutils.IPPool
 	testEnvVars         map[string]string
 	bundlesOverride     bool
 	requiredFiles       []string
@@ -53,7 +54,7 @@ func newSessionFromConf(conf instanceRunConf) (*E2ESession, error) {
 		storageBucket:       conf.storageBucket,
 		jobId:               conf.jobId,
 		subnetId:            conf.subnetId,
-		controlPlaneIP:      conf.controlPlaneIP,
+		ipPool:              conf.ipPool,
 		testEnvVars:         make(map[string]string),
 		bundlesOverride:     conf.bundlesOverride,
 		requiredFiles:       requiredFiles,

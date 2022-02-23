@@ -40,7 +40,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		validations.ValidationResult{
 			Name:        "worker nodes ready",
 			Remediation: fmt.Sprintf("ensure machine deployments for cluster %s are Ready", u.Opts.WorkloadCluster.Name),
-			Err:         k.ValidateWorkerNodes(ctx, targetCluster, u.Opts.Spec.Name),
+			Err:         k.ValidateWorkerNodes(ctx, u.Opts.Spec.Name, targetCluster.KubeconfigFile),
 		},
 		validations.ValidationResult{
 			Name:        "nodes ready",

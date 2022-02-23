@@ -23,6 +23,7 @@ func NewMulticlusterE2ETest(t *testing.T, managementCluster *ClusterE2ETest, wor
 	for i, c := range workloadClusters {
 		c.clusterFillers = append(c.clusterFillers, api.WithManagementCluster(managementCluster.ClusterName))
 		c.ClusterName = fmt.Sprintf("%s-w-%d", managementCluster.ClusterName, i)
+
 		m.WorkloadClusters[c.ClusterName] = &WorkloadCluster{
 			ClusterE2ETest:                  c,
 			managementClusterKubeconfigFile: managementCluster.kubeconfigFilePath,

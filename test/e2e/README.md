@@ -7,6 +7,16 @@ make e2e
 ```
 or
 ```sh
+# Create a .env file at the root of the repo with all the required envs vars listed below
+#
+# The makefile will include the .env file and export all the vars to the environment for you
+#
+# By default the local-e2e target will run TestDockerKubernetes121SimpleFlow. You can either 
+#   override LOCAL_E2E_TESTS in your .env file or pass it on the cli every time (i.e LOCAL_E2E_TESTS=TestDockerKubernetes121SimpleFlow)
+make local-e2e
+```
+or
+```sh
 go test -tags e2e -run [test name regex]
 ```
 
@@ -30,6 +40,7 @@ VSPHERE_USERNAME
 VSPHERE_PASSWORD
 T_VSPHERE_CIDR
 GOVC_URL
+T_CLUSTER_IP_POOL # comma-separated list of CP ip addresses
 ```
 
 # OIDC tests requisites
