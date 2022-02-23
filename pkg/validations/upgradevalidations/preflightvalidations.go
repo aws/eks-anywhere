@@ -21,12 +21,6 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 	upgradeValidations = append(
 		upgradeValidations,
 		validations.ValidationResult{
-			Name:        "validate taints support",
-			Remediation: "ensure TAINTS_SUPPORT env variable is set",
-			Err:         ValidateTaintsSupport(u.Opts.Spec),
-			FeatureFlag: true,
-		},
-		validations.ValidationResult{
 			Name:        "validate node labels support",
 			Remediation: "ensure NODE_LABELS_SUPPORT env variable is set",
 			Err:         ValidateNodeLabelsSupport(u.Opts.Spec),
