@@ -62,7 +62,7 @@ func getPackages(ctx context.Context, output string, args []string) error {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	kubectl := deps.Kubectl
-	packages, err := kubectl.GetPackagesFromKubectl(ctx, kubeConfig, output, args)
+	packages, err := kubectl.GetPackagesFromKubectl(ctx, executables.WithKubeconfig(kubeConfig), executables.WithOutput(output), executables.WithArgs(args))
 	if err != nil {
 		fmt.Print(packages)
 		return fmt.Errorf("error executing kubectl: %v", err)

@@ -695,6 +695,17 @@ func WithOverwrite() KubectlOpt {
 	return appendOpt("--overwrite")
 }
 
+func WithOutput(output string) KubectlOpt {
+	if output == "" {
+		return appendOpt()
+	}
+	return appendOpt("-o", output)
+}
+
+func WithArgs(args []string) KubectlOpt {
+	return appendOpt(args...)
+}
+
 func appendOpt(new ...string) KubectlOpt {
 	return func(args *[]string) {
 		*args = append(*args, new...)
@@ -1312,19 +1323,11 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 	return obj, nil
 }
 
-func (k *Kubectl) GetPackagesFromKubectl(ctx context.Context, kubeConfig string, output string, args []string) (string, error) {
+func (k *Kubectl) GetPackagesFromKubectl(ctx context.Context, opts ...KubectlOpt) (string, error) {
 	params := []string{
 		"get", "packages",
 	}
-	params = append(params, withOutput(output)...)
-	applyOpts(&params, appendOpt(args...), WithKubeconfig(kubeConfig), WithNamespace(constants.EksaPackagesName))
+	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
 	return stdOut.String(), err
-}
-
-func withOutput(output string) []string {
-	if output != "" {
-		return []string{"-o", output}
-	}
-	return []string{}
 }
