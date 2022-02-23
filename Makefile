@@ -15,7 +15,7 @@ GOLANG_VERSION?="1.16"
 GO ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))/go
 GO_TEST ?= $(GO) test
 
-## ensure local execution uses the 'main' branch bundle
+## ensure local execution uses the 'release-0.7' branch bundle
 BRANCH_NAME?=release-0.7
 ifeq (,$(findstring $(BRANCH_NAME),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
