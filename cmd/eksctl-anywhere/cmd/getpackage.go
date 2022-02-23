@@ -3,16 +3,16 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/dependencies"
-	"github.com/aws/eks-anywhere/pkg/executables"
 	"log"
 	"os"
+
+	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-
-	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 type getPackageOptions struct {
