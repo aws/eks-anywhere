@@ -178,25 +178,48 @@ func TestPreflightValidations(t *testing.T) {
 				s.Spec.ControlPlaneConfiguration.Endpoint.Host = "2.3.4.5"
 			},
 		},
-		//{
-		//	name:               "ValidationIdentityProviderRefsImmutable",
-		//	clusterVersion:     "v1.19.16-eks-1-19-4",
-		//	upgradeVersion:     "1.19",
-		//	getClusterResponse: goodClusterResponse,
-		//	cpResponse:         nil,
-		//	workerResponse:     nil,
-		//	nodeResponse:       nil,
-		//	crdResponse:        nil,
-		//	wantErr:            composeError("spec.identityProviderRefs is immutable"),
-		//	modifyFunc: func(s *cluster.Spec) {
-		//		s.Spec.IdentityProviderRefs = []v1alpha1.Ref{
-		//			{
-		//				Kind: v1alpha1.OIDCConfigKind,
-		//				Name: "oidc-2",
-		//			},
-		//		}
-		//	},
-		//},
+		{
+			name:               "ValidationAwsIamRegionImmutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            composeError("aws iam identity provider is immutable"),
+			modifyFunc: func(s *cluster.Spec) {
+				s.AWSIamConfig.Spec.AWSRegion = "us-east-2"
+			},
+		},
+		{
+			name:               "ValidationAwsIamBackEndModeImmutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            composeError("aws iam identity provider is immutable"),
+			modifyFunc: func(s *cluster.Spec) {
+				s.AWSIamConfig.Spec.BackendMode = append(s.AWSIamConfig.Spec.BackendMode, "us-east-2")
+			},
+		},
+		{
+			name:               "ValidationAwsIamPartitionImmutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            composeError("aws iam identity provider is immutable"),
+			modifyFunc: func(s *cluster.Spec) {
+				s.AWSIamConfig.Spec.Partition = "partition2"
+			},
+		},
 		{
 			name:               "ValidationGitOpsNamespaceImmutable",
 			clusterVersion:     "v1.19.16-eks-1-19-4",
@@ -281,104 +304,104 @@ func TestPreflightValidations(t *testing.T) {
 				s.GitOpsConfig.Spec.Flux.Github.Personal = !s.GitOpsConfig.Spec.Flux.Github.Personal
 			},
 		},
-		//{
-		//	name:               "ValidationOIDCClientIdImmutable",
-		//	clusterVersion:     "v1.19.16-eks-1-19-4",
-		//	upgradeVersion:     "1.19",
-		//	getClusterResponse: goodClusterResponse,
-		//	cpResponse:         nil,
-		//	workerResponse:     nil,
-		//	nodeResponse:       nil,
-		//	crdResponse:        nil,
-		//	wantErr:            composeError("oidc identity provider is immutable"),
-		//	modifyFunc: func(s *cluster.Spec) {
-		//		s.OIDCConfig.Spec.ClientId = "new-client-id"
-		//	},
-		//},
-		//{
-		//	name:               "ValidationOIDCGroupsClaimImmutable",
-		//	clusterVersion:     "v1.19.16-eks-1-19-4",
-		//	upgradeVersion:     "1.19",
-		//	getClusterResponse: goodClusterResponse,
-		//	cpResponse:         nil,
-		//	workerResponse:     nil,
-		//	nodeResponse:       nil,
-		//	crdResponse:        nil,
-		//	wantErr:            composeError("oidc identity provider is immutable"),
-		//	modifyFunc: func(s *cluster.Spec) {
-		//		s.OIDCConfig.Spec.GroupsClaim = "new-groups-claim"
-		//	},
-		//},
-		//{
-		//	name:               "ValidationOIDCGroupsPrefixImmutable",
-		//	clusterVersion:     "v1.19.16-eks-1-19-4",
-		//	upgradeVersion:     "1.19",
-		//	getClusterResponse: goodClusterResponse,
-		//	cpResponse:         nil,
-		//	workerResponse:     nil,
-		//	nodeResponse:       nil,
-		//	crdResponse:        nil,
-		//	wantErr:            composeError("oidc identity provider is immutable"),
-		//	modifyFunc: func(s *cluster.Spec) {
-		//		s.OIDCConfig.Spec.GroupsPrefix = "new-groups-prefix"
-		//	},
-		//},
-		//{
-		//	name:               "ValidationOIDCIssuerUrlImmutable",
-		//	clusterVersion:     "v1.19.16-eks-1-19-4",
-		//	upgradeVersion:     "1.19",
-		//	getClusterResponse: goodClusterResponse,
-		//	cpResponse:         nil,
-		//	workerResponse:     nil,
-		//	nodeResponse:       nil,
-		//	crdResponse:        nil,
-		//	wantErr:            composeError("oidc identity provider is immutable"),
-		//	modifyFunc: func(s *cluster.Spec) {
-		//		s.OIDCConfig.Spec.IssuerUrl = "new-issuer-url"
-		//	},
-		//},
-		//{
-		//	name:               "ValidationOIDCUsernameClaimImmutable",
-		//	clusterVersion:     "v1.19.16-eks-1-19-4",
-		//	upgradeVersion:     "1.19",
-		//	getClusterResponse: goodClusterResponse,
-		//	cpResponse:         nil,
-		//	workerResponse:     nil,
-		//	nodeResponse:       nil,
-		//	crdResponse:        nil,
-		//	wantErr:            composeError("oidc identity provider is immutable"),
-		//	modifyFunc: func(s *cluster.Spec) {
-		//		s.OIDCConfig.Spec.UsernameClaim = "new-username-claim"
-		//	},
-		//},
-		//{
-		//	name:               "ValidationOIDCUsernamePrefixImmutable",
-		//	clusterVersion:     "v1.19.16-eks-1-19-4",
-		//	upgradeVersion:     "1.19",
-		//	getClusterResponse: goodClusterResponse,
-		//	cpResponse:         nil,
-		//	workerResponse:     nil,
-		//	nodeResponse:       nil,
-		//	crdResponse:        nil,
-		//	wantErr:            composeError("oidc identity provider is immutable"),
-		//	modifyFunc: func(s *cluster.Spec) {
-		//		s.OIDCConfig.Spec.UsernamePrefix = "new-username-prefix"
-		//	},
-		//},
-		//{
-		//	name:               "ValidationOIDCRequiredClaimsImmutable",
-		//	clusterVersion:     "v1.19.16-eks-1-19-4",
-		//	upgradeVersion:     "1.19",
-		//	getClusterResponse: goodClusterResponse,
-		//	cpResponse:         nil,
-		//	workerResponse:     nil,
-		//	nodeResponse:       nil,
-		//	crdResponse:        nil,
-		//	wantErr:            composeError("oidc identity provider is immutable"),
-		//	modifyFunc: func(s *cluster.Spec) {
-		//		s.OIDCConfig.Spec.RequiredClaims[0].Claim = "new-groups-claim"
-		//	},
-		//},
+		{
+			name:               "ValidationOIDCClientIdMutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            nil,
+			modifyFunc: func(s *cluster.Spec) {
+				s.OIDCConfig.Spec.ClientId = "new-client-id"
+			},
+		},
+		{
+			name:               "ValidationOIDCGroupsClaimMutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            nil,
+			modifyFunc: func(s *cluster.Spec) {
+				s.OIDCConfig.Spec.GroupsClaim = "new-groups-claim"
+			},
+		},
+		{
+			name:               "ValidationOIDCGroupsPrefixMutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            nil,
+			modifyFunc: func(s *cluster.Spec) {
+				s.OIDCConfig.Spec.GroupsPrefix = "new-groups-prefix"
+			},
+		},
+		{
+			name:               "ValidationOIDCIssuerUrlMutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            nil,
+			modifyFunc: func(s *cluster.Spec) {
+				s.OIDCConfig.Spec.IssuerUrl = "new-issuer-url"
+			},
+		},
+		{
+			name:               "ValidationOIDCUsernameClaimMutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            nil,
+			modifyFunc: func(s *cluster.Spec) {
+				s.OIDCConfig.Spec.UsernameClaim = "new-username-claim"
+			},
+		},
+		{
+			name:               "ValidationOIDCUsernamePrefixMutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            nil,
+			modifyFunc: func(s *cluster.Spec) {
+				s.OIDCConfig.Spec.UsernamePrefix = "new-username-prefix"
+			},
+		},
+		{
+			name:               "ValidationOIDCRequiredClaimsMutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            nil,
+			modifyFunc: func(s *cluster.Spec) {
+				s.OIDCConfig.Spec.RequiredClaims[0].Claim = "new-groups-claim"
+			},
+		},
 		{
 			name:               "ValidationClusterNetworkImmutable",
 			clusterVersion:     "v1.19.16-eks-1-19-4",
@@ -520,6 +543,23 @@ func TestPreflightValidations(t *testing.T) {
 		},
 	}
 
+	defaultAWSIAM := &v1alpha1.AWSIamConfig{
+		Spec: v1alpha1.AWSIamConfigSpec{
+			AWSRegion: "us-east-1",
+			MapRoles: []v1alpha1.MapRoles{{
+				RoleARN:  "roleARN",
+				Username: "username",
+				Groups:   []string{"group1", "group2"},
+			}},
+			MapUsers: []v1alpha1.MapUsers{{
+				UserARN:  "userARN",
+				Username: "username",
+				Groups:   []string{"group1", "group2"},
+			}},
+			Partition: "partition",
+		},
+	}
+
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Name = testclustername
 		s.Spec.ControlPlaneConfiguration = defaultControlPlane
@@ -532,6 +572,10 @@ func TestPreflightValidations(t *testing.T) {
 			{
 				Kind: v1alpha1.OIDCConfigKind,
 				Name: "oidc",
+			},
+			{
+				Kind: v1alpha1.AWSIamConfigKind,
+				Name: "aws-iam",
 			},
 		}
 		s.Spec.GitOpsRef = &v1alpha1.Ref{
@@ -561,6 +605,7 @@ func TestPreflightValidations(t *testing.T) {
 
 		s.GitOpsConfig = defaultGitOps
 		s.OIDCConfig = defaultOIDC
+		s.AWSIamConfig = defaultAWSIAM
 	})
 
 	for _, tc := range tests {
@@ -586,6 +631,7 @@ func TestPreflightValidations(t *testing.T) {
 				Cluster:      clusterSpec.Cluster.DeepCopy(),
 				GitOpsConfig: clusterSpec.GitOpsConfig.DeepCopy(),
 				OIDCConfig:   clusterSpec.OIDCConfig.DeepCopy(),
+				AWSIamConfig: clusterSpec.AWSIamConfig.DeepCopy(),
 			}
 			existingProviderSpec := defaultDatacenterSpec.DeepCopy()
 			if tc.modifyFunc != nil {
@@ -608,6 +654,7 @@ func TestPreflightValidations(t *testing.T) {
 			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Name).Return(existingClusterSpec.Cluster, nil)
 			k.EXPECT().GetEksaGitOpsConfig(ctx, clusterSpec.Spec.GitOpsRef.Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.GitOpsConfig, nil).MaxTimes(1)
 			k.EXPECT().GetEksaOIDCConfig(ctx, clusterSpec.Spec.IdentityProviderRefs[0].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.OIDCConfig, nil).MaxTimes(1)
+			k.EXPECT().GetEksaAWSIamConfig(ctx, clusterSpec.Spec.IdentityProviderRefs[1].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.AWSIamConfig, nil).MaxTimes(1)
 			k.EXPECT().Version(ctx, workloadCluster).Return(versionResponse, nil)
 			upgradeValidations := upgradevalidations.New(opts)
 			err := upgradeValidations.PreflightValidations(ctx)
