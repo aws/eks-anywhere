@@ -66,7 +66,7 @@ type VersionsBundle struct {
 	ControlPlane           KubeadmControlPlaneBundle   `json:"controlPlane"`
 	Aws                    AwsBundle                   `json:"aws"`
 	VSphere                VSphereBundle               `json:"vSphere"`
-	CloudStack             CloudStackBundle            `json:"cloudStack"`
+	CloudStack             CloudStackBundle            `json:"cloudStack,omitempty"`
 	Docker                 DockerBundle                `json:"docker"`
 	Eksa                   EksaBundle                  `json:"eksa"`
 	Cilium                 CiliumBundle                `json:"cilium"`
