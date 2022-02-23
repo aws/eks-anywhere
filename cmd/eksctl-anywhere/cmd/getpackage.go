@@ -64,7 +64,7 @@ func getPackages(ctx context.Context, output string, args []string) error {
 	kubectl := deps.Kubectl
 	packages, err := kubectl.GetPackagesFromKubectl(ctx, kubeConfig, output, args)
 	if err != nil {
-		fmt.Printf(packages)
+		fmt.Print(packages)
 		return fmt.Errorf("error executing kubectl: %v", err)
 	}
 	fmt.Println(packages)
