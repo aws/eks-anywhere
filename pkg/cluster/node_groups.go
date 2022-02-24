@@ -14,6 +14,10 @@ func NodeGroupsToDelete(currentSpec, newSpec *Spec) []eksav1alpha1.WorkerNodeGro
 	workerConfigs := BuildMapForWorkerNodeGroupsByName(newSpec.Spec.WorkerNodeGroupConfigurations)
 	nodeGroupsToDelete := make([]eksav1alpha1.WorkerNodeGroupConfiguration, 0, len(currentSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, prevWorkerNodeGroupConfig := range currentSpec.Spec.WorkerNodeGroupConfigurations {
+		// Current spec doesn't have the default name since we never set the defaults at the api server level
+		if prevWorkerNodeGroupConfig.Name == "" {
+			prevWorkerNodeGroupConfig.Name = "md-0"
+		}
 		if _, ok := workerConfigs[prevWorkerNodeGroupConfig.Name]; !ok {
 			nodeGroupsToDelete = append(nodeGroupsToDelete, prevWorkerNodeGroupConfig)
 		}
