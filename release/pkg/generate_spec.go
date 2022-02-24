@@ -147,10 +147,24 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 	}
 
 	var tinkerbellBundle anywherev1alpha1.TinkerbellBundle
+	var snowBundle anywherev1alpha1.SnowBundle
 	if r.DevRelease && r.BuildRepoBranchName == "main" {
 		tinkerbellBundle, err = r.GetTinkerbellBundle(imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for Tinkerbell infrastructure provider")
+		}
+
+		snowBundle, err = r.GetSnowBundle(imageDigests)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting bundle for Snow infrastructure provider")
+		}
+	}
+
+	var cloudStackBundle anywherev1alpha1.CloudStackBundle
+	if r.DevRelease && r.BuildRepoBranchName == "main" {
+		cloudStackBundle, err = r.GetCloudStackBundle(imageDigests)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting bundle for CloudStack infrastructure provider")
 		}
 	}
 
@@ -199,6 +213,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			ControlPlane:           kubeadmControlPlaneBundle,
 			Aws:                    awsBundle,
 			VSphere:                vsphereBundle,
+			CloudStack:             cloudStackBundle,
 			Docker:                 dockerBundle,
 			Eksa:                   eksaBundle,
 			Cilium:                 ciliumBundle,
@@ -210,6 +225,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			BottleRocketAdmin:      bottlerocketAdminBundle,
 			Tinkerbell:             tinkerbellBundle,
 			Haproxy:                haproxyBundle,
+			Snow:                   snowBundle,
 		}
 		versionsBundles = append(versionsBundles, versionsBundle)
 	}
@@ -238,36 +254,39 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 
 	artifactsTable := map[string][]Artifact{}
 	eksAArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"eks-a-tools":                  r.GetEksAToolsAssets,
-		"cluster-api":                  r.GetCAPIAssets,
-		"cluster-api-provider-aws":     r.GetCapaAssets,
-		"cluster-api-provider-docker":  r.GetDockerAssets,
-		"cluster-api-provider-vsphere": r.GetCapvAssets,
-		"vsphere-csi-driver":           r.GetVsphereCsiAssets,
-		"cert-manager":                 r.GetCertManagerAssets,
-		"cilium":                       r.GetCiliumAssets,
-		"local-path-provisioner":       r.GetLocalPathProvisionerAssets,
-		"kube-rbac-proxy":              r.GetKubeRbacProxyAssets,
-		"kube-vip":                     r.GetKubeVipAssets,
-		"flux":                         r.GetFluxAssets,
-		"etcdadm-bootstrap-provider":   r.GetEtcdadmBootstrapAssets,
-		"etcdadm-controller":           r.GetEtcdadmControllerAssets,
-		"cluster-controller":           r.GetClusterControllerAssets,
-		"kindnetd":                     r.GetKindnetdAssets,
-		"etcdadm":                      r.GetEtcdadmAssets,
-		"cri-tools":                    r.GetCriToolsAssets,
-		"diagnostic-collector":         r.GetDiagnosticCollectorAssets,
-		"haproxy":                      r.GetHaproxyAssets,
+		"eks-a-tools":                     r.GetEksAToolsAssets,
+		"cluster-api":                     r.GetCAPIAssets,
+		"cluster-api-provider-aws":        r.GetCapaAssets,
+		"cluster-api-provider-docker":     r.GetDockerAssets,
+		"cluster-api-provider-vsphere":    r.GetCapvAssets,
+		"cluster-api-provider-cloudstack": r.GetCapcAssets,
+		"vsphere-csi-driver":              r.GetVsphereCsiAssets,
+		"cert-manager":                    r.GetCertManagerAssets,
+		"cilium":                          r.GetCiliumAssets,
+		"local-path-provisioner":          r.GetLocalPathProvisionerAssets,
+		"kube-rbac-proxy":                 r.GetKubeRbacProxyAssets,
+		"kube-vip":                        r.GetKubeVipAssets,
+		"flux":                            r.GetFluxAssets,
+		"etcdadm-bootstrap-provider":      r.GetEtcdadmBootstrapAssets,
+		"etcdadm-controller":              r.GetEtcdadmControllerAssets,
+		"cluster-controller":              r.GetClusterControllerAssets,
+		"kindnetd":                        r.GetKindnetdAssets,
+		"etcdadm":                         r.GetEtcdadmAssets,
+		"cri-tools":                       r.GetCriToolsAssets,
+		"diagnostic-collector":            r.GetDiagnosticCollectorAssets,
+		"haproxy":                         r.GetHaproxyAssets,
 	}
 
 	if r.DevRelease && r.BuildRepoBranchName == "main" {
 		eksAArtifactsFuncs["cluster-api-provider-tinkerbell"] = r.GetCaptAssets
+		eksAArtifactsFuncs["cluster-api-provider-cloudstack"] = r.GetCapcAssets
 		eksAArtifactsFuncs["tink"] = r.GetTinkAssets
 		eksAArtifactsFuncs["hegel"] = r.GetHegelAssets
 		eksAArtifactsFuncs["cfssl"] = r.GetCfsslAssets
 		eksAArtifactsFuncs["pbnj"] = r.GetPbnjAssets
 		eksAArtifactsFuncs["boots"] = r.GetBootsAssets
 		eksAArtifactsFuncs["hub"] = r.GetHubAssets
+		eksAArtifactsFuncs["cluster-api-provider-aws-snow"] = r.GetCapasAssets
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {

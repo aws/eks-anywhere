@@ -973,6 +973,16 @@ data:
           - effect: NoSchedule
             key: node-role.kubernetes.io/master
             operator: Exists
+{{- if .controlPlaneTaints }}
+{{- range .controlPlaneTaints}}
+          - key: {{ .Key }}
+            value: {{ .Value }}
+            effect: {{ .Effect }}
+{{- if .TimeAdded }}
+            timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- end }}
           volumes:
           - name: vsphere-config-volume
             secret:

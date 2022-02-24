@@ -28,6 +28,9 @@ func WithNoTaints() WorkerNodeGroupFiller {
 
 func WithLabel(key, value string) WorkerNodeGroupFiller {
 	return func(w *anywherev1.WorkerNodeGroupConfiguration) {
+		if w.Labels == nil {
+			w.Labels = map[string]string{}
+		}
 		w.Labels[key] = value
 	}
 }
