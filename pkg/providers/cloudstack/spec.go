@@ -5,17 +5,17 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 )
 
-type Spec struct {
+type spec struct {
 	*cluster.Spec
 	datacenterConfig     *anywherev1.CloudStackDatacenterConfig
 	machineConfigsLookup map[string]*anywherev1.CloudStackMachineConfig
 }
 
-func (s *Spec) controlPlaneMachineConfig() *anywherev1.CloudStackMachineConfig {
+func (s *spec) controlPlaneMachineConfig() *anywherev1.CloudStackMachineConfig {
 	return s.machineConfigsLookup[s.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
 }
 
-func (s *Spec) etcdMachineConfig() *anywherev1.CloudStackMachineConfig {
+func (s *spec) etcdMachineConfig() *anywherev1.CloudStackMachineConfig {
 	if s.Cluster.Spec.ExternalEtcdConfiguration == nil || s.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
 		return nil
 	}
