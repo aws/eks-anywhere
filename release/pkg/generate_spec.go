@@ -147,10 +147,16 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 	}
 
 	var tinkerbellBundle anywherev1alpha1.TinkerbellBundle
+	var snowBundle anywherev1alpha1.SnowBundle
 	if r.DevRelease && r.BuildRepoBranchName == "main" {
 		tinkerbellBundle, err = r.GetTinkerbellBundle(imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for Tinkerbell infrastructure provider")
+		}
+
+		snowBundle, err = r.GetSnowBundle(imageDigests)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting bundle for Snow infrastructure provider")
 		}
 	}
 
@@ -219,6 +225,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			BottleRocketAdmin:      bottlerocketAdminBundle,
 			Tinkerbell:             tinkerbellBundle,
 			Haproxy:                haproxyBundle,
+			Snow:                   snowBundle,
 		}
 		versionsBundles = append(versionsBundles, versionsBundle)
 	}
@@ -279,6 +286,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		eksAArtifactsFuncs["pbnj"] = r.GetPbnjAssets
 		eksAArtifactsFuncs["boots"] = r.GetBootsAssets
 		eksAArtifactsFuncs["hub"] = r.GetHubAssets
+		eksAArtifactsFuncs["cluster-api-provider-aws-snow"] = r.GetCapasAssets
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
