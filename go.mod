@@ -20,6 +20,7 @@ require (
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
 	github.com/tinkerbell/cluster-api-provider-tinkerbell v0.1.0
+	github.com/tinkerbell/pbnj v0.0.0-20211027151347-2fb19ffbe7ad
 	github.com/tinkerbell/tink v0.6.0
 	go.uber.org/zap v1.19.0
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
