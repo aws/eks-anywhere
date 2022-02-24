@@ -16,6 +16,7 @@ import (
 var updateGoldenFiles = flag.Bool("update", false, "update golden files")
 
 func AssertFilesEquals(t *testing.T, gotPath, wantPath string) {
+	t.Helper()
 	gotFile := ReadFile(t, gotPath)
 	processUpdate(t, wantPath, gotFile)
 	wantFile := ReadFile(t, wantPath)
@@ -35,6 +36,7 @@ func AssertFilesEquals(t *testing.T, gotPath, wantPath string) {
 }
 
 func AssertContentToFile(t *testing.T, gotContent, wantFile string) {
+	t.Helper()
 	if wantFile == "" && gotContent == "" {
 		return
 	}
