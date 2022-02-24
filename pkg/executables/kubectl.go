@@ -1323,7 +1323,7 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 	return obj, nil
 }
 
-func (k *Kubectl) GetPackagesFromKubectl(ctx context.Context, opts ...KubectlOpt) (string, error) {
+func (k *Kubectl) GetPackages(ctx context.Context, opts ...KubectlOpt) (string, error) {
 	params := []string{
 		"get", "packages",
 	}
