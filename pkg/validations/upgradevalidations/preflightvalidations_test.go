@@ -254,6 +254,23 @@ func TestPreflightValidations(t *testing.T) {
 			},
 		},
 		{
+			name:               "ValidationAwsIamKindImmutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            nil,
+			modifyFunc: func(s *cluster.Spec) {
+				s.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
+					Kind: v1alpha1.AWSIamConfigKind,
+					Name: "aws-iam",
+				}
+			},
+		},
+		{
 			name:               "ValidationGitOpsNamespaceImmutable",
 			clusterVersion:     "v1.19.16-eks-1-19-4",
 			upgradeVersion:     "1.19",
