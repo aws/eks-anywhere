@@ -16,10 +16,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/hardware"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -63,6 +64,11 @@ type tinkerbellProvider struct {
 	// TODO: Update hardwareConfig to proper type
 }
 
+type TinkerbellClients struct {
+	ProviderTinkClient ProviderTinkClient
+	ProviderPbnjClient ProviderPbnjClient
+}
+
 // TODO: Add necessary kubectl functions here
 type ProviderKubectlClient interface {
 	ApplyHardware(ctx context.Context, hardwareYaml string, kubeConfFile string) error
@@ -75,13 +81,18 @@ type ProviderTinkClient interface {
 	GetHardware(ctx context.Context) ([]*tink.Hardware, error)
 }
 
-func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
-	return NewProviderCustomNet(
+type ProviderPbnjClient interface {
+	ValidateBMCSecretCreds(ctx context.Context, bmc pbnj.BmcSecretConfig) error
+}
+
+func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkbellClient TinkerbellClients, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
+	return NewProviderCustomDep(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
 		providerKubectlClient,
-		providerTinkClient,
+		providerTinkbellClient.ProviderTinkClient,
+		providerTinkbellClient.ProviderPbnjClient,
 		&networkutils.DefaultNetClient{},
 		now,
 		skipIpCheck,
@@ -89,7 +100,7 @@ func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
+func NewProviderCustomDep(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, pbnjClient ProviderPbnjClient, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
@@ -120,7 +131,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
 			now:                         now,
 		},
 		hardwareConfigFile: hardwareConfigFile,
-		validator:          NewValidator(providerTinkClient, netClient, hardware.HardwareConfig{}),
+		validator:          NewValidator(providerTinkClient, netClient, hardware.HardwareConfig{}, pbnjClient),
 		skipIpCheck:        skipIpCheck,
 	}
 }

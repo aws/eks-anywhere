@@ -14,6 +14,7 @@ import (
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	"sigs.k8s.io/cluster-api/controllers/remote"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -108,12 +109,25 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager) {
 			os.Exit(1)
 		}
 
+		tracker, err := remote.NewClusterCacheTracker(
+			mgr,
+			remote.ClusterCacheTrackerOptions{
+				Log:     ctrl.Log.WithName("remote").WithName("ClusterCacheTracker"),
+				Indexes: remote.DefaultIndexes,
+			},
+		)
+		if err != nil {
+			setupLog.Error(err, "unable to create cluster cache tracker")
+			os.Exit(1)
+		}
+
 		setupLog.Info("Setting up cluster controller")
 		if err := (controllers.NewClusterReconciler(
 			mgr.GetClient(),
 			ctrl.Log.WithName("controllers").WithName(anywherev1.ClusterKind),
 			mgr.GetScheme(),
 			deps.Govc,
+			tracker,
 		)).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", anywherev1.ClusterKind)
 			os.Exit(1)

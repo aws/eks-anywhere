@@ -15,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/files"
@@ -70,32 +71,42 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 	}
 	bundlesManifestUrl := release.BundleManifestUrl
 
-	specManifests := []string{
-		bundlesManifestUrl,
-		clusterSpec.GetReleaseManifestUrl(),
-	}
 	reader := files.NewReader(files.WithUserAgent(fmt.Sprintf("eks-a-cli-download/%s", version.Get().GitVersion)))
-	for _, manifestURI := range specManifests {
-		if opts.dryRun {
-			logger.Info(fmt.Sprintf("Found artifact: %s\n", manifestURI))
-			continue
-		}
-		if err = downloadArtifact("", opts.downloadDir, manifestURI, reader); err != nil {
-			return fmt.Errorf("error downloading artifact: %v", err)
+
+	// download the eks-a-release.yaml
+	if !opts.dryRun {
+		releaseManifestURL := clusterSpec.GetReleaseManifestUrl()
+		if err := downloadArtifact(filepath.Join(opts.downloadDir, filepath.Base(releaseManifestURL)), releaseManifestURL, reader); err != nil {
+			return fmt.Errorf("error downloading release manifest: %v", err)
 		}
 	}
 
-	bundle := clusterSpec.VersionsBundle
-	for component, manifestList := range bundle.Manifests() {
-		for _, manifest := range manifestList {
-			if opts.dryRun {
-				logger.Info(fmt.Sprintf("Found artifact: %s\n", manifest.URI))
-				continue
-			}
-			if err = downloadArtifact(component, opts.downloadDir, manifest.URI, reader); err != nil {
-				return fmt.Errorf("error downloading artifact for component %s: %v", component, err)
+	versionBundles := clusterSpec.Bundles.Spec.VersionsBundles
+	for i, bundle := range versionBundles {
+		for component, manifestList := range bundle.Manifests() {
+			for _, manifest := range manifestList {
+				if opts.dryRun {
+					logger.Info(fmt.Sprintf("Found artifact: %s\n", *manifest))
+					continue
+				}
+
+				filePath := filepath.Join(opts.downloadDir, bundle.KubeVersion, component, filepath.Base(*manifest))
+				if err = downloadArtifact(filePath, *manifest, reader); err != nil {
+					return fmt.Errorf("error downloading artifact for component %s: %v", component, err)
+				}
+				*manifest = filePath
 			}
 		}
+		clusterSpec.Bundles.Spec.VersionsBundles[i] = bundle
+	}
+
+	bundleReleaseContent, err := yaml.Marshal(clusterSpec.Bundles)
+	if err != nil {
+		return fmt.Errorf("error marshaling bundle-release.yaml: %v", err)
+	}
+	bundleReleaseFilePath := filepath.Join(opts.downloadDir, filepath.Base(bundlesManifestUrl))
+	if err = ioutil.WriteFile(bundleReleaseFilePath, bundleReleaseContent, 0o644); err != nil {
+		return err
 	}
 
 	if !opts.dryRun {
@@ -122,17 +133,9 @@ func preRunDownloadArtifactsCmd(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func downloadArtifact(component, downloadDir, artifactUri string, reader *files.Reader) error {
+func downloadArtifact(filePath, artifactUri string, reader *files.Reader) error {
 	logger.V(3).Info(fmt.Sprintf("Downloading artifact: %s", artifactUri))
 
-	fileName := filepath.Base(artifactUri)
-
-	var filePath string
-	if component != "" {
-		filePath = filepath.Join(downloadDir, component, fileName)
-	} else {
-		filePath = filepath.Join(downloadDir, fileName)
-	}
 	if err := os.MkdirAll(filepath.Dir(filePath), 0o755); err != nil {
 		return err
 	}
