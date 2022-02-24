@@ -1,54 +1,66 @@
 package v1alpha1
 
-func (vb *VersionsBundle) Manifests() map[string][]Manifest {
-	return map[string][]Manifest{
+func (vb *VersionsBundle) Manifests() map[string][]*string {
+	return map[string][]*string{
 		"cluster-api-provider-aws": {
-			vb.Aws.Components,
-			vb.Aws.ClusterTemplate,
-			vb.Aws.Metadata,
+			&vb.Aws.Components.URI,
+			&vb.Aws.ClusterTemplate.URI,
+			&vb.Aws.Metadata.URI,
 		},
 		"core-cluster-api": {
-			vb.ClusterAPI.Components,
-			vb.ClusterAPI.Metadata,
+			&vb.ClusterAPI.Components.URI,
+			&vb.ClusterAPI.Metadata.URI,
 		},
 		"capi-kubeadm-bootstrap": {
-			vb.Bootstrap.Components,
-			vb.Bootstrap.Metadata,
+			&vb.Bootstrap.Components.URI,
+			&vb.Bootstrap.Metadata.URI,
 		},
 		"capi-kubeadm-control-plane": {
-			vb.ControlPlane.Components,
-			vb.ControlPlane.Metadata,
+			&vb.ControlPlane.Components.URI,
+			&vb.ControlPlane.Metadata.URI,
+		},
+		"cert-manager": {
+			&vb.CertManager.Manifest.URI,
 		},
 		"cluster-api-provider-docker": {
-			vb.Docker.Components,
-			vb.Docker.ClusterTemplate,
-			vb.Docker.Metadata,
+			&vb.Docker.Components.URI,
+			&vb.Docker.ClusterTemplate.URI,
+			&vb.Docker.Metadata.URI,
 		},
 		"cluster-api-provider-vsphere": {
-			vb.VSphere.Components,
-			vb.VSphere.ClusterTemplate,
-			vb.VSphere.Metadata,
+			&vb.VSphere.Components.URI,
+			&vb.VSphere.ClusterTemplate.URI,
+			&vb.VSphere.Metadata.URI,
 		},
 		"cluster-api-provider-cloudstack": {
-			vb.CloudStack.Components,
-			vb.CloudStack.Metadata,
+			&vb.CloudStack.Components.URI,
+			&vb.CloudStack.Metadata.URI,
+		},
+		"cluster-api-provider-tinkerbell": {
+			&vb.Tinkerbell.Components.URI,
+			&vb.Tinkerbell.ClusterTemplate.URI,
+			&vb.Tinkerbell.Metadata.URI,
 		},
 		"cilium": {
-			vb.Cilium.Manifest,
+			&vb.Cilium.Manifest.URI,
 		},
 		"kindnetd": {
-			vb.Kindnetd.Manifest,
+			&vb.Kindnetd.Manifest.URI,
 		},
 		"eks-anywhere-cluster-controller": {
-			vb.Eksa.Components,
+			&vb.Eksa.Components.URI,
 		},
 		"etcdadm-bootstrap-provider": {
-			vb.ExternalEtcdBootstrap.Components,
-			vb.ExternalEtcdBootstrap.Metadata,
+			&vb.ExternalEtcdBootstrap.Components.URI,
+			&vb.ExternalEtcdBootstrap.Metadata.URI,
 		},
 		"etcdadm-controller": {
-			vb.ExternalEtcdController.Components,
-			vb.ExternalEtcdController.Metadata,
+			&vb.ExternalEtcdController.Components.URI,
+			&vb.ExternalEtcdController.Metadata.URI,
+		},
+		"eks-distro": {
+			&vb.EksD.Components,
+			&vb.EksD.EksDReleaseUrl,
 		},
 	}
 }
