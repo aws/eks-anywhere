@@ -52,21 +52,33 @@ func preRunGetPackages(cmd *cobra.Command, args []string) error {
 
 func getPackages(ctx context.Context, output string, args []string) error {
 	kubeConfig := os.Getenv(kubeconfigEnvVariable)
-	deps, err := dependencies.
-		NewFactory().
-		WithExecutableImage(executables.DefaultEksaImage()).
-		WithExecutableBuilder().
-		WithKubectl().
-		Build(ctx)
+
+	deps, err := createKubectl(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	kubectl := deps.Kubectl
-	packages, err := kubectl.GetPackages(ctx, executables.WithKubeconfig(kubeConfig), executables.WithOutput(output), executables.WithArgs(args))
+
+	var packages string
+	if output != "" {
+		packages, err = kubectl.GetPackages(ctx, executables.WithKubeconfig(kubeConfig), executables.WithOutput(output), executables.WithArgs(args))
+	} else {
+		packages, err = kubectl.GetPackages(ctx, executables.WithKubeconfig(kubeConfig), executables.WithArgs(args))
+	}
+
 	if err != nil {
 		fmt.Print(packages)
 		return fmt.Errorf("error executing kubectl: %v", err)
 	}
 	fmt.Println(packages)
 	return nil
+}
+
+func createKubectl(ctx context.Context) (*dependencies.Dependencies, error) {
+	return dependencies.
+		NewFactory().
+		WithExecutableImage(executables.DefaultEksaImage()).
+		WithExecutableBuilder().
+		WithKubectl().
+		Build(ctx)
 }

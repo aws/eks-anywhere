@@ -696,9 +696,6 @@ func WithOverwrite() KubectlOpt {
 }
 
 func WithOutput(output string) KubectlOpt {
-	if output == "" {
-		return appendOpt()
-	}
 	return appendOpt("-o", output)
 }
 
