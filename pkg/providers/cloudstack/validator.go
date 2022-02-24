@@ -70,7 +70,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 	if cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
 		return fmt.Errorf("must specify machineGroupRef for control plane")
 	}
-	controlPlaneMachineConfig := cloudStackClusterSpec.controlPlaneMachineConfig()
 
 	if cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef == nil {
 		return fmt.Errorf("must specify machineGroupRef for worker nodes")
@@ -86,6 +85,9 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 			return fmt.Errorf("must specify machineGroupRef for etcd machines")
 		}
 		etcdMachineConfig = cloudStackClusterSpec.etcdMachineConfig()
+		if etcdMachineConfig == nil {
+			return fmt.Errorf("cannot find CloudStackMachineConfig %v for etcd machines", cloudStackClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
+		}
 		if len(etcdMachineConfig.Spec.Users) <= 0 {
 			etcdMachineConfig.Spec.Users = []anywherev1.UserConfiguration{{}}
 		}
@@ -94,6 +96,10 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 		}
 	}
 
+	controlPlaneMachineConfig := cloudStackClusterSpec.controlPlaneMachineConfig()
+	if controlPlaneMachineConfig == nil {
+		return fmt.Errorf("cannot find CloudStackMachineConfig %v for control plane", cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+	}
 	if len(controlPlaneMachineConfig.Spec.Users) <= 0 {
 		controlPlaneMachineConfig.Spec.Users = []anywherev1.UserConfiguration{{}}
 	}
@@ -141,11 +147,11 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 		if workerNodeGroupMachineConfig.Spec.Template.Value == "" {
 			return fmt.Errorf("worker CloudStackMachineConfig template is not set. Default template is not supported in CloudStack, please provide a template name")
 		}
-		if err = v.validateMachineConfig(ctx, cloudStackClusterSpec.datacenterConfig.Spec, workerNodeGroupMachineConfig); err != nil {
-			return fmt.Errorf("workload machine config validation failed: %v", err)
-		}
 		if controlPlaneMachineConfig.Spec.Template != workerNodeGroupMachineConfig.Spec.Template {
 			return fmt.Errorf("control plane and worker nodes must have the same template specified")
+		}
+		if err = v.validateMachineConfig(ctx, cloudStackClusterSpec.datacenterConfig.Spec, workerNodeGroupMachineConfig); err != nil {
+			return fmt.Errorf("workload machine config validation failed: %v", err)
 		}
 	}
 	logger.MarkPass("Control plane and Workload templates validated")
