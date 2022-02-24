@@ -824,17 +824,13 @@ func TestClusterValidateUpdateGitOpsRefNewNilImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
-func TestClusterValidateUpdateIdentityProviderRefsImmutableEqualOrder(t *testing.T) {
+func TestClusterValidateUpdateAWSIamNameImmutableUpdateSameName(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{
 				{
-					Kind: "identity",
+					Kind: v1alpha1.AWSIamConfigKind,
 					Name: "name1",
-				},
-				{
-					Kind: "identity",
-					Name: "name2",
 				},
 			},
 			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
@@ -846,11 +842,7 @@ func TestClusterValidateUpdateIdentityProviderRefsImmutableEqualOrder(t *testing
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{
 				{
-					Kind: "identity",
-					Name: "name2",
-				},
-				{
-					Kind: "identity",
+					Kind: v1alpha1.AWSIamConfigKind,
 					Name: "name1",
 				},
 			},
@@ -864,49 +856,200 @@ func TestClusterValidateUpdateIdentityProviderRefsImmutableEqualOrder(t *testing
 	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
-func TestClusterValidateUpdateIdentityProviderRefsImmutable(t *testing.T) {
+func TestClusterValidateUpdateAWSIamNameImmutableUpdateName(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{
 				{
-					Kind: "identity1",
+					Kind: v1alpha1.AWSIamConfigKind,
 					Name: "name1",
 				},
 			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
+	c := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			IdentityProviderRefs: []v1alpha1.Ref{
+				{
+					Kind: v1alpha1.AWSIamConfigKind,
+					Name: "name2",
+				},
+			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
+func TestClusterValidateUpdateAWSIamNameImmutableEmpty(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			IdentityProviderRefs: []v1alpha1.Ref{
+				{
+					Kind: v1alpha1.AWSIamConfigKind,
+					Name: "name1",
+				},
+			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
+	c := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			IdentityProviderRefs: []v1alpha1.Ref{},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
+func TestClusterValidateUpdateAWSIamNameImmutableAddConfig(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			IdentityProviderRefs: []v1alpha1.Ref{},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 	c := cOld.DeepCopy()
 	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
 		{
-			Kind: "identity1",
+			Kind: v1alpha1.AWSIamConfigKind,
 			Name: "name1",
 		},
-		{
-			Kind: "identity2",
-			Name: "name2",
-		},
 	}
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
-func TestClusterValidateUpdateIdentityProviderRefsImmutableName(t *testing.T) {
+func TestClusterValidateUpdateOIDCNameMutableUpdateNameWorkloadCluster(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{
 				{
-					Kind: "identity",
+					Kind: v1alpha1.OIDCConfigKind,
 					Name: "name1",
 				},
 			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
+	cOld.SetManagedBy("management-cluster")
+	c := cOld.DeepCopy()
+	c.Spec.IdentityProviderRefs[0].Name = "name2"
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
+func TestClusterValidateUpdateOIDCNameMutableUpdateNameMgmtCluster(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			IdentityProviderRefs: []v1alpha1.Ref{
+				{
+					Kind: v1alpha1.OIDCConfigKind,
+					Name: "name1",
+				},
+			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 	c := cOld.DeepCopy()
-	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
-		{
-			Kind: "identity",
-			Name: "name2",
+	c.Spec.IdentityProviderRefs[0].Name = "name2"
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
+func TestClusterValidateUpdateOIDCNameMutableUpdateNameUnchanged(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			IdentityProviderRefs: []v1alpha1.Ref{
+				{
+					Kind: v1alpha1.OIDCConfigKind,
+					Name: "name1",
+				},
+			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
+	c := cOld.DeepCopy()
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
+func TestClusterValidateUpdateOIDCNameMutableWorkloadCluster(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			IdentityProviderRefs: []v1alpha1.Ref{
+				{
+					Kind: v1alpha1.OIDCConfigKind,
+					Name: "name1",
+				},
+			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
+	cOld.SetManagedBy("mgmt")
+
+	c := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			IdentityProviderRefs: []v1alpha1.Ref{},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
+
+	c.SetManagedBy("mgmt")
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
+func TestClusterValidateUpdateOIDCNameMutableMgmtCluster(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			IdentityProviderRefs: []v1alpha1.Ref{
+				{
+					Kind: v1alpha1.OIDCConfigKind,
+					Name: "name1",
+				},
+			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
+
+	c := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			IdentityProviderRefs: []v1alpha1.Ref{},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 
@@ -914,27 +1057,77 @@ func TestClusterValidateUpdateIdentityProviderRefsImmutableName(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
-func TestClusterValidateUpdateIdentityProviderRefsImmutableKind(t *testing.T) {
+func TestClusterValidateUpdateOIDCNameMutableAddConfigWorkloadCluster(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			IdentityProviderRefs: []v1alpha1.Ref{},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
+	cOld.SetManagedBy("mgmt")
+
+	c := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			IdentityProviderRefs: []v1alpha1.Ref{
 				{
-					Kind: "identity1",
-					Name: "name",
+					Kind: v1alpha1.OIDCConfigKind,
+					Name: "name1",
 				},
 			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
-	c := cOld.DeepCopy()
-	c.Spec.IdentityProviderRefs = []v1alpha1.Ref{
-		{
-			Kind: "identity2",
-			Name: "name",
+	c.SetManagedBy("mgmt")
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
+func TestClusterValidateUpdateOIDCNameMutableAddConfigMgmtCluster(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			IdentityProviderRefs: []v1alpha1.Ref{},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
+
+	c := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			IdentityProviderRefs: []v1alpha1.Ref{
+				{
+					Kind: v1alpha1.OIDCConfigKind,
+					Name: "name1",
+				},
+			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
+func TestClusterValidateEmptyIdentityProviders(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			IdentityProviderRefs: []v1alpha1.Ref{},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
+	c := cOld.DeepCopy()
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
 }
 
 func TestClusterValidateUpdateGitOpsRefOldEmptyImmutable(t *testing.T) {
