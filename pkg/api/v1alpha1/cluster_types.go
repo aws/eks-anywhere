@@ -161,6 +161,22 @@ func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
 	return true
 }
 
+func LabelsMapEqual(s1, s2 map[string]string) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+	for key, val := range s2 {
+		v, ok := s1[key]
+		if !ok {
+			return false
+		}
+		if val != v {
+			return false
+		}
+	}
+	return true
+}
+
 func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
 	if n == o {
 		return true
@@ -168,7 +184,8 @@ func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Count == o.Count && n.Endpoint.Equal(o.Endpoint) && n.MachineGroupRef.Equal(o.MachineGroupRef) && TaintsSliceEqual(n.Taints, o.Taints)
+	return n.Count == o.Count && n.Endpoint.Equal(o.Endpoint) && n.MachineGroupRef.Equal(o.MachineGroupRef) &&
+		TaintsSliceEqual(n.Taints, o.Taints) && LabelsMapEqual(n.Labels, o.Labels)
 }
 
 type Endpoint struct {
@@ -229,7 +246,7 @@ func WorkerNodeGroupConfigurationsSliceEqual(a, b []WorkerNodeGroupConfiguration
 		return false
 	}
 
-	return WorkerNodeGroupConfigurationSliceTaintsEqual(a, b)
+	return WorkerNodeGroupConfigurationSliceTaintsEqual(a, b) && WorkerNodeGroupConfigurationsLabelsMapEqual(a, b)
 }
 
 func WorkerNodeGroupConfigurationSliceTaintsEqual(a, b []WorkerNodeGroupConfiguration) bool {
@@ -246,6 +263,27 @@ func WorkerNodeGroupConfigurationSliceTaintsEqual(a, b []WorkerNodeGroupConfigur
 			continue
 		} else {
 			if !TaintsSliceEqual(m[nodeGroup.Name], nodeGroup.Taints) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func WorkerNodeGroupConfigurationsLabelsMapEqual(a, b []WorkerNodeGroupConfiguration) bool {
+	m := make(map[string]map[string]string, len(a))
+	for _, nodeGroup := range a {
+		m[nodeGroup.Name] = nodeGroup.Labels
+	}
+
+	for _, nodeGroup := range b {
+		if _, ok := m[nodeGroup.Name]; !ok {
+			// this method is not concerned with added/removed node groups,
+			// only with the comparison of labels on existing node groups
+			// if a node group is present in a but not b, or vise versa, it's immaterial
+			continue
+		} else {
+			if !LabelsMapEqual(m[nodeGroup.Name], nodeGroup.Labels) {
 				return false
 			}
 		}

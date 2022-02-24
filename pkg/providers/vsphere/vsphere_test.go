@@ -29,7 +29,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -277,7 +276,6 @@ func (tctx *testContext) SaveContext() {
 	os.Setenv(vSpherePasswordKey, os.Getenv(EksavSpherePasswordKey))
 	os.Setenv(vSphereServerKey, expectedVSphereServer)
 	os.Setenv(expClusterResourceSetKey, expectedExpClusterResourceSet)
-	os.Setenv(features.TaintsSupportEnvVar, "true")
 }
 
 func (tctx *testContext) RestoreContext() {

@@ -69,11 +69,27 @@ func (r *Cluster) ValidateUpdate(old runtime.Object) error {
 
 	allErrs = append(allErrs, validateImmutableFieldsCluster(r, oldCluster)...)
 
-	if len(allErrs) == 0 {
-		return nil
+	if len(allErrs) != 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
 	}
 
-	return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
+	// Test for both taints and labels
+	if err := validateWorkerNodeGroups(r); err != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "workerNodeGroupConfigurations"), r.Spec.WorkerNodeGroupConfigurations, err.Error()))
+	}
+
+	// Control plane configuration is mutable if workload cluster
+	if !r.IsSelfManaged() {
+		if err := validateControlPlaneLabels(r); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneConfiguration", "labels"), r.Spec, err.Error()))
+		}
+	}
+
+	if len(allErrs) != 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind(ClusterKind).GroupKind(), r.Name, allErrs)
+	}
+
+	return nil
 }
 
 func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
@@ -154,16 +170,10 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 		)
 	}
 
-	if old.Spec.ControlPlaneConfiguration.Count != new.Spec.ControlPlaneConfiguration.Count {
+	if !old.Spec.ControlPlaneConfiguration.Equal(&new.Spec.ControlPlaneConfiguration) {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "ControlPlaneConfiguration.count"), new.Spec.ControlPlaneConfiguration.Count, "field is immutable"))
-	}
-
-	if !new.Spec.ControlPlaneConfiguration.MachineGroupRef.Equal(old.Spec.ControlPlaneConfiguration.MachineGroupRef) {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "ControlPlaneConfiguration.machineGroupRef"), new.Spec.ControlPlaneConfiguration.MachineGroupRef, "field is immutable"))
+			field.Invalid(field.NewPath("spec", "ControlPlaneConfiguration"), new.Spec.ControlPlaneConfiguration, "field is immutable"))
 	}
 
 	return allErrs

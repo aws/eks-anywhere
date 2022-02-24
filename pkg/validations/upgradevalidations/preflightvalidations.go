@@ -20,12 +20,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 	var upgradeValidations []validations.ValidationResult
 	upgradeValidations = append(
 		upgradeValidations,
-		validations.ValidationResult{
-			Name:        "validate node labels support",
-			Remediation: "ensure NODE_LABELS_SUPPORT env variable is set",
-			Err:         ValidateNodeLabelsSupport(u.Opts.Spec),
-			FeatureFlag: true,
-		},
+		validations.ValidationResult{},
 		validations.ValidationResult{
 			Name:        "control plane ready",
 			Remediation: fmt.Sprintf("ensure control plane nodes and pods for cluster %s are Ready", u.Opts.WorkloadCluster.Name),

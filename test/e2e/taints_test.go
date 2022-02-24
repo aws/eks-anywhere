@@ -12,10 +12,6 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-const worker0 = "worker-0"
-const worker1 = "worker-1"
-const worker2 = "worker-2"
-
 func runTaintsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
@@ -85,7 +81,6 @@ func TestVSphereKubernetes121TaintsBottlerocket(t *testing.T) {
 		),
 	)
 }
-
 
 func ubuntu121ProviderWithTaints(t *testing.T) *framework.VSphere {
 	return framework.NewVSphere(t,
