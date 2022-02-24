@@ -3,13 +3,10 @@ package cloudstack
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
-	"net"
 	"os"
 	"path"
 	"testing"
-	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -34,19 +31,9 @@ const (
 	api-key = test-key
 	secret-key = secret-key
 	api-url = http://1.1.1.1:8080/client/api
-	 */
+	*/
 	expectedCloudStackCloudConfig = "W0dsb2JhbF0KYXBpLWtleSAgICA9IHRlc3Qta2V5CnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldAphcGktdXJsICAgID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCgo="
 )
-
-type DummyNetClient struct{}
-
-func (n *DummyNetClient) DialTimeout(network, address string, timeout time.Duration) (net.Conn, error) {
-	// add dummy case for coverage
-	if address == "255.255.255.255:22" {
-		return &net.IPConn{}, nil
-	}
-	return nil, errors.New("")
-}
 
 func givenClusterConfig(t *testing.T, fileName string) *v1alpha1.Cluster {
 	return givenClusterSpec(t, fileName).Cluster
@@ -102,14 +89,8 @@ func givenProvider(t *testing.T) *cloudstackProvider {
 }
 
 type testContext struct {
-	oldUsername                          string
-	isUsernameSet                        bool
-	oldPassword                          string
-	isPasswordSet                        bool
 	oldCloudStackCloudConfigSecretName   string
 	isCloudStackCloudConfigSecretNameSet bool
-	oldExpClusterResourceSet             string
-	isExpClusterResourceSetSet           bool
 }
 
 func (tctx *testContext) SaveContext() {
@@ -121,7 +102,6 @@ func (tctx *testContext) SaveContext() {
 func setupContext() {
 	var tctx testContext
 	tctx.SaveContext()
-
 }
 
 func TestNewProvider(t *testing.T) {
@@ -161,7 +141,6 @@ func newProvider(t *testing.T, datacenterConfig *v1alpha1.CloudStackDatacenterCo
 		clusterConfig,
 		kubectl,
 		writer,
-		&DummyNetClient{},
 		test.FakeNow,
 		false,
 	)
@@ -681,132 +660,6 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyAllMachineConfigs(t *testing.T) {
 	}
 }
 
-func TestSetupAndValidateSshAuthorizedKeysNil(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys = nil
-	workerNodeMachineConfigName := clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	provider.machineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys = nil
-	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys = nil
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
-	}
-}
-
-func TestSetupAndValidateCreateClusterCPMachineGroupRefNil(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef = nil
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "must specify machineGroupRef for control plane", err)
-	}
-}
-
-func TestSetupAndValidateCreateClusterWorkerMachineGroupRefNil(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef = nil
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "must specify machineGroupRef for worker nodes", err)
-	}
-}
-
-func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNil(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef = nil
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "must specify machineGroupRef for etcd machines", err)
-	}
-}
-
-func TestSetupAndValidateCreateClusterCPMachineGroupRefNonexistent(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name = "nonexistent"
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "cannot find CloudStackMachineConfig nonexistent for control plane", err)
-	}
-}
-
-func TestSetupAndValidateCreateClusterWorkerMachineGroupRefNonexistent(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name = "nonexistent"
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "cannot find CloudStackMachineConfig nonexistent for worker nodes", err)
-	}
-}
-
-func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNonexistent(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = "nonexistent"
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "cannot find CloudStackMachineConfig nonexistent for etcd machines", err)
-	}
-}
-
-func TestSetupAndValidateCreateClusterTemplateDifferent(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Template = v1alpha1.CloudStackResourceRef{Value: "test", Type: "name"}
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		thenErrorExpected(t, "control plane and worker nodes must have the same template specified", err)
-	}
-}
-
 func TestGetInfrastructureBundleSuccess(t *testing.T) {
 	tests := []struct {
 		testName    string
@@ -840,7 +693,7 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 				t.Fatalf("provider.GetInfrastructureBundle() should have an infrastructure bundle")
 			}
 			assert.Equal(t, "infrastructure-cloudstack/v0.1.0/", infraBundle.FolderName, "Incorrect folder name")
-			assert.Equal(t, len(infraBundle.Manifests), 3, "Wrong number of files in the infrastructure bundle")
+			assert.Equal(t, len(infraBundle.Manifests), 2, "Wrong number of files in the infrastructure bundle")
 			wantManifests := []releasev1alpha1.Manifest{
 				tt.clusterSpec.VersionsBundle.CloudStack.Components,
 				tt.clusterSpec.VersionsBundle.CloudStack.Metadata,

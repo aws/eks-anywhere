@@ -1,26 +1,21 @@
 package cloudstack
 
 import (
-	"bytes"
 	"context"
 	_ "embed"
 	"errors"
 	"fmt"
-	"github.com/aws/eks-anywhere/decoder"
-	"golang.org/x/crypto/ssh"
 	"net"
 	"net/url"
 	"os"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"strconv"
 	"strings"
-	"text/template"
 	"time"
 
-	"github.com/aws/eks-anywhere/pkg/crypto"
-
 	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	"golang.org/x/crypto/ssh"
 	corev1 "k8s.io/api/core/v1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1beta1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -28,10 +23,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/crypto"
+	"github.com/aws/eks-anywhere/pkg/decoder"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -46,7 +42,7 @@ const (
 	cloudMonkeyInsecure                   = "CLOUDMONKEY_INSECURE"
 	privateKeyFileName                    = "eks-a-id_rsa"
 	publicKeyFileName                     = "eks-a-id_rsa.pub"
-	controlEndpointDefaultPort 			  = "6443"
+	controlEndpointDefaultPort            = "6443"
 )
 
 //go:embed config/template-cp.yaml
@@ -54,9 +50,6 @@ var defaultCAPIConfigCP string
 
 //go:embed config/template-md.yaml
 var defaultClusterConfigMD string
-
-//go:embed config/secret.yaml
-var defaultSecretObject string
 
 //go:embed config/machine-health-check-template.yaml
 var mhcTemplate []byte
@@ -74,19 +67,18 @@ var (
 )
 
 type cloudstackProvider struct {
-	datacenterConfig            *v1alpha1.CloudStackDatacenterConfig
-	machineConfigs              map[string]*v1alpha1.CloudStackMachineConfig
-	clusterConfig               *v1alpha1.Cluster
-	providerKubectlClient       ProviderKubectlClient
-	writer                      filewriter.FileWriter
-	selfSigned                  bool
-	controlPlaneSshAuthKey      string
-	workerSshAuthKey            string
-	etcdSshAuthKey              string
-	netClient                   networkutils.NetClient
-	templateBuilder             *CloudStackTemplateBuilder
-	skipIpCheck                 bool
-	//TODO: Integrate with validator (defined in https://github.com/aws/eks-anywhere/pull/1256)
+	datacenterConfig       *v1alpha1.CloudStackDatacenterConfig
+	machineConfigs         map[string]*v1alpha1.CloudStackMachineConfig
+	clusterConfig          *v1alpha1.Cluster
+	providerKubectlClient  ProviderKubectlClient
+	writer                 filewriter.FileWriter
+	selfSigned             bool
+	controlPlaneSshAuthKey string
+	workerSshAuthKey       string
+	etcdSshAuthKey         string
+	templateBuilder        *CloudStackTemplateBuilder
+	skipIpCheck            bool
+	// TODO: Integrate with validator (defined in https://github.com/aws/eks-anywhere/pull/1256)
 }
 
 func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
@@ -140,13 +132,12 @@ func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineC
 		clusterConfig,
 		providerKubectlClient,
 		writer,
-		&networkutils.DefaultNetClient{},
 		now,
 		skipIpCheck,
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
+func NewProviderCustomNet(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
@@ -166,7 +157,6 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.CloudStackDatacenterConfig,
 		providerKubectlClient: providerKubectlClient,
 		writer:                writer,
 		selfSigned:            false,
-		netClient:             netClient,
 		templateBuilder: &CloudStackTemplateBuilder{
 			datacenterConfigSpec:       &datacenterConfig.Spec,
 			controlPlaneMachineSpec:    controlPlaneMachineSpec,
@@ -174,7 +164,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.CloudStackDatacenterConfig,
 			etcdMachineSpec:            etcdMachineSpec,
 			now:                        now,
 		},
-		skipIpCheck:        skipIpCheck,
+		skipIpCheck: skipIpCheck,
 	}
 }
 
@@ -271,10 +261,6 @@ func (p *cloudstackProvider) setupSSHAuthKeysForCreate() error {
 	controlPlaneUser.SshAuthorizedKeys[0] = p.controlPlaneSshAuthKey
 	workerUser.SshAuthorizedKeys[0] = p.workerSshAuthKey
 	return nil
-}
-
-func (p *cloudstackProvider) setupSSHAuthKeysForUpgrade() error {
-	return fmt.Errorf("upgrade is not yet supported by cloudstack provider")
 }
 
 func (p *cloudstackProvider) parseSSHAuthKey(key *string) error {
@@ -410,8 +396,8 @@ func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context) 
 }
 
 type CloudStackTemplateBuilder struct {
-	datacenterConfigSpec    *v1alpha1.CloudStackDatacenterConfigSpec
-	controlPlaneMachineSpec *v1alpha1.CloudStackMachineConfigSpec
+	datacenterConfigSpec       *v1alpha1.CloudStackDatacenterConfigSpec
+	controlPlaneMachineSpec    *v1alpha1.CloudStackMachineConfigSpec
 	workerNodeGroupMachineSpec *v1alpha1.CloudStackMachineConfigSpec
 	etcdMachineSpec            *v1alpha1.CloudStackMachineConfigSpec
 	now                        types.NowFunc
@@ -634,10 +620,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	return values
 }
 
-func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	return nil, nil, fmt.Errorf("cloudstack provider does not support upgrade yet")
-}
-
 func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	clusterName := clusterSpec.ObjectMeta.Name
 
@@ -687,25 +669,6 @@ func (p *cloudstackProvider) GenerateMHC() ([]byte, error) {
 }
 
 func (p *cloudstackProvider) CleanupProviderInfrastructure(_ context.Context) error {
-	return nil
-}
-
-func (p *cloudstackProvider) createSecret(cluster *types.Cluster, contents *bytes.Buffer) error {
-	t, err := template.New("tmpl").Parse(defaultSecretObject)
-	if err != nil {
-		return fmt.Errorf("error creating secret object template: %v", err)
-	}
-
-	values := map[string]string{
-		"clusterName":       cluster.Name,
-		"insecure":          strconv.FormatBool(p.datacenterConfig.Spec.Insecure),
-		"cloudstackNetwork": p.datacenterConfig.Spec.Network.Value,
-		"eksaLicense":       os.Getenv(eksaLicense),
-	}
-	err = t.Execute(contents, values)
-	if err != nil {
-		return fmt.Errorf("error substituting values for secret object template: %v", err)
-	}
 	return nil
 }
 
@@ -779,11 +742,6 @@ func (p *cloudstackProvider) MachineConfigs() []providers.MachineConfig {
 		}
 	}
 	return configs
-}
-
-func (p *cloudstackProvider) validateMachineConfigImmutability(ctx context.Context, cluster *types.Cluster, newConfig *v1alpha1.CloudStackMachineConfig, clusterSpec *cluster.Spec) error {
-	// allow template, compute offering, details, users to mutate
-	return nil
 }
 
 func (p *cloudstackProvider) RunPostUpgrade(ctx context.Context, clusterSpec *cluster.Spec, managementCluster, workloadCluster *types.Cluster) error {

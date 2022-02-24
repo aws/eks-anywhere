@@ -3,8 +3,9 @@ package decoder
 import (
 	b64 "encoding/base64"
 	"fmt"
-	"gopkg.in/ini.v1"
 	"os"
+
+	"gopkg.in/ini.v1"
 )
 
 const eksacloudStackCloudConfigB64SecretKey = "EKSA_CLOUDSTACK_B64ENCODED_SECRET"
