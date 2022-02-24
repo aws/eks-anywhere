@@ -1,8 +1,6 @@
 package features
 
 const (
-	TaintsSupportEnvVar      = "TAINTS_SUPPORT"
-	NodeLabelsSupportEnvVar  = "NODE_LABELS_SUPPORT"
 	TinkerbellProviderEnvVar = "TINKERBELL_PROVIDER"
 	CloudStackProviderEnvVar = "CLOUDSTACK_PROVIDER"
 	SnowProviderEnvVar       = "SNOW_PROVIDER"
@@ -23,20 +21,6 @@ type Feature struct {
 
 func IsActive(feature Feature) bool {
 	return feature.IsActive()
-}
-
-func TaintsSupport() Feature {
-	return Feature{
-		Name:     "Taints support",
-		IsActive: globalFeatures.isActiveForEnvVar(TaintsSupportEnvVar),
-	}
-}
-
-func NodeLabelsSupport() Feature {
-	return Feature{
-		Name:     "Node labels support",
-		IsActive: globalFeatures.isActiveForEnvVar(NodeLabelsSupportEnvVar),
-	}
 }
 
 func FullLifecycleAPI() Feature {
