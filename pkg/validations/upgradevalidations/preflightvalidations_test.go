@@ -237,7 +237,7 @@ func TestPreflightValidations(t *testing.T) {
 			},
 		},
 		{
-			name:               "ValidationAwsIamNameImmutable",
+			name:               "ValidationAwsIamKindImmutable",
 			clusterVersion:     "v1.19.16-eks-1-19-4",
 			upgradeVersion:     "1.19",
 			getClusterResponse: goodClusterResponse,
@@ -248,8 +248,8 @@ func TestPreflightValidations(t *testing.T) {
 			wantErr:            composeError("aws iam identity provider is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
 				s.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
-					Kind: v1alpha1.AWSIamConfigKind,
-					Name: "aws-iam2",
+					Kind: v1alpha1.OIDCConfigKind,
+					Name: "oidc",
 				}
 			},
 		},
