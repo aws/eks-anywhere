@@ -88,14 +88,26 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 		return fmt.Errorf("spec.externalEtcdConfiguration is immutable")
 	}
 
-	if len(nSpec.IdentityProviderRefs) > 0 {
-		for _, nIdentityProvider := range nSpec.IdentityProviderRefs {
-			if nIdentityProvider.Kind == v1alpha1.AWSIamConfigKind {
+	oldAWSIamConfig := &v1alpha1.Ref{}
+
+	for _, oIdentityProvider := range oSpec.IdentityProviderRefs {
+		switch oIdentityProvider.Kind {
+		case v1alpha1.AWSIamConfigKind:
+			{
+				oldAWSIamConfig = &oIdentityProvider
+			}
+		}
+	}
+	for _, nIdentityProvider := range nSpec.IdentityProviderRefs {
+		switch nIdentityProvider.Kind {
+		case v1alpha1.AWSIamConfigKind:
+			{
+				newAWSIamConfig := &nIdentityProvider
 				prevAwsIam, err := k.GetEksaAWSIamConfig(ctx, nIdentityProvider.Name, cluster.KubeconfigFile, spec.Namespace)
 				if err != nil {
 					return fmt.Errorf("aws iam identity provider is immutable: %v", err)
 				}
-				if !prevAwsIam.Spec.Equal(&spec.AWSIamConfig.Spec) {
+				if !prevAwsIam.Spec.Equal(&spec.AWSIamConfig.Spec) || !oldAWSIamConfig.Equal(newAWSIamConfig) {
 					return fmt.Errorf("aws iam identity provider is immutable")
 				}
 			}

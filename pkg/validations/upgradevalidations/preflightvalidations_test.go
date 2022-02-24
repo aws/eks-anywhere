@@ -45,11 +45,10 @@ func TestPreflightValidations(t *testing.T) {
 			upgradeVersion:     "1.19",
 			getClusterResponse: goodClusterResponse,
 			cpResponse:         nil,
-
-			workerResponse: nil,
-			nodeResponse:   nil,
-			crdResponse:    nil,
-			wantErr:        nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            nil,
 		},
 		{
 			name:               "ValidationFailsMajorVersionPlus2",
@@ -218,6 +217,40 @@ func TestPreflightValidations(t *testing.T) {
 			wantErr:            composeError("aws iam identity provider is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
 				s.AWSIamConfig.Spec.Partition = "partition2"
+			},
+		},
+		{
+			name:               "ValidationAwsIamNameImmutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            composeError("aws iam identity provider is immutable"),
+			modifyFunc: func(s *cluster.Spec) {
+				s.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
+					Kind: v1alpha1.AWSIamConfigKind,
+					Name: "aws-iam2",
+				}
+			},
+		},
+		{
+			name:               "ValidationAwsIamNameImmutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            composeError("aws iam identity provider is immutable"),
+			modifyFunc: func(s *cluster.Spec) {
+				s.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
+					Kind: v1alpha1.AWSIamConfigKind,
+					Name: "aws-iam2",
+				}
 			},
 		},
 		{

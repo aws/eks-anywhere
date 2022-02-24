@@ -150,12 +150,23 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 			field.Invalid(field.NewPath("spec", "GitOpsRef"), new.Spec.GitOpsRef, "field is immutable"))
 	}
 
+	oldAWSIamConfig, newAWSIamConfig := &Ref{}, &Ref{}
 	for _, identityProvider := range new.Spec.IdentityProviderRefs {
 		if identityProvider.Kind == AWSIamConfigKind {
-			allErrs = append(
-				allErrs,
-				field.Invalid(field.NewPath("spec", "IdentityProviderRefs"), new.Spec.IdentityProviderRefs, "field is immutable"))
+			newAWSIamConfig = &identityProvider
 		}
+	}
+
+	for _, identityProvider := range old.Spec.IdentityProviderRefs {
+		if identityProvider.Kind == AWSIamConfigKind {
+			oldAWSIamConfig = &identityProvider
+		}
+	}
+
+	if !oldAWSIamConfig.Equal(newAWSIamConfig) {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "IdentityProviderRefs"), newAWSIamConfig.Kind, "field is immutable"))
 	}
 
 	if !old.IsSelfManaged() {
