@@ -44,7 +44,6 @@ func TestVSphereKubernetes121Labels(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar("NODE_LABELS_SUPPORT", "true"),
 	)
 
 	runLabelsUpgradeFlow(
@@ -71,7 +70,6 @@ func TestVSphereKubernetes121LabelsBottlerocket(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar("NODE_LABELS_SUPPORT", "true"),
 	)
 
 	runLabelsUpgradeFlow(
