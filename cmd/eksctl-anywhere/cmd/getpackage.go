@@ -60,11 +60,11 @@ func getPackages(ctx context.Context, output string, args []string) error {
 	kubectl := deps.Kubectl
 
 	var packages string
+        params := []KubectlOpt{executables.WithKubeconfig(kubeConfig), executables.WithArgs(args)}
 	if output != "" {
-		packages, err = kubectl.GetPackages(ctx, executables.WithKubeconfig(kubeConfig), executables.WithOutput(output), executables.WithArgs(args))
-	} else {
-		packages, err = kubectl.GetPackages(ctx, executables.WithKubeconfig(kubeConfig), executables.WithArgs(args))
+		params = append(params, executables.WithOutput(output)
 	}
+	packages, err = kubectl.GetPackages(ctx, params...)
 
 	if err != nil {
 		fmt.Print(packages)
