@@ -15,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -94,9 +95,9 @@ type testContext struct {
 }
 
 func (tctx *testContext) SaveContext() {
-	tctx.oldCloudStackCloudConfigSecretName, tctx.isCloudStackCloudConfigSecretNameSet = os.LookupEnv(eksacloudStackCloudConfigB64SecretKey)
-	os.Setenv(eksacloudStackCloudConfigB64SecretKey, expectedCloudStackCloudConfig)
-	os.Setenv(cloudStackCloudConfigB64SecretKey, os.Getenv(eksacloudStackCloudConfigB64SecretKey))
+	tctx.oldCloudStackCloudConfigSecretName, tctx.isCloudStackCloudConfigSecretNameSet = os.LookupEnv(decoder.EksacloudStackCloudConfigB64SecretKey)
+	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, expectedCloudStackCloudConfig)
+	os.Setenv(cloudStackCloudConfigB64SecretKey, os.Getenv(decoder.EksacloudStackCloudConfigB64SecretKey))
 }
 
 func setupContext() {

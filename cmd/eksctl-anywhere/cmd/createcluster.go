@@ -118,6 +118,10 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 		}
 	}
 
+	if !features.IsActive(features.CloudStackProvider()) && deps.Provider.Name() == "cloudstack" {
+		return fmt.Errorf("error: provider cloudstack is not supported in this release")
+	}
+
 	createCluster := workflows.NewCreate(
 		deps.Bootstrapper,
 		deps.Provider,

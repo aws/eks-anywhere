@@ -3,7 +3,6 @@ package factory
 import (
 	"errors"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -41,9 +40,6 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 		}
 		return vsphere.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.VSphereGovcClient, p.VSphereKubectlClient, p.Writer, time.Now, skipIpCheck, p.ClusterResourceSetManager), nil
 	case v1alpha1.CloudStackDatacenterKind:
-		if !features.IsActive(features.CloudStackProvider()) {
-			return nil, fmt.Errorf("cloudstack provider is not yet supported")
-		}
 		datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(clusterConfigFileName)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFileName, err)

@@ -11,6 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	mockswriter "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
+	cloudstackMocks "github.com/aws/eks-anywhere/pkg/providers/cloudstack/mocks"
 	dockerMocks "github.com/aws/eks-anywhere/pkg/providers/docker/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/factory"
 	vsphereMocks "github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
@@ -31,8 +32,9 @@ func TestProviderFactoryBuildProvider(t *testing.T) {
 	clusterSpec := &cluster.Spec{
 		VersionsBundle: &cluster.VersionsBundle{
 			VersionsBundle: &releasev1alpha1.VersionsBundle{
-				VSphere: releasev1alpha1.VSphereBundle{Version: "v0.7.8"},
-				Docker:  releasev1alpha1.DockerBundle{Version: "v0.3.19"},
+				VSphere:    releasev1alpha1.VSphereBundle{Version: "v0.7.8"},
+				CloudStack: releasev1alpha1.CloudStackBundle{Version: "v0.4.0"},
+				Docker:     releasev1alpha1.DockerBundle{Version: "v0.3.19"},
 			},
 		},
 	}
@@ -82,7 +84,10 @@ func TestProviderFactoryBuildProvider(t *testing.T) {
 				}},
 				clusterConfigFileName: "testdata/cluster_cloudstack.yaml",
 			},
-			wantErr: fmt.Errorf("cloudstack provider is not yet supported"),
+			want: providerMatch{
+				kind:    constants.CloudStackProviderName,
+				version: "v0.4.0",
+			},
 		},
 		{
 			name: "Aws cluster not supported",
@@ -102,10 +107,11 @@ func TestProviderFactoryBuildProvider(t *testing.T) {
 			g := NewWithT(t)
 			mockCtrl := gomock.NewController(t)
 			p := &factory.ProviderFactory{
-				DockerClient:         dockerMocks.NewMockProviderClient(mockCtrl),
-				VSphereGovcClient:    vsphereMocks.NewMockProviderGovcClient(mockCtrl),
-				VSphereKubectlClient: vsphereMocks.NewMockProviderKubectlClient(mockCtrl),
-				Writer:               mockswriter.NewMockFileWriter(mockCtrl),
+				DockerClient:            dockerMocks.NewMockProviderClient(mockCtrl),
+				VSphereGovcClient:       vsphereMocks.NewMockProviderGovcClient(mockCtrl),
+				VSphereKubectlClient:    vsphereMocks.NewMockProviderKubectlClient(mockCtrl),
+				CloudStackKubectlClient: cloudstackMocks.NewMockProviderKubectlClient(mockCtrl),
+				Writer:                  mockswriter.NewMockFileWriter(mockCtrl),
 			}
 			got, err := p.BuildProvider(tt.args.clusterConfigFileName, tt.args.clusterConfig, false, tt.args.hardwareFileName)
 			if err == nil {

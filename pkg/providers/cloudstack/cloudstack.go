@@ -36,13 +36,12 @@ import (
 )
 
 const (
-	eksaLicense                           = "EKSA_LICENSE"
-	eksacloudStackCloudConfigB64SecretKey = "EKSA_CLOUDSTACK_B64ENCODED_SECRET"
-	cloudStackCloudConfigB64SecretKey     = "CLOUDSTACK_B64ENCODED_SECRET"
-	cloudMonkeyInsecure                   = "CLOUDMONKEY_INSECURE"
-	privateKeyFileName                    = "eks-a-id_rsa"
-	publicKeyFileName                     = "eks-a-id_rsa.pub"
-	controlEndpointDefaultPort            = "6443"
+	eksaLicense                       = "EKSA_LICENSE"
+	cloudStackCloudConfigB64SecretKey = "CLOUDSTACK_B64ENCODED_SECRET"
+	cloudMonkeyInsecure               = "CLOUDMONKEY_INSECURE"
+	privateKeyFileName                = "eks-a-id_rsa"
+	publicKeyFileName                 = "eks-a-id_rsa.pub"
+	controlEndpointDefaultPort        = "6443"
 )
 
 //go:embed config/template-cp.yaml
@@ -313,12 +312,12 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	var cloudStackB64EncodedSecret string
 	var ok bool
 
-	if cloudStackB64EncodedSecret, ok = os.LookupEnv(eksacloudStackCloudConfigB64SecretKey); ok && len(cloudStackB64EncodedSecret) > 0 {
+	if cloudStackB64EncodedSecret, ok = os.LookupEnv(decoder.EksacloudStackCloudConfigB64SecretKey); ok && len(cloudStackB64EncodedSecret) > 0 {
 		if err := os.Setenv(cloudStackCloudConfigB64SecretKey, cloudStackB64EncodedSecret); err != nil {
 			return fmt.Errorf("unable to set %s: %v", cloudStackCloudConfigB64SecretKey, err)
 		}
 	} else {
-		return fmt.Errorf("%s is not set or is empty", eksacloudStackCloudConfigB64SecretKey)
+		return fmt.Errorf("%s is not set or is empty", decoder.EksacloudStackCloudConfigB64SecretKey)
 	}
 	execConfig, err := decoder.ParseCloudStackSecret()
 	if err != nil {
