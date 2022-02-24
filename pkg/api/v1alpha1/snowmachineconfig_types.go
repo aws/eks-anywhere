@@ -33,3 +33,13 @@ type SnowMachineConfig struct {
 	Spec   SnowMachineConfigSpec   `json:"spec,omitempty"`
 	Status SnowMachineConfigStatus `json:"status,omitempty"`
 }
+
+// +kubebuilder:object:generate=false
+
+// Same as SnowMachineConfig except stripped down for generation of yaml file during generate clusterconfig
+type SnowMachineConfigGenerate struct {
+	metav1.TypeMeta `json:",inline"`
+	ObjectMeta      `json:"metadata,omitempty"`
+
+	Spec SnowMachineConfigSpec `json:"spec,omitempty"`
+}

@@ -686,6 +686,57 @@ spec:
                       - manifest
                       - operator
                       type: object
+                    cloudStack:
+                      properties:
+                        clusterAPIController:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
+                        components:
+                          properties:
+                            uri:
+                              description: URI points to the manifest yaml file
+                              type: string
+                          type: object
+                        metadata:
+                          properties:
+                            uri:
+                              description: URI points to the manifest yaml file
+                              type: string
+                          type: object
+                        version:
+                          type: string
+                      required:
+                      - clusterAPIController
+                      - components
+                      - metadata
+                      - version
+                      type: object
                     clusterAPI:
                       properties:
                         components:
@@ -1849,6 +1900,87 @@ spec:
                       type: object
                     kubeVersion:
                       type: string
+                    snow:
+                      properties:
+                        components:
+                          properties:
+                            uri:
+                              description: URI points to the manifest yaml file
+                              type: string
+                          type: object
+                        kubeProxy:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
+                        kubeVip:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
+                        metadata:
+                          properties:
+                            uri:
+                              description: URI points to the manifest yaml file
+                              type: string
+                          type: object
+                        version:
+                          type: string
+                      required:
+                      - components
+                      - kubeProxy
+                      - kubeVip
+                      - metadata
+                      - version
+                      type: object
                     tinkerbell:
                       properties:
                         actions:
@@ -2840,30 +2972,6 @@ spec:
           status:
             description: ClusterStatus defines the observed state of Cluster
             properties:
-              eksdReleaseRef:
-                description: EksdReleaseRef defines the properties of the EKS-D object
-                  on the cluster
-                properties:
-                  apiVersion:
-                    description: ApiVersion refers to the EKS-D API version
-                    type: string
-                  kind:
-                    description: Kind refers to the Release kind for the EKS-D object
-                    type: string
-                  name:
-                    description: Name refers to the name of the EKS-D object on the
-                      cluster
-                    type: string
-                  namespace:
-                    description: Namespace refers to the namespace for the EKS-D release
-                      resources
-                    type: string
-                required:
-                - apiVersion
-                - kind
-                - name
-                - namespace
-                type: object
               conditions:
                 items:
                   description: Condition defines an observation of a Cluster API resource
@@ -2908,6 +3016,30 @@ spec:
                   - type
                   type: object
                 type: array
+              eksdReleaseRef:
+                description: EksdReleaseRef defines the properties of the EKS-D object
+                  on the cluster
+                properties:
+                  apiVersion:
+                    description: ApiVersion refers to the EKS-D API version
+                    type: string
+                  kind:
+                    description: Kind refers to the Release kind for the EKS-D object
+                    type: string
+                  name:
+                    description: Name refers to the name of the EKS-D object on the
+                      cluster
+                    type: string
+                  namespace:
+                    description: Namespace refers to the namespace for the EKS-D release
+                      resources
+                    type: string
+                required:
+                - apiVersion
+                - kind
+                - name
+                - namespace
+                type: object
               failureMessage:
                 description: Descriptive message about a fatal problem while reconciling
                   a cluster

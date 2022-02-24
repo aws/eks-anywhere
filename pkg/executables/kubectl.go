@@ -695,6 +695,14 @@ func WithOverwrite() KubectlOpt {
 	return appendOpt("--overwrite")
 }
 
+func WithOutput(output string) KubectlOpt {
+	return appendOpt("-o", output)
+}
+
+func WithArgs(args []string) KubectlOpt {
+	return appendOpt(args...)
+}
+
 func appendOpt(new ...string) KubectlOpt {
 	return func(args *[]string) {
 		*args = append(*args, new...)
@@ -1310,4 +1318,13 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 	}
 
 	return obj, nil
+}
+
+func (k *Kubectl) GetPackages(ctx context.Context, opts ...KubectlOpt) (string, error) {
+	params := []string{
+		"get", "packages",
+	}
+	applyOpts(&params, opts...)
+	stdOut, err := k.Execute(ctx, params...)
+	return stdOut.String(), err
 }
