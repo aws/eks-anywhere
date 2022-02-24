@@ -85,14 +85,8 @@ type ProviderPbnjClient interface {
 	ValidateBMCSecretCreds(ctx context.Context, bmc pbnj.BmcSecretConfig) error
 }
 
-func NewTinkerbellClient(ProviderTinkClient ProviderTinkClient, ProviderPbnjClient ProviderPbnjClient) *TinkerbellClients {
-	return &TinkerbellClients{
-		ProviderTinkClient, ProviderPbnjClient,
-	}
-}
-
 func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkbellClient TinkerbellClients, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
-	return NewProviderCustomNet(
+	return NewProviderCustomDep(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
@@ -106,7 +100,7 @@ func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, pbnjClient ProviderPbnjClient, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
+func NewProviderCustomDep(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, pbnjClient ProviderPbnjClient, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec

@@ -13,7 +13,7 @@ const (
 )
 
 type Pbnj struct {
-	*client.PbnjClient
+	pbnj *client.PbnjClient
 }
 
 type BmcSecretConfig struct {
@@ -25,6 +25,7 @@ type BmcSecretConfig struct {
 
 func NewPBNJClient(pbnjGrpcAuth string) (*Pbnj, error) {
 	os.Setenv(PbnjGrpcAuth, pbnjGrpcAuth)
+	defer os.Unsetenv(PbnjGrpcAuth)
 
 	conn, _ := client.SetupConnection()
 
@@ -32,13 +33,20 @@ func NewPBNJClient(pbnjGrpcAuth string) (*Pbnj, error) {
 	tClient := v1.NewTaskClient(conn)
 	pbnjObj := &Pbnj{client.NewPbnjClient(mClient, tClient)}
 
-	os.Unsetenv(PbnjGrpcAuth)
-
 	return pbnjObj, nil
 }
 
 func (p *Pbnj) ValidateBMCSecretCreds(ctx context.Context, bmcInfo BmcSecretConfig) error {
-	powerRequest := &v1.PowerRequest{
+	_, err := p.pbnj.MachinePower(ctx, p.NewPowerRequest(bmcInfo))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Pbnj) NewPowerRequest(bmcInfo BmcSecretConfig) *v1.PowerRequest {
+	return &v1.PowerRequest{
 		Authn: &v1.Authn{
 			Authn: &v1.Authn_DirectAuthn{
 				DirectAuthn: &v1.DirectAuthn{
@@ -55,11 +63,4 @@ func (p *Pbnj) ValidateBMCSecretCreds(ctx context.Context, bmcInfo BmcSecretConf
 		},
 		PowerAction: v1.PowerAction_POWER_ACTION_STATUS,
 	}
-
-	_, err := p.MachinePower(ctx, powerRequest)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
