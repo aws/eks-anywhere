@@ -144,9 +144,9 @@ func TestSetupAndValidateUsersNil(t *testing.T) {
 	validator.machineConfigs[workerNodeMachineConfigName].Spec.Users = nil
 	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	validator.machineConfigs[etcdMachineConfigName].Spec.Users = nil
-	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2)
-	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2)
-	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2)
+	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
+	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
+	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	if err != nil {
@@ -179,9 +179,9 @@ func TestSetupAndValidateSshAuthorizedKeysNil(t *testing.T) {
 	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	validator.machineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys = nil
 
-	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2)
-	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2)
-	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(2)
+	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
+	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
+	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	if err != nil {
 		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
@@ -353,11 +353,8 @@ func TestSetupAndValidateCreateClusterTemplateDifferent(t *testing.T) {
 	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	validator.machineConfigs[controlPlaneMachineConfigName].Spec.Template = v1alpha1.CloudStackResourceRef{Value: "different", Type: "name"}
 
-	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
-	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
-	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any())
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
-	thenErrorExpected(t, "control plane and worker nodes must have the same template specified", err)
+	thenErrorExpected(t, "control plane and etcd machines must have the same template specified", err)
 }
 
 func TestValidateMachineConfigsHappyCase(t *testing.T) {
@@ -379,11 +376,11 @@ func TestValidateMachineConfigsHappyCase(t *testing.T) {
 	}
 	validator := NewValidator(cmk, machineConfigs)
 	cmk.EXPECT().ValidateTemplatePresent(ctx, datacenterConfig.Spec.Domain,
-		datacenterConfig.Spec.Zone, datacenterConfig.Spec.Account, testTemplate).Times(2)
+		datacenterConfig.Spec.Zone, datacenterConfig.Spec.Account, testTemplate).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(ctx, datacenterConfig.Spec.Domain,
-		datacenterConfig.Spec.Zone, datacenterConfig.Spec.Account, testOffering).Times(2)
+		datacenterConfig.Spec.Zone, datacenterConfig.Spec.Account, testOffering).Times(3)
 	cmk.EXPECT().ValidateAffinityGroupsPresent(ctx, datacenterConfig.Spec.Domain,
-		datacenterConfig.Spec.Zone, datacenterConfig.Spec.Account, gomock.Any()).Times(2)
+		datacenterConfig.Spec.Zone, datacenterConfig.Spec.Account, gomock.Any()).Times(3)
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	assert.Nil(t, err)
 	assert.Equal(t, "1.2.3.4:6443", clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)

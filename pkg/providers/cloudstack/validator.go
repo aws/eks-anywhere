@@ -75,9 +75,9 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 		return fmt.Errorf("must specify machineGroupRef for worker nodes")
 	}
 
-	workerNodeGroupMachineConfig, ok := v.machineConfigs[cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
-	if !ok {
-		return fmt.Errorf("cannot find CloudStackMachineConfig %v for worker nodes", cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name)
+	controlPlaneMachineConfig := cloudStackClusterSpec.controlPlaneMachineConfig()
+	if controlPlaneMachineConfig == nil {
+		return fmt.Errorf("cannot find CloudStackMachineConfig %v for control plane", cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
 	}
 
 	if cloudStackClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
@@ -88,29 +88,27 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 		if etcdMachineConfig == nil {
 			return fmt.Errorf("cannot find CloudStackMachineConfig %v for etcd machines", cloudStackClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
 		}
-		if len(etcdMachineConfig.Spec.Users) <= 0 {
-			etcdMachineConfig.Spec.Users = []anywherev1.UserConfiguration{{}}
-		}
-		if len(etcdMachineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
-			etcdMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
+		if etcdMachineConfig.Spec.Template != controlPlaneMachineConfig.Spec.Template {
+			return fmt.Errorf("control plane and etcd machines must have the same template specified")
 		}
 	}
 
-	controlPlaneMachineConfig := cloudStackClusterSpec.controlPlaneMachineConfig()
-	if controlPlaneMachineConfig == nil {
-		return fmt.Errorf("cannot find CloudStackMachineConfig %v for control plane", cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
+	if cloudStackClusterSpec.datacenterConfig.Namespace != cloudStackClusterSpec.Namespace {
+		return fmt.Errorf(
+			"CloudStackDatacenterConfig and Cluster objects must have the same namespace: CloudstackDatacenterConfig namespace=%s; Cluster namespace=%s",
+			cloudStackClusterSpec.datacenterConfig.Namespace,
+			cloudStackClusterSpec.Namespace,
+		)
 	}
-	if len(controlPlaneMachineConfig.Spec.Users) <= 0 {
-		controlPlaneMachineConfig.Spec.Users = []anywherev1.UserConfiguration{{}}
+
+	workerNodeGroupMachineConfig, ok := v.machineConfigs[cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
+	if !ok {
+		return fmt.Errorf("cannot find CloudStackMachineConfig %v for worker nodes", cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name)
 	}
-	if len(workerNodeGroupMachineConfig.Spec.Users) <= 0 {
-		workerNodeGroupMachineConfig.Spec.Users = []anywherev1.UserConfiguration{{}}
-	}
-	if len(controlPlaneMachineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
-		controlPlaneMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
-	}
-	if len(workerNodeGroupMachineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
-		workerNodeGroupMachineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
+	if controlPlaneMachineConfig.Spec.Template != workerNodeGroupMachineConfig.Spec.Template {
+		if controlPlaneMachineConfig.Spec.Template != workerNodeGroupMachineConfig.Spec.Template {
+			return fmt.Errorf("control plane and worker nodes must have the same template specified")
+		}
 	}
 
 	hostWithPort, err := v.validateControlPlaneHostAndApplyDefaultPort(cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
@@ -123,50 +121,24 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 		if machineConfig.Namespace != cloudStackClusterSpec.Namespace {
 			return fmt.Errorf(
 				"CloudStackMachineConfig and Cluster objects must have the same namespace: CloudStackMachineConfig namespace=%s; Cluster namespace=%s",
-				cloudStackClusterSpec.datacenterConfig.Namespace,
+				machineConfig.Namespace,
 				cloudStackClusterSpec.Namespace,
 			)
 		}
-	}
-	if cloudStackClusterSpec.datacenterConfig.Namespace != cloudStackClusterSpec.Namespace {
-		return fmt.Errorf(
-			"CloudStackDatacenterConfig and Cluster objects must have the same namespace: CloudstackDatacenterConfig namespace=%s; Cluster namespace=%s",
-			cloudStackClusterSpec.datacenterConfig.Namespace,
-			cloudStackClusterSpec.Namespace,
-		)
-	}
-
-	if controlPlaneMachineConfig.Spec.Template.Value == "" {
-		return fmt.Errorf("control plane CloudStackMachineConfig template is not set. Default template is not supported in CloudStack, please provide a template name")
-	}
-
-	if err = v.validateMachineConfig(ctx, cloudStackClusterSpec.datacenterConfig.Spec, controlPlaneMachineConfig); err != nil {
-		return fmt.Errorf("control plane machine config validation failed: %v", err)
-	}
-	if controlPlaneMachineConfig.Spec.Template != workerNodeGroupMachineConfig.Spec.Template {
-		if workerNodeGroupMachineConfig.Spec.Template.Value == "" {
-			return fmt.Errorf("worker CloudStackMachineConfig template is not set. Default template is not supported in CloudStack, please provide a template name")
+		if len(machineConfig.Spec.Users) <= 0 {
+			machineConfig.Spec.Users = []anywherev1.UserConfiguration{{}}
 		}
-		if controlPlaneMachineConfig.Spec.Template != workerNodeGroupMachineConfig.Spec.Template {
-			return fmt.Errorf("control plane and worker nodes must have the same template specified")
+		if len(machineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
+			machineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
 		}
-		if err = v.validateMachineConfig(ctx, cloudStackClusterSpec.datacenterConfig.Spec, workerNodeGroupMachineConfig); err != nil {
-			return fmt.Errorf("workload machine config validation failed: %v", err)
-		}
-	}
-	logger.MarkPass("Control plane and Workload templates validated")
-
-	if etcdMachineConfig != nil {
-		if etcdMachineConfig.Spec.Template.Value == "" {
-			return fmt.Errorf("etcd CloudStackMachineConfig template is not set. Default template is not supported in CloudStack, please provide a template name")
+		if machineConfig.Spec.Template.Value == "" {
+			return fmt.Errorf("template is not set for CloudStackMachineConfig %s. Default template is not supported in CloudStack, please provide a template name", machineConfig.Name)
 		}
 		if err = v.validateMachineConfig(ctx, cloudStackClusterSpec.datacenterConfig.Spec, etcdMachineConfig); err != nil {
-			return fmt.Errorf("etcd machine config validation failed: %v", err)
-		}
-		if etcdMachineConfig.Spec.Template != controlPlaneMachineConfig.Spec.Template {
-			return fmt.Errorf("control plane and etcd machines must have the same template specified")
+			return fmt.Errorf("machine config %s validation failed: %v", machineConfig.Name, err)
 		}
 	}
+	logger.MarkPass("Validated cluster Machine Configs")
 
 	return nil
 }
