@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	tinkHardware "github.com/tinkerbell/tink/protos/hardware"
+	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -136,7 +136,7 @@ func TestTinkerbellProviderGenerateDeploymentFile(t *testing.T) {
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
-	tinkctl.EXPECT().GetHardware(ctx).Return([]*tinkHardware.Hardware{}, nil)
+	tinkctl.EXPECT().GetHardware(ctx).Return([]*tinkhardware.Hardware{}, nil)
 
 	provider := newProviderWithKubectlTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkerbellClients)
 	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
@@ -166,7 +166,7 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
-	tinkctl.EXPECT().GetHardware(ctx).Return([]*tinkHardware.Hardware{}, nil)
+	tinkctl.EXPECT().GetHardware(ctx).Return([]*tinkhardware.Hardware{}, nil)
 	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
 	provider := newProviderWithKubectlTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkerbellClients)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {

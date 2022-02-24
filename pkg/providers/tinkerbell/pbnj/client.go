@@ -23,6 +23,7 @@ type BmcSecretConfig struct {
 	Vendor   string
 }
 
+// NewPBNJClient client establishes a connection with PBnJ which requires "PBNJ_GRPC_AUTHORITY" as an env variables and returns a PBnJClient instance
 func NewPBNJClient(pbnjGrpcAuth string) (*Pbnj, error) {
 	os.Setenv(PbnjGrpcAuth, pbnjGrpcAuth)
 	defer os.Unsetenv(PbnjGrpcAuth)
