@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -28,18 +26,4 @@ func ValidateManagementCluster(ctx context.Context, k validations.KubectlClient,
 		return err
 	}
 	return k.ValidateEKSAClustersCRD(ctx, cluster)
-}
-
-func ValidateNodeLabelsSupport(clusterSpec *cluster.Spec) error {
-	if !features.IsActive(features.NodeLabelsSupport()) {
-		if len(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Labels) > 0 {
-			return fmt.Errorf("Node labels feature is not enabled. Please set the env variable NODE_LABELS_SUPPORT.")
-		}
-		for _, workerNodeGroup := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-			if len(workerNodeGroup.Labels) > 0 {
-				return fmt.Errorf("Node labels feature is not enabled. Please set the env variable NODE_LABELS_SUPPORT.")
-			}
-		}
-	}
-	return nil
 }
