@@ -3,6 +3,7 @@ package factory
 import (
 	"errors"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -19,6 +20,7 @@ type ProviderFactory struct {
 	DockerKubectlClient       docker.ProviderKubectlClient
 	VSphereGovcClient         vsphere.ProviderGovcClient
 	VSphereKubectlClient      vsphere.ProviderKubectlClient
+	CloudStackKubectlClient   cloudstack.ProviderKubectlClient
 	TinkerbellKubectlClient   tinkerbell.ProviderKubectlClient
 	TinkerbellTinkClient      tinkerbell.ProviderTinkClient
 	Writer                    filewriter.FileWriter
@@ -38,15 +40,25 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 		}
 		return vsphere.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.VSphereGovcClient, p.VSphereKubectlClient, p.Writer, time.Now, skipIpCheck, p.ClusterResourceSetManager), nil
 	case v1alpha1.TinkerbellDatacenterKind:
-		datacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFileName)
+		datacenterConfig, err := v1alpha1.GetVSphereDatacenterConfig(clusterConfigFileName)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFileName, err)
 		}
-		machineConfigs, err := v1alpha1.GetTinkerbellMachineConfigs(clusterConfigFileName)
+		machineConfigs, err := v1alpha1.GetVSphereMachineConfigs(clusterConfigFileName)
 		if err != nil {
 			return nil, fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFileName, err)
 		}
-		return tinkerbell.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.TinkerbellKubectlClient, p.TinkerbellTinkClient, time.Now, skipIpCheck, hardwareConfigFile), nil
+		return vsphere.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.VSphereGovcClient, p.VSphereKubectlClient, p.Writer, time.Now, skipIpCheck, p.ClusterResourceSetManager), nil
+	case v1alpha1.CloudStackDatacenterKind:
+		datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(clusterConfigFileName)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFileName, err)
+		}
+		machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(clusterConfigFileName)
+		if err != nil {
+			return nil, fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFileName, err)
+		}
+		return cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.CloudStackKubectlClient, p.Writer, time.Now, skipIpCheck), nil
 	case v1alpha1.DockerDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetDockerDatacenterConfig(clusterConfigFileName)
 		if err != nil {
