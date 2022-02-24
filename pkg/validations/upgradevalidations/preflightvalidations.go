@@ -22,12 +22,6 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 	upgradeValidations = append(
 		upgradeValidations,
 		validations.ValidationResult{
-			Name:        "validate node labels support",
-			Remediation: fmt.Sprintf("ensure %v env variable is set", features.NodeLabelsSupportEnvVar),
-			Err:         validations.ValidateNodeLabelsSupport(u.Opts.Spec),
-			Silent:      true,
-		},
-		validations.ValidationResult{
 			Name:        "validate kubernetes version 1.22 support",
 			Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s122SupportEnvVar),
 			Err:         validations.ValidateK8s122Support(u.Opts.Spec),

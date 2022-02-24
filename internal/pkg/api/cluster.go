@@ -70,6 +70,15 @@ func WithControlPlaneTaints(taints []corev1.Taint) ClusterFiller {
 	}
 }
 
+func WithControlPlaneLabel(key string, val string) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		if c.Spec.ControlPlaneConfiguration.Labels == nil {
+			c.Spec.ControlPlaneConfiguration.Labels = map[string]string{}
+		}
+		c.Spec.ControlPlaneConfiguration.Labels[key] = val
+	}
+}
+
 func WithPodCidr(podCidr string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		c.Spec.ClusterNetwork.Pods.CidrBlocks = []string{podCidr}
