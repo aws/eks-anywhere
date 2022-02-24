@@ -73,6 +73,18 @@ func TestProviderFactoryBuildProvider(t *testing.T) {
 			},
 		},
 		{
+			name: "CloudStack cluster",
+			args: args{
+				clusterConfig: &v1alpha1.Cluster{Spec: v1alpha1.ClusterSpec{
+					DatacenterRef: v1alpha1.Ref{
+						Kind: v1alpha1.CloudStackDatacenterKind,
+					},
+				}},
+				clusterConfigFileName: "testdata/cluster_cloudstack.yaml",
+			},
+			wantErr: fmt.Errorf("cloudstack provider is not yet supported"),
+		},
+		{
 			name: "Aws cluster not supported",
 			args: args{
 				clusterConfig: &v1alpha1.Cluster{Spec: v1alpha1.ClusterSpec{
