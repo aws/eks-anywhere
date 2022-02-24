@@ -8,12 +8,10 @@ import (
 	"net"
 	"os"
 	"path"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -29,8 +27,15 @@ const (
 	testClusterConfigMainFilename = "cluster_main.yaml"
 	testDataDir                   = "testdata"
 	expectedCloudStackName        = "cloudstack"
-	expectedCloudStackCloudConfig = "W0dsb2JhbF0KYXBpLWtleSAgICA9IHRlc3Qta2V5CnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldAphcGktdXJsICAgID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCgo="
 	eksd119Release                = "kubernetes-1-19-eks-4"
+
+	/* Generated from ini file (like the following) then b64 encoded: `cat fake-cloud-config.ini | base64 | tr -d '\n'`
+	[Global]
+	api-key = test-key
+	secret-key = secret-key
+	api-url = http://1.1.1.1:8080/client/api
+	 */
+	expectedCloudStackCloudConfig = "W0dsb2JhbF0KYXBpLWtleSAgICA9IHRlc3Qta2V5CnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldAphcGktdXJsICAgID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCgo="
 )
 
 type DummyNetClient struct{}
@@ -117,51 +122,6 @@ func setupContext() {
 	var tctx testContext
 	tctx.SaveContext()
 
-}
-
-type providerTest struct {
-	*WithT
-	ctx                                context.Context
-	managementCluster, workloadCluster *types.Cluster
-	provider                           *cloudstackProvider
-	cluster                            *v1alpha1.Cluster
-	clusterSpec                        *cluster.Spec
-	datacenterConfig                   *v1alpha1.CloudStackDatacenterConfig
-	machineConfigs                     map[string]*v1alpha1.CloudStackMachineConfig
-	kubectl                            *mocks.MockProviderKubectlClient
-}
-
-func newProviderTest(t *testing.T) *providerTest {
-	ctrl := gomock.NewController(t)
-	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-	datacenterConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	machineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-	provider := newProvider(
-		t,
-		datacenterConfig,
-		machineConfigs,
-		clusterConfig,
-		kubectl,
-	)
-	return &providerTest{
-		WithT: NewWithT(t),
-		ctx:   context.Background(),
-		managementCluster: &types.Cluster{
-			Name:           "m-cluster",
-			KubeconfigFile: "kubeconfig-m.kubeconfig",
-		},
-		workloadCluster: &types.Cluster{
-			Name:           "test",
-			KubeconfigFile: "kubeconfig-w.kubeconfig",
-		},
-		provider:           provider,
-		cluster:            clusterConfig,
-		clusterSpec:        givenClusterSpec(t, testClusterConfigMainFilename),
-		datacenterConfig:   datacenterConfig,
-		machineConfigs:     machineConfigs,
-		kubectl:            kubectl,
-	}
 }
 
 func TestNewProvider(t *testing.T) {
@@ -338,16 +298,6 @@ func thenErrorExpected(t *testing.T, expected string, err error) {
 	}
 	actual := err.Error()
 	if expected != actual {
-		t.Fatalf("Expected=<%s> actual=<%s>", expected, actual)
-	}
-}
-
-func thenErrorContainsExpected(t *testing.T, expected string, err error) {
-	if err == nil {
-		t.Fatalf("Expected=<%s> actual=<nil>", expected)
-	}
-	actual := err.Error()
-	if !strings.Contains(actual, expected) {
 		t.Fatalf("Expected=<%s> actual=<%s>", expected, actual)
 	}
 }
@@ -728,26 +678,6 @@ func TestSetupAndValidateSSHAuthorizedKeyEmptyAllMachineConfigs(t *testing.T) {
 	}
 	if provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] != provider.machineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys[0] {
 		t.Fatalf("sshAuthorizedKey not the same for controlplane and etcd machines")
-	}
-}
-
-func TestSetupAndValidateUsersNil(t *testing.T) {
-	ctx := context.Background()
-	clusterSpec := givenEmptyClusterSpec()
-	fillClusterSpecWithClusterConfig(clusterSpec, givenClusterConfig(t, testClusterConfigMainFilename))
-	provider := givenProvider(t)
-	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[controlPlaneMachineConfigName].Spec.Users = nil
-	workerNodeMachineConfigName := clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	provider.machineConfigs[workerNodeMachineConfigName].Spec.Users = nil
-	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	provider.machineConfigs[etcdMachineConfigName].Spec.Users = nil
-	var tctx testContext
-	tctx.SaveContext()
-
-	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	if err != nil {
-		t.Fatalf("provider.SetupAndValidateCreateCluster() err = %v, want err = nil", err)
 	}
 }
 

@@ -371,6 +371,24 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
+	if clusterSpec.IsManaged() {
+		for _, mc := range p.MachineConfigs() {
+			em, err := p.providerKubectlClient.SearchCloudStackMachineConfig(ctx, mc.GetName(), clusterSpec.ManagementCluster.KubeconfigFile, mc.GetNamespace())
+			if err != nil {
+				return err
+			}
+			if len(em) > 0 {
+				return fmt.Errorf("CloudStackMachineConfig %s already exists", mc.GetName())
+			}
+		}
+		existingDatacenter, err := p.providerKubectlClient.SearchCloudStackDatacenterConfig(ctx, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Namespace)
+		if err != nil {
+			return err
+		}
+		if len(existingDatacenter) > 0 {
+			return fmt.Errorf("CloudStackDeployment %s already exists", p.datacenterConfig.Name)
+		}
+	}
 	if p.skipIpCheck {
 		logger.Info("Skipping check for whether control plane ip is in use")
 		return nil
