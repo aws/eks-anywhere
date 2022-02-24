@@ -277,30 +277,6 @@ spec:
           status:
             description: ClusterStatus defines the observed state of Cluster
             properties:
-              eksdReleaseRef:
-                description: EksdReleaseRef defines the properties of the EKS-D object
-                  on the cluster
-                properties:
-                  apiVersion:
-                    description: ApiVersion refers to the EKS-D API version
-                    type: string
-                  kind:
-                    description: Kind refers to the Release kind for the EKS-D object
-                    type: string
-                  name:
-                    description: Name refers to the name of the EKS-D object on the
-                      cluster
-                    type: string
-                  namespace:
-                    description: Namespace refers to the namespace for the EKS-D release
-                      resources
-                    type: string
-                required:
-                - apiVersion
-                - kind
-                - name
-                - namespace
-                type: object
               conditions:
                 items:
                   description: Condition defines an observation of a Cluster API resource
@@ -345,6 +321,30 @@ spec:
                   - type
                   type: object
                 type: array
+              eksdReleaseRef:
+                description: EksdReleaseRef defines the properties of the EKS-D object
+                  on the cluster
+                properties:
+                  apiVersion:
+                    description: ApiVersion refers to the EKS-D API version
+                    type: string
+                  kind:
+                    description: Kind refers to the Release kind for the EKS-D object
+                    type: string
+                  name:
+                    description: Name refers to the name of the EKS-D object on the
+                      cluster
+                    type: string
+                  namespace:
+                    description: Namespace refers to the namespace for the EKS-D release
+                      resources
+                    type: string
+                required:
+                - apiVersion
+                - kind
+                - name
+                - namespace
+                type: object
               failureMessage:
                 description: Descriptive message about a fatal problem while reconciling
                   a cluster
