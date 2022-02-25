@@ -11,6 +11,7 @@ const (
 	CapiWebhookSystemNamespace              = "capi-webhook-system"
 	CapvSystemNamespace                     = "capv-system"
 	CapaSystemNamespace                     = "capa-system"
+	CapasSystemNamespace                    = "capas-system"
 	CertManagerNamespace                    = "cert-manager"
 	DefaultNamespace                        = "default"
 	EtcdAdmBootstrapProviderSystemNamespace = "etcdadm-bootstrap-provider-system"
@@ -34,4 +35,9 @@ const (
 	VSphereCredentialsName = "vsphere-credentials"
 	EksaLicenseName        = "eksa-license"
 	EksaPackagesName       = "eksa-packages"
+
+	// TODO: tmp solution to support private ECR, remove when CAPAS images is public.
+	EcrRegistrySecretName = "ecrcreds"
+	EcrRegistryUserName   = "AWS"
+	EcrRegistry           = "382577505035.dkr.ecr.us-west-2.amazonaws.com"
 )
