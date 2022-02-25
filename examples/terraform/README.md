@@ -24,9 +24,18 @@ how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provi
 - if you don't already have an existing EKS-A cluster, follow [the official instructions to create one](https://anywhere.eks.amazonaws.com/docs/getting-started/install/)
 
 1. Set up the Terraform Kubernetes provider
+   Make sure your KUBECONFIG environment variable is set
    ```bash
    export KUBECONFIG=/path/to/my/kubeconfig.kubeconfig
-   cat << EOF >> ./provider.tf
+   ```
+
+   Set an environment variable with your cluster name:
+   ```bash
+   export MY_EKSA_CLUSTER="myClusterName"
+   ```
+
+   ```bash
+   cat << EOF > ./provider.tf
    provider "kubernetes" {
      config_path    = "${KUBECONFIG}"
    }
@@ -37,16 +46,28 @@ how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provi
    - Install [tfk8s](https://github.com/jrhouston/tfk8s#install)
    - Convert the manifest into Terraform HCL:
    ```bash
-   export MY_EKSA_CLUSTER="myClusterName"
    kubectl get cluster ${MY_EKSA_CLUSTER} -o yaml | tfk8s --strip -o ${MY_EKSA_CLUSTER}.tf
    ``` 
 
 3. Configure the Terraform cluster resource definition generated in step 2
+   - Set `metadata.generation` as a [computed field](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/manifest#computed-fields). Add the following to your cluster resource configuration
+   ```bash
+   computed_fields = ["metadata.generated"]
+   ```
+   - Configure the field manager to [force reconcile managed resources](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/manifest#field_manager). Add the following configuration block to your cluster resource:
+   ```bash
+   field_manager {
+     force_conflicts = true
+   }
+   ```
    - Add the `namespace` `default` to the `metadata` of the cluster
    - Remove the `generation` field from the `metadata` of the cluster
-
-   - Your cluster manifest metadata should look like this (`generation` may be different):
+   - Your Terraform cluster resource should look similar to this:
     ```bash
+    computed_fields = ["metadata.generated"]
+    field_manager {
+      force_conflicts = true
+    }
     manifest = {
       "apiVersion" = "anywhere.eks.amazonaws.com/v1alpha1"
       "kind" = "Cluster"
@@ -56,21 +77,8 @@ how to scale your EKS Anywhere worker nodes using the Terraform Kubernetes provi
     }
     ```
 
-   Set `metadata.generation` as a [computed field](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/manifest#computed-fields)
-   - Add the following to your cluster resource configuration
-   computed_fields = ["metadata.generated"]
-
-   Configure the field manager to [force reconcile managed resources](https://registry.terraform.io/providers/hashicorp/kubernetes/latest/docs/resources/manifest#field_manager)
-   - Add the following configuration block to your cluster resource:
-   ```bash
-   field_manager {
-     force_conflicts = true
-   }
-   ```
-
 4. Import your EKS Anywhere cluster into terraform state:
    ```bash
-   export MY_EKSA_CLUSTER="myClusterName"
    terraform init
    terraform import kubernetes_manifest.cluster_${MY_EKSA_CLUSTER} "apiVersion=anywhere.eks.amazonaws.com/v1alpha1,kind=Cluster,namespace=default,name=${MY_EKSA_CLUSTER}"
    ```
