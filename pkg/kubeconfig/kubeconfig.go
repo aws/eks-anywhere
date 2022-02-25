@@ -5,9 +5,14 @@ import (
 	"path/filepath"
 )
 
-// FromClusterName formats an expected Kubeconfig path for EKS-A clusters.
+// FromClusterFormat defines the format of the kubeconfig of the
+const FromClusterFormat = "%s-eks-a-cluster.kubeconfig"
+
+// FromClusterName formats an expected Kubeconfig path for EKS-A clusters. This includes a subdirecftory
+// named after the cluster name. For example, if the clusterName is 'sandbox' the generated path would be
+// sandbox/sandbox-eks-a-cluster.kubeconfig
 func FromClusterName(clusterName string) string {
-	return filepath.Join(clusterName, fmt.Sprintf("%s-eks-a-cluster.kubeconfig", clusterName))
+	return filepath.Join(clusterName, fmt.Sprintf(FromClusterFormat, clusterName))
 }
 
 type missingFileError struct {
@@ -15,13 +20,11 @@ type missingFileError struct {
 	Path        string
 }
 
+// NewMissingFileError creates a missing kubeconfig file error.
 func NewMissingFileError(cluster, path string) error {
-	return missingFileError{
-		ClusterName: cluster,
-		Path:        path,
-	}
+	return missingFileError{Path: path}
 }
 
 func (m missingFileError) Error() string {
-	return fmt.Sprintf("kubeconfig missing for cluster '%v': kubeconfig path=%v", m.ClusterName, m.Path)
+	return fmt.Sprintf("kubeconfig file missing: path=%v", m.Path)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -88,8 +87,6 @@ func (cc *createClusterOptions) validate(ctx context.Context) error {
 func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 	ctx := cmd.Context()
 
-	fmt.Fprintf(os.Stderr, "Create cluster run\n")
-
 	clusterSpec, err := newClusterSpec(cc.clusterOptions)
 	if err != nil {
 		return err
@@ -125,7 +122,6 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 		}
 	}
 
-	fmt.Printf("Before create\n")
 	createCluster := workflows.NewCreate(
 		deps.Bootstrapper,
 		deps.Provider,
@@ -159,7 +155,5 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 	}
 	createValidations := createvalidations.New(validationOpts)
 
-	fmt.Printf("Before run\n%+v\n%+v\n", cluster, validationOpts)
-	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
-	return err
+	return createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
 }
