@@ -49,9 +49,9 @@ metadata:
   name: test
 spec:
   tinkerbellCertURL: "http://1.2.3.4/cert"
-  tinkerbellGRPCAuth: "1.2.3.4:0000"
+  tinkerbellGRPCAuth: "1.2.3.4:99"
   tinkerbellIP: "1.2.3.4"
-  tinkerbellPBnJGRPCAuth: "1.2.3.4:00000"
+  tinkerbellPBnJGRPCAuth: "1.2.3.4:99"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

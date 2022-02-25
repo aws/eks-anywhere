@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -42,11 +43,11 @@ func (v *Validator) ValidateTinkerbellConfig(ctx context.Context, datacenterConf
 		return err
 	}
 
-	if err := v.validatetinkerbellGRPCAuth(ctx, datacenterConfig.Spec.TinkerbellGRPCAuth); err != nil {
+	if err := v.validateTinkerbellGRPCAuth(ctx, datacenterConfig.Spec.TinkerbellGRPCAuth); err != nil {
 		return err
 	}
 
-	if err := v.validatetinkerbellPBnJGRPCAuth(ctx, datacenterConfig.Spec.TinkerbellPBnJGRPCAuth); err != nil {
+	if err := v.validateTinkerbellPBnJGRPCAuth(ctx, datacenterConfig.Spec.TinkerbellPBnJGRPCAuth); err != nil {
 		return err
 	}
 	logger.MarkPass("Tinkerbell Config is valid")
@@ -224,17 +225,25 @@ func (v *Validator) validateTinkerbellCertURL(ctx context.Context, tinkerbellCer
 	return nil
 }
 
-func (v *Validator) validatetinkerbellGRPCAuth(ctx context.Context, tinkerbellGRPCAuth string) error {
+func (v *Validator) validateTinkerbellGRPCAuth(ctx context.Context, tinkerbellGRPCAuth string) error {
 	if tinkerbellGRPCAuth == "" {
 		return fmt.Errorf("tinkerbellGRPCAuth is required")
+	}
+
+	if err := validateAddressWithPort(tinkerbellGRPCAuth); err != nil {
+		return fmt.Errorf("invalid grpc authority: %v", err)
 	}
 
 	return nil
 }
 
-func (v *Validator) validatetinkerbellPBnJGRPCAuth(ctx context.Context, tinkerbellPBnJGRPCAuth string) error {
+func (v *Validator) validateTinkerbellPBnJGRPCAuth(ctx context.Context, tinkerbellPBnJGRPCAuth string) error {
 	if tinkerbellPBnJGRPCAuth == "" {
 		return fmt.Errorf("tinkerbellPBnJGRPCAuth is required")
+	}
+
+	if err := validateAddressWithPort(tinkerbellPBnJGRPCAuth); err != nil {
+		return fmt.Errorf("invalid pbnj authority: %v", err)
 	}
 
 	return nil
@@ -246,4 +255,22 @@ func sumWorkerNodeCounts(nodes []v1alpha1.WorkerNodeGroupConfiguration) int {
 		requestedNodesCount += workerSpec.Count
 	}
 	return requestedNodesCount
+}
+
+// validateAddressWithPort validates address is a hostname:port combination. The port is required.
+func validateAddressWithPort(address string) error {
+	host, port, err := net.SplitHostPort(address)
+	if err != nil {
+		return err
+	}
+
+	if host == "" {
+		return fmt.Errorf("missing host: %v", address)
+	}
+
+	if !networkutils.IsPortValid(port) {
+		return fmt.Errorf("invalid port: %v", address)
+	}
+
+	return nil
 }
