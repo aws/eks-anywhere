@@ -18,6 +18,10 @@ CLI_REPO_URL?=https://github.com/aws/eks-anywhere.git
 BUILD_REPO_URL?=https://github.com/aws/eks-anywhere-build-tooling.git
 BUILD_REPO_BRANCH_NAME?=main
 CLI_REPO_BRANCH_NAME?=main
+ifeq ($(CI),true)
+BUILD_REPO_BRANCH_NAME=$(PULL_BASE_REF)
+CLI_REPO_BRANCH_NAME=$(PULL_BASE_REF)
+endif
 ifeq ($(CODEBUILD_CI),)
 DRY_RUN=true
 SOURCE_BUCKET=projectbuildpipeline-857-pipelineoutputartifactsb-10ajmk30khe3f
