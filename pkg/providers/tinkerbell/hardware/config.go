@@ -69,8 +69,11 @@ func (hc *HardwareConfig) setHardwareConfigFromFile(hardwareFileName string) err
 	return nil
 }
 
-func (hc *HardwareConfig) ValidateHardware(skipBmcCheck bool) error {
-	bmcRefMap := hc.initBmcRefMap()
+func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool) error {
+	var bmcRefMap = map[string]*tinkv1alpha1.Hardware{}
+	if !skipPowerActions {
+		bmcRefMap = hc.initBmcRefMap()
+	}
 	for _, hw := range hc.Hardwares {
 		if hw.Name == "" {
 			return fmt.Errorf("hardware name is required")
@@ -79,7 +82,7 @@ func (hc *HardwareConfig) ValidateHardware(skipBmcCheck bool) error {
 		if hw.Spec.ID == "" {
 			return fmt.Errorf("hardware: %s ID is required", hw.Name)
 		}
-		if !skipBmcCheck {
+		if !skipPowerActions {
 			if hw.Spec.BmcRef == "" {
 				return fmt.Errorf("bmcRef not present in hardware %s", hw.Name)
 			}
