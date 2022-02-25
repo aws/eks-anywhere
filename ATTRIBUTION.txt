@@ -68,6 +68,9 @@ https://github.com/mrajashree/etcdadm-bootstrap-provider
 ** github.com/mrajashree/etcdadm-controller/api/v1beta1; version v1.0.0-rc3 --
 https://github.com/mrajashree/etcdadm-controller
 
+** github.com/mwitkow/go-proto-validators; version v0.3.2 --
+https://github.com/mwitkow/go-proto-validators
+
 ** github.com/opencontainers/go-digest; version v1.0.0 --
 https://github.com/opencontainers/go-digest
 
@@ -94,6 +97,9 @@ https://github.com/spf13/cobra
 
 ** github.com/pokearu/cluster-api-provider-tinkerbell; version v0.0.0-20220128001529-79d851d0861f --
 https://github.com/pokearu/cluster-api-provider-tinkerbell
+
+** github.com/tinkerbell/pbnj; version v0.0.0-20211027151347-2fb19ffbe7ad --
+https://github.com/tinkerbell/pbnj
 
 ** github.com/tinkerbell/tink; version v0.6.0 --
 https://github.com/tinkerbell/tink
