@@ -358,7 +358,7 @@ unit-test:
 
 .PHONY: local-e2e
 local-e2e: e2e ## Run e2e test's locally
-	./bin/e2e.test -test.v -test.run $(LOCAL_E2E_TESTS)
+	./bin/e2e.test -test.v -test.run $(LOCAL_E2E_TESTS) $(GO_TEST_FLAGS)
 
 .PHONY: capd-test
 capd-test: ## Run default e2e capd test locally

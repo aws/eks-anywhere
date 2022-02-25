@@ -81,7 +81,7 @@ func (dc *deleteClusterOptions) validate(ctx context.Context, args []string) err
 
 	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, dc.wConfig)
 	if !validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
-		return missingKubeconfigError{clusterConfig.Name, kubeconfigPath}
+		return kubeconfig.NewMissingFileError(clusterConfig.Name, kubeconfigPath)
 	}
 
 	return nil
