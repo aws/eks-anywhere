@@ -19,7 +19,7 @@ As an EKS Anywhere user, I want to be able to use a generic git repository with 
 The goal of this design is to unlock the ability for EKS-A users to use any git provider which supports generic authentication methods like SSH authentication as their GitOps provider.
 
 ## Tenants
-- Supports any generic generic git providers with password/SSH auth
+- Supports any generic git providers with password/SSH auth
 - Minimal -- simple and straight forward
 - No tight coupling preventing abstraction of Flux configuration into a curated package in the future
 
