@@ -515,7 +515,7 @@ func (c *ClusterManager) setupEcr(ctx context.Context, cluster *types.Cluster) e
 	if err != nil {
 		return err
 	}
-	ecrPassword, err := aws.GetEcrLoginPassword()
+	ecrCreds, err := aws.GetEcrCredentials()
 	if err != nil {
 		return err
 	}
@@ -523,7 +523,7 @@ func (c *ClusterManager) setupEcr(ctx context.Context, cluster *types.Cluster) e
 		return fmt.Errorf("error creating namespace %s in cluster: %v", constants.CapasSystemNamespace, err)
 	}
 
-	if err = c.clusterClient.CreateDockerRegistrySecret(ctx, constants.EcrRegistrySecretName, constants.EcrRegistry, constants.EcrRegistryUserName, ecrPassword, executables.WithCluster(cluster), executables.WithNamespace(constants.CapasSystemNamespace)); err != nil {
+	if err = c.clusterClient.CreateDockerRegistrySecret(ctx, constants.EcrRegistrySecretName, constants.EcrRegistry, ecrCreds.Username, ecrCreds.Password, executables.WithCluster(cluster), executables.WithNamespace(constants.CapasSystemNamespace)); err != nil {
 		return fmt.Errorf("error creating ecr registry secret in cluster: %v", err)
 	}
 	return nil

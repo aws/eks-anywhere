@@ -142,7 +142,6 @@ func (r *ReleaseConfig) GetSnowBundle(imageDigests map[string]string) (anywherev
 
 	bundle := anywherev1alpha1.SnowBundle{
 		Version:    version,
-		KubeProxy:  bundleImageArtifacts["kube-rbac-proxy"],
 		KubeVip:    bundleImageArtifacts["kube-vip"],
 		Components: bundleManifestArtifacts["infrastructure-components.yaml"],
 		Metadata:   bundleManifestArtifacts["metadata.yaml"],
