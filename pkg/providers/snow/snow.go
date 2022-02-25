@@ -34,16 +34,11 @@ type snowProvider struct {
 	datacenterConfig      *v1alpha1.SnowDatacenterConfig
 	machineConfigs        map[string]*v1alpha1.SnowMachineConfig
 	clusterConfig         *v1alpha1.Cluster
-	awsClient             AwsClient
 	providerKubectlClient ProviderKubectlClient
 	writer                filewriter.FileWriter
 	templateBuilder       *SnowTemplateBuilder
 	retrier               *retrier.Retrier
 	bootstrapCreds        bootstrapCreds
-}
-
-type AwsClient interface {
-	GetEcrLoginPassword() (string, error)
 }
 
 type ProviderKubectlClient interface{}
