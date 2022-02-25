@@ -74,7 +74,7 @@ We will take advantage of this fact to translate a basic, provider-agnostic `git
 
 So, how does will this new sequence flow? Let's take a look at how the GitOps bootstrap process would flow during cluster creation.
 
-![GitOps Bootstrap Flow](images/gitops-bootstrap-flow.svg)
+![GitOps Bootstrap Flow](images/gitops-flow.png)
 
 -  check if the user provided repository exists, using a git provider specific implementation
     - generic git provider will use `git ls-remote` or similar to validate existence of remote and branch ref. 
