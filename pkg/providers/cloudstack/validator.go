@@ -11,17 +11,16 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
+// TODO: Move this to cloudstack.go provider file
 const controlEndpointDefaultPort = "6443"
 
 type Validator struct {
 	cmk            ProviderCmkClient
-	machineConfigs map[string]*anywherev1.CloudStackMachineConfig
 }
 
-func NewValidator(cmk ProviderCmkClient, machineConfigs map[string]*anywherev1.CloudStackMachineConfig) *Validator {
+func NewValidator(cmk ProviderCmkClient) *Validator {
 	return &Validator{
 		cmk:            cmk,
-		machineConfigs: machineConfigs,
 	}
 }
 
@@ -100,27 +99,33 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 			cloudStackClusterSpec.Namespace,
 		)
 	}
-
-	workerNodeGroupMachineConfig, ok := v.machineConfigs[cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
-	if !ok {
-		return fmt.Errorf("cannot find CloudStackMachineConfig %v for worker nodes", cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name)
+	if len(cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) > 1 {
+		return fmt.Errorf("multiple worker node groups are not yet supported by the Cloudstack provider")
 	}
-	if controlPlaneMachineConfig.Spec.Template != workerNodeGroupMachineConfig.Spec.Template {
+
+	for _, workerNodeGroupConfiguration := range cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		workerNodeGroupMachineConfig, ok := cloudStackClusterSpec.machineConfigsLookup[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		if !ok {
+			return fmt.Errorf("cannot find CloudStackMachineConfig %v for worker nodes", workerNodeGroupConfiguration.MachineGroupRef.Name)
+		}
 		if controlPlaneMachineConfig.Spec.Template != workerNodeGroupMachineConfig.Spec.Template {
 			return fmt.Errorf("control plane and worker nodes must have the same template specified")
 		}
 	}
 
-	hostWithPort, err := v.validateControlPlaneHostAndApplyDefaultPort(cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	isPortSpecified, err := v.validateControlPlaneHost(cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
 	if err != nil {
 		return fmt.Errorf("failed to validate controlPlaneConfiguration.Endpoint.Host: %v", err)
 	}
-	cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = hostWithPort
+	if !isPortSpecified {
+		v.setDefaultControlPlanePort(cloudStackClusterSpec)
+	}
 
-	for _, machineConfig := range v.machineConfigs {
+	for _, machineConfig := range cloudStackClusterSpec.machineConfigsLookup {
 		if machineConfig.Namespace != cloudStackClusterSpec.Namespace {
 			return fmt.Errorf(
-				"CloudStackMachineConfig and Cluster objects must have the same namespace: CloudStackMachineConfig namespace=%s; Cluster namespace=%s",
+				"CloudStackMachineConfig %s and Cluster objects must have the same namespace: CloudStackMachineConfig namespace=%s; Cluster namespace=%s",
+				machineConfig.Name,
 				machineConfig.Namespace,
 				cloudStackClusterSpec.Namespace,
 			)
@@ -162,20 +167,26 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfigS
 	return nil
 }
 
-func (v *Validator) validateControlPlaneHostAndApplyDefaultPort(pHost string) (string, error) {
+// validateControlPlaneHost checks the input host to see if it is a valid hostname. If it's valid, it checks the port
+// or returns a boolean indicating that there was no port specified, in which case the default port should be used
+func (v *Validator) validateControlPlaneHost(pHost string) (bool, error) {
 	_, port, err := net.SplitHostPort(pHost)
-	portWithHost := pHost
 	if err != nil {
 		if strings.Contains(err.Error(), "missing port") {
-			port = controlEndpointDefaultPort
-			portWithHost = fmt.Sprintf("%s:%s", pHost, port)
+			return false, nil
 		} else {
-			return "", fmt.Errorf("host %s is invalid: %v", pHost, err.Error())
+			return false, fmt.Errorf("host %s is invalid: %v", pHost, err.Error())
 		}
 	}
 	_, err = strconv.Atoi(port)
 	if err != nil {
-		return "", fmt.Errorf("host %s has an invalid port: %v", pHost, err.Error())
+		return false, fmt.Errorf("host %s has an invalid port: %v", pHost, err.Error())
 	}
-	return portWithHost, nil
+	return true, nil
+}
+
+func (v *Validator) setDefaultControlPlanePort(cloudStackClusterSpec *spec) {
+	cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = fmt.Sprintf("%s:%s",
+		cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
+		controlEndpointDefaultPort)
 }

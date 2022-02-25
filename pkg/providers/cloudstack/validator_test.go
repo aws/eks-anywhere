@@ -47,7 +47,7 @@ func thenErrorExpected(t *testing.T, expected string, err error) {
 func TestValidateCloudStackDatacenterConfig(t *testing.T) {
 	ctx := context.Background()
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
-	validator := NewValidator(cmk, nil)
+	validator := NewValidator(cmk)
 
 	cloudstackDatacenter, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {
@@ -64,7 +64,7 @@ func TestValidateCloudStackDatacenterConfig(t *testing.T) {
 func TestValidateCloudStackConnection(t *testing.T) {
 	ctx := context.Background()
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
-	validator := NewValidator(cmk, nil)
+	validator := NewValidator(cmk)
 
 	cmk.EXPECT().ValidateCloudStackConnection(ctx).Return(nil)
 	err := validator.validateCloudStackAccess(ctx)
@@ -76,7 +76,7 @@ func TestValidateCloudStackConnection(t *testing.T) {
 func TestValidateMachineConfigsNoControlPlaneEndpointIP(t *testing.T) {
 	ctx := context.Background()
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
-	validator := NewValidator(cmk, nil)
+	validator := NewValidator(cmk)
 	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
 	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {
@@ -91,6 +91,28 @@ func TestValidateMachineConfigsNoControlPlaneEndpointIP(t *testing.T) {
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 
 	thenErrorExpected(t, "cluster controlPlaneConfiguration.Endpoint.Host is not set or is empty", err)
+}
+
+func TestValidateMachineConfigsMultipleWorkerNodeGroupsUnsupported(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	validator := NewValidator(cmk)
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(path.Join(testDataDir, testClusterConfigMainFilename))
+	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = append(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0])
+	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get datacenter config from file")
+	}
+	cloudStackClusterSpec := &spec{
+		Spec:             clusterSpec,
+		datacenterConfig: datacenterConfig,
+		machineConfigsLookup: machineConfigs,
+	}
+
+	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
+
+	thenErrorExpected(t, "multiple worker node groups are not yet supported by the Cloudstack provider", err)
 }
 
 func TestValidateMachineConfigsNoNetwork(t *testing.T) {
@@ -108,8 +130,9 @@ func TestValidateMachineConfigsNoNetwork(t *testing.T) {
 	cloudStackClusterSpec := &spec{
 		Spec:             clusterSpec,
 		datacenterConfig: datacenterConfig,
+		machineConfigsLookup: machineConfigs,
 	}
-	validator := NewValidator(cmk, machineConfigs)
+	validator := NewValidator(cmk)
 	cloudStackClusterSpec.datacenterConfig.Spec.Network = v1alpha1.CloudStackResourceRef{
 		Value: "",
 		Type:  "id",
@@ -128,7 +151,7 @@ func TestSetupAndValidateUsersNil(t *testing.T) {
 		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
 	}
 	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	validator := NewValidator(cmk, machineConfigs)
+	validator := NewValidator(cmk)
 	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
@@ -139,11 +162,11 @@ func TestSetupAndValidateUsersNil(t *testing.T) {
 		machineConfigsLookup: machineConfigs,
 	}
 	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	validator.machineConfigs[controlPlaneMachineConfigName].Spec.Users = nil
+	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.Users = nil
 	workerNodeMachineConfigName := clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	validator.machineConfigs[workerNodeMachineConfigName].Spec.Users = nil
+	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.Users = nil
 	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	validator.machineConfigs[etcdMachineConfigName].Spec.Users = nil
+	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.Users = nil
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
@@ -162,7 +185,7 @@ func TestSetupAndValidateSshAuthorizedKeysNil(t *testing.T) {
 		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
 	}
 	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	validator := NewValidator(cmk, machineConfigs)
+	validator := NewValidator(cmk)
 	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
@@ -173,11 +196,11 @@ func TestSetupAndValidateSshAuthorizedKeysNil(t *testing.T) {
 		machineConfigsLookup: machineConfigs,
 	}
 	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	validator.machineConfigs[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys = nil
+	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.Users[0].SshAuthorizedKeys = nil
 	workerNodeMachineConfigName := clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
-	validator.machineConfigs[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys = nil
+	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.Users[0].SshAuthorizedKeys = nil
 	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-	validator.machineConfigs[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys = nil
+	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys = nil
 
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
@@ -196,7 +219,7 @@ func TestSetupAndValidateCreateClusterCPMachineGroupRefNil(t *testing.T) {
 		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
 	}
 	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	validator := NewValidator(cmk, machineConfigs)
+	validator := NewValidator(cmk)
 	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
@@ -220,7 +243,7 @@ func TestSetupAndValidateCreateClusterWorkerMachineGroupRefNil(t *testing.T) {
 		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
 	}
 	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	validator := NewValidator(cmk, machineConfigs)
+	validator := NewValidator(cmk)
 	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
@@ -244,7 +267,7 @@ func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNil(t *testing.T) {
 		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
 	}
 	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	validator := NewValidator(cmk, machineConfigs)
+	validator := NewValidator(cmk)
 	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
@@ -268,7 +291,7 @@ func TestSetupAndValidateCreateClusterCPMachineGroupRefNonexistent(t *testing.T)
 		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
 	}
 	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	validator := NewValidator(cmk, machineConfigs)
+	validator := NewValidator(cmk)
 	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
@@ -292,7 +315,7 @@ func TestSetupAndValidateCreateClusterWorkerMachineGroupRefNonexistent(t *testin
 		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
 	}
 	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	validator := NewValidator(cmk, machineConfigs)
+	validator := NewValidator(cmk)
 	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
@@ -316,7 +339,7 @@ func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNonexistent(t *testing.
 		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
 	}
 	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	validator := NewValidator(cmk, machineConfigs)
+	validator := NewValidator(cmk)
 	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
@@ -340,7 +363,7 @@ func TestSetupAndValidateCreateClusterTemplateDifferent(t *testing.T) {
 		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
 	}
 	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	validator := NewValidator(cmk, machineConfigs)
+	validator := NewValidator(cmk)
 	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
@@ -351,7 +374,7 @@ func TestSetupAndValidateCreateClusterTemplateDifferent(t *testing.T) {
 		machineConfigsLookup: machineConfigs,
 	}
 	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	validator.machineConfigs[controlPlaneMachineConfigName].Spec.Template = v1alpha1.CloudStackResourceRef{Value: "different", Type: "name"}
+	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.Template = v1alpha1.CloudStackResourceRef{Value: "different", Type: "name"}
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	thenErrorExpected(t, "control plane and etcd machines must have the same template specified", err)
@@ -374,7 +397,7 @@ func TestValidateMachineConfigsHappyCase(t *testing.T) {
 		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: machineConfigs,
 	}
-	validator := NewValidator(cmk, machineConfigs)
+	validator := NewValidator(cmk)
 	cmk.EXPECT().ValidateTemplatePresent(ctx, datacenterConfig.Spec.Domain,
 		datacenterConfig.Spec.Zone, datacenterConfig.Spec.Account, testTemplate).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(ctx, datacenterConfig.Spec.Domain,
@@ -397,7 +420,7 @@ func TestValidateCloudStackMachineConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
 	}
-	validator := NewValidator(cmk, machineConfigs)
+	validator := NewValidator(cmk)
 
 	for _, machineConfig := range machineConfigs {
 		cmk.EXPECT().ValidateTemplatePresent(ctx, "domain1", testZone, "admin", machineConfig.Spec.Template).Return(nil)
