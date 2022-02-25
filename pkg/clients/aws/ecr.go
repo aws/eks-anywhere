@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
+
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
