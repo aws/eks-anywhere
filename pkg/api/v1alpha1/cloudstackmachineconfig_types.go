@@ -109,6 +109,7 @@ type CloudStackMachineConfig struct {
 }
 
 func (c *CloudStackMachineConfig) OSFamily() OSFamily {
+	// This method must be defined to implement the providers.MachineConfig interface, but it's not actually used
 	return ""
 }
 
