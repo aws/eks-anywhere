@@ -158,7 +158,7 @@ type Github struct {
 }
 ```
 
-`GitOpsCOnfig.spec.flux.git.passwordEnvironmentVariable`
+`GitOpsConfig.spec.flux.git.passwordEnvironmentVariable`
 An environment variable which contains the password to be used when authenticating to the git repository
 
 `GitOpsCOnfig.spec.flux.git.privateKeyPath` 
