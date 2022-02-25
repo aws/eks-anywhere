@@ -535,7 +535,7 @@ func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidCP(t *testing.T) {
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: provided CloudStackMachineConfig sshAuthorizedKey is invalid: ssh: no key found", err)
+	thenErrorExpected(t, "failed setup and validations: provided MachineConfig sshAuthorizedKey is invalid: ssh: no key found", err)
 }
 
 func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidWorker(t *testing.T) {
@@ -550,7 +550,7 @@ func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidWorker(t *testing.T) {
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: provided CloudStackMachineConfig sshAuthorizedKey is invalid: ssh: no key found", err)
+	thenErrorExpected(t, "failed setup and validations: provided MachineConfig sshAuthorizedKey is invalid: ssh: no key found", err)
 }
 
 func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
@@ -565,7 +565,7 @@ func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: provided CloudStackMachineConfig sshAuthorizedKey is invalid: ssh: no key found", err)
+	thenErrorExpected(t, "failed setup and validations: provided MachineConfig sshAuthorizedKey is invalid: ssh: no key found", err)
 }
 
 func TestSetupAndValidateSSHAuthorizedKeyEmptyCP(t *testing.T) {
@@ -721,7 +721,7 @@ func TestGetMHCSuccess(t *testing.T) {
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
 	provider.providerKubectlClient = kubectl
 
-	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1alpha3
+	mhcTemplate := fmt.Sprintf(`apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineHealthCheck
 metadata:
   name: test-node-unhealthy-5m

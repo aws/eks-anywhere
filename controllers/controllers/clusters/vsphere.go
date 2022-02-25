@@ -3,6 +3,7 @@ package clusters
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"os"
 	"time"
 
@@ -196,7 +197,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 			values["vsphereEtcdSshAuthorizedKey"] = etcdUser.SshAuthorizedKeys[0]
 		}
 
-		values["etcdTemplateName"] = templateBuilder.EtcdMachineTemplateName(clusterName)
+		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, time.Now)
 	}
 	v.Log.Info("cluster", "name", cluster.Name)
 
