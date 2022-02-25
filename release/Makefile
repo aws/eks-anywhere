@@ -18,6 +18,10 @@ CLI_REPO_URL?=https://github.com/aws/eks-anywhere.git
 BUILD_REPO_URL?=https://github.com/aws/eks-anywhere-build-tooling.git
 BUILD_REPO_BRANCH_NAME?=main
 CLI_REPO_BRANCH_NAME?=main
+ifeq ($(CI),true)
+BUILD_REPO_BRANCH_NAME=$(PULL_BASE_REF)
+CLI_REPO_BRANCH_NAME=$(PULL_BASE_REF)
+endif
 ifeq ($(CODEBUILD_CI),)
 DRY_RUN=true
 SOURCE_BUCKET=projectbuildpipeline-857-pipelineoutputartifactsb-10ajmk30khe3f
@@ -109,7 +113,7 @@ dev-release: build ## Perform a dev release of EKS-A bundles and CLI manifests
 	scripts/release.sh $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(BUILD_REPO_URL) $(CLI_REPO_URL) $(BUILD_REPO_BRANCH_NAME) $(CLI_REPO_BRANCH_NAME) $(DRY_RUN)
 
 bundle-release: build ## Perform EKS-A versioned bundles release
-	scripts/bundle-release.sh $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(CLI_MIN_VERSION) $(CLI_MAX_VERSION) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(RELEASE_ENVIRONMENT) $(BUILD_REPO_BRANCH_NAME) $(BUILD_REPO_URL) $(CLI_REPO_URL)
+	scripts/bundle-release.sh $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(CLI_MIN_VERSION) $(CLI_MAX_VERSION) $(SOURCE_CONTAINER_REGISTRY) $(RELEASE_CONTAINER_REGISTRY) $(RELEASE_ENVIRONMENT) $(BUILD_REPO_BRANCH_NAME) $(CLI_REPO_BRANCH_NAME) $(BUILD_REPO_URL) $(CLI_REPO_URL)
 
 eks-a-release: build ## Perform EKS-A CLI release
 	scripts/eks-a-release.sh $(RELEASE_VERSION) $(REPO_ROOT)/release/downloaded-artifacts $(SOURCE_BUCKET) $(RELEASE_BUCKET) $(CDN) $(BUNDLE_NUMBER) $(RELEASE_NUMBER) $(RELEASE_ENVIRONMENT) $(CLI_REPO_BRANCH_NAME) $(BUILD_REPO_URL) $(CLI_REPO_URL)
