@@ -15,12 +15,12 @@ import (
 const controlEndpointDefaultPort = "6443"
 
 type Validator struct {
-	cmk            ProviderCmkClient
+	cmk ProviderCmkClient
 }
 
 func NewValidator(cmk ProviderCmkClient) *Validator {
 	return &Validator{
-		cmk:            cmk,
+		cmk: cmk,
 	}
 }
 

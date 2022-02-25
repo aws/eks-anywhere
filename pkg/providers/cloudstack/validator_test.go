@@ -99,14 +99,17 @@ func TestValidateMachineConfigsMultipleWorkerNodeGroupsUnsupported(t *testing.T)
 	validator := NewValidator(cmk)
 	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
 	machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
+	}
 	clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations = append(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0])
 	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
 	}
 	cloudStackClusterSpec := &spec{
-		Spec:             clusterSpec,
-		datacenterConfig: datacenterConfig,
+		Spec:                 clusterSpec,
+		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: machineConfigs,
 	}
 
@@ -128,8 +131,8 @@ func TestValidateMachineConfigsNoNetwork(t *testing.T) {
 	}
 	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
 	cloudStackClusterSpec := &spec{
-		Spec:             clusterSpec,
-		datacenterConfig: datacenterConfig,
+		Spec:                 clusterSpec,
+		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: machineConfigs,
 	}
 	validator := NewValidator(cmk)
