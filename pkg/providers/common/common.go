@@ -3,19 +3,26 @@ package common
 import (
 	_ "embed"
 	"fmt"
+	"strings"
+	"time"
+
+	"golang.org/x/crypto/ssh"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/types"
-	"golang.org/x/crypto/ssh"
-	"strings"
-	"time"
 )
 
 //go:embed config/audit-policy.yaml
 var auditPolicy string
 
+var NoProxyDefaults = []string{
+	"localhost",
+	"127.0.0.1",
+	".svc",
+}
 
 const (
 	privateKeyFileName = "eks-a-id_rsa"

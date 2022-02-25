@@ -54,11 +54,6 @@ var requiredEnvs = []string{cloudStackCloudConfigB64SecretKey}
 var (
 	eksaCloudStackDeploymentResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaCloudStackMachineResourceType    = fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	noProxyDefaults                      = []string{
-		"localhost",
-		"127.0.0.1",
-		".svc",
-	}
 )
 
 type cloudstackProvider struct {
@@ -488,7 +483,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
-		noProxyList = append(noProxyList, noProxyDefaults...)
+		noProxyList = append(noProxyList, common.NoProxyDefaults...)
 		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(managementApiEndpoint)
 		if err == nil {
 			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
@@ -550,7 +545,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
-		noProxyList = append(noProxyList, noProxyDefaults...)
+		noProxyList = append(noProxyList, common.NoProxyDefaults...)
 		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(managementApiEndpoint)
 		if err == nil {
 			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)

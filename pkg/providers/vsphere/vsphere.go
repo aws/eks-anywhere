@@ -45,8 +45,6 @@ const (
 	vSphereServerKey         = "VSPHERE_SERVER"
 	govcInsecure             = "GOVC_INSECURE"
 	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
-	privateKeyFileName       = "eks-a-id_rsa"
-	publicKeyFileName        = "eks-a-id_rsa.pub"
 	defaultTemplateLibrary   = "eks-a-templates"
 	defaultTemplatesFolder   = "vm/Templates"
 	bottlerocketDefaultUser  = "ec2-user"
@@ -73,11 +71,6 @@ var mhcTemplate []byte
 var (
 	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	noProxyDefaults                   = []string{
-		"localhost",
-		"127.0.0.1",
-		".svc",
-	}
 )
 
 var requiredEnvs = []string{vSphereUsernameKey, vSpherePasswordKey, expClusterResourceSetKey}
@@ -729,7 +722,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
-		noProxyList = append(noProxyList, noProxyDefaults...)
+		noProxyList = append(noProxyList, common.NoProxyDefaults...)
 		noProxyList = append(noProxyList,
 			datacenterSpec.Server,
 			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
@@ -822,7 +815,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterSpec v1alpha1.VSphe
 		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
-		noProxyList = append(noProxyList, noProxyDefaults...)
+		noProxyList = append(noProxyList, common.NoProxyDefaults...)
 		noProxyList = append(noProxyList,
 			datacenterSpec.Server,
 			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,

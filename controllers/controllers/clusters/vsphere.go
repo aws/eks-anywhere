@@ -3,7 +3,6 @@ package clusters
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"os"
 	"time"
 
@@ -21,6 +20,7 @@ import (
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
