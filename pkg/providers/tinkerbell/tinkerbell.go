@@ -61,7 +61,7 @@ type tinkerbellProvider struct {
 	skipIpCheck           bool
 	hardwareConfigFile    string
 	validator             *Validator
-	skipPowerActions          bool
+	skipPowerActions      bool
 	// TODO: Update hardwareConfig to proper type
 }
 
@@ -135,7 +135,7 @@ func NewProviderCustomDep(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
 		hardwareConfigFile: hardwareConfigFile,
 		validator:          NewValidator(providerTinkClient, netClient, hardware.HardwareConfig{}, pbnjClient),
 		skipIpCheck:        skipIpCheck,
-		skipPowerActions:       skipPowerActions,
+		skipPowerActions:   skipPowerActions,
 	}
 }
 

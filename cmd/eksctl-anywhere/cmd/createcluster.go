@@ -22,7 +22,7 @@ type createClusterOptions struct {
 	forceClean       bool
 	skipIpCheck      bool
 	hardwareFileName string
-	skipPowerActions     bool
+	skipPowerActions bool
 }
 
 var cc = &createClusterOptions{}

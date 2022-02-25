@@ -70,7 +70,7 @@ func (hc *HardwareConfig) setHardwareConfigFromFile(hardwareFileName string) err
 }
 
 func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool) error {
-	var bmcRefMap = map[string]*tinkv1alpha1.Hardware{}
+	bmcRefMap := map[string]*tinkv1alpha1.Hardware{}
 	if !skipPowerActions {
 		bmcRefMap = hc.initBmcRefMap()
 	}
