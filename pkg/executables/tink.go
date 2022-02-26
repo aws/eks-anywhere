@@ -41,13 +41,13 @@ func (t *Tink) PushHardware(ctx context.Context, hardware []byte) error {
 	return nil
 }
 
-func (t *Tink) GetHardware(ctx context.Context) ([]*hardware.Hardware, error) {
+func (t *Tink) GetHardware(ctx context.Context) (map[string]*hardware.Hardware, error) {
 	params := []string{"hardware", "get", "--format", "json"}
 	data, err := t.Command(ctx, params...).WithEnvVars(t.envMap).Run()
 	if err != nil {
 		return nil, fmt.Errorf("error getting hardware list: %v", err)
 	}
-	var hardwareList []*hardware.Hardware
+	hardwareList := make(map[string]*hardware.Hardware)
 	hardwareString := data.String()
 
 	if len(hardwareString) > 0 {
@@ -57,7 +57,9 @@ func (t *Tink) GetHardware(ctx context.Context) ([]*hardware.Hardware, error) {
 			return nil, fmt.Errorf("error unmarshling hardware json: %v", err)
 		}
 		if len(hardwareListData["data"]) > 0 {
-			hardwareList = append(hardwareList, hardwareListData["data"]...)
+			for _, data := range hardwareListData["data"] {
+				hardwareList[data.GetId()] = data
+			}
 		}
 	}
 
