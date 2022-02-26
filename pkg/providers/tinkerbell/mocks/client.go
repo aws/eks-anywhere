@@ -124,10 +124,10 @@ func (m *MockProviderTinkClient) EXPECT() *MockProviderTinkClientMockRecorder {
 }
 
 // GetHardware mocks base method.
-func (m *MockProviderTinkClient) GetHardware(arg0 context.Context) ([]*hardware.Hardware, error) {
+func (m *MockProviderTinkClient) GetHardware(arg0 context.Context) (map[string]*hardware.Hardware, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetHardware", arg0)
-	ret0, _ := ret[0].([]*hardware.Hardware)
+	ret0, _ := ret[0].(map[string]*hardware.Hardware)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
