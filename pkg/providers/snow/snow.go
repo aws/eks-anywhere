@@ -119,7 +119,7 @@ func (p *snowProvider) setupEcrSecret(ctx context.Context, cluster *types.Cluste
 	if err != nil {
 		return err
 	}
-	fmt.Println("PASS: " + ecrCreds.Password)
+
 	if err = p.providerKubectlClient.CreateNamespace(ctx, cluster.KubeconfigFile, constants.CapasSystemNamespace); err != nil {
 		return fmt.Errorf("error creating namespace %s in cluster: %v", constants.CapasSystemNamespace, err)
 	}
