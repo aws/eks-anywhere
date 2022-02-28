@@ -143,7 +143,7 @@ func (p *snowProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1
 }
 
 func (p *snowProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
-	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithExtraDockerMounts()}, nil
+	return nil, nil
 }
 
 func (p *snowProvider) UpdateKubeConfig(content *[]byte, clusterName string) error {

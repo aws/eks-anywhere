@@ -6,14 +6,11 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/service/ecr"
+
+	"github.com/aws/eks-anywhere/pkg/types"
 )
 
-type DockerCredentials struct {
-	Username string
-	Password string
-}
-
-func (a *AwsClient) GetEcrCredentials() (*DockerCredentials, error) {
+func (a *AwsClient) GetEcrCredentials() (*types.DockerCredentials, error) {
 	svc := ecr.New(a.session)
 
 	input := &ecr.GetAuthorizationTokenInput{}
@@ -29,7 +26,7 @@ func (a *AwsClient) GetEcrCredentials() (*DockerCredentials, error) {
 	}
 
 	authSplit := strings.Split(string(auth), ":")
-	creds := &DockerCredentials{
+	creds := &types.DockerCredentials{
 		Username: authSplit[0],
 		Password: authSplit[1],
 	}
