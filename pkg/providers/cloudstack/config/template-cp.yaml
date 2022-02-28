@@ -237,8 +237,8 @@ spec:
     format: {{.format}}
   replicas: {{.controlPlaneReplicas}}
   version: {{.kubernetesVersion}}
----
 {{- if .externalEtcd }}
+---
 kind: EtcdadmCluster
 apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
 metadata:
@@ -301,5 +301,4 @@ spec:
       - {{.}}
       {{- end }}
 {{- end }}
----
 {{- end}}
