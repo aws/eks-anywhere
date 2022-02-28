@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"sort"
 	"strings"
 
@@ -100,6 +101,14 @@ func NewKubectl(executable Executable) *Kubectl {
 	return &Kubectl{
 		Executable: executable,
 	}
+}
+
+func CreateKubectl(ctx context.Context) (*dependencies.Dependencies, error) {
+	return dependencies.NewFactory().
+		WithExecutableImage(DefaultEksaImage()).
+		WithExecutableBuilder().
+		WithKubectl().
+		Build(ctx)
 }
 
 func (k *Kubectl) GetNamespace(ctx context.Context, kubeconfig string, namespace string) error {
@@ -1331,9 +1340,9 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 	return obj, nil
 }
 
-func (k *Kubectl) GetPackages(ctx context.Context, opts ...KubectlOpt) (string, error) {
+func (k *Kubectl) GetResources(ctx context.Context, resourceType string, opts ...KubectlOpt) (string, error) {
 	params := []string{
-		"get", "packages",
+		"get", resourceType,
 	}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
