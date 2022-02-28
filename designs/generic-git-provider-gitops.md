@@ -80,7 +80,7 @@ So, how will this new sequence flow? Let's take a look at how the GitOps bootstr
     - generic git provider will use `git ls-remote` or similar to validate existence of remote and branch ref. 
     - Provider specific methods will be used for specific providers like GitHub, using the provider API to check the status of the remote.
 - if the repository does not exist, we determine if we can create it for the user; if we can, we will do so, and initialize it. 
-- if the repository does not exist, we will proceed as we do today, cloning and initializing it as needed.
+- if the repository does exist, we will proceed as we do today, cloning and initializing it as needed.
 
 Preflight validations will be executed to check the existence of the repository at CLI run time; if it does not exist, and the provider does not support repository creation, we will return a validation error. We will perform another validation durning the flux installation tasks to take care of cases such as the repository being deleted between preflight validations and the start of the task.
 
