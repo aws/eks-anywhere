@@ -31,16 +31,12 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 	var gitTag string
 	if r.DevRelease {
 		// Get git tag
-		out, err := git.GetRepoTags(r.CliRepoSource)
+		out, err := git.GetRepoTagsDescending(r.CliRepoSource)
 		if err != nil {
 			return nil, errors.Cause(err)
 		}
 
-		gitTags := strings.Split(out, "\n")
-		gitTag = gitTags[len(gitTags)-2]
-		if err != nil {
-			return nil, errors.Cause(err)
-		}
+		gitTag = strings.Split(out, "\n")[0]
 	} else {
 		gitTag = r.ReleaseVersion
 	}
