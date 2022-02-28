@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"sort"
 	"strings"
 
@@ -101,14 +100,6 @@ func NewKubectl(executable Executable) *Kubectl {
 	return &Kubectl{
 		Executable: executable,
 	}
-}
-
-func CreateKubectl(ctx context.Context) (*dependencies.Dependencies, error) {
-	return dependencies.NewFactory().
-		WithExecutableImage(DefaultEksaImage()).
-		WithExecutableBuilder().
-		WithKubectl().
-		Build(ctx)
 }
 
 func (k *Kubectl) GetNamespace(ctx context.Context, kubeconfig string, namespace string) error {

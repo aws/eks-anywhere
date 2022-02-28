@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"log"
 	"os"
 
@@ -36,10 +37,10 @@ func preRunGetPackages(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func GetResources(ctx context.Context, resourceType string, output string, args []string) error {
+func getResources(ctx context.Context, resourceType string, output string, args []string) error {
 	kubeConfig := os.Getenv(kubeconfigEnvVariable)
 
-	deps, err := executables.CreateKubectl(ctx)
+	deps, err := CreateKubectl(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
@@ -56,4 +57,12 @@ func GetResources(ctx context.Context, resourceType string, output string, args 
 	}
 	fmt.Println(packages)
 	return nil
+}
+
+func CreateKubectl(ctx context.Context) (*dependencies.Dependencies, error) {
+	return dependencies.NewFactory().
+		WithExecutableImage(executables.DefaultEksaImage()).
+		WithExecutableBuilder().
+		WithKubectl().
+		Build(ctx)
 }

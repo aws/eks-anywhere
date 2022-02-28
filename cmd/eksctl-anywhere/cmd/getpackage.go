@@ -23,6 +23,6 @@ var getPackageCommand = &cobra.Command{
 	PreRunE:      preRunGetPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return GetResources(cmd.Context(), "packages", gpo.output, args)
+		return getResources(cmd.Context(), "packages", gpo.output, args)
 	},
 }
