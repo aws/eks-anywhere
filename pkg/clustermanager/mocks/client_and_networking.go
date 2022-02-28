@@ -84,25 +84,6 @@ func (mr *MockClusterClientMockRecorder) ApplyKubeSpecFromBytesWithNamespace(arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesWithNamespace", reflect.TypeOf((*MockClusterClient)(nil).ApplyKubeSpecFromBytesWithNamespace), arg0, arg1, arg2, arg3)
 }
 
-// CreateDockerRegistrySecret mocks base method.
-func (m *MockClusterClient) CreateDockerRegistrySecret(arg0 context.Context, arg1, arg2, arg3, arg4 string, arg5 ...executables.KubectlOpt) error {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{arg0, arg1, arg2, arg3, arg4}
-	for _, a := range arg5 {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "CreateDockerRegistrySecret", varargs...)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateDockerRegistrySecret indicates an expected call of CreateDockerRegistrySecret.
-func (mr *MockClusterClientMockRecorder) CreateDockerRegistrySecret(arg0, arg1, arg2, arg3, arg4 interface{}, arg5 ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{arg0, arg1, arg2, arg3, arg4}, arg5...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDockerRegistrySecret", reflect.TypeOf((*MockClusterClient)(nil).CreateDockerRegistrySecret), varargs...)
-}
-
 // CreateNamespace mocks base method.
 func (m *MockClusterClient) CreateNamespace(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
