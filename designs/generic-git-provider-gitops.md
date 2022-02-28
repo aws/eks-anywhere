@@ -162,11 +162,13 @@ spec:
 
 ### Git Configuration Structs
 ### Flux
-The `Flux` configuration will be modified to contain generic flux options `FluxSystemNamespace`, `Branch`, and `ClusterConfigPath`, which will be universal across git providers used in conjunction with Flux. A new field, `Git`, will be added, and validations will ensure that `Git` and `Github` (and any other Provider type) are mutually exclusive.
-```Go
+The `Flux` configuration will be modified to contain generic flux options `FluxSystemNamespace`, `Branch`, and `ClusterConfigPath`, which will be universal across git providers used in conjunction with Flux.
+A `GitProviderRef` will be added, which will point to the git configuration object to use.
 type Flux struct {
     // GitProviderRef is a reference to the git provider specific information
     GitProviderRef *Ref `json:"gitProviderRef,omitempty"`
+
+
 
     // FluxSystemNamespace scope for this operation. Defaults to flux-system.
     FluxSystemNamespace string `json:"fluxSystemNamespace,omitempty"`
@@ -174,9 +176,9 @@ type Flux struct {
     // ClusterConfigPath relative to the repository root, when specified the cluster sync will be scoped to this path.
     ClusterConfigPath string `json:"clusterConfigPath,omitempty"`
 
-	// Git branch. Defaults to main.
-	// +kubebuilder:default:="main"
-	Branch string `json:"branch,omitempty"`
+    // Git branch. Defaults to main.
+    // +kubebuilder:default:="main"
+    Branch string `json:"branch,omitempty"`
 }
 ```
 
