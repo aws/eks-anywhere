@@ -7,6 +7,15 @@ menu:
     weight: 10
 ---
 
+## [v0.7.1](https://github.com/aws/eks-anywhere/releases/tag/v0.7.1) - 2022-02-25
+
+### Added
+- Support for Taints in Worker Node Group Configuration [#189](https://github.com/aws/eks-anywhere/issues/189)
+- Support for Taints in Control Plane Configurations [#189](https://github.com/aws/eks-anywhere/issues/189)
+- Support for Labels in Worker Node Group Configuration [#486](https://github.com/aws/eks-anywhere/issues/486)
+- Allow removal of Worker Node Groups using the `eksctl anywhere upgrade` command [#1054](https://github.com/aws/eks-anywhere/issues/1054)
+
+
 ## [v0.7.0](https://github.com/aws/eks-anywhere/releases/tag/v0.7.0) - 2022-01-27
 
 ### Added
