@@ -135,6 +135,17 @@ func (k *Kubectl) LoadSecret(ctx context.Context, secretObject string, secretObj
 	return nil
 }
 
+// TODO: remove when CAPAS image is hosted in public registry.
+func (k *Kubectl) CreateDockerRegistrySecret(ctx context.Context, secretName string, dockerServer, dockerUsername, dockerPassword string, opts ...KubectlOpt) error {
+	params := []string{"create", "secret", "docker-registry", secretName, "--docker-server", dockerServer, "--docker-username", dockerUsername, "--docker-password", dockerPassword}
+	applyOpts(&params, opts...)
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error creating secret for docker registry: %v", err)
+	}
+	return nil
+}
+
 func (k *Kubectl) ApplyHardware(ctx context.Context, hardwareYaml string, kubeConfFile string) error {
 	params := []string{"apply", "-f", hardwareYaml}
 	params = append(params, "--kubeconfig", kubeConfFile)
