@@ -16,7 +16,6 @@ package pkg
 
 import (
 	"fmt"
-	"io/ioutil"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -88,10 +87,8 @@ func (r *ReleaseConfig) GetSnowBundle(imageDigests map[string]string) (anywherev
 	}
 	sortedComponentNames := sortArtifactsMap(capasBundleArtifacts)
 
-	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
-	artifactHashes := []string{}
 
 	for _, componentName := range sortedComponentNames {
 		for _, artifact := range capasBundleArtifacts[componentName] {
@@ -107,41 +104,21 @@ func (r *ReleaseConfig) GetSnowBundle(imageDigests map[string]string) (anywherev
 					ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
 				}
 				bundleImageArtifacts[imageArtifact.AssetName] = bundleImageArtifact
-				artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 			}
 
 			if artifact.Manifest != nil {
 				manifestArtifact := artifact.Manifest
-				if componentName == "cluster-api-provider-aws-snow" {
-					sourceBranch = manifestArtifact.SourcedFromBranch
-				}
 				bundleManifestArtifact := anywherev1alpha1.Manifest{
 					URI: manifestArtifact.ReleaseCdnURI,
 				}
 
 				bundleManifestArtifacts[manifestArtifact.ReleaseName] = bundleManifestArtifact
-
-				manifestContents, err := ioutil.ReadFile(filepath.Join(manifestArtifact.ArtifactPath, manifestArtifact.ReleaseName))
-				if err != nil {
-					return anywherev1alpha1.SnowBundle{}, err
-				}
-				manifestHash := generateManifestHash(manifestContents)
-				artifactHashes = append(artifactHashes, manifestHash)
 			}
 		}
 	}
 
-	componentChecksum := generateComponentHash(artifactHashes)
-	version, err := BuildComponentVersion(
-		newVersionerWithGITTAG(r.BuildRepoSource, capasProjectPath, sourceBranch, r),
-		componentChecksum,
-	)
-	if err != nil {
-		return anywherev1alpha1.SnowBundle{}, errors.Wrapf(err, "Error getting version for CAPAS")
-	}
-
 	bundle := anywherev1alpha1.SnowBundle{
-		Version:    version,
+		Version:    "v1.0.2", // TODO: remove hardcoded fake version once capas has a release tag
 		KubeProxy:  bundleImageArtifacts["kube-rbac-proxy"],
 		KubeVip:    bundleImageArtifacts["kube-vip"],
 		Components: bundleManifestArtifacts["infrastructure-components.yaml"],
