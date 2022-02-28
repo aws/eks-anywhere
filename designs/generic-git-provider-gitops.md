@@ -86,8 +86,11 @@ Preflight validations will be executed to check the existence of the repository 
 
 The CLI code will check for the presence of a git provider in the method [`BootstrapToolkitsComponents(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig)`](https://github.com/aws/eks-anywhere/blob/main/pkg/executables/flux.go#L32), and execute a provider-specific sub method (e.g. `boostrapToolkitsComponentsGit`, `bootstrapToolkitsComponentsGithub`) depending on which provider field is present in the GitOpsConfig (e.g. `Github` is non-nil; `Git` is non-nil, etc). This will execute the logic needed to check for the existence of the repository, call the appropriate `flux bootstrap` command for our provider, and proceed to the generic cloning and initialization tasks.
 
-### `Git` GitOpsConfig  Spec
-I propose modifying the `GitOpsConfig`, to move the `fluxSystemNamespace` and `clusterConfigPath` fields up a level to be a part of `flux`, instead of reproducing them in both `git` and `github`. provider blocks. This will make for a more consistent experience across provider, all of which will require a `fluxSystemNamespace` and `clusterConfigPath`.
+### API Design
+We will add a `gitProviderRef` to the `GitOpsConfig` which will point to a git provider. This provider will contain the needed configuration for bootstrapping flux.
+
+The GitOps specific configuration, such as `fluxSystemNamespace` and `clusterConfigPath` will remain at the level of the `flux` configuration. But the `flux` configuration will refer to a `gitProviderRef` which contains the git-specific configuration.
+
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: GitOpsConfig
@@ -97,23 +100,48 @@ spec:
   flux:
     fluxSystemNamespace: ""
     clusterConfigPath: ""
-    git:
-      repositoryUrl: myClusterGitopsRepo
-      username: myGitProviderUserName
-      passwordEnvironmentVariable: MY_PASSWORD_ENV_VAR
-      privateKeyFile: '/path/to/my/private_key.rsa'
-      branch: branchToUseInRemoteRepo
+    gitProviderRef:
+        name: myGenericGitProvider
+        kind: GenericGitConfig
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: GenericGitConfig
+metadata:
+  name: myGenericGitProvider
+spec:
+  repositoryUrl: myClusterGitopsRepo
+  username: myGitProviderUserName
+```
+
+A GitHub Git Config:
+```yaml
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: GithubGitConfig
+metadata:
+  name: myGithubConfig
+spec:
+  repository: myClusterGitopsRepo
+  personal: false
+  owner: myOrg 
+```
+
+A generic Git git config:
+```yaml
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: GenericGitConfig
+metadata:
+  name: myGenericGitProvider
+spec:
+  repositoryUrl: myClusterGitopsRepo
+  username: myGitProviderUserName
 ```
 
 ### Git Configuration Structs
 The `Flux` configuration will be modified to contain generic flux options `FluxSystemNamespace`, `Branch`, and `ClusterConfigPath`, which will be universal across git providers used in conjunction with Flux. A new field, `Git`, will be added, and validations will ensure that `Git` and `Github` (and any other Provider type) are mutually exclusive.
 ```Go
 type Flux struct {
-    // Github is the name of the Git Provider to host the Git repo.
-	Github Github `json:"github,omitempty"`
-
-    // Git is the name of the generic Git Provider to host the Git repository
-    Git Git `json:"git,omitempty"`
+    // GitProviderRef is a reference to the git provider specific information
+    GitProviderRef *Ref `json:"gitProviderRef,omitempty"`
 
     // FluxSystemNamespace scope for this operation. Defaults to flux-system.
     FluxSystemNamespace string `json:"fluxSystemNamespace,omitempty"`
@@ -127,26 +155,23 @@ type Flux struct {
 }
 ```
 
-The `Git` struct contains the requisite fields for authenticating to a generic git repository using basic auth, either password, SSH or both together. Use of `net/url` for the repository URL provides out-of-the-box validations and assurance of structure.
+The `GenericGitProvider` struct contains the requisite fields for authenticating to a generic git repository using basic auth, either password, SSH or both together. Use of `net/url` for the repository URL provides out-of-the-box validations and assurance of structure.
+The PrivateKeyFile and Password values will be supplied by the user via environment variables and supplied to the `flux bootstrap` command directly from the environment variables.
+
+The private key file will need to be mounted in the Flux executable container at execution time to be read by the `flux bootstrap git` command and bootstrapped onto the cluster as a secret by flux.
 ```Go
-type Git struct {
+type GenericGitProvider struct {
     // Username is the user to authenticate to the git repository with.
     Username string `json:username`
 
     // Repository URL for the repository to be used with flux. Can be either an SSH or HTTPS url.
     RepositoryUrl net/url `json:repositoryUrl`
-
-    // Path to a private key file for authenticating to the repository via SSH.
-    PrivateKeyFile string `json:privateKeyFile,omitempty`
-
-    // An environment variable which should contain a user-provided password for authenticating to the git repository. 
-    passwordEnvironmentVariable string `json:passwordEnvironmentVariable,omitempty`
 }
 ```
 
-The `Github` struct will now no longer contain the `ClusterConfigPath` and `FluxSystemNamespace` fields, which are not specific to Github. It will contain only the fields required to establish a connection to Github -- Owner, Repository, and wether or not it's a Personal repository.
+The `GithubGitProvider` struct will contain the required fields to bootstrap flux with github, and not include the `ClusterConfigPath` and `FluxSystemNamespace` fields, which are not specific to Github. It will contain only the fields required to establish a connection to Github -- Owner, Repository, and wether or not it's a Personal repository.
 ```Go
-type Github struct {
+type GithubGitProvider struct {
 	// Owner is the user or organization name of the Git provider.
 	Owner string `json:"owner"`
 
@@ -158,17 +183,11 @@ type Github struct {
 }
 ```
 
-`GitOpsCOnfig.spec.flux.git.passwordEnvironmentVariable`
-An environment variable which contains the password to be used when authenticating to the git repository
-
-`GitOpsCOnfig.spec.flux.git.privateKeyPath` 
-A path to a private key to be used for authenticating to the Git SSH server
-
 ### Security
 #### Getting Credentials
 User may provide a private key, a password, or both.
-The private key will be provided via the path to the private key file.
-The password will be provided via an environment variable; the environment variable will be chosen by the user and later validated to exist by us.
+The private key will be provided via the path to the private key file in an environment variable.
+The password will be provided via an environment variable by the user and later validated to exist by us.
 
 - verify the permissions of the private key file are appropriate (600)
 - only accept environment variables for password
@@ -182,8 +201,8 @@ Private Key File:
 Password Env Var:
 - non-empty
 
-Git providers:
-- ensure `Git` and `Github` are mutually exclusive
+GitOpsConfig:
+- ensure that GitProviderRef is valid
 
 Git Repository:
 - use `git ls-remote` or equivalent with the provided credentials and remote configuration to verify the presence of the remote and branch ref; validation error if remote branch does not exist.
