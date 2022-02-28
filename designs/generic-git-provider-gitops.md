@@ -19,7 +19,7 @@ As an EKS Anywhere user, I want to be able to use a generic git repository with 
 The goal of this design is to unlock the ability for EKS-A users to use any git provider which supports generic authentication methods like SSH authentication as their GitOps provider.
 
 ## Tenants
-- Supports any generic generic git providers with password/SSH auth
+- Supports any generic git providers with password/SSH auth
 - Minimal -- simple and straight forward
 - No tight coupling preventing abstraction of Flux configuration into a curated package in the future
 
@@ -72,7 +72,7 @@ Up until now, we've only called [`flux bootstrap github`](https://fluxcd.io/docs
 
 We will take advantage of this fact to translate a basic, provider-agnostic `git` provider in our GitOpsConfiguration spec to arguments for `flux bootstrap git`, bypassing the provider-specific steps along the way.
 
-So, how does will this new sequence flow? Let's take a look at how the GitOps bootstrap process would flow during cluster creation.
+So, how will this new sequence flow? Let's take a look at how the GitOps bootstrap process would flow during cluster creation.
 
 ![GitOps Bootstrap Flow](images/gitops-flow.png)
 
@@ -80,7 +80,7 @@ So, how does will this new sequence flow? Let's take a look at how the GitOps bo
     - generic git provider will use `git ls-remote` or similar to validate existence of remote and branch ref. 
     - Provider specific methods will be used for specific providers like GitHub, using the provider API to check the status of the remote.
 - if the repository does not exist, we determine if we can create it for the user; if we can, we will do so, and initialize it. 
-- if the repository does not exist, we will proceed as we do today, cloning and initializing it as needed.
+- if the repository does exist, we will proceed as we do today, cloning and initializing it as needed.
 
 Preflight validations will be executed to check the existence of the repository at CLI run time; if it does not exist, and the provider does not support repository creation, we will return a validation error. We will perform another validation durning the flux installation tasks to take care of cases such as the repository being deleted between preflight validations and the start of the task.
 
@@ -195,7 +195,7 @@ The password will be provided via an environment variable by the user and later 
 
 ### Validation
 Private Key File:
-- file permissions are appropriate (600)
+- file permissions are appropriate (400)
 - exists
 
 Password Env Var:
