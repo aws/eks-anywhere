@@ -74,7 +74,7 @@ The CLI will then validate if the repository exists; if it does not exist, it wi
 If it does exist, the installation will proceed in the same manner as the current Github integration, cloning the repository locally, initializing it if needed, and committing the EKS Anywhere/Flux system configuration files and pushing the contents to the remote.
 
 ### Delete
-The delete experience will bypass the deletion of the repository if the generic git provider is used.
+The delete experience will bypass the deletion of the repository if the generic git provider is used. The configuration files specific to the cluster will be cleaned up as they would otherwise.
 
 ## Solution Details
 EKS Anywhere uses the `flux bootstrap` command to bootstrap the cluster with the Flux controllers and configure them to use the given provider. We translate the user-provided configuration in the GitOpsConfig spec into command line arguments for the Flux executable and, in the case of a specific provider like GitHub, to calls to the Github API to take specific actions like creating repositories. 
