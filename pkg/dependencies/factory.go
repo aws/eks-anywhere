@@ -183,6 +183,7 @@ func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v
 			DockerKubectlClient:       f.dependencies.Kubectl,
 			VSphereGovcClient:         f.dependencies.Govc,
 			VSphereKubectlClient:      f.dependencies.Kubectl,
+			SnowKubectlClient:         f.dependencies.Kubectl,
 			TinkerbellKubectlClient:   f.dependencies.Kubectl,
 			TinkerbellClients:         tinkerbell.TinkerbellClients{ProviderTinkClient: f.dependencies.Tink, ProviderPbnjClient: f.dependencies.Pbnj},
 			Writer:                    f.dependencies.Writer,

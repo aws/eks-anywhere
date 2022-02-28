@@ -133,7 +133,6 @@ func TestClusterManagerCAPIWaitForDeploymentStackedEtcd(t *testing.T) {
 	clusterSpecStackedEtcd := test.NewClusterSpec()
 
 	m.client.EXPECT().InitInfrastructure(ctx, clusterSpecStackedEtcd, clusterObj, m.provider)
-	m.provider.EXPECT().Name() // TODO: remove when private ecr logic is removed.
 	for namespace, deployments := range internal.CAPIDeployments {
 		for _, deployment := range deployments {
 			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)
@@ -159,7 +158,6 @@ func TestClusterManagerCAPIWaitForDeploymentExternalEtcd(t *testing.T) {
 		s.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{Count: 1}
 	})
 	m.client.EXPECT().InitInfrastructure(ctx, clusterSpecExternalEtcd, clusterObj, m.provider)
-	m.provider.EXPECT().Name() // TODO: remove when private ecr logic is removed.
 	for namespace, deployments := range internal.CAPIDeployments {
 		for _, deployment := range deployments {
 			m.client.EXPECT().WaitForDeployment(ctx, clusterObj, "30m", "Available", deployment, namespace)

@@ -100,6 +100,13 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 	}
 	commandContext.BootstrapCluster = bootstrapCluster
 
+	logger.Info("Provider specific pre-setup")
+	err = commandContext.Provider.PreBootstrapSetup(ctx, bootstrapCluster)
+	if err != nil {
+		commandContext.SetError(err)
+		return &CollectMgmtClusterDiagnosticsTask{}
+	}
+
 	logger.Info("Installing cluster-api providers on bootstrap cluster")
 	err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, bootstrapCluster, commandContext.Provider)
 	if err != nil {
@@ -116,8 +123,8 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 		}
 	}
 
-	logger.Info("Provider specific setup")
-	err = commandContext.Provider.BootstrapSetup(ctx, commandContext.ClusterSpec.Cluster, bootstrapCluster)
+	logger.Info("Provider specific post-setup")
+	err = commandContext.Provider.PostBootstrapSetup(ctx, commandContext.ClusterSpec.Cluster, bootstrapCluster)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectMgmtClusterDiagnosticsTask{}

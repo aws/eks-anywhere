@@ -8,8 +8,10 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
+	"github.com/aws/eks-anywhere/pkg/clients/aws"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -36,26 +38,16 @@ type snowProvider struct {
 	clusterConfig         *v1alpha1.Cluster
 	providerKubectlClient ProviderKubectlClient
 	writer                filewriter.FileWriter
-	templateBuilder       *SnowTemplateBuilder
 	retrier               *retrier.Retrier
 	bootstrapCreds        bootstrapCreds
 }
 
-type ProviderKubectlClient interface{}
+type ProviderKubectlClient interface {
+	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
+	CreateDockerRegistrySecret(ctx context.Context, secretName string, dockerServer, dockerUsername, dockerPassword string, opts ...executables.KubectlOpt) error
+}
 
 func NewProvider(datacenterConfig *v1alpha1.SnowDatacenterConfig, machineConfigs map[string]*v1alpha1.SnowMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc) *snowProvider {
-	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.SnowMachineConfigSpec
-	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
-		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
-	}
-
-	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.SnowMachineConfigSpec, len(machineConfigs))
-
-	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
-			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
-		}
-	}
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	return &snowProvider{
 		datacenterConfig:      datacenterConfig,
@@ -63,23 +55,8 @@ func NewProvider(datacenterConfig *v1alpha1.SnowDatacenterConfig, machineConfigs
 		clusterConfig:         clusterConfig,
 		providerKubectlClient: providerKubectlClient,
 		writer:                writer,
-		templateBuilder: &SnowTemplateBuilder{
-			datacenterSpec:              &datacenterConfig.Spec,
-			controlPlaneMachineSpec:     controlPlaneMachineSpec,
-			workerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
-			etcdMachineSpec:             etcdMachineSpec,
-			now:                         now,
-		},
-		retrier: retrier,
+		retrier:               retrier,
 	}
-}
-
-type SnowTemplateBuilder struct {
-	datacenterSpec              *v1alpha1.SnowDatacenterConfigSpec
-	controlPlaneMachineSpec     *v1alpha1.SnowMachineConfigSpec
-	workerNodeGroupMachineSpecs map[string]v1alpha1.SnowMachineConfigSpec
-	etcdMachineSpec             *v1alpha1.SnowMachineConfigSpec
-	now                         types.NowFunc
 }
 
 func (p *snowProvider) Name() string {
@@ -133,7 +110,35 @@ func (p *snowProvider) GenerateStorageClass() []byte {
 	return nil
 }
 
-func (p *snowProvider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+func (p *snowProvider) setupEcrSecret(ctx context.Context, cluster *types.Cluster) error {
+	aws, err := aws.NewClient()
+	if err != nil {
+		return err
+	}
+	ecrCreds, err := aws.GetEcrCredentials()
+	if err != nil {
+		return err
+	}
+	fmt.Println("PASS: " + ecrCreds.Password)
+	if err = p.providerKubectlClient.CreateNamespace(ctx, cluster.KubeconfigFile, constants.CapasSystemNamespace); err != nil {
+		return fmt.Errorf("error creating namespace %s in cluster: %v", constants.CapasSystemNamespace, err)
+	}
+
+	if err = p.providerKubectlClient.CreateDockerRegistrySecret(ctx, constants.EcrRegistrySecretName, constants.EcrRegistry, ecrCreds.Username, ecrCreds.Password, executables.WithCluster(cluster), executables.WithNamespace(constants.CapasSystemNamespace)); err != nil {
+		return fmt.Errorf("error creating ecr registry secret in cluster: %v", err)
+	}
+	return nil
+}
+
+// TODO: tmp solution to support private ECR, remove when CAPAS images is public.
+func (p *snowProvider) PreBootstrapSetup(ctx context.Context, cluster *types.Cluster) error {
+	if err := p.setupEcrSecret(ctx, cluster); err != nil {
+		return fmt.Errorf("error setting up ecr creds: %v", err)
+	}
+	return nil
+}
+
+func (p *snowProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }
 

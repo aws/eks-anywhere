@@ -12,7 +12,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/clients/aws"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
@@ -510,32 +509,7 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 	return false, nil
 }
 
-func (c *ClusterManager) setupEcr(ctx context.Context, cluster *types.Cluster) error {
-	aws, err := aws.NewClient()
-	if err != nil {
-		return err
-	}
-	ecrCreds, err := aws.GetEcrCredentials()
-	if err != nil {
-		return err
-	}
-	if err = c.clusterClient.CreateNamespace(ctx, cluster.KubeconfigFile, constants.CapasSystemNamespace); err != nil {
-		return fmt.Errorf("error creating namespace %s in cluster: %v", constants.CapasSystemNamespace, err)
-	}
-
-	if err = c.clusterClient.CreateDockerRegistrySecret(ctx, constants.EcrRegistrySecretName, constants.EcrRegistry, ecrCreds.Username, ecrCreds.Password, executables.WithCluster(cluster), executables.WithNamespace(constants.CapasSystemNamespace)); err != nil {
-		return fmt.Errorf("error creating ecr registry secret in cluster: %v", err)
-	}
-	return nil
-}
-
 func (c *ClusterManager) InstallCAPI(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {
-	// TODO: tmp solution to support private ECR, remove when CAPAS images is public.
-	if provider.Name() == constants.SnowProviderName {
-		if err := c.setupEcr(ctx, cluster); err != nil {
-			return fmt.Errorf("error setting up ecr creds: %v", err)
-		}
-	}
 	err := c.clusterClient.InitInfrastructure(ctx, clusterSpec, cluster, provider)
 	if err != nil {
 		return fmt.Errorf("error initializing capi resources in cluster: %v", err)
