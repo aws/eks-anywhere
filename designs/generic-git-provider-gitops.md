@@ -72,7 +72,7 @@ Up until now, we've only called [`flux bootstrap github`](https://fluxcd.io/docs
 
 We will take advantage of this fact to translate a basic, provider-agnostic `git` provider in our GitOpsConfiguration spec to arguments for `flux bootstrap git`, bypassing the provider-specific steps along the way.
 
-So, how does will this new sequence flow? Let's take a look at how the GitOps bootstrap process would flow during cluster creation.
+So, how will this new sequence flow? Let's take a look at how the GitOps bootstrap process would flow during cluster creation.
 
 ![GitOps Bootstrap Flow](images/gitops-flow.png)
 
