@@ -32,11 +32,6 @@ func (vb *VersionsBundle) Manifests() map[string][]*string {
 			&vb.VSphere.ClusterTemplate.URI,
 			&vb.VSphere.Metadata.URI,
 		},
-		"cluster-api-provider-tinkerbell": {
-			&vb.Tinkerbell.Components.URI,
-			&vb.Tinkerbell.ClusterTemplate.URI,
-			&vb.Tinkerbell.Metadata.URI,
-		},
 		"cilium": {
 			&vb.Cilium.Manifest.URI,
 		},
