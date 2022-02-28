@@ -176,7 +176,7 @@ The password will be provided via an environment variable; the environment varia
 
 ### Validation
 Private Key File:
-- file permissions are appropriate (600)
+- file permissions are appropriate (400)
 - exists
 
 Password Env Var:
