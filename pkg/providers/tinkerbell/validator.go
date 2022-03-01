@@ -117,9 +117,9 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 }
 
 func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string, skipPowerActions bool) error {
-	hardwares, err := v.validateTinkerbellAccess(ctx)
+	hardwares, err := v.tink.GetHardware(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
 	}
 
 	logger.MarkPass("Connected to tinkerbell stack")
@@ -128,10 +128,11 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 		return fmt.Errorf("failed to get hardware Config: %v", err)
 	}
 
-	hardwareMap := hardwareMap(hardwares)
-	if err := v.hardwareConfig.ValidateHardware(skipPowerActions, hardwareMap); err != nil {
+	tinkHardwareMap := hardwareMap(hardwares)
+	if err := v.hardwareConfig.ValidateHardware(skipPowerActions, tinkHardwareMap); err != nil {
 		return fmt.Errorf("failed validating Hardware BMC refs in hardware config: %v", err)
 	}
+
 	if !skipPowerActions {
 		if err := v.hardwareConfig.ValidateBMC(); err != nil {
 			return fmt.Errorf("failed validating BMCs in hardware config: %v", err)
@@ -195,15 +196,6 @@ func (v *Validator) ValidateMinimumRequiredTinkerbellHardwareAvailable(spec v1al
 	}
 
 	return nil
-}
-
-func (v *Validator) validateTinkerbellAccess(ctx context.Context) ([]*tinkhardware.Hardware, error) {
-	hardwares, err := v.tink.GetHardware(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
-	}
-
-	return hardwares, nil
 }
 
 func (v *Validator) validateControlPlaneIpUniqueness(tinkerBellClusterSpec *spec) error {

@@ -70,7 +70,7 @@ func (hc *HardwareConfig) setHardwareConfigFromFile(hardwareFileName string) err
 	return nil
 }
 
-func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, hardwares map[string]*tinkhardware.Hardware) error {
+func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, tinkHardwareMap map[string]*tinkhardware.Hardware) error {
 	bmcRefMap := map[string]*tinkv1alpha1.Hardware{}
 	if !skipPowerActions {
 		bmcRefMap = hc.initBmcRefMap()
@@ -85,7 +85,7 @@ func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, hardwares map[
 			return fmt.Errorf("hardware: %s ID is required", hw.Name)
 		}
 
-		if _, ok := hardwares[hw.Spec.ID]; !ok {
+		if _, ok := tinkHardwareMap[hw.Spec.ID]; !ok {
 			return fmt.Errorf("hardware id '%s' is not registered with tinkerbell stack", hw.Spec.ID)
 		}
 
