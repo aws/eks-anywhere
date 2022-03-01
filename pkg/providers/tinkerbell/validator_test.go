@@ -15,7 +15,7 @@ import (
 	tinkerbellmocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/mocks"
 )
 
-func TestValidateMinimumRequiredTinkerbellHardwareAvailable_SufficientHardware(t *testing.T) {
+func TestValidateMinHardwareAvailableForCreate_SufficientHardware(t *testing.T) {
 	for name, tt := range map[string]struct {
 		AvailableHardware int
 		ClusterSpec       v1alpha1.ClusterSpec
@@ -32,12 +32,12 @@ func TestValidateMinimumRequiredTinkerbellHardwareAvailable_SufficientHardware(t
 			var validator tinkerbell.Validator
 			tinkerbell.SetValidatorHardwareConfig(&validator, hardwareConfig)
 
-			assert.NoError(t, validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(tt.ClusterSpec))
+			assert.NoError(t, validator.ValidateMinHardwareAvailableForCreate(tt.ClusterSpec))
 		})
 	}
 }
 
-func TestValidateMinimumRequiredTinkerbellHardwareAvailable_InsufficientHardware(t *testing.T) {
+func TestValidateMinHardwareAvailableForCreate_InsufficientHardware(t *testing.T) {
 	clusterSpec := newValidClusterSpec(1, 1, 1)
 
 	hardwareConfig := newHardwareConfigWithHardware(2)
@@ -45,10 +45,10 @@ func TestValidateMinimumRequiredTinkerbellHardwareAvailable_InsufficientHardware
 	var validator tinkerbell.Validator
 	tinkerbell.SetValidatorHardwareConfig(&validator, hardwareConfig)
 
-	assert.Error(t, validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(clusterSpec))
+	assert.Error(t, validator.ValidateMinHardwareAvailableForCreate(clusterSpec))
 }
 
-func TestValidateMinimumRequiredTinkerbellHardware_EtcdUnspecified(t *testing.T) {
+func TestValidateMinHardware_EtcdUnspecified(t *testing.T) {
 	clusterSpec := newValidClusterSpec(1, 0, 1)
 	clusterSpec.ExternalEtcdConfiguration = nil
 
@@ -57,7 +57,7 @@ func TestValidateMinimumRequiredTinkerbellHardware_EtcdUnspecified(t *testing.T)
 	var validator tinkerbell.Validator
 	tinkerbell.SetValidatorHardwareConfig(&validator, hardwareConfig)
 
-	assert.NoError(t, validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(clusterSpec))
+	assert.NoError(t, validator.ValidateMinHardwareAvailableForCreate(clusterSpec))
 }
 
 func TestValidateTinkerbellConfig_ValidAuthorities(t *testing.T) {

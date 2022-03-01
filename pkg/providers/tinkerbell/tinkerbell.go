@@ -4,18 +4,19 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
 	corev1 "k8s.io/api/core/v1"
 	errorutil "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
@@ -45,6 +46,8 @@ const (
 	bmcStatePowerActionHardoff     = "POWER_ACTION_HARDOFF"
 	tinkerbellOwnerNameLabel       = "v1alpha1.tinkerbell.org/ownerName"
 	Provisioning                   = "provisioning"
+	maxRetries                     = 30
+	backOffPeriod                  = 5 * time.Second
 )
 
 //go:embed config/template-cp.yaml
@@ -82,6 +85,7 @@ type tinkerbellProvider struct {
 	skipPowerActions bool
 	setupTinkerbell  bool
 	force            bool
+	Retrier          *retrier.Retrier
 }
 
 type TinkerbellClients struct {
@@ -97,6 +101,13 @@ type ProviderKubectlClient interface {
 	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
 	GetHardwareWithLabel(ctx context.Context, label, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error)
 	GetBmcsPowerState(ctx context.Context, bmcNames []string, kubeconfigFile, namespace string) ([]string, error)
+	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
+	GetEksaTinkerbellDatacenterConfig(ctx context.Context, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.TinkerbellDatacenterConfig, error)
+	GetEksaTinkerbellMachineConfig(ctx context.Context, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.TinkerbellMachineConfig, error)
+	GetKubeadmControlPlane(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*controlplanev1.KubeadmControlPlane, error)
+	GetEtcdadmCluster(ctx context.Context, cluster *types.Cluster, clusterName string, opts ...executables.KubectlOpt) (*etcdv1.EtcdadmCluster, error)
+	GetSecret(ctx context.Context, secretObjectName string, opts ...executables.KubectlOpt) (*corev1.Secret, error)
+	UpdateAnnotation(ctx context.Context, resourceType, objectName string, annotations map[string]string, opts ...executables.KubectlOpt) error
 }
 
 type ProviderTinkClient interface {
@@ -183,6 +194,7 @@ func NewProviderCustomDep(
 			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
 		}
 	}
+	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	return &tinkerbellProvider{
 		clusterConfig:         clusterConfig,
 		datacenterConfig:      datacenterConfig,
@@ -211,6 +223,7 @@ func NewProviderCustomDep(
 		skipPowerActions: skipPowerActions,
 		setupTinkerbell:  setupTinkerbell,
 		force:            force,
+		Retrier:          retrier,
 	}
 }
 
@@ -421,12 +434,12 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("failed validating control plane template config: %v", err)
 	}
 
-	if err := p.validator.ValidateAndPopulateTemplate(ctx, tinkerbellClusterSpec.datacenterConfig, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.firstWorkerMachineConfig().Spec.TemplateRef.Name]); err != nil {
-		return fmt.Errorf("failed validating worker node template config: %v", err)
+	if err := p.validator.ValidateMinHardwareAvailableForCreate(tinkerbellClusterSpec.Spec.Cluster.Spec); err != nil {
+		return fmt.Errorf("minimum hardware not available: %v", err)
 	}
 
-	if err := p.validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(tinkerbellClusterSpec.Cluster.Spec); err != nil {
-		return fmt.Errorf("minimum hardware not available: %v", err)
+	if err := p.validator.ValidateAndPopulateTemplate(ctx, tinkerbellClusterSpec.datacenterConfig, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.firstWorkerMachineConfig().Spec.TemplateRef.Name]); err != nil {
+		return fmt.Errorf("failed validating worker node template config: %v", err)
 	}
 
 	if !p.skipIpCheck {
@@ -637,9 +650,227 @@ func filterHardwareForCluster(hardwares []tinkv1alpha1.Hardware, clusterName str
 	return filteredHardwareList, nil
 }
 
-func (p *tinkerbellProvider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec) error {
+func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.TinkerbellDatacenterConfig, oldTmc, newTmc *v1alpha1.TinkerbellMachineConfig) bool {
+	// Another option is to generate MachineTemplates based on the old and new eksa spec,
+	// remove the name field and compare them with DeepEqual
+	// We plan to approach this way since it's more flexible to add/remove fields and test out for validation
+	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
+		return true
+	}
+	if oldSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host != newSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host {
+		return true
+	}
+	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
+		return true
+	}
+
+	fieldsChanged := AnyImmutableFieldChanged(oldVdc, newVdc, oldTmc, newTmc)
+	return fieldsChanged
+}
+
+func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.TinkerbellDatacenterConfig, oldTmc, newTmc *v1alpha1.TinkerbellMachineConfig) bool {
+	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
+		return true
+	}
+	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
+		return true
+	}
+	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) ||
+		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Cluster.Spec.WorkerNodeGroupConfigurations, newSpec.Cluster.Spec.WorkerNodeGroupConfigurations) {
+		return true
+	}
+	return AnyImmutableFieldChanged(oldVdc, newVdc, oldTmc, newTmc)
+}
+
+func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration) bool {
+	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.LabelsMapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels)
+}
+
+func NeedsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newVdc *v1alpha1.TinkerbellDatacenterConfig, oldTmc, newTmc *v1alpha1.TinkerbellMachineConfig) bool {
+	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
+		return true
+	}
+	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
+		return true
+	}
+	return AnyImmutableFieldChanged(oldVdc, newVdc, oldTmc, newTmc)
+}
+
+func AnyImmutableFieldChanged(oldVdc, newVdc *v1alpha1.TinkerbellDatacenterConfig, oldTmc, newTmc *v1alpha1.TinkerbellMachineConfig) bool {
+	// @TODO: Add immutable fields check here
+	return false
+}
+
+func (p *tinkerbellProvider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	clusterName := newClusterSpec.Cluster.Name
+	var controlPlaneTemplateName, workloadTemplateName, kubeadmconfigTemplateName, etcdTemplateName string
+	var needsNewEtcdTemplate bool
+
+	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, newClusterSpec.Cluster.Name)
+	if err != nil {
+		return nil, nil, err
+	}
+	vdc, err := p.providerKubectlClient.GetEksaTinkerbellDatacenterConfig(ctx, p.datacenterConfig.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
+	if err != nil {
+		return nil, nil, err
+	}
+	controlPlaneMachineConfig := p.machineConfigs[newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+	controlPlaneTmc, err := p.providerKubectlClient.GetEksaTinkerbellMachineConfig(ctx, c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
+	if err != nil {
+		return nil, nil, err
+	}
+	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, controlPlaneTmc, controlPlaneMachineConfig)
+	if !needsNewControlPlaneTemplate {
+		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, c.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+		if err != nil {
+			return nil, nil, err
+		}
+		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
+	} else {
+		controlPlaneTemplateName = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
+	}
+
+	previousWorkerNodeGroupConfigs := cluster.BuildMapForWorkerNodeGroupsByName(currentSpec.Cluster.Spec.WorkerNodeGroupConfigurations)
+
+	workloadTemplateNames := make(map[string]string, len(newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
+	kubeadmconfigTemplateNames := make(map[string]string, len(newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroupConfiguration := range newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		needsNewWorkloadTemplate, err := p.needsNewMachineTemplate(ctx, workloadCluster, currentSpec, newClusterSpec, workerNodeGroupConfiguration, vdc, previousWorkerNodeGroupConfigs)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		needsNewKubeadmConfigTemplate, err := p.needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration, previousWorkerNodeGroupConfigs)
+		if err != nil {
+			return nil, nil, err
+		}
+		if !needsNewKubeadmConfigTemplate {
+			mdName := machineDeploymentName(newClusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name)
+			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, mdName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+			if err != nil {
+				return nil, nil, err
+			}
+			kubeadmconfigTemplateName = md.Spec.Template.Spec.Bootstrap.ConfigRef.Name
+			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = kubeadmconfigTemplateName
+		} else {
+			kubeadmconfigTemplateName = common.KubeadmConfigTemplateName(clusterName, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
+			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = kubeadmconfigTemplateName
+		}
+
+		if !needsNewWorkloadTemplate {
+			mdName := machineDeploymentName(newClusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name)
+			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, mdName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+			if err != nil {
+				return nil, nil, err
+			}
+			workloadTemplateName = md.Spec.Template.Spec.InfrastructureRef.Name
+			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
+		} else {
+			workloadTemplateName = common.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
+			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
+		}
+		p.templateBuilder.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
+	}
+
+	// @TODO: upgrade of external etcd
+	if newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		// etcdMachineConfig := p.machineConfigs[newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+		// etcdMachineTmc, err := p.providerKubectlClient.GetEksaTinkerbellMachineConfig(ctx, c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
+		// if err != nil {
+		//	return nil, nil, err
+		// }
+		// needsNewEtcdTemplate = NeedsNewEtcdTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, etcdMachineTmc, etcdMachineConfig)
+		/*** @TODO: hardcoding this to false, remove later *****/
+		needsNewEtcdTemplate = false
+		if !needsNewEtcdTemplate {
+			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+			if err != nil {
+				return nil, nil, err
+			}
+			etcdTemplateName = etcdadmCluster.Spec.InfrastructureTemplate.Name
+		} else {
+			/* During a cluster upgrade, etcd machines need to be upgraded first, so that the etcd machines with new spec get created and can be used by controlplane machines
+			as etcd endpoints. KCP rollout should not start until then. As a temporary solution in the absence of static etcd endpoints, we annotate the etcd cluster as "upgrading",
+			so that KCP checks this annotation and does not proceed if etcd cluster is upgrading. The etcdadm controller removes this annotation once the etcd upgrade is complete.
+			*/
+			err = p.providerKubectlClient.UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", clusterName),
+				map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"},
+				executables.WithCluster(bootstrapCluster),
+				executables.WithNamespace(constants.EksaSystemNamespace))
+			if err != nil {
+				return nil, nil, err
+			}
+			etcdTemplateName = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
+		}
+	}
+
+	cpOpt := func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = controlPlaneTemplateName
+		values["controlPlaneSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
+		if newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+			values["etcdSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
+		}
+		values["etcdTemplateName"] = etcdTemplateName
+	}
+	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(newClusterSpec, cpOpt)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
+	if err != nil {
+		return nil, nil, err
+	}
+	return controlPlaneSpec, workersSpec, nil
+}
+
+func (p *tinkerbellProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
+
+	hardware, err := p.providerTinkClient.GetHardware(ctx)
+	if err != nil {
+		return fmt.Errorf("retrieving tinkerbell hardware: %v", err)
+	}
+	logger.MarkPass("Connected to tinkerbell stack")
+
+	if err := setupEnvVars(p.datacenterConfig); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+
+	tinkerbellClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+
+	if err := p.configureSshKeys(); err != nil {
+		return err
+	}
+
+	// ValidateHardwareConfig performs a lazy load of hardware configuration. Given subsequent steps need the hardware
+	// read into memory it needs to be done first.
+	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile, hardware, p.skipPowerActions, p.force); err != nil {
+		return err
+	}
+
+	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
+		return err
+	}
+
+	if err := p.validator.ValidateClusterMachineConfigs(ctx, tinkerbellClusterSpec); err != nil {
+		return err
+	}
+
+	if err := p.validator.ValidateAndPopulateTemplateForUpgrade(ctx, tinkerbellClusterSpec.datacenterConfig, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.controlPlaneMachineConfig().Spec.TemplateRef.Name], clusterSpec.VersionsBundle.EksD.Raw.Ubuntu.URI, string(clusterSpec.Cluster.Spec.KubernetesVersion)); err != nil {
+		return fmt.Errorf("failed validating control plane template config: %v", err)
+	}
+
+	if err := p.validator.ValidateMinHardwareAvailableForUpgrade(tinkerbellClusterSpec.Spec.Cluster.Spec, 1); err != nil {
+		return fmt.Errorf("minimum hardware not available: %v", err)
+	}
+
+	if err := p.validator.ValidateAndPopulateTemplateForUpgrade(ctx, tinkerbellClusterSpec.datacenterConfig, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.firstWorkerMachineConfig().Spec.TemplateRef.Name], clusterSpec.VersionsBundle.EksD.Raw.Ubuntu.URI, string(clusterSpec.Cluster.Spec.KubernetesVersion)); err != nil {
+		return fmt.Errorf("failed validating worker node template config: %v", err)
+	}
+
 	// TODO: Add validations when this is supported
-	return errors.New("upgrade for tinkerbell provider isn't currently supported")
+	return nil
 }
 
 func (p *tinkerbellProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
@@ -704,10 +935,19 @@ func (tb *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 		}
 
 		values := buildTemplateMapMD(clusterSpec, tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration, wTemplateString)
-		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
-		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
+		_, ok := workloadTemplateNames[workerNodeGroupConfiguration.Name]
+		if workloadTemplateNames == nil || !ok {
+			return nil, fmt.Errorf("workloadTemplateNames invalid in GenerateCAPISpecWorkers: %v", err)
+		}
+		_, ok = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
+		if kubeadmconfigTemplateNames == nil || !ok {
+			return nil, fmt.Errorf("kubeadmconfigTemplateNames invalid in GenerateCAPISpecWorkers: %v", err)
+		}
 		values["workerSshAuthorizedKey"] = tb.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
+		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
+		values["workerNodeGroupName"] = workerNodeGroupConfiguration.Name
+		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
@@ -716,6 +956,14 @@ func (tb *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 		workerSpecs = append(workerSpecs, bytes)
 	}
 	return templater.AppendYamlResources(workerSpecs...), nil
+}
+
+func (p *tinkerbellProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, clusterSpec)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
+	}
+	return controlPlaneSpec, workersSpec, nil
 }
 
 func (p *tinkerbellProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
@@ -741,6 +989,7 @@ func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, clus
 	if err != nil {
 		return nil, nil, err
 	}
+
 	workloadTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
@@ -753,11 +1002,6 @@ func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, clus
 		return nil, nil, err
 	}
 	return controlPlaneSpec, workersSpec, nil
-}
-
-func (p *tinkerbellProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	// TODO: implement
-	return nil, nil, nil
 }
 
 func (p *tinkerbellProvider) GenerateStorageClass() []byte {
@@ -861,13 +1105,49 @@ func (p *tinkerbellProvider) ValidateNewSpec(_ context.Context, _ *types.Cluster
 	return nil
 }
 
+func (p *tinkerbellProvider) needsNewMachineTemplate(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.TinkerbellDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
+	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
+		workerMachineConfig := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		workerTmc, err := p.providerKubectlClient.GetEksaTinkerbellMachineConfig(ctx, workerNodeGroupConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
+		if err != nil {
+			return false, err
+		}
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, workerTmc, workerMachineConfig)
+		return needsNewWorkloadTemplate, nil
+	}
+	return true, nil
+}
+
+func (p *tinkerbellProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
+	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
+		existingWorkerNodeGroupConfig := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]
+		return NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, &existingWorkerNodeGroupConfig), nil
+	}
+	return true, nil
+}
+
 func (p *tinkerbellProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
 	// TODO: implement
 	return nil
 }
 
 func (p *tinkerbellProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
-	// TODO: Figure out if something is needed here
+	// @TODO: do we need this for bare metal upgrade?
+
+	// Use retrier so that cluster upgrade does not fail due to any intermittent failure while connecting to kube-api server
+
+	// This is unfortunate, but ClusterResourceSet's don't support any type of reapply of the resources they manage
+	// Even if we create a new ClusterResourceSet, if such resources already exist in the cluster, they won't be reapplied
+	// The long term solution is to add this capability to the cluster-api controller,
+	// with a new mode like "ReApplyOnChanges" or "ReApplyOnCreate" vs the current "ReApplyOnce"
+	/* err := p.Retrier.Retry(
+		func() error {
+			return p.resourceSetManager.ForceUpdate(ctx, resourceSetName(clusterSpec), constants.EksaSystemNamespace, managementCluster, workloadCluster)
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("failed updating the tinkerbell provider resource set post upgrade: %v", err)
+	} */
 	return nil
 }
 
