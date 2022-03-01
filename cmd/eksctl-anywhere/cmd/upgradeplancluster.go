@@ -76,7 +76,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	}
 	deps, err := dependencies.ForSpec(ctx, newClusterSpec).
 		WithClusterManager(newClusterSpec.Cluster).
-		WithProvider(uc.fileName, newClusterSpec.Cluster, cc.skipIpCheck, uc.hardwareFileName).
+		WithProvider(uc.fileName, newClusterSpec.Cluster, cc.skipIpCheck, uc.hardwareFileName, cc.skipPowerActions).
 		WithFluxAddonClient(ctx, newClusterSpec.Cluster, newClusterSpec.GitOpsConfig).
 		WithCAPIManager().
 		Build(ctx)
@@ -86,7 +86,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 
 	workloadCluster := &types.Cluster{
 		Name:           newClusterSpec.Name,
-		KubeconfigFile: uc.kubeConfig(newClusterSpec.Name),
+		KubeconfigFile: getKubeconfigPath(newClusterSpec.Name, uc.wConfig),
 	}
 
 	logger.V(0).Info("Checking new release availability...")

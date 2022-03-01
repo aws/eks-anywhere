@@ -54,20 +54,6 @@ func (mr *MockProviderMockRecorder) BootstrapClusterOpts() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BootstrapClusterOpts", reflect.TypeOf((*MockProvider)(nil).BootstrapClusterOpts))
 }
 
-// BootstrapSetup mocks base method.
-func (m *MockProvider) BootstrapSetup(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 *types.Cluster) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BootstrapSetup", arg0, arg1, arg2)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// BootstrapSetup indicates an expected call of BootstrapSetup.
-func (mr *MockProviderMockRecorder) BootstrapSetup(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BootstrapSetup", reflect.TypeOf((*MockProvider)(nil).BootstrapSetup), arg0, arg1, arg2)
-}
-
 // ChangeDiff mocks base method.
 func (m *MockProvider) ChangeDiff(arg0, arg1 *cluster.Spec) *types.ComponentChangeDiff {
 	m.ctrl.T.Helper()
@@ -282,6 +268,34 @@ func (m *MockProvider) Name() string {
 func (mr *MockProviderMockRecorder) Name() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockProvider)(nil).Name))
+}
+
+// PostBootstrapSetup mocks base method.
+func (m *MockProvider) PostBootstrapSetup(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PostBootstrapSetup", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PostBootstrapSetup indicates an expected call of PostBootstrapSetup.
+func (mr *MockProviderMockRecorder) PostBootstrapSetup(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostBootstrapSetup", reflect.TypeOf((*MockProvider)(nil).PostBootstrapSetup), arg0, arg1, arg2)
+}
+
+// PreBootstrapSetup mocks base method.
+func (m *MockProvider) PreBootstrapSetup(arg0 context.Context, arg1 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PreBootstrapSetup", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PreBootstrapSetup indicates an expected call of PreBootstrapSetup.
+func (mr *MockProviderMockRecorder) PreBootstrapSetup(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PreBootstrapSetup", reflect.TypeOf((*MockProvider)(nil).PreBootstrapSetup), arg0, arg1)
 }
 
 // RunPostControlPlaneCreation mocks base method.

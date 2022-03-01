@@ -1,17 +1,8 @@
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
-  creationTimestamp: "2022-02-04T22:35:36Z"
-  generation: 2
-  name: test_cluster-md-0
+  name: test_cluster-md-0-template-1234567890000
   namespace: eksa-system
-  ownerReferences:
-    - apiVersion: cluster.x-k8s.io/v1beta1
-      kind: Cluster
-      name: taintstest4
-      uid: f3cd4d33-94cd-456b-8cf1-21f80d833af3
-  resourceVersion: "825197"
-  uid: 95717072-bfe7-4f98-9ec3-0bc8ee42beac
 spec:
   template:
     spec:
@@ -20,14 +11,12 @@ spec:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
           kubeletExtraArgs:
-            cgroup-driver: systemd
+            anonymous-auth: "false"
             cloud-provider: external
+            read-only-port: "0"
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           name: '{{ ds.meta_data.hostname }}'
-          taints:
-            - effect: PreferNoSchedule
-              key: key1
-              value: PepperoniPizza
+          taints: []
       preKubeadmCommands:
         - hostname "{{ ds.meta_data.hostname }}"
         - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
@@ -35,7 +24,7 @@ spec:
         - echo "127.0.0.1   {{ ds.meta_data.hostname }}" >>/etc/hosts
         - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
       users:
-        - name: ec2-user
+        - name: capv
           sshAuthorizedKeys:
-            - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCyjtLJZAGkn7Ibi9RW4QKGs+v/ltSE/vYMEX4+mixNF35rU3cFIiXYMut5hflzRRWlEHeNW9oNQ/WNOUiynFp9ySDmkjo81PkfUfYl2mXqkcwRFW0qVXSzLB5nsH68Y2mzfSVZ4UuUXs9fRSu8faYs/QjRkOLmaGFWzL8CVBvCSAT51dIppJ0lh+a9ZLiLLTpExL7tC32Q+TDuCIK3EpTBd+km58NUUrKBfML5u5LSehRTWzPxuOa4egYCCKa5uGfTjk1T2ycXbkaL6hn6KqpGI/aHvMIeP51cloa64ropRQ7XuGnpAACLh67FWz2tE+HwRg7VgdkwqDbrFNf6ONhwt4SPmRhOtkToEuV1U3z8YqnIButaGs8HYZV8DLAMre2hoAdnpsQhKyA2Q7ZmQw/YIOVsKuHQGz/OYGv4/gQxRDH+pduGTFFii9w7WaZSKAroBG3qJ/iLhFBKRYG1e0Pi+89Xf8Rg/011eNnR+aC4sIjFlSK1b9lrtOM767BoBPM5HJKSECuDCUhHnFZbFsTm7IFjlxVIKGiR/B8RTpycAdr+UdrLoCCSUYZnvqosgMneAq96QqCQscu9hDEbP3Dndyh3N6/VbVpl+eghFKvd4gdVD5FFy1nDC9Z/+rqeiiO+HUnksP9vTG8PEsp9Mi91mpdhBvkAYfPQQAHJazhnjQ==
+            - 'ssh-rsa ssh_key_value'
           sudo: ALL=(ALL) NOPASSWD:ALL

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -46,7 +45,7 @@ func (c *retrierClient) installEksdComponents(ctx context.Context, clusterSpec *
 	); err != nil {
 		return fmt.Errorf("error applying eksd release manifest: %v", err)
 	}
-	clusterSpec.Status.EksdReleaseRef = setEksdReleaseRef(clusterSpec)
+	clusterSpec.Cluster.SetEksdReleaseRef(constants.EksDistroApiVersion, constants.ReleaseKind, clusterSpec.VersionsBundle.EksD.Name, constants.EksaSystemNamespace)
 
 	return nil
 }
@@ -85,13 +84,4 @@ func (c *retrierClient) installCustomComponents(ctx context.Context, clusterSpec
 		}
 	}
 	return c.waitForDeployments(ctx, internal.EksaDeployments, cluster)
-}
-
-func setEksdReleaseRef(clusterSpec *cluster.Spec) *v1alpha1.EksdReleaseRef {
-	return &v1alpha1.EksdReleaseRef{
-		ApiVersion: cluster.EksDistroApiVersion,
-		Kind:       cluster.ReleaseKind,
-		Name:       clusterSpec.VersionsBundle.EksD.Name,
-		Namespace:  constants.EksaSystemNamespace,
-	}
 }

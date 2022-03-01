@@ -84,9 +84,11 @@ func (c *createTestSetup) expectCreateBootstrap() {
 			c.ctx, c.clusterSpec, gomock.Not(gomock.Nil()), gomock.Not(gomock.Nil()),
 		).Return(c.bootstrapCluster, nil),
 
+		c.provider.EXPECT().PreBootstrapSetup(c.ctx, c.bootstrapCluster),
+
 		c.clusterManager.EXPECT().InstallCAPI(c.ctx, c.clusterSpec, c.bootstrapCluster, c.provider),
 
-		c.provider.EXPECT().BootstrapSetup(c.ctx, c.clusterSpec.Cluster, c.bootstrapCluster),
+		c.provider.EXPECT().PostBootstrapSetup(c.ctx, c.clusterSpec.Cluster, c.bootstrapCluster),
 	)
 }
 

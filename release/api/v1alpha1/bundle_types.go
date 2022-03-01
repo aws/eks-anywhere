@@ -66,6 +66,7 @@ type VersionsBundle struct {
 	ControlPlane           KubeadmControlPlaneBundle   `json:"controlPlane"`
 	Aws                    AwsBundle                   `json:"aws"`
 	VSphere                VSphereBundle               `json:"vSphere"`
+	CloudStack             CloudStackBundle            `json:"cloudStack,omitempty"`
 	Docker                 DockerBundle                `json:"docker"`
 	Eksa                   EksaBundle                  `json:"eksa"`
 	Cilium                 CiliumBundle                `json:"cilium"`
@@ -75,8 +76,9 @@ type VersionsBundle struct {
 	BottleRocketAdmin      BottlerocketAdminBundle     `json:"bottlerocketAdmin"`
 	ExternalEtcdBootstrap  EtcdadmBootstrapBundle      `json:"etcdadmBootstrap"`
 	ExternalEtcdController EtcdadmControllerBundle     `json:"etcdadmController"`
-	Tinkerbell             TinkerbellBundle            `json:"tinkerbell"`
-	Haproxy                HaproxyBundle               `json:"haproxy"`
+	Tinkerbell             TinkerbellBundle            `json:"tinkerbell,omitempty"`
+	Haproxy                HaproxyBundle               `json:"haproxy,omitempty"`
+	Snow                   SnowBundle                  `json:"snow,omitempty"`
 }
 
 type EksDRelease struct {
@@ -196,6 +198,13 @@ type DockerBundle struct {
 	Metadata        Manifest `json:"metadata"`
 }
 
+type CloudStackBundle struct {
+	Version              string   `json:"version"`
+	ClusterAPIController Image    `json:"clusterAPIController"`
+	Components           Manifest `json:"components"`
+	Metadata             Manifest `json:"metadata"`
+}
+
 type CiliumBundle struct {
 	Version   string   `json:"version,omitempty"`
 	Cilium    Image    `json:"cilium"`
@@ -269,4 +278,11 @@ type Actions struct {
 
 type HaproxyBundle struct {
 	Image Image `json:"image"`
+}
+
+type SnowBundle struct {
+	Version    string   `json:"version"`
+	KubeVip    Image    `json:"kubeVip"`
+	Components Manifest `json:"components"`
+	Metadata   Manifest `json:"metadata"`
 }

@@ -912,6 +912,15 @@ data:
           - effect: NoSchedule
             key: node-role.kubernetes.io/master
             operator: Exists
+          - key: key1
+            value: val1
+            effect: PreferNoSchedule
+          - key: key2
+            value: val2
+            effect: NoSchedule
+          - key: key3
+            value: val3
+            effect: NoExecute
           volumes:
           - name: vsphere-config-volume
             secret:

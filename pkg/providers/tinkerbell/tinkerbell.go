@@ -16,10 +16,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/hardware"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -60,7 +61,13 @@ type tinkerbellProvider struct {
 	skipIpCheck           bool
 	hardwareConfigFile    string
 	validator             *Validator
+	skipPowerActions      bool
 	// TODO: Update hardwareConfig to proper type
+}
+
+type TinkerbellClients struct {
+	ProviderTinkClient ProviderTinkClient
+	ProviderPbnjClient ProviderPbnjClient
 }
 
 // TODO: Add necessary kubectl functions here
@@ -75,21 +82,27 @@ type ProviderTinkClient interface {
 	GetHardware(ctx context.Context) ([]*tink.Hardware, error)
 }
 
-func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
-	return NewProviderCustomNet(
+type ProviderPbnjClient interface {
+	ValidateBMCSecretCreds(ctx context.Context, bmc pbnj.BmcSecretConfig) error
+}
+
+func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkbellClient TinkerbellClients, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string, skipPowerActions bool) *tinkerbellProvider {
+	return NewProviderCustomDep(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
 		providerKubectlClient,
-		providerTinkClient,
+		providerTinkbellClient.ProviderTinkClient,
+		providerTinkbellClient.ProviderPbnjClient,
 		&networkutils.DefaultNetClient{},
 		now,
 		skipIpCheck,
 		hardwareConfigFile,
+		skipPowerActions,
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
+func NewProviderCustomDep(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, pbnjClient ProviderPbnjClient, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string, skipPowerActions bool) *tinkerbellProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
@@ -120,8 +133,9 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
 			now:                         now,
 		},
 		hardwareConfigFile: hardwareConfigFile,
-		validator:          NewValidator(providerTinkClient, netClient, hardware.HardwareConfig{}),
+		validator:          NewValidator(providerTinkClient, netClient, hardware.HardwareConfig{}, pbnjClient),
 		skipIpCheck:        skipIpCheck,
+		skipPowerActions:   skipPowerActions,
 	}
 }
 
@@ -142,7 +156,11 @@ func (p *tinkerbellProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClu
 	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}, nil
 }
 
-func (p *tinkerbellProvider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+func (p *tinkerbellProvider) PreBootstrapSetup(ctx context.Context, cluster *types.Cluster) error {
+	return nil
+}
+
+func (p *tinkerbellProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO: figure out if we need something else here
 	err := p.providerKubectlClient.ApplyHardware(ctx, p.hardwareConfigFile, cluster.KubeconfigFile)
 	if err != nil {
@@ -179,6 +197,12 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
+	// ValidateHardwareConfig performs a lazy load of hardware configuration. Given subsequent steps need the hardware
+	// read into memory it needs to be done first.
+	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile, p.skipPowerActions); err != nil {
+		return err
+	}
+
 	tinkerbellClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
 	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
@@ -187,6 +211,10 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 
 	if err := p.validator.ValidateClusterMachineConfigs(ctx, tinkerbellClusterSpec); err != nil {
 		return err
+	}
+
+	if err := p.validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(tinkerbellClusterSpec.Spec.Cluster.Spec); err != nil {
+		return fmt.Errorf("minimum hardware not available: %v", err)
 	}
 
 	p.controlPlaneSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
@@ -199,10 +227,6 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		}
 	} else {
 		logger.Info("Skipping check for whether control plane ip is in use")
-	}
-
-	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile); err != nil {
-		return err
 	}
 
 	return nil

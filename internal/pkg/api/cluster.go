@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -60,6 +61,21 @@ func WithControlPlaneCount(r int) ClusterFiller {
 func WithControlPlaneEndpointIP(value string) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		c.Spec.ControlPlaneConfiguration.Endpoint.Host = value
+	}
+}
+
+func WithControlPlaneTaints(taints []corev1.Taint) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		c.Spec.ControlPlaneConfiguration.Taints = taints
+	}
+}
+
+func WithControlPlaneLabel(key string, val string) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		if c.Spec.ControlPlaneConfiguration.Labels == nil {
+			c.Spec.ControlPlaneConfiguration.Labels = map[string]string{}
+		}
+		c.Spec.ControlPlaneConfiguration.Labels[key] = val
 	}
 }
 
@@ -174,6 +190,7 @@ func WithWorkerNodeGroup(name string, fillers ...WorkerNodeGroupFiller) ClusterF
 		position := -1
 		for i, w := range c.Spec.WorkerNodeGroupConfigurations {
 			if w.Name == name {
+				logger.Info("Updating worker node group", "name", name)
 				nodeGroup = &w
 				position = i
 				break
@@ -181,6 +198,7 @@ func WithWorkerNodeGroup(name string, fillers ...WorkerNodeGroupFiller) ClusterF
 		}
 
 		if nodeGroup == nil {
+			logger.Info("Adding worker node group", "name", name)
 			nodeGroup = &anywherev1.WorkerNodeGroupConfiguration{Name: name}
 			c.Spec.WorkerNodeGroupConfigurations = append(c.Spec.WorkerNodeGroupConfigurations, *nodeGroup)
 			position = len(c.Spec.WorkerNodeGroupConfigurations) - 1
