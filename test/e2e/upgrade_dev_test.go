@@ -180,6 +180,7 @@ func TestVSphereKubernetes118To119Network1to3Upgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120To121CpComputeOfferingUpgrade(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	provider := cloudstack.NewCloudStack(t, cloudstack.WithRedhat120())
 	test := framework.NewE2ETest(
 		t,

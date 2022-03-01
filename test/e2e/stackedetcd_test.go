@@ -64,6 +64,7 @@ func TestDockerKubernetesStackedEtcd(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120StackedEtcdRedhat(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(t,
 		cloudstack.NewCloudStack(t, cloudstack.WithRedhat120()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
@@ -73,6 +74,7 @@ func TestCloudStackKubernetes120StackedEtcdRedhat(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121StackedEtcdRedhat(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(t,
 		cloudstack.NewCloudStack(t, cloudstack.WithRedhat121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),

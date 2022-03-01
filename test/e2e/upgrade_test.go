@@ -314,6 +314,7 @@ func TestVSphereKubernetes120BottlerocketTo121StackedEtcdUpgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120RedhatTo121Upgrade(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	provider := cloudstack.NewCloudStack(t, cloudstack.WithRedhat120())
 	test := framework.NewClusterE2ETest(
 		t,
@@ -329,6 +330,7 @@ func TestCloudStackKubernetes120RedhatTo121Upgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	provider := cloudstack.NewCloudStack(t, cloudstack.WithRedhat120())
 	test := framework.NewClusterE2ETest(
 		t,
@@ -347,6 +349,7 @@ func TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120RedhatWorkerNodeUpgrade(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	provider := cloudstack.NewCloudStack(t, cloudstack.WithRedhat120())
 	test := framework.NewClusterE2ETest(
 		t,

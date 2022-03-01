@@ -6,12 +6,11 @@ package e2e
 import (
 	"testing"
 
-	"github.com/aws/eks-anywhere/test/framework/cloudstack"
-	"github.com/aws/eks-anywhere/test/framework/vsphere"
-
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
+	"github.com/aws/eks-anywhere/test/framework/cloudstack"
+	"github.com/aws/eks-anywhere/test/framework/vsphere"
 )
 
 func runAWSIamAuthFlow(test *framework.ClusterE2ETest) {
@@ -81,6 +80,7 @@ func TestVSphereKubernetes121BottleRocketAWSIamAuth(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120AWSIamAuth(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(
 		t,
 		cloudstack.NewCloudStack(t, cloudstack.WithRedhat120()),
@@ -91,6 +91,7 @@ func TestCloudStackKubernetes120AWSIamAuth(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121AWSIamAuth(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(
 		t,
 		cloudstack.NewCloudStack(t, cloudstack.WithRedhat121()),

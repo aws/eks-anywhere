@@ -147,6 +147,7 @@ func TestVSphereKubernetes121GitopsOptionsFlux(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120Flux(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(t,
 		cloudstack.NewCloudStack(t, cloudstack.WithRedhat120()),
 		framework.WithFlux(),
@@ -159,6 +160,7 @@ func TestCloudStackKubernetes120Flux(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121Flux(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(t,
 		cloudstack.NewCloudStack(t, cloudstack.WithRedhat121()),
 		framework.WithFlux(),
@@ -171,6 +173,7 @@ func TestCloudStackKubernetes121Flux(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121ThreeReplicasThreeWorkersFlux(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(t,
 		cloudstack.NewCloudStack(t, cloudstack.WithRedhat121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
@@ -182,6 +185,7 @@ func TestCloudStackKubernetes121ThreeReplicasThreeWorkersFlux(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121GitopsOptionsFlux(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(t,
 		cloudstack.NewCloudStack(t, cloudstack.WithRedhat121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),

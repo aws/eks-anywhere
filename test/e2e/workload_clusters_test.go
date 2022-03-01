@@ -53,6 +53,7 @@ func TestVSphereKubernetes121WorkloadClusterDemo(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121WorkloadClusterDemo(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	provider := cloudstack.NewCloudStack(t, cloudstack.WithRedhat121())
 	test := framework.NewMulticlusterE2ETest(
 		t,

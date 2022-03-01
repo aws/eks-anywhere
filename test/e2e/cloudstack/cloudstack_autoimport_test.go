@@ -46,6 +46,7 @@ func deleteTemplates(test *framework.ClusterE2ETest, provider *cloudstack.CloudS
 }
 
 func TestCloudStackKubernetes120RedhatAutoimport(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	provider := cloudstack.NewCloudStack(t,
 		cloudstack.WithCloudStackFillers(
 			cloudstack.WithTemplate(""),
@@ -61,6 +62,7 @@ func TestCloudStackKubernetes120RedhatAutoimport(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121RedhatAutoimport(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	provider := cloudstack.NewCloudStack(t,
 		cloudstack.WithCloudStackFillers(
 			cloudstack.WithTemplate(""),

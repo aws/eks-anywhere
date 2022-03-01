@@ -83,6 +83,7 @@ func TestVSphereKubernetes121BottleRocketThreeWorkersConformanceFlow(t *testing.
 }
 
 func TestCloudStackKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(
 		t,
 		cloudstack.NewCloudStack(t, cloudstack.WithRedhat120()),
@@ -93,6 +94,7 @@ func TestCloudStackKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(
 		t,
 		cloudstack.NewCloudStack(t, cloudstack.WithRedhat121()),
