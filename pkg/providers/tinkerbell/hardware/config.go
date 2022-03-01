@@ -86,7 +86,7 @@ func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, hardwares map[
 		}
 
 		if _, ok := hardwares[hw.Spec.ID]; !ok {
-			return fmt.Errorf("hardware with the ID: %s is not present on the tinkerbell stack", hw.Spec.ID)
+			return fmt.Errorf("hardware id '%s' is not registered with tinkerbell stack", hw.Spec.ID)
 		}
 
 		if !skipPowerActions {

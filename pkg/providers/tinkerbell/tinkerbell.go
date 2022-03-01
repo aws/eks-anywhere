@@ -79,7 +79,7 @@ type ProviderKubectlClient interface {
 }
 
 type ProviderTinkClient interface {
-	GetHardware(ctx context.Context) (map[string]*tink.Hardware, error)
+	GetHardware(ctx context.Context) ([]*tink.Hardware, error)
 }
 
 type ProviderPbnjClient interface {

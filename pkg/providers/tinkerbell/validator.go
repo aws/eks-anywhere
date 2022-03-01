@@ -128,7 +128,8 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 		return fmt.Errorf("failed to get hardware Config: %v", err)
 	}
 
-	if err := v.hardwareConfig.ValidateHardware(skipPowerActions, hardwares); err != nil {
+	hardwareMap := hardwareMap(hardwares)
+	if err := v.hardwareConfig.ValidateHardware(skipPowerActions, hardwareMap); err != nil {
 		return fmt.Errorf("failed validating Hardware BMC refs in hardware config: %v", err)
 	}
 	if !skipPowerActions {
@@ -196,7 +197,7 @@ func (v *Validator) ValidateMinimumRequiredTinkerbellHardwareAvailable(spec v1al
 	return nil
 }
 
-func (v *Validator) validateTinkerbellAccess(ctx context.Context) (map[string]*tinkhardware.Hardware, error) {
+func (v *Validator) validateTinkerbellAccess(ctx context.Context) ([]*tinkhardware.Hardware, error) {
 	hardwares, err := v.tink.GetHardware(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
@@ -279,4 +280,14 @@ func validateAddressWithPort(address string) error {
 	}
 
 	return nil
+}
+
+func hardwareMap(hardwareList []*tinkhardware.Hardware) map[string]*tinkhardware.Hardware {
+	hardwareMap := make(map[string]*tinkhardware.Hardware)
+
+	for _, data := range hardwareList {
+		hardwareMap[data.GetId()] = data
+	}
+
+	return hardwareMap
 }
