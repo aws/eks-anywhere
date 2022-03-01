@@ -8,7 +8,7 @@ EKS Anywhere allows you to provision and manage Amazon EKS on your own infrastru
 
 This document walks you through setting up EKS Anywhere in a way that:
 
-* Deploys an initial cluster on your vSphere environment. That cluster can be used as a standalone cluster (to run workloads) or a management cluster (to create and manage other clusters)
+* Deploys an initial cluster on your vSphere environment. That cluster can be used as a self-managed cluster (to run workloads) or a management cluster (to create and manage other clusters)
 * Deploys zero or more workload clusters from the management cluster
 
 If your initial cluster is a management cluster, it is intended to stay in place so you can use it later to modify, upgrade, and delete workload clusters.
@@ -19,7 +19,7 @@ The alternative is to simply use your initial cluster to run workloads.
 {{% alert title="Important" color="warning" %}}
 
 Creating an EKS Anywhere management cluster is the recommended model.
-In its first release, EKS Anywhere clusters functioned as standalone clusters.
+In its first release, EKS Anywhere clusters functioned as self-managed clusters.
 Separating management features into a separate, persistent management cluster
 provides a cleaner model for managing the lifecycle of workload clusters (to create, upgrade, and delete clusters), while workload clusters run user applications.
 This approach also reduces provider permissions for workload clusters.
@@ -37,12 +37,12 @@ An EKS Anywhere deployment will also require the availability of certain
 
 The following steps are divided into two sections:
 
-* Create an initial cluster (used as a management or standalone cluster)
+* Create an initial cluster (used as a management or self-managed cluster)
 * Create zero or more workload clusters from the management cluster
 
 ### Create an initial cluster
 
-Follow these steps to create an EKS Anywhere cluster that can be used either as a management cluster or as a standalone cluster for running workloads.
+Follow these steps to create an EKS Anywhere cluster that can be used either as a management cluster or as a self-managed cluster (for running workloads itself).
 
 <!-- this content needs to be indented so the numbers are automatically incremented -->
 1. Generate an initial cluster config (named `mgmt` for this example):
