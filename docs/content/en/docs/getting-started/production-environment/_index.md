@@ -19,7 +19,6 @@ The alternative is to simply use your initial cluster to run workloads.
 {{% alert title="Important" color="warning" %}}
 
 Creating an EKS Anywhere management cluster is the recommended model.
-In its first release, EKS Anywhere clusters functioned as self-managed clusters.
 Separating management features into a separate, persistent management cluster
 provides a cleaner model for managing the lifecycle of workload clusters (to create, upgrade, and delete clusters), while workload clusters run user applications.
 This approach also reduces provider permissions for workload clusters.
