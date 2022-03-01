@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -83,7 +84,6 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 		}
 	}()
 
-
 	if cluster.DeletionTimestamp.IsZero() {
 		if !controllerutil.ContainsFinalizer(cluster, clusterFinalizerName) {
 			controllerutil.AddFinalizer(cluster, clusterFinalizerName)
@@ -132,25 +132,22 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, cluster *anywhe
 	capiCluster := &clusterv1.Cluster{}
 	capiClusterName := types.NamespacedName{Namespace: "eksa-system", Name: cluster.Name}
 	r.log.Info("Deleting", "name", cluster.Name)
-	err := r.client.Get(ctx, capiClusterName, capiCluster);
+	err := r.client.Get(ctx, capiClusterName, capiCluster)
 
 	switch {
 	case err == nil:
 		r.log.Info("Deleting CAPI cluster", "name", capiCluster.Name)
 		if err := r.client.Delete(ctx, capiCluster); err != nil {
 			r.log.Info("Error deleting CAPI cluster", "name", capiCluster.Name)
-			return  ctrl.Result{
-			}, err
+			return ctrl.Result{}, err
 		}
-		return  ctrl.Result{
-		}, nil
+		return ctrl.Result{}, nil
 	case !apierrors.IsNotFound(err):
-		return  ctrl.Result{
-		}, err
+		return ctrl.Result{}, err
 	case apierrors.IsNotFound(err):
 		r.log.Info("Deleting EKS Anywhere cluster", "name", capiCluster.Name, "cluster.DeletionTimestamp", cluster.DeletionTimestamp, "finalizer", cluster.Finalizers)
 
-		//TODO delete GitOps,Datacenter and MachineConfig objects
+		// TODO delete GitOps,Datacenter and MachineConfig objects
 		controllerutil.RemoveFinalizer(cluster, clusterFinalizerName)
 		if err := r.client.Update(ctx, cluster); err != nil {
 			return ctrl.Result{}, err
