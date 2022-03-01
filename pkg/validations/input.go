@@ -2,9 +2,7 @@ package validations
 
 import (
 	"errors"
-	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
@@ -29,14 +27,7 @@ func FileExists(filename string) bool {
 	return !os.IsNotExist(err)
 }
 
-func KubeConfigExists(dir, clusterName string, kubeConfigFileOverride string, kubeconfigPattern string) bool {
-	kubeConfigFile := kubeConfigFileOverride
-	if kubeConfigFile == "" {
-		kubeConfigFile = filepath.Join(dir, fmt.Sprintf(kubeconfigPattern, clusterName))
-	}
-
-	if info, err := os.Stat(kubeConfigFile); err == nil && info.Size() > 0 {
-		return true
-	}
-	return false
+func FileExistsAndIsNotEmpty(filename string) bool {
+	info, err := os.Stat(filename)
+	return err == nil && info.Size() > 0
 }

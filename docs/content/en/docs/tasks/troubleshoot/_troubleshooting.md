@@ -232,6 +232,17 @@ If this IP is not present on any control plane VM, make sure the `network` has a
 
 {{% content "../../reference/vsphere/domains.md" %}}
 
+If the IPv4 IPs are assigned to the VM and you have the workload kubeconfig under `<cluster-name>/<cluster-name>-eks-a-cluster.kubeconfig`, you can use it to check `vsphere-cloud-controller-manager` logs.
+```
+kubectl logs -n kube-system vsphere-cloud-controller-manager-<xxxxx> --kubeconfig <cluster-name>/<cluster-name>-eks-a-cluster.kubeconfig
+```
+
+If you see this message in the logs, it means your cluster nodes do not have access to vSphere, which is required for cluster to get to a ready state.
+```
+Failed to connect to <vSphere-FQDN>: connection refused
+```
+In this case, you need to enable inbound traffic from your cluster nodes on your vCenter's management network.
+
 If VMs are created, but they do not get a network connection and DHCP is not configured for your vSphere deployment, you may need to [create your own DHCP server]({{< relref "../../reference/vsphere/vsphere-dhcp" >}}).
 If no VMs are created, check the `capi-controller-manager`, `capv-controller-manager` and `capi-kubeadm-control-plane-controller-manager` logs using the commands mentioned in [Generic cluster unavailable]({{< relref "#generic-cluster-unavailable" >}}) section.
 

@@ -282,7 +282,6 @@ type HaproxyBundle struct {
 
 type SnowBundle struct {
 	Version    string   `json:"version"`
-	KubeProxy  Image    `json:"kubeProxy"`
 	KubeVip    Image    `json:"kubeVip"`
 	Components Manifest `json:"components"`
 	Metadata   Manifest `json:"metadata"`

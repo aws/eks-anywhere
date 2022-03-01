@@ -25,7 +25,7 @@ func (s *SnowDatacenterConfig) Kind() string {
 }
 
 func (s *SnowDatacenterConfig) ExpectedKind() string {
-	return VSphereDatacenterKind
+	return SnowDatacenterKind
 }
 
 // +kubebuilder:object:generate=false

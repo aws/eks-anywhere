@@ -345,4 +345,3 @@ spec:
     spec:
       offering: m4-large
       template: centos7-k8s-118
----

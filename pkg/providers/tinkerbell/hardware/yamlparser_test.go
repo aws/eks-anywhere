@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/aws/eks-anywhere/internal/test"
-	"github.com/aws/eks-anywhere/pkg/hardware"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
 func TestNewYamlParserSuccess(t *testing.T) {

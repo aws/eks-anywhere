@@ -22,8 +22,6 @@ import (
 )
 
 const (
-	testClusterConfigMainFilename = "cluster_main.yaml"
-	testDataDir                   = "testdata"
 	expectedCloudStackName        = "cloudstack"
 	eksd119Release                = "kubernetes-1-19-eks-4"
 
@@ -269,16 +267,6 @@ func TestSetupAndValidateCreateCluster(t *testing.T) {
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
-	}
-}
-
-func thenErrorExpected(t *testing.T, expected string, err error) {
-	if err == nil {
-		t.Fatalf("Expected=<%s> actual=<nil>", expected)
-	}
-	actual := err.Error()
-	if expected != actual {
-		t.Fatalf("Expected=<%s> actual=<%s>", expected, actual)
 	}
 }
 

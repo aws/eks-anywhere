@@ -33,8 +33,9 @@ SOURCE_CONTAINER_REGISTRY="${8?Specify eighth argument - source container regist
 RELEASE_CONTAINER_REGISTRY="${9?Specify ninth argument - release container registry}"
 RELEASE_ENVIRONMENT="${10?Specify tenth argument - Release environment}"
 BUILD_REPO_BRANCH_NAME="${11?Specify eleventh argument - Build repo branch name}"
-BUILD_REPO_URL="${12?Specify twelth argument - Build repo URL}"
-CLI_REPO_URL="${13?Specify thirteenth argument - CLI repo URL}"
+CLI_REPO_BRANCH_NAME="${12?Specify twelfth argument - CLI repo branch name}"
+BUILD_REPO_URL="${13?Specify thirteenth argument - Build repo URL}"
+CLI_REPO_URL="${14?Specify fourteenth argument - CLI repo URL}"
 
 set_aws_config "$RELEASE_ENVIRONMENT"
 
@@ -45,6 +46,7 @@ ${BASE_DIRECTORY}/release/bin/eks-anywhere-release release \
     --min-version "${CLI_MIN_VERSION}" \
     --max-version "${CLI_MAX_VERSION}" \
     --build-repo-branch-name "${BUILD_REPO_BRANCH_NAME}" \
+    --cli-repo-branch-name "${CLI_REPO_BRANCH_NAME}" \
     --artifact-dir "${ARTIFACTS_DIR}" \
     --source-bucket "${SOURCE_BUCKET}" \
     --source-container-registry "${SOURCE_CONTAINER_REGISTRY}" \

@@ -474,6 +474,9 @@ var versionBundle = &cluster.VersionsBundle{
 			},
 			KubeProxy: kubeProxyVersion08,
 		},
+		Snow: v1alpha1.SnowBundle{
+			Version: "v0.0.0",
+		},
 		VSphere: v1alpha1.VSphereBundle{
 			Version: "v0.7.8",
 			ClusterAPIController: v1alpha1.Image{

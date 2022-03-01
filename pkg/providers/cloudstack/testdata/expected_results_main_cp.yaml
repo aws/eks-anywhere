@@ -338,4 +338,3 @@ spec:
       template: centos7-k8s-118
       affinitygroupids:
       - etcd-affinity
----

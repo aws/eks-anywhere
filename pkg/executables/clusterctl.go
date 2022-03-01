@@ -273,6 +273,7 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		"VSphereProviderVersion":                          bundle.VSphere.Version,
 		"CloudStackProviderVersion":                       bundle.CloudStack.Version,
 		"AwsProviderVersion":                              bundle.Aws.Version,
+		"SnowProviderVersion":                             bundle.Snow.Version,
 		"TinkerbellProviderVersion":                       "v0.1.0", // TODO - version should come from the bundle
 		"IsActiveTinkerbellProvider":                      tinkerbellProvider,
 		"ClusterApiProviderVersion":                       bundle.ClusterAPI.Version,

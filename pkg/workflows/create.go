@@ -100,25 +100,28 @@ func (s *CreateBootStrapClusterTask) Run(ctx context.Context, commandContext *ta
 	}
 	commandContext.BootstrapCluster = bootstrapCluster
 
+	logger.Info("Provider specific pre-setup")
+	if err = commandContext.Provider.PreBootstrapSetup(ctx, bootstrapCluster); err != nil {
+		commandContext.SetError(err)
+		return &CollectMgmtClusterDiagnosticsTask{}
+	}
+
 	logger.Info("Installing cluster-api providers on bootstrap cluster")
-	err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, bootstrapCluster, commandContext.Provider)
-	if err != nil {
+	if err = commandContext.ClusterManager.InstallCAPI(ctx, commandContext.ClusterSpec, bootstrapCluster, commandContext.Provider); err != nil {
 		commandContext.SetError(err)
 		return &CollectMgmtClusterDiagnosticsTask{}
 	}
 
 	if commandContext.ClusterSpec.AWSIamConfig != nil {
 		logger.Info("Creating aws-iam-authenticator certificate and key pair secret on bootstrap cluster")
-		err = commandContext.ClusterManager.CreateAwsIamAuthCaSecret(ctx, bootstrapCluster)
-		if err != nil {
+		if err = commandContext.ClusterManager.CreateAwsIamAuthCaSecret(ctx, bootstrapCluster); err != nil {
 			commandContext.SetError(err)
 			return &CollectMgmtClusterDiagnosticsTask{}
 		}
 	}
 
-	logger.Info("Provider specific setup")
-	err = commandContext.Provider.BootstrapSetup(ctx, commandContext.ClusterSpec.Cluster, bootstrapCluster)
-	if err != nil {
+	logger.Info("Provider specific post-setup")
+	if err = commandContext.Provider.PostBootstrapSetup(ctx, commandContext.ClusterSpec.Cluster, bootstrapCluster); err != nil {
 		commandContext.SetError(err)
 		return &CollectMgmtClusterDiagnosticsTask{}
 	}

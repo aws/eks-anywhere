@@ -69,8 +69,11 @@ func (hc *HardwareConfig) setHardwareConfigFromFile(hardwareFileName string) err
 	return nil
 }
 
-func (hc *HardwareConfig) ValidateHardware() error {
-	bmcRefMap := hc.initBmcRefMap()
+func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool) error {
+	bmcRefMap := map[string]*tinkv1alpha1.Hardware{}
+	if !skipPowerActions {
+		bmcRefMap = hc.initBmcRefMap()
+	}
 	for _, hw := range hc.Hardwares {
 		if hw.Name == "" {
 			return fmt.Errorf("hardware name is required")
@@ -79,20 +82,21 @@ func (hc *HardwareConfig) ValidateHardware() error {
 		if hw.Spec.ID == "" {
 			return fmt.Errorf("hardware: %s ID is required", hw.Name)
 		}
+		if !skipPowerActions {
+			if hw.Spec.BmcRef == "" {
+				return fmt.Errorf("bmcRef not present in hardware %s", hw.Name)
+			}
 
-		if hw.Spec.BmcRef == "" {
-			return fmt.Errorf("bmcRef not present in hardware %s", hw.Name)
-		}
+			h, ok := bmcRefMap[hw.Spec.BmcRef]
+			if ok && h != nil {
+				return fmt.Errorf("bmcRef %s present in both hardware %s and hardware %s", hw.Spec.BmcRef, hw.Name, h.Name)
+			}
+			if !ok {
+				return fmt.Errorf("bmcRef %s not found in hardware config", hw.Spec.BmcRef)
+			}
 
-		h, ok := bmcRefMap[hw.Spec.BmcRef]
-		if ok && h != nil {
-			return fmt.Errorf("bmcRef %s present in both hardware %s and hardware %s", hw.Spec.BmcRef, hw.Name, h.Name)
+			bmcRefMap[hw.Spec.BmcRef] = &hw
 		}
-		if !ok {
-			return fmt.Errorf("bmcRef %s not found in hardware config", hw.Spec.BmcRef)
-		}
-
-		bmcRefMap[hw.Spec.BmcRef] = &hw
 	}
 
 	return nil

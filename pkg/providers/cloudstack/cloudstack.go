@@ -71,6 +71,14 @@ type cloudstackProvider struct {
 	// TODO: Integrate with validator (defined in https://github.com/aws/eks-anywhere/pull/1256)
 }
 
+func (p *cloudstackProvider) PreBootstrapSetup(ctx context.Context, cluster *types.Cluster) error {
+	return nil
+}
+
+func (p *cloudstackProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
 func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster) error {
 	return nil
 }
