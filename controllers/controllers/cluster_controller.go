@@ -87,9 +87,6 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 	if cluster.DeletionTimestamp.IsZero() {
 		if !controllerutil.ContainsFinalizer(cluster, clusterFinalizerName) {
 			controllerutil.AddFinalizer(cluster, clusterFinalizerName)
-			if err := r.client.Update(ctx, cluster); err != nil {
-				return ctrl.Result{}, err
-			}
 		}
 	} else {
 		return r.reconcileDelete(ctx, cluster, log)
