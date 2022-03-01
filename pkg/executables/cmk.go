@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/decoder"
 	"path/filepath"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -18,6 +19,7 @@ import (
 var cmkConfigTemplate string
 
 const (
+	cmkPath           = "cmk"
 	cmkConfigFileName = "cmk_tmp.ini"
 )
 
@@ -25,7 +27,11 @@ const (
 type Cmk struct {
 	writer     filewriter.FileWriter
 	executable Executable
-	config     CmkExecConfig
+	config     decoder.CloudStackExecConfig
+}
+
+func (c *Cmk) Close(ctx context.Context) error {
+	return nil
 }
 
 // TODO: Add support for domain, account filtering
@@ -174,7 +180,7 @@ func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string) error 
 	return nil
 }
 
-func NewCmk(executable Executable, writer filewriter.FileWriter, config CmkExecConfig) *Cmk {
+func NewCmk(executable Executable, writer filewriter.FileWriter, config decoder.CloudStackExecConfig) *Cmk {
 	return &Cmk{
 		writer:     writer,
 		executable: executable,

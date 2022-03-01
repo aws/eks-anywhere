@@ -68,7 +68,7 @@ type cloudstackProvider struct {
 	etcdSshAuthKey         string
 	templateBuilder        *CloudStackTemplateBuilder
 	skipIpCheck            bool
-	// TODO: Integrate with validator (defined in https://github.com/aws/eks-anywhere/pull/1256)
+	validator              *Validator
 }
 
 func (p *cloudstackProvider) PreBootstrapSetup(ctx context.Context, cluster *types.Cluster) error {
@@ -123,19 +123,20 @@ type ProviderKubectlClient interface {
 	DeleteEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) error
 }
 
-func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
+func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClient ProviderCmkClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
 	return NewProviderCustomNet(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
 		providerKubectlClient,
+		providerCmkClient,
 		writer,
 		now,
 		skipIpCheck,
 	)
 }
 
-func NewProviderCustomNet(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
+func NewProviderCustomNet(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClient ProviderCmkClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
@@ -163,6 +164,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.CloudStackDatacenterConfig,
 			now:                        now,
 		},
 		skipIpCheck: skipIpCheck,
+		validator: NewValidator(providerCmkClient),
 	}
 }
 
@@ -303,6 +305,8 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	if err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
+
+	cloudStackClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 	if p.datacenterConfig.Spec.Insecure {
 		logger.Info("Warning: CloudStackDatacenterConfig configured in insecure mode")
 	}
@@ -311,6 +315,10 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	}
 
 	// TODO: Integrate with validator (defined in https://github.com/aws/eks-anywhere/pull/1256/)
+
+	if err := p.validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec); err != nil {
+		return err
+	}
 	_ = validateControlPlaneHost(&clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
 
 	if err := p.setupSSHAuthKeysForCreate(); err != nil {

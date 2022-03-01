@@ -21,6 +21,7 @@ type ProviderFactory struct {
 	DockerKubectlClient       docker.ProviderKubectlClient
 	VSphereGovcClient         vsphere.ProviderGovcClient
 	VSphereKubectlClient      vsphere.ProviderKubectlClient
+	CloudStackCmkClient       cloudstack.ProviderCmkClient
 	CloudStackKubectlClient   cloudstack.ProviderKubectlClient
 	TinkerbellKubectlClient   tinkerbell.ProviderKubectlClient
 	TinkerbellClients         tinkerbell.TinkerbellClients
@@ -50,7 +51,7 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 		if err != nil {
 			return nil, fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFileName, err)
 		}
-		return cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.CloudStackKubectlClient, p.Writer, time.Now, skipIpCheck), nil
+		return cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.CloudStackKubectlClient, p.CloudStackCmkClient, p.Writer, time.Now, skipIpCheck), nil
 	case v1alpha1.SnowDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetSnowDatacenterConfig(clusterConfigFileName)
 		if err != nil {
