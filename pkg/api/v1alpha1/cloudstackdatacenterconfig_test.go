@@ -39,14 +39,17 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 				},
 				Spec: CloudStackDatacenterConfigSpec{
 					Domain: "domain1",
-					Zone: CloudStackResourceRef{
-						Value: "zone1",
-						Type:  Name,
-					},
 					Account: "admin",
-					Network: CloudStackResourceRef{
-						Value: "net1",
-						Type:  Name,
+					Zones: []CloudStackZoneRef{
+						{
+							Zone: CloudStackResourceRef{
+								Value: "zone1",
+								Type:  Name,
+							}, Network: CloudStackResourceRef{
+								Value: "net1",
+								Type:  Name,
+							},
+						},
 					},
 					Insecure: false,
 				},
@@ -66,14 +69,17 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 				},
 				Spec: CloudStackDatacenterConfigSpec{
 					Domain: "domain1",
-					Zone: CloudStackResourceRef{
-						Value: "zone1",
-						Type:  Name,
-					},
 					Account: "admin",
-					Network: CloudStackResourceRef{
-						Value: "net1",
-						Type:  Name,
+					Zones: []CloudStackZoneRef{
+						{
+							Zone: CloudStackResourceRef{
+								Value: "zone1",
+								Type:  Name,
+							}, Network: CloudStackResourceRef{
+								Value: "net1",
+								Type:  Name,
+							},
+						},
 					},
 					Insecure: false,
 				},
@@ -93,14 +99,17 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 				},
 				Spec: CloudStackDatacenterConfigSpec{
 					Domain: "domain1",
-					Zone: CloudStackResourceRef{
-						Value: "zone1",
-						Type:  Name,
-					},
 					Account: "admin",
-					Network: CloudStackResourceRef{
-						Value: "net1",
-						Type:  Name,
+					Zones: []CloudStackZoneRef{
+						{
+							Zone: CloudStackResourceRef{
+								Value: "zone1",
+								Type:  Name,
+							}, Network: CloudStackResourceRef{
+								Value: "net1",
+								Type:  Name,
+							},
+						},
 					},
 					Insecure: false,
 				},

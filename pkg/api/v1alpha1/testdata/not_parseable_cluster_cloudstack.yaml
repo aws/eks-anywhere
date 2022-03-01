@@ -37,8 +37,13 @@ spec:
   account: "admin"
   domain: "domain1"
   insecure: false
-  network: "net1"
-  zone: "zone1"
+  zones:
+    - zone:
+        value: "zone1"
+        type: "Name"
+      network:
+        value: "net1"
+        type: "Name"
   idont: "belonghere"
 
 ---
