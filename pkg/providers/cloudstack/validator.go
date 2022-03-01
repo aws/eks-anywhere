@@ -70,10 +70,6 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 		return fmt.Errorf("must specify machineGroupRef for control plane")
 	}
 
-	if cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef == nil {
-		return fmt.Errorf("must specify machineGroupRef for worker nodes")
-	}
-
 	controlPlaneMachineConfig := cloudStackClusterSpec.controlPlaneMachineConfig()
 	if controlPlaneMachineConfig == nil {
 		return fmt.Errorf("cannot find CloudStackMachineConfig %v for control plane", cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name)
@@ -104,6 +100,9 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 	}
 
 	for _, workerNodeGroupConfiguration := range cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		if workerNodeGroupConfiguration.MachineGroupRef == nil {
+			return fmt.Errorf("must specify machineGroupRef for worker nodes")
+		}
 		workerNodeGroupMachineConfig, ok := cloudStackClusterSpec.machineConfigsLookup[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		if !ok {
 			return fmt.Errorf("cannot find CloudStackMachineConfig %v for worker nodes", workerNodeGroupConfiguration.MachineGroupRef.Name)
