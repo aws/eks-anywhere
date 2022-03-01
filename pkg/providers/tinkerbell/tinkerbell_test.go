@@ -66,6 +66,7 @@ func newProvider(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterCo
 		test.FakeNow,
 		true,
 		"testdata/hardware_config.yaml",
+		false,
 	)
 }
 

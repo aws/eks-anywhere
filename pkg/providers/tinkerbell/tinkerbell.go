@@ -61,6 +61,7 @@ type tinkerbellProvider struct {
 	skipIpCheck           bool
 	hardwareConfigFile    string
 	validator             *Validator
+	skipPowerActions      bool
 	// TODO: Update hardwareConfig to proper type
 }
 
@@ -85,7 +86,7 @@ type ProviderPbnjClient interface {
 	ValidateBMCSecretCreds(ctx context.Context, bmc pbnj.BmcSecretConfig) error
 }
 
-func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkbellClient TinkerbellClients, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
+func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkbellClient TinkerbellClients, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string, skipPowerActions bool) *tinkerbellProvider {
 	return NewProviderCustomDep(
 		datacenterConfig,
 		machineConfigs,
@@ -97,10 +98,11 @@ func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 		now,
 		skipIpCheck,
 		hardwareConfigFile,
+		skipPowerActions,
 	)
 }
 
-func NewProviderCustomDep(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, pbnjClient ProviderPbnjClient, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string) *tinkerbellProvider {
+func NewProviderCustomDep(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, pbnjClient ProviderPbnjClient, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string, skipPowerActions bool) *tinkerbellProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
@@ -133,6 +135,7 @@ func NewProviderCustomDep(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
 		hardwareConfigFile: hardwareConfigFile,
 		validator:          NewValidator(providerTinkClient, netClient, hardware.HardwareConfig{}, pbnjClient),
 		skipIpCheck:        skipIpCheck,
+		skipPowerActions:   skipPowerActions,
 	}
 }
 
@@ -196,7 +199,7 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 
 	// ValidateHardwareConfig performs a lazy load of hardware configuration. Given subsequent steps need the hardware
 	// read into memory it needs to be done first.
-	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile); err != nil {
+	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile, p.skipPowerActions); err != nil {
 		return err
 	}
 

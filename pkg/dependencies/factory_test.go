@@ -38,7 +38,7 @@ func newTest(t *testing.T) *factoryTest {
 func TestFactoryBuildWithProvider(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false).
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -61,7 +61,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	deps, err := dependencies.NewFactory().
 		WithBootstrapper().
 		WithClusterManager(tt.clusterSpec.Cluster).
-		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile).
+		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false).
 		WithFluxAddonClient(tt.ctx, tt.clusterSpec.Cluster, tt.clusterSpec.GitOpsConfig).
 		WithWriter().
 		WithDiagnosticCollectorImage("public.ecr.aws/collector").
