@@ -240,6 +240,11 @@ func (c *upgradeTestSetup) expectPauseGitOpsKustomization(expectedCluster *types
 	)
 }
 
+func (c *upgradeTestSetup) expectInstallEksdComponents(expectedCluster *types.Cluster) {
+	gomock.InOrder(
+		c.clusterManager.EXPECT().InstallEksdComponents(c.ctx, c.newClusterSpec, expectedCluster))
+}
+
 func (c *upgradeTestSetup) expectDatacenterConfig() {
 	gomock.InOrder(
 		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
@@ -375,6 +380,7 @@ func TestUpgradeRunSuccess(t *testing.T) {
 	test.expectMoveManagementToWorkload()
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap()
+	test.expectInstallEksdComponents(test.workloadCluster)
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
 	test.expectCreateEKSAResources(test.workloadCluster)
@@ -405,6 +411,7 @@ func TestUpgradeRunProviderNeedsUpgradeSuccess(t *testing.T) {
 	test.expectMoveManagementToWorkload()
 	test.expectWriteClusterConfig()
 	test.expectDeleteBootstrap()
+	test.expectInstallEksdComponents(test.workloadCluster)
 	test.expectDatacenterConfig()
 	test.expectMachineConfigs()
 	test.expectCreateEKSAResources(test.workloadCluster)

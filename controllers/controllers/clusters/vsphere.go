@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/go-logr/logr"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -15,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/controllers/controllers/reconciler"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -93,8 +95,19 @@ func (v *VSphereClusterReconciler) bundles(ctx context.Context, name, namespace 
 	return clusterBundle, nil
 }
 
+func (v *VSphereClusterReconciler) eksdRelease(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error) {
+	eksd := &eksdv1alpha1.Release{}
+	releaseName := types.NamespacedName{Namespace: namespace, Name: name}
+
+	if err := v.Client.Get(ctx, releaseName, eksd); err != nil {
+		return nil, err
+	}
+
+	return eksd, nil
+}
+
 func (v *VSphereClusterReconciler) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*c.Spec, error) {
-	return c.BuildSpecForCluster(ctx, cs, v.bundles, nil)
+	return c.BuildSpecForCluster(ctx, cs, v.bundles, v.eksdRelease, nil)
 }
 
 func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (reconciler.Result, error) {
@@ -129,7 +142,12 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return reconciler.Result{}, err
 	}
 
-	specWithBundles, err := c.BuildSpecFromBundles(cluster, bundles)
+	eksd, err := v.eksdRelease(ctx, cluster.Status.EksdReleaseRef.Name, constants.EksaSystemNamespace)
+	if err != nil {
+		return reconciler.Result{}, err
+	}
+
+	specWithBundles, err := c.BuildSpecFromBundles(cluster, bundles, eksd)
 	if err != nil {
 		return reconciler.Result{}, err
 	}

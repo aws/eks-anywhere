@@ -22,6 +22,8 @@ import (
 const (
 	FluxDefaultNamespace = "flux-system"
 	FluxDefaultBranch    = "main"
+	EksDistroApiVersion  = "distro.eks.amazonaws.com/v1alpha1"
+	ReleaseKind          = "Release"
 )
 
 var releasesManifestURL string
@@ -253,15 +255,10 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	return s, nil
 }
 
-func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundles, opts ...SpecOpt) (*Spec, error) {
+func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundles, eksd *eksdv1alpha1.Release, opts ...SpecOpt) (*Spec, error) {
 	s := NewSpec(opts...)
 
 	versionsBundle, err := s.getVersionsBundle(cluster, bundles)
-	if err != nil {
-		return nil, err
-	}
-
-	eksd, err := s.reader.GetEksdRelease(versionsBundle)
 	if err != nil {
 		return nil, err
 	}
@@ -454,6 +451,28 @@ func (s *Spec) LoadManifest(manifest v1alpha1.Manifest) (*Manifest, error) {
 
 func userAgent(eksAComponent, version string) string {
 	return fmt.Sprintf("eks-a-%s/%s", eksAComponent, version)
+}
+
+type EksdRelease struct {
+	ReleaseManifestContent []byte
+	ReleaseCrdContent      []byte
+}
+
+func (s *Spec) GetEksdRelease(release v1alpha1.EksDRelease) (*EksdRelease, error) {
+	releaseCrdContent, err := s.reader.ReadFile(release.Components)
+	if err != nil {
+		return nil, err
+	}
+
+	releaseManifestContent, err := s.reader.ReadFile(release.EksDReleaseUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	return &EksdRelease{
+		ReleaseManifestContent: releaseManifestContent,
+		ReleaseCrdContent:      releaseCrdContent,
+	}, nil
 }
 
 func (vb *VersionsBundle) KubeDistroImages() []v1alpha1.Image {

@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"time"
 
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/yaml"
 
@@ -87,6 +88,7 @@ type ClusterClient interface {
 	KubeconfigSecretAvailable(ctx context.Context, kubeconfig string, clusterName string, namespace string) (bool, error)
 	DeleteOldWorkerNodeGroup(ctx context.Context, machineDeployment *clusterv1.MachineDeployment, kubeconfig string) error
 	GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
+	GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error)
 }
 
 type Networking interface {
@@ -859,6 +861,10 @@ func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpe
 	return c.clusterClient.installCustomComponents(ctx, clusterSpec, cluster)
 }
 
+func (c *ClusterManager) InstallEksdComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+	return c.clusterClient.installEksdComponents(ctx, clusterSpec, cluster)
+}
+
 func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
 	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error {
 	if clusterSpec.Namespace != "" {
@@ -993,12 +999,18 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 }
 
 func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.gitOpsFetcher(clus))
+	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.eksdReleaseFetcher(clus), c.gitOpsFetcher(clus))
 }
 
 func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {
 	return func(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
 		return c.clusterClient.GetBundles(ctx, cluster.KubeconfigFile, name, namespace)
+	}
+}
+
+func (c *ClusterManager) eksdReleaseFetcher(cluster *types.Cluster) cluster.EksdReleaseFetch {
+	return func(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error) {
+		return c.clusterClient.GetEksdRelease(ctx, name, namespace, cluster.KubeconfigFile)
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -1032,6 +1033,22 @@ func (k *Kubectl) ValidateNodesVersion(ctx context.Context, kubeconfig string, k
 		}
 	}
 	return nil
+}
+
+func (k *Kubectl) GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error) {
+	params := []string{"get", "release", name, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting EKS-D release with kubectl: %v", err)
+	}
+
+	response := &eksdv1alpha1.Release{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing Release response: %v", err)
+	}
+
+	return response, nil
 }
 
 func (k *Kubectl) GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error) {

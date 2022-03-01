@@ -383,6 +383,14 @@ func (s *moveManagementToWorkloadTask) Name() string {
 func (s *updateClusterAndGitResources) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	target := getManagementCluster(commandContext)
 
+	if !commandContext.BootstrapCluster.ExistingManagement {
+		logger.Info("Installing EKS Distro custom components on workload cluster")
+		if err := commandContext.ClusterManager.InstallEksdComponents(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster); err != nil {
+			commandContext.SetError(err)
+			return &CollectDiagnosticsTask{}
+		}
+	}
+
 	logger.Info("Applying new EKS-A cluster resource; resuming reconcile")
 	datacenterConfig := commandContext.Provider.DatacenterConfig()
 	machineConfigs := commandContext.Provider.MachineConfigs()

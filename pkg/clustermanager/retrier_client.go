@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clustermanager/internal"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
@@ -21,6 +23,32 @@ func NewRetrierClient(client *client, retrier *retrier.Retrier) *retrierClient {
 		client:  client,
 		Retrier: retrier,
 	}
+}
+
+func (c *retrierClient) installEksdComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+	eksdComponents, err := clusterSpec.GetEksdRelease(clusterSpec.VersionsBundle.EksD)
+	if err != nil {
+		return fmt.Errorf("failed loading manifest for eksd components: %v", err)
+	}
+
+	if err = c.Retry(
+		func() error {
+			return c.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, eksdComponents.ReleaseCrdContent, constants.EksaSystemNamespace)
+		},
+	); err != nil {
+		return fmt.Errorf("error applying eksd release crd: %v", err)
+	}
+
+	if err = c.Retry(
+		func() error {
+			return c.ApplyKubeSpecFromBytesWithNamespace(ctx, cluster, eksdComponents.ReleaseManifestContent, constants.EksaSystemNamespace)
+		},
+	); err != nil {
+		return fmt.Errorf("error applying eksd release manifest: %v", err)
+	}
+	clusterSpec.Status.EksdReleaseRef = setEksdReleaseRef(clusterSpec)
+
+	return nil
 }
 
 func (c *retrierClient) installCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
@@ -57,4 +85,13 @@ func (c *retrierClient) installCustomComponents(ctx context.Context, clusterSpec
 		}
 	}
 	return c.waitForDeployments(ctx, internal.EksaDeployments, cluster)
+}
+
+func setEksdReleaseRef(clusterSpec *cluster.Spec) *v1alpha1.EksdReleaseRef {
+	return &v1alpha1.EksdReleaseRef{
+		ApiVersion: cluster.EksDistroApiVersion,
+		Kind:       cluster.ReleaseKind,
+		Name:       clusterSpec.VersionsBundle.EksD.Name,
+		Namespace:  constants.EksaSystemNamespace,
+	}
 }

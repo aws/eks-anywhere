@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/go-logr/logr"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -285,6 +286,15 @@ func (r *CapiResourceFetcher) bundles(ctx context.Context, name, namespace strin
 	return clusterBundle, nil
 }
 
+func (r *CapiResourceFetcher) eksdRelease(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error) {
+	eksd := &eksdv1alpha1.Release{}
+	err := r.FetchObjectByName(ctx, name, namespace, eksd)
+	if err != nil {
+		return nil, err
+	}
+	return eksd, nil
+}
+
 func (r *CapiResourceFetcher) ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error) {
 	// Fetch capi cluster
 	capiCluster := &clusterv1.Cluster{}
@@ -330,7 +340,7 @@ func (r *CapiResourceFetcher) OIDCConfig(ctx context.Context, ref *anywherev1.Re
 }
 
 func (r *CapiResourceFetcher) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, cs, r.bundles, nil)
+	return cluster.BuildSpecForCluster(ctx, cs, r.bundles, r.eksdRelease, nil)
 }
 
 func (r *CapiResourceFetcher) ExistingVSphereDatacenterConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.VSphereDatacenterConfig, error) {

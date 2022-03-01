@@ -67,6 +67,8 @@ type SetAndValidateTask struct{}
 
 type CreateWorkloadClusterTask struct{}
 
+type InstallEksdComponentsTask struct{}
+
 type InstallEksaComponentsTask struct{}
 
 type InstallAddonManagerTask struct{}
@@ -250,11 +252,28 @@ func (s *MoveClusterManagementTask) Run(ctx context.Context, commandContext *tas
 		return &CollectDiagnosticsTask{}
 	}
 
-	return &InstallEksaComponentsTask{}
+	return &InstallEksdComponentsTask{}
 }
 
 func (s *MoveClusterManagementTask) Name() string {
 	return "capi-management-move"
+}
+
+// InstallEksdComponentsTask implementation
+
+func (s *InstallEksdComponentsTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
+	if !commandContext.BootstrapCluster.ExistingManagement {
+		logger.Info("Installing EKS Distro custom components on workload cluster")
+		if err := commandContext.ClusterManager.InstallEksdComponents(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster); err != nil {
+			commandContext.SetError(err)
+			return &CollectDiagnosticsTask{}
+		}
+	}
+	return &InstallEksaComponentsTask{}
+}
+
+func (s *InstallEksdComponentsTask) Name() string {
+	return "eksd-components-install"
 }
 
 // InstallEksaComponentsTask implementation
