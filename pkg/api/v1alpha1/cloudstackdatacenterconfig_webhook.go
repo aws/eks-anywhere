@@ -16,7 +16,6 @@ package v1alpha1
 
 import (
 	"fmt"
-	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -87,10 +86,10 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 		)
 	}
 
-	if !reflect.DeepEqual(old.Spec.Zones, new.Spec.Zones) {
+	if old.Spec.Zone != new.Spec.Zone {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "zones"), new.Spec.Zones, "field is immutable"),
+			field.Invalid(field.NewPath("spec", "zone"), new.Spec.Zone, "field is immutable"),
 		)
 	}
 
@@ -98,6 +97,13 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 		allErrs = append(
 			allErrs,
 			field.Invalid(field.NewPath("spec", "account"), new.Spec.Account, "field is immutable"),
+		)
+	}
+
+	if old.Spec.Network != new.Spec.Network {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "network"), new.Spec.Network, "field is immutable"),
 		)
 	}
 
