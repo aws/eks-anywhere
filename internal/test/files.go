@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"regexp"
 	"testing"
 
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -15,6 +16,7 @@ import (
 var updateGoldenFiles = flag.Bool("update", false, "update golden files")
 
 func AssertFilesEquals(t *testing.T, gotPath, wantPath string) {
+	t.Helper()
 	gotFile := ReadFile(t, gotPath)
 	processUpdate(t, wantPath, gotFile)
 	wantFile := ReadFile(t, wantPath)
@@ -34,6 +36,7 @@ func AssertFilesEquals(t *testing.T, gotPath, wantPath string) {
 }
 
 func AssertContentToFile(t *testing.T, gotContent, wantFile string) {
+	t.Helper()
 	if wantFile == "" && gotContent == "" {
 		return
 	}
@@ -76,7 +79,7 @@ func ReadFile(t *testing.T, file string) string {
 }
 
 func NewWriter(t *testing.T) (dir string, writer filewriter.FileWriter) {
-	dir, err := ioutil.TempDir(".", "folderWriter")
+	dir, err := ioutil.TempDir(".", SanitizePath(t.Name())+"-")
 	if err != nil {
 		t.Fatalf("error setting up folder for test: %v", err)
 	}
@@ -95,4 +98,14 @@ func cleanupDir(t *testing.T, dir string) func() {
 			os.RemoveAll(dir)
 		}
 	}
+}
+
+var sanitizePathChars = regexp.MustCompile(`[^\w-]`)
+
+const sanitizePathReplacementChar = "_"
+
+// SanitizePath sanitizes s so its usable as a path name. For safety, it assumes all characters that are not
+// A-Z, a-z, 0-9, _ or - are illegal and replaces them with _.
+func SanitizePath(s string) string {
+	return sanitizePathChars.ReplaceAllString(s, sanitizePathReplacementChar)
 }

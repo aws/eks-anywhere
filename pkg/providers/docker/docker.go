@@ -73,7 +73,11 @@ func (p *provider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption
 	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithExtraDockerMounts()}, nil
 }
 
-func (p *provider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+func (p *provider) PreBootstrapSetup(ctx context.Context, cluster *types.Cluster) error {
+	return nil
+}
+
+func (p *provider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }
 

@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
@@ -22,6 +23,7 @@ type createClusterOptions struct {
 	forceClean       bool
 	skipIpCheck      bool
 	hardwareFileName string
+	skipPowerActions bool
 }
 
 var cc = &createClusterOptions{}
@@ -48,6 +50,7 @@ func init() {
 	createClusterCmd.Flags().StringVarP(&cc.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
 	if features.IsActive(features.TinkerbellProvider()) {
 		createClusterCmd.Flags().StringVarP(&cc.hardwareFileName, "hardwarefile", "w", "", "Filename that contains datacenter hardware information")
+		createClusterCmd.Flags().BoolVar(&cc.skipPowerActions, "skip-power-actions", false, "Skip IPMI power actions on the hardware for Tinkerbell provider")
 	}
 	createClusterCmd.Flags().BoolVar(&cc.forceClean, "force-cleanup", false, "Force deletion of previously created bootstrap cluster")
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
@@ -74,9 +77,12 @@ func (cc *createClusterOptions) validate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if validations.KubeConfigExists(clusterConfig.Name, clusterConfig.Name, "", kubeconfigPattern) {
-		return fmt.Errorf("old cluster config file exists under %s, please use a different clusterName to proceed", clusterConfig.Name)
+
+	kubeconfigPath := kubeconfig.FromClusterName(clusterConfig.Name)
+	if validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
+		return kubeconfig.NewMissingFileError(clusterConfig.Name, kubeconfigPath)
 	}
+
 	return nil
 }
 
@@ -91,7 +97,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareFileName).
+		WithProvider(cc.fileName, clusterSpec.Cluster, cc.skipIpCheck, cc.hardwareFileName, cc.skipPowerActions).
 		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
 		WithWriter().
 		Build(ctx)
@@ -130,7 +136,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 	if clusterSpec.ManagementCluster == nil {
 		cluster = &types.Cluster{
 			Name:           clusterSpec.Name,
-			KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
+			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Name),
 		}
 	} else {
 		cluster = &types.Cluster{
@@ -144,13 +150,12 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 		Spec:    clusterSpec,
 		WorkloadCluster: &types.Cluster{
 			Name:           clusterSpec.Name,
-			KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
+			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Name),
 		},
 		ManagementCluster: cluster,
 		Provider:          deps.Provider,
 	}
 	createValidations := createvalidations.New(validationOpts)
 
-	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
-	return err
+	return createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
 }

@@ -12,6 +12,8 @@ import (
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/validation"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/crypto"
@@ -172,6 +174,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateProxyConfig,
 	validateMirrorConfig,
 	validatePodIAMConfig,
+	validateControlPlaneLabels,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -308,11 +311,11 @@ func ValidateClusterNameLength(clusterName string) error {
 func validateClusterConfigName(clusterConfig *Cluster) error {
 	err := ValidateClusterName(clusterConfig.ObjectMeta.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to validate cluster config name: %v", err)
 	}
 	err = ValidateClusterNameLength(clusterConfig.ObjectMeta.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to validate cluster config name: %v", err)
 	}
 	return nil
 }
@@ -336,6 +339,13 @@ func validateControlPlaneReplicas(clusterConfig *Cluster) error {
 	return nil
 }
 
+func validateControlPlaneLabels(clusterConfig *Cluster) error {
+	if err := validateNodeLabels(clusterConfig.Spec.ControlPlaneConfiguration.Labels, field.NewPath("spec", "controlPlaneConfiguration", "labels")); err != nil {
+		return fmt.Errorf("labels for control plane not valid: %v", err)
+	}
+	return nil
+}
+
 func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	workerNodeGroupConfigs := clusterConfig.Spec.WorkerNodeGroupConfigurations
 	if len(workerNodeGroupConfigs) <= 0 {
@@ -343,7 +353,7 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	}
 	workerNodeGroupNames := make(map[string]bool, len(workerNodeGroupConfigs))
 	noExecuteNoScheduleTaintedNodeGroups := make(map[string]struct{})
-	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
+	for i, workerNodeGroupConfig := range workerNodeGroupConfigs {
 		if workerNodeGroupConfig.Name == "" {
 			return errors.New("must specify name for worker nodes")
 		}
@@ -357,10 +367,22 @@ func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 				}
 			}
 		}
+		workerNodeGroupField := fmt.Sprintf("workerNodeGroupConfigurations[%d]", i)
+		if err := validateNodeLabels(workerNodeGroupConfig.Labels, field.NewPath("spec", workerNodeGroupField, "labels")); err != nil {
+			return fmt.Errorf("labels for worker node group %v not valid: %v", workerNodeGroupConfig.Name, err)
+		}
 		workerNodeGroupNames[workerNodeGroupConfig.Name] = true
 	}
 	if len(noExecuteNoScheduleTaintedNodeGroups) == len(workerNodeGroupConfigs) {
 		return errors.New("at least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints")
+	}
+	return nil
+}
+
+func validateNodeLabels(labels map[string]string, fldPath *field.Path) error {
+	errList := validation.ValidateLabels(labels, fldPath)
+	if len(errList) != 0 {
+		return fmt.Errorf("found following errors with labels: %v", errList.ToAggregate().Error())
 	}
 	return nil
 }

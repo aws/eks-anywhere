@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/workflows"
@@ -77,9 +78,12 @@ func (dc *deleteClusterOptions) validate(ctx context.Context, args []string) err
 	if err != nil {
 		return err
 	}
-	if !validations.KubeConfigExists(clusterConfig.Name, clusterConfig.Name, dc.wConfig, kubeconfigPattern) {
-		return fmt.Errorf("KubeConfig doesn't exists for cluster %s", clusterConfig.Name)
+
+	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, dc.wConfig)
+	if !validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
+		return kubeconfig.NewMissingFileError(clusterConfig.Name, kubeconfigPath)
 	}
+
 	return nil
 }
 
@@ -92,7 +96,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName).
+		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, cc.skipPowerActions).
 		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
 		WithWriter().
 		Build(ctx)
@@ -116,7 +120,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	if clusterSpec.ManagementCluster == nil {
 		cluster = &types.Cluster{
 			Name:           clusterSpec.Name,
-			KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
+			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Name),
 		}
 	} else {
 		cluster = &types.Cluster{

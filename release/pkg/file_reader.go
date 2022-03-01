@@ -29,13 +29,25 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
+	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
 	k8syaml "sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/release/pkg/aws/s3"
 	"github.com/aws/eks-anywhere/release/pkg/git"
 )
+
+type EksDLatestRelease struct {
+	Branch      string `json:"branch"`
+	KubeVersion string `json:"kubeVersion"`
+	Number      int    `json:"number"`
+	Dev         bool   `json:"dev,omitempty"`
+}
+
+type EksDLatestReleases struct {
+	Releases []EksDLatestRelease `json:"releases"`
+	Latest   string              `json:"latest"`
+}
 
 func (r *ReleaseConfig) readShaSums(filename string) (string, string, error) {
 	var sha256, sha512 string
@@ -84,20 +96,20 @@ func readFile(filename string) (string, error) {
 	return strings.TrimSpace(string(data)), nil
 }
 
-func readEksDReleases(r *ReleaseConfig) (map[string]interface{}, error) {
+func readEksDReleases(r *ReleaseConfig) (*EksDLatestReleases, error) {
 	// Read the eks-d latest release file to get all the releases
-	var eksDReleaseMap map[string]interface{}
+	eksDLatestReleases := &EksDLatestReleases{}
 	eksDReleaseFilePath := filepath.Join(r.BuildRepoSource, "EKSD_LATEST_RELEASES")
 
 	eksDReleaseFile, err := ioutil.ReadFile(eksDReleaseFilePath)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
-	err = yaml.Unmarshal(eksDReleaseFile, &eksDReleaseMap)
+	err = yaml.Unmarshal(eksDReleaseFile, eksDLatestReleases)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
-	return eksDReleaseMap, nil
+	return eksDLatestReleases, nil
 }
 
 func getSupportedK8sVersions(r *ReleaseConfig) ([]string, error) {
@@ -307,25 +319,6 @@ func (r *ReleaseConfig) readGitTag(projectPath, branch string) (string, error) {
 	}
 
 	return gitTag, nil
-}
-
-func getEksDKubeVersion(releaseChannel, releaseNumber string, dev bool) (string, error) {
-	var kubeVersion string
-	eksDReleaseManifestUrl := GetEksDReleaseManifestUrl(releaseChannel, releaseNumber, dev)
-
-	eksDRelease, err := getEksdRelease(eksDReleaseManifestUrl)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-
-	for _, component := range eksDRelease.Status.Components {
-		if component.Name == "kubernetes" {
-			kubeVersion = component.GitTag
-			break
-		}
-	}
-
-	return kubeVersion, nil
 }
 
 func getEksdRelease(eksdReleaseURL string) (*eksdv1alpha1.Release, error) {

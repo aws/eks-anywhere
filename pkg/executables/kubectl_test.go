@@ -621,6 +621,135 @@ func TestKubectlGetMachines(t *testing.T) {
 	}
 }
 
+func TestKubectlGetEksaCloudStackMachineConfig(t *testing.T) {
+	tests := []struct {
+		testName         string
+		jsonResponseFile string
+		wantMachines     *v1alpha1.CloudStackMachineConfig
+	}{
+		{
+			testName:         "no machines",
+			jsonResponseFile: "testdata/kubectl_no_cs_machineconfigs.json",
+			wantMachines: &v1alpha1.CloudStackMachineConfig{
+				TypeMeta: metav1.TypeMeta{APIVersion: "v1"},
+			},
+		},
+		{
+			testName:         "one machineconfig",
+			jsonResponseFile: "testdata/kubectl_eksa_cs_machineconfig.json",
+			wantMachines: &v1alpha1.CloudStackMachineConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "CloudStackMachineConfig",
+					APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "test-etcd"},
+				Spec: v1alpha1.CloudStackMachineConfigSpec{
+					Template: v1alpha1.CloudStackResourceRef{
+						Type:  "name",
+						Value: "testTemplate",
+					},
+					ComputeOffering: v1alpha1.CloudStackResourceRef{
+						Type:  "name",
+						Value: "testOffering",
+					},
+					Users: []v1alpha1.UserConfiguration{
+						{
+							Name:              "maxdrib",
+							SshAuthorizedKeys: []string{"ssh-rsa test123 hi"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			fileContent := test.ReadFile(t, tt.jsonResponseFile)
+			k, ctx, cluster, e := newKubectl(t)
+			machineConfigName := "testMachineConfig"
+			e.EXPECT().Execute(ctx, []string{
+				"get", "--namespace", constants.EksaSystemNamespace,
+				"cloudstackmachineconfigs.anywhere.eks.amazonaws.com",
+				machineConfigName,
+				"-o", "json", "--kubeconfig", cluster.KubeconfigFile,
+			}).Return(*bytes.NewBufferString(fileContent), nil)
+
+			gotMachines, err := k.GetEksaCloudStackMachineConfig(ctx, machineConfigName, cluster.KubeconfigFile, constants.EksaSystemNamespace)
+			if err != nil {
+				t.Fatalf("Kubectl.GetEksaCloudStackMachineConfig() error = %v, want nil", err)
+			}
+
+			if !reflect.DeepEqual(gotMachines, tt.wantMachines) {
+				t.Fatalf("Kubectl.GetEksaCloudStackMachineConfig() machines = %+v, want %+v", gotMachines, tt.wantMachines)
+			}
+		})
+	}
+}
+
+func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
+	tests := []struct {
+		testName         string
+		jsonResponseFile string
+		wantDatacenter   *v1alpha1.CloudStackDatacenterConfig
+	}{
+		{
+			testName:         "no datacenter",
+			jsonResponseFile: "testdata/kubectl_no_cs_datacenterconfigs.json",
+			wantDatacenter: &v1alpha1.CloudStackDatacenterConfig{
+				TypeMeta: metav1.TypeMeta{APIVersion: "v1"},
+			},
+		},
+		{
+			testName:         "one datacenter",
+			jsonResponseFile: "testdata/kubectl_eksa_cs_datacenterconfig.json",
+			wantDatacenter: &v1alpha1.CloudStackDatacenterConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "CloudStackDatacenterConfig",
+					APIVersion: "anywhere.eks.amazonaws.com/v1alpha1",
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: v1alpha1.CloudStackDatacenterConfigSpec{
+					Insecure: true,
+					Network: v1alpha1.CloudStackResourceRef{
+						Type:  "name",
+						Value: "testNetwork",
+					},
+					Zone: v1alpha1.CloudStackResourceRef{
+						Type:  "name",
+						Value: "testZone",
+					},
+					Domain:  "testDomain",
+					Account: "testAccount",
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testName, func(t *testing.T) {
+			fileContent := test.ReadFile(t, tt.jsonResponseFile)
+			k, ctx, cluster, e := newKubectl(t)
+			datacenterConfigName := "testDatacenterConfig"
+			e.EXPECT().Execute(ctx, []string{
+				"get", "--namespace", constants.EksaSystemNamespace,
+				"cloudstackdatacenterconfigs.anywhere.eks.amazonaws.com",
+				datacenterConfigName,
+				"-o", "json", "--kubeconfig", cluster.KubeconfigFile,
+			}).Return(*bytes.NewBufferString(fileContent), nil)
+
+			gotDatacenter, err := k.GetEksaCloudStackDatacenterConfig(ctx, datacenterConfigName, cluster.KubeconfigFile, constants.EksaSystemNamespace)
+			if err != nil {
+				t.Fatalf("Kubectl.GetEksaCloudStackDatacenterConfig() error = %v, want nil", err)
+			}
+
+			if !reflect.DeepEqual(gotDatacenter, tt.wantDatacenter) {
+				t.Fatalf("Kubectl.GetEksaCloudStackDatacenterConfig() machines = %+v, want %+v", gotDatacenter, tt.wantDatacenter)
+			}
+		})
+	}
+}
+
 func TestKubectlLoadSecret(t *testing.T) {
 	tests := []struct {
 		testName string
