@@ -28,15 +28,22 @@ type Cmk struct {
 	config     CmkExecConfig
 }
 
-// TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, template v1alpha1.CloudStackResourceRef) error {
-	var filterArg string
+func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domainId string, zoneId string, account string, template v1alpha1.CloudStackResourceRef) error {
+	filterArgs := []string{"list", "templates", "templatefilter=all", "listall=true"}
 	if template.Type == v1alpha1.Id {
-		filterArg = fmt.Sprintf("id=\"%s\"", template.Value)
+		filterArgs = append(filterArgs, fmt.Sprintf("id=\"%s\"", template.Value))
 	} else {
-		filterArg = fmt.Sprintf("name=\"%s\"", template.Value)
+		filterArgs = append(filterArgs, fmt.Sprintf("name=\"%s\"", template.Value))
 	}
-	result, err := c.exec(ctx, "list", "templates", "templatefilter=all", "listall=true", filterArg)
+
+	filterArgs = append(filterArgs, fmt.Sprintf("zoneid=\"%s\"", zoneId))
+	if len(domainId) > 0 {
+		filterArgs = append(filterArgs, fmt.Sprintf("domainid=\"%s\"", domainId))
+		if len(account) > 0 {
+			filterArgs = append(filterArgs, fmt.Sprintf("account=\"%s\"", account))
+		}
+	}
+	result, err := c.exec(ctx, filterArgs...)
 	if err != nil {
 		return fmt.Errorf("error getting templates info: %v", err)
 	}
@@ -59,15 +66,16 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domain string, zone v
 	return nil
 }
 
-// TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, serviceOffering v1alpha1.CloudStackResourceRef) error {
-	var filterArg string
+func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, zoneId string, serviceOffering v1alpha1.CloudStackResourceRef) error {
+	filterArgs := []string{"list", "serviceofferings"}
 	if serviceOffering.Type == v1alpha1.Id {
-		filterArg = fmt.Sprintf("id=\"%s\"", serviceOffering.Value)
+		filterArgs = append(filterArgs, fmt.Sprintf("id=\"%s\"", serviceOffering.Value))
+		filterArgs = append(filterArgs, fmt.Sprintf("zoneid=\"%s\"", zoneId))
 	} else {
-		filterArg = fmt.Sprintf("name=\"%s\"", serviceOffering.Value)
+		filterArgs = append(filterArgs, fmt.Sprintf("name=\"%s\"", serviceOffering.Value))
+		filterArgs = append(filterArgs, fmt.Sprintf("zoneid=\"%s\"", zoneId))
 	}
-	result, err := c.exec(ctx, "list", "serviceofferings", filterArg)
+	result, err := c.exec(ctx, filterArgs...)
 	if err != nil {
 		return fmt.Errorf("error getting service offerings info: %v", err)
 	}
@@ -91,11 +99,20 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, domain string,
 	return nil
 }
 
-// TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, affinityGroupIds []string) error {
+func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string, account string, affinityGroupIds []string) error {
+	var filterArgs []string
 	for _, affinityGroupId := range affinityGroupIds {
-		idFilterParam := fmt.Sprintf("id=\"%s\"", affinityGroupId)
-		result, err := c.exec(ctx, "list", "affinitygroups", idFilterParam)
+		filterArgs = []string{"list", "affinitygroups"}
+		filterArgs = append(filterArgs, fmt.Sprintf("id=\"%s\"", affinityGroupId))
+		// account must be specified within a domainId
+		// domainId can be specified without account
+		if len(domainId) > 0 {
+			filterArgs = append(filterArgs, fmt.Sprintf("domainid=\"%s\"", domainId))
+			if len(account) > 0 {
+				filterArgs = append(filterArgs, fmt.Sprintf("account=\"%s\"", account))
+			}
+		}
+		result, err := c.exec(ctx, filterArgs...)
 		if err != nil {
 			return fmt.Errorf("error getting affinity group info: %v", err)
 		}
@@ -119,39 +136,143 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domain string, 
 	return nil
 }
 
-func (c *Cmk) ValidateZonePresent(ctx context.Context, zone v1alpha1.CloudStackResourceRef) error {
-	var filterArg string
-	if zone.Type == v1alpha1.Id {
-		filterArg = fmt.Sprintf("id=\"%s\"", zone.Value)
-	} else {
-		filterArg = fmt.Sprintf("name=\"%s\"", zone.Value)
+func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudStackZoneRef) ([]v1alpha1.CloudStackResourceIdentifier, error) {
+	var zoneIdentifiers []v1alpha1.CloudStackResourceIdentifier
+	filterArgs := []string{"list", "zones"}
+
+	for _, z := range zones {
+		zone := z.Zone
+		var filterString string
+		if zone.Type == v1alpha1.Id {
+			filterString = fmt.Sprintf("id=\"%s\"", zone.Value)
+			filterArgs = append(filterArgs, filterString)
+		} else {
+			filterString =  fmt.Sprintf("name=\"%s\"", zone.Value)
+			filterArgs = append(filterArgs, filterString)
+		}
+		result, err := c.exec(ctx, filterArgs...)
+		if err != nil {
+			return nil, fmt.Errorf("error getting zones info: %v", err)
+		}
+		if result.Len() == 0 {
+			return nil, fmt.Errorf("zone %s not found", filterString)
+		}
+
+		response := struct {
+			CmkZones []cmkZone `json:"zone"`
+		}{}
+		if err = json.Unmarshal(result.Bytes(), &response); err != nil {
+			return nil, fmt.Errorf("failed to parse response into json: %v", err)
+		}
+		cmkZones := response.CmkZones
+		if len(cmkZones) > 1 {
+			return nil, fmt.Errorf("duplicate zone %s found", filterString)
+		} else if len(zones) == 0 {
+			return nil, fmt.Errorf("zone %s not found", filterString)
+		} else {
+			zoneIdentifiers = append(zoneIdentifiers, v1alpha1.CloudStackResourceIdentifier{Name: cmkZones[0].Name, Id: cmkZones[0].Id})
+		}
 	}
-	result, err := c.exec(ctx, "list", "zones", filterArg)
+	return zoneIdentifiers, nil
+}
+
+func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha1.CloudStackResourceIdentifier, error) {
+	domainIdentifier := v1alpha1.CloudStackResourceIdentifier{Name: domain, Id: ""}
+	result, err := c.exec(ctx, "list", "domains", fmt.Sprintf("name=\"%s\"", domain))
 	if err != nil {
-		return fmt.Errorf("error getting zones info: %v", err)
+		return domainIdentifier, fmt.Errorf("error getting domain info: %v", err)
 	}
 	if result.Len() == 0 {
-		return fmt.Errorf("zone %s not found", zone)
+		return domainIdentifier, fmt.Errorf("domain %s not found", domain)
 	}
 
 	response := struct {
-		CmkZones []cmkZone `json:"zone"`
+		CmkDomains []cmkDomain `json:"domain"`
+	}{}
+	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
+		return domainIdentifier, fmt.Errorf("failed to parse response into json: %v", err)
+	}
+	domains := response.CmkDomains
+	if len(domains) > 1 {
+		return domainIdentifier, fmt.Errorf("duplicate domain %s found", domain)
+	} else if len(domains) == 0 {
+		return domainIdentifier, fmt.Errorf("domain %s not found", domain)
+	}
+
+	domainIdentifier.Id = domains[0].Id
+	domainIdentifier.Name = domains[0].Name
+
+	return domainIdentifier, nil
+}
+
+func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zoneRef v1alpha1.CloudStackZoneRef, zones []v1alpha1.CloudStackResourceIdentifier, account string, multipleZone bool) error {
+	filterArgs := []string{"list", "networks"}
+	shared := ""
+	if multipleZone {
+		shared = "Shared"
+	}
+	if zoneRef.Network.Type == v1alpha1.Id {
+		filterArgs = append(filterArgs, fmt.Sprintf("id=\"%s\"", zoneRef.Network.Value))
+	}
+	if len(shared) > 0 {
+		filterArgs = append(filterArgs, fmt.Sprintf("type=\"%s\"", shared))
+	}
+	// account must be specified within a domainId
+	// domainId can be specified without account
+	if len(domainId) > 0 {
+		filterArgs = append(filterArgs, fmt.Sprintf("domainid=\"%s\"", domainId))
+		if len(account) > 0 {
+			filterArgs = append(filterArgs, fmt.Sprintf("account=\"%s\"", account))
+		}
+	}
+	zoneId := ""
+	if zoneRef.Zone.Type == v1alpha1.Id {
+		zoneId = zoneRef.Zone.Value
+	} else {
+		for _, zoneIdentifier := range zones {
+			if zoneRef.Zone.Value == zoneIdentifier.Name {
+				zoneId = zoneIdentifier.Id
+				break
+			}
+		}
+	}
+	filterArgs = append(filterArgs, fmt.Sprintf("zoneid=\"%s\"", zoneId))
+	result, err := c.exec(ctx, filterArgs...)
+	if err != nil {
+		return fmt.Errorf("error getting network info: %v", err)
+	}
+	if result.Len() == 0 {
+		return fmt.Errorf("%s network %s not found in zoneRef %s", shared, zoneRef.Network.Value, zoneRef.Zone.Value)
+	}
+
+	response := struct {
+		CmkNetworks []cmkNetwork `json:"network"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
 		return fmt.Errorf("failed to parse response into json: %v", err)
 	}
-	zones := response.CmkZones
-	if len(zones) > 1 {
-		return fmt.Errorf("duplicate zone %s found", zone)
-	} else if len(zones) == 0 {
-		return fmt.Errorf("zone %s not found", zone)
+	networks := response.CmkNetworks
+
+	// filter by network name -- cmk does not support name= filter
+	if zoneRef.Network.Type == v1alpha1.Name {
+		networks = []cmkNetwork{}
+		for _, net := range response.CmkNetworks {
+			if net.Name == zoneRef.Network.Value {
+				networks = append(networks, net)
+			}
+		}
+	}
+
+	if len(networks) > 1 {
+		return fmt.Errorf("duplicate network %s found", zoneRef.Network.Value)
+	} else if len(networks) == 0 {
+		return fmt.Errorf("%s network %s not found in zoneRef %s", shared, zoneRef.Network.Value, zoneRef.Zone.Value)
 	}
 	return nil
 }
 
-// TODO: Add support for domain filtering
-func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string) error {
-	result, err := c.exec(ctx, "list", "accounts", fmt.Sprintf("name=\"%s\"", account))
+func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string, domainId string) error {
+	result, err := c.exec(ctx, "list", "accounts", fmt.Sprintf("name=\"%s\"", account), fmt.Sprintf("domainid=\"%s\"", domainId))
 	if err != nil {
 		return fmt.Errorf("error getting accounts info: %v", err)
 	}
@@ -248,6 +369,16 @@ type cmkAffinityGroup struct {
 }
 
 type cmkZone struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type cmkNetwork struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type cmkDomain struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
 }
