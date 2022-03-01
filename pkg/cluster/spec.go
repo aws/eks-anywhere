@@ -182,7 +182,7 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 		return nil, err
 	}
 
-	versionsBundle, err := s.getVersionsBundle(clusterConfig, bundles)
+	versionsBundle, err := s.getVersionsBundle(clusterConfig.Spec.KubernetesVersion, bundles)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +256,7 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundles, opts ...SpecOpt) (*Spec, error) {
 	s := NewSpec(opts...)
 
-	versionsBundle, err := s.getVersionsBundle(cluster, bundles)
+	versionsBundle, err := s.getVersionsBundle(cluster.Spec.KubernetesVersion, bundles)
 	if err != nil {
 		return nil, err
 	}
@@ -285,13 +285,13 @@ func (s *Spec) newManifestReader() *ManifestReader {
 	return NewManifestReader(files.WithEmbedFS(s.configFS), files.WithUserAgent(s.userAgent))
 }
 
-func (s *Spec) getVersionsBundle(clusterConfig *eksav1alpha1.Cluster, bundles *v1alpha1.Bundles) (*v1alpha1.VersionsBundle, error) {
+func (s *Spec) getVersionsBundle(kubeVersion eksav1alpha1.KubernetesVersion, bundles *v1alpha1.Bundles) (*v1alpha1.VersionsBundle, error) {
 	for _, versionsBundle := range bundles.Spec.VersionsBundles {
-		if versionsBundle.KubeVersion == string(clusterConfig.Spec.KubernetesVersion) {
+		if versionsBundle.KubeVersion == string(kubeVersion) {
 			return &versionsBundle, nil
 		}
 	}
-	return nil, fmt.Errorf("kubernetes version %s is not supported by bundles manifest %d", clusterConfig.Spec.KubernetesVersion, bundles.Spec.Number)
+	return nil, fmt.Errorf("kubernetes version %s is not supported by bundles manifest %d", kubeVersion, bundles.Spec.Number)
 }
 
 func (s *Spec) GetBundles(cliVersion version.Info) (*v1alpha1.Bundles, error) {
@@ -417,7 +417,7 @@ func GetEksdRelease(cliVersion version.Info, clusterConfig *eksav1alpha1.Cluster
 		return nil, nil, err
 	}
 
-	versionsBundle, err := s.getVersionsBundle(clusterConfig, bundles)
+	versionsBundle, err := s.getVersionsBundle(clusterConfig.Spec.KubernetesVersion, bundles)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -428,6 +428,17 @@ func GetEksdRelease(cliVersion version.Info, clusterConfig *eksav1alpha1.Cluster
 	}
 
 	return &versionsBundle.EksD, eksdRelease, nil
+}
+
+// GetVersionsBundleForVersion returns the  versionBundle for gitVersion and kubernetes version
+func GetVersionsBundleForVersion(cliVersion version.Info, kubernetesVersion eksav1alpha1.KubernetesVersion) (*v1alpha1.VersionsBundle, error) {
+	s := newWithCliVersion(cliVersion)
+	bundles, err := s.GetBundles(cliVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.getVersionsBundle(kubernetesVersion, bundles)
 }
 
 type Manifest struct {
