@@ -38,25 +38,27 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Name: "eksa-unit-test",
 				},
 				Spec: CloudStackDatacenterConfigSpec{
-					Domain: "domain1",
+					Domain:  "domain1",
 					Account: "admin",
 					Zones: []Zone{
 						{
 							ZoneRef: CloudStackResourceRef{
 								Value: "zone1",
 								Type:  Name,
-						}, Network: CloudStackResourceRef{
+							}, Network: CloudStackResourceRef{
 								Value: "net1",
 								Type:  Name,
-						},},
+							},
+						},
 						{
 							ZoneRef: CloudStackResourceRef{
 								Value: "zone2",
 								Type:  Name,
-						}, Network: CloudStackResourceRef{
+							}, Network: CloudStackResourceRef{
 								Value: "net2",
 								Type:  Name,
-						},},
+							},
+						},
 					},
 					Insecure: false,
 				},
@@ -82,19 +84,21 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 								Value: "zone1",
 								Type:  Name,
 							}, Network: CloudStackResourceRef{
-							Value: "net1",
-							Type:  Name,
-						},},
+								Value: "net1",
+								Type:  Name,
+							},
+						},
 						{
 							ZoneRef: CloudStackResourceRef{
 								Value: "zone2",
 								Type:  Name,
 							}, Network: CloudStackResourceRef{
-							Value: "net2",
-							Type:  Name,
-						},},
+								Value: "net2",
+								Type:  Name,
+							},
+						},
 					},
-					Account: "admin",
+					Account:  "admin",
 					Insecure: false,
 				},
 			},
@@ -119,19 +123,21 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 								Value: "zone1",
 								Type:  Name,
 							}, Network: CloudStackResourceRef{
-							Value: "net1",
-							Type:  Name,
-						},},
+								Value: "net1",
+								Type:  Name,
+							},
+						},
 						{
 							ZoneRef: CloudStackResourceRef{
 								Value: "zone2",
 								Type:  Name,
 							}, Network: CloudStackResourceRef{
-							Value: "net2",
-							Type:  Name,
-						},},
+								Value: "net2",
+								Type:  Name,
+							},
+						},
 					},
-					Account: "admin",
+					Account:  "admin",
 					Insecure: false,
 				},
 			},

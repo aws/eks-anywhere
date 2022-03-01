@@ -27,10 +27,9 @@ type Cmk struct {
 	writer     filewriter.FileWriter
 	executable Executable
 	config     CmkExecConfig
-	zones []cmkZone
-	domain cmkDomain
-	account cmkAccount
-
+	zones      []cmkZone
+	domain     cmkDomain
+	account    cmkAccount
 }
 
 func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domainId string, zoneId string, account string, template v1alpha1.CloudStackResourceRef) error {
@@ -110,9 +109,9 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string
 		// account must be specified within a domainId
 		// domainId can be specified without account
 		if len(domainId) > 0 {
-			filterArgs = append(filterArgs,  fmt.Sprintf("domainid=\"%s\"", domainId))
+			filterArgs = append(filterArgs, fmt.Sprintf("domainid=\"%s\"", domainId))
 			if len(account) > 0 {
-				filterArgs = append(filterArgs,  fmt.Sprintf("account=\"%s\"", account))
+				filterArgs = append(filterArgs, fmt.Sprintf("account=\"%s\"", account))
 			}
 		}
 		result, err := c.exec(ctx, filterArgs...)

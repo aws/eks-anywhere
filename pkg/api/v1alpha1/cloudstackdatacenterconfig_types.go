@@ -55,7 +55,6 @@ type Zone struct {
 	// Network is the name or UUID of the CloudStack network in which clusters should be created. It can either be an isolated or shared network. If it doesn’t already exist in CloudStack, it’ll automatically be created by CAPC as an isolated network. It can either be specified as a UUID or name
 	// In multiple-zones situation, only 'Shared' network is supported.
 	Network CloudStackResourceRef `json:"network"`
-
 }
 
 // CloudStackDatacenterConfigStatus defines the observed state of CloudStackDatacenterConfig
