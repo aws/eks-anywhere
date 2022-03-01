@@ -2,6 +2,7 @@ package validations_test
 
 import (
 	"errors"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -9,33 +10,30 @@ import (
 )
 
 func TestOldClusterConfigExists(t *testing.T) {
-	tests := []struct {
-		name        string
-		clusterName string
-		expect      bool
+	tests := map[string]struct {
+		Filename string
+		Expect   bool
 	}{
-		{
-			name:        "Non existence should return false",
-			clusterName: "nonexistence",
-			expect:      false,
+		"Non existence should return false": {
+			Filename: "nonexistence",
+			Expect:   false,
 		},
-		{
-			name:        "Empty file should return false",
-			clusterName: "empty",
-			expect:      false,
+		"Empty file should return false": {
+			Filename: "empty",
+			Expect:   false,
 		},
-		{
-			name:        "Non Empty file should return true",
-			clusterName: "nonempty",
-			expect:      true,
+		"Non empty file should return true": {
+			Filename: "nonempty",
+			Expect:   true,
 		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(tt *testing.T) {
-			got := validations.KubeConfigExists("testdata", tc.clusterName, "", "%s-eks-a-cluster.kubeconfig")
-			if tc.expect != got {
-				t.Errorf("%v got = %v, want %v", tc.name, got, tc.expect)
+	for tn, td := range tests {
+		t.Run(tn, func(t *testing.T) {
+			filename := filepath.Join("testdata", td.Filename)
+			got := validations.FileExistsAndIsNotEmpty(filename)
+			if td.Expect != got {
+				t.Errorf("FileExistsAndIsNotEmpty(%v): want = %v; got = %v", filename, td.Expect, got)
 			}
 		})
 	}

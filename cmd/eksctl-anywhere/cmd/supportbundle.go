@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"path/filepath"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -14,6 +13,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
@@ -25,13 +25,6 @@ type createSupportBundleOptions struct {
 	sinceTime        string
 	bundleConfig     string
 	hardwareFileName string
-}
-
-func (csbo *createSupportBundleOptions) kubeConfig(clusterName string) string {
-	if csbo.wConfig == "" {
-		return filepath.Join(clusterName, fmt.Sprintf(kubeconfigPattern, clusterName))
-	}
-	return csbo.wConfig
 }
 
 var csbo = &createSupportBundleOptions{}
@@ -71,9 +64,12 @@ func (csbo *createSupportBundleOptions) validate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if !validations.KubeConfigExists(clusterConfig.Name, clusterConfig.Name, csbo.wConfig, kubeconfigPattern) {
-		return fmt.Errorf("KubeConfig doesn't exists for cluster %s", clusterConfig.Name)
+
+	kubeconfigPath := kubeconfig.FromClusterName(clusterConfig.Name)
+	if !validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
+		return kubeconfig.NewMissingFileError(clusterConfig.Name, kubeconfigPath)
 	}
+
 	return nil
 }
 
@@ -102,7 +98,7 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 	}
 	defer close(ctx, deps)
 
-	supportBundle, err := deps.DignosticCollectorFactory.DiagnosticBundle(clusterSpec, deps.Provider, csbo.kubeConfig(clusterSpec.Name), bundleConfig)
+	supportBundle, err := deps.DignosticCollectorFactory.DiagnosticBundle(clusterSpec, deps.Provider, getKubeconfigPath(clusterSpec.Name, csbo.wConfig), bundleConfig)
 	if err != nil {
 		return fmt.Errorf("failed to parse collector: %v", err)
 	}

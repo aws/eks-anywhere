@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/upgradevalidations"
@@ -23,13 +23,6 @@ type upgradeClusterOptions struct {
 	wConfig          string
 	forceClean       bool
 	hardwareFileName string
-}
-
-func (uc *upgradeClusterOptions) kubeConfig(clusterName string) string {
-	if uc.wConfig == "" {
-		return filepath.Join(clusterName, fmt.Sprintf(kubeconfigPattern, clusterName))
-	}
-	return uc.wConfig
 }
 
 var uc = &upgradeClusterOptions{}
@@ -109,14 +102,14 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 
 	workloadCluster := &types.Cluster{
 		Name:           clusterSpec.Name,
-		KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
+		KubeconfigFile: getKubeconfigPath(clusterSpec.Name, uc.wConfig),
 	}
 
 	var cluster *types.Cluster
 	if clusterSpec.ManagementCluster == nil {
 		cluster = &types.Cluster{
 			Name:           clusterSpec.Name,
-			KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
+			KubeconfigFile: getKubeconfigPath(clusterSpec.Name, uc.wConfig),
 		}
 	} else {
 		cluster = &types.Cluster{
@@ -143,8 +136,11 @@ func (uc *upgradeClusterOptions) commonValidations(ctx context.Context) (cluster
 	if err != nil {
 		return nil, err
 	}
-	if !validations.KubeConfigExists(clusterConfig.Name, clusterConfig.Name, uc.wConfig, kubeconfigPattern) {
-		return nil, fmt.Errorf("KubeConfig doesn't exists for cluster %s", clusterConfig.Name)
+
+	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, uc.wConfig)
+	if !validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
+		return nil, kubeconfig.NewMissingFileError(clusterConfig.Name, kubeconfigPath)
 	}
+
 	return clusterConfig, nil
 }

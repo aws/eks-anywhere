@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/createvalidations"
@@ -74,9 +75,12 @@ func (cc *createClusterOptions) validate(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if validations.KubeConfigExists(clusterConfig.Name, clusterConfig.Name, "", kubeconfigPattern) {
-		return fmt.Errorf("old cluster config file exists under %s, please use a different clusterName to proceed", clusterConfig.Name)
+
+	kubeconfigPath := kubeconfig.FromClusterName(clusterConfig.Name)
+	if validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
+		return kubeconfig.NewMissingFileError(clusterConfig.Name, kubeconfigPath)
 	}
+
 	return nil
 }
 
@@ -130,7 +134,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 	if clusterSpec.ManagementCluster == nil {
 		cluster = &types.Cluster{
 			Name:           clusterSpec.Name,
-			KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
+			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Name),
 		}
 	} else {
 		cluster = &types.Cluster{
@@ -144,13 +148,12 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 		Spec:    clusterSpec,
 		WorkloadCluster: &types.Cluster{
 			Name:           clusterSpec.Name,
-			KubeconfigFile: uc.kubeConfig(clusterSpec.Name),
+			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Name),
 		},
 		ManagementCluster: cluster,
 		Provider:          deps.Provider,
 	}
 	createValidations := createvalidations.New(validationOpts)
 
-	err = createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
-	return err
+	return createCluster.Run(ctx, clusterSpec, createValidations, cc.forceClean)
 }

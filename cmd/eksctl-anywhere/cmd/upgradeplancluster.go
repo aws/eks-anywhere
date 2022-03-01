@@ -86,7 +86,7 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 
 	workloadCluster := &types.Cluster{
 		Name:           newClusterSpec.Name,
-		KubeconfigFile: uc.kubeConfig(newClusterSpec.Name),
+		KubeconfigFile: getKubeconfigPath(newClusterSpec.Name, uc.wConfig),
 	}
 
 	logger.V(0).Info("Checking new release availability...")
