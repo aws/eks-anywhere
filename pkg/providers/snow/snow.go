@@ -112,19 +112,19 @@ func ControlPlaneObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v
 }
 
 func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) []runtime.Object {
-	kubeadmConfigTemplateList := KubeadmConfigTemplateList(clusterSpec)
-	workerMachineTemplateList, workerMachineTemplateMap := SnowMachineTemplatetList(clusterSpec, machineConfigs)
-	machineDeploymentList := MachineDeploymentList(clusterSpec, workerMachineTemplateMap)
+	kubeadmConfigTemplates := KubeadmConfigTemplates(clusterSpec)
+	workerMachineTemplates := SnowMachineTemplates(clusterSpec, machineConfigs)
+	machineDeployments := MachineDeployments(clusterSpec, workerMachineTemplates)
 
-	workersObjs := make([]runtime.Object, 0, len(machineDeploymentList.Items)+len(kubeadmConfigTemplateList.Items)+len(workerMachineTemplateList.Items))
-	for _, item := range machineDeploymentList.Items {
-		workersObjs = append(workersObjs, &item)
+	workersObjs := make([]runtime.Object, 0, len(machineDeployments)+len(kubeadmConfigTemplates)+len(workerMachineTemplates))
+	for _, item := range machineDeployments {
+		workersObjs = append(workersObjs, item)
 	}
-	for _, item := range kubeadmConfigTemplateList.Items {
-		workersObjs = append(workersObjs, &item)
+	for _, item := range kubeadmConfigTemplates {
+		workersObjs = append(workersObjs, item)
 	}
-	for _, item := range workerMachineTemplateList.Items {
-		workersObjs = append(workersObjs, &item)
+	for _, item := range workerMachineTemplates {
+		workersObjs = append(workersObjs, item)
 	}
 
 	return workersObjs
