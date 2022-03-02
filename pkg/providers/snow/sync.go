@@ -12,7 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/cluster-api-provider-aws-snow/api/v1beta1"
+	snowv1 "github.com/aws/eks-anywhere/pkg/providers/snow/api/v1beta1"
 )
 
 const (

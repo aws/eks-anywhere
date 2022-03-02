@@ -117,10 +117,16 @@ func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *t
 	kubeadmConfigTemplateList := KubeadmConfigTemplateList(clusterSpec)
 	workerMachineTemplateList := SnowMachineTemplatetList(clusterSpec, p.machineConfigs)
 
-	workersObjs := []runtime.Object{}
-	workersObjs = append(workersObjs, machineDeploymentList.Items...)
-	workersObjs = append(workersObjs, kubeadmConfigTemplateList.Items...)
-	workersObjs = append(workersObjs, workerMachineTemplateList.Items...)
+	workersObjs := make([]runtime.Object, 0, len(machineDeploymentList.Items))
+	for _, item := range machineDeploymentList.Items {
+		workersObjs = append(workersObjs, &item)
+	}
+	for _, item := range kubeadmConfigTemplateList.Items {
+		workersObjs = append(workersObjs, &item)
+	}
+	for _, item := range workerMachineTemplateList.Items {
+		workersObjs = append(workersObjs, &item)
+	}
 
 	workersSpec, err = templater.ObjectsToYaml(workersObjs...)
 	if err != nil {
