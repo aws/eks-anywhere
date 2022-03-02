@@ -29,7 +29,8 @@ type Cmk struct {
 }
 
 func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domainId string, zoneId string, account string, template v1alpha1.CloudStackResourceRef) error {
-	filterArgs := []string{"list", "templates", "templatefilter=all", "listall=true"}
+	commandArgs := []string{"list", "templates"}
+	filterArgs := []string{"templatefilter=all", "listall=true"}
 	if template.Type == v1alpha1.Id {
 		filterArgs = append(filterArgs, fmt.Sprintf("id=\"%s\"", template.Value))
 	} else {
@@ -43,7 +44,8 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domainId string, zone
 			filterArgs = append(filterArgs, fmt.Sprintf("account=\"%s\"", account))
 		}
 	}
-	result, err := c.exec(ctx, filterArgs...)
+	commandArgs = append(commandArgs, filterArgs...)
+	result, err := c.exec(ctx, commandArgs...)
 	if err != nil {
 		return fmt.Errorf("error getting templates info: %v", err)
 	}
@@ -67,14 +69,16 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domainId string, zone
 }
 
 func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, zoneId string, serviceOffering v1alpha1.CloudStackResourceRef) error {
-	filterArgs := []string{"list", "serviceofferings"}
+	commandArgs := []string{"list", "serviceofferings"}
+	var filterArgs []string
 	if serviceOffering.Type == v1alpha1.Id {
 		filterArgs = append(filterArgs, fmt.Sprintf("id=\"%s\"", serviceOffering.Value))
 	} else {
 		filterArgs = append(filterArgs, fmt.Sprintf("name=\"%s\"", serviceOffering.Value))
 	}
 	filterArgs = append(filterArgs, fmt.Sprintf("zoneid=\"%s\"", zoneId))
-	result, err := c.exec(ctx, filterArgs...)
+	commandArgs = append(commandArgs, filterArgs...)
+	result, err := c.exec(ctx, commandArgs...)
 	if err != nil {
 		return fmt.Errorf("error getting service offerings info: %v", err)
 	}
@@ -99,11 +103,9 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, zoneId string,
 }
 
 func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string, account string, affinityGroupIds []string) error {
-	var filterArgs []string
 	for _, affinityGroupId := range affinityGroupIds {
-		filterArgs = []string{"list", "affinitygroups"}
-		filterArgs = append(filterArgs, fmt.Sprintf("id=\"%s\"", affinityGroupId))
-		// account must be specified within a domainId
+		filterArgs := []string{fmt.Sprintf("id=\"%s\"", affinityGroupId)}
+		// account must be specified with a domainId
 		// domainId can be specified without account
 		if len(domainId) > 0 {
 			filterArgs = append(filterArgs, fmt.Sprintf("domainid=\"%s\"", domainId))
@@ -111,7 +113,9 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string
 				filterArgs = append(filterArgs, fmt.Sprintf("account=\"%s\"", account))
 			}
 		}
-		result, err := c.exec(ctx, filterArgs...)
+		commandArgs := []string{"list", "affinitygroups"}
+		commandArgs = append(commandArgs, filterArgs...)
+		result, err := c.exec(ctx, commandArgs...)
 		if err != nil {
 			return fmt.Errorf("error getting affinity group info: %v", err)
 		}
@@ -137,8 +141,8 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string
 
 func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudStackZoneRef) ([]v1alpha1.CloudStackResourceIdentifier, error) {
 	var zoneIdentifiers []v1alpha1.CloudStackResourceIdentifier
-	filterArgs := []string{"list", "zones"}
-
+	commandArgs := []string{"list", "zones"}
+    var filterArgs []string
 	for _, z := range zones {
 		zone := z.Zone
 		var filterString string
@@ -149,7 +153,8 @@ func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudSt
 			filterString = fmt.Sprintf("name=\"%s\"", zone.Value)
 			filterArgs = append(filterArgs, filterString)
 		}
-		result, err := c.exec(ctx, filterArgs...)
+		commandArgs = append(commandArgs, filterArgs...)
+		result, err := c.exec(ctx, commandArgs...)
 		if err != nil {
 			return nil, fmt.Errorf("error getting zones info: %v", err)
 		}
@@ -205,7 +210,8 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha
 }
 
 func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zoneRef v1alpha1.CloudStackZoneRef, zones []v1alpha1.CloudStackResourceIdentifier, account string, multipleZone bool) error {
-	filterArgs := []string{"list", "networks"}
+	commandArgs := []string{"list", "networks"}
+	var filterArgs []string
 	if zoneRef.Network.Type == v1alpha1.Id {
 		filterArgs = append(filterArgs, fmt.Sprintf("id=\"%s\"", zoneRef.Network.Value))
 	}
@@ -232,7 +238,8 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zoneR
 		}
 	}
 	filterArgs = append(filterArgs, fmt.Sprintf("zoneid=\"%s\"", zoneId))
-	result, err := c.exec(ctx, filterArgs...)
+	commandArgs = append(commandArgs, filterArgs...)
+	result, err := c.exec(ctx, commandArgs...)
 	if err != nil {
 		return fmt.Errorf("error getting network info: %v", err)
 	}
