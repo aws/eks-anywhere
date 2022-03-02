@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/url"
-	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -16,7 +15,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
@@ -492,35 +490,6 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 
 	if !networkutils.IsPortValid(clusterConfig.Spec.RegistryMirrorConfiguration.Port) {
 		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterConfig.Spec.RegistryMirrorConfiguration.Port)
-	}
-
-	tlsValidator := crypto.NewTlsValidator(clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint, clusterConfig.Spec.RegistryMirrorConfiguration.Port)
-	selfSigned, err := tlsValidator.HasSelfSignedCert()
-	if err != nil {
-		return fmt.Errorf("error validating registy mirror endpoint: %v", err)
-	}
-	if selfSigned {
-		logger.V(1).Info(fmt.Sprintf("Warning: registry mirror endpoint %s is using self-signed certs", clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint))
-	}
-
-	certContent := clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent
-	if certContent == "" {
-		if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
-			certBuffer, err := ioutil.ReadFile(caCert)
-			if err != nil {
-				return fmt.Errorf("error reading the cert file %s: %v", caCert, err)
-			}
-			certContent = string(certBuffer)
-		} else if selfSigned {
-			return fmt.Errorf("registry %s is using self-signed certs, please provide the certificate using caCertContent field", clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint)
-		}
-	}
-
-	if certContent != "" {
-		err := tlsValidator.ValidateCert(certContent)
-		if err != nil {
-			return fmt.Errorf("error validating the registry certificate: %v", err)
-		}
 	}
 
 	return nil
