@@ -27,7 +27,7 @@ type CloudStackDatacenterConfigSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
-	Domain string `json:"domain`
+	Domain string `json:"domain"`
 	// Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
 	Zones []CloudStackZoneRef `json:"zones"`
 	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain name must also be provided.
@@ -37,7 +37,7 @@ type CloudStackDatacenterConfigSpec struct {
 }
 
 type CloudStackResourceIdentifier struct {
-	Id string `json:"id"`
+	Id   string `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -129,7 +129,7 @@ func (v *CloudStackDatacenterConfig) Marshallable() Marshallable {
 	return v.ConvertConfigToConfigGenerateStruct()
 }
 
-func (z *CloudStackZoneRef) Equals(o *CloudStackZoneRef) bool{
+func (z *CloudStackZoneRef) Equals(o *CloudStackZoneRef) bool {
 	if z == o {
 		return true
 	}
@@ -137,8 +137,8 @@ func (z *CloudStackZoneRef) Equals(o *CloudStackZoneRef) bool{
 		return false
 	}
 	if z.Zone.Type == o.Zone.Type && z.Zone.Value == o.Zone.Value &&
-	   z.Network.Type == o.Network.Type && z.Network.Value == o.Network.Value {
-			return true
+		z.Network.Type == o.Network.Type && z.Network.Value == o.Network.Value {
+		return true
 	}
 	return false
 }
