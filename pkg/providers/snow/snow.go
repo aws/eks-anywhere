@@ -36,7 +36,7 @@ var requiredEnvs = []string{
 }
 
 type snowProvider struct {
-	// TODO: once clusterspec.config is ready, remove these
+	// TODO: once cluster.config is available, remove below objs
 	datacenterConfig      *v1alpha1.SnowDatacenterConfig
 	machineConfigs        map[string]*v1alpha1.SnowMachineConfig
 	clusterConfig         *v1alpha1.Cluster
@@ -113,11 +113,13 @@ func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *t
 		return nil, nil, err
 	}
 
+	fmt.Println(string(controlPlaneSpec))
+
 	machineDeploymentList := MachineDeploymentList(clusterSpec)
 	kubeadmConfigTemplateList := KubeadmConfigTemplateList(clusterSpec)
 	workerMachineTemplateList := SnowMachineTemplatetList(clusterSpec, p.machineConfigs)
 
-	workersObjs := make([]runtime.Object, 0, len(machineDeploymentList.Items))
+	workersObjs := make([]runtime.Object, 0, len(machineDeploymentList.Items)+len(kubeadmConfigTemplateList.Items)+len(workerMachineTemplateList.Items))
 	for _, item := range machineDeploymentList.Items {
 		workersObjs = append(workersObjs, &item)
 	}
