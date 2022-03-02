@@ -25,10 +25,9 @@ const (
 )
 
 var execConfig = decoder.CloudStackExecConfig{
-	CloudStackApiKey:        "test",
-	CloudStackSecretKey:     "test",
-	CloudStackManagementUrl: "http://1.1.1.1:8080/client/api",
-	CloudMonkeyVerifyCert:   "false",
+	ApiKey:        "test",
+	SecretKey:     "test",
+	ManagementUrl: "http://1.1.1.1:8080/client/api",
 }
 
 var zoneName = v1alpha1.CloudStackResourceRef{
@@ -56,7 +55,7 @@ func TestValidateCloudStackConnectionSuccess(t *testing.T) {
 	expectedArgs := []string{"-c", configFilePath, "sync"}
 	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, nil)
 	c := executables.NewCmk(executable, writer, execConfig)
-	err := c.ValidateCloudStackConnection(ctx)
+	err := c.ValidateCloudStackConnection(ctx, true)
 	if err != nil {
 		t.Fatalf("Cmk.ValidateCloudStackConnection() error = %v, want nil", err)
 	}
@@ -72,7 +71,7 @@ func TestValidateCloudStackConnectionError(t *testing.T) {
 	expectedArgs := []string{"-c", configFilePath, "sync"}
 	executable.EXPECT().Execute(ctx, expectedArgs).Return(bytes.Buffer{}, errors.New("cmk test error"))
 	c := executables.NewCmk(executable, writer, execConfig)
-	err := c.ValidateCloudStackConnection(ctx)
+	err := c.ValidateCloudStackConnection(ctx, true)
 	if err == nil {
 		t.Fatalf("Cmk.ValidateCloudStackConnection() didn't throw expected error")
 	}
@@ -99,7 +98,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName.Value),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateZonePresent(ctx, resourceName)
+				return cmk.ValidateZonePresent(ctx, true, resourceName)
 			},
 			cmkResponseError:      nil,
 			wantErr:               false,
@@ -114,7 +113,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "zones", fmt.Sprintf("id=\"%s\"", resourceId.Value),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateZonePresent(ctx, resourceId)
+				return cmk.ValidateZonePresent(ctx, true, resourceId)
 			},
 			cmkResponseError:      nil,
 			wantErr:               false,
@@ -129,7 +128,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName.Value),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateZonePresent(ctx, resourceName)
+				return cmk.ValidateZonePresent(ctx, true, resourceName)
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,
@@ -144,7 +143,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "zones", fmt.Sprintf("name=\"%s\"", resourceName.Value),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateZonePresent(ctx, resourceName)
+				return cmk.ValidateZonePresent(ctx, true, resourceName)
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,
@@ -159,7 +158,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "accounts", fmt.Sprintf("name=\"%s\"", accountName),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateAccountPresent(ctx, accountName)
+				return cmk.ValidateAccountPresent(ctx, true, accountName)
 			},
 			cmkResponseError:      nil,
 			wantErr:               false,
@@ -174,7 +173,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "accounts", fmt.Sprintf("name=\"%s\"", accountName),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateAccountPresent(ctx, accountName)
+				return cmk.ValidateAccountPresent(ctx, true, accountName)
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,
@@ -189,7 +188,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "accounts", fmt.Sprintf("name=\"%s\"", accountName),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateAccountPresent(ctx, accountName)
+				return cmk.ValidateAccountPresent(ctx, true, accountName)
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,
@@ -204,7 +203,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "serviceofferings", fmt.Sprintf("name=\"%s\"", resourceName.Value),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateServiceOfferingPresent(ctx, domainName, zoneName, accountName, resourceName)
+				return cmk.ValidateServiceOfferingPresent(ctx, true, domainName, zoneName, accountName, resourceName)
 			},
 			cmkResponseError:      nil,
 			wantErr:               false,
@@ -219,7 +218,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "serviceofferings", fmt.Sprintf("id=\"%s\"", resourceId.Value),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateServiceOfferingPresent(ctx, domainName, zoneName, accountName, resourceId)
+				return cmk.ValidateServiceOfferingPresent(ctx, true, domainName, zoneName, accountName, resourceId)
 			},
 			cmkResponseError:      nil,
 			wantErr:               false,
@@ -234,7 +233,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "serviceofferings", fmt.Sprintf("id=\"%s\"", resourceId.Value),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateServiceOfferingPresent(ctx, domainName, zoneName, accountName, resourceId)
+				return cmk.ValidateServiceOfferingPresent(ctx, true, domainName, zoneName, accountName, resourceId)
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,
@@ -249,7 +248,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "serviceofferings", fmt.Sprintf("name=\"%s\"", resourceName.Value),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateServiceOfferingPresent(ctx, domainName, zoneName, accountName, resourceName)
+				return cmk.ValidateServiceOfferingPresent(ctx, true, domainName, zoneName, accountName, resourceName)
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,
@@ -264,7 +263,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName.Value),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateTemplatePresent(ctx, domainName, zoneName, accountName, resourceName)
+				return cmk.ValidateTemplatePresent(ctx, true, domainName, zoneName, accountName, resourceName)
 			},
 			cmkResponseError:      nil,
 			wantErr:               false,
@@ -279,7 +278,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("id=\"%s\"", resourceId.Value),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateTemplatePresent(ctx, domainName, zoneName, accountName, resourceId)
+				return cmk.ValidateTemplatePresent(ctx, true, domainName, zoneName, accountName, resourceId)
 			},
 			cmkResponseError:      nil,
 			wantErr:               false,
@@ -294,7 +293,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName.Value),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateTemplatePresent(ctx, domainName, zoneName, accountName, resourceName)
+				return cmk.ValidateTemplatePresent(ctx, true, domainName, zoneName, accountName, resourceName)
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,
@@ -309,7 +308,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "templates", "templatefilter=all", "listall=true", fmt.Sprintf("name=\"%s\"", resourceName.Value),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateTemplatePresent(ctx, domainName, zoneName, accountName, resourceName)
+				return cmk.ValidateTemplatePresent(ctx, true, domainName, zoneName, accountName, resourceName)
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,
@@ -324,7 +323,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "affinitygroups", fmt.Sprintf("id=\"%s\"", resourceId.Value),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateAffinityGroupsPresent(ctx, domainName, zoneName, accountName, []string{resourceId.Value})
+				return cmk.ValidateAffinityGroupsPresent(ctx, true, domainName, zoneName, accountName, []string{resourceId.Value})
 			},
 			cmkResponseError:      nil,
 			wantErr:               false,
@@ -339,7 +338,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "affinitygroups", fmt.Sprintf("id=\"%s\"", resourceId.Value),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateAffinityGroupsPresent(ctx, domainName, zoneName, accountName, []string{resourceId.Value})
+				return cmk.ValidateAffinityGroupsPresent(ctx, true, domainName, zoneName, accountName, []string{resourceId.Value})
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,
@@ -354,7 +353,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "affinitygroups", fmt.Sprintf("id=\"%s\"", resourceId.Value),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateAffinityGroupsPresent(ctx, domainName, zoneName, accountName, []string{resourceId.Value})
+				return cmk.ValidateAffinityGroupsPresent(ctx, true, domainName, zoneName, accountName, []string{resourceId.Value})
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,

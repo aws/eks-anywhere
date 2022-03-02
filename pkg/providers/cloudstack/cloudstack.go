@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"strconv"
 	"time"
 
 	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
@@ -35,7 +34,6 @@ import (
 const (
 	eksaLicense                       = "EKSA_LICENSE"
 	cloudStackCloudConfigB64SecretKey = "CLOUDSTACK_B64ENCODED_SECRET"
-	cloudMonkeyInsecure               = "CLOUDMONKEY_INSECURE"
 	controlEndpointDefaultPort        = "6443"
 )
 
@@ -177,7 +175,7 @@ func (p *cloudstackProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClu
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
-	return common.BootstrapClusterOpts(execConfig.CloudStackManagementUrl, p.clusterConfig)
+	return common.BootstrapClusterOpts(execConfig.ManagementUrl, p.clusterConfig)
 }
 
 func (p *cloudstackProvider) Name() string {
@@ -285,10 +283,10 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
-	if len(execConfig.CloudStackManagementUrl) <= 0 {
+	if len(execConfig.ManagementUrl) <= 0 {
 		return errors.New("cloudstack management api url is not set or is empty")
 	}
-	if err := p.validateManagementApiEndpoint(execConfig.CloudStackManagementUrl); err != nil {
+	if err := p.validateManagementApiEndpoint(execConfig.ManagementUrl); err != nil {
 		return errors.New("CloudStackDatacenterConfig managementApiEndpoint is invalid")
 	}
 	if _, ok := os.LookupEnv(eksaLicense); !ok {
@@ -309,11 +307,8 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	if p.datacenterConfig.Spec.Insecure {
 		logger.Info("Warning: CloudStackDatacenterConfig configured in insecure mode")
 	}
-	if err := os.Setenv(cloudMonkeyInsecure, strconv.FormatBool(p.datacenterConfig.Spec.Insecure)); err != nil {
-		return fmt.Errorf("unable to set %s: %v", cloudMonkeyInsecure, err)
-	}
 
-	if err := p.validator.validateCloudStackAccess(ctx); err != nil {
+	if err := p.validator.validateCloudStackAccess(ctx, !p.datacenterConfig.Spec.Insecure); err != nil {
 		return err
 	}
 	if err := p.validator.ValidateCloudStackDatacenterConfig(ctx, p.datacenterConfig); err != nil {
@@ -387,7 +382,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
-	values := buildTemplateMapCP(clusterSpec, *cs.datacenterConfigSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec, execConfig.CloudStackManagementUrl)
+	values := buildTemplateMapCP(clusterSpec, *cs.datacenterConfigSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec, execConfig.ManagementUrl)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -406,7 +401,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
-	values := buildTemplateMapMD(clusterSpec, *cs.datacenterConfigSpec, *cs.workerNodeGroupMachineSpec, execConfig.CloudStackManagementUrl)
+	values := buildTemplateMapMD(clusterSpec, *cs.datacenterConfigSpec, *cs.workerNodeGroupMachineSpec, execConfig.ManagementUrl)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)

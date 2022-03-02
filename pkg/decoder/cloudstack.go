@@ -41,15 +41,14 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 		return nil, fmt.Errorf("failed to extract value of 'api-url' from %s: %v", EksacloudStackCloudConfigB64SecretKey, err)
 	}
 	return &CloudStackExecConfig{
-		CloudStackApiKey:        apiKey.Value(),
-		CloudStackSecretKey:     secretKey.Value(),
-		CloudStackManagementUrl: apiUrl.Value(),
+		ApiKey:        apiKey.Value(),
+		SecretKey:     secretKey.Value(),
+		ManagementUrl: apiUrl.Value(),
 	}, nil
 }
 
 type CloudStackExecConfig struct {
-	CloudStackApiKey        string
-	CloudStackSecretKey     string
-	CloudStackManagementUrl string
-	CloudMonkeyVerifyCert   string
+	ApiKey        string
+	SecretKey     string
+	ManagementUrl string
 }

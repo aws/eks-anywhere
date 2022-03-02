@@ -22,15 +22,15 @@ func NewValidator(cmk ProviderCmkClient) *Validator {
 }
 
 type ProviderCmkClient interface {
-	ValidateCloudStackConnection(ctx context.Context) error
-	ValidateServiceOfferingPresent(ctx context.Context, domain string, zone anywherev1.CloudStackResourceRef, account string, serviceOffering anywherev1.CloudStackResourceRef) error
-	ValidateTemplatePresent(ctx context.Context, domain string, zone anywherev1.CloudStackResourceRef, account string, template anywherev1.CloudStackResourceRef) error
-	ValidateAffinityGroupsPresent(ctx context.Context, domain string, zone anywherev1.CloudStackResourceRef, account string, affinityGroupIds []string) error
-	ValidateZonePresent(ctx context.Context, zone anywherev1.CloudStackResourceRef) error
+	ValidateCloudStackConnection(ctx context.Context, verifyCert bool) error
+	ValidateServiceOfferingPresent(ctx context.Context, verifyCert bool, domain string, zone anywherev1.CloudStackResourceRef, account string, serviceOffering anywherev1.CloudStackResourceRef) error
+	ValidateTemplatePresent(ctx context.Context, verifyCert bool, domain string, zone anywherev1.CloudStackResourceRef, account string, template anywherev1.CloudStackResourceRef) error
+	ValidateAffinityGroupsPresent(ctx context.Context, verifyCert bool, domain string, zone anywherev1.CloudStackResourceRef, account string, affinityGroupIds []string) error
+	ValidateZonePresent(ctx context.Context, verifyCert bool, zone anywherev1.CloudStackResourceRef) error
 }
 
-func (v *Validator) validateCloudStackAccess(ctx context.Context) error {
-	if err := v.cmk.ValidateCloudStackConnection(ctx); err != nil {
+func (v *Validator) validateCloudStackAccess(ctx context.Context, verifyCert bool) error {
+	if err := v.cmk.ValidateCloudStackConnection(ctx, verifyCert); err != nil {
 		return fmt.Errorf("failed validating connection to vCenter: %v", err)
 	}
 	logger.MarkPass("Connected to server")
@@ -39,7 +39,7 @@ func (v *Validator) validateCloudStackAccess(ctx context.Context) error {
 }
 
 func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error {
-	if err := v.cmk.ValidateZonePresent(ctx, datacenterConfig.Spec.Zone); err != nil {
+	if err := v.cmk.ValidateZonePresent(ctx, !datacenterConfig.Spec.Insecure, datacenterConfig.Spec.Zone); err != nil {
 		return err
 	}
 	logger.MarkPass("Datacenter validated")
@@ -148,14 +148,14 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfigS
 	domain := datacenterConfigSpec.Domain
 	zone := datacenterConfigSpec.Zone
 	account := datacenterConfigSpec.Account
-	if err := v.cmk.ValidateTemplatePresent(ctx, domain, zone, account, machineConfig.Spec.Template); err != nil {
+	if err := v.cmk.ValidateTemplatePresent(ctx, !datacenterConfigSpec.Insecure, domain, zone, account, machineConfig.Spec.Template); err != nil {
 		return fmt.Errorf("validating template: %v", err)
 	}
-	if err := v.cmk.ValidateServiceOfferingPresent(ctx, domain, zone, account, machineConfig.Spec.ComputeOffering); err != nil {
+	if err := v.cmk.ValidateServiceOfferingPresent(ctx, !datacenterConfigSpec.Insecure, domain, zone, account, machineConfig.Spec.ComputeOffering); err != nil {
 		return fmt.Errorf("validating service offering: %v", err)
 	}
 	if len(machineConfig.Spec.AffinityGroupIds) > 0 {
-		if err := v.cmk.ValidateAffinityGroupsPresent(ctx, domain, zone, account, machineConfig.Spec.AffinityGroupIds); err != nil {
+		if err := v.cmk.ValidateAffinityGroupsPresent(ctx, !datacenterConfigSpec.Insecure, domain, zone, account, machineConfig.Spec.AffinityGroupIds); err != nil {
 			return fmt.Errorf("validating affinity group ids: %v", err)
 		}
 	}

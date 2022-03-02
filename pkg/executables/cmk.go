@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"strconv"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/decoder"
@@ -30,19 +31,26 @@ type Cmk struct {
 	config     decoder.CloudStackExecConfig
 }
 
+type cmkExecConfig struct {
+	CloudStackApiKey string
+	CloudStackSecretKey string
+	CloudStackManagementUrl string
+	CloudMonkeyVerifyCert string
+}
+
 func (c *Cmk) Close(ctx context.Context) error {
 	return nil
 }
 
 // TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, template v1alpha1.CloudStackResourceRef) error {
+func (c *Cmk) ValidateTemplatePresent(ctx context.Context, verifyCert bool, domain string, zone v1alpha1.CloudStackResourceRef, account string, template v1alpha1.CloudStackResourceRef) error {
 	var filterArg string
 	if template.Type == v1alpha1.Id {
 		filterArg = fmt.Sprintf("id=\"%s\"", template.Value)
 	} else {
 		filterArg = fmt.Sprintf("name=\"%s\"", template.Value)
 	}
-	result, err := c.exec(ctx, "list", "templates", "templatefilter=all", "listall=true", filterArg)
+	result, err := c.exec(ctx, verifyCert, "list", "templates", "templatefilter=all", "listall=true", filterArg)
 	if err != nil {
 		return fmt.Errorf("error getting templates info: %v", err)
 	}
@@ -66,14 +74,14 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domain string, zone v
 }
 
 // TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, serviceOffering v1alpha1.CloudStackResourceRef) error {
+func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, verifyCert bool, domain string, zone v1alpha1.CloudStackResourceRef, account string, serviceOffering v1alpha1.CloudStackResourceRef) error {
 	var filterArg string
 	if serviceOffering.Type == v1alpha1.Id {
 		filterArg = fmt.Sprintf("id=\"%s\"", serviceOffering.Value)
 	} else {
 		filterArg = fmt.Sprintf("name=\"%s\"", serviceOffering.Value)
 	}
-	result, err := c.exec(ctx, "list", "serviceofferings", filterArg)
+	result, err := c.exec(ctx, verifyCert, "list", "serviceofferings", filterArg)
 	if err != nil {
 		return fmt.Errorf("error getting service offerings info: %v", err)
 	}
@@ -98,10 +106,10 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, domain string,
 }
 
 // TODO: Add support for domain, account filtering
-func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domain string, zone v1alpha1.CloudStackResourceRef, account string, affinityGroupIds []string) error {
+func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, verifyCert bool, domain string, zone v1alpha1.CloudStackResourceRef, account string, affinityGroupIds []string) error {
 	for _, affinityGroupId := range affinityGroupIds {
 		idFilterParam := fmt.Sprintf("id=\"%s\"", affinityGroupId)
-		result, err := c.exec(ctx, "list", "affinitygroups", idFilterParam)
+		result, err := c.exec(ctx, verifyCert, "list", "affinitygroups", idFilterParam)
 		if err != nil {
 			return fmt.Errorf("error getting affinity group info: %v", err)
 		}
@@ -125,14 +133,14 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domain string, 
 	return nil
 }
 
-func (c *Cmk) ValidateZonePresent(ctx context.Context, zone v1alpha1.CloudStackResourceRef) error {
+func (c *Cmk) ValidateZonePresent(ctx context.Context, verifyCert bool, zone v1alpha1.CloudStackResourceRef) error {
 	var filterArg string
 	if zone.Type == v1alpha1.Id {
 		filterArg = fmt.Sprintf("id=\"%s\"", zone.Value)
 	} else {
 		filterArg = fmt.Sprintf("name=\"%s\"", zone.Value)
 	}
-	result, err := c.exec(ctx, "list", "zones", filterArg)
+	result, err := c.exec(ctx, verifyCert, "list", "zones", filterArg)
 	if err != nil {
 		return fmt.Errorf("error getting zones info: %v", err)
 	}
@@ -156,8 +164,8 @@ func (c *Cmk) ValidateZonePresent(ctx context.Context, zone v1alpha1.CloudStackR
 }
 
 // TODO: Add support for domain filtering
-func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string) error {
-	result, err := c.exec(ctx, "list", "accounts", fmt.Sprintf("name=\"%s\"", account))
+func (c *Cmk) ValidateAccountPresent(ctx context.Context, verifyCert bool, account string) error {
+	result, err := c.exec(ctx, verifyCert, "list", "accounts", fmt.Sprintf("name=\"%s\"", account))
 	if err != nil {
 		return fmt.Errorf("error getting accounts info: %v", err)
 	}
@@ -189,8 +197,8 @@ func NewCmk(executable Executable, writer filewriter.FileWriter, config decoder.
 }
 
 // ValidateCloudStackConnection Calls `cmk sync` to ensure that the endpoint and credentials + domain are valid
-func (c *Cmk) ValidateCloudStackConnection(ctx context.Context) error {
-	buffer, err := c.exec(ctx, "sync")
+func (c *Cmk) ValidateCloudStackConnection(ctx context.Context, verifyCert bool) error {
+	buffer, err := c.exec(ctx, verifyCert, "sync")
 	if err != nil {
 		return fmt.Errorf("error validating cloudstack connection for cmk config %s: %v", buffer.String(), err)
 	}
@@ -198,11 +206,11 @@ func (c *Cmk) ValidateCloudStackConnection(ctx context.Context) error {
 	return nil
 }
 
-func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, err error) {
+func (c *Cmk) exec(ctx context.Context, verifyCert bool, args ...string) (stdout bytes.Buffer, err error) {
 	if err != nil {
 		return bytes.Buffer{}, fmt.Errorf("failed get environment map: %v", err)
 	}
-	configFile, err := c.buildCmkConfigFile()
+	configFile, err := c.buildCmkConfigFile(verifyCert)
 	if err != nil {
 		return bytes.Buffer{}, fmt.Errorf("failed cmk validations: %v", err)
 	}
@@ -211,17 +219,15 @@ func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, er
 	return c.executable.Execute(ctx, argsWithConfigFile...)
 }
 
-// TODO: Add support for passing in domain from Deployment Config Spec
-type CmkExecConfig struct {
-	CloudStackApiKey        string // Api Key for CloudMonkey to access CloudStack Cluster
-	CloudStackSecretKey     string // Secret Key for CloudMonkey to access CloudStack Cluster
-	CloudStackManagementUrl string // Management Endpoint Url for CloudMonkey to access CloudStack Cluster
-	CloudMonkeyVerifyCert   bool   // boolean indicating if CloudMonkey should verify the cert presented by the CloudStack Management Server
-}
-
-func (c *Cmk) buildCmkConfigFile() (configFile string, err error) {
+func (c *Cmk) buildCmkConfigFile(verifyCert bool) (configFile string, err error) {
 	t := templater.New(c.writer)
-	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, c.config, cmkConfigFileName)
+	cmkConfig := &cmkExecConfig{
+		CloudStackApiKey: c.config.ApiKey,
+		CloudStackSecretKey: c.config.SecretKey,
+		CloudStackManagementUrl:  c.config.ManagementUrl,
+		CloudMonkeyVerifyCert: strconv.FormatBool(verifyCert),
+	}
+	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, cmkConfig, cmkConfigFileName)
 	if err != nil {
 		return "", fmt.Errorf("error creating file for cmk config: %v", err)
 	}
