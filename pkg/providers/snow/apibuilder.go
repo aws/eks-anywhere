@@ -79,12 +79,14 @@ func kubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 	return kct
 }
 
-func KubeadmConfigTemplateList(clusterSpec *cluster.Spec) *bootstrapv1.KubeadmConfigTemplateList {
-	kctList := &bootstrapv1.KubeadmConfigTemplateList{}
+func KubeadmConfigTemplates(clusterSpec *cluster.Spec) map[string]*bootstrapv1.KubeadmConfigTemplate {
+	m := make(map[string]*bootstrapv1.KubeadmConfigTemplate, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
+
 	for _, workerNodeGroupConfig := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		kctList.Items = append(kctList.Items, kubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig))
+		template := kubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
+		m[workerNodeGroupConfig.Name] = &template
 	}
-	return kctList
+	return m
 }
 
 func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) clusterv1.MachineDeployment {
@@ -92,12 +94,14 @@ func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1
 	return md
 }
 
-func MachineDeploymentList(clusterSpec *cluster.Spec, machineTemplates map[string]*snowv1.AWSSnowMachineTemplate) *clusterv1.MachineDeploymentList {
-	mdList := &clusterv1.MachineDeploymentList{}
+func MachineDeployments(clusterSpec *cluster.Spec, machineTemplates map[string]*snowv1.AWSSnowMachineTemplate) map[string]*clusterv1.MachineDeployment {
+	m := make(map[string]*clusterv1.MachineDeployment, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
+
 	for _, workerNodeGroupConfig := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		mdList.Items = append(mdList.Items, machineDeployment(clusterSpec, workerNodeGroupConfig, machineTemplates[workerNodeGroupConfig.MachineGroupRef.Name]))
+		deployment := machineDeployment(clusterSpec, workerNodeGroupConfig, machineTemplates[workerNodeGroupConfig.MachineGroupRef.Name])
+		m[workerNodeGroupConfig.Name] = &deployment
 	}
-	return mdList
+	return m
 }
 
 func SnowCluster(clusterSpec *cluster.Spec) *snowv1.AWSSnowCluster {
@@ -121,15 +125,13 @@ func SnowCluster(clusterSpec *cluster.Spec) *snowv1.AWSSnowCluster {
 	return cluster
 }
 
-func SnowMachineTemplatetList(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) (*snowv1.AWSSnowMachineTemplateList, map[string]*snowv1.AWSSnowMachineTemplate) {
-	smtList := &snowv1.AWSSnowMachineTemplateList{}
+func SnowMachineTemplates(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) map[string]*snowv1.AWSSnowMachineTemplate {
 	smtMap := map[string]*snowv1.AWSSnowMachineTemplate{}
 	for _, workerNodeGroupConfig := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		smt := SnowMachineTemplate(machineConfigs[workerNodeGroupConfig.MachineGroupRef.Name])
-		smtList.Items = append(smtList.Items, *smt)
-		smtMap[workerNodeGroupConfig.MachineGroupRef.Name] = smt
+		smtMap[workerNodeGroupConfig.Name] = smt
 	}
-	return smtList, smtMap
+	return smtMap
 }
 
 func SnowMachineTemplate(machineConfig *v1alpha1.SnowMachineConfig) *snowv1.AWSSnowMachineTemplate {
