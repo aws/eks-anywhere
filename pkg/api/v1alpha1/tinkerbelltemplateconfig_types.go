@@ -14,6 +14,7 @@ import (
 
 // TinkerbellTemplateConfigSpec defines the desired state of TinkerbellTemplateConfig
 type TinkerbellTemplateConfigSpec struct {
+	// Template defines a Tinkerbell workflow template with specific tasks and actions.
 	Template tinkerbell.Workflow `json:"template"`
 }
 

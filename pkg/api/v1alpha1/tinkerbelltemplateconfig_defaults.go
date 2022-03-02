@@ -35,9 +35,6 @@ warnings:
 `
 )
 
-// +kubebuilder:object:generate=false
-type ActionOpt func(action *[]tinkerbell.Action)
-
 func WithDefaultActionsFromBundle(b v1alpha1.VersionsBundle) []ActionOpt {
 	return []ActionOpt{
 		withStreamImageAction(b),
@@ -64,7 +61,7 @@ func withStreamImageAction(b v1alpha1.VersionsBundle) ActionOpt {
 	}
 }
 
-// TODO: The below functions currently dont use the bundle. Update functions to pull action images from bundle.
+// TODO(pokearu): The below functions currently dont use the bundle. Update functions to pull action images from bundle.
 
 func withInstallOpensslAction(b v1alpha1.VersionsBundle) ActionOpt {
 	return func(a *[]tinkerbell.Action) {

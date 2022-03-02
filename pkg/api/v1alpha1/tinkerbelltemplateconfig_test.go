@@ -1,9 +1,9 @@
 package v1alpha1
 
 import (
-	"reflect"
 	"testing"
 
+	"github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell"
@@ -171,13 +171,10 @@ func TestGetTinkerbellTemplateConfig(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.testName, func(t *testing.T) {
+			g := gomega.NewWithT(t)
 			got, err := GetTinkerbellTemplateConfig(tt.fileName)
-			if (err != nil) != tt.wantErr {
-				t.Fatalf("GetTinkerbellTemplateConfig() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if !reflect.DeepEqual(got, tt.wantConfigs) {
-				t.Fatalf("GetTinkerbellTemplateConfig() = %#v, want %#v", got, tt.wantConfigs)
-			}
+			g.Expect((err != nil)).To(gomega.BeEquivalentTo(tt.wantErr))
+			g.Expect(got).To(gomega.BeEquivalentTo(tt.wantConfigs))
 		})
 	}
 }

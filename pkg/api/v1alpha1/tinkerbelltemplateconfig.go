@@ -13,6 +13,9 @@ import (
 
 const TinkerbellTemplateConfigKind = "TinkerbellTemplateConfig"
 
+// +kubebuilder:object:generate=false
+type ActionOpt func(action *[]tinkerbell.Action)
+
 func NewTinkerbellTemplateConfigGenerate(name string, opts ...ActionOpt) *TinkerbellTemplateConfigGenerate {
 	config := &TinkerbellTemplateConfigGenerate{
 		TypeMeta: metav1.TypeMeta{

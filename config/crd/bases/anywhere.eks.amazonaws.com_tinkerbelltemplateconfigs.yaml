@@ -39,7 +39,8 @@ spec:
               TinkerbellTemplateConfig
             properties:
               template:
-                description: Workflow represents a workflow to be executed.
+                description: Template defines a Tinkerbell workflow template with
+                  specific tasks and actions.
                 properties:
                   global_timeout:
                     type: integer

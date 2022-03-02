@@ -206,7 +206,7 @@ func generateClusterConfig(clusterName string) error {
 				return fmt.Errorf("failed to generate cluster yaml: %v", err)
 			}
 			datacenterYaml = dcyaml
-			versionBundle, err := cluster.GetVersionsBundleForVersion(version.Get(), v1alpha1.GetDefaultKubernetesVersion())
+			versionBundle, err := cluster.GetVersionsBundleForVersion(version.Get(), v1alpha1.GetClusterDefaultKubernetesVersion())
 			if err != nil {
 				return fmt.Errorf("failed to generate cluster yaml: %v", err)
 			}

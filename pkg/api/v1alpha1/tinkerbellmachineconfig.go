@@ -26,10 +26,12 @@ func NewTinkerbellMachineConfigGenerate(name string, opts ...TinkerbellMachineCo
 		},
 		Spec: TinkerbellMachineConfigSpec{
 			OSFamily: Ubuntu,
-			Users: []UserConfiguration{{
-				Name:              "ec2-user",
-				SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},
-			}},
+			Users: []UserConfiguration{
+				{
+					Name:              "ec2-user",
+					SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},
+				},
+			},
 		},
 	}
 

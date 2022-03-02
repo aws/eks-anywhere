@@ -41,7 +41,7 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 			Name: clusterName,
 		},
 		Spec: ClusterSpec{
-			KubernetesVersion: GetDefaultKubernetesVersion(),
+			KubernetesVersion: GetClusterDefaultKubernetesVersion(),
 			ClusterNetwork: ClusterNetwork{
 				Pods: Pods{
 					CidrBlocks: []string{"192.168.0.0/16"},
@@ -220,8 +220,8 @@ func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
 	return clusterConfig, nil
 }
 
-// GetDefaultKubernetesVersion returns the default kubernetes version for a Cluster
-func GetDefaultKubernetesVersion() KubernetesVersion {
+// GetClusterDefaultKubernetesVersion returns the default kubernetes version for a Cluster
+func GetClusterDefaultKubernetesVersion() KubernetesVersion {
 	return Kube121
 }
 
