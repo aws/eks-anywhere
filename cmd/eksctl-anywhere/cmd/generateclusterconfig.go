@@ -211,8 +211,7 @@ func generateClusterConfig(clusterName string) error {
 				return fmt.Errorf("failed to generate cluster yaml: %v", err)
 			}
 
-			tinkTmpConfig := v1alpha1.NewTinkerbellTemplateConfigGenerate(clusterName,
-				v1alpha1.WithDefaultActionsFromBundle(*versionBundle)...)
+			tinkTmpConfig := v1alpha1.NewDefaultTinkerbellTemplateConfigGenerate(clusterName, *versionBundle)
 			tinkTmpYaml, err := yaml.Marshal(tinkTmpConfig)
 			if err != nil {
 				return fmt.Errorf("failed to generate cluster yaml: %v", err)

@@ -9,6 +9,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1/thirdparty/tinkerbell"
+	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const TinkerbellTemplateConfigKind = "TinkerbellTemplateConfig"
@@ -16,7 +17,8 @@ const TinkerbellTemplateConfigKind = "TinkerbellTemplateConfig"
 // +kubebuilder:object:generate=false
 type ActionOpt func(action *[]tinkerbell.Action)
 
-func NewTinkerbellTemplateConfigGenerate(name string, opts ...ActionOpt) *TinkerbellTemplateConfigGenerate {
+// NewDefaultTinkerbellTemplateConfigGenerate returns a default TinkerbellTemplateConfig with the required Tasks and Actions
+func NewDefaultTinkerbellTemplateConfigGenerate(name string, versionBundle v1alpha1.VersionsBundle) *TinkerbellTemplateConfigGenerate {
 	config := &TinkerbellTemplateConfigGenerate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       TinkerbellTemplateConfigKind,
@@ -42,8 +44,10 @@ func NewTinkerbellTemplateConfigGenerate(name string, opts ...ActionOpt) *Tinker
 			},
 		},
 	}
-	for _, opt := range opts {
-		opt(&config.Spec.Template.Tasks[0].Actions)
+
+	defaultActions := WithDefaultActionsFromBundle(versionBundle)
+	for _, action := range defaultActions {
+		action(&config.Spec.Template.Tasks[0].Actions)
 	}
 
 	return config
