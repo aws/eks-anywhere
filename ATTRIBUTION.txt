@@ -2,6 +2,9 @@
 ** cloud.google.com/go/compute/metadata; version v0.93.3 --
 https://github.com/googleapis/google-cloud-go
 
+** github.com/aws/aws-sdk-go; version v1.38.40 --
+https://github.com/aws/aws-sdk-go
+
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
 https://github.com/aws/eks-distro-build-tooling/release
 
@@ -52,6 +55,9 @@ https://github.com/google/gofuzz
 
 ** github.com/googleapis/gnostic; version v0.5.5 --
 https://github.com/google/gnostic
+
+** github.com/jmespath/go-jmespath; version v0.4.0 --
+https://github.com/jmespath/go-jmespath
 
 ** github.com/matttproud/golang_protobuf_extensions/pbutil; version v1.0.2-0.20181231171920-c182affec369 --
 https://github.com/matttproud/golang_protobuf_extensions
@@ -574,6 +580,72 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
+** github.com/aws/aws-sdk-go/internal/sync/singleflight; version v1.38.40 --
+https://github.com/aws/aws-sdk-go
+
+** github.com/ProtonMail/go-crypto; version v0.0.0-20210428141323-04723f9f07d7 --
+https://github.com/ProtonMail/go-crypto
+
+** golang.org/go; version go1.16.12 --
+https://github.com/golang/go
+
+** golang.org/x/crypto; version v0.0.0-20210817164053-32db794688a5 --
+https://go.googlesource.com/crypto
+
+** golang.org/x/net; version v0.0.0-20210825183410-e898025ed96a --
+https://go.googlesource.com/net
+
+** golang.org/x/oauth2; version v0.0.0-20210819190943-2bc19b11175f --
+https://go.googlesource.com/oauth2
+
+** golang.org/x/sys; version v0.0.0-20210823070655-63515b42dcdf --
+https://go.googlesource.com/sys
+
+** golang.org/x/term; version v0.0.0-20210220032956-6a3ed077a48d --
+https://go.googlesource.com/term
+
+** golang.org/x/text; version v0.3.6 --
+https://go.googlesource.com/text
+
+** golang.org/x/time/rate; version v0.0.0-20210723032227-1f47c861a9ac --
+https://go.googlesource.com/time
+
+** k8s.io/apimachinery/third_party/forked/golang; version v0.22.2 --
+https://github.com/kubernetes/apimachinery
+
+** k8s.io/client-go/third_party/forked/golang/template; version v0.22.2 --
+https://github.com/kubernetes/client-go
+
+Copyright (c) 2009 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+------
+
 ** github.com/evanphx/json-patch; version v4.11.0+incompatible --
 https://github.com/evanphx/json-patch
 
@@ -984,69 +1056,6 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-------
-
-** github.com/ProtonMail/go-crypto; version v0.0.0-20210428141323-04723f9f07d7 --
-https://github.com/ProtonMail/go-crypto
-
-** golang.org/go; version go1.16.12 --
-https://github.com/golang/go
-
-** golang.org/x/crypto; version v0.0.0-20210817164053-32db794688a5 --
-https://go.googlesource.com/crypto
-
-** golang.org/x/net; version v0.0.0-20210825183410-e898025ed96a --
-https://go.googlesource.com/net
-
-** golang.org/x/oauth2; version v0.0.0-20210819190943-2bc19b11175f --
-https://go.googlesource.com/oauth2
-
-** golang.org/x/sys; version v0.0.0-20210823070655-63515b42dcdf --
-https://go.googlesource.com/sys
-
-** golang.org/x/term; version v0.0.0-20210220032956-6a3ed077a48d --
-https://go.googlesource.com/term
-
-** golang.org/x/text; version v0.3.6 --
-https://go.googlesource.com/text
-
-** golang.org/x/time/rate; version v0.0.0-20210723032227-1f47c861a9ac --
-https://go.googlesource.com/time
-
-** k8s.io/apimachinery/third_party/forked/golang; version v0.22.2 --
-https://github.com/kubernetes/apimachinery
-
-** k8s.io/client-go/third_party/forked/golang/template; version v0.22.2 --
-https://github.com/kubernetes/client-go
-
-Copyright (c) 2009 The Go Authors. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
-
-   * Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
-   * Redistributions in binary form must reproduce the above
-copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the
-distribution.
-   * Neither the name of Google Inc. nor the names of its
-contributors may be used to endorse or promote products derived from
-this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 ------
 
 ** github.com/spf13/pflag; version v1.0.5 --
