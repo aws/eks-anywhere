@@ -142,7 +142,7 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string
 func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudStackZoneRef) ([]v1alpha1.CloudStackResourceIdentifier, error) {
 	var zoneIdentifiers []v1alpha1.CloudStackResourceIdentifier
 	commandArgs := []string{"list", "zones"}
-    var filterArgs []string
+	var filterArgs []string
 	for _, z := range zones {
 		zone := z.Zone
 		var filterString string

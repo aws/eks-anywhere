@@ -24,9 +24,9 @@ func NewCloudStackDatacenterConfigGenerate(clusterName string) *CloudStackDatace
 						Value: "",
 						Type:  Name,
 					}, Network: CloudStackResourceRef{
-					Value: "",
-					Type:  Name,
-				},
+						Value: "",
+						Type:  Name,
+					},
 				},
 			},
 			Account:  "admin",
