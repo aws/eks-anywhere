@@ -14,10 +14,7 @@ func TestGenerateSSHKeyPairSuccess(t *testing.T) {
 	dir := "testdata"
 
 	_, writer := test.NewWriter(t)
-	c, err := crypto.NewKeyGenerator(writer)
-	if err != nil {
-		t.Fatalf("failed creating new key generator error = %v", err)
-	}
+	c := crypto.NewKeyGenerator(writer)
 
 	bytes, err := c.GenerateSSHKeyPair(dir, dir, privateFile, publicFile, user)
 	if err != nil || bytes == nil {

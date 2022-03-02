@@ -11,20 +11,19 @@ import (
 	"golang.org/x/crypto/ssh"
 
 	"github.com/aws/eks-anywhere/pkg/filewriter"
-	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
-type keygenerator struct {
+type KeyGenerator struct {
 	writer filewriter.FileWriter
 }
 
-func NewKeyGenerator(writer filewriter.FileWriter) (KeyGenerator, error) {
-	return &keygenerator{
+func NewKeyGenerator(writer filewriter.FileWriter) *KeyGenerator {
+	return &KeyGenerator{
 		writer: writer,
-	}, nil
+	}
 }
 
-func (kg *keygenerator) GenerateSSHKeyPair(privateKeyDir string, publicKeyDir string, privateKeyFileName string, publicKeyFileName string, clusterUsername string) (key []byte, err error) {
+func (kg *KeyGenerator) GenerateSSHKeyPair(privateKeyDir string, publicKeyDir string, privateKeyFileName string, publicKeyFileName string, clusterUsername string) (key []byte, err error) {
 	bitSize := 4096
 
 	privateKey, err := kg.generatePrivateKey(bitSize)
@@ -45,8 +44,6 @@ func (kg *keygenerator) GenerateSSHKeyPair(privateKeyDir string, publicKeyDir st
 	if err != nil {
 		return nil, fmt.Errorf("failed to write private key to %s: %s", filePath, err.Error())
 	}
-	logMsg := fmt.Sprintf("VSphereDatacenterConfig private key saved to %[1]s. Use 'ssh -i %[1]s %s@<VM-IP-Address>' to login to your cluster VM", filePath, clusterUsername)
-	logger.Info(logMsg)
 
 	filePath, err = kg.writeKeyToFile([]byte(publicKeyBytes), publicKeyDir, publicKeyFileName)
 	if err != nil {
@@ -57,7 +54,7 @@ func (kg *keygenerator) GenerateSSHKeyPair(privateKeyDir string, publicKeyDir st
 }
 
 // generatePrivateKey creates a RSA Private Key of specified byte size
-func (kg *keygenerator) generatePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
+func (kg *KeyGenerator) generatePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
 	// Private Key generation
 	privateKey, err := rsa.GenerateKey(rand.Reader, bitSize)
 	if err != nil {
@@ -75,7 +72,7 @@ func (kg *keygenerator) generatePrivateKey(bitSize int) (*rsa.PrivateKey, error)
 
 // generatePublicKey take a rsa.PublicKey and return bytes suitable for writing to .pub file
 // returns in the format "ssh-rsa ..."
-func (kg *keygenerator) generatePublicKey(privatekey *rsa.PublicKey) ([]byte, error) {
+func (kg *KeyGenerator) generatePublicKey(privatekey *rsa.PublicKey) ([]byte, error) {
 	publicRsaKey, err := ssh.NewPublicKey(privatekey)
 	if err != nil {
 		return nil, err
@@ -87,7 +84,7 @@ func (kg *keygenerator) generatePublicKey(privatekey *rsa.PublicKey) ([]byte, er
 }
 
 // writePemToFile writes keys to a file
-func (kg *keygenerator) writeKeyToFile(keyBytes []byte, dir string, saveFileTo string) (string, error) {
+func (kg *KeyGenerator) writeKeyToFile(keyBytes []byte, dir string, saveFileTo string) (string, error) {
 	keyFileWriter, err := kg.writer.WithDir(dir)
 	if err != nil {
 		return "", err
@@ -97,18 +94,15 @@ func (kg *keygenerator) writeKeyToFile(keyBytes []byte, dir string, saveFileTo s
 }
 
 // encodePrivateKeyToPEM encodes Private Key from RSA to PEM format
-func (kg *keygenerator) encodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
-	// Get ASN.1 DER format
+func (kg *KeyGenerator) encodePrivateKeyToPEM(privateKey *rsa.PrivateKey) []byte {
 	privDER := x509.MarshalPKCS1PrivateKey(privateKey)
 
-	// pem.Block
 	privBlock := pem.Block{
 		Type:    "RSA PRIVATE KEY",
 		Headers: nil,
 		Bytes:   privDER,
 	}
 
-	// Private key in PEM format
 	privatePEM := pem.EncodeToMemory(&privBlock)
 
 	return privatePEM
