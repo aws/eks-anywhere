@@ -133,6 +133,14 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 						},
 					},
 					Etcd: etcd,
+					APIServer: bootstrapv1.APIServer{
+						ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
+							ExtraArgs: map[string]string{},
+						},
+					},
+					ControllerManager: bootstrapv1.ControlPlaneComponent{
+						ExtraArgs: map[string]string{},
+					},
 				},
 				InitConfiguration: &bootstrapv1.InitConfiguration{
 					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
@@ -166,6 +174,16 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 		Spec: bootstrapv1.KubeadmConfigTemplateSpec{
 			Template: bootstrapv1.KubeadmConfigTemplateResource{
 				Spec: bootstrapv1.KubeadmConfigSpec{
+					ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
+						ControllerManager: bootstrapv1.ControlPlaneComponent{
+							ExtraArgs: map[string]string{},
+						},
+						APIServer: bootstrapv1.APIServer{
+							ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
+								ExtraArgs: map[string]string{},
+							},
+						},
+					},
 					JoinConfiguration: &bootstrapv1.JoinConfiguration{
 						NodeRegistration: bootstrapv1.NodeRegistrationOptions{
 							KubeletExtraArgs: map[string]string{},
@@ -179,7 +197,7 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 	}
 }
 
-func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, infrastructureObject APIObject) clusterv1.MachineDeployment {
+func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, bootstrapObject, infrastructureObject APIObject) clusterv1.MachineDeployment {
 	clusterName := clusterSpec.GetName()
 	replicas := int32(workerNodeGroupConfig.Count)
 	version := clusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag
@@ -206,9 +224,9 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1
 				Spec: clusterv1.MachineSpec{
 					Bootstrap: clusterv1.Bootstrap{
 						ConfigRef: &v1.ObjectReference{
-							APIVersion: bootstrapAPIVersion,
-							Kind:       kubeadmConfigTemplateKind,
-							Name:       workerNodeGroupConfig.Name, // TODO: different from vsphere
+							APIVersion: bootstrapObject.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+							Kind:       bootstrapObject.GetObjectKind().GroupVersionKind().Kind,
+							Name:       bootstrapObject.GetName(),
 						},
 					},
 					ClusterName: clusterName,

@@ -114,7 +114,7 @@ func ControlPlaneObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v
 func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) []runtime.Object {
 	kubeadmConfigTemplates := KubeadmConfigTemplates(clusterSpec)
 	workerMachineTemplates := SnowMachineTemplates(clusterSpec, machineConfigs)
-	machineDeployments := MachineDeployments(clusterSpec, workerMachineTemplates)
+	machineDeployments := MachineDeployments(clusterSpec, kubeadmConfigTemplates, workerMachineTemplates)
 
 	workersObjs := make([]runtime.Object, 0, len(machineDeployments)+len(kubeadmConfigTemplates)+len(workerMachineTemplates))
 	for _, item := range machineDeployments {
