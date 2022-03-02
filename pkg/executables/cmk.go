@@ -32,10 +32,10 @@ type Cmk struct {
 }
 
 type cmkExecConfig struct {
-	CloudStackApiKey string
-	CloudStackSecretKey string
+	CloudStackApiKey        string
+	CloudStackSecretKey     string
 	CloudStackManagementUrl string
-	CloudMonkeyVerifyCert string
+	CloudMonkeyVerifyCert   string
 }
 
 func (c *Cmk) Close(ctx context.Context) error {
@@ -222,10 +222,10 @@ func (c *Cmk) exec(ctx context.Context, verifyCert bool, args ...string) (stdout
 func (c *Cmk) buildCmkConfigFile(verifyCert bool) (configFile string, err error) {
 	t := templater.New(c.writer)
 	cmkConfig := &cmkExecConfig{
-		CloudStackApiKey: c.config.ApiKey,
-		CloudStackSecretKey: c.config.SecretKey,
-		CloudStackManagementUrl:  c.config.ManagementUrl,
-		CloudMonkeyVerifyCert: strconv.FormatBool(verifyCert),
+		CloudStackApiKey:        c.config.ApiKey,
+		CloudStackSecretKey:     c.config.SecretKey,
+		CloudStackManagementUrl: c.config.ManagementUrl,
+		CloudMonkeyVerifyCert:   strconv.FormatBool(verifyCert),
 	}
 	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, cmkConfig, cmkConfigFileName)
 	if err != nil {
