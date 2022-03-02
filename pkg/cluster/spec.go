@@ -12,6 +12,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -28,19 +29,20 @@ var releasesManifestURL string
 
 type Spec struct {
 	*eksav1alpha1.Cluster
-	OIDCConfig          *eksav1alpha1.OIDCConfig
-	AWSIamConfig        *eksav1alpha1.AWSIamConfig
-	GitOpsConfig        *eksav1alpha1.GitOpsConfig
-	DatacenterConfig    *metav1.ObjectMeta
-	releasesManifestURL string
-	bundlesManifestURL  string
-	configFS            embed.FS
-	userAgent           string
-	reader              *ManifestReader
-	VersionsBundle      *VersionsBundle
-	eksdRelease         *eksdv1alpha1.Release
-	Bundles             *v1alpha1.Bundles
-	ManagementCluster   *types.Cluster
+	OIDCConfig                *eksav1alpha1.OIDCConfig
+	AWSIamConfig              *eksav1alpha1.AWSIamConfig
+	GitOpsConfig              *eksav1alpha1.GitOpsConfig
+	DatacenterConfig          *metav1.ObjectMeta
+	releasesManifestURL       string
+	bundlesManifestURL        string
+	configFS                  embed.FS
+	userAgent                 string
+	reader                    *ManifestReader
+	VersionsBundle            *VersionsBundle
+	eksdRelease               *eksdv1alpha1.Release
+	Bundles                   *v1alpha1.Bundles
+	ManagementCluster         *types.Cluster
+	TinkerbellTemplateConfigs map[string]*eksav1alpha1.TinkerbellTemplateConfig
 }
 
 func (s *Spec) DeepCopy() *Spec {
@@ -57,8 +59,9 @@ func (s *Spec) DeepCopy() *Spec {
 			VersionsBundle: s.VersionsBundle.VersionsBundle.DeepCopy(),
 			KubeDistro:     s.VersionsBundle.KubeDistro.deepCopy(),
 		},
-		eksdRelease: s.eksdRelease.DeepCopy(),
-		Bundles:     s.Bundles.DeepCopy(),
+		eksdRelease:               s.eksdRelease.DeepCopy(),
+		Bundles:                   s.Bundles.DeepCopy(),
+		TinkerbellTemplateConfigs: s.TinkerbellTemplateConfigs,
 	}
 }
 
@@ -242,6 +245,21 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 			return nil, err
 		}
 		s.DatacenterConfig = &datacenterConfig.ObjectMeta
+	case eksav1alpha1.TinkerbellDatacenterKind:
+		if features.IsActive(features.TinkerbellProvider()) {
+			datacenterConfig, err := eksav1alpha1.GetTinkerbellDatacenterConfig(clusterConfigPath)
+			if err != nil {
+				return nil, err
+			}
+			s.DatacenterConfig = &datacenterConfig.ObjectMeta
+			templateConfigs, err := eksav1alpha1.GetTinkerbellTemplateConfig(clusterConfigPath)
+			if err != nil {
+				return nil, err
+			}
+			s.TinkerbellTemplateConfigs = templateConfigs
+		} else {
+			return nil, fmt.Errorf("unsupported DatacenterRef.Kind: %s", eksav1alpha1.TinkerbellDatacenterKind)
+		}
 	}
 
 	if s.ManagementCluster != nil {
