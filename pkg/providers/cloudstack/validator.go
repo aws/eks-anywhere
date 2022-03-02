@@ -31,7 +31,7 @@ type ProviderCmkClient interface {
 
 func (v *Validator) validateCloudStackAccess(ctx context.Context, verifyCert bool) error {
 	if err := v.cmk.ValidateCloudStackConnection(ctx, verifyCert); err != nil {
-		return fmt.Errorf("failed validating connection to vCenter: %v", err)
+		return fmt.Errorf("failed validating connection to cloudstack: %v", err)
 	}
 	logger.MarkPass("Connected to server")
 
