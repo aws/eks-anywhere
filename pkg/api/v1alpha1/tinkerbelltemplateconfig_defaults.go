@@ -20,18 +20,18 @@ const (
           dhcp4: true
 `
 	cloudInit = `datasource:
-Ec2:
-  metadata_urls: ["http://<TINKERBELL_IP>:50061"]
-  strict_id: false
+  Ec2:
+    metadata_urls: ["http://TINKERBELL_IP:50061"]
+    strict_id: false
 system_info:
-default_user:
-  name: tink
-  groups: [wheel, adm]
-  sudo: ["ALL=(ALL) NOPASSWD:ALL"]
-  shell: /bin/bash
+  default_user:
+    name: tink
+    groups: [wheel, adm]
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    shell: /bin/bash
 manage_etc_hosts: localhost
 warnings:
-dsid_missing_source: off
+  dsid_missing_source: off
 `
 )
 
@@ -112,6 +112,7 @@ func WithTinkCloudInitAction(b v1alpha1.VersionsBundle) ActionOpt {
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
 				"CONTENTS":  cloudInit,
+				"UID":       "0",
 				"GID":       "0",
 				"MODE":      "0600",
 				"DIRMODE":   "0700",

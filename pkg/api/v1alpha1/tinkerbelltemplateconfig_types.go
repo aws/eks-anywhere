@@ -66,10 +66,6 @@ func (c *TinkerbellTemplateConfig) ConvertConfigToConfigGenerateStruct() *Tinker
 	return config
 }
 
-func (c *TinkerbellTemplateConfig) Marshallable() Marshallable {
-	return c.ConvertConfigToConfigGenerateStruct()
-}
-
 // +kubebuilder:object:generate=false
 
 // Same as TinkerbellTemplateConfig except stripped down for generation of yaml file during generate clusterconfig
