@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/aws"
@@ -15,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
+	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -33,6 +36,7 @@ var requiredEnvs = []string{
 }
 
 type snowProvider struct {
+	// TODO: once cluster.config is available, remove below objs
 	datacenterConfig      *v1alpha1.SnowDatacenterConfig
 	machineConfigs        map[string]*v1alpha1.SnowMachineConfig
 	clusterConfig         *v1alpha1.Cluster
@@ -98,8 +102,50 @@ func (p *snowProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster
 	return nil
 }
 
+func ControlPlaneObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) []runtime.Object {
+	snowCluster := SnowCluster(clusterSpec)
+	capiCluster := CAPICluster(clusterSpec, snowCluster)
+	controlPlaneMachineTemplate := SnowMachineTemplate(machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	kubeadmControlPlane := KubeadmControlPlane(clusterSpec, controlPlaneMachineTemplate)
+
+	return []runtime.Object{capiCluster, snowCluster, kubeadmControlPlane, controlPlaneMachineTemplate}
+}
+
+func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) []runtime.Object {
+	kubeadmConfigTemplates := KubeadmConfigTemplates(clusterSpec)
+	workerMachineTemplates := SnowMachineTemplates(clusterSpec, machineConfigs)
+	machineDeployments := MachineDeployments(clusterSpec, kubeadmConfigTemplates, workerMachineTemplates)
+
+	workersObjs := make([]runtime.Object, 0, len(machineDeployments)+len(kubeadmConfigTemplates)+len(workerMachineTemplates))
+	for _, item := range machineDeployments {
+		workersObjs = append(workersObjs, item)
+	}
+	for _, item := range kubeadmConfigTemplates {
+		workersObjs = append(workersObjs, item)
+	}
+	for _, item := range workerMachineTemplates {
+		workersObjs = append(workersObjs, item)
+	}
+
+	return workersObjs
+}
+
 func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	return nil, nil, nil
+	controlPlaneSpec, err = templater.ObjectsToYaml(ControlPlaneObjects(clusterSpec, p.machineConfigs)...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	fmt.Println(string(controlPlaneSpec))
+
+	workersSpec, err = templater.ObjectsToYaml(WorkersObjects(clusterSpec, p.machineConfigs)...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	fmt.Println(string(workersSpec))
+
+	return controlPlaneSpec, workersSpec, nil
 }
 
 func (p *snowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currrentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
