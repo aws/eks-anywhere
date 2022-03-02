@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -17,6 +15,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/aws/eks-anywhere/controllers/controllers/clusters"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -25,8 +24,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 )
 
-const clusterFinalizerName string = "clusters.anywhere.eks.amazonaws.com/finalizer"
-const defaultRequeueTime = time.Minute
+const (
+	defaultRequeueTime          = time.Minute
+	clusterFinalizerName string = "clusters.anywhere.eks.amazonaws.com/finalizer"
+)
 
 // ClusterReconciler reconciles a Cluster object
 type ClusterReconciler struct {
@@ -72,7 +73,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 	cluster := &anywherev1.Cluster{}
 	log.Info("Reconciling cluster", "name", req.NamespacedName)
 	if err := r.client.Get(ctx, req.NamespacedName, cluster); err != nil {
-		if errors.IsNotFound(err) {
+		if apierrors.IsNotFound(err) {
 			return reconcile.Result{}, nil
 		}
 		return ctrl.Result{}, err
