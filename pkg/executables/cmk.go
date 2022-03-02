@@ -224,15 +224,14 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zoneR
 			filterArgs = append(filterArgs, fmt.Sprintf("account=\"%s\"", account))
 		}
 	}
-	zoneId := ""
+	var zoneId string
+	var err error
 	if zoneRef.Zone.Type == v1alpha1.Id {
 		zoneId = zoneRef.Zone.Value
 	} else {
-		for _, zoneIdentifier := range zones {
-			if zoneRef.Zone.Value == zoneIdentifier.Name {
-				zoneId = zoneIdentifier.Id
-				break
-			}
+		zoneId, err = getZoneIdByName(zones, zoneRef.Zone.Value)
+		if err != nil {
+			return fmt.Errorf("error getting zone id by name: %v", err)
 		}
 	}
 	filterArgs = append(filterArgs, fmt.Sprintf("zoneid=\"%s\"", zoneId))
@@ -277,6 +276,15 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zoneR
 		}
 	}
 	return nil
+}
+
+func getZoneIdByName(zones []v1alpha1.CloudStackResourceIdentifier, zoneName string) (string, error) {
+	for _, zoneIdentifier := range zones {
+		if zoneName == zoneIdentifier.Name {
+			return zoneIdentifier.Id, nil
+		}
+	}
+	return "", fmt.Errorf("zoneId not found for zone %s", zoneName)
 }
 
 func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string, domainId string) error {
