@@ -3,10 +3,10 @@ package executables
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/decoder"
 	"os"
 	"strings"
 
+	"github.com/aws/eks-anywhere/pkg/decoder"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )

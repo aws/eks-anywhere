@@ -13,6 +13,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/decoder"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
 )
@@ -23,11 +24,11 @@ const (
 	domainName        = "domain1"
 )
 
-var execConfig = executables.CmkExecConfig{
+var execConfig = decoder.CloudStackExecConfig{
 	CloudStackApiKey:        "test",
 	CloudStackSecretKey:     "test",
 	CloudStackManagementUrl: "http://1.1.1.1:8080/client/api",
-	CloudMonkeyVerifyCert:   false,
+	CloudMonkeyVerifyCert:   "false",
 }
 
 var zoneName = v1alpha1.CloudStackResourceRef{

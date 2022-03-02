@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
@@ -164,7 +163,7 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.CloudStackDatacenterConfig,
 			now:                        now,
 		},
 		skipIpCheck: skipIpCheck,
-		validator: NewValidator(providerCmkClient),
+		validator:   NewValidator(providerCmkClient),
 	}
 }
 
@@ -314,12 +313,15 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("unable to set %s: %v", cloudMonkeyInsecure, err)
 	}
 
-	// TODO: Integrate with validator (defined in https://github.com/aws/eks-anywhere/pull/1256/)
-
+	if err := p.validator.validateCloudStackAccess(ctx); err != nil {
+		return err
+	}
+	if err := p.validator.ValidateCloudStackDatacenterConfig(ctx, p.datacenterConfig); err != nil {
+		return err
+	}
 	if err := p.validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec); err != nil {
 		return err
 	}
-	_ = validateControlPlaneHost(&clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
 
 	if err := p.setupSSHAuthKeysForCreate(); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
@@ -418,28 +420,9 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 	return bytes, nil
 }
 
-func validateControlPlaneHost(pHost *string) error {
-	_, port, err := net.SplitHostPort(*pHost)
-	if err != nil {
-		if strings.Contains(err.Error(), "missing port") {
-			port = controlEndpointDefaultPort
-			*pHost = fmt.Sprintf("%s:%s", *pHost, port)
-		} else {
-			return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host is invalid: %s (%s)", *pHost, err.Error())
-		}
-	}
-	_, err = strconv.Atoi(port)
-	if err != nil {
-		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host has an invalid port: %s (%s)", *pHost, err.Error())
-	}
-	return nil
-}
-
 func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec, managementApiEndpoint string) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
-	// TODO: Move this check/substitution to validator (defined in https://github.com/aws/eks-anywhere/pull/1256/)
-	_ = validateControlPlaneHost(&clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
 	host, port, _ := net.SplitHostPort(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
 
 	values := map[string]interface{}{

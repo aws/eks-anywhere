@@ -3,7 +3,6 @@ package dependencies
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/decoder"
 
 	"github.com/google/uuid"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/crypto"
+	"github.com/aws/eks-anywhere/pkg/decoder"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"

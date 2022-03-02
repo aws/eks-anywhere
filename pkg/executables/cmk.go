@@ -6,10 +6,10 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/decoder"
 	"path/filepath"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/decoder"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/templater"
