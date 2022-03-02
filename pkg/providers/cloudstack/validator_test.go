@@ -19,17 +19,6 @@ const (
 	testDataDir                   = "testdata"
 )
 
-var testZone = v1alpha1.CloudStackZoneRef{
-	Zone: v1alpha1.CloudStackResourceRef{
-		Type: "name",
-		Value: "zone1",
-	},
-	Network: v1alpha1.CloudStackResourceRef{
-		Type: "name",
-		Value: "net1",
-	},
-}
-
 var testTemplate = v1alpha1.CloudStackResourceRef{
 	Type:  "name",
 	Value: "centos7-k8s-118",
@@ -63,7 +52,7 @@ func TestValidateCloudStackDatacenterConfig(t *testing.T) {
 	cmk.EXPECT().ValidateZonesPresent(ctx, cloudstackDatacenter.Spec.Zones).Return([]v1alpha1.CloudStackResourceIdentifier{{Name: "zone1", Id: "4e3b338d-87a6-4189-b931-a1747edeea8f"}}, nil)
 	cmk.EXPECT().ValidateDomainPresent(ctx, cloudstackDatacenter.Spec.Domain).Return(v1alpha1.CloudStackResourceIdentifier{Id: "5300cdac-74d5-11ec-8696-c81f66d3e965", Name: cloudstackDatacenter.Spec.Domain}, nil)
 	cmk.EXPECT().ValidateAccountPresent(ctx, gomock.Any(), gomock.Any()).Return(nil)
-	cmk.EXPECT().ValidateNetworkPresent(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), false ).Return(nil)
+	cmk.EXPECT().ValidateNetworkPresent(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), false).Return(nil)
 	err = validator.ValidateCloudStackDatacenterConfig(ctx, cloudstackDatacenter)
 	if err != nil {
 		t.Fatalf("failed to validate CloudStackDataCenterConfig: %v", err)
@@ -412,7 +401,7 @@ func TestValidateMachineConfigsHappyCase(t *testing.T) {
 	validator := NewValidator(cmk)
 	cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).Times(3).Return([]v1alpha1.CloudStackResourceIdentifier{{Name: "zone1", Id: "4e3b338d-87a6-4189-b931-a1747edeea8f"}}, nil)
-    cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(),
+	cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(),
 		gomock.Any(), datacenterConfig.Spec.Account, testTemplate).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(ctx, gomock.Any(), testOffering).Times(3)
 	cmk.EXPECT().ValidateAffinityGroupsPresent(ctx, gomock.Any(), datacenterConfig.Spec.Account, gomock.Any()).Times(3)

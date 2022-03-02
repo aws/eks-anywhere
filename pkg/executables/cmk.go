@@ -147,7 +147,7 @@ func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudSt
 			filterString = fmt.Sprintf("id=\"%s\"", zone.Value)
 			filterArgs = append(filterArgs, filterString)
 		} else {
-			filterString =  fmt.Sprintf("name=\"%s\"", zone.Value)
+			filterString = fmt.Sprintf("name=\"%s\"", zone.Value)
 			filterArgs = append(filterArgs, filterString)
 		}
 		result, err := c.exec(ctx, filterArgs...)

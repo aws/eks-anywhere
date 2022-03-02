@@ -15,9 +15,7 @@ import (
 const controlEndpointDefaultPort = "6443"
 
 type Validator struct {
-	cmk    ProviderCmkClient
-	zones  []anywherev1.CloudStackResourceIdentifier
-	domain anywherev1.CloudStackResourceIdentifier
+	cmk ProviderCmkClient
 }
 
 func NewValidator(cmk ProviderCmkClient) *Validator {
