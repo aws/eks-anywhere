@@ -89,7 +89,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 			controllerutil.AddFinalizer(cluster, clusterFinalizerName)
 		}
 	} else {
-		return r.reconcileDelete(ctx, cluster, log)
+		return r.reconcileDelete(ctx, cluster)
 	}
 
 	// If the cluster is paused, return without any further processing.
@@ -125,7 +125,7 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, cluster *anywherev1.C
 	return reconcileResult.ToCtrlResult(), nil
 }
 
-func (r *ClusterReconciler) reconcileDelete(ctx context.Context, cluster *anywherev1.Cluster, log logr.Logger) (ctrl.Result, error) {
+func (r *ClusterReconciler) reconcileDelete(ctx context.Context, cluster *anywherev1.Cluster) (ctrl.Result, error) {
 	capiCluster := &clusterv1.Cluster{}
 	capiClusterName := types.NamespacedName{Namespace: "eksa-system", Name: cluster.Name}
 	r.log.Info("Deleting", "name", cluster.Name)
