@@ -141,18 +141,16 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string
 
 func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudStackZoneRef) ([]v1alpha1.CloudStackResourceIdentifier, error) {
 	var zoneIdentifiers []v1alpha1.CloudStackResourceIdentifier
-	commandArgs := []string{"list", "zones"}
-	var filterArgs []string
 	for _, z := range zones {
 		zone := z.Zone
 		var filterString string
 		if zone.Type == v1alpha1.Id {
 			filterString = fmt.Sprintf("id=\"%s\"", zone.Value)
-			filterArgs = append(filterArgs, filterString)
 		} else {
 			filterString = fmt.Sprintf("name=\"%s\"", zone.Value)
-			filterArgs = append(filterArgs, filterString)
 		}
+		commandArgs := []string{"list", "zones"}
+		filterArgs := []string{filterString}
 		commandArgs = append(commandArgs, filterArgs...)
 		result, err := c.exec(ctx, commandArgs...)
 		if err != nil {
