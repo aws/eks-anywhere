@@ -2,6 +2,9 @@ package controllers
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/api/errors"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"time"
 
 	"github.com/go-logr/logr"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -23,6 +26,7 @@ import (
 )
 
 const clusterFinalizerName string = "clusters.anywhere.eks.amazonaws.com/finalizer"
+const defaultRequeueTime = time.Minute
 
 // ClusterReconciler reconciles a Cluster object
 type ClusterReconciler struct {
@@ -68,6 +72,9 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 	cluster := &anywherev1.Cluster{}
 	log.Info("Reconciling cluster", "name", req.NamespacedName)
 	if err := r.client.Get(ctx, req.NamespacedName, cluster); err != nil {
+		if errors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
 		return ctrl.Result{}, err
 	}
 
@@ -138,7 +145,7 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, cluster *anywhe
 			r.log.Info("Error deleting CAPI cluster", "name", capiCluster.Name)
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{}, nil
+		return ctrl.Result{RequeueAfter: defaultRequeueTime}, nil
 	case !apierrors.IsNotFound(err):
 		return ctrl.Result{}, err
 	case apierrors.IsNotFound(err):
