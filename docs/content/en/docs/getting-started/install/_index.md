@@ -14,6 +14,13 @@ See [Create cluster workflow]({{< relref "../../concepts/clusterworkflow" >}}) f
 To create an EKS Anywhere cluster you will need [`eksctl`](https://eksctl.io) and the `eksctl-anywhere` plugin.
 This will let you create a cluster in multiple providers for local development or production workloads.
 
+To create an EKS Anywhere cluster you will need [`eksctl`](https://eksctl.io), the `eksctl-anywhere` plugin, `kubectl`, `Docker` and `Helm`. This will let you create a cluster in multiple providers for local development or production workloads, and deploying workloads to your clusters. 
+
+> **_NOTE:_** You can install `eksctl-anywhere` on Linux, macOS. Windows is not supported at the time of writing this document. 
+
+In addition, you would need to install `Go`, `kind`, `govc`, `jq` and `flux`. `Go` will be needed when it comes enabling IAM Role for Service Accounts on your EKS Anywhere cluster, to generate the keys.json file. `kind` and `govc` will be used for some troubleshooting tasks. `jq` to query JSON output of some command and pipe the result to another command. `flux` would be needed if you need to enable GitOps on your cluster, but with a self hosted Github (which is not supported at the time being with the addon GitOps which is on the roadmap to be supported soon)
+
+
 ### Administrative machine prerequisites
 
 - Docker 20.x.x
@@ -40,6 +47,17 @@ This package will also install `kubectl` and the `aws-iam-authenticator` which w
 brew install aws/tap/eks-anywhere
 ```
 
+And you can also install `helm`, `govc`, `kind`, `jq`, `go` and `flux` with [homebrew](http://brew.sh/).
+
+```bash
+brew install helm
+brew install govc
+brew install kind
+brew install jq
+brew install go
+brew install flux
+```
+
 #### Manually (macOS and Linux)
 
 Install the latest release of `eksctl`.
@@ -60,6 +78,64 @@ curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${RELEASE_NUMBER}
     --silent --location \
     | tar xz ./eksctl-anywhere
 sudo mv ./eksctl-anywhere /usr/local/bin/
+```
+
+Install `kubectl`.
+
+```bash
+sudo curl --silent --location -o /usr/local/bin/kubectl \
+   https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
+sudo chmod +x /usr/local/bin/kubectl
+```
+
+Install `helm`.
+
+```bash
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+sudo chmod 700 get_helm.sh
+./get_helm.sh
+```
+
+Install `go`.
+
+```bash
+wget https://go.dev/dl/go1.17.7.linux-amd64.tar.gz
+rm -rf /usr/local/go && tar -C /usr/local -xzf go1.17.7.linux-amd64.tar.gz
+export PATH=$PATH:/usr/local/go/bin
+go version
+```
+
+Install `jq`.
+
+```bash
+wget https://go.dev/dl/go1.17.7.linux-amd64.tar.gz
+rm -rf /usr/local/go && tar -C /usr/local -xzf go1.17.7.linux-amd64.tar.gz
+export PATH=$PATH:/usr/local/go/bin
+go version
+```
+
+Install Flux (if a self hosted Github is the only option available)
+
+```bash
+curl -s https://fluxcd.io/install.sh | sudo bash
+```
+
+Troubleshooting tools are needed on the admin machine as well to enable you troubleshooting the cluster later on, if needed:
+
+The first tool called `govc`, which is a vSphere CLI, that you can use to make vSphere API calls. You can download and install it like this:
+
+```bash
+curl -L -o \
+- "https://github.com/vmware/govmomi/releases/latest/download/govc_$(uname -s)_$(uname -m).tar.gz" \
+| tar -C /usr/local/bin -xvzf - govc
+```
+
+The second tool called `kind`, which is  a tool for running local Kubernetes clusters using Docker container “nodes”, that runs during the bootstrap process. You can download and install it like this:
+
+```bash
+curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.11.1/kind-linux-amd64
+chmod +x ./kind
+mv ./kind /some-dir-in-your-PATH/kind
 ```
 
 ### Upgrade eksctl-anywhere
