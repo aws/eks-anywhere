@@ -48,4 +48,5 @@ replace (
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20220207154021-dcf66392d606
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.0-rc95
 	github.com/tinkerbell/cluster-api-provider-tinkerbell => github.com/pokearu/cluster-api-provider-tinkerbell v0.0.0-20220128001529-79d851d0861f
+	sigs.k8s.io/cluster-api => github.com/mrajashree/cluster-api v1.0.3-0.20220301005127-382d70d4a76f
 )

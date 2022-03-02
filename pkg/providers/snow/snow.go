@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/aws"
@@ -15,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
+	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -33,6 +36,7 @@ var requiredEnvs = []string{
 }
 
 type snowProvider struct {
+	// TODO: once clusterspec.config is ready, remove these
 	datacenterConfig      *v1alpha1.SnowDatacenterConfig
 	machineConfigs        map[string]*v1alpha1.SnowMachineConfig
 	clusterConfig         *v1alpha1.Cluster
@@ -99,7 +103,33 @@ func (p *snowProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster
 }
 
 func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	return nil, nil, nil
+	capiCluster := CAPICluster(clusterSpec)
+	snowCluster := SnowCluster(clusterSpec)
+	kubeadmControlPlane := KubeadmControlPlane(clusterSpec)
+	controlPlaneMachineTemplate := SnowMachineTemplate(p.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+
+	controlPlaneSpec, err = templater.ObjectsToYaml(capiCluster, snowCluster, kubeadmControlPlane, controlPlaneMachineTemplate)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	machineDeploymentList := MachineDeploymentList(clusterSpec)
+	kubeadmConfigTemplateList := KubeadmConfigTemplateList(clusterSpec)
+	workerMachineTemplateList := SnowMachineTemplatetList(clusterSpec, p.machineConfigs)
+
+	workersObjs := []runtime.Object{}
+	workersObjs = append(workersObjs, machineDeploymentList.Items...)
+	workersObjs = append(workersObjs, kubeadmConfigTemplateList.Items...)
+	workersObjs = append(workersObjs, workerMachineTemplateList.Items...)
+
+	workersSpec, err = templater.ObjectsToYaml(workersObjs...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	fmt.Println(string(workersSpec))
+
+	return controlPlaneSpec, workersSpec, nil
 }
 
 func (p *snowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currrentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
