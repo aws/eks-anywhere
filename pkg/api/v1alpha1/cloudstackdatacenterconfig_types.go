@@ -136,8 +136,10 @@ func (z *CloudStackZoneRef) Equals(o *CloudStackZoneRef) bool {
 	if z == nil || o == nil {
 		return false
 	}
-	if z.Zone.Type == o.Zone.Type && z.Zone.Value == o.Zone.Value &&
-		z.Network.Type == o.Network.Type && z.Network.Value == o.Network.Value {
+	if z.Zone.Type == o.Zone.Type &&
+		z.Zone.Value == o.Zone.Value &&
+		z.Network.Type == o.Network.Type &&
+		z.Network.Value == o.Network.Value {
 		return true
 	}
 	return false

@@ -70,11 +70,10 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, zoneId string,
 	filterArgs := []string{"list", "serviceofferings"}
 	if serviceOffering.Type == v1alpha1.Id {
 		filterArgs = append(filterArgs, fmt.Sprintf("id=\"%s\"", serviceOffering.Value))
-		filterArgs = append(filterArgs, fmt.Sprintf("zoneid=\"%s\"", zoneId))
 	} else {
 		filterArgs = append(filterArgs, fmt.Sprintf("name=\"%s\"", serviceOffering.Value))
-		filterArgs = append(filterArgs, fmt.Sprintf("zoneid=\"%s\"", zoneId))
 	}
+	filterArgs = append(filterArgs, fmt.Sprintf("zoneid=\"%s\"", zoneId))
 	result, err := c.exec(ctx, filterArgs...)
 	if err != nil {
 		return fmt.Errorf("error getting service offerings info: %v", err)
@@ -207,15 +206,11 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha
 
 func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zoneRef v1alpha1.CloudStackZoneRef, zones []v1alpha1.CloudStackResourceIdentifier, account string, multipleZone bool) error {
 	filterArgs := []string{"list", "networks"}
-	shared := ""
-	if multipleZone {
-		shared = "Shared"
-	}
 	if zoneRef.Network.Type == v1alpha1.Id {
 		filterArgs = append(filterArgs, fmt.Sprintf("id=\"%s\"", zoneRef.Network.Value))
 	}
-	if len(shared) > 0 {
-		filterArgs = append(filterArgs, fmt.Sprintf("type=\"%s\"", shared))
+	if multipleZone {
+		filterArgs = append(filterArgs, fmt.Sprintf("type=\"%s\"", "Shared"))
 	}
 	// account must be specified within a domainId
 	// domainId can be specified without account
@@ -242,7 +237,11 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zoneR
 		return fmt.Errorf("error getting network info: %v", err)
 	}
 	if result.Len() == 0 {
-		return fmt.Errorf("%s network %s not found in zoneRef %s", shared, zoneRef.Network.Value, zoneRef.Zone.Value)
+		if multipleZone {
+			return fmt.Errorf("%s network %s not found in zoneRef %s", "Shared", zoneRef.Network.Value, zoneRef.Zone.Value)
+		} else {
+			return fmt.Errorf("network %s not found in zoneRef %s", zoneRef.Network.Value, zoneRef.Zone.Value)
+		}
 	}
 
 	response := struct {
@@ -266,7 +265,11 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zoneR
 	if len(networks) > 1 {
 		return fmt.Errorf("duplicate network %s found", zoneRef.Network.Value)
 	} else if len(networks) == 0 {
-		return fmt.Errorf("%s network %s not found in zoneRef %s", shared, zoneRef.Network.Value, zoneRef.Zone.Value)
+		if multipleZone {
+			return fmt.Errorf("%s network %s not found in zoneRef %s", "Shared", zoneRef.Network.Value, zoneRef.Zone.Value)
+		} else {
+			return fmt.Errorf("network %s not found in zoneRef %s", zoneRef.Network.Value, zoneRef.Zone.Value)
+		}
 	}
 	return nil
 }
