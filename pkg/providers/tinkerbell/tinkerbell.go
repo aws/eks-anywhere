@@ -197,15 +197,16 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
-	// ValidateHardwareConfig performs a lazy load of hardware configuration. Given subsequent steps need the hardware
-	// read into memory it needs to be done first.
-	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile, p.skipPowerActions); err != nil {
-		return err
-	}
-
 	tinkerbellClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
 	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
+		return err
+	}
+
+	// ValidateHardwareConfig performs a lazy load of hardware configuration. Given subsequent steps need the hardware
+	// read into memory it needs to be done first. It also needs connection to
+	// Tinkerbell steps to verify hardware availability on the stack
+	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile, p.skipPowerActions); err != nil {
 		return err
 	}
 

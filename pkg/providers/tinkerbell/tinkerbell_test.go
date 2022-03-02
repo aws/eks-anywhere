@@ -124,6 +124,16 @@ func setupContext(t *testing.T) {
 	})
 }
 
+func setupHardware() []*tinkhardware.Hardware {
+	var hardwares []*tinkhardware.Hardware
+	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "b14d7f5b-8903-4a4c-b38d-55889ba820ba"})
+	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "b14d7f5b-8903-4a4c-b38d-55889ba820bb"})
+	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "d2c14d26-640a-48f0-baee-a737c68a75f5"})
+	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "0c9d1701-f884-499e-80b8-6dcfc0973e85"})
+
+	return hardwares
+}
+
 func TestTinkerbellProviderGenerateDeploymentFile(t *testing.T) {
 	setupContext(t)
 	clusterSpecManifest := "cluster_tinkerbell.yaml"
@@ -133,14 +143,18 @@ func TestTinkerbellProviderGenerateDeploymentFile(t *testing.T) {
 	pbnjClient := mocks.NewMockProviderPbnjClient(mockCtrl)
 	tinkerbellClients := TinkerbellClients{tinkctl, pbnjClient}
 	cluster := &types.Cluster{Name: "test"}
+	hardwares := setupHardware()
+
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
-	tinkctl.EXPECT().GetHardware(ctx).Return([]*tinkhardware.Hardware{}, nil)
+
+	tinkctl.EXPECT().GetHardware(ctx).Return(hardwares, nil)
+	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
 
 	provider := newProviderWithKubectlTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkerbellClients)
-	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
+
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
@@ -163,11 +177,12 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 	pbnjClient := mocks.NewMockProviderPbnjClient(mockCtrl)
 	tinkerbellClients := TinkerbellClients{tinkctl, pbnjClient}
 	cluster := &types.Cluster{Name: "test"}
+	hardwares := setupHardware()
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
-	tinkctl.EXPECT().GetHardware(ctx).Return([]*tinkhardware.Hardware{}, nil)
+	tinkctl.EXPECT().GetHardware(ctx).Return(hardwares, nil)
 	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
 	provider := newProviderWithKubectlTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkerbellClients)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {

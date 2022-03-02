@@ -66,8 +66,6 @@ func TestValidateTinkerbellConfig_ValidAuthorities(t *testing.T) {
 	tink := tinkerbellmocks.NewMockProviderTinkClient(ctrl)
 	net := networkutilsmocks.NewMockNetClient(ctrl)
 
-	tink.EXPECT().GetHardware(gomock.Any())
-
 	var hardware hardware.HardwareConfig
 	datacenter := newValidTinkerbellDatacenterConfig()
 
@@ -91,8 +89,6 @@ func TestValidateTinkerbellConfig_InvalidGrpcAuthority(t *testing.T) {
 			pbnj := tinkerbellmocks.NewMockProviderPbnjClient(ctrl)
 			tink := tinkerbellmocks.NewMockProviderTinkClient(ctrl)
 			net := networkutilsmocks.NewMockNetClient(ctrl)
-
-			tink.EXPECT().GetHardware(gomock.Any())
 
 			var hardware hardware.HardwareConfig
 			datacenter := newValidTinkerbellDatacenterConfig()
@@ -120,8 +116,6 @@ func TestValidateTinkerbellConfig_InvalidPbnjAuthority(t *testing.T) {
 			pbnj := tinkerbellmocks.NewMockProviderPbnjClient(ctrl)
 			tink := tinkerbellmocks.NewMockProviderTinkClient(ctrl)
 			net := networkutilsmocks.NewMockNetClient(ctrl)
-
-			tink.EXPECT().GetHardware(gomock.Any())
 
 			var hardware hardware.HardwareConfig
 			datacenter := newValidTinkerbellDatacenterConfig()

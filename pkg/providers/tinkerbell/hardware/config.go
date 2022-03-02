@@ -7,6 +7,7 @@ import (
 
 	pbnjv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/pbnj/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
+	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
@@ -69,11 +70,12 @@ func (hc *HardwareConfig) setHardwareConfigFromFile(hardwareFileName string) err
 	return nil
 }
 
-func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool) error {
+func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, tinkHardwareMap map[string]*tinkhardware.Hardware) error {
 	bmcRefMap := map[string]*tinkv1alpha1.Hardware{}
 	if !skipPowerActions {
 		bmcRefMap = hc.initBmcRefMap()
 	}
+
 	for _, hw := range hc.Hardwares {
 		if hw.Name == "" {
 			return fmt.Errorf("hardware name is required")
@@ -82,6 +84,11 @@ func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool) error {
 		if hw.Spec.ID == "" {
 			return fmt.Errorf("hardware: %s ID is required", hw.Name)
 		}
+
+		if _, ok := tinkHardwareMap[hw.Spec.ID]; !ok {
+			return fmt.Errorf("hardware id '%s' is not registered with tinkerbell stack", hw.Spec.ID)
+		}
+
 		if !skipPowerActions {
 			if hw.Spec.BmcRef == "" {
 				return fmt.Errorf("bmcRef not present in hardware %s", hw.Name)

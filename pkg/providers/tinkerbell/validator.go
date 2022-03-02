@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net"
 
+	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
+
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -33,11 +35,6 @@ func (v *Validator) ValidateTinkerbellConfig(ctx context.Context, datacenterConf
 	if err := v.validateTinkerbellIP(ctx, datacenterConfig.Spec.TinkerbellIP); err != nil {
 		return err
 	}
-
-	if err := v.validateTinkerbellAccess(ctx); err != nil {
-		return err
-	}
-	logger.MarkPass("Connected to tinkerbell stack")
 
 	if err := v.validateTinkerbellCertURL(ctx, datacenterConfig.Spec.TinkerbellCertURL); err != nil {
 		return err
@@ -120,13 +117,22 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 }
 
 func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string, skipPowerActions bool) error {
+	hardwares, err := v.tink.GetHardware(ctx)
+	if err != nil {
+		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
+	}
+
+	logger.MarkPass("Connected to tinkerbell stack")
+
 	if err := v.hardwareConfig.ParseHardwareConfig(hardwareConfigFile); err != nil {
 		return fmt.Errorf("failed to get hardware Config: %v", err)
 	}
 
-	if err := v.hardwareConfig.ValidateHardware(skipPowerActions); err != nil {
+	tinkHardwareMap := hardwareMap(hardwares)
+	if err := v.hardwareConfig.ValidateHardware(skipPowerActions, tinkHardwareMap); err != nil {
 		return fmt.Errorf("failed validating Hardware BMC refs in hardware config: %v", err)
 	}
+
 	if !skipPowerActions {
 		if err := v.hardwareConfig.ValidateBMC(); err != nil {
 			return fmt.Errorf("failed validating BMCs in hardware config: %v", err)
@@ -189,13 +195,6 @@ func (v *Validator) ValidateMinimumRequiredTinkerbellHardwareAvailable(spec v1al
 		)
 	}
 
-	return nil
-}
-
-func (v *Validator) validateTinkerbellAccess(ctx context.Context) error {
-	if _, err := v.tink.GetHardware(ctx); err != nil {
-		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
-	}
 	return nil
 }
 
@@ -273,4 +272,14 @@ func validateAddressWithPort(address string) error {
 	}
 
 	return nil
+}
+
+func hardwareMap(hardwareList []*tinkhardware.Hardware) map[string]*tinkhardware.Hardware {
+	hardwareMap := make(map[string]*tinkhardware.Hardware)
+
+	for _, data := range hardwareList {
+		hardwareMap[data.GetId()] = data
+	}
+
+	return hardwareMap
 }
