@@ -5,6 +5,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
@@ -23,22 +24,30 @@ const (
 )
 
 var (
-	ClusterAPIVersion             = clusterv1.GroupVersion.String()
+	clusterAPIVersion             = clusterv1.GroupVersion.String()
 	kubeadmControlPlaneAPIVersion = controlplanev1.GroupVersion.String()
 	bootstrapAPIVersion           = bootstrapv1.GroupVersion.String()
-	InfrastructureAPIVersion      = fmt.Sprintf("infrastructure.%s/%s", clusterv1.GroupVersion.Group, clusterv1.GroupVersion.Version)
 	etcdClusterAPIVersion         = fmt.Sprintf("etcdcluster.%s/%s", clusterv1.GroupVersion.Group, clusterv1.GroupVersion.Version)
 )
+
+type APIObject interface {
+	runtime.Object
+	GetName() string
+}
+
+func InfrastructureAPIVersion() string {
+	return fmt.Sprintf("infrastructure.%s/%s", clusterv1.GroupVersion.Group, clusterv1.GroupVersion.Version)
+}
 
 func clusterLabels(clusterName string) map[string]string {
 	return map[string]string{clusterv1.ClusterLabelName: clusterName}
 }
 
-func Cluster(clusterSpec *cluster.Spec) *clusterv1.Cluster {
+func Cluster(clusterSpec *cluster.Spec, infrastructureObject APIObject) *clusterv1.Cluster {
 	clusterName := clusterSpec.GetName()
 	cluster := &clusterv1.Cluster{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: ClusterAPIVersion,
+			APIVersion: clusterAPIVersion,
 			Kind:       clusterKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -61,8 +70,9 @@ func Cluster(clusterSpec *cluster.Spec) *clusterv1.Cluster {
 				Name:       clusterName,
 			},
 			InfrastructureRef: &v1.ObjectReference{
-				APIVersion: InfrastructureAPIVersion,
-				Name:       clusterName,
+				APIVersion: infrastructureObject.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+				Name:       infrastructureObject.GetName(),
+				Kind:       infrastructureObject.GetObjectKind().GroupVersionKind().Kind,
 			},
 		},
 	}
@@ -78,8 +88,25 @@ func Cluster(clusterSpec *cluster.Spec) *clusterv1.Cluster {
 	return cluster
 }
 
-func KubeadmControlPlane(clusterSpec *cluster.Spec) *controlplanev1.KubeadmControlPlane {
-	kcp := &controlplanev1.KubeadmControlPlane{
+func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObject) *controlplanev1.KubeadmControlPlane {
+	replicas := int32(clusterSpec.Spec.ControlPlaneConfiguration.Count)
+
+	etcd := bootstrapv1.Etcd{}
+	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+		etcd.External = &bootstrapv1.ExternalEtcd{
+			Endpoints: []string{},
+		}
+	} else {
+		etcd.Local = &bootstrapv1.LocalEtcd{
+			ImageMeta: bootstrapv1.ImageMeta{
+				ImageRepository: clusterSpec.VersionsBundle.KubeDistro.Etcd.Repository,
+				ImageTag:        clusterSpec.VersionsBundle.KubeDistro.Etcd.Tag,
+			},
+			ExtraArgs: map[string]string{},
+		}
+	}
+
+	return &controlplanev1.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: kubeadmControlPlaneAPIVersion,
 			Kind:       kubeadmControlPlaneKind,
@@ -91,8 +118,9 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec) *controlplanev1.KubeadmContr
 		Spec: controlplanev1.KubeadmControlPlaneSpec{
 			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
 				InfrastructureRef: v1.ObjectReference{
-					APIVersion: InfrastructureAPIVersion,
-					Name:       clusterSpec.GetName(), // TODO
+					APIVersion: infrastructureObject.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+					Kind:       infrastructureObject.GetObjectKind().GroupVersionKind().Kind,
+					Name:       infrastructureObject.GetName(),
 				},
 			},
 			KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
@@ -104,28 +132,29 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec) *controlplanev1.KubeadmContr
 							ImageTag:        clusterSpec.VersionsBundle.KubeDistro.CoreDNS.Tag,
 						},
 					},
+					Etcd: etcd,
 				},
 				InitConfiguration: &bootstrapv1.InitConfiguration{
-					NodeRegistration: bootstrapv1.NodeRegistrationOptions{},
+					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+						KubeletExtraArgs: map[string]string{},
+					},
 				},
 				JoinConfiguration: &bootstrapv1.JoinConfiguration{
-					NodeRegistration: bootstrapv1.NodeRegistrationOptions{},
+					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+						KubeletExtraArgs: map[string]string{},
+					},
 				},
 				PreKubeadmCommands:  []string{},
 				PostKubeadmCommands: []string{},
 			},
-			Version: clusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag,
+			Replicas: &replicas,
+			Version:  clusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag,
 		},
 	}
-
-	replicas := int32(clusterSpec.Spec.ControlPlaneConfiguration.Count)
-	kcp.Spec.Replicas = &replicas
-
-	return kcp
 }
 
 func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) bootstrapv1.KubeadmConfigTemplate {
-	kct := bootstrapv1.KubeadmConfigTemplate{
+	return bootstrapv1.KubeadmConfigTemplate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: bootstrapAPIVersion,
 			Kind:       kubeadmConfigTemplateKind,
@@ -138,7 +167,9 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 			Template: bootstrapv1.KubeadmConfigTemplateResource{
 				Spec: bootstrapv1.KubeadmConfigSpec{
 					JoinConfiguration: &bootstrapv1.JoinConfiguration{
-						NodeRegistration: bootstrapv1.NodeRegistrationOptions{},
+						NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+							KubeletExtraArgs: map[string]string{},
+						},
 					},
 					PreKubeadmCommands:  []string{},
 					PostKubeadmCommands: []string{},
@@ -146,14 +177,16 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 			},
 		},
 	}
-	return kct
 }
 
-func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) clusterv1.MachineDeployment {
+func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, infrastructureObject APIObject) clusterv1.MachineDeployment {
 	clusterName := clusterSpec.GetName()
-	md := clusterv1.MachineDeployment{
+	replicas := int32(workerNodeGroupConfig.Count)
+	version := clusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag
+
+	return clusterv1.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: ClusterAPIVersion,
+			APIVersion: clusterAPIVersion,
 			Kind:       machineDeploymentKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -180,18 +213,14 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1
 					},
 					ClusterName: clusterName,
 					InfrastructureRef: v1.ObjectReference{
-						APIVersion: InfrastructureAPIVersion,
-						Name:       workerNodeGroupConfig.Name, // TODO: different from vsphere
+						APIVersion: infrastructureObject.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+						Kind:       infrastructureObject.GetObjectKind().GroupVersionKind().Kind,
+						Name:       infrastructureObject.GetName(),
 					},
+					Version: &version,
 				},
 			},
+			Replicas: &replicas,
 		},
 	}
-	replicas := int32(workerNodeGroupConfig.Count)
-	md.Spec.Replicas = &replicas
-
-	version := clusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag
-	md.Spec.Template.Spec.Version = &version
-
-	return md
 }

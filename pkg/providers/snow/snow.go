@@ -102,22 +102,19 @@ func (p *snowProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster
 	return nil
 }
 
-func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	capiCluster := CAPICluster(clusterSpec)
+func ControlPlaneObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) []runtime.Object {
 	snowCluster := SnowCluster(clusterSpec)
-	kubeadmControlPlane := KubeadmControlPlane(clusterSpec)
-	controlPlaneMachineTemplate := SnowMachineTemplate(p.machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	capiCluster := CAPICluster(clusterSpec, snowCluster)
+	controlPlaneMachineTemplate := SnowMachineTemplate(machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	kubeadmControlPlane := KubeadmControlPlane(clusterSpec, controlPlaneMachineTemplate)
 
-	controlPlaneSpec, err = templater.ObjectsToYaml(capiCluster, snowCluster, kubeadmControlPlane, controlPlaneMachineTemplate)
-	if err != nil {
-		return nil, nil, err
-	}
+	return []runtime.Object{capiCluster, snowCluster, kubeadmControlPlane, controlPlaneMachineTemplate}
+}
 
-	fmt.Println(string(controlPlaneSpec))
-
-	machineDeploymentList := MachineDeploymentList(clusterSpec)
+func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) []runtime.Object {
 	kubeadmConfigTemplateList := KubeadmConfigTemplateList(clusterSpec)
-	workerMachineTemplateList := SnowMachineTemplatetList(clusterSpec, p.machineConfigs)
+	workerMachineTemplateList, workerMachineTemplateMap := SnowMachineTemplatetList(clusterSpec, machineConfigs)
+	machineDeploymentList := MachineDeploymentList(clusterSpec, workerMachineTemplateMap)
 
 	workersObjs := make([]runtime.Object, 0, len(machineDeploymentList.Items)+len(kubeadmConfigTemplateList.Items)+len(workerMachineTemplateList.Items))
 	for _, item := range machineDeploymentList.Items {
@@ -130,7 +127,18 @@ func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *t
 		workersObjs = append(workersObjs, &item)
 	}
 
-	workersSpec, err = templater.ObjectsToYaml(workersObjs...)
+	return workersObjs
+}
+
+func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	controlPlaneSpec, err = templater.ObjectsToYaml(ControlPlaneObjects(clusterSpec, p.machineConfigs)...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	fmt.Println(string(controlPlaneSpec))
+
+	workersSpec, err = templater.ObjectsToYaml(WorkersObjects(clusterSpec, p.machineConfigs)...)
 	if err != nil {
 		return nil, nil, err
 	}

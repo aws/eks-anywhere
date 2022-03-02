@@ -20,31 +20,18 @@ const (
 	SnowMachineTemplateKind = "AWSSnowMachineTemplate"
 )
 
-func CAPICluster(clusterSpec *cluster.Spec) *clusterv1.Cluster {
-	cluster := clusterapi.Cluster(clusterSpec)
-	cluster.Spec.InfrastructureRef.Kind = SnowClusterKind
-	cluster.Spec.InfrastructureRef.Name = clusterSpec.GetName() // TODO: use capinamegenerator
+func CAPICluster(clusterSpec *cluster.Spec, snowCluster *snowv1.AWSSnowCluster) *clusterv1.Cluster {
+	cluster := clusterapi.Cluster(clusterSpec, snowCluster)
 	return cluster
 }
 
-func KubeadmControlPlane(clusterSpec *cluster.Spec) *controlplanev1.KubeadmControlPlane {
-	kcp := clusterapi.KubeadmControlPlane(clusterSpec)
-
-	kcp.Spec.MachineTemplate.InfrastructureRef.Kind = "AWSSnowMachineTemplate"
+func KubeadmControlPlane(clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) *controlplanev1.KubeadmControlPlane {
+	kcp := clusterapi.KubeadmControlPlane(clusterSpec, snowMachineTemplate)
 
 	// TODO: support unstacked etcd
-	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd = bootstrapv1.Etcd{
-		Local: &bootstrapv1.LocalEtcd{
-			ImageMeta: bootstrapv1.ImageMeta{
-				ImageRepository: clusterSpec.VersionsBundle.KubeDistro.Etcd.Repository,
-				ImageTag:        clusterSpec.VersionsBundle.KubeDistro.Etcd.Tag,
-			},
-			ExtraArgs: map[string]string{
-				"listen-peer-urls":   "https://0.0.0.0:2380",
-				"listen-client-urls": "https://0.0.0.0:2379",
-			},
-		},
-	}
+	stackedEtcdExtraArgs := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local.ExtraArgs
+	stackedEtcdExtraArgs["listen-peer-urls"] = "https://0.0.0.0:2380"
+	stackedEtcdExtraArgs["listen-client-urls"] = "https://0.0.0.0:2379"
 
 	kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer = bootstrapv1.APIServer{
 		ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
@@ -60,15 +47,13 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec) *controlplanev1.KubeadmContr
 		},
 	}
 
-	kcp.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.KubeletExtraArgs = map[string]string{
-		"cloud-provider": "external",
-		"provider-id":    "aws-snow:////'{{ ds.meta_data.instance_id }}'",
-	}
+	initConfigKubeletExtraArg := kcp.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.KubeletExtraArgs
+	initConfigKubeletExtraArg["cloud-provider"] = "external"
+	initConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
-	kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = map[string]string{
-		"cloud-provider": "external",
-		"provider-id":    "aws-snow:////'{{ ds.meta_data.instance_id }}'",
-	}
+	joinConfigKubeletExtraArg := kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.KubeletExtraArgs
+	joinConfigKubeletExtraArg["cloud-provider"] = "external"
+	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
 	kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = []string{
 		fmt.Sprintf("/etc/eks/bootstrap.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host),
@@ -83,10 +68,11 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec) *controlplanev1.KubeadmContr
 
 func kubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) bootstrapv1.KubeadmConfigTemplate {
 	kct := clusterapi.KubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
-	kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs = map[string]string{
-		"cloud-provider": "external",
-		"provider-id":    "aws-snow:////'{{ ds.meta_data.instance_id }}'",
-	}
+
+	joinConfigKubeletExtraArg := kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs
+	joinConfigKubeletExtraArg["cloud-provider"] = "external"
+	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
+
 	kct.Spec.Template.Spec.PreKubeadmCommands = []string{
 		fmt.Sprintf("/etc/eks/bootstrap.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host),
 	}
@@ -101,16 +87,15 @@ func KubeadmConfigTemplateList(clusterSpec *cluster.Spec) *bootstrapv1.KubeadmCo
 	return kctList
 }
 
-func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) clusterv1.MachineDeployment {
-	md := clusterapi.MachineDeployment(clusterSpec, workerNodeGroupConfig)
-	md.Spec.Template.Spec.InfrastructureRef.Kind = "AWSSnowMachineTemplate"
+func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) clusterv1.MachineDeployment {
+	md := clusterapi.MachineDeployment(clusterSpec, workerNodeGroupConfig, snowMachineTemplate)
 	return md
 }
 
-func MachineDeploymentList(clusterSpec *cluster.Spec) *clusterv1.MachineDeploymentList {
+func MachineDeploymentList(clusterSpec *cluster.Spec, machineTemplates map[string]*snowv1.AWSSnowMachineTemplate) *clusterv1.MachineDeploymentList {
 	mdList := &clusterv1.MachineDeploymentList{}
 	for _, workerNodeGroupConfig := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		mdList.Items = append(mdList.Items, machineDeployment(clusterSpec, workerNodeGroupConfig))
+		mdList.Items = append(mdList.Items, machineDeployment(clusterSpec, workerNodeGroupConfig, machineTemplates[workerNodeGroupConfig.MachineGroupRef.Name]))
 	}
 	return mdList
 }
@@ -118,7 +103,7 @@ func MachineDeploymentList(clusterSpec *cluster.Spec) *clusterv1.MachineDeployme
 func SnowCluster(clusterSpec *cluster.Spec) *snowv1.AWSSnowCluster {
 	cluster := &snowv1.AWSSnowCluster{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: clusterapi.InfrastructureAPIVersion,
+			APIVersion: clusterapi.InfrastructureAPIVersion(),
 			Kind:       SnowClusterKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -136,18 +121,21 @@ func SnowCluster(clusterSpec *cluster.Spec) *snowv1.AWSSnowCluster {
 	return cluster
 }
 
-func SnowMachineTemplatetList(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) *snowv1.AWSSnowMachineTemplateList {
-	smt := &snowv1.AWSSnowMachineTemplateList{}
+func SnowMachineTemplatetList(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) (*snowv1.AWSSnowMachineTemplateList, map[string]*snowv1.AWSSnowMachineTemplate) {
+	smtList := &snowv1.AWSSnowMachineTemplateList{}
+	smtMap := map[string]*snowv1.AWSSnowMachineTemplate{}
 	for _, workerNodeGroupConfig := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		smt.Items = append(smt.Items, *SnowMachineTemplate(machineConfigs[workerNodeGroupConfig.MachineGroupRef.Name]))
+		smt := SnowMachineTemplate(machineConfigs[workerNodeGroupConfig.MachineGroupRef.Name])
+		smtList.Items = append(smtList.Items, *smt)
+		smtMap[workerNodeGroupConfig.MachineGroupRef.Name] = smt
 	}
-	return smt
+	return smtList, smtMap
 }
 
 func SnowMachineTemplate(machineConfig *v1alpha1.SnowMachineConfig) *snowv1.AWSSnowMachineTemplate {
 	smt := &snowv1.AWSSnowMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: clusterapi.InfrastructureAPIVersion,
+			APIVersion: clusterapi.InfrastructureAPIVersion(),
 			Kind:       SnowMachineTemplateKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
