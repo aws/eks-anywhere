@@ -53,9 +53,11 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 		return fmt.Errorf("error while checking domain %v", errDomain)
 	}
 
-	err := v.cmk.ValidateAccountPresent(ctx, datacenterConfig.Spec.Account, domain.Id)
-	if err != nil {
-		return fmt.Errorf("error while checking account %v", err)
+	if len(datacenterConfig.Spec.Account) > 0 {
+		err := v.cmk.ValidateAccountPresent(ctx, datacenterConfig.Spec.Account, domain.Id)
+		if err != nil {
+			return fmt.Errorf("error while checking account %v", err)
+		}
 	}
 
 	zones, errZone := v.cmk.ValidateZonesPresent(ctx, datacenterConfig.Spec.Zones)
@@ -67,7 +69,7 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 		if len(zoneRef.Network.Value) == 0 {
 			return fmt.Errorf("zone network is not set or is empty")
 		}
-		err = v.cmk.ValidateNetworkPresent(ctx, domain.Id, zoneRef, zones, datacenterConfig.Spec.Account, len(zones) > 1)
+		err := v.cmk.ValidateNetworkPresent(ctx, domain.Id, zoneRef, zones, datacenterConfig.Spec.Account, len(zones) > 1)
 		if err != nil {
 			return fmt.Errorf("error while checking network %v", err)
 		}
