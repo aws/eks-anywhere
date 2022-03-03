@@ -290,7 +290,12 @@ func (vs *TinkerbellTemplateBuilder) KubeadmConfigTemplateName(clusterName, work
 }
 
 func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	values := buildTemplateMapCP(clusterSpec, *vs.controlPlaneMachineSpec)
+	cpTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[vs.controlPlaneMachineSpec.TemplateRef.Name]
+	cpTemplateString, err := cpTemplateConfig.ToTemplateString()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Control Plane TinkerbellTemplateConfig: %v", err)
+	}
+	values := buildTemplateMapCP(clusterSpec, *vs.controlPlaneMachineSpec, cpTemplateString)
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
@@ -304,7 +309,13 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
+		wTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].TemplateRef.Name]
+		wTemplateString, err := wTemplateConfig.ToTemplateString()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get worker TinkerbellTemplateConfig: %v", err)
+		}
+
+		values := buildTemplateMapMD(clusterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration, wTemplateString)
 		_, ok := workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		if workloadTemplateNames != nil && ok {
 			values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
@@ -469,7 +480,7 @@ func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
 }
 
-func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alpha1.TinkerbellMachineConfigSpec) map[string]interface{} {
+func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alpha1.TinkerbellMachineConfigSpec, cpTemplateOverride string) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
@@ -493,12 +504,12 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"corednsVersion":               bundle.KubeDistro.CoreDNS.Tag,
 		"etcdRepository":               bundle.KubeDistro.Etcd.Repository,
 		"etcdImageTag":                 bundle.KubeDistro.Etcd.Tag,
-		"controlPlanetemplateOverride": controlPlaneMachineSpec.TemplateOverride,
+		"controlPlanetemplateOverride": cpTemplateOverride,
 	}
 	return values
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1alpha1.TinkerbellMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1alpha1.TinkerbellMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, workerTemplateOverride string) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
@@ -510,7 +521,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"workerNodeGroupName":    workerNodeGroupConfiguration.Name,
 		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys,
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
-		"workertemplateOverride": workerNodeGroupMachineSpec.TemplateOverride,
+		"workertemplateOverride": workerTemplateOverride,
 	}
 	return values
 }

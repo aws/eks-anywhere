@@ -1,10 +1,6 @@
 package v1alpha1
 
 import (
-	"fmt"
-
-	"github.com/tinkerbell/tink/workflow"
-	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -12,9 +8,9 @@ import (
 
 // TinkerbellMachineConfigSpec defines the desired state of TinkerbellMachineConfig
 type TinkerbellMachineConfigSpec struct {
-	TemplateOverride string              `json:"templateOverride,omitempty"`
-	OSFamily         OSFamily            `json:"osFamily"`
-	Users            []UserConfiguration `json:"users,omitempty"`
+	TemplateRef Ref                 `json:"templateRef,omitempty"`
+	OSFamily    OSFamily            `json:"osFamily"`
+	Users       []UserConfiguration `json:"users,omitempty"`
 }
 
 func (c *TinkerbellMachineConfig) PauseReconcile() {
@@ -74,25 +70,6 @@ func (c *TinkerbellMachineConfig) GetNamespace() string {
 
 func (c *TinkerbellMachineConfig) GetName() string {
 	return c.Name
-}
-
-type TinkerbellTemplate workflow.Workflow
-
-func NewTinkerbellTemplateFromString(templateOverride string) (*TinkerbellTemplate, error) {
-	t := TinkerbellTemplate{}
-	err := yaml.Unmarshal([]byte(templateOverride), &t)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create tinkerbell template struct: %v", err)
-	}
-	return &t, nil
-}
-
-func (t *TinkerbellTemplate) ToString() (string, error) {
-	b, err := yaml.Marshal(&t)
-	if err != nil {
-		return "", fmt.Errorf("failed to convert tinkerbell template to string: %v", err)
-	}
-	return string(b), nil
 }
 
 // TinkerbellMachineConfigStatus defines the observed state of TinkerbellMachineConfig

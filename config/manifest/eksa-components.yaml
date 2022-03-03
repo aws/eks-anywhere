@@ -3487,8 +3487,13 @@ spec:
             properties:
               osFamily:
                 type: string
-              templateOverride:
-                type: string
+              templateRef:
+                properties:
+                  kind:
+                    type: string
+                  name:
+                    type: string
+                type: object
               users:
                 items:
                   description: UserConfiguration defines the configuration of the
@@ -3511,6 +3516,145 @@ spec:
           status:
             description: TinkerbellMachineConfigStatus defines the observed state
               of TinkerbellMachineConfig
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.6.1
+  creationTimestamp: null
+  name: tinkerbelltemplateconfigs.anywhere.eks.amazonaws.com
+spec:
+  group: anywhere.eks.amazonaws.com
+  names:
+    kind: TinkerbellTemplateConfig
+    listKind: TinkerbellTemplateConfigList
+    plural: tinkerbelltemplateconfigs
+    singular: tinkerbelltemplateconfig
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: TinkerbellTemplateConfig is the Schema for the TinkerbellTemplateConfigs
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: TinkerbellTemplateConfigSpec defines the desired state of
+              TinkerbellTemplateConfig
+            properties:
+              template:
+                description: Template defines a Tinkerbell workflow template with
+                  specific tasks and actions.
+                properties:
+                  global_timeout:
+                    type: integer
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  tasks:
+                    items:
+                      description: Task represents a task to be executed as part of
+                        a workflow.
+                      properties:
+                        actions:
+                          items:
+                            description: Action is the basic executional unit for
+                              a workflow.
+                            properties:
+                              command:
+                                items:
+                                  type: string
+                                type: array
+                              environment:
+                                additionalProperties:
+                                  type: string
+                                type: object
+                              image:
+                                type: string
+                              name:
+                                type: string
+                              on-failure:
+                                items:
+                                  type: string
+                                type: array
+                              on-timeout:
+                                items:
+                                  type: string
+                                type: array
+                              pid:
+                                type: string
+                              timeout:
+                                format: int64
+                                type: integer
+                              volumes:
+                                items:
+                                  type: string
+                                type: array
+                            required:
+                            - image
+                            - name
+                            - timeout
+                            type: object
+                          type: array
+                        environment:
+                          additionalProperties:
+                            type: string
+                          type: object
+                        name:
+                          type: string
+                        volumes:
+                          items:
+                            type: string
+                          type: array
+                        worker:
+                          type: string
+                      required:
+                      - actions
+                      - name
+                      - worker
+                      type: object
+                    type: array
+                  version:
+                    type: string
+                required:
+                - global_timeout
+                - id
+                - name
+                - tasks
+                - version
+                type: object
+            required:
+            - template
+            type: object
+          status:
+            description: TinkerbellTemplateConfigStatus defines the observed state
+              of TinkerbellTemplateConfig
             type: object
         type: object
     served: true
