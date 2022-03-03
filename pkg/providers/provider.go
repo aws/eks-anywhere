@@ -52,10 +52,6 @@ type BuildMapOption func(map[string]interface{})
 type TemplateBuilder interface {
 	GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...BuildMapOption) (content []byte, err error)
 	GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error)
-	WorkerMachineTemplateName(clusterName, workerNodeGroupName string) string
-	CPMachineTemplateName(clusterName string) string
-	KubeadmConfigTemplateName(clusterName, workerNodeGroupName string) string
-	EtcdMachineTemplateName(clusterName string) string
 }
 
 type MachineConfig interface {

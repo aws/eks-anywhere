@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"time"
 
 	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -368,11 +367,6 @@ type CloudStackTemplateBuilder struct {
 	now                        types.NowFunc
 }
 
-func (cs *CloudStackTemplateBuilder) WorkerMachineTemplateName(clusterName string) string {
-	t := cs.now().UnixNano() / int64(time.Millisecond)
-	return fmt.Sprintf("%s-worker-node-template-%d", clusterName, t)
-}
-
 func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	var etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
@@ -570,7 +564,7 @@ func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, clus
 		return nil, nil, err
 	}
 	workersOpt := func(values map[string]interface{}) {
-		values["workloadTemplateName"] = p.templateBuilder.WorkerMachineTemplateName(clusterName)
+		values["workloadTemplateName"] = common.WorkerMachineTemplateName(clusterName, clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Name, p.templateBuilder.now)
 		values["cloudstackWorkerSshAuthorizedKey"] = p.workerSshAuthKey
 	}
 	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workersOpt)

@@ -543,7 +543,7 @@ func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidCP(t *testing.T) {
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: provided MachineConfig sshAuthorizedKey is invalid: ssh: no key found", err)
+	thenErrorExpected(t, "failed setup and validations: setting up ssh auth keys for create: provided MachineConfig sshAuthorizedKey is invalid: ssh: no key found", err)
 }
 
 func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidWorker(t *testing.T) {
@@ -558,7 +558,7 @@ func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidWorker(t *testing.T) {
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: provided MachineConfig sshAuthorizedKey is invalid: ssh: no key found", err)
+	thenErrorExpected(t, "failed setup and validations: setting up ssh auth keys for create: provided MachineConfig sshAuthorizedKey is invalid: ssh: no key found", err)
 }
 
 func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
@@ -573,7 +573,7 @@ func TestSetupAndValidateForCreateSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
 	tctx.SaveContext()
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
-	thenErrorExpected(t, "failed setup and validations: provided MachineConfig sshAuthorizedKey is invalid: ssh: no key found", err)
+	thenErrorExpected(t, "failed setup and validations: setting up ssh auth keys for create: provided MachineConfig sshAuthorizedKey is invalid: ssh: no key found", err)
 }
 
 func TestSetupAndValidateSSHAuthorizedKeyEmptyCP(t *testing.T) {

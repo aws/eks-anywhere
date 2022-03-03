@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/docker"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -67,7 +68,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 	var controlPlaneTemplateName string
 	updateControlPlaneTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, oldCpVmc, &cpVmc)
 	if updateControlPlaneTemplate {
-		controlPlaneTemplateName = templateBuilder.CPMachineTemplateName(clusterName)
+		controlPlaneTemplateName = common.CPMachineTemplateName(clusterName, r.now)
 	} else {
 		cp, err := r.ControlPlane(ctx, eksaCluster)
 		if err != nil {
@@ -84,7 +85,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 			return nil, err
 		}
 		if vsphere.NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, oldWn) {
-			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = templateBuilder.KubeadmConfigTemplateName(clusterName, workerNodeGroupConfiguration.Name)
+			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterName, workerNodeGroupConfiguration.Name, r.now)
 		} else {
 			md, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
 			if err != nil {
@@ -101,7 +102,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		}
 		updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, oldVmc, &vmc)
 		if updateWorkloadTemplate {
-			workloadTemplateName := templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
+			workloadTemplateName := common.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name, r.now)
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		} else {
 			md, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
@@ -129,7 +130,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 			if err := r.ApplyPatch(ctx, etcd, false); err != nil {
 				return nil, err
 			}
-			etcdTemplateName = templateBuilder.EtcdMachineTemplateName(clusterName)
+			etcdTemplateName = common.EtcdMachineTemplateName(clusterName, r.now)
 		} else {
 			etcdTemplateName = etcd.Spec.InfrastructureTemplate.Name
 		}

@@ -86,3 +86,13 @@ func EtcdMachineTemplateName(clusterName string, now types.NowFunc) string {
 	t := now().UnixNano() / int64(time.Millisecond)
 	return fmt.Sprintf("%s-etcd-template-%d", clusterName, t)
 }
+
+func WorkerMachineTemplateName(clusterName, workerNodeGroupName string, now types.NowFunc) string {
+	t := now().UnixNano() / int64(time.Millisecond)
+	return fmt.Sprintf("%s-%s-%d", clusterName, workerNodeGroupName, t)
+}
+
+func KubeadmConfigTemplateName(clusterName, workerNodeGroupName string, now types.NowFunc) string {
+	t := now().UnixNano() / int64(time.Millisecond)
+	return fmt.Sprintf("%s-%s-template-%d", clusterName, workerNodeGroupName, t)
+}
