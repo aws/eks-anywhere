@@ -12,12 +12,6 @@ const (
   ethernets:
       eno1:
           dhcp4: true
-      eno2:
-          dhcp4: true
-      eno3:
-          dhcp4: true
-      eno4:
-          dhcp4: true
 `
 	cloudInit = `datasource:
   Ec2:
