@@ -20,7 +20,7 @@ var getPackageBundleCommand = &cobra.Command{
 	Aliases:      []string{"packagebundle", "packagebundles"},
 	Short:        "Get packagebundle(s)",
 	Long:         "This command is used to display the currently supported packagebundles",
-	PreRunE:      preRunGetPackages,
+	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return getResources(cmd.Context(), "packagebundles", gpbo.output, args)
