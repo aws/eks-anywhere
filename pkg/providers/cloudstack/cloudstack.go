@@ -303,11 +303,8 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	}
 
 	cloudStackClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
-	if p.datacenterConfig.Spec.Insecure {
-		logger.Info("Warning: CloudStackDatacenterConfig configured in insecure mode")
-	}
 
-	if err := p.validator.validateCloudStackAccess(ctx, !p.datacenterConfig.Spec.Insecure); err != nil {
+	if err := p.validator.validateCloudStackAccess(ctx); err != nil {
 		return err
 	}
 	if err := p.validator.ValidateCloudStackDatacenterConfig(ctx, p.datacenterConfig); err != nil {
@@ -376,7 +373,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
-	values := buildTemplateMapCP(clusterSpec, *cs.datacenterConfigSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec, execConfig.ManagementUrl)
+	values := buildTemplateMapCP(clusterSpec, *cs.datacenterConfigSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec, execConfig.ManagementUrl, execConfig.VerifySsl)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -409,7 +406,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 	return bytes, nil
 }
 
-func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec, managementApiEndpoint string) map[string]interface{} {
+func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec, managementApiEndpoint string, verifySsl string) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 	host, port, _ := net.SplitHostPort(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
@@ -431,7 +428,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"externalProvisionerImage":               bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
 		"cloudstackManagementApiEndpoint":        managementApiEndpoint,
 		"managerImage":                           bundle.CloudStack.ClusterAPIController.VersionedImage(),
-		"insecure":                               datacenterConfigSpec.Insecure,
+		"verifySsl":                              verifySsl,
 		"cloudstackNetwork":                      datacenterConfigSpec.Network.Value,
 		"cloudstackDomain":                       datacenterConfigSpec.Domain,
 		"cloudstackZone":                         datacenterConfigSpec.Zone.Value,

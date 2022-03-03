@@ -52,10 +52,6 @@ spec:
                   each other and a set of delegated administrators with some authority
                   over the domain and its subdomains
                 type: string
-              insecure:
-                description: Insecure is used by CloudMonkey for validating the server
-                  cert presented by CloudStack (if using https) against certs in "/etc/ssl/certs"
-                type: boolean
               network:
                 description: Network is the name or UUID of the CloudStack network
                   in which clusters should be created. It can either be an isolated
@@ -87,7 +83,6 @@ spec:
                 type: object
             required:
             - domain
-            - insecure
             - network
             - zone
             type: object

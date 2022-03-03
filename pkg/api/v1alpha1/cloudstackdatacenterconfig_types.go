@@ -34,8 +34,6 @@ type CloudStackDatacenterConfigSpec struct {
 	Account string `json:"account,omitempty"`
 	// Network is the name or UUID of the CloudStack network in which clusters should be created. It can either be an isolated or shared network. If it doesn’t already exist in CloudStack, it’ll automatically be created by CAPC as an isolated network. It can either be specified as a UUID or name
 	Network CloudStackResourceRef `json:"network"`
-	// Insecure is used by CloudMonkey for validating the server cert presented by CloudStack (if using https) against certs in "/etc/ssl/certs"
-	Insecure bool `json:"insecure"`
 }
 
 type CloudStackResourceRef struct {

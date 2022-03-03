@@ -35,8 +35,6 @@ metadata:
   name: eksa-unit-test
 spec:
   account: "admin"
-  domain: "domain1"
-  insecure: false
   network: "net1"
   zone: "zone1"
   idont: "belonghere"

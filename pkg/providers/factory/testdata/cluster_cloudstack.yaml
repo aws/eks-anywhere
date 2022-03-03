@@ -34,7 +34,6 @@ kind: CloudStackDatacenterConfig
 metadata:
   name: test
 spec:
-  insecure: true
   network:
     value: "Shared1"
     type: "name"

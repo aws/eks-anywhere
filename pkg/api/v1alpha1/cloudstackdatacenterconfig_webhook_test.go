@@ -61,16 +61,6 @@ func TestCloudStackDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCloudStackDatacenterValidateUpdateTLSInsecureImmutable(t *testing.T) {
-	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.Insecure = true
-	c := vOld.DeepCopy()
-
-	c.Spec.Insecure = false
-	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
-}
-
 func TestCloudStackDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Network = v1alpha1.CloudStackResourceRef{

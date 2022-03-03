@@ -62,7 +62,6 @@ metadata:
 spec:
   account: "admin"
   domain: "domain1"
-  insecure: false
   network:
     value: "net1"
     type: "name"

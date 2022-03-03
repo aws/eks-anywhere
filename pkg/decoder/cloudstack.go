@@ -40,10 +40,15 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract value of 'api-url' from %s: %v", EksacloudStackCloudConfigB64SecretKey, err)
 	}
+	verifySsl, err := section.GetKey("verify-ssl")
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract value of 'verify-ssl' from %s: %v", EksacloudStackCloudConfigB64SecretKey, err)
+	}
 	return &CloudStackExecConfig{
 		ApiKey:        apiKey.Value(),
 		SecretKey:     secretKey.Value(),
 		ManagementUrl: apiUrl.Value(),
+		VerifySsl:     verifySsl.Value(),
 	}, nil
 }
 
@@ -51,4 +56,5 @@ type CloudStackExecConfig struct {
 	ApiKey        string
 	SecretKey     string
 	ManagementUrl string
+	VerifySsl     string
 }
