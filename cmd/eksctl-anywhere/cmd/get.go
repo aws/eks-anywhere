@@ -25,7 +25,7 @@ func init() {
 	rootCmd.AddCommand(getCmd)
 }
 
-func preRunGetPackages(cmd *cobra.Command, args []string) error {
+func preRunPackages(cmd *cobra.Command, args []string) error {
 	if !features.IsActive(features.CuratedPackagesSupport()) {
 		return fmt.Errorf("this command is currently not supported")
 	}
