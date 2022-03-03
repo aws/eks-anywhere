@@ -111,6 +111,10 @@ func (c *AWSIamConfig) ConvertConfigToConfigGenerateStruct() *AWSIamConfigGenera
 	return config
 }
 
+func (c *AWSIamConfig) Validate() error {
+	return validateAWSIamConfig(c)
+}
+
 func init() {
 	SchemeBuilder.Register(&AWSIamConfig{}, &AWSIamConfigList{})
 }

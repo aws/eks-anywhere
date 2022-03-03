@@ -94,6 +94,10 @@ func (n *Cluster) Equal(o *Cluster) bool {
 	return true
 }
 
+func (n *Cluster) Validate() error {
+	return ValidateClusterConfigContent(n)
+}
+
 type ProxyConfiguration struct {
 	HttpProxy  string   `json:"httpProxy,omitempty"`
 	HttpsProxy string   `json:"httpsProxy,omitempty"`

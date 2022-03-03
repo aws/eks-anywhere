@@ -104,6 +104,10 @@ func (c *GitOpsConfig) ConvertConfigToConfigGenerateStruct() *GitOpsConfigGenera
 	return config
 }
 
+func (c *GitOpsConfig) Validate() error {
+	return validateGitOpsConfig(c)
+}
+
 func init() {
 	SchemeBuilder.Register(&GitOpsConfig{}, &GitOpsConfigList{})
 }

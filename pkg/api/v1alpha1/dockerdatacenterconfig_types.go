@@ -71,6 +71,10 @@ func (d *DockerDatacenterConfig) Marshallable() Marshallable {
 	return d.ConvertConfigToConfigGenerateStruct()
 }
 
+func (d *DockerDatacenterConfig) Validate() error {
+	return nil
+}
+
 // +kubebuilder:object:generate=false
 
 // Same as DockerDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig
