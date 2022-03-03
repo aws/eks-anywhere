@@ -136,14 +136,10 @@ func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *t
 		return nil, nil, err
 	}
 
-	fmt.Println(string(controlPlaneSpec))
-
 	workersSpec, err = templater.ObjectsToYaml(WorkersObjects(clusterSpec, p.machineConfigs)...)
 	if err != nil {
 		return nil, nil, err
 	}
-
-	fmt.Println(string(workersSpec))
 
 	return controlPlaneSpec, workersSpec, nil
 }
