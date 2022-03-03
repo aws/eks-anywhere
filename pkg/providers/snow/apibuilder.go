@@ -21,7 +21,7 @@ const (
 )
 
 func CAPICluster(clusterSpec *cluster.Spec, snowCluster *snowv1.AWSSnowCluster) *clusterv1.Cluster {
-	cluster := clusterapi.Cluster(clusterSpec, snowCluster)
+	cluster := clusterapi.Cluster(clusterSpec, snowCluster, &controlplanev1.KubeadmControlPlane{})
 	return cluster
 }
 

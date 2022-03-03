@@ -205,9 +205,6 @@ func (p *snowProvider) EnvMap() (map[string]string, error) {
 	envMap[snowCredentialsKey] = p.bootstrapCreds.snowCredsB64
 	envMap[snowCertsKey] = p.bootstrapCreds.snowCertsB64
 
-	// TODO: remove $DEVICE_IPS whenever CAPAS removes it as a required env
-	envMap["DEVICE_IPS"] = ""
-
 	// TODO: tmp solution to pull private ECR
 	envMap["SNOW_CONTROLLER_IMAGE"] = fmt.Sprintf("%s/cluster-api-provider-aws-snow:latest", constants.EcrRegistry)
 	envMap["ECR_CREDS"] = constants.EcrRegistrySecretName

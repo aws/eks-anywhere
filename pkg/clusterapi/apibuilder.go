@@ -43,7 +43,7 @@ func clusterLabels(clusterName string) map[string]string {
 	return map[string]string{clusterv1.ClusterLabelName: clusterName}
 }
 
-func Cluster(clusterSpec *cluster.Spec, infrastructureObject APIObject) *clusterv1.Cluster {
+func Cluster(clusterSpec *cluster.Spec, infrastructureObject, controlPlaneObject APIObject) *clusterv1.Cluster {
 	clusterName := clusterSpec.GetName()
 	cluster := &clusterv1.Cluster{
 		TypeMeta: metav1.TypeMeta{
@@ -65,9 +65,9 @@ func Cluster(clusterSpec *cluster.Spec, infrastructureObject APIObject) *cluster
 				},
 			},
 			ControlPlaneRef: &v1.ObjectReference{
-				APIVersion: kubeadmControlPlaneAPIVersion,
-				Kind:       kubeadmControlPlaneKind,
-				Name:       clusterName,
+				APIVersion: controlPlaneObject.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+				Name:       controlPlaneObject.GetName(),
+				Kind:       controlPlaneObject.GetObjectKind().GroupVersionKind().Kind,
 			},
 			InfrastructureRef: &v1.ObjectReference{
 				APIVersion: infrastructureObject.GetObjectKind().GroupVersionKind().GroupVersion().String(),
