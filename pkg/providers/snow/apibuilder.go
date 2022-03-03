@@ -66,7 +66,7 @@ func kubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
 	kct.Spec.Template.Spec.PreKubeadmCommands = []string{
-		fmt.Sprintf("/etc/eks/bootstrap.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host),
+		"/etc/eks/bootstrap.sh",
 	}
 	return kct
 }
