@@ -3,16 +3,17 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"log"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"log"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 )
 
 var getCmd = &cobra.Command{
