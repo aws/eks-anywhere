@@ -5,13 +5,16 @@ import (
 	"os"
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
 type TinkerbellConfig struct {
+	clusterConfig    *anywherev1.Cluster
 	datacenterConfig *anywherev1.TinkerbellDatacenterConfig
 	machineConfigs   map[string]*anywherev1.TinkerbellMachineConfig
 	templateConfigs  map[string]*anywherev1.TinkerbellTemplateConfig
@@ -35,7 +38,13 @@ func AutoFillTinkerbellProvider(filename string, fillers ...TinkerbellFiller) ([
 		return nil, fmt.Errorf("unable to get tinkerbell template configs from file: %v", err)
 	}
 
+	clusterConfig, err := anywherev1.GetClusterConfig(filename)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get tinkerbell cluster config from file: %v", err)
+	}
+
 	config := TinkerbellConfig{
+		clusterConfig:    clusterConfig,
 		datacenterConfig: tinkerbellDatacenterConfig,
 		machineConfigs:   tinkerbellMachineConfigs,
 		templateConfigs:  tinkerbellTemplateConfigs,
@@ -151,7 +160,36 @@ func WithSSHAuthorizedKeyForAllTinkerbellMachines(key string) TinkerbellFiller {
 				m.Spec.Users = []anywherev1.UserConfiguration{{}}
 			}
 
+			m.Spec.Users[0].Name = "ec2-user"
 			m.Spec.Users[0].SshAuthorizedKeys = []string{key}
+		}
+		return nil
+	}
+}
+
+func WithTinkerbellEtcdMachineConfig() TinkerbellFiller {
+	return func(config TinkerbellConfig) error {
+		clusterName := config.clusterConfig.Name
+		name := providers.GetEtcdNodeName(clusterName)
+
+		_, ok := config.machineConfigs[name]
+		if !ok {
+			m := &anywherev1.TinkerbellMachineConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       anywherev1.TinkerbellMachineConfigKind,
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: name,
+				},
+				Spec: anywherev1.TinkerbellMachineConfigSpec{
+					TemplateRef: anywherev1.Ref{
+						Name: clusterName,
+						Kind: anywherev1.TinkerbellTemplateConfigKind,
+					},
+				},
+			}
+			config.machineConfigs[name] = m
 		}
 		return nil
 	}

@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewYamlParserSuccess(t *testing.T) {
-	yaml, err := hardware.NewYamlParser()
+	yaml, err := hardware.NewYamlParser("")
 	if err != nil {
 		t.Fatalf("hardware.NewYamlParser() error = %v, expected = nil", err)
 	}
