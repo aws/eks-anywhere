@@ -1,0 +1,85 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: m-docker
+spec:
+  clusterNetwork:
+    cni: cilium
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+  datacenterRef:
+    kind: DockerDatacenterConfig
+    name: m-docker
+  kubernetesVersion: "1.21"
+  managementCluster:
+    name: m-docker
+  workerNodeGroupConfigurations:
+  - count: 1
+  identityProviderRefs:
+  - kind: OIDCConfig
+    name: eksa-unit-test
+  - kind: AWSIamConfig
+    name: eksa-unit-test
+  gitOpsRef:
+    kind: GitOpsConfig
+    name: eksa-unit-test
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: DockerDatacenterConfig
+metadata:
+  name: m-docker
+spec: {}
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: OIDCConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  clientId: id12
+  groupsClaim: claim1
+  groupsPrefix: prefix-for-groups
+  issuerUrl: https://mydomain.com/issuer
+  requiredClaims:
+    - claim: sub
+      value: test
+  usernameClaim: username-claim
+  usernamePrefix: username-prefix
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: AWSIamConfig
+metadata:
+   name: eksa-unit-test
+spec:
+  awsRegion: test-region
+  partition: aws
+  backendMode:
+    - mode1
+    - mode2
+  mapRoles:
+    - groups:
+      - group1
+      - group2
+      roleARN: test-role-arn
+      username: test
+  mapUsers:
+    - groups:
+      - group1
+      - group2
+      userARN: test-user-arn
+      username: test
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: GitOpsConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  flux:
+    github:
+      owner: "janedoe"
+      repository: "flux-fleet"

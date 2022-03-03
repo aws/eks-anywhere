@@ -19,7 +19,7 @@ require (
 )
 
 replace (
-	github.com/containerd/containerd => github.com/containerd/containerd v1.5.9
+	github.com/containerd/containerd => github.com/containerd/containerd v1.5.10
 	github.com/opencontainers/image-spec => github.com/opencontainers/image-spec v1.0.2
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.3
 )
