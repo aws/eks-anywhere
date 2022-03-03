@@ -31,9 +31,8 @@ import (
 )
 
 const (
-	eksaLicense                       = "EKSA_LICENSE"
-	cloudStackCloudConfigB64SecretKey = "CLOUDSTACK_B64ENCODED_SECRET"
-	controlEndpointDefaultPort        = "6443"
+	eksaLicense                = "EKSA_LICENSE"
+	controlEndpointDefaultPort = "6443"
 )
 
 //go:embed config/template-cp.yaml
@@ -45,7 +44,7 @@ var defaultClusterConfigMD string
 //go:embed config/machine-health-check-template.yaml
 var mhcTemplate []byte
 
-var requiredEnvs = []string{cloudStackCloudConfigB64SecretKey}
+var requiredEnvs = []string{decoder.CloudStackCloudConfigB64SecretKey}
 
 var (
 	eksaCloudStackDeploymentResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -272,8 +271,8 @@ func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	var ok bool
 
 	if cloudStackB64EncodedSecret, ok = os.LookupEnv(decoder.EksacloudStackCloudConfigB64SecretKey); ok && len(cloudStackB64EncodedSecret) > 0 {
-		if err := os.Setenv(cloudStackCloudConfigB64SecretKey, cloudStackB64EncodedSecret); err != nil {
-			return fmt.Errorf("unable to set %s: %v", cloudStackCloudConfigB64SecretKey, err)
+		if err := os.Setenv(decoder.CloudStackCloudConfigB64SecretKey, cloudStackB64EncodedSecret); err != nil {
+			return fmt.Errorf("unable to set %s: %v", decoder.CloudStackCloudConfigB64SecretKey, err)
 		}
 	} else {
 		return fmt.Errorf("%s is not set or is empty", decoder.EksacloudStackCloudConfigB64SecretKey)

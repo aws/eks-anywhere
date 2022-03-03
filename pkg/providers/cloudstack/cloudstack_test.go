@@ -109,7 +109,7 @@ type testContext struct {
 func (tctx *testContext) SaveContext() {
 	tctx.oldCloudStackCloudConfigSecretName, tctx.isCloudStackCloudConfigSecretNameSet = os.LookupEnv(decoder.EksacloudStackCloudConfigB64SecretKey)
 	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, expectedCloudStackCloudConfig)
-	os.Setenv(cloudStackCloudConfigB64SecretKey, os.Getenv(decoder.EksacloudStackCloudConfigB64SecretKey))
+	os.Setenv(decoder.CloudStackCloudConfigB64SecretKey, os.Getenv(decoder.EksacloudStackCloudConfigB64SecretKey))
 }
 
 func setupContext() {

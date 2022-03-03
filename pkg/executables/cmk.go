@@ -23,7 +23,7 @@ const (
 	cmkConfigFileName = "cmk_tmp.ini"
 )
 
-// Cmk this type will be used once the CloudStack provider is added to the repository
+// Cmk this struct wraps around the CloudMonkey executable CLI to perform operations against a CloudStack endpoint
 type Cmk struct {
 	writer     filewriter.FileWriter
 	executable Executable

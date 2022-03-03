@@ -8,7 +8,10 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-const EksacloudStackCloudConfigB64SecretKey = "EKSA_CLOUDSTACK_B64ENCODED_SECRET"
+const (
+	EksacloudStackCloudConfigB64SecretKey = "EKSA_CLOUDSTACK_B64ENCODED_SECRET"
+	CloudStackCloudConfigB64SecretKey     = "CLOUDSTACK_B64ENCODED_SECRET"
+)
 
 // ParseCloudStackSecret parses the input b64 string into the ini object to extract out the api key, secret key, and url
 func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
