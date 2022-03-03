@@ -11,20 +11,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-type packageWithCRD struct {
-	pkg   string
-	regex *regexp.Regexp
-	name  string
-	path  string
+type moduleWithCRD struct {
+	pkg          string
+	requireRegex *regexp.Regexp
+	replaceRegex *regexp.Regexp
 }
 
-func (p *packageWithCRD) pathToCRDs(version string) string {
-	gopath := envOrDefault("GOPATH", build.Default.GOPATH)
-	return filepath.Join(gopath, "pkg", "mod", p.path, fmt.Sprintf("%s@v%s", p.name, version), "config", "crd", "bases")
-}
-
-func mustBuildPackagesWithCRDs(packages ...string) []packageWithCRD {
-	pkgs, err := buildPackagesWithCRD(packages...)
+func mustBuildModulesWithCRDs(packages ...string) []moduleWithCRD {
+	pkgs, err := buildModulesWithCRD(packages...)
 	if err != nil {
 		panic(err)
 	}
@@ -32,10 +26,10 @@ func mustBuildPackagesWithCRDs(packages ...string) []packageWithCRD {
 	return pkgs
 }
 
-func buildPackagesWithCRD(packages ...string) ([]packageWithCRD, error) {
-	pkgs := make([]packageWithCRD, 0, len(packages))
+func buildModulesWithCRD(packages ...string) ([]moduleWithCRD, error) {
+	pkgs := make([]moduleWithCRD, 0, len(packages))
 	for _, p := range packages {
-		pkgCRD, err := buildPackageWithCRD(p)
+		pkgCRD, err := buildModuleWithCRD(p)
 		if err != nil {
 			return nil, err
 		}
@@ -45,43 +39,91 @@ func buildPackagesWithCRD(packages ...string) ([]packageWithCRD, error) {
 	return pkgs, nil
 }
 
-func buildPackageWithCRD(pkg string) (*packageWithCRD, error) {
-	r, err := regexp.Compile(fmt.Sprintf("%s%s v(.+)", `^(\W)`, pkg))
+func buildModuleWithCRD(pkg string) (*moduleWithCRD, error) {
+	requireRegex, err := regexp.Compile(fmt.Sprintf("%s%s v(.+)", `^(\W)`, pkg))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed building regex for package with CRD")
 	}
 
-	return &packageWithCRD{
-		pkg:   pkg,
-		regex: r,
-		name:  filepath.Base(pkg),
-		path:  filepath.Dir(pkg),
+	replaceRegex, err := regexp.Compile(fmt.Sprintf("%s%s => (.+) v(.+)", `^(\W)`, pkg))
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed building regex for package with CRD")
+	}
+
+	return &moduleWithCRD{
+		pkg:          pkg,
+		requireRegex: requireRegex,
+		replaceRegex: replaceRegex,
 	}, nil
 }
 
-func getPathsToPackagesCRDs(rootFolder string, packages ...packageWithCRD) ([]string, error) {
+type moduleInDisk struct {
+	moduleWithCRD
+	path, name, version string
+}
+
+func (m moduleInDisk) pathToCRDs() string {
+	return pathToCRDs(m.path, m.name, m.version)
+}
+
+func pathToCRDs(path, name, version string) string {
+	gopath := envOrDefault("GOPATH", build.Default.GOPATH)
+	return filepath.Join(gopath, "pkg", "mod", path, fmt.Sprintf("%s@v%s", name, version), "config", "crd", "bases")
+}
+
+func getPathsToPackagesCRDs(rootFolder string, packages ...moduleWithCRD) ([]string, error) {
 	goModFile, err := os.Open(filepath.Join(rootFolder, "go.mod"))
 	if err != nil {
 		return nil, err
 	}
 	defer goModFile.Close()
 
-	paths := make([]string, 0, len(packages))
+	modulesMappedToDisk := buildModulesMappedToDisk(packages)
 
 	scanner := bufio.NewScanner(goModFile)
 	for scanner.Scan() {
 		moduleLine := scanner.Text()
 		for _, p := range packages {
-			matches := p.regex.FindStringSubmatch(moduleLine)
+			matches := p.requireRegex.FindStringSubmatch(moduleLine)
 			if len(matches) == 3 {
 				version := matches[2]
-				paths = append(paths, p.pathToCRDs(version))
+				moduleInDisk := modulesMappedToDisk[p.pkg]
+				if moduleInDisk.version != "" {
+					// If the package has already been mapped to disk, it was
+					// probably by a replace, don't overwrite
+					continue
+				}
+
+				moduleInDisk.path = filepath.Dir(p.pkg)
+				moduleInDisk.name = filepath.Base(p.pkg)
+				moduleInDisk.version = version
+				continue
+			}
+
+			matches = p.replaceRegex.FindStringSubmatch(moduleLine)
+			if len(matches) == 4 {
+				replaceModule := matches[2]
+				replaceVersion := matches[3]
+				modulesMappedToDisk[p.pkg] = &moduleInDisk{
+					moduleWithCRD: p,
+					path:          filepath.Dir(replaceModule),
+					name:          filepath.Base(replaceModule),
+					version:       replaceVersion,
+				}
 			}
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
 		return nil, err
+	}
+
+	paths := make([]string, 0, len(modulesMappedToDisk))
+	for _, m := range modulesMappedToDisk {
+		if m.version == "" {
+			return nil, fmt.Errorf("couldn't find module in disk for %s", m.pkg)
+		}
+		paths = append(paths, m.pathToCRDs())
 	}
 
 	return paths, nil
@@ -92,4 +134,15 @@ func envOrDefault(envKey, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+func buildModulesMappedToDisk(modules []moduleWithCRD) map[string]*moduleInDisk {
+	modulesMappedToDisk := make(map[string]*moduleInDisk, len(packages))
+	for _, m := range modules {
+		modulesMappedToDisk[m.pkg] = &moduleInDisk{
+			moduleWithCRD: m,
+		}
+	}
+
+	return modulesMappedToDisk
 }
