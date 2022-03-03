@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"log"
 	"os"
 
@@ -46,14 +47,18 @@ func getResources(ctx context.Context, resourceType string, output string, args 
 	}
 	kubectl := deps.Kubectl
 
-	params := []executables.KubectlOpt{executables.WithKubeconfig(kubeConfig), executables.WithArgs(args)}
+	params := []executables.KubectlOpt{executables.WithKubeconfig(kubeConfig), executables.WithArgs(args), executables.WithNamespace(constants.EksaPackagesName)}
 	if output != "" {
 		params = append(params, executables.WithOutput(output))
 	}
 	packages, err := kubectl.GetResources(ctx, resourceType, params...)
 	if err != nil {
 		fmt.Print(packages)
-		return fmt.Errorf("error executing kubectl: %v", err)
+		return fmt.Errorf("kubectl execution failure: \n%v", err)
+	}
+	if packages == "" {
+		fmt.Printf("No resources found in %v namespace", constants.EksaPackagesName)
+		return nil
 	}
 	fmt.Println(packages)
 	return nil
