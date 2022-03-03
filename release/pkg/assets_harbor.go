@@ -16,12 +16,8 @@ package pkg
 
 import (
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
 
 	"github.com/pkg/errors"
-
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const harborProjectPath = "projects/goharbor/harbor"
