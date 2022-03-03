@@ -3,12 +3,11 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
-	"os"
-
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"log"
 
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
@@ -39,7 +38,7 @@ func preRunGetPackages(cmd *cobra.Command, args []string) error {
 }
 
 func getResources(ctx context.Context, resourceType string, output string, args []string) error {
-	kubeConfig := os.Getenv(kubeconfigEnvVariable)
+	kubeConfig := kubeconfig.FromEnvironment(kubeconfigEnvVariable)
 
 	deps, err := createKubectl(ctx)
 	if err != nil {
