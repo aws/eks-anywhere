@@ -20,8 +20,8 @@ const (
 	SnowMachineTemplateKind = "AWSSnowMachineTemplate"
 )
 
-func CAPICluster(clusterSpec *cluster.Spec, snowCluster *snowv1.AWSSnowCluster) *clusterv1.Cluster {
-	cluster := clusterapi.Cluster(clusterSpec, snowCluster, &controlplanev1.KubeadmControlPlane{})
+func CAPICluster(clusterSpec *cluster.Spec, snowCluster *snowv1.AWSSnowCluster, kubeadmControlPlane *controlplanev1.KubeadmControlPlane) *clusterv1.Cluster {
+	cluster := clusterapi.Cluster(clusterSpec, snowCluster, kubeadmControlPlane)
 	return cluster
 }
 
