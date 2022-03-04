@@ -22,6 +22,9 @@ spec:
         image: controller:latest
         imagePullPolicy: Always
         name: manager
+        env:
+        - name: FULL_LIFECYCLE_API
+          value: "false"
         ports:
         - containerPort: 8081
           name: healthz

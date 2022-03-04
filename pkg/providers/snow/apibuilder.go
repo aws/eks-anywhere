@@ -33,18 +33,10 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.
 	stackedEtcdExtraArgs["listen-peer-urls"] = "https://0.0.0.0:2380"
 	stackedEtcdExtraArgs["listen-client-urls"] = "https://0.0.0.0:2379"
 
-	apiServerExtraArgs := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.APIServer.ControlPlaneComponent.ExtraArgs
-	apiServerExtraArgs["cloud-provider"] = "external"
-
-	controllerManagerExtraArgs := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.ControllerManager.ExtraArgs
-	controllerManagerExtraArgs["cloud-provider"] = "external"
-
 	initConfigKubeletExtraArg := kcp.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.KubeletExtraArgs
-	initConfigKubeletExtraArg["cloud-provider"] = "external"
 	initConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
 	joinConfigKubeletExtraArg := kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.KubeletExtraArgs
-	joinConfigKubeletExtraArg["cloud-provider"] = "external"
 	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
 	kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = []string{
@@ -62,7 +54,6 @@ func kubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 	kct := clusterapi.KubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
 
 	joinConfigKubeletExtraArg := kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs
-	joinConfigKubeletExtraArg["cloud-provider"] = "external"
 	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
 	kct.Spec.Template.Spec.PreKubeadmCommands = []string{

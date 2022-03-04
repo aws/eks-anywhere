@@ -31,6 +31,9 @@ local_resource(
 
 DOCKERFILE = '''FROM golang:alpine
 WORKDIR /
+ENV MR_TOOLS_DISABLE=true
+RUN apk --no-cache add curl
+RUN curl -L -o - "https://github.com/vmware/govmomi/releases/latest/download/govc_$(uname -s)_$(uname -m).tar.gz" | tar -C /usr/local/bin -xvzf - govc
 COPY ./bin/manager /
 CMD ["/manager"]
 '''
