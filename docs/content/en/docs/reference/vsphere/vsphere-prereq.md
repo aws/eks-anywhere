@@ -42,3 +42,56 @@ The administrative machine and the target workload environment will need network
 {{% content "./domains.md" %}}
 
 
+### vSphere Information Needed Before Creating the Cluster
+We need to get the following information before creating the cluster:
+
+* **Static IP Addresses**: 
+You will need one IP address for the management cluster control plane endpoint, and a separate one for the controlplane of each workload cluster you add. 
+
+So now let’s say you are going to have the management cluster and two workload clusters. Then you would need three IP addresses, one for each. And they all will be configured same way in the configuration file you are going to generate for each cluster.
+
+A static IP addresses will be used for each control plane VM in your EKS Anywhere cluster. Choose IP addresses in your network range that do not conflict with other VMs, that must be excluded from your DHCP offering.
+
+NOTE: This IP addresses should be outside the network DHCP range. Suggestions on how to ensure this IP does not cause issues during cluster creation process are here.
+
+An IP address will be the value of the property `controlPlaneConfiguration.endpoint.host` in the config file of the management cluster, and a separate IP address for each workload cluster.
+![Import ova wizard](/images/ip.png) 
+
+* **vSphere Datacenter Name**:
+The vSphere datacenter to deploy the EKS Anywhere cluster on.
+![Import ova wizard](/images/datacenter.png) 
+
+* **VM Network Name**:
+The VM network to deploy your EKS Anywhere cluster on.
+![Import ova wizard](/images/network.png) 
+
+* **vCenter Server Domain Name**:
+The vCenter server fully qualified domain name or IP address. If the server IP is used, the thumbprint must be set or insecure must be set to true.
+![Import ova wizard](/images/domainname.png) 
+
+* **thumbprint** (required if insecure=false):
+The SHA1 thumbprint of the vCenter server certificate which is only required if you have a self-signed certificate for your vSphere endpoint.
+
+There are several ways to obtain your vCenter thumbprint. The easiest way is if you have govc installed, you can run the following command in the admin machine terminal, and take a note of the output:
+
+```bash
+govc about.cert -thumbprint -k
+```
+
+* **template**:
+The VM template to use for your EKS Anywhere cluster. This template was created when you imported the OVA file into vSphere . 
+![Import ova wizard](/images/template.png) 
+
+* **datastore**:
+The vSphere [datastore](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.storage.doc/GUID-3CC7078E-9C30-402C-B2E1-2542BEE67E8F.html) to deploy your EKS Anywhere cluster on.
+![Import ova wizard](/images/storage.png) 
+
+
+* **folder**:
+The folder parameter in VSphereMachineConfig allows you to organize your VMs of an EKS Anywhere cluster. With this each cluster can be organized as a folder in vSphere. It will be nice to have a separate folder for the management cluster and each cluster you are adding. 
+![Import ova wizard](/images/folder.png) 
+
+
+* **resourcePool**:
+The vSphere Resource pools for your VMs in the EKS Anywhere cluster. If there is a resource pool: `/<datacenter>/host/<resource-pool-name>/Resources`
+![Import ova wizard](/images/resourcepool.png) 
