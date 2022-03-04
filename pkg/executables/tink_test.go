@@ -53,7 +53,7 @@ func TestTinkGetHardware(t *testing.T) {
 	}
 }
 
-func TestTinkWorkflow(t *testing.T) {
+func TestTinkGetWorkflow(t *testing.T) {
 	tink, ctx, e := newTink(t)
 	expectedParam := []string{"workflow", "get", "--format", "json"}
 	expectCommand(e, ctx, expectedParam...).withEnvVars(envMap).to().Return(bytes.Buffer{}, nil)

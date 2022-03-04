@@ -129,13 +129,14 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 		return fmt.Errorf("failed to get hardware Config: %v", err)
 	}
 
-	tinkHardwareMap := hardwareMap(hardwares)
+	tinkHardwareMap := getHardwareMap(hardwares)
 
 	workflows, err := v.tink.GetWorkflow(ctx)
 	if err != nil {
 		return fmt.Errorf("%v", err)
 	}
-	tinkWorkflowMap, err := workflowMap(workflows)
+	tinkWorkflowMap, err := getWorkflowMap(workflows)
+
 	if err != nil {
 		return fmt.Errorf("error validating if the workflow exist for the given list of hardwares %v", err)
 	}
@@ -285,8 +286,8 @@ func validateAddressWithPort(address string) error {
 	return nil
 }
 
-// hardwareMap returns all the hardwares on the tinkerbell stack in the form of map with hardware uuid as a key
-func hardwareMap(hardwareList []*tinkhardware.Hardware) map[string]*tinkhardware.Hardware {
+// getHardwareMap returns all the hardwares on the tinkerbell stack in the form of map with hardware uuid as a key
+func getHardwareMap(hardwareList []*tinkhardware.Hardware) map[string]*tinkhardware.Hardware {
 	hardwareMap := make(map[string]*tinkhardware.Hardware)
 
 	for _, data := range hardwareList {
@@ -296,8 +297,8 @@ func hardwareMap(hardwareList []*tinkhardware.Hardware) map[string]*tinkhardware
 	return hardwareMap
 }
 
-// workflowMap returns all the workflows on the tinkerbell stack in the form of map with mac address as a key
-func workflowMap(workflowList []*tinkworkflow.Workflow) (map[string]*tinkworkflow.Workflow, error) {
+// getWorkflowMap returns all the workflows on the tinkerbell stack in the form of map with mac address as a key
+func getWorkflowMap(workflowList []*tinkworkflow.Workflow) (map[string]*tinkworkflow.Workflow, error) {
 	workflowMap := make(map[string]*tinkworkflow.Workflow)
 
 	for _, data := range workflowList {
@@ -306,9 +307,8 @@ func workflowMap(workflowList []*tinkworkflow.Workflow) (map[string]*tinkworkflo
 		if err := json.Unmarshal([]byte(data.GetHardware()), &macAddress); err != nil {
 			return nil, fmt.Errorf("error unmarshling workflow data: %v", err)
 		}
-
-		if _, ok := macAddress["device_1"]; ok {
-			workflowMap[macAddress["device_1"]] = data
+		for _, mac := range macAddress {
+			workflowMap[mac] = data
 		}
 	}
 
