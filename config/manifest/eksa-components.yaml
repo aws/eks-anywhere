@@ -2236,6 +2236,161 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
+                        hook:
+                          description: Tinkerbell hook OS
+                          properties:
+                            amd:
+                              properties:
+                                initramfs:
+                                  properties:
+                                    arch:
+                                      description: Architectures of the asset
+                                      items:
+                                        type: string
+                                      type: array
+                                    description:
+                                      type: string
+                                    name:
+                                      description: The asset name
+                                      type: string
+                                    os:
+                                      description: Operating system of the asset
+                                      enum:
+                                      - linux
+                                      - darwin
+                                      - windows
+                                      type: string
+                                    osName:
+                                      description: Name of the OS like ubuntu, bottlerocket
+                                      type: string
+                                    sha256:
+                                      description: The sha256 of the asset, only applies
+                                        for 'file' store
+                                      type: string
+                                    sha512:
+                                      description: The sha512 of the asset, only applies
+                                        for 'file' store
+                                      type: string
+                                    uri:
+                                      description: The URI where the asset is located
+                                      type: string
+                                  type: object
+                                vmlinuz:
+                                  properties:
+                                    arch:
+                                      description: Architectures of the asset
+                                      items:
+                                        type: string
+                                      type: array
+                                    description:
+                                      type: string
+                                    name:
+                                      description: The asset name
+                                      type: string
+                                    os:
+                                      description: Operating system of the asset
+                                      enum:
+                                      - linux
+                                      - darwin
+                                      - windows
+                                      type: string
+                                    osName:
+                                      description: Name of the OS like ubuntu, bottlerocket
+                                      type: string
+                                    sha256:
+                                      description: The sha256 of the asset, only applies
+                                        for 'file' store
+                                      type: string
+                                    sha512:
+                                      description: The sha512 of the asset, only applies
+                                        for 'file' store
+                                      type: string
+                                    uri:
+                                      description: The URI where the asset is located
+                                      type: string
+                                  type: object
+                              required:
+                              - initramfs
+                              - vmlinuz
+                              type: object
+                            arm:
+                              properties:
+                                initramfs:
+                                  properties:
+                                    arch:
+                                      description: Architectures of the asset
+                                      items:
+                                        type: string
+                                      type: array
+                                    description:
+                                      type: string
+                                    name:
+                                      description: The asset name
+                                      type: string
+                                    os:
+                                      description: Operating system of the asset
+                                      enum:
+                                      - linux
+                                      - darwin
+                                      - windows
+                                      type: string
+                                    osName:
+                                      description: Name of the OS like ubuntu, bottlerocket
+                                      type: string
+                                    sha256:
+                                      description: The sha256 of the asset, only applies
+                                        for 'file' store
+                                      type: string
+                                    sha512:
+                                      description: The sha512 of the asset, only applies
+                                        for 'file' store
+                                      type: string
+                                    uri:
+                                      description: The URI where the asset is located
+                                      type: string
+                                  type: object
+                                vmlinuz:
+                                  properties:
+                                    arch:
+                                      description: Architectures of the asset
+                                      items:
+                                        type: string
+                                      type: array
+                                    description:
+                                      type: string
+                                    name:
+                                      description: The asset name
+                                      type: string
+                                    os:
+                                      description: Operating system of the asset
+                                      enum:
+                                      - linux
+                                      - darwin
+                                      - windows
+                                      type: string
+                                    osName:
+                                      description: Name of the OS like ubuntu, bottlerocket
+                                      type: string
+                                    sha256:
+                                      description: The sha256 of the asset, only applies
+                                        for 'file' store
+                                      type: string
+                                    sha512:
+                                      description: The sha512 of the asset, only applies
+                                        for 'file' store
+                                      type: string
+                                    uri:
+                                      description: The URI where the asset is located
+                                      type: string
+                                  type: object
+                              required:
+                              - initramfs
+                              - vmlinuz
+                              type: object
+                          required:
+                          - amd
+                          - arm
+                          type: object
                         kubeVip:
                           properties:
                             arch:
@@ -2397,6 +2552,7 @@ spec:
                       - clusterTemplate
                       - components
                       - hegel
+                      - hook
                       - kubeVip
                       - metadata
                       - pbnj
