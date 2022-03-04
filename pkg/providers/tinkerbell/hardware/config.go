@@ -91,12 +91,10 @@ func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, tinkHardwareMa
 		}
 
 		hardwareInterface := tinkHardwareMap[hw.Spec.ID].GetNetwork().GetInterfaces()
-		if len(hardwareInterface) > 0 {
-			for _, interfaces := range hardwareInterface {
-				mac := interfaces.GetDhcp()
-				if _, ok := tinkWorkflowMap[mac.Mac]; ok {
-					return fmt.Errorf("workflow %s alredy exixts for the hardware id %s", tinkWorkflowMap[mac.Mac].Id, hw.Spec.ID)
-				}
+		for _, interfaces := range hardwareInterface {
+			mac := interfaces.GetDhcp()
+			if _, ok := tinkWorkflowMap[mac.Mac]; ok {
+				return fmt.Errorf("workflow %s already exixts for the hardware id %s", tinkWorkflowMap[mac.Mac].Id, hw.Spec.ID)
 			}
 		}
 
