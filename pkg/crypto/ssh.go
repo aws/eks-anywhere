@@ -52,21 +52,23 @@ func NewSshKeyPair(privateOut, publicOut io.Writer) error {
 
 // NewSshKeyPairUsingFileWriter provides a mechanism for generating SSH key pairs and writing them to the writer
 // direcftory context. It exists to create compatibility with filewriter.FileWriter and compliment older code.
-// The bytes returned by NewSshKeyPairUsingFileWriter are the public key formated as specified in NewSshKeyPair().
-func NewSshKeyPairUsingFileWriter(writer filewriter.FileWriter, privateKeyFilename, publicKeyFilename string) ([]byte, error) {
+// The string returned is a path to the private key written to disk using writer.
+// The bytes returned are the public key formated as specified in NewSshKeyPair().
+func NewSshKeyPairUsingFileWriter(writer filewriter.FileWriter, privateKeyFilename, publicKeyFilename string) (string, []byte, error) {
 	var private, public bytes.Buffer
 
 	if err := NewSshKeyPair(&private, &public); err != nil {
-		return nil, fmt.Errorf("generating key pair: %v", err)
+		return "", nil, fmt.Errorf("generating key pair: %v", err)
 	}
 
-	if _, err := writer.Write(privateKeyFilename, private.Bytes(), filewriter.Permission0600); err != nil {
-		return nil, fmt.Errorf("writing private key: %v", err)
+	privateKeyPath, err := writer.Write(privateKeyFilename, private.Bytes(), filewriter.Permission0600)
+	if err != nil {
+		return "", nil, fmt.Errorf("writing private key: %v", err)
 	}
 
 	if _, err := writer.Write(publicKeyFilename, public.Bytes(), filewriter.Permission0600); err != nil {
-		return nil, fmt.Errorf("writing public key: %v", err)
+		return "", nil, fmt.Errorf("writing public key: %v", err)
 	}
 
-	return public.Bytes(), nil
+	return privateKeyPath, public.Bytes(), nil
 }
