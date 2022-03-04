@@ -34,12 +34,14 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 		"pbnj":                            r.BundleArtifactsTable["pbnj"],
 		"boots":                           r.BundleArtifactsTable["boots"],
 		"hub":                             r.BundleArtifactsTable["hub"],
+		"hook":                            r.BundleArtifactsTable["hook"],
 	}
 	sortedComponentNames := sortArtifactsMap(tinkerbellBundleArtifacts)
 
 	var sourceBranch string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
+	bundleArchiveArtifacts := map[string]anywherev1alpha1.Archive{}
 	artifactHashes := []string{}
 
 	for _, componentName := range sortedComponentNames {
@@ -76,6 +78,17 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 				manifestHash := generateManifestHash(manifestContents)
 				artifactHashes = append(artifactHashes, manifestHash)
 			}
+
+			if artifact.Archive != nil {
+				archiveArtifact := artifact.Archive
+				bundleArchiveArtifact := anywherev1alpha1.Archive{
+					Name:        archiveArtifact.ReleaseName,
+					Description: "Tinkerbell operating system installation environment (osie) component",
+					URI:         archiveArtifact.ReleaseCdnURI,
+				}
+
+				bundleArchiveArtifacts[archiveArtifact.ReleaseName] = bundleArchiveArtifact
+			}
 		}
 	}
 
@@ -109,6 +122,16 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 		Components:      bundleManifestArtifacts["infrastructure-components.yaml"],
 		ClusterTemplate: bundleManifestArtifacts["cluster-template.yaml"],
 		Metadata:        bundleManifestArtifacts["metadata.yaml"],
+		Hook: anywherev1alpha1.Hook{
+			Arm: anywherev1alpha1.HookOS{
+				Initramfs: bundleArchiveArtifacts["initramfs-aarch64"],
+				Vmlinuz:   bundleArchiveArtifacts["vmlinuz-aarch64"],
+			},
+			Amd: anywherev1alpha1.HookOS{
+				Initramfs: bundleArchiveArtifacts["initramfs-x86_64"],
+				Vmlinuz:   bundleArchiveArtifacts["vmlinuz-x86_64"],
+			},
+		},
 	}
 
 	return bundle, nil

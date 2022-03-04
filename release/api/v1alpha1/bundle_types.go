@@ -265,6 +265,7 @@ type TinkerbellBundle struct {
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
 	ClusterTemplate      Manifest `json:"clusterTemplate"`
+	Hook                 Hook     `json:"hook"`
 }
 
 // Tinkerbell Template Actions
@@ -274,6 +275,17 @@ type Actions struct {
 	ImageToDisk Image `json:"imageToDisk"`
 	OciToDisk   Image `json:"ociToDisk"`
 	WriteFile   Image `json:"writeFile"`
+}
+
+// Tinkerbell hook OS
+type Hook struct {
+	Arm HookOS `json:"arm"`
+	Amd HookOS `json:"amd"`
+}
+
+type HookOS struct {
+	Initramfs Archive `json:"initramfs"`
+	Vmlinuz   Archive `json:"vmlinuz"`
 }
 
 type HaproxyBundle struct {
