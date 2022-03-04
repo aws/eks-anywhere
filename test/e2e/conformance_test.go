@@ -73,7 +73,7 @@ func TestVSphereKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
 func TestVSphereKubernetes122ThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu121()),
+		framework.NewVSphere(t, framework.WithUbuntu122()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),

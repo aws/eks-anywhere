@@ -55,7 +55,7 @@ func TestVSphereKubernetes121StackedEtcdUbuntu(t *testing.T) {
 
 func TestVSphereKubernetes122StackedEtcdUbuntu(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
-		framework.NewVSphere(t, framework.WithUbuntu121()),
+		framework.NewVSphere(t, framework.WithUbuntu122()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()),

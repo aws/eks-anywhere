@@ -65,7 +65,7 @@ func TestVSphereKubernetes121UbuntuTo122Upgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes121UbuntuTo122MultipleFieldsUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu120())
+	provider := framework.NewVSphere(t, framework.WithUbuntu121())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -93,7 +93,7 @@ func TestVSphereKubernetes121UbuntuTo122MultipleFieldsUpgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes121UbuntuTo122WithFluxUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu120())
+	provider := framework.NewVSphere(t, framework.WithUbuntu121())
 	test := framework.NewClusterE2ETest(t,
 		provider,
 		framework.WithFlux(),
@@ -112,7 +112,7 @@ func TestVSphereKubernetes121UbuntuTo122WithFluxUpgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes121UbuntuTo122DifferentNamespaceWithFluxUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu120(), framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace)))
+	provider := framework.NewVSphere(t, framework.WithUbuntu121(), framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace)))
 	test := framework.NewClusterE2ETest(t,
 		provider,
 		framework.WithFlux(api.WithGitOpsNamespace(clusterNamespace)),
@@ -132,7 +132,7 @@ func TestVSphereKubernetes121UbuntuTo122DifferentNamespaceWithFluxUpgrade(t *tes
 }
 
 func TestVSphereKubernetes122UbuntuControlPlaneNodeUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu120())
+	provider := framework.NewVSphere(t, framework.WithUbuntu122())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -149,7 +149,7 @@ func TestVSphereKubernetes122UbuntuControlPlaneNodeUpgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes122UbuntuWorkerNodeUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu120())
+	provider := framework.NewVSphere(t, framework.WithUbuntu122())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
@@ -293,7 +293,7 @@ func TestDockerKubernetes121To122StackedEtcdUpgrade(t *testing.T) {
 }
 
 func TestVSphereKubernetes121UbuntuTo122StackedEtcdUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithUbuntu120())
+	provider := framework.NewVSphere(t, framework.WithUbuntu121())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,

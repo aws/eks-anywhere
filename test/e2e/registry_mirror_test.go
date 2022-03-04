@@ -22,7 +22,7 @@ func runRegistryMirrorConfigFlow(test *framework.ClusterE2ETest) {
 func TestVSphereKubernetes122UbuntuRegistryMirrorAndCert(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu121(), framework.WithPrivateNetwork()),
+		framework.NewVSphere(t, framework.WithUbuntu122(), framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),

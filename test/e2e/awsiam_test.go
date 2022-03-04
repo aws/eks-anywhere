@@ -81,7 +81,7 @@ func TestVSphereKubernetes121AWSIamAuth(t *testing.T) {
 func TestVSphereKubernetes122AWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu121()),
+		framework.NewVSphere(t, framework.WithUbuntu122()),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),

@@ -20,7 +20,7 @@ func runProxyConfigFlow(test *framework.ClusterE2ETest) {
 func TestVSphereKubernetes122UbuntuProxyConfig(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu121(),
+		framework.NewVSphere(t, framework.WithUbuntu122(),
 			framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),

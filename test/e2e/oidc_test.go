@@ -87,7 +87,7 @@ func TestVSphereKubernetes121OIDC(t *testing.T) {
 func TestVSphereKubernetes122OIDC(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu121()),
+		framework.NewVSphere(t, framework.WithUbuntu122()),
 		framework.WithOIDC(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
