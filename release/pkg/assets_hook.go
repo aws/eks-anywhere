@@ -23,8 +23,8 @@ import (
 
 const hookProjectPath = "projects/tinkerbell/hook"
 
-// GethookAssets returns the eks-a artifacts for tinkerbell/hook
-func (r *ReleaseConfig) GethookAssets() ([]Artifact, error) {
+// GetHookAssets returns the eks-a artifacts for tinkerbell/hook
+func (r *ReleaseConfig) GetHookAssets() ([]Artifact, error) {
 	gitTag, err := r.readGitTag(hookProjectPath, r.BuildRepoBranchName)
 	if err != nil {
 		return nil, errors.Cause(err)
