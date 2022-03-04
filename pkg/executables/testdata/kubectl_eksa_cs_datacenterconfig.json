@@ -6,15 +6,19 @@
   },
   "spec": {
     "insecure": true,
-    "network": {
-      "value": "testNetwork",
-      "type": "name"
-    },
     "domain": "testDomain",
     "account": "testAccount",
-    "zone": {
-      "value": "testZone",
-      "type": "name"
-    }
+    "zones": [
+      {
+        "zone": {
+          "type": "Name",
+          "value": "testZone"
+        },
+        "network": {
+          "type": "Name",
+          "value": "testNetwork"
+        }
+      }
+    ]
   }
 }
