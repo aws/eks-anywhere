@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -32,31 +31,4 @@ func TestGetBundlesForCluster(t *testing.T) {
 	gotBundles, err := cluster.GetBundlesForCluster(context.Background(), c, mockFetch)
 	g.Expect(err).To(BeNil())
 	g.Expect(gotBundles).To(Equal(wantBundles))
-}
-
-func TestGetEksdReleaseForCluster(t *testing.T) {
-	g := NewWithT(t)
-	c := &v1alpha1.Cluster{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "eksa-cluster",
-			Namespace: "eksa",
-		},
-		Status: v1alpha1.ClusterStatus{
-			EksdReleaseRef: &v1alpha1.EksdReleaseRef{
-				Name:      "eks-d",
-				Namespace: "eksa-system",
-			},
-		},
-	}
-	wantRelease := &eksdv1alpha1.Release{}
-	mockFetch := func(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error) {
-		g.Expect(name).To(Equal(c.Status.EksdReleaseRef.Name))
-		g.Expect(namespace).To(Equal(c.Status.EksdReleaseRef.Namespace))
-
-		return wantRelease, nil
-	}
-
-	gotRelease, err := cluster.GetEksdReleaseForCluster(context.Background(), c, mockFetch)
-	g.Expect(err).To(BeNil())
-	g.Expect(gotRelease).To(Equal(wantRelease))
 }

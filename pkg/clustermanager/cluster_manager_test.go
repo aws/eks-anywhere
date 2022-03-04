@@ -950,14 +950,6 @@ func newSpecChangedTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) 
 				Name: clusterName,
 			},
 		},
-		Status: v1alpha1.ClusterStatus{
-			EksdReleaseRef: &v1alpha1.EksdReleaseRef{
-				ApiVersion: "distro.eks.amazonaws.com/v1alpha1",
-				Kind:       "Release",
-				Name:       "kubernetes-1-21-eks-4",
-				Namespace:  "eksa-system",
-			},
-		},
 	}
 	newClusterConfig := clusterConfig.DeepCopy()
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{
@@ -996,7 +988,7 @@ func newSpecChangedTest(t *testing.T, opts ...clustermanager.ClusterManagerOpt) 
 
 	var err error
 
-	testSetup.mocks.client.EXPECT().GetEksdRelease(changedTest.ctx, clusterConfig.Status.EksdReleaseRef.Name, clusterConfig.Status.EksdReleaseRef.Namespace, gomock.Any()).Return(test.EksdRelease(t), nil).MaxTimes(2)
+	testSetup.mocks.client.EXPECT().GetEksdRelease(changedTest.ctx, gomock.Any(), constants.EksaSystemNamespace, gomock.Any()).Return(test.EksdRelease(t), nil).MaxTimes(2)
 
 	changedTest.clusterSpec, err = cluster.BuildSpecFromBundles(newClusterConfig, test.Bundles(t), test.EksdRelease(t))
 	if err != nil {
@@ -1148,6 +1140,7 @@ func newClusterManager(t *testing.T, opts ...clustermanager.ClusterManagerOpt) (
 	}
 
 	c := clustermanager.New(m.client, m.networking, m.writer, m.diagnosticsFactory, m.awsIamAuth, opts...)
+
 	return c, m
 }
 

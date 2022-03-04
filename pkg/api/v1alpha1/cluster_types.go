@@ -516,15 +516,6 @@ func (c *Cluster) SetConditions(conditions clusterv1.Conditions) {
 	c.Status.Conditions = conditions
 }
 
-func (c *Cluster) SetEksdReleaseRef(apiVersion, kind, name, namespace string) {
-	c.Status.EksdReleaseRef = &EksdReleaseRef{
-		ApiVersion: apiVersion,
-		Kind:       kind,
-		Name:       name,
-		Namespace:  namespace,
-	}
-}
-
 // +kubebuilder:object:generate=false
 // Same as Cluster except stripped down for generation of yaml file during generate clusterconfig
 type ClusterGenerate struct {

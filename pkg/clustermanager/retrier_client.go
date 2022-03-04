@@ -45,7 +45,6 @@ func (c *retrierClient) installEksdComponents(ctx context.Context, clusterSpec *
 	); err != nil {
 		return fmt.Errorf("error applying eksd release manifest: %v", err)
 	}
-	clusterSpec.Cluster.SetEksdReleaseRef(constants.EksDistroApiVersion, constants.ReleaseKind, clusterSpec.VersionsBundle.EksD.Name, constants.EksaSystemNamespace)
 
 	return nil
 }

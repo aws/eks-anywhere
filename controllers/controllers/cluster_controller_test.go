@@ -272,7 +272,7 @@ func createCPMachineConfig() *anywherev1.VSphereMachineConfig {
 func createEksdRelease() *eksdv1alpha1.Release {
 	return &eksdv1alpha1.Release{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "kubernetes-1-20-eks-1",
+			Name:      "test",
 			Namespace: "eksa-system",
 		},
 		Status: eksdv1alpha1.ReleaseStatus{
@@ -413,14 +413,6 @@ func createCluster() *anywherev1.Cluster {
 					Name:   "md-0",
 					Labels: nil,
 				},
-			},
-		},
-		Status: anywherev1.ClusterStatus{
-			EksdReleaseRef: &anywherev1.EksdReleaseRef{
-				ApiVersion: "distro.eks.amazonaws.com/v1alpha1",
-				Kind:       "Release",
-				Name:       "kubernetes-1-20-eks-1",
-				Namespace:  "eksa-system",
 			},
 		},
 	}

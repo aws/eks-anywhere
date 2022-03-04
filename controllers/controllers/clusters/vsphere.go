@@ -164,19 +164,21 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	if err != nil {
 		return reconciler.Result{}, err
 	}
-
-	eksd, err := v.eksdRelease(ctx, cluster.Status.EksdReleaseRef.Name, constants.EksaSystemNamespace)
+	versionsBundle, err := getVersionsBundle(cluster, bundles)
+	if err != nil {
+		return reconciler.Result{}, err
+	}
+	v.Log.V(4).Info("Fetching eks-d manifest", "release name", versionsBundle.EksD.Name)
+	eksd, err := v.eksdRelease(ctx, versionsBundle.EksD.Name, constants.EksaSystemNamespace)
 	if err != nil {
 		return reconciler.Result{}, err
 	}
 
 	specWithBundles, err := c.BuildSpecFromBundles(cluster, bundles, eksd)
-	if err != nil {
-		return reconciler.Result{}, err
-	}
-	vshepreClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
 
-	if err := v.Validator.ValidateClusterMachineConfigs(ctx, vshepreClusterSpec); err != nil {
+	vsphereClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
+
+	if err := v.Validator.ValidateClusterMachineConfigs(ctx, vsphereClusterSpec); err != nil {
 		return reconciler.Result{}, err
 	}
 
@@ -352,4 +354,13 @@ func (v *VSphereClusterReconciler) reconcileControlPlaneSpec(ctx context.Context
 		conditions.MarkTrue(cluster, controlSpecPlaneAppliedCondition)
 	}
 	return reconciler.Result{}, nil
+}
+
+func getVersionsBundle(clusterConfig *anywherev1.Cluster, bundles *releasev1alpha1.Bundles) (*releasev1alpha1.VersionsBundle, error) {
+	for _, versionsBundle := range bundles.Spec.VersionsBundles {
+		if versionsBundle.KubeVersion == string(clusterConfig.Spec.KubernetesVersion) {
+			return &versionsBundle, nil
+		}
+	}
+	return nil, fmt.Errorf("kubernetes version %s is not supported by bundles manifest %d", clusterConfig.Spec.KubernetesVersion, bundles.Spec.Number)
 }

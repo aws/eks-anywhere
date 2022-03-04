@@ -273,6 +273,7 @@ func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundl
 		KubeDistro:     kubeDistro,
 	}
 	s.eksdRelease = eksd
+
 	return s, nil
 }
 
