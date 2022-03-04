@@ -571,6 +571,7 @@ func TestPreflightValidations(t *testing.T) {
 
 			mockCtrl := gomock.NewController(t)
 			k := mocks.NewMockKubectlClient(mockCtrl)
+			tlsValidator := mocks.NewMockTlsValidator(mockCtrl)
 
 			provider := mockproviders.NewMockProvider(mockCtrl)
 			opts := &validations.Opts{
@@ -579,6 +580,7 @@ func TestPreflightValidations(t *testing.T) {
 				WorkloadCluster:   workloadCluster,
 				ManagementCluster: workloadCluster,
 				Provider:          provider,
+				TlsValidator:      tlsValidator,
 			}
 
 			clusterSpec.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)

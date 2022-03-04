@@ -52,22 +52,22 @@ invalidCert
 )
 
 func TestValidateCertValidCert(t *testing.T) {
-	tv := crypto.NewTlsValidator(endpoint, port)
-	if err := tv.ValidateCert(cert); err != nil {
+	tv := crypto.NewTlsValidator()
+	if err := tv.ValidateCert(endpoint, port, cert); err != nil {
 		t.Fatalf("Failed to validate cert: %v", err)
 	}
 }
 
 func TestValidateCertInvalidEndpoint(t *testing.T) {
-	tv := crypto.NewTlsValidator(invalid_endpoint, port)
-	if err := tv.ValidateCert(cert); err == nil {
+	tv := crypto.NewTlsValidator()
+	if err := tv.ValidateCert(invalid_endpoint, port, cert); err == nil {
 		t.Fatalf("Certificate validation passed for invalid endpoint")
 	}
 }
 
 func TestValidateCertInvalidCert(t *testing.T) {
-	tv := crypto.NewTlsValidator(endpoint, port)
-	if err := tv.ValidateCert(invalid_cert); err == nil {
+	tv := crypto.NewTlsValidator()
+	if err := tv.ValidateCert(endpoint, port, invalid_cert); err == nil {
 		t.Fatalf("Certificate validation passed for invalid cert")
 	}
 }

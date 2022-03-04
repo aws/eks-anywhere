@@ -8,30 +8,24 @@ import (
 	"net"
 )
 
-type DefaultTlsValidator struct {
-	host string
-	port string
-}
+type DefaultTlsValidator struct{}
 
 type TlsValidator interface {
-	ValidateCert(cert string) error
-	HasSelfSignedCert() (bool, error)
+	ValidateCert(host, port, cert string) error
+	HasSelfSignedCert(host, port string) (bool, error)
 }
 
-func NewTlsValidator(host string, port string) TlsValidator {
-	return &DefaultTlsValidator{
-		host: host,
-		port: port,
-	}
+func NewTlsValidator() TlsValidator {
+	return &DefaultTlsValidator{}
 }
 
 // HasSelfSignedCert determines whether the url is using self-signed certs or not
-func (tv *DefaultTlsValidator) HasSelfSignedCert() (bool, error) {
+func (tv *DefaultTlsValidator) HasSelfSignedCert(host, port string) (bool, error) {
 	conf := &tls.Config{
 		InsecureSkipVerify: false,
 	}
 
-	_, err := tls.Dial("tcp", net.JoinHostPort(tv.host, tv.port), conf)
+	_, err := tls.Dial("tcp", net.JoinHostPort(host, port), conf)
 	if err != nil {
 		// If the error is x509.UnknownAuthorityError, this means the url is using self-signed certs
 		if err.Error() == (x509.UnknownAuthorityError{}).Error() {
@@ -43,7 +37,7 @@ func (tv *DefaultTlsValidator) HasSelfSignedCert() (bool, error) {
 }
 
 // ValidateCert parses the cert, ensures that the cert format is valid and verifies that the cert is valid for the url
-func (tv *DefaultTlsValidator) ValidateCert(cert string) error {
+func (tv *DefaultTlsValidator) ValidateCert(host, port, cert string) error {
 	// Validates that the cert format is valid
 	block, _ := pem.Decode([]byte(cert))
 	if block == nil {
@@ -57,7 +51,7 @@ func (tv *DefaultTlsValidator) ValidateCert(cert string) error {
 	roots := x509.NewCertPool()
 	roots.AddCert(providedCert)
 	opts := x509.VerifyOptions{
-		DNSName: tv.host,
+		DNSName: host,
 		Roots:   roots,
 	}
 
