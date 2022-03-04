@@ -136,7 +136,6 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 		return fmt.Errorf("%v", err)
 	}
 	tinkWorkflowMap, err := getWorkflowMap(workflows)
-
 	if err != nil {
 		return fmt.Errorf("error validating if the workflow exist for the given list of hardwares %v", err)
 	}
