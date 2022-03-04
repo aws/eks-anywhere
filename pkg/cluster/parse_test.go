@@ -46,6 +46,7 @@ func TestParseConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
+							Name:  "workers-1",
 							Count: 1,
 							MachineGroupRef: &anywherev1.Ref{
 								Kind: "VSphereMachineConfig",
@@ -146,6 +147,7 @@ func TestParseConfig(t *testing.T) {
 					},
 					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
 						{
+							Name:  "workers-1",
 							Count: 1,
 						},
 					},

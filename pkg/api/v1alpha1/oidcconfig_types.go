@@ -125,6 +125,10 @@ func (c *OIDCConfig) ExpectedKind() string {
 	return OIDCConfigKind
 }
 
+func (c *OIDCConfig) Validate() error {
+	return validateOIDCConfig(c)
+}
+
 func (c *OIDCConfig) ConvertConfigToConfigGenerateStruct() *OIDCConfigGenerate {
 	namespace := defaultEksaNamespace
 	if c.Namespace != "" {
