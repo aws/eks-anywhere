@@ -59,7 +59,7 @@ func TestVSphereKubernetes121UbuntuTo122Upgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithEnvVar("K8S_1_22_SUPPORT", "true"),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var()),
 	)
 }

@@ -20,6 +20,7 @@ const (
 func runUpgradeFlowWithFlux(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
+	test.ValidateFlux()
 	test.UpgradeCluster(clusterOpts)
 	test.ValidateCluster(updateVersion)
 	test.ValidateFlux()
@@ -167,4 +168,24 @@ func TestVSphereKubernetes122GitopsOptionsFlux(t *testing.T) {
 		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runFluxFlow(test)
+}
+
+func TestVSphereKubernetes121To122FluxUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu121())
+	test := framework.NewClusterE2ETest(t,
+		provider,
+		framework.WithFlux(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
+	)
+	runUpgradeFlowWithFlux(
+		test,
+		v1alpha1.Kube122,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
+		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var()),
+	)
 }

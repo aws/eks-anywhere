@@ -19,6 +19,17 @@ func runOIDCFlow(test *framework.ClusterE2ETest) {
 	test.DeleteCluster()
 }
 
+func runUpgradeFlowWithOIDC(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
+	test.GenerateClusterConfig()
+	test.CreateCluster()
+	test.ValidateOIDC()
+	test.UpgradeCluster(clusterOpts)
+	test.ValidateCluster(updateVersion)
+	test.ValidateOIDC()
+	test.StopIfFailed()
+	test.DeleteCluster()
+}
+
 func TestDockerKubernetes120OIDC(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
@@ -85,4 +96,25 @@ func TestVSphereKubernetes122OIDC(t *testing.T) {
 		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runOIDCFlow(test)
+}
+
+func TestVSphereKubernetes121To122OIDCUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu121())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithOIDC(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
+	)
+	runUpgradeFlowWithOIDC(
+		test,
+		v1alpha1.Kube122,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
+		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var()),
+	)
 }
