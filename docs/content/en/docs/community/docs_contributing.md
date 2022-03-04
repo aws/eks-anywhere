@@ -44,7 +44,7 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
    * [Install EKS Anywhere](https://anywhere.eks.amazonaws.com/docs/getting-started/install/) installation guide: For prerequisites and procedures related to setting up the Administrative machine.
    * [Creating a local cluster](https://anywhere.eks.amazonaws.com/docs/getting-started/local-environment/) or [production cluster](https://anywhere.eks.amazonaws.com/docs/getting-started/production-environment/): For simple instructions for a Docker or vSphere installation ,respectively.
 * **Instructions that are specific to an EKS Anywhere provider** should go into the appropriate provider section. Currently, [vSphere](https://anywhere.eks.amazonaws.com/docs/reference/vsphere/) is the only supported production quality provider so far.
-  * [Add integrations to cluster]({{< relref "../tasks/cluster/cluster-integrations/): Add names of suggested third-party tools. Then Link the names of providers to:
+  * [Add integrations to cluster]({{< relref "../tasks/cluster/cluster-integrations/" >}}): Add names of suggested third-party tools. Then Link the names of providers to:
     * EKS Anywhere docs instructions for configuring that feature, if instructions are available or
     * Somewhere on the third-party site, if there are no instructions available on the EKS Anywhere site
   * [Compare EKS Anywhere and EKS]({{< relref "../concepts/eksafeatures/" >}}): Add supported third-party solutions to the Amazon EKS Anywhere column.
@@ -56,7 +56,7 @@ To contribute documentation describing how to use third-party software products 
 
 ### Docs for third-party software in EKS Anywhere
 
-Documentation PRs for EKS Anywhere that describe third-party software that is included in EKS Anywhere are acceptable, provided they meet the quality standards described in the https://quip-amazon.com/pAtZAXNGp4Dg/EKS-Anywhere-docs-contributor-guide#temp:C:aCPbdcf16d05a9246a79cb0e8b45 below. This includes:
+Documentation PRs for EKS Anywhere that describe third-party software that is included in EKS Anywhere are acceptable, provided they meet the quality standards described in the Tips described below. This includes:
 
 * Software built into EKS Anywhere (for example, [Cilium docs](https://anywhere.eks.amazonaws.com/docs/tasks/workload/networking-and-security/))
 * Supported platforms on which EKS Anywhere runs (for example, [VMware vSphere](https://anywhere.eks.amazonaws.com/docs/reference/vsphere/))
