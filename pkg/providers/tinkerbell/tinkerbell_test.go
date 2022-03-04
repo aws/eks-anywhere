@@ -8,6 +8,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
+	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -151,6 +152,8 @@ func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) 
 	ctx := context.Background()
 
 	tink.EXPECT().GetHardware(ctx).Return(hardwares, nil)
+	tink.EXPECT().GetWorkflow(ctx).Return([]*tinkworkflow.Workflow{}, nil)
+
 	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
 
 	provider := newProviderWithKubectlWithTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkerbellClients)
@@ -184,6 +187,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithStackedEtcd(t *testing.T) {
 	ctx := context.Background()
 
 	tink.EXPECT().GetHardware(ctx).Return(hardwares, nil)
+	tink.EXPECT().GetWorkflow(ctx).Return([]*tinkworkflow.Workflow{}, nil)
 	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
 
 	provider := newProviderWithKubectlWithTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkerbellClients)
@@ -210,11 +214,15 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 	tinkerbellClients := TinkerbellClients{tink, pbnjClient}
 	cluster := &types.Cluster{Name: "test"}
 	hardwares := setupHardware()
+
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
+
 	tink.EXPECT().GetHardware(ctx).Return(hardwares, nil)
+	tink.EXPECT().GetWorkflow(ctx).Return([]*tinkworkflow.Workflow{}, nil)
+
 	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
 	provider := newProviderWithKubectlWithTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkerbellClients)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {

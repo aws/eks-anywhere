@@ -8,7 +8,8 @@ import (
 	"os"
 	"time"
 
-	tink "github.com/tinkerbell/tink/protos/hardware"
+	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
+	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -80,7 +81,8 @@ type ProviderKubectlClient interface {
 }
 
 type ProviderTinkClient interface {
-	GetHardware(ctx context.Context) ([]*tink.Hardware, error)
+	GetHardware(ctx context.Context) ([]*tinkhardware.Hardware, error)
+	GetWorkflow(ctx context.Context) ([]*tinkworkflow.Workflow, error)
 }
 
 type ProviderPbnjClient interface {

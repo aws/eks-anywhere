@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/tinkerbell/tink/protos/hardware"
+	"github.com/tinkerbell/tink/protos/workflow"
 )
 
 const (
@@ -62,4 +63,27 @@ func (t *Tink) GetHardware(ctx context.Context) ([]*hardware.Hardware, error) {
 	}
 
 	return hardwareList, nil
+}
+
+func (t *Tink) GetWorkflow(ctx context.Context) ([]*workflow.Workflow, error) {
+	params := []string{"workflow", "get", "--format", "json"}
+	data, err := t.Command(ctx, params...).WithEnvVars(t.envMap).Run()
+	if err != nil {
+		return nil, fmt.Errorf("error getting workflow list: %v", err)
+	}
+	var workflowList []*workflow.Workflow
+	workflowString := data.String()
+
+	if len(workflowString) > 0 {
+		workflowListData := map[string][]*workflow.Workflow{}
+
+		if err = json.Unmarshal([]byte(workflowString), &workflowListData); err != nil {
+			return nil, fmt.Errorf("error unmarshling workflow json: %v", err)
+		}
+		if len(workflowListData["data"]) > 0 {
+			workflowList = append(workflowList, workflowListData["data"]...)
+		}
+	}
+
+	return workflowList, nil
 }
