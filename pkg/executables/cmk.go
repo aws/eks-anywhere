@@ -19,6 +19,7 @@ var cmkConfigTemplate string
 
 const (
 	cmkConfigFileName = "cmk_tmp.ini"
+	Shared            = "Shared"
 )
 
 // Cmk this type will be used once the CloudStack provider is added to the repository
@@ -214,7 +215,7 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zoneR
 		filterArgs = append(filterArgs, fmt.Sprintf("id=\"%s\"", zoneRef.Network.Value))
 	}
 	if multipleZone {
-		filterArgs = append(filterArgs, fmt.Sprintf("type=\"%s\"", "Shared"))
+		filterArgs = append(filterArgs, fmt.Sprintf("type=\"%s\"", Shared))
 	}
 	// account must be specified within a domainId
 	// domainId can be specified without account
@@ -242,7 +243,7 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zoneR
 	}
 	if result.Len() == 0 {
 		if multipleZone {
-			return fmt.Errorf("%s network %s not found in zoneRef %s", "Shared", zoneRef.Network.Value, zoneRef.Zone.Value)
+			return fmt.Errorf("%s network %s not found in zoneRef %s", Shared, zoneRef.Network.Value, zoneRef.Zone.Value)
 		} else {
 			return fmt.Errorf("network %s not found in zoneRef %s", zoneRef.Network.Value, zoneRef.Zone.Value)
 		}
@@ -270,7 +271,7 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zoneR
 		return fmt.Errorf("duplicate network %s found", zoneRef.Network.Value)
 	} else if len(networks) == 0 {
 		if multipleZone {
-			return fmt.Errorf("%s network %s not found in zoneRef %s", "Shared", zoneRef.Network.Value, zoneRef.Zone.Value)
+			return fmt.Errorf("%s network %s not found in zoneRef %s", Shared, zoneRef.Network.Value, zoneRef.Zone.Value)
 		} else {
 			return fmt.Errorf("network %s not found in zoneRef %s", zoneRef.Network.Value, zoneRef.Zone.Value)
 		}
