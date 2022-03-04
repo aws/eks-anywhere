@@ -19,6 +19,7 @@ func appendArgs(new ...string) cmkCommandArgs {
 		*args = append(*args, new...)
 	}
 }
+
 func withCloudStackDomainId(domainId string) cmkCommandArgs {
 	return appendArgs(fmt.Sprintf("domainid=\"%s\"", domainId))
 }
