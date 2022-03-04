@@ -31,18 +31,18 @@ type Cmk struct {
 
 func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domainId string, zoneId string, account string, template v1alpha1.CloudStackResourceRef) error {
 	command := newCmkCommand("list templates")
-	ApplyCmkArgs(&command, appendArgs("templatefilter=all"), appendArgs("listall=true"))
+	applyCmkArgs(&command, appendArgs("templatefilter=all"), appendArgs("listall=true"))
 	if template.Type == v1alpha1.Id {
-		ApplyCmkArgs(&command, WithCloudStackId(template.Value))
+		applyCmkArgs(&command, withCloudStackId(template.Value))
 	} else {
-		ApplyCmkArgs(&command, WithCloudStackName(template.Value))
+		applyCmkArgs(&command, withCloudStackName(template.Value))
 	}
 
-	ApplyCmkArgs(&command, WithCloudStackZoneId(zoneId))
+	applyCmkArgs(&command, withCloudStackZoneId(zoneId))
 	if len(domainId) > 0 {
-		ApplyCmkArgs(&command, WithCloudStackDomainId(domainId))
+		applyCmkArgs(&command, withCloudStackDomainId(domainId))
 		if len(account) > 0 {
-			ApplyCmkArgs(&command, WithCloudStackAccount(account))
+			applyCmkArgs(&command, withCloudStackAccount(account))
 		}
 	}
 	result, err := c.exec(ctx, command...)
@@ -71,11 +71,11 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domainId string, zone
 func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, zoneId string, serviceOffering v1alpha1.CloudStackResourceRef) error {
 	command := newCmkCommand("list serviceofferings")
 	if serviceOffering.Type == v1alpha1.Id {
-		ApplyCmkArgs(&command, WithCloudStackId(serviceOffering.Value))
+		applyCmkArgs(&command, withCloudStackId(serviceOffering.Value))
 	} else {
-		ApplyCmkArgs(&command, WithCloudStackName(serviceOffering.Value))
+		applyCmkArgs(&command, withCloudStackName(serviceOffering.Value))
 	}
-	ApplyCmkArgs(&command, WithCloudStackZoneId(zoneId))
+	applyCmkArgs(&command, withCloudStackZoneId(zoneId))
 	result, err := c.exec(ctx, command...)
 	if err != nil {
 		return fmt.Errorf("error getting service offerings info: %v", err)
@@ -103,13 +103,13 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, zoneId string,
 func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string, account string, affinityGroupIds []string) error {
 	for _, affinityGroupId := range affinityGroupIds {
 		command := newCmkCommand("list affinitygroups")
-		ApplyCmkArgs(&command, WithCloudStackId(affinityGroupId))
+		applyCmkArgs(&command, withCloudStackId(affinityGroupId))
 		// account must be specified with a domainId
 		// domainId can be specified without account
 		if len(domainId) > 0 {
-			ApplyCmkArgs(&command, WithCloudStackDomainId(domainId))
+			applyCmkArgs(&command, withCloudStackDomainId(domainId))
 			if len(account) > 0 {
-				ApplyCmkArgs(&command, WithCloudStackAccount(account))
+				applyCmkArgs(&command, withCloudStackAccount(account))
 			}
 		}
 
@@ -143,9 +143,9 @@ func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudSt
 		command := newCmkCommand("list zones")
 		zone := z.Zone
 		if zone.Type == v1alpha1.Id {
-			ApplyCmkArgs(&command, WithCloudStackId(zone.Value))
+			applyCmkArgs(&command, withCloudStackId(zone.Value))
 		} else {
-			ApplyCmkArgs(&command, WithCloudStackName(zone.Value))
+			applyCmkArgs(&command, withCloudStackName(zone.Value))
 		}
 		result, err := c.exec(ctx, command...)
 		if err != nil {
@@ -176,7 +176,7 @@ func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudSt
 func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha1.CloudStackResourceIdentifier, error) {
 	domainIdentifier := v1alpha1.CloudStackResourceIdentifier{Name: domain, Id: ""}
 	command := newCmkCommand("list domains")
-	ApplyCmkArgs(&command, WithCloudStackName(domain))
+	applyCmkArgs(&command, withCloudStackName(domain))
 	result, err := c.exec(ctx, command...)
 	if err != nil {
 		return domainIdentifier, fmt.Errorf("error getting domain info: %v", err)
@@ -207,17 +207,17 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha
 func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zoneRef v1alpha1.CloudStackZoneRef, zones []v1alpha1.CloudStackResourceIdentifier, account string, multipleZone bool) error {
 	command := newCmkCommand("list networks")
 	if zoneRef.Network.Type == v1alpha1.Id {
-		ApplyCmkArgs(&command, WithCloudStackId(zoneRef.Network.Value))
+		applyCmkArgs(&command, withCloudStackId(zoneRef.Network.Value))
 	}
 	if multipleZone {
-		ApplyCmkArgs(&command, WithCloudStackNetworkType(Shared))
+		applyCmkArgs(&command, withCloudStackNetworkType(Shared))
 	}
 	// account must be specified within a domainId
 	// domainId can be specified without account
 	if len(domainId) > 0 {
-		ApplyCmkArgs(&command, WithCloudStackDomainId(domainId))
+		applyCmkArgs(&command, withCloudStackDomainId(domainId))
 		if len(account) > 0 {
-			ApplyCmkArgs(&command, WithCloudStackAccount(account))
+			applyCmkArgs(&command, withCloudStackAccount(account))
 		}
 	}
 	var zoneId string
@@ -230,7 +230,7 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zoneR
 			return fmt.Errorf("error getting zone id by name: %v", err)
 		}
 	}
-	ApplyCmkArgs(&command, WithCloudStackZoneId(zoneId))
+	applyCmkArgs(&command, withCloudStackZoneId(zoneId))
 	result, err := c.exec(ctx, command...)
 	if err != nil {
 		return fmt.Errorf("error getting network info: %v", err)
@@ -284,7 +284,7 @@ func getZoneIdByName(zones []v1alpha1.CloudStackResourceIdentifier, zoneName str
 
 func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string, domainId string) error {
 	command := newCmkCommand("list accounts")
-	ApplyCmkArgs(&command, WithCloudStackName(account), WithCloudStackDomainId(domainId))
+	applyCmkArgs(&command, withCloudStackName(account), withCloudStackDomainId(domainId))
 	result, err := c.exec(ctx, command...)
 	if err != nil {
 		return fmt.Errorf("error getting accounts info: %v", err)

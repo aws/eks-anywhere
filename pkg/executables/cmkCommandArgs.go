@@ -2,43 +2,43 @@ package executables
 
 import "fmt"
 
-type CmkCommandArgs func(*[]string)
+type cmkCommandArgs func(*[]string)
 
 func newCmkCommand(command string) []string {
 	return []string{command}
 }
 
-func ApplyCmkArgs(params *[]string, args ...CmkCommandArgs) {
+func applyCmkArgs(params *[]string, args ...cmkCommandArgs) {
 	for _, arg := range args {
 		arg(params)
 	}
 }
 
-func appendArgs(new ...string) CmkCommandArgs {
+func appendArgs(new ...string) cmkCommandArgs {
 	return func(args *[]string) {
 		*args = append(*args, new...)
 	}
 }
-func WithCloudStackDomainId(domainId string) CmkCommandArgs {
+func withCloudStackDomainId(domainId string) cmkCommandArgs {
 	return appendArgs(fmt.Sprintf("domainid=\"%s\"", domainId))
 }
 
-func WithCloudStackAccount(account string) CmkCommandArgs {
+func withCloudStackAccount(account string) cmkCommandArgs {
 	return appendArgs(fmt.Sprintf("account=\"%s\"", account))
 }
 
-func WithCloudStackZoneId(zoneId string) CmkCommandArgs {
+func withCloudStackZoneId(zoneId string) cmkCommandArgs {
 	return appendArgs(fmt.Sprintf("zoneid=\"%s\"", zoneId))
 }
 
-func WithCloudStackNetworkType(networkType string) CmkCommandArgs {
+func withCloudStackNetworkType(networkType string) cmkCommandArgs {
 	return appendArgs(fmt.Sprintf("type=\"%s\"", networkType))
 }
 
-func WithCloudStackId(id string) CmkCommandArgs {
+func withCloudStackId(id string) cmkCommandArgs {
 	return appendArgs(fmt.Sprintf("id=\"%s\"", id))
 }
 
-func WithCloudStackName(name string) CmkCommandArgs {
+func withCloudStackName(name string) cmkCommandArgs {
 	return appendArgs(fmt.Sprintf("name=\"%s\"", name))
 }
