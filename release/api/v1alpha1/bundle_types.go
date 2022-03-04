@@ -279,13 +279,16 @@ type Actions struct {
 
 // Tinkerbell hook OS
 type Hook struct {
-	Arm HookOS `json:"arm"`
-	Amd HookOS `json:"amd"`
+	Bootkit   Image    `json:"bootkit"`
+	Docker    Image    `json:"docker"`
+	Kernel    Image    `json:"kernel"`
+	Initramfs HookArch `json:"initramfs"`
+	Vmlinuz   HookArch `json:"vmlinuz"`
 }
 
-type HookOS struct {
-	Initramfs Archive `json:"initramfs"`
-	Vmlinuz   Archive `json:"vmlinuz"`
+type HookArch struct {
+	Arm Archive `json:"arm"`
+	Amd Archive `json:"amd"`
 }
 
 type HaproxyBundle struct {

@@ -38,13 +38,53 @@ func (r *ReleaseConfig) GethookAssets() ([]Artifact, error) {
 	sourcedFromBranch := r.BuildRepoBranchName
 	latestPath := getLatestUploadDestination(sourcedFromBranch)
 
+	hookImages := []string{
+		"hook-bootkit",
+		"hook-docker",
+		"hook-kernel",
+	}
+	for _, image := range hookImages {
+		repoName := fmt.Sprintf("tinkerbell/%s", image)
+		tagOptions := map[string]string{
+			"gitTag":      gitTag,
+			"projectPath": hookProjectPath,
+		}
+
+		sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(image, repoName, tagOptions)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+		if sourcedFromBranch != r.BuildRepoBranchName {
+			gitTag, err = r.readGitTag(hookProjectPath, sourcedFromBranch)
+			if err != nil {
+				return nil, errors.Cause(err)
+			}
+			tagOptions["gitTag"] = gitTag
+		}
+		releaseImageUri, err := r.GetReleaseImageURI(image, repoName, tagOptions)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+
+		imageArtifact := &ImageArtifact{
+			AssetName:         image,
+			SourceImageURI:    sourceImageUri,
+			ReleaseImageURI:   releaseImageUri,
+			Arch:              []string{"amd64"},
+			OS:                "linux",
+			GitTag:            gitTag,
+			ProjectPath:       hookProjectPath,
+			SourcedFromBranch: sourcedFromBranch,
+		}
+		artifacts = append(artifacts, Artifact{Image: imageArtifact})
+	}
+
 	hookArchives := []string{
 		"initramfs-aarch64",
 		"initramfs-x86_64",
 		"vmlinuz-aarch64",
 		"vmlinuz-x86_64",
 	}
-
 	for _, archive := range hookArchives {
 		sourceS3Key = archive
 		releaseName = archive

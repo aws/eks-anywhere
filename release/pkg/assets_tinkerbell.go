@@ -123,13 +123,16 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 		ClusterTemplate: bundleManifestArtifacts["cluster-template.yaml"],
 		Metadata:        bundleManifestArtifacts["metadata.yaml"],
 		Hook: anywherev1alpha1.Hook{
-			Arm: anywherev1alpha1.HookOS{
-				Initramfs: bundleArchiveArtifacts["initramfs-aarch64"],
-				Vmlinuz:   bundleArchiveArtifacts["vmlinuz-aarch64"],
+			Bootkit: bundleImageArtifacts["hook-bootkit"],
+			Docker:  bundleImageArtifacts["hook-docker"],
+			Kernel:  bundleImageArtifacts["hook-kernel"],
+			Initramfs: anywherev1alpha1.HookArch{
+				Arm: bundleArchiveArtifacts["initramfs-aarch64"],
+				Amd: bundleArchiveArtifacts["initramfs-x86_64"],
 			},
-			Amd: anywherev1alpha1.HookOS{
-				Initramfs: bundleArchiveArtifacts["initramfs-x86_64"],
-				Vmlinuz:   bundleArchiveArtifacts["vmlinuz-x86_64"],
+			Vmlinuz: anywherev1alpha1.HookArch{
+				Arm: bundleArchiveArtifacts["vmlinuz-aarch64"],
+				Amd: bundleArchiveArtifacts["vmlinuz-x86_64"],
 			},
 		},
 	}
