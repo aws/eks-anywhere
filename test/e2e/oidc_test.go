@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -31,7 +32,17 @@ func TestDockerKubernetes121OIDC(t *testing.T) {
 	test := framework.NewClusterE2ETest(t,
 		framework.NewDocker(t),
 		framework.WithOIDC(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+	)
+	runOIDCFlow(test)
+}
+
+func TestDockerKubernetes122OIDC(t *testing.T) {
+	test := framework.NewClusterE2ETest(t,
+		framework.NewDocker(t),
+		framework.WithOIDC(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runOIDCFlow(test)
 }
@@ -58,6 +69,20 @@ func TestVSphereKubernetes121OIDC(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runOIDCFlow(test)
+}
+
+func TestVSphereKubernetes122OIDC(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu121()),
+		framework.WithOIDC(),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runOIDCFlow(test)
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -30,8 +31,8 @@ func runTaintsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 // remove a taint from a node
 // add a taint to a node which already has another taint
 // add a taint to a node which had no taints
-func TestVSphereKubernetes121Taints(t *testing.T) {
-	provider := ubuntu121ProviderWithTaints(t)
+func TestVSphereKubernetes122Taints(t *testing.T) {
+	provider := ubuntu122ProviderWithTaints(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
@@ -42,11 +43,12 @@ func TestVSphereKubernetes121Taints(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
 		test,
-		v1alpha1.Kube121,
+		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithTaint(framework.NoExecuteTaint())),
 			api.WithWorkerNodeGroup(worker1, api.WithTaint(framework.NoExecuteTaint())),
@@ -82,7 +84,7 @@ func TestVSphereKubernetes121TaintsBottlerocket(t *testing.T) {
 	)
 }
 
-func ubuntu121ProviderWithTaints(t *testing.T) *framework.VSphere {
+func ubuntu122ProviderWithTaints(t *testing.T) *framework.VSphere {
 	return framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
@@ -96,7 +98,7 @@ func ubuntu121ProviderWithTaints(t *testing.T) *framework.VSphere {
 			worker2,
 			framework.PreferNoScheduleWorkerNodeGroup(worker2, 1),
 		),
-		framework.WithUbuntu121(),
+		framework.WithUbuntu122(),
 	)
 }
 
