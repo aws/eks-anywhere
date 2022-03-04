@@ -45,7 +45,7 @@ func givenMachineConfigs(t *testing.T, fileName string) map[string]*v1alpha1.Tin
 	return machineConfigs
 }
 
-func newProviderWithKubectlTink(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, tinkerbellClients TinkerbellClients) *tinkerbellProvider {
+func newProviderWithKubectlWithTink(t *testing.T, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient, tinkerbellClients TinkerbellClients) *tinkerbellProvider {
 	return newProvider(
 		t,
 		datacenterConfig,
@@ -134,14 +134,14 @@ func setupHardware() []*tinkhardware.Hardware {
 	return hardwares
 }
 
-func TestTinkerbellProviderGenerateDeploymentFile(t *testing.T) {
+func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) {
 	setupContext(t)
-	clusterSpecManifest := "cluster_tinkerbell.yaml"
+	clusterSpecManifest := "cluster_tinkerbell_external_etcd.yaml"
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	tinkctl := mocks.NewMockProviderTinkClient(mockCtrl)
+	tink := mocks.NewMockProviderTinkClient(mockCtrl)
 	pbnjClient := mocks.NewMockProviderPbnjClient(mockCtrl)
-	tinkerbellClients := TinkerbellClients{tinkctl, pbnjClient}
+	tinkerbellClients := TinkerbellClients{tink, pbnjClient}
 	cluster := &types.Cluster{Name: "test"}
 	hardwares := setupHardware()
 
@@ -150,11 +150,10 @@ func TestTinkerbellProviderGenerateDeploymentFile(t *testing.T) {
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
 
-	tinkctl.EXPECT().GetHardware(ctx).Return(hardwares, nil)
+	tink.EXPECT().GetHardware(ctx).Return(hardwares, nil)
 	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
 
-	provider := newProviderWithKubectlTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkerbellClients)
-
+	provider := newProviderWithKubectlWithTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkerbellClients)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
@@ -164,7 +163,40 @@ func TestTinkerbellProviderGenerateDeploymentFile(t *testing.T) {
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 
-	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp.yaml")
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_external_etcd.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_cluster_tinkerbell_md.yaml")
+}
+
+func TestTinkerbellProviderGenerateDeploymentFileWithStackedEtcd(t *testing.T) {
+	setupContext(t)
+	clusterSpecManifest := "cluster_tinkerbell_stacked_etcd.yaml"
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	tink := mocks.NewMockProviderTinkClient(mockCtrl)
+	pbnjClient := mocks.NewMockProviderPbnjClient(mockCtrl)
+	tinkerbellClients := TinkerbellClients{tink, pbnjClient}
+	cluster := &types.Cluster{Name: "test"}
+	hardwares := setupHardware()
+
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+
+	tink.EXPECT().GetHardware(ctx).Return(hardwares, nil)
+	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
+
+	provider := newProviderWithKubectlWithTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkerbellClients)
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_stacked_etcd.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_cluster_tinkerbell_md.yaml")
 }
 
@@ -173,18 +205,18 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 	clusterSpecManifest := "cluster_tinkerbell_multiple_node_groups.yaml"
 	mockCtrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	tinkctl := mocks.NewMockProviderTinkClient(mockCtrl)
+	tink := mocks.NewMockProviderTinkClient(mockCtrl)
 	pbnjClient := mocks.NewMockProviderPbnjClient(mockCtrl)
-	tinkerbellClients := TinkerbellClients{tinkctl, pbnjClient}
+	tinkerbellClients := TinkerbellClients{tink, pbnjClient}
 	cluster := &types.Cluster{Name: "test"}
 	hardwares := setupHardware()
 	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
 	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
 	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
 	ctx := context.Background()
-	tinkctl.EXPECT().GetHardware(ctx).Return(hardwares, nil)
+	tink.EXPECT().GetHardware(ctx).Return(hardwares, nil)
 	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
-	provider := newProviderWithKubectlTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkerbellClients)
+	provider := newProviderWithKubectlWithTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, tinkerbellClients)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)
 	}
@@ -194,6 +226,6 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 
-	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp.yaml")
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_cluster_tinkerbell_cp_external_etcd.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_tinkerbell_md_multiple_node_groups.yaml")
 }
