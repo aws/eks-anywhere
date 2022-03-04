@@ -6,6 +6,8 @@ import (
 	"os"
 )
 
+const HeaderNotExist = -1
+
 type CsvParser struct {
 	HeadersIndex
 	csvFile *os.File
@@ -13,6 +15,7 @@ type CsvParser struct {
 }
 
 type HeadersIndex struct {
+	GuidIndex        int
 	HostnameIndex    int
 	IpAddressIndex   int
 	GatewayIndex     int
@@ -64,6 +67,11 @@ func (c *CsvParser) parseHeaders() error {
 	m := make(map[string]int)
 	for i, header := range headers {
 		m[header] = i
+	}
+
+	// guid is optional
+	if c.GuidIndex, ok = m[guid]; !ok {
+		c.GuidIndex = HeaderNotExist
 	}
 
 	if c.HostnameIndex, ok = m[hostname]; !ok {

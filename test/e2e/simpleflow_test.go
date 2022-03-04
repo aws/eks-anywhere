@@ -20,6 +20,13 @@ func init() {
 	}
 }
 
+func runTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.CreateCluster()
+	test.DeleteCluster()
+}
+
 func runSimpleFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.CreateCluster()
@@ -131,4 +138,24 @@ func TestVSphereKubernetes120BottleRocketDifferentNamespaceSimpleFlow(t *testing
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
 	)
 	runSimpleFlow(test)
+}
+
+func TestTinkerbellKubernetes120SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu120Tinkerbell()),
+		framework.WithEnvVar("TINKERBELL_PROVIDER", "true"),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
+func TestTinkerbellKubernetes121SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu121Tinkerbell()),
+		framework.WithEnvVar("TINKERBELL_PROVIDER", "true"),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+	)
+	runTinkerbellSimpleFlow(test)
 }
