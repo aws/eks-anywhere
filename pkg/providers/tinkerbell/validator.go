@@ -2,11 +2,13 @@ package tinkerbell
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
 
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
+	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -121,15 +123,24 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 	if err != nil {
 		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
 	}
-
 	logger.MarkPass("Connected to tinkerbell stack")
 
 	if err := v.hardwareConfig.ParseHardwareConfig(hardwareConfigFile); err != nil {
 		return fmt.Errorf("failed to get hardware Config: %v", err)
 	}
 
-	tinkHardwareMap := hardwareMap(hardwares)
-	if err := v.hardwareConfig.ValidateHardware(skipPowerActions, tinkHardwareMap); err != nil {
+	tinkHardwareMap := getHardwareMap(hardwares)
+
+	workflows, err := v.tink.GetWorkflow(ctx)
+	if err != nil {
+		return fmt.Errorf("%v", err)
+	}
+	tinkWorkflowMap, err := getWorkflowMap(workflows)
+	if err != nil {
+		return fmt.Errorf("error validating if the workflow exist for the given list of hardwares %v", err)
+	}
+
+	if err := v.hardwareConfig.ValidateHardware(skipPowerActions, tinkHardwareMap, tinkWorkflowMap); err != nil {
 		return fmt.Errorf("failed validating Hardware BMC refs in hardware config: %v", err)
 	}
 
@@ -274,7 +285,8 @@ func validateAddressWithPort(address string) error {
 	return nil
 }
 
-func hardwareMap(hardwareList []*tinkhardware.Hardware) map[string]*tinkhardware.Hardware {
+// getHardwareMap returns all the hardwares on the tinkerbell stack in the form of map with hardware uuid as a key
+func getHardwareMap(hardwareList []*tinkhardware.Hardware) map[string]*tinkhardware.Hardware {
 	hardwareMap := make(map[string]*tinkhardware.Hardware)
 
 	for _, data := range hardwareList {
@@ -282,4 +294,22 @@ func hardwareMap(hardwareList []*tinkhardware.Hardware) map[string]*tinkhardware
 	}
 
 	return hardwareMap
+}
+
+// getWorkflowMap returns all the workflows on the tinkerbell stack in the form of map with mac address as a key
+func getWorkflowMap(workflowList []*tinkworkflow.Workflow) (map[string]*tinkworkflow.Workflow, error) {
+	workflowMap := make(map[string]*tinkworkflow.Workflow)
+
+	for _, data := range workflowList {
+		var macAddress map[string]string
+
+		if err := json.Unmarshal([]byte(data.GetHardware()), &macAddress); err != nil {
+			return nil, fmt.Errorf("error unmarshling workflow data: %v", err)
+		}
+		for _, mac := range macAddress {
+			workflowMap[mac] = data
+		}
+	}
+
+	return workflowMap, nil
 }

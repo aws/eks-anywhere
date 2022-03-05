@@ -8,6 +8,7 @@ import (
 	pbnjv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/pbnj/api/v1alpha1"
 	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
+	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/yaml"
@@ -70,7 +71,7 @@ func (hc *HardwareConfig) setHardwareConfigFromFile(hardwareFileName string) err
 	return nil
 }
 
-func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, tinkHardwareMap map[string]*tinkhardware.Hardware) error {
+func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, tinkHardwareMap map[string]*tinkhardware.Hardware, tinkWorkflowMap map[string]*tinkworkflow.Workflow) error {
 	bmcRefMap := map[string]*tinkv1alpha1.Hardware{}
 	if !skipPowerActions {
 		bmcRefMap = hc.initBmcRefMap()
@@ -87,6 +88,14 @@ func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, tinkHardwareMa
 
 		if _, ok := tinkHardwareMap[hw.Spec.ID]; !ok {
 			return fmt.Errorf("hardware id '%s' is not registered with tinkerbell stack", hw.Spec.ID)
+		}
+
+		hardwareInterface := tinkHardwareMap[hw.Spec.ID].GetNetwork().GetInterfaces()
+		for _, interfaces := range hardwareInterface {
+			mac := interfaces.GetDhcp()
+			if _, ok := tinkWorkflowMap[mac.Mac]; ok {
+				return fmt.Errorf("workflow %s already exixts for the hardware id %s", tinkWorkflowMap[mac.Mac].Id, hw.Spec.ID)
+			}
 		}
 
 		if !skipPowerActions {

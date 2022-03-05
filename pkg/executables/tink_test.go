@@ -52,3 +52,12 @@ func TestTinkGetHardware(t *testing.T) {
 		t.Errorf("Tink.GetHardware() error = %v, want nil", err)
 	}
 }
+
+func TestTinkGetWorkflow(t *testing.T) {
+	tink, ctx, e := newTink(t)
+	expectedParam := []string{"workflow", "get", "--format", "json"}
+	expectCommand(e, ctx, expectedParam...).withEnvVars(envMap).to().Return(bytes.Buffer{}, nil)
+	if _, err := tink.GetWorkflow(ctx); err != nil {
+		t.Errorf("Tink.GetWorkflow() error = %v, want nil", err)
+	}
+}
