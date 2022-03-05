@@ -2,6 +2,8 @@
 
 package e2e
 
-const worker0 = "worker-0"
-const worker1 = "worker-1"
-const worker2 = "worker-2"
+const (
+	worker0 = "worker-0"
+	worker1 = "worker-1"
+	worker2 = "worker-2"
+)

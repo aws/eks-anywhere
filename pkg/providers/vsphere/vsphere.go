@@ -418,6 +418,11 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		if len(existingDatacenter) > 0 {
 			return fmt.Errorf("VSphereDatacenter %s already exists", p.datacenterConfig.Name)
 		}
+		for _, identityProviderRef := range clusterSpec.Spec.IdentityProviderRefs {
+			if identityProviderRef.Kind == v1alpha1.OIDCConfigKind {
+				clusterSpec.OIDCConfig.SetManagedBy(p.clusterConfig.ManagedBy())
+			}
+		}
 	}
 
 	if !p.skipIpCheck {

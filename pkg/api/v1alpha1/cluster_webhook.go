@@ -150,18 +150,37 @@ func validateImmutableFieldsCluster(new, old *Cluster) field.ErrorList {
 			field.Invalid(field.NewPath("spec", "GitOpsRef"), new.Spec.GitOpsRef, "field is immutable"))
 	}
 
+	if !old.IsSelfManaged() {
+		clusterlog.Info("Cluster config is associated with workload cluster", "name", old.Name)
+
+		oldAWSIamConfig, newAWSIamConfig := &Ref{}, &Ref{}
+		for _, identityProvider := range new.Spec.IdentityProviderRefs {
+			if identityProvider.Kind == AWSIamConfigKind {
+				newAWSIamConfig = &identityProvider
+			}
+		}
+
+		for _, identityProvider := range old.Spec.IdentityProviderRefs {
+			if identityProvider.Kind == AWSIamConfigKind {
+				oldAWSIamConfig = &identityProvider
+			}
+		}
+
+		if !oldAWSIamConfig.Equal(newAWSIamConfig) {
+			allErrs = append(
+				allErrs,
+				field.Invalid(field.NewPath("spec", "AWS Iam Config"), newAWSIamConfig.Kind, "field is immutable"))
+		}
+		return allErrs
+	}
+
+	clusterlog.Info("Cluster config is associated with management cluster", "name", old.Name)
+
 	if !RefSliceEqual(new.Spec.IdentityProviderRefs, old.Spec.IdentityProviderRefs) {
 		allErrs = append(
 			allErrs,
 			field.Invalid(field.NewPath("spec", "IdentityProviderRefs"), new.Spec.IdentityProviderRefs, "field is immutable"))
 	}
-
-	if !old.IsSelfManaged() {
-		clusterlog.Info("Cluster config is associated with workload cluster", "name", old.Name)
-		return allErrs
-	}
-
-	clusterlog.Info("Cluster config is associated with management cluster", "name", old.Name)
 
 	if old.Spec.KubernetesVersion != new.Spec.KubernetesVersion {
 		allErrs = append(
