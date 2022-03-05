@@ -152,6 +152,14 @@ func (r *ReleaseConfig) renameArtifacts(artifacts map[string][]Artifact) error {
 
 				// Change the names of the checksum files
 				checksumExtensions := []string{".sha256", ".sha512"}
+
+				// Adding a special case for tinkerbell/hook project.
+				// The project builds linux kernel files that are not stored as tarballs and currently do not have SHA checksums.
+				// TODO(pokearu): Add logic to generate SHA for hook project
+				if artifact.Archive.ProjectPath == hookProjectPath {
+					checksumExtensions = []string{}
+				}
+
 				for _, extension := range checksumExtensions {
 					oldChecksumFile := oldArtifactFile + extension
 					newChecksumFile := newArtifactFile + extension
@@ -255,6 +263,14 @@ func (r *ReleaseConfig) downloadArtifacts(eksArtifacts map[string][]Artifact) er
 					".sha256",
 					".sha512",
 				}
+
+				// Adding a special case for tinkerbell/hook project.
+				// The project builds linux kernel files that are not stored as tarballs and currently do not have SHA checksums.
+				// TODO(pokearu): Add logic to generate SHA for hook project
+				if artifact.Archive.ProjectPath == hookProjectPath {
+					checksumExtensions = []string{}
+				}
+
 				for _, extension := range checksumExtensions {
 					objectShasumFileName := fmt.Sprintf("%s%s", sourceS3Key, extension)
 					objectShasumFileKey := filepath.Join(sourceS3Prefix, objectShasumFileName)
