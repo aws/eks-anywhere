@@ -369,6 +369,13 @@ func (r *ReleaseConfig) UploadArtifacts(eksArtifacts map[string][]Artifact) erro
 				}
 
 				checksumExtensions := []string{".sha256", ".sha512"}
+				// Adding a special case for tinkerbell/hook project.
+				// The project builds linux kernel files that are not stored as tarballs and currently do not have SHA checksums.
+				// TODO(pokearu): Add logic to generate SHA for hook project
+				if artifact.Archive.ProjectPath == hookProjectPath {
+					checksumExtensions = []string{}
+				}
+
 				for _, extension := range checksumExtensions {
 					checksumFile := filepath.Join(artifact.Archive.ArtifactPath, artifact.Archive.ReleaseName) + extension
 					fmt.Printf("Checksum - %s\n", checksumFile)
