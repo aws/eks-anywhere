@@ -49,6 +49,8 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
     * Somewhere on the third-party site, if there are no instructions available on the EKS Anywhere site
   * [Compare EKS Anywhere and EKS]({{< relref "../concepts/eksafeatures/" >}}): Add supported third-party solutions to the Amazon EKS Anywhere column.
   Only link to the partner page for now.
+* **Workshop content** should contain organized links to existing documentation pages.
+  The workshop content should not duplicate existing documentation pages or contain guides that are not part of the main documentation.
 
 ## Contributing docs for third-party solutions
 
