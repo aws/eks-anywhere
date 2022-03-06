@@ -83,3 +83,4 @@ In line with these general guidelines, we recommend that even acceptable third-p
 * **Not be marketing oriented**. The content shouldn’t sell a third-party products or make vague claims of quality.
 * **Not outside the scope of EKS Anywhere**:  Just because some projects or products of a partner are appropriate for EKS Anywhere docs, it doesn’t mean that any project or product by that partner can be documented in EKS Anywhere.
 * **Stick to the facts**:  So, for example, docs about third-party software could say: “To set up load balancer ABC, do XYZ” or “Make these modifications to improve speed and efficiency.” It should not make blanket statements like: “ABC load balancer is the best one in the industry.”
+* **EKS features**: Features that relate to EKS which runs in AWS or requires an AWS account should link to [the official documentation](https://docs.aws.amazon.com/eks/latest/) as much as possible.
