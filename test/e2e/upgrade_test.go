@@ -139,6 +139,7 @@ func TestVSphereKubernetes122UbuntuControlPlaneNodeUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -156,6 +157,7 @@ func TestVSphereKubernetes122UbuntuWorkerNodeUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,

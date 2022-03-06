@@ -38,7 +38,7 @@ func TestVSphereKubernetes122Taints(t *testing.T) {
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube121),
+			api.WithKubernetesVersion(v1alpha1.Kube122),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
