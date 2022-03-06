@@ -42,7 +42,7 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
   In kubectl examples, you can point to those files using: `https://anywhere.eks.amazonaws.com/manifests/whatever.yaml`
 * **Generic instructions for creating a cluster** should go into the [getting started](https://anywhere.eks.amazonaws.com/docs/getting-started/) section in either:
    * [Install EKS Anywhere](https://anywhere.eks.amazonaws.com/docs/getting-started/install/) installation guide: For prerequisites and procedures related to setting up the Administrative machine.
-   * [Creating a local cluster](https://anywhere.eks.amazonaws.com/docs/getting-started/local-environment/) or [production cluster](https://anywhere.eks.amazonaws.com/docs/getting-started/production-environment/): For simple instructions for a Docker or vSphere installation ,respectively.
+   * [Creating a local cluster](https://anywhere.eks.amazonaws.com/docs/getting-started/local-environment/) or [production cluster](https://anywhere.eks.amazonaws.com/docs/getting-started/production-environment/): For simple instructions for a Docker or vSphere installation, respectively.
 * **Instructions that are specific to an EKS Anywhere provider** should go into the appropriate provider section. Currently, [vSphere](https://anywhere.eks.amazonaws.com/docs/reference/vsphere/) is the only supported production quality provider so far.
   * [Add integrations to cluster]({{< relref "../tasks/cluster/cluster-integrations/" >}}): Add names of suggested third-party tools. Then Link the names of providers to:
     * EKS Anywhere docs instructions for configuring that feature, if instructions are available or
