@@ -58,7 +58,7 @@ To contribute documentation describing how to use third-party software products 
 
 Documentation PRs for EKS Anywhere that describe third-party software that is included in EKS Anywhere are acceptable, provided they meet the quality standards described in the Tips described below. This includes:
 
-* Software built into EKS Anywhere (for example, [Cilium docs](https://anywhere.eks.amazonaws.com/docs/tasks/workload/networking-and-security/))
+* Software bundled with EKS Anywhere (for example, [Cilium docs](https://anywhere.eks.amazonaws.com/docs/tasks/workload/networking-and-security/))
 * Supported platforms on which EKS Anywhere runs (for example, [VMware vSphere](https://anywhere.eks.amazonaws.com/docs/reference/vsphere/))
 * Curated software that is packaged by the EKS Anywhere project to run EKS Anywhere. This includes documentation for Harbor local registry, Ingress controller, and Prometheus, Grafana, and Fluentd monitoring and logging.
 
