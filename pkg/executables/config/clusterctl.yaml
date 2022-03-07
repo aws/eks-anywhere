@@ -9,6 +9,10 @@ providers:
     type: "InfrastructureProvider"
     version: "{{.TinkerbellProviderVersion}}"
     {{- end }}
+  - name: "cloudstack"
+    url: "{{.dir}}/infrastructure-cloudstack/{{.CloudStackProviderVersion}}/infrastructure-components.yaml"
+    type: "InfrastructureProvider"
+    version: "{{.CloudStackProviderVersion}}"
   - name: "vsphere"
     url: "{{.dir}}/infrastructure-vsphere/{{.VSphereProviderVersion}}/infrastructure-components.yaml"
     type: "InfrastructureProvider"

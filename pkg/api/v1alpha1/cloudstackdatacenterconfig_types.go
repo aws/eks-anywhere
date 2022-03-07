@@ -32,8 +32,6 @@ type CloudStackDatacenterConfigSpec struct {
 	Zones []CloudStackZoneRef `json:"zones"`
 	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain name must also be provided.
 	Account string `json:"account,omitempty"`
-	// Insecure is used by CloudMonkey for validating the server cert presented by CloudStack (if using https) against certs in "/etc/ssl/certs"
-	Insecure bool `json:"insecure"`
 }
 
 type CloudStackResourceIdentifier struct {

@@ -2,6 +2,7 @@ package dependencies
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/clustermanager"
 	"github.com/aws/eks-anywhere/pkg/crypto"
+	"github.com/aws/eks-anywhere/pkg/decoder"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -32,6 +34,7 @@ type Dependencies struct {
 	DockerClient              *executables.Docker
 	Kubectl                   *executables.Kubectl
 	Govc                      *executables.Govc
+	Cmk                       *executables.Cmk
 	Tink                      *executables.Tink
 	Pbnj                      *pbnj.Pbnj
 	TinkerbellClients         tinkerbell.TinkerbellClients
@@ -167,6 +170,8 @@ func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
+	case v1alpha1.CloudStackDatacenterKind:
+		f.WithKubectl().WithCmk().WithWriter()
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
@@ -181,6 +186,8 @@ func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v
 		f.providerFactory = &factory.ProviderFactory{
 			DockerClient:              f.dependencies.DockerClient,
 			DockerKubectlClient:       f.dependencies.Kubectl,
+			CloudStackCmkClient:       f.dependencies.Cmk,
+			CloudStackKubectlClient:   f.dependencies.Kubectl,
 			VSphereGovcClient:         f.dependencies.Govc,
 			VSphereKubectlClient:      f.dependencies.Kubectl,
 			SnowKubectlClient:         f.dependencies.Kubectl,
@@ -251,6 +258,27 @@ func (f *Factory) WithGovc() *Factory {
 
 		f.dependencies.Govc = f.executableBuilder.BuildGovcExecutable(f.dependencies.Writer)
 		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Govc)
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithCmk() *Factory {
+	f.WithExecutableBuilder().WithWriter()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.Cmk != nil {
+			return nil
+		}
+		execConfig, err := decoder.ParseCloudStackSecret()
+		if err != nil {
+			return fmt.Errorf("building cmk executable: %v", err)
+		}
+
+		f.dependencies.Cmk = f.executableBuilder.BuildCmkExecutable(f.dependencies.Writer, *execConfig)
+		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Cmk)
 
 		return nil
 	})

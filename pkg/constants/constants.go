@@ -5,6 +5,7 @@ const (
 	EksaSystemNamespace                     = "eksa-system"
 	EksaDiagnosticsNamespace                = "eksa-diagnostics"
 	CapdSystemNamespace                     = "capd-system"
+	CapcSystemNamespace                     = "capc-system"
 	CapiKubeadmBootstrapSystemNamespace     = "capi-kubeadm-bootstrap-system"
 	CapiKubeadmControlPlaneSystemNamespace  = "capi-kubeadm-control-plane-system"
 	CapiSystemNamespace                     = "capi-system"

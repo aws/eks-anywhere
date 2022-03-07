@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/aws/eks-anywhere/pkg/decoder"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
@@ -38,6 +39,10 @@ func (b *ExecutableBuilder) BuildKubectlExecutable() *Kubectl {
 
 func (b *ExecutableBuilder) BuildGovcExecutable(writer filewriter.FileWriter) *Govc {
 	return NewGovc(b.buildExecutable(govcPath), writer)
+}
+
+func (b *ExecutableBuilder) BuildCmkExecutable(writer filewriter.FileWriter, execConfig decoder.CloudStackExecConfig) *Cmk {
+	return NewCmk(b.buildExecutable(cmkPath), writer, execConfig)
 }
 
 func (b *ExecutableBuilder) BuildTinkExecutable(tinkerbellCertUrl, tinkerbellGrpcAuthority string) *Tink {
