@@ -71,10 +71,10 @@ spec:
     apiGroup: anywhere.eks.amazonaws.com/v1alpha1
     kind: Bundles
     name: "bundle-name"
-    namespace: "namespace for resource" 
+    namespace: eksa-system 
 ```
 
-This bundles ref will allow us accurately fetch the bundle from the cluster, access the EKSD bundle, and grab the correct release manifest in the controller.
+This bundles ref will allow us to accurately fetch the bundle from the cluster, access the EKSD bundle, and grab the correct release manifest in the controller.
 
 ### Upgrading EKSD components
 
