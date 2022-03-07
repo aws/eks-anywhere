@@ -287,6 +287,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		eksAArtifactsFuncs["boots"] = r.GetBootsAssets
 		eksAArtifactsFuncs["hub"] = r.GetHubAssets
 		eksAArtifactsFuncs["cluster-api-provider-aws-snow"] = r.GetCapasAssets
+		eksAArtifactsFuncs["hook"] = r.GetHookAssets
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {

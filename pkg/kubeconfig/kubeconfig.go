@@ -2,6 +2,7 @@ package kubeconfig
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 )
 
@@ -13,6 +14,10 @@ const FromClusterFormat = "%s-eks-a-cluster.kubeconfig"
 // sandbox/sandbox-eks-a-cluster.kubeconfig
 func FromClusterName(clusterName string) string {
 	return filepath.Join(clusterName, fmt.Sprintf(FromClusterFormat, clusterName))
+}
+
+func FromEnvironment(envVariable string) string {
+	return os.Getenv(envVariable)
 }
 
 type missingFileError struct {

@@ -61,6 +61,7 @@ type ClusterClient interface {
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
 	GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error)
+	GetEksaOIDCConfig(ctx context.Context, oidcConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.OIDCConfig, error)
 	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster) error
 	DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, gitOpsName, namespace string) error
 	DeleteOIDCConfig(ctx context.Context, managementCluster *types.Cluster, oidcConfigName, oidcConfigNamespace string) error
@@ -447,6 +448,13 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 	if currentClusterSpec.VersionsBundle.EksD.Name != newClusterSpec.VersionsBundle.EksD.Name {
 		logger.V(3).Info("New eks-d release detected")
 		return true, nil
+	}
+
+	if newClusterSpec.OIDCConfig != nil && currentClusterSpec.OIDCConfig != nil {
+		if !newClusterSpec.OIDCConfig.Spec.Equal(&currentClusterSpec.OIDCConfig.Spec) {
+			logger.V(3).Info("OIDC config changes detected")
+			return true, nil
+		}
 	}
 
 	logger.V(3).Info("Clusters are the same, checking provider spec")
@@ -993,7 +1001,7 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 }
 
 func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.gitOpsFetcher(clus))
+	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.gitOpsFetcher(clus), c.oidcFetcher(clus))
 }
 
 func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {
@@ -1005,6 +1013,12 @@ func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesF
 func (c *ClusterManager) gitOpsFetcher(cluster *types.Cluster) cluster.GitOpsFetch {
 	return func(ctx context.Context, name, namespace string) (*v1alpha1.GitOpsConfig, error) {
 		return c.clusterClient.GetEksaGitOpsConfig(ctx, name, cluster.KubeconfigFile, namespace)
+	}
+}
+
+func (c *ClusterManager) oidcFetcher(cluster *types.Cluster) cluster.OIDCFetch {
+	return func(ctx context.Context, name, namespace string) (*v1alpha1.OIDCConfig, error) {
+		return c.clusterClient.GetEksaOIDCConfig(ctx, name, cluster.KubeconfigFile, namespace)
 	}
 }
 

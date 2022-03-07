@@ -41,6 +41,13 @@ func (r *OIDCConfig) ValidateUpdate(old runtime.Object) error {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a OIDCConfig but got a %T", old))
 	}
 
+	if oldOIDCConfig.IsManaged() {
+		clusterlog.Info("OIDC config is associated with workload cluster", "name", oldOIDCConfig.Name)
+		return nil
+	}
+
+	clusterlog.Info("OIDC config is associated with management cluster", "name", oldOIDCConfig.Name)
+
 	var allErrs field.ErrorList
 
 	allErrs = append(allErrs, validateImmutableOIDCFields(r, oldOIDCConfig)...)

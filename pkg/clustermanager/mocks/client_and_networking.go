@@ -272,6 +272,21 @@ func (mr *MockClusterClientMockRecorder) GetEksaGitOpsConfig(arg0, arg1, arg2, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaGitOpsConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaGitOpsConfig), arg0, arg1, arg2, arg3)
 }
 
+// GetEksaOIDCConfig mocks base method.
+func (m *MockClusterClient) GetEksaOIDCConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.OIDCConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksaOIDCConfig", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha1.OIDCConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksaOIDCConfig indicates an expected call of GetEksaOIDCConfig.
+func (mr *MockClusterClientMockRecorder) GetEksaOIDCConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaOIDCConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaOIDCConfig), arg0, arg1, arg2, arg3)
+}
+
 // GetEksaVSphereDatacenterConfig mocks base method.
 func (m *MockClusterClient) GetEksaVSphereDatacenterConfig(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha1.VSphereDatacenterConfig, error) {
 	m.ctrl.T.Helper()

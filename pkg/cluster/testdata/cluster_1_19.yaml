@@ -23,7 +23,8 @@ spec:
     name: eksa-unit-test
   kubernetesVersion: "1.19"
   workerNodeGroupConfigurations:
-    - count: 1
+    - name: workers-1
+      count: 1
       machineGroupRef:
         kind: VSphereMachineConfig
         name: eksa-unit-test

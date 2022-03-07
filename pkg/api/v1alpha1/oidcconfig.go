@@ -12,10 +12,16 @@ func GetAndValidateOIDCConfig(fileName string, refName string, clusterConfig *Cl
 	if err != nil {
 		return nil, err
 	}
-	err = validateOIDCConfig(config, refName, clusterConfig)
-	if err != nil {
+	if err = validateOIDCConfig(config); err != nil {
 		return nil, err
 	}
+	if err = validateOIDCRefName(config, refName); err != nil {
+		return nil, err
+	}
+	if err = validateOIDCNamespace(config, clusterConfig); err != nil {
+		return nil, err
+	}
+
 	return config, nil
 }
 
@@ -32,17 +38,11 @@ func getOIDCConfig(fileName string) (*OIDCConfig, error) {
 	return &config, nil
 }
 
-func validateOIDCConfig(config *OIDCConfig, refName string, clusterConfig *Cluster) error {
+func validateOIDCConfig(config *OIDCConfig) error {
 	if config == nil {
 		return nil
 	}
-	if config.Name != refName {
-		return fmt.Errorf("OIDCConfig retrieved with name %v does not match name (%v) specified in "+
-			"identityProviderRefs", config.Name, refName)
-	}
-	if config.Namespace != clusterConfig.Namespace {
-		return fmt.Errorf("OIDCConfig and Cluster objects must have the same namespace specified")
-	}
+
 	if config.Spec.ClientId == "" {
 		return fmt.Errorf("OIDCConfig clientId is required")
 	}
@@ -62,5 +62,30 @@ func validateOIDCConfig(config *OIDCConfig, refName string, clusterConfig *Clust
 	if len(config.Spec.RequiredClaims) > 1 {
 		return fmt.Errorf("only one OIDConfig RequiredClaim is supported at this time")
 	}
+	return nil
+}
+
+func validateOIDCRefName(config *OIDCConfig, refName string) error {
+	if config == nil {
+		return nil
+	}
+
+	if config.Name != refName {
+		return fmt.Errorf("OIDCConfig retrieved with name %v does not match name (%s) specified in "+
+			"identityProviderRefs", config.Name, refName)
+	}
+
+	return nil
+}
+
+func validateOIDCNamespace(config *OIDCConfig, clusterConfig *Cluster) error {
+	if config == nil {
+		return nil
+	}
+
+	if config.Namespace != clusterConfig.Namespace {
+		return fmt.Errorf("OIDCConfig and Cluster objects must have the same namespace specified")
+	}
+
 	return nil
 }
