@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -32,23 +33,24 @@ func runLabelsUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1
 	test.DeleteCluster()
 }
 
-func TestVSphereKubernetes121Labels(t *testing.T) {
-	provider := ubuntu121ProviderWithLabels(t)
+func TestVSphereKubernetes122Labels(t *testing.T) {
+	provider := ubuntu122ProviderWithLabels(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube121),
+			api.WithKubernetesVersion(v1alpha1.Kube122),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
 		test,
-		v1alpha1.Kube121,
+		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithLabel(key1, val1)),
 			api.WithWorkerNodeGroup(worker1, api.WithLabel(key2, val2)),
@@ -84,7 +86,7 @@ func TestVSphereKubernetes121LabelsBottlerocket(t *testing.T) {
 	)
 }
 
-func ubuntu121ProviderWithLabels(t *testing.T) *framework.VSphere {
+func ubuntu122ProviderWithLabels(t *testing.T) *framework.VSphere {
 	return framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
@@ -100,7 +102,7 @@ func ubuntu121ProviderWithLabels(t *testing.T) *framework.VSphere {
 			framework.WithWorkerNodeGroup(worker2, api.WithCount(1),
 				api.WithLabel(key2, val2)),
 		),
-		framework.WithUbuntu121(),
+		framework.WithUbuntu122(),
 	)
 }
 

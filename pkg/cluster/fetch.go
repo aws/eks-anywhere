@@ -17,7 +17,9 @@ type GitOpsFetch func(ctx context.Context, name, namespace string) (*v1alpha1.Gi
 
 type EksdReleaseFetch func(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error)
 
-func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundlesFetch BundlesFetch, eksdReleaseFetch EksdReleaseFetch, gitOpsFetch GitOpsFetch) (*Spec, error) {
+type OIDCFetch func(ctx context.Context, name, namespace string) (*v1alpha1.OIDCConfig, error)
+
+func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundlesFetch BundlesFetch, eksdReleaseFetch EksdReleaseFetch, gitOpsFetch GitOpsFetch, oidcFetch OIDCFetch) (*Spec, error) {
 	bundles, err := GetBundlesForCluster(ctx, cluster, bundlesFetch)
 	if err != nil {
 		return nil, err
@@ -30,7 +32,11 @@ func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundles
 	if err != nil {
 		return nil, err
 	}
-	return BuildSpecFromBundles(cluster, bundles, eksd, WithGitOpsConfig(gitOpsConfig))
+	oidcConfig, err := GetOIDCForCluster(ctx, cluster, oidcFetch)
+	if err != nil {
+		return nil, err
+	}
+	return BuildSpecFromBundles(cluster, bundles, eksd, WithGitOpsConfig(gitOpsConfig), WithOIDCConfig(oidcConfig))
 }
 
 func GetBundlesForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch BundlesFetch) (*v1alpha1release.Bundles, error) {
@@ -74,4 +80,21 @@ func getVersionsBundle(clusterConfig *v1alpha1.Cluster, bundles *v1alpha1release
 		}
 	}
 	return nil, fmt.Errorf("kubernetes version %s is not supported by bundles manifest %d", clusterConfig.Spec.KubernetesVersion, bundles.Spec.Number)
+}
+
+func GetOIDCForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch OIDCFetch) (*v1alpha1.OIDCConfig, error) {
+	if fetch == nil || cluster.Spec.IdentityProviderRefs == nil {
+		return nil, nil
+	}
+
+	for _, identityProvider := range cluster.Spec.IdentityProviderRefs {
+		if identityProvider.Kind == v1alpha1.OIDCConfigKind {
+			oidc, err := fetch(ctx, identityProvider.Name, cluster.Namespace)
+			if err != nil {
+				return nil, fmt.Errorf("failed fetching OIDCConfig for cluster: %v", err)
+			}
+			return oidc, nil
+		}
+	}
+	return nil, nil
 }

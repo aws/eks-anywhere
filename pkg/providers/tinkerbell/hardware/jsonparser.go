@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	guid          = "guid"
 	hostname      = "hostname"
 	ipAddress     = "ip_address"
 	gateway       = "gateway"

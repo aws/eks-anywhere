@@ -120,5 +120,6 @@ func (r *ClusterReconcilerLegacy) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&source.Kind{Type: &anywherev1.VSphereMachineConfig{}}, &handler.EnqueueRequestForObject{}).
 		Watches(&source.Kind{Type: &anywherev1.DockerDatacenterConfig{}}, &handler.EnqueueRequestForObject{}).
 		Watches(&source.Kind{Type: &anywherev1.AWSIamConfig{}}, &handler.EnqueueRequestForObject{}).
+		Watches(&source.Kind{Type: &anywherev1.OIDCConfig{}}, &handler.EnqueueRequestForObject{}).
 		Complete(r)
 }

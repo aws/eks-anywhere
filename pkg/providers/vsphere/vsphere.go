@@ -342,13 +342,21 @@ func (p *vsphereProvider) parseSSHAuthKey(key *string) error {
 
 func (p *vsphereProvider) generateSSHAuthKey(username string) (string, error) {
 	logger.Info("Provided VSphereMachineConfig sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
-	keygenerator, _ := crypto.NewKeyGenerator(p.writer)
-	sshAuthorizedKeyBytes, err := keygenerator.GenerateSSHKeyPair("", "", privateKeyFileName, publicKeyFileName, username)
-	if err != nil || sshAuthorizedKeyBytes == nil {
+
+	privateKeyPath, sshAuthorizedKeyBytes, err := crypto.NewSshKeyPairUsingFileWriter(p.writer, privateKeyFileName, publicKeyFileName)
+	if err != nil {
 		return "", fmt.Errorf("VSphereMachineConfig error generating sshAuthorizedKey: %v", err)
 	}
+
+	logger.Info(fmt.Sprintf(
+		"VSphereDatacenterConfig private key saved to %[1]s. Use 'ssh -i %[1]s %s@<VM-IP-Address>' to login to your cluster VM",
+		privateKeyPath,
+		username,
+	))
+
 	key := string(sshAuthorizedKeyBytes)
 	key = strings.TrimRight(key, "\n")
+
 	return key, nil
 }
 
@@ -409,6 +417,11 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 		}
 		if len(existingDatacenter) > 0 {
 			return fmt.Errorf("VSphereDatacenter %s already exists", p.datacenterConfig.Name)
+		}
+		for _, identityProviderRef := range clusterSpec.Spec.IdentityProviderRefs {
+			if identityProviderRef.Kind == v1alpha1.OIDCConfigKind {
+				clusterSpec.OIDCConfig.SetManagedBy(p.clusterConfig.ManagedBy())
+			}
 		}
 	}
 
@@ -1085,10 +1098,6 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 	if err != nil {
 		return fmt.Errorf("error substituting values for secret object template: %v", err)
 	}
-	return nil
-}
-
-func (p *vsphereProvider) PreBootstrapSetup(ctx context.Context, cluster *types.Cluster) error {
 	return nil
 }
 

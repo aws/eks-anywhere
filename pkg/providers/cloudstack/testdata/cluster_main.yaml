@@ -43,12 +43,13 @@ spec:
   account: "admin"
   domain: "domain1"
   insecure: false
-  network:
-    value: "net1"
-    type: "name"
-  zone:
-    value: "zone1"
-    type: "name"
+  zones:
+    - zone:
+        value: "zone1"
+        type: "Name"
+      network:
+        value: "net1"
+        type: "Name"
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: CloudStackMachineConfig

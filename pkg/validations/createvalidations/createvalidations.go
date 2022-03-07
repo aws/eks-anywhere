@@ -5,6 +5,7 @@ import (
 )
 
 func New(opts *validations.Opts) *CreateValidations {
+	opts.SetDefaults()
 	return &CreateValidations{Opts: opts}
 }
 

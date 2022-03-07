@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -38,6 +39,17 @@ func TestDockerKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
 	runConformanceFlow(test)
 }
 
+func TestDockerKubernetes122ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
+	)
+	runConformanceFlow(test)
+}
+
 func TestVSphereKubernetes120ThreeWorkersConformanceFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -54,6 +66,17 @@ func TestVSphereKubernetes121ThreeWorkersConformanceFlow(t *testing.T) {
 		framework.NewVSphere(t, framework.WithUbuntu121()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+	)
+	runConformanceFlow(test)
+}
+
+func TestVSphereKubernetes122ThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu122()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runConformanceFlow(test)
 }

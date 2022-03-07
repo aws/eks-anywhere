@@ -12,7 +12,7 @@ docs/public
 docs/node_modules
 docs/public.zip
 cluster.yaml
-eksa-test
+eksa-test*
 generated/
 eks-anywhere-downloads*
 hardware-manifests/

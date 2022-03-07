@@ -77,7 +77,7 @@ func (r *CapiResourceFetcher) FetchObject(ctx context.Context, objectKey types.N
 }
 
 func (r *CapiResourceFetcher) fetchClusterKind(ctx context.Context, objectKey types.NamespacedName) (string, error) {
-	supportedKinds := []string{anywherev1.ClusterKind, anywherev1.VSphereDatacenterKind, anywherev1.DockerDatacenterKind, anywherev1.VSphereMachineConfigKind, anywherev1.AWSIamConfigKind}
+	supportedKinds := []string{anywherev1.ClusterKind, anywherev1.VSphereDatacenterKind, anywherev1.DockerDatacenterKind, anywherev1.VSphereMachineConfigKind, anywherev1.AWSIamConfigKind, anywherev1.OIDCConfigKind}
 	for _, kind := range supportedKinds {
 		obj := &unstructured.Unstructured{}
 		obj.SetKind(kind)
@@ -157,9 +157,9 @@ func (r *CapiResourceFetcher) fetchClusterForRef(ctx context.Context, refId type
 				}
 			}
 		}
-		if kind == anywherev1.AWSIamConfigKind {
-			for _, indentityProviderRef := range c.Spec.IdentityProviderRefs {
-				if indentityProviderRef.Name == refId.Name {
+		if kind == anywherev1.OIDCConfigKind || kind == anywherev1.AWSIamConfigKind {
+			for _, identityProviderRef := range c.Spec.IdentityProviderRefs {
+				if identityProviderRef.Name == refId.Name {
 					if _, err := r.clusterByName(ctx, constants.EksaSystemNamespace, c.Name); err == nil { // further validates a capi cluster exists
 						return &c, nil
 					}
@@ -296,6 +296,15 @@ func (r *CapiResourceFetcher) eksdRelease(ctx context.Context, name, namespace s
 	return eksd, nil
 }
 
+func (r *CapiResourceFetcher) oidcConfig(ctx context.Context, name, namespace string) (*anywherev1.OIDCConfig, error) {
+	clusterOIDC := &anywherev1.OIDCConfig{}
+	err := r.FetchObjectByName(ctx, name, namespace, clusterOIDC)
+	if err != nil {
+		return nil, err
+	}
+	return clusterOIDC, nil
+}
+
 func (r *CapiResourceFetcher) ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error) {
 	// Fetch capi cluster
 	capiCluster := &clusterv1.Cluster{}
@@ -341,7 +350,7 @@ func (r *CapiResourceFetcher) OIDCConfig(ctx context.Context, ref *anywherev1.Re
 }
 
 func (r *CapiResourceFetcher) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, cs, r.bundles, r.eksdRelease, nil)
+	return cluster.BuildSpecForCluster(ctx, cs, r.bundles, r.eksdRelease, nil, r.oidcConfig)
 }
 
 func (r *CapiResourceFetcher) ExistingVSphereDatacenterConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.VSphereDatacenterConfig, error) {

@@ -35,12 +35,4 @@ const (
 	VSphereCredentialsName = "vsphere-credentials"
 	EksaLicenseName        = "eksa-license"
 	EksaPackagesName       = "eksa-packages"
-
-	EksDistroApiVersion = "distro.eks.amazonaws.com/v1alpha1"
-	ReleaseKind         = "Release"
-
-	// TODO: tmp solution to support private ECR, remove when CAPAS images is public.
-	EcrRegistrySecretName = "ecrcreds"
-	EcrRegistryUserName   = "AWS"
-	EcrRegistry           = "382577505035.dkr.ecr.us-west-2.amazonaws.com"
 )

@@ -124,7 +124,7 @@ func (v *VSphereClusterReconciler) eksdRelease(ctx context.Context, name, namesp
 }
 
 func (v *VSphereClusterReconciler) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*c.Spec, error) {
-	return c.BuildSpecForCluster(ctx, cs, v.bundles, v.eksdRelease, nil)
+	return c.BuildSpecForCluster(ctx, cs, v.bundles, v.eksdRelease, nil, nil)
 }
 
 func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (reconciler.Result, error) {

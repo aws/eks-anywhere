@@ -22,6 +22,12 @@ spec:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: TinkerbellCluster
     name: {{.clusterName}}
+{{- if .externalEtcd }}
+  managedExternalEtcdRef:
+    apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+    kind: EtcdadmCluster
+    name: {{.clusterName}}-etcd
+{{- end }}
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -33,9 +39,17 @@ spec:
     clusterConfiguration:
       imageRepository: {{.kubernetesRepository}}
       etcd:
+{{- if .externalEtcd }}
+        external:
+          endpoints: []
+          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
+          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
+          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
+{{- else }}
         local:
           imageRepository: {{.etcdRepository}}
           imageTag: {{.etcdImageTag}}
+{{- end }}
       dns:
         imageRepository: {{.corednsRepository}}
         imageTag: {{.corednsVersion}}
@@ -128,6 +142,56 @@ spec:
   replicas: {{.controlPlaneReplicas}}
   version: {{.kubernetesVersion}}
 ---
+{{- if .externalEtcd }}
+kind: EtcdadmCluster
+apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
+metadata:
+  name: {{.clusterName}}-etcd
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  replicas: {{.externalEtcdReplicas}}
+  etcdadmConfigSpec:
+    etcdadmBuiltin: true
+    format: {{.format}}
+    cloudInitConfig:
+      version: {{.externalEtcdVersion}}
+      installDir: "/usr/bin"
+    preEtcdadmCommands:
+      - hostname "{{`{{ ds.meta_data.hostname }}`}}"
+      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+      - echo "127.0.0.1   localhost" >>/etc/hosts
+      - echo "127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}" >>/etc/hosts
+      - echo "{{`{{ ds.meta_data.hostname }}`}}" >/etc/hostname
+{{- if .etcdCipherSuites }}
+    cipherSuites: {{.etcdCipherSuites}}
+{{- end }}
+    users:
+      - name: {{.etcdSshUsername}}
+        sshAuthorizedKeys:
+          - '{{.etcdSshAuthorizedKey}}'
+        sudo: ALL=(ALL) NOPASSWD:ALL
+  infrastructureTemplate:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: TinkerbellMachineTemplate
+    name: {{.etcdTemplateName}}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: TinkerbellMachineTemplate
+metadata:
+  name: {{.etcdTemplateName}}
+  namespace: {{.eksaSystemNamespace}}
+spec:
+  template:
+    {{- if and .etcdTemplateOverride (ne .format "")}}
+    spec:
+      templateOverride: |
+{{.etcdTemplateOverride | indent 8}}
+    {{- end }}
+    {{- if (eq .etcdTemplateOverride "") }}
+    spec: {}
+    {{- end }}
+---
+{{- end }}
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: TinkerbellMachineTemplate
 metadata:

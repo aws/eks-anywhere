@@ -130,7 +130,13 @@ func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
 			return fmt.Errorf("failed reading csv: %v", err)
 		}
 
-		id := uuid.New().String()
+		var id string
+		if csv.GuidIndex == hardware.HeaderNotExist {
+			id = uuid.New().String()
+		} else {
+			id = items[csv.GuidIndex]
+		}
+
 		hardware, err := json.GetHardwareJson(id, items[csv.HostnameIndex], items[csv.IpAddressIndex], items[csv.GatewayIndex], items[csv.NetmaskIndex], items[csv.MacIndex], items[csv.NameServerIndex])
 		if err != nil {
 			return fmt.Errorf("error getting hardware json: %v", err)

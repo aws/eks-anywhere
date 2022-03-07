@@ -36,9 +36,9 @@ const (
 	eksctlVersionEnvVar              = "EKSCTL_VERSION"
 	eksctlVersionEnvVarDummyVal      = "ham sandwich"
 	ClusterNameVar                   = "T_CLUSTER_NAME"
-	ClusterIPPoolEnvVar              = "T_CLUSTER_IP_POOL"
 	JobIdVar                         = "T_JOB_ID"
 	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
+	hardwareYaml                     = "hardware-manifests/hardware.yaml"
 )
 
 //go:embed testdata/oidc-roles.yaml
@@ -159,6 +159,16 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 	e.GenerateClusterConfigForVersion("", opts...)
 }
 
+func (e *ClusterE2ETest) GenerateHardwareConfig(opts ...CommandOpt) {
+	csvFilePath := os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
+	e.generateHardwareConfig(csvFilePath, opts...)
+}
+
+func (e *ClusterE2ETest) generateHardwareConfig(csvFilePath string, opts ...CommandOpt) {
+	generateHardwareConfigArgs := []string{"generate", "hardware", "--dry-run", "-f", csvFilePath}
+	e.RunEKSA(generateHardwareConfigArgs, opts...)
+}
+
 func (e *ClusterE2ETest) GenerateClusterConfigForVersion(eksaVersion string, opts ...CommandOpt) {
 	e.generateClusterConfigObjects(opts...)
 	if eksaVersion != "" {
@@ -201,6 +211,10 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	createClusterArgs := []string{"create", "cluster", "-f", e.ClusterConfigLocation, "-v", "4"}
 	if getBundlesOverride() == "true" {
 		createClusterArgs = append(createClusterArgs, "--bundles-override", defaultBundleReleaseManifestFile)
+	}
+
+	if e.Provider.Name() == TinkerbellProviderName {
+		createClusterArgs = append(createClusterArgs, "-w", hardwareYaml)
 	}
 
 	e.RunEKSA(createClusterArgs, opts...)

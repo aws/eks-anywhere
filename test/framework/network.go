@@ -26,3 +26,12 @@ func PopIPFromEnv(ipPoolEnvVar string) (string, error) {
 
 	return ip, nil
 }
+
+func GenerateUniqueIp(cidr string) (string, error) {
+	ipgen := networkutils.NewIPGenerator(&networkutils.DefaultNetClient{})
+	ip, err := ipgen.GenerateUniqueIP(cidr)
+	if err != nil {
+		return "", fmt.Errorf("error getting unique IP for cidr %s: %v", cidr, err)
+	}
+	return ip, nil
+}

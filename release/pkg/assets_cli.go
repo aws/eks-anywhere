@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 
 	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	"github.com/aws/eks-anywhere/release/pkg/utils"
 )
 
 // GetCliArtifacts returns the artifacts for eksctl-anywhere cli
@@ -79,7 +80,11 @@ func (r *ReleaseConfig) GetEksARelease() (anywherev1alpha1.EksARelease, error) {
 
 	artifacts := r.EksAArtifactsTable["eks-a-cli"]
 
-	var bundleManifestUrl string
+	bundleManifestFilePath := utils.GetManifestFilepaths(r.DevRelease, r.BundleNumber, anywherev1alpha1.BundlesKind, r.BuildRepoBranchName)
+	bundleManifestUrl, err := r.GetURI(bundleManifestFilePath)
+	if err != nil {
+		return anywherev1alpha1.EksARelease{}, errors.Cause(err)
+	}
 	bundleArchiveArtifacts := map[string]anywherev1alpha1.Archive{}
 
 	for _, artifact := range artifacts {
@@ -89,12 +94,6 @@ func (r *ReleaseConfig) GetEksARelease() (anywherev1alpha1.EksARelease, error) {
 		sha256, sha512, err := r.readShaSums(tarfile)
 		if err != nil {
 			return anywherev1alpha1.EksARelease{}, errors.Cause(err)
-		}
-
-		if r.DevRelease {
-			bundleManifestUrl = fmt.Sprintf("%s/bundle-release.yaml", r.CDN)
-		} else {
-			bundleManifestUrl = fmt.Sprintf("%s/releases/bundles/%d/manifest.yaml", r.CDN, r.BundleNumber)
 		}
 
 		bundleArchiveArtifact := anywherev1alpha1.Archive{

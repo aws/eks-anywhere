@@ -1348,9 +1348,9 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 	return obj, nil
 }
 
-func (k *Kubectl) GetPackages(ctx context.Context, opts ...KubectlOpt) (string, error) {
+func (k *Kubectl) GetResources(ctx context.Context, resourceType string, opts ...KubectlOpt) (string, error) {
 	params := []string{
-		"get", "packages",
+		"get", resourceType,
 	}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
