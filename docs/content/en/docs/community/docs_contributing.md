@@ -20,7 +20,7 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
 * **Headings**: Use sentence case in headings. So do “Cluster spec reference” and not “Cluster Spec Reference”
 * **Cross references**: To cross reference to another doc in the EKS Anywhere docs set, use relref in the link so that Hugo will test it and fail the build for links not found. Also, use relative paths to point to other content in the docs set. For example:
    ```
-     [troubleshooting section]({{< relref "../troubleshoot" >}})
+     [troubleshooting section]({{< relref "../tasks/troubleshoot" >}})
    ```
 * **Notes, Warnings, etc.**: You can use this form for notes:
     
