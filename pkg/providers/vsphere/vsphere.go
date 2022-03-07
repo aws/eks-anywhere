@@ -45,8 +45,6 @@ const (
 	vSphereServerKey         = "VSPHERE_SERVER"
 	govcInsecure             = "GOVC_INSECURE"
 	expClusterResourceSetKey = "EXP_CLUSTER_RESOURCE_SET"
-	privateKeyFileName       = "eks-a-id_rsa"
-	publicKeyFileName        = "eks-a-id_rsa.pub"
 	defaultTemplateLibrary   = "eks-a-templates"
 	defaultTemplatesFolder   = "vm/Templates"
 	bottlerocketDefaultUser  = "ec2-user"

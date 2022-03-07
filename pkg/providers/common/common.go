@@ -3,7 +3,6 @@ package common
 import (
 	_ "embed"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/logger"
 	"strings"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 

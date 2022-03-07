@@ -52,39 +52,52 @@ spec:
                   each other and a set of delegated administrators with some authority
                   over the domain and its subdomains
                 type: string
-              network:
-                description: Network is the name or UUID of the CloudStack network
-                  in which clusters should be created. It can either be an isolated
-                  or shared network. If it doesn’t already exist in CloudStack, it’ll
-                  automatically be created by CAPC as an isolated network. It can
-                  either be specified as a UUID or name
-                properties:
-                  type:
-                    type: string
-                  value:
-                    type: string
-                required:
-                - type
-                - value
-                type: object
-              zone:
-                description: Zone is an organizational construct typically used to
-                  represent a single datacenter, and all its physical and virtual
-                  resources exist inside that zone. It can either be specified as
-                  a UUID or name
-                properties:
-                  type:
-                    type: string
-                  value:
-                    type: string
-                required:
-                - type
-                - value
-                type: object
+              zones:
+                description: Zones is a list of one or more zones that are managed
+                  by a single CloudStack management endpoint.
+                items:
+                  description: CloudStackZoneRef is an organizational construct typically
+                    used to represent a single datacenter, and all its physical and
+                    virtual resources exist inside that zone. It can either be specified
+                    as a UUID or name
+                  properties:
+                    network:
+                      description: Network is the name or UUID of the CloudStack network
+                        in which clusters should be created. It can either be an isolated
+                        or shared network. If it doesn’t already exist in CloudStack,
+                        it’ll automatically be created by CAPC as an isolated network.
+                        It can either be specified as a UUID or name In multiple-zones
+                        situation, only 'Shared' network is supported.
+                      properties:
+                        type:
+                          type: string
+                        value:
+                          type: string
+                      required:
+                      - type
+                      - value
+                      type: object
+                    zone:
+                      description: Zone is the name or UUID of the CloudStack zone
+                        in which clusters should be created. Zones should be managed
+                        by a single CloudStack Management endpoint.
+                      properties:
+                        type:
+                          type: string
+                        value:
+                          type: string
+                      required:
+                      - type
+                      - value
+                      type: object
+                  required:
+                  - network
+                  - zone
+                  type: object
+                type: array
             required:
             - domain
-            - network
-            - zone
+            - zones
             type: object
           status:
             description: CloudStackDatacenterConfigStatus defines the observed state

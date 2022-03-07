@@ -47,7 +47,7 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 	}
 	domain, errDomain := v.cmk.ValidateDomainPresent(ctx, datacenterConfig.Spec.Domain)
 	if errDomain != nil {
-		return fmt.Errorf("error while checking domain %v", errDomain)
+		return fmt.Errorf("error while checking domain: %v", errDomain)
 	}
 
 	if len(datacenterConfig.Spec.Account) > 0 {
@@ -170,7 +170,7 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfigS
 	}
 	domain, errDomain := v.cmk.ValidateDomainPresent(ctx, datacenterConfigSpec.Domain)
 	if errDomain != nil {
-		return fmt.Errorf("error while checking domain %v", errDomain)
+		return fmt.Errorf("error while checking domain: %v", errDomain)
 	}
 
 	zones, err := v.cmk.ValidateZonesPresent(ctx, datacenterConfigSpec.Zones)
