@@ -22,6 +22,17 @@ type SnowMachineConfigSpec struct {
 	SshKeyName string `json:"sshKeyName,omitempty"`
 }
 
+func (s *SnowMachineConfig) SetManagedBy(clusterName string) {
+	if s.Annotations == nil {
+		s.Annotations = map[string]string{}
+	}
+	s.Annotations[managementAnnotation] = clusterName
+}
+
+func (s *SnowMachineConfig) OSFamily() OSFamily {
+	return ""
+}
+
 // SnowMachineConfigStatus defines the observed state of SnowMachineConfig
 type SnowMachineConfigStatus struct{}
 
@@ -42,4 +53,26 @@ type SnowMachineConfigGenerate struct {
 	ObjectMeta      `json:"metadata,omitempty"`
 
 	Spec SnowMachineConfigSpec `json:"spec,omitempty"`
+}
+
+func (s *SnowMachineConfig) ConvertConfigToConfigGenerateStruct() *SnowMachineConfigGenerate {
+	namespace := defaultEksaNamespace
+	if s.Namespace != "" {
+		namespace = s.Namespace
+	}
+	config := &SnowMachineConfigGenerate{
+		TypeMeta: s.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        s.Name,
+			Annotations: s.Annotations,
+			Namespace:   namespace,
+		},
+		Spec: s.Spec,
+	}
+
+	return config
+}
+
+func (s *SnowMachineConfig) Marshallable() Marshallable {
+	return s.ConvertConfigToConfigGenerateStruct()
 }

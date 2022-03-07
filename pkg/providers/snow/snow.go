@@ -29,6 +29,11 @@ const (
 	backOffPeriod              = 5 * time.Second
 )
 
+var (
+	snowDatacenterResourceType = fmt.Sprintf("snowdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+	snowMachineResourceType    = fmt.Sprintf("snowmachineconfigs.%s", v1alpha1.GroupVersion.Group)
+)
+
 type snowProvider struct {
 	// TODO: once cluster.config is available, remove below objs
 	datacenterConfig      *v1alpha1.SnowDatacenterConfig
@@ -158,7 +163,9 @@ func (p *snowProvider) EnvMap() (map[string]string, error) {
 }
 
 func (p *snowProvider) GetDeployments() map[string][]string {
-	return nil
+	return map[string][]string{
+		"capas-system": {"capas-controller-manager"},
+	}
 }
 
 func (p *snowProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
@@ -180,15 +187,43 @@ func (p *snowProvider) DatacenterConfig() providers.DatacenterConfig {
 }
 
 func (p *snowProvider) DatacenterResourceType() string {
-	return ""
+	return snowDatacenterResourceType
 }
 
 func (p *snowProvider) MachineResourceType() string {
-	return ""
+	return snowMachineResourceType
 }
 
 func (p *snowProvider) MachineConfigs() []providers.MachineConfig {
-	return nil
+	configs := make(map[string]providers.MachineConfig, len(p.machineConfigs))
+	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
+	if p.clusterConfig.IsManaged() {
+		p.machineConfigs[controlPlaneMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
+	}
+	configs[controlPlaneMachineName] = p.machineConfigs[controlPlaneMachineName]
+
+	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
+		if etcdMachineName != controlPlaneMachineName {
+			configs[etcdMachineName] = p.machineConfigs[etcdMachineName]
+			if p.clusterConfig.IsManaged() {
+				p.machineConfigs[etcdMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
+			}
+		}
+	}
+
+	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
+		workerMachineName := workerNodeGroupConfiguration.MachineGroupRef.Name
+		if _, ok := configs[workerMachineName]; !ok {
+			configs[workerMachineName] = p.machineConfigs[workerMachineName]
+			if p.clusterConfig.IsManaged() {
+				p.machineConfigs[workerMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
+			}
+		}
+	}
+	return providers.MachineConfigsMapToSlice(configs)
 }
 
 func (p *snowProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {

@@ -1175,7 +1175,7 @@ func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
 			}
 		}
 	}
-	return configsMapToSlice(configs)
+	return providers.MachineConfigsMapToSlice(configs)
 }
 
 func (p *vsphereProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
@@ -1341,15 +1341,6 @@ func (p *vsphereProvider) UpgradeNeeded(_ context.Context, newSpec, currentSpec 
 
 func (p *vsphereProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
 	return nil
-}
-
-func configsMapToSlice(c map[string]providers.MachineConfig) []providers.MachineConfig {
-	configs := make([]providers.MachineConfig, 0, len(c))
-	for _, config := range c {
-		configs = append(configs, config)
-	}
-
-	return configs
 }
 
 func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
