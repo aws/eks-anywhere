@@ -39,7 +39,7 @@ func preRunPackages(cmd *cobra.Command, args []string) error {
 }
 
 func getResources(ctx context.Context, resourceType string, output string, args []string) error {
-	kubeConfig := kubeconfig.FromEnvironment(kubeconfigEnvVariable)
+	kubeConfig := kubeconfig.FromEnvironment()
 
 	deps, err := createKubectl(ctx)
 	if err != nil {
