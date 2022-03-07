@@ -6,7 +6,11 @@ import (
 	"regexp"
 )
 
-const GitOpsConfigKind = "GitOpsConfig"
+const (
+	GitOpsConfigKind     = "GitOpsConfig"
+	FluxDefaultNamespace = "flux-system"
+	FluxDefaultBranch    = "main"
+)
 
 func GetAndValidateGitOpsConfig(fileName string, refName string, clusterConfig *Cluster) (*GitOpsConfig, error) {
 	config, err := getGitOpsConfig(fileName)
@@ -102,4 +106,19 @@ func validateGitOpsNamespace(config *GitOpsConfig, clusterConfig *Cluster) error
 	}
 
 	return nil
+}
+
+func setGitOpsConfigDefaults(gitops *GitOpsConfig) {
+	if gitops == nil {
+		return
+	}
+
+	c := &gitops.Spec.Flux
+	if len(c.Github.FluxSystemNamespace) == 0 {
+		c.Github.FluxSystemNamespace = FluxDefaultNamespace
+	}
+
+	if len(c.Github.Branch) == 0 {
+		c.Github.Branch = FluxDefaultBranch
+	}
 }
