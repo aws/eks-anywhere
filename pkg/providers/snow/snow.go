@@ -66,10 +66,27 @@ func (p *snowProvider) Name() string {
 	return constants.SnowProviderName
 }
 
+func (p *snowProvider) setupMachineConfigs() {
+	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
+
+	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
+	}
+
+	if p.clusterConfig.IsManaged() {
+		for _, mc := range p.machineConfigs {
+			mc.SetManagedBy(p.clusterConfig.ManagedBy())
+		}
+	}
+}
+
 func (p *snowProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	if err := p.setupBootstrapCreds(); err != nil {
 		return fmt.Errorf("failed setting up credentials: %v", err)
 	}
+	p.setupMachineConfigs()
 	return nil
 }
 
@@ -195,35 +212,11 @@ func (p *snowProvider) MachineResourceType() string {
 }
 
 func (p *snowProvider) MachineConfigs() []providers.MachineConfig {
-	configs := make(map[string]providers.MachineConfig, len(p.machineConfigs))
-	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
-	if p.clusterConfig.IsManaged() {
-		p.machineConfigs[controlPlaneMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
+	configs := make([]providers.MachineConfig, 0, len(p.machineConfigs))
+	for _, mc := range p.machineConfigs {
+		configs = append(configs, mc)
 	}
-	configs[controlPlaneMachineName] = p.machineConfigs[controlPlaneMachineName]
-
-	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
-		if etcdMachineName != controlPlaneMachineName {
-			configs[etcdMachineName] = p.machineConfigs[etcdMachineName]
-			if p.clusterConfig.IsManaged() {
-				p.machineConfigs[etcdMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
-			}
-		}
-	}
-
-	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
-		workerMachineName := workerNodeGroupConfiguration.MachineGroupRef.Name
-		if _, ok := configs[workerMachineName]; !ok {
-			configs[workerMachineName] = p.machineConfigs[workerMachineName]
-			if p.clusterConfig.IsManaged() {
-				p.machineConfigs[workerMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
-			}
-		}
-	}
-	return providers.MachineConfigsMapToSlice(configs)
+	return configs
 }
 
 func (p *snowProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
