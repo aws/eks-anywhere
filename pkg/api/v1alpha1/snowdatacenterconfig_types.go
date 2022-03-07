@@ -28,6 +28,13 @@ func (s *SnowDatacenterConfig) ExpectedKind() string {
 	return SnowDatacenterKind
 }
 
+func (s *SnowDatacenterConfig) PauseReconcile() {
+	if s.Annotations == nil {
+		s.Annotations = map[string]string{}
+	}
+	s.Annotations[pausedAnnotation] = "true"
+}
+
 // +kubebuilder:object:generate=false
 
 // Same as SnowDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig
