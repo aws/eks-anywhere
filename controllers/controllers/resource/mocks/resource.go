@@ -11,14 +11,12 @@ import (
 	v1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	cluster "github.com/aws/eks-anywhere/pkg/cluster"
 	gomock "github.com/golang/mock/gomock"
-	v1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
-	v1 "k8s.io/api/core/v1"
+	v1alpha3 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
 	unstructured "k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	types "k8s.io/apimachinery/pkg/types"
-	v1beta10 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
-	v1beta11 "sigs.k8s.io/cluster-api/api/v1beta1"
-	v1beta12 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
-	v1beta13 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	v1alpha30 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
+	v1alpha31 "sigs.k8s.io/cluster-api/api/v1alpha3"
+	v1alpha32 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -61,10 +59,10 @@ func (mr *MockResourceFetcherMockRecorder) AWSIamConfig(arg0, arg1, arg2 interfa
 }
 
 // ControlPlane mocks base method.
-func (m *MockResourceFetcher) ControlPlane(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1beta13.KubeadmControlPlane, error) {
+func (m *MockResourceFetcher) ControlPlane(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha32.KubeadmControlPlane, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ControlPlane", arg0, arg1)
-	ret0, _ := ret[0].(*v1beta13.KubeadmControlPlane)
+	ret0, _ := ret[0].(*v1alpha32.KubeadmControlPlane)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -76,10 +74,10 @@ func (mr *MockResourceFetcherMockRecorder) ControlPlane(arg0, arg1 interface{}) 
 }
 
 // Etcd mocks base method.
-func (m *MockResourceFetcher) Etcd(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1beta1.EtcdadmCluster, error) {
+func (m *MockResourceFetcher) Etcd(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha3.EtcdadmCluster, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Etcd", arg0, arg1)
-	ret0, _ := ret[0].(*v1beta1.EtcdadmCluster)
+	ret0, _ := ret[0].(*v1alpha3.EtcdadmCluster)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -88,6 +86,66 @@ func (m *MockResourceFetcher) Etcd(arg0 context.Context, arg1 *v1alpha1.Cluster)
 func (mr *MockResourceFetcherMockRecorder) Etcd(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Etcd", reflect.TypeOf((*MockResourceFetcher)(nil).Etcd), arg0, arg1)
+}
+
+// ExistingCloudStackControlPlaneMachineConfig mocks base method.
+func (m *MockResourceFetcher) ExistingCloudStackControlPlaneMachineConfig(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha1.CloudStackMachineConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistingCloudStackControlPlaneMachineConfig", arg0, arg1)
+	ret0, _ := ret[0].(*v1alpha1.CloudStackMachineConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistingCloudStackControlPlaneMachineConfig indicates an expected call of ExistingCloudStackControlPlaneMachineConfig.
+func (mr *MockResourceFetcherMockRecorder) ExistingCloudStackControlPlaneMachineConfig(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingCloudStackControlPlaneMachineConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingCloudStackControlPlaneMachineConfig), arg0, arg1)
+}
+
+// ExistingCloudStackDeploymentConfig mocks base method.
+func (m *MockResourceFetcher) ExistingCloudStackDeploymentConfig(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha1.CloudStackDeploymentConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistingCloudStackDeploymentConfig", arg0, arg1)
+	ret0, _ := ret[0].(*v1alpha1.CloudStackDeploymentConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistingCloudStackDeploymentConfig indicates an expected call of ExistingCloudStackDeploymentConfig.
+func (mr *MockResourceFetcherMockRecorder) ExistingCloudStackDeploymentConfig(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingCloudStackDeploymentConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingCloudStackDeploymentConfig), arg0, arg1)
+}
+
+// ExistingCloudStackEtcdMachineConfig mocks base method.
+func (m *MockResourceFetcher) ExistingCloudStackEtcdMachineConfig(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha1.CloudStackMachineConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistingCloudStackEtcdMachineConfig", arg0, arg1)
+	ret0, _ := ret[0].(*v1alpha1.CloudStackMachineConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistingCloudStackEtcdMachineConfig indicates an expected call of ExistingCloudStackEtcdMachineConfig.
+func (mr *MockResourceFetcherMockRecorder) ExistingCloudStackEtcdMachineConfig(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingCloudStackEtcdMachineConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingCloudStackEtcdMachineConfig), arg0, arg1)
+}
+
+// ExistingCloudStackWorkerMachineConfig mocks base method.
+func (m *MockResourceFetcher) ExistingCloudStackWorkerMachineConfig(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha1.CloudStackMachineConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistingCloudStackWorkerMachineConfig", arg0, arg1)
+	ret0, _ := ret[0].(*v1alpha1.CloudStackMachineConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistingCloudStackWorkerMachineConfig indicates an expected call of ExistingCloudStackWorkerMachineConfig.
+func (mr *MockResourceFetcherMockRecorder) ExistingCloudStackWorkerMachineConfig(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingCloudStackWorkerMachineConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingCloudStackWorkerMachineConfig), arg0, arg1)
 }
 
 // ExistingVSphereControlPlaneMachineConfig mocks base method.
@@ -106,18 +164,18 @@ func (mr *MockResourceFetcherMockRecorder) ExistingVSphereControlPlaneMachineCon
 }
 
 // ExistingVSphereDatacenterConfig mocks base method.
-func (m *MockResourceFetcher) ExistingVSphereDatacenterConfig(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 v1alpha1.WorkerNodeGroupConfiguration) (*v1alpha1.VSphereDatacenterConfig, error) {
+func (m *MockResourceFetcher) ExistingVSphereDatacenterConfig(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha1.VSphereDatacenterConfig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExistingVSphereDatacenterConfig", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "ExistingVSphereDatacenterConfig", arg0, arg1)
 	ret0, _ := ret[0].(*v1alpha1.VSphereDatacenterConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ExistingVSphereDatacenterConfig indicates an expected call of ExistingVSphereDatacenterConfig.
-func (mr *MockResourceFetcherMockRecorder) ExistingVSphereDatacenterConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockResourceFetcherMockRecorder) ExistingVSphereDatacenterConfig(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingVSphereDatacenterConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingVSphereDatacenterConfig), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingVSphereDatacenterConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingVSphereDatacenterConfig), arg0, arg1)
 }
 
 // ExistingVSphereEtcdMachineConfig mocks base method.
@@ -136,33 +194,18 @@ func (mr *MockResourceFetcherMockRecorder) ExistingVSphereEtcdMachineConfig(arg0
 }
 
 // ExistingVSphereWorkerMachineConfig mocks base method.
-func (m *MockResourceFetcher) ExistingVSphereWorkerMachineConfig(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 v1alpha1.WorkerNodeGroupConfiguration) (*v1alpha1.VSphereMachineConfig, error) {
+func (m *MockResourceFetcher) ExistingVSphereWorkerMachineConfig(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha1.VSphereMachineConfig, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExistingVSphereWorkerMachineConfig", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "ExistingVSphereWorkerMachineConfig", arg0, arg1)
 	ret0, _ := ret[0].(*v1alpha1.VSphereMachineConfig)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ExistingVSphereWorkerMachineConfig indicates an expected call of ExistingVSphereWorkerMachineConfig.
-func (mr *MockResourceFetcherMockRecorder) ExistingVSphereWorkerMachineConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockResourceFetcherMockRecorder) ExistingVSphereWorkerMachineConfig(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingVSphereWorkerMachineConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingVSphereWorkerMachineConfig), arg0, arg1, arg2)
-}
-
-// ExistingWorkerNodeGroupConfig mocks base method.
-func (m *MockResourceFetcher) ExistingWorkerNodeGroupConfig(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 v1alpha1.WorkerNodeGroupConfiguration) (*v1alpha1.WorkerNodeGroupConfiguration, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExistingWorkerNodeGroupConfig", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*v1alpha1.WorkerNodeGroupConfiguration)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ExistingWorkerNodeGroupConfig indicates an expected call of ExistingWorkerNodeGroupConfig.
-func (mr *MockResourceFetcherMockRecorder) ExistingWorkerNodeGroupConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingWorkerNodeGroupConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingWorkerNodeGroupConfig), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingVSphereWorkerMachineConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingVSphereWorkerMachineConfig), arg0, arg1)
 }
 
 // Fetch mocks base method.
@@ -238,34 +281,19 @@ func (mr *MockResourceFetcherMockRecorder) FetchObjectByName(arg0, arg1, arg2, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchObjectByName", reflect.TypeOf((*MockResourceFetcher)(nil).FetchObjectByName), arg0, arg1, arg2, arg3)
 }
 
-// KubeadmConfigTemplate mocks base method.
-func (m *MockResourceFetcher) KubeadmConfigTemplate(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 v1alpha1.WorkerNodeGroupConfiguration) (*v1beta12.KubeadmConfigTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "KubeadmConfigTemplate", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*v1beta12.KubeadmConfigTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// KubeadmConfigTemplate indicates an expected call of KubeadmConfigTemplate.
-func (mr *MockResourceFetcherMockRecorder) KubeadmConfigTemplate(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KubeadmConfigTemplate", reflect.TypeOf((*MockResourceFetcher)(nil).KubeadmConfigTemplate), arg0, arg1, arg2)
-}
-
 // MachineDeployment mocks base method.
-func (m *MockResourceFetcher) MachineDeployment(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 v1alpha1.WorkerNodeGroupConfiguration) (*v1beta11.MachineDeployment, error) {
+func (m *MockResourceFetcher) MachineDeployment(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha31.MachineDeployment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MachineDeployment", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*v1beta11.MachineDeployment)
+	ret := m.ctrl.Call(m, "MachineDeployment", arg0, arg1)
+	ret0, _ := ret[0].(*v1alpha31.MachineDeployment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // MachineDeployment indicates an expected call of MachineDeployment.
-func (mr *MockResourceFetcherMockRecorder) MachineDeployment(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockResourceFetcherMockRecorder) MachineDeployment(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MachineDeployment", reflect.TypeOf((*MockResourceFetcher)(nil).MachineDeployment), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MachineDeployment", reflect.TypeOf((*MockResourceFetcher)(nil).MachineDeployment), arg0, arg1)
 }
 
 // OIDCConfig mocks base method.
@@ -283,34 +311,19 @@ func (mr *MockResourceFetcherMockRecorder) OIDCConfig(arg0, arg1, arg2 interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OIDCConfig", reflect.TypeOf((*MockResourceFetcher)(nil).OIDCConfig), arg0, arg1, arg2)
 }
 
-// VSphereCredentials mocks base method.
-func (m *MockResourceFetcher) VSphereCredentials(arg0 context.Context) (*v1.Secret, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VSphereCredentials", arg0)
-	ret0, _ := ret[0].(*v1.Secret)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// VSphereCredentials indicates an expected call of VSphereCredentials.
-func (mr *MockResourceFetcherMockRecorder) VSphereCredentials(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VSphereCredentials", reflect.TypeOf((*MockResourceFetcher)(nil).VSphereCredentials), arg0)
-}
-
 // VSphereWorkerMachineTemplate mocks base method.
-func (m *MockResourceFetcher) VSphereWorkerMachineTemplate(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 v1alpha1.WorkerNodeGroupConfiguration) (*v1beta10.VSphereMachineTemplate, error) {
+func (m *MockResourceFetcher) VSphereWorkerMachineTemplate(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha30.VSphereMachineTemplate, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VSphereWorkerMachineTemplate", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*v1beta10.VSphereMachineTemplate)
+	ret := m.ctrl.Call(m, "VSphereWorkerMachineTemplate", arg0, arg1)
+	ret0, _ := ret[0].(*v1alpha30.VSphereMachineTemplate)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // VSphereWorkerMachineTemplate indicates an expected call of VSphereWorkerMachineTemplate.
-func (mr *MockResourceFetcherMockRecorder) VSphereWorkerMachineTemplate(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockResourceFetcherMockRecorder) VSphereWorkerMachineTemplate(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VSphereWorkerMachineTemplate", reflect.TypeOf((*MockResourceFetcher)(nil).VSphereWorkerMachineTemplate), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VSphereWorkerMachineTemplate", reflect.TypeOf((*MockResourceFetcher)(nil).VSphereWorkerMachineTemplate), arg0, arg1)
 }
 
 // MockResourceUpdater is a mock of ResourceUpdater interface.

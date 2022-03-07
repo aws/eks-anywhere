@@ -1,0 +1,14 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackDeploymentConfig
+metadata:
+  creationTimestamp: null
+  name: test_cluster
+spec:
+  domain: domain1
+  network: isolated1
+  account: account1
+  zone: zone1
+  thumbprint: ""
+  insecure: false
+  ManagementAPIEndpoint: 1.1.1.1:8080/client/api
+status: {}

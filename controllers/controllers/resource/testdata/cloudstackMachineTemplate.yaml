@@ -1,0 +1,13 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
+kind: CloudStackMachineTemplate
+metadata:
+  name: test_cluster-worker-node-template-1234567890000
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      details:
+        foo: bar
+      offering: large
+      template: rhel8-1.20
+
