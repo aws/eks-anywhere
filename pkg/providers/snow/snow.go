@@ -176,7 +176,7 @@ func (p *snowProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types
 }
 
 func (p *snowProvider) DatacenterConfig() providers.DatacenterConfig {
-	return nil
+	return p.datacenterConfig
 }
 
 func (p *snowProvider) DatacenterResourceType() string {
