@@ -1,7 +1,6 @@
 package crypto
 
 import (
-	"bytes"
 	cryptorand "crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -10,8 +9,6 @@ import (
 	"io"
 
 	"golang.org/x/crypto/ssh"
-
-	"github.com/aws/eks-anywhere/pkg/filewriter"
 )
 
 // SshKeysize is the key size used when calling NewSshKeyPair().
@@ -48,27 +45,4 @@ func NewSshKeyPair(privateOut, publicOut io.Writer) error {
 	}
 
 	return nil
-}
-
-// NewSshKeyPairUsingFileWriter provides a mechanism for generating SSH key pairs and writing them to the writer
-// direcftory context. It exists to create compatibility with filewriter.FileWriter and compliment older code.
-// The string returned is a path to the private key written to disk using writer.
-// The bytes returned are the public key formated as specified in NewSshKeyPair().
-func NewSshKeyPairUsingFileWriter(writer filewriter.FileWriter, privateKeyFilename, publicKeyFilename string) (string, []byte, error) {
-	var private, public bytes.Buffer
-
-	if err := NewSshKeyPair(&private, &public); err != nil {
-		return "", nil, fmt.Errorf("generating key pair: %v", err)
-	}
-
-	privateKeyPath, err := writer.Write(privateKeyFilename, private.Bytes(), filewriter.PersistentFile, filewriter.Permission0600)
-	if err != nil {
-		return "", nil, fmt.Errorf("writing private key: %v", err)
-	}
-
-	if _, err := writer.Write(publicKeyFilename, public.Bytes(), filewriter.PersistentFile, filewriter.Permission0600); err != nil {
-		return "", nil, fmt.Errorf("writing public key: %v", err)
-	}
-
-	return privateKeyPath, public.Bytes(), nil
 }

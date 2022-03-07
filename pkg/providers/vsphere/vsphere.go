@@ -343,7 +343,7 @@ func (p *vsphereProvider) parseSSHAuthKey(key *string) error {
 func (p *vsphereProvider) generateSSHAuthKey(username string) (string, error) {
 	logger.Info("Provided VSphereMachineConfig sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
 
-	privateKeyPath, sshAuthorizedKeyBytes, err := crypto.NewSshKeyPairUsingFileWriter(p.writer, privateKeyFileName, publicKeyFileName)
+	privateKeyPath, sshAuthorizedKeyBytes, err := providers.NewSshKeyPairUsingFileWriter(p.writer)
 	if err != nil {
 		return "", fmt.Errorf("VSphereMachineConfig error generating sshAuthorizedKey: %v", err)
 	}

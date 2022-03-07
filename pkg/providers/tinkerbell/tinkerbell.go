@@ -18,6 +18,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -217,12 +218,11 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("minimum hardware not available: %v", err)
 	}
 
-	p.controlPlaneSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
-	p.workerSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
-	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		p.etcdSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
+	// todo(chrisdoheryt4) SSH Key Generation here.
+
+	for _, machine := range p.machineConfigs {
+		generateUserSshKeyIfNotPresent(machine)
 	}
-	// TODO: Add more validations
 
 	if !p.skipIpCheck {
 		if err := p.validator.validateControlPlaneIpUniqueness(tinkerbellClusterSpec); err != nil {
@@ -559,4 +559,13 @@ func (p *tinkerbellProvider) MachineDeploymentsToDelete(workloadCluster *types.C
 		machineDeployments = append(machineDeployments, mdName)
 	}
 	return machineDeployments
+}
+
+func generateUserSshKeyIfNotPresent(machine *v1alpha1.TinkerbellMachineConfig) {
+	for _, user := range machine.Spec.Users {
+		if len(user.SshAuthorizedKeys) == 0 {
+			var fr filewriter.FileWriter
+			providers.NewSshKeyPairUsingFileWriter(fr)
+		}
+	}
 }
