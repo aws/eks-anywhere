@@ -79,6 +79,21 @@ func RequiredClaimsSliceEqual(a, b []OIDCConfigRequiredClaim) bool {
 	return len(m) == 0
 }
 
+// IsManaged returns true if the oidcconfig is associated with a workload cluster
+func (c *OIDCConfig) IsManaged() bool {
+	if s, ok := c.Annotations[managementAnnotation]; ok {
+		return s != ""
+	}
+	return false
+}
+
+func (c *OIDCConfig) SetManagedBy(clusterName string) {
+	if c.Annotations == nil {
+		c.Annotations = map[string]string{}
+	}
+	c.Annotations[managementAnnotation] = clusterName
+}
+
 type OIDCConfigRequiredClaim struct {
 	Claim string `json:"claim,omitempty"`
 	Value string `json:"value,omitempty"`
@@ -123,6 +138,10 @@ func (c *OIDCConfig) Kind() string {
 
 func (c *OIDCConfig) ExpectedKind() string {
 	return OIDCConfigKind
+}
+
+func (c *OIDCConfig) Validate() error {
+	return validateOIDCConfig(c)
 }
 
 func (c *OIDCConfig) ConvertConfigToConfigGenerateStruct() *OIDCConfigGenerate {

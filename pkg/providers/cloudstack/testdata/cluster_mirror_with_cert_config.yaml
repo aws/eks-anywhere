@@ -62,12 +62,13 @@ metadata:
 spec:
   account: "admin"
   domain: "domain1"
-  network:
-    value: "net1"
-    type: "name"
-  zone:
-    value: "zone1"
-    type: "name"
+  zones:
+    - network:
+        value: "net1"
+        type: "name"
+      zone:
+        value: "zone1"
+        type: "name"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

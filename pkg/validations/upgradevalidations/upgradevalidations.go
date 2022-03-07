@@ -5,6 +5,7 @@ import (
 )
 
 func New(opts *validations.Opts) *UpgradeValidations {
+	opts.SetDefaults()
 	return &UpgradeValidations{Opts: opts}
 }
 

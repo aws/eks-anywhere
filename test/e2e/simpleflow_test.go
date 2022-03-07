@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/test/framework"
 )
@@ -18,6 +19,13 @@ func init() {
 	if err := logger.InitZap(4, logger.WithName("e2e")); err != nil {
 		log.Fatal(fmt.Errorf("failed init zap logger for e2e tests: %v", err))
 	}
+}
+
+func runTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
+	test.GenerateClusterConfig()
+	test.GenerateHardwareConfig()
+	test.CreateCluster()
+	test.DeleteCluster()
 }
 
 func runSimpleFlow(test *framework.ClusterE2ETest) {
@@ -49,7 +57,7 @@ func TestDockerKubernetes122SimpleFlow(t *testing.T) {
 		t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithEnvVar("K8S_1_22_SUPPORT", "true"),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -77,7 +85,7 @@ func TestVSphereKubernetes122SimpleFlow(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu122()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithEnvVar("K8S_1_22_SUPPORT", "true"),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -131,4 +139,24 @@ func TestVSphereKubernetes120BottleRocketDifferentNamespaceSimpleFlow(t *testing
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
 	)
 	runSimpleFlow(test)
+}
+
+func TestTinkerbellKubernetes120SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu120Tinkerbell()),
+		framework.WithEnvVar("TINKERBELL_PROVIDER", "true"),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+	)
+	runTinkerbellSimpleFlow(test)
+}
+
+func TestTinkerbellKubernetes121SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewTinkerbell(t, framework.WithUbuntu121Tinkerbell()),
+		framework.WithEnvVar("TINKERBELL_PROVIDER", "true"),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+	)
+	runTinkerbellSimpleFlow(test)
 }

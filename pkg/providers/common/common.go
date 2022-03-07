@@ -3,6 +3,7 @@ package common
 import (
 	_ "embed"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"strings"
 	"time"
 
@@ -67,13 +68,20 @@ func ParseSSHAuthKey(key *string) error {
 }
 
 func GenerateSSHAuthKey(username string, writer filewriter.FileWriter) (string, error) {
-	keygenerator, _ := crypto.NewKeyGenerator(writer)
-	sshAuthorizedKeyBytes, err := keygenerator.GenerateSSHKeyPair("", "", privateKeyFileName, publicKeyFileName, username)
-	if err != nil || sshAuthorizedKeyBytes == nil {
+	privateKeyPath, sshAuthorizedKeyBytes, err := crypto.NewSshKeyPairUsingFileWriter(writer, privateKeyFileName, publicKeyFileName)
+	if err != nil {
 		return "", fmt.Errorf("VSphereMachineConfig error generating sshAuthorizedKey: %v", err)
 	}
+
+	logger.Info(fmt.Sprintf(
+		"DatacenterConfig private key saved to %[1]s. Use 'ssh -i %[1]s %s@<VM-IP-Address>' to login to your cluster VM",
+		privateKeyPath,
+		username,
+	))
+
 	key := string(sshAuthorizedKeyBytes)
 	key = strings.TrimRight(key, "\n")
+
 	return key, nil
 }
 

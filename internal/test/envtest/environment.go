@@ -31,7 +31,7 @@ import (
 
 const (
 	capiPackage = "sigs.k8s.io/cluster-api"
-	capvPackage = "sigs.k8s.io/cluster-api-vsphere-provider"
+	capvPackage = "sigs.k8s.io/cluster-api-provider-vsphere"
 )
 
 func init() {
@@ -45,7 +45,7 @@ func init() {
 	utilruntime.Must(anywherev1.AddToScheme(scheme.Scheme))
 }
 
-var packages = mustBuildPackagesWithCRDs(capiPackage, capvPackage)
+var packages = mustBuildModulesWithCRDs(capiPackage, capvPackage)
 
 type Environment struct {
 	scheme  *runtime.Scheme
@@ -72,7 +72,7 @@ func RunWithEnvironment(m *testing.M, opts ...EnvironmentOpt) int {
 	ctx := ctrl.SetupSignalHandler()
 	env, err := newEnvironment(ctx)
 	if err != nil {
-		fmt.Printf("Failed setting up envtest: %s", err)
+		fmt.Printf("Failed setting up envtest: %s\n", err)
 		return 1
 	}
 

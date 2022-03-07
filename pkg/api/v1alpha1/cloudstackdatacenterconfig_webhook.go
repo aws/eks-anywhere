@@ -85,11 +85,21 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 			field.Invalid(field.NewPath("spec", "domain"), new.Spec.Domain, "field is immutable"),
 		)
 	}
-
-	if old.Spec.Zone != new.Spec.Zone {
+	zonesMutated := false
+	if len(old.Spec.Zones) != len(new.Spec.Zones) {
+		zonesMutated = true
+	} else {
+		for i, z := range old.Spec.Zones {
+			if !z.Equals(&new.Spec.Zones[i]) {
+				zonesMutated = true
+				break
+			}
+		}
+	}
+	if zonesMutated {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "zone"), new.Spec.Zone, "field is immutable"),
+			field.Invalid(field.NewPath("spec", "zone"), new.Spec.Zones, "field is immutable"),
 		)
 	}
 
@@ -97,13 +107,6 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 		allErrs = append(
 			allErrs,
 			field.Invalid(field.NewPath("spec", "account"), new.Spec.Account, "field is immutable"),
-		)
-	}
-
-	if old.Spec.Network != new.Spec.Network {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "network"), new.Spec.Network, "field is immutable"),
 		)
 	}
 

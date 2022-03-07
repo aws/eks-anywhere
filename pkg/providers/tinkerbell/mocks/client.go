@@ -12,6 +12,7 @@ import (
 	pbnj "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	gomock "github.com/golang/mock/gomock"
 	hardware "github.com/tinkerbell/tink/protos/hardware"
+	workflow "github.com/tinkerbell/tink/protos/workflow"
 	v1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
@@ -136,6 +137,21 @@ func (m *MockProviderTinkClient) GetHardware(arg0 context.Context) ([]*hardware.
 func (mr *MockProviderTinkClientMockRecorder) GetHardware(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardware", reflect.TypeOf((*MockProviderTinkClient)(nil).GetHardware), arg0)
+}
+
+// GetWorkflow mocks base method.
+func (m *MockProviderTinkClient) GetWorkflow(arg0 context.Context) ([]*workflow.Workflow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWorkflow", arg0)
+	ret0, _ := ret[0].([]*workflow.Workflow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWorkflow indicates an expected call of GetWorkflow.
+func (mr *MockProviderTinkClientMockRecorder) GetWorkflow(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkflow", reflect.TypeOf((*MockProviderTinkClient)(nil).GetWorkflow), arg0)
 }
 
 // MockProviderPbnjClient is a mock of ProviderPbnjClient interface.

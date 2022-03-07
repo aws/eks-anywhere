@@ -28,12 +28,15 @@ type CloudStackDatacenterConfigSpec struct {
 
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
 	Domain string `json:"domain"`
-	// Zone is an organizational construct typically used to represent a single datacenter, and all its physical and virtual resources exist inside that zone. It can either be specified as a UUID or name
-	Zone CloudStackResourceRef `json:"zone"`
+	// Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
+	Zones []CloudStackZoneRef `json:"zones"`
 	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain name must also be provided.
 	Account string `json:"account,omitempty"`
-	// Network is the name or UUID of the CloudStack network in which clusters should be created. It can either be an isolated or shared network. If it doesn’t already exist in CloudStack, it’ll automatically be created by CAPC as an isolated network. It can either be specified as a UUID or name
-	Network CloudStackResourceRef `json:"network"`
+}
+
+type CloudStackResourceIdentifier struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type CloudStackResourceRef struct {
@@ -47,6 +50,15 @@ const (
 	Id   CloudStackResourceRefType = "Id"
 	Name CloudStackResourceRefType = "Name"
 )
+
+// CloudStackZoneRef is an organizational construct typically used to represent a single datacenter, and all its physical and virtual resources exist inside that zone. It can either be specified as a UUID or name
+type CloudStackZoneRef struct {
+	// Zone is the name or UUID of the CloudStack zone in which clusters should be created. Zones should be managed by a single CloudStack Management endpoint.
+	Zone CloudStackResourceRef `json:"zone"`
+	// Network is the name or UUID of the CloudStack network in which clusters should be created. It can either be an isolated or shared network. If it doesn’t already exist in CloudStack, it’ll automatically be created by CAPC as an isolated network. It can either be specified as a UUID or name
+	// In multiple-zones situation, only 'Shared' network is supported.
+	Network CloudStackResourceRef `json:"network"`
+}
 
 // CloudStackDatacenterConfigStatus defines the observed state of CloudStackDatacenterConfig
 type CloudStackDatacenterConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
@@ -113,6 +125,22 @@ func (v *CloudStackDatacenterConfig) ConvertConfigToConfigGenerateStruct() *Clou
 
 func (v *CloudStackDatacenterConfig) Marshallable() Marshallable {
 	return v.ConvertConfigToConfigGenerateStruct()
+}
+
+func (z *CloudStackZoneRef) Equals(o *CloudStackZoneRef) bool {
+	if z == o {
+		return true
+	}
+	if z == nil || o == nil {
+		return false
+	}
+	if z.Zone.Type == o.Zone.Type &&
+		z.Zone.Value == o.Zone.Value &&
+		z.Network.Type == o.Network.Type &&
+		z.Network.Value == o.Network.Value {
+		return true
+	}
+	return false
 }
 
 // +kubebuilder:object:generate=false

@@ -34,14 +34,15 @@ kind: CloudStackDatacenterConfig
 metadata:
   name: test
 spec:
-  network:
-    value: "Shared1"
-    type: "name"
+  zones:
+    - network:
+        value: "Shared1"
+        type: "name"
+      zone:
+        value: "zone1"
+        type: "name"
   domain: "dribinm"
   account: "dribinm-admin"
-  zone:
-    value: "zone1"
-    type: "name"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

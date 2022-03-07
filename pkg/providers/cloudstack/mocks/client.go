@@ -41,18 +41,32 @@ func (m *MockProviderCmkClient) EXPECT() *MockProviderCmkClientMockRecorder {
 	return m.recorder
 }
 
-// ValidateAffinityGroupsPresent mocks base method.
-func (m *MockProviderCmkClient) ValidateAffinityGroupsPresent(arg0 context.Context, arg1 string, arg2 v1alpha1.CloudStackResourceRef, arg3 string, arg4 []string) error {
+// ValidateAccountPresent mocks base method.
+func (m *MockProviderCmkClient) ValidateAccountPresent(arg0 context.Context, arg1, arg2 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateAffinityGroupsPresent", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "ValidateAccountPresent", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateAccountPresent indicates an expected call of ValidateAccountPresent.
+func (mr *MockProviderCmkClientMockRecorder) ValidateAccountPresent(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAccountPresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateAccountPresent), arg0, arg1, arg2)
+}
+
+// ValidateAffinityGroupsPresent mocks base method.
+func (m *MockProviderCmkClient) ValidateAffinityGroupsPresent(arg0 context.Context, arg1, arg2 string, arg3 []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateAffinityGroupsPresent", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ValidateAffinityGroupsPresent indicates an expected call of ValidateAffinityGroupsPresent.
-func (mr *MockProviderCmkClientMockRecorder) ValidateAffinityGroupsPresent(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockProviderCmkClientMockRecorder) ValidateAffinityGroupsPresent(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAffinityGroupsPresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateAffinityGroupsPresent), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAffinityGroupsPresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateAffinityGroupsPresent), arg0, arg1, arg2, arg3)
 }
 
 // ValidateCloudStackConnection mocks base method.
@@ -69,22 +83,51 @@ func (mr *MockProviderCmkClientMockRecorder) ValidateCloudStackConnection(arg0 i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateCloudStackConnection", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateCloudStackConnection), arg0)
 }
 
-// ValidateServiceOfferingPresent mocks base method.
-func (m *MockProviderCmkClient) ValidateServiceOfferingPresent(arg0 context.Context, arg1 string, arg2 v1alpha1.CloudStackResourceRef, arg3 string, arg4 v1alpha1.CloudStackResourceRef) error {
+// ValidateDomainPresent mocks base method.
+func (m *MockProviderCmkClient) ValidateDomainPresent(arg0 context.Context, arg1 string) (v1alpha1.CloudStackResourceIdentifier, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateServiceOfferingPresent", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "ValidateDomainPresent", arg0, arg1)
+	ret0, _ := ret[0].(v1alpha1.CloudStackResourceIdentifier)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ValidateDomainPresent indicates an expected call of ValidateDomainPresent.
+func (mr *MockProviderCmkClientMockRecorder) ValidateDomainPresent(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateDomainPresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateDomainPresent), arg0, arg1)
+}
+
+// ValidateNetworkPresent mocks base method.
+func (m *MockProviderCmkClient) ValidateNetworkPresent(arg0 context.Context, arg1 string, arg2 v1alpha1.CloudStackZoneRef, arg3 []v1alpha1.CloudStackResourceIdentifier, arg4 string, arg5 bool) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateNetworkPresent", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateNetworkPresent indicates an expected call of ValidateNetworkPresent.
+func (mr *MockProviderCmkClientMockRecorder) ValidateNetworkPresent(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateNetworkPresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateNetworkPresent), arg0, arg1, arg2, arg3, arg4, arg5)
+}
+
+// ValidateServiceOfferingPresent mocks base method.
+func (m *MockProviderCmkClient) ValidateServiceOfferingPresent(arg0 context.Context, arg1 string, arg2 v1alpha1.CloudStackResourceRef) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateServiceOfferingPresent", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ValidateServiceOfferingPresent indicates an expected call of ValidateServiceOfferingPresent.
-func (mr *MockProviderCmkClientMockRecorder) ValidateServiceOfferingPresent(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+func (mr *MockProviderCmkClientMockRecorder) ValidateServiceOfferingPresent(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateServiceOfferingPresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateServiceOfferingPresent), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateServiceOfferingPresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateServiceOfferingPresent), arg0, arg1, arg2)
 }
 
 // ValidateTemplatePresent mocks base method.
-func (m *MockProviderCmkClient) ValidateTemplatePresent(arg0 context.Context, arg1 string, arg2 v1alpha1.CloudStackResourceRef, arg3 string, arg4 v1alpha1.CloudStackResourceRef) error {
+func (m *MockProviderCmkClient) ValidateTemplatePresent(arg0 context.Context, arg1, arg2, arg3 string, arg4 v1alpha1.CloudStackResourceRef) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateTemplatePresent", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
@@ -97,18 +140,19 @@ func (mr *MockProviderCmkClientMockRecorder) ValidateTemplatePresent(arg0, arg1,
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateTemplatePresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateTemplatePresent), arg0, arg1, arg2, arg3, arg4)
 }
 
-// ValidateZonePresent mocks base method.
-func (m *MockProviderCmkClient) ValidateZonePresent(arg0 context.Context, arg1 v1alpha1.CloudStackResourceRef) error {
+// ValidateZonesPresent mocks base method.
+func (m *MockProviderCmkClient) ValidateZonesPresent(arg0 context.Context, arg1 []v1alpha1.CloudStackZoneRef) ([]v1alpha1.CloudStackResourceIdentifier, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateZonePresent", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "ValidateZonesPresent", arg0, arg1)
+	ret0, _ := ret[0].([]v1alpha1.CloudStackResourceIdentifier)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// ValidateZonePresent indicates an expected call of ValidateZonePresent.
-func (mr *MockProviderCmkClientMockRecorder) ValidateZonePresent(arg0, arg1 interface{}) *gomock.Call {
+// ValidateZonesPresent indicates an expected call of ValidateZonesPresent.
+func (mr *MockProviderCmkClientMockRecorder) ValidateZonesPresent(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateZonePresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateZonePresent), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateZonesPresent", reflect.TypeOf((*MockProviderCmkClient)(nil).ValidateZonesPresent), arg0, arg1)
 }
 
 // MockProviderKubectlClient is a mock of ProviderKubectlClient interface.

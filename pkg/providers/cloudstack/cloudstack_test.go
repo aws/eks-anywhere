@@ -54,10 +54,13 @@ func givenEmptyClusterSpec() *cluster.Spec {
 func givenWildcardCmk(mockCtrl *gomock.Controller) ProviderCmkClient {
 	cmk := mocks.NewMockProviderCmkClient(mockCtrl)
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateZonePresent(gomock.Any(), gomock.Any()).AnyTimes()
-	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateAffinityGroupsPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	cmk.EXPECT().ValidateCloudStackConnection(gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateAccountPresent(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateNetworkPresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	return cmk
 }
 

@@ -8,13 +8,15 @@ import (
 	"os"
 	"time"
 
-	tink "github.com/tinkerbell/tink/protos/hardware"
+	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
+	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
@@ -55,14 +57,14 @@ type tinkerbellProvider struct {
 	machineConfigs         map[string]*v1alpha1.TinkerbellMachineConfig
 	controlPlaneSshAuthKey string
 	workerSshAuthKey       string
-	// etcdSshAuthKey         string
-	providerKubectlClient ProviderKubectlClient
-	providerTinkClient    ProviderTinkClient
-	templateBuilder       *TinkerbellTemplateBuilder
-	skipIpCheck           bool
-	hardwareConfigFile    string
-	validator             *Validator
-	skipPowerActions      bool
+	etcdSshAuthKey         string
+	providerKubectlClient  ProviderKubectlClient
+	providerTinkClient     ProviderTinkClient
+	templateBuilder        *TinkerbellTemplateBuilder
+	skipIpCheck            bool
+	hardwareConfigFile     string
+	validator              *Validator
+	skipPowerActions       bool
 	// TODO: Update hardwareConfig to proper type
 }
 
@@ -80,7 +82,8 @@ type ProviderKubectlClient interface {
 }
 
 type ProviderTinkClient interface {
-	GetHardware(ctx context.Context) ([]*tink.Hardware, error)
+	GetHardware(ctx context.Context) ([]*tinkhardware.Hardware, error)
+	GetWorkflow(ctx context.Context) ([]*tinkworkflow.Workflow, error)
 }
 
 type ProviderPbnjClient interface {
@@ -157,10 +160,6 @@ func (p *tinkerbellProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClu
 	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}, nil
 }
 
-func (p *tinkerbellProvider) PreBootstrapSetup(ctx context.Context, cluster *types.Cluster) error {
-	return nil
-}
-
 func (p *tinkerbellProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO: figure out if we need something else here
 	err := p.providerKubectlClient.ApplyHardware(ctx, p.hardwareConfigFile, cluster.KubeconfigFile)
@@ -198,15 +197,16 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
-	// ValidateHardwareConfig performs a lazy load of hardware configuration. Given subsequent steps need the hardware
-	// read into memory it needs to be done first.
-	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile, p.skipPowerActions); err != nil {
-		return err
-	}
-
 	tinkerbellClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
 
 	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
+		return err
+	}
+
+	// ValidateHardwareConfig performs a lazy load of hardware configuration. Given subsequent steps need the hardware
+	// read into memory it needs to be done first. It also needs connection to
+	// Tinkerbell steps to verify hardware availability on the stack
+	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile, p.skipPowerActions); err != nil {
 		return err
 	}
 
@@ -220,6 +220,9 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 
 	p.controlPlaneSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 	p.workerSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
+	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
+		p.etcdSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
+	}
 	// TODO: Add more validations
 
 	if !p.skipIpCheck {
@@ -290,7 +293,24 @@ func (vs *TinkerbellTemplateBuilder) KubeadmConfigTemplateName(clusterName, work
 }
 
 func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	values := buildTemplateMapCP(clusterSpec, *vs.controlPlaneMachineSpec)
+	cpTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[vs.controlPlaneMachineSpec.TemplateRef.Name]
+	cpTemplateString, err := cpTemplateConfig.ToTemplateString()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get Control Plane TinkerbellTemplateConfig: %v", err)
+	}
+
+	var etcdMachineSpec v1alpha1.TinkerbellMachineConfigSpec
+	var etcdTemplateString string
+	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineSpec = *vs.etcdMachineSpec
+		etcdTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[vs.etcdMachineSpec.TemplateRef.Name]
+		etcdTemplateString, err = etcdTemplateConfig.ToTemplateString()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get ETCD TinkerbellTemplateConfig: %v", err)
+		}
+	}
+	values := buildTemplateMapCP(clusterSpec, *vs.controlPlaneMachineSpec, etcdMachineSpec, cpTemplateString, etcdTemplateString)
+
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
@@ -304,7 +324,13 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
-		values := buildTemplateMapMD(clusterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
+		wTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].TemplateRef.Name]
+		wTemplateString, err := wTemplateConfig.ToTemplateString()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get worker TinkerbellTemplateConfig: %v", err)
+		}
+
+		values := buildTemplateMapMD(clusterSpec, vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration, wTemplateString)
 		_, ok := workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		if workloadTemplateNames != nil && ok {
 			values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
@@ -337,8 +363,10 @@ func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, clus
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
 		values["controlPlaneSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
-		// values["etcdSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
-		// values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
+		if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+			values["etcdSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
+		}
+		values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
@@ -469,7 +497,7 @@ func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
 }
 
-func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alpha1.TinkerbellMachineConfigSpec) map[string]interface{} {
+func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.TinkerbellMachineConfigSpec, cpTemplateOverride, etcdTemplateOverride string) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
@@ -493,12 +521,21 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"corednsVersion":               bundle.KubeDistro.CoreDNS.Tag,
 		"etcdRepository":               bundle.KubeDistro.Etcd.Repository,
 		"etcdImageTag":                 bundle.KubeDistro.Etcd.Tag,
-		"controlPlanetemplateOverride": controlPlaneMachineSpec.TemplateOverride,
+		"externalEtcdVersion":          bundle.KubeDistro.EtcdVersion,
+		"etcdCipherSuites":             crypto.SecureCipherSuitesString(),
+		"controlPlanetemplateOverride": cpTemplateOverride,
 	}
+	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+		values["externalEtcd"] = true
+		values["externalEtcdReplicas"] = clusterSpec.Spec.ExternalEtcdConfiguration.Count
+		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
+		values["etcdTemplateOverride"] = etcdTemplateOverride
+	}
+
 	return values
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1alpha1.TinkerbellMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1alpha1.TinkerbellMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, workerTemplateOverride string) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
@@ -510,7 +547,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"workerNodeGroupName":    workerNodeGroupConfiguration.Name,
 		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys,
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
-		"workertemplateOverride": workerNodeGroupMachineSpec.TemplateOverride,
+		"workertemplateOverride": workerTemplateOverride,
 	}
 	return values
 }

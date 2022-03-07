@@ -35,8 +35,14 @@ metadata:
   name: eksa-unit-test
 spec:
   account: "admin"
-  network: "net1"
-  zone: "zone1"
+  domain: "domain1"
+  zones:
+    - zone:
+        value: "zone1"
+        type: "Name"
+      network:
+        value: "net1"
+        type: "Name"
   idont: "belonghere"
 
 ---

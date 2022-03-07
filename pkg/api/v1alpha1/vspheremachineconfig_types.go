@@ -117,6 +117,10 @@ func (c *VSphereMachineConfig) Marshallable() Marshallable {
 	return c.ConvertConfigToConfigGenerateStruct()
 }
 
+func (c *VSphereMachineConfig) Validate() error {
+	return nil
+}
+
 // +kubebuilder:object:generate=false
 
 // Same as VSphereMachineConfig except stripped down for generation of yaml file during generate clusterconfig

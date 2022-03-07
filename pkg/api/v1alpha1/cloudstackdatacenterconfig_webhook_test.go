@@ -19,17 +19,33 @@ func TestCloudStackDatacenterValidateUpdateDomainImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestCloudStackDatacenterValidateUpdateZoneImmutable(t *testing.T) {
+func TestCloudStackDatacenterValidateUpdateZonesImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.Zone = v1alpha1.CloudStackResourceRef{
-		Type:  v1alpha1.Name,
-		Value: "oldCruftyZone",
+	vOld.Spec.Zones = []v1alpha1.CloudStackZoneRef{
+		{
+			Zone: v1alpha1.CloudStackResourceRef{
+				Type:  v1alpha1.Name,
+				Value: "oldCruftyZone",
+			},
+			Network: v1alpha1.CloudStackResourceRef{
+				Type:  v1alpha1.Name,
+				Value: "GuestNet1",
+			},
+		},
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.Zone = v1alpha1.CloudStackResourceRef{
-		Type:  v1alpha1.Name,
-		Value: "shinyNewZone",
+	c.Spec.Zones = []v1alpha1.CloudStackZoneRef{
+		{
+			Zone: v1alpha1.CloudStackResourceRef{
+				Type:  v1alpha1.Name,
+				Value: "shinyNewZone",
+			},
+			Network: v1alpha1.CloudStackResourceRef{
+				Type:  v1alpha1.Name,
+				Value: "GuestNet1",
+			},
+		},
 	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
@@ -47,15 +63,31 @@ func TestCloudStackDatacenterValidateUpdateAccountImmutable(t *testing.T) {
 
 func TestCloudStackDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.Network = v1alpha1.CloudStackResourceRef{
-		Value: "OldNet",
-		Type:  v1alpha1.Name,
+	vOld.Spec.Zones = []v1alpha1.CloudStackZoneRef{
+		{
+			Zone: v1alpha1.CloudStackResourceRef{
+				Type:  v1alpha1.Name,
+				Value: "oldCruftyZone",
+			},
+			Network: v1alpha1.CloudStackResourceRef{
+				Type:  v1alpha1.Name,
+				Value: "GuestNet1",
+			},
+		},
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.Network = v1alpha1.CloudStackResourceRef{
-		Value: "NewNet",
-		Type:  v1alpha1.Name,
+	c.Spec.Zones = []v1alpha1.CloudStackZoneRef{
+		{
+			Zone: v1alpha1.CloudStackResourceRef{
+				Type:  v1alpha1.Name,
+				Value: "oldCruftyZone",
+			},
+			Network: v1alpha1.CloudStackResourceRef{
+				Type:  v1alpha1.Name,
+				Value: "GuestNet2",
+			},
+		},
 	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
@@ -63,15 +95,31 @@ func TestCloudStackDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 
 func TestCloudStackDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.Network = v1alpha1.CloudStackResourceRef{
-		Value: "oldNetwork",
-		Type:  v1alpha1.Name,
+	vOld.Spec.Zones = []v1alpha1.CloudStackZoneRef{
+		{
+			Zone: v1alpha1.CloudStackResourceRef{
+				Type:  v1alpha1.Name,
+				Value: "oldCruftyZone",
+			},
+			Network: v1alpha1.CloudStackResourceRef{
+				Type:  v1alpha1.Name,
+				Value: "GuestNet1",
+			},
+		},
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.Network = v1alpha1.CloudStackResourceRef{
-		Value: "newNetwork",
-		Type:  v1alpha1.Name,
+	c.Spec.Zones = []v1alpha1.CloudStackZoneRef{
+		{
+			Zone: v1alpha1.CloudStackResourceRef{
+				Type:  v1alpha1.Name,
+				Value: "oldCruftyZone",
+			},
+			Network: v1alpha1.CloudStackResourceRef{
+				Type:  v1alpha1.Name,
+				Value: "GuestNet2",
+			},
+		},
 	}
 
 	vOld.PauseReconcile()

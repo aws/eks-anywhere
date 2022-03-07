@@ -710,13 +710,17 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: v1alpha1.CloudStackDatacenterConfigSpec{
-					Network: v1alpha1.CloudStackResourceRef{
-						Type:  "name",
-						Value: "testNetwork",
-					},
-					Zone: v1alpha1.CloudStackResourceRef{
-						Type:  "name",
-						Value: "testZone",
+					Zones: []v1alpha1.CloudStackZoneRef{
+						{
+							Zone: v1alpha1.CloudStackResourceRef{
+								Type:  v1alpha1.Name,
+								Value: "testZone",
+							},
+							Network: v1alpha1.CloudStackResourceRef{
+								Type:  v1alpha1.Name,
+								Value: "testNetwork",
+							},
+						},
 					},
 					Domain:  "testDomain",
 					Account: "testAccount",

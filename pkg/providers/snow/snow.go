@@ -3,18 +3,19 @@ package snow
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
+
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
-	"github.com/aws/eks-anywhere/pkg/clients/aws"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
+	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -28,11 +29,8 @@ const (
 	backOffPeriod              = 5 * time.Second
 )
 
-var requiredEnvs = []string{
-	"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_REGION", "AWS_SESSION_TOKEN",
-}
-
 type snowProvider struct {
+	// TODO: once cluster.config is available, remove below objs
 	datacenterConfig      *v1alpha1.SnowDatacenterConfig
 	machineConfigs        map[string]*v1alpha1.SnowMachineConfig
 	clusterConfig         *v1alpha1.Cluster
@@ -63,23 +61,7 @@ func (p *snowProvider) Name() string {
 	return constants.SnowProviderName
 }
 
-// TODO: move this to validator
-func validateEnvsForEcrRegistry() error {
-	// get aws credentials for the private ecr registry
-	for _, key := range requiredEnvs {
-		if env, ok := os.LookupEnv(key); !ok || len(env) <= 0 {
-			return fmt.Errorf("warning required env not set %s", key)
-		}
-	}
-	return nil
-}
-
 func (p *snowProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
-	// TODO: remove this validation when capas image is public.
-	if err := validateEnvsForEcrRegistry(); err != nil {
-		return fmt.Errorf("failed checking aws credentials for private ecr: %v", err)
-	}
-
 	if err := p.setupBootstrapCreds(); err != nil {
 		return fmt.Errorf("failed setting up credentials: %v", err)
 	}
@@ -98,8 +80,46 @@ func (p *snowProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster
 	return nil
 }
 
+func ControlPlaneObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) []runtime.Object {
+	snowCluster := SnowCluster(clusterSpec)
+	controlPlaneMachineTemplate := SnowMachineTemplate(machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	kubeadmControlPlane := KubeadmControlPlane(clusterSpec, controlPlaneMachineTemplate)
+	capiCluster := CAPICluster(clusterSpec, snowCluster, kubeadmControlPlane)
+
+	return []runtime.Object{capiCluster, snowCluster, kubeadmControlPlane, controlPlaneMachineTemplate}
+}
+
+func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) []runtime.Object {
+	kubeadmConfigTemplates := KubeadmConfigTemplates(clusterSpec)
+	workerMachineTemplates := SnowMachineTemplates(clusterSpec, machineConfigs)
+	machineDeployments := MachineDeployments(clusterSpec, kubeadmConfigTemplates, workerMachineTemplates)
+
+	workersObjs := make([]runtime.Object, 0, len(machineDeployments)+len(kubeadmConfigTemplates)+len(workerMachineTemplates))
+	for _, item := range machineDeployments {
+		workersObjs = append(workersObjs, item)
+	}
+	for _, item := range kubeadmConfigTemplates {
+		workersObjs = append(workersObjs, item)
+	}
+	for _, item := range workerMachineTemplates {
+		workersObjs = append(workersObjs, item)
+	}
+
+	return workersObjs
+}
+
 func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	return nil, nil, nil
+	controlPlaneSpec, err = templater.ObjectsToYaml(ControlPlaneObjects(clusterSpec, p.machineConfigs)...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	workersSpec, err = templater.ObjectsToYaml(WorkersObjects(clusterSpec, p.machineConfigs)...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return controlPlaneSpec, workersSpec, nil
 }
 
 func (p *snowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currrentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
@@ -107,34 +127,6 @@ func (p *snowProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrap
 }
 
 func (p *snowProvider) GenerateStorageClass() []byte {
-	return nil
-}
-
-func (p *snowProvider) setupEcrSecret(ctx context.Context, cluster *types.Cluster) error {
-	aws, err := aws.NewClient()
-	if err != nil {
-		return err
-	}
-	ecrCreds, err := aws.GetEcrCredentials()
-	if err != nil {
-		return err
-	}
-
-	if err = p.providerKubectlClient.CreateNamespace(ctx, cluster.KubeconfigFile, constants.CapasSystemNamespace); err != nil {
-		return fmt.Errorf("error creating namespace %s in cluster: %v", constants.CapasSystemNamespace, err)
-	}
-
-	if err = p.providerKubectlClient.CreateDockerRegistrySecret(ctx, constants.EcrRegistrySecretName, constants.EcrRegistry, ecrCreds.Username, ecrCreds.Password, executables.WithCluster(cluster), executables.WithNamespace(constants.CapasSystemNamespace)); err != nil {
-		return fmt.Errorf("error creating ecr registry secret in cluster: %v", err)
-	}
-	return nil
-}
-
-// TODO: tmp solution to support private ECR, remove when CAPAS images is public.
-func (p *snowProvider) PreBootstrapSetup(ctx context.Context, cluster *types.Cluster) error {
-	if err := p.setupEcrSecret(ctx, cluster); err != nil {
-		return fmt.Errorf("error setting up ecr creds: %v", err)
-	}
 	return nil
 }
 
@@ -159,12 +151,8 @@ func (p *snowProvider) EnvMap() (map[string]string, error) {
 	envMap[snowCredentialsKey] = p.bootstrapCreds.snowCredsB64
 	envMap[snowCertsKey] = p.bootstrapCreds.snowCertsB64
 
-	// TODO: remove $DEVICE_IPS whenever CAPAS removes it as a required env
-	envMap["DEVICE_IPS"] = ""
-
-	// TODO: tmp solution to pull private ECR
-	envMap["SNOW_CONTROLLER_IMAGE"] = fmt.Sprintf("%s/cluster-api-provider-aws-snow:latest", constants.EcrRegistry)
-	envMap["ECR_CREDS"] = constants.EcrRegistrySecretName
+	// TODO: tmp solution to pull capas image from arbitrary regi
+	envMap["SNOW_CONTROLLER_IMAGE"] = "public.ecr.aws/xyz/aws/cluster-api-provider-aws-snow:latest"
 
 	return envMap, nil
 }

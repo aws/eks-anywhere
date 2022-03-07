@@ -162,6 +162,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, cpOpt)
 }
 
+// TODO(pokearu): This method is currently not used. Need to add logic in reconciler for TinkerbellDatacenterKind
 func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, tdc anywherev1.TinkerbellDatacenterConfig, cpTmc, etcdTmc anywherev1.TinkerbellMachineConfig, workerTmc map[string]anywherev1.TinkerbellMachineConfig) ([]*unstructured.Unstructured, error) {
 	workerNodeGroupMachineSpecs := make(map[string]anywherev1.TinkerbellMachineConfigSpec, len(workerTmc))
 	for _, wnConfig := range workerTmc {
