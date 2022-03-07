@@ -21,12 +21,11 @@ func FromEnvironment(envVariable string) string {
 }
 
 type missingFileError struct {
-	ClusterName string
-	Path        string
+	Path string
 }
 
 // NewMissingFileError creates a missing kubeconfig file error.
-func NewMissingFileError(cluster, path string) error {
+func NewMissingFileError(path string) error {
 	return missingFileError{Path: path}
 }
 
