@@ -27,7 +27,7 @@ import (
 func ExecCommand(cmd *exec.Cmd) (string, error) {
 	stdout, err := cmd.Output()
 	if err != nil {
-		return "", errors.Cause(err)
+		return string(stdout), errors.Cause(err)
 	}
 	return string(stdout), nil
 }
