@@ -169,14 +169,15 @@ func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResul
 }
 
 func (c instanceRunConf) runPostTestsProcessing(e *E2ESession, testCommandResult *testCommandResult) error {
-	e.uploadJUnitReportFromInstance(c.regex)
+	testName := strings.Trim(c.regex, "\"")
+	e.uploadJUnitReportFromInstance(testName)
 	if c.testReportFolder != "" {
-		e.downloadJUnitReportToLocalDisk(c.regex, c.testReportFolder)
+		e.downloadJUnitReportToLocalDisk(testName, c.testReportFolder)
 	}
 
 	if !testCommandResult.Successful() {
-		e.uploadGeneratedFilesFromInstance(c.regex)
-		e.uploadDiagnosticArchiveFromInstance(c.regex)
+		e.uploadGeneratedFilesFromInstance(testName)
+		e.uploadDiagnosticArchiveFromInstance(testName)
 		return nil
 	}
 
