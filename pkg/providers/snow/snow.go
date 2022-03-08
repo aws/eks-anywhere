@@ -29,6 +29,11 @@ const (
 	backOffPeriod              = 5 * time.Second
 )
 
+var (
+	snowDatacenterResourceType = fmt.Sprintf("snowdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+	snowMachineResourceType    = fmt.Sprintf("snowmachineconfigs.%s", v1alpha1.GroupVersion.Group)
+)
+
 type snowProvider struct {
 	// TODO: once cluster.config is available, remove below objs
 	datacenterConfig      *v1alpha1.SnowDatacenterConfig
@@ -61,10 +66,27 @@ func (p *snowProvider) Name() string {
 	return constants.SnowProviderName
 }
 
+func (p *snowProvider) setupMachineConfigs() {
+	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
+
+	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
+	}
+
+	if p.clusterConfig.IsManaged() {
+		for _, mc := range p.machineConfigs {
+			mc.SetManagedBy(p.clusterConfig.ManagedBy())
+		}
+	}
+}
+
 func (p *snowProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	if err := p.setupBootstrapCreds(); err != nil {
 		return fmt.Errorf("failed setting up credentials: %v", err)
 	}
+	p.setupMachineConfigs()
 	return nil
 }
 
@@ -158,7 +180,9 @@ func (p *snowProvider) EnvMap() (map[string]string, error) {
 }
 
 func (p *snowProvider) GetDeployments() map[string][]string {
-	return nil
+	return map[string][]string{
+		"capas-system": {"capas-controller-manager"},
+	}
 }
 
 func (p *snowProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
@@ -176,19 +200,23 @@ func (p *snowProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types
 }
 
 func (p *snowProvider) DatacenterConfig() providers.DatacenterConfig {
-	return nil
+	return p.datacenterConfig
 }
 
 func (p *snowProvider) DatacenterResourceType() string {
-	return ""
+	return snowDatacenterResourceType
 }
 
 func (p *snowProvider) MachineResourceType() string {
-	return ""
+	return snowMachineResourceType
 }
 
 func (p *snowProvider) MachineConfigs() []providers.MachineConfig {
-	return nil
+	configs := make([]providers.MachineConfig, 0, len(p.machineConfigs))
+	for _, mc := range p.machineConfigs {
+		configs = append(configs, mc)
+	}
+	return configs
 }
 
 func (p *snowProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {

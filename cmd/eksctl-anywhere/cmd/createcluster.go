@@ -80,7 +80,10 @@ func (cc *createClusterOptions) validate(ctx context.Context) error {
 
 	kubeconfigPath := kubeconfig.FromClusterName(clusterConfig.Name)
 	if validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
-		return kubeconfig.NewMissingFileError(clusterConfig.Name, kubeconfigPath)
+		return fmt.Errorf(
+			"old cluster config file exists under %s, please use a different clusterName to proceed",
+			clusterConfig.Name,
+		)
 	}
 
 	return nil

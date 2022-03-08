@@ -139,7 +139,7 @@ func (uc *upgradeClusterOptions) commonValidations(ctx context.Context) (cluster
 
 	kubeconfigPath := getKubeconfigPath(clusterConfig.Name, uc.wConfig)
 	if !validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
-		return nil, kubeconfig.NewMissingFileError(clusterConfig.Name, kubeconfigPath)
+		return nil, kubeconfig.NewMissingFileError(kubeconfigPath)
 	}
 
 	return clusterConfig, nil

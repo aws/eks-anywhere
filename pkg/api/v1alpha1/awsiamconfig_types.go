@@ -115,6 +115,10 @@ func (c *AWSIamConfig) Validate() error {
 	return validateAWSIamConfig(c)
 }
 
+func (c *AWSIamConfig) SetDefaults() {
+	setDefaultAWSIamPartition(c)
+}
+
 func init() {
 	SchemeBuilder.Register(&AWSIamConfig{}, &AWSIamConfigList{})
 }

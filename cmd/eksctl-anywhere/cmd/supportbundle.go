@@ -67,7 +67,7 @@ func (csbo *createSupportBundleOptions) validate(ctx context.Context) error {
 
 	kubeconfigPath := kubeconfig.FromClusterName(clusterConfig.Name)
 	if !validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
-		return kubeconfig.NewMissingFileError(clusterConfig.Name, kubeconfigPath)
+		return kubeconfig.NewMissingFileError(kubeconfigPath)
 	}
 
 	return nil
