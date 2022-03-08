@@ -17,6 +17,8 @@ func GetAndValidateAWSIamConfig(fileName string, refName string, clusterConfig *
 	if err != nil {
 		return nil, err
 	}
+	config.SetDefaults()
+
 	if err = validateAWSIamConfig(config); err != nil {
 		return nil, err
 	}
@@ -68,10 +70,7 @@ func validateAWSIamConfig(config *AWSIamConfig) error {
 	if err := validateMapUsers(config.Spec.MapUsers); err != nil {
 		return err
 	}
-	if config.Spec.Partition == "" {
-		config.Spec.Partition = "aws"
-		logger.V(1).Info("AWSIamConfig Partition is empty. Using default partition 'aws'")
-	}
+
 	return nil
 }
 
@@ -122,4 +121,11 @@ func validateAWSIamNamespace(config *AWSIamConfig, clusterConfig *Cluster) error
 	}
 
 	return nil
+}
+
+func setDefaultAWSIamPartition(config *AWSIamConfig) {
+	if config.Spec.Partition == "" {
+		config.Spec.Partition = "aws"
+		logger.V(1).Info("AWSIamConfig Partition is empty. Using default partition 'aws'")
+	}
 }
