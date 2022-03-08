@@ -11,9 +11,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
-// TODO: Move this to cloudstack.go provider file
-const controlEndpointDefaultPort = "6443"
-
 type Validator struct {
 	cmk ProviderCmkClient
 }
@@ -37,7 +34,7 @@ type ProviderCmkClient interface {
 
 func (v *Validator) validateCloudStackAccess(ctx context.Context) error {
 	if err := v.cmk.ValidateCloudStackConnection(ctx); err != nil {
-		return fmt.Errorf("failed validating connection to cloudStack: %v", err)
+		return fmt.Errorf("failed validating connection to cloudstack: %v", err)
 	}
 	logger.MarkPass("Connected to server")
 
@@ -50,7 +47,7 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 	}
 	domain, errDomain := v.cmk.ValidateDomainPresent(ctx, datacenterConfig.Spec.Domain)
 	if errDomain != nil {
-		return fmt.Errorf("error while checking domain %v", errDomain)
+		return fmt.Errorf("error while checking domain: %v", errDomain)
 	}
 
 	if len(datacenterConfig.Spec.Account) > 0 {
@@ -80,7 +77,7 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 }
 
 // TODO: dry out machine configs validations
-func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStackClusterSpec *spec) error {
+func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStackClusterSpec *Spec) error {
 	var etcdMachineConfig *anywherev1.CloudStackMachineConfig
 
 	if len(cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
@@ -173,7 +170,7 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfigS
 	}
 	domain, errDomain := v.cmk.ValidateDomainPresent(ctx, datacenterConfigSpec.Domain)
 	if errDomain != nil {
-		return fmt.Errorf("error while checking domain %v", errDomain)
+		return fmt.Errorf("error while checking domain: %v", errDomain)
 	}
 
 	zones, err := v.cmk.ValidateZonesPresent(ctx, datacenterConfigSpec.Zones)
@@ -219,7 +216,7 @@ func (v *Validator) validateControlPlaneHost(pHost string) (bool, error) {
 	return true, nil
 }
 
-func (v *Validator) setDefaultControlPlanePort(cloudStackClusterSpec *spec) {
+func (v *Validator) setDefaultControlPlanePort(cloudStackClusterSpec *Spec) {
 	cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = fmt.Sprintf("%s:%s",
 		cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		controlEndpointDefaultPort)

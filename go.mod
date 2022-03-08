@@ -26,6 +26,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f
 	golang.org/x/sys v0.0.0-20210823070655-63515b42dcdf
+	gopkg.in/ini.v1 v1.63.2
 	gopkg.in/square/go-jose.v2 v2.6.0
 	k8s.io/api v0.22.2
 	k8s.io/apimachinery v0.22.2
@@ -47,7 +48,7 @@ replace (
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20220207154021-dcf66392d606
 	github.com/opencontainers/runc => github.com/opencontainers/runc v1.0.0-rc95
 	github.com/tinkerbell/cluster-api-provider-tinkerbell => github.com/pokearu/cluster-api-provider-tinkerbell v0.0.0-20220128001529-79d851d0861f
-	
+
 	// need the modifications eksa made to the capi api structs
 	sigs.k8s.io/cluster-api => github.com/mrajashree/cluster-api v1.0.3-0.20220301005127-382d70d4a76f
 )

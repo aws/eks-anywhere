@@ -11,6 +11,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
@@ -18,15 +19,27 @@ import (
 var cmkConfigTemplate string
 
 const (
+	cmkPath           = "cmk"
 	cmkConfigFileName = "cmk_tmp.ini"
 	Shared            = "Shared"
 )
 
-// Cmk this type will be used once the CloudStack provider is added to the repository
+// Cmk this struct wraps around the CloudMonkey executable CLI to perform operations against a CloudStack endpoint
 type Cmk struct {
 	writer     filewriter.FileWriter
 	executable Executable
-	config     CmkExecConfig
+	config     decoder.CloudStackExecConfig
+}
+
+type cmkExecConfig struct {
+	CloudStackApiKey        string
+	CloudStackSecretKey     string
+	CloudStackManagementUrl string
+	CloudMonkeyVerifyCert   string
+}
+
+func (c *Cmk) Close(ctx context.Context) error {
+	return nil
 }
 
 func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domainId string, zoneId string, account string, template v1alpha1.CloudStackResourceRef) error {
@@ -47,7 +60,7 @@ func (c *Cmk) ValidateTemplatePresent(ctx context.Context, domainId string, zone
 	}
 	result, err := c.exec(ctx, command...)
 	if err != nil {
-		return fmt.Errorf("error getting templates info: %v", err)
+		return fmt.Errorf("error getting templates info - %s: %v", result.String(), err)
 	}
 	if result.Len() == 0 {
 		return fmt.Errorf("template %s not found", template)
@@ -78,7 +91,7 @@ func (c *Cmk) ValidateServiceOfferingPresent(ctx context.Context, zoneId string,
 	applyCmkArgs(&command, withCloudStackZoneId(zoneId))
 	result, err := c.exec(ctx, command...)
 	if err != nil {
-		return fmt.Errorf("error getting service offerings info: %v", err)
+		return fmt.Errorf("error getting service offerings info - %s: %v", result.String(), err)
 	}
 	if result.Len() == 0 {
 		return fmt.Errorf("service offering %s not found", serviceOffering)
@@ -115,7 +128,7 @@ func (c *Cmk) ValidateAffinityGroupsPresent(ctx context.Context, domainId string
 
 		result, err := c.exec(ctx, command...)
 		if err != nil {
-			return fmt.Errorf("error getting affinity group info: %v", err)
+			return fmt.Errorf("error getting affinity group info - %s: %v", result.String(), err)
 		}
 		if result.Len() == 0 {
 			return fmt.Errorf(fmt.Sprintf("affinity group %s not found", affinityGroupId))
@@ -149,7 +162,7 @@ func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudSt
 		}
 		result, err := c.exec(ctx, command...)
 		if err != nil {
-			return nil, fmt.Errorf("error getting zones info: %v", err)
+			return nil, fmt.Errorf("error getting zones info - %s: %v", result.String(), err)
 		}
 		if result.Len() == 0 {
 			return nil, fmt.Errorf("zone %s not found", zone.Value)
@@ -179,7 +192,7 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha
 	applyCmkArgs(&command, withCloudStackName(domain))
 	result, err := c.exec(ctx, command...)
 	if err != nil {
-		return domainIdentifier, fmt.Errorf("error getting domain info: %v", err)
+		return domainIdentifier, fmt.Errorf("error getting domain info - %s: %v", result.String(), err)
 	}
 	if result.Len() == 0 {
 		return domainIdentifier, fmt.Errorf("domain %s not found", domain)
@@ -233,7 +246,7 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zoneR
 	applyCmkArgs(&command, withCloudStackZoneId(zoneId))
 	result, err := c.exec(ctx, command...)
 	if err != nil {
-		return fmt.Errorf("error getting network info: %v", err)
+		return fmt.Errorf("error getting network info - %s: %v", result.String(), err)
 	}
 	if result.Len() == 0 {
 		if multipleZone {
@@ -287,7 +300,7 @@ func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string, domain
 	applyCmkArgs(&command, withCloudStackName(account), withCloudStackDomainId(domainId))
 	result, err := c.exec(ctx, command...)
 	if err != nil {
-		return fmt.Errorf("error getting accounts info: %v", err)
+		return fmt.Errorf("error getting accounts info - %s: %v", result.String(), err)
 	}
 	if result.Len() == 0 {
 		return fmt.Errorf("account %s not found", account)
@@ -308,7 +321,7 @@ func (c *Cmk) ValidateAccountPresent(ctx context.Context, account string, domain
 	return nil
 }
 
-func NewCmk(executable Executable, writer filewriter.FileWriter, config CmkExecConfig) *Cmk {
+func NewCmk(executable Executable, writer filewriter.FileWriter, config decoder.CloudStackExecConfig) *Cmk {
 	return &Cmk{
 		writer:     writer,
 		executable: executable,
@@ -340,17 +353,15 @@ func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, er
 	return c.executable.Execute(ctx, argsWithConfigFile...)
 }
 
-// TODO: Add support for passing in domain from Deployment Config Spec
-type CmkExecConfig struct {
-	CloudStackApiKey        string // Api Key for CloudMonkey to access CloudStack Cluster
-	CloudStackSecretKey     string // Secret Key for CloudMonkey to access CloudStack Cluster
-	CloudStackManagementUrl string // Management Endpoint Url for CloudMonkey to access CloudStack Cluster
-	CloudMonkeyVerifyCert   bool   // boolean indicating if CloudMonkey should verify the cert presented by the CloudStack Management Server
-}
-
 func (c *Cmk) buildCmkConfigFile() (configFile string, err error) {
 	t := templater.New(c.writer)
-	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, c.config, cmkConfigFileName)
+	cmkConfig := &cmkExecConfig{
+		CloudStackApiKey:        c.config.ApiKey,
+		CloudStackSecretKey:     c.config.SecretKey,
+		CloudStackManagementUrl: c.config.ManagementUrl,
+		CloudMonkeyVerifyCert:   c.config.VerifySsl,
+	}
+	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, cmkConfig, cmkConfigFileName)
 	if err != nil {
 		return "", fmt.Errorf("error creating file for cmk config: %v", err)
 	}

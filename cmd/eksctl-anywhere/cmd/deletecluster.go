@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -105,6 +106,9 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	}
 	defer cleanup(ctx, deps, &err)
 
+	if !features.IsActive(features.CloudStackProvider()) && deps.Provider.Name() == constants.CloudStackProviderName {
+		return fmt.Errorf("Error: provider cloudstack is not supported in this release")
+	}
 	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == "tinkerbell" {
 		return fmt.Errorf("Error: provider tinkerbell is not supported in this release")
 	}

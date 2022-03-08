@@ -35,8 +35,11 @@ spec:
   controlPlaneEndpoint:
     host: {{.controlPlaneEndpointHost}}
     port: {{.controlPlaneEndpointPort}}
-  network: {{.cloudstackNetwork}}
-  zone: {{.cloudstackZone}}
+  zones:{{ range $zone := .cloudstackZones }}
+    - network:
+        {{ $zone.Network.Type}}: {{ $zone.Network.Value}}
+      {{ $zone.Zone.Type }}: {{ $zone.Zone.Value }}
+  {{- end }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate

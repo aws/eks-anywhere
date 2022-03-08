@@ -2698,6 +2698,7 @@ spec:
                   - bottlerocketBootstrap
                   - certManager
                   - cilium
+                  - cloudStack
                   - clusterAPI
                   - controlPlane
                   - docker
