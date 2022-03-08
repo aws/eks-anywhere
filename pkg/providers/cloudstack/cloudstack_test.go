@@ -192,7 +192,7 @@ func TestProviderGenerateCAPISpecForCreate(t *testing.T) {
 
 	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
 	if err != nil {
-		t.Fatalf("failed to generate cluster api Spec contents: %v", err)
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_main_cp.yaml")
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md.yaml")
@@ -217,7 +217,7 @@ func TestProviderGenerateDeploymentFileWithMirrorConfig(t *testing.T) {
 
 	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
 	if err != nil {
-		t.Fatalf("failed to generate cluster api Spec contents: %v", err)
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_mirror_config_cp.yaml")
@@ -243,7 +243,7 @@ func TestProviderGenerateDeploymentFileWithMirrorAndCertConfig(t *testing.T) {
 
 	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
 	if err != nil {
-		t.Fatalf("failed to generate cluster api Spec contents: %v", err)
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
 	}
 
 	test.AssertContentToFile(t, string(cp), "testdata/expected_results_mirror_config_with_cert_cp.yaml")
