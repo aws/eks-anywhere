@@ -176,6 +176,37 @@ func TestSetupAndValidateUsersNil(t *testing.T) {
 	}
 }
 
+func TestSetupAndValidateRestrictedUserDetails(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
+	}
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	validator := NewValidator(cmk)
+	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get datacenter config from file")
+	}
+	cloudStackClusterSpec := &Spec{
+		Spec:                 clusterSpec,
+		datacenterConfig:     datacenterConfig,
+		machineConfigsLookup: machineConfigs,
+	}
+	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.UserCustomDetails = map[string]string{"keyboard": "test"}
+	workerNodeMachineConfigName := clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.UserCustomDetails = map[string]string{"keyboard": "test"}
+	etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.UserCustomDetails = map[string]string{"keyboard": "test"}
+
+	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
+	if err == nil {
+		t.Fatalf("expected error like 'validation failed: restricted key keyboard found in custom user details' but no error was thrown")
+	}
+}
+
 func TestSetupAndValidateSshAuthorizedKeysNil(t *testing.T) {
 	ctx := context.Background()
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))

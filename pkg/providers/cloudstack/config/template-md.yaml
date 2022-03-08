@@ -107,6 +107,12 @@ spec:
     spec:
       offering: {{.cloudstackOffering}}
       template: {{.cloudstackTemplate}}
+      {{- if .cloudstackDetails }}
+      details:
+      {{- range $key, $value := .cloudstackDetails}}
+        {{$key}}: {{$value}}
+      {{- end}}
+      {{- end}}
 {{- if .cloudstackAffinityGroupIds }}
       affinitygroupids:
       {{- range .cloudstackAffinityGroupIds}}
