@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -127,7 +128,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 		}
 	}
 
-	if !features.IsActive(features.CloudStackProvider()) && deps.Provider.Name() == "cloudstack" {
+	if !features.IsActive(features.CloudStackProvider()) && deps.Provider.Name() == constants.CloudStackProviderName {
 		return fmt.Errorf("error: provider cloudstack is not supported in this release")
 	}
 

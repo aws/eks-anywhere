@@ -19,11 +19,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/decoder"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -190,12 +190,15 @@ func (p *cloudstackProvider) MachineResourceType() string {
 
 func (p *cloudstackProvider) setupSSHAuthKeysForCreate() error {
 	var useKeyGeneratedForControlplane, useKeyGeneratedForWorker bool
+	var err error
 	controlPlaneUser := p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
 	p.controlPlaneSshAuthKey = controlPlaneUser.SshAuthorizedKeys[0]
-	if err := common.ParseSSHAuthKey(&p.controlPlaneSshAuthKey); err != nil {
-		return err
-	}
-	if len(p.controlPlaneSshAuthKey) <= 0 {
+	if len(p.controlPlaneSshAuthKey) > 0 {
+		p.controlPlaneSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.controlPlaneSshAuthKey)
+		if err != nil {
+			return err
+		}
+	} else {
 		logger.Info("Provided control plane sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
 		generatedKey, err := common.GenerateSSHAuthKey(controlPlaneUser.Name, p.writer)
 		if err != nil {
@@ -206,10 +209,12 @@ func (p *cloudstackProvider) setupSSHAuthKeysForCreate() error {
 	}
 	workerUser := p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0]
 	p.workerSshAuthKey = workerUser.SshAuthorizedKeys[0]
-	if err := common.ParseSSHAuthKey(&p.workerSshAuthKey); err != nil {
-		return err
-	}
-	if len(p.workerSshAuthKey) <= 0 {
+	if len(p.workerSshAuthKey) > 0 {
+		p.workerSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.workerSshAuthKey)
+		if err != nil {
+			return err
+		}
+	} else {
 		if useKeyGeneratedForControlplane { // use the same key
 			p.workerSshAuthKey = p.controlPlaneSshAuthKey
 		} else {
@@ -225,10 +230,12 @@ func (p *cloudstackProvider) setupSSHAuthKeysForCreate() error {
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		etcdUser := p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0]
 		p.etcdSshAuthKey = etcdUser.SshAuthorizedKeys[0]
-		if err := common.ParseSSHAuthKey(&p.etcdSshAuthKey); err != nil {
-			return err
-		}
-		if len(p.etcdSshAuthKey) <= 0 {
+		if len(p.etcdSshAuthKey) > 0 {
+			p.etcdSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.etcdSshAuthKey)
+			if err != nil {
+				return err
+			}
+		} else {
 			if useKeyGeneratedForControlplane { // use the same key as for controlplane
 				p.etcdSshAuthKey = p.controlPlaneSshAuthKey
 			} else if useKeyGeneratedForWorker {
@@ -575,7 +582,7 @@ func (p *cloudstackProvider) GenerateCAPISpecForUpgrade(ctx context.Context, boo
 func (p *cloudstackProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
+		return nil, nil, fmt.Errorf("error generating cluster api Spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }

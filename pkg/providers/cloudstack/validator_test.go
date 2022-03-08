@@ -80,7 +80,7 @@ func TestValidateMachineConfigsNoControlPlaneEndpointIP(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
 	}
-	cloudStackClusterSpec := &spec{
+	cloudStackClusterSpec := &Spec{
 		Spec:             clusterSpec,
 		datacenterConfig: datacenterConfig,
 	}
@@ -105,7 +105,7 @@ func TestValidateMachineConfigsMultipleWorkerNodeGroupsUnsupported(t *testing.T)
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
 	}
-	cloudStackClusterSpec := &spec{
+	cloudStackClusterSpec := &Spec{
 		Spec:                 clusterSpec,
 		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: machineConfigs,
@@ -124,7 +124,7 @@ func TestValidateDatacenterConfigsNoNetwork(t *testing.T) {
 		t.Fatalf("unable to get datacenter config from file")
 	}
 	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	cloudStackClusterSpec := &spec{
+	cloudStackClusterSpec := &Spec{
 		Spec:                 clusterSpec,
 		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: nil,
@@ -153,7 +153,7 @@ func TestSetupAndValidateUsersNil(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
 	}
-	cloudStackClusterSpec := &spec{
+	cloudStackClusterSpec := &Spec{
 		Spec:                 clusterSpec,
 		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: machineConfigs,
@@ -189,7 +189,7 @@ func TestSetupAndValidateSshAuthorizedKeysNil(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
 	}
-	cloudStackClusterSpec := &spec{
+	cloudStackClusterSpec := &Spec{
 		Spec:                 clusterSpec,
 		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: machineConfigs,
@@ -225,7 +225,7 @@ func TestSetupAndValidateCreateClusterCPMachineGroupRefNil(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
 	}
-	cloudStackClusterSpec := &spec{
+	cloudStackClusterSpec := &Spec{
 		Spec:                 clusterSpec,
 		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: machineConfigs,
@@ -249,7 +249,7 @@ func TestSetupAndValidateCreateClusterWorkerMachineGroupRefNil(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
 	}
-	cloudStackClusterSpec := &spec{
+	cloudStackClusterSpec := &Spec{
 		Spec:                 clusterSpec,
 		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: machineConfigs,
@@ -273,7 +273,7 @@ func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNil(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
 	}
-	cloudStackClusterSpec := &spec{
+	cloudStackClusterSpec := &Spec{
 		Spec:                 clusterSpec,
 		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: machineConfigs,
@@ -297,7 +297,7 @@ func TestSetupAndValidateCreateClusterCPMachineGroupRefNonexistent(t *testing.T)
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
 	}
-	cloudStackClusterSpec := &spec{
+	cloudStackClusterSpec := &Spec{
 		Spec:                 clusterSpec,
 		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: machineConfigs,
@@ -321,7 +321,7 @@ func TestSetupAndValidateCreateClusterWorkerMachineGroupRefNonexistent(t *testin
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
 	}
-	cloudStackClusterSpec := &spec{
+	cloudStackClusterSpec := &Spec{
 		Spec:                 clusterSpec,
 		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: machineConfigs,
@@ -345,7 +345,7 @@ func TestSetupAndValidateCreateClusterEtcdMachineGroupRefNonexistent(t *testing.
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
 	}
-	cloudStackClusterSpec := &spec{
+	cloudStackClusterSpec := &Spec{
 		Spec:                 clusterSpec,
 		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: machineConfigs,
@@ -369,7 +369,7 @@ func TestSetupAndValidateCreateClusterTemplateDifferent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to get datacenter config from file")
 	}
-	cloudStackClusterSpec := &spec{
+	cloudStackClusterSpec := &Spec{
 		Spec:                 clusterSpec,
 		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: machineConfigs,
@@ -393,7 +393,7 @@ func TestValidateMachineConfigsHappyCase(t *testing.T) {
 		t.Fatalf("unable to get datacenter config from file")
 	}
 	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
-	cloudStackClusterSpec := &spec{
+	cloudStackClusterSpec := &Spec{
 		Spec:                 clusterSpec,
 		datacenterConfig:     datacenterConfig,
 		machineConfigsLookup: machineConfigs,

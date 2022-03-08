@@ -77,7 +77,7 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 }
 
 // TODO: dry out machine configs validations
-func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStackClusterSpec *spec) error {
+func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStackClusterSpec *Spec) error {
 	var etcdMachineConfig *anywherev1.CloudStackMachineConfig
 
 	if len(cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
@@ -216,7 +216,7 @@ func (v *Validator) validateControlPlaneHost(pHost string) (bool, error) {
 	return true, nil
 }
 
-func (v *Validator) setDefaultControlPlanePort(cloudStackClusterSpec *spec) {
+func (v *Validator) setDefaultControlPlanePort(cloudStackClusterSpec *Spec) {
 	cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = fmt.Sprintf("%s:%s",
 		cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		controlEndpointDefaultPort)

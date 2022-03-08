@@ -218,12 +218,15 @@ func (p *vsphereProvider) MachineResourceType() string {
 
 func (p *vsphereProvider) setupSSHAuthKeysForCreate() error {
 	var useKeyGeneratedForControlplane, useKeyGeneratedForWorker bool
+	var err error
 	controlPlaneUser := p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
 	p.controlPlaneSshAuthKey = controlPlaneUser.SshAuthorizedKeys[0]
-	if err := common.ParseSSHAuthKey(&p.controlPlaneSshAuthKey); err != nil {
-		return err
-	}
-	if len(p.controlPlaneSshAuthKey) <= 0 {
+	if len(p.controlPlaneSshAuthKey) > 0 {
+		p.controlPlaneSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.controlPlaneSshAuthKey)
+		if err != nil {
+			return err
+		}
+	} else {
 		logger.Info("Provided control plane sshAuthorizedKey is not set or is empty, auto-generating new key pair...")
 		generatedKey, err := common.GenerateSSHAuthKey(controlPlaneUser.Name, p.writer)
 		if err != nil {
@@ -236,10 +239,12 @@ func (p *vsphereProvider) setupSSHAuthKeysForCreate() error {
 	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
 		workerUser := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users[0]
 		p.workerSshAuthKey = workerUser.SshAuthorizedKeys[0]
-		if err := common.ParseSSHAuthKey(&p.workerSshAuthKey); err != nil {
-			return err
-		}
-		if len(p.workerSshAuthKey) <= 0 {
+		if len(p.workerSshAuthKey) > 0 {
+			p.workerSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.workerSshAuthKey)
+			if err != nil {
+				return err
+			}
+		} else {
 			if useKeyGeneratedForControlplane { // use the same key
 				p.workerSshAuthKey = p.controlPlaneSshAuthKey
 			} else {
@@ -257,10 +262,12 @@ func (p *vsphereProvider) setupSSHAuthKeysForCreate() error {
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		etcdUser := p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0]
 		p.etcdSshAuthKey = etcdUser.SshAuthorizedKeys[0]
-		if err := common.ParseSSHAuthKey(&p.etcdSshAuthKey); err != nil {
-			return err
-		}
-		if len(p.etcdSshAuthKey) <= 0 {
+		if len(p.etcdSshAuthKey) > 0 {
+			p.etcdSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.etcdSshAuthKey)
+			if err != nil {
+				return err
+			}
+		} else {
 			if useKeyGeneratedForControlplane { // use the same key as for controlplane
 				p.etcdSshAuthKey = p.controlPlaneSshAuthKey
 			} else if useKeyGeneratedForWorker {
@@ -280,25 +287,35 @@ func (p *vsphereProvider) setupSSHAuthKeysForCreate() error {
 }
 
 func (p *vsphereProvider) setupSSHAuthKeysForUpgrade() error {
+	var err error
 	controlPlaneUser := p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
 	p.controlPlaneSshAuthKey = controlPlaneUser.SshAuthorizedKeys[0]
-	if err := common.ParseSSHAuthKey(&p.controlPlaneSshAuthKey); err != nil {
-		return err
+	if len(p.controlPlaneSshAuthKey) > 0 {
+		p.controlPlaneSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.controlPlaneSshAuthKey)
+		if err != nil {
+			return err
+		}
 	}
 	controlPlaneUser.SshAuthorizedKeys[0] = p.controlPlaneSshAuthKey
 	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
 		workerUser := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users[0]
 		p.workerSshAuthKey = workerUser.SshAuthorizedKeys[0]
-		if err := common.ParseSSHAuthKey(&p.workerSshAuthKey); err != nil {
-			return err
+		if len(p.workerSshAuthKey) > 0 {
+			p.workerSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.workerSshAuthKey)
+			if err != nil {
+				return err
+			}
 		}
 		workerUser.SshAuthorizedKeys[0] = p.workerSshAuthKey
 	}
 	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		etcdUser := p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0]
 		p.etcdSshAuthKey = etcdUser.SshAuthorizedKeys[0]
-		if err := common.ParseSSHAuthKey(&p.etcdSshAuthKey); err != nil {
-			return err
+		if len(p.etcdSshAuthKey) > 0 {
+			p.etcdSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.etcdSshAuthKey)
+			if err != nil {
+				return err
+			}
 		}
 		etcdUser.SshAuthorizedKeys[0] = p.etcdSshAuthKey
 	}
