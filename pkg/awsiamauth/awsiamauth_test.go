@@ -82,7 +82,7 @@ func newAwsIamAuth(t *testing.T) (*awsiamauth.AwsIamAuth, *mocks.MockCertificate
 func givenClusterSpec() *cluster.Spec {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.Name = "test-cluster"
-		s.VersionsBundle.KubeDistro.AwsIamAuthIamge = bundlev1.Image{
+		s.VersionsBundle.KubeDistro.AwsIamAuthImage = bundlev1.Image{
 			URI: "public.ecr.aws/eks-distro/kubernetes-sigs/aws-iam-authenticator:v0.5.2-eks-1-18-11",
 		}
 		s.AWSIamConfig = &v1alpha1.AWSIamConfig{
