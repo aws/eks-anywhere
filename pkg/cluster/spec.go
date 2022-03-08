@@ -50,6 +50,7 @@ func (s *Spec) DeepCopy() *Spec {
 		Cluster:             s.Cluster.DeepCopy(),
 		OIDCConfig:          s.OIDCConfig.DeepCopy(),
 		GitOpsConfig:        s.GitOpsConfig.DeepCopy(),
+		AWSIamConfig:        s.AWSIamConfig.DeepCopy(),
 		releasesManifestURL: s.releasesManifestURL,
 		bundlesManifestURL:  s.bundlesManifestURL,
 		configFS:            s.configFS,
