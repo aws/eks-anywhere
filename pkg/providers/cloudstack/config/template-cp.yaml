@@ -51,9 +51,9 @@ spec:
     spec:
       offering: {{.cloudstackControlPlaneComputeOffering}}
       template: {{.cloudstackControlPlaneTemplateOffering}}
-      {{- if .cloudstackControlPlaneDetails }}
+      {{- if .cloudstackControlPlaneCustomDetails }}
       details:
-      {{- range $key, $value := .cloudstackControlPlaneDetails}}
+      {{- range $key, $value := .cloudstackControlPlaneCustomDetails}}
         {{$key}}: {{$value}}
       {{- end}}
       {{- end}}
@@ -304,9 +304,9 @@ spec:
     spec:
       offering: {{.cloudstackEtcdComputeOffering}}
       template: {{.cloudstackEtcdTemplateOffering}}
-      {{- if .cloudstackEtcdDetails }}
+      {{- if .cloudstackEtcdCustomDetails }}
       details:
-      {{- range $key, $value := .cloudstackEtcdDetails}}
+      {{- range $key, $value := .cloudstackEtcdCustomDetails}}
         {{$key}}: {{$value}}
       {{- end}}
       {{- end}}

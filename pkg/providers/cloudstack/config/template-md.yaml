@@ -107,9 +107,9 @@ spec:
     spec:
       offering: {{.cloudstackOffering}}
       template: {{.cloudstackTemplate}}
-      {{- if .cloudstackDetails }}
+      {{- if .cloudstackCustomDetails }}
       details:
-      {{- range $key, $value := .cloudstackDetails}}
+      {{- range $key, $value := .cloudstackCustomDetails}}
         {{$key}}: {{$value}}
       {{- end}}
       {{- end}}
