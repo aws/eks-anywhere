@@ -215,7 +215,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 	ipman := newE2EIPManager(os.Getenv(cidrVar), os.Getenv(privateNetworkCidrVar))
 
 	testsInCurrentInstance := make([]string, 0, testPerInstance)
-	for _, testName := range testsList {
+	for i, testName := range testsList {
 		testsInCurrentInstance = append(testsInCurrentInstance, testName)
 		multiClusterTest := multiClusterTestsRe.MatchString(testName)
 		var ips networkutils.IPPool
@@ -233,7 +233,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 			}
 		}
 
-		if len(testsInCurrentInstance) == testPerInstance {
+		if len(testsInCurrentInstance) == testPerInstance || (len(testsList)-1) == i {
 			runConfs = append(runConfs, instanceRunConf{
 				amiId:               conf.AmiId,
 				instanceProfileName: conf.InstanceProfileName,
@@ -241,7 +241,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 				jobId:               fmt.Sprintf("%s-%d", conf.JobId, len(runConfs)),
 				parentJobId:         conf.JobId,
 				subnetId:            conf.SubnetId,
-				regex:               strings.Join(testsInCurrentInstance, "|"),
+				regex:               fmt.Sprintf("\"%s\"", strings.Join(testsInCurrentInstance, "|")),
 				bundlesOverride:     conf.BundlesOverride,
 				testReportFolder:    conf.TestReportFolder,
 				branchName:          conf.BranchName,
