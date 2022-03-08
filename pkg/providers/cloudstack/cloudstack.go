@@ -500,7 +500,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	values := map[string]interface{}{
 		"clusterName":                clusterSpec.ObjectMeta.Name,
 		"kubernetesVersion":          bundle.KubeDistro.Kubernetes.Tag,
-		"cloudstackNetwork":          datacenterConfigSpec.Zones[0].Network.Value,
 		"cloudstackTemplate":         workerNodeGroupMachineSpec.Template.Value,
 		"cloudstackOffering":         workerNodeGroupMachineSpec.ComputeOffering.Value,
 		"cloudstackAffinityGroupIds": workerNodeGroupMachineSpec.AffinityGroupIds,
