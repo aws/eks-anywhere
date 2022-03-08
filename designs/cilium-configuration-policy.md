@@ -8,7 +8,7 @@
 
 As an EKS Anywhere user:
 
-* I want to have the ability to configure Cilium's [supported policy enforcement modes](https://docs.cilium.io/en/v1.8/policy/intro/).
+* I want to have the ability to configure Cilium's [supported policy enforcement modes](https://docs.cilium.io/en/v1.9/policy/intro/).
 * I want that, depending on the policy enforcement mode I select, EKS Anywhere should configure the network policies required for its core components to ensure that the cluster gets provisioned successfully.
 
 ### Non-Goals/Future Work
