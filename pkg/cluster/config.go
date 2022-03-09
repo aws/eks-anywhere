@@ -12,6 +12,7 @@ type Config struct {
 	OIDCConfigs           map[string]*anywherev1.OIDCConfig
 	AWSIAMConfigs         map[string]*anywherev1.AWSIamConfig
 	GitOpsConfig          *anywherev1.GitOpsConfig
+	FluxConfig            *anywherev1.FluxConfig
 }
 
 func (c *Config) VsphereMachineConfig(name string) *anywherev1.VSphereMachineConfig {

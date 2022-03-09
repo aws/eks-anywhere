@@ -13,8 +13,13 @@ func GetAndValidateFluxConfig(fileName string, refName string, clusterConfig *Cl
 	if err != nil {
 		return nil, err
 	}
-	err = validateFluxConfig(config, refName, clusterConfig)
-	if err != nil {
+	if err = validateFluxConfig(config); err != nil {
+		return nil, err
+	}
+	if err = validateFluxRefName(config, refName); err != nil {
+		return nil, err
+	}
+	if err = validateFluxNamespace(config, clusterConfig); err != nil {
 		return nil, err
 	}
 	return config, nil
@@ -29,17 +34,7 @@ func getFluxConfig(fileName string) (*FluxConfig, error) {
 	return &config, nil
 }
 
-func validateFluxConfig(config *FluxConfig, refName string, clusterConfig *Cluster) error {
-	if config == nil {
-		return errors.New("gitOpsRef is specified but FluxConfig is not specified")
-	}
-	if config.Name != refName {
-		return fmt.Errorf("FluxConfig retrieved with name %s does not match name (%s) specified in "+
-			"gitOpsRef", config.Name, refName)
-	}
-	if config.Namespace != clusterConfig.Namespace {
-		return errors.New("FluxConfig and Cluster objects must have the same namespace specified")
-	}
+func validateFluxConfig(config *FluxConfig) error {
 	if config.Spec.Git != nil && config.Spec.Github != nil {
 		return errors.New("must specify only one provider")
 	}
@@ -103,4 +98,41 @@ func validateRepositoryUrl(repositoryUrl string) error {
 		return fmt.Errorf("invalid repository url scheme: %v", err)
 	}
 	return nil
+}
+
+func validateFluxRefName(config *FluxConfig, refName string) error {
+	if config == nil {
+		return nil
+	}
+	if config.Name != refName {
+		return fmt.Errorf("FluxConfig retrieved with name %s does not match name (%s) specified in "+
+			"gitOpsRef", config.Name, refName)
+	}
+	return nil
+}
+
+func validateFluxNamespace(config *FluxConfig, clusterConfig *Cluster) error {
+	if config == nil {
+		return nil
+	}
+
+	if config.Namespace != clusterConfig.Namespace {
+		return errors.New("FluxConfig and Cluster objects must have the same namespace specified")
+	}
+	return nil
+}
+
+func setFluxConfigDefaults(flux *FluxConfig) {
+	if flux == nil {
+		return
+	}
+
+	c := &flux.Spec
+	if len(c.SystemNamespace) == 0 {
+		c.SystemNamespace = FluxDefaultNamespace
+	}
+
+	if len(c.Branch) == 0 {
+		c.Branch = FluxDefaultBranch
+	}
 }

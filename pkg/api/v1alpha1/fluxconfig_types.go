@@ -156,6 +156,14 @@ func (c *FluxConfig) ConvertConfigToConfigGenerateStruct() *FluxConfigGenerate {
 	return config
 }
 
+func (c *FluxConfig) Validate() error {
+	return validateFluxConfig(c)
+}
+
+func (c *FluxConfig) SetDefaults() {
+	setFluxConfigDefaults(c)
+}
+
 func init() {
 	SchemeBuilder.Register(&FluxConfig{}, &FluxConfigList{})
 }
