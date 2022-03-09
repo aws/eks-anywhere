@@ -6,14 +6,15 @@ import (
 	"path"
 	"testing"
 
+	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
+
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/providers/docker/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-	"github.com/golang/mock/gomock"
-	. "github.com/onsi/gomega"
 )
 
 const (
