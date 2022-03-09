@@ -462,8 +462,10 @@ func (r *ReleaseConfig) GetPreviousReleaseIfExists() (*anywherev1alpha1.Release,
 }
 
 func (releases EksAReleases) AppendOrUpdateRelease(r anywherev1alpha1.EksARelease) EksAReleases {
+	currentReleaseSemver := strings.Split(r.Version, "+")[0]
 	for i, release := range releases {
-		if release.Version == r.Version {
+		existingReleaseSemver := strings.Split(release.Version, "+")[0]
+		if currentReleaseSemver == existingReleaseSemver {
 			releases[i] = r
 			fmt.Println("Updating existing release in releases manifest")
 			return releases
