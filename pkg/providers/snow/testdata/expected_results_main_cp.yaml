@@ -1,0 +1,134 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  creationTimestamp: null
+  labels:
+    cluster.x-k8s.io/cluster-name: snow-test
+  name: snow-test
+  namespace: eksa-system
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+      - 10.1.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneEndpoint:
+    host: ""
+    port: 0
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: snow-test
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: AWSSnowCluster
+    name: snow-test
+status:
+  controlPlaneReady: false
+  infrastructureReady: false
+  managedExternalEtcdInitialized: false
+  managedExternalEtcdReady: false
+
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: AWSSnowCluster
+metadata:
+  creationTimestamp: null
+  name: snow-test
+  namespace: eksa-system
+spec:
+  controlPlaneEndpoint:
+    host: 1.2.3.4
+    port: 6443
+  region: snow
+status:
+  ready: false
+
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  creationTimestamp: null
+  name: snow-test
+  namespace: eksa-system
+spec:
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      apiServer: {}
+      bottlerocketBootstrap: {}
+      bottlerocketControl: {}
+      controllerManager: {}
+      dns:
+        imageRepository: public.ecr.aws/eks-distro/coredns
+        imageTag: v1.8.3-eks-1-21-4
+      etcd:
+        local:
+          extraArgs:
+            listen-client-urls: https://0.0.0.0:2379
+            listen-peer-urls: https://0.0.0.0:2380
+          imageRepository: public.ecr.aws/eks-distro/etcd-io
+          imageTag: v3.4.16-eks-1-21-4
+      imageRepository: public.ecr.aws/eks-distro/kubernetes
+      networking: {}
+      pause: {}
+      proxy: {}
+      registryMirror: {}
+      scheduler: {}
+    initConfiguration:
+      localAPIEndpoint: {}
+      nodeRegistration:
+        kubeletExtraArgs:
+          provider-id: aws-snow:////'{{ ds.meta_data.instance_id }}'
+    joinConfiguration:
+      bottlerocketBootstrap: {}
+      bottlerocketControl: {}
+      discovery: {}
+      nodeRegistration:
+        kubeletExtraArgs:
+          provider-id: aws-snow:////'{{ ds.meta_data.instance_id }}'
+      pause: {}
+      proxy: {}
+      registryMirror: {}
+    postKubeadmCommands:
+    - /etc/eks/bootstrap-after.sh public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433
+      1.2.3.4
+    preKubeadmCommands:
+    - /etc/eks/bootstrap.sh public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433
+      1.2.3.4
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: AWSSnowMachineTemplate
+      name: test-cp
+    metadata: {}
+  replicas: 3
+  version: v1.21.2-eks-1-21-4
+status:
+  initialized: false
+  ready: false
+  readyReplicas: 0
+  replicas: 0
+  unavailableReplicas: 0
+  updatedReplicas: 0
+
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: AWSSnowMachineTemplate
+metadata:
+  creationTimestamp: null
+  name: test-cp
+  namespace: eksa-system
+spec:
+  template:
+    spec:
+      ami:
+        id: eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea
+      cloudInit:
+        insecureSkipSecretsManager: true
+      iamInstanceProfile: control-plane.cluster-api-provider-aws.sigs.k8s.io
+      instanceType: sbe-c.large
+      sshKeyName: default
+
+---
