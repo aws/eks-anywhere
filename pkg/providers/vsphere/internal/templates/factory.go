@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -51,7 +50,7 @@ func NewFactory(client GovcClient, datacenter, datastore, resourcePool, template
 	}
 }
 
-func (f *Factory) CreateIfMissing(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig, ovaURL string, tagsByCategory map[string][]string) error {
+func (f *Factory) CreateIfMissing(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig, ovaURL string, tagsByCategory map[string][]string, resizeDisk2 bool) error {
 	templateFullPath, err := f.client.SearchTemplate(ctx, datacenter, machineConfig)
 	if err != nil {
 		return fmt.Errorf("error checking for template: %v", err)
@@ -65,7 +64,7 @@ func (f *Factory) CreateIfMissing(ctx context.Context, datacenter string, machin
 	logger.V(2).Info("Template not available. Creating", "template", machineConfig.Spec.Template)
 
 	osFamily := machineConfig.Spec.OSFamily
-	if err = f.createTemplate(ctx, machineConfig.Spec.Template, ovaURL, string(osFamily)); err != nil {
+	if err = f.createTemplate(ctx, machineConfig.Spec.Template, ovaURL, string(osFamily), resizeDisk2); err != nil {
 		return err
 	}
 
@@ -75,7 +74,7 @@ func (f *Factory) CreateIfMissing(ctx context.Context, datacenter string, machin
 	return nil
 }
 
-func (f *Factory) createTemplate(ctx context.Context, templatePath, ovaURL, osFamily string) error {
+func (f *Factory) createTemplate(ctx context.Context, templatePath, ovaURL, osFamily string, resizeDisk2 bool) error {
 	if err := f.createLibraryIfMissing(ctx); err != nil {
 		return err
 	}
@@ -88,10 +87,6 @@ func (f *Factory) createTemplate(ctx context.Context, templatePath, ovaURL, osFa
 		return err
 	}
 
-	var resizeDisk2 bool
-	if strings.EqualFold(osFamily, string(v1alpha1.Bottlerocket)) {
-		resizeDisk2 = true
-	}
 	if err := f.client.DeployTemplateFromLibrary(ctx, templateDir, templateName, f.templateLibrary, f.datacenter, f.datastore, f.resourcePool, resizeDisk2); err != nil {
 		return fmt.Errorf("failed deploying template: %v", err)
 	}
