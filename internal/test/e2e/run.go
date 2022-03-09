@@ -62,9 +62,9 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	}
 
 	var wg sync.WaitGroup
-	resultCh := make(chan instanceTestsResults)
 
 	instancesConf := splitTests(testsList, conf)
+	results := make([]instanceTestsResults, 0, len(instancesConf))
 	logTestGroups(instancesConf)
 	maxConcurrentTests := conf.MaxConcurrentTests
 	// Add a blocking channel to only allow for certain number of tests to run at a time
@@ -80,7 +80,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 				r.err = err
 			}
 
-			resultCh <- r
+			results = append(results, r)
 			<-queue
 		}(instanceConf)
 		wg.Add(1)
@@ -88,11 +88,11 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 
 	go func() {
 		wg.Wait()
-		close(resultCh)
+		close(queue)
 	}()
 
 	failedInstances := 0
-	for r := range resultCh {
+	for _, r := range results {
 		if r.err != nil {
 			logger.Error(r.err, "Failed running e2e tests for instance", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "tests", r.conf.regex, "status", failedStatus)
 			failedInstances += 1
