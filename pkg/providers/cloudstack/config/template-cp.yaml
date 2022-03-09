@@ -40,6 +40,8 @@ spec:
         {{ $zone.Network.Type}}: {{ $zone.Network.Value}}
       {{ $zone.Zone.Type }}: {{ $zone.Zone.Value }}
   {{- end }}
+  {{ if .cloudstackDomain }}domain: {{.cloudstackDomain}}{{- end}}
+  {{ if .cloudstackAccount }}account: {{.cloudstackAccount}}{{- end}}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate
