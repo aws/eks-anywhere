@@ -11,7 +11,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -45,10 +44,7 @@ type snowProvider struct {
 	bootstrapCreds        bootstrapCreds
 }
 
-type ProviderKubectlClient interface {
-	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
-	CreateDockerRegistrySecret(ctx context.Context, secretName string, dockerServer, dockerUsername, dockerPassword string, opts ...executables.KubectlOpt) error
-}
+type ProviderKubectlClient interface{}
 
 func NewProvider(datacenterConfig *v1alpha1.SnowDatacenterConfig, machineConfigs map[string]*v1alpha1.SnowMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc) *snowProvider {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
@@ -130,7 +126,7 @@ func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alph
 	return workersObjs
 }
 
-func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, err = templater.ObjectsToYaml(ControlPlaneObjects(clusterSpec, p.machineConfigs)...)
 	if err != nil {
 		return nil, nil, err
