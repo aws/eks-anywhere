@@ -95,15 +95,15 @@ spec:
               - name: vip_leaderelection
                 value: "true"
               - name: vip_leaseduration
-                value: "5"
+                value: "15"
               - name: vip_renewdeadline
-                value: "3"
+                value: "10"
               - name: vip_retryperiod
-                value: "1"
+                value: "2"
               - name: address
                 value: {{.controlPlaneEndpointIp}}
               image: {{.kubeVipImage}}
-              imagePullPolicy: Always
+              imagePullPolicy: IfNotPresent
               name: kube-vip
               resources: {}
               securityContext:

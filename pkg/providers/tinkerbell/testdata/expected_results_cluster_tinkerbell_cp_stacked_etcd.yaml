@@ -81,15 +81,15 @@ spec:
               - name: vip_leaderelection
                 value: "true"
               - name: vip_leaseduration
-                value: "5"
+                value: "15"
               - name: vip_renewdeadline
-                value: "3"
+                value: "10"
               - name: vip_retryperiod
-                value: "1"
+                value: "2"
               - name: address
                 value: 1.2.3.4
               image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
-              imagePullPolicy: Always
+              imagePullPolicy: IfNotPresent
               name: kube-vip
               resources: {}
               securityContext:
