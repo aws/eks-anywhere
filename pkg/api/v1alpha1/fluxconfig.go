@@ -77,7 +77,7 @@ func validateGitProviderConfig(config GitProviderConfig) error {
 
 func validateGithubProviderConfig(config GithubProviderConfig) error {
 	if len(config.Owner) <= 0 {
-		return errors.New("'owner' is not set or empty in gitOps.flux; owner is a required field")
+		return errors.New("'owner' is not set or empty in githubProviderConfig; owner is a required field")
 	}
 	if len(config.Repository) <= 0 {
 		return errors.New("'repository' is not set or empty in githubProviderConfig; repository is a required field")

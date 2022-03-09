@@ -48,7 +48,7 @@ spec:
                 type: string
               git:
                 description: Used to specify Git provider that will be used to host
-                  the git files
+                  the git files.
                 properties:
                   repositoryUrl:
                     description: Repository URL for the repository to be used with
@@ -64,7 +64,7 @@ spec:
                 type: object
               github:
                 description: Used to specify Github provider to host the Git repo
-                  and host the git files
+                  and host the git files.
                 properties:
                   owner:
                     description: Owner is the user or organization name of the Git
@@ -83,7 +83,7 @@ spec:
                 type: object
               systemNamespace:
                 description: SystemNamespace scope for this operation. Defaults to
-                  flux-system
+                  flux-system.
                 type: string
             type: object
           status:
