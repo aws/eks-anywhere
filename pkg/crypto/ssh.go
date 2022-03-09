@@ -61,12 +61,12 @@ func NewSshKeyPairUsingFileWriter(writer filewriter.FileWriter, privateKeyFilena
 		return "", nil, fmt.Errorf("generating key pair: %v", err)
 	}
 
-	privateKeyPath, err := writer.Write(privateKeyFilename, private.Bytes(), filewriter.Permission0600)
+	privateKeyPath, err := writer.Write(privateKeyFilename, private.Bytes(), filewriter.PersistentFile, filewriter.Permission0600)
 	if err != nil {
 		return "", nil, fmt.Errorf("writing private key: %v", err)
 	}
 
-	if _, err := writer.Write(publicKeyFilename, public.Bytes(), filewriter.Permission0600); err != nil {
+	if _, err := writer.Write(publicKeyFilename, public.Bytes(), filewriter.PersistentFile, filewriter.Permission0600); err != nil {
 		return "", nil, fmt.Errorf("writing public key: %v", err)
 	}
 

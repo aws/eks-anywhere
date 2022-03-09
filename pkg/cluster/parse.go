@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,6 +13,8 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
+
+var separatorRegex = regexp.MustCompile(`(?m)^---$`)
 
 type parsed struct {
 	objects        objects
@@ -70,12 +73,12 @@ func ParseConfig(yamlManifest []byte) (*Config, error) {
 	parsed := &parsed{
 		objects: objects{},
 	}
-	yamlObjs := strings.Split(string(yamlManifest), "---")
+	yamlObjs := separatorRegex.Split(string(yamlManifest), -1)
 
 	for _, yamlObj := range yamlObjs {
+		trimmedYamlObj := strings.TrimSuffix(yamlObj, "\n")
 		k := &basicAPIObject{}
-		err := yaml.Unmarshal([]byte(yamlObj), k)
-		if err != nil {
+		if err := yaml.Unmarshal([]byte(trimmedYamlObj), k); err != nil {
 			return nil, err
 		}
 
@@ -110,7 +113,7 @@ func ParseConfig(yamlManifest []byte) (*Config, error) {
 			return nil, fmt.Errorf("invalid object with kind %s found on manifest", k.Kind)
 		}
 
-		if err := yaml.Unmarshal([]byte(yamlObj), obj); err != nil {
+		if err := yaml.Unmarshal([]byte(trimmedYamlObj), obj); err != nil {
 			return nil, err
 		}
 

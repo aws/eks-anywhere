@@ -110,13 +110,6 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 		)
 	}
 
-	if old.Spec.Insecure != new.Spec.Insecure {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "insecure"), new.Spec.Insecure, "field is immutable"),
-		)
-	}
-
 	return allErrs
 }
 

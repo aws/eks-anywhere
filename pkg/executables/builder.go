@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
 
 const defaultEksaImage = "public.ecr.aws/l0g8r8j6/eks-anywhere-cli-tools:v0.1.0-eks-a-v0.0.0-dev-build.589"
@@ -38,6 +39,10 @@ func (b *ExecutableBuilder) BuildKubectlExecutable() *Kubectl {
 
 func (b *ExecutableBuilder) BuildGovcExecutable(writer filewriter.FileWriter) *Govc {
 	return NewGovc(b.buildExecutable(govcPath), writer)
+}
+
+func (b *ExecutableBuilder) BuildCmkExecutable(writer filewriter.FileWriter, execConfig decoder.CloudStackExecConfig) *Cmk {
+	return NewCmk(b.buildExecutable(cmkPath), writer, execConfig)
 }
 
 func (b *ExecutableBuilder) BuildTinkExecutable(tinkerbellCertUrl, tinkerbellGrpcAuthority string) *Tink {

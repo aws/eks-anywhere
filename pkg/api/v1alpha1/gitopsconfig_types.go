@@ -108,6 +108,10 @@ func (c *GitOpsConfig) Validate() error {
 	return validateGitOpsConfig(c)
 }
 
+func (c *GitOpsConfig) SetDefaults() {
+	setGitOpsConfigDefaults(c)
+}
+
 func init() {
 	SchemeBuilder.Register(&GitOpsConfig{}, &GitOpsConfigList{})
 }

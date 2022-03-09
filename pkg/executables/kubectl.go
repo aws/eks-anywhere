@@ -54,6 +54,16 @@ type Kubectl struct {
 	Executable
 }
 
+func (k *Kubectl) SearchCloudStackMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackMachineConfig, error) {
+	// Required implementation for Kubectl interface implementation
+	return nil, fmt.Errorf("cloudstack provider does not support this yet")
+}
+
+func (k *Kubectl) SearchCloudStackDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackDatacenterConfig, error) {
+	// Required implementation for Kubectl interface implementation
+	return nil, fmt.Errorf("cloudstack provider does not support this yet")
+}
+
 func (k *Kubectl) GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
 	response := &v1alpha1.CloudStackMachineConfig{}
 	err := k.getObject(ctx, eksaCloudStackMachineResourceType, cloudstackMachineConfigName, namespace, kubeconfigFile, response)

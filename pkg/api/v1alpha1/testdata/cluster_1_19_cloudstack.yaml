@@ -36,7 +36,6 @@ metadata:
 spec:
   account: "admin"
   domain: "domain1"
-  insecure: false
   zones:
     - zone:
         value: "zone1"

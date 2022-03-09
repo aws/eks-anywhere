@@ -22,6 +22,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -201,13 +202,13 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	workloadTemplateNames := make(map[string]string, len(cluster.Spec.WorkerNodeGroupConfigurations))
 
 	for _, wnConfig := range cluster.Spec.WorkerNodeGroupConfigurations {
-		kubeadmconfigTemplateNames[wnConfig.Name] = templateBuilder.KubeadmConfigTemplateName(cluster.Name, wnConfig.MachineGroupRef.Name)
-		workloadTemplateNames[wnConfig.Name] = templateBuilder.WorkerMachineTemplateName(cluster.Name, wnConfig.Name)
+		kubeadmconfigTemplateNames[wnConfig.Name] = common.KubeadmConfigTemplateName(cluster.Name, wnConfig.MachineGroupRef.Name, time.Now)
+		workloadTemplateNames[wnConfig.Name] = common.WorkerMachineTemplateName(cluster.Name, wnConfig.Name, time.Now)
 		templateBuilder.WorkerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name]
 	}
 
 	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = templateBuilder.CPMachineTemplateName(clusterName)
+		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, time.Now)
 		controlPlaneUser := machineConfigMap[cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
 		values["vsphereControlPlaneSshAuthorizedKey"] = controlPlaneUser.SshAuthorizedKeys[0]
 
@@ -216,7 +217,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 			values["vsphereEtcdSshAuthorizedKey"] = etcdUser.SshAuthorizedKeys[0]
 		}
 
-		values["etcdTemplateName"] = templateBuilder.EtcdMachineTemplateName(clusterName)
+		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, time.Now)
 	}
 	v.Log.Info("cluster", "name", cluster.Name)
 
@@ -281,7 +282,7 @@ func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *an
 			return reconciler.Result{}, err
 		}
 
-		ciliumSpec, err := cilium.GenerateManifest(specWithBundles)
+		ciliumSpec, err := cilium.GenerateManifest(ctx, specWithBundles)
 		if err != nil {
 			return reconciler.Result{}, err
 		}

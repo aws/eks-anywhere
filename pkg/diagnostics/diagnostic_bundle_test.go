@@ -9,6 +9,7 @@ import (
 	"github.com/golang/mock/gomock"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -84,27 +85,26 @@ func TestParseTimeOptions(t *testing.T) {
 }
 
 func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
-	spec := &cluster.Spec{
-		Cluster: &eksav1alpha1.Cluster{
+	spec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster = &eksav1alpha1.Cluster{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{},
-			Spec:       eksav1alpha1.ClusterSpec{},
-			Status:     eksav1alpha1.ClusterStatus{},
-		},
-	}
-
-	spec.Cluster.Spec.ExternalEtcdConfiguration = &eksav1alpha1.ExternalEtcdConfiguration{
-		Count: 3,
-		MachineGroupRef: &eksav1alpha1.Ref{
-			Kind: eksav1alpha1.VSphereMachineConfigKind,
-			Name: "testRef",
-		},
-	}
-
-	spec.Cluster.Spec.DatacenterRef = eksav1alpha1.Ref{
-		Kind: eksav1alpha1.VSphereDatacenterKind,
-		Name: "testRef",
-	}
+			Spec: eksav1alpha1.ClusterSpec{
+				DatacenterRef: eksav1alpha1.Ref{
+					Kind: eksav1alpha1.VSphereDatacenterKind,
+					Name: "testRef",
+				},
+				ExternalEtcdConfiguration: &eksav1alpha1.ExternalEtcdConfiguration{
+					Count: 3,
+					MachineGroupRef: &eksav1alpha1.Ref{
+						Kind: eksav1alpha1.VSphereMachineConfigKind,
+						Name: "testRef",
+					},
+				},
+			},
+			Status: eksav1alpha1.ClusterStatus{},
+		}
+	})
 
 	t.Run(t.Name(), func(t *testing.T) {
 		p := givenProvider(t)
@@ -138,26 +138,25 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 }
 
 func TestGenerateBundleConfigWithOidc(t *testing.T) {
-	spec := &cluster.Spec{
-		Cluster: &eksav1alpha1.Cluster{
+	spec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster = &eksav1alpha1.Cluster{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{},
-			Spec:       eksav1alpha1.ClusterSpec{},
-			Status:     eksav1alpha1.ClusterStatus{},
-		},
-	}
-
-	spec.OIDCConfig = &eksav1alpha1.OIDCConfig{
-		TypeMeta:   metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{},
-		Spec:       eksav1alpha1.OIDCConfigSpec{},
-		Status:     eksav1alpha1.OIDCConfigStatus{},
-	}
-
-	spec.Cluster.Spec.DatacenterRef = eksav1alpha1.Ref{
-		Kind: eksav1alpha1.VSphereDatacenterKind,
-		Name: "testRef",
-	}
+			Spec: eksav1alpha1.ClusterSpec{
+				DatacenterRef: eksav1alpha1.Ref{
+					Kind: eksav1alpha1.VSphereDatacenterKind,
+					Name: "testRef",
+				},
+			},
+			Status: eksav1alpha1.ClusterStatus{},
+		}
+		s.OIDCConfig = &eksav1alpha1.OIDCConfig{
+			TypeMeta:   metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{},
+			Spec:       eksav1alpha1.OIDCConfigSpec{},
+			Status:     eksav1alpha1.OIDCConfigStatus{},
+		}
+	})
 
 	t.Run(t.Name(), func(t *testing.T) {
 		p := givenProvider(t)
@@ -191,26 +190,25 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 }
 
 func TestGenerateBundleConfigWithGitOps(t *testing.T) {
-	spec := &cluster.Spec{
-		Cluster: &eksav1alpha1.Cluster{
+	spec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster = &eksav1alpha1.Cluster{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{},
-			Spec:       eksav1alpha1.ClusterSpec{},
-			Status:     eksav1alpha1.ClusterStatus{},
-		},
-	}
-
-	spec.GitOpsConfig = &eksav1alpha1.GitOpsConfig{
-		TypeMeta:   metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{},
-		Spec:       eksav1alpha1.GitOpsConfigSpec{},
-		Status:     eksav1alpha1.GitOpsConfigStatus{},
-	}
-
-	spec.Cluster.Spec.DatacenterRef = eksav1alpha1.Ref{
-		Kind: eksav1alpha1.VSphereDatacenterKind,
-		Name: "testRef",
-	}
+			Spec: eksav1alpha1.ClusterSpec{
+				DatacenterRef: eksav1alpha1.Ref{
+					Kind: eksav1alpha1.VSphereDatacenterKind,
+					Name: "testRef",
+				},
+			},
+			Status: eksav1alpha1.ClusterStatus{},
+		}
+		s.GitOpsConfig = &eksav1alpha1.GitOpsConfig{
+			TypeMeta:   metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{},
+			Spec:       eksav1alpha1.GitOpsConfigSpec{},
+			Status:     eksav1alpha1.GitOpsConfigStatus{},
+		}
+	})
 
 	t.Run(t.Name(), func(t *testing.T) {
 		p := givenProvider(t)
@@ -267,27 +265,26 @@ func TestGenerateDefaultBundle(t *testing.T) {
 }
 
 func TestBundleFromSpecComplete(t *testing.T) {
-	spec := &cluster.Spec{
-		Cluster: &eksav1alpha1.Cluster{
+	spec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster = &eksav1alpha1.Cluster{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{},
-			Spec:       eksav1alpha1.ClusterSpec{},
-			Status:     eksav1alpha1.ClusterStatus{},
-		},
-	}
-
-	spec.Cluster.Spec.ExternalEtcdConfiguration = &eksav1alpha1.ExternalEtcdConfiguration{
-		Count: 3,
-		MachineGroupRef: &eksav1alpha1.Ref{
-			Kind: eksav1alpha1.VSphereMachineConfigKind,
-			Name: "testRef",
-		},
-	}
-
-	spec.Cluster.Spec.DatacenterRef = eksav1alpha1.Ref{
-		Kind: eksav1alpha1.VSphereDatacenterKind,
-		Name: "testRef",
-	}
+			Spec: eksav1alpha1.ClusterSpec{
+				DatacenterRef: eksav1alpha1.Ref{
+					Kind: eksav1alpha1.VSphereDatacenterKind,
+					Name: "testRef",
+				},
+				ExternalEtcdConfiguration: &eksav1alpha1.ExternalEtcdConfiguration{
+					Count: 3,
+					MachineGroupRef: &eksav1alpha1.Ref{
+						Kind: eksav1alpha1.VSphereMachineConfigKind,
+						Name: "testRef",
+					},
+				},
+			},
+			Status: eksav1alpha1.ClusterStatus{},
+		}
+	})
 
 	t.Run(t.Name(), func(t *testing.T) {
 		ctx := context.Background()

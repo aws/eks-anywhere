@@ -14,18 +14,19 @@ import (
 )
 
 const (
-	amiIdFlagName            = "ami-id"
-	storageBucketFlagName    = "storage-bucket"
-	jobIdFlagName            = "job-id"
-	instanceProfileFlagName  = "instance-profile-name"
-	subnetIdFlagName         = "subnet-id"
-	regexFlagName            = "regex"
-	maxInstancesFlagName     = "max-instances"
-	skipFlagName             = "skip"
-	bundlesOverrideFlagName  = "bundles-override"
-	cleanupVmsFlagName       = "cleanup-vms"
-	testReportFolderFlagName = "test-report-folder"
-	branchNameFlagName       = "branch-name"
+	amiIdFlagName              = "ami-id"
+	storageBucketFlagName      = "storage-bucket"
+	jobIdFlagName              = "job-id"
+	instanceProfileFlagName    = "instance-profile-name"
+	subnetIdFlagName           = "subnet-id"
+	regexFlagName              = "regex"
+	maxInstancesFlagName       = "max-instances"
+	maxConcurrentTestsFlagName = "max-concurrent-tests"
+	skipFlagName               = "skip"
+	bundlesOverrideFlagName    = "bundles-override"
+	cleanupVmsFlagName         = "cleanup-vms"
+	testReportFolderFlagName   = "test-report-folder"
+	branchNameFlagName         = "branch-name"
 )
 
 var runE2ECmd = &cobra.Command{
@@ -62,7 +63,8 @@ func init() {
 	runE2ECmd.Flags().StringP(instanceProfileFlagName, "i", "", "IAM instance profile name to attach to ec2 instances")
 	runE2ECmd.Flags().StringP(subnetIdFlagName, "n", "", "EC2 subnet ID")
 	runE2ECmd.Flags().StringP(regexFlagName, "r", "", "Run only those tests and examples matching the regular expression. Equivalent to go test -run")
-	runE2ECmd.Flags().IntP(maxInstancesFlagName, "m", 1, "Run tests in parallel with multiple EC2 instances")
+	runE2ECmd.Flags().IntP(maxInstancesFlagName, "m", 1, "Run tests in parallel on same instance within the max EC2 instance count")
+	runE2ECmd.Flags().IntP(maxConcurrentTestsFlagName, "c", 1, "Maximum number of parallel tests that can be run at a time")
 	runE2ECmd.Flags().StringSlice(skipFlagName, nil, "List of tests to skip")
 	runE2ECmd.Flags().Bool(bundlesOverrideFlagName, false, "Flag to indicate if the tests should run with a bundles override")
 	runE2ECmd.Flags().Bool(cleanupVmsFlagName, false, "Flag to indicate if VSphere VMs should be cleaned up automatically as tests complete")
@@ -84,6 +86,7 @@ func runE2E(ctx context.Context) error {
 	subnetId := viper.GetString(subnetIdFlagName)
 	testRegex := viper.GetString(regexFlagName)
 	maxInstances := viper.GetInt(maxInstancesFlagName)
+	maxConcurrentTests := viper.GetInt(maxConcurrentTestsFlagName)
 	testsToSkip := viper.GetStringSlice(skipFlagName)
 	bundlesOverride := viper.GetBool(bundlesOverrideFlagName)
 	cleanupVms := viper.GetBool(cleanupVmsFlagName)
@@ -92,6 +95,7 @@ func runE2E(ctx context.Context) error {
 
 	runConf := e2e.ParallelRunConf{
 		MaxInstances:        maxInstances,
+		MaxConcurrentTests:  maxConcurrentTests,
 		AmiId:               amiId,
 		InstanceProfileName: instanceProfileName,
 		StorageBucket:       storageBucket,

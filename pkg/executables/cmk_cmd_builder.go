@@ -1,11 +1,14 @@
 package executables
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type cmkCommandArgs func(*[]string)
 
 func newCmkCommand(command string) []string {
-	return []string{command}
+	return strings.Fields(command)
 }
 
 func applyCmkArgs(params *[]string, args ...cmkCommandArgs) {

@@ -28,6 +28,41 @@ func (s *SnowDatacenterConfig) ExpectedKind() string {
 	return SnowDatacenterKind
 }
 
+func (s *SnowDatacenterConfig) PauseReconcile() {
+	if s.Annotations == nil {
+		s.Annotations = map[string]string{}
+	}
+	s.Annotations[pausedAnnotation] = "true"
+}
+
+func (s *SnowDatacenterConfig) ClearPauseAnnotation() {
+	if s.Annotations != nil {
+		delete(s.Annotations, pausedAnnotation)
+	}
+}
+
+func (s *SnowDatacenterConfig) ConvertConfigToConfigGenerateStruct() *SnowDatacenterConfigGenerate {
+	namespace := defaultEksaNamespace
+	if s.Namespace != "" {
+		namespace = s.Namespace
+	}
+	config := &SnowDatacenterConfigGenerate{
+		TypeMeta: s.TypeMeta,
+		ObjectMeta: ObjectMeta{
+			Name:        s.Name,
+			Annotations: s.Annotations,
+			Namespace:   namespace,
+		},
+		Spec: s.Spec,
+	}
+
+	return config
+}
+
+func (s *SnowDatacenterConfig) Marshallable() Marshallable {
+	return s.ConvertConfigToConfigGenerateStruct()
+}
+
 // +kubebuilder:object:generate=false
 
 // Same as SnowDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig
