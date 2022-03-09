@@ -36,7 +36,7 @@ func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundles
 	if err != nil {
 		return nil, err
 	}
-	return BuildSpecFromBundles(cluster, bundles, eksd, WithGitOpsConfig(gitOpsConfig), WithOIDCConfig(oidcConfig))
+	return BuildSpecFromBundles(cluster, bundles, WithEksdRelease(eksd), WithGitOpsConfig(gitOpsConfig), WithOIDCConfig(oidcConfig))
 }
 
 func GetBundlesForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch BundlesFetch) (*v1alpha1release.Bundles, error) {

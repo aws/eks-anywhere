@@ -4442,11 +4442,8 @@ rules:
   resources:
   - releases
   verbs:
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
 - apiGroups:
   - etcdcluster.cluster.x-k8s.io

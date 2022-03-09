@@ -175,7 +175,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return reconciler.Result{}, err
 	}
 
-	specWithBundles, err := c.BuildSpecFromBundles(cluster, bundles, eksd)
+	specWithBundles, err := c.BuildSpecFromBundles(cluster, bundles, c.WithEksdRelease(eksd))
 
 	vsphereClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
 

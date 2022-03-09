@@ -39,7 +39,7 @@ type Spec struct {
 	userAgent                 string
 	reader                    *ManifestReader
 	VersionsBundle            *VersionsBundle
-	eksdRelease               *eksdv1alpha1.Release
+	EksdRelease               *eksdv1alpha1.Release
 	Bundles                   *v1alpha1.Bundles
 	ManagementCluster         *types.Cluster
 	TinkerbellTemplateConfigs map[string]*eksav1alpha1.TinkerbellTemplateConfig
@@ -60,7 +60,7 @@ func (s *Spec) DeepCopy() *Spec {
 			VersionsBundle: s.VersionsBundle.VersionsBundle.DeepCopy(),
 			KubeDistro:     s.VersionsBundle.KubeDistro.deepCopy(),
 		},
-		eksdRelease:               s.eksdRelease.DeepCopy(),
+		EksdRelease:               s.EksdRelease.DeepCopy(),
 		Bundles:                   s.Bundles.DeepCopy(),
 		TinkerbellTemplateConfigs: s.TinkerbellTemplateConfigs,
 	}
@@ -146,6 +146,12 @@ func WithUserAgent(userAgent string) SpecOpt {
 	}
 }
 
+func WithEksdRelease(release *eksdv1alpha1.Release) SpecOpt {
+	return func(s *Spec) {
+		s.EksdRelease = release
+	}
+}
+
 func WithGitOpsConfig(gitOpsConfig *eksav1alpha1.GitOpsConfig) SpecOpt {
 	return func(s *Spec) {
 		s.GitOpsConfig = gitOpsConfig
@@ -213,7 +219,7 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 		VersionsBundle: versionsBundle,
 		KubeDistro:     kubeDistro,
 	}
-	s.eksdRelease = eksd
+	s.EksdRelease = eksd
 	for _, identityProvider := range s.Cluster.Spec.IdentityProviderRefs {
 		switch identityProvider.Kind {
 		case eksav1alpha1.OIDCConfigKind:
@@ -278,7 +284,7 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	return s, nil
 }
 
-func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundles, eksd *eksdv1alpha1.Release, opts ...SpecOpt) (*Spec, error) {
+func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundles, opts ...SpecOpt) (*Spec, error) {
 	s := NewSpec(opts...)
 
 	versionsBundle, err := s.getVersionsBundle(cluster.Spec.KubernetesVersion, bundles)
@@ -286,7 +292,14 @@ func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundl
 		return nil, err
 	}
 
-	kubeDistro, err := buildKubeDistro(eksd)
+	if s.EksdRelease == nil {
+		eksd, err := s.reader.GetEksdRelease(versionsBundle)
+		if err != nil {
+			return nil, err
+		}
+		s.EksdRelease = eksd
+	}
+	kubeDistro, err := buildKubeDistro(s.EksdRelease)
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +310,6 @@ func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundl
 		VersionsBundle: versionsBundle,
 		KubeDistro:     kubeDistro,
 	}
-	s.eksdRelease = eksd
 
 	return s, nil
 }
@@ -356,7 +368,7 @@ func (s *Spec) GetRelease(cliVersion version.Info) (*v1alpha1.EksARelease, error
 
 func (s *Spec) KubeDistroImages() []v1alpha1.Image {
 	images := []v1alpha1.Image{}
-	for _, component := range s.eksdRelease.Status.Components {
+	for _, component := range s.EksdRelease.Status.Components {
 		for _, asset := range component.Assets {
 			if asset.Image != nil {
 				images = append(images, v1alpha1.Image{URI: asset.Image.URI})
