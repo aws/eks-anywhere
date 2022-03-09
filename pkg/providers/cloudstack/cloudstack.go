@@ -490,9 +490,10 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 	// Cloudstack provider currently does not support multiple work node groups yet
 	workerNodeGroupConfiguration := clusterSpec.Spec.WorkerNodeGroupConfigurations[0]
 	values := buildTemplateMapMD(clusterSpec, *cs.datacenterConfigSpec, cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
-	values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
-	values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 
+	for _, buildOption := range buildOptions {
+		buildOption(values)
+	}
 	bytes, err := templater.Execute(defaultClusterConfigMD, values)
 	if err != nil {
 		return nil, err
@@ -669,7 +670,11 @@ func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, clus
 		kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
 		p.templateBuilder.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
+	workerOpt := func(values map[string]interface{}) {
+		values["workloadTemplateName"] = workloadTemplateNames[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Name]
+		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Name]
+	}
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, workerOpt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -787,7 +792,12 @@ func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, boo
 		return nil, nil, err
 	}
 
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
+	workersOpt := func(values map[string]interface{}) {
+		values["workloadTemplateName"] = workloadTemplateName
+		values["cloudstackWorkerSshAuthorizedKey"] = p.workerSshAuthKey
+	}
+
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, workersOpt)
 	if err != nil {
 		return nil, nil, err
 	}

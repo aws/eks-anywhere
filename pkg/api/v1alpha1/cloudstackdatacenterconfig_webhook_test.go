@@ -68,9 +68,7 @@ func TestCloudStackDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 
 	c.Spec.Zones = []v1alpha1.CloudStackZone{
 		{
-			Zone: v1alpha1.CloudStackResourceIdentifier{
-				Name: "oldCruftyZone",
-			},
+			Name: "oldCruftyZone",
 			Network: v1alpha1.CloudStackResourceIdentifier{
 				Name: "GuestNet2",
 			},

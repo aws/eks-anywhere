@@ -4,10 +4,10 @@ metadata:
   creationTimestamp: null
   name: test_cluster
 spec:
-  computeoffering: large
-  diskoffering: small
-  osFamily: ubuntu
-  template: rhel8-1.20
+  computeoffering:
+    name: large
+  template:
+    name: rhel8-1.20
   details:
     foo: bar
   users:
