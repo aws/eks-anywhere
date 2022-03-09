@@ -28,12 +28,15 @@ A new type will be added to accept the cni plugin name and additional options fr
 
 ```go
 type CNIConfig struct {
-  Cilium *CiliumConfig `json:"cilium,omitempty"`
+  Cilium   *CiliumConfig   `json:"cilium,omitempty"`
+  Kindnetd *KindnetdConfig `json:"kindnetd,omitempty"`
 }
 
 type CiliumConfig struct {
   PolicyEnforcementMode string `json:"policyEnforcementMode,omitempty"`
 }
+
+type KindnetdConfig struct{}
 ```
 
 The user can then configure cilium, starting with the policy enforcement mode as follows:
@@ -53,7 +56,7 @@ We can further expand the new CNIConfig type to support more CNI plugins. We can
 
 ##### Unsupported CNI plugins
 
-Currently we consider Kindnetd and Cilium Enterprise to be valid CNI plugins for EKS Anywhere, however we don't support them for the workload cluster as of now. So the CNIConfig type won't accept Kindnetd or Cilium Enterprise plugins to begin with, we can add configuration options for plugins as we start supporting them.
+Currently we consider Cilium Enterprise to be a valid CNI plugin for EKS Anywhere, however we don't support it for the workload cluster as of now. So the CNIConfig type won't accept Cilium Enterprise plugin to begin with. We can add configuration options for plugins as we start supporting them.
 
 ##### Validation
 
