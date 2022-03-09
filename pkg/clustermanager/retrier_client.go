@@ -25,7 +25,7 @@ func NewRetrierClient(client *client, retrier *retrier.Retrier) *retrierClient {
 }
 
 func (c *retrierClient) installEksdComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	eksdComponents, err := clusterSpec.GetEksdRelease(clusterSpec.VersionsBundle.EksD)
+	eksdComponents, err := clusterSpec.ReadEksdManifests(clusterSpec.VersionsBundle.EksD)
 	if err != nil {
 		return fmt.Errorf("failed loading manifest for eksd components: %v", err)
 	}

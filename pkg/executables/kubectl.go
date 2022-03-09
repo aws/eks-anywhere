@@ -1143,22 +1143,6 @@ func (k *Kubectl) ValidateNodesVersion(ctx context.Context, kubeconfig string, k
 	return nil
 }
 
-func (k *Kubectl) GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error) {
-	params := []string{"get", "release", name, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
-	stdOut, err := k.Execute(ctx, params...)
-	if err != nil {
-		return nil, fmt.Errorf("error getting EKS-D release with kubectl: %v", err)
-	}
-
-	response := &eksdv1alpha1.Release{}
-	err = json.Unmarshal(stdOut.Bytes(), response)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing Release response: %v", err)
-	}
-
-	return response, nil
-}
-
 func (k *Kubectl) GetBundles(ctx context.Context, kubeconfigFile, name, namespace string) (*releasev1alpha1.Bundles, error) {
 	params := []string{"get", bundlesResourceType, name, "-o", "json", "--kubeconfig", kubeconfigFile, "--namespace", namespace}
 	stdOut, err := k.Execute(ctx, params...)
@@ -1328,6 +1312,15 @@ func (k *Kubectl) getObject(ctx context.Context, resourceType, name, namespace, 
 	}
 
 	return nil
+}
+
+func (k *Kubectl) GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error) {
+	obj := &eksdv1alpha1.Release{}
+	if err := k.getObject(ctx, "release", name, namespace, kubeconfigFile, obj); err != nil {
+		return nil, err
+	}
+
+	return obj, nil
 }
 
 func (k *Kubectl) GetDeployment(ctx context.Context, name, namespace, kubeconfig string) (*appsv1.Deployment, error) {

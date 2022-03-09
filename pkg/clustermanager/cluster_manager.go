@@ -888,8 +888,10 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	}
 	logger.V(4).Info("Applying eksa yaml resources to cluster")
 	logger.V(6).Info(string(resourcesSpec))
-	err = c.applyResource(ctx, cluster, resourcesSpec)
-	if err != nil {
+	if err = c.applyResource(ctx, cluster, resourcesSpec); err != nil {
+		return err
+	}
+	if err = c.InstallEksdComponents(ctx, clusterSpec, cluster); err != nil {
 		return err
 	}
 	return c.ApplyBundles(ctx, clusterSpec, cluster)

@@ -27,7 +27,6 @@ import (
 	mocksprovider "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 var (
@@ -723,34 +722,20 @@ func TestClusterManagerMoveCAPIErrorGetMachines(t *testing.T) {
 }
 
 func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
-	clusterSpec := &cluster.Spec{
-		Cluster: &v1alpha1.Cluster{
-			Spec: v1alpha1.ClusterSpec{
-				KubernetesVersion:             "1.19",
-				ControlPlaneConfiguration:     v1alpha1.ControlPlaneConfiguration{Count: 1},
-				WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{Count: 1}},
-				DatacenterRef: v1alpha1.Ref{
-					Kind: v1alpha1.VSphereDatacenterKind,
-				},
-			},
-		},
-		Bundles: &anywherev1alpha1.Bundles{},
-	}
-
 	ctx := context.Background()
-	clusterName := "cluster-name"
-	cluster := &types.Cluster{
-		Name: clusterName,
-	}
+	tt := newTest(t)
+	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/eksa_components.yaml"
+	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "testdata/eksa_components.yaml"
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{}
 
 	c, m := newClusterManager(t)
 
-	m.client.EXPECT().ApplyKubeSpecFromBytesForce(ctx, cluster, gomock.Any())
-	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, gomock.Any())
-	if err := c.CreateEKSAResources(ctx, cluster, clusterSpec, datacenterConfig, machineConfigs); err != nil {
+	m.client.EXPECT().ApplyKubeSpecFromBytesForce(ctx, tt.cluster, gomock.Any())
+	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, tt.cluster, gomock.Any())
+	m.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, tt.cluster, gomock.Any(), gomock.Any()).MaxTimes(2)
+	if err := c.CreateEKSAResources(ctx, tt.cluster, tt.clusterSpec, datacenterConfig, machineConfigs); err != nil {
 		t.Errorf("ClusterManager.CreateEKSAResources() error = %v, wantErr nil", err)
 	}
 }

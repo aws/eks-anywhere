@@ -487,12 +487,12 @@ func userAgent(eksAComponent, version string) string {
 	return fmt.Sprintf("eks-a-%s/%s", eksAComponent, version)
 }
 
-type EksdRelease struct {
+type EksdManifests struct {
 	ReleaseManifestContent []byte
 	ReleaseCrdContent      []byte
 }
 
-func (s *Spec) GetEksdRelease(release v1alpha1.EksDRelease) (*EksdRelease, error) {
+func (s *Spec) ReadEksdManifests(release v1alpha1.EksDRelease) (*EksdManifests, error) {
 	releaseCrdContent, err := s.reader.ReadFile(release.Components)
 	if err != nil {
 		return nil, err
@@ -503,7 +503,7 @@ func (s *Spec) GetEksdRelease(release v1alpha1.EksDRelease) (*EksdRelease, error
 		return nil, err
 	}
 
-	return &EksdRelease{
+	return &EksdManifests{
 		ReleaseManifestContent: releaseManifestContent,
 		ReleaseCrdContent:      releaseCrdContent,
 	}, nil

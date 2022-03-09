@@ -90,27 +90,14 @@ func Bundles(t *testing.T) *releasev1alpha1.Bundles {
 }
 
 func EksdRelease(t *testing.T) *eksdv1alpha1.Release {
+	t.Helper()
 	content, err := configFS.ReadFile("testdata/kubernetes-1-21-eks-4.yaml")
 	if err != nil {
 		t.Fatalf("Failed to read embed eksd release: %s", err)
 	}
 
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("Failed getting path to current file")
-	}
-
-	templateValues := map[string]string{
-		"TestPath": filepath.Dir(filename),
-	}
-
-	eksdContent, err := templater.Execute(string(content), templateValues)
-	if err != nil {
-		t.Fatalf("Failed writing new eksd release file: %v", err)
-	}
-
 	eksd := &eksdv1alpha1.Release{}
-	if err = yaml.Unmarshal(eksdContent, eksd); err != nil {
+	if err = yaml.Unmarshal(content, eksd); err != nil {
 		t.Fatalf("Failed to unmarshal eksd manifest: %s", err)
 	}
 
