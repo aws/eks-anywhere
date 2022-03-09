@@ -13,7 +13,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/decoder"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
@@ -34,10 +33,10 @@ var execConfig = decoder.CloudStackExecConfig{
 }
 
 var zones = []v1alpha1.CloudStackZone{
-	{Zone: v1alpha1.CloudStackResourceIdentifier{Name: "TEST_RESOURCE"}, Network: v1alpha1.CloudStackResourceIdentifier{Name: "TEST_RESOURCE"}},
-	{Zone: v1alpha1.CloudStackResourceIdentifier{Name: "TEST_RESOURCE"}, Network: v1alpha1.CloudStackResourceIdentifier{Id: "TEST_RESOURCE"}},
-	{Zone: v1alpha1.CloudStackResourceIdentifier{Id: "TEST_RESOURCE"}, Network: v1alpha1.CloudStackResourceIdentifier{Name: "TEST_RESOURCE"}},
-	{Zone: v1alpha1.CloudStackResourceIdentifier{Id: "TEST_RESOURCE"}, Network: v1alpha1.CloudStackResourceIdentifier{Id: "TEST_RESOURCE"}},
+	{Name: "TEST_RESOURCE", Network: v1alpha1.CloudStackResourceIdentifier{Name: "TEST_RESOURCE"}},
+	{Name: "TEST_RESOURCE", Network: v1alpha1.CloudStackResourceIdentifier{Id: "TEST_RESOURCE"}},
+	{Id: "TEST_RESOURCE", Network: v1alpha1.CloudStackResourceIdentifier{Name: "TEST_RESOURCE"}},
+	{Id: "TEST_RESOURCE", Network: v1alpha1.CloudStackResourceIdentifier{Id: "TEST_RESOURCE"}},
 }
 
 var resourceName = v1alpha1.CloudStackResourceIdentifier{
@@ -450,10 +449,10 @@ func TestCmkListOperations(t *testing.T) {
 			jsonResponseFile: "testdata/cmk_list_empty_response.json",
 			argumentsExecCall: []string{
 				"-c", configFilePath,
-				"list affinitygroups", fmt.Sprintf("id=\"%s\"", resourceId.id), fmt.Sprintf("domainid=\"%s\"", domainId), fmt.Sprintf("account=\"%s\"", accountName),
+				"list affinitygroups", fmt.Sprintf("id=\"%s\"", resourceId.Id), fmt.Sprintf("domainid=\"%s\"", domainId), fmt.Sprintf("account=\"%s\"", accountName),
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				return cmk.ValidateAffinityGroupsPresent(ctx, domainId, accountName, []string{resourceId.Value})
+				return cmk.ValidateAffinityGroupsPresent(ctx, domainId, accountName, []string{resourceId.Id})
 			},
 			cmkResponseError:      nil,
 			wantErr:               true,

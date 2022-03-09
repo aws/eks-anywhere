@@ -41,10 +41,10 @@ type ResourceFetcher interface {
 	ExistingVSphereEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
 	ExistingVSphereWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.VSphereMachineConfig, error)
 	// TODO: cloudstack update for wnc
-	ExistingCloudStackDeploymentConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackDatacenterConfig, error)
+	ExistingCloudStackDatacenterConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.CloudStackDatacenterConfig, error)
 	ExistingCloudStackControlPlaneMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error)
 	ExistingCloudStackEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error)
-	ExistingCloudStackWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error)
+	ExistingCloudStackWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.CloudStackMachineConfig, error)
 
 	ExistingWorkerNodeGroupConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.WorkerNodeGroupConfiguration, error)
 	ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error)

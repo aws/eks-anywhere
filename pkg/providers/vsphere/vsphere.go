@@ -616,7 +616,7 @@ func (vs *VsphereTemplateBuilder) isCgroupDriverSystemd(clusterSpec *cluster.Spe
 	return false, nil
 }
 
-func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
+func (vs *VsphereTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	// pin cgroupDriver to systemd for k8s >= 1.21 when generating template in controller
 	// remove this check once the controller supports order upgrade.
 	// i.e. control plane, etcd upgrade before worker nodes.

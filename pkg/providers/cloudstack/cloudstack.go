@@ -486,7 +486,7 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	return bytes, nil
 }
 
-func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
+func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	// Cloudstack provider currently does not support multiple work node groups yet
 	workerNodeGroupConfiguration := clusterSpec.Spec.WorkerNodeGroupConfigurations[0]
 	values := buildTemplateMapMD(clusterSpec, *cs.datacenterConfigSpec, cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)

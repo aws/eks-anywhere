@@ -23,9 +23,7 @@ func TestCloudStackDatacenterValidateUpdateZonesImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Zones = []v1alpha1.CloudStackZone{
 		{
-			Zone: v1alpha1.CloudStackResourceIdentifier{
-				Name: "oldCruftyZone",
-			},
+			Name: "oldCruftyZone",
 			Network: v1alpha1.CloudStackResourceIdentifier{
 				Name: "GuestNet1",
 			},
@@ -35,9 +33,8 @@ func TestCloudStackDatacenterValidateUpdateZonesImmutable(t *testing.T) {
 
 	c.Spec.Zones = []v1alpha1.CloudStackZone{
 		{
-			Zone: v1alpha1.CloudStackResourceIdentifier{
-				Name: "shinyNewZone",
-			},
+			Name: "shinyNewZone",
+
 			Network: v1alpha1.CloudStackResourceIdentifier{
 				Name: "GuestNet1",
 			},
@@ -61,9 +58,7 @@ func TestCloudStackDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Zones = []v1alpha1.CloudStackZone{
 		{
-			Zone: v1alpha1.CloudStackResourceIdentifier{
-				Name: "oldCruftyZone",
-			},
+			Name: "oldCruftyZone",
 			Network: v1alpha1.CloudStackResourceIdentifier{
 				Name: "GuestNet1",
 			},
@@ -89,9 +84,7 @@ func TestCloudStackDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Zones = []v1alpha1.CloudStackZone{
 		{
-			Zone: v1alpha1.CloudStackResourceIdentifier{
-				Name: "oldCruftyZone",
-			},
+			Name: "oldCruftyZone",
 			Network: v1alpha1.CloudStackResourceIdentifier{
 				Name: "GuestNet1",
 			},
@@ -101,9 +94,7 @@ func TestCloudStackDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
 
 	c.Spec.Zones = []v1alpha1.CloudStackZone{
 		{
-			Zone: v1alpha1.CloudStackResourceIdentifier{
-				Name: "oldCruftyZone",
-			},
+			Name: "oldCruftyZone",
 			Network: v1alpha1.CloudStackResourceIdentifier{
 				Name: "GuestNet2",
 			},

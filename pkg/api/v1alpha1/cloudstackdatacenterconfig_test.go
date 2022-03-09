@@ -42,9 +42,8 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Account: "admin",
 					Zones: []CloudStackZone{
 						{
-							Zone: CloudStackResourceIdentifier{
-								Name: "zone1",
-							}, Network: CloudStackResourceIdentifier{
+							Name: "zone1",
+							Network: CloudStackResourceIdentifier{
 								Name: "net1",
 							},
 						},
@@ -69,9 +68,8 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Account: "admin",
 					Zones: []CloudStackZone{
 						{
-							Zone: CloudStackResourceIdentifier{
-								Name: "zone1",
-							}, Network: CloudStackResourceIdentifier{
+							Name: "zone1",
+							Network: CloudStackResourceIdentifier{
 								Name: "net1",
 							},
 						},
@@ -96,9 +94,8 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 					Account: "admin",
 					Zones: []CloudStackZone{
 						{
-							Zone: CloudStackResourceIdentifier{
-								Name: "zone1",
-							}, Network: CloudStackResourceIdentifier{
+							Name: "zone1",
+							Network: CloudStackResourceIdentifier{
 								Name: "net1",
 							},
 						},

@@ -139,8 +139,14 @@ func TestMapClusterToCloudStackDeploymentConfigSpec(t *testing.T) {
 			},
 			want: &anywherev1.CloudStackDatacenterConfig{
 				Spec: anywherev1.CloudStackDatacenterConfigSpec{
-					Zones: []anywherev1.CloudStackZone{}    "zone",
-					Network: "network",
+					Zones: []anywherev1.CloudStackZone{
+						{
+							Name: "zone",
+							Network: anywherev1.CloudStackResourceIdentifier{
+								Name: "network",
+							},
+						},
+					},
 					Account: "account",
 					Domain:  "domain",
 				},

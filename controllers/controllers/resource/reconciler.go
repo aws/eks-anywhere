@@ -132,7 +132,7 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 				return err
 			}
 		}
-		r, err := cor.cloudStackTemplate.TemplateResources(ctx, cs, spec, *csdc, *cpCSmc, *etcdCSmc, workerCSmcs)
+		r, err := cor.cloudStackTemplate.TemplateResources(ctx, cs, spec, *csdc, *cpCsmc, *etcdCsmc, workerCsmcs)
 		if err != nil {
 			return err
 		}

@@ -166,10 +166,13 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		values["eksaVspherePassword"] = string(passwordBytes)
 	}
 
-	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, cpOpt)
+	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, cpOpt, nil)
 }
 
-func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, csdc anywherev1.CloudStackDatacenterConfig, cpCsmc, workerCsmc, etcdCsmc anywherev1.CloudStackMachineConfig, workerCsmcs map[string]anywherev1.CloudStackMachineConfig) ([]*unstructured.Unstructured, error) {
+func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, csdc anywherev1.CloudStackDatacenterConfig, cpCsmc, etcdCsmc anywherev1.CloudStackMachineConfig, workerCsmcs map[string]anywherev1.CloudStackMachineConfig) ([]*unstructured.Unstructured, error) {
+	if len(workerCsmcs) > 1 {
+		return nil, fmt.Errorf("multiple worker node group configuration is not supported in CloudStack provider")
+	}
 	workerNodeGroupMachineSpecs := make(map[string]anywherev1.CloudStackMachineConfigSpec, len(workerCsmcs))
 	for _, wnConfig := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = workerCsmcs[wnConfig.MachineGroupRef.Name].Spec
@@ -178,15 +181,11 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 	templateBuilder := cloudstack.NewCloudStackTemplateBuilder(&csdc.Spec, &cpCsmc.Spec, &etcdCsmc.Spec, workerNodeGroupMachineSpecs, r.now)
 	clusterName := clusterSpec.ObjectMeta.Name
 
-	oldCsdc, err := r.ExistingCloudStackDeploymentConfig(ctx, eksaCluster)
+	oldCsdc, err := r.ExistingCloudStackDatacenterConfig(ctx, eksaCluster, clusterSpec.Spec.WorkerNodeGroupConfigurations[0])
 	if err != nil {
 		return nil, err
 	}
 	oldCpCsmc, err := r.ExistingCloudStackControlPlaneMachineConfig(ctx, eksaCluster)
-	if err != nil {
-		return nil, err
-	}
-	oldWorkerCsmc, err := r.ExistingCloudStackWorkerMachineConfig(ctx, eksaCluster)
 	if err != nil {
 		return nil, err
 	}
@@ -240,18 +239,6 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 		}
 	}
 
-	var workloadTemplateName string
-	updateWorkloadTemplate := cloudstack.AnyImmutableFieldChanged(oldCsdc, &csdc, oldWorkerCsmc, &workerCsmc)
-	if updateWorkloadTemplate {
-		workloadTemplateName = templateBuilder.WorkerMachineTemplateName(clusterName)
-	} else {
-		mcDeployment, err := r.MachineDeployment(ctx, eksaCluster)
-		if err != nil {
-			return nil, err
-		}
-		workloadTemplateName = mcDeployment.Spec.Template.Spec.InfrastructureRef.Name
-	}
-
 	var etcdTemplateName string
 	if eksaCluster.Spec.ExternalEtcdConfiguration != nil {
 		oldEtcdCsmc, err := r.ExistingCloudStackEtcdMachineConfig(ctx, eksaCluster)
@@ -268,7 +255,7 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 			if err := r.ApplyPatch(ctx, etcd, false); err != nil {
 				return nil, err
 			}
-			etcdTemplateName = templateBuilder.EtcdMachineTemplateName(clusterName)
+			etcdTemplateName = common.EtcdMachineTemplateName(clusterName, r.now)
 		} else {
 			etcdTemplateName = etcd.Spec.InfrastructureTemplate.Name
 		}
@@ -282,11 +269,11 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 	}
 
 	workersOpt := func(values map[string]interface{}) {
-		values["workloadTemplateName"] = workloadTemplateName
-		values["cloudStackWorkerSshAuthorizedKey"] = sshAuthorizedKey(workerCsmc.Spec.Users)
+		values["workloadTemplateName"] = workloadTemplateNames[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Name]
+		values["cloudStackWorkerSshAuthorizedKey"] = sshAuthorizedKey(workerNodeGroupMachineSpecs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Users)
 	}
 
-	return generateTemplateResources(templateBuilder, clusterSpec, cpOpt, workersOpt)
+	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, cpOpt, workersOpt)
 }
 
 // TODO(pokearu): This method is currently not used. Need to add logic in reconciler for TinkerbellDatacenterKind
@@ -324,15 +311,15 @@ func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster 
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 
-	return generateTemplateResources(templateBuilder, clusterSpec, nil, nil, cpOpt)
+	return generateTemplateResources(templateBuilder, clusterSpec, nil, nil, cpOpt, nil)
 }
 
-func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string, cpOpt providers.BuildMapOption) ([]*unstructured.Unstructured, error) {
+func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string, cpOpt providers.BuildMapOption, workerOpt providers.BuildMapOption) ([]*unstructured.Unstructured, error) {
 	cp, err := builder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, err
 	}
-	md, err := builder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
+	md, err := builder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, workerOpt)
 	if err != nil {
 		return nil, err
 	}
@@ -381,7 +368,7 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 
-	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, nil, cpOpt)
+	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, nil, cpOpt, nil)
 }
 
 func sshAuthorizedKey(users []anywherev1.UserConfiguration) string {
