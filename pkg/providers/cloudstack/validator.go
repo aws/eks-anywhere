@@ -15,6 +15,18 @@ type Validator struct {
 	cmk ProviderCmkClient
 }
 
+// Taken from https://github.com/shapeblue/cloudstack/blob/08bb4ad9fea7e422c3d3ac6d52f4670b1e89eed7/api/src/main/java/com/cloud/vm/VmDetailConstants.java
+// These fields should be modeled separately in eks-a and not used by the additionalDetails cloudstack VM field
+var restrictedUserCustomDetails = [...]string{
+	"keyboard", "cpu.corespersocket", "rootdisksize", "boot.mode", "nameonhypervisor",
+	"nicAdapter", "rootDiskController", "dataDiskController", "svga.vramSize", "nestedVirtualizationFlag", "ramReservation",
+	"hypervisortoolsversion", "platform", "timeoffset", "kvm.vnc.port", "kvm.vnc.address", "video.hardware", "video.ram",
+	"smc.present", "firmware", "cpuNumber", "cpuSpeed", "memory", "cpuOvercommitRatio", "memoryOvercommitRatio",
+	"Message.ReservedCapacityFreed.Flag", "deployvm", "SSH.PublicKey", "SSH.KeyPairNames", "password", "Encrypted.Password",
+	"configDriveLocation", "nic", "network", "ip4Address", "ip6Address", "disk", "diskOffering", "configurationId",
+	"keypairnames", "controlNodeLoginUser",
+}
+
 func NewValidator(cmk ProviderCmkClient) *Validator {
 	return &Validator{
 		cmk: cmk,
@@ -34,7 +46,7 @@ type ProviderCmkClient interface {
 
 func (v *Validator) validateCloudStackAccess(ctx context.Context) error {
 	if err := v.cmk.ValidateCloudStackConnection(ctx); err != nil {
-		return fmt.Errorf("failed validating connection to cloudStack: %v", err)
+		return fmt.Errorf("failed validating connection to cloudstack: %v", err)
 	}
 	logger.MarkPass("Connected to server")
 
@@ -47,7 +59,7 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 	}
 	domain, errDomain := v.cmk.ValidateDomainPresent(ctx, datacenterConfig.Spec.Domain)
 	if errDomain != nil {
-		return fmt.Errorf("error while checking domain %v", errDomain)
+		return fmt.Errorf("error while checking domain: %v", errDomain)
 	}
 
 	if len(datacenterConfig.Spec.Account) > 0 {
@@ -77,7 +89,7 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 }
 
 // TODO: dry out machine configs validations
-func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStackClusterSpec *spec) error {
+func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStackClusterSpec *Spec) error {
 	var etcdMachineConfig *anywherev1.CloudStackMachineConfig
 
 	if len(cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host) <= 0 {
@@ -155,7 +167,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 		if len(machineConfig.Spec.Template.Id) == 0 && len(machineConfig.Spec.Template.Name) == 0 {
 			return fmt.Errorf("template is not set for CloudStackMachineConfig %s. Default template is not supported in CloudStack, please provide a template name", machineConfig.Name)
 		}
-		if err = v.validateMachineConfig(ctx, cloudStackClusterSpec.datacenterConfig.Spec, etcdMachineConfig); err != nil {
+		if err = v.validateMachineConfig(ctx, cloudStackClusterSpec.datacenterConfig.Spec, machineConfig); err != nil {
 			return fmt.Errorf("machine config %s validation failed: %v", machineConfig.Name, err)
 		}
 	}
@@ -168,9 +180,14 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfigS
 	if len(datacenterConfigSpec.Domain) <= 0 {
 		return fmt.Errorf("CloudStackDatacenterConfig domain is not set or is empty")
 	}
+	for _, restrictedKey := range restrictedUserCustomDetails {
+		if _, found := machineConfig.Spec.UserCustomDetails[restrictedKey]; found {
+			return fmt.Errorf("restricted key %s found in custom user details", restrictedKey)
+		}
+	}
 	domain, errDomain := v.cmk.ValidateDomainPresent(ctx, datacenterConfigSpec.Domain)
 	if errDomain != nil {
-		return fmt.Errorf("error while checking domain %v", errDomain)
+		return fmt.Errorf("error while checking domain: %v", errDomain)
 	}
 
 	zones, err := v.cmk.ValidateZonesPresent(ctx, datacenterConfigSpec.Zones)
@@ -216,7 +233,7 @@ func (v *Validator) validateControlPlaneHost(pHost string) (bool, error) {
 	return true, nil
 }
 
-func (v *Validator) setDefaultControlPlanePort(cloudStackClusterSpec *spec) {
+func (v *Validator) setDefaultControlPlanePort(cloudStackClusterSpec *Spec) {
 	cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = fmt.Sprintf("%s:%s",
 		cloudStackClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		controlEndpointDefaultPort)

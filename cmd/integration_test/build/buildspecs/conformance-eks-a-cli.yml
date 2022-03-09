@@ -3,6 +3,7 @@ version: 0.2
 env:
   variables:
     INTEGRATION_TEST_MAX_EC2_COUNT: 25
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 25
     T_VSPHERE_CIDR: "198.18.0.0/16"
     T_VSPHERE_PRIVATE_NETWORK_CIDR: "10.1.0.0/24"
   secrets-manager:
@@ -47,5 +48,6 @@ phases:
         -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
         -n ${INTEGRATION_TEST_SUBNET_ID}
         -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
+        -c ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
         -r 'Test'
         --cleanup-vms=true

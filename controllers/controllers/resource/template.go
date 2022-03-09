@@ -221,12 +221,12 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = workloadKubeadmConfigTemplateName
 		}
 
-		vmc := workerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
-		oldVmc, err := r.ExistingVSphereWorkerMachineConfig(ctx, eksaCluster, workerNodeGroupConfiguration)
+		csmc := workerCsmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		oldCsmc, err := r.ExistingCloudStackWorkerMachineConfig(ctx, eksaCluster, workerNodeGroupConfiguration)
 		if err != nil {
 			return nil, err
 		}
-		updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, oldVmc, &vmc)
+		updateWorkloadTemplate := cloudstack.AnyImmutableFieldChanged(oldCsdc, &csdc, oldCsmc, &csmc)
 		if updateWorkloadTemplate {
 			workloadTemplateName := common.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name, r.now)
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName

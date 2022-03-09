@@ -19,12 +19,12 @@ spec:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: CloudStackCluster
     name: {{.clusterName}}
-  { { - if .externalEtcd } }
+          {{- if .externalEtcd}}
 managedExternalEtcdRef:
   apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
   kind: EtcdadmCluster
   name: {{.clusterName}}-etcd
-  { { - end } }
+          {{- end}}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackCluster
@@ -35,8 +35,11 @@ spec:
   controlPlaneEndpoint:
     host: {{.controlPlaneEndpointHost}}
     port: {{.controlPlaneEndpointPort}}
-  network: {{.cloudstackNetwork}}
-  zone: {{.cloudstackZone}}
+  zones:{{ range $zone := .cloudstackZones }}
+  - network:
+            {{$zone.Network.Type}}: {{$zone.Network.Value}}
+                    {{$zone.Zone.Type}}: {{$zone.Zone.Value}}
+                    {{- end}}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate
@@ -46,18 +49,14 @@ metadata:
 spec:
   template:
     spec:
-      offering:
-        id: {{.cloudstackControlPlaneComputeOfferingId}}
-        name: {{.cloudstackControlPlaneComputeOfferingName}}
-      template:
-        id: {{.cloudstackControlPlaneTemplateOfferingId}}
-        name: {{.cloudstackControlPlaneTemplateOfferingName}}
-  { { - if .affinityGroupIds } }
+      offering: {{.cloudstackControlPlaneComputeOffering}}
+      template: {{.cloudstackControlPlaneTemplateOffering}}
+          {{- if .affinityGroupIds}}
 affinitygroupids:
-  { { - range .affinityGroupIds } }
-  - { { . } }
-    { { - end } }
-    { { - end } }
+        {{- range .affinityGroupIds}}
+  - {{.}}
+          {{- end}}
+          {{- end}}
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -74,17 +73,17 @@ spec:
     clusterConfiguration:
       imageRepository: {{.kubernetesRepository}}
       etcd:
-  { { - if .externalEtcd } }
+          {{- if .externalEtcd}}
 external:
-  endpoints: [ ]
+  endpoints: []
   caFile: "/etc/kubernetes/pki/etcd/ca.crt"
   certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
   keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
-  { { - else } }
+          {{- else}}
 local:
   imageRepository: {{.etcdRepository}}
   imageTag: {{.etcdImageTag}}
-  { { - end } }
+          {{- end}}
 dns:
   imageRepository: {{.corednsRepository}}
   imageTag: {{.corednsVersion}}
@@ -97,9 +96,9 @@ apiServer:
     audit-log-maxbackup: "10"
     audit-log-maxsize: "512"
     profiling: "false"
-  { { - if .apiserverExtraArgs } }
-  { { .apiserverExtraArgs.ToYaml | indent 10 } }
-  { { - end } }
+          {{- if .apiserverExtraArgs}}
+          {{.apiserverExtraArgs.ToYaml | indent 10}}
+          {{- end}}
 extraVolumes:
   - hostPath: /etc/kubernetes/audit-policy.yaml
     mountPath: /etc/kubernetes/audit-policy.yaml
@@ -116,7 +115,7 @@ extraVolumes:
     name: audit-log
     pathType: FileOrCreate
     readOnly: false
-  { { - if .awsIamAuth } }
+      {{- if .awsIamAuth}}
   - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
     mountPath: /etc/kubernetes/aws-iam-authenticator/
     name: authconfig
@@ -125,7 +124,7 @@ extraVolumes:
     mountPath: /var/aws-iam-authenticator/
     name: awsiamcert
     readOnly: false
-    { { - end } }
+      {{- end}}
 controllerManager:
   extraArgs:
     cloud-provider: external
@@ -135,10 +134,10 @@ scheduler:
     profiling: "false"
 files:
   - content: |
-  { { .auditPolicy | indent 8 } }
+      {{ .auditPolicy | indent 8 }}
 owner: root:root
 path: /etc/kubernetes/audit-policy.yaml
-  { { - if .proxyConfig } }
+  {{- if .proxyConfig }}
   - content: |
       [Service]
       Environment="HTTP_PROXY={{.httpProxy}}"
@@ -146,14 +145,14 @@ path: /etc/kubernetes/audit-policy.yaml
       Environment="NO_PROXY={{ stringsJoin .noProxy "," }}"
     owner: root:root
     path: /etc/systemd/system/containerd.service.d/http-proxy.conf
-    { { - end } }
-    { { - if .registryCACert } }
+      {{- end }}
+      {{- if .registryCACert }}
   - content: |
-    { { .registryCACert | indent 8 } }
+      {{ .registryCACert | indent 8 }}
 owner: root:root
 path: "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
-  { { - end } }
-  { { - if .registryMirrorConfiguration } }
+        {{- end}}
+        {{- if .registryMirrorConfiguration}}
         - content: |
             [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
               [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
@@ -164,8 +163,8 @@ path: "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
               {{- end }}
           owner: root:root
           path: "/etc/containerd/config_append.toml"
-          { { - end } }
-          { { - if .awsIamAuth } }
+                  {{- end}}
+                  {{- if .awsIamAuth}}
         - content: |
             # clusters refers to the remote service.
             clusters:
@@ -201,7 +200,7 @@ path: "/etc/containerd/certs.d/{{.registryMirrorConfiguration}}/ca.crt"
           permissions: "0640"
           owner: root:root
           path: /var/lib/kubeadm/aws-iam-authenticator/pki/key.pem
-          { { - end } }
+            {{- end}}
 initConfiguration:
   nodeRegistration:
     criSocket: /var/run/containerd/containerd.sock
@@ -220,13 +219,13 @@ joinConfiguration:
     name: '{{`{{ ds.meta_data.local_hostname }}`}}'
 preKubeadmCommands:
   - swapoff -a
-  { { - if.registryMirrorConfiguration } }
+    {{- if.registryMirrorConfiguration }}
   - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
-    { { - end } }
-    { { - if or .proxyConfig .registryMirrorConfiguration } }
+    {{- end }}
+    {{- if or .proxyConfig .registryMirrorConfiguration }}
   - sudo systemctl daemon-reload
   - sudo systemctl restart containerd
-    { { - end } }
+    {{- end }}
   - hostname "{{`{{ ds.meta_data.local_hostname }}`}}"
   - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
   - echo "127.0.0.1   localhost" >>/etc/hosts
@@ -241,7 +240,7 @@ users:
 format: {{.format}}
 replicas: {{.controlPlaneReplicas}}
 version: {{.kubernetesVersion}}
-  { { - if .externalEtcd } }
+        {{- if .externalEtcd}}
 ---
 kind: EtcdadmCluster
 apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
@@ -268,22 +267,22 @@ spec:
         sshAuthorizedKeys:
           - '{{.cloudstackEtcdSshAuthorizedKey}}'
         sudo: ALL=(ALL) NOPASSWD:ALL
-  { { - if .proxyConfig } }
+          {{- if .proxyConfig}}
 proxy:
-  httpProxy: { { .httpProxy } }
-  httpsProxy: { { .httpsProxy } }
-  noProxy: { { range .noProxy } }
-    - { { . } }
-  { { - end } }
-  { { - end } }
-  { { - if .registryMirrorConfiguration } }
+  httpProxy: {{.httpProxy}}
+  httpsProxy: {{.httpsProxy}}
+  noProxy: {{range .noProxy}}
+    - {{.}}
+          {{- end}}
+          {{- end}}
+          {{- if .registryMirrorConfiguration}}
 registryMirror:
   endpoint: {{.registryMirrorConfiguration}}
-  { { - if .registryCACert } }
+          {{- if .registryCACert}}
   caCert: |
-  { { .registryCACert | indent 8 } }
-  { { - end } }
-  { { - end } }
+    {{ .registryCACert | indent 8 }}
+    {{- end }}
+    {{- end }}
 infrastructureTemplate:
   apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
   kind: CloudStackMachineTemplate
@@ -297,16 +296,12 @@ metadata:
 spec:
   template:
     spec:
-      offering:
-        id: {{.cloudstackEtcdComputeOfferingId}}
-        name: {{.cloudstackEtcdComputeOfferingName}}
-      template:
-        id: {{.cloudstackEtcdTemplateOfferingId}}
-        name: {{.cloudstackEtcdTemplateOfferingName}}
-  { { - if .cloudstackEtcdAffinityGroupIds } }
+      offering: {{.cloudstackEtcdComputeOffering}}
+      template: {{.cloudstackEtcdTemplateOffering}}
+          {{- if .cloudstackEtcdAffinityGroupIds}}
 affinitygroupids:
-  { { - range .cloudstackEtcdAffinityGroupIds } }
-  - { { . } }
-    { { - end } }
-    { { - end } }
-    { { - end } }
+        {{- range .cloudstackEtcdAffinityGroupIds}}
+  - {{.}}
+          {{- end}}
+          {{- end}}
+          {{- end}}

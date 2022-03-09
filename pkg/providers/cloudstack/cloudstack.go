@@ -487,7 +487,6 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 }
 
 func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
-
 	// Cloudstack provider currently does not support multiple work node groups yet
 	workerNodeGroupConfiguration := clusterSpec.Spec.WorkerNodeGroupConfigurations[0]
 	values := buildTemplateMapMD(clusterSpec, *cs.datacenterConfigSpec, cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
@@ -498,7 +497,6 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 	if err != nil {
 		return nil, err
 	}
-
 	return bytes, nil
 }
 
@@ -751,7 +749,7 @@ func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, boo
 
 	if newClusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineConfig := p.machineConfigs[newClusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-		etcdMachineVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
+		etcdMachineVmc, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -764,11 +762,11 @@ func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, boo
 			etcdTemplateName = etcdadmCluster.Spec.InfrastructureTemplate.Name
 		} else {
 			/* During a cluster upgrade, etcd machines need to be upgraded first, so that the etcd machines with new spec get created and can be used by controlplane machines
-			as etcd endpoints. KCP rollout should not start until then. As a temporary solution in the absence of static etcd endpoints, we annotate the etcd cluster as "upgrading",
-			so that KCP checks this annotation and does not proceed if etcd cluster is upgrading. The etcdadm controller removes this annotation once the etcd upgrade is complete.
+			   as etcd endpoints. KCP rollout should not start until then. As a temporary solution in the absence of static etcd endpoints, we annotate the etcd cluster as "upgrading",
+			   so that KCP checks this annotation and does not proceed if etcd cluster is upgrading. The etcdadm controller removes this annotation once the etcd upgrade is complete.
 			*/
 			err = p.providerKubectlClient.UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", clusterName),
-				map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"},
+				map[string]string{etcdv1beta1.UpgradeInProgressAnnotation: "true"},
 				executables.WithCluster(bootstrapCluster),
 				executables.WithNamespace(constants.EksaSystemNamespace))
 			if err != nil {
@@ -824,7 +822,7 @@ func (p *cloudstackProvider) GenerateMHC() ([]byte, error) {
 	return mhc, nil
 }
 
-func (p *cloudstackProvider) CleanupProviderInfrastructure(_ context.Context) error {
+func (p *cloudstackProvider) CleanupProviderInfrastructure(ctx context.Context) error {
 	return nil
 }
 
@@ -850,9 +848,7 @@ func (p *cloudstackProvider) EnvMap() (map[string]string, error) {
 }
 
 func (p *cloudstackProvider) GetDeployments() map[string][]string {
-	return map[string][]string{
-		"capc-system": {"capc-controller-manager"},
-	}
+	return map[string][]string{"capc-system": {"capc-controller-manager"}}
 }
 
 func (p *cloudstackProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
@@ -919,4 +915,8 @@ func (p *cloudstackProvider) DeleteResources(ctx context.Context, clusterSpec *c
 
 func (p *cloudstackProvider) GenerateStorageClass() []byte {
 	return nil
+}
+
+func machineDeploymentName(clusterName, nodeGroupName string) string {
+	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
 }

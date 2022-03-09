@@ -50,6 +50,7 @@ func (s *Spec) DeepCopy() *Spec {
 		Cluster:             s.Cluster.DeepCopy(),
 		OIDCConfig:          s.OIDCConfig.DeepCopy(),
 		GitOpsConfig:        s.GitOpsConfig.DeepCopy(),
+		AWSIamConfig:        s.AWSIamConfig.DeepCopy(),
 		releasesManifestURL: s.releasesManifestURL,
 		bundlesManifestURL:  s.bundlesManifestURL,
 		configFS:            s.configFS,
@@ -101,7 +102,7 @@ type KubeDistro struct {
 	Pause               v1alpha1.Image
 	EtcdImage           v1alpha1.Image
 	EtcdVersion         string
-	AwsIamAuthIamge     v1alpha1.Image
+	AwsIamAuthImage     v1alpha1.Image
 }
 
 func (k *KubeDistro) deepCopy() *KubeDistro {
@@ -390,7 +391,7 @@ func buildKubeDistro(eksd *eksdv1alpha1.Release) (*KubeDistro, error) {
 		"external-provisioner-image":  &kubeDistro.ExternalProvisioner,
 		"pause-image":                 &kubeDistro.Pause,
 		"etcd-image":                  &kubeDistro.EtcdImage,
-		"aws-iam-authenticator-image": &kubeDistro.AwsIamAuthIamge,
+		"aws-iam-authenticator-image": &kubeDistro.AwsIamAuthImage,
 	}
 
 	for assetName, image := range kubeDistroComponents {

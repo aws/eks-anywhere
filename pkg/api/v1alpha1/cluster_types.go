@@ -6,6 +6,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 const (
@@ -96,6 +98,14 @@ func (n *Cluster) Equal(o *Cluster) bool {
 
 func (n *Cluster) Validate() error {
 	return ValidateClusterConfigContent(n)
+}
+
+func (n *Cluster) SetDefaults() {
+	// TODO: move any defaults that can return error out of this package
+	// All the defaults here should be context unaware
+	if err := setClusterDefaults(n); err != nil {
+		logger.Error(err, "Failed to validate Cluster")
+	}
 }
 
 type ProxyConfiguration struct {

@@ -34,7 +34,6 @@ spec:
             value: "1.21"
           - name: SKIPPED_TESTS
             value: "1.1.7,1.1.8,1.1.11,1.1.12,1.2.6,1.2.16,1.2.32,1.2.33,1.2.34"
-          - n
           volumeMounts:
             - name: var-lib-etcd
               mountPath: /var/lib/etcd
