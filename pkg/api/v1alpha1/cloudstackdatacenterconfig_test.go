@@ -40,14 +40,12 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 				Spec: CloudStackDatacenterConfigSpec{
 					Domain:  "domain1",
 					Account: "admin",
-					Zones: []CloudStackZoneRef{
+					Zones: []CloudStackZone{
 						{
-							Zone: CloudStackResourceRef{
-								Value: "zone1",
-								Type:  Name,
-							}, Network: CloudStackResourceRef{
-								Value: "net1",
-								Type:  Name,
+							Zone: CloudStackResourceIdentifier{
+								Name: "zone1",
+							}, Network: CloudStackResourceIdentifier{
+								Name: "net1",
 							},
 						},
 					},
@@ -69,14 +67,12 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 				Spec: CloudStackDatacenterConfigSpec{
 					Domain:  "domain1",
 					Account: "admin",
-					Zones: []CloudStackZoneRef{
+					Zones: []CloudStackZone{
 						{
-							Zone: CloudStackResourceRef{
-								Value: "zone1",
-								Type:  Name,
-							}, Network: CloudStackResourceRef{
-								Value: "net1",
-								Type:  Name,
+							Zone: CloudStackResourceIdentifier{
+								Name: "zone1",
+							}, Network: CloudStackResourceIdentifier{
+								Name: "net1",
 							},
 						},
 					},
@@ -98,14 +94,12 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 				Spec: CloudStackDatacenterConfigSpec{
 					Domain:  "domain1",
 					Account: "admin",
-					Zones: []CloudStackZoneRef{
+					Zones: []CloudStackZone{
 						{
-							Zone: CloudStackResourceRef{
-								Value: "zone1",
-								Type:  Name,
-							}, Network: CloudStackResourceRef{
-								Value: "net1",
-								Type:  Name,
+							Zone: CloudStackResourceIdentifier{
+								Name: "zone1",
+							}, Network: CloudStackResourceIdentifier{
+								Name: "net1",
 							},
 						},
 					},

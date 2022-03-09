@@ -7,14 +7,15 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	bootstrapv1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	controllerruntime "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -26,11 +27,8 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
-//go:embed testdata/vspherekubeadmcontrolplane.yaml
-var vspherekubeadmcontrolplaneFile string
-
-//go:embed testdata/cloudstackkubeadmcontrolplane.yaml
-var cloudstackkubeadmcontrolplaneFile string
+//go:embed testdata/kubeadmcontrolplane.yaml
+var kubeadmcontrolplaneFile string
 
 //go:embed testdata/etcdadmcluster.yaml
 var etcdadmclusterFile string
@@ -38,38 +36,26 @@ var etcdadmclusterFile string
 //go:embed testdata/vsphereMachineTemplate.yaml
 var vsphereMachineTemplateFile string
 
-//go:embed testdata/cloudstackMachineTemplate.yaml
-var cloudstackMachineTemplateFile string
+//go:embed testdata/machineDeployment.yaml
+var machineDeploymentFile string
 
-//go:embed testdata/vsphereMachineDeployment.yaml
-var vsphereMachineDeploymentFile string
+//go:embed testdata/expectedMachineDeployment.yaml
+var expectedMachineDeploymentFile string
 
-//go:embed testdata/cloudstackMachineDeployment.yaml
-var cloudstackMachineDeploymentFile string
+//go:embed testdata/expectedMachineDeploymentOnlyReplica.yaml
+var expectedMachineDeploymentOnlyReplica string
 
-//go:embed testdata/expectedVSphereMachineDeployment.yaml
-var expectedVSphereMachineDeploymentFile string
-
-//go:embed testdata/expectedCloudStackMachineDeployment.yaml
-var expectedCloudStackMachineDeploymentFile string
-
-//go:embed testdata/expectedVSphereMachineDeploymentOnlyReplica.yaml
-var expectedVSphereMachineDeploymentOnlyReplica string
-
-//go:embed testdata/expectedCloudStackMachineDeploymentOnlyReplica.yaml
-var expectedCloudStackMachineDeploymentOnlyReplica string
+//go:embed testdata/expectedMachineDeploymentTemplateChanged.yaml
+var expectedMachineDeploymentTemplateChanged string
 
 //go:embed testdata/vsphereDatacenterConfigSpec.yaml
 var vsphereDatacenterConfigSpecPath string
 
-//go:embed testdata/cloudstackDeploymentConfigSpec.yaml
-var cloudstackDeploymentConfigSpecPath string
-
 //go:embed testdata/vsphereMachineConfigSpec.yaml
 var vsphereMachineConfigSpecPath string
 
-//go:embed testdata/cloudstackMachineConfigSpec.yaml
-var cloudstackMachineConfigSpecPath string
+//go:embed testdata/kubeadmconfigTemplateSpec.yaml
+var kubeadmconfigTemplateSpecPath string
 
 func TestClusterReconcilerReconcile(t *testing.T) {
 	type args struct {
@@ -96,21 +82,14 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 			},
 			want: controllerruntime.Result{},
 			prepare: func(ctx context.Context, fetcher *mocks.MockResourceFetcher, resourceUpdater *mocks.MockResourceUpdater, name string, namespace string) {
-				replicasInput := 3
 				cluster := &anywherev1.Cluster{}
 				cluster.SetName(name)
 				cluster.SetNamespace(namespace)
-				cluster.Spec.DatacenterRef.Name = "testDataRef"
-				cluster.Spec.DatacenterRef.Kind = anywherev1.VSphereDatacenterKind
-				cluster.Spec.ControlPlaneConfiguration = anywherev1.ControlPlaneConfiguration{Count: replicasInput, MachineGroupRef: &anywherev1.Ref{Name: "testMachineGroupRef-cp"}}
-				cluster.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{{Count: replicasInput, MachineGroupRef: &anywherev1.Ref{Name: "testMachineGroupRef"}}}
-				cluster.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{Count: replicasInput, MachineGroupRef: &anywherev1.Ref{Name: "testMachineGroupRef-etcd"}}
-				cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
-				cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.96.0.0/12"}
 
 				fetcher.EXPECT().FetchCluster(gomock.Any(), gomock.Any()).Return(cluster, nil)
 
-				spec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-vsphere.yaml")
+				spec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+				cluster.Spec = spec.Spec
 
 				fetcher.EXPECT().FetchAppliedSpec(ctx, gomock.Any()).Return(spec, nil)
 
@@ -120,10 +99,10 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 						t.Errorf("unmarshal failed: %v", err)
 					}
 					cluster := obj.(*anywherev1.VSphereDatacenterConfig)
-					cluster.SetName(name)
-					cluster.SetNamespace(namespace)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "testDataRef", "expected Name to be testDataRef")
+					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.VSphereMachineConfig{}
@@ -131,10 +110,10 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 						t.Errorf("unmarshal failed: %v", err)
 					}
 					cluster := obj.(*anywherev1.VSphereMachineConfig)
-					cluster.SetName(name)
-					cluster.SetNamespace(namespace)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "testMachineGroupRef-cp", "expected Name to be testMachineGroupRef-cp")
+					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.VSphereMachineConfig{}
@@ -142,10 +121,10 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 						t.Errorf("unmarshal failed: %v", err)
 					}
 					cluster := obj.(*anywherev1.VSphereMachineConfig)
-					cluster.SetName(name)
-					cluster.SetNamespace(namespace)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "testMachineGroupRef", "expected Name to be testMachineGroupRef")
+					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					clusterSpec := &anywherev1.VSphereMachineConfig{}
@@ -153,14 +132,14 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 						t.Errorf("unmarshal failed: %v", err)
 					}
 					cluster := obj.(*anywherev1.VSphereMachineConfig)
-					cluster.SetName(name)
-					cluster.SetNamespace(namespace)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "testMachineGroupRef-etcd", "expected Name to be testMachineGroupRef-etcd")
+					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
 
-				kubeAdmControlPlane := &bootstrapv1.KubeadmControlPlane{}
-				if err := yaml.Unmarshal([]byte(vspherekubeadmcontrolplaneFile), kubeAdmControlPlane); err != nil {
+				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}
+				if err := yaml.Unmarshal([]byte(kubeadmcontrolplaneFile), kubeAdmControlPlane); err != nil {
 					t.Errorf("unmarshal failed: %v", err)
 				}
 
@@ -169,11 +148,21 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 					t.Errorf("unmarshal failed: %v", err)
 				}
 
+				machineDeployment := &clusterv1.MachineDeployment{}
+				if err := yaml.Unmarshal([]byte(machineDeploymentFile), machineDeployment); err != nil {
+					t.Errorf("unmarshalling machinedeployment failed: %v", err)
+				}
+				fetcher.EXPECT().MachineDeployment(ctx, gomock.Any(), gomock.Any()).Return(machineDeployment, nil)
+
 				fetcher.EXPECT().Etcd(ctx, gomock.Any()).Return(etcdadmCluster, nil)
-				fetcher.EXPECT().ExistingVSphereDatacenterConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereDatacenterConfig{}, nil)
+				fetcher.EXPECT().ExistingVSphereDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.VSphereDatacenterConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereEtcdMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
-				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
+				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
+				fetcher.EXPECT().ExistingWorkerNodeGroupConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.WorkerNodeGroupConfiguration{}, nil)
+				fetcher.EXPECT().VSphereCredentials(ctx).Return(&corev1.Secret{
+					Data: map[string][]byte{"username": []byte("username"), "password": []byte("password")},
+				}, nil)
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))
 
 				resourceUpdater.EXPECT().ApplyPatch(ctx, gomock.Any(), false).Return(nil)
@@ -190,7 +179,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 						}
 					case "MachineDeployment":
 						expectedMCDeployment := &unstructured.Unstructured{}
-						if err := yaml.Unmarshal([]byte(expectedVSphereMachineDeploymentFile), expectedMCDeployment); err != nil {
+						if err := yaml.Unmarshal([]byte(expectedMachineDeploymentFile), expectedMCDeployment); err != nil {
 							t.Errorf("unmarshal failed: %v", err)
 						}
 						assert.Equal(t, expectedMCDeployment, template, "values", expectedMCDeployment, template)
@@ -213,13 +202,10 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				cluster := &anywherev1.Cluster{}
 				cluster.SetName(name)
 				cluster.SetNamespace(namespace)
-				cluster.Spec.DatacenterRef.Name = "testDataRef"
-				cluster.Spec.DatacenterRef.Kind = anywherev1.VSphereDatacenterKind
-				cluster.Spec.ControlPlaneConfiguration = anywherev1.ControlPlaneConfiguration{Count: 1, MachineGroupRef: &anywherev1.Ref{Name: "testMachineGroupRef-cp"}}
-				cluster.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{{Count: 1, MachineGroupRef: &anywherev1.Ref{Name: "testMachineGroupRef"}}}
 				fetcher.EXPECT().FetchCluster(gomock.Any(), gomock.Any()).Return(cluster, nil)
 
-				spec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-vsphere_no_changes.yaml")
+				spec := test.NewFullClusterSpec(t, "testdata/eksa-cluster_no_changes.yaml")
+				cluster.Spec = spec.Spec
 				fetcher.EXPECT().FetchAppliedSpec(ctx, gomock.Any()).Return(spec, nil)
 
 				datacenterSpec := &anywherev1.VSphereDatacenterConfig{}
@@ -229,15 +215,15 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					cluster := obj.(*anywherev1.VSphereDatacenterConfig)
-					cluster.SetName(name)
-					cluster.SetNamespace(namespace)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Name)
 					cluster.Spec = datacenterSpec.Spec
-					assert.Equal(t, objectKey.Name, "testDataRef", "expected Name to be testDataRef")
+					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
 
 				existingVSDatacenter := &anywherev1.VSphereDatacenterConfig{}
 				existingVSDatacenter.Spec = datacenterSpec.Spec
-				fetcher.EXPECT().ExistingVSphereDatacenterConfig(ctx, gomock.Any()).Return(existingVSDatacenter, nil)
+				fetcher.EXPECT().ExistingVSphereDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(existingVSDatacenter, nil)
 
 				machineSpec := &anywherev1.VSphereMachineConfig{}
 				if err := yaml.Unmarshal([]byte(vsphereMachineConfigSpecPath), machineSpec); err != nil {
@@ -246,35 +232,45 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					cluster := obj.(*anywherev1.VSphereMachineConfig)
-					cluster.SetName(name)
-					cluster.SetNamespace(namespace)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = machineSpec.Spec
-					assert.Equal(t, objectKey.Name, "testMachineGroupRef-cp", "expected Name to be testMachineGroupRef-cp")
+					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
 					cluster := obj.(*anywherev1.VSphereMachineConfig)
-					cluster.SetName(name)
-					cluster.SetNamespace(namespace)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = machineSpec.Spec
-					assert.Equal(t, objectKey.Name, "testMachineGroupRef", "expected Name to be testMachineGroupRef")
+					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
+
+				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
+					Name:            "md-0",
+					Count:           3,
+					MachineGroupRef: nil,
+				}
+				fetcher.EXPECT().ExistingWorkerNodeGroupConfig(ctx, gomock.Any(), gomock.Any()).Return(existingWorkerNodeGroupConfiguration, nil)
 
 				existingVSMachine := &anywherev1.VSphereMachineConfig{}
 				existingVSMachine.Spec = machineSpec.Spec
 				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
-				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any()).Return(existingVSMachine, nil)
+				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 
-				kubeAdmControlPlane := &bootstrapv1.KubeadmControlPlane{}
-				if err := yaml.Unmarshal([]byte(vspherekubeadmcontrolplaneFile), kubeAdmControlPlane); err != nil {
+				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}
+				if err := yaml.Unmarshal([]byte(kubeadmcontrolplaneFile), kubeAdmControlPlane); err != nil {
 					t.Errorf("unmarshal failed: %v", err)
 				}
 
-				mcDeployment := &clusterv1.MachineDeployment{}
-				if err := yaml.Unmarshal([]byte(vsphereMachineDeploymentFile), mcDeployment); err != nil {
+				machineDeployment := &clusterv1.MachineDeployment{}
+				if err := yaml.Unmarshal([]byte(machineDeploymentFile), machineDeployment); err != nil {
 					t.Errorf("unmarshal failed: %v", err)
 				}
+				fetcher.EXPECT().MachineDeployment(ctx, gomock.Any(), gomock.Any()).Return(machineDeployment, nil)
 
-				fetcher.EXPECT().MachineDeployment(ctx, gomock.Any()).Return(mcDeployment, nil)
+				fetcher.EXPECT().VSphereCredentials(ctx).Return(&corev1.Secret{
+					Data: map[string][]byte{"username": []byte("username"), "password": []byte("password")},
+				}, nil)
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))
 
 				resourceUpdater.EXPECT().ForceApplyTemplate(ctx, gomock.Any(), gomock.Any()).Do(func(ctx context.Context, template *unstructured.Unstructured, dryRun bool) {
@@ -283,7 +279,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 					switch template.GetKind() {
 					case "MachineDeployment":
 						expectedMCDeployment := &unstructured.Unstructured{}
-						if err := yaml.Unmarshal([]byte(expectedVSphereMachineDeploymentOnlyReplica), expectedMCDeployment); err != nil {
+						if err := yaml.Unmarshal([]byte(expectedMachineDeploymentOnlyReplica), expectedMCDeployment); err != nil {
 							t.Errorf("unmarshal failed: %v", err)
 						}
 						assert.Equal(t, expectedMCDeployment, template, "values", expectedMCDeployment, template)
@@ -292,7 +288,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 			},
 		},
 		{
-			name: "worker node reconcile (Cloudstack provider) - worker nodes has changes",
+			name: "worker node reconcile (Vsphere provider) - worker node taints have changed",
 			args: args{
 				namespace: "namespaceA",
 				name:      "nameA",
@@ -303,71 +299,64 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 			},
 			want: controllerruntime.Result{},
 			prepare: func(ctx context.Context, fetcher *mocks.MockResourceFetcher, resourceUpdater *mocks.MockResourceUpdater, name string, namespace string) {
-				replicasInput := 3
 				cluster := &anywherev1.Cluster{}
 				cluster.SetName(name)
 				cluster.SetNamespace(namespace)
-				cluster.Spec.DatacenterRef.Name = "testDataRef"
-				cluster.Spec.DatacenterRef.Kind = anywherev1.CloudStackDeploymentKind
-				cluster.Spec.ControlPlaneConfiguration = anywherev1.ControlPlaneConfiguration{Count: replicasInput, MachineGroupRef: &anywherev1.Ref{Name: "testMachineGroupRef-cp"}}
-				cluster.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{{Count: replicasInput, MachineGroupRef: &anywherev1.Ref{Name: "testMachineGroupRef"}}}
-				cluster.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{Count: replicasInput, MachineGroupRef: &anywherev1.Ref{Name: "testMachineGroupRef-etcd"}}
-				cluster.Spec.ClusterNetwork.Pods.CidrBlocks = []string{"192.168.0.0/16"}
-				cluster.Spec.ClusterNetwork.Services.CidrBlocks = []string{"10.96.0.0/12"}
 
 				fetcher.EXPECT().FetchCluster(gomock.Any(), gomock.Any()).Return(cluster, nil)
 
-				spec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-cloudstack.yaml")
+				spec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+				cluster.Spec = spec.Spec
 
 				fetcher.EXPECT().FetchAppliedSpec(ctx, gomock.Any()).Return(spec, nil)
 
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
-					clusterSpec := &anywherev1.CloudStackDeploymentConfig{}
-					if err := yaml.Unmarshal([]byte(cloudstackDeploymentConfigSpecPath), clusterSpec); err != nil {
+					clusterSpec := &anywherev1.VSphereDatacenterConfig{}
+					if err := yaml.Unmarshal([]byte(vsphereDatacenterConfigSpecPath), clusterSpec); err != nil {
 						t.Errorf("unmarshal failed: %v", err)
 					}
-					cluster := obj.(*anywherev1.CloudStackDeploymentConfig)
-					cluster.SetName(name)
-					cluster.SetNamespace(namespace)
+					cluster := obj.(*anywherev1.VSphereDatacenterConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "testDataRef", "expected Name to be testDataRef")
+					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
-					clusterSpec := &anywherev1.CloudStackMachineConfig{}
-					if err := yaml.Unmarshal([]byte(cloudstackMachineConfigSpecPath), clusterSpec); err != nil {
+					clusterSpec := &anywherev1.VSphereMachineConfig{}
+					if err := yaml.Unmarshal([]byte(vsphereMachineConfigSpecPath), clusterSpec); err != nil {
 						t.Errorf("unmarshal failed: %v", err)
 					}
-					cluster := obj.(*anywherev1.CloudStackMachineConfig)
-					cluster.SetName(name)
-					cluster.SetNamespace(namespace)
+					cluster := obj.(*anywherev1.VSphereMachineConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "testMachineGroupRef-cp", "expected Name to be testMachineGroupRef-cp")
+					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
-					clusterSpec := &anywherev1.CloudStackMachineConfig{}
-					if err := yaml.Unmarshal([]byte(cloudstackMachineConfigSpecPath), clusterSpec); err != nil {
+					clusterSpec := &anywherev1.VSphereMachineConfig{}
+					if err := yaml.Unmarshal([]byte(vsphereMachineConfigSpecPath), clusterSpec); err != nil {
 						t.Errorf("unmarshal failed: %v", err)
 					}
-					cluster := obj.(*anywherev1.CloudStackMachineConfig)
-					cluster.SetName(name)
-					cluster.SetNamespace(namespace)
+					cluster := obj.(*anywherev1.VSphereMachineConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "testMachineGroupRef", "expected Name to be testMachineGroupRef")
+					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
-					clusterSpec := &anywherev1.CloudStackMachineConfig{}
-					if err := yaml.Unmarshal([]byte(cloudstackMachineConfigSpecPath), clusterSpec); err != nil {
+					clusterSpec := &anywherev1.VSphereMachineConfig{}
+					if err := yaml.Unmarshal([]byte(vsphereMachineConfigSpecPath), clusterSpec); err != nil {
 						t.Errorf("unmarshal failed: %v", err)
 					}
-					cluster := obj.(*anywherev1.CloudStackMachineConfig)
-					cluster.SetName(name)
-					cluster.SetNamespace(namespace)
+					cluster := obj.(*anywherev1.VSphereMachineConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
 					cluster.Spec = clusterSpec.Spec
-					assert.Equal(t, objectKey.Name, "testMachineGroupRef-etcd", "expected Name to be testMachineGroupRef-etcd")
+					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
 
-				kubeAdmControlPlane := &bootstrapv1.KubeadmControlPlane{}
-				if err := yaml.Unmarshal([]byte(vspherekubeadmcontrolplaneFile), kubeAdmControlPlane); err != nil {
+				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}
+				if err := yaml.Unmarshal([]byte(kubeadmcontrolplaneFile), kubeAdmControlPlane); err != nil {
 					t.Errorf("unmarshal failed: %v", err)
 				}
 
@@ -376,28 +365,43 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 					t.Errorf("unmarshal failed: %v", err)
 				}
 
+				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
+					Name:            "md-0",
+					Count:           3,
+					MachineGroupRef: nil,
+					Taints: []corev1.Taint{
+						{
+							Key:    "key1",
+							Value:  "val1",
+							Effect: "PreferNoSchedule",
+						},
+					},
+				}
+
 				fetcher.EXPECT().Etcd(ctx, gomock.Any()).Return(etcdadmCluster, nil)
-				fetcher.EXPECT().ExistingCloudStackDeploymentConfig(ctx, gomock.Any()).Return(&anywherev1.CloudStackDeploymentConfig{}, nil)
-				fetcher.EXPECT().ExistingCloudStackControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.CloudStackMachineConfig{}, nil)
-				fetcher.EXPECT().ExistingCloudStackEtcdMachineConfig(ctx, gomock.Any()).Return(&anywherev1.CloudStackMachineConfig{}, nil)
-				fetcher.EXPECT().ExistingCloudStackWorkerMachineConfig(ctx, gomock.Any()).Return(&anywherev1.CloudStackMachineConfig{}, nil)
+				fetcher.EXPECT().ExistingVSphereDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.VSphereDatacenterConfig{}, nil)
+				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
+				fetcher.EXPECT().ExistingVSphereEtcdMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
+				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
+				fetcher.EXPECT().ExistingWorkerNodeGroupConfig(ctx, gomock.Any(), gomock.Any()).Return(existingWorkerNodeGroupConfiguration, nil)
+				fetcher.EXPECT().VSphereCredentials(ctx).Return(&corev1.Secret{
+					Data: map[string][]byte{"username": []byte("username"), "password": []byte("password")},
+				}, nil)
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))
 
 				resourceUpdater.EXPECT().ApplyPatch(ctx, gomock.Any(), false).Return(nil)
 				resourceUpdater.EXPECT().ForceApplyTemplate(ctx, gomock.Any(), gomock.Any()).Do(func(ctx context.Context, template *unstructured.Unstructured, dryRun bool) {
 					assert.Equal(t, false, dryRun, "Expected dryRun didn't match")
 					switch template.GetKind() {
-					case "CloudStackMachineTemplate":
-						if strings.Contains(template.GetName(), "worker-node") {
-							expectedMachineTemplate := &unstructured.Unstructured{}
-							if err := yaml.Unmarshal([]byte(cloudstackMachineTemplateFile), expectedMachineTemplate); err != nil {
-								t.Errorf("unmarshal failed: %v", err)
-							}
-							assert.Equal(t, expectedMachineTemplate, template, "values", expectedMachineTemplate, template)
+					case "KubeadmConfigTemplate":
+						existingKubeadmConfigTemplate := &unstructured.Unstructured{}
+						if err := yaml.Unmarshal([]byte(kubeadmconfigTemplateSpecPath), existingKubeadmConfigTemplate); err != nil {
+							t.Errorf("unmarshal failed: %v", err)
 						}
+						assert.Equal(t, existingKubeadmConfigTemplate, template, "values", existingKubeadmConfigTemplate, template)
 					case "MachineDeployment":
 						expectedMCDeployment := &unstructured.Unstructured{}
-						if err := yaml.Unmarshal([]byte(expectedCloudStackMachineDeploymentFile), expectedMCDeployment); err != nil {
+						if err := yaml.Unmarshal([]byte(expectedMachineDeploymentTemplateChanged), expectedMCDeployment); err != nil {
 							t.Errorf("unmarshal failed: %v", err)
 						}
 						assert.Equal(t, expectedMCDeployment, template, "values", expectedMCDeployment, template)
@@ -406,7 +410,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 			},
 		},
 		{
-			name: "worker node reconcile (Cloudstack provider) - worker nodes has NO machine-template changes",
+			name: "worker node reconcile (Vsphere provider) - worker node labels have changed",
 			args: args{
 				namespace: "namespaceA",
 				name:      "nameA",
@@ -420,77 +424,103 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				cluster := &anywherev1.Cluster{}
 				cluster.SetName(name)
 				cluster.SetNamespace(namespace)
-				cluster.Spec.DatacenterRef.Name = "testDataRef"
-				cluster.Spec.DatacenterRef.Kind = anywherev1.CloudStackDeploymentKind
-				cluster.Spec.ControlPlaneConfiguration = anywherev1.ControlPlaneConfiguration{Count: 1, MachineGroupRef: &anywherev1.Ref{Name: "testMachineGroupRef-cp"}}
-				cluster.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{{Count: 1, MachineGroupRef: &anywherev1.Ref{Name: "testMachineGroupRef"}}}
+
 				fetcher.EXPECT().FetchCluster(gomock.Any(), gomock.Any()).Return(cluster, nil)
 
-				spec := test.NewFullClusterSpec(t, "testdata/eksa-cluster-cloudstack_no_changes.yaml")
+				spec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
+				cluster.Spec = spec.Spec
+
 				fetcher.EXPECT().FetchAppliedSpec(ctx, gomock.Any()).Return(spec, nil)
 
-				deploymentSpec := &anywherev1.CloudStackDeploymentConfig{}
-				if err := yaml.Unmarshal([]byte(cloudstackDeploymentConfigSpecPath), deploymentSpec); err != nil {
-					t.Errorf("unmarshal failed: %v", err)
-				}
-
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
-					cluster := obj.(*anywherev1.CloudStackDeploymentConfig)
-					cluster.SetName(name)
-					cluster.SetNamespace(namespace)
-					cluster.Spec = deploymentSpec.Spec
-					assert.Equal(t, objectKey.Name, "testDataRef", "expected Name to be testDataRef")
-				}).Return(nil)
-
-				existingVSDatacenter := &anywherev1.CloudStackDeploymentConfig{}
-				existingVSDatacenter.Spec = deploymentSpec.Spec
-				fetcher.EXPECT().ExistingCloudStackDeploymentConfig(ctx, gomock.Any()).Return(existingVSDatacenter, nil)
-
-				machineSpec := &anywherev1.CloudStackMachineConfig{}
-				if err := yaml.Unmarshal([]byte(cloudstackMachineConfigSpecPath), machineSpec); err != nil {
-					t.Errorf("unmarshal failed: %v", err)
-				}
-
-				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
-					cluster := obj.(*anywherev1.CloudStackMachineConfig)
-					cluster.SetName(name)
-					cluster.SetNamespace(namespace)
-					cluster.Spec = machineSpec.Spec
-					assert.Equal(t, objectKey.Name, "testMachineGroupRef-cp", "expected Name to be testMachineGroupRef-cp")
+					clusterSpec := &anywherev1.VSphereDatacenterConfig{}
+					if err := yaml.Unmarshal([]byte(vsphereDatacenterConfigSpecPath), clusterSpec); err != nil {
+						t.Errorf("unmarshal failed: %v", err)
+					}
+					cluster := obj.(*anywherev1.VSphereDatacenterConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
+					cluster.Spec = clusterSpec.Spec
+					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
 				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
-					cluster := obj.(*anywherev1.CloudStackMachineConfig)
-					cluster.SetName(name)
-					cluster.SetNamespace(namespace)
-					cluster.Spec = machineSpec.Spec
-					assert.Equal(t, objectKey.Name, "testMachineGroupRef", "expected Name to be testMachineGroupRef")
+					clusterSpec := &anywherev1.VSphereMachineConfig{}
+					if err := yaml.Unmarshal([]byte(vsphereMachineConfigSpecPath), clusterSpec); err != nil {
+						t.Errorf("unmarshal failed: %v", err)
+					}
+					cluster := obj.(*anywherev1.VSphereMachineConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
+					cluster.Spec = clusterSpec.Spec
+					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+				}).Return(nil)
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
+					clusterSpec := &anywherev1.VSphereMachineConfig{}
+					if err := yaml.Unmarshal([]byte(vsphereMachineConfigSpecPath), clusterSpec); err != nil {
+						t.Errorf("unmarshal failed: %v", err)
+					}
+					cluster := obj.(*anywherev1.VSphereMachineConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
+					cluster.Spec = clusterSpec.Spec
+					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
+				}).Return(nil)
+				fetcher.EXPECT().FetchObject(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(ctx context.Context, objectKey types.NamespacedName, obj client.Object) {
+					clusterSpec := &anywherev1.VSphereMachineConfig{}
+					if err := yaml.Unmarshal([]byte(vsphereMachineConfigSpecPath), clusterSpec); err != nil {
+						t.Errorf("unmarshal failed: %v", err)
+					}
+					cluster := obj.(*anywherev1.VSphereMachineConfig)
+					cluster.SetName(objectKey.Name)
+					cluster.SetNamespace(objectKey.Namespace)
+					cluster.Spec = clusterSpec.Spec
+					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
 
-				existingCSMachine := &anywherev1.CloudStackMachineConfig{}
-				existingCSMachine.Spec = machineSpec.Spec
-				fetcher.EXPECT().ExistingCloudStackControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.CloudStackMachineConfig{}, nil)
-				fetcher.EXPECT().ExistingCloudStackWorkerMachineConfig(ctx, gomock.Any()).Return(existingCSMachine, nil)
-
-				kubeAdmControlPlane := &bootstrapv1.KubeadmControlPlane{}
-				if err := yaml.Unmarshal([]byte(vspherekubeadmcontrolplaneFile), kubeAdmControlPlane); err != nil {
+				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}
+				if err := yaml.Unmarshal([]byte(kubeadmcontrolplaneFile), kubeAdmControlPlane); err != nil {
 					t.Errorf("unmarshal failed: %v", err)
 				}
 
-				mcDeployment := &clusterv1.MachineDeployment{}
-				if err := yaml.Unmarshal([]byte(cloudstackMachineDeploymentFile), mcDeployment); err != nil {
+				etcdadmCluster := &etcdv1.EtcdadmCluster{}
+				if err := yaml.Unmarshal([]byte(etcdadmclusterFile), etcdadmCluster); err != nil {
 					t.Errorf("unmarshal failed: %v", err)
 				}
 
-				fetcher.EXPECT().MachineDeployment(ctx, gomock.Any()).Return(mcDeployment, nil)
+				existingWorkerNodeGroupConfiguration := &anywherev1.WorkerNodeGroupConfiguration{
+					Name:            "md-0",
+					Count:           3,
+					MachineGroupRef: nil,
+					Labels: map[string]string{
+						"Key1": "Val1",
+						"Key2": "Val2",
+					},
+				}
+
+				fetcher.EXPECT().Etcd(ctx, gomock.Any()).Return(etcdadmCluster, nil)
+				fetcher.EXPECT().ExistingVSphereDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.VSphereDatacenterConfig{}, nil)
+				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
+				fetcher.EXPECT().ExistingVSphereEtcdMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
+				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
+				fetcher.EXPECT().ExistingWorkerNodeGroupConfig(ctx, gomock.Any(), gomock.Any()).Return(existingWorkerNodeGroupConfiguration, nil)
+				fetcher.EXPECT().VSphereCredentials(ctx).Return(&corev1.Secret{
+					Data: map[string][]byte{"username": []byte("username"), "password": []byte("password")},
+				}, nil)
 				fetcher.EXPECT().Fetch(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes().Return(nil, errors.NewNotFound(schema.GroupResource{Group: "testgroup", Resource: "testresource"}, ""))
 
+				resourceUpdater.EXPECT().ApplyPatch(ctx, gomock.Any(), false).Return(nil)
 				resourceUpdater.EXPECT().ForceApplyTemplate(ctx, gomock.Any(), gomock.Any()).Do(func(ctx context.Context, template *unstructured.Unstructured, dryRun bool) {
 					assert.Equal(t, false, dryRun, "Expected dryRun didn't match")
-					println(template.GetName(), " : ", template.GetKind())
 					switch template.GetKind() {
+					case "KubeadmConfigTemplate":
+						existingKubeadmConfigTemplate := &unstructured.Unstructured{}
+						if err := yaml.Unmarshal([]byte(kubeadmconfigTemplateSpecPath), existingKubeadmConfigTemplate); err != nil {
+							t.Errorf("unmarshal failed: %v", err)
+						}
+						assert.Equal(t, existingKubeadmConfigTemplate, template, "values", existingKubeadmConfigTemplate, template)
 					case "MachineDeployment":
 						expectedMCDeployment := &unstructured.Unstructured{}
-						if err := yaml.Unmarshal([]byte(expectedCloudStackMachineDeploymentOnlyReplica), expectedMCDeployment); err != nil {
+						if err := yaml.Unmarshal([]byte(expectedMachineDeploymentTemplateChanged), expectedMCDeployment); err != nil {
 							t.Errorf("unmarshal failed: %v", err)
 						}
 						assert.Equal(t, expectedMCDeployment, template, "values", expectedMCDeployment, template)

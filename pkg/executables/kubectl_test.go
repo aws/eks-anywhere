@@ -710,7 +710,7 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: v1alpha1.CloudStackDatacenterConfigSpec{
-					Zones: []v1alpha1.CloudStackZoneRef{
+					Zones: []v1alpha1.CloudStackZone{
 						{
 							Zone: v1alpha1.CloudStackResourceRef{
 								Type:  v1alpha1.Name,

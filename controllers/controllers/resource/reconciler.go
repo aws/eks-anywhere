@@ -68,7 +68,6 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 	if err != nil {
 		return err
 	}
-	cor.Log.Info("Reconciling cluster", "DatacenterKind", cs.Spec.DatacenterRef.Kind)
 
 	switch cs.Spec.DatacenterRef.Kind {
 	case anywherev1.VSphereDatacenterKind:
@@ -76,6 +75,7 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		cpVmc := &anywherev1.VSphereMachineConfig{}
 		etcdVmc := &anywherev1.VSphereMachineConfig{}
 		workerVmc := &anywherev1.VSphereMachineConfig{}
+		workerVmcs := make(map[string]anywherev1.VSphereMachineConfig, len(cs.Spec.WorkerNodeGroupConfigurations))
 		err := cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.DatacenterRef.Name}, vdc)
 		if err != nil {
 			return err
@@ -84,12 +84,12 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		if err != nil {
 			return err
 		}
-		if len(cs.Spec.WorkerNodeGroupConfigurations) != 1 {
-			return fmt.Errorf("expects WorkerNodeGroupConfigurations's length to be 1, but found %d", len(cs.Spec.WorkerNodeGroupConfigurations))
-		}
-		err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name}, workerVmc)
-		if err != nil {
-			return err
+		for _, workerNodeGroupConfiguration := range cs.Spec.WorkerNodeGroupConfigurations {
+			err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: workerNodeGroupConfiguration.MachineGroupRef.Name}, workerVmc)
+			if err != nil {
+				return err
+			}
+			workerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name] = *workerVmc
 		}
 		if cs.Spec.ExternalEtcdConfiguration != nil {
 			err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name}, etcdVmc)
@@ -97,16 +97,17 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 				return err
 			}
 		}
-		r, err := cor.vsphereTemplate.TemplateResources(ctx, cs, spec, *vdc, *cpVmc, *workerVmc, *etcdVmc)
+		r, err := cor.vsphereTemplate.TemplateResources(ctx, cs, spec, *vdc, *cpVmc, *etcdVmc, workerVmcs)
 		if err != nil {
 			return err
 		}
 		resources = append(resources, r...)
-	case anywherev1.CloudStackDeploymentKind:
-		csdc := &anywherev1.CloudStackDeploymentConfig{}
+	case anywherev1.CloudStackDatacenterKind:
+		csdc := &anywherev1.CloudStackDatacenterConfig{}
 		cpCsmc := &anywherev1.CloudStackMachineConfig{}
 		etcdCsmc := &anywherev1.CloudStackMachineConfig{}
 		workerCsmc := &anywherev1.CloudStackMachineConfig{}
+		workerCsmcs := make(map[string]anywherev1.CloudStackMachineConfig, len(cs.Spec.WorkerNodeGroupConfigurations))
 		err := cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.DatacenterRef.Name}, csdc)
 		if err != nil {
 			return err
@@ -118,9 +119,12 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		if len(cs.Spec.WorkerNodeGroupConfigurations) != 1 {
 			return fmt.Errorf("expects WorkerNodeGroupConfigurations's length to be 1, but found %d", len(cs.Spec.WorkerNodeGroupConfigurations))
 		}
-		err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name}, workerCsmc)
-		if err != nil {
-			return err
+		for _, workerNodeGroupConfiguration := range cs.Spec.WorkerNodeGroupConfigurations[:1] {
+			err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: workerNodeGroupConfiguration.MachineGroupRef.Name}, workerCsmc)
+			if err != nil {
+				return err
+			}
+			workerCsmcs[workerNodeGroupConfiguration.MachineGroupRef.Name] = *workerCsmc
 		}
 		if cs.Spec.ExternalEtcdConfiguration != nil {
 			err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name}, etcdCsmc)
@@ -128,7 +132,7 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 				return err
 			}
 		}
-		r, err := cor.cloudStackTemplate.TemplateResources(ctx, cs, spec, *csdc, *cpCsmc, *workerCsmc, *etcdCsmc)
+		r, err := cor.cloudStackTemplate.TemplateResources(ctx, cs, spec, *csdc, *cpCSmc, *etcdCSmc, workerCSmcs)
 		if err != nil {
 			return err
 		}
@@ -143,7 +147,7 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		return fmt.Errorf("unsupport Provider %s", cs.Spec.DatacenterRef.Kind)
 	}
 
-	// Reconciling IdentityProviders
+	// Reconcling IdentityProviders
 	for _, identityProvider := range cs.Spec.IdentityProviderRefs {
 		switch identityProvider.Kind {
 		case anywherev1.AWSIamConfigKind:

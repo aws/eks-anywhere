@@ -2,15 +2,15 @@ package resource_test
 
 import (
 	"context"
+	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
 	"reflect"
 	"testing"
 
-	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1alpha3"
 	"k8s.io/api/node/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -117,23 +117,29 @@ func TestMapClusterToCloudStackDeploymentConfigSpec(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *anywherev1.CloudStackDeploymentConfig
+		want *anywherev1.CloudStackDatacenterConfig
 	}{
 		{
 			name: "All path are available",
 			args: args{
 				csCluster: &cloudstackv1.CloudStackCluster{
 					Spec: cloudstackv1.CloudStackClusterSpec{
-						Zone:    "zone",
-						Network: "network",
+						Zones: []cloudstackv1.Zone{
+							{
+								Name: "zone",
+								Network: cloudstackv1.Network{
+									Name: "network",
+								},
+							},
+						},
 						Account: "account",
 						Domain:  "domain",
 					},
 				},
 			},
-			want: &anywherev1.CloudStackDeploymentConfig{
-				Spec: anywherev1.CloudStackDeploymentConfigSpec{
-					Zone:    "zone",
+			want: &anywherev1.CloudStackDatacenterConfig{
+				Spec: anywherev1.CloudStackDatacenterConfigSpec{
+					Zones: []anywherev1.CloudStackZone{}    "zone",
 					Network: "network",
 					Account: "account",
 					Domain:  "domain",
@@ -143,7 +149,7 @@ func TestMapClusterToCloudStackDeploymentConfigSpec(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := resource.MapClusterToCloudStackDeploymentConfigSpec(tt.args.csCluster)
+			got, err := resource.MapClusterToCloudStackDatacenterConfigSpec(tt.args.csCluster)
 			if err == nil && !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("MapMachineTemplateToCloudStackDeploymentConfigSpec() got = %v, want %v", got, tt.want)
 			}
@@ -238,10 +244,9 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 					Spec: cloudstackv1.CloudStackMachineTemplateSpec{
 						Spec: cloudstackv1.CloudStackMachineTemplateResource{
 							Spec: cloudstackv1.CloudStackMachineSpec{
-								Offering: "Large",
-								Template: "rhel8-1.20",
-								Details:  map[string]string{"a": "b"},
-								AffinityGroupIds: []string{"c", "d"},
+								Offering:         cloudstackv1.CloudStackResourceIdentifier{Name: "large"},
+								Template:         cloudstackv1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
+								AffinityGroupIDs: []string{"c", "d"},
 							},
 						},
 					},
@@ -249,9 +254,8 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 			},
 			want: &anywherev1.CloudStackMachineConfig{
 				Spec: anywherev1.CloudStackMachineConfigSpec{
-					Template:        "rhel8-1.20",
-					ComputeOffering: "Large",
-					Details:         map[string]string{"a": "b"},
+					Template:         anywherev1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
+					ComputeOffering:  anywherev1.CloudStackResourceIdentifier{Name: "large"},
 					AffinityGroupIds: []string{"c", "d"},
 				},
 			},

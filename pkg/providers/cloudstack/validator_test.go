@@ -19,14 +19,12 @@ const (
 	testDataDir                   = "testdata"
 )
 
-var testTemplate = v1alpha1.CloudStackResourceRef{
-	Type:  "name",
-	Value: "centos7-k8s-118",
+var testTemplate = v1alpha1.CloudStackResourceIdentifier{
+	Name: "centos7-k8s-118",
 }
 
-var testOffering = v1alpha1.CloudStackResourceRef{
-	Type:  "name",
-	Value: "m4-large",
+var testOffering = v1alpha1.CloudStackResourceIdentifier{
+	Name: "m4-large",
 }
 
 func thenErrorExpected(t *testing.T, expected string, err error) {
@@ -375,7 +373,7 @@ func TestSetupAndValidateCreateClusterTemplateDifferent(t *testing.T) {
 		machineConfigsLookup: machineConfigs,
 	}
 	controlPlaneMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.Template = v1alpha1.CloudStackResourceRef{Value: "different", Type: "name"}
+	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.Template = v1alpha1.CloudStackResourceIdentifier{Name: "different"}
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	thenErrorExpected(t, "control plane and etcd machines must have the same template specified", err)

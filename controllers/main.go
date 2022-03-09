@@ -1,25 +1,28 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 
-	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1alpha3"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1alpha3"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1alpha3"
-	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1alpha3"
+	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	"sigs.k8s.io/cluster-api/controllers/remote"
+	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1alpha3"
 	"github.com/aws/eks-anywhere/controllers/controllers"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/features"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -42,8 +45,8 @@ func init() {
 	utilruntime.Must(clusterv1.AddToScheme(scheme))
 	utilruntime.Must(controlplanev1.AddToScheme(scheme))
 	utilruntime.Must(vspherev1.AddToScheme(scheme))
-	utilruntime.Must(cloudstackv1.AddToScheme(scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme))
+	utilruntime.Must(kubeadmv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -82,34 +85,60 @@ func main() {
 		os.Exit(1)
 	}
 
-	setupReconcilers(mgr)
+	// Setup the context that's going to be used in controllers and for the manager.
+	ctx := ctrl.SetupSignalHandler()
+
+	setupReconcilers(ctx, mgr)
 	setupWebhooks(mgr)
 	//+kubebuilder:scaffold:builder
 	setupChecks(mgr)
 
 	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(ctx); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
 }
 
-func setupReconcilers(mgr ctrl.Manager) {
+func setupReconcilers(ctx context.Context, mgr ctrl.Manager) {
 	if features.IsActive(features.FullLifecycleAPI()) {
+		factory := dependencies.NewFactory()
+		deps, err := factory.WithGovc().Build(ctx)
+		if err != nil {
+			setupLog.Error(err, "unable to build dependencies")
+			os.Exit(1)
+		}
+
+		tracker, err := remote.NewClusterCacheTracker(
+			mgr,
+			remote.ClusterCacheTrackerOptions{
+				Log:     ctrl.Log.WithName("remote").WithName("ClusterCacheTracker"),
+				Indexes: remote.DefaultIndexes,
+			},
+		)
+		if err != nil {
+			setupLog.Error(err, "unable to create cluster cache tracker")
+			os.Exit(1)
+		}
+
 		setupLog.Info("Setting up cluster controller")
 		if err := (controllers.NewClusterReconciler(
 			mgr.GetClient(),
 			ctrl.Log.WithName("controllers").WithName(anywherev1.ClusterKind),
 			mgr.GetScheme(),
+			deps.Govc,
+			tracker,
 		)).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", anywherev1.ClusterKind)
 			os.Exit(1)
 		}
 
+		setupLog.Info("Setting up vspheredatacenter controller")
 		if err := (controllers.NewVSphereDatacenterReconciler(
 			mgr.GetClient(),
 			ctrl.Log.WithName("controllers").WithName(anywherev1.VSphereDatacenterKind),
 			mgr.GetScheme(),
+			deps.Govc,
 		)).SetupWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create controller", "controller", anywherev1.VSphereDatacenterKind)
 			os.Exit(1)
@@ -151,14 +180,6 @@ func setupWebhooks(mgr ctrl.Manager) {
 	}
 	if err := (&anywherev1.VSphereMachineConfig{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.VSphereMachineConfigKind)
-		os.Exit(1)
-	}
-	if err := (&anywherev1.CloudStackDeploymentConfig{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.CloudStackDeploymentKind)
-		os.Exit(1)
-	}
-	if err := (&anywherev1.CloudStackMachineConfig{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.CloudStackMachineConfigKind)
 		os.Exit(1)
 	}
 

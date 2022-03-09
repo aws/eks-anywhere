@@ -25,6 +25,8 @@ var NoProxyDefaults = []string{
 	".svc",
 }
 
+// TODO: Split out common into separate packages to avoid becoming a dumping ground
+
 const (
 	privateKeyFileName = "eks-a-id_rsa"
 	publicKeyFileName  = "eks-a-id_rsa.pub"
@@ -50,31 +52,23 @@ func BootstrapClusterOpts(serverEndpoint string, clusterConfig *v1alpha1.Cluster
 	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}, nil
 }
 
-func ParseSSHAuthKey(key *string) error {
-	if len(*key) > 0 {
-		// When public key is entered by user in provider config, it may contain email address (or any other comment) at the end. ssh-keygen allows users to add comments as suffixes to public key in
-		// public key file. When CLI generates the key pair, no comments will be present. So we get rid of the comment from the public key to ensure unit tests that do string compare on the sshAuthorizedKey
-		// will pass
-		parts := strings.Fields(strings.TrimSpace(*key))
-		if len(parts) >= 3 {
-			*key = parts[0] + " " + parts[1]
-		}
-		_, _, _, _, err := ssh.ParseAuthorizedKey([]byte(*key))
-		if err != nil {
-			return fmt.Errorf("provided MachineConfig sshAuthorizedKey is invalid: %v", err)
-		}
+func StripSshAuthorizedKeyComment(key string) (string, error) {
+	public, _, _, _, err := ssh.ParseAuthorizedKey([]byte(key))
+	if err != nil {
+		return "", err
 	}
-	return nil
+	// ssh.MarshalAuthorizedKey returns the key with a trailing newline, which we want to remove
+	return strings.TrimSpace(string(ssh.MarshalAuthorizedKey(public))), nil
 }
 
 func GenerateSSHAuthKey(username string, writer filewriter.FileWriter) (string, error) {
 	privateKeyPath, sshAuthorizedKeyBytes, err := crypto.NewSshKeyPairUsingFileWriter(writer, privateKeyFileName, publicKeyFileName)
 	if err != nil {
-		return "", fmt.Errorf("VSphereMachineConfig error generating sshAuthorizedKey: %v", err)
+		return "", fmt.Errorf("error generating sshAuthorizedKey: %v", err)
 	}
 
 	logger.Info(fmt.Sprintf(
-		"DatacenterConfig private key saved to %[1]s. Use 'ssh -i %[1]s %s@<VM-IP-Address>' to login to your cluster VM",
+		"Private key saved to %[1]s. Use 'ssh -i %[1]s %s@<Node-IP-Address>' to login to your cluster node",
 		privateKeyPath,
 		username,
 	))
