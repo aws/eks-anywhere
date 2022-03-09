@@ -62,14 +62,14 @@ spec:
       controllerManager: {}
       dns:
         imageRepository: public.ecr.aws/eks-distro/coredns
-        imageTag: v1.8.3-eks-1-21-4
+        imageTag: v1.8.4-eks-1-21-9
       etcd:
         local:
           extraArgs:
             listen-client-urls: https://0.0.0.0:2379
             listen-peer-urls: https://0.0.0.0:2380
           imageRepository: public.ecr.aws/eks-distro/etcd-io
-          imageTag: v3.4.16-eks-1-21-4
+          imageTag: v3.4.16-eks-1-21-9
       imageRepository: public.ecr.aws/eks-distro/kubernetes
       networking: {}
       pause: {}
@@ -104,7 +104,7 @@ spec:
       name: test-cp
     metadata: {}
   replicas: 3
-  version: v1.21.2-eks-1-21-4
+  version: v1.21.5-eks-1-21-9
 status:
   initialized: false
   ready: false
