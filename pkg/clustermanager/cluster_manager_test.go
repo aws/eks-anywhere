@@ -27,7 +27,6 @@ import (
 	mocksprovider "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/types"
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 var (
@@ -723,8 +722,8 @@ func TestClusterManagerMoveCAPIErrorGetMachines(t *testing.T) {
 }
 
 func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
-	clusterSpec := &cluster.Spec{
-		Cluster: &v1alpha1.Cluster{
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster = &v1alpha1.Cluster{
 			Spec: v1alpha1.ClusterSpec{
 				KubernetesVersion:             "1.19",
 				ControlPlaneConfiguration:     v1alpha1.ControlPlaneConfiguration{Count: 1},
@@ -733,9 +732,8 @@ func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
 					Kind: v1alpha1.VSphereDatacenterKind,
 				},
 			},
-		},
-		Bundles: &anywherev1alpha1.Bundles{},
-	}
+		}
+	})
 
 	ctx := context.Background()
 	clusterName := "cluster-name"

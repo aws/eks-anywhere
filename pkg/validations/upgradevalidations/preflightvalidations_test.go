@@ -679,12 +679,7 @@ func TestPreflightValidations(t *testing.T) {
 			}
 
 			clusterSpec.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
-			existingClusterSpec := &cluster.Spec{
-				Cluster:      clusterSpec.Cluster.DeepCopy(),
-				GitOpsConfig: clusterSpec.GitOpsConfig.DeepCopy(),
-				OIDCConfig:   clusterSpec.OIDCConfig.DeepCopy(),
-				AWSIamConfig: clusterSpec.AWSIamConfig.DeepCopy(),
-			}
+			existingClusterSpec := clusterSpec.DeepCopy()
 			existingProviderSpec := defaultDatacenterSpec.DeepCopy()
 			if tc.modifyFunc != nil {
 				tc.modifyFunc(existingClusterSpec)
