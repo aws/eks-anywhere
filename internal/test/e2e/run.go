@@ -24,6 +24,7 @@ const (
 
 type ParallelRunConf struct {
 	MaxInstances        int
+	MaxConcurrentTests  int
 	AmiId               string
 	InstanceProfileName string
 	StorageBucket       string
@@ -65,7 +66,11 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 
 	instancesConf := splitTests(testsList, conf)
 	logTestGroups(instancesConf)
+	maxConcurrentTests := conf.MaxConcurrentTests
+	// Add a blocking channel to only allow for certain number of tests to run at a time
+	queue := make(chan struct{}, maxConcurrentTests)
 	for _, instanceConf := range instancesConf {
+		queue <- struct{}{}
 		go func(c instanceRunConf) {
 			defer wg.Done()
 			r := instanceTestsResults{conf: c}
@@ -76,6 +81,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			}
 
 			resultCh <- r
+			<-queue
 		}(instanceConf)
 		wg.Add(1)
 	}
