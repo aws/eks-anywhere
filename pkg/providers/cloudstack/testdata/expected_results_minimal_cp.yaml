@@ -30,9 +30,11 @@ spec:
     host: 1.2.3.4
     port: 6443
   zones:
-    - network:
-        name: net1
+    - id:
       name: zone1
+      network:
+        id:
+        name: net1
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate
@@ -43,8 +45,10 @@ spec:
   template:
     spec:
       offering:
+        id:
         name: m4-large
       template:
+        id:
         name: centos7-k8s-118
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -78,21 +82,21 @@ spec:
           audit-log-maxsize: "512"
           profiling: "false"
         extraVolumes:
-          - hostPath: /etc/kubernetes/audit-policy.yaml
-            mountPath: /etc/kubernetes/audit-policy.yaml
-            name: audit-policy
-            pathType: File
-            readOnly: true
-          - hostPath: /var/log/kubernetes
-            mountPath: /var/log/kubernetes
-            name: audit-log-dir
-            pathType: DirectoryOrCreate
-            readOnly: false
-          - hostPath: /var/log/kubernetes/api-audit.log
-            mountPath: /var/log/kubernetes/api-audit.log
-            name: audit-log
-            pathType: FileOrCreate
-            readOnly: false
+        - hostPath: /etc/kubernetes/audit-policy.yaml
+          mountPath: /etc/kubernetes/audit-policy.yaml
+          name: audit-policy
+          pathType: File
+          readOnly: true
+        - hostPath: /var/log/kubernetes
+          mountPath: /var/log/kubernetes
+          name: audit-log-dir
+          pathType: DirectoryOrCreate
+          readOnly: false
+        - hostPath: /var/log/kubernetes/api-audit.log
+          mountPath: /var/log/kubernetes/api-audit.log
+          name: audit-log
+          pathType: FileOrCreate
+          readOnly: false
       controllerManager:
         extraArgs:
           cloud-provider: external
@@ -101,164 +105,164 @@ spec:
         extraArgs:
           profiling: "false"
     files:
-      - content: |
-          apiVersion: audit.k8s.io/v1beta1
-          kind: Policy
-          rules:
-          # Log aws-auth configmap changes
-          - level: RequestResponse
-            namespaces: ["kube-system"]
-            verbs: ["update", "patch", "delete"]
-            resources:
-            - group: "" # core
-              resources: ["configmaps"]
-              resourceNames: ["aws-auth"]
-            omitStages:
+    - content: |
+        apiVersion: audit.k8s.io/v1beta1
+        kind: Policy
+        rules:
+        # Log aws-auth configmap changes
+        - level: RequestResponse
+          namespaces: ["kube-system"]
+          verbs: ["update", "patch", "delete"]
+          resources:
+          - group: "" # core
+            resources: ["configmaps"]
+            resourceNames: ["aws-auth"]
+          omitStages:
+          - "RequestReceived"
+        # The following requests were manually identified as high-volume and low-risk,
+        # so drop them.
+        - level: None
+          users: ["system:kube-proxy"]
+          verbs: ["watch"]
+          resources:
+          - group: "" # core
+            resources: ["endpoints", "services", "services/status"]
+        - level: None
+          users: ["kubelet"] # legacy kubelet identity
+          verbs: ["get"]
+          resources:
+          - group: "" # core
+            resources: ["nodes", "nodes/status"]
+        - level: None
+          userGroups: ["system:nodes"]
+          verbs: ["get"]
+          resources:
+          - group: "" # core
+            resources: ["nodes", "nodes/status"]
+        - level: None
+          users:
+          - system:kube-controller-manager
+          - system:kube-scheduler
+          - system:serviceaccount:kube-system:endpoint-controller
+          verbs: ["get", "update"]
+          namespaces: ["kube-system"]
+          resources:
+          - group: "" # core
+            resources: ["endpoints"]
+        - level: None
+          users: ["system:apiserver"]
+          verbs: ["get"]
+          resources:
+          - group: "" # core
+            resources: ["namespaces", "namespaces/status", "namespaces/finalize"]
+        # Don't log HPA fetching metrics.
+        - level: None
+          users:
+          - system:kube-controller-manager
+          verbs: ["get", "list"]
+          resources:
+          - group: "metrics.k8s.io"
+        # Don't log these read-only URLs.
+        - level: None
+          nonResourceURLs:
+          - /healthz*
+          - /version
+          - /swagger*
+        # Don't log events requests.
+        - level: None
+          resources:
+          - group: "" # core
+            resources: ["events"]
+        # node and pod status calls from nodes are high-volume and can be large, don't log responses for expected updates from nodes
+        - level: Request
+          users: ["kubelet", "system:node-problem-detector", "system:serviceaccount:kube-system:node-problem-detector"]
+          verbs: ["update","patch"]
+          resources:
+          - group: "" # core
+            resources: ["nodes/status", "pods/status"]
+          omitStages:
+          - "RequestReceived"
+        - level: Request
+          userGroups: ["system:nodes"]
+          verbs: ["update","patch"]
+          resources:
+          - group: "" # core
+            resources: ["nodes/status", "pods/status"]
+          omitStages:
+          - "RequestReceived"
+        # deletecollection calls can be large, don't log responses for expected namespace deletions
+        - level: Request
+          users: ["system:serviceaccount:kube-system:namespace-controller"]
+          verbs: ["deletecollection"]
+          omitStages:
+          - "RequestReceived"
+        # Secrets, ConfigMaps, and TokenReviews can contain sensitive & binary data,
+        # so only log at the Metadata level.
+        - level: Metadata
+          resources:
+          - group: "" # core
+            resources: ["secrets", "configmaps"]
+          - group: authentication.k8s.io
+            resources: ["tokenreviews"]
+          omitStages:
             - "RequestReceived"
-          # The following requests were manually identified as high-volume and low-risk,
-          # so drop them.
-          - level: None
-            users: ["system:kube-proxy"]
-            verbs: ["watch"]
-            resources:
-            - group: "" # core
-              resources: ["endpoints", "services", "services/status"]
-          - level: None
-            users: ["kubelet"] # legacy kubelet identity
-            verbs: ["get"]
-            resources:
-            - group: "" # core
-              resources: ["nodes", "nodes/status"]
-          - level: None
-            userGroups: ["system:nodes"]
-            verbs: ["get"]
-            resources:
-            - group: "" # core
-              resources: ["nodes", "nodes/status"]
-          - level: None
-            users:
-            - system:kube-controller-manager
-            - system:kube-scheduler
-            - system:serviceaccount:kube-system:endpoint-controller
-            verbs: ["get", "update"]
-            namespaces: ["kube-system"]
-            resources:
-            - group: "" # core
-              resources: ["endpoints"]
-          - level: None
-            users: ["system:apiserver"]
-            verbs: ["get"]
-            resources:
-            - group: "" # core
-              resources: ["namespaces", "namespaces/status", "namespaces/finalize"]
-          # Don't log HPA fetching metrics.
-          - level: None
-            users:
-            - system:kube-controller-manager
-            verbs: ["get", "list"]
-            resources:
-            - group: "metrics.k8s.io"
-          # Don't log these read-only URLs.
-          - level: None
-            nonResourceURLs:
-            - /healthz*
-            - /version
-            - /swagger*
-          # Don't log events requests.
-          - level: None
-            resources:
-            - group: "" # core
-              resources: ["events"]
-          # node and pod status calls from nodes are high-volume and can be large, don't log responses for expected updates from nodes
-          - level: Request
-            users: ["kubelet", "system:node-problem-detector", "system:serviceaccount:kube-system:node-problem-detector"]
-            verbs: ["update","patch"]
-            resources:
-            - group: "" # core
-              resources: ["nodes/status", "pods/status"]
-            omitStages:
-            - "RequestReceived"
-          - level: Request
-            userGroups: ["system:nodes"]
-            verbs: ["update","patch"]
-            resources:
-            - group: "" # core
-              resources: ["nodes/status", "pods/status"]
-            omitStages:
-            - "RequestReceived"
-          # deletecollection calls can be large, don't log responses for expected namespace deletions
-          - level: Request
-            users: ["system:serviceaccount:kube-system:namespace-controller"]
-            verbs: ["deletecollection"]
-            omitStages:
-            - "RequestReceived"
-          # Secrets, ConfigMaps, and TokenReviews can contain sensitive & binary data,
-          # so only log at the Metadata level.
-          - level: Metadata
-            resources:
-            - group: "" # core
-              resources: ["secrets", "configmaps"]
-            - group: authentication.k8s.io
-              resources: ["tokenreviews"]
-            omitStages:
-              - "RequestReceived"
-          - level: Request
-            resources:
-            - group: ""
-              resources: ["serviceaccounts/token"]
-          # Get repsonses can be large; skip them.
-          - level: Request
-            verbs: ["get", "list", "watch"]
-            resources:
-            - group: "" # core
-            - group: "admissionregistration.k8s.io"
-            - group: "apiextensions.k8s.io"
-            - group: "apiregistration.k8s.io"
-            - group: "apps"
-            - group: "authentication.k8s.io"
-            - group: "authorization.k8s.io"
-            - group: "autoscaling"
-            - group: "batch"
-            - group: "certificates.k8s.io"
-            - group: "extensions"
-            - group: "metrics.k8s.io"
-            - group: "networking.k8s.io"
-            - group: "policy"
-            - group: "rbac.authorization.k8s.io"
-            - group: "scheduling.k8s.io"
-            - group: "settings.k8s.io"
-            - group: "storage.k8s.io"
-            omitStages:
-            - "RequestReceived"
-          # Default level for known APIs
-          - level: RequestResponse
-            resources:
-            - group: "" # core
-            - group: "admissionregistration.k8s.io"
-            - group: "apiextensions.k8s.io"
-            - group: "apiregistration.k8s.io"
-            - group: "apps"
-            - group: "authentication.k8s.io"
-            - group: "authorization.k8s.io"
-            - group: "autoscaling"
-            - group: "batch"
-            - group: "certificates.k8s.io"
-            - group: "extensions"
-            - group: "metrics.k8s.io"
-            - group: "networking.k8s.io"
-            - group: "policy"
-            - group: "rbac.authorization.k8s.io"
-            - group: "scheduling.k8s.io"
-            - group: "settings.k8s.io"
-            - group: "storage.k8s.io"
-            omitStages:
-            - "RequestReceived"
-          # Default level for all other requests.
-          - level: Metadata
-            omitStages:
-            - "RequestReceived"
-        owner: root:root
-        path: /etc/kubernetes/audit-policy.yaml
+        - level: Request
+          resources:
+          - group: ""
+            resources: ["serviceaccounts/token"]
+        # Get repsonses can be large; skip them.
+        - level: Request
+          verbs: ["get", "list", "watch"]
+          resources:
+          - group: "" # core
+          - group: "admissionregistration.k8s.io"
+          - group: "apiextensions.k8s.io"
+          - group: "apiregistration.k8s.io"
+          - group: "apps"
+          - group: "authentication.k8s.io"
+          - group: "authorization.k8s.io"
+          - group: "autoscaling"
+          - group: "batch"
+          - group: "certificates.k8s.io"
+          - group: "extensions"
+          - group: "metrics.k8s.io"
+          - group: "networking.k8s.io"
+          - group: "policy"
+          - group: "rbac.authorization.k8s.io"
+          - group: "scheduling.k8s.io"
+          - group: "settings.k8s.io"
+          - group: "storage.k8s.io"
+          omitStages:
+          - "RequestReceived"
+        # Default level for known APIs
+        - level: RequestResponse
+          resources:
+          - group: "" # core
+          - group: "admissionregistration.k8s.io"
+          - group: "apiextensions.k8s.io"
+          - group: "apiregistration.k8s.io"
+          - group: "apps"
+          - group: "authentication.k8s.io"
+          - group: "authorization.k8s.io"
+          - group: "autoscaling"
+          - group: "batch"
+          - group: "certificates.k8s.io"
+          - group: "extensions"
+          - group: "metrics.k8s.io"
+          - group: "networking.k8s.io"
+          - group: "policy"
+          - group: "rbac.authorization.k8s.io"
+          - group: "scheduling.k8s.io"
+          - group: "settings.k8s.io"
+          - group: "storage.k8s.io"
+          omitStages:
+          - "RequestReceived"
+        # Default level for all other requests.
+        - level: Metadata
+          omitStages:
+          - "RequestReceived"
+      owner: root:root
+      path: /etc/kubernetes/audit-policy.yaml
     initConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -276,18 +280,18 @@ spec:
           anonymous-auth: "false"
         name: '{{ ds.meta_data.local_hostname }}'
     preKubeadmCommands:
-      - swapoff -a
-      - hostname "{{ ds.meta_data.local_hostname }}"
-      - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
-      - echo "127.0.0.1   localhost" >>/etc/hosts
-      - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
-      - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+    - swapoff -a
+    - hostname "{{ ds.meta_data.local_hostname }}"
+    - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
+    - echo "127.0.0.1   localhost" >>/etc/hosts
+    - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
+    - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
     useExperimentalRetryJoin: true
     users:
-      - name: mySshUsername
-        sshAuthorizedKeys:
-          - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
-        sudo: ALL=(ALL) NOPASSWD:ALL
+    - name: mySshUsername
+      sshAuthorizedKeys:
+      - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
+      sudo: ALL=(ALL) NOPASSWD:ALL
     format: cloud-config
   replicas: 3
   version: v1.21.2-eks-1-21-4

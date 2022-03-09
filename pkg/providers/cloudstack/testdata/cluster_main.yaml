@@ -99,4 +99,5 @@ spec:
     name: "centos7-k8s-118"
   affinityGroupIds:
     - etcd-affinity
+
 ---
