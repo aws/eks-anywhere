@@ -39,7 +39,7 @@ type Spec struct {
 	userAgent                 string
 	reader                    *ManifestReader
 	VersionsBundle            *VersionsBundle
-	EksdRelease               *eksdv1alpha1.Release
+	eksdRelease               *eksdv1alpha1.Release
 	Bundles                   *v1alpha1.Bundles
 	ManagementCluster         *types.Cluster
 	TinkerbellTemplateConfigs map[string]*eksav1alpha1.TinkerbellTemplateConfig
@@ -60,7 +60,7 @@ func (s *Spec) DeepCopy() *Spec {
 			VersionsBundle: s.VersionsBundle.VersionsBundle.DeepCopy(),
 			KubeDistro:     s.VersionsBundle.KubeDistro.deepCopy(),
 		},
-		EksdRelease:               s.EksdRelease.DeepCopy(),
+		eksdRelease:               s.eksdRelease.DeepCopy(),
 		Bundles:                   s.Bundles.DeepCopy(),
 		TinkerbellTemplateConfigs: s.TinkerbellTemplateConfigs,
 	}
@@ -148,7 +148,7 @@ func WithUserAgent(userAgent string) SpecOpt {
 
 func WithEksdRelease(release *eksdv1alpha1.Release) SpecOpt {
 	return func(s *Spec) {
-		s.EksdRelease = release
+		s.eksdRelease = release
 	}
 }
 
@@ -219,7 +219,7 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 		VersionsBundle: versionsBundle,
 		KubeDistro:     kubeDistro,
 	}
-	s.EksdRelease = eksd
+	s.eksdRelease = eksd
 	for _, identityProvider := range s.Cluster.Spec.IdentityProviderRefs {
 		switch identityProvider.Kind {
 		case eksav1alpha1.OIDCConfigKind:
@@ -292,14 +292,14 @@ func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundl
 		return nil, err
 	}
 
-	if s.EksdRelease == nil {
+	if s.eksdRelease == nil {
 		eksd, err := s.reader.GetEksdRelease(versionsBundle)
 		if err != nil {
 			return nil, err
 		}
-		s.EksdRelease = eksd
+		s.eksdRelease = eksd
 	}
-	kubeDistro, err := buildKubeDistro(s.EksdRelease)
+	kubeDistro, err := buildKubeDistro(s.eksdRelease)
 	if err != nil {
 		return nil, err
 	}
@@ -368,7 +368,7 @@ func (s *Spec) GetRelease(cliVersion version.Info) (*v1alpha1.EksARelease, error
 
 func (s *Spec) KubeDistroImages() []v1alpha1.Image {
 	images := []v1alpha1.Image{}
-	for _, component := range s.EksdRelease.Status.Components {
+	for _, component := range s.eksdRelease.Status.Components {
 		for _, asset := range component.Assets {
 			if asset.Image != nil {
 				images = append(images, v1alpha1.Image{URI: asset.Image.URI})
