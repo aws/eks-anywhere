@@ -44,7 +44,10 @@ type snowProvider struct {
 	bootstrapCreds        bootstrapCreds
 }
 
-type ProviderKubectlClient interface{}
+type ProviderKubectlClient interface {
+	DeleteEksaDatacenterConfig(ctx context.Context, snowDatacenterResourceType string, snowDatacenterConfigName string, kubeconfigFile string, namespace string) error
+	DeleteEksaMachineConfig(ctx context.Context, snowMachineResourceType string, snowMachineConfigName string, kubeconfigFile string, namespace string) error
+}
 
 func NewProvider(datacenterConfig *v1alpha1.SnowDatacenterConfig, machineConfigs map[string]*v1alpha1.SnowMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc) *snowProvider {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
@@ -91,6 +94,9 @@ func (p *snowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, clust
 }
 
 func (p *snowProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
+	if err := p.setupBootstrapCreds(); err != nil {
+		return fmt.Errorf("failed setting up credentials: %v", err)
+	}
 	return nil
 }
 
@@ -236,7 +242,12 @@ func (p *snowProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *
 }
 
 func (p *snowProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
-	return nil
+	for _, mc := range p.machineConfigs {
+		if err := p.providerKubectlClient.DeleteEksaMachineConfig(ctx, snowMachineResourceType, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace); err != nil {
+			return err
+		}
+	}
+	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx, snowDatacenterResourceType, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
 }
 
 func (p *snowProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
