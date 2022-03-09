@@ -12,7 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/providers/docker/mocks"
+	"github.com/aws/eks-anywhere/pkg/providers/snow/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -137,6 +137,10 @@ func givenClusterSpec() *cluster.Spec {
 					},
 				},
 			},
+		}
+		s.ManagementCluster = &types.Cluster{
+			Name:           "test-snow",
+			KubeconfigFile: "management.kubeconfig",
 		}
 	})
 }
@@ -266,6 +270,29 @@ func TestSetupAndValidateCreateClusterNoCertsEnv(t *testing.T) {
 	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CA_BUNDLES_FILE is not set or is empty")))
 }
 
+func TestSetupAndValidateDeleteClusterSuccess(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx)
+	tt.Expect(err).To(Succeed())
+}
+
+func TestSetupAndValidateDeleteClusterNoCredsEnv(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	os.Unsetenv(credsFileEnvVar)
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx)
+	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CREDENTIALS_FILE is not set or is empty")))
+}
+
+func TestSetupAndValidateDeleteClusterNoCertsEnv(t *testing.T) {
+	tt := newSnowTest(t)
+	setupContext(t)
+	os.Unsetenv(certsFileEnvVar)
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx)
+	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CA_BUNDLES_FILE is not set or is empty")))
+}
+
 // TODO: add more tests (multi worker node groups, unstacked etcd, etc.)
 func TestGenerateCAPISpecForCreate(t *testing.T) {
 	tt := newSnowTest(t)
@@ -319,4 +346,25 @@ func TestMachineConfigs(t *testing.T) {
 	tt := newSnowTest(t)
 	want := tt.provider.MachineConfigs()
 	tt.Expect(len(want)).To(Equal(2))
+}
+
+func TestDeleteResources(t *testing.T) {
+	tt := newSnowTest(t)
+	tt.kubectl.EXPECT().DeleteEksaDatacenterConfig(
+		tt.ctx,
+		snowDatacenterResourceType,
+		tt.provider.datacenterConfig.Name,
+		tt.clusterSpec.ManagementCluster.KubeconfigFile,
+		tt.provider.datacenterConfig.Namespace,
+	).Return(nil)
+	tt.kubectl.EXPECT().DeleteEksaMachineConfig(
+		tt.ctx,
+		snowMachineResourceType,
+		gomock.Any(),
+		tt.clusterSpec.ManagementCluster.KubeconfigFile,
+		gomock.Any(),
+	).Times(2).Return(nil)
+
+	err := tt.provider.DeleteResources(tt.ctx, tt.clusterSpec)
+	tt.Expect(err).To(Succeed())
 }
