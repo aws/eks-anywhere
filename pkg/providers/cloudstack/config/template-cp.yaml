@@ -51,6 +51,12 @@ spec:
     spec:
       offering: {{.cloudstackControlPlaneComputeOffering}}
       template: {{.cloudstackControlPlaneTemplateOffering}}
+      {{- if .cloudstackControlPlaneCustomDetails }}
+      details:
+      {{- range $key, $value := .cloudstackControlPlaneCustomDetails}}
+        {{$key}}: {{$value}}
+      {{- end}}
+      {{- end}}
 {{- if .affinityGroupIds }}
       affinitygroupids:
       {{- range .affinityGroupIds}}
@@ -298,6 +304,12 @@ spec:
     spec:
       offering: {{.cloudstackEtcdComputeOffering}}
       template: {{.cloudstackEtcdTemplateOffering}}
+      {{- if .cloudstackEtcdCustomDetails }}
+      details:
+      {{- range $key, $value := .cloudstackEtcdCustomDetails}}
+        {{$key}}: {{$value}}
+      {{- end}}
+      {{- end}}
 {{- if .cloudstackEtcdAffinityGroupIds }}
       affinitygroupids:
       {{- range .cloudstackEtcdAffinityGroupIds }}

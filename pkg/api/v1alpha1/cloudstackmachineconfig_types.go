@@ -34,6 +34,8 @@ type CloudStackMachineConfigSpec struct {
 	Users []UserConfiguration `json:"users,omitempty"`
 	// AffinityGroupIds allows users to pass in a list of UUIDs for previously-created Affinity Groups. Any VM’s created with this spec will be added to the affinity group, which will dictate which physical host(s) they can be placed on. Affinity groups can be type “affinity” or “anti-affinity” in CloudStack. If they are type “anti-affinity”, all VM’s in the group must be on separate physical hosts for high availability. If they are type “affinity”, all VM’s in the group must be on the same physical host for improved performance
 	AffinityGroupIds []string `json:"affinityGroupIds,omitempty"`
+	// UserCustomDetails allows users to pass in non-standard key value inputs, outside those defined [here](https://github.com/shapeblue/cloudstack/blob/main/api/src/main/java/com/cloud/vm/VmDetailConstants.java)
+	UserCustomDetails map[string]string `json:"userCustomDetails,omitempty"`
 }
 
 func (c *CloudStackMachineConfig) PauseReconcile() {
