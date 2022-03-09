@@ -2,7 +2,8 @@ version: 0.2
 
 env:
   variables:
-    INTEGRATION_TEST_MAX_EC2_COUNT: 85
+    INTEGRATION_TEST_MAX_EC2_COUNT: 100
+    INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 50
     T_VSPHERE_CIDR: "198.18.128.0/17"
     T_VSPHERE_PRIVATE_NETWORK_CIDR: "197.18.128.0/17"
     SKIPPED_TESTS: "TestTinkerbellKubernetes120SimpleFlow,TestTinkerbellKubernetes121SimpleFlow"
@@ -64,6 +65,7 @@ phases:
         -i ${INTEGRATION_TEST_INSTANCE_PROFILE}
         -n ${INTEGRATION_TEST_SUBNET_ID}
         -m ${INTEGRATION_TEST_MAX_EC2_COUNT}
+        -c ${INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT}
         -r 'Test'
         -v 4
         --skip ${SKIPPED_TESTS}
