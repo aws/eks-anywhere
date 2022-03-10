@@ -408,50 +408,19 @@ func TestParseConfig(t *testing.T) {
 			g.Expect(got.Cluster).To(Equal(tt.wantCluster))
 			g.Expect(got.VSphereDatacenter).To(Equal(tt.wantVsphereDatacenter))
 			g.Expect(got.DockerDatacenter).To(Equal(tt.wantDockerDatacenter))
-			g.Expect(len(got.VSphereMachineConfigs)).To(Equal(len(tt.wantVsphereMachineConfigs)))
+			g.Expect(len(got.VSphereMachineConfigs)).To(Equal(len(tt.wantVsphereMachineConfigs)), "it should return the right number of VSphereMachineConfigs")
 			for _, m := range tt.wantVsphereMachineConfigs {
 				g.Expect(got.VsphereMachineConfig(m.Name)).To(Equal(m))
 			}
-			g.Expect(len(got.OIDCConfigs)).To(Equal(len(tt.wantOIDCConfigs)))
+			g.Expect(len(got.OIDCConfigs)).To(Equal(len(tt.wantOIDCConfigs)), "it should return the right number of OIDCConfigs")
 			for _, o := range tt.wantOIDCConfigs {
 				g.Expect(got.OIDCConfig(o.Name)).To(Equal(o))
 			}
-			g.Expect(len(got.AWSIAMConfigs)).To(Equal(len(tt.wantAWSIamConfigs)))
+			g.Expect(len(got.AWSIAMConfigs)).To(Equal(len(tt.wantAWSIamConfigs)), "it should return the right number of AWSIAMConfigs")
 			for _, a := range tt.wantAWSIamConfigs {
 				g.Expect(got.AWSIamConfig(a.Name)).To(Equal(a))
 			}
 			g.Expect(got.GitOpsConfig).To(Equal(tt.wantGitOpsConfig))
 		})
 	}
-}
-
-func TestParseConfigMissingCluster(t *testing.T) {
-	g := NewWithT(t)
-	_, err := cluster.ParseConfig([]byte{})
-	g.Expect(err).To(MatchError(ContainSubstring("no Cluster found in manifest")))
-}
-
-func TestParseConfigTwoClusters(t *testing.T) {
-	g := NewWithT(t)
-	manifest := `apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: Cluster
-metadata:
-  name: eksa-unit-test
----
-apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: Cluster
-metadata:
-  name: eksa-unit-test-2
-`
-	_, err := cluster.ParseConfig([]byte(manifest))
-	g.Expect(err).To(MatchError(ContainSubstring("only one Cluster per yaml manifest is allowed")))
-}
-
-func TestParseConfigUnknownKind(t *testing.T) {
-	g := NewWithT(t)
-	manifest := `apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: MysteryCRD
-`
-	_, err := cluster.ParseConfig([]byte(manifest))
-	g.Expect(err).To(MatchError(ContainSubstring("invalid object with kind MysteryCRD found on manifest")))
 }
