@@ -423,7 +423,7 @@ func (f *Factory) WithHelm() *Factory {
 
 func (f *Factory) WithNetworking(clusterConfig *v1alpha1.Cluster) *Factory {
 	var networkingBuilder func() clustermanager.Networking
-	if clusterConfig.Spec.ClusterNetwork.CNI == v1alpha1.Kindnetd {
+	if clusterConfig.Spec.ClusterNetwork.CNIConfig.Kindnetd != nil {
 		f.WithKubectl()
 		networkingBuilder = func() clustermanager.Networking {
 			return kindnetd.NewKindnetd(f.dependencies.Kubectl)

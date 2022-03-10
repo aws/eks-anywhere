@@ -47,7 +47,7 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 				Services: Services{
 					CidrBlocks: []string{"10.96.0.0/12"},
 				},
-				CNI: Cilium,
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 			},
 		},
 	}
@@ -433,12 +433,44 @@ func validateNetworking(clusterConfig *Cluster) error {
 	if err != nil {
 		return fmt.Errorf("invalid CIDR block for Services: %s. Please specify a valid CIDR block for service subnet", clusterConfig.Spec.ClusterNetwork.Services)
 	}
-	if clusterConfig.Spec.ClusterNetwork.CNI == "" {
-		return errors.New("cni not specified or empty")
+
+	return validateCNIPlugin(clusterConfig.Spec.ClusterNetwork)
+}
+
+func validateCNIPlugin(network ClusterNetwork) error {
+	if network.CNI != "" {
+		if network.CNIConfig != nil {
+			return fmt.Errorf("invalid format for cni plugin: both old and new formats used, use only the CNIConfig field")
+		}
+		logger.Info("Warning: CNI field is deprecated. Provide CNI information through CNIConfig")
+		if _, ok := validCNIs[network.CNI]; !ok {
+			return fmt.Errorf("cni %s not supported", network.CNI)
+		}
+		return nil
 	}
-	if _, ok := validCNIs[clusterConfig.Spec.ClusterNetwork.CNI]; !ok {
-		return fmt.Errorf("cni %s not supported", clusterConfig.Spec.ClusterNetwork.CNI)
+	return validateCNIConfig(network.CNIConfig)
+}
+
+func validateCNIConfig(cniConfig *CNIConfig) error {
+	if cniConfig == nil {
+		return fmt.Errorf("cni not specified")
 	}
+	var cniPluginSpecified int
+
+	if cniConfig.Cilium != nil {
+		cniPluginSpecified++
+	}
+
+	if cniConfig.Kindnetd != nil {
+		cniPluginSpecified++
+	}
+
+	if cniPluginSpecified == 0 {
+		return fmt.Errorf("no cni plugin specified")
+	} else if cniPluginSpecified > 1 {
+		return fmt.Errorf("cannot specify more than one cni plugins")
+	}
+
 	return nil
 }
 

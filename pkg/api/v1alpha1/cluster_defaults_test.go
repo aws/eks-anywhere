@@ -47,7 +47,9 @@ func TestSetClusterDefaults(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					ClusterNetwork: ClusterNetwork{
-						CNI: Cilium,
+						CNIConfig: &CNIConfig{
+							Cilium: &CiliumConfig{},
+						},
 						Pods: Pods{
 							CidrBlocks: []string{"192.168.0.0/16"},
 						},
@@ -90,7 +92,57 @@ func TestSetClusterDefaults(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					ClusterNetwork: ClusterNetwork{
+						CNIConfig: &CNIConfig{
+							Cilium: &CiliumConfig{},
+						},
+						Pods: Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+					},
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "cni plugin - old format in input, set new format",
+			in: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube119,
+					ClusterNetwork: ClusterNetwork{
 						CNI: Cilium,
+						Pods: Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+					},
+				},
+			},
+			wantCluster: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube119,
+					ClusterNetwork: ClusterNetwork{
+						CNIConfig: &CNIConfig{
+							Cilium: &CiliumConfig{},
+						},
 						Pods: Pods{
 							CidrBlocks: []string{"192.168.0.0/16"},
 						},
