@@ -3,6 +3,8 @@ package clusterapi_test
 import (
 	"testing"
 
+	etcdbootstrapv1 "github.com/mrajashree/etcdadm-bootstrap-provider/api/v1beta1"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -76,6 +78,7 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 		s.VersionsBundle.KubeDistro.CoreDNS.Tag = "v1.8.4-eks-1-21-9"
 		s.VersionsBundle.KubeDistro.Etcd.Repository = "public.ecr.aws/eks-distro/etcd-io"
 		s.VersionsBundle.KubeDistro.Etcd.Tag = "v3.4.16-eks-1-21-9"
+		s.VersionsBundle.KubeDistro.EtcdVersion = "3.4.16"
 	})
 
 	controlPlane := &controlplanev1.KubeadmControlPlane{
@@ -134,7 +137,6 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 	}
 }
 
-// TODO: add unstacked etcd test
 func TestCluster(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	got := clusterapi.Cluster(tt.clusterSpec, tt.providerCluster, tt.controlPlane)
@@ -178,7 +180,57 @@ func TestCluster(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
-// TODO: add unstacked etcd test
+func TestClusterUnstackedEtcd(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	tt.clusterSpec.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
+		Count: 3,
+	}
+	got := clusterapi.Cluster(tt.clusterSpec, tt.providerCluster, tt.controlPlane)
+	want := &clusterv1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "cluster.x-k8s.io/v1beta1",
+			Kind:       "Cluster",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-cluster",
+			Namespace: "eksa-system",
+			Labels: map[string]string{
+				"cluster.x-k8s.io/cluster-name": "test-cluster",
+			},
+		},
+		Spec: clusterv1.ClusterSpec{
+			ClusterNetwork: &clusterv1.ClusterNetwork{
+				Pods: &clusterv1.NetworkRanges{
+					CIDRBlocks: []string{
+						"1.2.3.4/5",
+					},
+				},
+				Services: &clusterv1.NetworkRanges{
+					CIDRBlocks: []string{
+						"1.2.3.4/5",
+					},
+				},
+			},
+			ControlPlaneRef: &v1.ObjectReference{
+				APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+				Kind:       "KubeadmControlPlane",
+				Name:       "cp-test",
+			},
+			InfrastructureRef: &v1.ObjectReference{
+				APIVersion: "providercluster.cluster.x-k8s.io/v1beta1",
+				Kind:       "ProviderCluster",
+				Name:       "provider-cluster",
+			},
+			ManagedExternalEtcdRef: &v1.ObjectReference{
+				APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
+				Kind:       "EtcdadmCluster",
+				Name:       "test-cluster",
+			},
+		},
+	}
+	tt.Expect(got).To(Equal(want))
+}
+
 func TestKubeadmControlPlane(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	got := clusterapi.KubeadmControlPlane(tt.clusterSpec, tt.providerMachineTemplate)
@@ -216,6 +268,76 @@ func TestKubeadmControlPlane(t *testing.T) {
 								ImageTag:        "v3.4.16-eks-1-21-9",
 							},
 							ExtraArgs: map[string]string{},
+						},
+					},
+					APIServer: bootstrapv1.APIServer{
+						ControlPlaneComponent: bootstrapv1.ControlPlaneComponent{
+							ExtraArgs: map[string]string{},
+						},
+					},
+					ControllerManager: bootstrapv1.ControlPlaneComponent{
+						ExtraArgs: map[string]string{},
+					},
+				},
+				InitConfiguration: &bootstrapv1.InitConfiguration{
+					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+						KubeletExtraArgs: map[string]string{},
+					},
+				},
+				JoinConfiguration: &bootstrapv1.JoinConfiguration{
+					NodeRegistration: bootstrapv1.NodeRegistrationOptions{
+						KubeletExtraArgs: map[string]string{},
+					},
+				},
+				PreKubeadmCommands:  []string{},
+				PostKubeadmCommands: []string{},
+			},
+			Replicas: &replicas,
+			Version:  "v1.21.5-eks-1-21-9",
+		},
+	}
+	tt.Expect(got).To(Equal(want))
+}
+
+func TestKubeadmControlPlaneUnstackedEtcd(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	tt.clusterSpec.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
+		Count: 3,
+	}
+	got := clusterapi.KubeadmControlPlane(tt.clusterSpec, tt.providerMachineTemplate)
+	replicas := int32(3)
+	want := &controlplanev1.KubeadmControlPlane{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "controlplane.cluster.x-k8s.io/v1beta1",
+			Kind:       "KubeadmControlPlane",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-cluster",
+			Namespace: "eksa-system",
+		},
+		Spec: controlplanev1.KubeadmControlPlaneSpec{
+			MachineTemplate: controlplanev1.KubeadmControlPlaneMachineTemplate{
+				InfrastructureRef: v1.ObjectReference{
+					APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+					Kind:       "ProviderMachineTemplate",
+					Name:       "provider-template",
+				},
+			},
+			KubeadmConfigSpec: bootstrapv1.KubeadmConfigSpec{
+				ClusterConfiguration: &bootstrapv1.ClusterConfiguration{
+					ImageRepository: "public.ecr.aws/eks-distro/kubernetes",
+					DNS: bootstrapv1.DNS{
+						ImageMeta: bootstrapv1.ImageMeta{
+							ImageRepository: "public.ecr.aws/eks-distro/coredns",
+							ImageTag:        "v1.8.4-eks-1-21-9",
+						},
+					},
+					Etcd: bootstrapv1.Etcd{
+						External: &bootstrapv1.ExternalEtcd{
+							Endpoints: []string{},
+							CAFile:    "/etc/kubernetes/pki/etcd/ca.crt",
+							CertFile:  "/etc/kubernetes/pki/apiserver-etcd-client.crt",
+							KeyFile:   "/etc/kubernetes/pki/apiserver-etcd-client.key",
 						},
 					},
 					APIServer: bootstrapv1.APIServer{
@@ -332,6 +454,49 @@ func TestMachineDeployment(t *testing.T) {
 				},
 			},
 			Replicas: &replicas,
+		},
+	}
+	tt.Expect(got).To(Equal(want))
+}
+
+func TestEtcdadmCluster(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	tt.clusterSpec.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
+		Count: 3,
+	}
+	got := clusterapi.EtcdadmCluster(tt.clusterSpec, tt.providerMachineTemplate)
+	replicas := int32(3)
+	want := &etcdv1.EtcdadmCluster{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
+			Kind:       "EtcdadmCluster",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-cluster",
+			Namespace: "eksa-system",
+		},
+		Spec: etcdv1.EtcdadmClusterSpec{
+			Replicas: &replicas,
+			EtcdadmConfigSpec: etcdbootstrapv1.EtcdadmConfigSpec{
+				EtcdadmBuiltin: true,
+				Format:         etcdbootstrapv1.Format("cloud-config"),
+				CloudInitConfig: &etcdbootstrapv1.CloudInitConfig{
+					Version:    "3.4.16",
+					InstallDir: "/usr/bin",
+				},
+				PreEtcdadmCommands: []string{
+					"hostname \"{{`{{ ds.meta_data.hostname }}`}}",
+					"echo \"::1         ipv6-localhost ipv6-loopback\" >/etc/hosts",
+					"echo \"127.0.0.1   localhost\" >>/etc/hosts",
+					"echo \"127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}\" >>/etc/hosts",
+					"echo \"{{`{{ ds.meta_data.hostname }}`}}\" >/etc/hostname",
+				},
+			},
+			InfrastructureTemplate: v1.ObjectReference{
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+				Kind:       "ProviderMachineTemplate",
+				Name:       "provider-template",
+			},
 		},
 	}
 	tt.Expect(got).To(Equal(want))

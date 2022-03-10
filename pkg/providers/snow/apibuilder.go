@@ -3,6 +3,7 @@ package snow
 import (
 	"fmt"
 
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
@@ -88,6 +89,10 @@ func MachineDeployments(clusterSpec *cluster.Spec, kubeadmConfigTemplates map[st
 		m[workerNodeGroupConfig.Name] = &deployment
 	}
 	return m
+}
+
+func EtcdadmCluster(clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) *etcdv1.EtcdadmCluster {
+	return clusterapi.EtcdadmCluster(clusterSpec, snowMachineTemplate)
 }
 
 func SnowCluster(clusterSpec *cluster.Spec) *snowv1.AWSSnowCluster {

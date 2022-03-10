@@ -110,7 +110,15 @@ func ControlPlaneObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v
 	kubeadmControlPlane := KubeadmControlPlane(clusterSpec, controlPlaneMachineTemplate)
 	capiCluster := CAPICluster(clusterSpec, snowCluster, kubeadmControlPlane)
 
-	return []runtime.Object{capiCluster, snowCluster, kubeadmControlPlane, controlPlaneMachineTemplate}
+	cpObjs := []runtime.Object{capiCluster, snowCluster, kubeadmControlPlane, controlPlaneMachineTemplate}
+
+	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineTemplate := SnowMachineTemplate(machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name])
+		etcdadmCluster := EtcdadmCluster(clusterSpec, etcdMachineTemplate)
+		cpObjs = append(cpObjs, etcdadmCluster)
+	}
+
+	return cpObjs
 }
 
 func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) []runtime.Object {
