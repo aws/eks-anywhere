@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"testing"
 
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 
@@ -86,6 +87,21 @@ func Bundles(t *testing.T) *releasev1alpha1.Bundles {
 	}
 
 	return bundles
+}
+
+func EksdRelease(t *testing.T) *eksdv1alpha1.Release {
+	t.Helper()
+	content, err := configFS.ReadFile("testdata/kubernetes-1-21-eks-4.yaml")
+	if err != nil {
+		t.Fatalf("Failed to read embed eksd release: %s", err)
+	}
+
+	eksd := &eksdv1alpha1.Release{}
+	if err = yaml.Unmarshal(content, eksd); err != nil {
+		t.Fatalf("Failed to unmarshal eksd manifest: %s", err)
+	}
+
+	return eksd
 }
 
 func SetTag(image *releasev1alpha1.Image, tag string) {

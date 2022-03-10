@@ -4438,6 +4438,14 @@ rules:
   - list
   - watch
 - apiGroups:
+  - distro.eks.amazonaws.com
+  resources:
+  - releases
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
   - etcdcluster.cluster.x-k8s.io
   resources:
   - '*'

@@ -15,6 +15,7 @@ import (
 	providers "github.com/aws/eks-anywhere/pkg/providers"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	v1alpha10 "github.com/aws/eks-anywhere/release/api/v1alpha1"
+	v1alpha11 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	gomock "github.com/golang/mock/gomock"
 	v1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
@@ -315,6 +316,21 @@ func (m *MockClusterClient) GetEksaVSphereMachineConfig(arg0 context.Context, ar
 func (mr *MockClusterClientMockRecorder) GetEksaVSphereMachineConfig(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksaVSphereMachineConfig", reflect.TypeOf((*MockClusterClient)(nil).GetEksaVSphereMachineConfig), arg0, arg1, arg2, arg3)
+}
+
+// GetEksdRelease mocks base method.
+func (m *MockClusterClient) GetEksdRelease(arg0 context.Context, arg1, arg2, arg3 string) (*v1alpha11.Release, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEksdRelease", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*v1alpha11.Release)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEksdRelease indicates an expected call of GetEksdRelease.
+func (mr *MockClusterClientMockRecorder) GetEksdRelease(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEksdRelease", reflect.TypeOf((*MockClusterClient)(nil).GetEksdRelease), arg0, arg1, arg2, arg3)
 }
 
 // GetMachineDeployment mocks base method.
