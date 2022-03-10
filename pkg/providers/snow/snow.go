@@ -115,7 +115,7 @@ func ControlPlaneObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineTemplate := SnowMachineTemplate(machineConfigs[clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name])
 		etcdadmCluster := EtcdadmCluster(clusterSpec, etcdMachineTemplate)
-		cpObjs = append(cpObjs, etcdadmCluster)
+		cpObjs = append(cpObjs, etcdMachineTemplate, etcdadmCluster)
 	}
 
 	return cpObjs

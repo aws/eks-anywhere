@@ -29,11 +29,6 @@ func CAPICluster(clusterSpec *cluster.Spec, snowCluster *snowv1.AWSSnowCluster, 
 func KubeadmControlPlane(clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) *controlplanev1.KubeadmControlPlane {
 	kcp := clusterapi.KubeadmControlPlane(clusterSpec, snowMachineTemplate)
 
-	// TODO: support unstacked etcd
-	stackedEtcdExtraArgs := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local.ExtraArgs
-	stackedEtcdExtraArgs["listen-peer-urls"] = "https://0.0.0.0:2380"
-	stackedEtcdExtraArgs["listen-client-urls"] = "https://0.0.0.0:2379"
-
 	initConfigKubeletExtraArg := kcp.Spec.KubeadmConfigSpec.InitConfiguration.NodeRegistration.KubeletExtraArgs
 	initConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
@@ -46,6 +41,13 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.
 
 	kcp.Spec.KubeadmConfigSpec.PostKubeadmCommands = []string{
 		fmt.Sprintf("/etc/eks/bootstrap-after.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host),
+	}
+
+	// stacked etcd extra args
+	if clusterSpec.Spec.ExternalEtcdConfiguration == nil {
+		stackedEtcdExtraArgs := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local.ExtraArgs
+		stackedEtcdExtraArgs["listen-peer-urls"] = "https://0.0.0.0:2380"
+		stackedEtcdExtraArgs["listen-client-urls"] = "https://0.0.0.0:2379"
 	}
 
 	return kcp
