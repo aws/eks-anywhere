@@ -22,6 +22,7 @@ func TestParseConfig(t *testing.T) {
 		wantOIDCConfigs           []*anywherev1.OIDCConfig
 		wantAWSIamConfigs         []*anywherev1.AWSIamConfig
 		wantGitOpsConfig          *anywherev1.GitOpsConfig
+		wantFluxConfig            *anywherev1.FluxConfig
 	}{
 		{
 			name:         "vsphere cluster",
@@ -127,8 +128,8 @@ func TestParseConfig(t *testing.T) {
 			},
 		},
 		{
-			name:         "docker cluster with oidc, awsaim and flux",
-			yamlManifest: []byte(test.ReadFile(t, "testdata/docker_cluster_oidc_awsiam_flux.yaml")),
+			name:         "docker cluster with oidc, awsiam and gitops",
+			yamlManifest: []byte(test.ReadFile(t, "testdata/docker_cluster_oidc_awsiam_gitops.yaml")),
 			wantCluster: &anywherev1.Cluster{
 				TypeMeta: metav1.TypeMeta{
 					Kind:       anywherev1.ClusterKind,
@@ -203,6 +204,140 @@ func TestParseConfig(t *testing.T) {
 							Owner:      "janedoe",
 							Repository: "flux-fleet",
 						},
+					},
+				},
+			},
+			wantOIDCConfigs: []*anywherev1.OIDCConfig{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       "OIDCConfig",
+						APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "eksa-unit-test",
+					},
+					Spec: anywherev1.OIDCConfigSpec{
+						ClientId:     "id12",
+						GroupsClaim:  "claim1",
+						GroupsPrefix: "prefix-for-groups",
+						IssuerUrl:    "https://mydomain.com/issuer",
+						RequiredClaims: []anywherev1.OIDCConfigRequiredClaim{
+							{
+								Claim: "sub",
+								Value: "test",
+							},
+						},
+						UsernameClaim:  "username-claim",
+						UsernamePrefix: "username-prefix",
+					},
+				},
+			},
+			wantAWSIamConfigs: []*anywherev1.AWSIamConfig{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       anywherev1.AWSIamConfigKind,
+						APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "eksa-unit-test",
+					},
+					Spec: anywherev1.AWSIamConfigSpec{
+						AWSRegion:   "test-region",
+						BackendMode: []string{"mode1", "mode2"},
+						MapRoles: []anywherev1.MapRoles{
+							{
+								RoleARN:  "test-role-arn",
+								Username: "test",
+								Groups:   []string{"group1", "group2"},
+							},
+						},
+						MapUsers: []anywherev1.MapUsers{
+							{
+								UserARN:  "test-user-arn",
+								Username: "test",
+								Groups:   []string{"group1", "group2"},
+							},
+						},
+						Partition: "aws",
+					},
+				},
+			},
+		},
+		{
+			name:         "docker cluster with oidc, awsiam and flux",
+			yamlManifest: []byte(test.ReadFile(t, "testdata/docker_cluster_oidc_awsiam_flux.yaml")),
+			wantCluster: &anywherev1.Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       anywherev1.ClusterKind,
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "m-docker",
+				},
+				Spec: anywherev1.ClusterSpec{
+					KubernetesVersion: "1.21",
+					ManagementCluster: anywherev1.ManagementCluster{
+						Name: "m-docker",
+					},
+					ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+						Count: 1,
+					},
+					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+						{
+							Name:  "workers-1",
+							Count: 1,
+						},
+					},
+					DatacenterRef: anywherev1.Ref{
+						Kind: anywherev1.DockerDatacenterKind,
+						Name: "m-docker",
+					},
+					ClusterNetwork: anywherev1.ClusterNetwork{
+						Pods: anywherev1.Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: anywherev1.Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+						CNI: "cilium",
+					},
+					IdentityProviderRefs: []anywherev1.Ref{
+						{
+							Kind: anywherev1.OIDCConfigKind,
+							Name: "eksa-unit-test",
+						},
+						{
+							Kind: anywherev1.AWSIamConfigKind,
+							Name: "eksa-unit-test",
+						},
+					},
+					GitOpsRef: &anywherev1.Ref{
+						Kind: anywherev1.FluxConfigKind,
+						Name: "eksa-unit-test",
+					},
+				},
+			},
+			wantDockerDatacenter: &anywherev1.DockerDatacenterConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       anywherev1.DockerDatacenterKind,
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "m-docker",
+				},
+			},
+			wantFluxConfig: &anywherev1.FluxConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "FluxConfig",
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: anywherev1.FluxConfigSpec{
+					Github: &anywherev1.GithubProviderConfig{
+						Owner:      "janedoe",
+						Repository: "flux-fleet",
 					},
 				},
 			},

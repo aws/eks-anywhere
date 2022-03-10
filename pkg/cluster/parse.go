@@ -109,6 +109,8 @@ func ParseConfig(yamlManifest []byte) (*Config, error) {
 			obj = &anywherev1.OIDCConfig{}
 		case anywherev1.GitOpsConfigKind:
 			obj = &anywherev1.GitOpsConfig{}
+		case anywherev1.FluxConfigKind:
+			obj = &anywherev1.FluxConfig{}
 		default:
 			return nil, fmt.Errorf("invalid object with kind %s found on manifest", k.Kind)
 		}
@@ -159,8 +161,11 @@ func buildConfigFromParsed(p *parsed) (*Config, error) {
 		processIdentityProvider(p, c, idr)
 	}
 
-	// Process GitOps
+	// Process GitOps (will be removed once we implement FluxConfig below
 	processGitOps(p, c)
+
+	// Process Flux
+	processFlux(p, c)
 
 	return c, nil
 }
@@ -209,5 +214,21 @@ func processGitOps(p *parsed, c *Config) {
 	switch p.cluster.Spec.GitOpsRef.Kind {
 	case anywherev1.GitOpsConfigKind:
 		c.GitOpsConfig = gitOps.(*anywherev1.GitOpsConfig)
+	}
+}
+
+func processFlux(p *parsed, c *Config) {
+	if c.Cluster.Spec.GitOpsRef == nil {
+		return
+	}
+
+	gitOps := p.objects.getFromRef(p.cluster.APIVersion, *p.cluster.Spec.GitOpsRef)
+	if gitOps == nil {
+		return
+	}
+
+	switch p.cluster.Spec.GitOpsRef.Kind {
+	case anywherev1.FluxConfigKind:
+		c.FluxConfig = gitOps.(*anywherev1.FluxConfig)
 	}
 }
