@@ -30,7 +30,7 @@ fi
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 BIN_FOLDER=$REPO_ROOT/bin
-TEST_REGEX="${1:-TestDockerKubernetes121SimpleFlow}"
+TEST_REGEX="${1:-TestDockerKubernetes122AWSIamAuth}"
 
 cat << EOF > config_file
 [default]
