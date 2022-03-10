@@ -120,7 +120,7 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 			return fmt.Errorf("something wrong. Flag hardwarefile not set up for provider tinkerbell")
 		}
 		if !viper.IsSet("hardwarefile") || viper.GetString("hardwarefile") == "" {
-			return fmt.Errorf("srror: required flag \"hardwarefile\" not set")
+			return fmt.Errorf("error: required flag \"hardwarefile\" not set")
 		}
 		hardwareConfigFileExist := validations.FileExists(cc.hardwareFileName)
 		if !hardwareConfigFileExist {
