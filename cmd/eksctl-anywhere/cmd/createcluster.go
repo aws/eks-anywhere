@@ -110,26 +110,30 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 	}
 	defer cleanup(ctx, deps, &err)
 
-	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == "tinkerbell" {
-		return fmt.Errorf("Error: provider tinkerbell is not supported in this release")
+	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == constants.TinkerbellProviderName {
+		return fmt.Errorf("provider tinkerbell is not supported in this release")
 	}
 
-	if deps.Provider.Name() == "tinkerbell" {
+	if deps.Provider.Name() == constants.TinkerbellProviderName {
 		flag := cmd.Flags().Lookup("hardwarefile")
 		if flag == nil {
-			return fmt.Errorf("Something wrong. Flag hardwarefile not set up for provider tinkerbell")
+			return fmt.Errorf("something wrong. Flag hardwarefile not set up for provider tinkerbell")
 		}
 		if !viper.IsSet("hardwarefile") || viper.GetString("hardwarefile") == "" {
-			return fmt.Errorf("Error: required flag \"hardwarefile\" not set")
+			return fmt.Errorf("required flag \"hardwarefile\" not set")
 		}
 		hardwareConfigFileExist := validations.FileExists(cc.hardwareFileName)
 		if !hardwareConfigFileExist {
-			return fmt.Errorf("Error: hardware config file %s does not exist", cc.hardwareFileName)
+			return fmt.Errorf("hardware config file %s does not exist", cc.hardwareFileName)
 		}
 	}
 
 	if !features.IsActive(features.CloudStackProvider()) && deps.Provider.Name() == constants.CloudStackProviderName {
-		return fmt.Errorf("error: provider cloudstack is not supported in this release")
+		return fmt.Errorf("provider cloudstack is not supported in this release")
+	}
+
+	if !features.IsActive(features.SnowProvider()) && deps.Provider.Name() == constants.SnowProviderName {
+		return fmt.Errorf("provider snow is not supported in this release")
 	}
 
 	createCluster := workflows.NewCreate(
