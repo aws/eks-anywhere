@@ -86,10 +86,8 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 		wg.Add(1)
 	}
 
-	go func() {
-		wg.Wait()
-		close(queue)
-	}()
+	wg.Wait()
+	close(queue)
 
 	failedInstances := 0
 	for _, r := range results {

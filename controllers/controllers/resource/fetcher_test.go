@@ -2,10 +2,10 @@ package resource_test
 
 import (
 	"context"
-	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
 	"reflect"
 	"testing"
 
+	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
 	"k8s.io/api/node/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"

@@ -53,8 +53,9 @@ kind: FluxConfig
 metadata:
   name: my-generic-flux-provider
 spec:
-  fluxSystemNamespace: "my-alternative-flux-system-namespace"
+  systemNamespace: "my-alternative-flux-system-namespace"
   clusterConfigPath: "path-to-my-clusters-config"
+  branch: "main"
   git:
     repositoryUrl: myClusterGitopsRepo
     username: myGitProviderUserName    
@@ -108,20 +109,20 @@ There will be multiple, mutually exclusive fields which will allow us to specify
 ### FluxConfig
 ```yaml
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: GitOpsConfig
+kind: FluxConfig
 metadata:
   name: my-flux-config-with-generic-git-provider
 spec:
-  flux:
-    fluxSystemNamespace: ""
-    clusterConfigPath: ""
-    git:
-      repositoryUrl: ""
-      username: ""
-    github:
-      repository: ""
-      personal: false
-      owner: "" 
+  systemNamespace: ""
+  clusterConfigPath: ""
+  branch: ""
+  git:
+    repositoryUrl: ""
+    username: ""
+  github:
+    repository: ""
+    personal: false
+    owner: "" 
 ---
 ```
 
@@ -132,9 +133,9 @@ The `Flux` configuration will be modified to contain generic flux options `FluxS
 ```Go
 type Flux struct {
 
-    Git *gitProviderConfig `json:"git,omitempty"`
+    Git *GitProviderConfig `json:"git,omitempty"`
 
-    Github *githubProviderConfig  `json:"github,omitempty"`
+    Github *GithubProviderConfig  `json:"github,omitempty"`
 
     // FluxSystemNamespace scope for this operation. Defaults to flux-system.
     FluxSystemNamespace string `json:"fluxSystemNamespace,omitempty"`
@@ -158,10 +159,10 @@ The private key will need to be mounted in the Flux executable container at exec
 ```Go
 type GitProviderConfig struct {
     // Username is the user to authenticate to the git repository with.
-    Username string `json:username`
-
-    // Repository URL for the repository to be used with flux. Can be either an SSH or HTTPS url.
-    RepositoryUrl net/url `json:repositoryUrl`
+	Username string `json:"username"`
+    
+	// Repository URL for the repository to be used with flux. Can be either an SSH or HTTPS url.
+	RepositoryUrl string `json:"repositoryUrl"`
 }
 ```
 
@@ -207,7 +208,7 @@ Git Repository:
 
 Repository URL:
 - parse into net/url object to ensure formatting is appropriate
-- validate that, if a private key file path is provided, the URL is of the appropriate SSH format
+- validate that, if a private key file path is provided, the URL is of the appropriate HTTPS/SSH format
 
 ### Testing
 - E2E GitOps Tests exercising the generic git provider

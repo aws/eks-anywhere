@@ -23,8 +23,8 @@ func TestValidateConfig(t *testing.T) {
 			config: clusterConfigFromFile(t, "testdata/cluster_1_19.yaml"),
 		},
 		{
-			name:   "docker cluster",
-			config: clusterConfigFromFile(t, "testdata/docker_cluster_oidc_awsiam_flux.yaml"),
+			name:   "docker cluster gitops",
+			config: clusterConfigFromFile(t, "testdata/docker_cluster_oidc_awsiam_gitops.yaml"),
 		},
 	}
 

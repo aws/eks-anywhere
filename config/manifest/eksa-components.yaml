@@ -4892,6 +4892,27 @@ webhooks:
     service:
       name: eksa-webhook-service
       namespace: eksa-system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-fluxconfig
+  failurePolicy: Fail
+  name: validation.fluxconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - fluxconfigs
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
       path: /validate-anywhere-eks-amazonaws-com-v1alpha1-gitopsconfig
   failurePolicy: Fail
   name: validation.gitopsconfig.anywhere.amazonaws.com
