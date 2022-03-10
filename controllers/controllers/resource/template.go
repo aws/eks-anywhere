@@ -307,6 +307,7 @@ func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster 
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = cp.Spec.MachineTemplate.InfrastructureRef.Name
+		values["tinkerbellControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpTmc.Spec.Users)
 		values["tinkerbellEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdTmc.Spec.Users)
 		values["etcdTemplateName"] = etcdTemplateName
 	}

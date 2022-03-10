@@ -8,6 +8,8 @@ spec:
     spec:
       details:
         foo: bar
-      offering: large
-      template: rhel8-1.20
+      offering:
+        name: large
+      template:
+        name: rhel8-1.20
 
