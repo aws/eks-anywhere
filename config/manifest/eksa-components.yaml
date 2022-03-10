@@ -2957,11 +2957,18 @@ spec:
                 description: Zones is a list of one or more zones that are managed
                   by a single CloudStack management endpoint.
                 items:
-                  description: CloudStackZoneRef is an organizational construct typically
+                  description: CloudStackZone is an organizational construct typically
                     used to represent a single datacenter, and all its physical and
                     virtual resources exist inside that zone. It can either be specified
                     as a UUID or name
                   properties:
+                    id:
+                      description: Zone is the name or UUID of the CloudStack zone
+                        in which clusters should be created. Zones should be managed
+                        by a single CloudStack Management endpoint.
+                      type: string
+                    name:
+                      type: string
                     network:
                       description: Network is the name or UUID of the CloudStack network
                         in which clusters should be created. It can either be an isolated
@@ -2970,30 +2977,16 @@ spec:
                         It can either be specified as a UUID or name In multiple-zones
                         situation, only 'Shared' network is supported.
                       properties:
-                        type:
+                        id:
                           type: string
-                        value:
-                          type: string
-                      required:
-                      - type
-                      - value
-                      type: object
-                    zone:
-                      description: Zone is the name or UUID of the CloudStack zone
-                        in which clusters should be created. Zones should be managed
-                        by a single CloudStack Management endpoint.
-                      properties:
-                        type:
-                          type: string
-                        value:
+                        name:
                           type: string
                       required:
-                      - type
-                      - value
+                      - id
+                      - name
                       type: object
                   required:
                   - network
-                  - zone
                   type: object
                 type: array
             required:
@@ -3072,26 +3065,26 @@ spec:
                   size including number of CPU’s, memory, and CPU speed. It can either
                   be specified as a UUID or name
                 properties:
-                  type:
+                  id:
                     type: string
-                  value:
+                  name:
                     type: string
                 required:
-                - type
-                - value
+                - id
+                - name
                 type: object
               template:
                 description: Template refers to a VM image template which has been
                   previously registered in CloudStack. It can either be specified
                   as a UUID or name
                 properties:
-                  type:
+                  id:
                     type: string
-                  value:
+                  name:
                     type: string
                 required:
-                - type
-                - value
+                - id
+                - name
                 type: object
               userCustomDetails:
                 additionalProperties:
