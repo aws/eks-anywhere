@@ -421,6 +421,7 @@ func TestParseConfig(t *testing.T) {
 				g.Expect(got.AWSIamConfig(a.Name)).To(Equal(a))
 			}
 			g.Expect(got.GitOpsConfig).To(Equal(tt.wantGitOpsConfig))
+			g.Expect(got.FluxConfig).To(Equal(tt.wantFluxConfig))
 		})
 	}
 }
