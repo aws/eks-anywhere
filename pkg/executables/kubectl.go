@@ -48,6 +48,7 @@ var (
 	bundlesResourceType                  = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
 	clusterResourceSetResourceType       = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
 	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
+	eksdReleaseType                      = fmt.Sprintf("releases.%s", eksdv1alpha1.GroupVersion.Group)
 )
 
 type Kubectl struct {
@@ -1326,7 +1327,7 @@ func (k *Kubectl) getObject(ctx context.Context, resourceType, name, namespace, 
 
 func (k *Kubectl) GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error) {
 	obj := &eksdv1alpha1.Release{}
-	if err := k.getObject(ctx, "release", name, namespace, kubeconfigFile, obj); err != nil {
+	if err := k.getObject(ctx, eksdReleaseType, name, namespace, kubeconfigFile, obj); err != nil {
 		return nil, err
 	}
 

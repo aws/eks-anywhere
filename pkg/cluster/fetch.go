@@ -61,7 +61,7 @@ func GetGitOpsForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch G
 }
 
 func GetEksdReleaseForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundles *v1alpha1release.Bundles, fetch EksdReleaseFetch) (*eksdv1alpha1.Release, error) {
-	versionsBundle, err := getVersionsBundle(cluster, bundles)
+	versionsBundle, err := GetVersionsBundle(cluster, bundles)
 	if err != nil {
 		return nil, fmt.Errorf("failed fetching versions bundle: %v", err)
 	}
@@ -73,7 +73,7 @@ func GetEksdReleaseForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bu
 	return eksd, nil
 }
 
-func getVersionsBundle(clusterConfig *v1alpha1.Cluster, bundles *v1alpha1release.Bundles) (*v1alpha1release.VersionsBundle, error) {
+func GetVersionsBundle(clusterConfig *v1alpha1.Cluster, bundles *v1alpha1release.Bundles) (*v1alpha1release.VersionsBundle, error) {
 	for _, versionsBundle := range bundles.Spec.VersionsBundles {
 		if versionsBundle.KubeVersion == string(clusterConfig.Spec.KubernetesVersion) {
 			return &versionsBundle, nil
