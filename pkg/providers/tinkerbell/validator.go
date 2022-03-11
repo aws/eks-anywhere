@@ -189,7 +189,7 @@ func (v *Validator) ValidateTinkerbellTemplate(ctx context.Context, tinkerbellIp
 			if action.Name == "add-tink-cloud-init-config" {
 				metadataUrl := fmt.Sprintf("http://%s:50061", tinkerbellIp)
 				if !strings.Contains(action.Environment["CONTENTS"], metadataUrl) {
-					return fmt.Errorf("failed validating metadata_url, template metadata_url should be in http://<TINKERBELL_IP>:50061 format")
+					return fmt.Errorf("failed validating metadata_url, template metadata_url should be set to %s", metadataUrl)
 				}
 			}
 		}
