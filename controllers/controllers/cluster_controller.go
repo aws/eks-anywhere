@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	defaultRequeueTime          = time.Minute
-	clusterFinalizerName string = "clusters.anywhere.eks.amazonaws.com/finalizer"
+	defaultRequeueTime   = time.Minute
+	clusterFinalizerName = "clusters.anywhere.eks.amazonaws.com/finalizer"
 )
 
 // ClusterReconciler reconciles a Cluster object
