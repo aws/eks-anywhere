@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"net"
 	"net/url"
 	"os"
@@ -523,7 +524,9 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"externalProvisionerImage":                   bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
 		"cloudstackManagementApiEndpoint":            managementApiEndpoint,
 		"managerImage":                               bundle.CloudStack.ClusterAPIController.VersionedImage(),
+		"kubeVipImage":                               bundle.CloudStack.KubeVip.VersionedImage(),
 		"verifySsl":                                  verifySsl,
+		"cloudstackKubeVip":                          !features.IsActive(features.CloudStackKubeVipDisabled()),
 		"cloudstackDomain":                           datacenterConfigSpec.Domain,
 		"cloudstackZones":                            datacenterConfigSpec.Zones,
 		"cloudstackAccount":                          datacenterConfigSpec.Account,
@@ -906,12 +909,11 @@ func (p *cloudstackProvider) MachineConfigs() []providers.MachineConfig {
 	return configs
 }
 
-func (p *cloudstackProvider) RunPostUpgrade(ctx context.Context, clusterSpec *cluster.Spec, managementCluster, workloadCluster *types.Cluster) error {
-	return fmt.Errorf("upgrade is not supported for CloudStack provider yet")
-}
-
 func (p *cloudstackProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error) {
-	return false, fmt.Errorf("upgrade is not supported for CloudStack provider yet")
+	newV, oldV := newSpec.VersionsBundle.CloudStack, currentSpec.VersionsBundle.CloudStack
+
+	return newV.ClusterAPIController.ImageDigest != oldV.ClusterAPIController.ImageDigest ||
+		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest, nil
 }
 
 func (p *cloudstackProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
