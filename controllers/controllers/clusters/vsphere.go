@@ -18,7 +18,6 @@ import (
 	"github.com/aws/eks-anywhere/controllers/controllers/reconciler"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
@@ -61,9 +60,7 @@ func NewVSphereReconciler(client client.Client, log logr.Logger, validator *vsph
 			Defaulter: defaulter,
 			tracker:   tracker,
 		},
-		providerClusterReconciler: &providerClusterReconciler{
-			providerClient: client,
-		},
+		providerClusterReconciler: &providerClusterReconciler{},
 	}
 }
 
@@ -115,7 +112,7 @@ func (v *VSphereClusterReconciler) bundles(ctx context.Context, name, namespace 
 }
 
 func (v *VSphereClusterReconciler) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*c.Spec, error) {
-	return c.BuildSpecForCluster(ctx, cs, v.bundles, v.eksdRelease, nil, nil)
+	return c.BuildSpecForCluster(ctx, cs, v.bundles, nil, nil)
 }
 
 func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (reconciler.Result, error) {
@@ -155,21 +152,14 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	if err != nil {
 		return reconciler.Result{}, err
 	}
-	versionsBundle, err := c.GetVersionsBundle(cluster, bundles)
+
+	specWithBundles, err := c.BuildSpecFromBundles(cluster, bundles)
 	if err != nil {
 		return reconciler.Result{}, err
 	}
-	v.Log.V(4).Info("Fetching eks-d manifest", "release name", versionsBundle.EksD.Name)
-	eksd, err := v.eksdRelease(ctx, versionsBundle.EksD.Name, constants.EksaSystemNamespace)
-	if err != nil {
-		return reconciler.Result{}, err
-	}
+	vshepreClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
 
-	specWithBundles, err := c.BuildSpecFromBundles(cluster, bundles, c.WithEksdRelease(eksd))
-
-	vsphereClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
-
-	if err := v.Validator.ValidateClusterMachineConfigs(ctx, vsphereClusterSpec); err != nil {
+	if err := v.Validator.ValidateClusterMachineConfigs(ctx, vshepreClusterSpec); err != nil {
 		return reconciler.Result{}, err
 	}
 

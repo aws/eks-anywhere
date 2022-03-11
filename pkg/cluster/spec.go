@@ -146,12 +146,6 @@ func WithUserAgent(userAgent string) SpecOpt {
 	}
 }
 
-func WithEksdRelease(release *eksdv1alpha1.Release) SpecOpt {
-	return func(s *Spec) {
-		s.eksdRelease = release
-	}
-}
-
 func WithGitOpsConfig(gitOpsConfig *eksav1alpha1.GitOpsConfig) SpecOpt {
 	return func(s *Spec) {
 		s.GitOpsConfig = gitOpsConfig
@@ -292,14 +286,12 @@ func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundl
 		return nil, err
 	}
 
-	if s.eksdRelease == nil {
-		eksd, err := s.reader.GetEksdRelease(versionsBundle)
-		if err != nil {
-			return nil, err
-		}
-		s.eksdRelease = eksd
+	eksd, err := s.reader.GetEksdRelease(versionsBundle)
+	if err != nil {
+		return nil, err
 	}
-	kubeDistro, err := buildKubeDistro(s.eksdRelease)
+
+	kubeDistro, err := buildKubeDistro(eksd)
 	if err != nil {
 		return nil, err
 	}
@@ -310,7 +302,7 @@ func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundl
 		VersionsBundle: versionsBundle,
 		KubeDistro:     kubeDistro,
 	}
-
+	s.eksdRelease = eksd
 	return s, nil
 }
 
@@ -498,28 +490,6 @@ func (s *Spec) LoadManifest(manifest v1alpha1.Manifest) (*Manifest, error) {
 
 func userAgent(eksAComponent, version string) string {
 	return fmt.Sprintf("eks-a-%s/%s", eksAComponent, version)
-}
-
-type EksdManifests struct {
-	ReleaseManifestContent []byte
-	ReleaseCrdContent      []byte
-}
-
-func (s *Spec) ReadEksdManifests(release v1alpha1.EksDRelease) (*EksdManifests, error) {
-	releaseCrdContent, err := s.reader.ReadFile(release.Components)
-	if err != nil {
-		return nil, err
-	}
-
-	releaseManifestContent, err := s.reader.ReadFile(release.EksDReleaseUrl)
-	if err != nil {
-		return nil, err
-	}
-
-	return &EksdManifests{
-		ReleaseManifestContent: releaseManifestContent,
-		ReleaseCrdContent:      releaseCrdContent,
-	}, nil
 }
 
 func (vb *VersionsBundle) KubeDistroImages() []v1alpha1.Image {
