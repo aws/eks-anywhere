@@ -17,7 +17,7 @@ EKS Anywhere documentation uses the [Hugo](https://gohugo.io/categories/fundamen
 * **EKS Anywhere**: Always refer to EKS Anywhere as EKS Anywhere and *NOT* EKS-A or EKS-Anywhere.
 * **Line breaks**: Put each sentence on its own line and don’t do a line break in the middle of a sentence. 
   We are using a modified [Semantic Line Breaking](https://sembr.org/) in that we are requiring a break at the end of every sentence, but not at commas or other semantic boundaries.
-* **Headings**: Use sentence case in headings. So do “Cluster spec reference” and not “Cluster Spec Reference”
+* **Headings**: Use sentence case in headings. So do “Cluster specification reference” and not “Cluster Specification Reference”
 * **Cross references**: To cross reference to another doc in the EKS Anywhere docs set, use relref in the link so that Hugo will test it and fail the build for links not found. Also, use relative paths to point to other content in the docs set. For example:
    ```
      [troubleshooting section]({{< relref "../tasks/troubleshoot" >}})
