@@ -289,7 +289,7 @@ func TestWorkloadEtcdVSphereMachineValidateUpdateDiskGiBSuccess(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestManagementSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
+func TestManagementControlPlaneSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
@@ -301,7 +301,7 @@ func TestManagementSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testi
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkloadVSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
+func TestWorkloadControlPlaneVSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
 	vOld.SetManagedBy("test-cluster")
@@ -311,10 +311,10 @@ func TestWorkloadVSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testin
 
 	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
 	g := NewWithT(t)
-	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
-func TestManagementVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
+func TestManagementControlPlaneVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
 	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
@@ -325,7 +325,7 @@ func TestManagementVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
-func TestWorkloadVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
+func TestWorkloadControlPlaneVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
 	vOld := vsphereMachineConfig()
 	vOld.SetControlPlane()
 	vOld.SetManagedBy("test-cluster")
@@ -334,7 +334,99 @@ func TestWorkloadVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) 
 
 	c.Spec.Users[0].Name = "Andy"
 	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestManagementEtcdSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetEtcd()
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	vOld.Spec.Users[0].SshAuthorizedKeys = []string{"rsa-blahdeblahbalh"}
+	c := vOld.DeepCopy()
+
+	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
+	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestWorkloadEtcdVSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetEtcd()
+	vOld.SetManagedBy("test-cluster")
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	vOld.Spec.Users[0].SshAuthorizedKeys = []string{"rsa-blahdeblahbalh"}
+	c := vOld.DeepCopy()
+
+	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestManagementEtcdVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetEtcd()
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	c := vOld.DeepCopy()
+
+	c.Spec.Users[0].Name = "Andy"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
+func TestWorkloadEtcdVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetEtcd()
+	vOld.SetManagedBy("test-cluster")
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	c := vOld.DeepCopy()
+
+	c.Spec.Users[0].Name = "Andy"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestManagementWorkerNodeSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	vOld.Spec.Users[0].SshAuthorizedKeys = []string{"rsa-blahdeblahbalh"}
+	c := vOld.DeepCopy()
+
+	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestWorkloadWorkerNodeVSphereMachineValidateUpdateSshAuthorizedKeyImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetManagedBy("test-cluster")
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	vOld.Spec.Users[0].SshAuthorizedKeys = []string{"rsa-blahdeblahbalh"}
+	c := vOld.DeepCopy()
+
+	c.Spec.Users[0].SshAuthorizedKeys[0] = "rsa-laDeLala"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestManagementWorkerNodeVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	c := vOld.DeepCopy()
+
+	c.Spec.Users[0].Name = "Andy"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
+}
+
+func TestWorkloadWorkerNodeVSphereMachineValidateUpdateSshUsernameImmutable(t *testing.T) {
+	vOld := vsphereMachineConfig()
+	vOld.SetManagedBy("test-cluster")
+	vOld.Spec.Users = []v1alpha1.UserConfiguration{{Name: "Jeff"}}
+	c := vOld.DeepCopy()
+
+	c.Spec.Users[0].Name = "Andy"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
 }
 
 func TestVSphereMachineValidateUpdateWithPausedAnnotation(t *testing.T) {
