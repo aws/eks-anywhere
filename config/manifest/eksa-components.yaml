@@ -2981,9 +2981,6 @@ spec:
                           type: string
                         name:
                           type: string
-                      required:
-                      - id
-                      - name
                       type: object
                   required:
                   - network
@@ -3069,9 +3066,6 @@ spec:
                     type: string
                   name:
                     type: string
-                required:
-                - id
-                - name
                 type: object
               template:
                 description: Template refers to a VM image template which has been
@@ -3082,9 +3076,6 @@ spec:
                     type: string
                   name:
                     type: string
-                required:
-                - id
-                - name
                 type: object
               userCustomDetails:
                 additionalProperties:
