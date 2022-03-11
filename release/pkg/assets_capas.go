@@ -34,6 +34,49 @@ func (r *ReleaseConfig) GetCapasAssets() ([]Artifact, error) {
 	}
 
 	artifacts := []Artifact{}
+
+	name := "cluster-api-snow-controller"
+	repoName := "aws/cluster-api-provider-aws-snow/manager"
+	tagOptions := map[string]string{
+		"gitTag":      gitTag,
+		"projectPath": capasProjectPath,
+	}
+
+	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	if sourcedFromBranch != r.BuildRepoBranchName {
+		gitTag, err = r.readGitTag(capasProjectPath, sourcedFromBranch)
+		if err != nil {
+			return nil, errors.Cause(err)
+		}
+		tagOptions["gitTag"] = gitTag
+	}
+	releaseImageUri, err := r.GetReleaseImageURI(name, repoName, tagOptions)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+
+	imageArtifact := &ImageArtifact{
+		AssetName:         name,
+		SourceImageURI:    sourceImageUri,
+		ReleaseImageURI:   releaseImageUri,
+		Arch:              []string{"amd64"},
+		OS:                "linux",
+		GitTag:            gitTag,
+		ProjectPath:       capasProjectPath,
+		SourcedFromBranch: sourcedFromBranch,
+	}
+	artifacts = append(artifacts, Artifact{Image: imageArtifact})
+
+	imageTagOverrides := []ImageTagOverride{
+		{
+			Repository: repoName,
+			ReleaseUri: imageArtifact.ReleaseImageURI,
+		},
+	}
+
 	manifestList := []string{
 		"infrastructure-components.yaml",
 		"metadata.yaml",
@@ -73,6 +116,7 @@ func (r *ReleaseConfig) GetCapasAssets() ([]Artifact, error) {
 			ProjectPath:       capasProjectPath,
 			SourcedFromBranch: sourcedFromBranch,
 			Component:         "cluster-api-provider-aws-snow",
+			ImageTagOverrides: imageTagOverrides,
 		}
 		artifacts = append(artifacts, Artifact{Manifest: manifestArtifact})
 	}
@@ -142,6 +186,7 @@ func (r *ReleaseConfig) GetSnowBundle(imageDigests map[string]string) (anywherev
 
 	bundle := anywherev1alpha1.SnowBundle{
 		Version:    version,
+		Manager:    bundleImageArtifacts["cluster-api-snow-controller"],
 		KubeVip:    bundleImageArtifacts["kube-vip"],
 		Components: bundleManifestArtifacts["infrastructure-components.yaml"],
 		Metadata:   bundleManifestArtifacts["metadata.yaml"],
