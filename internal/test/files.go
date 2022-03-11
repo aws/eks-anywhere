@@ -46,7 +46,7 @@ func AssertContentToFile(t *testing.T, gotContent, wantFile string) {
 	fileContent := ReadFile(t, wantFile)
 
 	if gotContent != fileContent {
-		cmd := exec.Command("diff", wantFile, "-")
+		cmd := exec.Command("diff", "-u", wantFile, "-")
 		cmd.Stdin = bytes.NewReader([]byte(gotContent))
 		result, err := cmd.Output()
 		if err != nil {
