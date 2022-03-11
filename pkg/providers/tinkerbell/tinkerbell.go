@@ -465,6 +465,18 @@ func (p *tinkerbellProvider) MachineConfigs() []providers.MachineConfig {
 			p.machineConfigs[workerMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
 		}
 	}
+
+	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
+		if etcdMachineName != controlPlaneMachineName {
+			configs = append(configs, p.machineConfigs[etcdMachineName])
+			if p.clusterConfig.IsManaged() {
+				p.machineConfigs[etcdMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
+			}
+		}
+	}
+
 	return configs
 }
 

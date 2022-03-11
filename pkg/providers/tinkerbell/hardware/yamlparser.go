@@ -26,22 +26,26 @@ const (
 	moveLabel            = "clusterctl.cluster.x-k8s.io/move"
 )
 
-var (
-	yamlPath      = filepath.Join(yamlDirectory, yamlFile)
-	yamlSeparator = []byte("---\n")
-)
+var yamlSeparator = []byte("---\n")
 
 type YamlParser struct {
 	file *os.File
 }
 
-func NewYamlParser() (*YamlParser, error) {
-	if _, err := os.Stat(yamlDirectory); errors.Is(err, os.ErrNotExist) {
+func NewYamlParser(outputDir string) (*YamlParser, error) {
+	outputYamlDir := yamlDirectory
+	if outputDir != "" {
+		outputYamlDir = filepath.Join(outputDir, yamlDirectory)
+	}
+
+	if _, err := os.Stat(outputYamlDir); errors.Is(err, os.ErrNotExist) {
 		logger.V(4).Info("Creating directory for YamlParser", "Directory", yamlDirectory)
-		if err := os.Mkdir(yamlDirectory, os.ModePerm); err != nil {
+		if err := os.MkdirAll(outputYamlDir, os.ModePerm); err != nil {
 			return nil, fmt.Errorf("error creating directory for YamlParser: %v", err)
 		}
 	}
+
+	yamlPath := filepath.Join(outputYamlDir, yamlFile)
 
 	err := ioutil.WriteFile(yamlPath, []byte{}, 0o644)
 	if err != nil {
