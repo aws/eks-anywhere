@@ -507,7 +507,7 @@ func (p *tinkerbellProvider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.Tinkerbell.Version
 }
 
-func (p *tinkerbellProvider) EnvMap() (map[string]string, error) {
+func (p *tinkerbellProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 	// TODO: determine if any env vars are needed and add them to requiredEnvs
 	envMap := make(map[string]string)
 	for _, key := range requiredEnvs {

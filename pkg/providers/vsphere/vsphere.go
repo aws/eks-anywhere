@@ -1059,7 +1059,7 @@ func (p *vsphereProvider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.VSphere.Version
 }
 
-func (p *vsphereProvider) EnvMap() (map[string]string, error) {
+func (p *vsphereProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 	envMap := make(map[string]string)
 	for _, key := range requiredEnvs {
 		if env, ok := os.LookupEnv(key); ok && len(env) > 0 {
