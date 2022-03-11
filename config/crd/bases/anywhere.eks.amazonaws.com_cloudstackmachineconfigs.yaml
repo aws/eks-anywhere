@@ -56,26 +56,26 @@ spec:
                   size including number of CPU’s, memory, and CPU speed. It can either
                   be specified as a UUID or name
                 properties:
-                  type:
+                  id:
                     type: string
-                  value:
+                  name:
                     type: string
                 required:
-                - type
-                - value
+                - id
+                - name
                 type: object
               template:
                 description: Template refers to a VM image template which has been
                   previously registered in CloudStack. It can either be specified
                   as a UUID or name
                 properties:
-                  type:
+                  id:
                     type: string
-                  value:
+                  name:
                     type: string
                 required:
-                - type
-                - value
+                - id
+                - name
                 type: object
               userCustomDetails:
                 additionalProperties:

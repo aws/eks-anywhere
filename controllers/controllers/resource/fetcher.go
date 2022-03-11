@@ -75,6 +75,7 @@ func (r *CapiResourceFetcher) FetchObjectByName(ctx context.Context, name string
 }
 
 func (r *CapiResourceFetcher) FetchObject(ctx context.Context, objectKey types.NamespacedName, obj client.Object) error {
+	r.log.Info("FetchObject", "key", objectKey, "obj", obj)
 	err := r.client.Get(ctx, objectKey, obj)
 	if err != nil {
 		return err
@@ -83,7 +84,9 @@ func (r *CapiResourceFetcher) FetchObject(ctx context.Context, objectKey types.N
 }
 
 func (r *CapiResourceFetcher) fetchClusterKind(ctx context.Context, objectKey types.NamespacedName) (string, error) {
-	supportedKinds := []string{anywherev1.ClusterKind, anywherev1.VSphereDatacenterKind, anywherev1.DockerDatacenterKind, anywherev1.VSphereMachineConfigKind, anywherev1.AWSIamConfigKind, anywherev1.OIDCConfigKind}
+	supportedKinds := []string{anywherev1.ClusterKind, anywherev1.VSphereDatacenterKind, anywherev1.DockerDatacenterKind,
+		anywherev1.VSphereMachineConfigKind, anywherev1.CloudStackMachineConfigKind, anywherev1.CloudStackDatacenterKind,
+		anywherev1.AWSIamConfigKind, anywherev1.OIDCConfigKind}
 	for _, kind := range supportedKinds {
 		obj := &unstructured.Unstructured{}
 		obj.SetKind(kind)
@@ -137,6 +140,7 @@ func (r *CapiResourceFetcher) fetchClusterForRef(ctx context.Context, refId type
 		return nil, err
 	}
 	for _, c := range clusters.Items {
+		//r.log.Info("fetching cluster for ref stuff", "cluster", c.ClusterName)
 		if kind == anywherev1.VSphereDatacenterKind || kind == anywherev1.DockerDatacenterKind || kind == anywherev1.CloudStackDatacenterKind {
 			if c.Spec.DatacenterRef.Name == refId.Name {
 				if _, err := r.clusterByName(ctx, constants.EksaSystemNamespace, c.Name); err == nil { // further validates a capi cluster exists
