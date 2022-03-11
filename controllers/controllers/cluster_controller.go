@@ -19,6 +19,7 @@ import (
 
 	"github.com/aws/eks-anywhere/controllers/controllers/clusters"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
@@ -135,7 +136,7 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, cluster *anywherev1.C
 
 func (r *ClusterReconciler) reconcileDelete(ctx context.Context, cluster *anywherev1.Cluster) (ctrl.Result, error) {
 	capiCluster := &clusterv1.Cluster{}
-	capiClusterName := types.NamespacedName{Namespace: "eksa-system", Name: cluster.Name}
+	capiClusterName := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: cluster.Name}
 	r.log.Info("Deleting", "name", cluster.Name)
 	err := r.client.Get(ctx, capiClusterName, capiCluster)
 
