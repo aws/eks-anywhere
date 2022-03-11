@@ -54,6 +54,6 @@ spec:
   OSFamily: Ubuntu,
   template:
     name: "centos7-k8s-119"
-  details:
+  userCustomDetails:
     foo: "bar"
     key: "value"

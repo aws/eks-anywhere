@@ -110,7 +110,7 @@ func TestMapMachineTemplateToVSphereDatacenterConfigSpec(t *testing.T) {
 	}
 }
 
-func TestMapClusterToCloudStackDeploymentConfigSpec(t *testing.T) {
+func TestMapClusterToCloudStackDatacenterConfigSpec(t *testing.T) {
 	type args struct {
 		csCluster *cloudstackv1.CloudStackCluster
 	}
@@ -157,7 +157,7 @@ func TestMapClusterToCloudStackDeploymentConfigSpec(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := resource.MapClusterToCloudStackDatacenterConfigSpec(tt.args.csCluster)
 			if err == nil && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("MapMachineTemplateToCloudStackDeploymentConfigSpec() got = %v, want %v", got, tt.want)
+				t.Errorf("MapMachineTemplateToCloudStackDatacenterConfigSpec() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

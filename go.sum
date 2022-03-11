@@ -212,10 +212,6 @@ github.com/aws/aws-sdk-go v1.38.40 h1:VVqBFV24tGgXR11tFXPjmR+0ItbnUepbuQjdmhgu3U
 github.com/aws/aws-sdk-go v1.38.40/go.mod h1:hcU610XS61/+aQV88ixoOzUoG7v3b31pl2zKMmprdro=
 github.com/aws/aws-sdk-go-v2 v0.18.0/go.mod h1:JWVYvqSMppoMJC0x5wdwiImzgXTI9FuZwxzkQq9wy+g=
 github.com/aws/aws-sdk-go-v2 v1.5.0/go.mod h1:tI4KhsR5VkzlUa2DZAdwx7wCAYGwkZZ1H31PYrBFx1w=
-github.com/aws/cluster-api-provider-cloudstack v0.4.0-alpha h1:iJEgQ5RCGY7wGOiekCZz2hJFqYUfCIjjH+oaFR9CElk=
-github.com/aws/cluster-api-provider-cloudstack v0.4.0-alpha/go.mod h1:ZC8iRgeMGhQDMnme0mUmACaGoaRzlwbp2DpZWDxocZY=
-github.com/aws/cluster-api-provider-cloudstack v0.4.0-alpha.0.20220307215845-b506fc38b353 h1:n9pZSsKdkpGRvfRXDxAki6EFOvo0Ng8cdRrh3Vaj3pE=
-github.com/aws/cluster-api-provider-cloudstack v0.4.0-alpha.0.20220307215845-b506fc38b353/go.mod h1:ZC8iRgeMGhQDMnme0mUmACaGoaRzlwbp2DpZWDxocZY=
 github.com/aws/cluster-api-provider-cloudstack v0.4.0-alpha.0.20220308155357-576a122c8434 h1:MQ79azufQYROBjaWlnjm0TafS8BM6u9jply+M4vm1Nk=
 github.com/aws/cluster-api-provider-cloudstack v0.4.0-alpha.0.20220308155357-576a122c8434/go.mod h1:ZC8iRgeMGhQDMnme0mUmACaGoaRzlwbp2DpZWDxocZY=
 github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e h1:GB6Cn9yKEt31mDF7RrVWyM9WoppNkGYth8zBPIJGJ+w=

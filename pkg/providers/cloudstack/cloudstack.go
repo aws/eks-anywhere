@@ -47,7 +47,7 @@ var mhcTemplate []byte
 var requiredEnvs = []string{decoder.CloudStackCloudConfigB64SecretKey}
 
 var (
-	eksaCloudStackDeploymentResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaCloudStackDatacenterResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaCloudStackMachineResourceType    = fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 )
 
@@ -184,7 +184,7 @@ func (p *cloudstackProvider) Name() string {
 }
 
 func (p *cloudstackProvider) DatacenterResourceType() string {
-	return eksaCloudStackDeploymentResourceType
+	return eksaCloudStackDatacenterResourceType
 }
 
 func (p *cloudstackProvider) MachineResourceType() string {
@@ -342,7 +342,7 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 			return err
 		}
 		if len(existingDatacenter) > 0 {
-			return fmt.Errorf("CloudStackDeployment %s already exists", p.datacenterConfig.Name)
+			return fmt.Errorf("CloudStackDatacenter %s already exists", p.datacenterConfig.Name)
 		}
 	}
 	if p.skipIpCheck {
@@ -445,9 +445,9 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterCon
 	return false
 }
 
-func NewCloudStackTemplateBuilder(cloudStackDeploymentConfigSpec *v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec, workerNodeGroupMachineSpecs map[string]v1alpha1.CloudStackMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
+func NewCloudStackTemplateBuilder(CloudStackDatacenterConfigSpec *v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec, workerNodeGroupMachineSpecs map[string]v1alpha1.CloudStackMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
 	return &CloudStackTemplateBuilder{
-		datacenterConfigSpec:        cloudStackDeploymentConfigSpec,
+		datacenterConfigSpec:        CloudStackDatacenterConfigSpec,
 		controlPlaneMachineSpec:     controlPlaneMachineSpec,
 		WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
 		etcdMachineSpec:             etcdMachineSpec,

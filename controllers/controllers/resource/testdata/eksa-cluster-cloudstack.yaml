@@ -17,7 +17,7 @@ spec:
         name: test_cluster
         kind: CloudStackMachineConfig
   datacenterRef:
-    kind: CloudStackDeployment
+    kind: CloudStackDatacenter
     name: test_cluster
   clusterNetwork:
     cni: "cilium"
@@ -38,7 +38,7 @@ spec:
   diskoffering: small
   osFamily: ubuntu
   template: rhel8-1.20
-  details:
+  userCustomDetails:
     foo: bar
   users:
     - name: capc
@@ -46,7 +46,7 @@ spec:
         - "ssh-rsa ssh_key_value"
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: CloudStackDeploymentConfig
+kind: CloudStackDatacenterConfig
 metadata:
   creationTimestamp: null
   name: test_cluster

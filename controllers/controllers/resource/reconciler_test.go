@@ -36,8 +36,8 @@ var etcdadmclusterFile string
 //go:embed testdata/vsphereMachineTemplate.yaml
 var vsphereMachineTemplateFile string
 
-//go:embed testdata/machineDeployment.yaml
-var machineDeploymentFile string
+//go:embed testdata/vsphereMachineDeployment.yaml
+var vsphereMachineDeploymentFile string
 
 //go:embed testdata/expectedMachineDeployment.yaml
 var expectedMachineDeploymentFile string
@@ -149,7 +149,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				}
 
 				machineDeployment := &clusterv1.MachineDeployment{}
-				if err := yaml.Unmarshal([]byte(machineDeploymentFile), machineDeployment); err != nil {
+				if err := yaml.Unmarshal([]byte(vsphereMachineDeploymentFile), machineDeployment); err != nil {
 					t.Errorf("unmarshalling machinedeployment failed: %v", err)
 				}
 				fetcher.EXPECT().MachineDeployment(ctx, gomock.Any(), gomock.Any()).Return(machineDeployment, nil)
@@ -263,7 +263,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				}
 
 				machineDeployment := &clusterv1.MachineDeployment{}
-				if err := yaml.Unmarshal([]byte(machineDeploymentFile), machineDeployment); err != nil {
+				if err := yaml.Unmarshal([]byte(vsphereMachineDeploymentFile), machineDeployment); err != nil {
 					t.Errorf("unmarshal failed: %v", err)
 				}
 				fetcher.EXPECT().MachineDeployment(ctx, gomock.Any(), gomock.Any()).Return(machineDeployment, nil)
