@@ -176,15 +176,15 @@ func WithDatacenter(value string) VSphereFiller {
 	}
 }
 
-func WithStringFromEnvVar(envVar string, opt func(string) VSphereFiller) VSphereFiller {
+func WithVSphereStringFromEnvVar(envVar string, opt func(string) VSphereFiller) VSphereFiller {
 	return opt(os.Getenv(envVar))
 }
 
-func WithBoolFromEnvVar(envVar string, opt func(bool) VSphereFiller) VSphereFiller {
+func WithVSphereBoolFromEnvVar(envVar string, opt func(bool) VSphereFiller) VSphereFiller {
 	return opt(os.Getenv(envVar) == "true")
 }
 
-func WithMachineConfig(name string, fillers ...VSphereMachineConfigFiller) VSphereFiller {
+func WithVSphereMachineConfig(name string, fillers ...VSphereMachineConfigFiller) VSphereFiller {
 	return func(config VSphereConfig) {
 		m, ok := config.machineConfigs[name]
 		if !ok {

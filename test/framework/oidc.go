@@ -27,7 +27,7 @@ var oidcRequiredEnvVars = []string{
 
 func WithOIDC() ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		checkRequiredEnvVars(e.T, oidcRequiredEnvVars)
+		CheckRequiredEnvVars(e.T, oidcRequiredEnvVars)
 		e.OIDCConfig = api.NewOIDCConfig(defaultClusterName,
 			api.WithOIDCRequiredClaims("kubernetesAccess", "true"),
 			api.WithOIDCGroupsPrefix("s3-oidc:"),

@@ -30,7 +30,7 @@ func RequiredAWSIamEnvVars() []string {
 
 func WithAWSIam() ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		checkRequiredEnvVars(e.T, awsIamRequiredEnvVars)
+		CheckRequiredEnvVars(e.T, awsIamRequiredEnvVars)
 		e.AWSIamConfig = api.NewAWSIamConfig(defaultClusterName,
 			api.WithAWSIamAWSRegion("us-west-1"),
 			api.WithAWSIamPartition("aws"),

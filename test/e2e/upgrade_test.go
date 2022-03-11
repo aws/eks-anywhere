@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -12,16 +13,17 @@ import (
 )
 
 const (
-	vsphereCpVmNumCpuUpdateVar = 4
-	vsphereCpVmMemoryUpdate    = 16384
-	vsphereCpDiskGiBUpdateVar  = 40
-	vsphereWlVmNumCpuUpdateVar = 4
-	vsphereWlVmMemoryUpdate    = 16384
-	vsphereWlDiskGiBUpdate     = 40
-	vsphereFolderUpdateVar     = "/SDDC-Datacenter/vm/capv/e2eUpdate"
-	vsphereNetwork2UpdateVar   = "/SDDC-Datacenter/network/sddc-cgw-network-2"
-	vsphereNetwork3UpdateVar   = "/SDDC-Datacenter/network/sddc-cgw-network-3"
-	clusterNamespace           = "test-namespace"
+	vsphereCpVmNumCpuUpdateVar         = 4
+	vsphereCpVmMemoryUpdate            = 16384
+	vsphereCpDiskGiBUpdateVar          = 40
+	vsphereWlVmNumCpuUpdateVar         = 4
+	vsphereWlVmMemoryUpdate            = 16384
+	vsphereWlDiskGiBUpdate             = 40
+	vsphereFolderUpdateVar             = "/SDDC-Datacenter/vm/capv/e2eUpdate"
+	vsphereNetwork2UpdateVar           = "/SDDC-Datacenter/network/sddc-cgw-network-2"
+	vsphereNetwork3UpdateVar           = "/SDDC-Datacenter/network/sddc-cgw-network-3"
+	clusterNamespace                   = "test-namespace"
+	cloudstackComputeOfferingUpdateVar = "Larger Instance"
 )
 
 func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
@@ -328,5 +330,57 @@ func TestVSphereKubernetes120BottlerocketTo121StackedEtcdUpgrade(t *testing.T) {
 		v1alpha1.Kube121,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate121()),
+	)
+}
+
+func TestCloudStackKubernetes120RedhatTo121Upgrade(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
+	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube121,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		provider.WithProviderUpgrade(framework.UpdateRedhatTemplate121Var()),
+	)
+}
+
+func TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
+	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube121,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		provider.WithProviderUpgrade(
+			framework.UpdateRedhatTemplate121Var(),
+			api.WithCloudStackComputeOffering(cloudstackComputeOfferingUpdateVar),
+		),
+	)
+}
+
+func TestCloudStackKubernetes120RedhatWorkerNodeUpgrade(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
+	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube120,
+		framework.WithClusterUpgrade(api.WithWorkerNodeCount(5)),
 	)
 }

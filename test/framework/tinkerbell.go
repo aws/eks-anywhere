@@ -49,7 +49,7 @@ type Tinkerbell struct {
 }
 
 func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
-	checkRequiredEnvVars(t, requiredTinkerbellEnvVars)
+	CheckRequiredEnvVars(t, requiredTinkerbellEnvVars)
 	tink := &Tinkerbell{
 		t: t,
 		fillers: []api.TinkerbellFiller{

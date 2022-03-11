@@ -1,0 +1,82 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: test
+  namespace: default
+spec:
+  clusterNetwork:
+    cni: cilium
+    pods:
+      cidrBlocks:
+      - 192.169.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: 192.168.1.155
+    machineGroupRef:
+      kind: CloudStackMachineConfig
+      name: test-cp
+  datacenterRef:
+    kind: CloudStackDeploymentConfig
+    name: test
+  kubernetesVersion: "1.20"
+  managementCluster:
+    name: test
+  workerNodeGroupConfigurations:
+  - count: 3
+    machineGroupRef:
+      kind: CloudStackMachineConfig
+      name: test
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackDeploymentConfig
+metadata:
+  name: test
+spec:
+  domain: root
+  insecure: false
+  managementApiEndpoint: https://192.168.1.129:8080/client/api
+  network: GuestNet3
+  zone: zone1
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackMachineConfig
+metadata:
+  annotations:
+    anywhere.eks.amazonaws.com/control-plane: "true"
+  name: test-cp
+spec:
+  computeOffering: Large Instance
+  details:
+    foo: bar
+    key: value
+  osFamily: ubuntu
+  template: rhel-8-kube-v1.20.7
+  users:
+  - name: capc
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDourm6cvJUzKE9k0JsDIfm0PP7yWOvLB4XlrqGJLgulLW1R8y0ws4AylaZi6/VjXr1vYT+FHcyfixO7MVWWf4Qc9aWBHB76V0TWq4DOp3d+xFK9PQ0jv0pzBpdJVCgvM8RZqp3U2jbbjtTPbalN0zFGWRQ/tPvavq7nA0tl26KiSszsDHSmtpJ3McvGDZ+s/AruHB5zOTde+gO7YEX9CxGIX1Fxn+gvAcLXgcpI3xwgUPmIDDyC+x+eJA+U5r2rV99Cj2RSfYghKpTPsdR3aDe2TOQI5ksHgcGyhXrglskPp1iQ78Fh5nyQKpFMZtmRkUqZGmGDLRoFJ5Cr0Gpy4KecHuro+e/z60Y5fybLLgtt5EDHcKdt4iyHKXOFW8PGNSl8vms0Yq2ewDXNsX5idjY39yBN56u5B3BPhrSCv4JAEQ4e+MMRXbuDEMnWOgka7YTzTOPmb4Abwhc6VqVD952VYvwtwsygizXkGZmB0m6rANLImQijyOlJ/4in+OA+ns=
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackMachineConfig
+metadata:
+  name: test
+spec:
+  computeOffering: Large Instance
+  details:
+    foo: bar
+    key: value
+  osFamily: ubuntu
+  template: rhel-8-kube-v1.20.7
+  users:
+  - name: capc
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDourm6cvJUzKE9k0JsDIfm0PP7yWOvLB4XlrqGJLgulLW1R8y0ws4AylaZi6/VjXr1vYT+FHcyfixO7MVWWf4Qc9aWBHB76V0TWq4DOp3d+xFK9PQ0jv0pzBpdJVCgvM8RZqp3U2jbbjtTPbalN0zFGWRQ/tPvavq7nA0tl26KiSszsDHSmtpJ3McvGDZ+s/AruHB5zOTde+gO7YEX9CxGIX1Fxn+gvAcLXgcpI3xwgUPmIDDyC+x+eJA+U5r2rV99Cj2RSfYghKpTPsdR3aDe2TOQI5ksHgcGyhXrglskPp1iQ78Fh5nyQKpFMZtmRkUqZGmGDLRoFJ5Cr0Gpy4KecHuro+e/z60Y5fybLLgtt5EDHcKdt4iyHKXOFW8PGNSl8vms0Yq2ewDXNsX5idjY39yBN56u5B3BPhrSCv4JAEQ4e+MMRXbuDEMnWOgka7YTzTOPmb4Abwhc6VqVD952VYvwtwsygizXkGZmB0m6rANLImQijyOlJ/4in+OA+ns=
+
+---
