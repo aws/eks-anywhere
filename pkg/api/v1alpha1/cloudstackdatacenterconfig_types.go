@@ -35,14 +35,9 @@ type CloudStackDatacenterConfigSpec struct {
 }
 
 type CloudStackResourceIdentifier struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
+	Id   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
 }
-
-const (
-	Id   string = "Id"
-	Name string = "Name"
-)
 
 // CloudStackZone is an organizational construct typically used to represent a single datacenter, and all its physical and virtual resources exist inside that zone. It can either be specified as a UUID or name
 type CloudStackZone struct {
