@@ -4,10 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
-
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	v1alpha1release "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
@@ -15,11 +12,9 @@ type BundlesFetch func(ctx context.Context, name, namespace string) (*v1alpha1re
 
 type GitOpsFetch func(ctx context.Context, name, namespace string) (*v1alpha1.GitOpsConfig, error)
 
-type EksdReleaseFetch func(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error)
-
 type OIDCFetch func(ctx context.Context, name, namespace string) (*v1alpha1.OIDCConfig, error)
 
-func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundlesFetch BundlesFetch, eksdReleaseFetch EksdReleaseFetch, gitOpsFetch GitOpsFetch, oidcFetch OIDCFetch) (*Spec, error) {
+func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundlesFetch BundlesFetch, gitOpsFetch GitOpsFetch, oidcFetch OIDCFetch) (*Spec, error) {
 	bundles, err := GetBundlesForCluster(ctx, cluster, bundlesFetch)
 	if err != nil {
 		return nil, err
@@ -28,15 +23,11 @@ func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundles
 	if err != nil {
 		return nil, err
 	}
-	eksd, err := GetEksdReleaseForCluster(ctx, cluster, bundles, eksdReleaseFetch)
-	if err != nil {
-		return nil, err
-	}
 	oidcConfig, err := GetOIDCForCluster(ctx, cluster, oidcFetch)
 	if err != nil {
 		return nil, err
 	}
-	return BuildSpecFromBundles(cluster, bundles, WithEksdRelease(eksd), WithGitOpsConfig(gitOpsConfig), WithOIDCConfig(oidcConfig))
+	return BuildSpecFromBundles(cluster, bundles, WithGitOpsConfig(gitOpsConfig), WithOIDCConfig(oidcConfig))
 }
 
 func GetBundlesForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch BundlesFetch) (*v1alpha1release.Bundles, error) {
@@ -58,28 +49,6 @@ func GetGitOpsForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch G
 	}
 
 	return gitops, nil
-}
-
-func GetEksdReleaseForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundles *v1alpha1release.Bundles, fetch EksdReleaseFetch) (*eksdv1alpha1.Release, error) {
-	versionsBundle, err := GetVersionsBundle(cluster, bundles)
-	if err != nil {
-		return nil, fmt.Errorf("failed fetching versions bundle: %v", err)
-	}
-	eksd, err := fetch(ctx, versionsBundle.EksD.Name, constants.EksaSystemNamespace)
-	if err != nil {
-		return nil, fmt.Errorf("failed fetching EKS-D release for cluster: %v", err)
-	}
-
-	return eksd, nil
-}
-
-func GetVersionsBundle(clusterConfig *v1alpha1.Cluster, bundles *v1alpha1release.Bundles) (*v1alpha1release.VersionsBundle, error) {
-	for _, versionsBundle := range bundles.Spec.VersionsBundles {
-		if versionsBundle.KubeVersion == string(clusterConfig.Spec.KubernetesVersion) {
-			return &versionsBundle, nil
-		}
-	}
-	return nil, fmt.Errorf("kubernetes version %s is not supported by bundles manifest %d", clusterConfig.Spec.KubernetesVersion, bundles.Spec.Number)
 }
 
 func GetOIDCForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch OIDCFetch) (*v1alpha1.OIDCConfig, error) {

@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	admissionv1beta1 "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -44,7 +43,6 @@ func init() {
 	utilruntime.Must(etcdv1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(admissionv1beta1.AddToScheme(scheme.Scheme))
 	utilruntime.Must(anywherev1.AddToScheme(scheme.Scheme))
-	utilruntime.Must(eksdv1alpha1.AddToScheme(scheme.Scheme))
 }
 
 var packages = mustBuildModulesWithCRDs(capiPackage, capvPackage)
