@@ -36,7 +36,7 @@ type CloudStackDatacenterConfigSpec struct {
 
 type CloudStackResourceIdentifier struct {
 	// +optional
-	Id   string `json:"id,omitempty"`
+	Id string `json:"id,omitempty"`
 	// +optional
 	Name string `json:"name,omitempty"`
 }

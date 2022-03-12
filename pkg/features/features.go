@@ -1,14 +1,14 @@
 package features
 
 const (
-	TinkerbellProviderEnvVar = "TINKERBELL_PROVIDER"
-	CloudStackProviderEnvVar = "CLOUDSTACK_PROVIDER"
+	TinkerbellProviderEnvVar        = "TINKERBELL_PROVIDER"
+	CloudStackProviderEnvVar        = "CLOUDSTACK_PROVIDER"
 	CloudStackKubeVipDisabledEnvVar = "CLOUDSTACK_KUBE_VIP_DISABLED"
-	SnowProviderEnvVar       = "SNOW_PROVIDER"
-	FullLifecycleAPIEnvVar   = "FULL_LIFECYCLE_API"
-	FullLifecycleGate        = "FullLifecycleAPI"
-	K8s122SupportEnvVar      = "K8S_1_22_SUPPORT"
-	CuratedPackagesEnvVar    = "CURATED_PACKAGES_SUPPORT"
+	SnowProviderEnvVar              = "SNOW_PROVIDER"
+	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
+	FullLifecycleGate               = "FullLifecycleAPI"
+	K8s122SupportEnvVar             = "K8S_1_22_SUPPORT"
+	CuratedPackagesEnvVar           = "CURATED_PACKAGES_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {

@@ -5,12 +5,12 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"github.com/aws/eks-anywhere/pkg/features"
-	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
-	corev1 "k8s.io/api/core/v1"
 	"net"
 	"net/url"
 	"os"
+
+	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	corev1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1beta1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 
@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -1036,7 +1037,6 @@ func (p *cloudstackProvider) setupSSHAuthKeysForUpgrade() error {
 		etcdUser.SshAuthorizedKeys[0] = p.etcdSshAuthKey
 	}
 	return nil
-
 }
 
 func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {

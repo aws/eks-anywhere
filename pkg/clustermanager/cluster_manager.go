@@ -28,15 +28,16 @@ import (
 )
 
 const (
-	maxRetries        = 30
-	backOffPeriod     = 5 * time.Second
-	machineMaxWait    = 10 * time.Minute
-	machineBackoff    = 1 * time.Second
-	machinesMinWait   = 30 * time.Minute
-	moveCAPIWait      = 15 * time.Minute
-	ctrlPlaneWaitStr  = "60m"
-	etcdWaitStr       = "60m"
-	deploymentWaitStr = "30m"
+	maxRetries             = 30
+	backOffPeriod          = 5 * time.Second
+	machineMaxWait         = 10 * time.Minute
+	machineBackoff         = 1 * time.Second
+	machinesMinWait        = 30 * time.Minute
+	moveCAPIWait           = 15 * time.Minute
+	ctrlPlaneWaitStr       = "60m"
+	etcdWaitStr            = "60m"
+	deploymentWaitStr      = "30m"
+	ctrlPlaneInProgressStr = "1m"
 )
 
 type ClusterManager struct {
@@ -58,6 +59,7 @@ type ClusterClient interface {
 	ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error
 	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
 	WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
+	WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
 	GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error)
@@ -74,10 +76,12 @@ type ClusterClient interface {
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
+	GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDeploymentConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackDatacenterConfig, error)
 	UpdateEnvironmentVariablesInNamespace(ctx context.Context, resourceType, resourceName string, envMap map[string]string, cluster *types.Cluster, namespace string) error
 	UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error
 	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
+	GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error)
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
@@ -369,6 +373,12 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		return fmt.Errorf("error running post control plane upgrade operations: %v", err)
 	}
 
+	logger.V(3).Info("Waiting for control plane upgrade to be in progress")
+	err = c.clusterClient.WaitForControlPlaneNotReady(ctx, managementCluster, ctrlPlaneInProgressStr, newClusterSpec.Name)
+	if err != nil {
+		logger.V(3).Info("no control plane upgrading")
+	}
+
 	logger.V(3).Info("Waiting for control plane to be ready")
 	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, newClusterSpec.Name)
 	if err != nil {
@@ -504,6 +514,52 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 			}
 			etcdVmc := machineConfigMap[newClusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
 			if !reflect.DeepEqual(existingEtcdVmc.Spec, etcdVmc.Spec) {
+				logger.V(3).Info("New etcd machine config spec is different from the existing spec")
+				return true, nil
+			}
+		}
+	case v1alpha1.CloudStackDatacenterKind:
+		machineConfigMap := make(map[string]*v1alpha1.CloudStackMachineConfig)
+
+		existingCsdc, err := c.clusterClient.GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
+		if err != nil {
+			return false, err
+		}
+		csDc := datacenterConfig.(*v1alpha1.CloudStackDatacenterConfig)
+		if !reflect.DeepEqual(existingCsdc.Spec, csDc.Spec) {
+			logger.V(3).Info("New provider spec is different from the new spec")
+			return true, nil
+		}
+
+		for _, config := range machineConfigs {
+			mc := config.(*v1alpha1.CloudStackMachineConfig)
+			machineConfigMap[mc.Name] = mc
+		}
+		existingCpCsmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, cc.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
+		if err != nil {
+			return false, err
+		}
+		cpCsmc := machineConfigMap[newClusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+		if !reflect.DeepEqual(existingCpCsmc.Spec, cpCsmc.Spec) {
+			logger.V(3).Info("New control plane machine config spec is different from the existing spec")
+			return true, nil
+		}
+		existingWnCsmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, cc.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
+		if err != nil {
+			return false, err
+		}
+		wnCsmc := machineConfigMap[newClusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
+		if !reflect.DeepEqual(existingWnCsmc.Spec, wnCsmc.Spec) {
+			logger.V(3).Info("New worker node machine config spec is different from the existing spec")
+			return true, nil
+		}
+		if cc.Spec.ExternalEtcdConfiguration != nil {
+			existingEtcdCsmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, cc.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Namespace)
+			if err != nil {
+				return false, err
+			}
+			etcdCsmc := machineConfigMap[newClusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+			if !reflect.DeepEqual(existingEtcdCsmc.Spec, etcdCsmc.Spec) {
 				logger.V(3).Info("New etcd machine config spec is different from the existing spec")
 				return true, nil
 			}
