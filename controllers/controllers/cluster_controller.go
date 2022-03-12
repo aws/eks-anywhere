@@ -155,9 +155,6 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, cluster *anywhe
 
 		// TODO delete GitOps,Datacenter and MachineConfig objects
 		controllerutil.RemoveFinalizer(cluster, clusterFinalizerName)
-		if err := r.client.Update(ctx, cluster); err != nil {
-			return ctrl.Result{}, err
-		}
 
 	}
 	return ctrl.Result{}, nil

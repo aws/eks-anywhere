@@ -6,11 +6,15 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
 	apiv1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -203,7 +207,127 @@ func TestClusterReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 	}
 }
 
-// TODO add extra tests
+func TestClusterReconcilerDeleteExistingCAPIClusterSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	govcClient := mocks.NewMockProviderGovcClient(ctrl)
+
+	secret := createSecret()
+	managementCluster := createCluster()
+	managementCluster.Name = "management-cluster"
+	cluster := createCluster()
+	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
+	now := metav1.Now()
+	cluster.DeletionTimestamp = &now
+
+	datacenterConfig := createDataCenter(cluster)
+	bundle := createBundle(managementCluster)
+	machineConfigCP := createCPMachineConfig()
+	machineConfigWN := createWNMachineConfig()
+
+	capiCluster := newCAPICluster(cluster.Name, cluster.Namespace)
+
+	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN, managementCluster, capiCluster}
+
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).Build()
+
+	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{})
+	defaulter := vsphere.NewDefaulter(govcClient)
+
+	r := &ClusterReconciler{
+		client:    cl,
+		log:       logf.Log,
+		validator: validator,
+		defaulter: defaulter,
+	}
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+
+	ctx := context.Background()
+
+	_, err := r.Reconcile(ctx, req)
+	if err != nil {
+		t.Fatalf("reconcile: (%v)", err)
+	}
+
+	apiCluster := &clusterv1.Cluster{}
+
+	err = r.client.Get(context.TODO(), req.NamespacedName, apiCluster)
+	if !apierrors.IsNotFound(err) {
+		t.Fatalf("expected apierrors.IsNotFound but got: (%v)", err)
+	}
+	if apiCluster.Status.FailureMessage != nil {
+		t.Errorf("Expected failure message to be nil. FailureMessage:%s", *apiCluster.Status.FailureMessage)
+	}
+}
+
+func TestClusterReconcilerDeleteNoCAPIClusterSuccess(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	govcClient := mocks.NewMockProviderGovcClient(ctrl)
+
+	g := NewWithT(t)
+
+	secret := createSecret()
+	managementCluster := createCluster()
+	managementCluster.Name = "management-cluster"
+	cluster := createCluster()
+	cluster.Spec.ManagementCluster = anywherev1.ManagementCluster{Name: "management-cluster"}
+	now := metav1.Now()
+	cluster.DeletionTimestamp = &now
+
+	datacenterConfig := createDataCenter(cluster)
+	bundle := createBundle(managementCluster)
+	machineConfigCP := createCPMachineConfig()
+	machineConfigWN := createWNMachineConfig()
+
+	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN, managementCluster}
+
+	g.Expect(cluster.Finalizers).NotTo(ContainElement(clusterFinalizerName))
+
+	cb := fake.NewClientBuilder()
+	cl := cb.WithRuntimeObjects(objs...).Build()
+
+	validator := vsphere.NewValidator(govcClient, &networkutils.DefaultNetClient{})
+	defaulter := vsphere.NewDefaulter(govcClient)
+
+	r := &ClusterReconciler{
+		client:    cl,
+		log:       logf.Log,
+		validator: validator,
+		defaulter: defaulter,
+	}
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name:      name,
+			Namespace: namespace,
+		},
+	}
+
+	ctx := context.Background()
+
+	controllerutil.AddFinalizer(cluster, clusterFinalizerName)
+	_, err := r.Reconcile(ctx, req)
+	if err != nil {
+		t.Fatalf("reconcile: (%v)", err)
+	}
+
+	apiCluster := &anywherev1.Cluster{}
+
+	err = r.client.Get(context.TODO(), req.NamespacedName, apiCluster)
+	if err != nil {
+		t.Fatalf("get cluster: (%v)", err)
+	}
+
+	if apiCluster.Status.FailureMessage != nil {
+		t.Errorf("Expected failure message to be nil. FailureMessage:%s", *apiCluster.Status.FailureMessage)
+	}
+}
 
 func createWNMachineConfig() *anywherev1.VSphereMachineConfig {
 	return &anywherev1.VSphereMachineConfig{
@@ -233,6 +357,19 @@ func createWNMachineConfig() *anywherev1.VSphereMachineConfig {
 			},
 		},
 		Status: anywherev1.VSphereMachineConfigStatus{},
+	}
+}
+
+func newCAPICluster(name, namespace string) *clusterv1.Cluster {
+	return &clusterv1.Cluster{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Cluster",
+			APIVersion: clusterv1.GroupVersion.String(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
 	}
 }
 
