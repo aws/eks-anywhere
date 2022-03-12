@@ -148,13 +148,13 @@ func (r *ClusterReconciler) reconcileDelete(ctx context.Context, cluster *anywhe
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{RequeueAfter: defaultRequeueTime}, nil
-	case !apierrors.IsNotFound(err):
-		return ctrl.Result{}, err
 	case apierrors.IsNotFound(err):
 		r.log.Info("Deleting EKS Anywhere cluster", "name", capiCluster.Name, "cluster.DeletionTimestamp", cluster.DeletionTimestamp, "finalizer", cluster.Finalizers)
 
 		// TODO delete GitOps,Datacenter and MachineConfig objects
 		controllerutil.RemoveFinalizer(cluster, clusterFinalizerName)
+	default:
+		return ctrl.Result{}, err
 
 	}
 	return ctrl.Result{}, nil
