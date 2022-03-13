@@ -46,7 +46,6 @@ type Tinkerbell struct {
 	clusterFillers       []api.ClusterFiller
 	cidr                 string
 	inventoryCsvFilePath string
-	hardware             []*api.Hardware
 }
 
 func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
@@ -65,13 +64,6 @@ func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 
 	tink.cidr = os.Getenv(tinkerbellNetworkCidrEnvVar)
 	tink.inventoryCsvFilePath = os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
-
-	var err error
-	tink.hardware, err = api.NewHardwareSlice(tink.inventoryCsvFilePath)
-
-	if err != nil {
-		t.Fatalf("failed to create tinkerbell test provider: %v", err)
-	}
 
 	for _, opt := range opts {
 		opt(tink)
@@ -123,20 +115,6 @@ func WithUbuntu121Tinkerbell() TinkerbellOpt {
 			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu121EnvVar, api.WithImageUrlForAllTinkerbellMachines),
 			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
 		)
-	}
-}
-
-func WithHardware(vendor string, requiredCount int) TinkerbellOpt {
-	return func(t *Tinkerbell) {
-		var count int
-		for _, h := range t.hardware {
-			if h.Vendor == vendor {
-				count++
-			}
-		}
-		if count < requiredCount {
-			t.t.Errorf("this test requires at least %d piece(s) of %s hardware", requiredCount, vendor)
-		}
 	}
 }
 
