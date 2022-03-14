@@ -135,13 +135,7 @@ func (e *E2ESession) setup(regex string) error {
 		e.testEnvVars[e2etests.BranchNameEnvVar] = e.branchName
 	}
 
-	clusterNameTemplate := "%s-%s"
-	clusterName := fmt.Sprintf(clusterNameTemplate, e.branchName, instanceId)
-	if len(clusterName) > 80 {
-		logger.Info("Cluster name is longer than 80 characters; truncating to 80 characters.", "original cluster name", clusterName, "truncated cluster name", clusterName[:80])
-		clusterName = clusterName[:80]
-	}
-	e.testEnvVars[e2etests.ClusterNameVar] = clusterName
+	e.testEnvVars[e2etests.ClusterNameVar] = clusterName(e.branchName, e.instanceId)
 	return nil
 }
 
@@ -210,4 +204,14 @@ func (e *E2ESession) createTestNameFile(testName string) error {
 	logger.V(1).Info("Successfully created test name file")
 
 	return nil
+}
+
+func clusterName(branch string, instanceId string) (clusterName string) {
+	clusterNameTemplate := "%s-%s"
+	clusterName = fmt.Sprintf(clusterNameTemplate, branch, instanceId)
+	if len(clusterName) > 80 {
+		logger.Info("Cluster name is longer than 80 characters; truncating to 80 characters.", "original cluster name", clusterName, "truncated cluster name", clusterName[:80])
+		clusterName = clusterName[:80]
+	}
+	return clusterName
 }
