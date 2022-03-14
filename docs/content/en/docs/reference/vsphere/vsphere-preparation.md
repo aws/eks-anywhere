@@ -2,7 +2,7 @@
 title: "Preparing vSphere for EKS Anywhere"
 weight: 20
 description: >
-  Set up a VSphere cluster to prepare it for EKS Anywhere
+  Set up a vSphere cluster to prepare it for EKS Anywhere
 ---
 
 ## Create a VM and template folder (Optional):
