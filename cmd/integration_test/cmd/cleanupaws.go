@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	maxAgeFlagName = "max-age"
-	tagFlagName    = "tag"
+	maxAgeFlagName  = "max-age"
+	tagFlagName     = "tag"
+	buildIdFlagName = "buildId"
 )
 
 var cleanUpAwsCmd = &cobra.Command{
@@ -49,6 +50,7 @@ func init() {
 	cleanUpAwsCmd.Flags().StringP(storageBucketFlagName, "s", "", "Name of s3 bucket used for e2e testing")
 	cleanUpAwsCmd.Flags().StringP(maxAgeFlagName, "a", "0", "Instance age in seconds after which it should be deleted")
 	cleanUpAwsCmd.Flags().StringP(tagFlagName, "t", "", "EC2 instance tag")
+	cleanUpAwsCmd.Flags().StringP(buildIdFlagName, "b", "", "Build ID of CodeBuild build; will clean up instances associated with the build")
 
 	for _, flag := range requiredAwsCleanUpFlags {
 		if err := cleanUpAwsCmd.MarkFlagRequired(flag); err != nil {
@@ -61,8 +63,9 @@ func cleanUpAwsTestResources(ctx context.Context) error {
 	maxAge := viper.GetString(maxAgeFlagName)
 	storageBucket := viper.GetString(storageBucketFlagName)
 	tag := viper.GetString(tagFlagName)
+	codebuildId := viper.GetString(buildIdFlagName)
 
-	err := e2e.CleanUpAwsTestResources(storageBucket, maxAge, tag)
+	err := e2e.CleanUpAwsTestResources(storageBucket, maxAge, tag, codebuildId)
 	if err != nil {
 		return fmt.Errorf("error running cleanup for aws test resources: %v", err)
 	}

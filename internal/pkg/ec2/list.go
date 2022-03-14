@@ -11,18 +11,12 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
-func ListInstances(session *session.Session, key string, value string, maxAge float64) ([]*string, error) {
+func ListInstances(session *session.Session, tags map[string]string, maxAge float64) ([]*string, error) {
 	service := ec2.New(session)
 	var instanceList []*string
 
 	input := &ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
-			{
-				Name: aws.String("tag:" + key),
-				Values: []*string{
-					aws.String(value),
-				},
-			},
 			{
 				Name: aws.String("instance-state-name"),
 				Values: []*string{
@@ -33,6 +27,16 @@ func ListInstances(session *session.Session, key string, value string, maxAge fl
 				},
 			},
 		},
+	}
+
+	for k, v := range tags {
+		tagFilter := ec2.Filter{
+			Name: aws.String("tag:" + k),
+			Values: []*string{
+				aws.String(v),
+			},
+		}
+		input.Filters = append(input.Filters, &tagFilter)
 	}
 
 	for {
