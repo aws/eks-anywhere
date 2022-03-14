@@ -16,7 +16,7 @@ That folder will host:
 User permissions should be set up to: 
 
 * Only allow the user to see and create EKS Anywhere resources in that folder and its nested folders.
-* Prevent the user from having visibility and control over the whole vSphere cluster domain and its sub-child objects (data center, resource pools and other folders).
+* Prevent the user from having visibility and control over the whole vSphere cluster domain and its sub-child objects (datacenter, resource pools and other folders).
 
 In your EKS Anywhere configuration file you will reference to a path under this folder associated with the cluster you create.
 
