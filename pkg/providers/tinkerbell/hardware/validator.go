@@ -1,6 +1,9 @@
 package hardware
 
-import "fmt"
+import (
+	"fmt"
+	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
+)
 
 // MachineAssertion defines a condition that Machine must meet.
 type MachineAssertion func(Machine) error
@@ -91,6 +94,11 @@ func UniqueHostnames() MachineAssertion {
 	return func(m Machine) error {
 		if _, seen := hostnames[m.Hostname]; seen {
 			return fmt.Errorf("duplicate Hostname: %v", m.Hostname)
+		}
+
+		err := apimachineryvalidation.IsDNS1123Subdomain(m.Hostname)
+		if err != nil {
+			return fmt.Errorf("invalid Hostname %s : %v", m.Hostname, err)
 		}
 
 		hostnames[m.Hostname] = struct{}{}
