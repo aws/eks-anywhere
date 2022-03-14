@@ -102,7 +102,7 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", passedStatus)
 			logResult(r.testCommandResult)
 		}
-		clusterName := fmt.Sprintf("%s-%s", r.conf.branchName, r.conf.instanceId)
+		clusterName := clusterName(r.conf.branchName, r.conf.instanceId)
 		if conf.CleanupVms {
 			err = CleanUpVsphereTestResources(context.Background(), clusterName)
 			if err != nil {
