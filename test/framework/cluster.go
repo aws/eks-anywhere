@@ -39,7 +39,6 @@ const (
 	JobIdVar                         = "T_JOB_ID"
 	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
 	hardwareYamlPath                 = "hardware-manifests/hardware.yaml"
-	hardwareCsvPath                  = "hardware-manifests/hardware.csv"
 )
 
 //go:embed testdata/oidc-roles.yaml
@@ -50,8 +49,6 @@ type ClusterE2ETest struct {
 	ClusterConfigLocation  string
 	ClusterConfigFolder    string
 	HardwareConfigLocation string
-	HardwareCsvLocation    string
-	Hardware               map[string]*api.Hardware
 	ClusterName            string
 	ClusterConfig          *v1alpha1.Cluster
 	Provider               Provider
@@ -83,7 +80,6 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 
 	e.ClusterConfigFolder = fmt.Sprintf("%s-config", e.ClusterName)
 	e.HardwareConfigLocation = filepath.Join(e.ClusterConfigFolder, hardwareYamlPath)
-	e.HardwareCsvLocation = filepath.Join(e.ClusterConfigFolder, hardwareCsvPath)
 
 	for _, opt := range opts {
 		opt(e)
@@ -92,39 +88,6 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 	provider.Setup()
 
 	return e
-}
-
-func WithHardware(vendor string, requiredCount int) ClusterE2ETestOpt {
-	return func(e *ClusterE2ETest) {
-		csvFilePath := os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
-		hardwarePool, err := api.NewHardwareMap(csvFilePath)
-
-		if err != nil {
-			e.T.Fatalf("failed to create hardware map from test hardware pool: %v", err)
-		}
-
-		if e.Hardware == nil {
-			e.Hardware = make(map[string]*api.Hardware)
-		}
-
-		var count int
-		for id, h := range hardwarePool {
-			if strings.ToLower(h.Vendor) == vendor || vendor == api.HardwareVendorAgnostic {
-				if _, exists := e.Hardware[id]; !exists {
-					count++
-					e.Hardware[id] = h
-				}
-
-				if count == requiredCount {
-					break
-				}
-			}
-		}
-
-		if count < requiredCount {
-			e.T.Errorf("this test requires at least %d piece(s) of %s hardware", requiredCount, vendor)
-		}
-	}
 }
 
 func WithClusterFiller(f ...api.ClusterFiller) ClusterE2ETestOpt {
@@ -202,24 +165,12 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 }
 
 func (e *ClusterE2ETest) GenerateHardwareConfig(opts ...CommandOpt) {
-	e.generateHardwareConfig(opts...)
+	csvFilePath := os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
+	e.generateHardwareConfig(csvFilePath, opts...)
 }
 
-func (e *ClusterE2ETest) generateHardwareConfig(opts ...CommandOpt) {
-	if len(e.Hardware) == 0 {
-		e.T.Fatal("you must provide the ClusterE2ETest the hardware to use for the test run")
-	}
-
-	if _, err := os.Stat(e.HardwareCsvLocation); err == nil {
-		os.Remove(e.HardwareCsvLocation)
-	}
-
-	err := api.HardwareMapToCSV(e.Hardware, e.HardwareCsvLocation)
-	if err != nil {
-		e.T.Fatalf("failed to create hardware csv for the test run: %v", err)
-	}
-
-	generateHardwareConfigArgs := []string{"generate", "hardware", "--dry-run", "-f", e.HardwareCsvLocation, "-o", e.ClusterConfigFolder}
+func (e *ClusterE2ETest) generateHardwareConfig(csvFilePath string, opts ...CommandOpt) {
+	generateHardwareConfigArgs := []string{"generate", "hardware", "--dry-run", "-f", csvFilePath, "-o", e.ClusterConfigFolder}
 	e.RunEKSA(generateHardwareConfigArgs, opts...)
 }
 

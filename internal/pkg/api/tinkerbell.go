@@ -129,7 +129,7 @@ func WithTinkerbellHegelURL(value string) TinkerbellFiller {
 				for _, action := range task.Actions {
 					if action.Name == "add-tink-cloud-init-config" {
 						contents := action.Environment["CONTENTS"]
-						action.Environment["CONTENTS"] = strings.ReplaceAll(contents, "http://<REPLACE WITH TINKERBELL IP>:50061", value)
+						action.Environment["CONTENTS"] = strings.ReplaceAll(contents, "http://TINKERBELL_IP:50061", value)
 					}
 				}
 			}
