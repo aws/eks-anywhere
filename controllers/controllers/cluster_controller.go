@@ -30,7 +30,6 @@ type ClusterReconciler struct {
 func NewClusterReconciler(client client.Client, log logr.Logger, scheme *runtime.Scheme, govc *executables.Govc, tracker *remote.ClusterCacheTracker) *ClusterReconciler {
 	validator := vsphere.NewValidator(govc, &networkutils.DefaultNetClient{})
 	defaulter := vsphere.NewDefaulter(govc)
-	// TODO: cloudstack
 	return &ClusterReconciler{
 		client:    client,
 		log:       log,

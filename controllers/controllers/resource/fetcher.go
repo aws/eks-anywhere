@@ -523,7 +523,6 @@ func MapClusterToCloudStackDatacenterConfigSpec(csCluster *cloudstackv1.CloudSta
 
 func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate) (*anywherev1.CloudStackMachineConfig, error) {
 	csSpec := &anywherev1.CloudStackMachineConfig{}
-	// TODO: capc needs to change offering and template to type=ID/Name, value structure
 	csSpec.Spec.ComputeOffering = anywherev1.CloudStackResourceIdentifier{
 		Id:   csMachineTemplate.Spec.Spec.Spec.Offering.ID,
 		Name: csMachineTemplate.Spec.Spec.Spec.Offering.Name,
@@ -532,9 +531,10 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 		Id:   csMachineTemplate.Spec.Spec.Spec.Template.ID,
 		Name: csMachineTemplate.Spec.Spec.Spec.Template.Name,
 	}
+
 	csSpec.Spec.AffinityGroupIds = csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs
 
-	// TODO: OSFamily, Users (these fields are immutable)
+	// TODO: Details, Users (these fields are immutable)
 	return csSpec, nil
 }
 
@@ -575,26 +575,4 @@ func MapMachineTemplateToVSphereMachineConfigSpecWorkers(vsMachineTemplates []vs
 
 	// TODO: OSFamily, Users (these fields are immutable)
 	return vsSpecs, nil
-}
-
-func MapMachineTemplateToCloudStackMachineConfigSpecWorkers(csMachineTemplates []cloudstackv1.CloudStackMachineTemplate) (map[string]anywherev1.CloudStackMachineConfig, error) {
-	csSpecs := make(map[string]anywherev1.CloudStackMachineConfig, len(csMachineTemplates))
-	for _, csMachineTemplate := range csMachineTemplates {
-		csSpec := &anywherev1.CloudStackMachineConfig{}
-		if len(csMachineTemplate.Spec.Spec.Spec.Offering.ID) > 0 {
-			csSpec.Spec.ComputeOffering = anywherev1.CloudStackResourceIdentifier{Id: csMachineTemplate.Spec.Spec.Spec.Offering.ID}
-		} else {
-			csSpec.Spec.ComputeOffering = anywherev1.CloudStackResourceIdentifier{Name: csMachineTemplate.Spec.Spec.Spec.Offering.Name}
-		}
-		if len(csMachineTemplate.Spec.Spec.Spec.Template.ID) > 0 {
-			csSpec.Spec.Template = anywherev1.CloudStackResourceIdentifier{Id: csMachineTemplate.Spec.Spec.Spec.Template.ID}
-		} else {
-			csSpec.Spec.Template = anywherev1.CloudStackResourceIdentifier{Name: csMachineTemplate.Spec.Spec.Spec.Template.Name}
-		}
-		csSpec.Spec.AffinityGroupIds = csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs
-		csSpecs[csMachineTemplate.Name] = *csSpec
-	}
-
-	// TODO: OSFamily, Users (these fields are immutable)
-	return csSpecs, nil
 }

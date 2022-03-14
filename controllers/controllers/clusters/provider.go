@@ -22,7 +22,6 @@ func BuildProviderReconciler(datacenterKind string, client client.Client, log lo
 	case anywherev1.VSphereDatacenterKind:
 		return NewVSphereReconciler(client, log, validator, defaulter, tracker), nil
 	}
-	// TODO: cloudstack
 	return nil, fmt.Errorf("invalid data center type %s", datacenterKind)
 }
 
