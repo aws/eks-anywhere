@@ -111,6 +111,12 @@ spec:
       template:
         id: {{.cloudstackTemplateId}}
         name: {{.cloudstackTemplateName}}
+{{- if .cloudstackCustomDetails }}
+      details:
+{{- range $key, $value := .cloudstackCustomDetails}}
+        {{$key}}: {{$value}}
+{{- end}}
+{{- end}}
 {{- if .cloudstackAffinityGroupIds }}
       affinitygroupids:
       {{- range .cloudstackAffinityGroupIds}}
