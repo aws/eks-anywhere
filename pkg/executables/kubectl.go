@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -47,6 +48,7 @@ var (
 	bundlesResourceType                  = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
 	clusterResourceSetResourceType       = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
 	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
+	eksdReleaseType                      = fmt.Sprintf("releases.%s", eksdv1alpha1.GroupVersion.Group)
 )
 
 type Kubectl struct {
@@ -1310,6 +1312,15 @@ func (k *Kubectl) getObject(ctx context.Context, resourceType, name, namespace, 
 	}
 
 	return nil
+}
+
+func (k *Kubectl) GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error) {
+	obj := &eksdv1alpha1.Release{}
+	if err := k.getObject(ctx, eksdReleaseType, name, namespace, kubeconfigFile, obj); err != nil {
+		return nil, err
+	}
+
+	return obj, nil
 }
 
 func (k *Kubectl) GetDeployment(ctx context.Context, name, namespace, kubeconfig string) (*appsv1.Deployment, error) {
