@@ -428,10 +428,7 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 	if err := p.setupSSHAuthKeysForUpgrade(); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
-	err = p.setupSSHAuthKeysForUpgrade()
-	if err != nil {
-		return fmt.Errorf("failed setup and validations: %v", err)
-	}
+
 	err = p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
 	if err != nil {
 		return fmt.Errorf("failed validate machineconfig uniqueness: %v", err)
@@ -860,8 +857,8 @@ func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, boo
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
-		values["vsphereControlPlaneSshAuthorizedKey"] = p.controlPlaneSshAuthKey
-		values["vsphereEtcdSshAuthorizedKey"] = p.etcdSshAuthKey
+		values["cloudstackControlPlaneSshAuthorizedKey"] = p.controlPlaneSshAuthKey
+		values["cloudstackEtcdSshAuthorizedKey"] = p.etcdSshAuthKey
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(newClusterSpec, cpOpt)

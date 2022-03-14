@@ -267,13 +267,8 @@ func (r *CapiResourceFetcher) VSphereEtcdMachineTemplate(ctx context.Context, cs
 }
 
 func (r *CapiResourceFetcher) CloudStackCluster(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*cloudstackv1.CloudStackCluster, error) {
-	md, err := r.MachineDeployment(ctx, cs, wnc)
-	r.log.Info("Fetching CloudStackCluster", "objectKey", md.Spec.ClusterName)
-	if err != nil {
-		return nil, err
-	}
 	cloudStackCluster := &cloudstackv1.CloudStackCluster{}
-	err = r.FetchObjectByName(ctx, md.Spec.ClusterName, constants.EksaSystemNamespace, cloudStackCluster)
+	err := r.FetchObjectByName(ctx, cs.Name, constants.EksaSystemNamespace, cloudStackCluster)
 	if err != nil {
 		return nil, err
 	}
