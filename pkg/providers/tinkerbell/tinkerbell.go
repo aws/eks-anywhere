@@ -18,6 +18,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -45,6 +46,8 @@ var defaultClusterConfigMD string
 //go:embed config/machine-health-check-template.yaml
 var mhcTemplate []byte
 
+const defaultUsername = "ec2-user"
+
 var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
@@ -52,19 +55,18 @@ var (
 )
 
 type tinkerbellProvider struct {
-	clusterConfig          *v1alpha1.Cluster
-	datacenterConfig       *v1alpha1.TinkerbellDatacenterConfig
-	machineConfigs         map[string]*v1alpha1.TinkerbellMachineConfig
-	controlPlaneSshAuthKey string
-	workerSshAuthKey       string
-	etcdSshAuthKey         string
-	providerKubectlClient  ProviderKubectlClient
-	providerTinkClient     ProviderTinkClient
-	templateBuilder        *TinkerbellTemplateBuilder
-	skipIpCheck            bool
-	hardwareConfigFile     string
-	validator              *Validator
-	skipPowerActions       bool
+	clusterConfig         *v1alpha1.Cluster
+	datacenterConfig      *v1alpha1.TinkerbellDatacenterConfig
+	machineConfigs        map[string]*v1alpha1.TinkerbellMachineConfig
+	providerKubectlClient ProviderKubectlClient
+	providerTinkClient    ProviderTinkClient
+	templateBuilder       *TinkerbellTemplateBuilder
+	skipIpCheck           bool
+	hardwareConfigFile    string
+	validator             *Validator
+	skipPowerActions      bool
+	writer                filewriter.FileWriter
+	keyGenerator          SSHAuthKeyGenerator
 	// TODO: Update hardwareConfig to proper type
 }
 
@@ -90,11 +92,28 @@ type ProviderPbnjClient interface {
 	ValidateBMCSecretCreds(ctx context.Context, bmc pbnj.BmcSecretConfig) error
 }
 
-func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkbellClient TinkerbellClients, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string, skipPowerActions bool) *tinkerbellProvider {
+// KeyGenerator generates ssh keys and writes them to a FileWriter.
+type SSHAuthKeyGenerator interface {
+	GenerateSSHAuthKey(filewriter.FileWriter) (string, error)
+}
+
+func NewProvider(
+	datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
+	machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig,
+	clusterConfig *v1alpha1.Cluster,
+	writer filewriter.FileWriter,
+	providerKubectlClient ProviderKubectlClient,
+	providerTinkbellClient TinkerbellClients,
+	now types.NowFunc,
+	skipIpCheck bool,
+	hardwareConfigFile string,
+	skipPowerActions bool,
+) *tinkerbellProvider {
 	return NewProviderCustomDep(
 		datacenterConfig,
 		machineConfigs,
 		clusterConfig,
+		writer,
 		providerKubectlClient,
 		providerTinkbellClient.ProviderTinkClient,
 		providerTinkbellClient.ProviderPbnjClient,
@@ -106,7 +125,20 @@ func NewProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 	)
 }
 
-func NewProviderCustomDep(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerTinkClient ProviderTinkClient, pbnjClient ProviderPbnjClient, netClient networkutils.NetClient, now types.NowFunc, skipIpCheck bool, hardwareConfigFile string, skipPowerActions bool) *tinkerbellProvider {
+func NewProviderCustomDep(
+	datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
+	machineConfigs map[string]*v1alpha1.TinkerbellMachineConfig,
+	clusterConfig *v1alpha1.Cluster,
+	writer filewriter.FileWriter,
+	providerKubectlClient ProviderKubectlClient,
+	providerTinkClient ProviderTinkClient,
+	pbnjClient ProviderPbnjClient,
+	netClient networkutils.NetClient,
+	now types.NowFunc,
+	skipIpCheck bool,
+	hardwareConfigFile string,
+	skipPowerActions bool,
+) *tinkerbellProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
@@ -140,6 +172,12 @@ func NewProviderCustomDep(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig,
 		validator:          NewValidator(providerTinkClient, netClient, hardware.HardwareConfig{}, pbnjClient),
 		skipIpCheck:        skipIpCheck,
 		skipPowerActions:   skipPowerActions,
+		writer:             writer,
+
+		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
+		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch
+		// directly. This is very much a hack for testability.
+		keyGenerator: sshAuthKeyGenerator{},
 	}
 }
 
@@ -190,6 +228,68 @@ func (p *tinkerbellProvider) DeleteResources(ctx context.Context, clusterSpec *c
 	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx, eksaTinkerbellMachineResourceType, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
 }
 
+func ensureMachineConfigsHaveAtLeast1User(machines map[string]*v1alpha1.TinkerbellMachineConfig) {
+	for _, machine := range machines {
+		if len(machine.Spec.Users) == 0 {
+			machine.Spec.Users = []v1alpha1.UserConfiguration{{Name: defaultUsername}}
+		}
+	}
+}
+
+func extractUserConfigurationsWithoutSshKeys(machines map[string]*v1alpha1.TinkerbellMachineConfig) []*v1alpha1.UserConfiguration {
+	var users []*v1alpha1.UserConfiguration
+
+	for _, machine := range machines {
+		if len(machine.Spec.Users[0].SshAuthorizedKeys) == 0 || len(machine.Spec.Users[0].SshAuthorizedKeys[0]) == 0 {
+			users = append(users, &machine.Spec.Users[0])
+		}
+	}
+
+	return users
+}
+
+func applySshKeyToUsers(users []*v1alpha1.UserConfiguration, key string) {
+	for _, user := range users {
+		if len(user.SshAuthorizedKeys) == 0 {
+			user.SshAuthorizedKeys = make([]string, 1)
+		}
+
+		user.SshAuthorizedKeys[0] = key
+	}
+}
+
+func stripCommentsFromSshKeys(machines map[string]*v1alpha1.TinkerbellMachineConfig) error {
+	for _, machine := range machines {
+		key, err := common.StripSshAuthorizedKeyComment(machine.Spec.Users[0].SshAuthorizedKeys[0])
+		if err != nil {
+			return fmt.Errorf("TinkerbellMachineConfig name=%v: %v", machine.Name, err)
+		}
+		machine.Spec.Users[0].SshAuthorizedKeys[0] = key
+	}
+
+	return nil
+}
+
+func (p *tinkerbellProvider) configureSshKeys() error {
+	ensureMachineConfigsHaveAtLeast1User(p.machineConfigs)
+
+	users := extractUserConfigurationsWithoutSshKeys(p.machineConfigs)
+	if len(users) > 0 {
+		publicAuthorizedKey, err := p.keyGenerator.GenerateSSHAuthKey(p.writer)
+		if err != nil {
+			return err
+		}
+
+		applySshKeyToUsers(users, publicAuthorizedKey)
+	}
+
+	if err := stripCommentsFromSshKeys(p.machineConfigs); err != nil {
+		return fmt.Errorf("stripping ssh key comment: %v", err)
+	}
+
+	return nil
+}
+
 func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 
@@ -198,6 +298,10 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	}
 
 	tinkerbellClusterSpec := newSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+
+	if err := p.configureSshKeys(); err != nil {
+		return err
+	}
 
 	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
 		return err
@@ -214,16 +318,17 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return err
 	}
 
+	if err := p.validator.ValidateTinkerbellTemplate(ctx, tinkerbellClusterSpec.datacenterConfig.Spec.TinkerbellIP, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.controlPlaneMachineConfig().Spec.TemplateRef.Name]); err != nil {
+		return fmt.Errorf("failed validating control plane template config: %v", err)
+	}
+
+	if err := p.validator.ValidateTinkerbellTemplate(ctx, tinkerbellClusterSpec.datacenterConfig.Spec.TinkerbellIP, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.firstWorkerMachineConfig().Spec.TemplateRef.Name]); err != nil {
+		return fmt.Errorf("failed validating worker node template config: %v", err)
+	}
+
 	if err := p.validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(tinkerbellClusterSpec.Spec.Cluster.Spec); err != nil {
 		return fmt.Errorf("minimum hardware not available: %v", err)
 	}
-
-	p.controlPlaneSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
-	p.workerSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
-	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		p.etcdSshAuthKey = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
-	}
-	// TODO: Add more validations
 
 	if !p.skipIpCheck {
 		if err := p.validator.validateControlPlaneIpUniqueness(tinkerbellClusterSpec); err != nil {
@@ -410,7 +515,7 @@ func (p *tinkerbellProvider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.Tinkerbell.Version
 }
 
-func (p *tinkerbellProvider) EnvMap() (map[string]string, error) {
+func (p *tinkerbellProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 	// TODO: determine if any env vars are needed and add them to requiredEnvs
 	envMap := make(map[string]string)
 	for _, key := range requiredEnvs {
@@ -465,6 +570,18 @@ func (p *tinkerbellProvider) MachineConfigs() []providers.MachineConfig {
 			p.machineConfigs[workerMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
 		}
 	}
+
+	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
+		if etcdMachineName != controlPlaneMachineName {
+			configs = append(configs, p.machineConfigs[etcdMachineName])
+			if p.clusterConfig.IsManaged() {
+				p.machineConfigs[etcdMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
+			}
+		}
+	}
+
 	return configs
 }
 

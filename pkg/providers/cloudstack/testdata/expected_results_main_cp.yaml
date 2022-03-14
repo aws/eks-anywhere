@@ -37,6 +37,8 @@ spec:
     - network:
         Name: net1
       Name: zone1
+  domain: domain1
+  account: admin
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate

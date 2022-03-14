@@ -61,16 +61,15 @@ func StripSshAuthorizedKeyComment(key string) (string, error) {
 	return strings.TrimSpace(string(ssh.MarshalAuthorizedKey(public))), nil
 }
 
-func GenerateSSHAuthKey(username string, writer filewriter.FileWriter) (string, error) {
+func GenerateSSHAuthKey(writer filewriter.FileWriter) (string, error) {
 	privateKeyPath, sshAuthorizedKeyBytes, err := crypto.NewSshKeyPairUsingFileWriter(writer, privateKeyFileName, publicKeyFileName)
 	if err != nil {
-		return "", fmt.Errorf("error generating sshAuthorizedKey: %v", err)
+		return "", fmt.Errorf("generating ssh key pair: %v", err)
 	}
 
 	logger.Info(fmt.Sprintf(
-		"Private key saved to %[1]s. Use 'ssh -i %[1]s %s@<Node-IP-Address>' to login to your cluster node",
+		"Private key saved to %[1]s. Use 'ssh -i %[1]s <username>@<Node-IP-Address>' to login to your cluster node",
 		privateKeyPath,
-		username,
 	))
 
 	key := string(sshAuthorizedKeyBytes)

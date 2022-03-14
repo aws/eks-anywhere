@@ -700,6 +700,20 @@ spec:
         os: linux
         uri: public.ecr.aws/l0g8r8j6/fluxcd/source-controller:v0.12.1-eks-a-v0.0.0-dev-build.158
     kubeVersion: "1.21"
+    snow:
+      components:
+        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1641/cluster-api-provider-aws-snow/manifests/infrastructure-snow/unsure/infrastructure-components.yaml
+      kubeVip:
+        arch:
+        - amd64
+        description: Container image for kube-vip image
+        imageDigest: sha256:cf324971db7696810effd5c6c95e34b2c115893e1fbcaeb8877355dc74768ef1
+        name: kube-vip
+        os: linux
+        uri: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433
+      metadata:
+        uri: https://dev-release-prod-pdx.s3.amazonaws.com/artifacts/v0.0.0-dev-build.1641/cluster-api-provider-aws-snow/manifests/infrastructure-snow/unsure/metadata.yaml
+      version: v1.0.2
     tinkerbell:
       clusterAPIController:
         uri: public.ecr.aws/l0g8r8j6/tinkerbell/cluster-api-provider-tinkerbell:v0.1.0-eks-a-v0.0.0-dev-build.952

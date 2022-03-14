@@ -20,6 +20,7 @@ import (
 
 type hardwareOptions struct {
 	csvPath      string
+	outputPath   string
 	tinkerbellIp string
 	grpcPort     string
 	certPort     string
@@ -50,6 +51,7 @@ var generateHardwareCmd = &cobra.Command{
 func init() {
 	generateCmd.AddCommand(generateHardwareCmd)
 	generateHardwareCmd.Flags().StringVarP(&hOpts.csvPath, "filename", "f", "", "path to csv file")
+	generateHardwareCmd.Flags().StringVarP(&hOpts.outputPath, "output", "o", "", "directory path to output hardware files")
 	generateHardwareCmd.Flags().StringVar(&hOpts.tinkerbellIp, "tinkerbell-ip", "", "Tinkerbell stack IP, required unless --dry-run flag is set")
 	generateHardwareCmd.Flags().StringVar(&hOpts.grpcPort, "grpc-port", defaultGrpcPort, "Tinkerbell GRPC Authority port")
 	generateHardwareCmd.Flags().StringVar(&hOpts.certPort, "cert-port", defaultCertPort, "Tinkerbell Cert URL port")
@@ -81,14 +83,14 @@ func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
 
 	defer csv.Close()
 
-	json, err := hardware.NewJsonParser()
+	json, err := hardware.NewJsonParser(hOpts.outputPath)
 	if err != nil {
 		return err
 	}
 
 	defer json.CleanUp()
 
-	yaml, err := hardware.NewYamlParser()
+	yaml, err := hardware.NewYamlParser(hOpts.outputPath)
 	if err != nil {
 		return err
 	}

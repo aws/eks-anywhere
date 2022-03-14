@@ -204,6 +204,10 @@ func setupWebhooks(mgr ctrl.Manager) {
 		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.AWSIamConfigKind)
 		os.Exit(1)
 	}
+	if err := (&anywherev1.FluxConfig{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.FluxConfigKind)
+		os.Exit(1)
+	}
 }
 
 func setupChecks(mgr ctrl.Manager) {

@@ -407,7 +407,7 @@ func (p *provider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.Docker.Version
 }
 
-func (p *provider) EnvMap() (map[string]string, error) {
+func (p *provider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 	envMap := make(map[string]string)
 	if env, ok := os.LookupEnv(githubTokenEnvVar); ok && len(env) > 0 {
 		envMap[githubTokenEnvVar] = env

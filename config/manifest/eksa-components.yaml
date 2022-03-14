@@ -1937,6 +1937,35 @@ spec:
                               description: The image repository, name, and tag
                               type: string
                           type: object
+                        manager:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
                         metadata:
                           properties:
                             uri:
@@ -1948,6 +1977,7 @@ spec:
                       required:
                       - components
                       - kubeVip
+                      - manager
                       - metadata
                       - version
                       type: object
@@ -2866,7 +2896,6 @@ spec:
                   - bottlerocketBootstrap
                   - certManager
                   - cilium
-                  - cloudStack
                   - clusterAPI
                   - controlPlane
                   - docker
@@ -4899,6 +4928,27 @@ webhooks:
     - UPDATE
     resources:
     - clusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  - v1beta1
+  clientConfig:
+    service:
+      name: eksa-webhook-service
+      namespace: eksa-system
+      path: /validate-anywhere-eks-amazonaws-com-v1alpha1-fluxconfig
+  failurePolicy: Fail
+  name: validation.fluxconfig.anywhere.amazonaws.com
+  rules:
+  - apiGroups:
+    - anywhere.eks.amazonaws.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - fluxconfigs
   sideEffects: None
 - admissionReviewVersions:
   - v1
