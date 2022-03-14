@@ -9,7 +9,7 @@ description: >
 For each user that needs to create workload clusters, have the vSphere administrator create a VM and template folder.
 That folder will host:
 
-* The VMs of the Controlplane and Data plane nodes of each cluster.
+* The VMs of the Control plane and Data plane nodes of each cluster.
 * A nested folder for the management cluster and another one for each workload cluster.
 * Each cluster VM in its own nested folder under this folder.
 
