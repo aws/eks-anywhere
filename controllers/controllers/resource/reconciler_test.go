@@ -152,23 +152,13 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				if err := yaml.Unmarshal([]byte(machineDeploymentFile), machineDeployment); err != nil {
 					t.Errorf("unmarshalling machinedeployment failed: %v", err)
 				}
-				workerNodeMachineConfig := &anywherev1.VSphereMachineConfig{
-					Spec: anywherev1.VSphereMachineConfigSpec{
-						Users: []anywherev1.UserConfiguration{
-							{
-								Name:              "capv",
-								SshAuthorizedKeys: []string{"ssh-rsa ssh_key_value"},
-							},
-						},
-					},
-				}
 				fetcher.EXPECT().MachineDeployment(ctx, gomock.Any(), gomock.Any()).Return(machineDeployment, nil)
 
 				fetcher.EXPECT().Etcd(ctx, gomock.Any()).Return(etcdadmCluster, nil)
 				fetcher.EXPECT().ExistingVSphereDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.VSphereDatacenterConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingVSphereEtcdMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
-				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(workerNodeMachineConfig, nil)
+				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingWorkerNodeGroupConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.WorkerNodeGroupConfiguration{}, nil)
 				fetcher.EXPECT().VSphereCredentials(ctx).Return(&corev1.Secret{
 					Data: map[string][]byte{"username": []byte("username"), "password": []byte("password")},
@@ -264,18 +254,8 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 
 				existingVSMachine := &anywherev1.VSphereMachineConfig{}
 				existingVSMachine.Spec = machineSpec.Spec
-				workerNodeMachineConfig := &anywherev1.VSphereMachineConfig{
-					Spec: anywherev1.VSphereMachineConfigSpec{
-						Users: []anywherev1.UserConfiguration{
-							{
-								Name:              "capv",
-								SshAuthorizedKeys: []string{"ssh-rsa ssh_key_value"},
-							},
-						},
-					},
-				}
 				fetcher.EXPECT().ExistingVSphereControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
-				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(workerNodeMachineConfig, nil)
+				fetcher.EXPECT().ExistingVSphereWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.VSphereMachineConfig{}, nil)
 
 				kubeAdmControlPlane := &controlplanev1.KubeadmControlPlane{}
 				if err := yaml.Unmarshal([]byte(kubeadmcontrolplaneFile), kubeAdmControlPlane); err != nil {

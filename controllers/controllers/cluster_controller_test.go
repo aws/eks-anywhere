@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/golang/mock/gomock"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -156,10 +157,11 @@ func TestClusterReconcilerFailToSetUpMachineConfigCP(t *testing.T) {
 
 	datacenterConfig := createDataCenter(cluster)
 	bundle := createBundle(managementCluster)
+	eksd := createEksdRelease()
 	machineConfigCP := createCPMachineConfig()
 	machineConfigWN := createWNMachineConfig()
 
-	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, machineConfigCP, machineConfigWN, managementCluster}
+	objs := []runtime.Object{cluster, datacenterConfig, secret, bundle, eksd, machineConfigCP, machineConfigWN, managementCluster}
 
 	cb := fake.NewClientBuilder()
 	cl := cb.WithRuntimeObjects(objs...).Build()
@@ -264,6 +266,59 @@ func createCPMachineConfig() *anywherev1.VSphereMachineConfig {
 			},
 		},
 		Status: anywherev1.VSphereMachineConfigStatus{},
+	}
+}
+
+func createEksdRelease() *eksdv1alpha1.Release {
+	return &eksdv1alpha1.Release{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test",
+			Namespace: "eksa-system",
+		},
+		Status: eksdv1alpha1.ReleaseStatus{
+			Components: []eksdv1alpha1.Component{
+				{
+					Assets: []eksdv1alpha1.Asset{
+						{
+							Name:  "etcd-image",
+							Image: &eksdv1alpha1.AssetImage{},
+						},
+						{
+							Name:  "node-driver-registrar-image",
+							Image: &eksdv1alpha1.AssetImage{},
+						},
+						{
+							Name:  "livenessprobe-image",
+							Image: &eksdv1alpha1.AssetImage{},
+						},
+						{
+							Name:  "external-attacher-image",
+							Image: &eksdv1alpha1.AssetImage{},
+						},
+						{
+							Name:  "external-provisioner-image",
+							Image: &eksdv1alpha1.AssetImage{},
+						},
+						{
+							Name:  "pause-image",
+							Image: &eksdv1alpha1.AssetImage{},
+						},
+						{
+							Name:  "aws-iam-authenticator-image",
+							Image: &eksdv1alpha1.AssetImage{},
+						},
+						{
+							Name:  "coredns-image",
+							Image: &eksdv1alpha1.AssetImage{},
+						},
+						{
+							Name:  "kube-apiserver-image",
+							Image: &eksdv1alpha1.AssetImage{},
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
