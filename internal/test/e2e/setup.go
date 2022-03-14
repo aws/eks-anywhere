@@ -130,11 +130,18 @@ func (e *E2ESession) setup(regex string) error {
 	// Adding JobId to Test Env variables
 	e.testEnvVars[e2etests.JobIdVar] = e.jobId
 	e.testEnvVars[e2etests.BundlesOverrideVar] = strconv.FormatBool(e.bundlesOverride)
-	e.testEnvVars[e2etests.ClusterNameVar] = instanceId
 
 	if e.branchName != "" {
 		e.testEnvVars[e2etests.BranchNameEnvVar] = e.branchName
 	}
+
+	clusterNameTemplate := "%s-%s"
+	clusterName := fmt.Sprintf(clusterNameTemplate, e.branchName, instanceId)
+	if len(clusterName) > 80 {
+		logger.Info("Cluster name is longer than 80 characters; truncating to 80 characters.", "original cluster name", clusterName, "truncated cluster name", clusterName[:80])
+		clusterName = clusterName[:80]
+	}
+	e.testEnvVars[e2etests.ClusterNameVar] = clusterName
 	return nil
 }
 

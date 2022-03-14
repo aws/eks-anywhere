@@ -89,7 +89,7 @@ phases:
         false
       - >
         ./bin/test e2e cleanup vsphere
-        -n i-
+        -n ${BRANCH_NAME}
         -v 4
 reports:
   e2e-reports:
