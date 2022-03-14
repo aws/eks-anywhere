@@ -23,7 +23,7 @@ In your EKS Anywhere configuration file you will reference to a path under this 
 ### Add a vSphere folder
 Follow these steps to create the user's vSphere folder:
 
-1. In the vSphere Client, select the VM and Template tab.
+1. From vCenter, select the Menus/VM and Template tab.
 1. Select either a datacenter or another folder as a parent object for the folder that you want to create.
 1. Right-click the parent object and click New Folder.
 1. Enter a name for the folder and click OK.
