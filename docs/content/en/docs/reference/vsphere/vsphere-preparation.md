@@ -184,7 +184,6 @@ If the user creating the cluster has permission and network access to create and
 
 To build your own Ubuntu OVA template check the Building your own Ubuntu OVA section in the following [link]({{< relref "../artifacts/" >}}).
 
-## Tagging the Deployed OVA Template
 To use the deployed OVA template to create the VMs for the EKS Anywhere cluster, you have to tag it with specific values for the `os` and `eksdRelease` keys.
 The value of the `os` key is the operating system of the deployed OVA template, which is `ubuntu` in our scenario.
 The value of the `eksdRelease` holds `kubernetes` and the EKS-D release used in the deployed OVA template.
