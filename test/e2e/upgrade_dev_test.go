@@ -25,7 +25,7 @@ func TestVSphereKubernetes118To119CpVmNumCpuUpgrade(t *testing.T) {
 		v1alpha1.Kube119,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
-			vsphere.UpdateUbuntuTemplate119Var(),
+			framework.UpdateUbuntuTemplate119Var(),
 			vsphere2.WithControlPlaneVMsNumCPUs(vsphereCpVmNumCpuUpdateVar),
 		),
 	)
@@ -43,7 +43,7 @@ func TestVSphereKubernetes118To119CpVmMemoryUpgrade(t *testing.T) {
 		v1alpha1.Kube119,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
-			vsphere.UpdateUbuntuTemplate119Var(),
+			framework.UpdateUbuntuTemplate119Var(),
 			vsphere2.WithControlPlaneVMsMemoryMiB(vsphereCpVmMemoryUpdate),
 		),
 	)
@@ -61,7 +61,7 @@ func TestVSphereKubernetes118To119CpDiskGiBUpgrade(t *testing.T) {
 		v1alpha1.Kube119,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
-			vsphere.UpdateUbuntuTemplate119Var(),
+			framework.UpdateUbuntuTemplate119Var(),
 			vsphere2.WithControlPlaneDiskGiB(vsphereCpDiskGiBUpdateVar),
 		),
 	)
@@ -79,7 +79,7 @@ func TestVSphereKubernetes118To119WlVmNumCpuUpgrade(t *testing.T) {
 		v1alpha1.Kube119,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
-			vsphere.UpdateUbuntuTemplate119Var(),
+			framework.UpdateUbuntuTemplate119Var(),
 			vsphere2.WithWorkloadVMsNumCPUs(vsphereWlVmNumCpuUpdateVar),
 		),
 	)
@@ -97,7 +97,7 @@ func TestVSphereKubernetes118To119WlVmMemoryUpgrade(t *testing.T) {
 		v1alpha1.Kube119,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
-			vsphere.UpdateUbuntuTemplate119Var(),
+			framework.UpdateUbuntuTemplate119Var(),
 			vsphere2.WithWorkloadVMsMemoryMiB(vsphereWlVmMemoryUpdate),
 		),
 	)
@@ -115,7 +115,7 @@ func TestVSphereKubernetes118To119WlDiskGiBUpgrade(t *testing.T) {
 		v1alpha1.Kube119,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
-			vsphere.UpdateUbuntuTemplate119Var(),
+			framework.UpdateUbuntuTemplate119Var(),
 			vsphere2.WithWorkloadDiskGiB(vsphereWlDiskGiBUpdate),
 		),
 	)
@@ -133,7 +133,7 @@ func TestVSphereKubernetes118To119FolderUpgrade(t *testing.T) {
 		v1alpha1.Kube119,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
-			vsphere.UpdateUbuntuTemplate119Var(),
+			framework.UpdateUbuntuTemplate119Var(),
 			vsphere2.WithFolder(vsphereFolderUpdateVar),
 		),
 	)
@@ -151,7 +151,7 @@ func TestVSphereKubernetes118To119Network1to2Upgrade(t *testing.T) {
 		v1alpha1.Kube119,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
-			vsphere.UpdateUbuntuTemplate119Var(),
+			framework.UpdateUbuntuTemplate119Var(),
 			vsphere2.WithNetwork(vsphereNetwork2UpdateVar),
 		),
 	)
@@ -169,14 +169,14 @@ func TestVSphereKubernetes118To119Network1to3Upgrade(t *testing.T) {
 		v1alpha1.Kube119,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
-			vsphere.UpdateUbuntuTemplate119Var(),
+			framework.UpdateUbuntuTemplate119Var(),
 			vsphere2.WithNetwork(vsphereNetwork3UpdateVar),
 		),
 	)
 }
 
 func TestCloudStackKubernetes120To121CpComputeOfferingUpgrade(t *testing.T) {
-	t.Skip("Skipping CloudStack in CI/CD")
+	//t.Skip("Skipping CloudStack in CI/CD")
 	provider := framework.NewCloudStack(t, framework.WithRedhat120())
 	test := framework.NewE2ETest(
 		t,

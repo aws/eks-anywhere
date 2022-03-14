@@ -152,7 +152,7 @@ func TestCloudStackKubernetes120SimpleFlow(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121SimpleFlow(t *testing.T) {
-	t.Skip("Skipping CloudStack in CI/CD")
+	//t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithRedhat121()),

@@ -4,10 +4,8 @@
 package cloudstack
 
 import (
-	"context"
 	"testing"
 
-	cloudstack "github.com/aws/eks-anywhere/internal/pkg/api/cloudstack"
 	"github.com/aws/eks-anywhere/test/framework/cloudstack"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
@@ -20,7 +18,7 @@ func runAutoImportFlow(test *framework.ClusterE2ETest, provider *cloudstack.Clou
 	test.CreateCluster()
 	templates := getMachineConfigs(test)
 	test.DeleteCluster()
-	deleteTemplates(test, provider, templates)
+	//deleteTemplates(test, provider, templates)
 }
 
 func getMachineConfigs(test *framework.ClusterE2ETest) map[string]v1alpha1.CloudStackMachineConfig {
@@ -34,16 +32,16 @@ func getMachineConfigs(test *framework.ClusterE2ETest) map[string]v1alpha1.Cloud
 	return uniqueMachineConfigs
 }
 
-func deleteTemplates(test *framework.ClusterE2ETest, provider *cloudstack.CloudStack, machineConfigs map[string]v1alpha1.CloudStackMachineConfig) {
-	ctx := context.Background()
-	for _, machineConfig := range machineConfigs {
-		test.T.Logf("Deleting cloudStack template: %s", machineConfig.Spec.Template)
-		err := provider.GovcClient.DeleteTemplate(ctx, machineConfig.Spec.ResourcePool, machineConfig.Spec.Template)
-		if err != nil {
-			test.T.Errorf("Failed deleting template [%s]: %v", machineConfig.Spec.Template, err)
-		}
-	}
-}
+//func deleteTemplates(test *framework.ClusterE2ETest, provider *cloudstack.CloudStack, machineConfigs map[string]v1alpha1.CloudStackMachineConfig) {
+//	ctx := context.Background()
+//	for _, machineConfig := range machineConfigs {
+//		test.T.Logf("Deleting cloudStack template: %s", machineConfig.Spec.Template)
+//		err := provider.GovcClient.DeleteTemplate(ctx, machineConfig.Spec.ResourcePool, machineConfig.Spec.Template)
+//		if err != nil {
+//			test.T.Errorf("Failed deleting template [%s]: %v", machineConfig.Spec.Template, err)
+//		}
+//	}
+//}
 
 func TestCloudStackKubernetes120RedhatAutoimport(t *testing.T) {
 	t.Skip("Skipping CloudStack in CI/CD")
