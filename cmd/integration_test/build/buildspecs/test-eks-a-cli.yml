@@ -87,6 +87,10 @@ phases:
         "linux,darwin"
         "amd64"
         false
+      - >
+        ./bin/test e2e cleanup vsphere
+        -n i-
+        -v 4
 reports:
   e2e-reports:
     files:

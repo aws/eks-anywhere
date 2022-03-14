@@ -615,7 +615,7 @@ func (p *cloudstackProvider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.CloudStack.Version
 }
 
-func (p *cloudstackProvider) EnvMap() (map[string]string, error) {
+func (p *cloudstackProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 	envMap := make(map[string]string)
 	for _, key := range requiredEnvs {
 		if env, ok := os.LookupEnv(key); ok && len(env) > 0 {
