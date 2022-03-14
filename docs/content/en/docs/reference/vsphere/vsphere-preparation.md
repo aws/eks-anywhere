@@ -169,7 +169,7 @@ If the user creating the cluster has permission and network access to create and
 
 ### Steps to deploy the Ubuntu OVA
 1. Go to the [artifacts]({{< relref "../artifacts/" >}}) page and download the OVA template with the newest EKS-D Kubernetes release to your computer.
-1. Log in with the vSphere Client to the vCenter Server.
+1. Log in to the vCenter Server.
 1. Right-click the folder you created above and select Deploy OVF Template.
    The Deploy OVF Template wizard opens.
 1. On the Select an OVF template page, select the Local file option, specify the location of the OVA template you downloaded to your computer, and click Next.
