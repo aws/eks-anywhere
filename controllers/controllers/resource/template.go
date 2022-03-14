@@ -84,12 +84,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		if err != nil {
 			return nil, err
 		}
-		vmc := workerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
-		oldVmc, err := r.ExistingVSphereWorkerMachineConfig(ctx, eksaCluster, workerNodeGroupConfiguration)
-		if err != nil {
-			return nil, err
-		}
-		if vsphere.NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, oldWn, oldVmc, &vmc) {
+		if vsphere.NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, oldWn) {
 			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterName, workerNodeGroupConfiguration.Name, r.now)
 		} else {
 			md, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
@@ -100,6 +95,11 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = workloadKubeadmConfigTemplateName
 		}
 
+		vmc := workerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		oldVmc, err := r.ExistingVSphereWorkerMachineConfig(ctx, eksaCluster, workerNodeGroupConfiguration)
+		if err != nil {
+			return nil, err
+		}
 		updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, oldVmc, &vmc)
 		if updateWorkloadTemplate {
 			workloadTemplateName := common.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name, r.now)
