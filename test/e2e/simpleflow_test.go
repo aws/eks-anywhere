@@ -16,7 +16,7 @@ import (
 )
 
 func init() {
-	if err := logger.InitZap(4, logger.WithName("e2e")); err != nil {
+	if err := logger.InitZap(9, logger.WithName("e2e")); err != nil {
 		log.Fatal(fmt.Errorf("failed init zap logger for e2e tests: %v", err))
 	}
 }
@@ -142,7 +142,6 @@ func TestVSphereKubernetes120BottleRocketDifferentNamespaceSimpleFlow(t *testing
 }
 
 func TestCloudStackKubernetes120SimpleFlow(t *testing.T) {
-	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithRedhat120()),
@@ -152,7 +151,6 @@ func TestCloudStackKubernetes120SimpleFlow(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121SimpleFlow(t *testing.T) {
-	//t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithRedhat121()),
@@ -162,7 +160,6 @@ func TestCloudStackKubernetes121SimpleFlow(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121DifferentNamespaceSimpleFlow(t *testing.T) {
-	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithRedhat121(), framework.WithCloudStackFillers(api.WithCloudStackConfigNamespace(clusterNamespace))),

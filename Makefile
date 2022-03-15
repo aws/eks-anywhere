@@ -122,7 +122,7 @@ EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-rel
 
 DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow
 LOCAL_E2E_TESTS ?= $(DOCKER_E2E_TEST)
-CLOUDSTACK_E2E_TEST := TestCloudStackKubernetes121SimpleFlow
+CLOUDSTACK_E2E_TEST := TestCloudStackKubernetes120StackedEtcdRedhat
 
 export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.21.x
 
@@ -530,11 +530,11 @@ docker-build:
 
 .PHONY: docker-build-core
 docker-build-core: docker-pull-prerequisites ## Build the docker image for controller-manager
-	DOCKER_BUILDKIT=1 docker build --build-arg ARCH=$(ARCH) --build-arg ldflags="$(LDFLAGS)" . -t CONTROLLER_IMG_TAGGED -f build/Dockerfile
+	DOCKER_BUILDKIT=1 docker build --build-arg ARCH=$(ARCH) --build-arg ldflags="$(LDFLAGS)" . -t $(CONTROLLER_IMG_TAGGED) -f build/Dockerfile
 
 .PHONY: docker-push
 docker-push: ## Push the docker image
-	docker push CONTROLLER_IMG_TAGGED
+	docker push $(CONTROLLER_IMG_TAGGED)
 
 .PHONY: docker-pull-prerequisites
 docker-pull-prerequisites:
