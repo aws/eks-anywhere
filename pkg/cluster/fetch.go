@@ -65,10 +65,7 @@ func GetEksdReleaseForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bu
 	if err != nil {
 		return nil, fmt.Errorf("failed fetching versions bundle: %v", err)
 	}
-	eksd, err := fetch(ctx, versionsBundle.EksD.Name, constants.EksaSystemNamespace)
-	if err != nil {
-		return nil, fmt.Errorf("failed fetching EKS-D release for cluster: %v", err)
-	}
+	eksd, _ := fetch(ctx, versionsBundle.EksD.Name, constants.EksaSystemNamespace)
 
 	return eksd, nil
 }
