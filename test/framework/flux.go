@@ -10,18 +10,18 @@ import (
 	"strings"
 	"time"
 
-	"sigs.k8s.io/yaml"
-
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/clustermarshaller"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
-	"github.com/aws/eks-anywhere/pkg/templater"
+	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 const (
@@ -254,17 +254,17 @@ func (e *ClusterE2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Contex
 		vsphereMachineConfigs[workerName].Spec.NumCPUs = 1
 
 		// update replica
-		clusterConfig, err := v1alpha1.GetClusterConfig(clusterConfGitPath)
+		clusterSpec, err := e.clusterSpecFromGit()
 		if err != nil {
 			return err
 		}
-		clusterConfig.Spec.WorkerNodeGroupConfigurations[0].Count += 1
+		clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count += 1
 
 		providerConfig := providerConfig{
 			datacenterConfig: vsphereClusterConfig,
 			machineConfigs:   e.convertVSphereMachineConfigs(cpName, workerName, etcdName, vsphereMachineConfigs),
 		}
-		_, err = e.updateEKSASpecInGit(clusterConfig, providerConfig)
+		_, err = e.updateEKSASpecInGit(clusterSpec, providerConfig)
 		if err != nil {
 			return err
 		}
@@ -438,13 +438,13 @@ func (e *ClusterE2ETest) updateWorkerNodeCountValue(newValue int) (string, error
 	}
 	e.T.Logf("Updating workerNodeGroupConfiguration count to new value %d", newValue)
 
-	clusterConfig, err := v1alpha1.GetClusterConfig(clusterConfGitPath)
+	clusterSpec, err := e.clusterSpecFromGit()
 	if err != nil {
 		return "", err
 	}
-	clusterConfig.Spec.WorkerNodeGroupConfigurations[0].Count = newValue
+	clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count = newValue
 
-	p, err := e.updateEKSASpecInGit(clusterConfig, *providerConfig)
+	p, err := e.updateEKSASpecInGit(clusterSpec, *providerConfig)
 	if err != nil {
 		return "", err
 	}
@@ -606,8 +606,8 @@ func (e *ClusterE2ETest) waitForWorkerScaling(targetvalue int) error {
 	})
 }
 
-func (e *ClusterE2ETest) updateEKSASpecInGit(c *v1alpha1.Cluster, providersConfig providerConfig) (string, error) {
-	p, err := e.writeEKSASpec(c, providersConfig.datacenterConfig, providersConfig.machineConfigs)
+func (e *ClusterE2ETest) updateEKSASpecInGit(s *cluster.Spec, providersConfig providerConfig) (string, error) {
+	p, err := e.writeEKSASpec(s, providersConfig.datacenterConfig, providersConfig.machineConfigs)
 	if err != nil {
 		return "", err
 	}
@@ -631,26 +631,11 @@ func (e *ClusterE2ETest) pushConfigChanges() error {
 }
 
 // todo: reuse logic in clustermanager to template resources
-func (e *ClusterE2ETest) writeEKSASpec(c *v1alpha1.Cluster, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (path string, err error) {
-	clusterObj, err := yaml.Marshal(c)
+func (e *ClusterE2ETest) writeEKSASpec(s *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (path string, err error) {
+	resourcesSpec, err := clustermarshaller.MarshalClusterSpec(s, datacenterConfig, machineConfigs)
 	if err != nil {
-		return "", fmt.Errorf("error outputting cluster yaml: %v", err)
+		return "", err
 	}
-
-	datacenterObj, err := yaml.Marshal(datacenterConfig)
-	if err != nil {
-		return "", fmt.Errorf("error outputting datacenter yaml: %v", err)
-	}
-	resources := [][]byte{clusterObj, datacenterObj}
-	for _, m := range machineConfigs {
-		mObj, err := yaml.Marshal(m)
-		if err != nil {
-			return "", fmt.Errorf("error outputting machine yaml: %v", err)
-		}
-		resources = append(resources, mObj)
-	}
-	resourcesSpec := templater.AppendYamlResources(resources...)
-
 	p := e.clusterConfGitPath()
 
 	e.T.Logf("writing cluster config to path %s", p)
@@ -679,6 +664,17 @@ func (e *ClusterE2ETest) clusterConfGitPath() string {
 
 func (e *ClusterE2ETest) clusterConfigGitPath() string {
 	return filepath.Join(e.GitWriter.Dir(), e.clusterConfGitPath())
+}
+
+func (e *ClusterE2ETest) clusterSpecFromGit() (*cluster.Spec, error) {
+	s, err := cluster.NewSpecFromClusterConfig(
+		e.clusterConfigGitPath(),
+		version.Info{GitVersion: "v0.0.0-dev"},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("unable to build spec from git: %v", err)
+	}
+	return s, nil
 }
 
 func RequiredFluxEnvVars() []string {
