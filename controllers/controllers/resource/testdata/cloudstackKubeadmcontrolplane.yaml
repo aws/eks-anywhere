@@ -93,7 +93,7 @@ spec:
       - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
     useExperimentalRetryJoin: true
     users:
-      - name: capv
+      - name: capc
         sshAuthorizedKeys:
           - 'ssh-rsa ssh_key_value'
         sudo: ALL=(ALL) NOPASSWD:ALL

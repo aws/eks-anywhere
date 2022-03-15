@@ -97,6 +97,10 @@ spec:
         local:
           imageRepository: {{.etcdRepository}}
           imageTag: {{.etcdImageTag}}
+{{- if .etcdExtraArgs }}
+          extraArgs:
+{{ .etcdExtraArgs.ToYaml | indent 12 }}
+{{- end }}
 {{- end }}
       dns:
         imageRepository: {{.corednsRepository}}
@@ -143,9 +147,15 @@ spec:
         extraArgs:
           cloud-provider: external
           profiling: "false"
+{{- if .controllermanagerExtraArgs }}
+{{ .controllermanagerExtraArgs.ToYaml | indent 10 }}
+{{- end }}
       scheduler:
         extraArgs:
           profiling: "false"
+{{- if .schedulerExtraArgs }}
+{{ .schedulerExtraArgs.ToYaml | indent 10 }}
+{{- end }}
     files:
 {{- if .cloudstackKubeVip}}
     - content: |
@@ -271,7 +281,23 @@ spec:
           provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
           read-only-port: "0"
           anonymous-auth: "false"
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
         name: '{{`{{ ds.meta_data.local_hostname }}`}}'
+{{- if .controlPlaneTaints }}
+        taints:
+{{- range .controlPlaneTaints}}
+        - key: {{ .Key }}
+          value: {{ .Value }}
+          effect: {{ .Effect }}
+{{- if .TimeAdded }}
+          timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- else}}
+        taints: []
+{{- end }}
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -279,7 +305,23 @@ spec:
           provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
           read-only-port: "0"
           anonymous-auth: "false"
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 10 }}
+{{- end }}
         name: '{{`{{ ds.meta_data.local_hostname }}`}}'
+{{- if .controlPlaneTaints }}
+        taints:
+{{- range .controlPlaneTaints}}
+        - key: {{ .Key }}
+          value: {{ .Value }}
+          effect: {{ .Effect }}
+{{- if .TimeAdded }}
+          timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- else}}
+        taints: []
+{{- end }}
     preKubeadmCommands:
     - swapoff -a
 {{- if.registryMirrorConfiguration }}
@@ -325,6 +367,9 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{`{{ ds.meta_data.local_hostname }}`}}" >>/etc/hosts
     - echo "{{`{{ ds.meta_data.local_hostname }}`}}" >/etc/hostname
+{{- if .etcdCipherSuites }}
+    cipherSuites: {{.etcdCipherSuites}}
+{{- end }}
     users:
     - name: {{.etcdSshUsername}}
       sshAuthorizedKeys:
