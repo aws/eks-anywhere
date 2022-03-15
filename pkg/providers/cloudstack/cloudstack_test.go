@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -790,48 +791,40 @@ func TestChangeDiffWithChange(t *testing.T) {
 	assert.Equal(t, wantDiff, provider.ChangeDiff(clusterSpec, newClusterSpec))
 }
 
-//func TestCloudStackProviderRunPostUpgrade(t *testing.T) {
-//	tt := newProviderTest(t)
-//
-//	tt.resourceSetManager.EXPECT().ForceUpdate(tt.ctx, "test-crs-0", "eksa-system", tt.managementCluster, tt.workloadCluster)
-//
-//	tt.Expect(tt.provider.RunPostUpgrade(tt.ctx, tt.clusterSpec, tt.managementCluster, tt.workloadCluster)).To(Succeed())
-//}
-//
-//func TestProviderUpgradeNeeded(t *testing.T) {
-//	testCases := []struct {
-//		testName               string
-//		newManager, oldManager string
-//		newKubeVip, oldKubeVip string
-//		want                   bool
-//	}{
-//		{
-//			testName:   "different manager",
-//			newManager: "a", oldManager: "b",
-//			want: true,
-//		},
-//		{
-//			testName:   "different kubevip",
-//			newKubeVip: "a", oldKubeVip: "b",
-//			want: true,
-//		},
-//	}
-//
-//	for _, tt := range testCases {
-//		t.Run(tt.testName, func(t *testing.T) {
-//			provider := givenProvider(t)
-//			clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-//				s.VersionsBundle.CloudStack.Manager.ImageDigest = tt.oldManager
-//				s.VersionsBundle.CloudStack.KubeVip.ImageDigest = tt.oldKubeVip
-//			})
-//
-//			newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-//				s.VersionsBundle.CloudStack.Manager.ImageDigest = tt.newManager
-//				s.VersionsBundle.CloudStack.KubeVip.ImageDigest = tt.newKubeVip
-//			})
-//
-//			g := NewWithT(t)
-//			g.Expect(provider.UpgradeNeeded(context.Background(), clusterSpec, newClusterSpec)).To(Equal(tt.want))
-//		})
-//	}
-//}
+func TestProviderUpgradeNeeded(t *testing.T) {
+	testCases := []struct {
+		testName               string
+		newManager, oldManager string
+		newKubeVip, oldKubeVip string
+		want                   bool
+	}{
+		{
+			testName:   "different manager",
+			newManager: "a", oldManager: "b",
+			want: true,
+		},
+		{
+			testName:   "different kubevip",
+			newKubeVip: "a", oldKubeVip: "b",
+			want: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			provider := givenProvider(t)
+			clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundle.CloudStack.ClusterAPIController.ImageDigest = tt.oldManager
+				s.VersionsBundle.CloudStack.KubeVip.ImageDigest = tt.oldKubeVip
+			})
+
+			newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundle.CloudStack.ClusterAPIController.ImageDigest = tt.newManager
+				s.VersionsBundle.CloudStack.KubeVip.ImageDigest = tt.newKubeVip
+			})
+
+			g := NewWithT(t)
+			g.Expect(provider.UpgradeNeeded(context.Background(), clusterSpec, newClusterSpec)).To(Equal(tt.want))
+		})
+	}
+}
