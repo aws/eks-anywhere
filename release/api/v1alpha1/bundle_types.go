@@ -298,6 +298,7 @@ type HaproxyBundle struct {
 
 type SnowBundle struct {
 	Version    string   `json:"version"`
+	Manager    Image    `json:"manager"`
 	KubeVip    Image    `json:"kubeVip"`
 	Components Manifest `json:"components"`
 	Metadata   Manifest `json:"metadata"`

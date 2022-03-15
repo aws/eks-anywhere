@@ -239,6 +239,20 @@ func (mr *MockClusterManagerMockRecorder) InstallCustomComponents(arg0, arg1, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallCustomComponents", reflect.TypeOf((*MockClusterManager)(nil).InstallCustomComponents), arg0, arg1, arg2)
 }
 
+// InstallEksdComponents mocks base method.
+func (m *MockClusterManager) InstallEksdComponents(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InstallEksdComponents", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InstallEksdComponents indicates an expected call of InstallEksdComponents.
+func (mr *MockClusterManagerMockRecorder) InstallEksdComponents(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallEksdComponents", reflect.TypeOf((*MockClusterManager)(nil).InstallEksdComponents), arg0, arg1, arg2)
+}
+
 // InstallMachineHealthChecks mocks base method.
 func (m *MockClusterManager) InstallMachineHealthChecks(arg0 context.Context, arg1 *types.Cluster, arg2 providers.Provider) error {
 	m.ctrl.T.Helper()

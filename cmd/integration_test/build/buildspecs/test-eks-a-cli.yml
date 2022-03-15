@@ -6,7 +6,7 @@ env:
     INTEGRATION_TEST_MAX_CONCURRENT_TEST_COUNT: 30
     T_VSPHERE_CIDR: "198.18.128.0/17"
     T_VSPHERE_PRIVATE_NETWORK_CIDR: "197.18.128.0/17"
-    SKIPPED_TESTS: "TestTinkerbellKubernetes120SimpleFlow,TestTinkerbellKubernetes121SimpleFlow"
+    SKIPPED_TESTS: "TestTinkerbellKubernetes120SimpleFlow,TestTinkerbellKubernetes121ThreeReplicasTwoWorkersSimpleFlow,TestTinkerbellKubernetes121DellSimpleFlow,TestTinkerbellKubernetes121HPSimpleFlow,TestTinkerbellKubernetes121SuperMicroSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdSimpleFlow,TestTinkerbellKubernetes121ExternalEtcdThreeReplicasTwoWorkersSimpleFlow"
   secrets-manager:
     EKSA_VSPHERE_USERNAME: "vsphere_ci_beta_connection:vsphere_username"
     EKSA_VSPHERE_PASSWORD: "vsphere_ci_beta_connection:vsphere_password"
@@ -87,6 +87,10 @@ phases:
         "linux,darwin"
         "amd64"
         false
+      - >
+        ./bin/test e2e cleanup vsphere
+        -n ${BRANCH_NAME}
+        -v 4
 reports:
   e2e-reports:
     files:

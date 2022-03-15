@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
@@ -174,6 +175,23 @@ func (v *Validator) ValidateBMCSecretCreds(ctx context.Context, hc hardware.Hard
 		}
 		if err := v.pbnj.ValidateBMCSecretCreds(ctx, bmcInfo); err != nil {
 			return fmt.Errorf("failed validating Hardware BMC credentials for the node %s, host %s : %v", hc.Hardwares[index].Name, bmcInfo.Host, err)
+		}
+	}
+
+	return nil
+}
+
+func (v *Validator) ValidateTinkerbellTemplate(ctx context.Context, tinkerbellIp string, templateConfig *v1alpha1.TinkerbellTemplateConfig) error {
+	for _, task := range templateConfig.Spec.Template.Tasks {
+		for _, action := range task.Actions {
+			// check if the metadata_url provided by the user is valid or not
+			// TODO(pjshah):: add more validations around metadata_url field and parse
+			if action.Name == "add-tink-cloud-init-config" {
+				metadataUrl := fmt.Sprintf("http://%s:50061", tinkerbellIp)
+				if !strings.Contains(action.Environment["CONTENTS"], metadataUrl) {
+					return fmt.Errorf("failed validating metadata_url, template metadata_url should be set to %s", metadataUrl)
+				}
+			}
 		}
 	}
 
