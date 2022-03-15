@@ -16,15 +16,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
-const (
-	yamlDirectory        = "hardware-manifests"
-	yamlFile             = "hardware.yaml"
-	hardwareKind         = "Hardware"
-	bmcKind              = "BMC"
-	secretKind           = "Secret"
-	tinkerbellApiVersion = "tinkerbell.org/v1alpha1"
-	moveLabel            = "clusterctl.cluster.x-k8s.io/move"
-)
+const moveLabel = "clusterctl.cluster.x-k8s.io/move"
 
 var yamlSeparator = []byte("---\n")
 
