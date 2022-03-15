@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"path"
 	"path/filepath"
+	"sigs.k8s.io/cluster-api/api/v1beta1"
 	"strings"
 	"time"
 
@@ -593,11 +594,12 @@ func (e *ClusterE2ETest) waitForWorkerScaling(targetvalue int) error {
 			return err
 		}
 
+
 		for _, d := range md {
 			r := int(d.Status.Replicas)
-			if r != targetvalue {
-				e.T.Logf("Waiting for worker node MachineDeployment %s replicas to scale; target: %d, actual: %d", d.Name, targetvalue, r)
-				return fmt.Errorf(" MachineDeployment %s replicas are not at desired scale; target: %d, actual: %d", d.Name, targetvalue, r)
+			if r != targetvalue || d.Status.Phase == v1beta1.ScalingUpReason || d.Status.Phase == v1beta1.ScalingDownReason {
+				e.T.Logf("Waiting for worker node MachineDeployment %s to scale; phase: %s, desired replicas: %d, actual replicas: %d", d.Status.Phase, d.Name, targetvalue, r)
+				return fmt.Errorf(" MachineDeployment %s has not scaled; phase: %s, desired replicas: %d, actual replicas: %d", d.Status.Phase, d.Name, targetvalue, r)
 			}
 			e.T.Logf("Worker node MachineDeployment %s Ready replicas have reached target scale %d", d.Name, r)
 		}
