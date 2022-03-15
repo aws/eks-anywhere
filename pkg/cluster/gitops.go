@@ -22,6 +22,22 @@ func gitOpsEntry() *ConfigManagerEntry {
 			},
 			SetDefaultFluxGitHubConfigPath,
 		},
+		Validations: []Validation{
+			func(c *Config) error {
+				if c.GitOpsConfig != nil {
+					return c.GitOpsConfig.Validate()
+				}
+				return nil
+			},
+			func(c *Config) error {
+				if c.GitOpsConfig != nil {
+					if err := validateSameNamespace(c, c.GitOpsConfig); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+		},
 	}
 }
 
