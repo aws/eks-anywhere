@@ -18,7 +18,7 @@ To prepare a VMware vSphere environment to run EKS Anywhere, you need the follow
 * [DHCP service]({{< relref "./vsphere-dhcp/" >}}) running in vSphere environment in the primary VM network for your workload cluster
 * One network in vSphere to use for the cluster. This network must have inbound access into vCenter
 * An [OVA]({{< relref "./vsphere-ovas/" >}}) imported into vSphere and converted into a template for the workload VMs
-* User credentials to [create VMs and attach networks, etc]({{< relref "./user-permissions/" >}})
+* User credentials to create VMs and attach networks, etc
 * One IP address routable from cluster but excluded from DHCP offering. 
   This IP address is to be used as the [Control Plane Endpoint IP or kube-vip VIP address]({{< relref "../clusterspec/vsphere/#controlplaneconfigurationendpointhost-required" >}})
 
