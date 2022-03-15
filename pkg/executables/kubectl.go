@@ -1427,20 +1427,3 @@ func (k *Kubectl) GetPackageBundles(ctx context.Context, opts ...KubectlOpt) (*a
 	}
 	return obj, nil
 }
-
-func (k *Kubectl) GetPackages(ctx context.Context, opts ...KubectlOpt) (*api.PackageList, error) {
-	params := []string{
-		"get", "packages",
-	}
-	applyOpts(&params, opts...)
-	stdOut, err := k.Execute(ctx, params...)
-	obj := &api.PackageList{}
-	if err != nil {
-		return nil, fmt.Errorf("error getting packages with kubectl: %v", err)
-	}
-
-	if err = json.Unmarshal(stdOut.Bytes(), obj); err != nil {
-		return nil, fmt.Errorf("error parsing packages response: %v", err)
-	}
-	return obj, nil
-}
