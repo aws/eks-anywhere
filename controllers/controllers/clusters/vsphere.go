@@ -300,7 +300,7 @@ func (v *VSphereClusterReconciler) reconcileExtraObjects(ctx context.Context, cl
 
 func (v *VSphereClusterReconciler) getCAPICluster(ctx context.Context, cluster *anywherev1.Cluster) (*clusterv1.Cluster, reconciler.Result, error) {
 	capiCluster := &clusterv1.Cluster{}
-	capiClusterName := types.NamespacedName{Namespace: "eksa-system", Name: cluster.Name}
+	capiClusterName := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: cluster.Name}
 	v.Log.Info("Searching for CAPI cluster", "name", cluster.Name)
 	if err := v.Client.Get(ctx, capiClusterName, capiCluster); err != nil {
 		return nil, reconciler.Result{Result: &ctrl.Result{

@@ -26,6 +26,7 @@
       - patch
       - update
       - watch
+      - delete
 - op: add
   path: /rules/-
   value:
@@ -95,6 +96,7 @@
       - update
       - watch
       - create
+      - delete
 - op: add
   path: /rules/-
   value:

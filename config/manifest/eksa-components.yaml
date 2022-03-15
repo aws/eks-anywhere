@@ -4496,6 +4496,7 @@ rules:
   - patch
   - update
   - watch
+  - delete
 - apiGroups:
   - controlplane.cluster.x-k8s.io
   resources:
@@ -4553,6 +4554,7 @@ rules:
   - update
   - watch
   - create
+  - delete
 - apiGroups:
   - etcdcluster.cluster.x-k8s.io
   resources:
