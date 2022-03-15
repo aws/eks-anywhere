@@ -7,9 +7,10 @@ import (
 	"io/ioutil"
 	"path"
 	"path/filepath"
-	"sigs.k8s.io/cluster-api/api/v1beta1"
 	"strings"
 	"time"
+
+	"sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/test"
@@ -593,7 +594,6 @@ func (e *ClusterE2ETest) waitForWorkerScaling(targetvalue int) error {
 		if err != nil {
 			return err
 		}
-
 
 		for _, d := range md {
 			r := int(d.Status.Replicas)
