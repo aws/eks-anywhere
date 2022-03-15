@@ -11,7 +11,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
@@ -29,6 +28,11 @@ const (
 	backOffPeriod              = 5 * time.Second
 )
 
+var (
+	snowDatacenterResourceType = fmt.Sprintf("snowdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+	snowMachineResourceType    = fmt.Sprintf("snowmachineconfigs.%s", v1alpha1.GroupVersion.Group)
+)
+
 type snowProvider struct {
 	// TODO: once cluster.config is available, remove below objs
 	datacenterConfig      *v1alpha1.SnowDatacenterConfig
@@ -41,8 +45,8 @@ type snowProvider struct {
 }
 
 type ProviderKubectlClient interface {
-	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
-	CreateDockerRegistrySecret(ctx context.Context, secretName string, dockerServer, dockerUsername, dockerPassword string, opts ...executables.KubectlOpt) error
+	DeleteEksaDatacenterConfig(ctx context.Context, snowDatacenterResourceType string, snowDatacenterConfigName string, kubeconfigFile string, namespace string) error
+	DeleteEksaMachineConfig(ctx context.Context, snowMachineResourceType string, snowMachineConfigName string, kubeconfigFile string, namespace string) error
 }
 
 func NewProvider(datacenterConfig *v1alpha1.SnowDatacenterConfig, machineConfigs map[string]*v1alpha1.SnowMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc) *snowProvider {
@@ -61,10 +65,27 @@ func (p *snowProvider) Name() string {
 	return constants.SnowProviderName
 }
 
+func (p *snowProvider) setupMachineConfigs() {
+	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
+
+	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
+	}
+
+	if p.clusterConfig.IsManaged() {
+		for _, mc := range p.machineConfigs {
+			mc.SetManagedBy(p.clusterConfig.ManagedBy())
+		}
+	}
+}
+
 func (p *snowProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	if err := p.setupBootstrapCreds(); err != nil {
 		return fmt.Errorf("failed setting up credentials: %v", err)
 	}
+	p.setupMachineConfigs()
 	return nil
 }
 
@@ -73,6 +94,9 @@ func (p *snowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, clust
 }
 
 func (p *snowProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
+	if err := p.setupBootstrapCreds(); err != nil {
+		return fmt.Errorf("failed setting up credentials: %v", err)
+	}
 	return nil
 }
 
@@ -108,7 +132,7 @@ func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alph
 	return workersObjs
 }
 
-func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, err = templater.ObjectsToYaml(ControlPlaneObjects(clusterSpec, p.machineConfigs)...)
 	if err != nil {
 		return nil, nil, err
@@ -146,19 +170,20 @@ func (p *snowProvider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.Snow.Version
 }
 
-func (p *snowProvider) EnvMap() (map[string]string, error) {
+func (p *snowProvider) EnvMap(clusterSpec *cluster.Spec) (map[string]string, error) {
 	envMap := make(map[string]string)
 	envMap[snowCredentialsKey] = p.bootstrapCreds.snowCredsB64
 	envMap[snowCertsKey] = p.bootstrapCreds.snowCertsB64
 
-	// TODO: tmp solution to pull capas image from arbitrary regi
-	envMap["SNOW_CONTROLLER_IMAGE"] = "public.ecr.aws/xyz/aws/cluster-api-provider-aws-snow:latest"
+	envMap["SNOW_CONTROLLER_IMAGE"] = clusterSpec.VersionsBundle.Snow.Manager.VersionedImage()
 
 	return envMap, nil
 }
 
 func (p *snowProvider) GetDeployments() map[string][]string {
-	return nil
+	return map[string][]string{
+		"capas-system": {"capas-controller-manager"},
+	}
 }
 
 func (p *snowProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
@@ -176,19 +201,23 @@ func (p *snowProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types
 }
 
 func (p *snowProvider) DatacenterConfig() providers.DatacenterConfig {
-	return nil
+	return p.datacenterConfig
 }
 
 func (p *snowProvider) DatacenterResourceType() string {
-	return ""
+	return snowDatacenterResourceType
 }
 
 func (p *snowProvider) MachineResourceType() string {
-	return ""
+	return snowMachineResourceType
 }
 
 func (p *snowProvider) MachineConfigs() []providers.MachineConfig {
-	return nil
+	configs := make([]providers.MachineConfig, 0, len(p.machineConfigs))
+	for _, mc := range p.machineConfigs {
+		configs = append(configs, mc)
+	}
+	return configs
 }
 
 func (p *snowProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
@@ -212,7 +241,12 @@ func (p *snowProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *
 }
 
 func (p *snowProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
-	return nil
+	for _, mc := range p.machineConfigs {
+		if err := p.providerKubectlClient.DeleteEksaMachineConfig(ctx, snowMachineResourceType, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace); err != nil {
+			return err
+		}
+	}
+	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx, snowDatacenterResourceType, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
 }
 
 func (p *snowProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {

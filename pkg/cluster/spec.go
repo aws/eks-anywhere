@@ -50,6 +50,7 @@ func (s *Spec) DeepCopy() *Spec {
 		Cluster:             s.Cluster.DeepCopy(),
 		OIDCConfig:          s.OIDCConfig.DeepCopy(),
 		GitOpsConfig:        s.GitOpsConfig.DeepCopy(),
+		AWSIamConfig:        s.AWSIamConfig.DeepCopy(),
 		releasesManifestURL: s.releasesManifestURL,
 		bundlesManifestURL:  s.bundlesManifestURL,
 		configFS:            s.configFS,
@@ -101,7 +102,7 @@ type KubeDistro struct {
 	Pause               v1alpha1.Image
 	EtcdImage           v1alpha1.Image
 	EtcdVersion         string
-	AwsIamAuthIamge     v1alpha1.Image
+	AwsIamAuthImage     v1alpha1.Image
 }
 
 func (k *KubeDistro) deepCopy() *KubeDistro {
@@ -142,6 +143,12 @@ func WithManagementCluster(cluster *types.Cluster) SpecOpt {
 func WithUserAgent(userAgent string) SpecOpt {
 	return func(s *Spec) {
 		s.userAgent = userAgent
+	}
+}
+
+func WithEksdRelease(release *eksdv1alpha1.Release) SpecOpt {
+	return func(s *Spec) {
+		s.eksdRelease = release
 	}
 }
 
@@ -285,12 +292,14 @@ func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundl
 		return nil, err
 	}
 
-	eksd, err := s.reader.GetEksdRelease(versionsBundle)
-	if err != nil {
-		return nil, err
+	if s.eksdRelease == nil {
+		eksd, err := s.reader.GetEksdRelease(versionsBundle)
+		if err != nil {
+			return nil, err
+		}
+		s.eksdRelease = eksd
 	}
-
-	kubeDistro, err := buildKubeDistro(eksd)
+	kubeDistro, err := buildKubeDistro(s.eksdRelease)
 	if err != nil {
 		return nil, err
 	}
@@ -301,7 +310,7 @@ func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundl
 		VersionsBundle: versionsBundle,
 		KubeDistro:     kubeDistro,
 	}
-	s.eksdRelease = eksd
+
 	return s, nil
 }
 
@@ -390,7 +399,7 @@ func buildKubeDistro(eksd *eksdv1alpha1.Release) (*KubeDistro, error) {
 		"external-provisioner-image":  &kubeDistro.ExternalProvisioner,
 		"pause-image":                 &kubeDistro.Pause,
 		"etcd-image":                  &kubeDistro.EtcdImage,
-		"aws-iam-authenticator-image": &kubeDistro.AwsIamAuthIamge,
+		"aws-iam-authenticator-image": &kubeDistro.AwsIamAuthImage,
 	}
 
 	for assetName, image := range kubeDistroComponents {
@@ -489,6 +498,28 @@ func (s *Spec) LoadManifest(manifest v1alpha1.Manifest) (*Manifest, error) {
 
 func userAgent(eksAComponent, version string) string {
 	return fmt.Sprintf("eks-a-%s/%s", eksAComponent, version)
+}
+
+type EksdManifests struct {
+	ReleaseManifestContent []byte
+	ReleaseCrdContent      []byte
+}
+
+func (s *Spec) ReadEksdManifests(release v1alpha1.EksDRelease) (*EksdManifests, error) {
+	releaseCrdContent, err := s.reader.ReadFile(release.Components)
+	if err != nil {
+		return nil, err
+	}
+
+	releaseManifestContent, err := s.reader.ReadFile(release.EksDReleaseUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	return &EksdManifests{
+		ReleaseManifestContent: releaseManifestContent,
+		ReleaseCrdContent:      releaseCrdContent,
+	}, nil
 }
 
 func (vb *VersionsBundle) KubeDistroImages() []v1alpha1.Image {

@@ -22,7 +22,7 @@ type Provider interface {
 	BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error)
 	UpdateKubeConfig(content *[]byte, clusterName string) error
 	Version(clusterSpec *cluster.Spec) string
-	EnvMap() (map[string]string, error)
+	EnvMap(clusterSpec *cluster.Spec) (map[string]string, error)
 	GetDeployments() map[string][]string
 	GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle
 	DatacenterConfig() DatacenterConfig
@@ -51,10 +51,6 @@ type BuildMapOption func(map[string]interface{})
 type TemplateBuilder interface {
 	GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...BuildMapOption) (content []byte, err error)
 	GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error)
-	WorkerMachineTemplateName(clusterName, workerNodeGroupName string) string
-	CPMachineTemplateName(clusterName string) string
-	KubeadmConfigTemplateName(clusterName, workerNodeGroupName string) string
-	EtcdMachineTemplateName(clusterName string) string
 }
 
 type MachineConfig interface {

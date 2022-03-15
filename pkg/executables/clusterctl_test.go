@@ -61,7 +61,7 @@ func (ct *clusterctlTest) expectBuildOverrideLayer() {
 }
 
 func (ct *clusterctlTest) expectGetProviderEnvMap() {
-	ct.provider.EXPECT().EnvMap().Return(ct.providerEnvMap, nil)
+	ct.provider.EXPECT().EnvMap(clusterSpec).Return(ct.providerEnvMap, nil)
 }
 
 func TestClusterctlInitInfrastructure(t *testing.T) {
@@ -131,7 +131,7 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			provider := mockproviders.NewMockProvider(mockCtrl)
 			provider.EXPECT().Name().Return(tt.providerName)
 			provider.EXPECT().Version(clusterSpec).Return(tt.providerVersion)
-			provider.EXPECT().EnvMap().Return(tt.env, nil)
+			provider.EXPECT().EnvMap(clusterSpec).Return(tt.env, nil)
 			provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
 
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
@@ -186,7 +186,7 @@ func TestClusterctlInitInfrastructureEnvMapError(t *testing.T) {
 	provider := mockproviders.NewMockProvider(mockCtrl)
 	provider.EXPECT().Name()
 	provider.EXPECT().Version(clusterSpec)
-	provider.EXPECT().EnvMap().Return(nil, errors.New("error with env map"))
+	provider.EXPECT().EnvMap(clusterSpec).Return(nil, errors.New("error with env map"))
 	provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
 
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
@@ -213,7 +213,7 @@ func TestClusterctlInitInfrastructureExecutableError(t *testing.T) {
 	provider := mockproviders.NewMockProvider(mockCtrl)
 	provider.EXPECT().Name()
 	provider.EXPECT().Version(clusterSpec)
-	provider.EXPECT().EnvMap()
+	provider.EXPECT().EnvMap(clusterSpec)
 	provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
 
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
@@ -483,6 +483,12 @@ var versionBundle = &cluster.VersionsBundle{
 				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v0.7.8-eks-a-0.0.1.build.38",
 			},
 			KubeProxy: kubeProxyVersion08,
+		},
+		CloudStack: v1alpha1.CloudStackBundle{
+			Version: "v0.7.8",
+			ClusterAPIController: v1alpha1.Image{
+				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.7.8-eks-a-0.0.1.build.38",
+			},
 		},
 		Docker: v1alpha1.DockerBundle{
 			Version: "v0.3.19",

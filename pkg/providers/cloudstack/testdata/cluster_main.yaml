@@ -42,7 +42,6 @@ metadata:
 spec:
   account: "admin"
   domain: "domain1"
-  insecure: false
   zones:
     - zone:
         value: "zone1"
@@ -88,6 +87,8 @@ spec:
     type: "name"
   affinityGroupIds:
   - worker-affinity
+  userCustomDetails:
+    foo: bar
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: CloudStackMachineConfig

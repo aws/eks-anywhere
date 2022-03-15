@@ -29,8 +29,7 @@ func NewCloudStackDatacenterConfigGenerate(clusterName string) *CloudStackDatace
 					},
 				},
 			},
-			Account:  "admin",
-			Insecure: false,
+			Account: "admin",
 		},
 	}
 }

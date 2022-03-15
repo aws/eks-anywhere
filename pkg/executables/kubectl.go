@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -47,10 +48,21 @@ var (
 	bundlesResourceType                  = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
 	clusterResourceSetResourceType       = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
 	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
+	eksdReleaseType                      = fmt.Sprintf("releases.%s", eksdv1alpha1.GroupVersion.Group)
 )
 
 type Kubectl struct {
 	Executable
+}
+
+func (k *Kubectl) SearchCloudStackMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackMachineConfig, error) {
+	// Required implementation for Kubectl interface implementation
+	return nil, fmt.Errorf("cloudstack provider does not support this yet")
+}
+
+func (k *Kubectl) SearchCloudStackDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackDatacenterConfig, error) {
+	// Required implementation for Kubectl interface implementation
+	return nil, fmt.Errorf("cloudstack provider does not support this yet")
 }
 
 func (k *Kubectl) GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
@@ -131,17 +143,6 @@ func (k *Kubectl) LoadSecret(ctx context.Context, secretObject string, secretObj
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error loading secret: %v", err)
-	}
-	return nil
-}
-
-// TODO: remove when CAPAS image is hosted in public registry.
-func (k *Kubectl) CreateDockerRegistrySecret(ctx context.Context, secretName string, dockerServer, dockerUsername, dockerPassword string, opts ...KubectlOpt) error {
-	params := []string{"create", "secret", "docker-registry", secretName, "--docker-server", dockerServer, "--docker-username", dockerUsername, "--docker-password", dockerPassword}
-	applyOpts(&params, opts...)
-	_, err := k.Execute(ctx, params...)
-	if err != nil {
-		return fmt.Errorf("error creating secret for docker registry: %v", err)
 	}
 	return nil
 }
@@ -1311,6 +1312,15 @@ func (k *Kubectl) getObject(ctx context.Context, resourceType, name, namespace, 
 	}
 
 	return nil
+}
+
+func (k *Kubectl) GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error) {
+	obj := &eksdv1alpha1.Release{}
+	if err := k.getObject(ctx, eksdReleaseType, name, namespace, kubeconfigFile, obj); err != nil {
+		return nil, err
+	}
+
+	return obj, nil
 }
 
 func (k *Kubectl) GetDeployment(ctx context.Context, name, namespace, kubeconfig string) (*appsv1.Deployment, error) {

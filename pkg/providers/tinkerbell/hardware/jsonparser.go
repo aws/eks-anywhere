@@ -3,6 +3,7 @@ package hardware
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/tinkerbell/tink/protos/hardware"
@@ -24,8 +25,9 @@ const (
 	bmcUsername   = "bmc_username"
 	bmcPassword   = "bmc_password"
 	eksaNamespace = "eksa-system"
-	jsonPath      = "hardware-manifests/json"
 )
+
+var jsonPath = "hardware-manifests/json"
 
 type Hardware struct {
 	Id       string                     `json:"id"`
@@ -37,7 +39,10 @@ type JsonParser struct {
 	jsonWriter filewriter.FileWriter
 }
 
-func NewJsonParser() (*JsonParser, error) {
+func NewJsonParser(outputPath string) (*JsonParser, error) {
+	if outputPath != "" {
+		jsonPath = filepath.Join(outputPath, jsonPath)
+	}
 	filewriter, err := filewriter.NewWriter(jsonPath)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing JsonParser: %v", err)

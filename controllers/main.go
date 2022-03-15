@@ -5,6 +5,7 @@ import (
 	"flag"
 	"os"
 
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -47,6 +48,7 @@ func init() {
 	utilruntime.Must(vspherev1.AddToScheme(scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme))
 	utilruntime.Must(kubeadmv1.AddToScheme(scheme))
+	utilruntime.Must(eksdv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -182,7 +184,14 @@ func setupWebhooks(mgr ctrl.Manager) {
 		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.VSphereMachineConfigKind)
 		os.Exit(1)
 	}
-
+	if err := (&anywherev1.CloudStackDatacenterConfig{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.CloudStackDatacenterKind)
+		os.Exit(1)
+	}
+	if err := (&anywherev1.CloudStackMachineConfig{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.CloudStackMachineConfigKind)
+		os.Exit(1)
+	}
 	if err := (&anywherev1.GitOpsConfig{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.GitOpsConfigKind)
 		os.Exit(1)
@@ -193,6 +202,10 @@ func setupWebhooks(mgr ctrl.Manager) {
 	}
 	if err := (&anywherev1.AWSIamConfig{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.AWSIamConfigKind)
+		os.Exit(1)
+	}
+	if err := (&anywherev1.FluxConfig{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", WEBHOOK, anywherev1.FluxConfigKind)
 		os.Exit(1)
 	}
 }

@@ -24,6 +24,7 @@ const (
 
 type ParallelRunConf struct {
 	MaxInstances        int
+	MaxConcurrentTests  int
 	AmiId               string
 	InstanceProfileName string
 	StorageBucket       string
@@ -61,11 +62,15 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 	}
 
 	var wg sync.WaitGroup
-	resultCh := make(chan instanceTestsResults)
 
 	instancesConf := splitTests(testsList, conf)
+	results := make([]instanceTestsResults, 0, len(instancesConf))
 	logTestGroups(instancesConf)
+	maxConcurrentTests := conf.MaxConcurrentTests
+	// Add a blocking channel to only allow for certain number of tests to run at a time
+	queue := make(chan struct{}, maxConcurrentTests)
 	for _, instanceConf := range instancesConf {
+		queue <- struct{}{}
 		go func(c instanceRunConf) {
 			defer wg.Done()
 			r := instanceTestsResults{conf: c}
@@ -75,18 +80,17 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 				r.err = err
 			}
 
-			resultCh <- r
+			results = append(results, r)
+			<-queue
 		}(instanceConf)
 		wg.Add(1)
 	}
 
-	go func() {
-		wg.Wait()
-		close(resultCh)
-	}()
+	wg.Wait()
+	close(queue)
 
 	failedInstances := 0
-	for r := range resultCh {
+	for _, r := range results {
 		if r.err != nil {
 			logger.Error(r.err, "Failed running e2e tests for instance", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "tests", r.conf.regex, "status", failedStatus)
 			failedInstances += 1
@@ -98,8 +102,9 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 			logger.Info("Ec2 instance tests completed successfully", "jobId", r.conf.jobId, "instanceId", r.conf.instanceId, "commandId", r.testCommandResult.CommandId, "tests", r.conf.regex, "status", passedStatus)
 			logResult(r.testCommandResult)
 		}
+		clusterName := clusterName(r.conf.branchName, r.conf.instanceId)
 		if conf.CleanupVms {
-			err = CleanUpVsphereTestResources(context.Background(), r.conf.instanceId)
+			err = CleanUpVsphereTestResources(context.Background(), clusterName)
 			if err != nil {
 				logger.Error(err, "Failed to clean up VSphere cluster VMs", "clusterName", r.conf.instanceId)
 			}
@@ -169,14 +174,15 @@ func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResul
 }
 
 func (c instanceRunConf) runPostTestsProcessing(e *E2ESession, testCommandResult *testCommandResult) error {
-	e.uploadJUnitReportFromInstance(c.regex)
+	testName := strings.Trim(c.regex, "\"")
+	e.uploadJUnitReportFromInstance(testName)
 	if c.testReportFolder != "" {
-		e.downloadJUnitReportToLocalDisk(c.regex, c.testReportFolder)
+		e.downloadJUnitReportToLocalDisk(testName, c.testReportFolder)
 	}
 
 	if !testCommandResult.Successful() {
-		e.uploadGeneratedFilesFromInstance(c.regex)
-		e.uploadDiagnosticArchiveFromInstance(c.regex)
+		e.uploadGeneratedFilesFromInstance(testName)
+		e.uploadDiagnosticArchiveFromInstance(testName)
 		return nil
 	}
 
@@ -215,7 +221,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 	ipman := newE2EIPManager(os.Getenv(cidrVar), os.Getenv(privateNetworkCidrVar))
 
 	testsInCurrentInstance := make([]string, 0, testPerInstance)
-	for _, testName := range testsList {
+	for i, testName := range testsList {
 		testsInCurrentInstance = append(testsInCurrentInstance, testName)
 		multiClusterTest := multiClusterTestsRe.MatchString(testName)
 		var ips networkutils.IPPool
@@ -233,7 +239,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 			}
 		}
 
-		if len(testsInCurrentInstance) == testPerInstance {
+		if len(testsInCurrentInstance) == testPerInstance || (len(testsList)-1) == i {
 			runConfs = append(runConfs, instanceRunConf{
 				amiId:               conf.AmiId,
 				instanceProfileName: conf.InstanceProfileName,
@@ -241,7 +247,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 				jobId:               fmt.Sprintf("%s-%d", conf.JobId, len(runConfs)),
 				parentJobId:         conf.JobId,
 				subnetId:            conf.SubnetId,
-				regex:               strings.Join(testsInCurrentInstance, "|"),
+				regex:               fmt.Sprintf("\"%s\"", strings.Join(testsInCurrentInstance, "|")),
 				bundlesOverride:     conf.BundlesOverride,
 				testReportFolder:    conf.TestReportFolder,
 				branchName:          conf.BranchName,

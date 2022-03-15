@@ -9,6 +9,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers"
 )
 
 type ClusterFiller func(c *anywherev1.Cluster)
@@ -119,6 +120,21 @@ func WithExternalEtcdTopology(count int) ClusterFiller {
 			c.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{}
 		}
 		c.Spec.ExternalEtcdConfiguration.Count = count
+	}
+}
+
+func WithExternalEtcdMachineRef(kind string) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		if c.Spec.ExternalEtcdConfiguration == nil {
+			c.Spec.ExternalEtcdConfiguration = &anywherev1.ExternalEtcdConfiguration{}
+			c.Spec.ExternalEtcdConfiguration.Count = 1
+		}
+
+		if c.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
+			c.Spec.ExternalEtcdConfiguration.MachineGroupRef = &anywherev1.Ref{}
+		}
+		c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Kind = kind
+		c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name = providers.GetEtcdNodeName(c.Name)
 	}
 }
 

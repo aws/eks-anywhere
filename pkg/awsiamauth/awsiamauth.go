@@ -47,7 +47,7 @@ func NewAwsIamAuthTemplateBuilder() *AwsIamAuthTemplateBuilder {
 
 func (a *AwsIamAuthTemplateBuilder) GenerateManifest(clusterSpec *cluster.Spec, clusterId uuid.UUID) ([]byte, error) {
 	data := map[string]interface{}{
-		"image":       clusterSpec.VersionsBundle.KubeDistro.AwsIamAuthIamge.VersionedImage(),
+		"image":       clusterSpec.VersionsBundle.KubeDistro.AwsIamAuthImage.VersionedImage(),
 		"awsRegion":   clusterSpec.AWSIamConfig.Spec.AWSRegion,
 		"clusterID":   clusterId.String(),
 		"backendMode": strings.Join(clusterSpec.AWSIamConfig.Spec.BackendMode, ","),

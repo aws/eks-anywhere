@@ -11,6 +11,8 @@ rules:
   resources:
   - awsiamconfigs
   - bundles
+  - cloudstackdatacenterconfigs
+  - cloudstackmachineconfigs
   - clusters
   - dockerdatacenterconfigs
   - vspheredatacenterconfigs
@@ -28,6 +30,8 @@ rules:
   resources:
   - awsiamconfigs/finalizers
   - bundles/finalizers
+  - cloudstackdatacenterconfigs/finalizers
+  - cloudstackmachineconfigs/finalizers
   - clusters/finalizers
   - dockerdatacenterconfigs/finalizers
   - vspheredatacenterconfigs/finalizers
@@ -39,6 +43,8 @@ rules:
   resources:
   - awsiamconfigs/status
   - bundles/status
+  - cloudstackdatacenterconfigs/status
+  - cloudstackmachineconfigs/status
   - clusters/status
   - dockerdatacenterconfigs/status
   - vspheredatacenterconfigs/status
@@ -51,6 +57,14 @@ rules:
   - anywhere.eks.amazonaws.com
   resources:
   - oidcconfigs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - distro.eks.amazonaws.com
+  resources:
+  - releases
   verbs:
   - get
   - list

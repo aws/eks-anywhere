@@ -28,7 +28,7 @@ spec:
   - kind: AWSIamConfig
     name: eksa-unit-test
   gitOpsRef:
-    kind: GitOpsConfig
+    kind: FluxConfig
     name: eksa-unit-test
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -76,11 +76,10 @@ spec:
       username: test
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: GitOpsConfig
+kind: FluxConfig
 metadata:
   name: eksa-unit-test
 spec:
-  flux:
-    github:
-      owner: "janedoe"
-      repository: "flux-fleet"
+  github:
+    owner: "janedoe"
+    repository: "flux-fleet"

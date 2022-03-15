@@ -138,7 +138,7 @@ func writeInfrastructureBundle(clusterSpec *cluster.Spec, rootFolder string, bun
 	for _, manifest := range bundle.Manifests {
 		m, err := clusterSpec.LoadManifest(manifest)
 		if err != nil {
-			return fmt.Errorf("can't load infrastructure bundle: %v", err)
+			return fmt.Errorf("can't load infrastructure bundle for manifest %s: %v", manifest.URI, err)
 		}
 
 		if err := ioutil.WriteFile(filepath.Join(infraFolder, m.Filename), m.Content, 0o644); err != nil {
@@ -200,7 +200,7 @@ func (c *Clusterctl) InitInfrastructure(ctx context.Context, clusterSpec *cluste
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
 	}
 
-	envMap, err := provider.EnvMap()
+	envMap, err := provider.EnvMap(clusterSpec)
 	if err != nil {
 		return err
 	}
@@ -253,6 +253,8 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		"ClusterApiAwsKubeRbacProxyTag":                   bundle.Aws.KubeProxy.Tag(),
 		"ClusterApiVSphereControllerRepository":           imageRepository(bundle.VSphere.ClusterAPIController),
 		"ClusterApiVSphereControllerTag":                  bundle.VSphere.ClusterAPIController.Tag(),
+		"ClusterApiCloudStackManagerRepository":           imageRepository(bundle.CloudStack.ClusterAPIController),
+		"ClusterApiCloudStackManagerTag":                  bundle.CloudStack.ClusterAPIController.Tag(),
 		"ClusterApiVSphereKubeRbacProxyRepository":        imageRepository(bundle.VSphere.KubeProxy),
 		"ClusterApiVSphereKubeRbacProxyTag":               bundle.VSphere.KubeProxy.Tag(),
 		"DockerKubeRbacProxyRepository":                   imageRepository(bundle.Docker.KubeProxy),
@@ -269,6 +271,7 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		"EtcdadmControllerKubeRbacProxyTag":               bundle.ExternalEtcdController.KubeProxy.Tag(),
 		"DockerProviderVersion":                           bundle.Docker.Version,
 		"VSphereProviderVersion":                          bundle.VSphere.Version,
+		"CloudStackProviderVersion":                       bundle.CloudStack.Version,
 		"AwsProviderVersion":                              bundle.Aws.Version,
 		"SnowProviderVersion":                             bundle.Snow.Version,
 		"TinkerbellProviderVersion":                       "v0.1.0", // TODO - version should come from the bundle
@@ -300,12 +303,13 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 }
 
 var providerNamespaces = map[string]string{
-	constants.VSphereProviderName: constants.CapvSystemNamespace,
-	constants.DockerProviderName:  constants.CapdSystemNamespace,
-	constants.AWSProviderName:     constants.CapaSystemNamespace,
-	etcdadmBootstrapProviderName:  constants.EtcdAdmBootstrapProviderSystemNamespace,
-	etcdadmControllerProviderName: constants.EtcdAdmControllerSystemNamespace,
-	kubeadmBootstrapProviderName:  constants.CapiKubeadmBootstrapSystemNamespace,
+	constants.VSphereProviderName:    constants.CapvSystemNamespace,
+	constants.DockerProviderName:     constants.CapdSystemNamespace,
+	constants.CloudStackProviderName: constants.CapcSystemNamespace,
+	constants.AWSProviderName:        constants.CapaSystemNamespace,
+	etcdadmBootstrapProviderName:     constants.EtcdAdmBootstrapProviderSystemNamespace,
+	etcdadmControllerProviderName:    constants.EtcdAdmControllerSystemNamespace,
+	kubeadmBootstrapProviderName:     constants.CapiKubeadmBootstrapSystemNamespace,
 }
 
 func (c *Clusterctl) Upgrade(ctx context.Context, managementCluster *types.Cluster, provider providers.Provider, newSpec *cluster.Spec, changeDiff *clusterapi.CAPIChangeDiff) error {
@@ -338,7 +342,7 @@ func (c *Clusterctl) Upgrade(ctx context.Context, managementCluster *types.Clust
 		upgradeCommand = append(upgradeCommand, "--bootstrap", newBootstrapProvider)
 	}
 
-	providerEnvMap, err := provider.EnvMap()
+	providerEnvMap, err := provider.EnvMap(newSpec)
 	if err != nil {
 		return fmt.Errorf("failed generating provider env map for clusterctl upgrade: %v", err)
 	}
@@ -382,7 +386,7 @@ func (c *Clusterctl) InstallEtcdadmProviders(ctx context.Context, clusterSpec *c
 		params = append(params, "--kubeconfig", cluster.KubeconfigFile)
 	}
 
-	envMap, err := infraProvider.EnvMap()
+	envMap, err := infraProvider.EnvMap(clusterSpec)
 	if err != nil {
 		return err
 	}

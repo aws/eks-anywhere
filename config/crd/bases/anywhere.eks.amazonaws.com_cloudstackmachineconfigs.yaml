@@ -77,6 +77,12 @@ spec:
                 - type
                 - value
                 type: object
+              userCustomDetails:
+                additionalProperties:
+                  type: string
+                description: UserCustomDetails allows users to pass in non-standard
+                  key value inputs, outside those defined [here](https://github.com/shapeblue/cloudstack/blob/main/api/src/main/java/com/cloud/vm/VmDetailConstants.java)
+                type: object
               users:
                 description: Users consists of an array of objects containing the
                   username, as well as a list of their public keys. These users will

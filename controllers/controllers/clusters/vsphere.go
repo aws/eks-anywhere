@@ -18,8 +18,10 @@ import (
 	"github.com/aws/eks-anywhere/controllers/controllers/reconciler"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -59,7 +61,9 @@ func NewVSphereReconciler(client client.Client, log logr.Logger, validator *vsph
 			Defaulter: defaulter,
 			tracker:   tracker,
 		},
-		providerClusterReconciler: &providerClusterReconciler{},
+		providerClusterReconciler: &providerClusterReconciler{
+			providerClient: client,
+		},
 	}
 }
 
@@ -111,7 +115,7 @@ func (v *VSphereClusterReconciler) bundles(ctx context.Context, name, namespace 
 }
 
 func (v *VSphereClusterReconciler) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*c.Spec, error) {
-	return c.BuildSpecForCluster(ctx, cs, v.bundles, nil, nil)
+	return c.BuildSpecForCluster(ctx, cs, v.bundles, v.eksdRelease, nil, nil)
 }
 
 func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (reconciler.Result, error) {
@@ -151,14 +155,21 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	if err != nil {
 		return reconciler.Result{}, err
 	}
-
-	specWithBundles, err := c.BuildSpecFromBundles(cluster, bundles)
+	versionsBundle, err := c.GetVersionsBundle(cluster, bundles)
 	if err != nil {
 		return reconciler.Result{}, err
 	}
-	vshepreClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
+	v.Log.V(4).Info("Fetching eks-d manifest", "release name", versionsBundle.EksD.Name)
+	eksd, err := v.eksdRelease(ctx, versionsBundle.EksD.Name, constants.EksaSystemNamespace)
+	if err != nil {
+		return reconciler.Result{}, err
+	}
 
-	if err := v.Validator.ValidateClusterMachineConfigs(ctx, vshepreClusterSpec); err != nil {
+	specWithBundles, err := c.BuildSpecFromBundles(cluster, bundles, c.WithEksdRelease(eksd))
+
+	vsphereClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
+
+	if err := v.Validator.ValidateClusterMachineConfigs(ctx, vsphereClusterSpec); err != nil {
 		return reconciler.Result{}, err
 	}
 
@@ -181,13 +192,13 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	workloadTemplateNames := make(map[string]string, len(cluster.Spec.WorkerNodeGroupConfigurations))
 
 	for _, wnConfig := range cluster.Spec.WorkerNodeGroupConfigurations {
-		kubeadmconfigTemplateNames[wnConfig.Name] = templateBuilder.KubeadmConfigTemplateName(cluster.Name, wnConfig.MachineGroupRef.Name)
-		workloadTemplateNames[wnConfig.Name] = templateBuilder.WorkerMachineTemplateName(cluster.Name, wnConfig.Name)
+		kubeadmconfigTemplateNames[wnConfig.Name] = common.KubeadmConfigTemplateName(cluster.Name, wnConfig.MachineGroupRef.Name, time.Now)
+		workloadTemplateNames[wnConfig.Name] = common.WorkerMachineTemplateName(cluster.Name, wnConfig.Name, time.Now)
 		templateBuilder.WorkerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name]
 	}
 
 	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = templateBuilder.CPMachineTemplateName(clusterName)
+		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, time.Now)
 		controlPlaneUser := machineConfigMap[cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
 		values["vsphereControlPlaneSshAuthorizedKey"] = controlPlaneUser.SshAuthorizedKeys[0]
 
@@ -196,7 +207,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 			values["vsphereEtcdSshAuthorizedKey"] = etcdUser.SshAuthorizedKeys[0]
 		}
 
-		values["etcdTemplateName"] = templateBuilder.EtcdMachineTemplateName(clusterName)
+		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, time.Now)
 	}
 	v.Log.Info("cluster", "name", cluster.Name)
 
@@ -261,7 +272,7 @@ func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *an
 			return reconciler.Result{}, err
 		}
 
-		ciliumSpec, err := cilium.GenerateManifest(specWithBundles)
+		ciliumSpec, err := cilium.GenerateManifest(ctx, specWithBundles)
 		if err != nil {
 			return reconciler.Result{}, err
 		}
@@ -289,7 +300,7 @@ func (v *VSphereClusterReconciler) reconcileExtraObjects(ctx context.Context, cl
 
 func (v *VSphereClusterReconciler) getCAPICluster(ctx context.Context, cluster *anywherev1.Cluster) (*clusterv1.Cluster, reconciler.Result, error) {
 	capiCluster := &clusterv1.Cluster{}
-	capiClusterName := types.NamespacedName{Namespace: "eksa-system", Name: cluster.Name}
+	capiClusterName := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: cluster.Name}
 	v.Log.Info("Searching for CAPI cluster", "name", cluster.Name)
 	if err := v.Client.Get(ctx, capiClusterName, capiCluster); err != nil {
 		return nil, reconciler.Result{Result: &ctrl.Result{

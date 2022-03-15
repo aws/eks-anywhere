@@ -2,20 +2,32 @@ package controllers
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-logr/logr"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	"sigs.k8s.io/cluster-api/controllers/remote"
 	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/aws/eks-anywhere/controllers/controllers/clusters"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere"
+)
+
+const (
+	defaultRequeueTime   = time.Minute
+	clusterFinalizerName = "clusters.anywhere.eks.amazonaws.com/finalizer"
 )
 
 // ClusterReconciler reconciles a Cluster object
@@ -56,12 +68,16 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 // +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=*,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=test,resources=test,verbs=get;list;watch;create;update;patch;delete;kill
+// +kubebuilder:rbac:groups=distro.eks.amazonaws.com,resources=releases,verbs=get;list;watch
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
 	log := r.log.WithValues("cluster", req.NamespacedName)
 	// Fetch the Cluster object
 	cluster := &anywherev1.Cluster{}
 	log.Info("Reconciling cluster", "name", req.NamespacedName)
 	if err := r.client.Get(ctx, req.NamespacedName, cluster); err != nil {
+		if apierrors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
 		return ctrl.Result{}, err
 	}
 
@@ -78,8 +94,12 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ 
 		}
 	}()
 
-	if !cluster.DeletionTimestamp.IsZero() {
-		return r.reconcileDelete(ctx, cluster, log)
+	if cluster.DeletionTimestamp.IsZero() {
+		if !controllerutil.ContainsFinalizer(cluster, clusterFinalizerName) {
+			controllerutil.AddFinalizer(cluster, clusterFinalizerName)
+		}
+	} else {
+		return r.reconcileDelete(ctx, cluster)
 	}
 
 	// If the cluster is paused, return without any further processing.
@@ -115,6 +135,28 @@ func (r *ClusterReconciler) reconcile(ctx context.Context, cluster *anywherev1.C
 	return reconcileResult.ToCtrlResult(), nil
 }
 
-func (r *ClusterReconciler) reconcileDelete(ctx context.Context, cluster *anywherev1.Cluster, log logr.Logger) (ctrl.Result, error) {
+func (r *ClusterReconciler) reconcileDelete(ctx context.Context, cluster *anywherev1.Cluster) (ctrl.Result, error) {
+	capiCluster := &clusterv1.Cluster{}
+	capiClusterName := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: cluster.Name}
+	r.log.Info("Deleting", "name", cluster.Name)
+	err := r.client.Get(ctx, capiClusterName, capiCluster)
+
+	switch {
+	case err == nil:
+		r.log.Info("Deleting CAPI cluster", "name", capiCluster.Name)
+		if err := r.client.Delete(ctx, capiCluster); err != nil {
+			r.log.Info("Error deleting CAPI cluster", "name", capiCluster.Name)
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{RequeueAfter: defaultRequeueTime}, nil
+	case apierrors.IsNotFound(err):
+		r.log.Info("Deleting EKS Anywhere cluster", "name", capiCluster.Name, "cluster.DeletionTimestamp", cluster.DeletionTimestamp, "finalizer", cluster.Finalizers)
+
+		// TODO delete GitOps,Datacenter and MachineConfig objects
+		controllerutil.RemoveFinalizer(cluster, clusterFinalizerName)
+	default:
+		return ctrl.Result{}, err
+
+	}
 	return ctrl.Result{}, nil
 }
