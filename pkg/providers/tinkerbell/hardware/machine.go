@@ -110,11 +110,20 @@ const NameserversSeparator = "|"
 // Nameservers is a custom type that can unmarshal a CSV representation of nameservers.
 type Nameservers []string
 
+func (n *Nameservers) String() string {
+	return strings.Join(*n, NameserversSeparator)
+}
+
 // UnmarshalCSV unmarshalls s where is is a list of nameservers separated by NameserversSeparator.
 func (n *Nameservers) UnmarshalCSV(s string) error {
 	servers := strings.Split(s, NameserversSeparator)
 	*n = append(*n, servers...)
 	return nil
+}
+
+// MarshalCSV marshalls Nameservers into a string list of nameservers separated by NameserversSeparator.
+func (n *Nameservers) MarshalCSV() (string, error) {
+	return n.String(), nil
 }
 
 func newEmptyFieldError(s string) error {
