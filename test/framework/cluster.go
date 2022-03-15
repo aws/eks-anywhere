@@ -22,6 +22,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/git"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/semver"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -51,7 +52,8 @@ type ClusterE2ETest struct {
 	ClusterConfigFolder    string
 	HardwareConfigLocation string
 	HardwareCsvLocation    string
-	Hardware               map[string]*api.Hardware
+	TestHardware           map[string]*api.Hardware
+	HardwarePool           map[string]*api.Hardware
 	ClusterName            string
 	ClusterConfig          *v1alpha1.Cluster
 	Provider               Provider
@@ -96,22 +98,18 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 
 func WithHardware(vendor string, requiredCount int) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		csvFilePath := os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
-		hardwarePool, err := api.NewHardwareMapFromFile(csvFilePath)
-		if err != nil {
-			e.T.Fatalf("failed to create hardware map from test hardware pool: %v", err)
-		}
+		hardwarePool := e.GetHardwarePool()
 
-		if e.Hardware == nil {
-			e.Hardware = make(map[string]*api.Hardware)
+		if e.TestHardware == nil {
+			e.TestHardware = make(map[string]*api.Hardware)
 		}
 
 		var count int
 		for id, h := range hardwarePool {
 			if strings.ToLower(h.BmcVendor) == vendor || vendor == api.HardwareVendorUnspecified {
-				if _, exists := e.Hardware[id]; !exists {
+				if _, exists := e.TestHardware[id]; !exists {
 					count++
-					e.Hardware[id] = h
+					e.TestHardware[id] = h
 				}
 
 				if count == requiredCount {
@@ -124,6 +122,18 @@ func WithHardware(vendor string, requiredCount int) ClusterE2ETestOpt {
 			e.T.Errorf("this test requires at least %d piece(s) of %s hardware", requiredCount, vendor)
 		}
 	}
+}
+
+func (e *ClusterE2ETest) GetHardwarePool() map[string]*api.Hardware {
+	if e.HardwarePool == nil {
+		csvFilePath := os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
+		var err error
+		e.HardwarePool, err = api.NewHardwareMapFromFile(csvFilePath)
+		if err != nil {
+			e.T.Fatalf("failed to create hardware map from test hardware pool: %v", err)
+		}
+	}
+	return e.HardwarePool
 }
 
 func WithClusterFiller(f ...api.ClusterFiller) ClusterE2ETestOpt {
@@ -200,12 +210,35 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 	e.GenerateClusterConfigForVersion("", opts...)
 }
 
+func (e *ClusterE2ETest) PowerOffHardware(opts ...CommandOpt) {
+	pbnjEndpoint := os.Getenv(tinkerbellPBnJGRPCAuthEnvVar)
+	pbnjClient, err := pbnj.NewPBNJClient(pbnjEndpoint)
+	if err != nil {
+		e.T.Fatalf("failed to create pbnj client: %v", err)
+	}
+
+	ctx := context.Background()
+
+	for _, h := range e.TestHardware {
+		bmcInfo := pbnj.BmcSecretConfig{
+			Host:     h.BmcIpAddress,
+			Username: h.BmcUsername,
+			Password: h.BmcPassword,
+			Vendor:   h.BmcVendor,
+		}
+		err := pbnjClient.PowerOff(ctx, bmcInfo)
+		if err != nil {
+			e.T.Fatalf("failed to power off hardware: %v", err)
+		}
+	}
+}
+
 func (e *ClusterE2ETest) GenerateHardwareConfig(opts ...CommandOpt) {
 	e.generateHardwareConfig(opts...)
 }
 
 func (e *ClusterE2ETest) generateHardwareConfig(opts ...CommandOpt) {
-	if len(e.Hardware) == 0 {
+	if len(e.TestHardware) == 0 {
 		e.T.Fatal("you must provide the ClusterE2ETest the hardware to use for the test run")
 	}
 
@@ -213,7 +246,7 @@ func (e *ClusterE2ETest) generateHardwareConfig(opts ...CommandOpt) {
 		os.Remove(e.HardwareCsvLocation)
 	}
 
-	err := api.WriteHardwareMapToCSV(e.Hardware, e.HardwareCsvLocation)
+	err := api.WriteHardwareMapToCSV(e.TestHardware, e.HardwareCsvLocation)
 	if err != nil {
 		e.T.Fatalf("failed to create hardware csv for the test run: %v", err)
 	}

@@ -178,18 +178,19 @@ func (m *MockProviderPbnjClient) EXPECT() *MockProviderPbnjClientMockRecorder {
 	return m.recorder
 }
 
-// ValidateBMCSecretCreds mocks base method.
-func (m *MockProviderPbnjClient) ValidateBMCSecretCreds(arg0 context.Context, arg1 pbnj.BmcSecretConfig) error {
+// GetPowerState mocks base method.
+func (m *MockProviderPbnjClient) GetPowerState(arg0 context.Context, arg1 pbnj.BmcSecretConfig) (pbnj.PowerState, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateBMCSecretCreds", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "GetPowerState", arg0, arg1)
+	ret0, _ := ret[0].(pbnj.PowerState)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// ValidateBMCSecretCreds indicates an expected call of ValidateBMCSecretCreds.
-func (mr *MockProviderPbnjClientMockRecorder) ValidateBMCSecretCreds(arg0, arg1 interface{}) *gomock.Call {
+// GetPowerState indicates an expected call of GetPowerState.
+func (mr *MockProviderPbnjClientMockRecorder) GetPowerState(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateBMCSecretCreds", reflect.TypeOf((*MockProviderPbnjClient)(nil).ValidateBMCSecretCreds), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPowerState", reflect.TypeOf((*MockProviderPbnjClient)(nil).GetPowerState), arg0, arg1)
 }
 
 // MockSSHAuthKeyGenerator is a mock of SSHAuthKeyGenerator interface.
