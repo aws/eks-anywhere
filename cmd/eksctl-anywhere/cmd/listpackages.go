@@ -2,10 +2,12 @@ package cmd
 
 import (
 	"context"
+	"log"
+
+	"github.com/spf13/cobra"
+
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
-	"github.com/spf13/cobra"
-	"log"
 )
 
 type listPackagesOption struct {
@@ -32,7 +34,6 @@ var listPackagesCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		if err := packageLocationValidation(lpo.source); err != nil {
 			return err
 		}
@@ -54,7 +55,7 @@ func listPackages(ctx context.Context, source string, kubeVersion string) error 
 	if err != nil {
 		return err
 	}
-	packages, err := curatedpackages.GetPackages(ctx, bundle)
+	packages, err := curatedpackages.GetPackages(bundle)
 	curatedpackages.DisplayPackages(packages)
 	return nil
 }
