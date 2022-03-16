@@ -723,9 +723,6 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					assert.Equal(t, objectKey.Name, "test_cluster", "expected Name to be test_cluster")
 				}).Return(nil)
 
-				existingVSDatacenter := &anywherev1.CloudStackDatacenterConfig{}
-				existingVSDatacenter.Spec = datacenterSpec.Spec
-
 				machineSpec := &anywherev1.CloudStackMachineConfig{}
 				if err := yaml.Unmarshal([]byte(cloudstackMachineConfigSpecPath), machineSpec); err != nil {
 					t.Errorf("unmarshal failed: %v", err)

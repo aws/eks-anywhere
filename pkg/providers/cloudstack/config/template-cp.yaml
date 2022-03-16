@@ -36,12 +36,20 @@ spec:
     host: {{.controlPlaneEndpointHost}}
     port: {{.controlPlaneEndpointPort}}
   zones:{{ range $zone := .cloudstackZones }}
-    - id: {{ $zone.Id}}
-      name: {{ $zone.Name}}
-      network:
+    - network:
+{{- if $zone.Network.Id }}
         id: {{ $zone.Network.Id}}
+{{- end}}
+{{- if $zone.Network.Name }}
         name: {{ $zone.Network.Name}}
-  {{- end }}
+{{- end}}
+{{- if $zone.Id }}
+      id: {{ $zone.Id }}
+{{- end}}
+{{- if $zone.Name }}
+      name: {{ $zone.Name }}
+{{- end}}
+{{- end}}
   {{ if .cloudstackDomain }}domain: {{.cloudstackDomain}}{{- end}}
   {{ if .cloudstackAccount }}account: {{.cloudstackAccount}}{{- end}}
 ---
@@ -54,11 +62,19 @@ spec:
   template:
     spec:
       offering:
+{{- if .cloudstackControlPlaneComputeOfferingId}}
         id: {{.cloudstackControlPlaneComputeOfferingId}}
+{{- end}}
+{{- if .cloudstackControlPlaneComputeOfferingName}}
         name: {{.cloudstackControlPlaneComputeOfferingName}}
+{{- end}}
       template:
+{{- if .cloudstackControlPlaneTemplateOfferingId}}
         id: {{.cloudstackControlPlaneTemplateOfferingId}}
+{{- end}}
+{{- if .cloudstackControlPlaneTemplateOfferingName}}
         name: {{.cloudstackControlPlaneTemplateOfferingName}}
+{{- end}}
 {{- if .cloudstackControlPlaneCustomDetails }}
       details:
 {{- range $key, $value := .cloudstackControlPlaneCustomDetails}}
@@ -405,11 +421,19 @@ spec:
   template:
     spec:
       offering:
+{{- if .cloudstackEtcdComputeOfferingId}}
         id: {{.cloudstackEtcdComputeOfferingId}}
+{{- end}}
+{{- if .cloudstackEtcdComputeOfferingName}}
         name: {{.cloudstackEtcdComputeOfferingName}}
+{{- end}}
       template:
+{{- if .cloudstackEtcdTemplateOfferingId}}
         id: {{.cloudstackEtcdTemplateOfferingId}}
+{{- end}}
+{{- if .cloudstackEtcdTemplateOfferingName}}
         name: {{.cloudstackEtcdTemplateOfferingName}}
+{{- end}}
 {{- if .cloudstackEtcdCustomDetails }}
       details:
 {{- range $key, $value := .cloudstackEtcdCustomDetails}}
