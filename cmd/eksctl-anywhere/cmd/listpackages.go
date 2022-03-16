@@ -34,7 +34,7 @@ var listPackagesCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := packageLocationValidation(lpo.source); err != nil {
+		if err := sourceValidation(lpo.source); err != nil {
 			return err
 		}
 
