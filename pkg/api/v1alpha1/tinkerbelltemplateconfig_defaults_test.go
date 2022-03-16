@@ -127,5 +127,6 @@ func givenVersionBundle() v1alpha1.VersionsBundle {
 					URI: "writefile:v1.0.0",
 				},
 			},
-		}}
+		},
+	}
 }
