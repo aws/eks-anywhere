@@ -49,7 +49,10 @@ func packageLocationValidation(location string) error {
 	return fmt.Errorf("invalid from flag specified. Please use either %v, or %v", FromCluster, FromRegistry)
 }
 
-func kubeVersionValidation(kubeVersion string) error {
+func kubeVersionValidation(kubeVersion string, from string) error {
+	if from != FromRegistry {
+		return nil
+	}
 	versionSplit := strings.Split(kubeVersion, ".")
 	if len(versionSplit) < 2 {
 		return fmt.Errorf("please specify kubeVersion as <major>.<minor>")
