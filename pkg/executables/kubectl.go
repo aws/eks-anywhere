@@ -2,6 +2,7 @@ package executables
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -1401,27 +1402,21 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 	return obj, nil
 }
 
-// TODO: Refactor for reusability
-func (k *Kubectl) GetResources(ctx context.Context, resourceType string, opts ...KubectlOpt) (string, error) {
+func (k *Kubectl) GetResources(ctx context.Context, resourceType string, opts ...KubectlOpt) (bytes.Buffer, error) {
 	params := []string{
 		"get", resourceType,
 	}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
-	return stdOut.String(), err
+	return stdOut, err
 }
 
 func (k *Kubectl) GetPackageBundles(ctx context.Context, opts ...KubectlOpt) (*api.PackageBundleList, error) {
-	params := []string{
-		"get", "packageBundles",
-	}
-	applyOpts(&params, opts...)
-	stdOut, err := k.Execute(ctx, params...)
-	obj := &api.PackageBundleList{}
+	stdOut, err := k.GetResources(ctx, "packageBundles", opts...)
 	if err != nil {
-		return nil, fmt.Errorf("error getting packageBundles with kubectl: %v", err)
+		return nil, err
 	}
-
+	obj := &api.PackageBundleList{}
 	if err = json.Unmarshal(stdOut.Bytes(), obj); err != nil {
 		return nil, fmt.Errorf("error parsing packageBundle response: %v", err)
 	}

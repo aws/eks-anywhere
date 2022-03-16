@@ -10,16 +10,16 @@ import (
 
 type listPackagesOption struct {
 	kubeVersion string
-	from        string
+	source      string
 }
 
 var lpo = &listPackagesOption{}
 
 func init() {
 	listCmd.AddCommand(listPackagesCommand)
-	listPackagesCommand.Flags().StringVar(&lpo.from, "from", "", "Discovery Location. Options (cluster, registry)")
+	listPackagesCommand.Flags().StringVar(&lpo.source, "source", "", "Discovery Location. Options (cluster, registry)")
 	listPackagesCommand.Flags().StringVar(&lpo.kubeVersion, "kubeversion", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
-	err := listPackagesCommand.MarkFlagRequired("from")
+	err := listPackagesCommand.MarkFlagRequired("source")
 	if err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
@@ -33,24 +33,24 @@ var listPackagesCommand = &cobra.Command{
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
-		if err := packageLocationValidation(lpo.from); err != nil {
+		if err := packageLocationValidation(lpo.source); err != nil {
 			return err
 		}
 
-		if err := kubeVersionValidation(lpo.kubeVersion, lpo.from); err != nil {
+		if err := kubeVersionValidation(lpo.kubeVersion, lpo.source); err != nil {
 			return err
 		}
 
-		if err := listPackages(cmd.Context(), lpo.from, lpo.kubeVersion); err != nil {
+		if err := listPackages(cmd.Context(), lpo.source, lpo.kubeVersion); err != nil {
 			return err
 		}
 		return nil
 	},
 }
 
-func listPackages(ctx context.Context, location string, kubeVersion string) error {
+func listPackages(ctx context.Context, source string, kubeVersion string) error {
 	kubeConfig := kubeconfig.FromEnvironment()
-	bundle, err := curatedpackages.GetLatestBundle(ctx, kubeConfig, location, kubeVersion)
+	bundle, err := curatedpackages.GetLatestBundle(ctx, kubeConfig, source, kubeVersion)
 	if err != nil {
 		return err
 	}
