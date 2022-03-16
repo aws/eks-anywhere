@@ -40,7 +40,7 @@ func commonValidation(ctx context.Context, clusterConfigFile string) (*v1alpha1.
 	return clusterConfig, nil
 }
 
-func packageLocationValidation(source string) error {
+func sourceValidation(source string) error {
 	switch strings.ToLower(source) {
 	case Cluster:
 		return nil
