@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	api "github.com/aws/eks-anywhere-packages/api/v1alpha1"
+	"strings"
 )
 
 func DisplayPackages(m map[string][]string) {
 	fmt.Println("Package", "Version(s)")
 	for key, values := range m {
 		fmt.Print(key)
-		fmt.Print(values)
+		fmt.Print(strings.Join(values, ","))
 		fmt.Println()
 	}
 }

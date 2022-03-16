@@ -37,7 +37,7 @@ var listPackagesCommand = &cobra.Command{
 			return err
 		}
 
-		if err := kubeVersionValidation(lpo.kubeVersion); err != nil {
+		if err := kubeVersionValidation(lpo.kubeVersion, lpo.from); err != nil {
 			return err
 		}
 
