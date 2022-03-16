@@ -202,8 +202,61 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
 	}
 
+	kubeadmconfigTemplateNames, err:= r.getKubeadmconfigTemplateNames(ctx, eksaCluster, clusterSpec, clusterName)
+	if err != nil {
+		return nil, err
+	}
+	workloadTemplateNames, err := r.getWorkerloadTemplateNames(ctx, eksaCluster, clusterSpec, oldCsdc, csdc, workerCsmcs, clusterName)
+	if err != nil {
+		return nil, err
+	}
+	etcdTemplateName, err := r.getEtcdTemplateName(ctx, eksaCluster, oldCsdc, csdc, etcdCsmc, clusterName)
+	if err != nil {
+		return nil, err
+	}
+
+	cpOpt := func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = controlPlaneTemplateName
+		values["cloudstackControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpCsmc.Spec.Users)
+		values["cloudstackEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdCsmc.Spec.Users)
+		values["etcdTemplateName"] = etcdTemplateName
+	}
+
+	workersOpt := func(values map[string]interface{}) {
+		values["workloadTemplateName"] = workloadTemplateNames[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Name]
+		values["cloudStackWorkerSshAuthorizedKey"] = sshAuthorizedKey(workerNodeGroupMachineSpecs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Users)
+	}
+
+	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, cpOpt, workersOpt)
+}
+
+func (r *CloudStackTemplate) getEtcdTemplateName(ctx context.Context, eksaCluster *anywherev1.Cluster, oldCsdc *anywherev1.CloudStackDatacenterConfig, csdc anywherev1.CloudStackDatacenterConfig, etcdCsmc anywherev1.CloudStackMachineConfig, clusterName string) (string, error) {
+	var etcdTemplateName string
+	if eksaCluster.Spec.ExternalEtcdConfiguration != nil {
+		oldEtcdCsmc, err := r.ExistingCloudStackEtcdMachineConfig(ctx, eksaCluster)
+		if err != nil {
+			return "", err
+		}
+		updateEtcdTemplate := cloudstack.AnyImmutableFieldChanged(oldCsdc, &csdc, oldEtcdCsmc, &etcdCsmc)
+		etcd, err := r.Etcd(ctx, eksaCluster)
+		if err != nil {
+			return "", err
+		}
+		if updateEtcdTemplate {
+			etcd.SetAnnotations(map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"})
+			if err := r.ApplyPatch(ctx, etcd, false); err != nil {
+				return "", err
+			}
+			etcdTemplateName = common.EtcdMachineTemplateName(clusterName, r.now)
+		} else {
+			etcdTemplateName = etcd.Spec.InfrastructureTemplate.Name
+		}
+	}
+	return etcdTemplateName, nil
+}
+
+func (r *CloudStackTemplate) getKubeadmconfigTemplateNames(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, clusterName string) (map[string]string, error) {
 	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
-	workloadTemplateNames := make(map[string]string, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		oldWn, err := r.ExistingWorkerNodeGroupConfig(ctx, eksaCluster, workerNodeGroupConfiguration)
 		if err != nil {
@@ -219,7 +272,13 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 			workloadKubeadmConfigTemplateName := md.Spec.Template.Spec.Bootstrap.ConfigRef.Name
 			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = workloadKubeadmConfigTemplateName
 		}
+	}
+	return kubeadmconfigTemplateNames, nil
+}
 
+func (r *CloudStackTemplate) getWorkerloadTemplateNames(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, oldCsdc *anywherev1.CloudStackDatacenterConfig, csdc anywherev1.CloudStackDatacenterConfig, workerCsmcs map[string]anywherev1.CloudStackMachineConfig, clusterName string) (map[string]string, error) {
+	workloadTemplateNames := make(map[string]string, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		csmc := workerCsmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		oldCsmc, err := r.ExistingCloudStackWorkerMachineConfig(ctx, eksaCluster, workerNodeGroupConfiguration)
 		if err != nil {
@@ -238,42 +297,7 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		}
 	}
-
-	var etcdTemplateName string
-	if eksaCluster.Spec.ExternalEtcdConfiguration != nil {
-		oldEtcdCsmc, err := r.ExistingCloudStackEtcdMachineConfig(ctx, eksaCluster)
-		if err != nil {
-			return nil, err
-		}
-		updateEtcdTemplate := cloudstack.AnyImmutableFieldChanged(oldCsdc, &csdc, oldEtcdCsmc, &etcdCsmc)
-		etcd, err := r.Etcd(ctx, eksaCluster)
-		if err != nil {
-			return nil, err
-		}
-		if updateEtcdTemplate {
-			etcd.SetAnnotations(map[string]string{etcdv1.UpgradeInProgressAnnotation: "true"})
-			if err := r.ApplyPatch(ctx, etcd, false); err != nil {
-				return nil, err
-			}
-			etcdTemplateName = common.EtcdMachineTemplateName(clusterName, r.now)
-		} else {
-			etcdTemplateName = etcd.Spec.InfrastructureTemplate.Name
-		}
-	}
-
-	cpOpt := func(values map[string]interface{}) {
-		values["controlPlaneTemplateName"] = controlPlaneTemplateName
-		values["cloudstackControlPlaneSshAuthorizedKey"] = sshAuthorizedKey(cpCsmc.Spec.Users)
-		values["cloudstackEtcdSshAuthorizedKey"] = sshAuthorizedKey(etcdCsmc.Spec.Users)
-		values["etcdTemplateName"] = etcdTemplateName
-	}
-
-	workersOpt := func(values map[string]interface{}) {
-		values["workloadTemplateName"] = workloadTemplateNames[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Name]
-		values["cloudStackWorkerSshAuthorizedKey"] = sshAuthorizedKey(workerNodeGroupMachineSpecs[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Users)
-	}
-
-	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, cpOpt, workersOpt)
+	return workloadTemplateNames, nil
 }
 
 // TODO(pokearu): This method is currently not used. Need to add logic in reconciler for TinkerbellDatacenterKind
