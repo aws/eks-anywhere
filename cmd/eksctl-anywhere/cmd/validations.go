@@ -43,10 +43,11 @@ func commonValidation(ctx context.Context, clusterConfigFile string) (*v1alpha1.
 func packageLocationValidation(location string) error {
 	switch strings.ToLower(location) {
 	case FromCluster:
+		return nil
 	case FromRegistry:
 		return nil
 	}
-	return fmt.Errorf("invalid from flag specified. Please use either %v, or %v", FromCluster, FromRegistry)
+	return fmt.Errorf("invalid source flag specified. Please use either %v, or %v", FromCluster, FromRegistry)
 }
 
 func kubeVersionValidation(kubeVersion string, from string) error {
