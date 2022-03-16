@@ -51,7 +51,8 @@ func getResources(ctx context.Context, resourceType string, output string, args 
 	if output != "" {
 		params = append(params, executables.WithOutput(output))
 	}
-	packages, err := kubectl.GetResources(ctx, resourceType, params...)
+	stdOut, err := kubectl.GetResources(ctx, resourceType, params...)
+	packages := stdOut.String()
 	if err != nil {
 		fmt.Print(packages)
 		return fmt.Errorf("kubectl execution failure: \n%v", err)
