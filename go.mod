@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/aws/aws-sdk-go v1.38.40
 	github.com/aws/eks-anywhere/release v0.0.0-20211130194657-f6e9593c6551
+	github.com/aws/eks-anywhere-packages v0.1.1
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logr/logr v0.4.0
