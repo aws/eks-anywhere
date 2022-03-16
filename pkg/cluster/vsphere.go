@@ -16,6 +16,13 @@ func vsphereEntry() *ConfigManagerEntry {
 			processVSphereDatacenter,
 			machineConfigsProcessor(processVSphereMachineConfig),
 		},
+		Defaulters: []Defaulter{
+			func(c *Config) {
+				if c.VSphereDatacenter != nil {
+					c.VSphereDatacenter.SetDefaults()
+				}
+			},
+		},
 	}
 }
 
