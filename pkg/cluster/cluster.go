@@ -7,5 +7,10 @@ func clusterEntry() *ConfigManagerEntry {
 				c.Cluster.SetDefaults()
 			},
 		},
+		Validations: []Validation{
+			func(c *Config) error {
+				return c.Cluster.Validate()
+			},
+		},
 	}
 }

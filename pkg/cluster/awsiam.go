@@ -17,6 +17,24 @@ func awsIamEntry() *ConfigManagerEntry {
 				}
 			},
 		},
+		Validations: []Validation{
+			func(c *Config) error {
+				for _, a := range c.AWSIAMConfigs {
+					if err := a.Validate(); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			func(c *Config) error {
+				for _, a := range c.AWSIAMConfigs {
+					if err := validateSameNamespace(c, a); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+		},
 	}
 }
 
