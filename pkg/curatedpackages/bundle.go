@@ -3,22 +3,24 @@ package curatedpackages
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"sort"
+	"strconv"
+	"strings"
+
+	"github.com/go-logr/logr"
+
 	api "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere-packages/pkg/artifacts"
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
 	"github.com/aws/eks-anywhere-packages/pkg/testutil"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/go-logr/logr"
-	"regexp"
-	"sort"
-	"strconv"
-	"strings"
 )
 
 const (
-	FromCluster     = "cluster"
-	FromRegistry    = "registry"
+	Cluster         = "cluster"
+	Registry        = "registry"
 	RegistryBaseRef = "public.ecr.aws/q0f6t3x4/eksa-package-bundles"
 )
 
@@ -29,9 +31,9 @@ func GetLatestBundle(ctx context.Context, kubeConfig string, source string, kube
 	)
 
 	switch strings.ToLower(source) {
-	case FromCluster:
+	case Cluster:
 		packageBundle, err = getLatestBundleFromCluster(ctx, kubeConfig)
-	case FromRegistry:
+	case Registry:
 		packageBundle, err = getLatestBundleFromRegistry(ctx, kubeVersion)
 	}
 
