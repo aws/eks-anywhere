@@ -366,7 +366,12 @@ func (r *CapiResourceFetcher) ExistingVSphereControlPlaneMachineConfig(ctx conte
 	if err != nil {
 		return nil, err
 	}
-	return MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate)
+	existingControlPlane, err := r.ControlPlane(ctx, cs)
+	if err != nil {
+		return nil, err
+	}
+	users := existingControlPlane.Spec.KubeadmConfigSpec.Users
+	return MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate, users)
 }
 
 func (r *CapiResourceFetcher) ExistingVSphereEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error) {
@@ -374,7 +379,12 @@ func (r *CapiResourceFetcher) ExistingVSphereEtcdMachineConfig(ctx context.Conte
 	if err != nil {
 		return nil, err
 	}
-	return MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate)
+	existingEtcd, err := r.Etcd(ctx, cs)
+	if err != nil {
+		return nil, err
+	}
+	users := existingEtcd.Spec.EtcdadmConfigSpec.Users
+	return MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate, users)
 }
 
 func (r *CapiResourceFetcher) ExistingVSphereWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.VSphereMachineConfig, error) {
@@ -382,7 +392,12 @@ func (r *CapiResourceFetcher) ExistingVSphereWorkerMachineConfig(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	return MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate)
+	existingKubeadmConfigTemplate, err := r.KubeadmConfigTemplate(ctx, cs, wnc)
+	if err != nil {
+		return nil, err
+	}
+	users := existingKubeadmConfigTemplate.Spec.Template.Spec.Users
+	return MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate, users)
 }
 
 func (r *CapiResourceFetcher) ExistingWorkerNodeGroupConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.WorkerNodeGroupConfiguration, error) {
@@ -407,7 +422,7 @@ func MapMachineTemplateToVSphereDatacenterConfigSpec(vsMachineTemplate *vspherev
 	return vsSpec, nil
 }
 
-func MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate *vspherev1.VSphereMachineTemplate) (*anywherev1.VSphereMachineConfig, error) {
+func MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate *vspherev1.VSphereMachineTemplate, users []kubeadmv1.User) (*anywherev1.VSphereMachineConfig, error) {
 	vsSpec := &anywherev1.VSphereMachineConfig{}
 	vsSpec.Spec.MemoryMiB = int(vsMachineTemplate.Spec.Template.Spec.MemoryMiB)
 	vsSpec.Spec.DiskGiB = int(vsMachineTemplate.Spec.Template.Spec.DiskGiB)
@@ -417,8 +432,14 @@ func MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate *vspherev1.V
 	vsSpec.Spec.Datastore = vsMachineTemplate.Spec.Template.Spec.Datastore
 	vsSpec.Spec.Folder = vsMachineTemplate.Spec.Template.Spec.Folder
 	vsSpec.Spec.StoragePolicyName = vsMachineTemplate.Spec.Template.Spec.StoragePolicyName
-
-	// TODO: OSFamily, Users (these fields are immutable)
+	for _, user := range users {
+		user := anywherev1.UserConfiguration{
+			Name:              user.Name,
+			SshAuthorizedKeys: user.SSHAuthorizedKeys,
+		}
+		vsSpec.Spec.Users = append(vsSpec.Spec.Users, user)
+	}
+	// TODO: OSFamily (these fields are immutable)
 	return vsSpec, nil
 }
 
@@ -440,23 +461,4 @@ func convertStringToLabelsMap(labels string) map[string]string {
 		labelsMap[pair[0]] = pair[1]
 	}
 	return labelsMap
-}
-
-func MapMachineTemplateToVSphereMachineConfigSpecWorkers(vsMachineTemplates []vspherev1.VSphereMachineTemplate) (map[string]anywherev1.VSphereMachineConfig, error) {
-	vsSpec := &anywherev1.VSphereMachineConfig{}
-	vsSpecs := make(map[string]anywherev1.VSphereMachineConfig, len(vsMachineTemplates))
-	for _, vsMachineTemplate := range vsMachineTemplates {
-		vsSpec.Spec.MemoryMiB = int(vsMachineTemplate.Spec.Template.Spec.MemoryMiB)
-		vsSpec.Spec.DiskGiB = int(vsMachineTemplate.Spec.Template.Spec.DiskGiB)
-		vsSpec.Spec.NumCPUs = int(vsMachineTemplate.Spec.Template.Spec.NumCPUs)
-		vsSpec.Spec.Template = vsMachineTemplate.Spec.Template.Spec.Template
-		vsSpec.Spec.ResourcePool = vsMachineTemplate.Spec.Template.Spec.ResourcePool
-		vsSpec.Spec.Datastore = vsMachineTemplate.Spec.Template.Spec.Datastore
-		vsSpec.Spec.Folder = vsMachineTemplate.Spec.Template.Spec.Folder
-		vsSpec.Spec.StoragePolicyName = vsMachineTemplate.Spec.Template.Spec.StoragePolicyName
-		vsSpecs[vsMachineTemplate.Name] = *vsSpec
-	}
-
-	// TODO: OSFamily, Users (these fields are immutable)
-	return vsSpecs, nil
 }

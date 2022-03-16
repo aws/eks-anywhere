@@ -70,13 +70,6 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 		)
 	}
 
-	if !reflect.DeepEqual(old.Spec.Users, new.Spec.Users) {
-		allErrs = append(
-			allErrs,
-			field.Invalid(field.NewPath("spec", "users"), new.Spec.Users, "field is immutable"),
-		)
-	}
-
 	if old.Spec.StoragePolicyName != new.Spec.StoragePolicyName {
 		allErrs = append(
 			allErrs,
@@ -95,6 +88,13 @@ func validateImmutableFieldsVSphereMachineConfig(new, old *VSphereMachineConfig)
 	}
 
 	vspheremachineconfiglog.Info("Machine config is associated with management cluster's control plane or etcd", "name", old.Name)
+
+	if !reflect.DeepEqual(old.Spec.Users, new.Spec.Users) {
+		allErrs = append(
+			allErrs,
+			field.Invalid(field.NewPath("spec", "users"), new.Spec.Users, "field is immutable"),
+		)
+	}
 
 	if old.Spec.Template != new.Spec.Template {
 		allErrs = append(

@@ -10,6 +10,13 @@ func awsIamEntry() *ConfigManagerEntry {
 			},
 		},
 		Processors: []ParsedProcessor{processAWSIam},
+		Defaulters: []Defaulter{
+			func(c *Config) {
+				for _, a := range c.AWSIAMConfigs {
+					a.SetDefaults()
+				}
+			},
+		},
 	}
 }
 
