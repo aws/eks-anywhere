@@ -2,6 +2,7 @@ package curatedpackages
 
 import (
 	"context"
+
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/executables"
 )
