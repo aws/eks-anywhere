@@ -304,17 +304,17 @@ func (e *ClusterE2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Contex
 		}
 
 		// update replica
-		clusterConfig, err := v1alpha1.GetClusterConfig(clusterConfGitPath)
+		clusterSpec, err := e.clusterSpecFromGit()
 		if err != nil {
 			return err
 		}
-		clusterConfig.Spec.WorkerNodeGroupConfigurations[0].Count += 1
+		clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count += 1
 
 		providerConfig := providerConfig{
 			datacenterConfig: cloudstackClusterConfig,
 			machineConfigs:   e.convertCloudStackMachineConfigs(cpName, workerName, etcdName, cloudstackMachineConfigs),
 		}
-		_, err = e.updateEKSASpecInGit(clusterConfig, providerConfig)
+		_, err = e.updateEKSASpecInGit(clusterSpec, providerConfig)
 		if err != nil {
 			return err
 		}
@@ -709,6 +709,7 @@ func (e *ClusterE2ETest) waitForWorkerScaling(targetvalue int) error {
 	return retrier.Retry(120, time.Second*10, func() error {
 		md, err := e.KubectlClient.GetMachineDeployments(ctx,
 			executables.WithKubeconfig(e.managementKubeconfigFilePath()),
+			executables.WithNamespace("eksa-system"),
 		)
 		if err != nil {
 			return err

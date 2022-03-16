@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
 	"sort"
 	"strings"
 
@@ -490,6 +491,25 @@ func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, cluster
 		return nil, err
 	}
 	machineTemplateSpec := &vspherev1.VSphereMachineTemplate{}
+	if err := yaml.Unmarshal(buffer.Bytes(), machineTemplateSpec); err != nil {
+		return nil, err
+	}
+	return machineTemplateSpec, nil
+}
+
+
+func (k *Kubectl) CloudstackWorkerNodesMachineTemplate(ctx context.Context, clusterName string, kubeconfig string, namespace string) (*cloudstackv1.CloudStackMachineTemplate, error) {
+	machineTemplateName, err := k.MachineTemplateName(ctx, clusterName, kubeconfig, WithNamespace(namespace))
+	if err != nil {
+		return nil, err
+	}
+
+	params := []string{"get", "cloudstackmachinetemplates", machineTemplateName, "-o", "go-template", "--template", "{{.spec.template.spec}}", "-o", "yaml", "--kubeconfig", kubeconfig, "--namespace", namespace}
+	buffer, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, err
+	}
+	machineTemplateSpec := &cloudstackv1.CloudStackMachineTemplate{}
 	if err := yaml.Unmarshal(buffer.Bytes(), machineTemplateSpec); err != nil {
 		return nil, err
 	}

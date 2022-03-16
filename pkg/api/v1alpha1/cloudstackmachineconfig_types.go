@@ -116,12 +116,16 @@ func (c *CloudStackMachineConfig) OSFamily() OSFamily {
 }
 
 func (c *CloudStackMachineConfig) ConvertConfigToConfigGenerateStruct() *CloudStackMachineConfigGenerate {
+	namespace := defaultEksaNamespace
+	if c.Namespace != "" {
+		namespace = c.Namespace
+	}
 	config := &CloudStackMachineConfigGenerate{
 		TypeMeta: c.TypeMeta,
 		ObjectMeta: ObjectMeta{
 			Name:        c.Name,
 			Annotations: c.Annotations,
-			Namespace:   c.Namespace,
+			Namespace:   namespace,
 		},
 		Spec: c.Spec,
 	}
