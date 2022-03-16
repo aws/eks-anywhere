@@ -447,7 +447,7 @@ func (r *CapiResourceFetcher) ExistingCloudStackDatacenterConfig(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	return MapClusterToCloudStackDatacenterConfigSpec(csCluster)
+	return MapClusterToCloudStackDatacenterConfigSpec(csCluster), nil
 }
 
 func (r *CapiResourceFetcher) ExistingCloudStackControlPlaneMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error) {
@@ -511,7 +511,7 @@ func MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate *vspherev1.V
 	return vsSpec, nil
 }
 
-func MapClusterToCloudStackDatacenterConfigSpec(csCluster *cloudstackv1.CloudStackCluster) (*anywherev1.CloudStackDatacenterConfig, error) {
+func MapClusterToCloudStackDatacenterConfigSpec(csCluster *cloudstackv1.CloudStackCluster) *anywherev1.CloudStackDatacenterConfig {
 	csSpec := &anywherev1.CloudStackDatacenterConfig{}
 	var zones []anywherev1.CloudStackZone
 	for _, csZone := range csCluster.Spec.Zones {
@@ -528,7 +528,7 @@ func MapClusterToCloudStackDatacenterConfigSpec(csCluster *cloudstackv1.CloudSta
 	csSpec.Spec.Domain = csCluster.Spec.Domain
 	csSpec.Spec.Account = csCluster.Spec.Account
 
-	return csSpec, nil
+	return csSpec
 }
 
 func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate) (*anywherev1.CloudStackMachineConfig, error) {
@@ -544,7 +544,9 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 
 	csSpec.Spec.AffinityGroupIds = csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs
 
-	// TODO: Details, Users (these fields are immutable)
+	for key, element := range csMachineTemplate.Spec.Spec.Spec.Details {
+		csSpec.Spec.UserCustomDetails[key] = element
+	}
 	return csSpec, nil
 }
 
