@@ -1,10 +1,10 @@
 package curatedpackages
 
 import (
-	"context"
 	"fmt"
-	api "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"strings"
+
+	api "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 )
 
 func DisplayPackages(m map[string][]string) {
@@ -16,12 +16,12 @@ func DisplayPackages(m map[string][]string) {
 	}
 }
 
-func GetPackages(ctx context.Context, bundle *api.PackageBundle) (map[string][]string, error) {
-	packages := getPackagesFromBundle(ctx, bundle)
+func GetPackages(bundle *api.PackageBundle) (map[string][]string, error) {
+	packages := getPackagesFromBundle(bundle)
 	return packages, nil
 }
 
-func getPackagesFromBundle(ctx context.Context, bundle *api.PackageBundle) map[string][]string {
+func getPackagesFromBundle(bundle *api.PackageBundle) map[string][]string {
 	packagesInBundle := make(map[string][]string)
 	for _, p := range bundle.Spec.Packages {
 		packagesInBundle[p.Name] = append(packagesInBundle[p.Name], convertBundleVersionToVersion(p.Source.Versions)...)
