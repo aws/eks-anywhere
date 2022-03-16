@@ -43,8 +43,8 @@ func (t *Tink) PushHardware(ctx context.Context, hardware []byte) error {
 }
 
 func (t *Tink) GetHardware(ctx context.Context) ([]*hardware.Hardware, error) {
-	params := []string{"hardware", "get", "--format", "json"}
-	data, err := t.Command(ctx, params...).WithEnvVars(t.envMap).Run()
+	params := []string{"hardware", "get", "--tinkerbell-cert-url", t.tinkerbellCertUrl, "--tinkerbell-grpc-authority", t.tinkerbellGrpcAuthority, "--format", "json"}
+	data, err := t.Command(ctx, params...).Run()
 	if err != nil {
 		return nil, fmt.Errorf("error getting hardware list: %v", err)
 	}
@@ -66,8 +66,8 @@ func (t *Tink) GetHardware(ctx context.Context) ([]*hardware.Hardware, error) {
 }
 
 func (t *Tink) GetWorkflow(ctx context.Context) ([]*workflow.Workflow, error) {
-	params := []string{"workflow", "get", "--format", "json"}
-	data, err := t.Command(ctx, params...).WithEnvVars(t.envMap).Run()
+	params := []string{"workflow", "get", "--tinkerbell-cert-url", t.tinkerbellCertUrl, "--tinkerbell-grpc-authority", t.tinkerbellGrpcAuthority, "--format", "json"}
+	data, err := t.Command(ctx, params...).Run()
 	if err != nil {
 		return nil, fmt.Errorf("error getting workflow list: %v", err)
 	}
