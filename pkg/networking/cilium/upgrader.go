@@ -37,7 +37,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentS
 		return nil, nil
 	}
 
-	logger.V(1).Info("Upgrading Cilium", "oldVersion", diff.OldVersion, "newVersion", diff.NewVersion)
+	logger.V(1).Info("Upgrading Cilium", "oldVersion", diff.ComponentReports[0].OldVersion, "newVersion", diff.ComponentReports[0].NewVersion)
 	logger.V(4).Info("Generating Cilium upgrade preflight manifest")
 	preflight, err := u.templater.GenerateUpgradePreflightManifest(ctx, newSpec)
 	if err != nil {
@@ -75,7 +75,7 @@ func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentS
 		return nil, err
 	}
 
-	return types.NewChangeDiff(diff), nil
+	return diff, nil
 }
 
 func (u *Upgrader) waitForPreflight(ctx context.Context, cluster *types.Cluster) error {
@@ -102,18 +102,22 @@ func (u *Upgrader) waitForCilium(ctx context.Context, cluster *types.Cluster) er
 	return nil
 }
 
-func ciliumChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
+func ciliumChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
 	if currentSpec.VersionsBundle.Cilium.Version == newSpec.VersionsBundle.Cilium.Version {
 		return nil
 	}
 
-	return &types.ComponentChangeDiff{
-		ComponentName: "cilium",
-		OldVersion:    currentSpec.VersionsBundle.Cilium.Version,
-		NewVersion:    newSpec.VersionsBundle.Cilium.Version,
+	return &types.ChangeDiff{
+		ComponentReports: []types.ComponentChangeDiff{
+			{
+				ComponentName: "cilium",
+				OldVersion:    currentSpec.VersionsBundle.Cilium.Version,
+				NewVersion:    newSpec.VersionsBundle.Cilium.Version,
+			},
+		},
 	}
 }
 
 func ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
-	return types.NewChangeDiff(ciliumChangeDiff(currentSpec, newSpec))
+	return ciliumChangeDiff(currentSpec, newSpec)
 }
