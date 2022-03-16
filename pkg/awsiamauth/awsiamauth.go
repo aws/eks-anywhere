@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -97,12 +98,18 @@ func (a *AwsIamAuth) GenerateCertKeyPairSecret() ([]byte, error) {
 }
 
 func (a *AwsIamAuth) GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, serverUrl, tlsCert string) ([]byte, error) {
-	data := map[string]string{
+	data := map[string]interface{}{
 		"clusterName": clusterSpec.Cluster.Name,
 		"server":      serverUrl,
 		"cert":        tlsCert,
 		"clusterID":   a.clusterId.String(),
 	}
+	k8Version, err := strconv.ParseFloat(string(clusterSpec.Spec.KubernetesVersion), 32)
+	if err != nil {
+		return nil, err
+	}
+	data["k8sVersion"] = k8Version
+
 	awsIamAuthKubeconfig, err := templater.Execute(awsIamAuthKubeconfigTemplate, data)
 	if err != nil {
 		return nil, fmt.Errorf("error generating aws-iam-authenticator kubeconfig content: %v", err)
