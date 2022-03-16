@@ -41,12 +41,12 @@ func GetPackages(bundle *api.PackageBundle) (map[string][]string, error) {
 func getPackagesFromBundle(bundle *api.PackageBundle) map[string][]string {
 	packagesInBundle := make(map[string][]string)
 	for _, p := range bundle.Spec.Packages {
-		packagesInBundle[p.Name] = append(packagesInBundle[p.Name], convertBundleVersionToVersion(p.Source.Versions)...)
+		packagesInBundle[p.Name] = append(packagesInBundle[p.Name], convertBundleVersionToPackageVersion(p.Source.Versions)...)
 	}
 	return packagesInBundle
 }
 
-func convertBundleVersionToVersion(bundleVersions []api.SourceVersion) []string {
+func convertBundleVersionToPackageVersion(bundleVersions []api.SourceVersion) []string {
 	var versions []string
 	for _, v := range bundleVersions {
 		versions = append(versions, v.Name)
