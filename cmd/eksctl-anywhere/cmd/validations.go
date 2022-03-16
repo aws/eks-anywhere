@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	FromCluster  = "cluster"
-	FromRegistry = "registry"
+	Cluster  = "cluster"
+	Registry = "registry"
 )
 
 func commonValidation(ctx context.Context, clusterConfigFile string) (*v1alpha1.Cluster, error) {
@@ -40,18 +40,18 @@ func commonValidation(ctx context.Context, clusterConfigFile string) (*v1alpha1.
 	return clusterConfig, nil
 }
 
-func packageLocationValidation(location string) error {
-	switch strings.ToLower(location) {
-	case FromCluster:
+func packageLocationValidation(source string) error {
+	switch strings.ToLower(source) {
+	case Cluster:
 		return nil
-	case FromRegistry:
+	case Registry:
 		return nil
 	}
-	return fmt.Errorf("invalid source flag specified. Please use either %v, or %v", FromCluster, FromRegistry)
+	return fmt.Errorf("invalid source flag specified. Please use either %v, or %v", Cluster, Registry)
 }
 
-func kubeVersionValidation(kubeVersion string, from string) error {
-	if from != FromRegistry {
+func kubeVersionValidation(kubeVersion string, source string) error {
+	if source != Registry {
 		return nil
 	}
 	versionSplit := strings.Split(kubeVersion, ".")
