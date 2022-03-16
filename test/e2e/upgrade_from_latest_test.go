@@ -150,7 +150,7 @@ func TestVSphereKubernetes121To122UbuntuUpgradeFromLatestMinorRelease(t *testing
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate122Var(), // Set the template so it doesn't get autoimported
 		),
-		framework.WithClusterFiller(api.WithKubernetesVersion(anywherev1.Kube122)),
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube122)),
 		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 }
@@ -168,7 +168,7 @@ func TestDockerKubernetes121to122UpgradeFromLatestMinorRelease(t *testing.T) {
 	runUpgradeFromLatestReleaseFlow(
 		test,
 		anywherev1.Kube122,
-		framework.WithClusterFiller(api.WithKubernetesVersion(anywherev1.Kube122)),
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube122)),
 		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 }
