@@ -146,6 +146,11 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		return nil, errors.Wrapf(err, "Error getting bundle for Bottlerocket admin container")
 	}
 
+	packageBundle, err := r.GetPackagesBundle(imageDigests)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Error getting bundle for Package controllers")
+	}
+
 	var tinkerbellBundle anywherev1alpha1.TinkerbellBundle
 	var snowBundle anywherev1alpha1.SnowBundle
 	if r.DevRelease && r.BuildRepoBranchName == "main" {
@@ -219,6 +224,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			Cilium:                 ciliumBundle,
 			Kindnetd:               kindnetdBundle,
 			Flux:                   fluxBundle,
+			PackgeController:       packageBundle,
 			ExternalEtcdBootstrap:  etcdadmBootstrapBundle,
 			ExternalEtcdController: etcdadmControllerBundle,
 			BottleRocketBootstrap:  bottlerocketBootstrapBundle,
