@@ -47,8 +47,7 @@ func TestVSphereKubernetes121BottlerocketProxyConfig(t *testing.T) {
 	runProxyConfigFlow(test)
 }
 
-func TestCloudStackKubernetes121UbuntuProxyConfig(t *testing.T) {
-	t.Skip("Skipping CloudStack in CI/CD")
+func TestCloudStackKubernetes121RedhatProxyConfig(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithRedhat121()),

@@ -111,7 +111,6 @@ func TestVSphereKubernetes121BottleRocketAWSIamAuth(t *testing.T) {
 }
 
 func TestCloudStackKubernetes120AWSIamAuth(t *testing.T) {
-	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithRedhat120()),
@@ -122,7 +121,6 @@ func TestCloudStackKubernetes120AWSIamAuth(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121AWSIamAuth(t *testing.T) {
-	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithRedhat121()),

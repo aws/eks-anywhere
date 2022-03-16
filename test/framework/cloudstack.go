@@ -19,7 +19,6 @@ const (
 	cloudstackComputeOfferingLargeVar  = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGE"
 	cloudstackComputeOfferingLargerVar = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGER"
 	cloudstackK8sControlPlaneHostVar   = "T_CLOUDSTACK_CONTROL_PLANE_HOST"
-	cloudstackB64SecretVar             = "T_CLOUDSTACK_B64ENCODED_SECRET"
 	podCidrVar                         = "T_CLOUDSTACK_POD_CIDR"
 	serviceCidrVar                     = "T_CLOUDSTACK_SERVICE_CIDR"
 )
@@ -36,7 +35,6 @@ var requiredCloudStackEnvVars = []string{
 	cloudstackComputeOfferingLargeVar,
 	cloudstackComputeOfferingLargerVar,
 	cloudstackK8sControlPlaneHostVar,
-	cloudstackB64SecretVar,
 	podCidrVar,
 	serviceCidrVar,
 }

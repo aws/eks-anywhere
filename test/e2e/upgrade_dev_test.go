@@ -6,8 +6,6 @@ package e2e
 import (
 	"testing"
 
-	vsphere2 "github.com/aws/eks-anywhere/internal/pkg/api/vsphere"
-
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/test/framework"
@@ -26,7 +24,7 @@ func TestVSphereKubernetes118To119CpVmNumCpuUpgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate119Var(),
-			vsphere2.WithControlPlaneVMsNumCPUs(vsphereCpVmNumCpuUpdateVar),
+			api.WithControlPlaneVMsNumCPUs(vsphereCpVmNumCpuUpdateVar),
 		),
 	)
 }
@@ -44,7 +42,7 @@ func TestVSphereKubernetes118To119CpVmMemoryUpgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate119Var(),
-			vsphere2.WithControlPlaneVMsMemoryMiB(vsphereCpVmMemoryUpdate),
+			api.WithControlPlaneVMsMemoryMiB(vsphereCpVmMemoryUpdate),
 		),
 	)
 }
@@ -62,7 +60,7 @@ func TestVSphereKubernetes118To119CpDiskGiBUpgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate119Var(),
-			vsphere2.WithControlPlaneDiskGiB(vsphereCpDiskGiBUpdateVar),
+			api.WithControlPlaneDiskGiB(vsphereCpDiskGiBUpdateVar),
 		),
 	)
 }
@@ -80,7 +78,7 @@ func TestVSphereKubernetes118To119WlVmNumCpuUpgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate119Var(),
-			vsphere2.WithWorkloadVMsNumCPUs(vsphereWlVmNumCpuUpdateVar),
+			api.WithWorkloadVMsNumCPUs(vsphereWlVmNumCpuUpdateVar),
 		),
 	)
 }
@@ -98,7 +96,7 @@ func TestVSphereKubernetes118To119WlVmMemoryUpgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate119Var(),
-			vsphere2.WithWorkloadVMsMemoryMiB(vsphereWlVmMemoryUpdate),
+			api.WithWorkloadVMsMemoryMiB(vsphereWlVmMemoryUpdate),
 		),
 	)
 }
@@ -116,7 +114,7 @@ func TestVSphereKubernetes118To119WlDiskGiBUpgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate119Var(),
-			vsphere2.WithWorkloadDiskGiB(vsphereWlDiskGiBUpdate),
+			api.WithWorkloadDiskGiB(vsphereWlDiskGiBUpdate),
 		),
 	)
 }
@@ -134,7 +132,7 @@ func TestVSphereKubernetes118To119FolderUpgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate119Var(),
-			vsphere2.WithFolder(vsphereFolderUpdateVar),
+			api.WithFolder(vsphereFolderUpdateVar),
 		),
 	)
 }
@@ -152,7 +150,7 @@ func TestVSphereKubernetes118To119Network1to2Upgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate119Var(),
-			vsphere2.WithNetwork(vsphereNetwork2UpdateVar),
+			api.WithNetwork(vsphereNetwork2UpdateVar),
 		),
 	)
 }
@@ -170,17 +168,17 @@ func TestVSphereKubernetes118To119Network1to3Upgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube119)),
 		provider.WithProviderUpgrade(
 			framework.UpdateUbuntuTemplate119Var(),
-			vsphere2.WithNetwork(vsphereNetwork3UpdateVar),
+			api.WithNetwork(vsphereNetwork3UpdateVar),
 		),
 	)
 }
 
 func TestCloudStackKubernetes120To121CpComputeOfferingUpgrade(t *testing.T) {
-	//t.Skip("Skipping CloudStack in CI/CD")
 	provider := framework.NewCloudStack(t, framework.WithRedhat120())
 	test := framework.NewE2ETest(
 		t,
 		provider,
+		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 	)
 	runSimpleUpgradeFlow(

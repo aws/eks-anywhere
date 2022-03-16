@@ -48,7 +48,6 @@ func TestVSphereKubernetes121BottlerocketRegistryMirrorAndCert(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121RedhatRegistryMirrorAndCert(t *testing.T) {
-	t.Skip("Skipping CloudStack in CI/CD")
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewCloudStack(t, framework.WithRedhat121()),
