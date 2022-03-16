@@ -15,7 +15,7 @@ const (
 `
 	cloudInit = `datasource:
   Ec2:
-    metadata_urls: ["http://TINKERBELL_IP:50061"]
+    metadata_urls: ["http://<REPLACE WITH TINKERBELL IP>:50061"]
     strict_id: false
 system_info:
   default_user:

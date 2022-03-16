@@ -10,14 +10,14 @@ spec:
     machineGroupRef:
       name: test_cluster
       kind: CloudStackMachineConfig
-  kubernetesVersion: "1.19"
+  kubernetesVersion: "1.20"
   workerNodeGroupConfigurations:
     - count: 3
       machineGroupRef:
         name: test_cluster
         kind: CloudStackMachineConfig
   datacenterRef:
-    kind: CloudStackDatacenter
+    kind: CloudStackDatacenterConfig
     name: test_cluster
   clusterNetwork:
     cni: "cilium"
@@ -34,10 +34,10 @@ metadata:
   creationTimestamp: null
   name: test_cluster
 spec:
-  computeoffering: large
-  diskoffering: small
-  osFamily: ubuntu
-  template: rhel8-1.20
+  computeoffering:
+    name: large
+  template:
+    name: rhel8-1.20
   userCustomDetails:
     - foo: bar
   users:
@@ -52,10 +52,11 @@ metadata:
   name: test_cluster
 spec:
   domain: domain1
-  network: isolated1
   account: account1
-  zone: zone1
-  thumbprint: ""
+  zones:
+    - name: zone1
+      network:
+        name: isolated1
   insecure: false
   ManagementAPIEndpoint: 1.1.1.1:8080/client/api
 status: {}

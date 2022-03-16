@@ -61,7 +61,7 @@ func (ct *clusterctlTest) expectBuildOverrideLayer() {
 }
 
 func (ct *clusterctlTest) expectGetProviderEnvMap() {
-	ct.provider.EXPECT().EnvMap().Return(ct.providerEnvMap, nil)
+	ct.provider.EXPECT().EnvMap(clusterSpec).Return(ct.providerEnvMap, nil)
 }
 
 func TestClusterctlInitInfrastructure(t *testing.T) {
@@ -131,7 +131,7 @@ func TestClusterctlInitInfrastructure(t *testing.T) {
 			provider := mockproviders.NewMockProvider(mockCtrl)
 			provider.EXPECT().Name().Return(tt.providerName)
 			provider.EXPECT().Version(clusterSpec).Return(tt.providerVersion)
-			provider.EXPECT().EnvMap().Return(tt.env, nil)
+			provider.EXPECT().EnvMap(clusterSpec).Return(tt.env, nil)
 			provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
 
 			executable := mockexecutables.NewMockExecutable(mockCtrl)
@@ -186,7 +186,7 @@ func TestClusterctlInitInfrastructureEnvMapError(t *testing.T) {
 	provider := mockproviders.NewMockProvider(mockCtrl)
 	provider.EXPECT().Name()
 	provider.EXPECT().Version(clusterSpec)
-	provider.EXPECT().EnvMap().Return(nil, errors.New("error with env map"))
+	provider.EXPECT().EnvMap(clusterSpec).Return(nil, errors.New("error with env map"))
 	provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
 
 	executable := mockexecutables.NewMockExecutable(mockCtrl)
@@ -213,7 +213,7 @@ func TestClusterctlInitInfrastructureExecutableError(t *testing.T) {
 	provider := mockproviders.NewMockProvider(mockCtrl)
 	provider.EXPECT().Name()
 	provider.EXPECT().Version(clusterSpec)
-	provider.EXPECT().EnvMap()
+	provider.EXPECT().EnvMap(clusterSpec)
 	provider.EXPECT().GetInfrastructureBundle(clusterSpec).Return(&types.InfrastructureBundle{})
 
 	executable := mockexecutables.NewMockExecutable(mockCtrl)

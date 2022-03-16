@@ -18,6 +18,7 @@ import (
 	"github.com/aws/eks-anywhere/controllers/controllers/reconciler"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
@@ -60,7 +61,9 @@ func NewVSphereReconciler(client client.Client, log logr.Logger, validator *vsph
 			Defaulter: defaulter,
 			tracker:   tracker,
 		},
-		providerClusterReconciler: &providerClusterReconciler{},
+		providerClusterReconciler: &providerClusterReconciler{
+			providerClient: client,
+		},
 	}
 }
 
@@ -112,7 +115,7 @@ func (v *VSphereClusterReconciler) bundles(ctx context.Context, name, namespace 
 }
 
 func (v *VSphereClusterReconciler) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*c.Spec, error) {
-	return c.BuildSpecForCluster(ctx, cs, v.bundles, nil, nil)
+	return c.BuildSpecForCluster(ctx, cs, v.bundles, v.eksdRelease, nil, nil)
 }
 
 func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (reconciler.Result, error) {
@@ -152,14 +155,21 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	if err != nil {
 		return reconciler.Result{}, err
 	}
-
-	specWithBundles, err := c.BuildSpecFromBundles(cluster, bundles)
+	versionsBundle, err := c.GetVersionsBundle(cluster, bundles)
 	if err != nil {
 		return reconciler.Result{}, err
 	}
-	vshepreClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
+	v.Log.V(4).Info("Fetching eks-d manifest", "release name", versionsBundle.EksD.Name)
+	eksd, err := v.eksdRelease(ctx, versionsBundle.EksD.Name, constants.EksaSystemNamespace)
+	if err != nil {
+		return reconciler.Result{}, err
+	}
 
-	if err := v.Validator.ValidateClusterMachineConfigs(ctx, vshepreClusterSpec); err != nil {
+	specWithBundles, err := c.BuildSpecFromBundles(cluster, bundles, c.WithEksdRelease(eksd))
+
+	vsphereClusterSpec := vsphere.NewSpec(specWithBundles, machineConfigMap, dataCenterConfig)
+
+	if err := v.Validator.ValidateClusterMachineConfigs(ctx, vsphereClusterSpec); err != nil {
 		return reconciler.Result{}, err
 	}
 
@@ -290,7 +300,7 @@ func (v *VSphereClusterReconciler) reconcileExtraObjects(ctx context.Context, cl
 
 func (v *VSphereClusterReconciler) getCAPICluster(ctx context.Context, cluster *anywherev1.Cluster) (*clusterv1.Cluster, reconciler.Result, error) {
 	capiCluster := &clusterv1.Cluster{}
-	capiClusterName := types.NamespacedName{Namespace: "eksa-system", Name: cluster.Name}
+	capiClusterName := types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: cluster.Name}
 	v.Log.Info("Searching for CAPI cluster", "name", cluster.Name)
 	if err := v.Client.Get(ctx, capiClusterName, capiCluster); err != nil {
 		return nil, reconciler.Result{Result: &ctrl.Result{

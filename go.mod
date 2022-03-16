@@ -10,6 +10,7 @@ require (
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.4.0
+	github.com/gocarina/gocsv v0.0.0-20220304222734-caabc5f00d30
 	github.com/golang/mock v1.6.0
 	github.com/google/go-github/v35 v35.3.0
 	github.com/google/uuid v1.3.0

@@ -55,6 +55,34 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			testName: "valid 1.21",
+			fileName: "testdata/cluster_1_21_cloudstack.yaml",
+			wantCloudStackMachineConfigs: map[string]*CloudStackMachineConfig{
+				"eksa-unit-test": {
+					TypeMeta: metav1.TypeMeta{
+						Kind:       CloudStackMachineConfigKind,
+						APIVersion: SchemeBuilder.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "eksa-unit-test",
+					},
+					Spec: CloudStackMachineConfigSpec{
+						Template: CloudStackResourceIdentifier{
+							Id: "centos7-k8s-121-id",
+						},
+						ComputeOffering: CloudStackResourceIdentifier{
+							Id: "m4-large-id",
+						},
+						Users: []UserConfiguration{{
+							Name:              "mySshUsername",
+							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
+						}},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			testName: "valid with extra delimiters",
 			fileName: "testdata/cluster_extra_delimiters_cloudstack.yaml",
 			wantCloudStackMachineConfigs: map[string]*CloudStackMachineConfig{

@@ -170,13 +170,12 @@ func (p *snowProvider) Version(clusterSpec *cluster.Spec) string {
 	return clusterSpec.VersionsBundle.Snow.Version
 }
 
-func (p *snowProvider) EnvMap() (map[string]string, error) {
+func (p *snowProvider) EnvMap(clusterSpec *cluster.Spec) (map[string]string, error) {
 	envMap := make(map[string]string)
 	envMap[snowCredentialsKey] = p.bootstrapCreds.snowCredsB64
 	envMap[snowCertsKey] = p.bootstrapCreds.snowCertsB64
 
-	// TODO: tmp solution to pull capas image from arbitrary regi
-	envMap["SNOW_CONTROLLER_IMAGE"] = "public.ecr.aws/xyz/aws/cluster-api-provider-aws-snow:latest"
+	envMap["SNOW_CONTROLLER_IMAGE"] = clusterSpec.VersionsBundle.Snow.Manager.VersionedImage()
 
 	return envMap, nil
 }

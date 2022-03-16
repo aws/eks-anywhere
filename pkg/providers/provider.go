@@ -22,7 +22,7 @@ type Provider interface {
 	BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error)
 	UpdateKubeConfig(content *[]byte, clusterName string) error
 	Version(clusterSpec *cluster.Spec) string
-	EnvMap() (map[string]string, error)
+	EnvMap(clusterSpec *cluster.Spec) (map[string]string, error)
 	GetDeployments() map[string][]string
 	GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle
 	DatacenterConfig() DatacenterConfig

@@ -34,11 +34,9 @@ spec:
     host: 1.2.3.4
     port: 6443
   zones:
-    - id: 
-      name: zone1
-      network:
-        id: 
+    - network:
         name: net1
+      name: zone1
   domain: domain1
   account: admin
 ---
@@ -51,10 +49,8 @@ spec:
   template:
     spec:
       offering:
-        id: 
         name: m4-large
       template:
-        id: 
         name: centos7-k8s-118
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -89,6 +85,7 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -109,10 +106,59 @@ spec:
         extraArgs:
           cloud-provider: external
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       scheduler:
         extraArgs:
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     files:
+    - content: |
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          creationTimestamp: null
+          name: kube-vip
+          namespace: kube-system
+        spec:
+          containers:
+          - args:
+            - start
+            env:
+            - name: vip_arp
+              value: "true"
+            - name: vip_leaderelection
+              value: "true"
+            - name: vip_address
+              value: 1.2.3.4
+            - name: vip_interface
+              value: ens3
+            - name: vip_leaseduration
+              value: "15"
+            - name: vip_renewdeadline
+              value: "10"
+            - name: vip_retryperiod
+              value: "2"
+            image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+            imagePullPolicy: IfNotPresent
+            name: kube-vip
+            resources: {}
+            securityContext:
+              capabilities:
+                add:
+                - NET_ADMIN
+                - SYS_TIME
+            volumeMounts:
+            - mountPath: /etc/kubernetes/admin.conf
+              name: kubeconfig
+          hostNetwork: true
+          volumes:
+          - hostPath:
+              path: /etc/kubernetes/admin.conf
+              type: FileOrCreate
+            name: kubeconfig
+        status: {}
+      owner: root:root
+      path: /etc/kubernetes/manifests/kube-vip.yaml
     - content: |
         apiVersion: audit.k8s.io/v1beta1
         kind: Policy
@@ -284,7 +330,9 @@ spec:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.local_hostname }}'
+        taints: []
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -292,7 +340,9 @@ spec:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.local_hostname }}'
+        taints: []
     preKubeadmCommands:
     - swapoff -a
     - cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml
@@ -333,6 +383,7 @@ spec:
     - echo "127.0.0.1   localhost" >>/etc/hosts
     - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
     - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
+    cipherSuites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     users:
     - name: mySshUsername
       sshAuthorizedKeys:
@@ -354,8 +405,6 @@ spec:
   template:
     spec:
       offering:
-        id: 
         name: m4-large
       template:
-        id: 
         name: centos7-k8s-118

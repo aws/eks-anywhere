@@ -8,5 +8,6 @@ spec:
   account: account1
   zones:
     - name: zone1
-      network: isolated1
+      network:
+        name: shared1
 status: {}

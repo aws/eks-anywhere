@@ -66,8 +66,6 @@ spec:
   template:
     spec:
       offering:
-        id:
         name: m4-large
       template:
-        id:
         name: centos7-k8s-118

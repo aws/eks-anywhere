@@ -77,13 +77,17 @@ spec:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
+          anonymous-auth: "false"
+          provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+          read-only-port: "0"
         name: '{{ ds.meta_data.hostname }}'
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
-          cloud-provider: external
+          anonymous-auth: "false"
+          provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
+          read-only-port: "0"
         name: '{{ ds.meta_data.hostname }}'
     preKubeadmCommands:
       - hostname "{{ ds.meta_data.hostname }}"
@@ -93,7 +97,7 @@ spec:
       - echo "{{ ds.meta_data.hostname }}" >/etc/hostname
     useExperimentalRetryJoin: true
     users:
-      - name: capv
+      - name: capc
         sshAuthorizedKeys:
           - 'ssh-rsa ssh_key_value'
         sudo: ALL=(ALL) NOPASSWD:ALL

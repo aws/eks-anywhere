@@ -3,59 +3,59 @@ kind: Cluster
 metadata:
   name: test_cluster
 spec:
-  controlPlaneConfiguration:
-    count: 3
-    endpoint:
-      host: "198.18.40.234"
-    machineGroupRef:
-      name: test_cluster
-      kind: CloudStackMachineConfig
-  kubernetesVersion: "1.19"
-  workerNodeGroupConfigurations:
-    - count: 4
-      machineGroupRef:
-        name: test_cluster
-        kind: CloudStackMachineConfig
-  datacenterRef:
-    kind: CloudStackDatacenter
-    name: test_cluster
   clusterNetwork:
-    cni: "cilium"
+    cni: cilium
     pods:
       cidrBlocks:
-        - 192.168.0.0/16
+        - 172.31.0.0/16
     services:
       cidrBlocks:
         - 10.96.0.0/12
----
-apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: CloudStackMachineConfig
-metadata:
-  creationTimestamp: null
-  name: test_cluster
-spec:
-  computeoffering: large
-  diskoffering: small
-  osFamily: ubuntu
-  template: rhel8-1.20
-  userCustomDetails:
-    foo: bar
-  users:
-    - name: capc
-      sshAuthorizedKeys:
-        - "ssh-rsa ssh_key_value"
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: "192.168.1.71"
+    machineGroupRef:
+      kind: CloudStackMachineConfig
+      name: test_cluster
+  datacenterRef:
+    kind: CloudStackDatacenterConfig
+    name: test_cluster
+  kubernetesVersion: "1.21"
+  workerNodeGroupConfigurations:
+    - count: 3
+      machineGroupRef:
+        kind: CloudStackMachineConfig
+        name: test_cluster
+
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: CloudStackDatacenterConfig
 metadata:
-  creationTimestamp: null
   name: test_cluster
 spec:
-  domain: domain1
-  network: isolated1
-  account: account1
-  zone: zone1
-  thumbprint: ""
-  insecure: false
-  ManagementAPIEndpoint: 1.1.1.1:8080/client/api
-status: {}
+  domain: "root"
+  account: "admin"
+  zones:
+    - name: "zone1"
+      network:
+        name: GuestNet1
+    - name: "zone2"
+      network:
+        name: GuestNet2
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackMachineConfig
+metadata:
+  name: test_cluster
+spec:
+  computeOffering:
+    name: "Large Instance"
+  users:
+    - name: "cpac"
+      sshAuthorizedKeys:
+        - "ssh-rsa ssh-key-value"
+  template:
+    name: "rhel-8-kube-v1.21.5"
+---

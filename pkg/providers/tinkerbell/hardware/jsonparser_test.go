@@ -9,7 +9,7 @@ import (
 
 func TestNewJsonParserSuccess(t *testing.T) {
 	expected_hardware_json := "testdata/expected_hardware_json.json"
-	json, err := hardware.NewJsonParser()
+	json, err := hardware.NewJsonParser("")
 	if err != nil {
 		t.Fatalf("hardware.NewJsonParser() error = %v, expected = nil", err)
 	}

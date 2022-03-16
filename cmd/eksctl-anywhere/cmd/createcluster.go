@@ -1,16 +1,18 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"log"
+	"runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -35,15 +37,7 @@ var createClusterCmd = &cobra.Command{
 	Long:         "This command is used to create workload clusters",
 	PreRunE:      preRunCreateCluster,
 	SilenceUsage: true,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := cc.validate(cmd.Context()); err != nil {
-			return err
-		}
-		if err := cc.createCluster(cmd); err != nil {
-			return fmt.Errorf("failed to create cluster: %v", err)
-		}
-		return nil
-	},
+	RunE:         cc.createCluster,
 }
 
 func init() {
@@ -57,8 +51,8 @@ func init() {
 	createClusterCmd.Flags().BoolVar(&cc.skipIpCheck, "skip-ip-check", false, "Skip check for whether cluster control plane ip is in use")
 	createClusterCmd.Flags().StringVar(&cc.bundlesOverride, "bundles-override", "", "Override default Bundles manifest (not recommended)")
 	createClusterCmd.Flags().StringVar(&cc.managementKubeconfig, "kubeconfig", "", "Management cluster kubeconfig file")
-	err := createClusterCmd.MarkFlagRequired("filename")
-	if err != nil {
+
+	if err := createClusterCmd.MarkFlagRequired("filename"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
 }
@@ -73,11 +67,50 @@ func preRunCreateCluster(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (cc *createClusterOptions) validate(ctx context.Context) error {
-	clusterConfig, err := commonValidation(ctx, cc.fileName)
-	if err != nil {
-		return err
+func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) error {
+	ctx := cmd.Context()
+
+	clusterConfigFileExist := validations.FileExists(cc.fileName)
+	if !clusterConfigFileExist {
+		return fmt.Errorf("the cluster config file %s does not exist", cc.fileName)
 	}
+
+	clusterConfig, err := v1alpha1.GetAndValidateClusterConfig(cc.fileName)
+	if err != nil {
+		return fmt.Errorf("the cluster config file provided is invalid: %v", err)
+	}
+
+	if clusterConfig.Spec.DatacenterRef.Kind == v1alpha1.TinkerbellDatacenterKind {
+		flag := cmd.Flags().Lookup("hardwarefile")
+
+		// If no flag was returned there is a developer error as the flag has been removed
+		// from the program rendering it invalid.
+		if flag == nil {
+			panic("'hardwarefile' flag not configured")
+		}
+
+		if !viper.IsSet("hardwarefile") || viper.GetString("hardwarefile") == "" {
+			return fmt.Errorf("required flag \"hardwarefile\" not set")
+		}
+
+		if !validations.FileExists(cc.hardwareFileName) {
+			return fmt.Errorf("hardware config file %s does not exist", cc.hardwareFileName)
+		}
+	}
+
+	docker := executables.BuildDockerExecutable()
+
+	if err := validations.CheckMinimumDockerVersion(ctx, docker); err != nil {
+		return fmt.Errorf("failed to validate docker: %v", err)
+	}
+
+	if runtime.GOOS == "darwin" {
+		if err = validations.CheckDockerDesktopVersion(ctx, docker); err != nil {
+			return fmt.Errorf("failed to validate docker desktop: %v", err)
+		}
+	}
+
+	validations.CheckDockerAllocatedMemory(ctx, docker)
 
 	kubeconfigPath := kubeconfig.FromClusterName(clusterConfig.Name)
 	if validations.FileExistsAndIsNotEmpty(kubeconfigPath) {
@@ -86,12 +119,6 @@ func (cc *createClusterOptions) validate(ctx context.Context) error {
 			clusterConfig.Name,
 		)
 	}
-
-	return nil
-}
-
-func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
-	ctx := cmd.Context()
 
 	clusterSpec, err := newClusterSpec(cc.clusterOptions)
 	if err != nil {
@@ -110,26 +137,16 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command) error {
 	}
 	defer cleanup(ctx, deps, &err)
 
-	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == "tinkerbell" {
-		return fmt.Errorf("Error: provider tinkerbell is not supported in this release")
-	}
-
-	if deps.Provider.Name() == "tinkerbell" {
-		flag := cmd.Flags().Lookup("hardwarefile")
-		if flag == nil {
-			return fmt.Errorf("Something wrong. Flag hardwarefile not set up for provider tinkerbell")
-		}
-		if !viper.IsSet("hardwarefile") || viper.GetString("hardwarefile") == "" {
-			return fmt.Errorf("Error: required flag \"hardwarefile\" not set")
-		}
-		hardwareConfigFileExist := validations.FileExists(cc.hardwareFileName)
-		if !hardwareConfigFileExist {
-			return fmt.Errorf("Error: hardware config file %s does not exist", cc.hardwareFileName)
-		}
+	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == constants.TinkerbellProviderName {
+		return fmt.Errorf("provider tinkerbell is not supported in this release")
 	}
 
 	if !features.IsActive(features.CloudStackProvider()) && deps.Provider.Name() == constants.CloudStackProviderName {
-		return fmt.Errorf("error: provider cloudstack is not supported in this release")
+		return fmt.Errorf("provider cloudstack is not supported in this release")
+	}
+
+	if !features.IsActive(features.SnowProvider()) && deps.Provider.Name() == constants.SnowProviderName {
+		return fmt.Errorf("provider snow is not supported in this release")
 	}
 
 	createCluster := workflows.NewCreate(

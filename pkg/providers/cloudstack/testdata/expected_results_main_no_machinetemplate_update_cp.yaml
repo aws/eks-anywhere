@@ -34,11 +34,9 @@ spec:
     host: 1.2.3.4
     port: 6443
   zones:
-    - id:
-      name: "zone1"
-      network:
-        id:
+    - network:
         name: "net1"
+      name: "zone1"
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate
@@ -49,13 +47,11 @@ spec:
   template:
     spec:
       offering:
-        id:
         name: m4-large
       template:
-        id:
         name: centos7-k8s-118
       affinitygroupids:
-        - control-plane-anti-affinity
+      - control-plane-anti-affinity
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -112,6 +108,53 @@ spec:
         extraArgs:
           profiling: "false"
     files:
+    - content: |
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          creationTimestamp: null
+          name: kube-vip
+          namespace: kube-system
+        spec:
+          containers:
+          - args:
+            - start
+            env:
+            - name: vip_arp
+              value: "true"
+            - name: vip_leaderelection
+              value: "true"
+            - name: vip_address
+              value: 1.2.3.4
+            - name: vip_interface
+              value: ens3
+            - name: vip_leaseduration
+              value: "15"
+            - name: vip_renewdeadline
+              value: "10"
+            - name: vip_retryperiod
+              value: "2"
+            image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.158
+            imagePullPolicy: IfNotPresent
+            name: kube-vip
+            resources: {}
+            securityContext:
+              capabilities:
+                add:
+                - NET_ADMIN
+                - SYS_TIME
+            volumeMounts:
+            - mountPath: /etc/kubernetes/admin.conf
+              name: kubeconfig
+          hostNetwork: true
+          volumes:
+          - hostPath:
+              path: /etc/kubernetes/admin.conf
+              type: FileOrCreate
+            name: kubeconfig
+        status: {}
+      owner: root:root
+      path: /etc/kubernetes/manifests/kube-vip.yaml
     - content: |
         apiVersion: audit.k8s.io/v1beta1
         kind: Policy
@@ -342,10 +385,8 @@ spec:
   template:
     spec:
       offering:
-        id:
         name: m4-large
       template:
-        id:
         name: centos7-k8s-118
       affinitygroupids:
       - etcd-affinity

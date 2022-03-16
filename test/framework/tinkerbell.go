@@ -62,12 +62,12 @@ func NewTinkerbell(t *testing.T, opts ...TinkerbellOpt) *Tinkerbell {
 		},
 	}
 
+	tink.cidr = os.Getenv(tinkerbellNetworkCidrEnvVar)
+	tink.inventoryCsvFilePath = os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
+
 	for _, opt := range opts {
 		opt(tink)
 	}
-
-	tink.cidr = os.Getenv(tinkerbellNetworkCidrEnvVar)
-	tink.inventoryCsvFilePath = os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
 
 	return tink
 }
@@ -82,10 +82,10 @@ func (t *Tinkerbell) CustomizeProviderConfig(file string) []byte {
 	return t.customizeProviderConfig(file, t.fillers...)
 }
 
-func (v *Tinkerbell) customizeProviderConfig(file string, fillers ...api.TinkerbellFiller) []byte {
+func (t *Tinkerbell) customizeProviderConfig(file string, fillers ...api.TinkerbellFiller) []byte {
 	providerOutput, err := api.AutoFillTinkerbellProvider(file, fillers...)
 	if err != nil {
-		v.t.Fatalf("Error customizing provider config from file: %v", err)
+		t.t.Fatalf("failed to customize provider config from file: %v", err)
 	}
 	return providerOutput
 }
@@ -96,6 +96,7 @@ func (t *Tinkerbell) ClusterConfigFillers() []api.ClusterFiller {
 		t.t.Fatalf("failed to generate ip for tinkerbell cidr %s: %v", t.cidr, err)
 	}
 	t.clusterFillers = append(t.clusterFillers, api.WithControlPlaneEndpointIP(clusterIP))
+
 	return t.clusterFillers
 }
 
@@ -114,5 +115,12 @@ func WithUbuntu121Tinkerbell() TinkerbellOpt {
 			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu121EnvVar, api.WithImageUrlForAllTinkerbellMachines),
 			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
 		)
+	}
+}
+
+func WithTinkerbellExternalEtcdTopology(count int) TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append([]api.TinkerbellFiller{api.WithTinkerbellEtcdMachineConfig()}, t.fillers...)
+		t.clusterFillers = append(t.clusterFillers, api.WithExternalEtcdTopology(count), api.WithExternalEtcdMachineRef(anywherev1.TinkerbellMachineConfigKind))
 	}
 }

@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -48,6 +48,7 @@ var (
 	bundlesResourceType                  = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
 	clusterResourceSetResourceType       = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
 	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
+	eksdReleaseType                      = fmt.Sprintf("releases.%s", eksdv1alpha1.GroupVersion.Group)
 )
 
 type Kubectl struct {
@@ -56,18 +57,18 @@ type Kubectl struct {
 
 func (k *Kubectl) SearchCloudStackMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackMachineConfig, error) {
 	params := []string{
-		"get", eksaVSphereMachineResourceType, "-o", "json", "--kubeconfig",
+		"get", eksaCloudStackMachineResourceType, "-o", "json", "--kubeconfig",
 		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
 	}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {
-		return nil, fmt.Errorf("error searching eksa VSphereMachineConfigResponse: %v", err)
+		return nil, fmt.Errorf("error searching eksa CloudStackMachineConfigResponse: %v", err)
 	}
 
 	response := &CloudStackMachineConfigResponse{}
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing VSphereMachineConfigResponse response: %v", err)
+		return nil, fmt.Errorf("error parsing CloudStackMachineConfigResponse response: %v", err)
 	}
 
 	return response.Items, nil
@@ -244,6 +245,10 @@ func (k *Kubectl) DeleteKubeSpecFromBytes(ctx context.Context, cluster *types.Cl
 
 func (k *Kubectl) WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ControlPlaneReady", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
+}
+
+func (k *Kubectl) WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ControlPlaneReady=false", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
 }
 
 func (k *Kubectl) WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
@@ -485,24 +490,6 @@ func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, cluster
 		return nil, err
 	}
 	machineTemplateSpec := &vspherev1.VSphereMachineTemplate{}
-	if err := yaml.Unmarshal(buffer.Bytes(), machineTemplateSpec); err != nil {
-		return nil, err
-	}
-	return machineTemplateSpec, nil
-}
-
-func (k *Kubectl) CloudstackWorkerNodesMachineTemplate(ctx context.Context, clusterName string, kubeconfig string, namespace string) (*cloudstackv1.CloudStackMachineTemplate, error) {
-	machineTemplateName, err := k.MachineTemplateName(ctx, clusterName, kubeconfig, WithNamespace(namespace))
-	if err != nil {
-		return nil, err
-	}
-
-	params := []string{"get", "cloudstackmachinetemplates", machineTemplateName, "-o", "go-template", "--template", "{{.spec.template.spec}}", "-o", "yaml", "--kubeconfig", kubeconfig, "--namespace", namespace}
-	buffer, err := k.Execute(ctx, params...)
-	if err != nil {
-		return nil, err
-	}
-	machineTemplateSpec := &cloudstackv1.CloudStackMachineTemplate{}
 	if err := yaml.Unmarshal(buffer.Bytes(), machineTemplateSpec); err != nil {
 		return nil, err
 	}
@@ -1347,6 +1334,15 @@ func (k *Kubectl) getObject(ctx context.Context, resourceType, name, namespace, 
 	}
 
 	return nil
+}
+
+func (k *Kubectl) GetEksdRelease(ctx context.Context, name, namespace, kubeconfigFile string) (*eksdv1alpha1.Release, error) {
+	obj := &eksdv1alpha1.Release{}
+	if err := k.getObject(ctx, eksdReleaseType, name, namespace, kubeconfigFile, obj); err != nil {
+		return nil, err
+	}
+
+	return obj, nil
 }
 
 func (k *Kubectl) GetDeployment(ctx context.Context, name, namespace, kubeconfig string) (*appsv1.Deployment, error) {

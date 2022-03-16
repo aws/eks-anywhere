@@ -38,29 +38,34 @@ const (
 	ClusterNameVar                   = "T_CLUSTER_NAME"
 	JobIdVar                         = "T_JOB_ID"
 	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
-	hardwareYaml                     = "hardware-manifests/hardware.yaml"
+	hardwareYamlPath                 = "hardware-manifests/hardware.yaml"
+	hardwareCsvPath                  = "hardware-manifests/hardware.csv"
 )
 
 //go:embed testdata/oidc-roles.yaml
 var oidcRoles []byte
 
 type ClusterE2ETest struct {
-	T                     *testing.T
-	ClusterConfigLocation string
-	ClusterName           string
-	ClusterConfig         *v1alpha1.Cluster
-	Provider              Provider
-	ClusterConfigB        []byte
-	ProviderConfigB       []byte
-	clusterFillers        []api.ClusterFiller
-	KubectlClient         *executables.Kubectl
-	GitProvider           git.Provider
-	GitWriter             filewriter.FileWriter
-	OIDCConfig            *v1alpha1.OIDCConfig
-	GitOpsConfig          *v1alpha1.GitOpsConfig
-	ProxyConfig           *v1alpha1.ProxyConfiguration
-	AWSIamConfig          *v1alpha1.AWSIamConfig
-	eksaBinaryLocation    string
+	T                      *testing.T
+	ClusterConfigLocation  string
+	ClusterConfigFolder    string
+	HardwareConfigLocation string
+	HardwareCsvLocation    string
+	Hardware               map[string]*api.Hardware
+	ClusterName            string
+	ClusterConfig          *v1alpha1.Cluster
+	Provider               Provider
+	ClusterConfigB         []byte
+	ProviderConfigB        []byte
+	clusterFillers         []api.ClusterFiller
+	KubectlClient          *executables.Kubectl
+	GitProvider            git.Provider
+	GitWriter              filewriter.FileWriter
+	OIDCConfig             *v1alpha1.OIDCConfig
+	GitOpsConfig           *v1alpha1.GitOpsConfig
+	ProxyConfig            *v1alpha1.ProxyConfiguration
+	AWSIamConfig           *v1alpha1.AWSIamConfig
+	eksaBinaryLocation     string
 }
 
 type ClusterE2ETestOpt func(e *ClusterE2ETest)
@@ -76,6 +81,10 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 		eksaBinaryLocation:    defaultEksaBinaryLocation,
 	}
 
+	e.ClusterConfigFolder = fmt.Sprintf("%s-config", e.ClusterName)
+	e.HardwareConfigLocation = filepath.Join(e.ClusterConfigFolder, hardwareYamlPath)
+	e.HardwareCsvLocation = filepath.Join(e.ClusterConfigFolder, hardwareCsvPath)
+
 	for _, opt := range opts {
 		opt(e)
 	}
@@ -83,6 +92,38 @@ func NewClusterE2ETest(t *testing.T, provider Provider, opts ...ClusterE2ETestOp
 	provider.Setup()
 
 	return e
+}
+
+func WithHardware(vendor string, requiredCount int) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		csvFilePath := os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
+		hardwarePool, err := api.NewHardwareMapFromFile(csvFilePath)
+		if err != nil {
+			e.T.Fatalf("failed to create hardware map from test hardware pool: %v", err)
+		}
+
+		if e.Hardware == nil {
+			e.Hardware = make(map[string]*api.Hardware)
+		}
+
+		var count int
+		for id, h := range hardwarePool {
+			if strings.ToLower(h.BmcVendor) == vendor || vendor == api.HardwareVendorUnspecified {
+				if _, exists := e.Hardware[id]; !exists {
+					count++
+					e.Hardware[id] = h
+				}
+
+				if count == requiredCount {
+					break
+				}
+			}
+		}
+
+		if count < requiredCount {
+			e.T.Errorf("this test requires at least %d piece(s) of %s hardware", requiredCount, vendor)
+		}
+	}
 }
 
 func WithClusterFiller(f ...api.ClusterFiller) ClusterE2ETestOpt {
@@ -160,12 +201,24 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 }
 
 func (e *ClusterE2ETest) GenerateHardwareConfig(opts ...CommandOpt) {
-	csvFilePath := os.Getenv(tinkerbellInventoryCsvFilePathEnvVar)
-	e.generateHardwareConfig(csvFilePath, opts...)
+	e.generateHardwareConfig(opts...)
 }
 
-func (e *ClusterE2ETest) generateHardwareConfig(csvFilePath string, opts ...CommandOpt) {
-	generateHardwareConfigArgs := []string{"generate", "hardware", "--dry-run", "-f", csvFilePath}
+func (e *ClusterE2ETest) generateHardwareConfig(opts ...CommandOpt) {
+	if len(e.Hardware) == 0 {
+		e.T.Fatal("you must provide the ClusterE2ETest the hardware to use for the test run")
+	}
+
+	if _, err := os.Stat(e.HardwareCsvLocation); err == nil {
+		os.Remove(e.HardwareCsvLocation)
+	}
+
+	err := api.WriteHardwareMapToCSV(e.Hardware, e.HardwareCsvLocation)
+	if err != nil {
+		e.T.Fatalf("failed to create hardware csv for the test run: %v", err)
+	}
+
+	generateHardwareConfigArgs := []string{"generate", "hardware", "--dry-run", "-f", e.HardwareCsvLocation, "-o", e.ClusterConfigFolder}
 	e.RunEKSA(generateHardwareConfigArgs, opts...)
 }
 
@@ -214,7 +267,7 @@ func (e *ClusterE2ETest) createCluster(opts ...CommandOpt) {
 	}
 
 	if e.Provider.Name() == TinkerbellProviderName {
-		createClusterArgs = append(createClusterArgs, "-w", hardwareYaml)
+		createClusterArgs = append(createClusterArgs, "-w", e.HardwareConfigLocation)
 	}
 
 	e.RunEKSA(createClusterArgs, opts...)
@@ -304,8 +357,7 @@ func (e *ClusterE2ETest) generateClusterConfig() []byte {
 func (e *ClusterE2ETest) buildClusterConfigFile() {
 	b := e.generateClusterConfig()
 
-	clusterConfigFolder := fmt.Sprintf("%s-config", e.ClusterName)
-	writer, err := filewriter.NewWriter(clusterConfigFolder)
+	writer, err := filewriter.NewWriter(e.ClusterConfigFolder)
 	if err != nil {
 		e.T.Fatalf("Error creating writer: %v", err)
 	}
@@ -337,10 +389,12 @@ func (e *ClusterE2ETest) Run(name string, args ...string) {
 	cmd := exec.CommandContext(context.Background(), "sh", shArgs...)
 
 	envPath := os.Getenv("PATH")
+
 	workDir, err := os.Getwd()
 	if err != nil {
 		e.T.Fatalf("Error finding current directory: %v", err)
 	}
+
 	var stdoutAndErr bytes.Buffer
 
 	cmd.Env = os.Environ()

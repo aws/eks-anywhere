@@ -77,6 +77,9 @@ func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, tinkHardwareMa
 		bmcRefMap = hc.initBmcRefMap()
 	}
 
+	// A database of observed hardware IDs so we can check for uniqueness.
+	hardwareIdsDb := make(map[string]struct{}, len(hc.Hardwares))
+
 	for _, hw := range hc.Hardwares {
 		if hw.Name == "" {
 			return fmt.Errorf("hardware name is required")
@@ -85,6 +88,11 @@ func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, tinkHardwareMa
 		if hw.Spec.ID == "" {
 			return fmt.Errorf("hardware: %s ID is required", hw.Name)
 		}
+
+		if _, found := hardwareIdsDb[hw.Spec.ID]; found {
+			return fmt.Errorf("duplicate hardware id: %v", hw.Spec.ID)
+		}
+		hardwareIdsDb[hw.Spec.ID] = struct{}{}
 
 		if _, ok := tinkHardwareMap[hw.Spec.ID]; !ok {
 			return fmt.Errorf("hardware id '%s' is not registered with tinkerbell stack", hw.Spec.ID)

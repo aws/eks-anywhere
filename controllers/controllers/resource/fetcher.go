@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/go-logr/logr"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -73,7 +74,6 @@ func (r *CapiResourceFetcher) FetchObjectByName(ctx context.Context, name string
 }
 
 func (r *CapiResourceFetcher) FetchObject(ctx context.Context, objectKey types.NamespacedName, obj client.Object) error {
-	r.log.Info("FetchObject", "key", objectKey, "obj", obj)
 	err := r.client.Get(ctx, objectKey, obj)
 	if err != nil {
 		return err
@@ -82,9 +82,11 @@ func (r *CapiResourceFetcher) FetchObject(ctx context.Context, objectKey types.N
 }
 
 func (r *CapiResourceFetcher) fetchClusterKind(ctx context.Context, objectKey types.NamespacedName) (string, error) {
-	supportedKinds := []string{anywherev1.ClusterKind, anywherev1.VSphereDatacenterKind, anywherev1.DockerDatacenterKind,
+	supportedKinds := []string{
+		anywherev1.ClusterKind, anywherev1.VSphereDatacenterKind, anywherev1.DockerDatacenterKind,
 		anywherev1.VSphereMachineConfigKind, anywherev1.CloudStackMachineConfigKind, anywherev1.CloudStackDatacenterKind,
-		anywherev1.AWSIamConfigKind, anywherev1.OIDCConfigKind}
+		anywherev1.AWSIamConfigKind, anywherev1.OIDCConfigKind,
+	}
 	for _, kind := range supportedKinds {
 		obj := &unstructured.Unstructured{}
 		obj.SetKind(kind)
@@ -138,7 +140,6 @@ func (r *CapiResourceFetcher) fetchClusterForRef(ctx context.Context, refId type
 		return nil, err
 	}
 	for _, c := range clusters.Items {
-		//r.log.Info("fetching cluster for ref stuff", "cluster", c.ClusterName)
 		if kind == anywherev1.VSphereDatacenterKind || kind == anywherev1.DockerDatacenterKind || kind == anywherev1.CloudStackDatacenterKind {
 			if c.Spec.DatacenterRef.Name == refId.Name {
 				if _, err := r.clusterByName(ctx, constants.EksaSystemNamespace, c.Name); err == nil { // further validates a capi cluster exists
@@ -265,13 +266,8 @@ func (r *CapiResourceFetcher) VSphereEtcdMachineTemplate(ctx context.Context, cs
 }
 
 func (r *CapiResourceFetcher) CloudStackCluster(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*cloudstackv1.CloudStackCluster, error) {
-	md, err := r.MachineDeployment(ctx, cs, wnc)
-	r.log.Info("Fetching CloudStackCluster", "objectKey", md.Spec.ClusterName)
-	if err != nil {
-		return nil, err
-	}
 	cloudStackCluster := &cloudstackv1.CloudStackCluster{}
-	err = r.FetchObjectByName(ctx, md.Spec.ClusterName, constants.EksaSystemNamespace, cloudStackCluster)
+	err := r.FetchObjectByName(ctx, cs.Name, constants.EksaSystemNamespace, cloudStackCluster)
 	if err != nil {
 		return nil, err
 	}
@@ -348,6 +344,15 @@ func (r *CapiResourceFetcher) bundles(ctx context.Context, name, namespace strin
 	return clusterBundle, nil
 }
 
+func (r *CapiResourceFetcher) eksdRelease(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error) {
+	eksd := &eksdv1alpha1.Release{}
+	err := r.FetchObjectByName(ctx, name, namespace, eksd)
+	if err != nil {
+		return nil, err
+	}
+	return eksd, nil
+}
+
 func (r *CapiResourceFetcher) oidcConfig(ctx context.Context, name, namespace string) (*anywherev1.OIDCConfig, error) {
 	clusterOIDC := &anywherev1.OIDCConfig{}
 	err := r.FetchObjectByName(ctx, name, namespace, clusterOIDC)
@@ -402,7 +407,7 @@ func (r *CapiResourceFetcher) OIDCConfig(ctx context.Context, ref *anywherev1.Re
 }
 
 func (r *CapiResourceFetcher) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, cs, r.bundles, nil, r.oidcConfig)
+	return cluster.BuildSpecForCluster(ctx, cs, r.bundles, r.eksdRelease, nil, r.oidcConfig)
 }
 
 func (r *CapiResourceFetcher) ExistingVSphereDatacenterConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.VSphereDatacenterConfig, error) {
@@ -442,7 +447,7 @@ func (r *CapiResourceFetcher) ExistingCloudStackDatacenterConfig(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	return MapClusterToCloudStackDatacenterConfigSpec(csCluster)
+	return MapClusterToCloudStackDatacenterConfigSpec(csCluster), nil
 }
 
 func (r *CapiResourceFetcher) ExistingCloudStackControlPlaneMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error) {
@@ -506,7 +511,7 @@ func MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate *vspherev1.V
 	return vsSpec, nil
 }
 
-func MapClusterToCloudStackDatacenterConfigSpec(csCluster *cloudstackv1.CloudStackCluster) (*anywherev1.CloudStackDatacenterConfig, error) {
+func MapClusterToCloudStackDatacenterConfigSpec(csCluster *cloudstackv1.CloudStackCluster) *anywherev1.CloudStackDatacenterConfig {
 	csSpec := &anywherev1.CloudStackDatacenterConfig{}
 	var zones []anywherev1.CloudStackZone
 	for _, csZone := range csCluster.Spec.Zones {
@@ -523,12 +528,11 @@ func MapClusterToCloudStackDatacenterConfigSpec(csCluster *cloudstackv1.CloudSta
 	csSpec.Spec.Domain = csCluster.Spec.Domain
 	csSpec.Spec.Account = csCluster.Spec.Account
 
-	return csSpec, nil
+	return csSpec
 }
 
 func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudstackv1.CloudStackMachineTemplate) (*anywherev1.CloudStackMachineConfig, error) {
 	csSpec := &anywherev1.CloudStackMachineConfig{}
-	// TODO: capc needs to change offering and template to type=ID/Name, value structure
 	csSpec.Spec.ComputeOffering = anywherev1.CloudStackResourceIdentifier{
 		Id:   csMachineTemplate.Spec.Spec.Spec.Offering.ID,
 		Name: csMachineTemplate.Spec.Spec.Spec.Offering.Name,
@@ -537,9 +541,12 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 		Id:   csMachineTemplate.Spec.Spec.Spec.Template.ID,
 		Name: csMachineTemplate.Spec.Spec.Spec.Template.Name,
 	}
+
 	csSpec.Spec.AffinityGroupIds = csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs
 
-	// TODO: OSFamily, Users (these fields are immutable)
+	for key, element := range csMachineTemplate.Spec.Spec.Spec.Details {
+		csSpec.Spec.UserCustomDetails[key] = element
+	}
 	return csSpec, nil
 }
 
@@ -580,26 +587,4 @@ func MapMachineTemplateToVSphereMachineConfigSpecWorkers(vsMachineTemplates []vs
 
 	// TODO: OSFamily, Users (these fields are immutable)
 	return vsSpecs, nil
-}
-
-func MapMachineTemplateToCloudStackMachineConfigSpecWorkers(csMachineTemplates []cloudstackv1.CloudStackMachineTemplate) (map[string]anywherev1.CloudStackMachineConfig, error) {
-	csSpecs := make(map[string]anywherev1.CloudStackMachineConfig, len(csMachineTemplates))
-	for _, csMachineTemplate := range csMachineTemplates {
-		csSpec := &anywherev1.CloudStackMachineConfig{}
-		if len(csMachineTemplate.Spec.Spec.Spec.Offering.ID) > 0 {
-			csSpec.Spec.ComputeOffering = anywherev1.CloudStackResourceIdentifier{Id: csMachineTemplate.Spec.Spec.Spec.Offering.ID}
-		} else {
-			csSpec.Spec.ComputeOffering = anywherev1.CloudStackResourceIdentifier{Name: csMachineTemplate.Spec.Spec.Spec.Offering.Name}
-		}
-		if len(csMachineTemplate.Spec.Spec.Spec.Template.ID) > 0 {
-			csSpec.Spec.Template = anywherev1.CloudStackResourceIdentifier{Id: csMachineTemplate.Spec.Spec.Spec.Template.ID}
-		} else {
-			csSpec.Spec.Template = anywherev1.CloudStackResourceIdentifier{Name: csMachineTemplate.Spec.Spec.Spec.Template.Name}
-		}
-		csSpec.Spec.AffinityGroupIds = csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs
-		csSpecs[csMachineTemplate.Name] = *csSpec
-	}
-
-	// TODO: OSFamily, Users (these fields are immutable)
-	return csSpecs, nil
 }
