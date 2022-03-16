@@ -475,7 +475,14 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 				Spec: v1alpha1.VSphereDatacenterConfigSpec{},
 			}
 			vsphereMachineConfig := &v1alpha1.VSphereMachineConfig{
-				Spec: v1alpha1.VSphereMachineConfigSpec{},
+				Spec: v1alpha1.VSphereMachineConfigSpec{
+					Users: []v1alpha1.UserConfiguration{
+						{
+							Name:              "capv",
+							SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="},
+						},
+					},
+				},
 			}
 
 			kubectl.EXPECT().GetMachineDeployment(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(workerNodeGroup1MachineDeployment(), nil)
@@ -543,7 +550,14 @@ func TestProviderGenerateCAPISpecForUpgradeOIDC(t *testing.T) {
 				Spec: v1alpha1.VSphereDatacenterConfigSpec{},
 			}
 			vsphereMachineConfig := &v1alpha1.VSphereMachineConfig{
-				Spec: v1alpha1.VSphereMachineConfigSpec{},
+				Spec: v1alpha1.VSphereMachineConfigSpec{
+					Users: []v1alpha1.UserConfiguration{
+						{
+							Name:              "capv",
+							SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="},
+						},
+					},
+				},
 			}
 
 			kubectl.EXPECT().GetMachineDeployment(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(workerNodeGroup1MachineDeployment(), nil)
@@ -604,7 +618,14 @@ func TestProviderGenerateCAPISpecForUpgradeMultipleWorkerNodeGroups(t *testing.T
 				Spec: v1alpha1.VSphereDatacenterConfigSpec{},
 			}
 			vsphereMachineConfig := &v1alpha1.VSphereMachineConfig{
-				Spec: v1alpha1.VSphereMachineConfigSpec{},
+				Spec: v1alpha1.VSphereMachineConfigSpec{
+					Users: []v1alpha1.UserConfiguration{
+						{
+							Name:              "capv",
+							SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="},
+						},
+					},
+				},
 			}
 			newClusterSpec := givenClusterSpec(t, tt.clusterconfigFile)
 			newConfig := v1alpha1.WorkerNodeGroupConfiguration{Count: 1, MachineGroupRef: &v1alpha1.Ref{Name: "test-wn", Kind: "VSphereMachineConfig"}, Name: "md-2"}
@@ -692,7 +713,14 @@ func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplateExternalEtcd(t *
 				Spec: v1alpha1.VSphereDatacenterConfigSpec{},
 			}
 			vsphereMachineConfig := &v1alpha1.VSphereMachineConfig{
-				Spec: v1alpha1.VSphereMachineConfigSpec{},
+				Spec: v1alpha1.VSphereMachineConfigSpec{
+					Users: []v1alpha1.UserConfiguration{
+						{
+							Name:              "capv",
+							SshAuthorizedKeys: []string{"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="},
+						},
+					},
+				},
 			}
 
 			kubectl.EXPECT().GetMachineDeployment(ctx, gomock.Any(), gomock.Any(), gomock.Any()).Return(workerNodeGroup1MachineDeployment(), nil)
@@ -2723,61 +2751,6 @@ func TestValidateNewSpecTLSThumbprintImmutable(t *testing.T) {
 	}
 	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
 	assert.Error(t, err, "Thumbprint should be immutable")
-}
-
-func TestValidateNewSpecMachineConfigSshUsersImmutable(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-
-	provider := givenProvider(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider.providerKubectlClient = kubectl
-
-	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newProviderConfig.Spec.Datacenter = "new-" + newProviderConfig.Spec.Datacenter
-
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Namespace = "test-namespace"
-		s.Cluster = clusterConfig
-	})
-
-	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(newMachineConfigs["test-cp"], nil)
-
-	newMachineConfigs["test-cp"].Spec.Users[0].Name = "newNameShouldNotBeAllowed"
-
-	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
-	assert.Error(t, err, "User should be immutable")
-}
-
-func TestValidateNewSpecMachineConfigSshAuthKeysImmutable(t *testing.T) {
-	mockCtrl := gomock.NewController(t)
-	clusterConfig := givenClusterConfig(t, testClusterConfigMainFilename)
-
-	provider := givenProvider(t)
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	provider.providerKubectlClient = kubectl
-
-	newProviderConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
-	newProviderConfig.Spec.Datacenter = "new-" + newProviderConfig.Spec.Datacenter
-
-	newMachineConfigs := givenMachineConfigs(t, testClusterConfigMainFilename)
-
-	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Namespace = "test-namespace"
-		s.Cluster = clusterConfig
-	})
-
-	kubectl.EXPECT().GetEksaCluster(context.TODO(), gomock.Any(), gomock.Any()).Return(clusterConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(context.TODO(), clusterConfig.Spec.DatacenterRef.Name, gomock.Any(), clusterConfig.Namespace).Return(newProviderConfig, nil)
-	kubectl.EXPECT().GetEksaVSphereMachineConfig(context.TODO(), gomock.Any(), gomock.Any(), clusterConfig.Namespace).Return(newMachineConfigs["test-cp"], nil)
-	newMachineConfigs["test-cp"].Spec.Users[0].SshAuthorizedKeys = []string{"rsa ssh-asd;lfajsfl;asjdfl;asjdlfajsdlfjasl;djf"}
-
-	err := provider.ValidateNewSpec(context.TODO(), &types.Cluster{}, clusterSpec)
-	assert.Error(t, err, "SSH Authorized Keys should be immutable")
 }
 
 func TestGetMHCSuccess(t *testing.T) {

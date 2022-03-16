@@ -12,6 +12,22 @@ func dockerEntry() *ConfigManagerEntry {
 		Processors: []ParsedProcessor{
 			processDockerDatacenter,
 		},
+		Validations: []Validation{
+			func(c *Config) error {
+				if c.DockerDatacenter != nil {
+					return c.DockerDatacenter.Validate()
+				}
+				return nil
+			},
+			func(c *Config) error {
+				if c.DockerDatacenter != nil {
+					if err := validateSameNamespace(c, c.DockerDatacenter); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+		},
 	}
 }
 
