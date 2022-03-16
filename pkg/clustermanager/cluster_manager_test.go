@@ -728,8 +728,8 @@ func TestClusterManagerMoveCAPIErrorGetMachines(t *testing.T) {
 func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
 	ctx := context.Background()
 	tt := newTest(t)
-	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/eksa_components.yaml"
-	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "testdata/eksa_components.yaml"
+	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/components.yaml"
+	tt.clusterSpec.VersionsBundle.EksD.EksDReleaseUrl = "testdata/components.yaml"
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{}
 	machineConfigs := []providers.MachineConfig{}

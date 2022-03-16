@@ -145,6 +145,8 @@ func (c *createTestSetup) expectInstallEksaComponents() {
 		c.clusterManager.EXPECT().InstallCustomComponents(
 			c.ctx, c.clusterSpec, c.workloadCluster),
 
+		c.clusterManager.EXPECT().InstallEksdComponents(c.ctx, c.clusterSpec, c.workloadCluster),
+
 		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
 
 		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
@@ -161,6 +163,8 @@ func (c *createTestSetup) skipInstallEksaComponents() {
 	gomock.InOrder(
 		c.clusterManager.EXPECT().InstallCustomComponents(
 			c.ctx, c.clusterSpec, c.workloadCluster).Times(0),
+
+		c.clusterManager.EXPECT().InstallEksdComponents(c.ctx, c.clusterSpec, c.workloadCluster),
 
 		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
 
