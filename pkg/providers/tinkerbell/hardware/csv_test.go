@@ -18,13 +18,14 @@ func TestCsvReaderReads(t *testing.T) {
 
 	buf := NewBufferedCSV()
 
+	const uuid = "unique-id"
 	expect := NewValidMachine()
-	expect.Id = ""
+	expect.Id = uuid
 
 	err := csv.MarshalCSV([]hardware.Machine{expect}, buf)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
-	reader, err := hardware.NewCsvReader(buf.Buffer)
+	reader, err := hardware.NewCsvReaderWithUUIDGenerator(buf.Buffer, func() string { return uuid })
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	machine, err := reader.Read()

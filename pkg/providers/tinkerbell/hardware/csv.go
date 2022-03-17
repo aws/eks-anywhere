@@ -5,11 +5,13 @@ import (
 	"io"
 
 	csv "github.com/gocarina/gocsv"
+	"github.com/google/uuid"
 )
 
 // CsvReader reads a CSV file and provides Machine instances. It satisfies the MachineReader interface.
 type CsvReader struct {
-	reader *csv.Unmarshaller
+	reader        *csv.Unmarshaller
+	uuidGenerator func() string
 }
 
 // NewCsvReader returns a new CsvReader instance that consumes csv data from r. r should return io.EOF when no more
@@ -22,7 +24,19 @@ func NewCsvReader(r io.Reader) (CsvReader, error) {
 		return CsvReader{}, err
 	}
 
-	return CsvReader{reader: reader}, nil
+	return CsvReader{reader: reader, uuidGenerator: uuid.NewString}, nil
+}
+
+// NewCsvReaderWithUUIDGenerator returns a new CsvReader instance as defined in NewCsvReader with its internal
+// UUID generator configured as generator.
+func NewCsvReaderWithUUIDGenerator(r io.Reader, generator func() string) (CsvReader, error) {
+	reader, err := NewCsvReader(r)
+	if err != nil {
+		return CsvReader{}, err
+	}
+
+	reader.uuidGenerator = generator
+	return reader, nil
 }
 
 // Read reads a single entry from the CSV data source and returns a new Machine representation.
@@ -31,5 +45,7 @@ func (cr CsvReader) Read() (Machine, error) {
 	if err != nil {
 		return Machine{}, err
 	}
-	return machine.(Machine), nil
+	m := machine.(Machine)
+	m.Id = cr.uuidGenerator()
+	return m, nil
 }
