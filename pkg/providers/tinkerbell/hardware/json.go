@@ -78,6 +78,13 @@ func (tj *TinkerbellHardwareJson) Write(m Machine) error {
 	return nil
 }
 
+// Hardware describes the hardware json structure required by the Tinkerbell API when registering hardware.
+type Hardware struct {
+	Id       string                     `json:"id"`
+	Metadata *packet.Metadata           `json:"metadata"`
+	Network  *hardware.Hardware_Network `json:"network"`
+}
+
 func marshalTinkerbellHardwareJson(m Machine) ([]byte, error) {
 	return json.Marshal(
 		Hardware{
