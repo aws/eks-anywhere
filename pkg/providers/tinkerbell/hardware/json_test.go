@@ -1,8 +1,11 @@
 package hardware_test
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -41,18 +44,47 @@ func TestTinkerbellHardwareJsonMultiWriteErrors(t *testing.T) {
 	g.Expect(err).To(gomega.Equal(hardware.ErrTinkebellHardwareJsonRepeatWrites))
 }
 
+func TestRecordingTinkerbellHardwareJsonFactory(t *testing.T) {
+	g := gomega.NewWithT(t)
+
+	dir := t.TempDir()
+	defer os.RemoveAll(dir)
+
+	filename := "hello-world.json"
+	path := filepath.Join(dir, filename)
+
+	var journal hardware.Journal
+	factory, err := hardware.RecordingTinkerbellHardwareJsonFactory(dir, &journal)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
+	writer, err := factory.Create(filename)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
+	machine := NewValidMachine()
+	err = writer.Write(machine)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
+	data, err := os.ReadFile(path)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
+	var hardware hardware.Hardware
+	err = json.Unmarshal(data, &hardware)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+
+	AssertHardwareRepresentsMachine(g, hardware, machine)
+}
+
 func TestTinkerbellHardwareJsonWriter(t *testing.T) {
 	g := gomega.NewWithT(t)
 	ctrl := gomock.NewController(t)
 
 	buffer := &WriteCloser{}
 	expect := NewValidMachine()
-	path := filepath.Join("foo", expect.Hostname)
 
 	factory := mocks.NewMockTinkerbellHardwareJsonFactory(ctrl)
 	factory.EXPECT().
-		Create(expect.Hostname).
-		Return(hardware.NewTinkerbellHardwareJson(buffer), path, (error)(nil))
+		Create(fmt.Sprintf("%v.json", expect.Hostname)).
+		Return(hardware.NewTinkerbellHardwareJson(buffer), (error)(nil))
 
 	writer := hardware.NewTinkerbellHardwareJsonWriter(factory)
 
@@ -63,9 +95,6 @@ func TestTinkerbellHardwareJsonWriter(t *testing.T) {
 	err = json.Unmarshal(buffer.Buffer[0], &hardware)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
 	AssertHardwareRepresentsMachine(g, hardware, expect)
-
-	journal := writer.Journal()
-	g.Expect(journal).To(gomega.ContainElement(path))
 }
 
 func TestTinkerbellHardwareJsonWriterCreateErrors(t *testing.T) {
@@ -77,13 +106,55 @@ func TestTinkerbellHardwareJsonWriterCreateErrors(t *testing.T) {
 	factory := mocks.NewMockTinkerbellHardwareJsonFactory(ctrl)
 	factory.EXPECT().
 		Create(gomock.Any()).
-		Return(nil, "", expect)
+		Return(nil, expect)
 
 	writer := hardware.NewTinkerbellHardwareJsonWriter(factory)
 
 	err := writer.Write(NewValidMachine())
 	g.Expect(err).To(gomega.HaveOccurred())
 	g.Expect(err.Error()).To(gomega.ContainSubstring(expect.Error()))
+}
+
+func TestRegisterTinkerbellHardware(t *testing.T) {
+	g := gomega.NewWithT(t)
+	ctrl := gomock.NewController(t)
+
+	pusher := mocks.NewMockTinkerbellHardwarePusher(ctrl)
+
+	var pushed [][]byte
+	pusher.EXPECT().
+		PushHardware(gomock.Any(), gomock.Any()).
+		Times(3).
+		DoAndReturn(func(_ context.Context, d []byte) error {
+			pushed = append(pushed, d)
+			return nil
+		})
+
+	data := [][]byte{
+		[]byte("hello world"),
+		[]byte("foo bar"),
+		[]byte("baz qux"),
+	}
+
+	err := hardware.RegisterTinkerbellHardware(context.Background(), pusher, data)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+	g.Expect(pushed).To(gomega.ContainElements(data))
+}
+
+func TestRegisterTinkerbellHardwareClientError(t *testing.T) {
+	g := gomega.NewWithT(t)
+	ctrl := gomock.NewController(t)
+
+	pusher := mocks.NewMockTinkerbellHardwarePusher(ctrl)
+
+	expect := errors.New("hello error world")
+	pusher.EXPECT().
+		PushHardware(gomock.Any(), gomock.Any()).
+		Return(expect)
+
+	data := [][]byte{[]byte("hello world")}
+	err := hardware.RegisterTinkerbellHardware(context.Background(), pusher, data)
+	g.Expect(err).To(gomega.BeEquivalentTo(expect))
 }
 
 func AssertHardwareRepresentsMachine(g *gomega.WithT, h hardware.Hardware, m hardware.Machine) {

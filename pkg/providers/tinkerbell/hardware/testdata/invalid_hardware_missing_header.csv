@@ -1,3 +1,0 @@
-ip_address,gateway,nameservers,netmask,mac,hostname,vendor,bmc_ip,bmc_username
-192.168.1.10,192.168.0.1,8.8.8.8|8.8.4.4,255.255.255.0,00:00:00:00:00:00,worker1,supermicro,192.168.0.10,admin
-192.168.1.11,192.168.0.1,8.8.8.8|8.8.4.4,255.255.255.0,00:00:00:00:00:01,worker2,supermicro,192.168.0.11,admin
