@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -104,11 +103,6 @@ func (a *AwsIamAuth) GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, ser
 		"cert":        tlsCert,
 		"clusterID":   a.clusterId.String(),
 	}
-	k8Version, err := strconv.ParseFloat(string(clusterSpec.Spec.KubernetesVersion), 32)
-	if err != nil {
-		return nil, err
-	}
-	data["k8sVersion"] = k8Version
 
 	awsIamAuthKubeconfig, err := templater.Execute(awsIamAuthKubeconfigTemplate, data)
 	if err != nil {

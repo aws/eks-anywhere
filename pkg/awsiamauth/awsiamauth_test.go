@@ -17,10 +17,9 @@ import (
 )
 
 const (
-	wantManifestContent      = "testdata/want-aws-iam-authenticator.yaml"
-	wantSecretContent        = "testdata/want-aws-iam-authenticator-ca-secret.yaml"
-	wantKubeconfigContent    = "testdata/want-aws-iam-authenticator-kubeconfig.yaml"
-	wantKubeconfigContent122 = "testdata/want-aws-iam-authenticator-kubeconfig-v1.22-or-greater.yaml"
+	wantManifestContent   = "testdata/want-aws-iam-authenticator.yaml"
+	wantSecretContent     = "testdata/want-aws-iam-authenticator-ca-secret.yaml"
+	wantKubeconfigContent = "testdata/want-aws-iam-authenticator-kubeconfig.yaml"
 )
 
 func TestGenerateManifestSuccess(t *testing.T) {
@@ -61,32 +60,16 @@ func TestGenerateCertKeyPairSecretFail(t *testing.T) {
 }
 
 func TestGenerateAwsIamAuthKubeconfigSuccess(t *testing.T) {
-	type testStruct struct {
-		name               string
-		k8sversion         string
-		expectedKubeconfig string
-	}
+	s := givenClusterSpec()
+	serverUrl := "0.0.0.0:0000"
+	tlsCrt := "test-ca"
 
-	tests := []testStruct{
-		{name: "1.20 uses v1alpha1", k8sversion: "1.20", expectedKubeconfig: wantKubeconfigContent},
-		{name: "1.21 uses v1alpha1", k8sversion: "1.21", expectedKubeconfig: wantKubeconfigContent},
-		{name: "1.22 uses v1beta1", k8sversion: "1.22", expectedKubeconfig: wantKubeconfigContent122},
+	awsIamAuth, _ := newAwsIamAuth(t)
+	gotFileContent, err := awsIamAuth.GenerateAwsIamAuthKubeconfig(s, serverUrl, tlsCrt)
+	if err != nil {
+		t.Fatalf("awsiamauth.GenerateAwsIamAuthKubeconfig()\n error = %v\n wantErr = nil", err)
 	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			s := givenClusterSpec()
-			serverUrl := "0.0.0.0:0000"
-			tlsCrt := "test-ca"
-			s.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.k8sversion)
-			awsIamAuth, _ := newAwsIamAuth(t)
-			gotFileContent, err := awsIamAuth.GenerateAwsIamAuthKubeconfig(s, serverUrl, tlsCrt)
-			if err != nil {
-				t.Fatalf("awsiamauth.GenerateAwsIamAuthKubeconfig()\n error = %v\n wantErr = nil, version %s", err, tc.k8sversion)
-			}
-			test.AssertContentToFile(t, string(gotFileContent), tc.expectedKubeconfig)
-		})
-	}
+	test.AssertContentToFile(t, string(gotFileContent), wantKubeconfigContent)
 }
 
 func newAwsIamAuth(t *testing.T) (*awsiamauth.AwsIamAuth, *mocks.MockCertificateGenerator) {
