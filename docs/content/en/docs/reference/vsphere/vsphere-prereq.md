@@ -49,57 +49,58 @@ You need to get the following information before creating the cluster:
 * **Static IP Addresses**: 
 You will need one IP address for the management cluster control plane endpoint, and a separate one for the controlplane of each workload cluster you add. 
 
-Let’s say you are going to have the management cluster and two workload clusters.
+  Let’s say you are going to have the management cluster and two workload clusters.
 For those, you would need three IP addresses, one for each.
 All of those addresses will be configured the same way in the configuration file you will generate for each cluster.
 
-A static IP address will be used for each control plane VM in your EKS Anywhere cluster.
+  A static IP address will be used for each control plane VM in your EKS Anywhere cluster.
 Choose IP addresses in your network range that do not conflict with other VMs and make sure they are excluded from your DHCP offering.
 
-
-An IP address will be the value of the property `controlPlaneConfiguration.endpoint.host` in the config file of the management cluster.
+  An IP address will be the value of the property `controlPlaneConfiguration.endpoint.host` in the config file of the management cluster.
 A separate IP address must be assigned for each workload cluster.
-![Import ova wizard](/images/ip.png) 
 
-* **vSphere Datacenter Name**:
-The vSphere datacenter to deploy the EKS Anywhere cluster on.
-![Import ova wizard](/images/datacenter.png) 
+  ![Import ova wizard](/images/ip.png) 
 
-* **VM Network Name**:
-The VM network to deploy your EKS Anywhere cluster on.
-![Import ova wizard](/images/network.png) 
+* **vSphere Datacenter Name**: The vSphere datacenter to deploy the EKS Anywhere cluster on.
 
-* **vCenter Server Domain Name**:
-The vCenter server fully qualified domain name or IP address. If the server IP is used, the thumbprint must be set or insecure must be set to true.
-![Import ova wizard](/images/domainname.png) 
+  ![Import ova wizard](/images/datacenter.png) 
 
-* **thumbprint** (required if insecure=false):
-The SHA1 thumbprint of the vCenter server certificate which is only required if you have a self-signed certificate for your vSphere endpoint.
+* **VM Network Name**: The VM network to deploy your EKS Anywhere cluster on.
 
-There are several ways to obtain your vCenter thumbprint.
+  ![Import ova wizard](/images/networkname.png) 
+
+* **vCenter Server Domain Name**: The vCenter server fully qualified domain name or IP address. If the server IP is used, the thumbprint must be set or insecure must be set to true.
+
+  ![Import ova wizard](/images/domainname.png) 
+
+* **thumbprint** (required if insecure=false): The SHA1 thumbprint of the vCenter server certificate which is only required if you have a self-signed certificate for your vSphere endpoint.
+
+  There are several ways to obtain your vCenter thumbprint.
 If you have [govc installed](https://github.com/vmware/govmomi/blob/master/govc/README.md), you can run the following command in the Administrative machine terminal, and take a note of the output:
 
-```bash
-govc about.cert -thumbprint -k
-```
+  ```bash
+  govc about.cert -thumbprint -k
+  ```
 
-* **template**:
-The VM template to use for your EKS Anywhere cluster.
+* **template**: The VM template to use for your EKS Anywhere cluster.
 This template was created when you imported the OVA file into vSphere. 
-![Import ova wizard](/images/template.png) 
 
-* **datastore**:
-The vSphere [datastore](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.storage.doc/GUID-3CC7078E-9C30-402C-B2E1-2542BEE67E8F.html) to deploy your EKS Anywhere cluster on.
-![Import ova wizard](/images/storage.png) 
+  ![Import ova wizard](/images/ovatemplate.png) 
+
+* **datastore**: The vSphere [datastore](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.storage.doc/GUID-3CC7078E-9C30-402C-B2E1-2542BEE67E8F.html) to deploy your EKS Anywhere cluster on.
+
+  ![Import ova wizard](/images/storage.png) 
 
 
 * **folder**:
 The folder parameter in VSphereMachineConfig allows you to organize the VMs of an EKS Anywhere cluster.
 With this, each cluster can be organized as a folder in vSphere.
 You will have a separate folder for the management cluster and each cluster you are adding. 
-![Import ova wizard](/images/folder.png) 
+
+  ![Import ova wizard](/images/folder.png) 
 
 
 * **resourcePool**:
 The vSphere Resource pools for your VMs in the EKS Anywhere cluster. If there is a resource pool: `/<datacenter>/host/<resource-pool-name>/Resources`
-![Import ova wizard](/images/resourcepool.png) 
+
+  ![Import ova wizard](/images/resourcepool.png) 
