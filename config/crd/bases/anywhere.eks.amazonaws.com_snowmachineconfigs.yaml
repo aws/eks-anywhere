@@ -40,8 +40,9 @@ spec:
                 description: The AMI ID from which to create the machine instance.
                 type: string
               instanceType:
-                description: 'InstanceType is the type of instance to create. Example:
-                  m4.xlarge'
+                description: 'InstanceType is the type of instance to create. Valid
+                  values: "sbe-c.large" (default), "sbe-c.xlarge", "sbe-c.2xlarge"
+                  and "sbe-c.4xlarge".'
                 type: string
               physicalNetworkConnector:
                 description: 'PhysicalNetworkConnector is the physical network connector
@@ -61,6 +62,8 @@ spec:
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""

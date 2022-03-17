@@ -8,7 +8,9 @@ type Config struct {
 	Cluster               *anywherev1.Cluster
 	VSphereDatacenter     *anywherev1.VSphereDatacenterConfig
 	DockerDatacenter      *anywherev1.DockerDatacenterConfig
+	SnowDatacenter        *anywherev1.SnowDatacenterConfig
 	VSphereMachineConfigs map[string]*anywherev1.VSphereMachineConfig
+	SnowMachineConfigs    map[string]*anywherev1.SnowMachineConfig
 	OIDCConfigs           map[string]*anywherev1.OIDCConfig
 	AWSIAMConfigs         map[string]*anywherev1.AWSIamConfig
 	GitOpsConfig          *anywherev1.GitOpsConfig

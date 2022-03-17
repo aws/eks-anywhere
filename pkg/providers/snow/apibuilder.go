@@ -122,6 +122,7 @@ func SnowMachineTemplates(clusterSpec *cluster.Spec, machineConfigs map[string]*
 }
 
 func SnowMachineTemplate(machineConfig *v1alpha1.SnowMachineConfig) *snowv1.AWSSnowMachineTemplate {
+	networkConnector := string(machineConfig.Spec.PhysicalNetworkConnector)
 	return &snowv1.AWSSnowMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: clusterapi.InfrastructureAPIVersion(),
@@ -135,7 +136,7 @@ func SnowMachineTemplate(machineConfig *v1alpha1.SnowMachineConfig) *snowv1.AWSS
 			Template: snowv1.AWSSnowMachineTemplateResource{
 				Spec: snowv1.AWSSnowMachineSpec{
 					IAMInstanceProfile: "control-plane.cluster-api-provider-aws.sigs.k8s.io",
-					InstanceType:       machineConfig.Spec.InstanceType,
+					InstanceType:       string(machineConfig.Spec.InstanceType),
 					SSHKeyName:         &machineConfig.Spec.SshKeyName,
 					AMI: snowv1.AWSResourceReference{
 						ID: &machineConfig.Spec.AMIID,
@@ -143,6 +144,7 @@ func SnowMachineTemplate(machineConfig *v1alpha1.SnowMachineConfig) *snowv1.AWSS
 					CloudInit: snowv1.CloudInit{
 						InsecureSkipSecretsManager: true,
 					},
+					PhysicalNetworkConnectorType: &networkConnector,
 				},
 			},
 		},
