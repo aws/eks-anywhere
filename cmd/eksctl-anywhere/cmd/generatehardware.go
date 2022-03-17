@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -63,16 +64,21 @@ func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
 		return fmt.Errorf("csv: %v", err)
 	}
 
-	manifestFile, err := os.Create(hardware.DefaultHardwareManifestYamlFilename)
-	if err != nil {
-		return fmt.Errorf("tinkerbell manifest yaml: %v", err)
-	}
-	yamlWriter := hardware.NewTinkerbellManifestYaml(manifestFile)
-
-	jsonDir, err := hardware.CreateDefaultTinkerbellHardwareJsonDir()
+	outputDir, err := hardware.CreateDefaultDir()
 	if err != nil {
 		return err
 	}
+
+	jsonDir, err := hardware.CreateDefaultJsonDir()
+	if err != nil {
+		return err
+	}
+
+	hardwareYaml, err := os.Create(filepath.Join(outputDir, hardware.DefaultHardwareManifestYamlFilename))
+	if err != nil {
+		return fmt.Errorf("tinkerbell manifest yaml: %v", err)
+	}
+	yamlWriter := hardware.NewTinkerbellManifestYaml(hardwareYaml)
 
 	var journal hardware.Journal
 	jsonFactory, err := hardware.RecordingTinkerbellHardwareJsonFactory(jsonDir, &journal)

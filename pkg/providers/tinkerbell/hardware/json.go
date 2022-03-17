@@ -13,9 +13,6 @@ import (
 	"github.com/tinkerbell/tink/protos/packet"
 )
 
-// DefaultTinkerbellHardwareJsonDir is the default directory for writing Tinkerbell json.
-const DefaultTinkerbellHardwareJsonDir = "hardware-manifests"
-
 // ErrTinkebellHardwareJsonRepeatWrites occurs when a TinkerbellHardwareJson receives multiple calls to Write().
 var ErrTinkebellHardwareJsonRepeatWrites = errors.New("TinkerbellHardwareJson can only be written to once")
 
@@ -193,17 +190,4 @@ func RegisterTinkerbellHardware(ctx context.Context, client TinkerbellHardwarePu
 		}
 	}
 	return nil
-}
-
-// CreateDefaultTinkerbellHardwareJsonDir creates the defaut tinkerbell hardware json directory and returns the dir path.
-func CreateDefaultTinkerbellHardwareJsonDir() (string, error) {
-	if err := os.MkdirAll(DefaultTinkerbellHardwareJsonDir, os.ModePerm); err != nil {
-		return "", fmt.Errorf(
-			"could not create default tinkerbell hardware json dir: %v: %v",
-			DefaultTinkerbellHardwareJsonDir,
-			err,
-		)
-	}
-
-	return DefaultTinkerbellHardwareJsonDir, nil
 }
