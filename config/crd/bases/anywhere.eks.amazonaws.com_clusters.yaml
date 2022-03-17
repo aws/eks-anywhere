@@ -39,9 +39,23 @@ spec:
               clusterNetwork:
                 properties:
                   cni:
-                    description: CNI specifies the CNI plugin to be installed in the
-                      cluster
+                    description: Deprecated. Use CNIConfig
                     type: string
+                  cniConfig:
+                    description: CNIConfig specifies the CNI plugin to be installed
+                      in the cluster
+                    properties:
+                      cilium:
+                        properties:
+                          policyEnforcementMode:
+                            description: PolicyEnforcementMode determines communication
+                              allowed between pods. Accepted values are default, always,
+                              never.
+                            type: string
+                        type: object
+                      kindnetd:
+                        type: object
+                    type: object
                   dns:
                     properties:
                       resolvConf:

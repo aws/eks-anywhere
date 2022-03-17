@@ -12,6 +12,7 @@ import (
 var clusterDefaults = []func(*Cluster) error{
 	setRegistryMirrorConfigDefaults,
 	setWorkerNodeGroupDefaults,
+	setCNIConfigDefault,
 }
 
 func setClusterDefaults(cluster *Cluster) error {
@@ -49,5 +50,22 @@ func setWorkerNodeGroupDefaults(cluster *Cluster) error {
 		logger.V(1).Info("First worker node group name not specified. Defaulting name to md-0.")
 		cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "md-0"
 	}
+	return nil
+}
+
+func setCNIConfigDefault(cluster *Cluster) error {
+	if cluster.Spec.ClusterNetwork.CNIConfig != nil {
+		return nil
+	}
+
+	cluster.Spec.ClusterNetwork.CNIConfig = &CNIConfig{}
+	switch cluster.Spec.ClusterNetwork.CNI {
+	case Cilium, CiliumEnterprise:
+		cluster.Spec.ClusterNetwork.CNIConfig.Cilium = &CiliumConfig{}
+	case Kindnetd:
+		cluster.Spec.ClusterNetwork.CNIConfig.Kindnetd = &KindnetdConfig{}
+	}
+
+	cluster.Spec.ClusterNetwork.CNI = ""
 	return nil
 }
