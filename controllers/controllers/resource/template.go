@@ -190,16 +190,9 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 		return nil, err
 	}
 
-	var controlPlaneTemplateName string
-	updateControlPlaneTemplate := cloudstack.AnyImmutableFieldChanged(oldCsdc, &csdc, oldCpCsmc, &cpCsmc)
-	if updateControlPlaneTemplate {
-		controlPlaneTemplateName = common.CPMachineTemplateName(clusterName, r.now)
-	} else {
-		cp, err := r.ControlPlane(ctx, eksaCluster)
-		if err != nil {
-			return nil, err
-		}
-		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
+	controlPlaneTemplateName, err := r.getControlPlaneTemplateName(ctx, eksaCluster, oldCsdc, csdc, oldCpCsmc, cpCsmc, clusterName)
+	if err != nil {
+		return nil, err
 	}
 
 	kubeadmconfigTemplateNames, err := r.getKubeadmconfigTemplateNames(ctx, eksaCluster, clusterSpec, clusterName)
@@ -228,6 +221,21 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 	}
 
 	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, cpOpt, workersOpt)
+}
+
+func (r *CloudStackTemplate) getControlPlaneTemplateName(ctx context.Context, eksaCluster *anywherev1.Cluster, oldCsdc *anywherev1.CloudStackDatacenterConfig, csdc anywherev1.CloudStackDatacenterConfig, oldCpCsmc *anywherev1.CloudStackMachineConfig, cpCsmc anywherev1.CloudStackMachineConfig, clusterName string) (string, error) {
+	var controlPlaneTemplateName string
+	updateControlPlaneTemplate := cloudstack.AnyImmutableFieldChanged(oldCsdc, &csdc, oldCpCsmc, &cpCsmc)
+	if updateControlPlaneTemplate {
+		controlPlaneTemplateName = common.CPMachineTemplateName(clusterName, r.now)
+	} else {
+		cp, err := r.ControlPlane(ctx, eksaCluster)
+		if err != nil {
+			return "", err
+		}
+		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
+	}
+	return controlPlaneTemplateName, nil
 }
 
 func (r *CloudStackTemplate) getEtcdTemplateName(ctx context.Context, eksaCluster *anywherev1.Cluster, oldCsdc *anywherev1.CloudStackDatacenterConfig, csdc anywherev1.CloudStackDatacenterConfig, etcdCsmc anywherev1.CloudStackMachineConfig, clusterName string) (string, error) {
