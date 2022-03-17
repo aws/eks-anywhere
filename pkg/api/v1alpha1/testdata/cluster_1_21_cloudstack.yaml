@@ -40,6 +40,7 @@ spec:
     - id: "zoneId"
       network:
         id: "netId"
+  managementApiEndpoint: https://127.0.0.1:8080/client/api
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1

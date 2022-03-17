@@ -662,6 +662,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
+		if err == nil {
+			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+		}
 		noProxyList = append(noProxyList,
 			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		)
@@ -733,6 +737,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
+		if err == nil {
+			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+		}
 		noProxyList = append(noProxyList,
 			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		)
@@ -1097,4 +1105,12 @@ func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Co
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
+}
+
+func getHostnameFromUrl(rawurl string) (string, error) {
+	url, err := url.Parse(rawurl)
+	if err != nil {
+		return "", fmt.Errorf("#{rawurl} is not a valid url")
+	}
+	return url.Hostname(), nil
 }
