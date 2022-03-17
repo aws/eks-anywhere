@@ -71,8 +71,8 @@ func (d *Dependencies) Close(ctx context.Context) error {
 func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
 	return NewFactory().
-		WithExecutableImage(clusterSpec.UseImageMirror(eksaToolsImage.VersionedImage())).
-		WithWriterFolder(clusterSpec.Name).
+		WithExecutableImage(clusterSpec.Cluster.UseImageMirror(eksaToolsImage.VersionedImage())).
+		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
 }
 

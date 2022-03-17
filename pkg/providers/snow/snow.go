@@ -106,7 +106,7 @@ func (p *snowProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster
 
 func ControlPlaneObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) []runtime.Object {
 	snowCluster := SnowCluster(clusterSpec)
-	controlPlaneMachineTemplate := SnowMachineTemplate(machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	controlPlaneMachineTemplate := SnowMachineTemplate(machineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
 	kubeadmControlPlane := KubeadmControlPlane(clusterSpec, controlPlaneMachineTemplate)
 	capiCluster := CAPICluster(clusterSpec, snowCluster, kubeadmControlPlane)
 

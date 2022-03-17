@@ -32,13 +32,13 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 		},
 	}
 
-	if u.Opts.Spec.IsManaged() {
+	if u.Opts.Spec.Cluster.IsManaged() {
 		createValidations = append(
 			createValidations,
 			validations.ValidationResult{
 				Name:        "validate cluster name",
 				Remediation: "",
-				Err:         ValidateClusterNameIsUnique(ctx, k, targetCluster, u.Opts.Spec.Name),
+				Err:         ValidateClusterNameIsUnique(ctx, k, targetCluster, u.Opts.Spec.Cluster.Name),
 			},
 			validations.ValidationResult{
 				Name:        "validate gitops",

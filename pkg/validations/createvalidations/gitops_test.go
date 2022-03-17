@@ -123,13 +123,13 @@ func TestValidateGitopsForWorkloadClustersPath(t *testing.T) {
 			}
 
 			clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Name = testclustername
-				s.Spec.GitOpsRef = &v1alpha1.Ref{
+				s.Cluster.Name = testclustername
+				s.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{
 					Kind: v1alpha1.GitOpsConfigKind,
 					Name: "gitopstest",
 				}
 				s.GitOpsConfig = defaultGitOps
-				s.SetManagedBy("management-cluster")
+				s.Cluster.SetManagedBy("management-cluster")
 			})
 			k, ctx, cluster, e := validations.NewKubectl(t)
 			cluster.Name = "management-cluster"
@@ -137,7 +137,7 @@ func TestValidateGitopsForWorkloadClustersPath(t *testing.T) {
 			e.EXPECT().Execute(
 				ctx, []string{
 					"get", eksaGitOpsResourceType, "-o", "json", "--kubeconfig",
-					cluster.KubeconfigFile, "--namespace", clusterSpec.Namespace,
+					cluster.KubeconfigFile, "--namespace", clusterSpec.Cluster.Namespace,
 					"--field-selector=metadata.name=gitopstest",
 				}).Return(*bytes.NewBufferString(gitOpsListContent), nil)
 
@@ -151,7 +151,7 @@ func TestValidateGitopsForWorkloadClustersPath(t *testing.T) {
 			e.EXPECT().Execute(
 				ctx, []string{
 					"get", eksaGitOpsResourceType, "management-gitops", "-o", "json", "--kubeconfig",
-					cluster.KubeconfigFile, "--namespace", clusterSpec.Namespace,
+					cluster.KubeconfigFile, "--namespace", clusterSpec.Cluster.Namespace,
 				}).Return(*bytes.NewBufferString(mgmtGitOpsContent), nil)
 
 			err := createvalidations.ValidateGitOps(ctx, k, cluster, clusterSpec)
@@ -191,13 +191,13 @@ func TestValidateGitopsForWorkloadClustersFailure(t *testing.T) {
 	}
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Name = testclustername
-		s.Spec.GitOpsRef = &v1alpha1.Ref{
+		s.Cluster.Name = testclustername
+		s.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{
 			Kind: v1alpha1.GitOpsConfigKind,
 			Name: "gitopstest",
 		}
 		s.GitOpsConfig = defaultGitOps
-		s.SetManagedBy("management-cluster")
+		s.Cluster.SetManagedBy("management-cluster")
 		// s.OIDCConfig = defaultOIDC
 	})
 	k, ctx, cluster, e := validations.NewKubectl(t)
@@ -208,7 +208,7 @@ func TestValidateGitopsForWorkloadClustersFailure(t *testing.T) {
 			e.EXPECT().Execute(
 				ctx, []string{
 					"get", eksaGitOpsResourceType, "-o", "json", "--kubeconfig",
-					cluster.KubeconfigFile, "--namespace", clusterSpec.Namespace,
+					cluster.KubeconfigFile, "--namespace", clusterSpec.Cluster.Namespace,
 					"--field-selector=metadata.name=gitopstest",
 				}).Return(*bytes.NewBufferString(fileContent), nil)
 
@@ -234,8 +234,8 @@ func TestSkipValidateGitopsWithNoGitOpts(t *testing.T) {
 	}
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.SetManagedBy("management-cluster")
-		s.Name = testclustername
+		s.Cluster.SetManagedBy("management-cluster")
+		s.Cluster.Name = testclustername
 
 		s.GitOpsConfig = nil
 	})
@@ -247,7 +247,7 @@ func TestSkipValidateGitopsWithNoGitOpts(t *testing.T) {
 			e.EXPECT().Execute(
 				ctx, []string{
 					"get", eksaGitOpsResourceType, "-o", "json", "--kubeconfig",
-					cluster.KubeconfigFile, "--namespace", clusterSpec.Namespace,
+					cluster.KubeconfigFile, "--namespace", clusterSpec.Cluster.Namespace,
 					"--field-selector=metadata.name=gitopstest",
 				}).Times(0)
 
@@ -288,14 +288,14 @@ func TestValidateGitopsForSelfManagedCluster(t *testing.T) {
 	}
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Name = testclustername
-		s.Spec.GitOpsRef = &v1alpha1.Ref{
+		s.Cluster.Name = testclustername
+		s.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{
 			Kind: v1alpha1.GitOpsConfigKind,
 			Name: "gitopstest",
 		}
 		s.GitOpsConfig = defaultGitOps
 
-		s.SetSelfManaged()
+		s.Cluster.SetSelfManaged()
 	})
 	k, ctx, cluster, e := validations.NewKubectl(t)
 	cluster.Name = testclustername
@@ -304,7 +304,7 @@ func TestValidateGitopsForSelfManagedCluster(t *testing.T) {
 			e.EXPECT().Execute(
 				ctx, []string{
 					"get", eksaGitOpsResourceType, "-o", "json", "--kubeconfig",
-					cluster.KubeconfigFile, "--namespace", clusterSpec.Namespace,
+					cluster.KubeconfigFile, "--namespace", clusterSpec.Cluster.Namespace,
 					"--field-selector=metadata.name=gitopstest",
 				}).Times(0)
 

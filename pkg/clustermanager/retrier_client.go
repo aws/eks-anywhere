@@ -65,12 +65,12 @@ func (c *retrierClient) installCustomComponents(ctx context.Context, clusterSpec
 	}
 
 	// inject proxy env vars the eksa-controller-manager deployment if proxy is configured
-	if clusterSpec.Spec.ProxyConfiguration != nil {
-		noProxyList := append(clusterSpec.Spec.ProxyConfiguration.NoProxy, clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks...)
+	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
+		noProxyList := append(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
 		envMap := map[string]string{
-			"HTTP_PROXY":  clusterSpec.Spec.ProxyConfiguration.HttpProxy,
-			"HTTPS_PROXY": clusterSpec.Spec.ProxyConfiguration.HttpsProxy,
+			"HTTP_PROXY":  clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy,
+			"HTTPS_PROXY": clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy,
 			"NO_PROXY":    strings.Join(noProxyList[:], ","),
 		}
 		err = c.Retrier.Retry(
