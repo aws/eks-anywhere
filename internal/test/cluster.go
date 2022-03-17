@@ -43,7 +43,6 @@ func NewClusterSpec(opts ...ClusterSpecOpt) *cluster.Spec {
 		opt(s)
 	}
 
-	s.SetDefaultGitOps()
 	return s
 }
 

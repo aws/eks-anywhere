@@ -86,7 +86,7 @@ func TestFluxAddonClientInstallGitOpsOnManagementClusterWithPrexistingRepo(t *te
 			cluster := &types.Cluster{}
 			clusterConfig := v1alpha1.NewCluster(tt.clusterName)
 			f, m, g := newAddonClient(t)
-			clusterSpec := newClusterSpec(clusterConfig, tt.fluxpath)
+			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
 
 			m.flux.EXPECT().BootstrapToolkitsComponents(ctx, cluster, clusterSpec.GitOpsConfig)
 
@@ -127,7 +127,7 @@ func TestFluxAddonClientInstallGitOpsOnWorkloadClusterWithPrexistingRepo(t *test
 	clusterConfig := v1alpha1.NewCluster(clusterName)
 	clusterConfig.SetManagedBy("management-cluster")
 	f, m, g := newAddonClient(t)
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
 	m.flux.EXPECT().BootstrapToolkitsComponents(ctx, cluster, clusterSpec.GitOpsConfig)
 
@@ -212,7 +212,7 @@ func TestFluxAddonClientInstallGitOpsNoPrexistingRepo(t *testing.T) {
 			cluster := &types.Cluster{}
 			clusterConfig := v1alpha1.NewCluster(tt.clusterName)
 			f, m, g := newAddonClient(t)
-			clusterSpec := newClusterSpec(clusterConfig, tt.fluxpath)
+			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
 
 			m.flux.EXPECT().BootstrapToolkitsComponents(ctx, cluster, clusterSpec.GitOpsConfig)
 
@@ -295,7 +295,7 @@ func TestFluxAddonClientInstallGitOpsToolkitsBareRepo(t *testing.T) {
 			cluster := &types.Cluster{}
 			clusterConfig := v1alpha1.NewCluster(tt.clusterName)
 			f, m, g := newAddonClient(t)
-			clusterSpec := newClusterSpec(clusterConfig, tt.fluxpath)
+			clusterSpec := newClusterSpec(t, clusterConfig, tt.fluxpath)
 
 			m.flux.EXPECT().BootstrapToolkitsComponents(ctx, cluster, clusterSpec.GitOpsConfig)
 
@@ -334,7 +334,7 @@ func TestFluxAddonClientPauseKustomization(t *testing.T) {
 	ctx := context.Background()
 	cluster := &types.Cluster{}
 	clusterConfig := v1alpha1.NewCluster("management-cluster")
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
 	m.flux.EXPECT().PauseKustomization(ctx, cluster, clusterSpec.GitOpsConfig)
@@ -350,7 +350,7 @@ func TestFluxAddonClientResumeKustomization(t *testing.T) {
 	cluster := &types.Cluster{}
 	clusterConfig := v1alpha1.NewCluster("management-cluster")
 
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
 	m.flux.EXPECT().ResumeKustomization(ctx, cluster, clusterSpec.GitOpsConfig)
@@ -367,7 +367,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoNotExists(t *testing.T) {
 	clusterConfig := v1alpha1.NewCluster(clusterName)
 	eksaSystemDirPath := "clusters/management-cluster/management-cluster/eksa-system"
 	f, m, g := newAddonClient(t)
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
 	m.git.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository}, nil)
 	m.git.EXPECT().Clone(ctx).Return(nil)
@@ -392,7 +392,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecLocalRepoExists(t *testing.T) {
 	clusterName := "management-cluster"
 	clusterConfig := v1alpha1.NewCluster(clusterName)
 	eksaSystemDirPath := "clusters/management-cluster/management-cluster/eksa-system"
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	flux := addonClientMocks.NewMockFlux(mockCtrl)
 
 	gitProvider := gitMocks.NewMockProvider(mockCtrl)
@@ -422,7 +422,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecErrorGetRepo(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "management-cluster"
 	clusterConfig := v1alpha1.NewCluster(clusterName)
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
 	m.git.EXPECT().GetRepo(ctx).MaxTimes(2).Return(nil, errors.New("fail to get repo"))
@@ -439,7 +439,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecErrorCloneRepo(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "management-cluster"
 	clusterConfig := v1alpha1.NewCluster(clusterName)
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
 	m.git.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository}, nil)
@@ -457,7 +457,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecErrorSwitchBranch(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "management-cluster"
 	clusterConfig := v1alpha1.NewCluster(clusterName)
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
 	m.git.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository}, nil)
@@ -476,7 +476,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecErrorAddFile(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "management-cluster"
 	clusterConfig := v1alpha1.NewCluster(clusterName)
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
 	m.git.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository}, nil)
@@ -496,7 +496,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecErrorCommit(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "management-cluster"
 	clusterConfig := v1alpha1.NewCluster(clusterName)
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
 	m.git.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository}, nil)
@@ -517,7 +517,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecErrorPushAfterRetry(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "management-cluster"
 	clusterConfig := v1alpha1.NewCluster(clusterName)
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
 	m.git.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository}, nil)
@@ -539,7 +539,7 @@ func TestFluxAddonClientUpdateGitRepoEksaSpecSkip(t *testing.T) {
 	ctx := context.Background()
 	clusterName := "management-cluster"
 	clusterConfig := v1alpha1.NewCluster(clusterName)
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f := addonclients.NewFluxAddonClient(nil, nil)
 
 	datacenterConfig := datacenterConfig(clusterName)
@@ -554,7 +554,7 @@ func TestFluxAddonClientForceReconcileGitRepo(t *testing.T) {
 	ctx := context.Background()
 	cluster := &types.Cluster{}
 	clusterConfig := v1alpha1.NewCluster("")
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
 	m.flux.EXPECT().ForceReconcileGitRepo(ctx, cluster, "flux-system")
@@ -570,7 +570,7 @@ func TestFluxAddonClientCleanupGitRepo(t *testing.T) {
 	ctx := context.Background()
 	clusterConfig := v1alpha1.NewCluster("management-cluster")
 	expectedClusterPath := "clusters/management-cluster"
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
 	gitProvider := gitMocks.NewMockProvider(mockCtrl)
 	gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository}, nil)
@@ -599,7 +599,7 @@ func TestFluxAddonClientCleanupGitRepoWorkloadCluster(t *testing.T) {
 	clusterConfig := v1alpha1.NewCluster("workload-cluster")
 	clusterConfig.SetManagedBy("management-cluster")
 	expectedClusterPath := "clusters/management-cluster/workload-cluster/" + constants.EksaSystemNamespace
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 
 	gitProvider := gitMocks.NewMockProvider(mockCtrl)
 	gitProvider.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository}, nil)
@@ -625,7 +625,7 @@ func TestFluxAddonClientCleanupGitRepoWorkloadCluster(t *testing.T) {
 func TestFluxAddonClientCleanupGitRepoSkip(t *testing.T) {
 	ctx := context.Background()
 	clusterConfig := v1alpha1.NewCluster("management-cluster")
-	clusterSpec := newClusterSpec(clusterConfig, "")
+	clusterSpec := newClusterSpec(t, clusterConfig, "")
 	f, m, _ := newAddonClient(t)
 
 	m.git.EXPECT().GetRepo(ctx).Return(&git.Repository{Name: clusterSpec.GitOpsConfig.Spec.Flux.Github.Repository}, nil)
@@ -681,6 +681,7 @@ func runValidations(validations []validations.Validation) error {
 
 type fluxTest struct {
 	*WithT
+	*testing.T
 	f           *addonclients.FluxAddonClient
 	flux        *addonClientMocks.MockFlux
 	provider    *gitMocks.MockProvider
@@ -701,6 +702,7 @@ func newTest(t *testing.T) *fluxTest {
 		s.Cluster = clusterConfig
 	})
 	return &fluxTest{
+		T:           t,
 		f:           f,
 		flux:        flux,
 		provider:    gitProvider,
@@ -712,6 +714,7 @@ func newTest(t *testing.T) *fluxTest {
 }
 
 func (tt *fluxTest) setupFlux() (owner, repo, path string) {
+	tt.Helper()
 	path = "fluxFolder"
 	owner = "aws"
 	repo = "eksa-gitops"
@@ -726,7 +729,9 @@ func (tt *fluxTest) setupFlux() (owner, repo, path string) {
 			},
 		},
 	}
-	tt.clusterSpec.SetDefaultGitOps()
+	if err := c.SetConfigDefaults(tt.clusterSpec.Config); err != nil {
+		tt.Fatal(err)
+	}
 
 	return owner, repo, path
 }
@@ -759,7 +764,8 @@ func machineConfig(clusterName string) *v1alpha1.VSphereMachineConfig {
 	}
 }
 
-func newClusterSpec(clusterConfig *v1alpha1.Cluster, fluxPath string) *c.Spec {
+func newClusterSpec(t *testing.T, clusterConfig *v1alpha1.Cluster, fluxPath string) *c.Spec {
+	t.Helper()
 	fluxConfig := v1alpha1.Flux{
 		Github: v1alpha1.Github{
 			Owner:               "mFowler",
@@ -792,6 +798,9 @@ func newClusterSpec(clusterConfig *v1alpha1.Cluster, fluxPath string) *c.Spec {
 		s.VersionsBundle.Flux = fluxBundle()
 		s.GitOpsConfig = &gitOpsConfig
 	})
+	if err := c.SetConfigDefaults(clusterSpec.Config); err != nil {
+		t.Fatal(err)
+	}
 	return clusterSpec
 }
 

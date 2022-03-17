@@ -752,8 +752,8 @@ func TestClusterManagerPauseEKSAControllerReconcileSuccessWithoutMachineConfig(t
 		Name: clusterName,
 	}
 
-	clusterSpec := &cluster.Spec{
-		Cluster: &v1alpha1.Cluster{
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster = &v1alpha1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "cluster-test",
 			},
@@ -763,8 +763,8 @@ func TestClusterManagerPauseEKSAControllerReconcileSuccessWithoutMachineConfig(t
 					Name: "data-center-name",
 				},
 			},
-		},
-	}
+		}
+	})
 
 	expectedPauseAnnotation := map[string]string{"anywhere.eks.amazonaws.com/paused": "true"}
 
@@ -787,8 +787,8 @@ func TestClusterManagerPauseEKSAControllerReconcileSuccessWithMachineConfig(t *t
 		Name: clusterName,
 	}
 
-	clusterSpec := &cluster.Spec{
-		Cluster: &v1alpha1.Cluster{
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster = &v1alpha1.Cluster{
 			Spec: v1alpha1.ClusterSpec{
 				DatacenterRef: v1alpha1.Ref{
 					Kind: v1alpha1.VSphereDatacenterKind,
@@ -805,8 +805,8 @@ func TestClusterManagerPauseEKSAControllerReconcileSuccessWithMachineConfig(t *t
 					},
 				}},
 			},
-		},
-	}
+		}
+	})
 
 	expectedPauseAnnotation := map[string]string{"anywhere.eks.amazonaws.com/paused": "true"}
 
@@ -831,16 +831,16 @@ func TestClusterManagerResumeEKSAControllerReconcileSuccessWithoutMachineConfig(
 		Name: clusterName,
 	}
 
-	clusterSpec := &cluster.Spec{
-		Cluster: &v1alpha1.Cluster{
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.Cluster = &v1alpha1.Cluster{
 			Spec: v1alpha1.ClusterSpec{
 				DatacenterRef: v1alpha1.Ref{
 					Kind: v1alpha1.VSphereDatacenterKind,
 					Name: "data-center-name",
 				},
 			},
-		},
-	}
+		}
+	})
 	clusterSpec.Cluster.PauseReconcile()
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{
@@ -1098,7 +1098,6 @@ func TestClusterManagerClusterSpecChangedGitOpsDefault(t *testing.T) {
 	tt := newSpecChangedTest(t)
 	tt.clusterSpec.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{Kind: v1alpha1.GitOpsConfigKind}
 	tt.oldClusterConfig = tt.clusterSpec.Cluster.DeepCopy()
-	tt.clusterSpec.SetDefaultGitOps()
 	oldGitOpsConfig := tt.clusterSpec.GitOpsConfig.DeepCopy()
 	tt.clusterSpec.Cluster.Spec.IdentityProviderRefs = []v1alpha1.Ref{{Kind: v1alpha1.OIDCConfigKind, Name: tt.clusterName}}
 	tt.clusterSpec.OIDCConfig = tt.oldOIDCConfig.DeepCopy()

@@ -277,8 +277,6 @@ func (f *FluxAddonClient) Validations(ctx context.Context, clusterSpec *cluster.
 		return nil
 	}
 
-	clusterSpec.SetDefaultGitOps()
-
 	fc := &fluxForCluster{
 		FluxAddonClient: f,
 		clusterSpec:     clusterSpec,
@@ -300,8 +298,6 @@ func (f *FluxAddonClient) CleanupGitRepo(ctx context.Context, clusterSpec *clust
 		logger.Info("GitOps field not specified, clean up git repo skipped")
 		return nil
 	}
-
-	clusterSpec.SetDefaultGitOps()
 
 	fc := &fluxForCluster{
 		FluxAddonClient: f,

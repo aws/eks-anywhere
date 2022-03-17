@@ -62,8 +62,6 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 		if spec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath != "" && prevGitOps.Spec.Flux.Github.ClusterConfigPath != spec.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath {
 			return fmt.Errorf("gitOps spec.flux.github.clusterConfigPath is immutable")
 		}
-
-		spec.SetDefaultGitOps()
 	}
 
 	if !nSpec.ControlPlaneConfiguration.Endpoint.Equal(oSpec.ControlPlaneConfiguration.Endpoint) {
