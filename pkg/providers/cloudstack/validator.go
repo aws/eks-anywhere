@@ -117,11 +117,11 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 		}
 	}
 
-	if cloudStackClusterSpec.datacenterConfig.Namespace != cloudStackClusterSpec.Namespace {
+	if cloudStackClusterSpec.datacenterConfig.Namespace != cloudStackClusterSpec.Cluster.Namespace {
 		return fmt.Errorf(
 			"CloudStackDatacenterConfig and Cluster objects must have the same namespace: CloudstackDatacenterConfig namespace=%s; Cluster namespace=%s",
 			cloudStackClusterSpec.datacenterConfig.Namespace,
-			cloudStackClusterSpec.Namespace,
+			cloudStackClusterSpec.Cluster.Namespace,
 		)
 	}
 	if len(cloudStackClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations) > 1 {
@@ -150,12 +150,12 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 	}
 
 	for _, machineConfig := range cloudStackClusterSpec.machineConfigsLookup {
-		if machineConfig.Namespace != cloudStackClusterSpec.Namespace {
+		if machineConfig.Namespace != cloudStackClusterSpec.Cluster.Namespace {
 			return fmt.Errorf(
 				"CloudStackMachineConfig %s and Cluster objects must have the same namespace: CloudStackMachineConfig namespace=%s; Cluster namespace=%s",
 				machineConfig.Name,
 				machineConfig.Namespace,
-				cloudStackClusterSpec.Namespace,
+				cloudStackClusterSpec.Cluster.Namespace,
 			)
 		}
 		if len(machineConfig.Spec.Users) <= 0 {

@@ -81,7 +81,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		machineConfigs:   machineConfigs,
 		workflow:         workflow,
 		ctx:              context.Background(),
-		newClusterSpec:   test.NewClusterSpec(func(s *cluster.Spec) { s.Name = "cluster-name" }),
+		newClusterSpec:   test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "cluster-name" }),
 		bootstrapCluster: &types.Cluster{Name: "bootstrap"},
 		workloadCluster:  &types.Cluster{Name: "workload"},
 	}
@@ -126,7 +126,7 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(expectedCluster *types.Cl
 		NewVersion:    "v0.0.2",
 	})
 	gomock.InOrder(
-		c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, expectedCluster, c.newClusterSpec.Name).Return(currentSpec, nil),
+		c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, expectedCluster, c.newClusterSpec.Cluster.Name).Return(currentSpec, nil),
 		c.clusterManager.EXPECT().UpgradeNetworking(c.ctx, expectedCluster, currentSpec, c.newClusterSpec).Return(networkingChangeDiff, nil),
 		c.capiManager.EXPECT().Upgrade(c.ctx, expectedCluster, c.provider, currentSpec, c.newClusterSpec).Return(capiChangeDiff, nil),
 		c.addonManager.EXPECT().UpdateLegacyFileStructure(c.ctx, currentSpec, c.newClusterSpec),
@@ -444,7 +444,7 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 
 func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	test := newUpgradeTest(t)
-	test.newClusterSpec.SetSelfManaged()
+	test.newClusterSpec.Cluster.SetSelfManaged()
 
 	test.bootstrapCluster.Name = "management-cluster"
 	test.bootstrapCluster.ExistingManagement = true

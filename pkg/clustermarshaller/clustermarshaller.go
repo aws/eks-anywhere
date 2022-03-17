@@ -46,7 +46,7 @@ func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.Da
 		if err != nil {
 			return nil, fmt.Errorf("failed marshalling resource for cluster spec: %v", err)
 		}
-		if clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf == nil {
+		if clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf == nil {
 			removeFromDefaultConfig := []string{"spec.clusterNetwork.dns"}
 			resource, err = api.CleanupPathsFromYaml(resource, removeFromDefaultConfig)
 			if err != nil {

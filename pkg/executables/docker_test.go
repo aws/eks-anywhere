@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/pkg/executables"
 	mockexecutables "github.com/aws/eks-anywhere/pkg/executables/mocks"
@@ -96,4 +97,49 @@ func TestDockerCgroupVersion(t *testing.T) {
 	if !reflect.DeepEqual(cgroupVersion, wantVersion) {
 		t.Fatalf("Docker.Version() version = %v, want %v", cgroupVersion, wantVersion)
 	}
+}
+
+func TestDockerLoadFromFile(t *testing.T) {
+	file := "file"
+
+	g := NewWithT(t)
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	executable.EXPECT().Execute(ctx, "load", "-i", file).Return(bytes.Buffer{}, nil)
+	d := executables.NewDocker(executable)
+
+	g.Expect(d.LoadFromFile(ctx, file)).To(Succeed())
+}
+
+func TestDockerSaveToFileMultipleImages(t *testing.T) {
+	file := "file"
+	image1 := "image1:tag1"
+	image2 := "image2:tag2"
+	image3 := "image3:tag3"
+
+	g := NewWithT(t)
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	executable.EXPECT().Execute(ctx, "save", "-o", file, image1, image2, image3).Return(bytes.Buffer{}, nil)
+	d := executables.NewDocker(executable)
+
+	g.Expect(d.SaveToFile(ctx, file, image1, image2, image3)).To(Succeed())
+}
+
+func TestDockerSaveToFileNoImages(t *testing.T) {
+	file := "file"
+
+	g := NewWithT(t)
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+
+	executable := mockexecutables.NewMockExecutable(mockCtrl)
+	executable.EXPECT().Execute(ctx, "save", "-o", file).Return(bytes.Buffer{}, nil)
+	d := executables.NewDocker(executable)
+
+	g.Expect(d.SaveToFile(ctx, file)).To(Succeed())
 }

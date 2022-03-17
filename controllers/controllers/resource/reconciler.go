@@ -145,7 +145,7 @@ func (cor *clusterReconciler) applyTemplates(ctx context.Context, resources []*u
 }
 
 func (cor *clusterReconciler) fetchIdentityProviderRefs(ctx context.Context, cs *cluster.Spec, namespace string) error {
-	for _, identityProvider := range cs.Spec.IdentityProviderRefs {
+	for _, identityProvider := range cs.Cluster.Spec.IdentityProviderRefs {
 		switch identityProvider.Kind {
 		case anywherev1.AWSIamConfigKind:
 			awsIamConfig, err := cor.AWSIamConfig(ctx, &identityProvider, namespace)

@@ -87,7 +87,7 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 				APIVersion: troubleshootApiVersion,
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: spec.Name,
+				Name: spec.Cluster.Name,
 			},
 			Spec: supportBundleSpec{},
 		},
@@ -104,10 +104,10 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 	b = b.
 		WithGitOpsConfig(spec.GitOpsConfig).
 		WithOidcConfig(spec.OIDCConfig).
-		WithExternalEtcd(spec.Spec.ExternalEtcdConfiguration).
-		WithDatacenterConfig(spec.Spec.DatacenterRef).
+		WithExternalEtcd(spec.Cluster.Spec.ExternalEtcdConfiguration).
+		WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef).
 		WithMachineConfigs(provider.MachineConfigs()).
-		WithManagementCluster(spec.IsSelfManaged()).
+		WithManagementCluster(spec.Cluster.IsSelfManaged()).
 		WithDefaultAnalyzers().
 		WithDefaultCollectors().
 		WithLogTextAnalyzers()
