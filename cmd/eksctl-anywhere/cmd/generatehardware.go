@@ -64,12 +64,12 @@ func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
 		return fmt.Errorf("csv: %v", err)
 	}
 
-	outputDir, err := hardware.CreateDefaultDir()
+	outputDir, err := hardware.CreateManifestDir(hOpts.outputPath)
 	if err != nil {
 		return err
 	}
 
-	jsonDir, err := hardware.CreateDefaultJsonDir()
+	jsonDir, err := hardware.CreateDefaultJsonDir(outputDir)
 	if err != nil {
 		return err
 	}

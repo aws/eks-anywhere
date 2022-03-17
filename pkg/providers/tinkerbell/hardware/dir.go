@@ -3,37 +3,42 @@ package hardware
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
-// DefaultDir is the default directory for writing Tinkerbell hardware files.
-const DefaultDir = "hardware-manifests"
+// DefaultManifestDir is the default directory for writing Tinkerbell hardware files.
+const DefaultManifestDir = "hardware-manifests"
 
 // DefaultJsonDir is the default directory for writing hardware json files.
-const DefaultJsonDir = "hardware-manifests/json"
+const DefaultJsonDir = "json"
 
-// CreateDefaultDir creates the defaut directory where hardware files are written returning it as the string parameter.
-func CreateDefaultDir() (string, error) {
-	if err := os.MkdirAll(DefaultDir, os.ModePerm); err != nil {
+// CreateDefaultManifestDir creates the defaut directory where hardware files are written returning it as the string parameter.
+func CreateManifestDir(path string) (string, error) {
+	if path == "" {
+		path = DefaultManifestDir
+	}
+
+	if err := os.MkdirAll(path, os.ModePerm); err != nil {
 		return "", fmt.Errorf(
-			"could not create default hardware directory: %v: %v",
-			DefaultDir,
+			"could not create manifest directory: %v: %v",
+			path,
 			err,
 		)
 	}
 
-	return DefaultDir, nil
+	return path, nil
 }
 
 // CreateDefaultJsonDir creates the defaut directory where hardware json files are written returning it as the string
 // parameter.
-func CreateDefaultJsonDir() (string, error) {
-	if err := os.MkdirAll(DefaultJsonDir, os.ModePerm); err != nil {
+func CreateDefaultJsonDir(basepath string) (string, error) {
+	path := filepath.Join(basepath, DefaultJsonDir)
+	if err := os.MkdirAll(path, os.ModePerm); err != nil {
 		return "", fmt.Errorf(
-			"could not create default tinkerbell hardware json directory: %v: %v",
-			DefaultJsonDir,
+			"could not create json manifest directory: %v: %v",
+			path,
 			err,
 		)
 	}
-
-	return DefaultJsonDir, nil
+	return path, nil
 }
