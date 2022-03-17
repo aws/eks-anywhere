@@ -60,7 +60,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		machineConfigs:   machineConfigs,
 		workflow:         workflow,
 		ctx:              context.Background(),
-		clusterSpec:      test.NewClusterSpec(func(s *cluster.Spec) { s.Name = "cluster-name"; s.Annotations = map[string]string{} }),
+		clusterSpec:      test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "cluster-name"; s.Cluster.Annotations = map[string]string{} }),
 		bootstrapCluster: &types.Cluster{Name: "bootstrap"},
 		workloadCluster:  &types.Cluster{Name: "workload"},
 	}

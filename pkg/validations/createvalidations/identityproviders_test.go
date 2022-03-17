@@ -51,14 +51,14 @@ func TestValidateIdendityProviderForWorkloadClusters(t *testing.T) {
 	}
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Name = testclustername
-		s.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		s.Cluster.Name = testclustername
+		s.Cluster.Spec.IdentityProviderRefs = []v1alpha1.Ref{
 			{
 				Kind: v1alpha1.OIDCConfigKind,
 				Name: "oidc-config-test",
 			},
 		}
-		s.SetManagedBy("management-cluster")
+		s.Cluster.SetManagedBy("management-cluster")
 		s.OIDCConfig = defaultOIDC
 	})
 	k, ctx, cluster, e := validations.NewKubectl(t)
@@ -69,7 +69,7 @@ func TestValidateIdendityProviderForWorkloadClusters(t *testing.T) {
 			e.EXPECT().Execute(
 				ctx, []string{
 					"get", oidcResourceType, "-o", "json", "--kubeconfig",
-					cluster.KubeconfigFile, "--namespace", clusterSpec.Namespace,
+					cluster.KubeconfigFile, "--namespace", clusterSpec.Cluster.Namespace,
 					"--field-selector=metadata.name=oidc-config-test",
 				}).Return(*bytes.NewBufferString(fileContent), nil)
 
@@ -111,8 +111,8 @@ func TestValidateIdentityProviderForSelfManagedCluster(t *testing.T) {
 	}
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Name = testclustername
-		s.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		s.Cluster.Name = testclustername
+		s.Cluster.Spec.IdentityProviderRefs = []v1alpha1.Ref{
 			{
 				Kind: v1alpha1.OIDCConfigKind,
 				Name: "oidc-config-test",
@@ -120,7 +120,7 @@ func TestValidateIdentityProviderForSelfManagedCluster(t *testing.T) {
 		}
 		s.OIDCConfig = defaultOIDC
 
-		s.SetSelfManaged()
+		s.Cluster.SetSelfManaged()
 	})
 	k, ctx, cluster, e := validations.NewKubectl(t)
 	cluster.Name = testclustername
@@ -129,7 +129,7 @@ func TestValidateIdentityProviderForSelfManagedCluster(t *testing.T) {
 			e.EXPECT().Execute(
 				ctx, []string{
 					"get", oidcResourceType, "-o", "json", "--kubeconfig",
-					cluster.KubeconfigFile, "--namespace", clusterSpec.Namespace,
+					cluster.KubeconfigFile, "--namespace", clusterSpec.Cluster.Namespace,
 					"--field-selector=metadata.name=oidc-config-test",
 				}).Times(0)
 

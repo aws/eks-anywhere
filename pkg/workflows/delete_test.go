@@ -45,7 +45,7 @@ func newDeleteTest(t *testing.T) *deleteTestSetup {
 		provider:         provider,
 		workflow:         workflow,
 		ctx:              context.Background(),
-		clusterSpec:      test.NewClusterSpec(func(s *cluster.Spec) { s.Name = "cluster-name" }),
+		clusterSpec:      test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "cluster-name" }),
 		bootstrapCluster: &types.Cluster{Name: "bootstrap"},
 		workloadCluster:  &types.Cluster{Name: "workload"},
 	}
@@ -156,7 +156,7 @@ func TestDeleteWorkloadRunSuccess(t *testing.T) {
 		KubeconfigFile:     "kc.kubeconfig",
 		ExistingManagement: true,
 	}
-	test.clusterSpec.SetManagedBy(test.clusterSpec.ManagementCluster.Name)
+	test.clusterSpec.Cluster.SetManagedBy(test.clusterSpec.ManagementCluster.Name)
 	test.expectDeleteWorkload(test.clusterSpec.ManagementCluster)
 	test.expectCleanupGitRepo()
 	test.expectNotToMoveManagement()

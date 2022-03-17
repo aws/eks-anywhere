@@ -39,7 +39,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		{
 			Name:        "worker nodes ready",
 			Remediation: fmt.Sprintf("ensure machine deployments for cluster %s are Ready", u.Opts.WorkloadCluster.Name),
-			Err:         k.ValidateWorkerNodes(ctx, u.Opts.Spec.Name, targetCluster.KubeconfigFile),
+			Err:         k.ValidateWorkerNodes(ctx, u.Opts.Spec.Cluster.Name, targetCluster.KubeconfigFile),
 		},
 		{
 			Name:        "nodes ready",
@@ -59,7 +59,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		{
 			Name:        "upgrade cluster kubernetes version increment",
 			Remediation: "ensure that the cluster kubernetes version is incremented by one minor version exactly (e.g. 1.18 -> 1.19)",
-			Err:         ValidateServerVersionSkew(ctx, u.Opts.Spec.Spec.KubernetesVersion, u.Opts.WorkloadCluster, k),
+			Err:         ValidateServerVersionSkew(ctx, u.Opts.Spec.Cluster.Spec.KubernetesVersion, u.Opts.WorkloadCluster, k),
 		},
 		{
 			Name:        "validate immutable fields",

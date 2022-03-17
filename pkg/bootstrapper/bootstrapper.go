@@ -48,7 +48,7 @@ func (b *Bootstrapper) CreateBootstrapCluster(ctx context.Context, clusterSpec *
 	}
 
 	c := &types.Cluster{
-		Name:           clusterSpec.Name,
+		Name:           clusterSpec.Cluster.Name,
 		KubeconfigFile: kubeconfigFile,
 	}
 

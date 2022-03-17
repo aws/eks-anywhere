@@ -13,7 +13,7 @@ type Spec struct {
 
 func NewSpec(clusterSpec *cluster.Spec, machineConfigs map[string]*anywherev1.VSphereMachineConfig, datacenterConfig *anywherev1.VSphereDatacenterConfig) *Spec {
 	machineConfigsInCluster := map[string]*anywherev1.VSphereMachineConfig{}
-	for _, m := range clusterSpec.MachineConfigRefs() {
+	for _, m := range clusterSpec.Cluster.MachineConfigRefs() {
 		machineConfig, ok := machineConfigs[m.Name]
 		if !ok {
 			continue

@@ -54,8 +54,8 @@ func (a *AwsIamAuthTemplateBuilder) GenerateManifest(clusterSpec *cluster.Spec, 
 		"partition":   clusterSpec.AWSIamConfig.Spec.Partition,
 	}
 
-	if clusterSpec.Spec.ControlPlaneConfiguration.Taints != nil {
-		data["controlPlaneTaints"] = clusterSpec.Spec.ControlPlaneConfiguration.Taints
+	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints != nil {
+		data["controlPlaneTaints"] = clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Taints
 	}
 
 	mapRoles, err := a.mapRolesToYaml(clusterSpec.AWSIamConfig.Spec.MapRoles)

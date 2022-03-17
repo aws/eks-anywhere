@@ -101,5 +101,5 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 	}
 	defer close(ctx, deps)
 
-	return deps.DignosticCollectorFactory.DiagnosticBundleFromSpec(clusterSpec, deps.Provider, kubeconfig.FromClusterName(clusterSpec.Name))
+	return deps.DignosticCollectorFactory.DiagnosticBundleFromSpec(clusterSpec, deps.Provider, kubeconfig.FromClusterName(clusterSpec.Cluster.Name))
 }

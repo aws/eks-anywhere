@@ -11,17 +11,17 @@ import (
 )
 
 func ValidateGitOps(ctx context.Context, k validations.KubectlClient, cluster *types.Cluster, spec *cluster.Spec) error {
-	if spec.GitOpsConfig == nil || spec.IsSelfManaged() {
+	if spec.GitOpsConfig == nil || spec.Cluster.IsSelfManaged() {
 		logger.V(5).Info("skipping ValidateGitOps")
 		return nil
 	}
 
-	existingGitOps, err := k.SearchEksaGitOpsConfig(ctx, spec.Spec.GitOpsRef.Name, cluster.KubeconfigFile, spec.Namespace)
+	existingGitOps, err := k.SearchEksaGitOpsConfig(ctx, spec.Cluster.Spec.GitOpsRef.Name, cluster.KubeconfigFile, spec.Cluster.Namespace)
 	if err != nil {
 		return err
 	}
 	if len(existingGitOps) > 0 {
-		return fmt.Errorf("gitOpsConfig %s already exists", spec.Spec.GitOpsRef.Name)
+		return fmt.Errorf("gitOpsConfig %s already exists", spec.Cluster.Spec.GitOpsRef.Name)
 	}
 
 	err = validateWorkloadFields(ctx, k, cluster, spec)

@@ -54,17 +54,17 @@ func importImages(context context.Context, spec string) error {
 	}
 	de := executables.BuildDockerExecutable()
 
-	if clusterSpec.Spec.RegistryMirrorConfiguration == nil || clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint == "" {
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration == nil || clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint == "" {
 		return fmt.Errorf("it is necessary to define a valid endpoint in your spec (registryMirrorConfiguration.endpoint)")
 	}
-	host := clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
-	port := clusterSpec.Spec.RegistryMirrorConfiguration.Port
+	host := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
+	port := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port
 	if port == "" {
 		logger.V(1).Info("RegistryMirrorConfiguration.Port is not specified, default port will be used", "Default Port", constants.DefaultHttpsPort)
 		port = constants.DefaultHttpsPort
 	}
-	if !networkutils.IsPortValid(clusterSpec.Spec.RegistryMirrorConfiguration.Port) {
-		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterSpec.Spec.RegistryMirrorConfiguration.Port)
+	if !networkutils.IsPortValid(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port) {
+		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
 	}
 
 	images, err := getImages(spec)

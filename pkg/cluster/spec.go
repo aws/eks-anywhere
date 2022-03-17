@@ -28,7 +28,7 @@ const (
 var releasesManifestURL string
 
 type Spec struct {
-	*eksav1alpha1.Cluster
+	Cluster                   *eksav1alpha1.Cluster
 	OIDCConfig                *eksav1alpha1.OIDCConfig
 	AWSIamConfig              *eksav1alpha1.AWSIamConfig
 	GitOpsConfig              *eksav1alpha1.GitOpsConfig
@@ -71,7 +71,7 @@ func (cs *Spec) SetDefaultGitOps() {
 		c := &cs.GitOpsConfig.Spec.Flux
 		if len(c.Github.ClusterConfigPath) == 0 {
 			if cs.Cluster.IsSelfManaged() {
-				c.Github.ClusterConfigPath = path.Join("clusters", cs.Name)
+				c.Github.ClusterConfigPath = path.Join("clusters", cs.Cluster.Name)
 			} else {
 				c.Github.ClusterConfigPath = path.Join("clusters", cs.Cluster.ManagedBy())
 			}
@@ -276,9 +276,9 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	}
 
 	if s.ManagementCluster != nil {
-		s.SetManagedBy(s.ManagementCluster.Name)
+		s.Cluster.SetManagedBy(s.ManagementCluster.Name)
 	} else {
-		s.SetSelfManaged()
+		s.Cluster.SetSelfManaged()
 	}
 
 	return s, nil
