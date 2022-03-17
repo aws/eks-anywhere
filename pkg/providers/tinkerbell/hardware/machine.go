@@ -5,6 +5,8 @@ import (
 	"net"
 	"strings"
 
+	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
+
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
@@ -76,6 +78,10 @@ func (m *Machine) Validate() error {
 
 	if m.Hostname == "" {
 		return newEmptyFieldError("Hostname")
+	}
+
+	if errs := apimachineryvalidation.IsDNS1123Subdomain(m.Hostname); len(errs) > 0 {
+		return fmt.Errorf("invalid hostname: %v: %v", m.Hostname, errs)
 	}
 
 	if m.HasBmc() {
