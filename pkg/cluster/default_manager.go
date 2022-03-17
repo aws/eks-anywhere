@@ -5,6 +5,7 @@ var defaultManager *ConfigManager
 func init() {
 	defaultManager = NewConfigManager()
 	err := defaultManager.Register(
+		clusterEntry(),
 		oidcEntry(),
 		awsIamEntry(),
 		gitOpsEntry(),

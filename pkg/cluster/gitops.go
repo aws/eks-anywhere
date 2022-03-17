@@ -1,6 +1,10 @@
 package cluster
 
-import anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+import (
+	"path"
+
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+)
 
 func gitOpsEntry() *ConfigManagerEntry {
 	return &ConfigManagerEntry{
@@ -10,6 +14,30 @@ func gitOpsEntry() *ConfigManagerEntry {
 			},
 		},
 		Processors: []ParsedProcessor{processGitOps},
+		Defaulters: []Defaulter{
+			func(c *Config) {
+				if c.GitOpsConfig != nil {
+					c.GitOpsConfig.SetDefaults()
+				}
+			},
+			SetDefaultFluxGitHubConfigPath,
+		},
+		Validations: []Validation{
+			func(c *Config) error {
+				if c.GitOpsConfig != nil {
+					return c.GitOpsConfig.Validate()
+				}
+				return nil
+			},
+			func(c *Config) error {
+				if c.GitOpsConfig != nil {
+					if err := validateSameNamespace(c, c.GitOpsConfig); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+		},
 	}
 }
 
@@ -25,5 +53,22 @@ func processGitOps(c *Config, objects ObjectLookup) {
 		}
 
 		c.GitOpsConfig = gitOps.(*anywherev1.GitOpsConfig)
+	}
+}
+
+func SetDefaultFluxGitHubConfigPath(c *Config) {
+	if c.GitOpsConfig == nil {
+		return
+	}
+
+	gitops := c.GitOpsConfig
+	if gitops.Spec.Flux.Github.ClusterConfigPath != "" {
+		return
+	}
+
+	if c.Cluster.IsSelfManaged() {
+		gitops.Spec.Flux.Github.ClusterConfigPath = path.Join("clusters", c.Cluster.Name)
+	} else {
+		gitops.Spec.Flux.Github.ClusterConfigPath = path.Join("clusters", c.Cluster.ManagedBy())
 	}
 }

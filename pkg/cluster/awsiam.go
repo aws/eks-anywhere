@@ -10,6 +10,31 @@ func awsIamEntry() *ConfigManagerEntry {
 			},
 		},
 		Processors: []ParsedProcessor{processAWSIam},
+		Defaulters: []Defaulter{
+			func(c *Config) {
+				for _, a := range c.AWSIAMConfigs {
+					a.SetDefaults()
+				}
+			},
+		},
+		Validations: []Validation{
+			func(c *Config) error {
+				for _, a := range c.AWSIAMConfigs {
+					if err := a.Validate(); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			func(c *Config) error {
+				for _, a := range c.AWSIAMConfigs {
+					if err := validateSameNamespace(c, a); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+		},
 	}
 }
 

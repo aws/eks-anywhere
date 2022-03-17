@@ -10,6 +10,24 @@ func oidcEntry() *ConfigManagerEntry {
 			},
 		},
 		Processors: []ParsedProcessor{processOIDC},
+		Validations: []Validation{
+			func(c *Config) error {
+				for _, o := range c.OIDCConfigs {
+					if err := o.Validate(); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			func(c *Config) error {
+				for _, o := range c.OIDCConfigs {
+					if err := validateSameNamespace(c, o); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+		},
 	}
 }
 
