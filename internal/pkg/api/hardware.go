@@ -18,10 +18,8 @@ const (
 	HardwareVendorUnspecified = "unspecified"
 )
 
-type Hardware struct {
-	Id string `csv:"guid"`
-	hardware.Machine
-}
+// Alias for backwards compatibility.
+type Hardware = hardware.Machine
 
 func NewHardwareSlice(r io.Reader) ([]*Hardware, error) {
 	hardware := []*Hardware{}
