@@ -10,8 +10,7 @@ import (
 
 // Machine is a machine configuration with optional BMC interface configuration.
 type Machine struct {
-	// Id uniquely identifies this machine. It is programmatically generated so is not readable from CSV.
-	Id          string      `csv:"-"`
+	Id          string      `csv:"id"`
 	IpAddress   string      `csv:"ip_address"`
 	Gateway     string      `csv:"gateway"`
 	Nameservers Nameservers `csv:"nameservers"`

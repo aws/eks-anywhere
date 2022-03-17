@@ -8,7 +8,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// CsvReader reads a CSV file and provides Machine instances. It satisfies the MachineReader interface.
+// CsvReader reads a CSV file and provides Machine instances. It satisfies the MachineReader interface. The Id field of
+// the Machine is optional in the CSV. If unspecified, CsvReader will generate a UUID and apply it to the machine.
 type CsvReader struct {
 	reader        *csv.Unmarshaller
 	uuidGenerator func() string
@@ -46,6 +47,8 @@ func (cr CsvReader) Read() (Machine, error) {
 		return Machine{}, err
 	}
 	m := machine.(Machine)
-	m.Id = cr.uuidGenerator()
+	if m.Id == "" {
+		m.Id = cr.uuidGenerator()
+	}
 	return m, nil
 }
