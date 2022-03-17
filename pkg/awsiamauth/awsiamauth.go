@@ -97,7 +97,7 @@ func (a *AwsIamAuth) GenerateCertKeyPairSecret() ([]byte, error) {
 }
 
 func (a *AwsIamAuth) GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, serverUrl, tlsCert string) ([]byte, error) {
-	data := map[string]interface{}{
+	data := map[string]string{
 		"clusterName": clusterSpec.Cluster.Name,
 		"server":      serverUrl,
 		"cert":        tlsCert,
