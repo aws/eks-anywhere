@@ -37,7 +37,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator interfaces.Validator, forceCleanup bool) error {
 	if forceCleanup {
 		if err := c.bootstrapper.DeleteBootstrapCluster(ctx, &types.Cluster{
-			Name: clusterSpec.Name,
+			Name: clusterSpec.Cluster.Name,
 		}, false); err != nil {
 			return err
 		}
@@ -271,7 +271,7 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 	machineConfigs := commandContext.Provider.MachineConfigs()
 
 	// this disables create-webhook validation during create
-	commandContext.ClusterSpec.PauseReconcile()
+	commandContext.ClusterSpec.Cluster.PauseReconcile()
 	datacenterConfig.PauseReconcile()
 
 	targetCluster := commandContext.WorkloadCluster

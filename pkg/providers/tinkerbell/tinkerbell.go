@@ -326,7 +326,7 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("failed validating worker node template config: %v", err)
 	}
 
-	if err := p.validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(tinkerbellClusterSpec.Spec.Cluster.Spec); err != nil {
+	if err := p.validator.ValidateMinimumRequiredTinkerbellHardwareAvailable(tinkerbellClusterSpec.Cluster.Spec); err != nil {
 		return fmt.Errorf("minimum hardware not available: %v", err)
 	}
 
@@ -406,7 +406,7 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 
 	var etcdMachineSpec v1alpha1.TinkerbellMachineConfigSpec
 	var etcdTemplateString string
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *vs.etcdMachineSpec
 		etcdTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[vs.etcdMachineSpec.TemplateRef.Name]
 		etcdTemplateString, err = etcdTemplateConfig.ToTemplateString()
@@ -427,8 +427,8 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 }
 
 func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
-	workerSpecs := make([][]byte, 0, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
-	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		wTemplateConfig := clusterSpec.TinkerbellTemplateConfigs[vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].TemplateRef.Name]
 		wTemplateString, err := wTemplateConfig.ToTemplateString()
 		if err != nil {
@@ -440,7 +440,7 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 		if workloadTemplateNames != nil && ok {
 			values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
 		} else {
-			values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name)
+			values["workloadTemplateName"] = vs.WorkerMachineTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name)
 		}
 		values["workerSshAuthorizedKey"] = vs.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name].Users[0].SshAuthorizedKeys[0]
 		values["workerReplicas"] = workerNodeGroupConfiguration.Count
@@ -463,12 +463,12 @@ func (p *tinkerbellProvider) GenerateCAPISpecForCreate(ctx context.Context, clus
 }
 
 func (p *tinkerbellProvider) generateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	clusterName := clusterSpec.ObjectMeta.Name
+	clusterName := clusterSpec.Cluster.Name
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
 		values["controlPlaneSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
-		if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+		if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 			values["etcdSshAuthorizedKey"] = p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0].SshAuthorizedKeys[0]
 		}
 		values["etcdTemplateName"] = p.templateBuilder.EtcdMachineTemplateName(clusterName)
@@ -619,17 +619,17 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 	format := "cloud-config"
 
 	values := map[string]interface{}{
-		"clusterName":                  clusterSpec.ObjectMeta.Name,
-		"controlPlaneEndpointIp":       clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
-		"controlPlaneReplicas":         clusterSpec.Spec.ControlPlaneConfiguration.Count,
+		"clusterName":                  clusterSpec.Cluster.Name,
+		"controlPlaneEndpointIp":       clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
+		"controlPlaneReplicas":         clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
 		"controlPlaneSshAuthorizedKey": controlPlaneMachineSpec.Users[0].SshAuthorizedKeys,
 		"controlPlaneSshUsername":      controlPlaneMachineSpec.Users[0].Name,
 		"eksaSystemNamespace":          constants.EksaSystemNamespace,
 		"format":                       format,
 		"kubernetesVersion":            bundle.KubeDistro.Kubernetes.Tag,
 		"kubeVipImage":                 bundle.Tinkerbell.KubeVip.VersionedImage(),
-		"podCidrs":                     clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
-		"serviceCidrs":                 clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
+		"podCidrs":                     clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
+		"serviceCidrs":                 clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
 		"baseRegistry":                 "", // TODO: need to get this values for creating template IMAGE_URL
 		"osDistro":                     "", // TODO: need to get this values for creating template IMAGE_URL
 		"osVersion":                    "", // TODO: need to get this values for creating template IMAGE_URL
@@ -642,9 +642,9 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec, etcd
 		"etcdCipherSuites":             crypto.SecureCipherSuitesString(),
 		"controlPlanetemplateOverride": cpTemplateOverride,
 	}
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
-		values["externalEtcdReplicas"] = clusterSpec.Spec.ExternalEtcdConfiguration.Count
+		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
 		values["etcdTemplateOverride"] = etcdTemplateOverride
 	}
@@ -657,7 +657,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 	format := "cloud-config"
 
 	values := map[string]interface{}{
-		"clusterName":            clusterSpec.ObjectMeta.Name,
+		"clusterName":            clusterSpec.Cluster.Name,
 		"eksaSystemNamespace":    constants.EksaSystemNamespace,
 		"format":                 format,
 		"kubernetesVersion":      bundle.KubeDistro.Kubernetes.Tag,

@@ -12,23 +12,23 @@ import (
 )
 
 func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, cluster *types.Cluster, spec *cluster.Spec, provider providers.Provider) error {
-	prevSpec, err := k.GetEksaCluster(ctx, cluster, spec.Name)
+	prevSpec, err := k.GetEksaCluster(ctx, cluster, spec.Cluster.Name)
 	if err != nil {
 		return err
 	}
 
-	if prevSpec.Name != spec.Name {
-		return fmt.Errorf("cluster name is immutable. previous name %s, new name %s", prevSpec.Name, spec.Name)
+	if prevSpec.Name != spec.Cluster.Name {
+		return fmt.Errorf("cluster name is immutable. previous name %s, new name %s", prevSpec.Name, spec.Cluster.Name)
 	}
 
-	if prevSpec.Namespace != spec.Namespace {
-		if !(prevSpec.Namespace == "default" && spec.Namespace == "") {
+	if prevSpec.Namespace != spec.Cluster.Namespace {
+		if !(prevSpec.Namespace == "default" && spec.Cluster.Namespace == "") {
 			return fmt.Errorf("cluster namespace is immutable")
 		}
 	}
 
 	oSpec := prevSpec.Spec
-	nSpec := spec.Spec
+	nSpec := spec.Cluster.Spec
 
 	if !nSpec.DatacenterRef.Equal(&oSpec.DatacenterRef) {
 		return fmt.Errorf("spec.dataCenterRef.name is immutable")
@@ -39,7 +39,7 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 	}
 
 	if nSpec.GitOpsRef != nil {
-		prevGitOps, err := k.GetEksaGitOpsConfig(ctx, nSpec.GitOpsRef.Name, cluster.KubeconfigFile, spec.Namespace)
+		prevGitOps, err := k.GetEksaGitOpsConfig(ctx, nSpec.GitOpsRef.Name, cluster.KubeconfigFile, spec.Cluster.Namespace)
 		if err != nil {
 			return err
 		}
@@ -100,7 +100,7 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 		switch nIdentityProvider.Kind {
 		case v1alpha1.AWSIamConfigKind:
 			newAWSIamConfigRef := &nIdentityProvider
-			prevAwsIam, err := k.GetEksaAWSIamConfig(ctx, nIdentityProvider.Name, cluster.KubeconfigFile, spec.Namespace)
+			prevAwsIam, err := k.GetEksaAWSIamConfig(ctx, nIdentityProvider.Name, cluster.KubeconfigFile, spec.Cluster.Namespace)
 			if err != nil {
 				return err
 			}
@@ -110,7 +110,7 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 		}
 	}
 
-	if spec.IsSelfManaged() != prevSpec.IsSelfManaged() {
+	if spec.Cluster.IsSelfManaged() != prevSpec.IsSelfManaged() {
 		return fmt.Errorf("management flag is immutable")
 	}
 

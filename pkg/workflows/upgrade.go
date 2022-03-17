@@ -43,7 +43,7 @@ func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provide
 func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, validator interfaces.Validator, forceCleanup bool) error {
 	if forceCleanup {
 		if err := c.bootstrapper.DeleteBootstrapCluster(ctx, &types.Cluster{
-			Name: clusterSpec.Name,
+			Name: clusterSpec.Cluster.Name,
 		}, true); err != nil {
 			return err
 		}
@@ -160,7 +160,7 @@ func (s *ensureEtcdCAPIComponentsExistTask) Run(ctx context.Context, commandCont
 	target := getManagementCluster(commandContext)
 
 	logger.Info("Ensuring etcd CAPI providers exist on management cluster before upgrade")
-	currentSpec, err := commandContext.ClusterManager.GetCurrentClusterSpec(ctx, target, commandContext.ClusterSpec.Name)
+	currentSpec, err := commandContext.ClusterManager.GetCurrentClusterSpec(ctx, target, commandContext.ClusterSpec.Cluster.Name)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}

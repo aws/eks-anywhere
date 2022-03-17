@@ -89,7 +89,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				fetcher.EXPECT().FetchCluster(gomock.Any(), gomock.Any()).Return(cluster, nil)
 
 				spec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
-				cluster.Spec = spec.Spec
+				cluster.Spec = spec.Cluster.Spec
 
 				fetcher.EXPECT().FetchAppliedSpec(ctx, gomock.Any()).Return(spec, nil)
 
@@ -215,7 +215,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				fetcher.EXPECT().FetchCluster(gomock.Any(), gomock.Any()).Return(cluster, nil)
 
 				spec := test.NewFullClusterSpec(t, "testdata/eksa-cluster_no_changes.yaml")
-				cluster.Spec = spec.Spec
+				cluster.Spec = spec.Cluster.Spec
 				fetcher.EXPECT().FetchAppliedSpec(ctx, gomock.Any()).Return(spec, nil)
 
 				datacenterSpec := &anywherev1.VSphereDatacenterConfig{}
@@ -326,7 +326,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				fetcher.EXPECT().FetchCluster(gomock.Any(), gomock.Any()).Return(cluster, nil)
 
 				spec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
-				cluster.Spec = spec.Spec
+				cluster.Spec = spec.Cluster.Spec
 
 				fetcher.EXPECT().FetchAppliedSpec(ctx, gomock.Any()).Return(spec, nil)
 
@@ -448,7 +448,7 @@ func TestClusterReconcilerReconcile(t *testing.T) {
 				fetcher.EXPECT().FetchCluster(gomock.Any(), gomock.Any()).Return(cluster, nil)
 
 				spec := test.NewFullClusterSpec(t, "testdata/eksa-cluster.yaml")
-				cluster.Spec = spec.Spec
+				cluster.Spec = spec.Cluster.Spec
 
 				fetcher.EXPECT().FetchAppliedSpec(ctx, gomock.Any()).Return(spec, nil)
 

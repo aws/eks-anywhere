@@ -40,11 +40,11 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.
 	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
 	kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = []string{
-		fmt.Sprintf("/etc/eks/bootstrap.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host),
+		fmt.Sprintf("/etc/eks/bootstrap.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host),
 	}
 
 	kcp.Spec.KubeadmConfigSpec.PostKubeadmCommands = []string{
-		fmt.Sprintf("/etc/eks/bootstrap-after.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host),
+		fmt.Sprintf("/etc/eks/bootstrap-after.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host),
 	}
 
 	return kcp
@@ -63,9 +63,9 @@ func kubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 }
 
 func KubeadmConfigTemplates(clusterSpec *cluster.Spec) map[string]*bootstrapv1.KubeadmConfigTemplate {
-	m := make(map[string]*bootstrapv1.KubeadmConfigTemplate, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
+	m := make(map[string]*bootstrapv1.KubeadmConfigTemplate, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 
-	for _, workerNodeGroupConfig := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		template := kubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
 		m[workerNodeGroupConfig.Name] = &template
 	}
@@ -78,9 +78,9 @@ func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1
 }
 
 func MachineDeployments(clusterSpec *cluster.Spec, kubeadmConfigTemplates map[string]*bootstrapv1.KubeadmConfigTemplate, machineTemplates map[string]*snowv1.AWSSnowMachineTemplate) map[string]*clusterv1.MachineDeployment {
-	m := make(map[string]*clusterv1.MachineDeployment, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
+	m := make(map[string]*clusterv1.MachineDeployment, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 
-	for _, workerNodeGroupConfig := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		deployment := machineDeployment(clusterSpec, workerNodeGroupConfig,
 			kubeadmConfigTemplates[workerNodeGroupConfig.Name],
 			machineTemplates[workerNodeGroupConfig.MachineGroupRef.Name],
@@ -97,13 +97,13 @@ func SnowCluster(clusterSpec *cluster.Spec) *snowv1.AWSSnowCluster {
 			Kind:       SnowClusterKind,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      clusterSpec.GetName(),
+			Name:      clusterSpec.Cluster.GetName(),
 			Namespace: constants.EksaSystemNamespace,
 		},
 		Spec: snowv1.AWSSnowClusterSpec{
 			Region: "snow",
 			ControlPlaneEndpoint: clusterv1.APIEndpoint{
-				Host: clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
+				Host: clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 				Port: 6443,
 			},
 		},
@@ -114,7 +114,7 @@ func SnowCluster(clusterSpec *cluster.Spec) *snowv1.AWSSnowCluster {
 func SnowMachineTemplates(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) map[string]*snowv1.AWSSnowMachineTemplate {
 	m := map[string]*snowv1.AWSSnowMachineTemplate{}
 
-	for _, workerNodeGroupConfig := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		smt := SnowMachineTemplate(machineConfigs[workerNodeGroupConfig.MachineGroupRef.Name])
 		m[workerNodeGroupConfig.MachineGroupRef.Name] = smt
 	}

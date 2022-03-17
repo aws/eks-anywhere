@@ -65,7 +65,7 @@ func TestWriteClusterConfigWithOIDCAndGitOps(t *testing.T) {
 				},
 			},
 		}
-		s.SetSelfManaged()
+		s.Cluster.SetSelfManaged()
 	})
 
 	datacenterConfig := &v1alpha1.VSphereDatacenterConfig{

@@ -123,12 +123,12 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	var cluster *types.Cluster
 	if clusterSpec.ManagementCluster == nil {
 		cluster = &types.Cluster{
-			Name:           clusterSpec.Name,
-			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Name),
+			Name:           clusterSpec.Cluster.Name,
+			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
 		}
 	} else {
 		cluster = &types.Cluster{
-			Name:           clusterSpec.Name,
+			Name:           clusterSpec.Cluster.Name,
 			KubeconfigFile: clusterSpec.ManagementCluster.KubeconfigFile,
 		}
 	}

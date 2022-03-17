@@ -32,7 +32,7 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 func TestCAPICluster(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	snowCluster := SnowCluster(tt.clusterSpec)
-	controlPlaneMachineTemplate := SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	controlPlaneMachineTemplate := SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
 	kubeadmControlPlane := KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
 	got := CAPICluster(tt.clusterSpec, snowCluster, kubeadmControlPlane)
 	want := &clusterv1.Cluster{
@@ -77,7 +77,7 @@ func TestCAPICluster(t *testing.T) {
 
 func TestKubeadmControlPlane(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	controlPlaneMachineTemplate := SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	controlPlaneMachineTemplate := SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
 	got := KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
 	wantReplicas := int32(3)
 	want := &controlplanev1.KubeadmControlPlane{
