@@ -42,7 +42,6 @@ type SnowDatacenterConfigSpec struct {}
 
 ```go
 type SnowMachineConfigSpec struct {
-	// Important: Run "make generate" to regenerate code after modifying this file
 
 	// The AMI ID from which to create the machine instance.
 	AMIID string `json:"amiID"`
