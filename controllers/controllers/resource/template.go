@@ -202,7 +202,7 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
 	}
 
-	kubeadmconfigTemplateNames, err:= r.getKubeadmconfigTemplateNames(ctx, eksaCluster, clusterSpec, clusterName)
+	kubeadmconfigTemplateNames, err := r.getKubeadmconfigTemplateNames(ctx, eksaCluster, clusterSpec, clusterName)
 	if err != nil {
 		return nil, err
 	}
