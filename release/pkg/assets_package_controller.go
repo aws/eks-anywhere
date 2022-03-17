@@ -65,7 +65,6 @@ func (r *ReleaseConfig) GetPackagesAssets() ([]Artifact, error) {
 		SourcedFromBranch: sourcedFromBranch,
 	}
 	artifacts := []Artifact{{Image: imageArtifact}}
-
 	return artifacts, nil
 }
 
@@ -93,13 +92,12 @@ func (r *ReleaseConfig) GetPackagesBundle(imageDigests map[string]string) (anywh
 	componentChecksum := generateComponentHash(artifactHashes)
 	version, err := BuildComponentVersion(newCliVersioner(r.ReleaseVersion, r.CliRepoSource), componentChecksum)
 	if err != nil {
-		return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "failed generating version for flux bundle")
+		return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "failed generating version for package bundle")
 	}
 
 	bundle := anywherev1alpha1.PackageBundle{
 		Version:           version,
 		PackageController: bundleImageArtifacts["eks-anywhere-packages"],
 	}
-
 	return bundle, nil
 }

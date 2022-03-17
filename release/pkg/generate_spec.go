@@ -273,6 +273,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		"kube-rbac-proxy":                 r.GetKubeRbacProxyAssets,
 		"kube-vip":                        r.GetKubeVipAssets,
 		"flux":                            r.GetFluxAssets,
+		"eks-anywhere-packages":           r.GetPackagesAssets,
 		"etcdadm-bootstrap-provider":      r.GetEtcdadmBootstrapAssets,
 		"etcdadm-controller":              r.GetEtcdadmControllerAssets,
 		"cluster-controller":              r.GetClusterControllerAssets,
