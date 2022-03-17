@@ -90,6 +90,7 @@ func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
 }
 
 func (p *cloudstackProvider) validateMachineConfigImmutability(ctx context.Context, cluster *types.Cluster, newConfig *v1alpha1.CloudStackMachineConfig, clusterSpec *cluster.Spec) error {
+	// TODO: for GA, we need to decide which fields are immutable.
 	return nil
 }
 
@@ -128,12 +129,9 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 	if nSpec.Domain != oSpec.Domain {
 		return fmt.Errorf("spec.domain is immutable. Previous value %s, new value %s", oSpec.Domain, nSpec.Domain)
 	}
-	if nSpec.Domain != oSpec.Domain {
-		return fmt.Errorf("spec.domain is immutable. Previous value %s, new value %s", oSpec.Account, nSpec.Account)
+	if nSpec.Account != oSpec.Account {
+		return fmt.Errorf("spec.account is immutable. Previous value %s, new value %s", oSpec.Account, nSpec.Account)
 	}
-	//if !reflect.DeepEqual(nSpec.Zones, oSpec.Zones) {
-	//	return fmt.Errorf("spec.zones are immutable. Previous value %s, new value %s", oSpec.Zones, nSpec.Zones)
-	//}
 
 	return nil
 }
@@ -446,7 +444,7 @@ func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context) 
 	return nil
 }
 
-func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldVmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
+func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
 	// Another option is to generate MachineTemplates based on the old and new eksa spec,
 	// remove the name field and compare them with DeepEqual
 	// We plan to approach this way since it's more flexible to add/remove fields and test out for validation
@@ -459,7 +457,7 @@ func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCs
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
-	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldVmc, newCsmc)
+	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc)
 }
 
 func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
@@ -664,6 +662,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
+		if err == nil {
+			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+		}
 		noProxyList = append(noProxyList,
 			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		)
@@ -735,6 +737,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
+		if err == nil {
+			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+		}
 		noProxyList = append(noProxyList,
 			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		)
@@ -1099,4 +1105,12 @@ func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Co
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
+}
+
+func getHostnameFromUrl(rawurl string) (string, error) {
+	url, err := url.Parse(rawurl)
+	if err != nil {
+		return "", fmt.Errorf("#{rawurl} is not a valid url")
+	}
+	return url.Hostname(), nil
 }

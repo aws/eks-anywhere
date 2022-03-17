@@ -46,8 +46,8 @@ func TestTinkPushHardwareSuccess(t *testing.T) {
 
 func TestTinkGetHardware(t *testing.T) {
 	tink, ctx, e := newTink(t)
-	expectedParam := []string{"hardware", "get", "--format", "json"}
-	expectCommand(e, ctx, expectedParam...).withEnvVars(envMap).to().Return(bytes.Buffer{}, nil)
+	expectedParam := []string{"hardware", "get", "--tinkerbell-cert-url", tinkerbellCertUrl, "--tinkerbell-grpc-authority", tinkerbellGrpcAuthority, "--format", "json"}
+	expectCommand(e, ctx, expectedParam...).to().Return(bytes.Buffer{}, nil)
 	if _, err := tink.GetHardware(ctx); err != nil {
 		t.Errorf("Tink.GetHardware() error = %v, want nil", err)
 	}
@@ -55,8 +55,8 @@ func TestTinkGetHardware(t *testing.T) {
 
 func TestTinkGetWorkflow(t *testing.T) {
 	tink, ctx, e := newTink(t)
-	expectedParam := []string{"workflow", "get", "--format", "json"}
-	expectCommand(e, ctx, expectedParam...).withEnvVars(envMap).to().Return(bytes.Buffer{}, nil)
+	expectedParam := []string{"workflow", "get", "--tinkerbell-cert-url", tinkerbellCertUrl, "--tinkerbell-grpc-authority", tinkerbellGrpcAuthority, "--format", "json"}
+	expectCommand(e, ctx, expectedParam...).to().Return(bytes.Buffer{}, nil)
 	if _, err := tink.GetWorkflow(ctx); err != nil {
 		t.Errorf("Tink.GetWorkflow() error = %v, want nil", err)
 	}

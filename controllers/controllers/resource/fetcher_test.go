@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
+	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -166,6 +167,7 @@ func TestMapClusterToCloudStackDatacenterConfigSpec(t *testing.T) {
 func TestMapMachineTemplateToVSphereWorkerMachineConfigSpec(t *testing.T) {
 	type args struct {
 		vsMachineTemplate *vspherev1.VSphereMachineTemplate
+		users             []kubeadmv1.User
 	}
 	tests := []struct {
 		name    string
@@ -204,6 +206,14 @@ func TestMapMachineTemplateToVSphereWorkerMachineConfigSpec(t *testing.T) {
 						},
 					},
 				},
+				users: []kubeadmv1.User{
+					{
+						Name: "test",
+						SSHAuthorizedKeys: []string{
+							"ssh_rsa",
+						},
+					},
+				},
 			},
 			want: &anywherev1.VSphereMachineConfig{
 				Spec: anywherev1.VSphereMachineConfigSpec{
@@ -214,19 +224,27 @@ func TestMapMachineTemplateToVSphereWorkerMachineConfigSpec(t *testing.T) {
 					ResourcePool: "poolA",
 					Datastore:    "ds-aaa",
 					Folder:       "folder/A",
+					Users: []anywherev1.UserConfiguration{
+						{
+							Name: "test",
+							SshAuthorizedKeys: []string{
+								"ssh_rsa",
+							},
+						},
+					},
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := resource.MapMachineTemplateToVSphereMachineConfigSpec(tt.args.vsMachineTemplate)
+			got, err := resource.MapMachineTemplateToVSphereMachineConfigSpec(tt.args.vsMachineTemplate, tt.args.users)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("MapMachineTemplateToVSphereWorkerMachineConfigSpec() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("MapMachineTemplateToVSphereWorkerMachineConfigSpec() error = %v, \n wantErr %v", err, tt.wantErr)
 				return
 			}
 			if err == nil && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("MapMachineTemplateToVSphereWorkerMachineConfigSpec() got = %v, want %v", got, tt.want)
+				t.Errorf("MapMachineTemplateToVSphereWorkerMachineConfigSpec()\n got = %v, \n want %v", got, tt.want)
 			}
 		})
 	}
