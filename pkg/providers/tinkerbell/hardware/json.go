@@ -1,6 +1,7 @@
 package hardware
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -11,20 +12,21 @@ import (
 	"github.com/tinkerbell/tink/protos/packet"
 )
 
+// DefaultTinkerbellHardwareJsonDir is the default directory for writing Tinkerbell json.
+const DefaultTinkerbellHardwareJsonDir = "hardware-manifests"
+
 // ErrTinkebellHardwareJsonRepeatWrites occurs when a TinkerbellHardwareJson receives multiple calls to Write().
 var ErrTinkebellHardwareJsonRepeatWrites = errors.New("TinkerbellHardwareJson can only be written to once")
 
-// TinkerbellHardwareJsonFactory creates new TinkerbellHardwareJson instances. The path used by the
-// TinkerbellHardwareJson is available as the second return parameter.
+// TinkerbellHardwareJsonFactory creates new TinkerbellHardwareJson instances.
 type TinkerbellHardwareJsonFactory interface {
-	Create(name string) (*TinkerbellHardwareJson, string, error)
+	Create(name string) (*TinkerbellHardwareJson, error)
 }
 
 // TinkerbellHardwareJsonWriter writes discrete instances of TinkerbellHardwareJson's. Paths for files that were
 // successfully written can be retrieved from Journal().
 type TinkerbellHardwareJsonWriter struct {
-	json    TinkerbellHardwareJsonFactory
-	journal []string
+	json TinkerbellHardwareJsonFactory
 }
 
 // NewTinkerbellHardwareJsonWriter creates a newTinkerbellHardwareJsonWriter instance that uses factory to create
@@ -35,7 +37,7 @@ func NewTinkerbellHardwareJsonWriter(factory TinkerbellHardwareJsonFactory) *Tin
 
 // Write creates a new TinkerbellHardwareJson instance and writes m to it.
 func (tw *TinkerbellHardwareJsonWriter) Write(m Machine) error {
-	file, path, err := tw.json.Create(m.Hostname)
+	file, err := tw.json.Create(m.Hostname)
 	if err != nil {
 		return err
 	}
@@ -44,14 +46,7 @@ func (tw *TinkerbellHardwareJsonWriter) Write(m Machine) error {
 		return err
 	}
 
-	tw.journal = append(tw.journal, path)
-
 	return nil
-}
-
-// Journal returns a list of json files that tw has created and successfully written a Machine instance to.
-func (tw *TinkerbellHardwareJsonWriter) Journal() []string {
-	return tw.journal
 }
 
 // TinkerbellHardwareJson represents a discrete Tinkerbell hardware json file. It can only be written to once.
@@ -131,26 +126,61 @@ func marshalTinkerbellHardwareJson(m Machine) ([]byte, error) {
 	)
 }
 
+// Journal is an io.Writer that records the byte data passed to Write() as distinct chunks.
+type Journal [][]byte
+
+// Write records b as a distinct chunk in journal before returning len(b). It never returns an error.
+func (journal *Journal) Write(b []byte) (int, error) {
+	*journal = append(*journal, b)
+	return len(b), nil
+}
+
 // tinkerbellHardwareJsonFactoryFunc is a convinience function type that satisfies the TinkerbellHardwareJsonFactory
 // interface.
-type tinkerbellHardwareJsonFactoryFunc func(name string) (*TinkerbellHardwareJson, string, error)
+type tinkerbellHardwareJsonFactoryFunc func(name string) (*TinkerbellHardwareJson, error)
 
 // Create calls fn returning its return values to the caller.
-func (fn tinkerbellHardwareJsonFactoryFunc) Create(name string) (*TinkerbellHardwareJson, string, error) {
+func (fn tinkerbellHardwareJsonFactoryFunc) Create(name string) (*TinkerbellHardwareJson, error) {
 	return fn(name)
 }
 
-// NewTinkerbellHardwareJsonFactory creates a new TinkerbellHardwareJson with an *os.File. The file path will be rooted
-// at basepath.
-func NewTinkerbellHardwareJsonFactory(basepath string) TinkerbellHardwareJsonFactory {
-	return tinkerbellHardwareJsonFactoryFunc(func(name string) (*TinkerbellHardwareJson, string, error) {
+// RecordingTinkerbellHardwareJsonFactory creates a new TinkerbellHardwareJson where all writes to the
+// TinkerbellHardwareJson are recorded in journal.
+func RecordingTinkerbellHardwareJsonFactory(basepath string, journal *Journal) TinkerbellHardwareJsonFactory {
+	return tinkerbellHardwareJsonFactoryFunc(func(name string) (*TinkerbellHardwareJson, error) {
 		path := filepath.Join(basepath, name)
 
 		fh, err := os.Create(path)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 
-		return NewTinkerbellHardwareJson(fh), path, nil
+		// Create a simple construct that satisfies io.WriteCloser where the io.Writer writes to both the journal
+		// and the file and the io.Closer closes the file.
+		writer := struct {
+			io.Writer
+			io.Closer
+		}{
+			Writer: io.MultiWriter(fh, journal),
+			Closer: fh,
+		}
+
+		return NewTinkerbellHardwareJson(writer), nil
 	})
+}
+
+// TinkerbellHardwarePusher registers hardware with a Tinkerbell stack.
+type TinkerbellHardwarePusher interface {
+	PushHardware(ctx context.Context, hardware []byte) error
+}
+
+// RegisterTinkerbellHardware uses client to push all serializedJsons representing TinkerbellHardwareJson to a
+// Tinkerbell server.
+func RegisterTinkerbellHardware(ctx context.Context, client TinkerbellHardwarePusher, serializedJsons [][]byte) error {
+	for _, json := range serializedJsons {
+		if err := client.PushHardware(ctx, json); err != nil {
+			return err
+		}
+	}
+	return nil
 }

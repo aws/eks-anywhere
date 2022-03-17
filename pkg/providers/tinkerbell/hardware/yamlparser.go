@@ -16,6 +16,10 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
+const (
+	yamlDirectory = "hardware-manifests"
+	yamlFile      = "hardware.yaml"
+)
 const moveLabel = "clusterctl.cluster.x-k8s.io/move"
 
 var yamlSeparator = []byte("---\n")
