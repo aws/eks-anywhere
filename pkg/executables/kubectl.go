@@ -76,8 +76,22 @@ func (k *Kubectl) SearchCloudStackMachineConfig(ctx context.Context, name string
 }
 
 func (k *Kubectl) SearchCloudStackDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackDatacenterConfig, error) {
-	// Required implementation for Kubectl interface implementation
-	return nil, fmt.Errorf("cloudstack provider does not support this yet")
+	params := []string{
+		"get", eksaCloudStackDatacenterResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error searching eksa CloudStackDatacenterConfigResponse: %v", err)
+	}
+
+	response := &CloudStackDatacenterConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing CloudStackDatacenterConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
 }
 
 func (k *Kubectl) GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
@@ -632,6 +646,10 @@ type GitOpsConfigResponse struct {
 
 type VSphereDatacenterConfigResponse struct {
 	Items []*v1alpha1.VSphereDatacenterConfig `json:"items,omitempty"`
+}
+
+type CloudStackDatacenterConfigResponse struct {
+	Items []*v1alpha1.CloudStackDatacenterConfig `json:"items,omitempty"`
 }
 
 type IdentityProviderConfigResponse struct {

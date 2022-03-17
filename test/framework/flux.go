@@ -308,7 +308,9 @@ func (e *ClusterE2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Contex
 		if err != nil {
 			return err
 		}
-		clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count += 1
+		cloudstackMachineConfigs[workerName].Spec.UserCustomDetails = map[string]string{
+			"foo": "bar",
+		}
 
 		providerConfig := providerConfig{
 			datacenterConfig: cloudstackClusterConfig,

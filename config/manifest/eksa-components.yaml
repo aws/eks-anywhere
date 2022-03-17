@@ -4787,7 +4787,7 @@ spec:
         - --health-probe-bind-address=:8081
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
-        image: public.ecr.aws/o4h8n9j5/eksa-cluster-controller-amd64:dev
+        image: public.ecr.aws/o4h8n9j5/eksa-cluster-controller-amd64
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
