@@ -103,7 +103,6 @@ func (a *AwsIamAuth) GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, ser
 		"cert":        tlsCert,
 		"clusterID":   a.clusterId.String(),
 	}
-
 	awsIamAuthKubeconfig, err := templater.Execute(awsIamAuthKubeconfigTemplate, data)
 	if err != nil {
 		return nil, fmt.Errorf("error generating aws-iam-authenticator kubeconfig content: %v", err)
