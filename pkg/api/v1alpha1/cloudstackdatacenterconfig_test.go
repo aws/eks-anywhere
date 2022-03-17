@@ -40,14 +40,37 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 				Spec: CloudStackDatacenterConfigSpec{
 					Domain:  "domain1",
 					Account: "admin",
-					Zones: []CloudStackZoneRef{
+					Zones: []CloudStackZone{
 						{
-							Zone: CloudStackResourceRef{
-								Value: "zone1",
-								Type:  Name,
-							}, Network: CloudStackResourceRef{
-								Value: "net1",
-								Type:  Name,
+							Name: "zone1",
+							Network: CloudStackResourceIdentifier{
+								Name: "net1",
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			testName: "valid 1.21",
+			fileName: "testdata/cluster_1_21_cloudstack.yaml",
+			wantCloudStackDatacenter: &CloudStackDatacenterConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       CloudStackDatacenterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: CloudStackDatacenterConfigSpec{
+					Domain:  "domain1",
+					Account: "admin",
+					Zones: []CloudStackZone{
+						{
+							Id: "zoneId",
+							Network: CloudStackResourceIdentifier{
+								Id: "netId",
 							},
 						},
 					},
@@ -69,14 +92,11 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 				Spec: CloudStackDatacenterConfigSpec{
 					Domain:  "domain1",
 					Account: "admin",
-					Zones: []CloudStackZoneRef{
+					Zones: []CloudStackZone{
 						{
-							Zone: CloudStackResourceRef{
-								Value: "zone1",
-								Type:  Name,
-							}, Network: CloudStackResourceRef{
-								Value: "net1",
-								Type:  Name,
+							Name: "zone1",
+							Network: CloudStackResourceIdentifier{
+								Name: "net1",
 							},
 						},
 					},
@@ -98,14 +118,11 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 				Spec: CloudStackDatacenterConfigSpec{
 					Domain:  "domain1",
 					Account: "admin",
-					Zones: []CloudStackZoneRef{
+					Zones: []CloudStackZone{
 						{
-							Zone: CloudStackResourceRef{
-								Value: "zone1",
-								Type:  Name,
-							}, Network: CloudStackResourceRef{
-								Value: "net1",
-								Type:  Name,
+							Name: "zone1",
+							Network: CloudStackResourceIdentifier{
+								Name: "net1",
 							},
 						},
 					},

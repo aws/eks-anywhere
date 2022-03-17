@@ -37,12 +37,9 @@ spec:
   account: "admin"
   domain: "domain1"
   zones:
-    - zone:
-        value: "zone1"
-        type: "Name"
+    - name: "zone1"
       network:
-        value: "net1"
-        type: "Name"
+        name: "net1"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -51,12 +48,10 @@ metadata:
   name: eksa-unit-test
 spec:
   computeOffering:
-    value: "m4-large"
-    type: "Name"
+    name: "m4-large"
   users:
     - name: "mySshUsername"
       sshAuthorizedKeys:
         - "mySshAuthorizedKey"
   template:
-    value: "centos7-k8s-120"
-    type: "Name"
+    name: "centos7-k8s-120"

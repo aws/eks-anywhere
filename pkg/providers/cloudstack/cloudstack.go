@@ -19,7 +19,9 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -47,7 +49,7 @@ var mhcTemplate []byte
 var requiredEnvs = []string{decoder.CloudStackCloudConfigB64SecretKey}
 
 var (
-	eksaCloudStackDeploymentResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaCloudStackDatacenterResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaCloudStackMachineResourceType    = fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 )
 
@@ -78,16 +80,91 @@ func (p *cloudstackProvider) UpdateSecrets(ctx context.Context, cluster *types.C
 	return nil
 }
 
+func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
+	refMap := make(map[string]v1alpha1.Ref, len(machineRefs))
+	for _, ref := range machineRefs {
+		refMap[ref.Name] = ref
+	}
+	return refMap
+}
+
+func (p *cloudstackProvider) validateMachineConfigImmutability(ctx context.Context, cluster *types.Cluster, newConfig *v1alpha1.CloudStackMachineConfig, clusterSpec *cluster.Spec) error {
+	// TODO: for GA, we need to decide which fields are immutable.
+	return nil
+}
+
 func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	return fmt.Errorf("cloudstack provider does not support this functionality currently")
+	prevSpec, err := p.providerKubectlClient.GetEksaCluster(ctx, cluster, clusterSpec.Name)
+	if err != nil {
+		return err
+	}
+
+	prevDatacenter, err := p.providerKubectlClient.GetEksaCloudStackDatacenterConfig(ctx, prevSpec.Spec.DatacenterRef.Name, cluster.KubeconfigFile, prevSpec.Namespace)
+	if err != nil {
+		return err
+	}
+
+	datacenter := p.datacenterConfig
+
+	oSpec := prevDatacenter.Spec
+	nSpec := datacenter.Spec
+
+	prevMachineConfigRefs := machineRefSliceToMap(prevSpec.MachineConfigRefs())
+
+	for _, machineConfigRef := range clusterSpec.MachineConfigRefs() {
+		machineConfig, ok := p.machineConfigs[machineConfigRef.Name]
+		if !ok {
+			return fmt.Errorf("cannot find machine config %s in cloudstack provider machine configs", machineConfigRef.Name)
+		}
+
+		if _, ok = prevMachineConfigRefs[machineConfig.Name]; ok {
+			err = p.validateMachineConfigImmutability(ctx, cluster, machineConfig, clusterSpec)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if nSpec.Domain != oSpec.Domain {
+		return fmt.Errorf("spec.domain is immutable. Previous value %s, new value %s", oSpec.Domain, nSpec.Domain)
+	}
+	if nSpec.Account != oSpec.Account {
+		return fmt.Errorf("spec.account is immutable. Previous value %s, new value %s", oSpec.Account, nSpec.Account)
+	}
+
+	if len(nSpec.Zones) != len(oSpec.Zones) {
+		return fmt.Errorf("spec.zones is immutable. Previous value %s, new value %s", oSpec.Zones, nSpec.Zones)
+	} else {
+		for i, zone := range nSpec.Zones {
+			if !zone.Equals(&oSpec.Zones[i]) {
+				return fmt.Errorf("spec.zones is immutable. Previous value %s, new value %s", zone, oSpec.Zones[i])
+			}
+		}
+	}
+
+	return nil
 }
 
 func (p *cloudstackProvider) ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff {
-	panic("implement me")
+	if currentSpec.VersionsBundle.CloudStack.Version == newSpec.VersionsBundle.CloudStack.Version {
+		return nil
+	}
+
+	return &types.ComponentChangeDiff{
+		ComponentName: constants.CloudStackProviderName,
+		NewVersion:    newSpec.VersionsBundle.CloudStack.Version,
+		OldVersion:    currentSpec.VersionsBundle.CloudStack.Version,
+	}
 }
 
 func (p *cloudstackProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
-	panic("implement me")
+	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
+	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
+	for _, group := range nodeGroupsToDelete {
+		mdName := machineDeploymentName(workloadCluster.Name, group.Name)
+		machineDeployments = append(machineDeployments, mdName)
+	}
+	return machineDeployments
 }
 
 func (p *cloudstackProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error {
@@ -132,12 +209,15 @@ func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineC
 }
 
 func NewProviderCustomNet(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClient ProviderCmkClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
-	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec
+	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec
+	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.CloudStackMachineConfigSpec)
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
 		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
 	}
 	if len(clusterConfig.Spec.WorkerNodeGroupConfigurations) > 0 && clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name] != nil {
-		workerNodeGroupMachineSpec = &machineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec
+		spec := machineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name].Spec
+		name := clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+		workerNodeGroupMachineSpecs[name] = spec
 	}
 	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
@@ -152,11 +232,11 @@ func NewProviderCustomNet(datacenterConfig *v1alpha1.CloudStackDatacenterConfig,
 		writer:                writer,
 		selfSigned:            false,
 		templateBuilder: &CloudStackTemplateBuilder{
-			datacenterConfigSpec:       &datacenterConfig.Spec,
-			controlPlaneMachineSpec:    controlPlaneMachineSpec,
-			workerNodeGroupMachineSpec: workerNodeGroupMachineSpec,
-			etcdMachineSpec:            etcdMachineSpec,
-			now:                        now,
+			datacenterConfigSpec:        &datacenterConfig.Spec,
+			controlPlaneMachineSpec:     controlPlaneMachineSpec,
+			WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
+			etcdMachineSpec:             etcdMachineSpec,
+			now:                         now,
 		},
 		skipIpCheck: skipIpCheck,
 		validator:   NewValidator(providerCmkClient),
@@ -169,11 +249,7 @@ func (p *cloudstackProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 }
 
 func (p *cloudstackProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
-	execConfig, err := decoder.ParseCloudStackSecret()
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse environment variable exec config: %v", err)
-	}
-	return common.BootstrapClusterOpts(execConfig.ManagementUrl, p.clusterConfig)
+	return common.BootstrapClusterOpts("", p.clusterConfig)
 }
 
 func (p *cloudstackProvider) Name() string {
@@ -181,7 +257,7 @@ func (p *cloudstackProvider) Name() string {
 }
 
 func (p *cloudstackProvider) DatacenterResourceType() string {
-	return eksaCloudStackDeploymentResourceType
+	return eksaCloudStackDatacenterResourceType
 }
 
 func (p *cloudstackProvider) MachineResourceType() string {
@@ -264,15 +340,6 @@ func (p *cloudstackProvider) validateManagementApiEndpoint(rawurl string) error 
 	return nil
 }
 
-func getHostnameFromUrl(rawurl string) (string, error) {
-	url, err := url.Parse(rawurl)
-	if err != nil {
-		return "", fmt.Errorf("#{rawurl} is not a valid url")
-	}
-
-	return url.Hostname(), nil
-}
-
 func (p *cloudstackProvider) validateEnv(ctx context.Context) error {
 	var cloudStackB64EncodedSecret string
 	var ok bool
@@ -339,7 +406,7 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 			return err
 		}
 		if len(existingDatacenter) > 0 {
-			return fmt.Errorf("CloudStackDeployment %s already exists", p.datacenterConfig.Name)
+			return fmt.Errorf("CloudStackDatacenter %s already exists", p.datacenterConfig.Name)
 		}
 	}
 	if p.skipIpCheck {
@@ -351,7 +418,31 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 }
 
 func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	return fmt.Errorf("upgrade is not yet supported for CloudStack cluster")
+	err := p.validateEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+
+	cloudStackClusterSpec := NewSpec(clusterSpec, p.machineConfigs, p.datacenterConfig)
+	if err := p.validator.validateCloudStackAccess(ctx); err != nil {
+		return err
+	}
+	if err := p.validator.ValidateCloudStackDatacenterConfig(ctx, p.datacenterConfig); err != nil {
+		return err
+	}
+	if err := p.validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec); err != nil {
+		return err
+	}
+
+	if err := p.setupSSHAuthKeysForUpgrade(); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+
+	err = p.validateMachineConfigsNameUniqueness(ctx, cluster, clusterSpec)
+	if err != nil {
+		return fmt.Errorf("failed validate machineconfig uniqueness: %v", err)
+	}
+	return nil
 }
 
 func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
@@ -362,12 +453,102 @@ func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context) 
 	return nil
 }
 
+func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
+	// Another option is to generate MachineTemplates based on the old and new eksa spec,
+	// remove the name field and compare them with DeepEqual
+	// We plan to approach this way since it's more flexible to add/remove fields and test out for validation
+	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
+		return true
+	}
+	if oldSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host != newSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host {
+		return true
+	}
+	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
+		return true
+	}
+	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc)
+}
+
+func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
+	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
+		return true
+	}
+	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
+		return true
+	}
+	if !v1alpha1.WorkerNodeGroupConfigurationSliceTaintsEqual(oldSpec.Spec.WorkerNodeGroupConfigurations, newSpec.Spec.WorkerNodeGroupConfigurations) ||
+		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Spec.WorkerNodeGroupConfigurations, newSpec.Spec.WorkerNodeGroupConfigurations) {
+		return true
+	}
+	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc)
+}
+
+func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration, oldWorkerNodeGroup *v1alpha1.WorkerNodeGroupConfiguration) bool {
+	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.LabelsMapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels)
+}
+
+func NeedsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
+	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
+		return true
+	}
+	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
+		return true
+	}
+	return AnyImmutableFieldChanged(oldVdc, newCsdc, oldCsmc, newCsmc)
+}
+
+func (p *cloudstackProvider) needsNewMachineTemplate(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.CloudStackDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
+	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
+		workerMachineConfig := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
+		workerVmc, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, workerNodeGroupConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
+		if err != nil {
+			return false, err
+		}
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, workerVmc, workerMachineConfig)
+		return needsNewWorkloadTemplate, nil
+	}
+	return true, nil
+}
+
+func (p *cloudstackProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
+	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
+		existingWorkerNodeGroupConfig := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]
+		return NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, &existingWorkerNodeGroupConfig), nil
+	}
+	return true, nil
+}
+
+func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
+	for index, zone := range oldCsdc.Spec.Zones {
+		if !zone.Equals(&newCsdc.Spec.Zones[index]) {
+			return true
+		}
+	}
+	if oldCsmc.Spec.Template != newCsmc.Spec.Template {
+		return true
+	}
+	if oldCsmc.Spec.ComputeOffering != newCsmc.Spec.ComputeOffering {
+		return true
+	}
+	return false
+}
+
+func NewCloudStackTemplateBuilder(CloudStackDatacenterConfigSpec *v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec, workerNodeGroupMachineSpecs map[string]v1alpha1.CloudStackMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
+	return &CloudStackTemplateBuilder{
+		datacenterConfigSpec:        CloudStackDatacenterConfigSpec,
+		controlPlaneMachineSpec:     controlPlaneMachineSpec,
+		WorkerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
+		etcdMachineSpec:             etcdMachineSpec,
+		now:                         now,
+	}
+}
+
 type CloudStackTemplateBuilder struct {
-	datacenterConfigSpec       *v1alpha1.CloudStackDatacenterConfigSpec
-	controlPlaneMachineSpec    *v1alpha1.CloudStackMachineConfigSpec
-	workerNodeGroupMachineSpec *v1alpha1.CloudStackMachineConfigSpec
-	etcdMachineSpec            *v1alpha1.CloudStackMachineConfigSpec
-	now                        types.NowFunc
+	datacenterConfigSpec        *v1alpha1.CloudStackDatacenterConfigSpec
+	controlPlaneMachineSpec     *v1alpha1.CloudStackMachineConfigSpec
+	WorkerNodeGroupMachineSpecs map[string]v1alpha1.CloudStackMachineConfigSpec
+	etcdMachineSpec             *v1alpha1.CloudStackMachineConfigSpec
+	now                         types.NowFunc
 }
 
 func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
@@ -375,11 +556,10 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *cs.etcdMachineSpec
 	}
-	execConfig, err := decoder.ParseCloudStackSecret()
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse environment variable exec config: %v", err)
 	}
-	values := buildTemplateMapCP(clusterSpec, *cs.datacenterConfigSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec, execConfig.ManagementUrl, execConfig.VerifySsl)
+	values := buildTemplateMapCP(clusterSpec, *cs.datacenterConfigSpec, *cs.controlPlaneMachineSpec, etcdMachineSpec)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -393,68 +573,82 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	return bytes, nil
 }
 
-func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	execConfig, err := decoder.ParseCloudStackSecret()
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse environment variable exec config: %v", err)
-	}
-	values := buildTemplateMapMD(clusterSpec, *cs.datacenterConfigSpec, *cs.workerNodeGroupMachineSpec, execConfig.ManagementUrl)
+func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+	// Cloudstack provider currently does not support multiple work node groups yet
+	workerNodeGroupConfiguration := clusterSpec.Spec.WorkerNodeGroupConfigurations[0]
+	values := buildTemplateMapMD(clusterSpec, *cs.datacenterConfigSpec, cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
 	}
-
 	bytes, err := templater.Execute(defaultClusterConfigMD, values)
 	if err != nil {
 		return nil, err
 	}
-
 	return bytes, nil
 }
 
-func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec, managementApiEndpoint string, verifySsl string) map[string]interface{} {
+func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 	host, port, _ := net.SplitHostPort(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
+	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf)).
+		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Spec.ControlPlaneConfiguration))
+	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
+		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
+		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Spec.PodIAMConfig)).
+		Append(sharedExtraArgs)
 
 	values := map[string]interface{}{
-		"clusterName":                            clusterSpec.ObjectMeta.Name,
-		"controlPlaneEndpointHost":               host,
-		"controlPlaneEndpointPort":               port,
-		"controlPlaneReplicas":                   clusterSpec.Spec.ControlPlaneConfiguration.Count,
-		"kubernetesRepository":                   bundle.KubeDistro.Kubernetes.Repository,
-		"kubernetesVersion":                      bundle.KubeDistro.Kubernetes.Tag,
-		"etcdRepository":                         bundle.KubeDistro.Etcd.Repository,
-		"etcdImageTag":                           bundle.KubeDistro.Etcd.Tag,
-		"corednsRepository":                      bundle.KubeDistro.CoreDNS.Repository,
-		"corednsVersion":                         bundle.KubeDistro.CoreDNS.Tag,
-		"nodeDriverRegistrarImage":               bundle.KubeDistro.NodeDriverRegistrar.VersionedImage(),
-		"livenessProbeImage":                     bundle.KubeDistro.LivenessProbe.VersionedImage(),
-		"externalAttacherImage":                  bundle.KubeDistro.ExternalAttacher.VersionedImage(),
-		"externalProvisionerImage":               bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
-		"cloudstackManagementApiEndpoint":        managementApiEndpoint,
-		"managerImage":                           bundle.CloudStack.ClusterAPIController.VersionedImage(),
-		"verifySsl":                              verifySsl,
-		"cloudstackDomain":                       datacenterConfigSpec.Domain,
-		"cloudstackZones":                        datacenterConfigSpec.Zones,
-		"cloudstackAccount":                      datacenterConfigSpec.Account,
-		"cloudstackControlPlaneComputeOffering":  controlPlaneMachineSpec.ComputeOffering.Value,
-		"cloudstackControlPlaneTemplateOffering": controlPlaneMachineSpec.Template.Value,
-		"cloudstackControlPlaneCustomDetails":    controlPlaneMachineSpec.UserCustomDetails,
-		"affinityGroupIds":                       controlPlaneMachineSpec.AffinityGroupIds,
-		"cloudstackEtcdComputeOffering":          etcdMachineSpec.ComputeOffering.Value,
-		"cloudstackEtcdTemplateOffering":         etcdMachineSpec.Template.Value,
-		"cloudstackEtcdCustomDetails":            etcdMachineSpec.UserCustomDetails,
-		"cloudstackEtcdAffinityGroupIds":         etcdMachineSpec.AffinityGroupIds,
-		"controlPlaneSshUsername":                controlPlaneMachineSpec.Users[0].Name,
-		"podCidrs":                               clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
-		"serviceCidrs":                           clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
-		"apiserverExtraArgs":                     clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).ToPartialYaml(),
-		"format":                                 format,
-		"externalEtcdVersion":                    bundle.KubeDistro.EtcdVersion,
-		"etcdImage":                              bundle.KubeDistro.EtcdImage.VersionedImage(),
-		"eksaSystemNamespace":                    constants.EksaSystemNamespace,
-		"auditPolicy":                            common.GetAuditPolicy(),
+		"clusterName":                                clusterSpec.ObjectMeta.Name,
+		"controlPlaneEndpointHost":                   host,
+		"controlPlaneEndpointPort":                   port,
+		"controlPlaneReplicas":                       clusterSpec.Spec.ControlPlaneConfiguration.Count,
+		"kubernetesRepository":                       bundle.KubeDistro.Kubernetes.Repository,
+		"kubernetesVersion":                          bundle.KubeDistro.Kubernetes.Tag,
+		"etcdRepository":                             bundle.KubeDistro.Etcd.Repository,
+		"etcdImageTag":                               bundle.KubeDistro.Etcd.Tag,
+		"corednsRepository":                          bundle.KubeDistro.CoreDNS.Repository,
+		"corednsVersion":                             bundle.KubeDistro.CoreDNS.Tag,
+		"nodeDriverRegistrarImage":                   bundle.KubeDistro.NodeDriverRegistrar.VersionedImage(),
+		"livenessProbeImage":                         bundle.KubeDistro.LivenessProbe.VersionedImage(),
+		"externalAttacherImage":                      bundle.KubeDistro.ExternalAttacher.VersionedImage(),
+		"externalProvisionerImage":                   bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
+		"managerImage":                               bundle.CloudStack.ClusterAPIController.VersionedImage(),
+		"kubeVipImage":                               bundle.CloudStack.KubeVip.VersionedImage(),
+		"cloudstackKubeVip":                          !features.IsActive(features.CloudStackKubeVipDisabled()),
+		"cloudstackDomain":                           datacenterConfigSpec.Domain,
+		"cloudstackZones":                            datacenterConfigSpec.Zones,
+		"cloudstackAccount":                          datacenterConfigSpec.Account,
+		"cloudstackControlPlaneComputeOfferingId":    controlPlaneMachineSpec.ComputeOffering.Id,
+		"cloudstackControlPlaneComputeOfferingName":  controlPlaneMachineSpec.ComputeOffering.Name,
+		"cloudstackControlPlaneTemplateOfferingId":   controlPlaneMachineSpec.Template.Id,
+		"cloudstackControlPlaneTemplateOfferingName": controlPlaneMachineSpec.Template.Name,
+		"cloudstackControlPlaneCustomDetails":        controlPlaneMachineSpec.UserCustomDetails,
+		"affinityGroupIds":                           controlPlaneMachineSpec.AffinityGroupIds,
+		"cloudstackEtcdComputeOfferingId":            etcdMachineSpec.ComputeOffering.Id,
+		"cloudstackEtcdComputeOfferingName":          etcdMachineSpec.ComputeOffering.Name,
+		"cloudstackEtcdTemplateOfferingId":           etcdMachineSpec.Template.Id,
+		"cloudstackEtcdTemplateOfferingName":         etcdMachineSpec.Template.Name,
+		"cloudstackEtcdCustomDetails":                etcdMachineSpec.UserCustomDetails,
+		"cloudstackEtcdAffinityGroupIds":             etcdMachineSpec.AffinityGroupIds,
+		"controlPlaneSshUsername":                    controlPlaneMachineSpec.Users[0].Name,
+		"podCidrs":                                   clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
+		"serviceCidrs":                               clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
+		"apiserverExtraArgs":                         apiServerExtraArgs.ToPartialYaml(),
+		"kubeletExtraArgs":                           kubeletExtraArgs.ToPartialYaml(),
+		"etcdExtraArgs":                              etcdExtraArgs.ToPartialYaml(),
+		"etcdCipherSuites":                           crypto.SecureCipherSuitesString(),
+		"controllermanagerExtraArgs":                 sharedExtraArgs.ToPartialYaml(),
+		"schedulerExtraArgs":                         sharedExtraArgs.ToPartialYaml(),
+		"format":                                     format,
+		"externalEtcdVersion":                        bundle.KubeDistro.EtcdVersion,
+		"etcdImage":                                  bundle.KubeDistro.EtcdImage.VersionedImage(),
+		"eksaSystemNamespace":                        constants.EksaSystemNamespace,
+		"auditPolicy":                                common.GetAuditPolicy(),
 	}
 
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
@@ -476,10 +670,6 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, common.NoProxyDefaults...)
-		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(managementApiEndpoint)
-		if err == nil {
-			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
-		}
 		noProxyList = append(noProxyList,
 			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		)
@@ -495,6 +685,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
 	}
 
+	if len(clusterSpec.Spec.ControlPlaneConfiguration.Taints) > 0 {
+		values["controlPlaneTaints"] = clusterSpec.Spec.ControlPlaneConfiguration.Taints
+	}
+
 	if clusterSpec.AWSIamConfig != nil {
 		values["awsIamAuth"] = true
 	}
@@ -502,21 +696,30 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	return values
 }
 
-func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, workerNodeGroupMachineSpec v1alpha1.CloudStackMachineConfigSpec, managementApiEndpoint string) map[string]interface{} {
+func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, workerNodeGroupMachineSpec v1alpha1.CloudStackMachineConfigSpec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.WorkerNodeLabelsExtraArgs(workerNodeGroupConfiguration)).
+		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Spec.ClusterNetwork.DNS.ResolvConf))
 
 	values := map[string]interface{}{
-		"clusterName":                clusterSpec.ObjectMeta.Name,
-		"kubernetesVersion":          bundle.KubeDistro.Kubernetes.Tag,
-		"cloudstackTemplate":         workerNodeGroupMachineSpec.Template.Value,
-		"cloudstackOffering":         workerNodeGroupMachineSpec.ComputeOffering.Value,
-		"cloudstackCustomDetails":    workerNodeGroupMachineSpec.UserCustomDetails,
-		"cloudstackAffinityGroupIds": workerNodeGroupMachineSpec.AffinityGroupIds,
-		"workerReplicas":             clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count,
-		"workerSshUsername":          workerNodeGroupMachineSpec.Users[0].Name,
-		"format":                     format,
-		"eksaSystemNamespace":        constants.EksaSystemNamespace,
+		"clusterName":                      clusterSpec.ObjectMeta.Name,
+		"kubernetesVersion":                bundle.KubeDistro.Kubernetes.Tag,
+		"cloudstackTemplateId":             workerNodeGroupMachineSpec.Template.Id,
+		"cloudstackTemplateName":           workerNodeGroupMachineSpec.Template.Name,
+		"cloudstackOfferingId":             workerNodeGroupMachineSpec.ComputeOffering.Id,
+		"cloudstackOfferingName":           workerNodeGroupMachineSpec.ComputeOffering.Name,
+		"cloudstackCustomDetails":          workerNodeGroupMachineSpec.UserCustomDetails,
+		"cloudstackAffinityGroupIds":       workerNodeGroupMachineSpec.AffinityGroupIds,
+		"workerReplicas":                   clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count,
+		"workerSshUsername":                workerNodeGroupMachineSpec.Users[0].Name,
+		"cloudstackWorkerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
+		"format":                           format,
+		"kubeletExtraArgs":                 kubeletExtraArgs.ToPartialYaml(),
+		"eksaSystemNamespace":              constants.EksaSystemNamespace,
+		"workerNodeGroupName":              fmt.Sprintf("%s-%s", clusterSpec.Name, workerNodeGroupConfiguration.Name),
+		"workerNodeGroupTaints":            workerNodeGroupConfiguration.Taints,
 	}
 
 	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
@@ -538,10 +741,6 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, common.NoProxyDefaults...)
-		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(managementApiEndpoint)
-		if err == nil {
-			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
-		}
 		noProxyList = append(noProxyList,
 			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		)
@@ -567,11 +766,146 @@ func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, clus
 	if err != nil {
 		return nil, nil, err
 	}
+
+	if len(clusterSpec.Spec.WorkerNodeGroupConfigurations) > 1 {
+		return nil, nil, fmt.Errorf("error generating cluster api Spec contents: multiple worker node group configurations are not supported for CloudStack provider")
+	}
+
+	workloadTemplateNames := make(map[string]string, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
+	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		workloadTemplateNames[workerNodeGroupConfiguration.Name] = common.WorkerMachineTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
+		kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterSpec.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
+		p.templateBuilder.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
+	}
+	workerOpt := func(values map[string]interface{}) {
+		values["workloadTemplateName"] = workloadTemplateNames[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Name]
+		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Name]
+	}
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, workerOpt)
+	if err != nil {
+		return nil, nil, err
+	}
+	return controlPlaneSpec, workersSpec, nil
+}
+
+func (p *cloudstackProvider) generateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
+	clusterName := newClusterSpec.ObjectMeta.Name
+	var controlPlaneTemplateName, workloadTemplateName, kubeadmconfigTemplateName, etcdTemplateName string
+	var needsNewEtcdTemplate bool
+
+	c, err := p.providerKubectlClient.GetEksaCluster(ctx, workloadCluster, newClusterSpec.Name)
+	if err != nil {
+		return nil, nil, err
+	}
+	vdc, err := p.providerKubectlClient.GetEksaCloudStackDatacenterConfig(ctx, p.datacenterConfig.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
+	if err != nil {
+		return nil, nil, err
+	}
+	controlPlaneMachineConfig := p.machineConfigs[newClusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+	controlPlaneVmc, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, c.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
+	if err != nil {
+		return nil, nil, err
+	}
+	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, controlPlaneVmc, controlPlaneMachineConfig)
+	if !needsNewControlPlaneTemplate {
+		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, c.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+		if err != nil {
+			return nil, nil, err
+		}
+		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
+	} else {
+		controlPlaneTemplateName = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
+	}
+
+	previousWorkerNodeGroupConfigs := cluster.BuildMapForWorkerNodeGroupsByName(currentSpec.Spec.WorkerNodeGroupConfigurations)
+
+	workloadTemplateNames := make(map[string]string, len(newClusterSpec.Spec.WorkerNodeGroupConfigurations))
+	kubeadmconfigTemplateNames := make(map[string]string, len(newClusterSpec.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroupConfiguration := range newClusterSpec.Spec.WorkerNodeGroupConfigurations {
+		needsNewWorkloadTemplate, err := p.needsNewMachineTemplate(ctx, workloadCluster, currentSpec, newClusterSpec, workerNodeGroupConfiguration, vdc, previousWorkerNodeGroupConfigs)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		needsNewKubeadmConfigTemplate, err := p.needsNewKubeadmConfigTemplate(workerNodeGroupConfiguration, previousWorkerNodeGroupConfigs)
+		if err != nil {
+			return nil, nil, err
+		}
+		if !needsNewKubeadmConfigTemplate {
+			mdName := machineDeploymentName(newClusterSpec.Name, workerNodeGroupConfiguration.Name)
+			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, mdName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+			if err != nil {
+				return nil, nil, err
+			}
+			kubeadmconfigTemplateName = md.Spec.Template.Spec.Bootstrap.ConfigRef.Name
+			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = kubeadmconfigTemplateName
+		} else {
+			kubeadmconfigTemplateName = common.KubeadmConfigTemplateName(clusterName, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
+			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = kubeadmconfigTemplateName
+		}
+
+		if !needsNewWorkloadTemplate {
+			mdName := machineDeploymentName(newClusterSpec.Name, workerNodeGroupConfiguration.Name)
+			md, err := p.providerKubectlClient.GetMachineDeployment(ctx, mdName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+			if err != nil {
+				return nil, nil, err
+			}
+			workloadTemplateName = md.Spec.Template.Spec.InfrastructureRef.Name
+			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
+		} else {
+			workloadTemplateName = common.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
+			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
+		}
+		p.templateBuilder.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
+	}
+
+	if newClusterSpec.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineConfig := p.machineConfigs[newClusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+		etcdMachineVmc, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, c.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Namespace)
+		if err != nil {
+			return nil, nil, err
+		}
+		needsNewEtcdTemplate = NeedsNewEtcdTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, etcdMachineVmc, etcdMachineConfig)
+		if !needsNewEtcdTemplate {
+			etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
+			if err != nil {
+				return nil, nil, err
+			}
+			etcdTemplateName = etcdadmCluster.Spec.InfrastructureTemplate.Name
+		} else {
+			/* During a cluster upgrade, etcd machines need to be upgraded first, so that the etcd machines with new spec get created and can be used by controlplane machines
+			   as etcd endpoints. KCP rollout should not start until then. As a temporary solution in the absence of static etcd endpoints, we annotate the etcd cluster as "upgrading",
+			   so that KCP checks this annotation and does not proceed if etcd cluster is upgrading. The etcdadm controller removes this annotation once the etcd upgrade is complete.
+			*/
+			err = p.providerKubectlClient.UpdateAnnotation(ctx, "etcdadmcluster", fmt.Sprintf("%s-etcd", clusterName),
+				map[string]string{etcdv1beta1.UpgradeInProgressAnnotation: "true"},
+				executables.WithCluster(bootstrapCluster),
+				executables.WithNamespace(constants.EksaSystemNamespace))
+			if err != nil {
+				return nil, nil, err
+			}
+			etcdTemplateName = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
+		}
+	}
+
+	cpOpt := func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = controlPlaneTemplateName
+		values["cloudstackControlPlaneSshAuthorizedKey"] = p.controlPlaneSshAuthKey
+		values["cloudstackEtcdSshAuthorizedKey"] = p.etcdSshAuthKey
+		values["etcdTemplateName"] = etcdTemplateName
+	}
+	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(newClusterSpec, cpOpt)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	workersOpt := func(values map[string]interface{}) {
-		values["workloadTemplateName"] = common.WorkerMachineTemplateName(clusterName, clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Name, p.templateBuilder.now)
+		values["workloadTemplateName"] = workloadTemplateName
 		values["cloudstackWorkerSshAuthorizedKey"] = p.workerSshAuthKey
 	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workersOpt)
+
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(newClusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, workersOpt)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -579,7 +913,11 @@ func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, clus
 }
 
 func (p *cloudstackProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	return nil, nil, fmt.Errorf("cloudstack provider does not support upgrade yet")
+	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, clusterSpec)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
+	}
+	return controlPlaneSpec, workersSpec, nil
 }
 
 func (p *cloudstackProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
@@ -602,7 +940,7 @@ func (p *cloudstackProvider) GenerateMHC() ([]byte, error) {
 	return mhc, nil
 }
 
-func (p *cloudstackProvider) CleanupProviderInfrastructure(_ context.Context) error {
+func (p *cloudstackProvider) CleanupProviderInfrastructure(ctx context.Context) error {
 	return nil
 }
 
@@ -628,9 +966,7 @@ func (p *cloudstackProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) 
 }
 
 func (p *cloudstackProvider) GetDeployments() map[string][]string {
-	return map[string][]string{
-		"capc-system": {"capc-controller-manager"},
-	}
+	return map[string][]string{"capc-system": {"capc-controller-manager"}}
 }
 
 func (p *cloudstackProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
@@ -678,12 +1014,11 @@ func (p *cloudstackProvider) MachineConfigs() []providers.MachineConfig {
 	return configs
 }
 
-func (p *cloudstackProvider) RunPostUpgrade(ctx context.Context, clusterSpec *cluster.Spec, managementCluster, workloadCluster *types.Cluster) error {
-	return fmt.Errorf("upgrade is not supported for CloudStack provider yet")
-}
-
 func (p *cloudstackProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error) {
-	return false, fmt.Errorf("upgrade is not supported for CloudStack provider yet")
+	newV, oldV := newSpec.VersionsBundle.CloudStack, currentSpec.VersionsBundle.CloudStack
+
+	return newV.ClusterAPIController.ImageDigest != oldV.ClusterAPIController.ImageDigest ||
+		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest, nil
 }
 
 func (p *cloudstackProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
@@ -697,4 +1032,77 @@ func (p *cloudstackProvider) DeleteResources(ctx context.Context, clusterSpec *c
 
 func (p *cloudstackProvider) GenerateStorageClass() []byte {
 	return nil
+}
+
+func (p *cloudstackProvider) setupSSHAuthKeysForUpgrade() error {
+	var err error
+	controlPlaneUser := p.machineConfigs[p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec.Users[0]
+	p.controlPlaneSshAuthKey = controlPlaneUser.SshAuthorizedKeys[0]
+	if len(p.controlPlaneSshAuthKey) > 0 {
+		p.controlPlaneSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.controlPlaneSshAuthKey)
+		if err != nil {
+			return err
+		}
+	}
+	controlPlaneUser.SshAuthorizedKeys[0] = p.controlPlaneSshAuthKey
+	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
+		workerUser := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users[0]
+		p.workerSshAuthKey = workerUser.SshAuthorizedKeys[0]
+		if len(p.workerSshAuthKey) > 0 {
+			p.workerSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.workerSshAuthKey)
+			if err != nil {
+				return err
+			}
+		}
+		workerUser.SshAuthorizedKeys[0] = p.workerSshAuthKey
+	}
+	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
+		etcdUser := p.machineConfigs[p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec.Users[0]
+		p.etcdSshAuthKey = etcdUser.SshAuthorizedKeys[0]
+		if len(p.etcdSshAuthKey) > 0 {
+			p.etcdSshAuthKey, err = common.StripSshAuthorizedKeyComment(p.etcdSshAuthKey)
+			if err != nil {
+				return err
+			}
+		}
+		etcdUser.SshAuthorizedKeys[0] = p.etcdSshAuthKey
+	}
+	return nil
+}
+
+func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	prevSpec, err := p.providerKubectlClient.GetEksaCluster(ctx, cluster, clusterSpec.GetName())
+	if err != nil {
+		return err
+	}
+
+	cpMachineConfigName := clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	if prevSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name != cpMachineConfigName {
+		em, err := p.providerKubectlClient.SearchCloudStackMachineConfig(ctx, cpMachineConfigName, cluster.KubeconfigFile, clusterSpec.GetNamespace())
+		if err != nil {
+			return err
+		}
+		if len(em) > 0 {
+			return fmt.Errorf("control plane VSphereMachineConfig %s already exists", cpMachineConfigName)
+		}
+	}
+
+	if clusterSpec.Spec.ExternalEtcdConfiguration != nil && prevSpec.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineConfigName := clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		if prevSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name != etcdMachineConfigName {
+			em, err := p.providerKubectlClient.SearchCloudStackMachineConfig(ctx, etcdMachineConfigName, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.GetNamespace())
+			if err != nil {
+				return err
+			}
+			if len(em) > 0 {
+				return fmt.Errorf("external etcd machineconfig %s already exists", etcdMachineConfigName)
+			}
+		}
+	}
+
+	return nil
+}
+
+func machineDeploymentName(clusterName, nodeGroupName string) string {
+	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
 }

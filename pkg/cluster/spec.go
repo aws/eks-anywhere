@@ -540,6 +540,7 @@ func (vb *VersionsBundle) Images() []v1alpha1.Image {
 	images = append(images, vb.KubeDistroImages()...)
 	images = append(images, vb.DockerImages()...)
 	images = append(images, vb.VsphereImages()...)
+	images = append(images, vb.CloudStackImages()...)
 
 	return images
 }

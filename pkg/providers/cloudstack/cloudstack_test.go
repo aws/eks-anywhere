@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -421,7 +422,7 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterExists(t *testing
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, fmt.Sprintf("CloudStackDeployment %s already exists", datacenterConfig.Name), err)
+	thenErrorExpected(t, fmt.Sprintf("CloudStackDatacenter %s already exists", datacenterConfig.Name), err)
 }
 
 func TestSetupAndValidateSelfManagedClusterSkipDatacenterNameValidateSuccess(t *testing.T) {
@@ -671,6 +672,9 @@ func TestGetInfrastructureBundleSuccess(t *testing.T) {
 					ClusterAPIController: releasev1alpha1.Image{
 						URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-cloudstack/release/manager:v0.1.0",
 					},
+					KubeVip: releasev1alpha1.Image{
+						URI: "public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774",
+					},
 					Metadata: releasev1alpha1.Manifest{
 						URI: "Metadata.yaml",
 					},
@@ -738,7 +742,7 @@ spec:
       status: "False"
       timeout: 300s
 ---
-apiVersion: cluster.x-k8s.io/v1alpha3
+apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineHealthCheck
 metadata:
   name: test-kcp-unhealthy-5m
@@ -761,4 +765,66 @@ spec:
 	mch, err := provider.GenerateMHC()
 	assert.NoError(t, err, "Expected successful execution of GenerateMHC() but got an error", "error", err)
 	assert.Equal(t, string(mch), mhcTemplate, "generated MachineHealthCheck is different from the expected one")
+}
+
+func TestChangeDiffNoChange(t *testing.T) {
+	provider := givenProvider(t)
+	clusterSpec := givenEmptyClusterSpec()
+	assert.Nil(t, provider.ChangeDiff(clusterSpec, clusterSpec))
+}
+
+func TestChangeDiffWithChange(t *testing.T) {
+	provider := givenProvider(t)
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.VersionsBundle.CloudStack.Version = "v0.2.0"
+	})
+	newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.VersionsBundle.CloudStack.Version = "v0.1.0"
+	})
+
+	wantDiff := &types.ComponentChangeDiff{
+		ComponentName: "cloudstack",
+		NewVersion:    "v0.1.0",
+		OldVersion:    "v0.2.0",
+	}
+
+	assert.Equal(t, wantDiff, provider.ChangeDiff(clusterSpec, newClusterSpec))
+}
+
+func TestProviderUpgradeNeeded(t *testing.T) {
+	testCases := []struct {
+		testName               string
+		newManager, oldManager string
+		newKubeVip, oldKubeVip string
+		want                   bool
+	}{
+		{
+			testName:   "different manager",
+			newManager: "a", oldManager: "b",
+			want: true,
+		},
+		{
+			testName:   "different kubevip",
+			newKubeVip: "a", oldKubeVip: "b",
+			want: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			provider := givenProvider(t)
+			clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundle.CloudStack.ClusterAPIController.ImageDigest = tt.oldManager
+				s.VersionsBundle.CloudStack.KubeVip.ImageDigest = tt.oldKubeVip
+			})
+
+			newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundle.CloudStack.ClusterAPIController.ImageDigest = tt.newManager
+				s.VersionsBundle.CloudStack.KubeVip.ImageDigest = tt.newKubeVip
+			})
+
+			g := NewWithT(t)
+			g.Expect(provider.UpgradeNeeded(context.Background(), clusterSpec, newClusterSpec)).To(Equal(tt.want))
+		})
+	}
 }

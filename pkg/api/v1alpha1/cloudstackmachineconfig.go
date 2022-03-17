@@ -22,13 +22,11 @@ func NewCloudStackMachineConfigGenerate(name string) *CloudStackMachineConfigGen
 			Name: name,
 		},
 		Spec: CloudStackMachineConfigSpec{
-			ComputeOffering: CloudStackResourceRef{
-				Value: "",
-				Type:  Id,
+			ComputeOffering: CloudStackResourceIdentifier{
+				Id: "",
 			},
-			Template: CloudStackResourceRef{
-				Value: "",
-				Type:  Id,
+			Template: CloudStackResourceIdentifier{
+				Id: "",
 			},
 			Users: []UserConfiguration{{
 				Name:              "capc",

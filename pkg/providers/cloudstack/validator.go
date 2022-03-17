@@ -35,11 +35,11 @@ func NewValidator(cmk ProviderCmkClient) *Validator {
 
 type ProviderCmkClient interface {
 	ValidateCloudStackConnection(ctx context.Context) error
-	ValidateServiceOfferingPresent(ctx context.Context, zoneId string, serviceOffering anywherev1.CloudStackResourceRef) error
-	ValidateTemplatePresent(ctx context.Context, domainId string, zoneId string, account string, template anywherev1.CloudStackResourceRef) error
+	ValidateServiceOfferingPresent(ctx context.Context, zoneId string, serviceOffering anywherev1.CloudStackResourceIdentifier) error
+	ValidateTemplatePresent(ctx context.Context, domainId string, zoneId string, account string, template anywherev1.CloudStackResourceIdentifier) error
 	ValidateAffinityGroupsPresent(ctx context.Context, domainId string, account string, affinityGroupIds []string) error
-	ValidateZonesPresent(ctx context.Context, zones []anywherev1.CloudStackZoneRef) ([]anywherev1.CloudStackResourceIdentifier, error)
-	ValidateNetworkPresent(ctx context.Context, domainId string, zoneRef anywherev1.CloudStackZoneRef, zones []anywherev1.CloudStackResourceIdentifier, account string, multipleZone bool) error
+	ValidateZonesPresent(ctx context.Context, zones []anywherev1.CloudStackZone) ([]anywherev1.CloudStackResourceIdentifier, error)
+	ValidateNetworkPresent(ctx context.Context, domainId string, zoneRef anywherev1.CloudStackZone, zones []anywherev1.CloudStackResourceIdentifier, account string, multipleZone bool) error
 	ValidateDomainPresent(ctx context.Context, domain string) (anywherev1.CloudStackResourceIdentifier, error)
 	ValidateAccountPresent(ctx context.Context, account string, domainId string) error
 }
@@ -74,11 +74,11 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 		return fmt.Errorf("error while checking zones %v", errZone)
 	}
 
-	for _, zoneRef := range datacenterConfig.Spec.Zones {
-		if len(zoneRef.Network.Value) == 0 {
+	for _, zone := range datacenterConfig.Spec.Zones {
+		if len(zone.Network.Id) == 0 && len(zone.Network.Name) == 0 {
 			return fmt.Errorf("zone network is not set or is empty")
 		}
-		err := v.cmk.ValidateNetworkPresent(ctx, domain.Id, zoneRef, zones, datacenterConfig.Spec.Account, len(zones) > 1)
+		err := v.cmk.ValidateNetworkPresent(ctx, domain.Id, zone, zones, datacenterConfig.Spec.Account, len(zones) > 1)
 		if err != nil {
 			return fmt.Errorf("error while checking network %v", err)
 		}
@@ -164,7 +164,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 		if len(machineConfig.Spec.Users[0].SshAuthorizedKeys) <= 0 {
 			machineConfig.Spec.Users[0].SshAuthorizedKeys = []string{""}
 		}
-		if machineConfig.Spec.Template.Value == "" {
+		if len(machineConfig.Spec.Template.Id) == 0 && len(machineConfig.Spec.Template.Name) == 0 {
 			return fmt.Errorf("template is not set for CloudStackMachineConfig %s. Default template is not supported in CloudStack, please provide a template name", machineConfig.Name)
 		}
 		if err = v.validateMachineConfig(ctx, cloudStackClusterSpec.datacenterConfig.Spec, machineConfig); err != nil {
