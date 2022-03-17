@@ -38,8 +38,8 @@ const (
 	ClusterNameVar                   = "T_CLUSTER_NAME"
 	JobIdVar                         = "T_JOB_ID"
 	BundlesOverrideVar               = "T_BUNDLES_OVERRIDE"
-	hardwareYamlPath                 = "hardware-manifests/hardware.yaml"
-	hardwareCsvPath                  = "hardware-manifests/hardware.csv"
+	hardwareYamlPath                 = "hardware.yaml"
+	hardwareCsvPath                  = "hardware.csv"
 )
 
 //go:embed testdata/oidc-roles.yaml
