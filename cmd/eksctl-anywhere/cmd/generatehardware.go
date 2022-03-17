@@ -69,8 +69,16 @@ func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
 	}
 	yamlWriter := hardware.NewTinkerbellManifestYaml(manifestFile)
 
+	jsonDir, err := hardware.CreateDefaultTinkerbellHardwareJsonDir()
+	if err != nil {
+		return err
+	}
+
 	var journal hardware.Journal
-	jsonFactory := hardware.RecordingTinkerbellHardwareJsonFactory(hardware.DefaultTinkerbellHardwareJsonDir, &journal)
+	jsonFactory, err := hardware.RecordingTinkerbellHardwareJsonFactory(jsonDir, &journal)
+	if err != nil {
+		return err
+	}
 	jsonWriter := hardware.NewTinkerbellHardwareJsonWriter(jsonFactory)
 
 	reader, err := hardware.NewCsvReader(csvFile)

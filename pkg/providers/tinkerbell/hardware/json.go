@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -37,7 +38,7 @@ func NewTinkerbellHardwareJsonWriter(factory TinkerbellHardwareJsonFactory) *Tin
 
 // Write creates a new TinkerbellHardwareJson instance and writes m to it.
 func (tw *TinkerbellHardwareJsonWriter) Write(m Machine) error {
-	file, err := tw.json.Create(m.Hostname)
+	file, err := tw.json.Create(fmt.Sprintf("%v.json", m.Hostname))
 	if err != nil {
 		return err
 	}
@@ -146,7 +147,16 @@ func (fn tinkerbellHardwareJsonFactoryFunc) Create(name string) (*TinkerbellHard
 
 // RecordingTinkerbellHardwareJsonFactory creates a new TinkerbellHardwareJson where all writes to the
 // TinkerbellHardwareJson are recorded in journal.
-func RecordingTinkerbellHardwareJsonFactory(basepath string, journal *Journal) TinkerbellHardwareJsonFactory {
+func RecordingTinkerbellHardwareJsonFactory(basepath string, journal *Journal) (TinkerbellHardwareJsonFactory, error) {
+	info, err := os.Stat(basepath)
+	if os.IsNotExist(err) {
+		return nil, fmt.Errorf("basepath does not exist: %v", basepath)
+	}
+
+	if !info.IsDir() {
+		return nil, fmt.Errorf("basepath is not a directory: %v", basepath)
+	}
+
 	return tinkerbellHardwareJsonFactoryFunc(func(name string) (*TinkerbellHardwareJson, error) {
 		path := filepath.Join(basepath, name)
 
@@ -166,7 +176,7 @@ func RecordingTinkerbellHardwareJsonFactory(basepath string, journal *Journal) T
 		}
 
 		return NewTinkerbellHardwareJson(writer), nil
-	})
+	}), nil
 }
 
 // TinkerbellHardwarePusher registers hardware with a Tinkerbell stack.
@@ -183,4 +193,17 @@ func RegisterTinkerbellHardware(ctx context.Context, client TinkerbellHardwarePu
 		}
 	}
 	return nil
+}
+
+// CreateDefaultTinkerbellHardwareJsonDir creates the defaut tinkerbell hardware json directory and returns the dir path.
+func CreateDefaultTinkerbellHardwareJsonDir() (string, error) {
+	if err := os.MkdirAll(DefaultTinkerbellHardwareJsonDir, os.ModePerm); err != nil {
+		return "", fmt.Errorf(
+			"could not create default tinkerbell hardware json dir: %v: %v",
+			DefaultTinkerbellHardwareJsonDir,
+			err,
+		)
+	}
+
+	return DefaultTinkerbellHardwareJsonDir, nil
 }

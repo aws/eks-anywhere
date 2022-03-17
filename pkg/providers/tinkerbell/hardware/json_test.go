@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -53,7 +54,8 @@ func TestRecordingTinkerbellHardwareJsonFactory(t *testing.T) {
 	path := filepath.Join(dir, filename)
 
 	var journal hardware.Journal
-	factory := hardware.RecordingTinkerbellHardwareJsonFactory(dir, &journal)
+	factory, err := hardware.RecordingTinkerbellHardwareJsonFactory(dir, &journal)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
 
 	writer, err := factory.Create(filename)
 	g.Expect(err).ToNot(gomega.HaveOccurred())
@@ -81,7 +83,7 @@ func TestTinkerbellHardwareJsonWriter(t *testing.T) {
 
 	factory := mocks.NewMockTinkerbellHardwareJsonFactory(ctrl)
 	factory.EXPECT().
-		Create(expect.Hostname).
+		Create(fmt.Sprintf("%v.json", expect.Hostname)).
 		Return(hardware.NewTinkerbellHardwareJson(buffer), (error)(nil))
 
 	writer := hardware.NewTinkerbellHardwareJsonWriter(factory)
@@ -122,6 +124,7 @@ func TestRegisterTinkerbellHardware(t *testing.T) {
 	var pushed [][]byte
 	pusher.EXPECT().
 		PushHardware(gomock.Any(), gomock.Any()).
+		Times(3).
 		DoAndReturn(func(_ context.Context, d []byte) error {
 			pushed = append(pushed, d)
 			return nil
