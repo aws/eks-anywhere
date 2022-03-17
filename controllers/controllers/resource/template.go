@@ -199,7 +199,7 @@ func (r *CloudStackTemplate) TemplateResources(ctx context.Context, eksaCluster 
 	if err != nil {
 		return nil, err
 	}
-	workloadTemplateNames, err := r.getWorkerloadTemplateNames(ctx, eksaCluster, clusterSpec, oldCsdc, csdc, workerCsmcs, clusterName)
+	workloadTemplateNames, err := r.getWorkloadTemplateNames(ctx, eksaCluster, clusterSpec, oldCsdc, csdc, workerCsmcs, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +284,7 @@ func (r *CloudStackTemplate) getKubeadmconfigTemplateNames(ctx context.Context, 
 	return kubeadmconfigTemplateNames, nil
 }
 
-func (r *CloudStackTemplate) getWorkerloadTemplateNames(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, oldCsdc *anywherev1.CloudStackDatacenterConfig, csdc anywherev1.CloudStackDatacenterConfig, workerCsmcs map[string]anywherev1.CloudStackMachineConfig, clusterName string) (map[string]string, error) {
+func (r *CloudStackTemplate) getWorkloadTemplateNames(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, oldCsdc *anywherev1.CloudStackDatacenterConfig, csdc anywherev1.CloudStackDatacenterConfig, workerCsmcs map[string]anywherev1.CloudStackMachineConfig, clusterName string) (map[string]string, error) {
 	workloadTemplateNames := make(map[string]string, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
 		csmc := workerCsmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]

@@ -264,6 +264,9 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zone 
 	networks := response.CmkNetworks
 
 	// filter by network name -- cmk does not support name= filter
+	// if network id and name are both provided, the following code is to confirm name matches return value retrieved by id.
+	// if only name is provided, the following code is to only get networks with specified name.
+
 	if len(zone.Network.Name) > 0 {
 		networks = []cmkNetwork{}
 		for _, net := range response.CmkNetworks {

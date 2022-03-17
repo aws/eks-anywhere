@@ -89,6 +89,7 @@ func machineRefSliceToMap(machineRefs []v1alpha1.Ref) map[string]v1alpha1.Ref {
 }
 
 func (p *cloudstackProvider) validateMachineConfigImmutability(ctx context.Context, cluster *types.Cluster, newConfig *v1alpha1.CloudStackMachineConfig, clusterSpec *cluster.Spec) error {
+	// TODO: for GA, we need to decide which fields are immutable.
 	return nil
 }
 
@@ -127,12 +128,19 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 	if nSpec.Domain != oSpec.Domain {
 		return fmt.Errorf("spec.domain is immutable. Previous value %s, new value %s", oSpec.Domain, nSpec.Domain)
 	}
-	if nSpec.Domain != oSpec.Domain {
-		return fmt.Errorf("spec.domain is immutable. Previous value %s, new value %s", oSpec.Account, nSpec.Account)
+	if nSpec.Account != oSpec.Account {
+		return fmt.Errorf("spec.account is immutable. Previous value %s, new value %s", oSpec.Account, nSpec.Account)
 	}
-	//if !reflect.DeepEqual(nSpec.Zones, oSpec.Zones) {
-	//	return fmt.Errorf("spec.zones are immutable. Previous value %s, new value %s", oSpec.Zones, nSpec.Zones)
-	//}
+
+	if len(nSpec.Zones) != len(oSpec.Zones) {
+		return fmt.Errorf("spec.zones is immutable. Previous value %s, new value %s", oSpec.Zones, nSpec.Zones)
+	} else {
+		for i, zone := range nSpec.Zones {
+			if !zone.Equals(&oSpec.Zones[i]) {
+				return fmt.Errorf("spec.zones is immutable. Previous value %s, new value %s", zone, oSpec.Zones[i])
+			}
+		}
+	}
 
 	return nil
 }
