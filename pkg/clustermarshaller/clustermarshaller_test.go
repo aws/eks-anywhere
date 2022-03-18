@@ -60,7 +60,10 @@ func TestWriteClusterConfigWithOIDCAndGitOps(t *testing.T) {
 			Spec: v1alpha1.GitOpsConfigSpec{
 				Flux: v1alpha1.Flux{
 					Github: v1alpha1.Github{
-						Owner: "me",
+						Owner:               "me",
+						Branch:              "main",
+						ClusterConfigPath:   "clusters/mycluster",
+						FluxSystemNamespace: "flux-system",
 					},
 				},
 			},

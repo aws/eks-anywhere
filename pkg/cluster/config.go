@@ -32,3 +32,35 @@ func (c *Config) OIDCConfig(name string) *anywherev1.OIDCConfig {
 func (c *Config) AWSIamConfig(name string) *anywherev1.AWSIamConfig {
 	return c.AWSIAMConfigs[name]
 }
+
+func (c *Config) DeepCopy() *Config {
+	c2 := &Config{
+		Cluster:           c.Cluster.DeepCopy(),
+		VSphereDatacenter: c.VSphereDatacenter.DeepCopy(),
+		DockerDatacenter:  c.DockerDatacenter.DeepCopy(),
+		GitOpsConfig:      c.GitOpsConfig.DeepCopy(),
+	}
+
+	if c.VSphereMachineConfigs != nil {
+		c2.VSphereMachineConfigs = make(map[string]*anywherev1.VSphereMachineConfig, len(c.VSphereMachineConfigs))
+	}
+	for k, v := range c.VSphereMachineConfigs {
+		c2.VSphereMachineConfigs[k] = v.DeepCopy()
+	}
+
+	if c.OIDCConfigs != nil {
+		c2.OIDCConfigs = make(map[string]*anywherev1.OIDCConfig, len(c.OIDCConfigs))
+	}
+	for k, v := range c.OIDCConfigs {
+		c2.OIDCConfigs[k] = v.DeepCopy()
+	}
+
+	if c.AWSIAMConfigs != nil {
+		c2.AWSIAMConfigs = make(map[string]*anywherev1.AWSIamConfig, len(c.AWSIAMConfigs))
+	}
+	for k, v := range c.AWSIAMConfigs {
+		c2.AWSIAMConfigs[k] = v.DeepCopy()
+	}
+
+	return c2
+}
