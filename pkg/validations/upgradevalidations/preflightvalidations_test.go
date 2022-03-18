@@ -453,7 +453,7 @@ func TestPreflightValidations(t *testing.T) {
 			},
 		},
 		{
-			name:               "ValidationClusterNetworkImmutable",
+			name:               "ValidationClusterNetworkPodsImmutable",
 			clusterVersion:     "v1.19.16-eks-1-19-4",
 			upgradeVersion:     "1.19",
 			getClusterResponse: goodClusterResponse,
@@ -461,9 +461,37 @@ func TestPreflightValidations(t *testing.T) {
 			workerResponse:     nil,
 			nodeResponse:       nil,
 			crdResponse:        nil,
-			wantErr:            composeError("spec.clusterNetwork is immutable"),
+			wantErr:            composeError("spec.clusterNetwork.Pods is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{}
+				s.Cluster.Spec.ClusterNetwork.Pods = v1alpha1.Pods{}
+			},
+		},
+		{
+			name:               "ValidationClusterNetworkServicesImmutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            composeError("spec.clusterNetwork.Services is immutable"),
+			modifyFunc: func(s *cluster.Spec) {
+				s.Cluster.Spec.ClusterNetwork.Services = v1alpha1.Services{}
+			},
+		},
+		{
+			name:               "ValidationClusterNetworkDNSImmutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            composeError("spec.clusterNetwork.DNS is immutable"),
+			modifyFunc: func(s *cluster.Spec) {
+				s.Cluster.Spec.ClusterNetwork.DNS = v1alpha1.DNS{}
 			},
 		},
 		{
@@ -642,6 +670,9 @@ func TestPreflightValidations(t *testing.T) {
 				CidrBlocks: []string{
 					"1.2.3.4/6",
 				},
+			},
+			DNS: v1alpha1.DNS{
+				ResolvConf: &v1alpha1.ResolvConf{Path: "file.conf"},
 			},
 		}
 		s.Cluster.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{

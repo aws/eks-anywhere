@@ -115,16 +115,18 @@ func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
 }
 
 func validateOptions(opts *hardwareOptions) error {
-	if err := networkutils.ValidateIP(opts.tinkerbellIp); err != nil {
-		return fmt.Errorf("invalid tinkerbell-ip: %v", err)
-	}
+	if !opts.dryRun {
+		if err := networkutils.ValidateIP(opts.tinkerbellIp); err != nil {
+			return fmt.Errorf("invalid tinkerbell-ip: %v", err)
+		}
 
-	if !networkutils.IsPortValid(opts.grpcPort) {
-		return fmt.Errorf("invalid grpc-port: %v", opts.certPort)
-	}
+		if !networkutils.IsPortValid(opts.grpcPort) {
+			return fmt.Errorf("invalid grpc-port: %v", opts.certPort)
+		}
 
-	if !networkutils.IsPortValid(opts.certPort) {
-		return fmt.Errorf("invalid cert-port: %v", opts.certPort)
+		if !networkutils.IsPortValid(opts.certPort) {
+			return fmt.Errorf("invalid cert-port: %v", opts.certPort)
+		}
 	}
 
 	return nil

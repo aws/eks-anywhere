@@ -17,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	filewritermocks "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/mocks"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -158,7 +159,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithExternalEtcd(t *testing.T) 
 	tink.EXPECT().GetHardware(ctx).Return(hardwares, nil)
 	tink.EXPECT().GetWorkflow(ctx).Return([]*tinkworkflow.Workflow{}, nil)
 
-	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
+	pbnjClient.EXPECT().GetPowerState(ctx, gomock.Any()).Return(pbnj.PowerStateOff, nil).Times(4)
 
 	provider := newProviderWithKubectlWithTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, kubectl, tinkerbellClients)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
@@ -195,7 +196,7 @@ func TestTinkerbellProviderMachineConfigsMissingUserSshKeys(t *testing.T) {
 	tink.EXPECT().GetHardware(ctx).Return(hardwares, nil)
 	tink.EXPECT().GetWorkflow(ctx).Return([]*tinkworkflow.Workflow{}, nil)
 
-	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
+	pbnjClient.EXPECT().GetPowerState(ctx, gomock.Any()).Return(pbnj.PowerStateOff, nil).Times(4)
 
 	const sshKey = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=="
 	keyGenerator.EXPECT().GenerateSSHAuthKey(gomock.Any()).Return(sshKey, nil)
@@ -236,7 +237,7 @@ func TestTinkerbellProviderGenerateDeploymentFileWithStackedEtcd(t *testing.T) {
 
 	tink.EXPECT().GetHardware(ctx).Return(hardwares, nil)
 	tink.EXPECT().GetWorkflow(ctx).Return([]*tinkworkflow.Workflow{}, nil)
-	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
+	pbnjClient.EXPECT().GetPowerState(ctx, gomock.Any()).Return(pbnj.PowerStateOff, nil).Times(4)
 
 	provider := newProviderWithKubectlWithTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, kubectl, tinkerbellClients)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
@@ -272,7 +273,7 @@ func TestTinkerbellProviderGenerateDeploymentFileMultipleWorkerNodeGroups(t *tes
 	tink.EXPECT().GetHardware(ctx).Return(hardwares, nil)
 	tink.EXPECT().GetWorkflow(ctx).Return([]*tinkworkflow.Workflow{}, nil)
 
-	pbnjClient.EXPECT().ValidateBMCSecretCreds(ctx, gomock.Any()).Return(nil).Times(4)
+	pbnjClient.EXPECT().GetPowerState(ctx, gomock.Any()).Return(pbnj.PowerStateOff, nil).Times(4)
 	provider := newProviderWithKubectlWithTink(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, writer, kubectl, tinkerbellClients)
 	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
 		t.Fatalf("failed to setup and validate: %v", err)

@@ -70,8 +70,18 @@ func ValidateImmutableFields(ctx context.Context, k validations.KubectlClient, c
 		return fmt.Errorf("spec.controlPlaneConfiguration.endpoint is immutable")
 	}
 
-	if !nSpec.ClusterNetwork.Equal(&oSpec.ClusterNetwork) {
-		return fmt.Errorf("spec.clusterNetwork is immutable")
+	/* compare all clusterNetwork fields individually, since we do allow updating updating fields for configuring plugins such as CiliumConfig through the cli*/
+	if !nSpec.ClusterNetwork.Pods.Equal(&oSpec.ClusterNetwork.Pods) {
+		return fmt.Errorf("spec.clusterNetwork.Pods is immutable")
+	}
+	if !nSpec.ClusterNetwork.Services.Equal(&oSpec.ClusterNetwork.Services) {
+		return fmt.Errorf("spec.clusterNetwork.Services is immutable")
+	}
+	if !nSpec.ClusterNetwork.DNS.Equal(&oSpec.ClusterNetwork.DNS) {
+		return fmt.Errorf("spec.clusterNetwork.DNS is immutable")
+	}
+	if !v1alpha1.CNIPluginSame(nSpec.ClusterNetwork, oSpec.ClusterNetwork) {
+		return fmt.Errorf("spec.clusterNetwork.CNI/CNIConfig is immutable")
 	}
 
 	if !nSpec.ProxyConfiguration.Equal(oSpec.ProxyConfiguration) {

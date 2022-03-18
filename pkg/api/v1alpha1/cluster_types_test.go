@@ -802,6 +802,36 @@ func TestClusterEqualClusterNetwork(t *testing.T) {
 			},
 			want: true,
 		},
+		{
+			testName: "same cni plugin (cilium), diff format",
+			cluster1ClusterNetwork: v1alpha1.ClusterNetwork{
+				CNIConfig: &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}},
+			},
+			cluster2ClusterNetwork: v1alpha1.ClusterNetwork{
+				CNI: v1alpha1.Cilium,
+			},
+			want: true,
+		},
+		{
+			testName: "different cni plugin (cilium), diff format",
+			cluster1ClusterNetwork: v1alpha1.ClusterNetwork{
+				CNIConfig: &v1alpha1.CNIConfig{Kindnetd: &v1alpha1.KindnetdConfig{}},
+			},
+			cluster2ClusterNetwork: v1alpha1.ClusterNetwork{
+				CNIConfig: &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}},
+			},
+			want: false,
+		},
+		{
+			testName: "same cni plugin (cilium), diff cilium configuration",
+			cluster1ClusterNetwork: v1alpha1.ClusterNetwork{
+				CNIConfig: &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{PolicyEnforcementMode: "always"}},
+			},
+			cluster2ClusterNetwork: v1alpha1.ClusterNetwork{
+				CNIConfig: &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{PolicyEnforcementMode: "default"}},
+			},
+			want: false,
+		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.testName, func(t *testing.T) {

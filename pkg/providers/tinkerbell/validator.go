@@ -155,7 +155,7 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 		}
 
 		if err := v.ValidateBMCSecretCreds(ctx, v.hardwareConfig); err != nil {
-			return err
+			return fmt.Errorf("failed validating BMC connection in hardware config: %v", err)
 		}
 		logger.MarkPass("BMC connectivity validated")
 	}
@@ -173,8 +173,8 @@ func (v *Validator) ValidateBMCSecretCreds(ctx context.Context, hc hardware.Hard
 			Password: string(hc.Secrets[index].Data["password"]),
 			Vendor:   bmc.Spec.Vendor,
 		}
-		if err := v.pbnj.ValidateBMCSecretCreds(ctx, bmcInfo); err != nil {
-			return fmt.Errorf("failed validating Hardware BMC credentials for the node %s, host %s : %v", hc.Hardwares[index].Name, bmcInfo.Host, err)
+		if _, err := v.pbnj.GetPowerState(ctx, bmcInfo); err != nil {
+			return fmt.Errorf("failed to connect to BMC (address=%s): %v", bmcInfo.Host, err)
 		}
 	}
 
