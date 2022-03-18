@@ -167,9 +167,10 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 				Namespace: "test-namespace",
 			},
 			Spec: v1alpha1.SnowMachineConfigSpec{
-				AMIID:        "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
-				InstanceType: "sbe-c.large",
-				SshKeyName:   "default",
+				AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
+				InstanceType:             "sbe-c.large",
+				SshKeyName:               "default",
+				PhysicalNetworkConnector: "SFP_PLUS",
 			},
 		},
 		"test-wn": {
@@ -178,9 +179,10 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 				Namespace: "test-namespace",
 			},
 			Spec: v1alpha1.SnowMachineConfigSpec{
-				AMIID:        "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
-				InstanceType: "sbe-c.xlarge",
-				SshKeyName:   "default",
+				AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
+				InstanceType:             "sbe-c.xlarge",
+				SshKeyName:               "default",
+				PhysicalNetworkConnector: "SFP_PLUS",
 			},
 		},
 	}
