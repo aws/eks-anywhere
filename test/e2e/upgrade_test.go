@@ -13,16 +13,16 @@ import (
 )
 
 const (
-	vsphereCpVmNumCpuUpdateVar         = 4
-	vsphereCpVmMemoryUpdate            = 16384
-	vsphereCpDiskGiBUpdateVar          = 40
-	vsphereWlVmNumCpuUpdateVar         = 4
-	vsphereWlVmMemoryUpdate            = 16384
-	vsphereWlDiskGiBUpdate             = 40
-	vsphereFolderUpdateVar             = "/SDDC-Datacenter/vm/capv/e2eUpdate"
-	vsphereNetwork2UpdateVar           = "/SDDC-Datacenter/network/sddc-cgw-network-2"
-	vsphereNetwork3UpdateVar           = "/SDDC-Datacenter/network/sddc-cgw-network-3"
-	clusterNamespace                   = "test-namespace"
+	vsphereCpVmNumCpuUpdateVar = 4
+	vsphereCpVmMemoryUpdate    = 16384
+	vsphereCpDiskGiBUpdateVar  = 40
+	vsphereWlVmNumCpuUpdateVar = 4
+	vsphereWlVmMemoryUpdate    = 16384
+	vsphereWlDiskGiBUpdate     = 40
+	vsphereFolderUpdateVar     = "/SDDC-Datacenter/vm/capv/e2eUpdate"
+	vsphereNetwork2UpdateVar   = "/SDDC-Datacenter/network/sddc-cgw-network-2"
+	vsphereNetwork3UpdateVar   = "/SDDC-Datacenter/network/sddc-cgw-network-3"
+	clusterNamespace           = "test-namespace"
 )
 
 func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
