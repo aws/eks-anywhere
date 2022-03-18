@@ -295,17 +295,20 @@ func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templ
 			}
 		}
 		diskName := ""
+		var diskSizeInGB int
 		if disk2 != "" {
 			logger.V(4).Info("Resizing disk 2 of template to 20G")
 			diskName = disk2
+			diskSizeInGB = 20
 		} else if disk1 != "" {
-			logger.V(4).Info("Resizing disk 1 of template to 20G")
+			logger.V(4).Info("Resizing disk 1 of template to 22G")
 			diskName = disk1
+			diskSizeInGB = 22
 		} else {
 			return fmt.Errorf("template %v is not valid as there are no associated disks", templateName)
 		}
 
-		err = g.ResizeDisk(ctx, datacenter, templateName, diskName, 20)
+		err = g.ResizeDisk(ctx, datacenter, templateName, diskName, diskSizeInGB)
 		if err != nil {
 			return fmt.Errorf("error resizing disk %v to 20G: %v", diskName, err)
 		}
