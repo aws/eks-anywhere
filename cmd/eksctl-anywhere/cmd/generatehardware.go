@@ -92,7 +92,7 @@ func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
 		return fmt.Errorf("csv: %v", err)
 	}
 
-	writer := hardware.NewTeeWriterWith(yamlWriter, jsonWriter)
+	writer := hardware.MultiMachineWriter(yamlWriter, jsonWriter)
 	validator := hardware.NewDefaultMachineValidator()
 
 	if err := hardware.TranslateAll(reader, writer, validator); err != nil {

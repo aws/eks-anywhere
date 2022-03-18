@@ -38,7 +38,7 @@ func TestTeeWriterWritesToAllWriters(t *testing.T) {
 		}).
 		Return((error)(nil))
 
-	tee := hardware.NewTeeWriterWith(writer1, writer2)
+	tee := hardware.MultiMachineWriter(writer1, writer2)
 
 	err := tee.Write(expect)
 
@@ -62,7 +62,7 @@ func TestTeeWriterFirstWriterErrors(t *testing.T) {
 		Write(machine).
 		Return(expect)
 
-	tee := hardware.NewTeeWriterWith(writer1, writer2)
+	tee := hardware.MultiMachineWriter(writer1, writer2)
 
 	err := tee.Write(machine)
 
@@ -87,7 +87,7 @@ func TestTeeWriterSecondWriterErrors(t *testing.T) {
 		Write(machine).
 		Return(expect)
 
-	tee := hardware.NewTeeWriterWith(writer1, writer2)
+	tee := hardware.MultiMachineWriter(writer1, writer2)
 
 	err := tee.Write(machine)
 
