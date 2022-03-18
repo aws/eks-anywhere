@@ -65,6 +65,9 @@ func GetGitOpsForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetch G
 }
 
 func GetEksdReleaseForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundles *v1alpha1release.Bundles, fetch EksdReleaseFetch) (*eksdv1alpha1.Release, error) {
+	if !cluster.IsSelfManaged() { // We do not apply the EKS-D objects to the managed clusters, so the EKS-D release manifest will be retrieved from the URL in the bundle
+		return nil, nil
+	}
 	versionsBundle, err := GetVersionsBundle(cluster, bundles)
 	if err != nil {
 		return nil, fmt.Errorf("failed fetching versions bundle: %v", err)
