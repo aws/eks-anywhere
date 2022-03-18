@@ -69,7 +69,7 @@ func AutoFillCloudStackProvider(filename string, fillers ...CloudStackFiller) ([
 	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineConfig, ok = cloudstackMachineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
 		if !ok {
-			return nil, fmt.Errorf("unable to find cloudstack etcd machine config %v", cpName)
+			return nil, fmt.Errorf("unable to find cloudstack etcd machine config %s", clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name)
 		}
 		config.etcdMachineConfig = etcdMachineConfig
 	}
