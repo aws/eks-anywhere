@@ -271,8 +271,8 @@ func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *an
 		if err != nil {
 			return reconciler.Result{}, err
 		}
-
-		ciliumSpec, err := cilium.GenerateManifest(ctx, specWithBundles)
+		// TODO: adding to above TODO of using NewCilium, also provide provider interface so cilium generateManifest can get the deployments based on provider
+		ciliumSpec, err := cilium.GenerateManifest(ctx, specWithBundles, nil)
 		if err != nil {
 			return reconciler.Result{}, err
 		}

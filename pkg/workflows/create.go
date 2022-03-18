@@ -182,7 +182,7 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	commandContext.WorkloadCluster = workloadCluster
 
 	logger.Info("Installing networking on workload cluster")
-	err = commandContext.ClusterManager.InstallNetworking(ctx, workloadCluster, commandContext.ClusterSpec)
+	err = commandContext.ClusterManager.InstallNetworking(ctx, workloadCluster, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}

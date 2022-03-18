@@ -13,6 +13,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	networking "github.com/aws/eks-anywhere/pkg/networking/internal"
+	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
 
@@ -26,7 +27,7 @@ func NewKindnetd(client Client) *Kindnetd {
 	}
 }
 
-func (c *Kindnetd) GenerateManifest(ctx context.Context, clusterSpec *cluster.Spec) ([]byte, error) {
+func (c *Kindnetd) GenerateManifest(ctx context.Context, clusterSpec *cluster.Spec, provider providers.Provider) ([]byte, error) {
 	return generateManifest(clusterSpec)
 }
 

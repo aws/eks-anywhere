@@ -142,6 +142,16 @@ func TestVSphereKubernetes120BottleRocketDifferentNamespaceSimpleFlow(t *testing
 	runSimpleFlow(test)
 }
 
+func TestVSphereKubernetes121CiliumAlwaysPolicyEnforcementModeSimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu121()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode("always")),
+	)
+	runSimpleFlow(test)
+}
+
 func TestTinkerbellKubernetes120SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
