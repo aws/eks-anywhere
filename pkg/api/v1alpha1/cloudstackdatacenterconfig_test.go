@@ -48,7 +48,6 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 							},
 						},
 					},
-					ManagementApiEndpoint: "https://127.0.0.1:8080/client/api",
 				},
 			},
 			wantErr: false,

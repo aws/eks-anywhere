@@ -133,6 +133,16 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 		return fmt.Errorf("spec.account is immutable. Previous value %s, new value %s", oSpec.Account, nSpec.Account)
 	}
 
+	if len(nSpec.Zones) != len(oSpec.Zones) {
+		return fmt.Errorf("spec.zones is immutable. Previous value %s, new value %s", oSpec.Zones, nSpec.Zones)
+	} else {
+		for i, zone := range nSpec.Zones {
+			if !zone.Equals(&oSpec.Zones[i]) {
+				return fmt.Errorf("spec.zones is immutable. Previous value %s, new value %s", zone, oSpec.Zones[i])
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -471,7 +481,6 @@ func NeedsNewWorkloadTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *
 		!v1alpha1.WorkerNodeGroupConfigurationsLabelsMapEqual(oldSpec.Spec.WorkerNodeGroupConfigurations, newSpec.Spec.WorkerNodeGroupConfigurations) {
 		return true
 	}
-	logger.Info("NeedsNewWorkloadTemplate")
 	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc)
 }
 
