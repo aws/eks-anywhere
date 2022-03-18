@@ -120,6 +120,12 @@ func WithCloudStackComputeOffering(value string) CloudStackFiller {
 	}
 }
 
+func WithCloudStackManagementServer(value string) CloudStackFiller {
+	return func(config CloudStackConfig) {
+		config.datacenterConfig.Spec.ManagementApiEndpoint = value
+	}
+}
+
 func WithCloudStackAffinityGroupIds(value []string) CloudStackFiller {
 	return func(config CloudStackConfig) {
 		config.cpMachineConfig.Spec.AffinityGroupIds = value

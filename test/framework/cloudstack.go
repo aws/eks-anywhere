@@ -66,6 +66,7 @@ func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 		t: t,
 		fillers: []api.CloudStackFiller{
 			api.WithCloudStackStringFromEnvVar(cloudstackDomainVar, api.WithCloudStackDomain),
+			api.WithCloudStackStringFromEnvVar(cloudstackManagementServerVar, api.WithCloudStackManagementServer),
 			api.WithCloudStackStringFromEnvVar(cloudstackZoneVar, api.WithCloudStackZone),
 			api.WithCloudStackStringFromEnvVar(cloudstackNetworkVar, api.WithCloudStackNetwork),
 			api.WithCloudStackStringFromEnvVar(cloudstackAccountVar, api.WithCloudStackAccount),

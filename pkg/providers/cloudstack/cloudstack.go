@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"reflect"
 
 	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -531,7 +530,15 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterCon
 	if oldCsmc.Spec.ComputeOffering != newCsmc.Spec.ComputeOffering {
 		return true
 	}
-	return !reflect.DeepEqual(oldCsmc.Spec.UserCustomDetails, newCsmc.Spec.UserCustomDetails)
+	if len(oldCsmc.Spec.UserCustomDetails) != len(newCsmc.Spec.UserCustomDetails) {
+		return true
+	}
+	for key, value := range oldCsmc.Spec.UserCustomDetails {
+		if value != newCsmc.Spec.UserCustomDetails[key] {
+			return true
+		}
+	}
+	return false
 }
 
 func NewCloudStackTemplateBuilder(CloudStackDatacenterConfigSpec *v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.CloudStackMachineConfigSpec, workerNodeGroupMachineSpecs map[string]v1alpha1.CloudStackMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {

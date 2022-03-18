@@ -1,4 +1,3 @@
-//go:build e2e
 // +build e2e
 
 package e2e
@@ -104,28 +103,6 @@ func TestVSphereKubernetes121BottleRocketAWSIamAuth(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket121()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
-func TestCloudStackKubernetes120AWSIamAuth(t *testing.T) {
-	t.Skip("Skipping CloudStack in CI/CD")
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithRedhat120()),
-		framework.WithAWSIam(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-	)
-	runAWSIamAuthFlow(test)
-}
-
-func TestCloudStackKubernetes121AWSIamAuth(t *testing.T) {
-	t.Skip("Skipping CloudStack in CI/CD")
-	test := framework.NewClusterE2ETest(
-		t,
-		framework.NewCloudStack(t, framework.WithRedhat121()),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 	)
