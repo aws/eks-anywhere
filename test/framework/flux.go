@@ -41,7 +41,7 @@ var fluxRequiredEnvVars = []string{
 
 func WithFlux(opts ...api.GitOpsConfigOpt) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		CheckRequiredEnvVars(e.T, fluxRequiredEnvVars)
+		checkRequiredEnvVars(e.T, fluxRequiredEnvVars)
 		gitOpsConfigName := gitOpsConfigName()
 		e.GitOpsConfig = api.NewGitOpsConfig(gitOpsConfigName,
 			api.WithPersonalFluxRepository(true),

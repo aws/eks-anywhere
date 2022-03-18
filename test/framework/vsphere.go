@@ -100,8 +100,8 @@ func UpdateBottlerocketTemplate120() api.VSphereFiller {
 }
 
 func NewVSphere(t *testing.T, opts ...VSphereOpt) *VSphere {
-	CheckRequiredEnvVars(t, requiredEnvVars)
-	c := BuildGovc(t)
+	checkRequiredEnvVars(t, requiredEnvVars)
+	c := buildGovc(t)
 	v := &VSphere{
 		t:          t,
 		GovcClient: c,

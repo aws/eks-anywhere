@@ -21,7 +21,7 @@ var registryMirrorRequiredEnvVars = []string{RegistryEndpointVar, RegistryPortVa
 
 func WithRegistryMirrorEndpointAndCert() ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
-		CheckRequiredEnvVars(e.T, registryMirrorRequiredEnvVars)
+		checkRequiredEnvVars(e.T, registryMirrorRequiredEnvVars)
 		endpoint := os.Getenv(RegistryEndpointVar)
 		hostPort := net.JoinHostPort(endpoint, os.Getenv(RegistryPortVar))
 		username := os.Getenv(RegistryUsernameVar)

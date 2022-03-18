@@ -122,7 +122,7 @@ EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-rel
 
 DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow
 LOCAL_E2E_TESTS ?= $(DOCKER_E2E_TEST)
-CLOUDSTACK_E2E_TEST := TestCloudStackKubernetes121Flux
+CLOUDSTACK_E2E_TEST := TestCloudStackKubernetes121SimpleFlow
 
 export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.21.x
 

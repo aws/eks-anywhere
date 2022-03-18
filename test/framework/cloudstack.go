@@ -57,7 +57,7 @@ func UpdateRedhatTemplate121Var() api.CloudStackFiller {
 }
 
 func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
-	CheckRequiredEnvVars(t, requiredCloudStackEnvVars)
+	checkRequiredEnvVars(t, requiredCloudStackEnvVars)
 	v := &CloudStack{
 		t: t,
 		fillers: []api.CloudStackFiller{

@@ -1,11 +1,11 @@
 package e2e
 
 import (
-	e2etests "github.com/aws/eks-anywhere/test/framework"
 	"os"
 	"regexp"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
+	e2etests "github.com/aws/eks-anywhere/test/framework"
 )
 
 const (

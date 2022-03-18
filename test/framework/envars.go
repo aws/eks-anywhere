@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func CheckRequiredEnvVars(t *testing.T, requiredEnvVars []string) {
+func checkRequiredEnvVars(t *testing.T, requiredEnvVars []string) {
 	for _, eVar := range requiredEnvVars {
 		if _, ok := os.LookupEnv(eVar); !ok {
 			t.Fatalf("Required env var [%s] not present", eVar)

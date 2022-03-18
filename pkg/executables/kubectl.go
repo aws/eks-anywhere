@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
 	"sort"
 	"strings"
 
+	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -510,7 +510,6 @@ func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, cluster
 	}
 	return machineTemplateSpec, nil
 }
-
 
 func (k *Kubectl) CloudstackWorkerNodesMachineTemplate(ctx context.Context, clusterName string, kubeconfig string, namespace string) (*cloudstackv1.CloudStackMachineTemplate, error) {
 	machineTemplateName, err := k.MachineTemplateName(ctx, clusterName, kubeconfig, WithNamespace(namespace))
