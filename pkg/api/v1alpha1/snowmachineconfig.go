@@ -78,10 +78,6 @@ func validateSnowMachineConfig(config *SnowMachineConfig) error {
 		return fmt.Errorf("SnowMachineConfig AMIID is a required field")
 	}
 
-	if config.Spec.SshKeyName == "" {
-		return fmt.Errorf("SnowMachineConfig SshKeyName is a required field. Create one in Snow Console if not any")
-	}
-
 	if config.Spec.InstanceType != SbeCLarge && config.Spec.InstanceType != SbeCXLarge && config.Spec.InstanceType != SbeC2XLarge && config.Spec.InstanceType != SbeC4XLarge {
 		return fmt.Errorf("SnowMachineConfig InstanceType %s is not supported, please use one of the following: %s, %s, %s, %s ", config.Spec.InstanceType, SbeCLarge, SbeCXLarge, SbeC2XLarge, SbeC4XLarge)
 	}

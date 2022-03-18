@@ -21,6 +21,10 @@ func (c *Config) VsphereMachineConfig(name string) *anywherev1.VSphereMachineCon
 	return c.VSphereMachineConfigs[name]
 }
 
+func (c *Config) SnowMachineConfig(name string) *anywherev1.SnowMachineConfig {
+	return c.SnowMachineConfigs[name]
+}
+
 func (c *Config) OIDCConfig(name string) *anywherev1.OIDCConfig {
 	return c.OIDCConfigs[name]
 }
