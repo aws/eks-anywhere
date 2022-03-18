@@ -268,17 +268,17 @@ func (mr *MockClusterManagerMockRecorder) InstallMachineHealthChecks(arg0, arg1,
 }
 
 // InstallNetworking mocks base method.
-func (m *MockClusterManager) InstallNetworking(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) error {
+func (m *MockClusterManager) InstallNetworking(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.Provider) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallNetworking", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "InstallNetworking", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InstallNetworking indicates an expected call of InstallNetworking.
-func (mr *MockClusterManagerMockRecorder) InstallNetworking(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) InstallNetworking(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallNetworking", reflect.TypeOf((*MockClusterManager)(nil).InstallNetworking), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallNetworking", reflect.TypeOf((*MockClusterManager)(nil).InstallNetworking), arg0, arg1, arg2, arg3)
 }
 
 // InstallStorageClass mocks base method.
