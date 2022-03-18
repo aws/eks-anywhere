@@ -17,10 +17,11 @@ func snowEntry() *ConfigManagerEntry {
 			machineConfigsProcessor(processSnowMachineConfig),
 		},
 		Defaulters: []Defaulter{
-			func(c *Config) {
+			func(c *Config) error {
 				for _, m := range c.SnowMachineConfigs {
 					m.SetDefaults()
 				}
+				return nil
 			},
 		},
 		Validations: []Validation{
