@@ -711,7 +711,7 @@ func (e *ClusterE2ETest) waitForWorkerScaling(targetvalue int) error {
 	return retrier.Retry(120, time.Second*10, func() error {
 		md, err := e.KubectlClient.GetMachineDeployments(ctx,
 			executables.WithKubeconfig(e.managementKubeconfigFilePath()),
-			executables.WithNamespace("eksa-system"),
+			executables.WithNamespace(constants.EksaSystemNamespace),
 		)
 		if err != nil {
 			return err
