@@ -9,6 +9,9 @@ var incompatiblePathsForVersion = map[string][]string{
 		"spec.clusterNetwork.dns",
 		"spec.workerNodeGroupConfigurations[].name",
 	},
+	"v0.7.2": {
+		"spec.clusterNetwork.cniConfig",
+	},
 }
 
 func cleanUpClusterForVersion(clusterYaml []byte, version string) ([]byte, error) {
