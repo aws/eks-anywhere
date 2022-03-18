@@ -361,7 +361,7 @@ func (e *ClusterE2ETest) validateWorkerNodeUpdates(ctx context.Context, opts ...
 	if err != nil {
 		return err
 	}
-	if err := e.waitForWorkerScaling(clusterConfig.Spec.WorkerNodeGroupConfigurations[0].Count); err != nil {
+	if err := e.waitForWorkerScaling(clusterConfig.Spec.WorkerNodeGroupConfigurations[0].Name, clusterConfig.Spec.WorkerNodeGroupConfigurations[0].Count); err != nil {
 		return err
 	}
 
@@ -582,26 +582,25 @@ func (e *ClusterE2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clus
 	}
 }
 
-func (e *ClusterE2ETest) waitForWorkerScaling(targetvalue int) error {
-	e.T.Logf("Waiting for worker node MachineDeployment to scale to target value %d", targetvalue)
+func (e *ClusterE2ETest) waitForWorkerScaling(name string, targetvalue int) error {
+	e.T.Logf("Waiting for worker node group %v MachineDeployment to scale to target value %d", name, targetvalue)
 	ctx := context.Background()
 	return retrier.Retry(120, time.Second*10, func() error {
-		md, err := e.KubectlClient.GetMachineDeployments(ctx,
+		md, err := e.KubectlClient.GetMachineDeployment(ctx, fmt.Sprintf("%v-%v", e.ClusterName, name),
 			executables.WithKubeconfig(e.managementKubeconfigFilePath()),
 			executables.WithNamespace(constants.EksaSystemNamespace),
 		)
 		if err != nil {
+			e.T.Logf("Unable to get machine deployment: %v", err)
 			return err
 		}
 
-		for _, d := range md {
-			r := int(d.Status.Replicas)
-			if r != targetvalue {
-				e.T.Logf("Waiting for worker node MachineDeployment %s replicas to scale; target: %d, actual: %d", d.Name, targetvalue, r)
-				return fmt.Errorf(" MachineDeployment %s replicas are not at desired scale; target: %d, actual: %d", d.Name, targetvalue, r)
-			}
-			e.T.Logf("Worker node MachineDeployment %s Ready replicas have reached target scale %d", d.Name, r)
+		r := int(md.Status.Replicas)
+		if r != targetvalue {
+			e.T.Logf("Waiting for worker node MachineDeployment %s replicas to scale; target: %d, actual: %d", md.Name, targetvalue, r)
+			return fmt.Errorf(" MachineDeployment %s replicas are not at desired scale; target: %d, actual: %d", md.Name, targetvalue, r)
 		}
+		e.T.Logf("Worker node MachineDeployment %s Ready replicas have reached target scale %d", md.Name, r)
 		e.T.Logf("All worker node MachineDeployments have reached target scale %d", targetvalue)
 		return nil
 	})
