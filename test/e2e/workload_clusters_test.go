@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -132,4 +133,33 @@ func TestDockerUpgradeWorkloadClusterWithFlux(t *testing.T) {
 			api.WithWorkerNodeCount(2),
 		),
 	)
+}
+
+func TestCloudStackKubernetes121WorkloadClusterDemo(t *testing.T) {
+	t.Skip("Skipping CloudStack in CI/CD")
+	provider := framework.NewCloudStack(t, framework.WithRedhat121())
+	test := framework.NewMulticlusterE2ETest(
+		t,
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube121),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+		),
+		framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube121),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+		),
+	)
+	runWorkloadClusterFlow(test)
 }

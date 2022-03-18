@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"path"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -280,6 +281,57 @@ func (e *ClusterE2ETest) validateWorkerNodeMultiConfigUpdates(ctx context.Contex
 			return fmt.Errorf("machine template name should change on machine resource updates, old %s and new %s", machineTemplateName, newMachineTemplateName)
 		}
 		return nil
+	case v1alpha1.CloudStackDatacenterKind:
+		clusterConfGitPath := e.clusterConfigGitPath()
+		machineTemplateName, err := e.machineTemplateName(ctx)
+		if err != nil {
+			return err
+		}
+		cloudstackClusterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(clusterConfGitPath)
+		if err != nil {
+			return err
+		}
+		// update workernode specs
+		cloudstackMachineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(clusterConfGitPath)
+		if err != nil {
+			return err
+		}
+		cpName := e.ClusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+		workerName := e.ClusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
+		etcdName := ""
+		if e.ClusterConfig.Spec.ExternalEtcdConfiguration != nil {
+			etcdName = e.ClusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		}
+
+		// update replica
+		clusterSpec, err := e.clusterSpecFromGit()
+		if err != nil {
+			return err
+		}
+		cloudstackMachineConfigs[workerName].Spec.UserCustomDetails = map[string]string{
+			"foo": "bar",
+		}
+
+		providerConfig := providerConfig{
+			datacenterConfig: cloudstackClusterConfig,
+			machineConfigs:   e.convertCloudStackMachineConfigs(cpName, workerName, etcdName, cloudstackMachineConfigs),
+		}
+		_, err = e.updateEKSASpecInGit(clusterSpec, providerConfig)
+		if err != nil {
+			return err
+		}
+		err = e.validateWorkerNodeUpdates(ctx)
+		if err != nil {
+			return err
+		}
+		newMachineTemplateName, err := e.machineTemplateName(ctx)
+		if err != nil {
+			return err
+		}
+		if machineTemplateName == newMachineTemplateName {
+			return fmt.Errorf("machine template name should change on machine resource updates, old %s and new %s", machineTemplateName, newMachineTemplateName)
+		}
+		return nil
 	default:
 		return nil
 	}
@@ -323,6 +375,20 @@ func (e *ClusterE2ETest) convertVSphereMachineConfigs(cpName, workerName, etcdNa
 	}
 	if etcdName != "" && etcdName != cpName && etcdName != workerName && vsphereMachineConfigs[etcdName] != nil {
 		configs = append(configs, vsphereMachineConfigs[etcdName])
+	}
+	return configs
+}
+
+func (e *ClusterE2ETest) convertCloudStackMachineConfigs(cpName, workerName, etcdName string, cloudstackMachineConfigs map[string]*v1alpha1.CloudStackMachineConfig) []providers.MachineConfig {
+	var configs []providers.MachineConfig
+	if cloudstackMachineConfigs[cpName] != nil {
+		configs = append(configs, cloudstackMachineConfigs[cpName])
+	}
+	if workerName != cpName && cloudstackMachineConfigs[workerName] != nil {
+		configs = append(configs, cloudstackMachineConfigs[workerName])
+	}
+	if etcdName != "" && etcdName != cpName && etcdName != workerName && cloudstackMachineConfigs[etcdName] != nil {
+		configs = append(configs, cloudstackMachineConfigs[etcdName])
 	}
 	return configs
 }
@@ -474,6 +540,25 @@ func (e *ClusterE2ETest) providerConfig(clusterConfGitPath string) (*providerCon
 			e.ClusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name,
 			etcdName,
 			machineConfigs)
+	case v1alpha1.CloudStackDatacenterKind:
+		datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(clusterConfGitPath)
+		if err != nil {
+			return nil, err
+		}
+		machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(clusterConfGitPath)
+		if err != nil {
+			return nil, err
+		}
+		providerConfig.datacenterConfig = datacenterConfig
+		etcdName := ""
+		if e.ClusterConfig.Spec.ExternalEtcdConfiguration != nil {
+			etcdName = e.ClusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		}
+		providerConfig.machineConfigs = e.convertCloudStackMachineConfigs(
+			e.ClusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name,
+			e.ClusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name,
+			etcdName,
+			machineConfigs)
 	case v1alpha1.DockerDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetDockerDatacenterConfig(clusterConfGitPath)
 		if err != nil {
@@ -577,6 +662,44 @@ func (e *ClusterE2ETest) validateWorkerNodeMachineSpec(ctx context.Context, clus
 			e.T.Logf("Worker MachineTemplate values have matched expected values")
 			return nil
 		})
+	case v1alpha1.CloudStackDatacenterKind:
+		clusterConfig, err := v1alpha1.GetClusterConfig(clusterConfGitPath)
+		if err != nil {
+			return err
+		}
+		cloudstackMachineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(clusterConfGitPath)
+		if err != nil {
+			return err
+		}
+		cloudstackWorkerConfig := cloudstackMachineConfigs[clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
+		return retrier.Retry(120, time.Second*10, func() error {
+			csMachineTemplate, err := e.KubectlClient.CloudstackWorkerNodesMachineTemplate(ctx, clusterConfig.Name, e.cluster().KubeconfigFile, constants.EksaSystemNamespace)
+			if err != nil {
+				return err
+			}
+			if cloudstackWorkerConfig.Spec.Template.Name != csMachineTemplate.Spec.Spec.Spec.Template.Name {
+				err := fmt.Errorf("MachineSpec %s Template are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.Template, csMachineTemplate.Spec.Spec.Spec.Template)
+				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
+				return err
+			}
+			if cloudstackWorkerConfig.Spec.ComputeOffering.Name != csMachineTemplate.Spec.Spec.Spec.Offering.Name {
+				err := fmt.Errorf("MachineSpec %s Offering are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.ComputeOffering, csMachineTemplate.Spec.Spec.Spec.Offering)
+				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
+				return err
+			}
+			if !reflect.DeepEqual(cloudstackWorkerConfig.Spec.UserCustomDetails, csMachineTemplate.Spec.Spec.Spec.Details) {
+				err := fmt.Errorf("MachineSpec %s Details are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.UserCustomDetails, csMachineTemplate.Spec.Spec.Spec.Details)
+				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
+				return err
+			}
+			if !reflect.DeepEqual(cloudstackWorkerConfig.Spec.AffinityGroupIds, csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs) {
+				err := fmt.Errorf("MachineSpec %s AffinityGroupIds are not at desired value; target: %v, actual: %v", csMachineTemplate.Name, cloudstackWorkerConfig.Spec.AffinityGroupIds, csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs)
+				e.T.Logf("Waiting for WorkerNode Specs to match - %s", err.Error())
+				return err
+			}
+			e.T.Logf("Worker MachineTemplate values have matched expected values")
+			return nil
+		})
 	default:
 		return nil
 	}
@@ -588,6 +711,7 @@ func (e *ClusterE2ETest) waitForWorkerScaling(targetvalue int) error {
 	return retrier.Retry(120, time.Second*10, func() error {
 		md, err := e.KubectlClient.GetMachineDeployments(ctx,
 			executables.WithKubeconfig(e.managementKubeconfigFilePath()),
+			executables.WithNamespace(constants.EksaSystemNamespace),
 		)
 		if err != nil {
 			return err

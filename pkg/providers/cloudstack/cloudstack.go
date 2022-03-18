@@ -530,6 +530,14 @@ func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterCon
 	if oldCsmc.Spec.ComputeOffering != newCsmc.Spec.ComputeOffering {
 		return true
 	}
+	if len(oldCsmc.Spec.UserCustomDetails) != len(newCsmc.Spec.UserCustomDetails) {
+		return true
+	}
+	for key, value := range oldCsmc.Spec.UserCustomDetails {
+		if value != newCsmc.Spec.UserCustomDetails[key] {
+			return true
+		}
+	}
 	return false
 }
 
@@ -670,6 +678,10 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
+		if err == nil {
+			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+		}
 		noProxyList = append(noProxyList,
 			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		)
@@ -741,6 +753,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, common.NoProxyDefaults...)
+		cloudStackManagementApiEndpointHostname, err := getHostnameFromUrl(datacenterConfigSpec.ManagementApiEndpoint)
+		if err == nil {
+			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
+		}
 		noProxyList = append(noProxyList,
 			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		)
@@ -1105,4 +1121,12 @@ func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Co
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
+}
+
+func getHostnameFromUrl(rawurl string) (string, error) {
+	url, err := url.Parse(rawurl)
+	if err != nil {
+		return "", fmt.Errorf("%s is not a valid url", rawurl)
+	}
+	return url.Hostname(), nil
 }

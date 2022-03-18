@@ -19,6 +19,16 @@ func TestCloudStackDatacenterValidateUpdateDomainImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
+func TestCloudStackDatacenterValidateUpdateManagementApiEndpointImmutable(t *testing.T) {
+	vOld := cloudstackDatacenterConfig()
+	vOld.Spec.ManagementApiEndpoint = "oldCruftyManagementApiEndpoint"
+	c := vOld.DeepCopy()
+
+	c.Spec.ManagementApiEndpoint = "shinyNewManagementApiEndpoint"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
 func TestCloudStackDatacenterValidateUpdateZonesImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
 	vOld.Spec.Zones = []v1alpha1.CloudStackZone{

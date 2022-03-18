@@ -32,6 +32,8 @@ type CloudStackDatacenterConfigSpec struct {
 	Zones []CloudStackZone `json:"zones"`
 	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain name must also be provided.
 	Account string `json:"account,omitempty"`
+	// CloudStack Management API endpoint's IP. It is added to VM's noproxy list
+	ManagementApiEndpoint string `json:"managementApiEndpoint"`
 }
 
 type CloudStackResourceIdentifier struct {

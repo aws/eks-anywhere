@@ -3012,6 +3012,10 @@ spec:
                   each other and a set of delegated administrators with some authority
                   over the domain and its subdomains
                 type: string
+              managementApiEndpoint:
+                description: CloudStack Management API endpoint's IP. It is added
+                  to VM's noproxy list
+                type: string
               zones:
                 description: Zones is a list of one or more zones that are managed
                   by a single CloudStack management endpoint.
@@ -3047,6 +3051,7 @@ spec:
                 type: array
             required:
             - domain
+            - managementApiEndpoint
             - zones
             type: object
           status:
