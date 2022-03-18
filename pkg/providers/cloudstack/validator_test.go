@@ -139,6 +139,27 @@ func TestValidateDatacenterConfigsNoNetwork(t *testing.T) {
 	thenErrorExpected(t, "zone network is not set or is empty", err)
 }
 
+func TestValidateDatacenterBadManagementEndpoint(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get datacenter config from file")
+	}
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	cloudStackClusterSpec := &Spec{
+		Spec:                 clusterSpec,
+		datacenterConfig:     datacenterConfig,
+		machineConfigsLookup: nil,
+	}
+	validator := NewValidator(cmk)
+
+	datacenterConfig.Spec.ManagementApiEndpoint = ":1234.5234"
+	err = validator.ValidateCloudStackDatacenterConfig(ctx, cloudStackClusterSpec.datacenterConfig)
+
+	thenErrorExpected(t, "error while checking management api endpoint: :1234.5234 is not a valid url", err)
+}
+
 func TestSetupAndValidateUsersNil(t *testing.T) {
 	ctx := context.Background()
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))

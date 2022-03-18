@@ -1126,7 +1126,7 @@ func machineDeploymentName(clusterName, nodeGroupName string) string {
 func getHostnameFromUrl(rawurl string) (string, error) {
 	url, err := url.Parse(rawurl)
 	if err != nil {
-		return "", fmt.Errorf("#{rawurl} is not a valid url")
+		return "", fmt.Errorf("%s is not a valid url", rawurl)
 	}
 	return url.Hostname(), nil
 }
