@@ -24,6 +24,7 @@ func init() {
 func runTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
 	test.GenerateClusterConfig()
 	test.GenerateHardwareConfig()
+	test.PowerOffHardware()
 	test.CreateCluster()
 	test.DeleteCluster()
 }

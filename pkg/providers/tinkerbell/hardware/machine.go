@@ -26,7 +26,7 @@ type Machine struct {
 	BmcVendor    string `csv:"vendor"`
 }
 
-// HasBmc determines if m has a Bmc configuration. A Bmc connifiguration is present if any of the Bmc fields
+// HasBmc determines if m has a Bmc configuration. A Bmc configuration is present if any of the Bmc fields
 // contain non-empty strings.
 func (m *Machine) HasBmc() bool {
 	return m.BmcIpAddress != "" || m.BmcUsername != "" || m.BmcPassword != "" || m.BmcVendor != ""

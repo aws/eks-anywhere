@@ -89,7 +89,7 @@ type ProviderTinkClient interface {
 }
 
 type ProviderPbnjClient interface {
-	ValidateBMCSecretCreds(ctx context.Context, bmc pbnj.BmcSecretConfig) error
+	GetPowerState(ctx context.Context, bmc pbnj.BmcSecretConfig) (pbnj.PowerState, error)
 }
 
 // KeyGenerator generates ssh keys and writes them to a FileWriter.
