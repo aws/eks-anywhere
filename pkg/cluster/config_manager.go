@@ -64,10 +64,21 @@ func (c *ConfigManager) Parse(yamlManifest []byte) (*Config, error) {
 }
 
 // Parse set the registered defaults in a Config struct
-func (c *ConfigManager) SetDefaults(config *Config) {
+func (c *ConfigManager) SetDefaults(config *Config) error {
+	var allErrs []error
+
 	for _, d := range c.entry.Defaulters {
-		d(config)
+		if err := d(config); err != nil {
+			allErrs = append(allErrs, err)
+		}
 	}
+
+	if len(allErrs) > 0 {
+		aggregate := utilerrors.NewAggregate(allErrs)
+		return fmt.Errorf("error setting defaults on cluster config: %v", aggregate)
+	}
+
+	return nil
 }
 
 // Validate performs the registered validations in a Config struct
