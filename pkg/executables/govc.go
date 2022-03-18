@@ -434,7 +434,7 @@ func (g *Govc) getEnvMap() (map[string]string, error) {
 			if key != govcInsecure {
 				return nil, fmt.Errorf("warning required env not set %s", key)
 			}
-			err := os.Setenv(govcInsecure, "true")
+			err := os.Setenv(govcInsecure, "false")
 			if err != nil {
 				logger.Info("Warning: Unable to set <%s>", govcInsecure)
 			}
