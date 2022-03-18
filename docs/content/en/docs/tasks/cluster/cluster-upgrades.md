@@ -148,6 +148,8 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `workerNodeGroupConfigurations.count`
 - `workerNodeGroupConfigurations.machineGroupRef.name`
 - `etcdConfiguration.externalConfiguration.machineGroupRef.name`
+- `identityProviderRefs` (Only for `kind:OIDCConfig`, `kind:AWSIamConfig` is immutable)
+
 
 `VSphereMachineConfig`:
 - `datastore`
@@ -157,6 +159,18 @@ allowing you to upgrade a number of fields simultaneously with the same procedur
 - `numCPUs`
 - `resourcePool`
 - `template`
+- `users`
+
+`OIDCConfig`:
+- `clientID`
+- `groupsClaim`
+- `groupsPrefix`
+- `issuerUrl`
+- `requiredClaims.claim`
+- `requiredClaims.value`
+- `usernameClaim`
+- `usernamePrefix`
+
 
 EKS Anywhere `upgrade` also supports adding more worker node groups post-creation.
 To add more worker node groups, modify your cluster config file to define the additional group(s).

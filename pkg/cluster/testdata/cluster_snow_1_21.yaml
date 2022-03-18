@@ -1,0 +1,56 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: eksa-unit-test
+spec:
+  clusterNetwork:
+    cni: "cilium"
+    pods:
+      cidrBlocks:
+        - 192.168.0.0/16
+    services:
+      cidrBlocks:
+        - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 1
+    endpoint:
+      host: "myHostIp"
+    machineGroupRef:
+      kind: SnowMachineConfig
+      name: eksa-unit-test-cp
+  datacenterRef:
+    kind: SnowDatacenterConfig
+    name: eksa-unit-test
+  kubernetesVersion: "1.21"
+  workerNodeGroupConfigurations:
+    - name: workers-1
+      count: 1
+      machineGroupRef:
+        kind: SnowMachineConfig
+        name: eksa-unit-test
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: SnowDatacenterConfig
+metadata:
+  name: eksa-unit-test
+spec: {}
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: SnowMachineConfig
+metadata:
+  name: eksa-unit-test-cp
+spec:
+  amiID: eks-d-v1-21-ami
+  instanceType: sbe-c.large
+  sshKeyName: default
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: SnowMachineConfig
+metadata:
+  name: eksa-unit-test
+spec:
+  amiID: eks-d-v1-21-ami
+  instanceType: sbe-c.xlarge
+  sshKeyName: default

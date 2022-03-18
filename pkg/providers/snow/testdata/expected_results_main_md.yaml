@@ -84,6 +84,7 @@ spec:
         insecureSkipSecretsManager: true
       iamInstanceProfile: control-plane.cluster-api-provider-aws.sigs.k8s.io
       instanceType: sbe-c.xlarge
+      physicalNetworkConnectorType: SFP_PLUS
       sshKeyName: default
 
 ---

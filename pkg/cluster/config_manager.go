@@ -53,7 +53,7 @@ func (c *ConfigManager) RegisterDefaulters(defaulters ...Defaulter) {
 	c.entry.RegisterDefaulters(defaulters...)
 }
 
-// Parse reads yaml manifest with at leats one cluster object and generates the corresponding Config
+// Parse reads yaml manifest with at least one cluster object and generates the corresponding Config
 func (c *ConfigManager) Parse(yamlManifest []byte) (*Config, error) {
 	parsed, err := c.unmarshal(yamlManifest)
 	if err != nil {
