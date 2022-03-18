@@ -23,7 +23,6 @@ const (
 	vsphereNetwork2UpdateVar           = "/SDDC-Datacenter/network/sddc-cgw-network-2"
 	vsphereNetwork3UpdateVar           = "/SDDC-Datacenter/network/sddc-cgw-network-3"
 	clusterNamespace                   = "test-namespace"
-	cloudstackComputeOfferingUpdateVar = "Larger Instance"
 )
 
 func runSimpleUpgradeFlow(test *framework.ClusterE2ETest, updateVersion v1alpha1.KubernetesVersion, clusterOpts ...framework.ClusterE2ETestOpt) {
@@ -363,7 +362,7 @@ func TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade(t *testing.T) {
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		provider.WithProviderUpgrade(
 			framework.UpdateRedhatTemplate121Var(),
-			api.WithCloudStackComputeOffering(cloudstackComputeOfferingUpdateVar),
+			framework.UpdateLargerCloudStackComputeOffering(),
 		),
 	)
 }

@@ -56,6 +56,10 @@ func UpdateRedhatTemplate121Var() api.CloudStackFiller {
 	return api.WithCloudStackStringFromEnvVar(cloudstackTemplateRedhat121Var, api.WithCloudStackTemplate)
 }
 
+func UpdateLargerCloudStackComputeOffering() api.CloudStackFiller {
+	return api.WithCloudStackStringFromEnvVar(cloudstackComputeOfferingLargerVar, api.WithCloudStackComputeOffering)
+}
+
 func NewCloudStack(t *testing.T, opts ...CloudStackOpt) *CloudStack {
 	checkRequiredEnvVars(t, requiredCloudStackEnvVars)
 	v := &CloudStack{
