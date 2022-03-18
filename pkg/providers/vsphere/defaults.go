@@ -132,13 +132,8 @@ func (d *Defaulter) setupDefaultTemplate(ctx context.Context, spec *Spec, machin
 	// TODO: figure out if it's worth refactoring the factory to be able to reuse across machine configs.
 	templateFactory := templates.NewFactory(d.govc, spec.datacenterConfig.Spec.Datacenter, machineConfig.Spec.Datastore, machineConfig.Spec.ResourcePool, defaultTemplateLibrary)
 
-	resizeDisk2 := false
-	if osFamily == anywherev1.Bottlerocket &&
-		(spec.Cluster.Spec.KubernetesVersion == anywherev1.Kube120 || spec.Cluster.Spec.KubernetesVersion == anywherev1.Kube121) {
-		resizeDisk2 = true
-	}
 	// TODO: remove the factory's dependency on a machineConfig
-	if err := templateFactory.CreateIfMissing(ctx, spec.datacenterConfig.Spec.Datacenter, machineConfig, ova.URI, tags, resizeDisk2); err != nil {
+	if err := templateFactory.CreateIfMissing(ctx, spec.datacenterConfig.Spec.Datacenter, machineConfig, ova.URI, tags); err != nil {
 		return err
 	}
 

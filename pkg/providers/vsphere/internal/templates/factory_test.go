@@ -39,7 +39,6 @@ type createTest struct {
 	templateInLibrary string
 	ovaURL            string
 	tagsByCategory    map[string][]string
-	resizeDisk2       bool
 }
 
 func newTest(t *testing.T) *test {
@@ -100,7 +99,7 @@ func newCreateTest(t *testing.T) *createTest {
 }
 
 func (ct *createTest) createIfMissing() error {
-	return ct.factory.CreateIfMissing(ct.ctx, ct.datacenter, ct.machineConfig, ct.ovaURL, ct.tagsByCategory, ct.resizeDisk2)
+	return ct.factory.CreateIfMissing(ct.ctx, ct.datacenter, ct.machineConfig, ct.ovaURL, ct.tagsByCategory)
 }
 
 func (ct *createTest) assertErrorFromCreateIfMissing() {
