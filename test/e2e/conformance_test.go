@@ -100,3 +100,14 @@ func TestVSphereKubernetes121BottleRocketThreeWorkersConformanceFlow(t *testing.
 	)
 	runConformanceFlow(test)
 }
+
+func TestVSphereKubernetes122BottleRocketThreeWorkersConformanceFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithBottleRocket122()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
+	)
+	runConformanceFlow(test)
+}

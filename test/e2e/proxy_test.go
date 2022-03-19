@@ -32,16 +32,17 @@ func TestVSphereKubernetes122UbuntuProxyConfig(t *testing.T) {
 	runProxyConfigFlow(test)
 }
 
-func TestVSphereKubernetes121BottlerocketProxyConfig(t *testing.T) {
+func TestVSphereKubernetes122BottlerocketProxyConfig(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithBottleRocket121(),
+		framework.NewVSphere(t, framework.WithBottleRocket122(),
 			framework.WithPrivateNetwork()),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithProxy(),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runProxyConfigFlow(test)
 }
