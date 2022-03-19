@@ -27,6 +27,7 @@ func runTinkerbellSimpleFlow(test *framework.ClusterE2ETest) {
 	test.PowerOffHardware()
 	test.CreateCluster()
 	test.DeleteCluster()
+	test.ValidateHardwareDecommissioned()
 }
 
 func runSimpleFlow(test *framework.ClusterE2ETest) {
