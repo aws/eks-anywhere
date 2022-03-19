@@ -488,7 +488,7 @@ func (e *ClusterE2ETest) providerConfig(clusterConfGitPath string) (*providerCon
 
 func (e *ClusterE2ETest) waitForWorkerNodeValidation() error {
 	ctx := context.Background()
-	return retrier.Retry(10, time.Second*10, func() error {
+	return retrier.Retry(120, time.Second*10, func() error {
 		e.T.Log("Attempting to validate worker nodes...")
 		if err := e.KubectlClient.ValidateWorkerNodes(ctx, e.ClusterConfig.Name, e.managementKubeconfigFilePath()); err != nil {
 			e.T.Logf("Worker node validation failed: %v", err)
