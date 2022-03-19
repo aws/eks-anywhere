@@ -27,7 +27,7 @@ type Factory struct {
 
 type GovcClient interface {
 	CreateLibrary(ctx context.Context, datastore, library string) error
-	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, resourcePool string, resizeDisk2 bool) error
+	DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, resourcePool string, resizeBRDisk bool) error
 	SearchTemplate(ctx context.Context, datacenter string, machineConfig *v1alpha1.VSphereMachineConfig) (string, error)
 	ImportTemplate(ctx context.Context, library, ovaURL, name string) error
 	LibraryElementExists(ctx context.Context, library string) (bool, error)
@@ -88,11 +88,11 @@ func (f *Factory) createTemplate(ctx context.Context, templatePath, ovaURL, osFa
 		return err
 	}
 
-	var resizeDisk2 bool
+	var resizeBRDisk bool
 	if strings.EqualFold(osFamily, string(v1alpha1.Bottlerocket)) {
-		resizeDisk2 = true
+		resizeBRDisk = true
 	}
-	if err := f.client.DeployTemplateFromLibrary(ctx, templateDir, templateName, f.templateLibrary, f.datacenter, f.datastore, f.resourcePool, resizeDisk2); err != nil {
+	if err := f.client.DeployTemplateFromLibrary(ctx, templateDir, templateName, f.templateLibrary, f.datacenter, f.datastore, f.resourcePool, resizeBRDisk); err != nil {
 		return fmt.Errorf("failed deploying template: %v", err)
 	}
 
