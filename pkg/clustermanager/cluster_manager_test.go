@@ -856,7 +856,7 @@ func TestClusterManagerResumeEKSAControllerReconcileSuccessWithoutMachineConfig(
 	cm, m := newClusterManager(t)
 	m.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType)
 	m.provider.EXPECT().MachineResourceType().Return("")
-	m.provider.EXPECT().DatacenterConfig().Return(datacenterConfig)
+	m.provider.EXPECT().DatacenterConfig(clusterSpec).Return(datacenterConfig)
 	m.client.EXPECT().RemoveAnnotationInNamespace(ctx, eksaVSphereDatacenterResourceType, clusterSpec.Cluster.Spec.DatacenterRef.Name, pauseAnnotation, clusterObj, "").Return(nil)
 	m.client.EXPECT().RemoveAnnotationInNamespace(ctx, eksaClusterResourceType, clusterSpec.Cluster.Name, pauseAnnotation, clusterObj, "").Return(nil)
 

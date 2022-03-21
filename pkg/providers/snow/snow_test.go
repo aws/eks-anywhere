@@ -18,12 +18,11 @@ import (
 )
 
 const (
-	expectedSnowProviderName  = "snow"
-	testClusterConfigFilename = "cluster_main_1_21.yaml"
-	credsFileEnvVar           = "EKSA_SNOW_DEVICES_CREDENTIALS_FILE"
-	credsFilePath             = "testdata/credentials"
-	certsFileEnvVar           = "EKSA_SNOW_DEVICES_CA_BUNDLES_FILE"
-	certsFilePath             = "testdata/certificates"
+	expectedSnowProviderName = "snow"
+	credsFileEnvVar          = "EKSA_SNOW_DEVICES_CREDENTIALS_FILE"
+	credsFilePath            = "testdata/credentials"
+	certsFileEnvVar          = "EKSA_SNOW_DEVICES_CA_BUNDLES_FILE"
+	certsFilePath            = "testdata/certificates"
 )
 
 type snowTest struct {
@@ -38,26 +37,18 @@ type snowTest struct {
 func newSnowTest(t *testing.T) snowTest {
 	ctrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
-	o := givenFullAPIObjects(t, testClusterConfigFilename)
 	cluster := &types.Cluster{
 		Name: "cluster",
 	}
-	provider := newProvider(t, o.datacenterConfig, o.machineConfigs, o.cluster, kubectl)
+	provider := newProvider(t, kubectl)
 	return snowTest{
 		WithT:       NewWithT(t),
 		ctx:         context.Background(),
 		kubectl:     kubectl,
 		provider:    provider,
 		cluster:     cluster,
-		clusterSpec: o.clusterSpec,
+		clusterSpec: givenClusterSpec(),
 	}
-}
-
-type apiObjects struct {
-	cluster          *v1alpha1.Cluster
-	clusterSpec      *cluster.Spec
-	datacenterConfig *v1alpha1.SnowDatacenterConfig
-	machineConfigs   map[string]*v1alpha1.SnowMachineConfig
 }
 
 func givenClusterSpec() *cluster.Spec {
@@ -108,6 +99,8 @@ func givenClusterSpec() *cluster.Spec {
 				},
 			},
 		}
+		s.SnowDatacenter = givenDatacenterConfig()
+		s.SnowMachineConfigs = givenMachineConfigs()
 		s.VersionsBundle = &cluster.VersionsBundle{
 			KubeDistro: &cluster.KubeDistro{
 				Kubernetes: cluster.VersionedRepository{
@@ -188,21 +181,8 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 	}
 }
 
-func givenFullAPIObjects(t *testing.T, fileName string) apiObjects {
-	clusterSpec := givenClusterSpec()
-	datacenterConfig := givenDatacenterConfig()
-	machineConfigs := givenMachineConfigs()
-
-	return apiObjects{
-		cluster:          clusterSpec.Cluster,
-		clusterSpec:      clusterSpec,
-		datacenterConfig: datacenterConfig,
-		machineConfigs:   machineConfigs,
-	}
-}
-
 func givenProvider(t *testing.T) *snowProvider {
-	return newProvider(t, nil, nil, nil, nil)
+	return newProvider(t, nil)
 }
 
 func givenEmptyClusterSpec() *cluster.Spec {
@@ -211,11 +191,8 @@ func givenEmptyClusterSpec() *cluster.Spec {
 	})
 }
 
-func newProvider(t *testing.T, datacenterConfig *v1alpha1.SnowDatacenterConfig, machineConfigs map[string]*v1alpha1.SnowMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient) *snowProvider {
+func newProvider(t *testing.T, kubectl ProviderKubectlClient) *snowProvider {
 	return NewProvider(
-		datacenterConfig,
-		machineConfigs,
-		clusterConfig,
 		kubectl,
 		nil,
 		test.FakeNow,
@@ -329,7 +306,7 @@ func TestGetInfrastructureBundle(t *testing.T) {
 
 func TestGetDatacenterConfig(t *testing.T) {
 	tt := newSnowTest(t)
-	tt.Expect(tt.provider.DatacenterConfig().Kind()).To(Equal("SnowDatacenterConfig"))
+	tt.Expect(tt.provider.DatacenterConfig(tt.clusterSpec).Kind()).To(Equal("SnowDatacenterConfig"))
 }
 
 func TestDatacenterResourceType(t *testing.T) {
@@ -346,7 +323,7 @@ func TestMachineResourceType(t *testing.T) {
 
 func TestMachineConfigs(t *testing.T) {
 	tt := newSnowTest(t)
-	want := tt.provider.MachineConfigs()
+	want := tt.provider.MachineConfigs(tt.clusterSpec)
 	tt.Expect(len(want)).To(Equal(2))
 }
 
@@ -355,9 +332,9 @@ func TestDeleteResources(t *testing.T) {
 	tt.kubectl.EXPECT().DeleteEksaDatacenterConfig(
 		tt.ctx,
 		snowDatacenterResourceType,
-		tt.provider.datacenterConfig.Name,
+		tt.clusterSpec.SnowDatacenter.Name,
 		tt.clusterSpec.ManagementCluster.KubeconfigFile,
-		tt.provider.datacenterConfig.Namespace,
+		tt.clusterSpec.SnowDatacenter.Namespace,
 	).Return(nil)
 	tt.kubectl.EXPECT().DeleteEksaMachineConfig(
 		tt.ctx,

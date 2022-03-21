@@ -325,7 +325,7 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	}
 
 	if clusterSpec.Cluster.IsManaged() {
-		for _, mc := range p.MachineConfigs() {
+		for _, mc := range p.MachineConfigs(clusterSpec) {
 			em, err := p.providerKubectlClient.SearchCloudStackMachineConfig(ctx, mc.GetName(), clusterSpec.ManagementCluster.KubeconfigFile, mc.GetNamespace())
 			if err != nil {
 				return err
@@ -647,11 +647,11 @@ func (p *cloudstackProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) 
 	return &infraBundle
 }
 
-func (p *cloudstackProvider) DatacenterConfig() providers.DatacenterConfig {
+func (p *cloudstackProvider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {
 	return p.datacenterConfig
 }
 
-func (p *cloudstackProvider) MachineConfigs() []providers.MachineConfig {
+func (p *cloudstackProvider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
 	var configs []providers.MachineConfig
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	workerMachineName := p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name

@@ -549,11 +549,11 @@ func (p *tinkerbellProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) 
 	return &infraBundle
 }
 
-func (p *tinkerbellProvider) DatacenterConfig() providers.DatacenterConfig {
+func (p *tinkerbellProvider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {
 	return p.datacenterConfig
 }
 
-func (p *tinkerbellProvider) MachineConfigs() []providers.MachineConfig {
+func (p *tinkerbellProvider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
 	// TODO: Figure out if something is needed here
 	var configs []providers.MachineConfig
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name

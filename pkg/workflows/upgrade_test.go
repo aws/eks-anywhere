@@ -161,8 +161,8 @@ func (c *upgradeTestSetup) expectNotToCreateBootstrap() {
 
 func (c *upgradeTestSetup) expectWriteClusterConfig() {
 	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
-		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
+		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig),
+		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs),
 		c.writer.EXPECT().Write("cluster-name-eks-a-cluster.yaml", gomock.Any(), gomock.Any()),
 	)
 }
@@ -242,13 +242,13 @@ func (c *upgradeTestSetup) expectPauseGitOpsKustomization(expectedCluster *types
 
 func (c *upgradeTestSetup) expectDatacenterConfig() {
 	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
+		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig),
 	)
 }
 
 func (c *upgradeTestSetup) expectMachineConfigs() {
 	gomock.InOrder(
-		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
+		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs),
 	)
 }
 
@@ -286,8 +286,8 @@ func (c *upgradeTestSetup) expectResumeGitOpsKustomization(expectedCluster *type
 
 func (c *upgradeTestSetup) expectVerifyClusterSpecChanged(expectedCluster *types.Cluster) {
 	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
-		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
+		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig),
+		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs),
 		c.clusterManager.EXPECT().EKSAClusterSpecChanged(c.ctx, expectedCluster, c.newClusterSpec, c.datacenterConfig, c.machineConfigs).Return(true, nil),
 	)
 }
@@ -315,8 +315,8 @@ func (c *upgradeTestSetup) expectProviderUpgradeNeeded() {
 
 func (c *upgradeTestSetup) expectVerifyClusterSpecNoChanges() {
 	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
-		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
+		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig),
+		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs),
 		c.clusterManager.EXPECT().EKSAClusterSpecChanged(c.ctx, c.workloadCluster, c.newClusterSpec, c.datacenterConfig, c.machineConfigs).Return(false, nil),
 	)
 }

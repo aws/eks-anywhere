@@ -983,7 +983,7 @@ func (c *ClusterManager) ResumeEKSAControllerReconcile(ctx context.Context, clus
 	}
 	// clear pause annotation
 	clusterSpec.Cluster.ClearPauseAnnotation()
-	provider.DatacenterConfig().ClearPauseAnnotation()
+	provider.DatacenterConfig(clusterSpec).ClearPauseAnnotation()
 	return nil
 }
 
