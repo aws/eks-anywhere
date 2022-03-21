@@ -12,6 +12,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/validation"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
@@ -452,9 +453,13 @@ func validateCNIConfig(cniConfig *CNIConfig) error {
 		return fmt.Errorf("cni not specified")
 	}
 	var cniPluginSpecified int
+	var allErrs []error
 
 	if cniConfig.Cilium != nil {
 		cniPluginSpecified++
+		if err := validateCiliumConfig(cniConfig.Cilium); err != nil {
+			allErrs = append(allErrs, err)
+		}
 	}
 
 	if cniConfig.Kindnetd != nil {
@@ -462,11 +467,26 @@ func validateCNIConfig(cniConfig *CNIConfig) error {
 	}
 
 	if cniPluginSpecified == 0 {
-		return fmt.Errorf("no cni plugin specified")
+		allErrs = append(allErrs, fmt.Errorf("no cni plugin specified"))
 	} else if cniPluginSpecified > 1 {
-		return fmt.Errorf("cannot specify more than one cni plugins")
+		allErrs = append(allErrs, fmt.Errorf("cannot specify more than one cni plugins"))
 	}
 
+	if len(allErrs) > 0 {
+		aggregate := utilerrors.NewAggregate(allErrs)
+		return fmt.Errorf("error validating cniConfig: %v", aggregate)
+	}
+
+	return nil
+}
+
+func validateCiliumConfig(cilium *CiliumConfig) error {
+	if cilium.PolicyEnforcementMode == "" {
+		return nil
+	}
+	if !validCiliumPolicyEnforcementModes[cilium.PolicyEnforcementMode] {
+		return fmt.Errorf("cilium policyEnforcementMode \"%s\" not supported", cilium.PolicyEnforcementMode)
+	}
 	return nil
 }
 

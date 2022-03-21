@@ -524,6 +524,8 @@ const (
 
 type CNI string
 
+type CiliumPolicyEnforcementMode string
+
 type CNIConfig struct {
 	Cilium   *CiliumConfig   `json:"cilium,omitempty"`
 	Kindnetd *KindnetdConfig `json:"kindnetd,omitempty"`
@@ -531,7 +533,7 @@ type CNIConfig struct {
 
 type CiliumConfig struct {
 	// PolicyEnforcementMode determines communication allowed between pods. Accepted values are default, always, never.
-	PolicyEnforcementMode string `json:"policyEnforcementMode,omitempty"`
+	PolicyEnforcementMode CiliumPolicyEnforcementMode `json:"policyEnforcementMode,omitempty"`
 }
 
 type KindnetdConfig struct{}
@@ -545,6 +547,18 @@ const (
 var validCNIs = map[CNI]struct{}{
 	Cilium:   {},
 	Kindnetd: {},
+}
+
+const (
+	CiliumPolicyModeDefault CiliumPolicyEnforcementMode = "default"
+	CiliumPolicyModeAlways  CiliumPolicyEnforcementMode = "always"
+	CiliumPolicyModeNever   CiliumPolicyEnforcementMode = "never"
+)
+
+var validCiliumPolicyEnforcementModes = map[CiliumPolicyEnforcementMode]bool{
+	CiliumPolicyModeAlways:  true,
+	CiliumPolicyModeDefault: true,
+	CiliumPolicyModeNever:   true,
 }
 
 // ClusterStatus defines the observed state of Cluster
