@@ -100,11 +100,11 @@ func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
 	}
 
 	if !hOpts.dryRun {
-		tink, close, err := tinkExecutableFromOpts(ctx, hOpts)
+		tink, closer, err := tinkExecutableFromOpts(ctx, hOpts)
 		if err != nil {
 			return err
 		}
-		defer close.Close(ctx)
+		defer closer.Close(ctx)
 
 		if err := hardware.RegisterTinkerbellHardware(ctx, tink, journal); err != nil {
 			return err
@@ -115,18 +115,16 @@ func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
 }
 
 func validateOptions(opts *hardwareOptions) error {
-	if !opts.dryRun {
-		if err := networkutils.ValidateIP(opts.tinkerbellIp); err != nil {
-			return fmt.Errorf("invalid tinkerbell-ip: %v", err)
-		}
+	if err := networkutils.ValidateIP(opts.tinkerbellIp); err != nil {
+		return fmt.Errorf("invalid tinkerbell-ip: %v", err)
+	}
 
-		if !networkutils.IsPortValid(opts.grpcPort) {
-			return fmt.Errorf("invalid grpc-port: %v", opts.certPort)
-		}
+	if !networkutils.IsPortValid(opts.grpcPort) {
+		return fmt.Errorf("invalid grpc-port: %v", opts.certPort)
+	}
 
-		if !networkutils.IsPortValid(opts.certPort) {
-			return fmt.Errorf("invalid cert-port: %v", opts.certPort)
-		}
+	if !networkutils.IsPortValid(opts.certPort) {
+		return fmt.Errorf("invalid cert-port: %v", opts.certPort)
 	}
 
 	return nil
