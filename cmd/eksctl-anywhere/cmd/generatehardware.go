@@ -15,12 +15,12 @@ import (
 )
 
 type hardwareOptions struct {
-	csvPath      string
-	outputPath   string
-	tinkerbellIp string
-	grpcPort     string
-	certPort     string
-	dryRun       bool
+	csvPath          string
+	outputPath       string
+	tinkerbellIp     string
+	grpcPort         string
+	certPort         string
+	skipRegistration bool
 }
 
 const (
@@ -39,7 +39,11 @@ var hOpts = &hardwareOptions{}
 var generateHardwareCmd = &cobra.Command{
 	Use:   "hardware",
 	Short: "Generate hardware files",
-	Long:  "Generate hardware JSON and YAML files used for Tinkerbell provider. Tinkerbell hardware JSON are registered with a Tinkerbell stack.",
+	Long: `
+Generate hardware JSON and YAML files used for Tinkerbell provider. Tinkerbell 
+hardware JSON are registered with a Tinkerbell stack. Use --skip-registration 
+to prevent Tinkerbell stack interactions.
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return hOpts.generateHardware(cmd.Context())
 	},
@@ -55,7 +59,7 @@ func init() {
 		panic(err)
 	}
 
-	flags.StringVar(&hOpts.tinkerbellIp, generateHardwareTinkerbellIpFlagName, "", "Tinkerbell stack IP address")
+	flags.StringVar(&hOpts.tinkerbellIp, generateHardwareTinkerbellIpFlagName, "", "Tinkerbell stack IP address; not required with --skip-registration")
 	if err := generateHardwareCmd.MarkFlagRequired(generateHardwareTinkerbellIpFlagName); err != nil {
 		panic(err)
 	}
@@ -63,12 +67,14 @@ func init() {
 	flags.StringVarP(&hOpts.outputPath, "output", "o", "", "directory path to output hardware files; Tinkerbell JSON files are stored under a \"json\" subdirectory")
 	flags.StringVar(&hOpts.grpcPort, "grpc-port", defaultGrpcPort, "Tinkerbell GRPC Authority port")
 	flags.StringVar(&hOpts.certPort, "cert-port", defaultCertPort, "Tinkerbell Cert URL port")
-	flags.BoolVar(&hOpts.dryRun, "dry-run", false, "skip hardware registration with the Tinkerbell stack")
+	flags.BoolVar(&hOpts.skipRegistration, "skip-registration", false, "skip hardware registration with the Tinkerbell stack")
 }
 
 func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
-	if err := validateOptions(hOpts); err != nil {
-		return err
+	if !hOpts.skipRegistration {
+		if err := validateOptions(hOpts); err != nil {
+			return err
+		}
 	}
 
 	csvFile, err := os.Open(hOpts.csvPath)
@@ -111,7 +117,7 @@ func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
 		return err
 	}
 
-	if !hOpts.dryRun {
+	if !hOpts.skipRegistration {
 		tink, closer, err := tinkExecutableFromOpts(ctx, hOpts)
 		if err != nil {
 			return err

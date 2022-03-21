@@ -251,7 +251,13 @@ func (e *ClusterE2ETest) generateHardwareConfig(opts ...CommandOpt) {
 		e.T.Fatalf("failed to create hardware csv for the test run: %v", err)
 	}
 
-	generateHardwareConfigArgs := []string{"generate", "hardware", "--dry-run", "-f", e.HardwareCsvLocation, "-o", e.ClusterConfigFolder}
+	generateHardwareConfigArgs := []string{
+		"generate", "hardware",
+		"--skip-registration",
+		"-f", e.HardwareCsvLocation,
+		"-o", e.ClusterConfigFolder,
+	}
+
 	e.RunEKSA(generateHardwareConfigArgs, opts...)
 }
 
