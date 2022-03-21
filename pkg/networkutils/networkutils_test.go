@@ -35,7 +35,7 @@ func TestIsPortValidExpectInvalid(t *testing.T) {
 	}
 }
 
-func TestIsIPUniquePass(t *testing.T) {
+func TestIsIPInUsePass(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	g := gomega.NewWithT(t)
 
@@ -44,11 +44,11 @@ func TestIsIPUniquePass(t *testing.T) {
 		Times(5).
 		Return(nil, errors.New("no connection"))
 
-	res := networkutils.IsIPUnique(client, "10.10.10.10")
+	res := networkutils.IsIPInUse(client, "10.10.10.10")
 	g.Expect(res).To(gomega.BeTrue())
 }
 
-func TestIsIPUniqueFail(t *testing.T) {
+func TestIsIPInUseFail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	g := gomega.NewWithT(t)
 
@@ -59,7 +59,7 @@ func TestIsIPUniqueFail(t *testing.T) {
 	client.EXPECT().DialTimeout(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(conn, nil)
 
-	res := networkutils.IsIPUnique(client, "10.10.10.10")
+	res := networkutils.IsIPInUse(client, "10.10.10.10")
 	g.Expect(res).To(gomega.BeFalse())
 }
 

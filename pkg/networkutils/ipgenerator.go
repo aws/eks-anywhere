@@ -24,7 +24,7 @@ func (ipgen IPGenerator) GenerateUniqueIP(cidrBlock string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for !IsIPUnique(ipgen.netClient, uniqueIp.String()) {
+	for !IsIPInUse(ipgen.netClient, uniqueIp.String()) {
 		uniqueIp, err = ipgen.randIp(cidr)
 		if err != nil {
 			return "", err
