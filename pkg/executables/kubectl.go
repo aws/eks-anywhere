@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	api "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"sort"
 	"strings"
 
@@ -1350,16 +1349,4 @@ func (k *Kubectl) GetResources(ctx context.Context, resourceType string, opts ..
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
 	return stdOut, err
-}
-
-func (k *Kubectl) GetPackageBundles(ctx context.Context, opts ...KubectlOpt) (*api.PackageBundleList, error) {
-	stdOut, err := k.GetResources(ctx, "packageBundles", opts...)
-	if err != nil {
-		return nil, err
-	}
-	obj := &api.PackageBundleList{}
-	if err = json.Unmarshal(stdOut.Bytes(), obj); err != nil {
-		return nil, fmt.Errorf("error parsing packageBundle response: %v", err)
-	}
-	return obj, nil
 }
