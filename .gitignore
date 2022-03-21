@@ -15,4 +15,5 @@ cluster.yaml
 eksa-test
 generated/
 eks-anywhere-downloads*
-docs/themes
+hardware-manifests/
+*.env
