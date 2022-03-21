@@ -94,7 +94,7 @@ type ClusterClient interface {
 
 type Networking interface {
 	GenerateManifest(ctx context.Context, clusterSpec *cluster.Spec, namespaces []string) ([]byte, error)
-	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
+	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec, namespaces []string) (*types.ChangeDiff, error)
 }
 
 type AwsIamAuth interface {
@@ -565,8 +565,9 @@ func (c *ClusterManager) InstallNetworking(ctx context.Context, cluster *types.C
 	return nil
 }
 
-func (c *ClusterManager) UpgradeNetworking(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
-	return c.networking.Upgrade(ctx, cluster, currentSpec, newSpec)
+func (c *ClusterManager) UpgradeNetworking(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec, provider providers.Provider) (*types.ChangeDiff, error) {
+	providerNamespaces := getProviderNamespaces(provider.GetDeployments())
+	return c.networking.Upgrade(ctx, cluster, currentSpec, newSpec, providerNamespaces)
 }
 
 func getProviderNamespaces(providerDeployments map[string][]string) []string {
