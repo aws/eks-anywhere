@@ -124,7 +124,7 @@ func (c values) set(value interface{}, path ...string) {
 }
 
 func templateValues(spec *cluster.Spec) values {
-	return values{
+	val := values{
 		"cni": values{
 			"chainingMode": "portmap",
 		},
@@ -153,6 +153,11 @@ func templateValues(spec *cluster.Spec) values {
 			},
 		},
 	}
+
+	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode != "" {
+		val["policyEnforcementMode"] = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode
+	}
+	return val
 }
 
 func getChartUriAndVersion(spec *cluster.Spec) (uri, version string) {

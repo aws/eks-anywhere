@@ -21,7 +21,7 @@ type ClusterManager interface {
 	UpgradeCluster(ctx context.Context, managementCluster, workloadCluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	DeleteCluster(ctx context.Context, managementCluster, clusterToDelete *types.Cluster, provider providers.Provider, clusterSpec *cluster.Spec) error
 	InstallCAPI(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error
-	InstallNetworking(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
+	InstallNetworking(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error
 	UpgradeNetworking(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 	InstallStorageClass(ctx context.Context, cluster *types.Cluster, provider providers.Provider) error
 	SaveLogsManagementCluster(ctx context.Context, cluster *types.Cluster) error
