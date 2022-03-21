@@ -753,7 +753,6 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 	}
 }
 
-
 func TestKubectlLoadSecret(t *testing.T) {
 	tests := []struct {
 		testName string
