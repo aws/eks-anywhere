@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"text/tabwriter"
 
 	api "github.com/aws/eks-anywhere-packages/api/v1alpha1"
-	"text/tabwriter"
 )
 
 const (
