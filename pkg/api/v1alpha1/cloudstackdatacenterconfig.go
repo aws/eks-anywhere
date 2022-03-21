@@ -20,10 +20,7 @@ func NewCloudStackDatacenterConfigGenerate(clusterName string) *CloudStackDatace
 			Domain: "domain1",
 			Zones: []CloudStackZone{
 				{
-					Name: "",
-					Network: CloudStackResourceIdentifier{
-						Name: "",
-					},
+					Network: CloudStackResourceIdentifier{},
 				},
 			},
 			Account: "admin",
