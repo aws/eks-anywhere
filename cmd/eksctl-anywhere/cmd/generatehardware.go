@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -29,12 +28,18 @@ const (
 	defaultCertPort = "42114"
 )
 
+// Flag name constants
+const (
+	generateHardwareFilenameFlagName     = "filename"
+	generateHardwareTinkerbellIpFlagName = "tinkerbell-ip"
+)
+
 var hOpts = &hardwareOptions{}
 
 var generateHardwareCmd = &cobra.Command{
 	Use:   "hardware",
 	Short: "Generate hardware files",
-	Long:  "This command is used to generate hardware JSON and YAML files used for tinkerbell provider",
+	Long:  "Generate hardware JSON and YAML files used for Tinkerbell provider. Tinkerbell hardware JSON are registered with a Tinkerbell stack.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return hOpts.generateHardware(cmd.Context())
 	},
@@ -42,16 +47,23 @@ var generateHardwareCmd = &cobra.Command{
 
 func init() {
 	generateCmd.AddCommand(generateHardwareCmd)
-	generateHardwareCmd.Flags().StringVarP(&hOpts.csvPath, "filename", "f", "", "path to csv file")
-	generateHardwareCmd.Flags().StringVarP(&hOpts.outputPath, "output", "o", "", "directory path to output hardware files")
-	generateHardwareCmd.Flags().StringVar(&hOpts.tinkerbellIp, "tinkerbell-ip", "", "Tinkerbell stack IP, required unless --dry-run flag is set")
-	generateHardwareCmd.Flags().StringVar(&hOpts.grpcPort, "grpc-port", defaultGrpcPort, "Tinkerbell GRPC Authority port")
-	generateHardwareCmd.Flags().StringVar(&hOpts.certPort, "cert-port", defaultCertPort, "Tinkerbell Cert URL port")
-	generateHardwareCmd.Flags().BoolVar(&hOpts.dryRun, "dry-run", false, "set this flag to skip pushing Hardware to tinkerbell stack automatically")
-	err := generateHardwareCmd.MarkFlagRequired("filename")
-	if err != nil {
-		log.Fatalf("Error marking flag as required: %v", err)
+
+	flags := generateHardwareCmd.Flags()
+
+	flags.StringVarP(&hOpts.csvPath, generateHardwareFilenameFlagName, "f", "", "CSV file path")
+	if err := generateHardwareCmd.MarkFlagRequired(generateHardwareFilenameFlagName); err != nil {
+		panic(err)
 	}
+
+	flags.StringVar(&hOpts.tinkerbellIp, generateHardwareTinkerbellIpFlagName, "", "Tinkerbell stack IP address")
+	if err := generateHardwareCmd.MarkFlagRequired(generateHardwareTinkerbellIpFlagName); err != nil {
+		panic(err)
+	}
+
+	flags.StringVarP(&hOpts.outputPath, "output", "o", "", "directory path to output hardware files; Tinkerbell JSON files are stored under a \"json\" subdirectory")
+	flags.StringVar(&hOpts.grpcPort, "grpc-port", defaultGrpcPort, "Tinkerbell GRPC Authority port")
+	flags.StringVar(&hOpts.certPort, "cert-port", defaultCertPort, "Tinkerbell Cert URL port")
+	flags.BoolVar(&hOpts.dryRun, "dry-run", false, "skip hardware registration with the Tinkerbell stack")
 }
 
 func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
