@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/aws/eks-anywhere/pkg/features"
+
 	etcdv1beta1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -444,6 +446,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"externalProvisionerImage":                   bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
 		"cloudstackManagementApiEndpoint":            managementApiEndpoint,
 		"managerImage":                               bundle.CloudStack.ClusterAPIController.VersionedImage(),
+		"kubeVipImage":                               bundle.CloudStack.KubeVip.VersionedImage(),
+		"cloudstackKubeVip":                          !features.IsActive(features.CloudStackKubeVipDisabled()),
 		"verifySsl":                                  verifySsl,
 		"cloudstackDomain":                           datacenterConfigSpec.Domain,
 		"cloudstackZones":                            datacenterConfigSpec.Zones,

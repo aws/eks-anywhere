@@ -161,7 +161,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 	}
 
 	var cloudStackBundle anywherev1alpha1.CloudStackBundle
-	if r.DevRelease && r.BuildRepoBranchName == "main" {
+	if r.DevRelease && (r.BuildRepoBranchName == "main" || r.BuildRepoBranchName == "cloudstack") {
 		cloudStackBundle, err = r.GetCloudStackBundle(imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for CloudStack infrastructure provider")
@@ -277,7 +277,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		"haproxy":                         r.GetHaproxyAssets,
 	}
 
-	if r.DevRelease && r.BuildRepoBranchName == "main" {
+	if r.DevRelease && (r.BuildRepoBranchName == "main" || r.BuildRepoBranchName == "cloudstack") {
 		eksAArtifactsFuncs["cluster-api-provider-tinkerbell"] = r.GetCaptAssets
 		eksAArtifactsFuncs["cluster-api-provider-cloudstack"] = r.GetCapcAssets
 		eksAArtifactsFuncs["tink"] = r.GetTinkAssets

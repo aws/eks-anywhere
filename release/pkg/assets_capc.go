@@ -130,7 +130,7 @@ func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
 func (r *ReleaseConfig) GetCloudStackBundle(imageDigests map[string]string) (anywherev1alpha1.CloudStackBundle, error) {
 	cloudstackBundleArtifacts := map[string][]Artifact{
 		"cluster-api-provider-cloudstack": r.BundleArtifactsTable["cluster-api-provider-cloudstack"],
-		"kube-rbac-proxy":                 r.BundleArtifactsTable["kube-rbac-proxy"],
+		"kube-vip":                        r.BundleArtifactsTable["kube-vip"],
 	}
 
 	var version string
@@ -185,6 +185,7 @@ func (r *ReleaseConfig) GetCloudStackBundle(imageDigests map[string]string) (any
 	bundle := anywherev1alpha1.CloudStackBundle{
 		Version:              version,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-cloudstack-controller"],
+		KubeVip:              bundleImageArtifacts["kube-vip"],
 		Components:           bundleManifestArtifacts["infrastructure-components.yaml"],
 		Metadata:             bundleManifestArtifacts["metadata.yaml"],
 	}
