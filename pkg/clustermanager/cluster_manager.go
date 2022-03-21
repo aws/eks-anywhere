@@ -93,7 +93,7 @@ type ClusterClient interface {
 }
 
 type Networking interface {
-	GenerateManifest(ctx context.Context, clusterSpec *cluster.Spec) ([]byte, error)
+	GenerateManifest(ctx context.Context, clusterSpec *cluster.Spec, namespaces []string) ([]byte, error)
 	Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error)
 }
 
@@ -548,8 +548,9 @@ func (c *ClusterManager) waitForCAPI(ctx context.Context, cluster *types.Cluster
 	return nil
 }
 
-func (c *ClusterManager) InstallNetworking(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
-	networkingManifestContent, err := c.networking.GenerateManifest(ctx, clusterSpec)
+func (c *ClusterManager) InstallNetworking(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec, provider providers.Provider) error {
+	providerNamespaces := getProviderNamespaces(provider.GetDeployments())
+	networkingManifestContent, err := c.networking.GenerateManifest(ctx, clusterSpec, providerNamespaces)
 	if err != nil {
 		return fmt.Errorf("error generating networking manifest: %v", err)
 	}
@@ -566,6 +567,14 @@ func (c *ClusterManager) InstallNetworking(ctx context.Context, cluster *types.C
 
 func (c *ClusterManager) UpgradeNetworking(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
 	return c.networking.Upgrade(ctx, cluster, currentSpec, newSpec)
+}
+
+func getProviderNamespaces(providerDeployments map[string][]string) []string {
+	namespaces := make([]string, 0, len(providerDeployments))
+	for namespace := range providerDeployments {
+		namespaces = append(namespaces, namespace)
+	}
+	return namespaces
 }
 
 func (c *ClusterManager) InstallStorageClass(ctx context.Context, cluster *types.Cluster, provider providers.Provider) error {

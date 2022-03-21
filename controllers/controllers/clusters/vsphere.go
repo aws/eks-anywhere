@@ -266,13 +266,12 @@ func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *an
 
 		v.Log.Info("About to apply CNI")
 
-		// TODO use NewCilium
+		// TODO use NewCilium, create string slice of namespaces used for capv for calling cilium.GenerateManifest
 		cilium := cilium.Cilium{}
 		if err != nil {
 			return reconciler.Result{}, err
 		}
-
-		ciliumSpec, err := cilium.GenerateManifest(ctx, specWithBundles)
+		ciliumSpec, err := cilium.GenerateManifest(ctx, specWithBundles, []string{})
 		if err != nil {
 			return reconciler.Result{}, err
 		}
