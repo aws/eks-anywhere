@@ -2,6 +2,7 @@ package curatedpackages
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
@@ -66,13 +67,25 @@ func getLatestBundleFromCluster(ctx context.Context, kubeConfig string) (*api.Pa
 		return nil, fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	kubectl := deps.Kubectl
-	bundleList, err := kubectl.GetPackageBundles(ctx, params...)
+	bundleList, err := getPackageBundles(ctx, kubectl, params...)
 	if err != nil {
 		return nil, err
 	}
 	allBundles := bundleList.Items
 	sortBundlesNewestFirst(allBundles)
 	return &allBundles[0], nil
+}
+
+func getPackageBundles(ctx context.Context, kubectl *executables.Kubectl, opts ...executables.KubectlOpt) (*api.PackageBundleList, error) {
+	stdOut, err := kubectl.GetResources(ctx, "packageBundles", opts...)
+	if err != nil {
+		return nil, err
+	}
+	obj := &api.PackageBundleList{}
+	if err = json.Unmarshal(stdOut.Bytes(), obj); err != nil {
+		return nil, fmt.Errorf("error parsing packageBundle response: %v", err)
+	}
+	return obj, nil
 }
 
 func sortBundlesNewestFirst(bundles []api.PackageBundle) {
