@@ -27,7 +27,25 @@ const (
 	invalidEncoding            = "=====W0dsb2JhbF0KYXBpLWtleSA7IHRlc3Qta2V5CnNlY3JldC1rZXkgOyB0ZXN0LXNlY3JldAphcGktdXJsIDsgaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCnZlcmlmeS1zc2wgOyBmYWxzZQo======"
 )
 
+type testContext struct {
+	oldCloudStackCloudConfigSecret   string
+	isCloudStackCloudConfigSecretSet bool
+}
+
+func (tctx *testContext) backupContext() {
+	tctx.oldCloudStackCloudConfigSecret, tctx.isCloudStackCloudConfigSecretSet = os.LookupEnv(decoder.EksacloudStackCloudConfigB64SecretKey)
+}
+
+func (tctx *testContext) restoreContext() {
+	if tctx.isCloudStackCloudConfigSecretSet {
+		os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, tctx.oldCloudStackCloudConfigSecret)
+	}
+}
+
 func TestValidConfigShouldSucceedtoParse(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+
 	g := NewWithT(t)
 	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, validCloudStackCloudConfig)
 	execConfig, err := decoder.ParseCloudStackSecret()
@@ -36,30 +54,50 @@ func TestValidConfigShouldSucceedtoParse(t *testing.T) {
 	g.Expect(execConfig.SecretKey).To(Equal(secretKey))
 	g.Expect(execConfig.ManagementUrl).To(Equal(apiUrl))
 	g.Expect(execConfig.VerifySsl).To(Equal(verifySsl))
+
+	tctx.restoreContext()
 }
 
 func TestMissingApiKeyShouldFailToParse(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+
 	g := NewWithT(t)
 	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, missingApiKey)
 	_, err := decoder.ParseCloudStackSecret()
 	g.Expect(err).ToNot(BeNil())
+
+	tctx.restoreContext()
 }
 
 func TestMissingSecretKeyShouldFailToParse(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+
 	g := NewWithT(t)
 	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, missingSecretKey)
 	_, err := decoder.ParseCloudStackSecret()
 	g.Expect(err).ToNot(BeNil())
+
+	tctx.restoreContext()
 }
 
 func TestMissingApiUrlShouldFailToParse(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+
 	g := NewWithT(t)
 	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, missingApiUrl)
 	_, err := decoder.ParseCloudStackSecret()
 	g.Expect(err).ToNot(BeNil())
+
+	tctx.restoreContext()
 }
 
 func TestMissingVerifySslShouldSetDefaultValue(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+
 	g := NewWithT(t)
 	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, missingVerifySsl)
 	execConfig, err := decoder.ParseCloudStackSecret()
@@ -68,39 +106,66 @@ func TestMissingVerifySslShouldSetDefaultValue(t *testing.T) {
 	g.Expect(execConfig.SecretKey).To(Equal(secretKey))
 	g.Expect(execConfig.ManagementUrl).To(Equal(apiUrl))
 	g.Expect(execConfig.VerifySsl).To(Equal(defaultVerifySsl))
+
+	tctx.restoreContext()
 }
 
 func TestInvalidVerifySslShouldFailToParse(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+
 	g := NewWithT(t)
 	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, invalidVerifySslValue)
 	_, err := decoder.ParseCloudStackSecret()
 	g.Expect(err).ToNot(BeNil())
+
+	tctx.restoreContext()
 }
 
 func TestMissingGlobalSectionShouldFailToParse(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+
 	g := NewWithT(t)
 	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, missingGlobalSection)
 	_, err := decoder.ParseCloudStackSecret()
 	g.Expect(err).ToNot(BeNil())
+
+	tctx.restoreContext()
 }
 
 func TestInvalidINIShouldFailToParse(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+
 	g := NewWithT(t)
 	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, invalidINI)
 	_, err := decoder.ParseCloudStackSecret()
 	g.Expect(err).ToNot(BeNil())
+
+	tctx.restoreContext()
 }
 
 func TestMissingEnvVariableShouldFailToParse(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+
 	g := NewWithT(t)
-	os.Clearenv()
+	os.Unsetenv(decoder.EksacloudStackCloudConfigB64SecretKey)
 	_, err := decoder.ParseCloudStackSecret()
 	g.Expect(err).ToNot(BeNil())
+
+	tctx.restoreContext()
 }
 
 func TestInvalidEncodingShouldFailToParse(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+
 	g := NewWithT(t)
 	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, invalidEncoding)
 	_, err := decoder.ParseCloudStackSecret()
 	g.Expect(err).ToNot(BeNil())
+
+	tctx.restoreContext()
 }
