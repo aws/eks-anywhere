@@ -6,16 +6,18 @@
   },
   "spec": {
     "computeOffering": {
-      "value": "testOffering",
-      "type": "name"
+      "name": "testOffering"
     },
-    "users": [{
-      "name": "maxdrib",
-      "sshAuthorizedKeys": ["ssh-rsa test123 hi"]
-    }],
+    "users": [
+      {
+        "name": "maxdrib",
+        "sshAuthorizedKeys": [
+          "ssh-rsa test123 hi"
+        ]
+      }
+    ],
     "template": {
-      "value": "testTemplate",
-      "type": "name"
+      "name": "testTemplate"
     }
   }
 }

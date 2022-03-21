@@ -36,11 +36,8 @@ metadata:
 spec:
   zones:
     - network:
-        value: "Shared1"
-        type: "name"
-      zone:
-        value: "zone1"
-        type: "name"
+        name: "Shared1"
+      name: "zone1"
   domain: "dribinm"
   account: "dribinm-admin"
 
@@ -51,15 +48,13 @@ metadata:
   name: test-cp
 spec:
   computeOffering:
-    value: "Test Instance"
-    type: "name"
+    name: "Test Instance"
   users:
     - name: "maxdrib"
       sshAuthorizedKeys:
         - "authorizedKey"
   template:
-    value: "rhel-8-kube-v1.21.5-v0.6.4-beta"
-    type: "name"
+    name: "rhel-8-kube-v1.21.5-v0.6.4-beta"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
@@ -68,13 +63,11 @@ metadata:
   name: test
 spec:
   computeOffering:
-    value: "Test Instance"
-    type: "name"
+    name: "Test Instance"
   users:
     - name: "maxdrib"
       sshAuthorizedKeys:
         - "authorizedKey"
   template:
-    value: "rhel-8-kube-v1.21.5-v0.6.4-beta"
-    type: "name"
+    name: "rhel-8-kube-v1.21.5-v0.6.4-beta"
 ---

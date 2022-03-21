@@ -644,13 +644,11 @@ func TestKubectlGetEksaCloudStackMachineConfig(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{Name: "test-etcd"},
 				Spec: v1alpha1.CloudStackMachineConfigSpec{
-					Template: v1alpha1.CloudStackResourceRef{
-						Type:  "name",
-						Value: "testTemplate",
+					Template: v1alpha1.CloudStackResourceIdentifier{
+						Name: "testTemplate",
 					},
-					ComputeOffering: v1alpha1.CloudStackResourceRef{
-						Type:  "name",
-						Value: "testOffering",
+					ComputeOffering: v1alpha1.CloudStackResourceIdentifier{
+						Name: "testOffering",
 					},
 					Users: []v1alpha1.UserConfiguration{
 						{
@@ -710,15 +708,11 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: v1alpha1.CloudStackDatacenterConfigSpec{
-					Zones: []v1alpha1.CloudStackZoneRef{
+					Zones: []v1alpha1.CloudStackZone{
 						{
-							Zone: v1alpha1.CloudStackResourceRef{
-								Type:  v1alpha1.Name,
-								Value: "testZone",
-							},
-							Network: v1alpha1.CloudStackResourceRef{
-								Type:  v1alpha1.Name,
-								Value: "testNetwork",
+							Name: "testZone",
+							Network: v1alpha1.CloudStackResourceIdentifier{
+								Name: "testNetwork",
 							},
 						},
 					},
