@@ -1,5 +1,5 @@
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: BadCluster
+kind: Cluster
 metadata:
   name: eksa-unit-test
 spec:
@@ -16,44 +16,43 @@ spec:
     endpoint:
       host: test-ip
     machineGroupRef:
-      kind: BadCloudStackMachineConfig
+      kind: CloudStackMachineConfig
       name: eksa-unit-test
   datacenterRef:
-    kind: BadCloudStackDatacenterConfig
+    kind: CloudStackDatacenterConfig
     name: eksa-unit-test
-  kubernetesVersion: "1.19"
+  kubernetesVersion: "1.21"
   workerNodeGroupConfigurations:
     - count: 3
       machineGroupRef:
-        kind: BadCloudStackMachineConfig
+        kind: CloudStackMachineConfig
         name: eksa-unit-test
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: BadCloudStackDatacenterConfig
+kind: CloudStackDatacenterConfig
 metadata:
   name: eksa-unit-test
 spec:
   account: "admin"
   domain: "domain1"
-  insecure: false
   zones:
-    - name: "zone1"
+    - id: "zoneId"
       network:
-        name: "net1"
+        id: "netId"
+  managementApiEndpoint: "https://127.0.0.1:8080/client/api"
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: BadCloudStackMachineConfig
+kind: CloudStackMachineConfig
 metadata:
   name: eksa-unit-test
 spec:
   computeOffering:
-    name: "m4-large"
-  keyPairName: "cloudstack-keypair"
-  OSFamily: Ubuntu,
+    id: "m4-large-id"
+  users:
+    - name: "mySshUsername"
+      sshAuthorizedKeys:
+        - "mySshAuthorizedKey"
   template:
-    name: "centos7-k8s-119"
-  userCustomDetails:
-    foo: "bar"
-    key: "value"
+    id: "centos7-k8s-121-id"

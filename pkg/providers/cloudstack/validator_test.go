@@ -19,14 +19,12 @@ const (
 	testDataDir                   = "testdata"
 )
 
-var testTemplate = v1alpha1.CloudStackResourceRef{
-	Type:  "name",
-	Value: "centos7-k8s-118",
+var testTemplate = v1alpha1.CloudStackResourceIdentifier{
+	Name: "centos7-k8s-118",
 }
 
-var testOffering = v1alpha1.CloudStackResourceRef{
-	Type:  "name",
-	Value: "m4-large",
+var testOffering = v1alpha1.CloudStackResourceIdentifier{
+	Name: "m4-large",
 }
 
 func thenErrorExpected(t *testing.T, expected string, err error) {
@@ -134,10 +132,32 @@ func TestValidateDatacenterConfigsNoNetwork(t *testing.T) {
 	cmk.EXPECT().ValidateDomainPresent(ctx, gomock.Any()).Return(v1alpha1.CloudStackResourceIdentifier{Id: "5300cdac-74d5-11ec-8696-c81f66d3e965", Name: "ROOT"}, nil)
 	cmk.EXPECT().ValidateAccountPresent(ctx, gomock.Any(), gomock.Any()).Return(nil)
 
-	datacenterConfig.Spec.Zones[0].Network.Value = ""
+	datacenterConfig.Spec.Zones[0].Network.Id = ""
+	datacenterConfig.Spec.Zones[0].Network.Name = ""
 	err = validator.ValidateCloudStackDatacenterConfig(ctx, cloudStackClusterSpec.datacenterConfig)
 
 	thenErrorExpected(t, "zone network is not set or is empty", err)
+}
+
+func TestValidateDatacenterBadManagementEndpoint(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get datacenter config from file")
+	}
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	cloudStackClusterSpec := &Spec{
+		Spec:                 clusterSpec,
+		datacenterConfig:     datacenterConfig,
+		machineConfigsLookup: nil,
+	}
+	validator := NewValidator(cmk)
+
+	datacenterConfig.Spec.ManagementApiEndpoint = ":1234.5234"
+	err = validator.ValidateCloudStackDatacenterConfig(ctx, cloudStackClusterSpec.datacenterConfig)
+
+	thenErrorExpected(t, "error while checking management api endpoint: :1234.5234 is not a valid url", err)
 }
 
 func TestSetupAndValidateUsersNil(t *testing.T) {
@@ -406,7 +426,7 @@ func TestSetupAndValidateCreateClusterTemplateDifferent(t *testing.T) {
 		machineConfigsLookup: machineConfigs,
 	}
 	controlPlaneMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.Template = v1alpha1.CloudStackResourceRef{Value: "different", Type: "name"}
+	cloudStackClusterSpec.machineConfigsLookup[controlPlaneMachineConfigName].Spec.Template = v1alpha1.CloudStackResourceIdentifier{Name: "different"}
 
 	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
 	thenErrorExpected(t, "control plane and etcd machines must have the same template specified", err)

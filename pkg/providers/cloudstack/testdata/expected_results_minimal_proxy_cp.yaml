@@ -19,10 +19,6 @@ spec:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: CloudStackCluster
     name: test
-  managedExternalEtcdRef:
-    apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
-    kind: EtcdadmCluster
-    name: test-etcd
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackCluster
@@ -35,13 +31,15 @@ spec:
     port: 6443
   zones:
     - network:
-        name: "net1"
-      name: "zone1"
+        name: net1
+      name: zone1
+  domain: domain1
+  account: admin
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate
 metadata:
-  name: test-control-plane-template-original
+  name: test-control-plane-template-1234567890000
   namespace: eksa-system
 spec:
   template:
@@ -50,8 +48,6 @@ spec:
         name: m4-large
       template:
         name: centos7-k8s-118
-      affinitygroupids:
-      - control-plane-anti-affinity
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
@@ -59,19 +55,20 @@ metadata:
   name: test
   namespace: eksa-system
 spec:
-  infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-    kind: CloudStackMachineTemplate
-    name: test-control-plane-template-original
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: CloudStackMachineTemplate
+      name: test-control-plane-template-1234567890000
   kubeadmConfigSpec:
     clusterConfiguration:
       imageRepository: public.ecr.aws/eks-distro/kubernetes
       etcd:
-        external:
-          endpoints: []
-          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
-          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
-          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
+        local:
+          imageRepository: public.ecr.aws/eks-distro/etcd-io
+          imageTag: v3.4.16-eks-1-21-4
+          extraArgs:
+            cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       dns:
         imageRepository: public.ecr.aws/eks-distro/coredns
         imageTag: v1.8.3-eks-1-21-4
@@ -84,6 +81,7 @@ spec:
           audit-log-maxbackup: "10"
           audit-log-maxsize: "512"
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         extraVolumes:
         - hostPath: /etc/kubernetes/audit-policy.yaml
           mountPath: /etc/kubernetes/audit-policy.yaml
@@ -104,9 +102,11 @@ spec:
         extraArgs:
           cloud-provider: external
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
       scheduler:
         extraArgs:
           profiling: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
     files:
     - content: |
         apiVersion: v1
@@ -313,6 +313,13 @@ spec:
           - "RequestReceived"
       owner: root:root
       path: /etc/kubernetes/audit-policy.yaml
+    - content: |
+        [Service]
+        Environment="HTTP_PROXY=1.1.1.1:8080"
+        Environment="HTTPS_PROXY=1.1.1.1:8443"
+        Environment="NO_PROXY=192.168.0.0/16,10.96.0.0/12,localhost,127.0.0.1,.svc,1.1.1.1,1.2.3.4:6443"
+      owner: root:root
+      path: /etc/systemd/system/containerd.service.d/http-proxy.conf
     initConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -320,7 +327,9 @@ spec:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.local_hostname }}'
+        taints: []
     joinConfiguration:
       nodeRegistration:
         criSocket: /var/run/containerd/containerd.sock
@@ -328,9 +337,13 @@ spec:
           provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
           read-only-port: "0"
           anonymous-auth: "false"
+          tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
         name: '{{ ds.meta_data.local_hostname }}'
+        taints: []
     preKubeadmCommands:
     - swapoff -a
+    - sudo systemctl daemon-reload
+    - sudo systemctl restart containerd
     - hostname "{{ ds.meta_data.local_hostname }}"
     - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
     - echo "127.0.0.1   localhost" >>/etc/hosts
@@ -345,49 +358,3 @@ spec:
     format: cloud-config
   replicas: 3
   version: v1.21.2-eks-1-21-4
----
-kind: EtcdadmCluster
-apiVersion: etcdcluster.cluster.x-k8s.io/v1beta1
-metadata:
-  name: test-etcd
-  namespace: eksa-system
-spec:
-  replicas: 3
-  etcdadmConfigSpec:
-    etcdadmBuiltin: true
-    format: cloud-config
-    cloudInitConfig:
-      version: 3.4.16
-      installDir: "/usr/bin"
-    preEtcdadmCommands:
-    - swapoff -a
-    - hostname "{{ ds.meta_data.local_hostname }}"
-    - echo "::1         ipv6-localhost ipv6-loopback" >/etc/hosts
-    - echo "127.0.0.1   localhost" >>/etc/hosts
-    - echo "127.0.0.1   {{ ds.meta_data.local_hostname }}" >>/etc/hosts
-    - echo "{{ ds.meta_data.local_hostname }}" >/etc/hostname
-    users:
-    - name: mySshUsername
-      sshAuthorizedKeys:
-      - 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1BK73XhIzjX+meUr7pIYh6RHbvI3tmHeQIXY5lv7aztN1UoX+bhPo3dwo2sfSQn5kuxgQdnxIZ/CTzy0p0GkEYVv3gwspCeurjmu0XmrdmaSGcGxCEWT/65NtvYrQtUE5ELxJ+N/aeZNlK2B7IWANnw/82913asXH4VksV1NYNduP0o1/G4XcwLLSyVFB078q/oEnmvdNIoS61j4/o36HVtENJgYr0idcBvwJdvcGxGnPaqOhx477t+kfJAa5n5dSA5wilIaoXH5i1Tf/HsTCM52L+iNCARvQzJYZhzbWI1MDQwzILtIBEQCJsl2XSqIupleY8CxqQ6jCXt2mhae+wPc3YmbO5rFvr2/EvC57kh3yDs1Nsuj8KOvD78KeeujbR8n8pScm3WDp62HFQ8lEKNdeRNj6kB8WnuaJvPnyZfvzOhwG65/9w13IBl7B1sWxbFnq2rMpm5uHVK7mAmjL0Tt8zoDhcE1YJEnp9xte3/pvmKPkST5Q/9ZtR9P5sI+02jY0fvPkPyC03j2gsPixG7rpOCwpOdbny4dcj0TDeeXJX8er+oVfJuLYz0pNWJcT2raDdFfcqvYA0B0IyNYlj5nWX4RuEcyT3qocLReWPnZojetvAG/H8XwOh7fEVGqHAKOVSnPXCSQJPl6s0H12jPJBDJMTydtYPEszl4/CeQ=='
-      sudo: ALL=(ALL) NOPASSWD:ALL
-  infrastructureTemplate:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-    kind: CloudStackMachineTemplate
-    name: test-etcd-template-original
----
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: CloudStackMachineTemplate
-metadata:
-  name: test-etcd-template-original
-  namespace: 'eksa-system'
-spec:
-  template:
-    spec:
-      offering:
-        name: m4-large
-      template:
-        name: centos7-k8s-118
-      affinitygroupids:
-      - etcd-affinity
----

@@ -19,6 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -267,7 +268,7 @@ func (p *cloudstackProvider) validateManagementApiEndpoint(rawurl string) error 
 func getHostnameFromUrl(rawurl string) (string, error) {
 	url, err := url.Parse(rawurl)
 	if err != nil {
-		return "", fmt.Errorf("#{rawurl} is not a valid url")
+		return "", fmt.Errorf("%s is not a valid url", rawurl)
 	}
 
 	return url.Hostname(), nil
@@ -416,45 +417,63 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 	host, port, _ := net.SplitHostPort(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
+	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
+		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
+	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
+		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
+		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
+		Append(sharedExtraArgs)
 
 	values := map[string]interface{}{
-		"clusterName":                            clusterSpec.Cluster.Name,
-		"controlPlaneEndpointHost":               host,
-		"controlPlaneEndpointPort":               port,
-		"controlPlaneReplicas":                   clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
-		"kubernetesRepository":                   bundle.KubeDistro.Kubernetes.Repository,
-		"kubernetesVersion":                      bundle.KubeDistro.Kubernetes.Tag,
-		"etcdRepository":                         bundle.KubeDistro.Etcd.Repository,
-		"etcdImageTag":                           bundle.KubeDistro.Etcd.Tag,
-		"corednsRepository":                      bundle.KubeDistro.CoreDNS.Repository,
-		"corednsVersion":                         bundle.KubeDistro.CoreDNS.Tag,
-		"nodeDriverRegistrarImage":               bundle.KubeDistro.NodeDriverRegistrar.VersionedImage(),
-		"livenessProbeImage":                     bundle.KubeDistro.LivenessProbe.VersionedImage(),
-		"externalAttacherImage":                  bundle.KubeDistro.ExternalAttacher.VersionedImage(),
-		"externalProvisionerImage":               bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
-		"cloudstackManagementApiEndpoint":        managementApiEndpoint,
-		"managerImage":                           bundle.CloudStack.ClusterAPIController.VersionedImage(),
-		"verifySsl":                              verifySsl,
-		"cloudstackDomain":                       datacenterConfigSpec.Domain,
-		"cloudstackZones":                        datacenterConfigSpec.Zones,
-		"cloudstackAccount":                      datacenterConfigSpec.Account,
-		"cloudstackControlPlaneComputeOffering":  controlPlaneMachineSpec.ComputeOffering.Value,
-		"cloudstackControlPlaneTemplateOffering": controlPlaneMachineSpec.Template.Value,
-		"cloudstackControlPlaneCustomDetails":    controlPlaneMachineSpec.UserCustomDetails,
-		"affinityGroupIds":                       controlPlaneMachineSpec.AffinityGroupIds,
-		"cloudstackEtcdComputeOffering":          etcdMachineSpec.ComputeOffering.Value,
-		"cloudstackEtcdTemplateOffering":         etcdMachineSpec.Template.Value,
-		"cloudstackEtcdCustomDetails":            etcdMachineSpec.UserCustomDetails,
-		"cloudstackEtcdAffinityGroupIds":         etcdMachineSpec.AffinityGroupIds,
-		"controlPlaneSshUsername":                controlPlaneMachineSpec.Users[0].Name,
-		"podCidrs":                               clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
-		"serviceCidrs":                           clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
-		"apiserverExtraArgs":                     clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).ToPartialYaml(),
-		"format":                                 format,
-		"externalEtcdVersion":                    bundle.KubeDistro.EtcdVersion,
-		"etcdImage":                              bundle.KubeDistro.EtcdImage.VersionedImage(),
-		"eksaSystemNamespace":                    constants.EksaSystemNamespace,
-		"auditPolicy":                            common.GetAuditPolicy(),
+		"clusterName":                                clusterSpec.Cluster.Name,
+		"controlPlaneEndpointHost":                   host,
+		"controlPlaneEndpointPort":                   port,
+		"controlPlaneReplicas":                       clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
+		"kubernetesRepository":                       bundle.KubeDistro.Kubernetes.Repository,
+		"kubernetesVersion":                          bundle.KubeDistro.Kubernetes.Tag,
+		"etcdRepository":                             bundle.KubeDistro.Etcd.Repository,
+		"etcdImageTag":                               bundle.KubeDistro.Etcd.Tag,
+		"corednsRepository":                          bundle.KubeDistro.CoreDNS.Repository,
+		"corednsVersion":                             bundle.KubeDistro.CoreDNS.Tag,
+		"nodeDriverRegistrarImage":                   bundle.KubeDistro.NodeDriverRegistrar.VersionedImage(),
+		"livenessProbeImage":                         bundle.KubeDistro.LivenessProbe.VersionedImage(),
+		"externalAttacherImage":                      bundle.KubeDistro.ExternalAttacher.VersionedImage(),
+		"externalProvisionerImage":                   bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
+		"cloudstackManagementApiEndpoint":            managementApiEndpoint,
+		"managerImage":                               bundle.CloudStack.ClusterAPIController.VersionedImage(),
+		"verifySsl":                                  verifySsl,
+		"cloudstackDomain":                           datacenterConfigSpec.Domain,
+		"cloudstackZones":                            datacenterConfigSpec.Zones,
+		"cloudstackAccount":                          datacenterConfigSpec.Account,
+		"cloudstackControlPlaneComputeOfferingId":    controlPlaneMachineSpec.ComputeOffering.Id,
+		"cloudstackControlPlaneComputeOfferingName":  controlPlaneMachineSpec.ComputeOffering.Name,
+		"cloudstackControlPlaneTemplateOfferingId":   controlPlaneMachineSpec.Template.Id,
+		"cloudstackControlPlaneTemplateOfferingName": controlPlaneMachineSpec.Template.Name,
+		"cloudstackControlPlaneCustomDetails":        controlPlaneMachineSpec.UserCustomDetails,
+		"affinityGroupIds":                           controlPlaneMachineSpec.AffinityGroupIds,
+		"cloudstackEtcdComputeOfferingId":            etcdMachineSpec.ComputeOffering.Id,
+		"cloudstackEtcdComputeOfferingName":          etcdMachineSpec.ComputeOffering.Name,
+		"cloudstackEtcdTemplateOfferingId":           etcdMachineSpec.Template.Id,
+		"cloudstackEtcdTemplateOfferingName":         etcdMachineSpec.Template.Name,
+		"cloudstackEtcdCustomDetails":                etcdMachineSpec.UserCustomDetails,
+		"cloudstackEtcdAffinityGroupIds":             etcdMachineSpec.AffinityGroupIds,
+		"controlPlaneSshUsername":                    controlPlaneMachineSpec.Users[0].Name,
+		"podCidrs":                                   clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
+		"serviceCidrs":                               clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
+		"apiserverExtraArgs":                         apiServerExtraArgs.ToPartialYaml(),
+		"kubeletExtraArgs":                           kubeletExtraArgs.ToPartialYaml(),
+		"etcdExtraArgs":                              etcdExtraArgs.ToPartialYaml(),
+		"etcdCipherSuites":                           crypto.SecureCipherSuitesString(),
+		"controllermanagerExtraArgs":                 sharedExtraArgs.ToPartialYaml(),
+		"schedulerExtraArgs":                         sharedExtraArgs.ToPartialYaml(),
+		"format":                                     format,
+		"externalEtcdVersion":                        bundle.KubeDistro.EtcdVersion,
+		"etcdImage":                                  bundle.KubeDistro.EtcdImage.VersionedImage(),
+		"eksaSystemNamespace":                        constants.EksaSystemNamespace,
+		"auditPolicy":                                common.GetAuditPolicy(),
 	}
 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
@@ -509,8 +528,10 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	values := map[string]interface{}{
 		"clusterName":                clusterSpec.Cluster.Name,
 		"kubernetesVersion":          bundle.KubeDistro.Kubernetes.Tag,
-		"cloudstackTemplate":         workerNodeGroupMachineSpec.Template.Value,
-		"cloudstackOffering":         workerNodeGroupMachineSpec.ComputeOffering.Value,
+		"cloudstackTemplateId":       workerNodeGroupMachineSpec.Template.Id,
+		"cloudstackTemplateName":     workerNodeGroupMachineSpec.Template.Name,
+		"cloudstackOfferingId":       workerNodeGroupMachineSpec.ComputeOffering.Id,
+		"cloudstackOfferingName":     workerNodeGroupMachineSpec.ComputeOffering.Name,
 		"cloudstackCustomDetails":    workerNodeGroupMachineSpec.UserCustomDetails,
 		"cloudstackAffinityGroupIds": workerNodeGroupMachineSpec.AffinityGroupIds,
 		"workerReplicas":             clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count,
