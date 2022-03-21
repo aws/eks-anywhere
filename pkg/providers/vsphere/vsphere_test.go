@@ -2480,7 +2480,7 @@ func TestGetDatacenterConfig(t *testing.T) {
 	provider := givenProvider(t)
 	provider.datacenterConfig.TypeMeta.Kind = "kind"
 
-	providerConfig := provider.DatacenterConfig()
+	providerConfig := provider.DatacenterConfig(givenEmptyClusterSpec())
 	if providerConfig.Kind() != "kind" {
 		t.Fatal("Unexpected error DatacenterConfig: kind field not found")
 	}

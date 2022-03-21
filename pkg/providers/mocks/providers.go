@@ -69,17 +69,17 @@ func (mr *MockProviderMockRecorder) ChangeDiff(arg0, arg1 interface{}) *gomock.C
 }
 
 // DatacenterConfig mocks base method.
-func (m *MockProvider) DatacenterConfig() providers.DatacenterConfig {
+func (m *MockProvider) DatacenterConfig(arg0 *cluster.Spec) providers.DatacenterConfig {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DatacenterConfig")
+	ret := m.ctrl.Call(m, "DatacenterConfig", arg0)
 	ret0, _ := ret[0].(providers.DatacenterConfig)
 	return ret0
 }
 
 // DatacenterConfig indicates an expected call of DatacenterConfig.
-func (mr *MockProviderMockRecorder) DatacenterConfig() *gomock.Call {
+func (mr *MockProviderMockRecorder) DatacenterConfig(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DatacenterConfig", reflect.TypeOf((*MockProvider)(nil).DatacenterConfig))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DatacenterConfig", reflect.TypeOf((*MockProvider)(nil).DatacenterConfig), arg0)
 }
 
 // DatacenterResourceType mocks base method.
@@ -215,17 +215,17 @@ func (mr *MockProviderMockRecorder) GetInfrastructureBundle(arg0 interface{}) *g
 }
 
 // MachineConfigs mocks base method.
-func (m *MockProvider) MachineConfigs() []providers.MachineConfig {
+func (m *MockProvider) MachineConfigs(arg0 *cluster.Spec) []providers.MachineConfig {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MachineConfigs")
+	ret := m.ctrl.Call(m, "MachineConfigs", arg0)
 	ret0, _ := ret[0].([]providers.MachineConfig)
 	return ret0
 }
 
 // MachineConfigs indicates an expected call of MachineConfigs.
-func (mr *MockProviderMockRecorder) MachineConfigs() *gomock.Call {
+func (mr *MockProviderMockRecorder) MachineConfigs(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MachineConfigs", reflect.TypeOf((*MockProvider)(nil).MachineConfigs))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MachineConfigs", reflect.TypeOf((*MockProvider)(nil).MachineConfigs), arg0)
 }
 
 // MachineDeploymentsToDelete mocks base method.
