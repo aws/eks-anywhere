@@ -2,12 +2,12 @@ package resource_test
 
 import (
 	"context"
-	"github.com/go-logr/logr"
 	"reflect"
 	"testing"
 
 	"github.com/aws/eks-anywhere/controllers/controllers/resource"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/go-logr/logr"
 	"k8s.io/api/node/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
