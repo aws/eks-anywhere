@@ -1843,18 +1843,74 @@ func TestValidateCNIConfig(t *testing.T) {
 	}{
 		{
 			name:    "CNI plugin not specified",
-			wantErr: fmt.Errorf("no cni plugin specified"),
+			wantErr: fmt.Errorf("error validating cniConfig: no cni plugin specified"),
 			clusterNetwork: &ClusterNetwork{
 				CNIConfig: &CNIConfig{},
 			},
 		},
 		{
 			name:    "multiple CNI plugins specified",
-			wantErr: fmt.Errorf("cannot specify more than one cni plugins"),
+			wantErr: fmt.Errorf("error validating cniConfig: cannot specify more than one cni plugins"),
 			clusterNetwork: &ClusterNetwork{
 				CNIConfig: &CNIConfig{
 					Cilium:   &CiliumConfig{},
 					Kindnetd: &KindnetdConfig{},
+				},
+			},
+		},
+		{
+			name:    "invalid cilium policy enforcement mode",
+			wantErr: fmt.Errorf("error validating cniConfig: cilium policyEnforcementMode \"invalid\" not supported"),
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						PolicyEnforcementMode: "invalid",
+					},
+				},
+			},
+		},
+		{
+			name:    "invalid cilium policy enforcement mode and > 1 plugins",
+			wantErr: fmt.Errorf("error validating cniConfig: [cilium policyEnforcementMode \"invalid\" not supported, cannot specify more than one cni plugins]"),
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						PolicyEnforcementMode: "invalid",
+					},
+					Kindnetd: &KindnetdConfig{},
+				},
+			},
+		},
+		{
+			name:    "valid cilium policy enforcement mode",
+			wantErr: nil,
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						PolicyEnforcementMode: "default",
+					},
+				},
+			},
+		},
+		{
+			name:    "valid cilium policy enforcement mode",
+			wantErr: nil,
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						PolicyEnforcementMode: "always",
+					},
+				},
+			},
+		},
+		{
+			name:    "valid cilium policy enforcement mode",
+			wantErr: nil,
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						PolicyEnforcementMode: "never",
+					},
 				},
 			},
 		},
