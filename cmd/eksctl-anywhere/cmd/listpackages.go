@@ -55,7 +55,7 @@ func listPackages(ctx context.Context, source string, kubeVersion string) error 
 	if err != nil {
 		return err
 	}
-	packages, err := curatedpackages.GetPackages(bundle)
+	packages := curatedpackages.GetPackages(bundle)
 	curatedpackages.DisplayPackages(packages)
 	return nil
 }

@@ -33,9 +33,9 @@ func DisplayPackages(m map[string][]string) {
 	}
 }
 
-func GetPackages(bundle *api.PackageBundle) (map[string][]string, error) {
+func GetPackages(bundle *api.PackageBundle) map[string][]string {
 	packages := getPackagesFromBundle(bundle)
-	return packages, nil
+	return packages
 }
 
 func getPackagesFromBundle(bundle *api.PackageBundle) map[string][]string {
