@@ -29,13 +29,25 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
+	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
-	yaml "gopkg.in/yaml.v2"
 	k8syaml "sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/release/pkg/aws/s3"
 	"github.com/aws/eks-anywhere/release/pkg/git"
 )
+
+type EksDLatestRelease struct {
+	Branch      string `json:"branch"`
+	KubeVersion string `json:"kubeVersion"`
+	Number      int    `json:"number"`
+	Dev         bool   `json:"dev,omitempty"`
+}
+
+type EksDLatestReleases struct {
+	Releases []EksDLatestRelease `json:"releases"`
+	Latest   string              `json:"latest"`
+}
 
 func (r *ReleaseConfig) readShaSums(filename string) (string, string, error) {
 	var sha256, sha512 string
@@ -84,20 +96,33 @@ func readFile(filename string) (string, error) {
 	return strings.TrimSpace(string(data)), nil
 }
 
-func readEksDReleases(r *ReleaseConfig) (map[string]interface{}, error) {
+func readEksDReleases(r *ReleaseConfig) (*EksDLatestReleases, error) {
 	// Read the eks-d latest release file to get all the releases
-	var eksDReleaseMap map[string]interface{}
+	eksDLatestReleases := &EksDLatestReleases{}
 	eksDReleaseFilePath := filepath.Join(r.BuildRepoSource, "EKSD_LATEST_RELEASES")
 
 	eksDReleaseFile, err := ioutil.ReadFile(eksDReleaseFilePath)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
-	err = yaml.Unmarshal(eksDReleaseFile, &eksDReleaseMap)
+	err = yaml.Unmarshal(eksDReleaseFile, eksDLatestReleases)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
-	return eksDReleaseMap, nil
+	return eksDLatestReleases, nil
+}
+
+func getSupportedK8sVersions(r *ReleaseConfig) ([]string, error) {
+	// Read the eks-d latest release file to get all the releases
+	releaseFilePath := filepath.Join(r.BuildRepoSource, releasePath, "SUPPORTED_RELEASE_BRANCHES")
+
+	releaseFile, err := ioutil.ReadFile(releaseFilePath)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	supportedK8sVersions := strings.Split(strings.TrimRight(string(releaseFile), "\n"), "\n")
+
+	return supportedK8sVersions, nil
 }
 
 func getBottlerocketSupportedK8sVersions(r *ReleaseConfig) ([]string, error) {
@@ -139,9 +164,11 @@ func (r *ReleaseConfig) getBottlerocketAdminContainerMetadata() (string, string,
 	return tag, imageDigest, nil
 }
 
-func GetEksDReleaseManifestUrl(releaseChannel, releaseNumber string) string {
-	manifestUrl := fmt.Sprintf("https://distro.eks.amazonaws.com/kubernetes-%[1]s/kubernetes-%[1]s-eks-%s.yaml", releaseChannel, releaseNumber)
-	return manifestUrl
+func GetEksDReleaseManifestUrl(releaseChannel, releaseNumber string, dev bool) string {
+	if dev {
+		return fmt.Sprintf("https://eks-d-postsubmit-artifacts.s3.us-west-2.amazonaws.com/kubernetes-%[1]s/kubernetes-%[1]s-eks-%s.yaml", releaseChannel, releaseNumber)
+	}
+	return fmt.Sprintf("https://distro.eks.amazonaws.com/kubernetes-%[1]s/kubernetes-%[1]s-eks-%s.yaml", releaseChannel, releaseNumber)
 }
 
 func (r *ReleaseConfig) GetCurrentEksADevReleaseVersion(releaseVersion string) (string, error) {
@@ -292,25 +319,6 @@ func (r *ReleaseConfig) readGitTag(projectPath, branch string) (string, error) {
 	}
 
 	return gitTag, nil
-}
-
-func getEksDKubeVersion(releaseChannel, releaseNumber string) (string, error) {
-	var kubeVersion string
-	eksDReleaseManifestUrl := GetEksDReleaseManifestUrl(releaseChannel, releaseNumber)
-
-	eksDRelease, err := getEksdRelease(eksDReleaseManifestUrl)
-	if err != nil {
-		return "", errors.Cause(err)
-	}
-
-	for _, component := range eksDRelease.Status.Components {
-		if component.Name == "kubernetes" {
-			kubeVersion = component.GitTag
-			break
-		}
-	}
-
-	return kubeVersion, nil
 }
 
 func getEksdRelease(eksdReleaseURL string) (*eksdv1alpha1.Release, error) {

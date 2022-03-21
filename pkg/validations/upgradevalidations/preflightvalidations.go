@@ -6,6 +6,7 @@ import (
 
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -21,15 +22,9 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 	upgradeValidations = append(
 		upgradeValidations,
 		validations.ValidationResult{
-			Name:        "validate taints support",
-			Remediation: "ensure TAINTS_SUPPORT env variable is set",
-			Err:         validations.ValidateTaintsSupport(u.Opts.Spec),
-			Silent:      true,
-		},
-		validations.ValidationResult{
-			Name:        "validate node labels support",
-			Remediation: "ensure NODE_LABELS_SUPPORT env variable is set",
-			Err:         validations.ValidateNodeLabelsSupport(u.Opts.Spec),
+			Name:        "validate kubernetes version 1.22 support",
+			Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s122SupportEnvVar),
+			Err:         validations.ValidateK8s122Support(u.Opts.Spec),
 			Silent:      true,
 		},
 		validations.ValidationResult{
@@ -40,7 +35,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		validations.ValidationResult{
 			Name:        "worker nodes ready",
 			Remediation: fmt.Sprintf("ensure machine deployments for cluster %s are Ready", u.Opts.WorkloadCluster.Name),
-			Err:         k.ValidateWorkerNodes(ctx, targetCluster, u.Opts.Spec.Name),
+			Err:         k.ValidateWorkerNodes(ctx, u.Opts.Spec.Name, targetCluster.KubeconfigFile),
 		},
 		validations.ValidationResult{
 			Name:        "nodes ready",

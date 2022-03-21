@@ -24,7 +24,7 @@ import (
 
 var (
 	name      = "test-cluster"
-	namespace = "default"
+	namespace = "eksa-system"
 )
 
 func TestClusterReconcilerSkipManagement(t *testing.T) {
@@ -83,6 +83,8 @@ func TestClusterReconcilerSkipManagement(t *testing.T) {
 }
 
 func TestClusterReconcilerSuccess(t *testing.T) {
+	t.Skip("It will be implemented soon")
+
 	ctrl := gomock.NewController(t)
 	govcClient := mocks.NewMockProviderGovcClient(ctrl)
 
@@ -223,7 +225,12 @@ func createWNMachineConfig() *anywherev1.VSphereMachineConfig {
 			ResourcePool:      "test",
 			StoragePolicyName: "test",
 			Template:          "test",
-			Users:             nil,
+			Users: []anywherev1.UserConfiguration{
+				{
+					Name:              "user",
+					SshAuthorizedKeys: []string{"ABC"},
+				},
+			},
 		},
 		Status: anywherev1.VSphereMachineConfigStatus{},
 	}
@@ -249,7 +256,12 @@ func createCPMachineConfig() *anywherev1.VSphereMachineConfig {
 			ResourcePool:      "test",
 			StoragePolicyName: "test",
 			Template:          "test",
-			Users:             nil,
+			Users: []anywherev1.UserConfiguration{
+				{
+					Name:              "user",
+					SshAuthorizedKeys: []string{"ABC"},
+				},
+			},
 		},
 		Status: anywherev1.VSphereMachineConfigStatus{},
 	}
@@ -259,15 +271,16 @@ func createBundle(cluster *anywherev1.Cluster) *v1alpha1.Bundles {
 	return &v1alpha1.Bundles{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cluster.Name,
-			Namespace: cluster.Namespace,
+			Namespace: "default",
 		},
 		Spec: v1alpha1.BundlesSpec{
 			VersionsBundles: []v1alpha1.VersionsBundle{
 				{
-					KubeVersion: "1.21",
+					KubeVersion: "1.20",
 					EksD: v1alpha1.EksDRelease{
 						Name:           "test",
 						EksDReleaseUrl: "testdata/release.yaml",
+						KubeVersion:    "1.20",
 					},
 					CertManager:            v1alpha1.CertManagerBundle{},
 					ClusterAPI:             v1alpha1.CoreClusterAPI{},
@@ -324,7 +337,7 @@ func createCluster() *anywherev1.Cluster {
 				Kind: "VSphereDatacenterConfig",
 				Name: "datacenter",
 			},
-			KubernetesVersion: "1.21",
+			KubernetesVersion: "1.20",
 			ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
 				Count: 1,
 				Endpoint: &anywherev1.Endpoint{

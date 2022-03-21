@@ -31,16 +31,12 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 	var gitTag string
 	if r.DevRelease {
 		// Get git tag
-		out, err := git.GetRepoTags(r.CliRepoSource)
+		out, err := git.GetRepoTagsDescending(r.CliRepoSource)
 		if err != nil {
 			return nil, errors.Cause(err)
 		}
 
-		gitTags := strings.Split(out, "\n")
-		gitTag = gitTags[len(gitTags)-2]
-		if err != nil {
-			return nil, errors.Cause(err)
-		}
+		gitTag = strings.Split(out, "\n")[0]
 	} else {
 		gitTag = r.ReleaseVersion
 	}
@@ -114,7 +110,7 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 	latestPath := getLatestUploadDestination(sourcedFromBranch)
 
 	if r.DevRelease || r.ReleaseEnvironment == "development" {
-		sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/cluster-controller", eksAnywhereProjectPath, latestPath)
+		sourceS3Prefix = fmt.Sprintf("%s/%s/manifests/cluster-controller/%s", eksAnywhereProjectPath, latestPath, gitTag)
 	} else {
 		sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/eks-anywhere-cluster-controller/manifests/%s", r.BundleNumber, gitTag)
 	}

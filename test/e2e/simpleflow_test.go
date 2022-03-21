@@ -1,3 +1,4 @@
+//go:build e2e
 // +build e2e
 
 package e2e
@@ -43,6 +44,16 @@ func TestDockerKubernetes121SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestDockerKubernetes122SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewDocker(t),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar("K8S_1_22_SUPPORT", "true"),
+	)
+	runSimpleFlow(test)
+}
+
 func TestVSphereKubernetes120SimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -61,6 +72,16 @@ func TestVSphereKubernetes121SimpleFlow(t *testing.T) {
 	runSimpleFlow(test)
 }
 
+func TestVSphereKubernetes122SimpleFlow(t *testing.T) {
+	test := framework.NewClusterE2ETest(
+		t,
+		framework.NewVSphere(t, framework.WithUbuntu122()),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar("K8S_1_22_SUPPORT", "true"),
+	)
+	runSimpleFlow(test)
+}
+
 func TestVSphereKubernetes121ThreeReplicasFiveWorkersSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
@@ -75,7 +96,7 @@ func TestVSphereKubernetes121ThreeReplicasFiveWorkersSimpleFlow(t *testing.T) {
 func TestVSphereKubernetes121DifferentNamespaceSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithUbuntu121(), framework.WithVSphereFillers(api.WithVSphereConfigNamespace(clusterNamespace))),
+		framework.NewVSphere(t, framework.WithUbuntu121(), framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace))),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
 	)
@@ -105,7 +126,7 @@ func TestVSphereKubernetes120BottleRocketThreeReplicasFiveWorkersSimpleFlow(t *t
 func TestVSphereKubernetes120BottleRocketDifferentNamespaceSimpleFlow(t *testing.T) {
 	test := framework.NewClusterE2ETest(
 		t,
-		framework.NewVSphere(t, framework.WithBottleRocket120(), framework.WithVSphereFillers(api.WithVSphereConfigNamespace(clusterNamespace))),
+		framework.NewVSphere(t, framework.WithBottleRocket120(), framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace))),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
 	)

@@ -33,22 +33,62 @@ const (
 )
 
 var (
-	capiClustersResourceType          = fmt.Sprintf("clusters.%s", clusterv1.GroupVersion.Group)
-	eksaClusterResourceType           = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
-	eksaVSphereDatacenterResourceType = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaVSphereMachineResourceType    = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaAwsResourceType               = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaGitOpsResourceType            = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaOIDCResourceType              = fmt.Sprintf("oidcconfigs.%s", v1alpha1.GroupVersion.Group)
-	eksaAwsIamResourceType            = fmt.Sprintf("awsiamconfigs.%s", v1alpha1.GroupVersion.Group)
-	etcdadmClustersResourceType       = fmt.Sprintf("etcdadmclusters.%s", etcdv1.GroupVersion.Group)
-	bundlesResourceType               = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
-	clusterResourceSetResourceType    = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
-	kubeadmControlPlaneResourceType   = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
+	capiClustersResourceType             = fmt.Sprintf("clusters.%s", clusterv1.GroupVersion.Group)
+	eksaClusterResourceType              = fmt.Sprintf("clusters.%s", v1alpha1.GroupVersion.Group)
+	eksaVSphereDatacenterResourceType    = fmt.Sprintf("vspheredatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaVSphereMachineResourceType       = fmt.Sprintf("vspheremachineconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaCloudStackDatacenterResourceType = fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaCloudStackMachineResourceType    = fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaAwsResourceType                  = fmt.Sprintf("awsdatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaGitOpsResourceType               = fmt.Sprintf("gitopsconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaOIDCResourceType                 = fmt.Sprintf("oidcconfigs.%s", v1alpha1.GroupVersion.Group)
+	eksaAwsIamResourceType               = fmt.Sprintf("awsiamconfigs.%s", v1alpha1.GroupVersion.Group)
+	etcdadmClustersResourceType          = fmt.Sprintf("etcdadmclusters.%s", etcdv1.GroupVersion.Group)
+	bundlesResourceType                  = fmt.Sprintf("bundles.%s", releasev1alpha1.GroupVersion.Group)
+	clusterResourceSetResourceType       = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
+	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
 )
 
 type Kubectl struct {
 	Executable
+}
+
+func (k *Kubectl) GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
+	response := &v1alpha1.CloudStackMachineConfig{}
+	err := k.getObject(ctx, eksaCloudStackMachineResourceType, cloudstackMachineConfigName, namespace, kubeconfigFile, response)
+	if err != nil {
+		return nil, fmt.Errorf("error getting eksa cloudstack machineconfig: %v", err)
+	}
+
+	return response, nil
+}
+
+func (k *Kubectl) DeleteEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) error {
+	params := []string{"delete", eksaCloudStackDatacenterResourceType, cloudstackDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error deleting cloudstackdatacenterconfig cluster %s apply: %v", cloudstackDatacenterConfigName, err)
+	}
+	return nil
+}
+
+func (k *Kubectl) GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackDatacenterConfig, error) {
+	response := &v1alpha1.CloudStackDatacenterConfig{}
+	err := k.getObject(ctx, eksaCloudStackDatacenterResourceType, cloudstackDatacenterConfigName, namespace, kubeconfigFile, response)
+	if err != nil {
+		return nil, fmt.Errorf("error getting eksa cloudstack machineconfig: %v", err)
+	}
+
+	return response, nil
+}
+
+func (k *Kubectl) DeleteEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) error {
+	params := []string{"delete", eksaCloudStackMachineResourceType, cloudstackMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error deleting cloudstackmachineconfig cluster %s apply: %v", cloudstackMachineConfigName, err)
+	}
+	return nil
 }
 
 type VersionResponse struct {
@@ -91,6 +131,17 @@ func (k *Kubectl) LoadSecret(ctx context.Context, secretObject string, secretObj
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error loading secret: %v", err)
+	}
+	return nil
+}
+
+// TODO: remove when CAPAS image is hosted in public registry.
+func (k *Kubectl) CreateDockerRegistrySecret(ctx context.Context, secretName string, dockerServer, dockerUsername, dockerPassword string, opts ...KubectlOpt) error {
+	params := []string{"create", "secret", "docker-registry", secretName, "--docker-server", dockerServer, "--docker-username", dockerUsername, "--docker-password", dockerPassword}
+	applyOpts(&params, opts...)
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error creating secret for docker registry: %v", err)
 	}
 	return nil
 }
@@ -293,6 +344,30 @@ func (k *Kubectl) ListCluster(ctx context.Context) error {
 	return nil
 }
 
+func (k *Kubectl) GetNodes(ctx context.Context, kubeconfig string) ([]corev1.Node, error) {
+	params := []string{"get", "nodes", "-o", "json", "--kubeconfig", kubeconfig}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting nodes: %v", err)
+	}
+	response := &corev1.NodeList{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+
+	return response.Items, err
+}
+
+func (k *Kubectl) GetControlPlaneNodes(ctx context.Context, kubeconfig string) ([]corev1.Node, error) {
+	params := []string{"get", "nodes", "-o", "json", "--kubeconfig", kubeconfig, "--selector=node-role.kubernetes.io/control-plane"}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting control plane nodes: %v", err)
+	}
+	response := &corev1.NodeList{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+
+	return response.Items, err
+}
+
 func (k *Kubectl) ValidateNodes(ctx context.Context, kubeconfig string) error {
 	template := "{{range .items}}{{.metadata.name}}\n{{end}}"
 	params := []string{"get", "nodes", "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig}
@@ -314,6 +389,24 @@ func (k *Kubectl) ValidateNodes(ctx context.Context, kubeconfig string) error {
 				return fmt.Errorf("node %s is not ready, currently in %s state", node, buffer.String())
 			}
 		}
+	}
+	return nil
+}
+
+func (k *Kubectl) DeleteOldWorkerNodeGroup(ctx context.Context, md *clusterv1.MachineDeployment, kubeconfig string) error {
+	kubeadmConfigTemplateName := md.Spec.Template.Spec.Bootstrap.ConfigRef.Name
+	providerMachineTemplateName := md.Spec.Template.Spec.InfrastructureRef.Name
+	params := []string{"delete", md.Kind, md.Name, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
+	if _, err := k.Execute(ctx, params...); err != nil {
+		return err
+	}
+	params = []string{"delete", md.Spec.Template.Spec.Bootstrap.ConfigRef.Kind, kubeadmConfigTemplateName, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
+	if _, err := k.Execute(ctx, params...); err != nil {
+		return err
+	}
+	params = []string{"delete", md.Spec.Template.Spec.InfrastructureRef.Kind, providerMachineTemplateName, "--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
+	if _, err := k.Execute(ctx, params...); err != nil {
+		return err
 	}
 	return nil
 }
@@ -344,9 +437,9 @@ func (k *Kubectl) ValidateControlPlaneNodes(ctx context.Context, cluster *types.
 	return nil
 }
 
-func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error {
+func (k *Kubectl) ValidateWorkerNodes(ctx context.Context, clusterName string, kubeconfig string) error {
 	logger.V(6).Info("waiting for nodes", "cluster", clusterName)
-	deployments, err := k.GetMachineDeployments(ctx, WithCluster(cluster), WithNamespace(constants.EksaSystemNamespace))
+	deployments, err := k.GetMachineDeployments(ctx, WithKubeconfig(kubeconfig), WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
 		return err
 	}
@@ -460,6 +553,31 @@ func (k *Kubectl) GetMachines(ctx context.Context, cluster *types.Cluster, clust
 	err = json.Unmarshal(stdOut.Bytes(), response)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing get machines response: %v", err)
+	}
+
+	return response.Items, nil
+}
+
+type machineSetResponse struct {
+	Items []clusterv1.MachineSet `json:"items,omitempty"`
+}
+
+func (k *Kubectl) GetMachineSets(ctx context.Context, machineDeploymentName string, cluster *types.Cluster) ([]clusterv1.MachineSet, error) {
+	params := []string{
+		"get", "machinesets", "-o", "json", "--kubeconfig", cluster.KubeconfigFile,
+		"--selector=cluster.x-k8s.io/deployment-name=" + machineDeploymentName,
+		"--namespace", constants.EksaSystemNamespace,
+	}
+
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("error getting machineset associated with deployment %s: %v", machineDeploymentName, err)
+	}
+
+	response := &machineSetResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing get machinesets response: %v", err)
 	}
 
 	return response.Items, nil
@@ -588,6 +706,14 @@ func WithOverwrite() KubectlOpt {
 	return appendOpt("--overwrite")
 }
 
+func WithOutput(output string) KubectlOpt {
+	return appendOpt("-o", output)
+}
+
+func WithArgs(args []string) KubectlOpt {
+	return appendOpt(args...)
+}
+
 func appendOpt(new ...string) KubectlOpt {
 	return func(args *[]string) {
 		*args = append(*args, new...)
@@ -688,7 +814,7 @@ func (k *Kubectl) GetKubeadmControlPlane(ctx context.Context, cluster *types.Clu
 	return response, nil
 }
 
-func (k *Kubectl) GetMachineDeployment(ctx context.Context, cluster *types.Cluster, workerNodeGroupName string, opts ...KubectlOpt) (*clusterv1.MachineDeployment, error) {
+func (k *Kubectl) GetMachineDeployment(ctx context.Context, workerNodeGroupName string, opts ...KubectlOpt) (*clusterv1.MachineDeployment, error) {
 	params := []string{"get", fmt.Sprintf("machinedeployments.%s", clusterv1.GroupVersion.Group), workerNodeGroupName, "-o", "json"}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
@@ -1118,9 +1244,11 @@ func (k *Kubectl) ApplyTolerationsFromTaints(ctx context.Context, oldTaints []co
 		return err
 	}
 	var appliedTolerations []Toleration
-	err = json.Unmarshal(output.Bytes(), &appliedTolerations)
-	if err != nil {
-		return fmt.Errorf("error parsing toleration response: %v", err)
+	if len(output.String()) > 0 {
+		err = json.Unmarshal(output.Bytes(), &appliedTolerations)
+		if err != nil {
+			return fmt.Errorf("error parsing toleration response: %v", err)
+		}
 	}
 
 	oldTolerationSet := make(map[Toleration]bool)
@@ -1201,4 +1329,13 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 	}
 
 	return obj, nil
+}
+
+func (k *Kubectl) GetPackages(ctx context.Context, opts ...KubectlOpt) (string, error) {
+	params := []string{
+		"get", "packages",
+	}
+	applyOpts(&params, opts...)
+	stdOut, err := k.Execute(ctx, params...)
+	return stdOut.String(), err
 }

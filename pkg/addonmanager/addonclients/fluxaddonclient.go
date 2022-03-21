@@ -301,6 +301,8 @@ func (f *FluxAddonClient) CleanupGitRepo(ctx context.Context, clusterSpec *clust
 		return nil
 	}
 
+	clusterSpec.SetDefaultGitOps()
+
 	fc := &fluxForCluster{
 		FluxAddonClient: f,
 		clusterSpec:     clusterSpec,

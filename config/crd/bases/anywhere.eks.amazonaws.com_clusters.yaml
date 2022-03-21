@@ -241,12 +241,110 @@ spec:
                     name:
                       description: Name refers to the name of the worker node group
                       type: string
+                    taints:
+                      description: Taints define the set of taints to be applied on
+                        worker nodes
+                      items:
+                        description: The node this Taint is attached to has the "effect"
+                          on any pod that does not tolerate the Taint.
+                        properties:
+                          effect:
+                            description: Required. The effect of the taint on pods
+                              that do not tolerate the taint. Valid effects are NoSchedule,
+                              PreferNoSchedule and NoExecute.
+                            type: string
+                          key:
+                            description: Required. The taint key to be applied to
+                              a node.
+                            type: string
+                          timeAdded:
+                            description: TimeAdded represents the time at which the
+                              taint was added. It is only written for NoExecute taints.
+                            format: date-time
+                            type: string
+                          value:
+                            description: The taint value corresponding to the taint
+                              key.
+                            type: string
+                        required:
+                        - effect
+                        - key
+                        type: object
+                      type: array
                   type: object
                 type: array
             type: object
           status:
             description: ClusterStatus defines the observed state of Cluster
             properties:
+              conditions:
+                items:
+                  description: Condition defines an observation of a Cluster API resource
+                    operational state.
+                  properties:
+                    lastTransitionTime:
+                      description: Last time the condition transitioned from one status
+                        to another. This should be when the underlying condition changed.
+                        If that is not known, then using the time when the API field
+                        changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: A human readable message indicating details about
+                        the transition. This field may be empty.
+                      type: string
+                    reason:
+                      description: The reason for the condition's last transition
+                        in CamelCase. The specific API may choose whether or not this
+                        field is considered a guaranteed API. This field may not be
+                        empty.
+                      type: string
+                    severity:
+                      description: Severity provides an explicit classification of
+                        Reason code, so the users or machines can immediately understand
+                        the current situation and act accordingly. The Severity field
+                        MUST be set only when Status=False.
+                      type: string
+                    status:
+                      description: Status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: Type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources
+                        like Available, but because arbitrary conditions can be useful
+                        (see .node.status.conditions), the ability to deconflict is
+                        important.
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - status
+                  - type
+                  type: object
+                type: array
+              eksdReleaseRef:
+                description: EksdReleaseRef defines the properties of the EKS-D object
+                  on the cluster
+                properties:
+                  apiVersion:
+                    description: ApiVersion refers to the EKS-D API version
+                    type: string
+                  kind:
+                    description: Kind refers to the Release kind for the EKS-D object
+                    type: string
+                  name:
+                    description: Name refers to the name of the EKS-D object on the
+                      cluster
+                    type: string
+                  namespace:
+                    description: Namespace refers to the namespace for the EKS-D release
+                      resources
+                    type: string
+                required:
+                - apiVersion
+                - kind
+                - name
+                - namespace
+                type: object
               failureMessage:
                 description: Descriptive message about a fatal problem while reconciling
                   a cluster
@@ -255,6 +353,8 @@ spec:
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""

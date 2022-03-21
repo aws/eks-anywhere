@@ -9,7 +9,13 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-const VSphereMachineConfigKind = "VSphereMachineConfig"
+const (
+	VSphereMachineConfigKind = "VSphereMachineConfig"
+	DefaultVSphereDiskGiB    = 25
+	DefaultVSphereNumCPUs    = 2
+	DefaultVSphereMemoryMiB  = 8192
+	DefaultVSphereOSFamily   = Bottlerocket
+)
 
 // Used for generating yaml for generate clusterconfig command
 func NewVSphereMachineConfigGenerate(name string) *VSphereMachineConfigGenerate {
@@ -22,10 +28,10 @@ func NewVSphereMachineConfigGenerate(name string) *VSphereMachineConfigGenerate 
 			Name: name,
 		},
 		Spec: VSphereMachineConfigSpec{
-			DiskGiB:   25,
-			NumCPUs:   2,
-			MemoryMiB: 8192,
-			OSFamily:  Bottlerocket,
+			DiskGiB:   DefaultVSphereDiskGiB,
+			NumCPUs:   DefaultVSphereNumCPUs,
+			MemoryMiB: DefaultVSphereMemoryMiB,
+			OSFamily:  DefaultVSphereOSFamily,
 			Users: []UserConfiguration{{
 				Name:              "ec2-user",
 				SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},

@@ -66,6 +66,7 @@ type VersionsBundle struct {
 	ControlPlane           KubeadmControlPlaneBundle   `json:"controlPlane"`
 	Aws                    AwsBundle                   `json:"aws"`
 	VSphere                VSphereBundle               `json:"vSphere"`
+	CloudStack             CloudStackBundle            `json:"cloudStack,omitempty"`
 	Docker                 DockerBundle                `json:"docker"`
 	Eksa                   EksaBundle                  `json:"eksa"`
 	Cilium                 CiliumBundle                `json:"cilium"`
@@ -75,7 +76,9 @@ type VersionsBundle struct {
 	BottleRocketAdmin      BottlerocketAdminBundle     `json:"bottlerocketAdmin"`
 	ExternalEtcdBootstrap  EtcdadmBootstrapBundle      `json:"etcdadmBootstrap"`
 	ExternalEtcdController EtcdadmControllerBundle     `json:"etcdadmController"`
-	Tinkerbell             TinkerbellBundle            `json:"tinkerbell"`
+	Tinkerbell             TinkerbellBundle            `json:"tinkerbell,omitempty"`
+	Haproxy                HaproxyBundle               `json:"haproxy,omitempty"`
+	Snow                   SnowBundle                  `json:"snow,omitempty"`
 }
 
 type EksDRelease struct {
@@ -103,15 +106,21 @@ type EksDRelease struct {
 	KindNode Image `json:"kindNode,omitempty"`
 
 	// Ova points to a collection of Ovas built with this eks-d version
-	Ova ArchiveBundle `json:"ova,omitempty"`
+	Ova OSImageBundle `json:"ova,omitempty"`
+
+	// Raw points to a collection of Raw images built with this eks-d version
+	Raw OSImageBundle `json:"raw,omitempty"`
+
+	// Components refers to the url that points to the EKS-D release CRD
+	Components string `json:"components,omitempty"`
 }
 
-type ArchiveBundle struct {
-	Bottlerocket OvaArchive `json:"bottlerocket,omitempty"`
-	Ubuntu       OvaArchive `json:"ubuntu,omitempty"`
+type OSImageBundle struct {
+	Bottlerocket OSImage `json:"bottlerocket,omitempty"`
+	Ubuntu       OSImage `json:"ubuntu,omitempty"`
 }
 
-type OvaArchive struct {
+type OSImage struct {
 	Archive `json:",inline"`
 	Etcdadm Archive `json:"etcdadm,omitempty"`
 	Crictl  Archive `json:"crictl,omitempty"`
@@ -189,6 +198,13 @@ type DockerBundle struct {
 	Metadata        Manifest `json:"metadata"`
 }
 
+type CloudStackBundle struct {
+	Version              string   `json:"version"`
+	ClusterAPIController Image    `json:"clusterAPIController"`
+	Components           Manifest `json:"components"`
+	Metadata             Manifest `json:"metadata"`
+}
+
 type CiliumBundle struct {
 	Version   string   `json:"version,omitempty"`
 	Cilium    Image    `json:"cilium"`
@@ -243,7 +259,30 @@ type TinkerbellBundle struct {
 	TinkCli              Image    `json:"tinkCli"`
 	Hegel                Image    `json:"hegel"`
 	Cfssl                Image    `json:"cfssl"`
+	Pbnj                 Image    `json:"pbnj"`
+	Boots                Image    `json:"boots"`
+	Actions              Actions  `json:"actions"`
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
 	ClusterTemplate      Manifest `json:"clusterTemplate"`
+}
+
+// Tinkerbell Template Actions
+type Actions struct {
+	Cexec       Image `json:"cexec"`
+	Kexec       Image `json:"kexec"`
+	ImageToDisk Image `json:"imageToDisk"`
+	OciToDisk   Image `json:"ociToDisk"`
+	WriteFile   Image `json:"writeFile"`
+}
+
+type HaproxyBundle struct {
+	Image Image `json:"image"`
+}
+
+type SnowBundle struct {
+	Version    string   `json:"version"`
+	KubeVip    Image    `json:"kubeVip"`
+	Components Manifest `json:"components"`
+	Metadata   Manifest `json:"metadata"`
 }

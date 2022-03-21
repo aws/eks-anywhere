@@ -11,11 +11,15 @@ import (
 	"github.com/aws/eks-anywhere/internal/pkg/ec2"
 	"github.com/aws/eks-anywhere/internal/pkg/ssm"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
 const (
 	passedStatus = "pass"
 	failedStatus = "fail"
+
+	maxIPPoolSize = 10
+	minIPPoolSize = 1
 )
 
 type ParallelRunConf struct {
@@ -110,9 +114,10 @@ func RunTestsInParallel(conf ParallelRunConf) error {
 }
 
 type instanceRunConf struct {
-	amiId, instanceProfileName, storageBucket, jobId, parentJobId, subnetId, regex, instanceId, controlPlaneIP string
-	testReportFolder, branchName                                                                               string
-	bundlesOverride                                                                                            bool
+	amiId, instanceProfileName, storageBucket, jobId, parentJobId, subnetId, regex, instanceId string
+	testReportFolder, branchName                                                               string
+	ipPool                                                                                     networkutils.IPPool
+	bundlesOverride                                                                            bool
 }
 
 func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *testCommandResult, err error) {
@@ -204,6 +209,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 
 	vsphereTestsRe := regexp.MustCompile(vsphereRegex)
 	privateNetworkTestsRe := regexp.MustCompile(`^.*(Proxy|RegistryMirror).*$`)
+	multiClusterTestsRe := regexp.MustCompile(`^.*Multicluster.*$`)
 
 	runConfs := make([]instanceRunConf, 0, conf.MaxInstances)
 	ipman := newE2EIPManager(os.Getenv(cidrVar), os.Getenv(privateNetworkCidrVar))
@@ -211,12 +217,22 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 	testsInCurrentInstance := make([]string, 0, testPerInstance)
 	for _, testName := range testsList {
 		testsInCurrentInstance = append(testsInCurrentInstance, testName)
-		ip := ""
+		multiClusterTest := multiClusterTestsRe.MatchString(testName)
+		var ips networkutils.IPPool
 		if privateNetworkTestsRe.MatchString(testName) {
-			ip = ipman.getPrivateIP()
+			if multiClusterTest {
+				ips = ipman.reservePrivateIPPool(maxIPPoolSize)
+			} else {
+				ips = ipman.reservePrivateIPPool(minIPPoolSize)
+			}
 		} else if vsphereTestsRe.MatchString(testName) {
-			ip = ipman.getIP()
+			if multiClusterTest {
+				ips = ipman.reserveIPPool(maxIPPoolSize)
+			} else {
+				ips = ipman.reserveIPPool(minIPPoolSize)
+			}
 		}
+
 		if len(testsInCurrentInstance) == testPerInstance {
 			runConfs = append(runConfs, instanceRunConf{
 				amiId:               conf.AmiId,
@@ -227,9 +243,9 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 				subnetId:            conf.SubnetId,
 				regex:               strings.Join(testsInCurrentInstance, "|"),
 				bundlesOverride:     conf.BundlesOverride,
-				controlPlaneIP:      ip,
 				testReportFolder:    conf.TestReportFolder,
 				branchName:          conf.BranchName,
+				ipPool:              ips,
 			})
 
 			testsInCurrentInstance = make([]string, 0, testPerInstance)

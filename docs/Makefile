@@ -15,8 +15,11 @@ build: submodule ## Generate the static site into the /public folder
 
 submodule: ## initialize the docsy theme submodule
 	git submodule update --init --recursive
+	cd themes/docsy; git am ../../patches/0001-Make-docsy-js-files-static.patch; cd ../..
 
 submodule-reset: ## reset submodules to tracked commit
+	rm -rf themes/docsy
+	git submodule update --init --recursive
 	git submodule foreach --recursive git reset --hard
 
 zip: clean build ## Create zip file of assets to upload
@@ -27,7 +30,7 @@ zip: clean build ## Create zip file of assets to upload
 deploy: zip ## Deploy docs to Amplify
 	bash ./deploy-docs.sh public.zip
 
-serve: submodule ## Boot the development server.
+serve: submodule build ## Boot the development server.
 	hugo server --buildFuture --baseUrl http://127.0.0.1
 
 server: serve

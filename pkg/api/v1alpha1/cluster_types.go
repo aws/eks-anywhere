@@ -5,6 +5,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 const (
@@ -148,13 +149,29 @@ func TaintsSliceEqual(s1, s2 []corev1.Taint) bool {
 	if len(s1) != len(s2) {
 		return false
 	}
-	taints := make(map[corev1.Taint]bool)
+	taints := make(map[corev1.Taint]struct{})
 	for _, taint := range s1 {
-		taints[taint] = true
+		taints[taint] = struct{}{}
 	}
 	for _, taint := range s2 {
 		_, ok := taints[taint]
 		if !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func LabelsMapEqual(s1, s2 map[string]string) bool {
+	if len(s1) != len(s2) {
+		return false
+	}
+	for key, val := range s2 {
+		v, ok := s1[key]
+		if !ok {
+			return false
+		}
+		if val != v {
 			return false
 		}
 	}
@@ -168,7 +185,8 @@ func (n *ControlPlaneConfiguration) Equal(o *ControlPlaneConfiguration) bool {
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Count == o.Count && n.Endpoint.Equal(o.Endpoint) && n.MachineGroupRef.Equal(o.MachineGroupRef) && TaintsSliceEqual(n.Taints, o.Taints)
+	return n.Count == o.Count && n.Endpoint.Equal(o.Endpoint) && n.MachineGroupRef.Equal(o.MachineGroupRef) &&
+		TaintsSliceEqual(n.Taints, o.Taints) && LabelsMapEqual(n.Labels, o.Labels)
 }
 
 type Endpoint struct {
@@ -193,11 +211,14 @@ type WorkerNodeGroupConfiguration struct {
 	Count int `json:"count,omitempty"`
 	// MachineGroupRef defines the machine group configuration for the worker nodes.
 	MachineGroupRef *Ref `json:"machineGroupRef,omitempty"`
+	// Taints define the set of taints to be applied on worker nodes
+	Taints []corev1.Taint `json:"taints,omitempty"`
 	// Labels define the labels to assign to the node
 	Labels map[string]string `json:"labels,omitempty"`
 }
 
 func generateWorkerNodeGroupKey(c WorkerNodeGroupConfiguration) (key string) {
+	key = c.Name
 	if c.MachineGroupRef != nil {
 		key = c.MachineGroupRef.Kind + c.MachineGroupRef.Name
 	}
@@ -222,7 +243,53 @@ func WorkerNodeGroupConfigurationsSliceEqual(a, b []WorkerNodeGroupConfiguration
 			delete(m, k)
 		}
 	}
-	return len(m) == 0
+	if len(m) != 0 {
+		return false
+	}
+
+	return WorkerNodeGroupConfigurationSliceTaintsEqual(a, b) && WorkerNodeGroupConfigurationsLabelsMapEqual(a, b)
+}
+
+func WorkerNodeGroupConfigurationSliceTaintsEqual(a, b []WorkerNodeGroupConfiguration) bool {
+	m := make(map[string][]corev1.Taint, len(a))
+	for _, nodeGroup := range a {
+		m[nodeGroup.Name] = nodeGroup.Taints
+	}
+
+	for _, nodeGroup := range b {
+		if _, ok := m[nodeGroup.Name]; !ok {
+			// this method is not concerned with added/removed node groups,
+			// only with the comparison of taints on existing node groups
+			// if a node group is present in a but not b, or vise versa, it's immaterial
+			continue
+		} else {
+			if !TaintsSliceEqual(m[nodeGroup.Name], nodeGroup.Taints) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func WorkerNodeGroupConfigurationsLabelsMapEqual(a, b []WorkerNodeGroupConfiguration) bool {
+	m := make(map[string]map[string]string, len(a))
+	for _, nodeGroup := range a {
+		m[nodeGroup.Name] = nodeGroup.Labels
+	}
+
+	for _, nodeGroup := range b {
+		if _, ok := m[nodeGroup.Name]; !ok {
+			// this method is not concerned with added/removed node groups,
+			// only with the comparison of labels on existing node groups
+			// if a node group is present in a but not b, or vise versa, it's immaterial
+			continue
+		} else {
+			if !LabelsMapEqual(m[nodeGroup.Name], nodeGroup.Labels) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 type ClusterNetwork struct {
@@ -324,6 +391,7 @@ const (
 	Kube119 KubernetesVersion = "1.19"
 	Kube120 KubernetesVersion = "1.20"
 	Kube121 KubernetesVersion = "1.21"
+	Kube122 KubernetesVersion = "1.22"
 )
 
 type CNI string
@@ -344,6 +412,21 @@ type ClusterStatus struct {
 	// Descriptive message about a fatal problem while reconciling a cluster
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
+	// EksdReleaseRef defines the properties of the EKS-D object on the cluster
+	EksdReleaseRef *EksdReleaseRef `json:"eksdReleaseRef,omitempty"`
+	// +optional
+	Conditions []clusterv1.Condition `json:"conditions,omitempty"`
+}
+
+type EksdReleaseRef struct {
+	// ApiVersion refers to the EKS-D API version
+	ApiVersion string `json:"apiVersion"`
+	// Kind refers to the Release kind for the EKS-D object
+	Kind string `json:"kind"`
+	// Name refers to the name of the EKS-D object on the cluster
+	Name string `json:"name"`
+	// Namespace refers to the namespace for the EKS-D release resources
+	Namespace string `json:"namespace"`
 }
 
 type Ref struct {
@@ -415,6 +498,7 @@ func (n *PodIAMConfig) Equal(o *PodIAMConfig) bool {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 // Cluster is the Schema for the clusters API
 type Cluster struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -422,6 +506,14 @@ type Cluster struct {
 
 	Spec   ClusterSpec   `json:"spec,omitempty"`
 	Status ClusterStatus `json:"status,omitempty"`
+}
+
+func (c *Cluster) GetConditions() clusterv1.Conditions {
+	return c.Status.Conditions
+}
+
+func (c *Cluster) SetConditions(conditions clusterv1.Conditions) {
+	c.Status.Conditions = conditions
 }
 
 // +kubebuilder:object:generate=false

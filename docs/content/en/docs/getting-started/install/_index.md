@@ -26,6 +26,8 @@ This will let you create a cluster in multiple providers for local development o
 
 > **_NOTE:_** If you are using Mac OS Docker Desktop 4.4.2 or newer `"deprecatedCgroupv1": true` must be set in `~/Library/Group\ Containers/group.com.docker/settings.json`.
 
+> **_NOTE:_** Currently newer versions of Ubuntu (21.10) and other linux distributions with cgroup v2 enabled are not supported.
+
 ### Install EKS Anywhere CLI tools
 
 #### Via Homebrew (macOS and Linux)
@@ -36,7 +38,7 @@ It currently will not work on computers with Apple Silicon or Arm based processo
 {{% /alert %}}
 
 You can install `eksctl` and `eksctl-anywhere` with [homebrew](http://brew.sh/).
-This package will also install `kubectl` and the `aws-iam-authenticator` which will be helpful to test EKS clusters.
+This package will also install `kubectl` and the `aws-iam-authenticator` which will be helpful to test EKS Anywhere clusters.
 
 ```bash
 brew install aws/tap/eks-anywhere

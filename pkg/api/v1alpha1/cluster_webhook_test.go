@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -22,7 +23,13 @@ func TestClusterValidateUpdateManagementValueImmutable(t *testing.T) {
 }
 
 func TestClusterValidateUpdateManagementOldNilNewTrueSuccess(t *testing.T) {
-	cOld := &v1alpha1.Cluster{}
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
 	c := cOld.DeepCopy()
 	c.SetSelfManaged()
 
@@ -41,7 +48,11 @@ func TestClusterValidateUpdateManagementOldNilNewFalseImmutable(t *testing.T) {
 
 func TestClusterValidateUpdateManagementBothNilImmutable(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
-		Spec: v1alpha1.ClusterSpec{},
+		Spec: v1alpha1.ClusterSpec{
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
 	}
 	c := cOld.DeepCopy()
 
@@ -92,6 +103,9 @@ func TestWorkloadClusterValidateUpdateKubernetesVersionSuccess(t *testing.T) {
 			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
 				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
 			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 	cOld.SetManagedBy("management-cluster")
@@ -111,6 +125,9 @@ func TestManagementClusterValidateUpdateControlPlaneConfigurationEqual(t *testin
 				Endpoint:        &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
 				MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"},
 			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 	cOld.SetSelfManaged()
@@ -134,6 +151,9 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationEqual(t *testing.
 				Endpoint:        &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
 				MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"},
 			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 	cOld.SetManagedBy("management-cluster")
@@ -221,6 +241,58 @@ func TestClusterValidateUpdateControlPlaneConfigurationNewEndpointNilImmutable(t
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
+func TestManagementClusterValidateUpdateControlPlaneConfigurationTaintsImmutable(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Taints: []v1.Taint{
+					{
+						Key:    "Key1",
+						Value:  "Val1",
+						Effect: "PreferNoSchedule",
+					},
+				},
+			},
+		},
+	}
+	cOld.SetSelfManaged()
+	c := cOld.DeepCopy()
+	c.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
+		Taints: []v1.Taint{
+			{
+				Key:    "Key2",
+				Value:  "Val2",
+				Effect: "PreferNoSchedule",
+			},
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
+func TestManagementClusterValidateUpdateControlPlaneConfigurationLabelsImmutable(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Labels: map[string]string{
+					"Key1": "Val1",
+				},
+			},
+		},
+	}
+	cOld.SetSelfManaged()
+	c := cOld.DeepCopy()
+	c.Spec.ControlPlaneConfiguration = v1alpha1.ControlPlaneConfiguration{
+		Labels: map[string]string{
+			"Key2": "Val2",
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
 func TestManagementClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRefImmutable(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
@@ -246,6 +318,9 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationMachineGroupRef(t
 			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
 				MachineGroupRef: &v1alpha1.Ref{Name: "test1", Kind: "MachineConfig"},
 			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 	cOld.SetManagedBy("management-cluster")
@@ -284,6 +359,9 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationOldMachineGroupRe
 			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
 				MachineGroupRef: nil,
 			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 	cOld.SetManagedBy("management-cluster")
@@ -322,6 +400,9 @@ func TestWorkloadClusterValidateUpdateControlPlaneConfigurationNewMachineGroupRe
 			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
 				MachineGroupRef: &v1alpha1.Ref{Name: "test", Kind: "MachineConfig"},
 			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 	cOld.SetManagedBy("management-cluster")
@@ -341,6 +422,9 @@ func TestClusterValidateUpdateDatacenterRefImmutableEqual(t *testing.T) {
 			DatacenterRef: v1alpha1.Ref{
 				Name: "test", Kind: "DatacenterConfig",
 			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 	c := cOld.DeepCopy()
@@ -461,6 +545,9 @@ func TestClusterValidateUpdateClusterNetworkEqualOrder(t *testing.T) {
 					CidrBlocks: []string{"1.2.3.4/7", "1.2.3.4/8"},
 				},
 			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 	c := cOld.DeepCopy()
@@ -553,6 +640,9 @@ func TestClusterValidateUpdateProxyConfigurationEqualOrder(t *testing.T) {
 					"noproxy2",
 				},
 			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 
@@ -566,6 +656,9 @@ func TestClusterValidateUpdateProxyConfigurationEqualOrder(t *testing.T) {
 					"noproxy1",
 				},
 			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 
@@ -649,6 +742,9 @@ func TestClusterValidateUpdateGitOpsRefImmutableNilEqual(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			GitOpsRef: nil,
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 	c := cOld.DeepCopy()
@@ -741,6 +837,9 @@ func TestClusterValidateUpdateIdentityProviderRefsImmutableEqualOrder(t *testing
 					Name: "name2",
 				},
 			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 	c := &v1alpha1.Cluster{
@@ -755,6 +854,9 @@ func TestClusterValidateUpdateIdentityProviderRefsImmutableEqualOrder(t *testing
 					Name: "name1",
 				},
 			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 
@@ -860,6 +962,9 @@ func TestClusterValidateUpdateWithPausedAnnotation(t *testing.T) {
 		},
 		Spec: v1alpha1.ClusterSpec{
 			KubernetesVersion: v1alpha1.Kube119,
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
 		},
 	}
 	cOld.PauseReconcile()
@@ -879,7 +984,7 @@ func TestClusterValidateUpdateInvalidType(t *testing.T) {
 }
 
 func TestClusterValidateUpdateSuccess(t *testing.T) {
-	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: 5})
+	workerConfiguration := append([]v1alpha1.WorkerNodeGroupConfiguration{}, v1alpha1.WorkerNodeGroupConfiguration{Count: 5, Name: "test"})
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
 			WorkerNodeGroupConfigurations: workerConfiguration,
@@ -934,4 +1039,129 @@ func TestClusterCreateWorkloadCluster(t *testing.T) {
 	g := NewWithT(t)
 	g.Expect(cluster.ValidateCreate()).To(Succeed())
 	os.Unsetenv("FULL_LIFECYCLE_API")
+}
+
+func TestClusterUpdateWorkerNodeGroupTaintsAndLabelsSuccess(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+				Taints: []v1.Taint{{
+					Key:    "test",
+					Value:  "test",
+					Effect: "PreferNoSchedule",
+				}},
+				Labels: map[string]string{
+					"test": "val1",
+				},
+			}},
+		},
+	}
+	c := cOld.DeepCopy()
+	c.Spec.WorkerNodeGroupConfigurations[0].Taints[0].Value = "test2"
+	c.Spec.WorkerNodeGroupConfigurations[0].Labels["test"] = "val2"
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
+func TestClusterUpdateWorkerNodeGroupTaintsInvalid(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+				Taints: []v1.Taint{{
+					Key:    "test",
+					Value:  "test",
+					Effect: "PreferNoSchedule",
+				}},
+			}},
+		},
+	}
+	c := cOld.DeepCopy()
+	c.Spec.WorkerNodeGroupConfigurations[0].Taints[0].Effect = "NoSchedule"
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
+func TestClusterUpdateWorkerNodeGroupNameInvalid(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
+	c := cOld.DeepCopy()
+	c.Spec.WorkerNodeGroupConfigurations[0].Name = ""
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
+func TestClusterUpdateWorkerNodeGroupLabelsInvalid(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+				Labels: map[string]string{
+					"test": "val1",
+				},
+			}},
+		},
+	}
+	c := cOld.DeepCopy()
+	c.Spec.WorkerNodeGroupConfigurations[0].Labels["test"] = "val1/val2"
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
+func TestClusterUpdateControlPlaneTaintsAndLabelsSuccess(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Taints: []v1.Taint{{
+					Key:    "test",
+					Value:  "test",
+					Effect: "PreferNoSchedule",
+				}},
+				Labels: map[string]string{
+					"test": "val1",
+				},
+			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
+	cOld.SetManagedBy("management-cluster")
+	c := cOld.DeepCopy()
+	c.Spec.ControlPlaneConfiguration.Taints[0].Value = "test2"
+	c.Spec.ControlPlaneConfiguration.Labels["test"] = "val2"
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).To(Succeed())
+}
+
+func TestClusterUpdateControlPlaneLabelsInvalid(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{
+				Labels: map[string]string{
+					"test": "val1",
+				},
+			},
+			WorkerNodeGroupConfigurations: []v1alpha1.WorkerNodeGroupConfiguration{{
+				Name: "test",
+			}},
+		},
+	}
+	cOld.SetManagedBy("management-cluster")
+	c := cOld.DeepCopy()
+	c.Spec.ControlPlaneConfiguration.Labels["test"] = "val1/val2"
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }

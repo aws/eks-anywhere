@@ -21,6 +21,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/factory"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -30,6 +32,9 @@ type Dependencies struct {
 	DockerClient              *executables.Docker
 	Kubectl                   *executables.Kubectl
 	Govc                      *executables.Govc
+	Tink                      *executables.Tink
+	Pbnj                      *pbnj.Pbnj
+	TinkerbellClients         tinkerbell.TinkerbellClients
 	Writer                    filewriter.FileWriter
 	Kind                      *executables.Kind
 	Clusterctl                *executables.Clusterctl
@@ -139,16 +144,15 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 	return f
 }
 
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string) *Factory {
-	f.WithProviderFactory(clusterConfig)
-
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string, skipPowerActions bool) *Factory {
+	f.WithProviderFactory(clusterConfigFile, clusterConfig)
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Provider != nil {
 			return nil
 		}
 
 		var err error
-		f.dependencies.Provider, err = f.providerFactory.BuildProvider(clusterConfigFile, clusterConfig, skipIpCheck, hardwareConfigFile)
+		f.dependencies.Provider, err = f.providerFactory.BuildProvider(clusterConfigFile, clusterConfig, skipIpCheck, hardwareConfigFile, skipPowerActions)
 		if err != nil {
 			return err
 		}
@@ -159,14 +163,14 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 	return f
 }
 
-func (f *Factory) WithProviderFactory(clusterConfig *v1alpha1.Cluster) *Factory {
+func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v1alpha1.Cluster) *Factory {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		f.WithKubectl().WithGovc().WithWriter().WithCAPIClusterResourceSetManager()
 	case v1alpha1.DockerDatacenterKind:
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
-		f.WithKubectl()
+		f.WithKubectl().WithTink(clusterConfigFile).WithPbnj(clusterConfigFile)
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -179,7 +183,9 @@ func (f *Factory) WithProviderFactory(clusterConfig *v1alpha1.Cluster) *Factory 
 			DockerKubectlClient:       f.dependencies.Kubectl,
 			VSphereGovcClient:         f.dependencies.Govc,
 			VSphereKubectlClient:      f.dependencies.Kubectl,
+			SnowKubectlClient:         f.dependencies.Kubectl,
 			TinkerbellKubectlClient:   f.dependencies.Kubectl,
+			TinkerbellClients:         tinkerbell.TinkerbellClients{ProviderTinkClient: f.dependencies.Tink, ProviderPbnjClient: f.dependencies.Pbnj},
 			Writer:                    f.dependencies.Writer,
 			ClusterResourceSetManager: f.dependencies.ResourceSetManager,
 		}
@@ -246,6 +252,48 @@ func (f *Factory) WithGovc() *Factory {
 		f.dependencies.Govc = f.executableBuilder.BuildGovcExecutable(f.dependencies.Writer)
 		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Govc)
 
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithTink(clusterConfigFile string) *Factory {
+	f.WithExecutableBuilder()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.Tink != nil {
+			return nil
+		}
+		tinkerbellDatacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFile)
+		if err != nil {
+			return err
+		}
+		f.dependencies.Tink = f.executableBuilder.BuildTinkExecutable(tinkerbellDatacenterConfig.Spec.TinkerbellCertURL, tinkerbellDatacenterConfig.Spec.TinkerbellGRPCAuth)
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithPbnj(clusterConfigFile string) *Factory {
+	f.WithExecutableBuilder()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.Pbnj != nil {
+			return nil
+		}
+		tinkerbellDatacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFile)
+		if err != nil {
+			return err
+		}
+
+		pbnjClient, err := pbnj.NewPBNJClient(tinkerbellDatacenterConfig.Spec.TinkerbellPBnJGRPCAuth)
+		if err != nil {
+			return err
+		}
+		f.dependencies.Pbnj = pbnjClient
 		return nil
 	})
 

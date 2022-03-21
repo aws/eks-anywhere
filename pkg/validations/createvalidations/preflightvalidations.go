@@ -2,7 +2,9 @@ package createvalidations
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -17,15 +19,9 @@ func (u *CreateValidations) PreflightValidations(ctx context.Context) (err error
 
 	createValidations := []validations.ValidationResult{
 		{
-			Name:        "validate taints support",
-			Remediation: "ensure TAINTS_SUPPORT env variable is set",
-			Err:         validations.ValidateTaintsSupport(u.Opts.Spec),
-			Silent:      true,
-		},
-		{
-			Name:        "validate node labels support",
-			Remediation: "ensure NODE_LABELS_SUPPORT env variable is set",
-			Err:         validations.ValidateNodeLabelsSupport(u.Opts.Spec),
+			Name:        "validate kubernetes version 1.22 support",
+			Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s122SupportEnvVar),
+			Err:         validations.ValidateK8s122Support(u.Opts.Spec),
 			Silent:      true,
 		},
 	}

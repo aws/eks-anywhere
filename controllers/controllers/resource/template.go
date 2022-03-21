@@ -76,23 +76,39 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		controlPlaneTemplateName = cp.Spec.MachineTemplate.InfrastructureRef.Name
 	}
 
+	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	workloadTemplateNames := make(map[string]string, len(clusterSpec.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Spec.WorkerNodeGroupConfigurations {
+		oldWn, err := r.ExistingWorkerNodeGroupConfig(ctx, eksaCluster, workerNodeGroupConfiguration)
+		if err != nil {
+			return nil, err
+		}
+		if vsphere.NeedsNewKubeadmConfigTemplate(&workerNodeGroupConfiguration, oldWn) {
+			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = templateBuilder.KubeadmConfigTemplateName(clusterName, workerNodeGroupConfiguration.Name)
+		} else {
+			md, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
+			if err != nil {
+				return nil, err
+			}
+			workloadKubeadmConfigTemplateName := md.Spec.Template.Spec.Bootstrap.ConfigRef.Name
+			kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = workloadKubeadmConfigTemplateName
+		}
+
+		vmc := workerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		oldVmc, err := r.ExistingVSphereWorkerMachineConfig(ctx, eksaCluster, workerNodeGroupConfiguration)
 		if err != nil {
 			return nil, err
 		}
-		vmc := workerVmcs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		updateWorkloadTemplate := vsphere.AnyImmutableFieldChanged(oldVdc, &vdc, oldVmc, &vmc)
 		if updateWorkloadTemplate {
 			workloadTemplateName := templateBuilder.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name)
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		} else {
-			mcDeployment, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
+			md, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
 			if err != nil {
 				return nil, err
 			}
-			workloadTemplateName := mcDeployment.Spec.Template.Spec.InfrastructureRef.Name
+			workloadTemplateName := md.Spec.Template.Spec.InfrastructureRef.Name
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = workloadTemplateName
 		}
 	}
@@ -142,7 +158,7 @@ func (r *VsphereTemplate) TemplateResources(ctx context.Context, eksaCluster *an
 		values["eksaVspherePassword"] = string(passwordBytes)
 	}
 
-	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, cpOpt)
+	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, cpOpt)
 }
 
 func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster *anywherev1.Cluster, clusterSpec *cluster.Spec, tdc anywherev1.TinkerbellDatacenterConfig, cpTmc, etcdTmc anywherev1.TinkerbellMachineConfig, workerTmc map[string]anywherev1.TinkerbellMachineConfig) ([]*unstructured.Unstructured, error) {
@@ -180,15 +196,15 @@ func (r *TinkerbellTemplate) TemplateResources(ctx context.Context, eksaCluster 
 		values["etcdTemplateName"] = etcdTemplateName
 	}
 
-	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, cpOpt)
+	return generateTemplateResources(templateBuilder, clusterSpec, nil, nil, cpOpt)
 }
 
-func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *cluster.Spec, templateNames map[string]string, cpOpt providers.BuildMapOption) ([]*unstructured.Unstructured, error) {
+func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string, cpOpt providers.BuildMapOption) ([]*unstructured.Unstructured, error) {
 	cp, err := builder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
 	if err != nil {
 		return nil, err
 	}
-	md, err := builder.GenerateCAPISpecWorkers(clusterSpec, templateNames)
+	md, err := builder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +252,8 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 		values["controlPlaneTemplateName"] = kubeadmControlPlane.Spec.MachineTemplate.InfrastructureRef.Name
 		values["etcdTemplateName"] = etcdTemplateName
 	}
-	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, cpOpt)
+
+	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, nil, cpOpt)
 }
 
 func sshAuthorizedKey(users []anywherev1.UserConfiguration) string {

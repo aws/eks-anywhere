@@ -43,12 +43,16 @@ spec:
       nodeRegistration:
         kubeletExtraArgs:
           provider-id: PROVIDER_ID
+          read-only-port: "0"
+          anonymous-auth: "false"
     joinConfiguration:
       nodeRegistration:
         ignorePreflightErrors:
         - DirAvailable--etc-kubernetes-manifests
         kubeletExtraArgs:
           provider-id: PROVIDER_ID
+          read-only-port: "0"
+          anonymous-auth: "false"
     files:
       - content: |
           apiVersion: v1
@@ -67,7 +71,7 @@ spec:
               - name: port
                 value: "6443"
               - name: vip_interface
-                value: eno2
+                value: eno1
               - name: vip_cidr
                 value: "32"
               - name: cp_enable

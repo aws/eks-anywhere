@@ -1,0 +1,21 @@
+{
+  "apiVersion": "anywhere.eks.amazonaws.com/v1alpha1",
+  "kind": "CloudStackMachineConfig",
+  "metadata": {
+    "name": "test-etcd"
+  },
+  "spec": {
+    "computeOffering": {
+      "value": "testOffering",
+      "type": "name"
+    },
+    "users": [{
+      "name": "maxdrib",
+      "sshAuthorizedKeys": ["ssh-rsa test123 hi"]
+    }],
+    "template": {
+      "value": "testTemplate",
+      "type": "name"
+    }
+  }
+}

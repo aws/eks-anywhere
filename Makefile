@@ -6,14 +6,26 @@ export INTEGRATION_TEST_SUBNET_ID?=integration_test_subnet_id
 export INTEGRATION_TEST_INSTANCE_TAG?=integration_test_instance_tag
 export JOB_ID?=${PROW_JOB_ID}
 
+LOCAL_ENV=.env
+
+# Include local .env file for exporting e2e test env vars locally
+# FYI, This file is git ignored
+ifneq ("$(wildcard $(LOCAL_ENV))","")
+include $(LOCAL_ENV)
+export $(shell sed 's/=.*//' $(LOCAL_ENV))
+endif
+
 SHELL := /bin/bash
 
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
-GIT_TAG?=$(shell git describe --tag | cut -d'-' -f1)
+GIT_TAG?=$(shell git tag -l --sort -v:refname | head -1)
 GOLANG_VERSION?="1.16"
 GO ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))/go
 GO_TEST ?= $(GO) test
+
+# A regular expression defining what packages to exclude from the unit-test recipe.
+UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 
 ## ensure local execution uses the 'main' branch bundle
 BRANCH_NAME?=main
@@ -89,10 +101,10 @@ KUBE_RBAC_PROXY_IMAGE_NAME_OVERRIDE="${IMAGE_REPO}/brancz/kube-rbac-proxy"
 KUBE_RBAC_PROXY_IMAGE_TAG_OVERRIDE="latest"
 KUSTOMIZATION_CONFIG=./config/prod/kustomization.yaml
 
-CONTROLLER_MANIFEST_OUTPUT_DIR=$(OUTPUT_DIR)/manifests/cluster-controller
+CONTROLLER_MANIFEST_OUTPUT_DIR=$(OUTPUT_DIR)/manifests/cluster-controller/$(GIT_TAG)
 
-# This removes the compile dependency on C libraries from github.com/containers/storage which is imported by github.com/replicatedhq/troubleshoot
 BUILD_TAGS :=
+BUILD_FLAGS?=
 
 GO_ARCH:=$(shell go env GOARCH)
 GO_OS:=$(shell go env GOOS)
@@ -109,6 +121,7 @@ EKS_A_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-cross-platf
 EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-release-cross-platform-$(platform))
 
 DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow
+LOCAL_E2E_TESTS ?= $(DOCKER_E2E_TEST)
 
 export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.21.x
 
@@ -127,7 +140,7 @@ eks-a-binary: LINKER_FLAGS_ARG := -ldflags "$(ALL_LINKER_FLAGS)"
 eks-a-binary: BUILD_TAGS_ARG := -tags "$(BUILD_TAGS)"
 eks-a-binary: OUTPUT_FILE ?= bin/eksctl-anywhere
 eks-a-binary:
-	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) build $(BUILD_TAGS_ARG) $(LINKER_FLAGS_ARG) -o $(OUTPUT_FILE) github.com/aws/eks-anywhere/cmd/eksctl-anywhere
+	GOOS=$(GO_OS) GOARCH=$(GO_ARCH) $(GO) build $(BUILD_TAGS_ARG) $(LINKER_FLAGS_ARG) $(BUILD_FLAGS) -o $(OUTPUT_FILE) github.com/aws/eks-anywhere/cmd/eksctl-anywhere
 
 .PHONY: eks-a-embed-config
 eks-a-embed-config: ## Build a dev release version of eks-a with embed cluster spec config
@@ -194,7 +207,7 @@ eks-a-release-cross-platform-%: ## Generate binaries for Linux and MacOS
 eks-a-release-cross-platform-%: GO_OS = $(firstword $(subst -, ,$*))
 eks-a-release-cross-platform-%: GO_ARCH = $(lastword $(subst -, ,$*))
 eks-a-release-cross-platform-%:
-	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) GO_OS=$(GO_OS) GO_ARCH=$(GO_ARCH) OUTPUT_FILE=bin/$(GO_OS)/$(GO_ARCH)/eksctl-anywhere LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true'
+	$(MAKE) eks-a-binary GIT_VERSION=$(GIT_VERSION) GO_OS=$(GO_OS) GO_ARCH=$(GO_ARCH) OUTPUT_FILE=bin/$(GO_OS)/$(GO_ARCH)/eksctl-anywhere LINKER_FLAGS='-s -w -X github.com/aws/eks-anywhere/pkg/eksctl.enabled=true' BUILD_FLAGS='-trimpath'
 
 $(OUTPUT_DIR):
 	mkdir -p $(OUTPUT_DIR)
@@ -341,11 +354,15 @@ unit-test: ## Run unit tests
 unit-test: $(SETUP_ENVTEST) 
 unit-test: KUBEBUILDER_ASSETS ?= $(shell $(SETUP_ENVTEST) use --use-env -p path $(KUBEBUILDER_ENVTEST_KUBERNETES_VERSION))
 unit-test:
-	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) ./... -cover -tags "$(BUILD_TAGS)"
+	KUBEBUILDER_ASSETS="$(KUBEBUILDER_ASSETS)" $(GO_TEST) $$(go list ./... | grep -vE "$(UNIT_TEST_PACKAGE_EXCLUSION_REGEX)") -cover -tags "$(BUILD_TAGS)" $(GO_TEST_FLAGS)
+
+.PHONY: local-e2e
+local-e2e: e2e ## Run e2e test's locally
+	./bin/e2e.test -test.v -test.run $(LOCAL_E2E_TESTS) $(GO_TEST_FLAGS)
 
 .PHONY: capd-test
-capd-test: e2e ## Run default e2e capd test locally
-	./bin/e2e.test -test.v -test.run $(DOCKER_E2E_TEST)
+capd-test: ## Run default e2e capd test locally
+	$(MAKE) local-e2e LOCAL_E2E_TESTS=$(DOCKER_E2E_TEST)
 
 .PHONY: docker-e2e-test
 docker-e2e-test: e2e ## Run docker integration test in new ec2 instance
@@ -368,7 +385,8 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
 	${GOPATH}/bin/mockgen -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable
 	${GOPATH}/bin/mockgen -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
-	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell" ProviderKubectlClient
+	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell" ProviderKubectlClient,ProviderTinkClient,ProviderPbnjClient
+	${GOPATH}/bin/mockgen -destination=pkg/providers/cloudstack/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/cloudstack" ProviderCmkClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere" ProviderGovcClient,ProviderKubectlClient,ClusterResourceSetManager
 	${GOPATH}/bin/mockgen -destination=pkg/filewriter/mocks/filewriter.go -package=mocks "github.com/aws/eks-anywhere/pkg/filewriter" FileWriter
 	${GOPATH}/bin/mockgen -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth

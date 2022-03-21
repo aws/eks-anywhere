@@ -320,6 +320,8 @@ spec:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
+          read-only-port: "0"
+          anonymous-auth: "false"
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 10 }}
 {{- end }}
@@ -365,6 +367,8 @@ spec:
         criSocket: /var/run/containerd/containerd.sock
         kubeletExtraArgs:
           cloud-provider: external
+          read-only-port: "0"
+          anonymous-auth: "false"
 {{- if .kubeletExtraArgs }}
 {{ .kubeletExtraArgs.ToYaml | indent 10 }}
 {{- end }}
@@ -969,6 +973,16 @@ data:
           - effect: NoSchedule
             key: node-role.kubernetes.io/master
             operator: Exists
+{{- if .controlPlaneTaints }}
+{{- range .controlPlaneTaints}}
+          - key: {{ .Key }}
+            value: {{ .Value }}
+            effect: {{ .Effect }}
+{{- if .TimeAdded }}
+            timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- end }}
           volumes:
           - name: vsphere-config-volume
             secret:
@@ -1136,6 +1150,7 @@ data:
           secretName: cloud-provider-vsphere-credentials
           secretNamespace: kube-system
           thumbprint: "{{.thumbprint}}"
+          insecureFlag: {{.insecure}}
         vcenter:
           {{.vsphereServer}}:
             datacenters:

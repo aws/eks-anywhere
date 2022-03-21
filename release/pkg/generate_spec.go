@@ -121,6 +121,11 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		return nil, errors.Wrapf(err, "Error getting bundle for Kindnetd")
 	}
 
+	haproxyBundle, err := r.GetHaproxyBundle(imageDigests)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Error getting bundle for Haproxy")
+	}
+
 	fluxBundle, err := r.GetFluxBundle(imageDigests)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting bundle for Flux controllers")
@@ -142,10 +147,24 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 	}
 
 	var tinkerbellBundle anywherev1alpha1.TinkerbellBundle
+	var snowBundle anywherev1alpha1.SnowBundle
 	if r.DevRelease && r.BuildRepoBranchName == "main" {
 		tinkerbellBundle, err = r.GetTinkerbellBundle(imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for Tinkerbell infrastructure provider")
+		}
+
+		snowBundle, err = r.GetSnowBundle(imageDigests)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting bundle for Snow infrastructure provider")
+		}
+	}
+
+	var cloudStackBundle anywherev1alpha1.CloudStackBundle
+	if r.DevRelease && r.BuildRepoBranchName == "main" {
+		cloudStackBundle, err = r.GetCloudStackBundle(imageDigests)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting bundle for CloudStack infrastructure provider")
 		}
 	}
 
@@ -154,28 +173,25 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		return nil, err
 	}
 
-	bottlerocketSupportedK8sVersions, err := getBottlerocketSupportedK8sVersions(r)
+	supportedK8sVersions, err := getSupportedK8sVersions(r)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
 	}
 
-	for channel, release := range eksDReleaseMap {
-		if channel == "latest" || !utils.SliceContains(bottlerocketSupportedK8sVersions, channel) {
-			continue
-		}
-		releaseNumber := release.(map[interface{}]interface{})["number"]
-		releaseNumberInt := releaseNumber.(int)
-		releaseNumberStr := strconv.Itoa(releaseNumberInt)
-
-		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Error getting kubeversion for eks-d %s-%s release", channel, releaseNumberStr)
-		}
+	for _, release := range eksDReleaseMap.Releases {
+		channel := release.Branch
+		number := strconv.Itoa(release.Number)
+		dev := release.Dev
+		kubeVersion := release.KubeVersion
 		shortKubeVersion := kubeVersion[1:strings.LastIndex(kubeVersion, ".")]
 
-		eksDReleaseBundle, err := r.GetEksDReleaseBundle(channel, kubeVersion, releaseNumberStr, imageDigests)
+		if !utils.SliceContains(supportedK8sVersions, channel) {
+			continue
+		}
+
+		eksDReleaseBundle, err := r.GetEksDReleaseBundle(channel, kubeVersion, number, imageDigests, dev)
 		if err != nil {
-			return nil, errors.Wrapf(err, "Error getting bundle for eks-d %s-%s release bundle", channel, releaseNumberStr)
+			return nil, errors.Wrapf(err, "Error getting bundle for eks-d %s-%s release bundle", channel, number)
 		}
 
 		vsphereBundle, err := r.GetVsphereBundle(channel, imageDigests)
@@ -183,7 +199,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			return nil, errors.Wrapf(err, "Error getting bundle for vSphere infrastructure provider")
 		}
 
-		bottlerocketBootstrapBundle, err := r.GetBottlerocketBootstrapBundle(channel, releaseNumberStr, imageDigests)
+		bottlerocketBootstrapBundle, err := r.GetBottlerocketBootstrapBundle(channel, number, imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for bottlerocket bootstrap")
 		}
@@ -197,6 +213,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			ControlPlane:           kubeadmControlPlaneBundle,
 			Aws:                    awsBundle,
 			VSphere:                vsphereBundle,
+			CloudStack:             cloudStackBundle,
 			Docker:                 dockerBundle,
 			Eksa:                   eksaBundle,
 			Cilium:                 ciliumBundle,
@@ -207,6 +224,8 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			BottleRocketBootstrap:  bottlerocketBootstrapBundle,
 			BottleRocketAdmin:      bottlerocketAdminBundle,
 			Tinkerbell:             tinkerbellBundle,
+			Haproxy:                haproxyBundle,
+			Snow:                   snowBundle,
 		}
 		versionsBundles = append(versionsBundles, versionsBundle)
 	}
@@ -235,32 +254,39 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 
 	artifactsTable := map[string][]Artifact{}
 	eksAArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"eks-a-tools":                  r.GetEksAToolsAssets,
-		"cluster-api":                  r.GetCAPIAssets,
-		"cluster-api-provider-aws":     r.GetCapaAssets,
-		"cluster-api-provider-docker":  r.GetDockerAssets,
-		"cluster-api-provider-vsphere": r.GetCapvAssets,
-		"vsphere-csi-driver":           r.GetVsphereCsiAssets,
-		"cert-manager":                 r.GetCertManagerAssets,
-		"cilium":                       r.GetCiliumAssets,
-		"local-path-provisioner":       r.GetLocalPathProvisionerAssets,
-		"kube-rbac-proxy":              r.GetKubeRbacProxyAssets,
-		"kube-vip":                     r.GetKubeVipAssets,
-		"flux":                         r.GetFluxAssets,
-		"etcdadm-bootstrap-provider":   r.GetEtcdadmBootstrapAssets,
-		"etcdadm-controller":           r.GetEtcdadmControllerAssets,
-		"cluster-controller":           r.GetClusterControllerAssets,
-		"kindnetd":                     r.GetKindnetdAssets,
-		"etcdadm":                      r.GetEtcdadmAssets,
-		"cri-tools":                    r.GetCriToolsAssets,
-		"diagnostic-collector":         r.GetDiagnosticCollectorAssets,
+		"eks-a-tools":                     r.GetEksAToolsAssets,
+		"cluster-api":                     r.GetCAPIAssets,
+		"cluster-api-provider-aws":        r.GetCapaAssets,
+		"cluster-api-provider-docker":     r.GetDockerAssets,
+		"cluster-api-provider-vsphere":    r.GetCapvAssets,
+		"cluster-api-provider-cloudstack": r.GetCapcAssets,
+		"vsphere-csi-driver":              r.GetVsphereCsiAssets,
+		"cert-manager":                    r.GetCertManagerAssets,
+		"cilium":                          r.GetCiliumAssets,
+		"local-path-provisioner":          r.GetLocalPathProvisionerAssets,
+		"kube-rbac-proxy":                 r.GetKubeRbacProxyAssets,
+		"kube-vip":                        r.GetKubeVipAssets,
+		"flux":                            r.GetFluxAssets,
+		"etcdadm-bootstrap-provider":      r.GetEtcdadmBootstrapAssets,
+		"etcdadm-controller":              r.GetEtcdadmControllerAssets,
+		"cluster-controller":              r.GetClusterControllerAssets,
+		"kindnetd":                        r.GetKindnetdAssets,
+		"etcdadm":                         r.GetEtcdadmAssets,
+		"cri-tools":                       r.GetCriToolsAssets,
+		"diagnostic-collector":            r.GetDiagnosticCollectorAssets,
+		"haproxy":                         r.GetHaproxyAssets,
 	}
 
 	if r.DevRelease && r.BuildRepoBranchName == "main" {
 		eksAArtifactsFuncs["cluster-api-provider-tinkerbell"] = r.GetCaptAssets
+		eksAArtifactsFuncs["cluster-api-provider-cloudstack"] = r.GetCapcAssets
 		eksAArtifactsFuncs["tink"] = r.GetTinkAssets
 		eksAArtifactsFuncs["hegel"] = r.GetHegelAssets
 		eksAArtifactsFuncs["cfssl"] = r.GetCfsslAssets
+		eksAArtifactsFuncs["pbnj"] = r.GetPbnjAssets
+		eksAArtifactsFuncs["boots"] = r.GetBootsAssets
+		eksAArtifactsFuncs["hub"] = r.GetHubAssets
+		eksAArtifactsFuncs["cluster-api-provider-aws-snow"] = r.GetCapasAssets
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
@@ -277,24 +303,21 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		return nil, err
 	}
 
-	bottlerocketSupportedK8sVersions, err := getBottlerocketSupportedK8sVersions(r)
+	supportedK8sVersions, err := getSupportedK8sVersions(r)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error getting supported Kubernetes versions for bottlerocket")
 	}
-	for channel, release := range eksDReleaseMap {
-		if channel == "latest" || !utils.SliceContains(bottlerocketSupportedK8sVersions, channel) {
+
+	for _, release := range eksDReleaseMap.Releases {
+		channel := release.Branch
+		number := strconv.Itoa(release.Number)
+		kubeVersion := release.KubeVersion
+
+		if !utils.SliceContains(supportedK8sVersions, channel) {
 			continue
 		}
-		releaseNumber := release.(map[interface{}]interface{})["number"]
-		releaseNumberInt := releaseNumber.(int)
-		releaseNumberStr := strconv.Itoa(releaseNumberInt)
 
-		kubeVersion, err := getEksDKubeVersion(channel, releaseNumberStr)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Error getting kubeversion for eks-d %s-%s release", channel, releaseNumberStr)
-		}
-
-		eksDChannelArtifacts, err := r.GetEksDChannelAssets(channel, kubeVersion, releaseNumberStr)
+		eksDChannelArtifacts, err := r.GetEksDChannelAssets(channel, kubeVersion, number)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", channel)
 		}
@@ -304,7 +327,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", channel)
 		}
 
-		bottlerocketBootstrapArtifacts, err := r.GetBottlerocketBootstrapAssets(channel, releaseNumberStr)
+		bottlerocketBootstrapArtifacts, err := r.GetBottlerocketBootstrapAssets(channel, number)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting artifact information for %s", channel)
 		}
@@ -315,7 +338,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		vSphereCloudProviderComponentName := fmt.Sprintf("cloud-provider-vsphere-%s", channel)
 		artifactsTable[vSphereCloudProviderComponentName] = vSphereCloudProviderArtifacts
 
-		bottlerocketBootstrapComponentName := fmt.Sprintf("bottlerocket-bootstrap-%s-%s", channel, releaseNumberStr)
+		bottlerocketBootstrapComponentName := fmt.Sprintf("bottlerocket-bootstrap-%s-%s", channel, number)
 		artifactsTable[bottlerocketBootstrapComponentName] = bottlerocketBootstrapArtifacts
 	}
 
@@ -482,9 +505,10 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 		)
 	} else if name == "eks-anywhere-cluster-controller" {
 		if r.DevRelease {
-			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a",
+			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
 				r.ReleaseContainerRegistry,
 				repoName,
+				tagOptions["gitTag"],
 			)
 		} else {
 			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
@@ -495,9 +519,10 @@ func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map
 		}
 	} else if name == "eks-anywhere-diagnostic-collector" {
 		if r.DevRelease {
-			releaseImageUri = fmt.Sprintf("%s/%s:v0.0.0-eks-a",
+			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",
 				r.ReleaseContainerRegistry,
 				repoName,
+				tagOptions["gitTag"],
 			)
 		} else {
 			releaseImageUri = fmt.Sprintf("%s/%s:%s-eks-a",

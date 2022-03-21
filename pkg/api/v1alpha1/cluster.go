@@ -12,6 +12,8 @@ import (
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/validation"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/crypto"
@@ -172,6 +174,7 @@ var clusterConfigValidations = []func(*Cluster) error{
 	validateProxyConfig,
 	validateMirrorConfig,
 	validatePodIAMConfig,
+	validateControlPlaneLabels,
 }
 
 // GetClusterConfig parses a Cluster object from a multiobject yaml file in disk
@@ -179,6 +182,20 @@ var clusterConfigValidations = []func(*Cluster) error{
 func GetClusterConfig(fileName string) (*Cluster, error) {
 	clusterConfig := &Cluster{}
 	err := ParseClusterConfig(fileName, clusterConfig)
+	if err != nil {
+		return clusterConfig, err
+	}
+	if err := setClusterDefaults(clusterConfig); err != nil {
+		return clusterConfig, err
+	}
+	return clusterConfig, nil
+}
+
+// GetClusterConfigFromContent parses a Cluster object from a multiobject yaml content
+// and sets defaults if necessary
+func GetClusterConfigFromContent(content []byte) (*Cluster, error) {
+	clusterConfig := &Cluster{}
+	err := ParseClusterConfigFromContent(content, clusterConfig)
 	if err != nil {
 		return clusterConfig, err
 	}
@@ -222,9 +239,19 @@ func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 		return fmt.Errorf("unable to read file due to: %v", err)
 	}
 
+	if err = ParseClusterConfigFromContent(content, clusterConfig); err != nil {
+		return fmt.Errorf("unable to parse %s file: %v", fileName, err)
+	}
+
+	return nil
+}
+
+// ParseClusterConfigFromContent unmarshalls an API object implementing the KindAccessor interface
+// from a multiobject yaml content. It doesn't set defaults nor validates the object
+func ParseClusterConfigFromContent(content []byte, clusterConfig KindAccessor) error {
 	for _, c := range strings.Split(string(content), YamlSeparator) {
-		if err = yaml.Unmarshal([]byte(c), clusterConfig); err != nil {
-			return fmt.Errorf("unable to parse %s\nyaml: %s\n %v", fileName, c, err)
+		if err := yaml.Unmarshal([]byte(c), clusterConfig); err != nil {
+			return err
 		}
 
 		if clusterConfig.Kind() == clusterConfig.ExpectedKind() {
@@ -232,7 +259,7 @@ func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 		}
 	}
 
-	return fmt.Errorf("cluster spec file %s is invalid or does not contain kind %s", fileName, clusterConfig.ExpectedKind())
+	return fmt.Errorf("yamlop content is invalid or does not contain kind %s", clusterConfig.ExpectedKind())
 }
 
 func (c *Cluster) PauseReconcile() {
@@ -284,11 +311,11 @@ func ValidateClusterNameLength(clusterName string) error {
 func validateClusterConfigName(clusterConfig *Cluster) error {
 	err := ValidateClusterName(clusterConfig.ObjectMeta.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to validate cluster config name: %v", err)
 	}
 	err = ValidateClusterNameLength(clusterConfig.ObjectMeta.Name)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to validate cluster config name: %v", err)
 	}
 	return nil
 }
@@ -312,15 +339,50 @@ func validateControlPlaneReplicas(clusterConfig *Cluster) error {
 	return nil
 }
 
+func validateControlPlaneLabels(clusterConfig *Cluster) error {
+	if err := validateNodeLabels(clusterConfig.Spec.ControlPlaneConfiguration.Labels, field.NewPath("spec", "controlPlaneConfiguration", "labels")); err != nil {
+		return fmt.Errorf("labels for control plane not valid: %v", err)
+	}
+	return nil
+}
+
 func validateWorkerNodeGroups(clusterConfig *Cluster) error {
 	workerNodeGroupConfigs := clusterConfig.Spec.WorkerNodeGroupConfigurations
 	if len(workerNodeGroupConfigs) <= 0 {
 		return errors.New("worker node group must be specified")
 	}
-	for _, workerNodeGroupConfig := range workerNodeGroupConfigs {
+	workerNodeGroupNames := make(map[string]bool, len(workerNodeGroupConfigs))
+	noExecuteNoScheduleTaintedNodeGroups := make(map[string]struct{})
+	for i, workerNodeGroupConfig := range workerNodeGroupConfigs {
 		if workerNodeGroupConfig.Name == "" {
 			return errors.New("must specify name for worker nodes")
 		}
+		if workerNodeGroupNames[workerNodeGroupConfig.Name] {
+			return errors.New("worker node group names must be unique")
+		}
+		if len(workerNodeGroupConfig.Taints) != 0 {
+			for _, taint := range workerNodeGroupConfig.Taints {
+				if taint.Effect == "NoExecute" || taint.Effect == "NoSchedule" {
+					noExecuteNoScheduleTaintedNodeGroups[workerNodeGroupConfig.Name] = struct{}{}
+				}
+			}
+		}
+		workerNodeGroupField := fmt.Sprintf("workerNodeGroupConfigurations[%d]", i)
+		if err := validateNodeLabels(workerNodeGroupConfig.Labels, field.NewPath("spec", workerNodeGroupField, "labels")); err != nil {
+			return fmt.Errorf("labels for worker node group %v not valid: %v", workerNodeGroupConfig.Name, err)
+		}
+		workerNodeGroupNames[workerNodeGroupConfig.Name] = true
+	}
+	if len(noExecuteNoScheduleTaintedNodeGroups) == len(workerNodeGroupConfigs) {
+		return errors.New("at least one WorkerNodeGroupConfiguration must not have NoExecute and/or NoSchedule taints")
+	}
+	return nil
+}
+
+func validateNodeLabels(labels map[string]string, fldPath *field.Path) error {
+	errList := validation.ValidateLabels(labels, fldPath)
+	if len(errList) != 0 {
+		return fmt.Errorf("found following errors with labels: %v", errList.ToAggregate().Error())
 	}
 	return nil
 }

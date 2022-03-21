@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
@@ -15,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -26,6 +28,7 @@ import (
 
 type ResourceFetcher interface {
 	MachineDeployment(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*clusterv1.MachineDeployment, error)
+	KubeadmConfigTemplate(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*kubeadmv1.KubeadmConfigTemplate, error)
 	VSphereWorkerMachineTemplate(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*vspherev1.VSphereMachineTemplate, error)
 	VSphereCredentials(ctx context.Context) (*corev1.Secret, error)
 	FetchObject(ctx context.Context, objectKey types.NamespacedName, obj client.Object) error
@@ -36,6 +39,7 @@ type ResourceFetcher interface {
 	ExistingVSphereControlPlaneMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
 	ExistingVSphereEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
 	ExistingVSphereWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.VSphereMachineConfig, error)
+	ExistingWorkerNodeGroupConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.WorkerNodeGroupConfiguration, error)
 	ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error)
 	Etcd(ctx context.Context, cs *anywherev1.Cluster) (*etcdv1.EtcdadmCluster, error)
 	FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error)
@@ -251,6 +255,19 @@ func (r *CapiResourceFetcher) VSphereEtcdMachineTemplate(ctx context.Context, cs
 	return vsphereMachineTemplate, nil
 }
 
+func (r *CapiResourceFetcher) KubeadmConfigTemplate(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*kubeadmv1.KubeadmConfigTemplate, error) {
+	machineDeployment, err := r.MachineDeployment(ctx, cs, wnc)
+	if err != nil {
+		return nil, err
+	}
+	kubeadmConfigTemplate := &kubeadmv1.KubeadmConfigTemplate{}
+	err = r.FetchObjectByName(ctx, machineDeployment.Spec.Template.Spec.Bootstrap.ConfigRef.Name, constants.EksaSystemNamespace, kubeadmConfigTemplate)
+	if err != nil {
+		return nil, err
+	}
+	return kubeadmConfigTemplate, nil
+}
+
 func (r *CapiResourceFetcher) VSphereCredentials(ctx context.Context) (*corev1.Secret, error) {
 	secret := &corev1.Secret{}
 	err := r.FetchObjectByName(ctx, constants.VSphereCredentialsName, constants.EksaSystemNamespace, secret)
@@ -349,6 +366,14 @@ func (r *CapiResourceFetcher) ExistingVSphereWorkerMachineConfig(ctx context.Con
 	return MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate)
 }
 
+func (r *CapiResourceFetcher) ExistingWorkerNodeGroupConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.WorkerNodeGroupConfiguration, error) {
+	existingKubeadmConfigTemplate, err := r.KubeadmConfigTemplate(ctx, cs, wnc)
+	if err != nil {
+		return nil, err
+	}
+	return MapKubeadmConfigTemplateToWorkerNodeGroupConfiguration(*existingKubeadmConfigTemplate), nil
+}
+
 func MapMachineTemplateToVSphereDatacenterConfigSpec(vsMachineTemplate *vspherev1.VSphereMachineTemplate) (*anywherev1.VSphereDatacenterConfig, error) {
 	vsSpec := &anywherev1.VSphereDatacenterConfig{}
 	vsSpec.Spec.Thumbprint = vsMachineTemplate.Spec.Template.Spec.Thumbprint
@@ -376,6 +401,26 @@ func MapMachineTemplateToVSphereMachineConfigSpec(vsMachineTemplate *vspherev1.V
 
 	// TODO: OSFamily, Users (these fields are immutable)
 	return vsSpec, nil
+}
+
+func MapKubeadmConfigTemplateToWorkerNodeGroupConfiguration(template kubeadmv1.KubeadmConfigTemplate) *anywherev1.WorkerNodeGroupConfiguration {
+	wnSpec := &anywherev1.WorkerNodeGroupConfiguration{}
+	wnSpec.Taints = template.Spec.Template.Spec.JoinConfiguration.NodeRegistration.Taints
+	wnSpec.Labels = convertStringToLabelsMap(template.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs["node-labels"])
+	return wnSpec
+}
+
+func convertStringToLabelsMap(labels string) map[string]string {
+	if labels == "" {
+		return nil
+	}
+	labelsList := strings.Split(labels, ",")
+	labelsMap := make(map[string]string, len(labelsList))
+	for _, label := range labelsList {
+		pair := strings.Split(label, "=")
+		labelsMap[pair[0]] = pair[1]
+	}
+	return labelsMap
 }
 
 func MapMachineTemplateToVSphereMachineConfigSpecWorkers(vsMachineTemplates []vspherev1.VSphereMachineTemplate) (map[string]anywherev1.VSphereMachineConfig, error) {

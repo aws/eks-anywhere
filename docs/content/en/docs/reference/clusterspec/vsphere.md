@@ -29,6 +29,13 @@ spec:
       machineGroupRef:
         kind: VSphereMachineConfig
         name: my-cluster-machines
+      taints:
+      - key: ""
+        value: ""
+        effect: ""
+      labels:
+        "<key1>": ""
+        "<key2>": "" 
    datacenterRef:
       kind: VSphereDatacenterConfig
       name: my-cluster-datacenter
@@ -44,7 +51,13 @@ spec:
        kind: VSphereMachineConfig
        name: my-cluster-machines
      name: md-0
-
+     taints:
+     - key: ""
+       value: ""
+       effect: ""
+     labels:
+       "<key1>": ""
+       "<key2>": "" 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: VSphereDatacenterConfig
@@ -98,9 +111,11 @@ CNI plugin to be installed in the cluster. The only supported value at the momen
 
 ### clusterNetwork.pods.cidrBlocks[0] (required)
 Subnet used by pods in CIDR notation. Please note that only 1 custom pods CIDR block specification is permitted.
+This CIDR block should not conflict with the network subnet range selected for the VMs.
 
 ### clusterNetwork.services.cidrBlocks[0] (required)
 Subnet used by services in CIDR notation. Please note that only 1 custom services CIDR block specification is permitted.
+This CIDR block should not conflict with the network subnet range selected for the VMs.
 
 ### clusterNetwork.dns.resolvConf.path (optional)
 Path to the file with a custom DNS resolver configuration.
@@ -122,6 +137,24 @@ range that does not conflict with other VMs.
 the control plane nodes for kube-apiserver loadbalancing. Suggestions on how to ensure this IP does not cause issues during cluster 
 creation process are [here]({{< relref "../vsphere/vsphere-prereq/#:~:text=Below%20are%20some,existent%20mac%20address." >}})
 
+### controlPlaneConfiguration.taints
+A list of taints to apply to the control plane nodes of the cluster.
+
+Replaces the default control plane taint, `node-role.kubernetes.io/master`. The default control plane components will tolerate the provided taints.
+
+Modifying the taints associated with the control plane configuration will cause new nodes to be rolled-out, replacing the existing nodes.
+
+>**_NOTE:_** The taints provided will be used instead of the default control plane taint `node-role.kubernetes.io/master`.
+Any pods that you run on the control plane nodes must tolerate the taints you provide in the control plane configuration.
+> 
+
+### controlPlaneConfiguration.labels
+A list of labels to apply to the control plane nodes of the cluster. This is in addition to the labels that
+EKS Anywhere will add by default.
+
+Modifying the labels associated with the control plane configuration will cause new nodes to be rolled out, replacing
+the existing nodes.
+
 ### workerNodeGroupConfigurations (required)
 This takes in a list of node groups that you can define for your workers.
 You may define one or more worker node groups.
@@ -134,6 +167,20 @@ Refers to the Kubernetes object with vsphere specific configuration for your nod
 
 ### workerNodeGroupConfigurations.name (required)
 Name of the worker node group (default: md-0)
+
+### workerNodeGroupConfigurations.taints
+A list of taints to apply to the nodes in the worker node group.
+
+Modifying the taints associated with a worker node group configuration will cause new nodes to be rolled-out, replacing the existing nodes associated with the configuration.
+
+At least one node group must not have `NoSchedule` or `NoExecute` taints applied to it.
+
+### workerNodeGroupConfigurations.labels
+A list of labels to apply to the nodes in the worker node group. This is in addition to the labels that
+EKS Anywhere will add by default.
+
+Modifying the labels associated with a worker node group configuration will cause new nodes to be rolled out, replacing
+the existing nodes associated with the configuration.
 
 ### externalEtcdConfiguration.count
 Number of etcd members

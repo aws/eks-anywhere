@@ -270,6 +270,7 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		"DockerProviderVersion":                           bundle.Docker.Version,
 		"VSphereProviderVersion":                          bundle.VSphere.Version,
 		"AwsProviderVersion":                              bundle.Aws.Version,
+		"SnowProviderVersion":                             bundle.Snow.Version,
 		"TinkerbellProviderVersion":                       "v0.1.0", // TODO - version should come from the bundle
 		"IsActiveTinkerbellProvider":                      tinkerbellProvider,
 		"ClusterApiProviderVersion":                       bundle.ClusterAPI.Version,
