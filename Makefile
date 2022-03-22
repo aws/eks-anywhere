@@ -387,8 +387,7 @@ capd-test-%: e2e ## Run CAPD tests
 	./bin/e2e.test -test.v -test.run TestDockerKubernetes$*SimpleFlow
 
 .PHONY: mocks
-mocks: ## Generate mocks
-	$(MOCKGEN) ## Generate mocks
+mocks: $(MOCKGEN) ## Generate mocks
 	$(MOCKGEN_BIN) -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
 	$(MOCKGEN_BIN) -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable
 	$(MOCKGEN_BIN) -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
