@@ -1,12 +1,10 @@
 package factory
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
@@ -71,5 +69,5 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 		}
 		return docker.NewProvider(datacenterConfig, p.DockerClient, p.DockerKubectlClient, time.Now), nil
 	}
-	return nil, errors.New("valid providers include: " + constants.DockerProviderName + ", " + constants.VSphereProviderName)
+	return nil, fmt.Errorf("no provider support for datacenter kind: %s", clusterConfig.Spec.DatacenterRef.Kind)
 }
