@@ -224,7 +224,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			Cilium:                 ciliumBundle,
 			Kindnetd:               kindnetdBundle,
 			Flux:                   fluxBundle,
-			PackgeController:       packageBundle,
+			PackageController:      packageBundle,
 			ExternalEtcdBootstrap:  etcdadmBootstrapBundle,
 			ExternalEtcdController: etcdadmControllerBundle,
 			BottleRocketBootstrap:  bottlerocketBootstrapBundle,

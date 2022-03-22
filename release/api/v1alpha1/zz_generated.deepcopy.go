@@ -811,7 +811,7 @@ func (in *VersionsBundle) DeepCopyInto(out *VersionsBundle) {
 	in.Cilium.DeepCopyInto(&out.Cilium)
 	out.Kindnetd = in.Kindnetd
 	in.Flux.DeepCopyInto(&out.Flux)
-	in.PackgeController.DeepCopyInto(&out.PackgeController)
+	in.PackageController.DeepCopyInto(&out.PackageController)
 	in.BottleRocketBootstrap.DeepCopyInto(&out.BottleRocketBootstrap)
 	in.BottleRocketAdmin.DeepCopyInto(&out.BottleRocketAdmin)
 	in.ExternalEtcdBootstrap.DeepCopyInto(&out.ExternalEtcdBootstrap)
