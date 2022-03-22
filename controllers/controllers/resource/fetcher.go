@@ -41,6 +41,7 @@ type ResourceFetcher interface {
 	ExistingVSphereEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.VSphereMachineConfig, error)
 	ExistingVSphereWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.VSphereMachineConfig, error)
 	ExistingWorkerNodeGroupConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.WorkerNodeGroupConfiguration, error)
+	ExistingKubeVersion(ctx context.Context, cs *anywherev1.Cluster) (string, error)
 	ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error)
 	Etcd(ctx context.Context, cs *anywherev1.Cluster) (*etcdv1.EtcdadmCluster, error)
 	FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error)
@@ -406,6 +407,14 @@ func (r *CapiResourceFetcher) ExistingWorkerNodeGroupConfig(ctx context.Context,
 		return nil, err
 	}
 	return MapKubeadmConfigTemplateToWorkerNodeGroupConfiguration(*existingKubeadmConfigTemplate), nil
+}
+
+func (r *CapiResourceFetcher) ExistingKubeVersion(ctx context.Context, cs *anywherev1.Cluster) (string, error) {
+	existingControlPlane, err := r.ControlPlane(ctx, cs)
+	if err != nil {
+		return "", err
+	}
+	return existingControlPlane.Spec.Version, nil
 }
 
 func MapMachineTemplateToVSphereDatacenterConfigSpec(vsMachineTemplate *vspherev1.VSphereMachineTemplate) (*anywherev1.VSphereDatacenterConfig, error) {
