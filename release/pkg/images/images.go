@@ -76,10 +76,10 @@ func CopyToDestination(sourceAuthConfig, releaseAuthConfig *docker.AuthConfigura
 	releaseRegistryPassword := releaseAuthConfig.Password
 	cmd := exec.Command("skopeo", "copy", "--src-creds", fmt.Sprintf("%s:%s", sourceRegistryUsername, sourceRegistryPassword), "--dest-creds", fmt.Sprintf("%s:%s", releaseRegistryUsername, releaseRegistryPassword), fmt.Sprintf("docker://%s", sourceImageUri), fmt.Sprintf("docker://%s", releaseImageUri), "-f", "oci", "--all")
 	out, err := utils.ExecCommand(cmd)
+	fmt.Println(out)
 	if err != nil {
 		return fmt.Errorf("error executing skopeo copy command: %v", err)
 	}
-	fmt.Println(out)
 
 	return nil
 }
