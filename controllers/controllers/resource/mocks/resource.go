@@ -90,6 +90,21 @@ func (mr *MockResourceFetcherMockRecorder) Etcd(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Etcd", reflect.TypeOf((*MockResourceFetcher)(nil).Etcd), arg0, arg1)
 }
 
+// ExistingKubeVersion mocks base method.
+func (m *MockResourceFetcher) ExistingKubeVersion(arg0 context.Context, arg1 *v1alpha1.Cluster) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistingKubeVersion", arg0, arg1)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistingKubeVersion indicates an expected call of ExistingKubeVersion.
+func (mr *MockResourceFetcherMockRecorder) ExistingKubeVersion(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingKubeVersion", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingKubeVersion), arg0, arg1)
+}
+
 // ExistingVSphereControlPlaneMachineConfig mocks base method.
 func (m *MockResourceFetcher) ExistingVSphereControlPlaneMachineConfig(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha1.VSphereMachineConfig, error) {
 	m.ctrl.T.Helper()
