@@ -10,4 +10,6 @@ const (
 	SuccessMEssage            = "Ec2 instance tests completed successfully"
 	FailedTestsFile           = "failed-tests.txt"
 	LogOutputFile             = "codebuild-log.txt"
+	CiProxyLogGroup           = "nginx-vcenter-proxy.log"
+	CiProxyLogStream          = "nginx-vcenter-proxy.log"
 )
