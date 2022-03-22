@@ -716,6 +716,10 @@ func WithArgs(args []string) KubectlOpt {
 	return appendOpt(args...)
 }
 
+func WithArg(arg string) KubectlOpt {
+	return appendOpt(arg)
+}
+
 func appendOpt(new ...string) KubectlOpt {
 	return func(args *[]string) {
 		*args = append(*args, new...)

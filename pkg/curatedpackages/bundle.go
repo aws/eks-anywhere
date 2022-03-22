@@ -4,9 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"regexp"
-	"sort"
-	"strconv"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"strings"
 
 	"github.com/go-logr/logr"
@@ -15,7 +13,6 @@ import (
 	"github.com/aws/eks-anywhere-packages/pkg/artifacts"
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
 	"github.com/aws/eks-anywhere-packages/pkg/testutil"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
 )
 
@@ -33,7 +30,7 @@ func GetLatestBundle(ctx context.Context, kubeConfig string, source string, kube
 
 	switch strings.ToLower(source) {
 	case Cluster:
-		packageBundle, err = getLatestBundleFromCluster(ctx, kubeConfig)
+		packageBundle, err = getActiveBundleFromCluster(ctx, kubeConfig)
 	case Registry:
 		packageBundle, err = getLatestBundleFromRegistry(ctx, kubeVersion)
 	}
@@ -60,100 +57,61 @@ func getLatestBundleFromRegistry(ctx context.Context, kubeVersion string) (*api.
 	return bundle, err
 }
 
-func getLatestBundleFromCluster(ctx context.Context, kubeConfig string) (*api.PackageBundle, error) {
+func getActiveBundleFromCluster(ctx context.Context, kubeConfig string) (*api.PackageBundle, error) {
 	params := []executables.KubectlOpt{executables.WithOutput("json"), executables.WithKubeconfig(kubeConfig), executables.WithNamespace(constants.EksaPackagesName)}
 	deps, err := createKubectl(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize executables: %v", err)
 	}
 	kubectl := deps.Kubectl
-	bundleList, err := getPackageBundles(ctx, kubectl, params...)
+
+	// Active Bundle is set at the bundle Controller
+	bundleController, err := getBundleController(ctx, kubectl, params...)
 	if err != nil {
 		return nil, err
 	}
-	allBundles := bundleList.Items
-	sortBundlesNewestFirst(allBundles)
-	return &allBundles[0], nil
+	activeBundle := bundleController.Spec.ActiveBundle
+	params = append(params, executables.WithArg(activeBundle))
+	bundle, err := getPackageBundle(ctx, kubectl, params...)
+	if err != nil {
+		return nil, err
+	}
+	return bundle, nil
 }
 
-func getPackageBundles(ctx context.Context, kubectl *executables.Kubectl, opts ...executables.KubectlOpt) (*api.PackageBundleList, error) {
-	stdOut, err := kubectl.GetResources(ctx, "packageBundles", opts...)
+func getPackageBundle(ctx context.Context, kubectl *executables.Kubectl, opts ...executables.KubectlOpt) (*api.PackageBundle, error) {
+	stdOut, err := kubectl.GetResources(ctx, "packageBundle", opts...)
 	if err != nil {
 		return nil, err
 	}
-	obj := &api.PackageBundleList{}
+	obj := &api.PackageBundle{}
 	if err = json.Unmarshal(stdOut.Bytes(), obj); err != nil {
 		return nil, fmt.Errorf("error parsing packageBundle response: %v", err)
 	}
 	return obj, nil
 }
 
-func sortBundlesNewestFirst(bundles []api.PackageBundle) {
-	sortFn := func(i, j int) bool {
-		older, err := isBundleOlderThan(bundles[i].Name, bundles[j].Name)
-		if err != nil {
-			return true
+func getBundleController(ctx context.Context, kubectl *executables.Kubectl, opts ...executables.KubectlOpt) (*api.PackageBundleController, error) {
+	stdOut, err := kubectl.GetResources(ctx, "packageBundleController", opts...)
+	if err != nil {
+		return nil, err
+	}
+	obj := &api.PackageBundleControllerList{}
+	if err = json.Unmarshal(stdOut.Bytes(), obj); err != nil {
+		return nil, fmt.Errorf("error parsing packageBundleController response: %v", err)
+	}
+	activeController, err := getActiveBundleController(obj)
+	if err != nil {
+		return nil, err
+	}
+	return activeController, nil
+}
+
+func getActiveBundleController(bc *api.PackageBundleControllerList) (*api.PackageBundleController, error) {
+	for _, v := range bc.Items {
+		if v.Status.State == api.BundleControllerStateActive {
+			return &v, nil
 		}
-		return !older
 	}
-	sort.Slice(bundles, sortFn)
+	return nil, fmt.Errorf("no Active Bundle Controller Found")
 }
-
-func isBundleOlderThan(current, candidate string) (bool, error) {
-	if current == "" {
-		return true, nil
-	}
-
-	curK8sVer, err := kubeVersion(current)
-	if err != nil {
-		return false, fmt.Errorf("parsing current kube version: %s", err)
-	}
-
-	newK8sVer, err := kubeVersion(candidate)
-	if err != nil {
-		return false, fmt.Errorf("parsing candidate kube version: %s", err)
-	}
-
-	if curK8sVer < newK8sVer {
-		return true, nil
-	}
-
-	curBuildNum, err := buildNumber(current)
-	if err != nil {
-		return false, fmt.Errorf("parsing current build number: %s", err)
-	}
-
-	newBuildNum, err := buildNumber(candidate)
-	if err != nil {
-		return false, fmt.Errorf("parsing candidate build number: %s", err)
-	}
-
-	return curBuildNum < newBuildNum, nil
-}
-
-var kubeVersionRe = regexp.MustCompile(`^(v[^-]+)-.*$`)
-
-func kubeVersion(name string) (string, error) {
-	matches := kubeVersionRe.FindStringSubmatch(name)
-	if len(matches) > 1 {
-		return matches[1], nil
-	}
-
-	return "", fmt.Errorf("no kubernetes version found in %q", name)
-}
-
-func buildNumber(name string) (int, error) {
-	matches := bundleNameRe.FindStringSubmatch(name)
-	if len(matches) > 1 {
-		buildNumber, err := strconv.Atoi(matches[1])
-		if err != nil {
-			return 0, fmt.Errorf("parsing build number: %s", err)
-		}
-
-		return buildNumber, nil
-	}
-
-	return 0, fmt.Errorf("no build number found in %q", name)
-}
-
-var bundleNameRe = regexp.MustCompile(`^.*-(\d+)$`)
