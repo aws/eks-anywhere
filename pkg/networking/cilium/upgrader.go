@@ -139,7 +139,7 @@ func ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
 }
 
 func ciliumHelmChartValuesChanged(currentSpec, newSpec *cluster.Spec) bool {
-	if currentSpec.Cluster.Spec.ClusterNetwork.CNIConfig == nil {
+	if currentSpec.Cluster.Spec.ClusterNetwork.CNIConfig == nil || currentSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium == nil {
 		// this is for clusters created using 0.7 and lower versions, they won't have these fields initialized
 		// in these cases, a non-default PolicyEnforcementMode in the newSpec will be considered a change
 		if newSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode != v1alpha1.CiliumPolicyModeDefault {
