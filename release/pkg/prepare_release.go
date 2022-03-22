@@ -44,36 +44,36 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 	fmt.Println("Cloning CLI repository")
 	r.CliRepoSource = filepath.Join(parentSourceDir, "eks-a-cli")
 	out, err := git.CloneRepo(r.CliRepoUrl, r.CliRepoSource)
+	fmt.Println(out)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	fmt.Println(out)
 
 	// Clone the build-tooling repository
 	fmt.Println("Cloning build-tooling repository")
 	r.BuildRepoSource = filepath.Join(parentSourceDir, "eks-a-build")
 	out, err = git.CloneRepo(r.BuildRepoUrl, r.BuildRepoSource)
+	fmt.Println(out)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	fmt.Println(out)
 
 	if r.BuildRepoBranchName != "main" {
 		fmt.Printf("Checking out build-tooling repo at branch %s\n", r.BuildRepoBranchName)
 		out, err = git.CheckoutRepo(r.BuildRepoSource, r.BuildRepoBranchName)
+		fmt.Println(out)
 		if err != nil {
 			return errors.Cause(err)
 		}
-		fmt.Println(out)
 	}
 
 	if r.CliRepoBranchName != "main" {
 		fmt.Printf("Checking out CLI repo at branch %s\n", r.CliRepoBranchName)
 		out, err = git.CheckoutRepo(r.CliRepoSource, r.CliRepoBranchName)
+		fmt.Println(out)
 		if err != nil {
 			return errors.Cause(err)
 		}
-		fmt.Println(out)
 	}
 
 	// Set HEADs of the repos
