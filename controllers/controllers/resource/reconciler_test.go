@@ -3,6 +3,8 @@ package resource_test
 import (
 	"context"
 	_ "embed"
+	"github.com/aws/eks-anywhere/pkg/features"
+	"os"
 	"strings"
 	"testing"
 
@@ -883,6 +885,11 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					},
 				}
 
+
+				oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+				os.Unsetenv(features.CloudStackProviderEnvVar)
+				defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+				
 				fetcher.EXPECT().ExistingCloudStackDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.CloudStackDatacenterConfig{}, nil)
 				fetcher.EXPECT().ExistingCloudStackControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.CloudStackMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingCloudStackWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.CloudStackMachineConfig{}, nil)
