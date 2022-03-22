@@ -229,7 +229,7 @@ func (v *Validator) ValidateMinimumRequiredTinkerbellHardwareAvailable(spec v1al
 
 func (v *Validator) validateControlPlaneIpUniqueness(tinkerBellClusterSpec *spec) error {
 	ip := tinkerBellClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
-	if !networkutils.NewIPGenerator(v.netClient).IsIPUnique(ip) {
+	if networkutils.IsIPInUse(v.netClient, ip) {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
 	}
 

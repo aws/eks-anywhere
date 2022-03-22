@@ -28,21 +28,3 @@ func TestGenerateUniqueIP(t *testing.T) {
 		t.Fatalf("GenerateUniqueIP() ip = %v error: %v", ip, err)
 	}
 }
-
-func TestIsIPUniquePass(t *testing.T) {
-	ip := "0.0.0.0"
-
-	ipgen := networkutils.NewIPGenerator(&DummyNetClient{})
-	if !ipgen.IsIPUnique(ip) {
-		t.Fatalf("Expected IP: %s to be unique but it is not", ip)
-	}
-}
-
-func TestIsIPUniqueFail(t *testing.T) {
-	ip := "255.255.255.255"
-
-	ipgen := networkutils.NewIPGenerator(&DummyNetClient{})
-	if ipgen.IsIPUnique(ip) {
-		t.Fatalf("Expected IP: %s to be not be unique but it is", ip)
-	}
-}

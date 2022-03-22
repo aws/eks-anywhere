@@ -380,7 +380,7 @@ func (v *Validator) validateNetwork(ctx context.Context, network string) error {
 
 func (v *Validator) validateControlPlaneIpUniqueness(spec *Spec) error {
 	ip := spec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
-	if !networkutils.NewIPGenerator(v.netClient).IsIPUnique(ip) {
+	if networkutils.IsIPInUse(v.netClient, ip) {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
 	}
 	return nil
