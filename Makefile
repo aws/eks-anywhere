@@ -389,41 +389,41 @@ capd-test-%: e2e ## Run CAPD tests
 .PHONY: mocks
 mocks: ## Generate mocks
 	$(GO) install github.com/golang/mock/mockgen@v1.5.0
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/providers/tinkerbell/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell" ProviderKubectlClient,ProviderTinkClient,ProviderPbnjClient,SSHAuthKeyGenerator
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/providers/cloudstack/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/cloudstack" ProviderCmkClient,ProviderKubectlClient
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/providers/vsphere/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere" ProviderGovcClient,ProviderKubectlClient,ClusterResourceSetManager
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/filewriter/mocks/filewriter.go -package=mocks "github.com/aws/eks-anywhere/pkg/filewriter" FileWriter
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/addonmanager/addonclients/mocks/fluxaddonclient.go -package=mocks "github.com/aws/eks-anywhere/pkg/addonmanager/addonclients" Flux
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/task/mocks/task.go -package=mocks "github.com/aws/eks-anywhere/pkg/task" Task
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/bootstrapper/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/bootstrapper" ClusterClient
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/cluster/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/cluster" ClusterClient
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,AddonManager,Validator,CAPIManager
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/git/providers/github/mocks/github.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/providers/github" GitProviderClient,GithubProviderClient
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/git/mocks/git.go -package=mocks "github.com/aws/eks-anywhere/pkg/git" Provider
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/git/gogithub/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gogithub" Client
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/git/gogit/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gogit" GoGitClient
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/validations/mocks/docker.go -package=mocks "github.com/aws/eks-anywhere/pkg/validations" DockerExecutable
-	$(MOCKGEN_BIN)/bin/mockgen -destination=controllers/controllers/resource/mocks/resource.go -package=mocks "github.com/aws/eks-anywhere/controllers/controllers/resource" ResourceFetcher,ResourceUpdater
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/providers/vsphere/internal/templates/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/templates/factory.go" GovcClient
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/providers/vsphere/internal/tags/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/tags/factory.go" GovcClient
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/validations/mocks/kubectl.go -package=mocks -source "pkg/validations/kubectl.go" KubectlClient
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/validations/mocks/tls.go -package=mocks -source "pkg/validations/tls.go" TlsValidator
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/diagnostics/interfaces/mocks/diagnostics.go -package=mocks -source "pkg/diagnostics/interfaces.go" DiagnosticBundle,AnalyzerFactory,CollectorFactory,BundleClient
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/clusterapi/mocks/capiclient.go -package=mocks -source "pkg/clusterapi/manager.go" CAPIClient,KubectlClient
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/clusterapi/mocks/client.go -package=mocks -source "pkg/clusterapi/resourceset_manager.go" Client
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/crypto/mocks/crypto.go -package=mocks -source "pkg/crypto/certificategen.go" CertificateGenerator
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/networking/cilium/mocks/clients.go -package=mocks -source "pkg/networking/cilium/client.go"
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/networking/cilium/mocks/helm.go -package=mocks -source "pkg/networking/cilium/templater.go"
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/networking/cilium/mocks/upgrader.go -package=mocks -source "pkg/networking/cilium/upgrader.go"
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/networking/kindnetd/mocks/client.go -package=mocks -source "pkg/networking/kindnetd/upgrader.go"
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/networking/cilium/mocks/cilium.go -package=mocks -source "pkg/networking/cilium/cilium.go"
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/networkutils/mocks/client.go -package=mocks -source "pkg/networkutils/netclient.go" NetClient
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/providers/tinkerbell/hardware/mocks/translate.go -package=mocks -source "pkg/providers/tinkerbell/hardware/translate.go" MachineReader,MachineWriter,MachineValidator
-	$(MOCKGEN_BIN)/bin/mockgen -destination=pkg/providers/tinkerbell/hardware/mocks/json.go -package=mocks -source "pkg/providers/tinkerbell/hardware/json.go" TinkerbellHardwareJsonFactory,TinkerbellHardwarePusher
+	$(MOCKGEN_BIN) -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
+	$(MOCKGEN_BIN) -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable
+	$(MOCKGEN_BIN) -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
+	$(MOCKGEN_BIN) -destination=pkg/providers/tinkerbell/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/tinkerbell" ProviderKubectlClient,ProviderTinkClient,ProviderPbnjClient,SSHAuthKeyGenerator
+	$(MOCKGEN_BIN) -destination=pkg/providers/cloudstack/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/cloudstack" ProviderCmkClient,ProviderKubectlClient
+	$(MOCKGEN_BIN) -destination=pkg/providers/vsphere/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/vsphere" ProviderGovcClient,ProviderKubectlClient,ClusterResourceSetManager
+	$(MOCKGEN_BIN) -destination=pkg/filewriter/mocks/filewriter.go -package=mocks "github.com/aws/eks-anywhere/pkg/filewriter" FileWriter
+	$(MOCKGEN_BIN) -destination=pkg/clustermanager/mocks/client_and_networking.go -package=mocks "github.com/aws/eks-anywhere/pkg/clustermanager" ClusterClient,Networking,AwsIamAuth
+	$(MOCKGEN_BIN) -destination=pkg/addonmanager/addonclients/mocks/fluxaddonclient.go -package=mocks "github.com/aws/eks-anywhere/pkg/addonmanager/addonclients" Flux
+	$(MOCKGEN_BIN) -destination=pkg/task/mocks/task.go -package=mocks "github.com/aws/eks-anywhere/pkg/task" Task
+	$(MOCKGEN_BIN) -destination=pkg/bootstrapper/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/bootstrapper" ClusterClient
+	$(MOCKGEN_BIN) -destination=pkg/cluster/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/cluster" ClusterClient
+	$(MOCKGEN_BIN) -destination=pkg/workflows/interfaces/mocks/clients.go -package=mocks "github.com/aws/eks-anywhere/pkg/workflows/interfaces" Bootstrapper,ClusterManager,AddonManager,Validator,CAPIManager
+	$(MOCKGEN_BIN) -destination=pkg/git/providers/github/mocks/github.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/providers/github" GitProviderClient,GithubProviderClient
+	$(MOCKGEN_BIN) -destination=pkg/git/mocks/git.go -package=mocks "github.com/aws/eks-anywhere/pkg/git" Provider
+	$(MOCKGEN_BIN) -destination=pkg/git/gogithub/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gogithub" Client
+	$(MOCKGEN_BIN) -destination=pkg/git/gogit/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gogit" GoGitClient
+	$(MOCKGEN_BIN) -destination=pkg/validations/mocks/docker.go -package=mocks "github.com/aws/eks-anywhere/pkg/validations" DockerExecutable
+	$(MOCKGEN_BIN) -destination=controllers/controllers/resource/mocks/resource.go -package=mocks "github.com/aws/eks-anywhere/controllers/controllers/resource" ResourceFetcher,ResourceUpdater
+	$(MOCKGEN_BIN) -destination=pkg/providers/vsphere/internal/templates/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/templates/factory.go" GovcClient
+	$(MOCKGEN_BIN) -destination=pkg/providers/vsphere/internal/tags/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/tags/factory.go" GovcClient
+	$(MOCKGEN_BIN) -destination=pkg/validations/mocks/kubectl.go -package=mocks -source "pkg/validations/kubectl.go" KubectlClient
+	$(MOCKGEN_BIN) -destination=pkg/validations/mocks/tls.go -package=mocks -source "pkg/validations/tls.go" TlsValidator
+	$(MOCKGEN_BIN) -destination=pkg/diagnostics/interfaces/mocks/diagnostics.go -package=mocks -source "pkg/diagnostics/interfaces.go" DiagnosticBundle,AnalyzerFactory,CollectorFactory,BundleClient
+	$(MOCKGEN_BIN) -destination=pkg/clusterapi/mocks/capiclient.go -package=mocks -source "pkg/clusterapi/manager.go" CAPIClient,KubectlClient
+	$(MOCKGEN_BIN) -destination=pkg/clusterapi/mocks/client.go -package=mocks -source "pkg/clusterapi/resourceset_manager.go" Client
+	$(MOCKGEN_BIN) -destination=pkg/crypto/mocks/crypto.go -package=mocks -source "pkg/crypto/certificategen.go" CertificateGenerator
+	$(MOCKGEN_BIN) -destination=pkg/networking/cilium/mocks/clients.go -package=mocks -source "pkg/networking/cilium/client.go"
+	$(MOCKGEN_BIN) -destination=pkg/networking/cilium/mocks/helm.go -package=mocks -source "pkg/networking/cilium/templater.go"
+	$(MOCKGEN_BIN) -destination=pkg/networking/cilium/mocks/upgrader.go -package=mocks -source "pkg/networking/cilium/upgrader.go"
+	$(MOCKGEN_BIN) -destination=pkg/networking/kindnetd/mocks/client.go -package=mocks -source "pkg/networking/kindnetd/upgrader.go"
+	$(MOCKGEN_BIN) -destination=pkg/networking/cilium/mocks/cilium.go -package=mocks -source "pkg/networking/cilium/cilium.go"
+	$(MOCKGEN_BIN) -destination=pkg/networkutils/mocks/client.go -package=mocks -source "pkg/networkutils/netclient.go" NetClient
+	$(MOCKGEN_BIN) -destination=pkg/providers/tinkerbell/hardware/mocks/translate.go -package=mocks -source "pkg/providers/tinkerbell/hardware/translate.go" MachineReader,MachineWriter,MachineValidator
+	$(MOCKGEN_BIN) -destination=pkg/providers/tinkerbell/hardware/mocks/json.go -package=mocks -source "pkg/providers/tinkerbell/hardware/json.go" TinkerbellHardwareJsonFactory,TinkerbellHardwarePusher
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
