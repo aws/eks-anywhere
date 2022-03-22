@@ -212,7 +212,7 @@ func clusterName(branch string, instanceId string) (clusterName string) {
 	forbiddenChars := []string{"."}
 	sanitizedBranch := branch
 	for _, char := range forbiddenChars {
-		sanitizedBranch = strings.Replace(branch, char, "-", -1)
+		sanitizedBranch = strings.ReplaceAll(branch, char, "-")
 	}
 	sanitizedBranch = strings.ToLower(sanitizedBranch)
 	clusterName = fmt.Sprintf(clusterNameTemplate, sanitizedBranch, instanceId)
