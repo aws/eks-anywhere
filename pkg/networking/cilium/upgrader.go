@@ -71,12 +71,26 @@ func (u *Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentS
 	}
 
 	if chartValuesChanged {
-		if newSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode == v1alpha1.CiliumPolicyModeAlways {
+		switch newSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode {
+		case v1alpha1.CiliumPolicyModeAlways:
+			logger.V(3).Info("Installing NetworkPolicy resources for policy enforcement mode 'always'")
 			networkPolicyManifest, err := u.templater.GenerateNetworkPolicyManifest(newSpec, namespaces)
 			if err != nil {
 				return nil, err
 			}
 			upgradeManifest = templater.AppendYamlResources(upgradeManifest, networkPolicyManifest)
+		case v1alpha1.CiliumPolicyModeDefault, v1alpha1.CiliumPolicyModeNever:
+			if currentSpec.Cluster.Spec.ClusterNetwork.CNIConfig != nil && currentSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium != nil &&
+				currentSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode == v1alpha1.CiliumPolicyModeAlways {
+				logger.V(3).Info("Deleting NetworkPolicy resources previously created for policy enforcement mode 'always'")
+				networkPolicyManifest, err := u.templater.GenerateNetworkPolicyManifest(currentSpec, namespaces)
+				if err != nil {
+					return nil, err
+				}
+				if err := u.client.Delete(ctx, cluster, networkPolicyManifest); err != nil {
+					return nil, fmt.Errorf("failed deleting network policy objects: %v", err)
+				}
+			}
 		}
 	}
 
@@ -138,11 +152,15 @@ func ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ChangeDiff {
 }
 
 func ciliumHelmChartValuesChanged(currentSpec, newSpec *cluster.Spec) bool {
-	if currentSpec.Cluster.Spec.ClusterNetwork.CNIConfig != nil {
-		if currentSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium != nil {
-			if newSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode != currentSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode {
-				return true
-			}
+	if currentSpec.Cluster.Spec.ClusterNetwork.CNIConfig == nil {
+		// this is for clusters created using 0.7 and lower versions, they won't have these fields initialized
+		// in these cases, a non-default PolicyEnforcementMode in the newSpec will be considered a change
+		if newSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode != v1alpha1.CiliumPolicyModeDefault {
+			return true
+		}
+	} else {
+		if newSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode != currentSpec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode {
+			return true
 		}
 	}
 	// we can add comparisons for more values here as we start accepting them from cluster spec
