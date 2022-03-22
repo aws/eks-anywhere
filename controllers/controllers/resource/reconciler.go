@@ -12,6 +12,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/features"
 	anywhereTypes "github.com/aws/eks-anywhere/pkg/types"
 )
 
@@ -103,6 +104,9 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		}
 		resources = append(resources, r...)
 	case anywherev1.CloudStackDatacenterKind:
+		if !features.IsActive(features.CloudStackProvider()) {
+			return fmt.Errorf("cloudstack provider is not supported in eks-a controller")
+		}
 		csdc := &anywherev1.CloudStackDatacenterConfig{}
 		cpCsmc := &anywherev1.CloudStackMachineConfig{}
 		etcdCsmc := &anywherev1.CloudStackMachineConfig{}
