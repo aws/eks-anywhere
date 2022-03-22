@@ -3,7 +3,6 @@ package resource_test
 import (
 	"context"
 	_ "embed"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"os"
 	"strings"
 	"testing"
@@ -27,6 +26,7 @@ import (
 	"github.com/aws/eks-anywhere/controllers/controllers/resource/mocks"
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 //go:embed testdata/vsphereKubeadmcontrolplane.yaml
@@ -885,11 +885,10 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 					},
 				}
 
-
 				oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
 				os.Unsetenv(features.CloudStackProviderEnvVar)
 				defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
-				
+
 				fetcher.EXPECT().ExistingCloudStackDatacenterConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.CloudStackDatacenterConfig{}, nil)
 				fetcher.EXPECT().ExistingCloudStackControlPlaneMachineConfig(ctx, gomock.Any()).Return(&anywherev1.CloudStackMachineConfig{}, nil)
 				fetcher.EXPECT().ExistingCloudStackWorkerMachineConfig(ctx, gomock.Any(), gomock.Any()).Return(&anywherev1.CloudStackMachineConfig{}, nil)
