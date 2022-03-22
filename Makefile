@@ -22,7 +22,6 @@ GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git tag -l --sort -v:refname | head -1)
 GOLANG_VERSION?="1.17"
 GO ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))/go
-$(error $(GO))
 GO_TEST ?= $(GO) test
 
 # A regular expression defining what packages to exclude from the unit-test recipe.
