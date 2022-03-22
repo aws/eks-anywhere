@@ -26,7 +26,6 @@ func DisplayPackages(m map[string][]string) {
 
 	fmt.Fprintf(w, "\n %s\t%s\t", "Package", "Version(s)")
 	fmt.Fprintf(w, "\n %s\t%s\t", "----", "----")
-	fmt.Println("Package", "Version(s)")
 	for key, values := range m {
 		fmt.Fprintf(w, "\n %s\t%s\t", key, strings.Join(values, ","))
 	}
