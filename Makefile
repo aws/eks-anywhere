@@ -388,7 +388,7 @@ capd-test-%: e2e ## Run CAPD tests
 
 .PHONY: mocks
 mocks: ## Generate mocks
-	$(GO) install github.com/golang/mock/mockgen@v1.5.0
+	$(MOCKGEN) ## Generate mocks
 	$(MOCKGEN_BIN) -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
 	$(MOCKGEN_BIN) -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable
 	$(MOCKGEN_BIN) -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
