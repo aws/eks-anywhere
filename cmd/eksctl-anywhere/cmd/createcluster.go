@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"os"
 	"runtime"
 
 	"github.com/spf13/cobra"
@@ -136,6 +137,24 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		return err
 	}
 	defer cleanup(ctx, deps, &err)
+
+	if clusterSpec.VersionsBundle.Cilium.HelmChart.Image() != "public.ecr.aws/isovalent/cilium" {
+		if clusterConfig.Spec.RegistryMirrorConfiguration == nil {
+			return fmt.Errorf("provide registry mirror configuration to pull cilium chart from")
+		}
+		chart := clusterSpec.VersionsBundle.Cilium.HelmChart
+		if err := deps.Helm.PullChart(ctx, fmt.Sprintf("%s%s", ociPrefix, chart.Image()), chart.Tag()); err != nil {
+			registryUsername := os.Getenv("REGISTRY_USERNAME")
+			registryPassword := os.Getenv("REGISTRY_PASSWORD")
+			if registryUsername == "" || registryPassword == "" {
+				return fmt.Errorf("username or password not set. Provide REGISTRY_USERNAME and REGISTRY_PASSWORD for importing helm charts (e.g. cilium)")
+			}
+			loginErr := deps.Helm.RegistryLogin(ctx, clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint, registryUsername, registryPassword)
+			if loginErr != nil {
+				return loginErr
+			}
+		}
+	}
 
 	if !features.IsActive(features.TinkerbellProvider()) && deps.Provider.Name() == constants.TinkerbellProviderName {
 		return fmt.Errorf("provider tinkerbell is not supported in this release")
