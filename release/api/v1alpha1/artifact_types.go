@@ -48,6 +48,17 @@ func (i Image) Tag() string {
 	return i.URI[lastInd+1:]
 }
 
+func (i Image) ChartName() string {
+	lastInd := strings.LastIndex(i.Image(), "/")
+	if lastInd == -1 {
+		return i.URI
+	}
+	chart := i.URI[lastInd+1:]
+	chart = strings.Replace(chart, ":", "-", 1)
+	chart += ".tgz"
+	return chart
+}
+
 type Archive struct {
 	// +kubebuilder:validation:Required
 	// The asset name
