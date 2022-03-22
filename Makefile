@@ -23,8 +23,6 @@ GIT_TAG?=$(shell git tag -l --sort -v:refname | head -1)
 GOLANG_VERSION?="1.17"
 GO ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))/go
 GO_TEST ?= $(GO) test
-GO_ROOT:=$(shell go env GOROOT)
-$(error $(GO_ROOT))
 
 # A regular expression defining what packages to exclude from the unit-test recipe.
 UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
@@ -109,9 +107,9 @@ CONTROLLER_MANIFEST_OUTPUT_DIR=$(OUTPUT_DIR)/manifests/cluster-controller/$(GIT_
 BUILD_TAGS :=
 BUILD_FLAGS?=
 
-GO_ARCH:=$(shell go env GOARCH)
-GO_OS:=$(shell go env GOOS)
-
+GO_ARCH:=$(shell $(GO) env GOARCH)
+GO_OS:=$(shell $(GO) env GOOS)
+GO_ROOT:=$(shell $(GO) env GOROOT)
 
 BINARY_DEPS_DIR = $(OUTPUT_DIR)/dependencies
 CLUSTER_CONTROLLER_PLATFORMS ?= linux-amd64 linux-arm64
