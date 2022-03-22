@@ -197,8 +197,7 @@ function build::common::get_go_path() {
   fi
   if [[ $version == "1.17"* ]]; then
       gobinaryversion="1.17"
-    fi
-
+  fi
   if [[ "$gobinaryversion" == "" ]]; then
     return
   fi
