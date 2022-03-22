@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"testing"
 
+	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
 	"k8s.io/api/node/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -110,6 +111,59 @@ func TestMapMachineTemplateToVSphereDatacenterConfigSpec(t *testing.T) {
 	}
 }
 
+func TestMapClusterToCloudStackDatacenterConfigSpec(t *testing.T) {
+	type args struct {
+		csCluster *cloudstackv1.CloudStackCluster
+	}
+	tests := []struct {
+		name string
+		args args
+		want *anywherev1.CloudStackDatacenterConfig
+	}{
+		{
+			name: "All path are available",
+			args: args{
+				csCluster: &cloudstackv1.CloudStackCluster{
+					Spec: cloudstackv1.CloudStackClusterSpec{
+						Zones: []cloudstackv1.Zone{
+							{
+								Name: "zone",
+								Network: cloudstackv1.Network{
+									Name: "network",
+								},
+							},
+						},
+						Account: "account",
+						Domain:  "domain",
+					},
+				},
+			},
+			want: &anywherev1.CloudStackDatacenterConfig{
+				Spec: anywherev1.CloudStackDatacenterConfigSpec{
+					Zones: []anywherev1.CloudStackZone{
+						{
+							Name: "zone",
+							Network: anywherev1.CloudStackResourceIdentifier{
+								Name: "network",
+							},
+						},
+					},
+					Account: "account",
+					Domain:  "domain",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := resource.MapClusterToCloudStackDatacenterConfigSpec(tt.args.csCluster)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MapMachineTemplateToCloudStackDatacenterConfigSpec() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestMapMachineTemplateToVSphereWorkerMachineConfigSpec(t *testing.T) {
 	type args struct {
 		vsMachineTemplate *vspherev1.VSphereMachineTemplate
@@ -191,6 +245,55 @@ func TestMapMachineTemplateToVSphereWorkerMachineConfigSpec(t *testing.T) {
 			}
 			if err == nil && !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("MapMachineTemplateToVSphereWorkerMachineConfigSpec()\n got = %v, \n want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
+	type args struct {
+		csMachineTemplate *cloudstackv1.CloudStackMachineTemplate
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *anywherev1.CloudStackMachineConfig
+		wantErr bool
+	}{
+		{
+			name:    "All path are available",
+			wantErr: false,
+			args: args{
+				csMachineTemplate: &cloudstackv1.CloudStackMachineTemplate{
+					Spec: cloudstackv1.CloudStackMachineTemplateSpec{
+						Spec: cloudstackv1.CloudStackMachineTemplateResource{
+							Spec: cloudstackv1.CloudStackMachineSpec{
+								Offering:         cloudstackv1.CloudStackResourceIdentifier{Name: "large"},
+								Template:         cloudstackv1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
+								AffinityGroupIDs: []string{"c", "d"},
+							},
+						},
+					},
+				},
+			},
+			want: &anywherev1.CloudStackMachineConfig{
+				Spec: anywherev1.CloudStackMachineConfigSpec{
+					Template:         anywherev1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
+					ComputeOffering:  anywherev1.CloudStackResourceIdentifier{Name: "large"},
+					AffinityGroupIds: []string{"c", "d"},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := resource.MapMachineTemplateToCloudStackMachineConfigSpec(tt.args.csMachineTemplate)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("MapMachineTemplateToCloudStackWorkerMachineConfigSpec() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err == nil && !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MapMachineTemplateToCloudStackWorkerMachineConfigSpec() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

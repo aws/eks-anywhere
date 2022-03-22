@@ -90,6 +90,66 @@ func (mr *MockResourceFetcherMockRecorder) Etcd(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Etcd", reflect.TypeOf((*MockResourceFetcher)(nil).Etcd), arg0, arg1)
 }
 
+// ExistingCloudStackControlPlaneMachineConfig mocks base method.
+func (m *MockResourceFetcher) ExistingCloudStackControlPlaneMachineConfig(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha1.CloudStackMachineConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistingCloudStackControlPlaneMachineConfig", arg0, arg1)
+	ret0, _ := ret[0].(*v1alpha1.CloudStackMachineConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistingCloudStackControlPlaneMachineConfig indicates an expected call of ExistingCloudStackControlPlaneMachineConfig.
+func (mr *MockResourceFetcherMockRecorder) ExistingCloudStackControlPlaneMachineConfig(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingCloudStackControlPlaneMachineConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingCloudStackControlPlaneMachineConfig), arg0, arg1)
+}
+
+// ExistingCloudStackDatacenterConfig mocks base method.
+func (m *MockResourceFetcher) ExistingCloudStackDatacenterConfig(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 v1alpha1.WorkerNodeGroupConfiguration) (*v1alpha1.CloudStackDatacenterConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistingCloudStackDatacenterConfig", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*v1alpha1.CloudStackDatacenterConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistingCloudStackDatacenterConfig indicates an expected call of ExistingCloudStackDatacenterConfig.
+func (mr *MockResourceFetcherMockRecorder) ExistingCloudStackDatacenterConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingCloudStackDatacenterConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingCloudStackDatacenterConfig), arg0, arg1, arg2)
+}
+
+// ExistingCloudStackEtcdMachineConfig mocks base method.
+func (m *MockResourceFetcher) ExistingCloudStackEtcdMachineConfig(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha1.CloudStackMachineConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistingCloudStackEtcdMachineConfig", arg0, arg1)
+	ret0, _ := ret[0].(*v1alpha1.CloudStackMachineConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistingCloudStackEtcdMachineConfig indicates an expected call of ExistingCloudStackEtcdMachineConfig.
+func (mr *MockResourceFetcherMockRecorder) ExistingCloudStackEtcdMachineConfig(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingCloudStackEtcdMachineConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingCloudStackEtcdMachineConfig), arg0, arg1)
+}
+
+// ExistingCloudStackWorkerMachineConfig mocks base method.
+func (m *MockResourceFetcher) ExistingCloudStackWorkerMachineConfig(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 v1alpha1.WorkerNodeGroupConfiguration) (*v1alpha1.CloudStackMachineConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistingCloudStackWorkerMachineConfig", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*v1alpha1.CloudStackMachineConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistingCloudStackWorkerMachineConfig indicates an expected call of ExistingCloudStackWorkerMachineConfig.
+func (mr *MockResourceFetcherMockRecorder) ExistingCloudStackWorkerMachineConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingCloudStackWorkerMachineConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingCloudStackWorkerMachineConfig), arg0, arg1, arg2)
+}
+
 // ExistingVSphereControlPlaneMachineConfig mocks base method.
 func (m *MockResourceFetcher) ExistingVSphereControlPlaneMachineConfig(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha1.VSphereMachineConfig, error) {
 	m.ctrl.T.Helper()

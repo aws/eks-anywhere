@@ -23,6 +23,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -618,6 +619,15 @@ func (k *Kubectl) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cl
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("error getting eksa clusters crd: %v", err)
+	}
+	return nil
+}
+
+func (k *Kubectl) SetControllerCloudStackProviderEnv(ctx context.Context, kubeconfig string) error {
+	params := []string{"set", "env", "deployment/eksa-controller-manager", fmt.Sprintf("%s=true", features.CloudStackProviderEnvVar), "--kubeconfig", kubeconfig}
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error setting CLOUDSTACK_PROVIDER env var on eksa controller: %v", err)
 	}
 	return nil
 }
