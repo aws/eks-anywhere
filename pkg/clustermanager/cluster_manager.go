@@ -51,6 +51,7 @@ type ClusterManager struct {
 	machineBackoff     time.Duration
 	machinesMinWait    time.Duration
 	awsIamAuth         AwsIamAuth
+	fetcher            *EksaResourceFetcher
 }
 
 type ClusterClient interface {
@@ -103,10 +104,22 @@ type AwsIamAuth interface {
 	GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, serverUrl, tlsCert string) ([]byte, error)
 }
 
+type EksaResourceFetcher struct {
+	clusterClient ClusterClient
+	cluster       *types.Cluster
+}
+
+func NewEksaResourceFetcher(clusterClient ClusterClient) *EksaResourceFetcher {
+	return &EksaResourceFetcher{
+		clusterClient: clusterClient,
+	}
+}
+
 type ClusterManagerOpt func(*ClusterManager)
 
 func New(clusterClient ClusterClient, networking Networking, writer filewriter.FileWriter, diagnosticBundleFactory diagnostics.DiagnosticBundleFactory, awsIamAuth AwsIamAuth, opts ...ClusterManagerOpt) *ClusterManager {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
+	eksaResourceFetcher := NewEksaResourceFetcher(clusterClient)
 	retrierClient := NewRetrierClient(NewClient(clusterClient), retrier)
 	c := &ClusterManager{
 		Upgrader:           NewUpgrader(retrierClient),
@@ -119,6 +132,7 @@ func New(clusterClient ClusterClient, networking Networking, writer filewriter.F
 		machineBackoff:     machineBackoff,
 		machinesMinWait:    machinesMinWait,
 		awsIamAuth:         awsIamAuth,
+		fetcher:            eksaResourceFetcher,
 	}
 
 	for _, o := range opts {
@@ -1009,31 +1023,24 @@ func (c *ClusterManager) GetCurrentClusterSpec(ctx context.Context, clus *types.
 }
 
 func (c *ClusterManager) buildSpecForCluster(ctx context.Context, clus *types.Cluster, eksaCluster *v1alpha1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.bundlesFetcher(clus), c.eksdReleaseFetcher(clus), c.gitOpsFetcher(clus), c.oidcFetcher(clus))
+	c.fetcher.cluster = clus
+	return cluster.BuildSpecForCluster(ctx, eksaCluster, c.fetcher)
 }
 
-func (c *ClusterManager) bundlesFetcher(cluster *types.Cluster) cluster.BundlesFetch {
-	return func(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
-		return c.clusterClient.GetBundles(ctx, cluster.KubeconfigFile, name, namespace)
-	}
+func (f *EksaResourceFetcher) BundlesFetch(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
+	return f.clusterClient.GetBundles(ctx, f.cluster.KubeconfigFile, name, namespace)
 }
 
-func (c *ClusterManager) eksdReleaseFetcher(cluster *types.Cluster) cluster.EksdReleaseFetch {
-	return func(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error) {
-		return c.clusterClient.GetEksdRelease(ctx, name, namespace, cluster.KubeconfigFile)
-	}
+func (f *EksaResourceFetcher) EksdReleaseFetch(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error) {
+	return f.clusterClient.GetEksdRelease(ctx, name, namespace, f.cluster.KubeconfigFile)
 }
 
-func (c *ClusterManager) gitOpsFetcher(cluster *types.Cluster) cluster.GitOpsFetch {
-	return func(ctx context.Context, name, namespace string) (*v1alpha1.GitOpsConfig, error) {
-		return c.clusterClient.GetEksaGitOpsConfig(ctx, name, cluster.KubeconfigFile, namespace)
-	}
+func (f *EksaResourceFetcher) GitOpsFetch(ctx context.Context, name, namespace string) (*v1alpha1.GitOpsConfig, error) {
+	return f.clusterClient.GetEksaGitOpsConfig(ctx, name, f.cluster.KubeconfigFile, namespace)
 }
 
-func (c *ClusterManager) oidcFetcher(cluster *types.Cluster) cluster.OIDCFetch {
-	return func(ctx context.Context, name, namespace string) (*v1alpha1.OIDCConfig, error) {
-		return c.clusterClient.GetEksaOIDCConfig(ctx, name, cluster.KubeconfigFile, namespace)
-	}
+func (f *EksaResourceFetcher) OIDCFetch(ctx context.Context, name, namespace string) (*v1alpha1.OIDCConfig, error) {
+	return f.clusterClient.GetEksaOIDCConfig(ctx, name, f.cluster.KubeconfigFile, namespace)
 }
 
 func (c *ClusterManager) DeleteGitOpsConfig(ctx context.Context, managementCluster *types.Cluster, name string, namespace string) error {

@@ -23,20 +23,27 @@ type EksdReleaseFetch func(ctx context.Context, name, namespace string) (*eksdv1
 
 type OIDCFetch func(ctx context.Context, name, namespace string) (*v1alpha1.OIDCConfig, error)
 
-func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, bundlesFetch BundlesFetch, eksdReleaseFetch EksdReleaseFetch, gitOpsFetch GitOpsFetch, oidcFetch OIDCFetch) (*Spec, error) {
-	bundles, err := GetBundlesForCluster(ctx, cluster, bundlesFetch)
+type Fetcher interface {
+	BundlesFetch(ctx context.Context, name, namespace string) (*v1alpha1release.Bundles, error)
+	GitOpsFetch(ctx context.Context, name, namespace string) (*v1alpha1.GitOpsConfig, error)
+	EksdReleaseFetch(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error)
+	OIDCFetch(ctx context.Context, name, namespace string) (*v1alpha1.OIDCConfig, error)
+}
+
+func BuildSpecForCluster(ctx context.Context, cluster *v1alpha1.Cluster, fetchers Fetcher) (*Spec, error) {
+	bundles, err := GetBundlesForCluster(ctx, cluster, fetchers.BundlesFetch)
 	if err != nil {
 		return nil, err
 	}
-	gitOpsConfig, err := GetGitOpsForCluster(ctx, cluster, gitOpsFetch)
+	gitOpsConfig, err := GetGitOpsForCluster(ctx, cluster, fetchers.GitOpsFetch)
 	if err != nil {
 		return nil, err
 	}
-	eksd, err := GetEksdReleaseForCluster(ctx, cluster, bundles, eksdReleaseFetch)
+	eksd, err := GetEksdReleaseForCluster(ctx, cluster, bundles, fetchers.EksdReleaseFetch)
 	if err != nil {
 		return nil, err
 	}
-	oidcConfig, err := GetOIDCForCluster(ctx, cluster, oidcFetch)
+	oidcConfig, err := GetOIDCForCluster(ctx, cluster, fetchers.OIDCFetch)
 	if err != nil {
 		return nil, err
 	}

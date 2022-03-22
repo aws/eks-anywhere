@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	"github.com/go-logr/logr"
 	apiv1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -38,6 +39,16 @@ const (
 	controlPlaneReadyCondition            clusterv1.ConditionType = "ControlPlaneReady"
 )
 
+type EksaResourceFetcher struct {
+	client client.Client
+}
+
+func NewEksaResourceFetcher(client client.Client) *EksaResourceFetcher {
+	return &EksaResourceFetcher{
+		client: client,
+	}
+}
+
 // Struct that holds common methods and properties
 type VSphereReconciler struct {
 	Client    client.Client
@@ -62,9 +73,40 @@ func NewVSphereReconciler(client client.Client, log logr.Logger, validator *vsph
 			tracker:   tracker,
 		},
 		providerClusterReconciler: &providerClusterReconciler{
-			providerClient: client,
+			providerClient:      client,
+			eksaResourceFetcher: NewEksaResourceFetcher(client),
 		},
 	}
+}
+
+func (f *EksaResourceFetcher) BundlesFetch(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
+	clusterBundle := &releasev1alpha1.Bundles{}
+	bundleName := types.NamespacedName{Namespace: namespace, Name: name}
+
+	if err := f.client.Get(ctx, bundleName, clusterBundle); err != nil {
+		return nil, err
+	}
+
+	return clusterBundle, nil
+}
+
+func (f *EksaResourceFetcher) EksdReleaseFetch(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error) {
+	eksd := &eksdv1alpha1.Release{}
+	releaseName := types.NamespacedName{Namespace: namespace, Name: name}
+
+	if err := f.client.Get(ctx, releaseName, eksd); err != nil {
+		return nil, err
+	}
+
+	return eksd, nil
+}
+
+func (f *EksaResourceFetcher) GitOpsFetch(ctx context.Context, name, namespace string) (*anywherev1.GitOpsConfig, error) {
+	return nil, nil
+}
+
+func (f *EksaResourceFetcher) OIDCFetch(ctx context.Context, name, namespace string) (*anywherev1.OIDCConfig, error) {
+	return nil, nil
 }
 
 func VsphereCredentials(ctx context.Context, cli client.Client) (*apiv1.Secret, error) {
@@ -103,19 +145,8 @@ func SetupEnvVars(ctx context.Context, vsphereDatacenter *anywherev1.VSphereData
 	return nil
 }
 
-func (v *VSphereClusterReconciler) bundles(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
-	clusterBundle := &releasev1alpha1.Bundles{}
-	bundleName := types.NamespacedName{Namespace: namespace, Name: name}
-
-	if err := v.Client.Get(ctx, bundleName, clusterBundle); err != nil {
-		return nil, err
-	}
-
-	return clusterBundle, nil
-}
-
 func (v *VSphereClusterReconciler) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*c.Spec, error) {
-	return c.BuildSpecForCluster(ctx, cs, v.bundles, v.eksdRelease, nil, nil)
+	return c.BuildSpecForCluster(ctx, cs, v.eksaResourceFetcher)
 }
 
 func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywherev1.Cluster) (reconciler.Result, error) {
@@ -151,7 +182,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 	}
 
 	v.Log.V(4).Info("Fetching bundle", "cluster name", cluster.Spec.ManagementCluster.Name)
-	bundles, err := v.bundles(ctx, cluster.Spec.ManagementCluster.Name, "default")
+	bundles, err := v.eksaResourceFetcher.BundlesFetch(ctx, cluster.Spec.ManagementCluster.Name, "default")
 	if err != nil {
 		return reconciler.Result{}, err
 	}
@@ -160,7 +191,7 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		return reconciler.Result{}, err
 	}
 	v.Log.V(4).Info("Fetching eks-d manifest", "release name", versionsBundle.EksD.Name)
-	eksd, err := v.eksdRelease(ctx, versionsBundle.EksD.Name, constants.EksaSystemNamespace)
+	eksd, err := v.eksaResourceFetcher.EksdReleaseFetch(ctx, versionsBundle.EksD.Name, constants.EksaSystemNamespace)
 	if err != nil {
 		return reconciler.Result{}, err
 	}

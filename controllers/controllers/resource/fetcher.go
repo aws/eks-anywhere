@@ -278,7 +278,7 @@ func (r *CapiResourceFetcher) VSphereCredentials(ctx context.Context) (*corev1.S
 	return secret, nil
 }
 
-func (r *CapiResourceFetcher) bundles(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
+func (r *CapiResourceFetcher) BundlesFetch(ctx context.Context, name, namespace string) (*releasev1alpha1.Bundles, error) {
 	clusterBundle := &releasev1alpha1.Bundles{}
 	err := r.FetchObjectByName(ctx, name, namespace, clusterBundle)
 	if err != nil {
@@ -287,7 +287,7 @@ func (r *CapiResourceFetcher) bundles(ctx context.Context, name, namespace strin
 	return clusterBundle, nil
 }
 
-func (r *CapiResourceFetcher) eksdRelease(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error) {
+func (r *CapiResourceFetcher) EksdReleaseFetch(ctx context.Context, name, namespace string) (*eksdv1alpha1.Release, error) {
 	eksd := &eksdv1alpha1.Release{}
 	err := r.FetchObjectByName(ctx, name, namespace, eksd)
 	if err != nil {
@@ -296,7 +296,11 @@ func (r *CapiResourceFetcher) eksdRelease(ctx context.Context, name, namespace s
 	return eksd, nil
 }
 
-func (r *CapiResourceFetcher) oidcConfig(ctx context.Context, name, namespace string) (*anywherev1.OIDCConfig, error) {
+func (r *CapiResourceFetcher) GitOpsFetch(ctx context.Context, name, namespace string) (*anywherev1.GitOpsConfig, error) {
+	return nil, nil
+}
+
+func (r *CapiResourceFetcher) OIDCFetch(ctx context.Context, name, namespace string) (*anywherev1.OIDCConfig, error) {
 	clusterOIDC := &anywherev1.OIDCConfig{}
 	err := r.FetchObjectByName(ctx, name, namespace, clusterOIDC)
 	if err != nil {
@@ -350,7 +354,7 @@ func (r *CapiResourceFetcher) OIDCConfig(ctx context.Context, ref *anywherev1.Re
 }
 
 func (r *CapiResourceFetcher) FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error) {
-	return cluster.BuildSpecForCluster(ctx, cs, r.bundles, r.eksdRelease, nil, r.oidcConfig)
+	return cluster.BuildSpecForCluster(ctx, cs, r)
 }
 
 func (r *CapiResourceFetcher) ExistingVSphereDatacenterConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.VSphereDatacenterConfig, error) {
