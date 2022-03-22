@@ -28,7 +28,7 @@ GO_TEST ?= $(GO) test
 UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 
 ## ensure local execution uses the 'main' branch bundle
-BRANCH_NAME?=main
+BRANCH_NAME?=release-0.8
 ifeq (,$(findstring $(BRANCH_NAME),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
 DEV_GIT_VERSION:=v0.0.0-dev-${BRANCH_NAME}
