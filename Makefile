@@ -111,6 +111,8 @@ GO_ARCH:=$(shell $(GO) env GOARCH)
 GO_OS:=$(shell $(GO) env GOOS)
 GO_ROOT:=$(shell $(GO) env GOROOT)
 
+$(error $(GOPATH))
+
 BINARY_DEPS_DIR = $(OUTPUT_DIR)/dependencies
 CLUSTER_CONTROLLER_PLATFORMS ?= linux-amd64 linux-arm64
 CREATE_CLUSTER_CONTROLLER_BINARIES := $(foreach platform,$(CLUSTER_CONTROLLER_PLATFORMS),create-cluster-controller-binary-$(platform))
