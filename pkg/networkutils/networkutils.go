@@ -36,9 +36,9 @@ func IsIPInUse(client NetClient, ip string) bool {
 		conn, err := client.DialTimeout("tcp", address, 500*time.Millisecond)
 		if err == nil {
 			conn.Close()
-			return false
+			return true
 		}
 	}
 
-	return true
+	return false
 }

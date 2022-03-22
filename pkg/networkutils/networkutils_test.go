@@ -45,7 +45,7 @@ func TestIsIPInUsePass(t *testing.T) {
 		Return(nil, errors.New("no connection"))
 
 	res := networkutils.IsIPInUse(client, "10.10.10.10")
-	g.Expect(res).To(gomega.BeTrue())
+	g.Expect(res).To(gomega.BeFalse())
 }
 
 func TestIsIPInUseFail(t *testing.T) {
@@ -60,7 +60,7 @@ func TestIsIPInUseFail(t *testing.T) {
 		Return(conn, nil)
 
 	res := networkutils.IsIPInUse(client, "10.10.10.10")
-	g.Expect(res).To(gomega.BeFalse())
+	g.Expect(res).To(gomega.BeTrue())
 }
 
 // MockConn is a mock of NetClient interface. It is hand written.
