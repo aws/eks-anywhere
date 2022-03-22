@@ -1,6 +1,8 @@
 package hardware
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // MachineAssertion defines a condition that Machine must meet.
 type MachineAssertion func(Machine) error
