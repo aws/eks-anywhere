@@ -66,7 +66,7 @@ func getActiveBundleFromCluster(ctx context.Context, kubeConfig string) (*api.Pa
 	kubectl := deps.Kubectl
 
 	// Active Bundle is set at the bundle Controller
-	bundleController, err := getBundleController(ctx, kubectl, params...)
+	bundleController, err := getActiveController(ctx, kubectl, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func getPackageBundle(ctx context.Context, kubectl *executables.Kubectl, opts ..
 	return obj, nil
 }
 
-func getBundleController(ctx context.Context, kubectl *executables.Kubectl, opts ...executables.KubectlOpt) (*api.PackageBundleController, error) {
+func getActiveController(ctx context.Context, kubectl *executables.Kubectl, opts ...executables.KubectlOpt) (*api.PackageBundleController, error) {
 	stdOut, err := kubectl.GetResources(ctx, "packageBundleController", opts...)
 	if err != nil {
 		return nil, err
