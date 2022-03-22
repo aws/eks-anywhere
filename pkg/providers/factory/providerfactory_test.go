@@ -99,7 +99,7 @@ func TestProviderFactoryBuildProvider(t *testing.T) {
 				}},
 				clusterConfigFileName: "testdata/cluster_aws.yaml",
 			},
-			wantErr: fmt.Errorf("valid providers include: %s, %s", constants.DockerProviderName, constants.VSphereProviderName),
+			wantErr: fmt.Errorf("no provider support for datacenter kind: %s", v1alpha1.AWSDatacenterKind),
 		},
 	}
 	for _, tt := range tests {
