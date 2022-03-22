@@ -210,7 +210,7 @@ func (e *E2ESession) createTestNameFile(testName string) error {
 func clusterName(branch string, instanceId string) (clusterName string) {
 	clusterNameTemplate := "%s-%s"
 	forbiddenChars := []string{"."}
-	var sanitizedBranch string
+	sanitizedBranch := branch
 	for _, char := range forbiddenChars {
 		sanitizedBranch = strings.Replace(branch, char, "-", -1)
 	}
