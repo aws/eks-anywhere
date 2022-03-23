@@ -111,7 +111,7 @@ BUILD_FLAGS?=
 
 GO_ARCH:=$(shell go env GOARCH)
 GO_OS:=$(shell go env GOOS)
-GO_ROOT:=$(shell $(GO) env GOPATH)
+GO_ROOT:=$(shell $(GO) env)
 
 
 BINARY_DEPS_DIR = $(OUTPUT_DIR)/dependencies
