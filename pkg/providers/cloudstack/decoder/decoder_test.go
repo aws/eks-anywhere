@@ -16,6 +16,7 @@ const (
 	apiUrl                     = "http://127.16.0.1:8080/client/api"
 	verifySsl                  = "false"
 	defaultVerifySsl           = "true"
+	defaultTimeout             = "30"
 	validCloudStackCloudConfig = "W0dsb2JhbF0KYXBpLWtleSA9IHRlc3Qta2V5CnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldAphcGktdXJsID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCnZlcmlmeS1zc2wgPSBmYWxzZQo="
 	missingApiKey              = "W0dsb2JhbF0Kc2VjcmV0LWtleSA9IHRlc3Qtc2VjcmV0CmFwaS11cmwgPSBodHRwOi8vMTI3LjE2LjAuMTo4MDgwL2NsaWVudC9hcGkKdmVyaWZ5LXNzbCA9IGZhbHNlCg=="
 	missingSecretKey           = "W0dsb2JhbF0KYXBpLWtleSA9IHRlc3Qta2V5CmFwaS11cmwgPSBodHRwOi8vMTI3LjE2LjAuMTo4MDgwL2NsaWVudC9hcGkKdmVyaWZ5LXNzbCA9IGZhbHNlCg=="
@@ -25,6 +26,8 @@ const (
 	missingGlobalSection       = "YXBpLWtleSA9IHRlc3Qta2V5CnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldAphcGktdXJsID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCnZlcmlmeS1zc2wgPSBmYWxzZQo="
 	invalidINI                 = "W0dsb2JhbF0KYXBpLWtleSA7IHRlc3Qta2V5CnNlY3JldC1rZXkgOyB0ZXN0LXNlY3JldAphcGktdXJsIDsgaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCnZlcmlmeS1zc2wgOyBmYWxzZQo="
 	invalidEncoding            = "=====W0dsb2JhbF0KYXBpLWtleSA7IHRlc3Qta2V5CnNlY3JldC1rZXkgOyB0ZXN0LXNlY3JldAphcGktdXJsIDsgaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCnZlcmlmeS1zc2wgOyBmYWxzZQo======"
+	validTimeoutValue          = "W0dsb2JhbF0KYXBpLWtleSA9IHRlc3Qta2V5CnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldAphcGktdXJsID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCnZlcmlmeS1zc2wgPSBmYWxzZQp0aW1lb3V0ID0gMTAw"
+	invalidTimeoutValue        = "W0dsb2JhbF0KYXBpLWtleSA9IHRlc3Qta2V5CnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldAphcGktdXJsID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCnZlcmlmeS1zc2wgPSBmYWxzZQp0aW1lb3V0ID0geHh4"
 )
 
 type testContext struct {
@@ -54,6 +57,7 @@ func TestValidConfigShouldSucceedtoParse(t *testing.T) {
 	g.Expect(execConfig.SecretKey).To(Equal(secretKey))
 	g.Expect(execConfig.ManagementUrl).To(Equal(apiUrl))
 	g.Expect(execConfig.VerifySsl).To(Equal(verifySsl))
+	g.Expect(execConfig.Timeout).To(Equal(defaultTimeout))
 
 	tctx.restoreContext()
 }
@@ -106,6 +110,7 @@ func TestMissingVerifySslShouldSetDefaultValue(t *testing.T) {
 	g.Expect(execConfig.SecretKey).To(Equal(secretKey))
 	g.Expect(execConfig.ManagementUrl).To(Equal(apiUrl))
 	g.Expect(execConfig.VerifySsl).To(Equal(defaultVerifySsl))
+	g.Expect(execConfig.Timeout).To(Equal(defaultTimeout))
 
 	tctx.restoreContext()
 }
@@ -166,6 +171,35 @@ func TestInvalidEncodingShouldFailToParse(t *testing.T) {
 	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, invalidEncoding)
 	_, err := decoder.ParseCloudStackSecret()
 	g.Expect(err).ToNot(BeNil())
+
+	tctx.restoreContext()
+}
+
+func TestInvalidTimeoutValueShouldFailToParse(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+
+	g := NewWithT(t)
+	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, invalidTimeoutValue)
+	_, err := decoder.ParseCloudStackSecret()
+	g.Expect(err).ToNot(BeNil())
+
+	tctx.restoreContext()
+}
+
+func TestValidTimeoutValueShouldSucceedtoParse(t *testing.T) {
+	var tctx testContext
+	tctx.backupContext()
+
+	g := NewWithT(t)
+	os.Setenv(decoder.EksacloudStackCloudConfigB64SecretKey, validTimeoutValue)
+	execConfig, err := decoder.ParseCloudStackSecret()
+	g.Expect(err).To(BeNil(), "An error occurred when parsing a valid secret")
+	g.Expect(execConfig.ApiKey).To(Equal(apiKey))
+	g.Expect(execConfig.SecretKey).To(Equal(secretKey))
+	g.Expect(execConfig.ManagementUrl).To(Equal(apiUrl))
+	g.Expect(execConfig.VerifySsl).To(Equal(verifySsl))
+	g.Expect(execConfig.Timeout).To(Equal("100"))
 
 	tctx.restoreContext()
 }

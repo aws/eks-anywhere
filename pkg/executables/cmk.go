@@ -36,6 +36,7 @@ type cmkExecConfig struct {
 	CloudStackSecretKey     string
 	CloudStackManagementUrl string
 	CloudMonkeyVerifyCert   string
+	CloudMonkeyTimeout      string
 }
 
 func (c *Cmk) Close(ctx context.Context) error {
@@ -362,6 +363,7 @@ func (c *Cmk) buildCmkConfigFile() (configFile string, err error) {
 		CloudStackSecretKey:     c.config.SecretKey,
 		CloudStackManagementUrl: c.config.ManagementUrl,
 		CloudMonkeyVerifyCert:   c.config.VerifySsl,
+		CloudMonkeyTimeout:      c.config.Timeout,
 	}
 	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, cmkConfig, cmkConfigFileName)
 	if err != nil {

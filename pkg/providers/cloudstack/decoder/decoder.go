@@ -52,11 +52,20 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 			return nil, fmt.Errorf("'verify-ssl' has invalid boolean string %s: %v", verifySslValue, err)
 		}
 	}
+	timeout, err := section.GetKey("timeout")
+	timeoutValue := "30"
+	if err == nil {
+		timeoutValue = timeout.Value()
+		if _, err := strconv.ParseInt(timeoutValue, 10, 16); err != nil {
+			return nil, fmt.Errorf("'timeout' has invalid integer string %s: %v", timeoutValue, err)
+		}
+	}
 	return &CloudStackExecConfig{
 		ApiKey:        apiKey.Value(),
 		SecretKey:     secretKey.Value(),
 		ManagementUrl: apiUrl.Value(),
 		VerifySsl:     verifySslValue,
+		Timeout:       timeoutValue,
 	}, nil
 }
 
@@ -65,4 +74,5 @@ type CloudStackExecConfig struct {
 	SecretKey     string
 	ManagementUrl string
 	VerifySsl     string
+	Timeout       string
 }
