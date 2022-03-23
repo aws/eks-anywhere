@@ -3,10 +3,10 @@ package resource_test
 import (
 	"context"
 	_ "embed"
-	"github.com/go-logr/logr"
 	"strings"
 	"testing"
 
+	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"github.com/stretchr/testify/assert"
