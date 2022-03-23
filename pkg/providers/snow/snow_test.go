@@ -115,6 +115,7 @@ func givenClusterSpec() *cluster.Spec {
 					Repository: "public.ecr.aws/eks-distro/etcd-io",
 					Tag:        "v3.4.16-eks-1-21-9",
 				},
+				EtcdVersion: "3.4.16",
 			},
 			VersionsBundle: &releasev1alpha1.VersionsBundle{
 				KubeVersion: "1.21",

@@ -3,6 +3,8 @@ package clusterapi
 import (
 	"fmt"
 
+	etcdbootstrapv1 "github.com/mrajashree/etcdadm-bootstrap-provider/api/v1beta1"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,6 +29,7 @@ var (
 	clusterAPIVersion             = clusterv1.GroupVersion.String()
 	kubeadmControlPlaneAPIVersion = controlplanev1.GroupVersion.String()
 	bootstrapAPIVersion           = bootstrapv1.GroupVersion.String()
+	etcdAPIVersion                = etcdv1.GroupVersion.String()
 	etcdClusterAPIVersion         = fmt.Sprintf("etcdcluster.%s/%s", clusterv1.GroupVersion.Group, clusterv1.GroupVersion.Version)
 )
 
@@ -95,6 +98,9 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcd.External = &bootstrapv1.ExternalEtcd{
 			Endpoints: []string{},
+			CAFile:    "/etc/kubernetes/pki/etcd/ca.crt",
+			CertFile:  "/etc/kubernetes/pki/apiserver-etcd-client.crt",
+			KeyFile:   "/etc/kubernetes/pki/apiserver-etcd-client.key",
 		}
 	} else {
 		etcd.Local = &bootstrapv1.LocalEtcd{
@@ -239,6 +245,43 @@ func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1
 				},
 			},
 			Replicas: &replicas,
+		},
+	}
+}
+
+func EtcdadmCluster(clusterSpec *cluster.Spec, infrastructureObject APIObject) *etcdv1.EtcdadmCluster {
+	replicas := int32(clusterSpec.Spec.ExternalEtcdConfiguration.Count)
+	return &etcdv1.EtcdadmCluster{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: etcdAPIVersion,
+			Kind:       etcdadmClusterKind,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      clusterSpec.GetName(),
+			Namespace: constants.EksaSystemNamespace,
+		},
+		Spec: etcdv1.EtcdadmClusterSpec{
+			Replicas: &replicas,
+			EtcdadmConfigSpec: etcdbootstrapv1.EtcdadmConfigSpec{
+				EtcdadmBuiltin: true,
+				Format:         etcdbootstrapv1.Format("cloud-config"),
+				CloudInitConfig: &etcdbootstrapv1.CloudInitConfig{
+					Version:    clusterSpec.VersionsBundle.KubeDistro.EtcdVersion,
+					InstallDir: "/usr/bin",
+				},
+				PreEtcdadmCommands: []string{
+					"hostname \"{{`{{ ds.meta_data.hostname }}`}}",
+					"echo \"::1         ipv6-localhost ipv6-loopback\" >/etc/hosts",
+					"echo \"127.0.0.1   localhost\" >>/etc/hosts",
+					"echo \"127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}\" >>/etc/hosts",
+					"echo \"{{`{{ ds.meta_data.hostname }}`}}\" >/etc/hostname",
+				},
+			},
+			InfrastructureTemplate: v1.ObjectReference{
+				APIVersion: infrastructureObject.GetObjectKind().GroupVersionKind().GroupVersion().String(),
+				Kind:       infrastructureObject.GetObjectKind().GroupVersionKind().Kind,
+				Name:       infrastructureObject.GetName(),
+			},
 		},
 	}
 }

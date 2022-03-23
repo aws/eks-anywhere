@@ -3,6 +3,8 @@ package snow
 import (
 	"testing"
 
+	etcdbootstrapv1 "github.com/mrajashree/etcdadm-bootstrap-provider/api/v1beta1"
+	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -344,6 +346,65 @@ func TestSnowMachineTemplates(t *testing.T) {
 						PhysicalNetworkConnectorType: &wantPhysicalNetworkConnector,
 					},
 				},
+			},
+		},
+	}
+	tt.Expect(got).To(Equal(want))
+}
+
+func TestEtcdadmCluster(t *testing.T) {
+	tt := newApiBuilerTest(t)
+	tt.clusterSpec.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{
+		Count: 3,
+		MachineGroupRef: &v1alpha1.Ref{
+			Kind: v1alpha1.SnowMachineConfigKind,
+			Name: "test-etcd",
+		},
+	}
+	tt.machineConfigs["test-etcd"] = &v1alpha1.SnowMachineConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-etcd",
+			Namespace: "test-namespace",
+		},
+		Spec: v1alpha1.SnowMachineConfigSpec{
+			AMIID:        "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
+			InstanceType: "sbe-c.large",
+			SshKeyName:   "default",
+		},
+	}
+	etcdMachineTemplates := SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name])
+	got := EtcdadmCluster(tt.clusterSpec, etcdMachineTemplates)
+	replicas := int32(3)
+	want := &etcdv1.EtcdadmCluster{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "etcdcluster.cluster.x-k8s.io/v1beta1",
+			Kind:       "EtcdadmCluster",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "snow-test",
+			Namespace: "eksa-system",
+		},
+		Spec: etcdv1.EtcdadmClusterSpec{
+			Replicas: &replicas,
+			EtcdadmConfigSpec: etcdbootstrapv1.EtcdadmConfigSpec{
+				EtcdadmBuiltin: true,
+				Format:         etcdbootstrapv1.Format("cloud-config"),
+				CloudInitConfig: &etcdbootstrapv1.CloudInitConfig{
+					Version:    "3.4.16",
+					InstallDir: "/usr/bin",
+				},
+				PreEtcdadmCommands: []string{
+					"hostname \"{{`{{ ds.meta_data.hostname }}`}}",
+					"echo \"::1         ipv6-localhost ipv6-loopback\" >/etc/hosts",
+					"echo \"127.0.0.1   localhost\" >>/etc/hosts",
+					"echo \"127.0.0.1   {{`{{ ds.meta_data.hostname }}`}}\" >>/etc/hosts",
+					"echo \"{{`{{ ds.meta_data.hostname }}`}}\" >/etc/hostname",
+				},
+			},
+			InfrastructureTemplate: v1.ObjectReference{
+				APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
+				Kind:       "AWSSnowMachineTemplate",
+				Name:       "test-etcd",
 			},
 		},
 	}

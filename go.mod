@@ -13,6 +13,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/go-github/v35 v35.3.0
 	github.com/google/uuid v1.3.0
+	github.com/mrajashree/etcdadm-bootstrap-provider v1.0.0-rc3
 	github.com/mrajashree/etcdadm-controller v1.0.0-rc3
 	github.com/onsi/gomega v1.16.0
 	github.com/pkg/errors v0.9.1
