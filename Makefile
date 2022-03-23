@@ -24,7 +24,6 @@ GOLANG_VERSION?="1.17"
 GO ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))/go
 GO_TEST ?= $(GO) test
 GOBIN=$(shell $(GO) env GOPATH)/bin
-$(error $(GOBIN))
 
 # A regular expression defining what packages to exclude from the unit-test recipe.
 UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
