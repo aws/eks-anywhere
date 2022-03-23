@@ -96,8 +96,8 @@ func (r *ReleaseConfig) GetPackagesBundle(imageDigests map[string]string) (anywh
 	}
 
 	bundle := anywherev1alpha1.PackageBundle{
-		Version:           version,
-		PackageController: bundleImageArtifacts["eks-anywhere-packages"],
+		Version:    version,
+		Controller: bundleImageArtifacts["eks-anywhere-packages"],
 	}
 	return bundle, nil
 }
