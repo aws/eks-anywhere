@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/aws/eks-anywhere/controllers/controllers/resource"
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/go-logr/logr"
 	"k8s.io/api/node/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -15,6 +13,9 @@ import (
 	vspherev1 "sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1"
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/aws/eks-anywhere/controllers/controllers/resource"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 )
 
 func TestMapMachineTemplateToVSphereDatacenterConfigSpec(t *testing.T) {
