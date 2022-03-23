@@ -58,6 +58,9 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 	if len(datacenterConfig.Spec.Domain) <= 0 {
 		return fmt.Errorf("CloudStackDatacenterConfig domain is not set or is empty")
 	}
+	if datacenterConfig.Spec.ManagementApiEndpoint == "" {
+		return fmt.Errorf("CloudStackDatacenterConfig managementApiEndpoint is not set or is empty")
+	}
 	_, err := getHostnameFromUrl(datacenterConfig.Spec.ManagementApiEndpoint)
 	if err != nil {
 		return fmt.Errorf("error while checking management api endpoint: %v", err)
