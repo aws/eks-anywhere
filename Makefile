@@ -25,7 +25,6 @@ GO ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_
 GO_TEST ?= $(GO) test
 MOCKGEN_LOC ?= $(shell which mockgen)
 ## GOPATH ?= /home/prow/go1.17.5
-$(error $(MOCKGEN_LOC))
 
 # A regular expression defining what packages to exclude from the unit-test recipe.
 UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
@@ -387,6 +386,8 @@ capd-test-%: e2e ## Run CAPD tests
 .PHONY: mocks
 mocks: ## Generate mocks
 	$(GO) install github.com/golang/mock/mockgen@v1.6.0
+	MOCKGEN_LOC ?= $(shell which mockgen)
+	$(error $(MOCKGEN_LOC))
 	${GOPATH}/bin/mockgen -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
 	${GOPATH}/bin/mockgen -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable
 	${GOPATH}/bin/mockgen -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
