@@ -385,7 +385,7 @@ capd-test-%: e2e ## Run CAPD tests
 mocks: ## Generate mocks
 	PATH=$(shell $(GO) env GOROOT)/bin:$$PATH
 	$(GO) install github.com/golang/mock/mockgen@v1.6.0
-	$(shell which mockgen || true)
+	$(shell ls /home/prow/go/bin)
 	${GOPATH}/bin/mockgen -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
 	${GOPATH}/bin/mockgen -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable
 	${GOPATH}/bin/mockgen -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
