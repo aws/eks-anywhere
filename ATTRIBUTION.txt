@@ -2,6 +2,9 @@
 ** cloud.google.com/go/compute/metadata; version v0.93.3 --
 https://github.com/googleapis/google-cloud-go
 
+** github.com/aws/cluster-api-provider-cloudstack; version v0.4.1 --
+https://github.com/aws/cluster-api-provider-cloudstack
+
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
 https://github.com/aws/eks-distro-build-tooling/release
 
@@ -154,6 +157,9 @@ https://github.com/mrajashree/cluster-api
 
 ** sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1; version v1.0.1 --
 https://github.com/kubernetes-sigs/cluster-api-provider-vsphere
+
+** sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1; version v1.0.0 --
+https://github.com/kubernetes-sigs/cluster-api
 
 ** sigs.k8s.io/controller-runtime; version v0.10.3 --
 https://github.com/kubernetes-sigs/controller-runtime
@@ -1181,7 +1187,7 @@ Copyright (c) 2013 Mitchell Hashimoto
 https://github.com/mitchellh/mapstructure
 Copyright (c) 2013 Mitchell Hashimoto
 
-** github.com/onsi/gomega; version v1.16.0 --
+** github.com/onsi/gomega; version v1.17.0 --
 https://github.com/onsi/gomega
 Copyright (c) 2013-2014 Onsi Fakhouri
 
