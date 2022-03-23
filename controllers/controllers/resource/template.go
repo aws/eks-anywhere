@@ -231,12 +231,16 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 	templateBuilder := docker.NewDockerTemplateBuilder(r.now)
 
 	existingVersion, err := r.ExistingKubeVersion(ctx, eksaCluster)
-	// Check to see if there is any change the Kubernetes tag that requires a new template in order to specify the new
-	// node image
-	kubeVersionChanged := existingVersion != bundle.KubeDistro.Kubernetes.Tag
 	if err != nil {
 		return nil, err
 	}
+	existingControlPlaneNodeImage, err := r.ExistingControlPlaneKindNodeImage(ctx, eksaCluster)
+	if err != nil {
+		return nil, err
+	}
+	// Check to see if there is any change the Kubernetes tag that requires a new template in order to specify the new
+	// node image
+	kubeVersionChanged := existingVersion != bundle.KubeDistro.Kubernetes.Tag
 	var controlPlaneTemplateName string
 	if kubeVersionChanged {
 		controlPlaneTemplateName = common.CPMachineTemplateName(clusterName, r.now)
@@ -250,7 +254,14 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 
 	workloadTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		if kubeVersionChanged {
+		existingWorkerNodeImage, err := r.ExistingWorkerKindNodeImage(ctx, eksaCluster, workerNodeGroupConfiguration)
+		if err != nil {
+			return nil, err
+		}
+		// If Kubernetes version did not change but we have a newer kind node image for the same version, we will roll
+		// out new worker nodes to consume the latest image instead of only change on Kubernetes versions for control
+		// plane
+		if kubeVersionChanged || existingWorkerNodeImage != bundle.EksD.KindNode.VersionedImage() {
 			workloadTemplateNames[workerNodeGroupConfiguration.Name] = common.WorkerMachineTemplateName(clusterName, workerNodeGroupConfiguration.Name, r.now)
 		} else {
 			mcDeployment, err := r.MachineDeployment(ctx, eksaCluster, workerNodeGroupConfiguration)
@@ -277,6 +288,9 @@ func (r *DockerTemplate) TemplateResources(ctx context.Context, eksaCluster *any
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = controlPlaneTemplateName
 		values["etcdTemplateName"] = etcdTemplateName
+		if !kubeVersionChanged {
+			values["kindNodeImage"] = existingControlPlaneNodeImage
+		}
 	}
 
 	return generateTemplateResources(templateBuilder, clusterSpec, workloadTemplateNames, nil, cpOpt)
