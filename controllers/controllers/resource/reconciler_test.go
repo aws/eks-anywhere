@@ -3,7 +3,6 @@ package resource_test
 import (
 	"context"
 	_ "embed"
-	"github.com/go-logr/logr"
 	"strings"
 	"testing"
 
