@@ -669,7 +669,7 @@ func (e *ClusterE2ETest) clusterConfigGitPath() string {
 func (e *ClusterE2ETest) clusterSpecFromGit() (*cluster.Spec, error) {
 	s, err := cluster.NewSpecFromClusterConfig(
 		e.clusterConfigGitPath(),
-		version.Info{GitVersion: "v0.0.0-dev"},
+		version.Get(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("unable to build spec from git: %v", err)
