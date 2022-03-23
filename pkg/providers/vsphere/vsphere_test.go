@@ -2335,7 +2335,7 @@ func TestSetupAndValidateCreateClusterErrorCheckingTemplate(t *testing.T) {
 
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 
-	thenErrorExpected(t, "failed setting default values for vsphere machine configs: error setting template full path: "+errorMessage, err)
+	thenErrorExpected(t, "failed setting default values for vsphere machine configs: setting template full path: "+errorMessage, err)
 }
 
 func TestSetupAndValidateCreateClusterTemplateMissingTags(t *testing.T) {
@@ -2379,7 +2379,7 @@ func TestSetupAndValidateCreateClusterErrorGettingTags(t *testing.T) {
 
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 
-	thenErrorExpected(t, "error validating template tags: failed getting tags", err)
+	thenErrorExpected(t, "validating template tags: failed getting tags", err)
 }
 
 func TestSetupAndValidateCreateClusterDefaultTemplate(t *testing.T) {

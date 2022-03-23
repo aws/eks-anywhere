@@ -157,7 +157,7 @@ func TestValidateDatacenterBadManagementEndpoint(t *testing.T) {
 	datacenterConfig.Spec.ManagementApiEndpoint = ":1234.5234"
 	err = validator.ValidateCloudStackDatacenterConfig(ctx, cloudStackClusterSpec.datacenterConfig)
 
-	thenErrorExpected(t, "error while checking management api endpoint: :1234.5234 is not a valid url", err)
+	thenErrorExpected(t, "checking management api endpoint: :1234.5234 is not a valid url", err)
 }
 
 func TestSetupAndValidateUsersNil(t *testing.T) {
