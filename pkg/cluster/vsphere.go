@@ -17,10 +17,43 @@ func vsphereEntry() *ConfigManagerEntry {
 			machineConfigsProcessor(processVSphereMachineConfig),
 		},
 		Defaulters: []Defaulter{
-			func(c *Config) {
+			func(c *Config) error {
 				if c.VSphereDatacenter != nil {
 					c.VSphereDatacenter.SetDefaults()
 				}
+				return nil
+			},
+		},
+		Validations: []Validation{
+			func(c *Config) error {
+				if c.VSphereDatacenter != nil {
+					return c.VSphereDatacenter.Validate()
+				}
+				return nil
+			},
+			func(c *Config) error {
+				for _, m := range c.VSphereMachineConfigs {
+					if err := m.Validate(); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			func(c *Config) error {
+				if c.VSphereDatacenter != nil {
+					if err := validateSameNamespace(c, c.VSphereDatacenter); err != nil {
+						return err
+					}
+				}
+				return nil
+			},
+			func(c *Config) error {
+				for _, v := range c.VSphereMachineConfigs {
+					if err := validateSameNamespace(c, v); err != nil {
+						return err
+					}
+				}
+				return nil
 			},
 		},
 	}

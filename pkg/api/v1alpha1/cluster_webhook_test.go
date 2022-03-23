@@ -630,6 +630,31 @@ func TestClusterValidateUpdateClusterNetworkNewEmptyImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
 }
 
+func TestClusterValidateUpdateClusterNetworkCiliumConfigImmutable(t *testing.T) {
+	cOld := &v1alpha1.Cluster{
+		Spec: v1alpha1.ClusterSpec{
+			ClusterNetwork: v1alpha1.ClusterNetwork{
+				CNIConfig: &v1alpha1.CNIConfig{
+					Cilium: &v1alpha1.CiliumConfig{
+						PolicyEnforcementMode: "default",
+					},
+				},
+			},
+		},
+	}
+	c := cOld.DeepCopy()
+	c.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
+		CNIConfig: &v1alpha1.CNIConfig{
+			Cilium: &v1alpha1.CiliumConfig{
+				PolicyEnforcementMode: "always",
+			},
+		},
+	}
+
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(cOld)).NotTo(Succeed())
+}
+
 func TestClusterValidateUpdateProxyConfigurationEqualOrder(t *testing.T) {
 	cOld := &v1alpha1.Cluster{
 		Spec: v1alpha1.ClusterSpec{
@@ -1225,6 +1250,7 @@ func TestClusterCreateWorkloadCluster(t *testing.T) {
 				Count: 3, Endpoint: &v1alpha1.Endpoint{Host: "1.1.1.1/1"},
 			},
 			ExternalEtcdConfiguration: &v1alpha1.ExternalEtcdConfiguration{Count: 3},
+			ClusterNetwork:            v1alpha1.ClusterNetwork{CNIConfig: &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}},
 		},
 	}
 	cluster.Spec.ManagementCluster.Name = "management-cluster"

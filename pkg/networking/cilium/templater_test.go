@@ -12,6 +12,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/internal/test"
+	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium/mocks"
@@ -44,12 +45,14 @@ func newtemplaterTest(t *testing.T) *templaterTest {
 			s.VersionsBundle.Cilium.Cilium.URI = "public.ecr.aws/isovalent/cilium:v1.9.10-eksa.1"
 			s.VersionsBundle.Cilium.Operator.URI = "public.ecr.aws/isovalent/operator-generic:v1.9.10-eksa.1"
 			s.VersionsBundle.Cilium.HelmChart.URI = "public.ecr.aws/isovalent/cilium:1.9.10-eksa.1"
+			s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
 		}),
 		spec: test.NewClusterSpec(func(s *cluster.Spec) {
 			s.VersionsBundle.Cilium.Version = "v1.9.11-eksa.1"
 			s.VersionsBundle.Cilium.Cilium.URI = "public.ecr.aws/isovalent/cilium:v1.9.11-eksa.1"
 			s.VersionsBundle.Cilium.Operator.URI = "public.ecr.aws/isovalent/operator-generic:v1.9.11-eksa.1"
 			s.VersionsBundle.Cilium.HelmChart.URI = "public.ecr.aws/isovalent/cilium:1.9.11-eksa.1"
+			s.Cluster.Spec.ClusterNetwork.CNIConfig = &v1alpha1.CNIConfig{Cilium: &v1alpha1.CiliumConfig{}}
 		}),
 	}
 }
@@ -174,6 +177,42 @@ func TestTemplaterGenerateManifestSuccess(t *testing.T) {
 	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
 }
 
+func TestTemplaterGenerateManifestPolicyEnforcementModeSuccess(t *testing.T) {
+	wantValues := map[string]interface{}{
+		"cni": map[string]interface{}{
+			"chainingMode": "portmap",
+		},
+		"ipam": map[string]interface{}{
+			"mode": "kubernetes",
+		},
+		"identityAllocationMode": "crd",
+		"prometheus": map[string]interface{}{
+			"enabled": true,
+		},
+		"rollOutCiliumPods": true,
+		"tunnel":            "geneve",
+		"image": map[string]interface{}{
+			"repository": "public.ecr.aws/isovalent/cilium",
+			"tag":        "v1.9.11-eksa.1",
+		},
+		"operator": map[string]interface{}{
+			"image": map[string]interface{}{
+				"repository": "public.ecr.aws/isovalent/operator",
+				"tag":        "v1.9.11-eksa.1",
+			},
+			"prometheus": map[string]interface{}{
+				"enabled": true,
+			},
+		},
+		"policyEnforcementMode": "always",
+	}
+
+	tt := newtemplaterTest(t)
+	tt.expectHelmTemplateWith(eqMap(wantValues)).Return(tt.manifest, nil)
+	tt.spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode = v1alpha1.CiliumPolicyModeAlways
+	tt.Expect(tt.t.GenerateManifest(tt.ctx, tt.spec)).To(Equal(tt.manifest), "templater.GenerateManifest() should return right manifest")
+}
+
 func TestTemplaterGenerateManifestError(t *testing.T) {
 	tt := newtemplaterTest(t)
 	tt.expectHelmTemplateWith(gomock.Any()).Return(nil, errors.New("error from helm")) // Using any because we only want to test the returned error
@@ -226,4 +265,74 @@ func TestTemplaterGenerateUpgradeManifestError(t *testing.T) {
 	_, err := tt.t.GenerateUpgradeManifest(tt.ctx, tt.currentSpec, tt.spec)
 	tt.Expect(err).To(HaveOccurred(), "templater.GenerateUpgradeManifest() should fail")
 	tt.Expect(err).To(MatchError(ContainSubstring("error from helm")))
+}
+
+func TestTemplaterGenerateNetworkPolicy(t *testing.T) {
+	tests := []struct {
+		name                    string
+		k8sVersion              string
+		selfManaged             bool
+		gitopsEnabled           bool
+		infraProviderNamespaces []string
+		wantNetworkPolicyFile   string
+	}{
+		{
+			name:                    "CAPV mgmt cluster",
+			k8sVersion:              "v1.21.9-eks-1-21-10",
+			selfManaged:             true,
+			gitopsEnabled:           false,
+			infraProviderNamespaces: []string{"capv-system"},
+			wantNetworkPolicyFile:   "testdata/network_policy_mgmt_capv.yaml",
+		},
+		{
+			name:                    "CAPT mgmt cluster with flux",
+			k8sVersion:              "v1.21.9-eks-1-21-10",
+			selfManaged:             true,
+			gitopsEnabled:           true,
+			infraProviderNamespaces: []string{"capt-system"},
+			wantNetworkPolicyFile:   "testdata/network_policy_mgmt_capt_flux.yaml",
+		},
+		{
+			name:                    "workload cluster 1.21",
+			k8sVersion:              "v1.21.9-eks-1-21-10",
+			selfManaged:             false,
+			gitopsEnabled:           false,
+			infraProviderNamespaces: []string{},
+			wantNetworkPolicyFile:   "testdata/network_policy_workload_121.yaml",
+		},
+		{
+			name:                    "workload cluster 1.20",
+			k8sVersion:              "v1.20.9-eks-1-20-10",
+			selfManaged:             false,
+			gitopsEnabled:           false,
+			infraProviderNamespaces: []string{},
+			wantNetworkPolicyFile:   "testdata/network_policy_workload_120.yaml",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			temp := newtemplaterTest(t)
+			temp.spec.VersionsBundle.KubeDistro.Kubernetes.Tag = tt.k8sVersion
+			if !tt.selfManaged {
+				temp.spec.Cluster.Spec.ManagementCluster.Name = "managed"
+			}
+			if tt.gitopsEnabled {
+				temp.spec.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{
+					Kind: v1alpha1.FluxConfigKind,
+					Name: "eksa-unit-test",
+				}
+				temp.spec.Config.GitOpsConfig = &v1alpha1.GitOpsConfig{
+					Spec: v1alpha1.GitOpsConfigSpec{
+						Flux: v1alpha1.Flux{Github: v1alpha1.Github{FluxSystemNamespace: "flux-system"}},
+					},
+				}
+			}
+			networkPolicy, err := temp.t.GenerateNetworkPolicyManifest(temp.spec, tt.infraProviderNamespaces)
+			if err != nil {
+				t.Fatalf("failed to generate network policy template: %v", err)
+			}
+			test.AssertContentToFile(t, string(networkPolicy), tt.wantNetworkPolicyFile)
+		})
+	}
 }

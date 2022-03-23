@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -16,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/version"
+	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type importImagesOptions struct {
@@ -23,6 +25,8 @@ type importImagesOptions struct {
 }
 
 var opts = &importImagesOptions{}
+
+const ociPrefix = "oci://"
 
 func init() {
 	rootCmd.AddCommand(importImagesCmd)
@@ -47,24 +51,38 @@ var importImagesCmd = &cobra.Command{
 	},
 }
 
-func importImages(context context.Context, spec string) error {
+func importImages(ctx context.Context, spec string) error {
+	registryUsername := os.Getenv("REGISTRY_USERNAME")
+	registryPassword := os.Getenv("REGISTRY_PASSWORD")
+	if registryUsername == "" || registryPassword == "" {
+		return fmt.Errorf("username or password not set. Provide REGISTRY_USERNAME and REGISTRY_PASSWORD for importing helm charts (e.g. cilium)")
+	}
 	clusterSpec, err := cluster.NewSpecFromClusterConfig(spec, version.Get())
 	if err != nil {
 		return err
 	}
+
 	de := executables.BuildDockerExecutable()
 
-	if clusterSpec.Spec.RegistryMirrorConfiguration == nil || clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint == "" {
-		return fmt.Errorf("it is necessary to define a valid endpoint in your spec (registryMirrorConfiguration.endpoint)")
+	bundle := clusterSpec.VersionsBundle
+	executableBuilder, closer, err := executables.NewExecutableBuilder(ctx, bundle.Eksa.CliTools.VersionedImage())
+	if err != nil {
+		return fmt.Errorf("unable to initialize executables: %v", err)
 	}
-	host := clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
-	port := clusterSpec.Spec.RegistryMirrorConfiguration.Port
+	defer closer.CheckErr(ctx)
+	helmExecutable := executableBuilder.BuildHelmExecutable()
+
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration == nil || clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint == "" {
+		return fmt.Errorf("endpoint not set. It is necessary to define a valid endpoint in your spec (registryMirrorConfiguration.endpoint)")
+	}
+	host := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
+	port := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port
 	if port == "" {
 		logger.V(1).Info("RegistryMirrorConfiguration.Port is not specified, default port will be used", "Default Port", constants.DefaultHttpsPort)
 		port = constants.DefaultHttpsPort
 	}
-	if !networkutils.IsPortValid(clusterSpec.Spec.RegistryMirrorConfiguration.Port) {
-		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterSpec.Spec.RegistryMirrorConfiguration.Port)
+	if !networkutils.IsPortValid(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port) {
+		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
 	}
 
 	images, err := getImages(spec)
@@ -72,11 +90,13 @@ func importImages(context context.Context, spec string) error {
 		return err
 	}
 	for _, image := range images {
-		if err := importImage(context, de, image.URI, net.JoinHostPort(host, port)); err != nil {
+		if err := importImage(ctx, de, image.URI, net.JoinHostPort(host, port)); err != nil {
 			return fmt.Errorf("error importing image %s: %v", image.URI, err)
 		}
 	}
-	return nil
+
+	endpoint := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
+	return importCharts(ctx, helmExecutable, bundle.Charts(), endpoint, registryUsername, registryPassword)
 }
 
 func importImage(ctx context.Context, docker *executables.Docker, image string, endpoint string) error {
@@ -91,6 +111,26 @@ func importImage(ctx context.Context, docker *executables.Docker, image string, 
 	return docker.PushImage(ctx, image, endpoint)
 }
 
+func importCharts(ctx context.Context, helm *executables.Helm, charts map[string]*v1alpha1.Image, endpoint, username, password string) error {
+	if err := helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
+		return err
+	}
+	for _, chart := range charts {
+		if err := importChart(ctx, helm, *chart, endpoint); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func importChart(ctx context.Context, helm *executables.Helm, chart v1alpha1.Image, endpoint string) error {
+	uri, chartVersion := getChartUriAndVersion(chart)
+	if err := helm.PullChart(ctx, uri, chartVersion); err != nil {
+		return err
+	}
+	return helm.PushChart(ctx, chart.ChartName(), fmt.Sprintf("%s%s/%s", ociPrefix, endpoint, chart.Name))
+}
+
 func preRunImportImagesCmd(cmd *cobra.Command, args []string) error {
 	cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 		err := viper.BindPFlag(flag.Name, flag)
@@ -99,4 +139,10 @@ func preRunImportImagesCmd(cmd *cobra.Command, args []string) error {
 		}
 	})
 	return nil
+}
+
+func getChartUriAndVersion(chart v1alpha1.Image) (uri, version string) {
+	uri = fmt.Sprintf("%s%s", ociPrefix, chart.Image())
+	version = chart.Tag()
+	return uri, version
 }

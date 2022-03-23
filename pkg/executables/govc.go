@@ -263,32 +263,54 @@ func (g *Govc) CreateLibrary(ctx context.Context, datastore, library string) err
 	return nil
 }
 
-func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, resourcePool string, resizeDisk2 bool) error {
+func (g *Govc) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, resourcePool string, resizeBRDisk bool) error {
 	logger.V(4).Info("Deploying template", "dir", templateDir, "templateName", templateName)
 	if err := g.deployTemplate(ctx, library, templateName, templateDir, datacenter, datastore, resourcePool); err != nil {
 		return err
 	}
 
-	if resizeDisk2 {
+	if resizeBRDisk {
 		// Get devices information template to identify second disk properly
 		logger.V(4).Info("Getting devices info for template")
 		devicesInfo, err := g.DevicesInfo(ctx, datacenter, templateName)
 		if err != nil {
 			return err
 		}
+		// For 1.22 we switched to using one disk for BR, so it for now as long as the boolean is set, and we only see
+		// one disk, we can assume this is for 1.22. This loop would need to change if that assumption changes
+		// in the future, but 1.20 and 1.21 are still using dual disks which is why we need to check for the second
+		// disk first. Since this loop will get all kinds of devices and not just hard disks, we need to do these
+		// checks based on the label.
+		disk1 := ""
+		disk2 := ""
 		for _, deviceInfo := range devicesInfo.([]interface{}) {
 			deviceMetadata := deviceInfo.(map[string]interface{})["DeviceInfo"]
 			deviceLabel := deviceMetadata.(map[string]interface{})["Label"].(string)
-			if strings.EqualFold(deviceLabel, "Hard disk 2") {
-				// Get the name of the hard disk and resize the disk to 20G
-				diskName := deviceInfo.(map[string]interface{})["Name"].(string)
-				logger.V(4).Info("Resizing disk 2 of template to 20G")
-				err := g.ResizeDisk(ctx, datacenter, templateName, diskName, 20)
-				if err != nil {
-					return fmt.Errorf("error resizing disk 2 to 20G: %v", err)
-				}
+			// Get the name of the hard disk and resize the disk to 20G
+			if strings.EqualFold(deviceLabel, "Hard disk 1") {
+				disk1 = deviceInfo.(map[string]interface{})["Name"].(string)
+			} else if strings.EqualFold(deviceLabel, "Hard disk 2") {
+				disk2 = deviceInfo.(map[string]interface{})["Name"].(string)
 				break
 			}
+		}
+		diskName := ""
+		var diskSizeInGB int
+		if disk2 != "" {
+			logger.V(4).Info("Resizing disk 2 of template to 20G")
+			diskName = disk2
+			diskSizeInGB = 20
+		} else if disk1 != "" {
+			logger.V(4).Info("Resizing disk 1 of template to 22G")
+			diskName = disk1
+			diskSizeInGB = 22
+		} else {
+			return fmt.Errorf("template %v is not valid as there are no associated disks", templateName)
+		}
+
+		err = g.ResizeDisk(ctx, datacenter, templateName, diskName, diskSizeInGB)
+		if err != nil {
+			return fmt.Errorf("error resizing disk %v to 20G: %v", diskName, err)
 		}
 	}
 

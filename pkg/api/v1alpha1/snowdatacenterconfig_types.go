@@ -11,6 +11,9 @@ type SnowDatacenterConfigSpec struct { // Important: Run "make generate" to rege
 // SnowDatacenterConfigStatus defines the observed state of SnowDatacenterConfig
 type SnowDatacenterConfigStatus struct{}
 
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
+
 // SnowDatacenterConfig is the Schema for the SnowDatacenterConfigs API
 type SnowDatacenterConfig struct {
 	metav1.TypeMeta   `json:",inline"`

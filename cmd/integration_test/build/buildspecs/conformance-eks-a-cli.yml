@@ -28,6 +28,7 @@ env:
     T_VSPHERE_TEMPLATE_UBUNTU_1_22: "vsphere_ci_beta_connection:template_22"
     T_VSPHERE_TEMPLATE_BR_1_20: "vsphere_ci_beta_connection:template_br_20"
     T_VSPHERE_TEMPLATE_BR_1_21: "vsphere_ci_beta_connection:template_br_21"
+    T_VSPHERE_TEMPLATE_BR_1_22: "vsphere_ci_beta_connection:template_br_22"
     T_VSPHERE_TLS_INSECURE: "vsphere_ci_beta_connection:tls_insecure"
     T_VSPHERE_TLS_THUMBPRINT: "vsphere_ci_beta_connection:tls_thumbprint"
 

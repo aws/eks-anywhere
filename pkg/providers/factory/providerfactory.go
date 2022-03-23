@@ -1,12 +1,10 @@
 package factory
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
@@ -53,15 +51,7 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 		}
 		return cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.CloudStackKubectlClient, p.CloudStackCmkClient, p.Writer, time.Now, skipIpCheck), nil
 	case v1alpha1.SnowDatacenterKind:
-		datacenterConfig, err := v1alpha1.GetSnowDatacenterConfig(clusterConfigFileName)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get datacenter config from file %s: %v", clusterConfigFileName, err)
-		}
-		machineConfigs, err := v1alpha1.GetSnowMachineConfigs(clusterConfigFileName)
-		if err != nil {
-			return nil, fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFileName, err)
-		}
-		return snow.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.SnowKubectlClient, p.Writer, time.Now), nil
+		return snow.NewProvider(p.SnowKubectlClient, p.Writer, time.Now), nil
 	case v1alpha1.TinkerbellDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFileName)
 		if err != nil {
@@ -79,5 +69,5 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 		}
 		return docker.NewProvider(datacenterConfig, p.DockerClient, p.DockerKubectlClient, time.Now), nil
 	}
-	return nil, errors.New("valid providers include: " + constants.DockerProviderName + ", " + constants.VSphereProviderName)
+	return nil, fmt.Errorf("no provider support for datacenter kind: %s", clusterConfig.Spec.DatacenterRef.Kind)
 }

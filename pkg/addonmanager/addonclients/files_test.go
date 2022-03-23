@@ -122,9 +122,9 @@ func TestUpdateLegacyFileStructureSuccess(t *testing.T) {
 
 	tt.Expect(f.UpdateLegacyFileStructure(tt.ctx, tt.currentSpec, tt.newSpec)).To(BeNil())
 
-	expectedEksaClusterConfigPath := path.Join(g.Writer.Dir(), tt.fluxConfig.Github.ClusterConfigPath, tt.newSpec.GetClusterName(), "eksa-system", defaultEksaClusterConfigFileName)
+	expectedEksaClusterConfigPath := path.Join(g.Writer.Dir(), tt.fluxConfig.Github.ClusterConfigPath, tt.newSpec.Cluster.GetClusterName(), "eksa-system", defaultEksaClusterConfigFileName)
 	test.AssertFilesEquals(t, expectedEksaClusterConfigPath, "./testdata/cluster-config-default-path-management.yaml")
 
-	expectedEksaKustomizationPath := path.Join(g.Writer.Dir(), tt.fluxConfig.Github.ClusterConfigPath, tt.newSpec.GetClusterName(), "eksa-system", defaultKustomizationManifestFileName)
+	expectedEksaKustomizationPath := path.Join(g.Writer.Dir(), tt.fluxConfig.Github.ClusterConfigPath, tt.newSpec.Cluster.GetClusterName(), "eksa-system", defaultKustomizationManifestFileName)
 	test.AssertFilesEquals(t, expectedEksaKustomizationPath, "./testdata/kustomization.yaml")
 }

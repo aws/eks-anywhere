@@ -2982,15 +2982,26 @@ spec:
                   each other and a set of delegated administrators with some authority
                   over the domain and its subdomains
                 type: string
+              managementApiEndpoint:
+                description: CloudStack Management API endpoint's IP. It is added
+                  to VM's noproxy list
+                type: string
               zones:
                 description: Zones is a list of one or more zones that are managed
                   by a single CloudStack management endpoint.
                 items:
-                  description: CloudStackZoneRef is an organizational construct typically
+                  description: CloudStackZone is an organizational construct typically
                     used to represent a single datacenter, and all its physical and
                     virtual resources exist inside that zone. It can either be specified
                     as a UUID or name
                   properties:
+                    id:
+                      description: Zone is the name or UUID of the CloudStack zone
+                        in which clusters should be created. Zones should be managed
+                        by a single CloudStack Management endpoint.
+                      type: string
+                    name:
+                      type: string
                     network:
                       description: Network is the name or UUID of the CloudStack network
                         in which clusters should be created. It can either be an isolated
@@ -2999,34 +3010,18 @@ spec:
                         It can either be specified as a UUID or name In multiple-zones
                         situation, only 'Shared' network is supported.
                       properties:
-                        type:
+                        id:
                           type: string
-                        value:
+                        name:
                           type: string
-                      required:
-                      - type
-                      - value
-                      type: object
-                    zone:
-                      description: Zone is the name or UUID of the CloudStack zone
-                        in which clusters should be created. Zones should be managed
-                        by a single CloudStack Management endpoint.
-                      properties:
-                        type:
-                          type: string
-                        value:
-                          type: string
-                      required:
-                      - type
-                      - value
                       type: object
                   required:
                   - network
-                  - zone
                   type: object
                 type: array
             required:
             - domain
+            - managementApiEndpoint
             - zones
             type: object
           status:
@@ -3101,26 +3096,20 @@ spec:
                   size including number of CPU’s, memory, and CPU speed. It can either
                   be specified as a UUID or name
                 properties:
-                  type:
+                  id:
                     type: string
-                  value:
+                  name:
                     type: string
-                required:
-                - type
-                - value
                 type: object
               template:
                 description: Template refers to a VM image template which has been
                   previously registered in CloudStack. It can either be specified
                   as a UUID or name
                 properties:
-                  type:
+                  id:
                     type: string
-                  value:
+                  name:
                     type: string
-                required:
-                - type
-                - value
                 type: object
               userCustomDetails:
                 additionalProperties:
@@ -3217,9 +3206,23 @@ spec:
               clusterNetwork:
                 properties:
                   cni:
-                    description: CNI specifies the CNI plugin to be installed in the
-                      cluster
+                    description: Deprecated. Use CNIConfig
                     type: string
+                  cniConfig:
+                    description: CNIConfig specifies the CNI plugin to be installed
+                      in the cluster
+                    properties:
+                      cilium:
+                        properties:
+                          policyEnforcementMode:
+                            description: PolicyEnforcementMode determines communication
+                              allowed between pods. Accepted values are default, always,
+                              never.
+                            type: string
+                        type: object
+                      kindnetd:
+                        type: object
+                    type: object
                   dns:
                     properties:
                       resolvConf:
@@ -3815,6 +3818,8 @@ spec:
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""
@@ -3862,8 +3867,9 @@ spec:
                 description: The AMI ID from which to create the machine instance.
                 type: string
               instanceType:
-                description: 'InstanceType is the type of instance to create. Example:
-                  m4.xlarge'
+                description: 'InstanceType is the type of instance to create. Valid
+                  values: "sbe-c.large" (default), "sbe-c.xlarge", "sbe-c.2xlarge"
+                  and "sbe-c.4xlarge".'
                 type: string
               physicalNetworkConnector:
                 description: 'PhysicalNetworkConnector is the physical network connector
@@ -3883,6 +3889,8 @@ spec:
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 status:
   acceptedNames:
     kind: ""

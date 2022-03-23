@@ -26,6 +26,7 @@ const (
 	vsphereTemplateUbuntu122Var = "T_VSPHERE_TEMPLATE_UBUNTU_1_22"
 	vsphereTemplateBR120Var     = "T_VSPHERE_TEMPLATE_BR_1_20"
 	vsphereTemplateBR121Var     = "T_VSPHERE_TEMPLATE_BR_1_21"
+	vsphereTemplateBR122Var     = "T_VSPHERE_TEMPLATE_BR_1_22"
 	vsphereTlsInsecureVar       = "T_VSPHERE_TLS_INSECURE"
 	vsphereTlsThumbprintVar     = "T_VSPHERE_TLS_THUMBPRINT"
 	vsphereUsernameVar          = "EKSA_VSPHERE_USERNAME"
@@ -34,6 +35,7 @@ const (
 	cidrVar                     = "T_VSPHERE_CIDR"
 	privateNetworkCidrVar       = "T_VSPHERE_PRIVATE_NETWORK_CIDR"
 	govcUrlVar                  = "GOVC_URL"
+	govcInsecureVar             = "GOVC_INSECURE"
 )
 
 var requiredEnvVars = []string{
@@ -52,6 +54,7 @@ var requiredEnvVars = []string{
 	vsphereTemplateUbuntu122Var,
 	vsphereTemplateBR120Var,
 	vsphereTemplateBR121Var,
+	vsphereTemplateBR122Var,
 	vsphereTlsInsecureVar,
 	vsphereTlsThumbprintVar,
 	vsphereUsernameVar,
@@ -59,6 +62,7 @@ var requiredEnvVars = []string{
 	cidrVar,
 	privateNetworkCidrVar,
 	govcUrlVar,
+	govcInsecureVar,
 }
 
 type VSphere struct {
@@ -93,6 +97,10 @@ func UpdateUbuntuTemplate122Var() api.VSphereFiller {
 
 func UpdateBottlerocketTemplate121() api.VSphereFiller {
 	return api.WithStringFromEnvVar(vsphereTemplateBR121Var, api.WithTemplateForAllMachines)
+}
+
+func UpdateBottlerocketTemplate122() api.VSphereFiller {
+	return api.WithStringFromEnvVar(vsphereTemplateBR122Var, api.WithTemplateForAllMachines)
 }
 
 func UpdateBottlerocketTemplate120() api.VSphereFiller {
@@ -186,6 +194,15 @@ func WithBottleRocket121() VSphereOpt {
 	return func(v *VSphere) {
 		v.fillers = append(v.fillers,
 			api.WithStringFromEnvVar(vsphereTemplateBR121Var, api.WithTemplateForAllMachines),
+			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
+		)
+	}
+}
+
+func WithBottleRocket122() VSphereOpt {
+	return func(v *VSphere) {
+		v.fillers = append(v.fillers,
+			api.WithStringFromEnvVar(vsphereTemplateBR122Var, api.WithTemplateForAllMachines),
 			api.WithOsFamilyForAllMachines(anywherev1.Bottlerocket),
 		)
 	}

@@ -277,8 +277,6 @@ func (f *FluxAddonClient) Validations(ctx context.Context, clusterSpec *cluster.
 		return nil
 	}
 
-	clusterSpec.SetDefaultGitOps()
-
 	fc := &fluxForCluster{
 		FluxAddonClient: f,
 		clusterSpec:     clusterSpec,
@@ -301,8 +299,6 @@ func (f *FluxAddonClient) CleanupGitRepo(ctx context.Context, clusterSpec *clust
 		return nil
 	}
 
-	clusterSpec.SetDefaultGitOps()
-
 	fc := &fluxForCluster{
 		FluxAddonClient: f,
 		clusterSpec:     clusterSpec,
@@ -313,7 +309,7 @@ func (f *FluxAddonClient) CleanupGitRepo(ctx context.Context, clusterSpec *clust
 	}
 
 	var p string
-	if clusterSpec.IsManaged() {
+	if clusterSpec.Cluster.IsManaged() {
 		p = fc.eksaSystemDir()
 	} else {
 		p = fc.path()
@@ -384,7 +380,7 @@ func (fc *fluxForCluster) commitFluxAndClusterConfigToGit(ctx context.Context) e
 		return &ConfigVersionControlFailedError{Err: err}
 	}
 
-	if fc.clusterSpec.IsSelfManaged() {
+	if fc.clusterSpec.Cluster.IsSelfManaged() {
 		logger.V(3).Info("Generating flux custom manifest files...")
 		err = fc.writeFluxSystemFiles()
 		if err != nil {
@@ -647,7 +643,7 @@ func (fc *fluxForCluster) initializeLocalRepository() error {
 // validateLocalConfigPathDoesNotExist returns an exception if the cluster configuration file exists.
 // This is done so that we avoid clobbering existing cluster configurations in the user-provided git repository.
 func (fc *fluxForCluster) validateLocalConfigPathDoesNotExist() error {
-	if fc.clusterSpec.IsSelfManaged() {
+	if fc.clusterSpec.Cluster.IsSelfManaged() {
 		p := path.Join(fc.gitOpts.Writer.Dir(), fc.path())
 		if validations.FileExists(p) {
 			return fmt.Errorf("a cluster configuration file already exists at path %s", p)
@@ -657,7 +653,7 @@ func (fc *fluxForCluster) validateLocalConfigPathDoesNotExist() error {
 }
 
 func (fc *fluxForCluster) validateRemoteConfigPathDoesNotExist(ctx context.Context) error {
-	if fc.clusterSpec.IsSelfManaged() {
+	if fc.clusterSpec.Cluster.IsSelfManaged() {
 		if exists, err := fc.gitOpts.Git.PathExists(ctx, fc.owner(), fc.repository(), fc.branch(), fc.path()); err != nil {
 			return fmt.Errorf("failed validating remote flux config path: %v", err)
 		} else if exists {
@@ -700,7 +696,7 @@ func (e *ConfigVersionControlFailedError) Error() string {
 }
 
 func (fc *fluxForCluster) eksaSystemDir() string {
-	return path.Join(fc.path(), fc.clusterSpec.GetName(), eksaSystemDirName)
+	return path.Join(fc.path(), fc.clusterSpec.Cluster.GetName(), eksaSystemDirName)
 }
 
 func (fc *fluxForCluster) fluxSystemDir() string {

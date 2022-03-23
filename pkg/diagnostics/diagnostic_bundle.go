@@ -47,7 +47,8 @@ type EksaDiagnosticBundle struct {
 }
 
 func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactory, client BundleClient,
-	kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter) (*EksaDiagnosticBundle, error) {
+	kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter,
+) (*EksaDiagnosticBundle, error) {
 	b := &EksaDiagnosticBundle{
 		bundle: &supportBundle{
 			TypeMeta: metav1.TypeMeta{
@@ -79,7 +80,8 @@ func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactor
 }
 
 func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *cluster.Spec, provider providers.Provider,
-	client BundleClient, kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter) (*EksaDiagnosticBundle, error) {
+	client BundleClient, kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter,
+) (*EksaDiagnosticBundle, error) {
 	b := &EksaDiagnosticBundle{
 		bundle: &supportBundle{
 			TypeMeta: metav1.TypeMeta{
@@ -87,7 +89,7 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 				APIVersion: troubleshootApiVersion,
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: spec.Name,
+				Name: spec.Cluster.Name,
 			},
 			Spec: supportBundleSpec{},
 		},
@@ -104,10 +106,10 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 	b = b.
 		WithGitOpsConfig(spec.GitOpsConfig).
 		WithOidcConfig(spec.OIDCConfig).
-		WithExternalEtcd(spec.Spec.ExternalEtcdConfiguration).
-		WithDatacenterConfig(spec.Spec.DatacenterRef).
-		WithMachineConfigs(provider.MachineConfigs()).
-		WithManagementCluster(spec.IsSelfManaged()).
+		WithExternalEtcd(spec.Cluster.Spec.ExternalEtcdConfiguration).
+		WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef).
+		WithMachineConfigs(provider.MachineConfigs(spec)).
+		WithManagementCluster(spec.Cluster.IsSelfManaged()).
 		WithDefaultAnalyzers().
 		WithDefaultCollectors().
 		WithLogTextAnalyzers()

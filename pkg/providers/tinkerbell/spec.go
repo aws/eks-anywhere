@@ -13,7 +13,7 @@ type spec struct {
 
 func newSpec(clusterSpec *cluster.Spec, machineConfigs map[string]*anywherev1.TinkerbellMachineConfig, datacenterConfig *anywherev1.TinkerbellDatacenterConfig) *spec {
 	machineConfigsInCluster := map[string]*anywherev1.TinkerbellMachineConfig{}
-	for _, m := range clusterSpec.MachineConfigRefs() {
+	for _, m := range clusterSpec.Cluster.MachineConfigRefs() {
 		machineConfig, ok := machineConfigs[m.Name]
 		if !ok {
 			continue

@@ -21,7 +21,7 @@ func ApplyExtraObjects(ctx context.Context, clusterClient ClusterClient, cluster
 
 	resourcesSpec := templater.AppendYamlResources(extraObjects.Values()...)
 
-	logger.V(4).Info("Applying extra objects", "cluster", clusterSpec.Name, "resources", extraObjects.Names())
+	logger.V(4).Info("Applying extra objects", "cluster", clusterSpec.Cluster.Name, "resources", extraObjects.Names())
 	err := clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, resourcesSpec)
 	if err != nil {
 		return fmt.Errorf("error applying spec for extra resources to cluster %s: %v", cluster.Name, err)

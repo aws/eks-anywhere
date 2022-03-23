@@ -75,13 +75,13 @@ func (k *Kind) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.
 		return "", err
 	}
 
-	kubeconfigName, err := k.createKubeConfig(clusterSpec.Name, []byte(""))
+	kubeconfigName, err := k.createKubeConfig(clusterSpec.Cluster.Name, []byte(""))
 	if err != nil {
 		return "", err
 	}
-	executionArgs := k.execArguments(clusterSpec.Name, kubeconfigName)
+	executionArgs := k.execArguments(clusterSpec.Cluster.Name, kubeconfigName)
 
-	logger.V(4).Info("Creating kind cluster", "name", getInternalName(clusterSpec.Name), "kubeconfig", kubeconfigName)
+	logger.V(4).Info("Creating kind cluster", "name", getInternalName(clusterSpec.Cluster.Name), "kubeconfig", kubeconfigName)
 	_, err = k.ExecuteWithEnv(ctx, k.execConfig.env, executionArgs...)
 	if err != nil {
 		return "", fmt.Errorf("error executing create cluster: %v", err)
@@ -185,7 +185,7 @@ func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluste
 func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 	bundle := clusterSpec.VersionsBundle
 	k.execConfig = &kindExecConfig{
-		KindImage:            clusterSpec.UseImageMirror(bundle.EksD.KindNode.VersionedImage()),
+		KindImage:            clusterSpec.Cluster.UseImageMirror(bundle.EksD.KindNode.VersionedImage()),
 		KubernetesRepository: bundle.KubeDistro.Kubernetes.Repository,
 		KubernetesVersion:    bundle.KubeDistro.Kubernetes.Tag,
 		EtcdRepository:       bundle.KubeDistro.Etcd.Repository,
@@ -194,14 +194,14 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 		CorednsVersion:       bundle.KubeDistro.CoreDNS.Tag,
 		env:                  make(map[string]string),
 	}
-	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
-		k.execConfig.RegistryMirrorEndpoint = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Spec.RegistryMirrorConfiguration.Port)
-		if clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent != "" {
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		k.execConfig.RegistryMirrorEndpoint = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
+		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent != "" {
 			path := filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d", k.execConfig.RegistryMirrorEndpoint)
 			if err := os.MkdirAll(path, os.ModePerm); err != nil {
 				return err
 			}
-			if err := ioutil.WriteFile(filepath.Join(path, "ca.crt"), []byte(clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent), 0o644); err != nil {
+			if err := ioutil.WriteFile(filepath.Join(path, "ca.crt"), []byte(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent), 0o644); err != nil {
 				return errors.New("error writing the registry certification file")
 			}
 			k.execConfig.RegistryCACertPath = filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d")

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 
@@ -208,7 +209,13 @@ func (e *E2ESession) createTestNameFile(testName string) error {
 
 func clusterName(branch string, instanceId string) (clusterName string) {
 	clusterNameTemplate := "%s-%s"
-	clusterName = fmt.Sprintf(clusterNameTemplate, branch, instanceId)
+	forbiddenChars := []string{"."}
+	sanitizedBranch := branch
+	for _, char := range forbiddenChars {
+		sanitizedBranch = strings.ReplaceAll(branch, char, "-")
+	}
+	sanitizedBranch = strings.ToLower(sanitizedBranch)
+	clusterName = fmt.Sprintf(clusterNameTemplate, sanitizedBranch, instanceId)
 	if len(clusterName) > 80 {
 		logger.Info("Cluster name is longer than 80 characters; truncating to 80 characters.", "original cluster name", clusterName, "truncated cluster name", clusterName[:80])
 		clusterName = clusterName[:80]

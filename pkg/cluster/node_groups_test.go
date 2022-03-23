@@ -18,7 +18,7 @@ func TestNodeGroupsToDelete(t *testing.T) {
 		{
 			name: "one worker node group, missing name, no changes",
 			current: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
 					{
 						MachineGroupRef: &anywherev1.Ref{
 							Kind: anywherev1.VSphereMachineConfigKind,
@@ -28,7 +28,7 @@ func TestNodeGroupsToDelete(t *testing.T) {
 				}
 			}),
 			new: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
 					{
 						Name: "md-0",
 						MachineGroupRef: &anywherev1.Ref{
@@ -43,7 +43,7 @@ func TestNodeGroupsToDelete(t *testing.T) {
 		{
 			name: "one worker node group, missing name, new name is not default",
 			current: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
 					{
 						MachineGroupRef: &anywherev1.Ref{
 							Kind: anywherev1.VSphereMachineConfigKind,
@@ -53,7 +53,7 @@ func TestNodeGroupsToDelete(t *testing.T) {
 				}
 			}),
 			new: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
 					{
 						Name: "worker-node-group-0",
 						MachineGroupRef: &anywherev1.Ref{
@@ -76,7 +76,7 @@ func TestNodeGroupsToDelete(t *testing.T) {
 		{
 			name: "new added, some removed, some stay",
 			current: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
 					{
 						Name: "worker-node-group-0",
 						MachineGroupRef: &anywherev1.Ref{
@@ -94,7 +94,7 @@ func TestNodeGroupsToDelete(t *testing.T) {
 				}
 			}),
 			new: test.NewClusterSpec(func(s *cluster.Spec) {
-				s.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
+				s.Cluster.Spec.WorkerNodeGroupConfigurations = []anywherev1.WorkerNodeGroupConfiguration{
 					{
 						Name: "worker-node-group-0",
 						MachineGroupRef: &anywherev1.Ref{

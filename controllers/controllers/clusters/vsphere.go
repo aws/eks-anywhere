@@ -178,10 +178,10 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = machineConfigMap[wnConfig.MachineGroupRef.Name].Spec
 	}
 
-	cp := machineConfigMap[specWithBundles.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+	cp := machineConfigMap[specWithBundles.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
 	var etcdSpec *anywherev1.VSphereMachineConfigSpec
-	if specWithBundles.Spec.ExternalEtcdConfiguration != nil {
-		etcd := machineConfigMap[specWithBundles.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+	if specWithBundles.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		etcd := machineConfigMap[specWithBundles.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
 		etcdSpec = &etcd.Spec
 	}
 
@@ -266,13 +266,12 @@ func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *an
 
 		v.Log.Info("About to apply CNI")
 
-		// TODO use NewCilium
+		// TODO use NewCilium, create string slice of namespaces used for capv for calling cilium.GenerateManifest
 		cilium := cilium.Cilium{}
 		if err != nil {
 			return reconciler.Result{}, err
 		}
-
-		ciliumSpec, err := cilium.GenerateManifest(ctx, specWithBundles)
+		ciliumSpec, err := cilium.GenerateManifest(ctx, specWithBundles, []string{})
 		if err != nil {
 			return reconciler.Result{}, err
 		}

@@ -43,18 +43,19 @@ type SnowDatacenterConfigSpec struct {}
 ```go
 type SnowMachineConfigSpec struct {
 
-    // The EKS-D Node AMI ID from which to create the machine instance.
-    AMIID string `json:"amiID,omitempty"`
-    
-    // InstanceType is the type of instance to create. Example: m4.xlarge
-    InstanceType string `json:"instanceType,omitempty"`
-    
-    // PhysicalNetworkConnector is the physical network connector type to use for creating direct network interfaces (DNI).
-    // Valid values: "SFP_PLUS" (default) and "QSFP"
-    PhysicalNetworkConnector string `json:"physicalNetworkConnector,omitempty"`
-    
-    // SSHKeyName is the name of the ssh key defined in the aws snow key pairs, to attach to the instance.
-    SshKeyName string `json:"sshKeyName,omitempty"`
+	// The AMI ID from which to create the machine instance.
+	AMIID string `json:"amiID"`
+
+	// InstanceType is the type of instance to create.
+	// Valid values: "sbe-c.large" (default), "sbe-c.xlarge", "sbe-c.2xlarge" and "sbe-c.4xlarge".
+	InstanceType SnowInstanceType `json:"instanceType,omitempty"`
+
+	// PhysicalNetworkConnector is the physical network connector type to use for creating direct network interfaces (DNI).
+	// Valid values: "SFP_PLUS" (default) and "QSFP"
+	PhysicalNetworkConnector PhysicalNetworkConnectorType `json:"physicalNetworkConnector,omitempty"`
+
+	// SSHKeyName is the name of the ssh key defined in the aws snow key pairs, to attach to the instance.
+	SshKeyName string `json:"sshKeyName,omitempty"`
 
 }
 ```

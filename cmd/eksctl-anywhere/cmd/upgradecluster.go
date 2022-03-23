@@ -101,15 +101,15 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	)
 
 	workloadCluster := &types.Cluster{
-		Name:           clusterSpec.Name,
-		KubeconfigFile: getKubeconfigPath(clusterSpec.Name, uc.wConfig),
+		Name:           clusterSpec.Cluster.Name,
+		KubeconfigFile: getKubeconfigPath(clusterSpec.Cluster.Name, uc.wConfig),
 	}
 
 	var cluster *types.Cluster
 	if clusterSpec.ManagementCluster == nil {
 		cluster = &types.Cluster{
-			Name:           clusterSpec.Name,
-			KubeconfigFile: getKubeconfigPath(clusterSpec.Name, uc.wConfig),
+			Name:           clusterSpec.Cluster.Name,
+			KubeconfigFile: getKubeconfigPath(clusterSpec.Cluster.Name, uc.wConfig),
 		}
 	} else {
 		cluster = &types.Cluster{

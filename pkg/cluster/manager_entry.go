@@ -10,7 +10,7 @@ type (
 	// Validation performs a validation over the Config object
 	Validation func(*Config) error
 	// Defaulter sets defaults in a Config object
-	Defaulter func(*Config)
+	Defaulter func(*Config) error
 )
 
 // ConfigManagerEntry allows to declare the necessary configuration to parse

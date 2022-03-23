@@ -32,7 +32,7 @@ func newApiBuilerTest(t *testing.T) apiBuilerTest {
 func TestCAPICluster(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	snowCluster := SnowCluster(tt.clusterSpec)
-	controlPlaneMachineTemplate := SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	controlPlaneMachineTemplate := SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
 	kubeadmControlPlane := KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
 	got := CAPICluster(tt.clusterSpec, snowCluster, kubeadmControlPlane)
 	want := &clusterv1.Cluster{
@@ -77,7 +77,7 @@ func TestCAPICluster(t *testing.T) {
 
 func TestKubeadmControlPlane(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	controlPlaneMachineTemplate := SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	controlPlaneMachineTemplate := SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
 	got := KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
 	wantReplicas := int32(3)
 	want := &controlplanev1.KubeadmControlPlane{
@@ -283,6 +283,7 @@ func TestSnowMachineTemplate(t *testing.T) {
 	got := SnowMachineTemplate(tt.machineConfigs["test-wn"])
 	wantAMIID := "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea"
 	wantSSHKey := "default"
+	wantPhysicalNetworkConnector := "SFP_PLUS"
 	want := &snowv1.AWSSnowMachineTemplate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "infrastructure.cluster.x-k8s.io/v1beta1",
@@ -304,6 +305,7 @@ func TestSnowMachineTemplate(t *testing.T) {
 					CloudInit: snowv1.CloudInit{
 						InsecureSkipSecretsManager: true,
 					},
+					PhysicalNetworkConnectorType: &wantPhysicalNetworkConnector,
 				},
 			},
 		},
@@ -316,6 +318,7 @@ func TestSnowMachineTemplates(t *testing.T) {
 	got := SnowMachineTemplates(tt.clusterSpec, tt.machineConfigs)
 	wantAMIID := "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea"
 	wantSSHKey := "default"
+	wantPhysicalNetworkConnector := "SFP_PLUS"
 	want := map[string]*snowv1.AWSSnowMachineTemplate{
 		"test-wn": {
 			TypeMeta: metav1.TypeMeta{
@@ -338,6 +341,7 @@ func TestSnowMachineTemplates(t *testing.T) {
 						CloudInit: snowv1.CloudInit{
 							InsecureSkipSecretsManager: true,
 						},
+						PhysicalNetworkConnectorType: &wantPhysicalNetworkConnector,
 					},
 				},
 			},

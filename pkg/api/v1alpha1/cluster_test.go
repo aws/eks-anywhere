@@ -141,7 +141,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						},
 					}},
 					ClusterNetwork: ClusterNetwork{
-						CNI: Cilium,
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 						Pods: Pods{
 							CidrBlocks: []string{"192.168.0.0/16"},
 						},
@@ -193,7 +193,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					ClusterNetwork: ClusterNetwork{
-						CNI: Cilium,
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 						Pods: Pods{
 							CidrBlocks: []string{"192.168.0.0/16"},
 						},
@@ -241,7 +241,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					ClusterNetwork: ClusterNetwork{
-						CNI: Cilium,
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 						Pods: Pods{
 							CidrBlocks: []string{"192.168.0.0/16"},
 						},
@@ -289,7 +289,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					ClusterNetwork: ClusterNetwork{
-						CNI: Cilium,
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 						Pods: Pods{
 							CidrBlocks: []string{"192.168.0.0/16"},
 						},
@@ -337,7 +337,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					ClusterNetwork: ClusterNetwork{
-						CNI: Cilium,
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 						Pods: Pods{
 							CidrBlocks: []string{"192.168.0.0/16"},
 						},
@@ -389,7 +389,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						Name: "test-gitops",
 					},
 					ClusterNetwork: ClusterNetwork{
-						CNI: Cilium,
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 						Pods: Pods{
 							CidrBlocks: []string{"192.168.0.0/16"},
 						},
@@ -441,7 +441,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						Name: "test-gitops",
 					},
 					ClusterNetwork: ClusterNetwork{
-						CNI: Cilium,
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 						Pods: Pods{
 							CidrBlocks: []string{"192.168.0.0/16"},
 						},
@@ -489,7 +489,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					ClusterNetwork: ClusterNetwork{
-						CNI: Cilium,
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 						Pods: Pods{
 							CidrBlocks: []string{"192.168.0.0/16"},
 						},
@@ -566,7 +566,7 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					ClusterNetwork: ClusterNetwork{
-						CNI: Cilium,
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 						Pods: Pods{
 							CidrBlocks: []string{"192.168.0.0/16"},
 						},
@@ -767,7 +767,7 @@ func TestGetClusterConfig(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					ClusterNetwork: ClusterNetwork{
-						CNI: Cilium,
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 						Pods: Pods{
 							CidrBlocks: []string{"192.168.0.0/16"},
 						},
@@ -815,7 +815,7 @@ func TestGetClusterConfig(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					ClusterNetwork: ClusterNetwork{
-						CNI: Cilium,
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 						Pods: Pods{
 							CidrBlocks: []string{"192.168.0.0/16"},
 						},
@@ -863,7 +863,7 @@ func TestGetClusterConfig(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					ClusterNetwork: ClusterNetwork{
-						CNI: Cilium,
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 						Pods: Pods{
 							CidrBlocks: []string{"192.168.0.0/16"},
 						},
@@ -907,7 +907,7 @@ func TestGetClusterConfig(t *testing.T) {
 						},
 					}},
 					ClusterNetwork: ClusterNetwork{
-						CNI: Cilium,
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 						Pods: Pods{
 							CidrBlocks: []string{"192.168.0.0/16"},
 						},
@@ -1481,7 +1481,7 @@ func TestClusterNetworkEquals(t *testing.T) {
 			name: "previous == new, all exists",
 			want: true,
 			prev: &ClusterNetwork{
-				CNI: Cilium,
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 				Pods: Pods{
 					CidrBlocks: []string{
 						"1.2.3.4/5",
@@ -1496,7 +1496,7 @@ func TestClusterNetworkEquals(t *testing.T) {
 				},
 			},
 			new: &ClusterNetwork{
-				CNI: Cilium,
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 				Pods: Pods{
 					CidrBlocks: []string{
 						"1.2.3.4/5",
@@ -1528,7 +1528,7 @@ func TestClusterNetworkEquals(t *testing.T) {
 			name: "previous == new, order diff",
 			want: true,
 			prev: &ClusterNetwork{
-				CNI: Cilium,
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 				Pods: Pods{
 					CidrBlocks: []string{
 						"1.2.3.4/5",
@@ -1543,7 +1543,7 @@ func TestClusterNetworkEquals(t *testing.T) {
 				},
 			},
 			new: &ClusterNetwork{
-				CNI: Cilium,
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 				Pods: Pods{
 					CidrBlocks: []string{
 						"1.2.3.4/6",
@@ -1562,7 +1562,7 @@ func TestClusterNetworkEquals(t *testing.T) {
 			name: "previous != new, pods diff",
 			want: false,
 			prev: &ClusterNetwork{
-				CNI: Cilium,
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 				Pods: Pods{
 					CidrBlocks: []string{
 						"1.2.3.4/5",
@@ -1571,7 +1571,7 @@ func TestClusterNetworkEquals(t *testing.T) {
 				},
 			},
 			new: &ClusterNetwork{
-				CNI: Cilium,
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 				Pods: Pods{
 					CidrBlocks: []string{
 						"1.2.3.4/6",
@@ -1610,19 +1610,89 @@ func TestClusterNetworkEquals(t *testing.T) {
 			},
 		},
 		{
-			name: "previous != new, diff CNI",
-			want: false,
+			name: "previous == new, same cni, older format",
+			want: true,
 			prev: &ClusterNetwork{
-				CNI: CiliumEnterprise,
+				CNI: Cilium,
 			},
 			new: &ClusterNetwork{
 				CNI: Cilium,
 			},
 		},
+		{
+			name: "previous != new, diff CNI, older format",
+			want: false,
+			prev: &ClusterNetwork{
+				CNI: Kindnetd,
+			},
+			new: &ClusterNetwork{
+				CNI: Cilium,
+			},
+		},
+		{
+			name: "previous == new, same cni, diff format",
+			want: true,
+			prev: &ClusterNetwork{
+				CNI: Cilium,
+			},
+			new: &ClusterNetwork{
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+			},
+		},
+		{
+			name: "previous != new, same cni, diff format, diff cilium policy  mode",
+			want: false,
+			prev: &ClusterNetwork{
+				CNI: Cilium,
+			},
+			new: &ClusterNetwork{
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{PolicyEnforcementMode: "always"}},
+			},
+		},
+		{
+			name: "previous != new, different cni, different format",
+			want: false,
+			prev: &ClusterNetwork{
+				CNI: Kindnetd,
+			},
+			new: &ClusterNetwork{
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+			},
+		},
+		{
+			name: "previous != new, new cniConfig format, diff cni",
+			want: false,
+			prev: &ClusterNetwork{
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+			},
+			new: &ClusterNetwork{
+				CNIConfig: &CNIConfig{Kindnetd: &KindnetdConfig{}},
+			},
+		},
+		{
+			name: "previous == new, new cniConfig format, same cni",
+			want: true,
+			prev: &ClusterNetwork{
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+			},
+			new: &ClusterNetwork{
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+			},
+		},
+		{
+			name: "previous != new, new cniConfig format, same cilium cni, diff configuration",
+			want: false,
+			prev: &ClusterNetwork{
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{PolicyEnforcementMode: "always"}},
+			},
+			new: &ClusterNetwork{
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{PolicyEnforcementMode: "default"}},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.want != tt.prev.Equal(tt.new) {
+			if tt.want != tt.new.Equal(tt.prev) {
 				t.Errorf("ClusterNetwork %+v should be equals to  %+v", tt.prev, tt.new)
 			}
 		})
@@ -1677,6 +1747,179 @@ func TestRefEquals(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.want != tt.prev.Equal(tt.new) {
 				t.Errorf("Ref %+v should be equals to  %+v", tt.prev, tt.new)
+			}
+		})
+	}
+}
+
+func TestValidateNetworkingCNIPlugin(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr error
+		cluster *Cluster
+	}{
+		{
+			name:    "both formats used",
+			wantErr: fmt.Errorf("invalid format for cni plugin: both old and new formats used, use only the CNIConfig field"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/6",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						CNI:       Cilium,
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+					},
+				},
+			},
+		},
+		{
+			name:    "deprecated CNI field",
+			wantErr: nil,
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/6",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						CNI:       Cilium,
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+		{
+			name:    "no CNI plugin input",
+			wantErr: fmt.Errorf("cni not specified"),
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					ClusterNetwork: ClusterNetwork{
+						Pods: Pods{
+							CidrBlocks: []string{
+								"1.2.3.4/6",
+							},
+						},
+						Services: Services{
+							CidrBlocks: []string{
+								"1.2.3.4/7",
+							},
+						},
+						CNI:       "",
+						CNIConfig: nil,
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := validateNetworking(tt.cluster)
+			if !reflect.DeepEqual(tt.wantErr, got) {
+				t.Errorf("%v got = %v, want %v", tt.name, got, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateCNIConfig(t *testing.T) {
+	tests := []struct {
+		name           string
+		wantErr        error
+		clusterNetwork *ClusterNetwork
+	}{
+		{
+			name:    "CNI plugin not specified",
+			wantErr: fmt.Errorf("error validating cniConfig: no cni plugin specified"),
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{},
+			},
+		},
+		{
+			name:    "multiple CNI plugins specified",
+			wantErr: fmt.Errorf("error validating cniConfig: cannot specify more than one cni plugins"),
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium:   &CiliumConfig{},
+					Kindnetd: &KindnetdConfig{},
+				},
+			},
+		},
+		{
+			name:    "invalid cilium policy enforcement mode",
+			wantErr: fmt.Errorf("error validating cniConfig: cilium policyEnforcementMode \"invalid\" not supported"),
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						PolicyEnforcementMode: "invalid",
+					},
+				},
+			},
+		},
+		{
+			name:    "invalid cilium policy enforcement mode and > 1 plugins",
+			wantErr: fmt.Errorf("error validating cniConfig: [cilium policyEnforcementMode \"invalid\" not supported, cannot specify more than one cni plugins]"),
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						PolicyEnforcementMode: "invalid",
+					},
+					Kindnetd: &KindnetdConfig{},
+				},
+			},
+		},
+		{
+			name:    "valid cilium policy enforcement mode",
+			wantErr: nil,
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						PolicyEnforcementMode: "default",
+					},
+				},
+			},
+		},
+		{
+			name:    "valid cilium policy enforcement mode",
+			wantErr: nil,
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						PolicyEnforcementMode: "always",
+					},
+				},
+			},
+		},
+		{
+			name:    "valid cilium policy enforcement mode",
+			wantErr: nil,
+			clusterNetwork: &ClusterNetwork{
+				CNIConfig: &CNIConfig{
+					Cilium: &CiliumConfig{
+						PolicyEnforcementMode: "never",
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := validateCNIConfig(tt.clusterNetwork.CNIConfig)
+			if !reflect.DeepEqual(tt.wantErr, got) {
+				t.Errorf("%v got = %v, want %v", tt.name, got, tt.wantErr)
 			}
 		})
 	}

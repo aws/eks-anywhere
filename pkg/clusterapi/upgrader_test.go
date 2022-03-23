@@ -175,7 +175,7 @@ func TestUpgraderUpgradeEverythingChangesStackedEtcd(t *testing.T) {
 
 func TestUpgraderUpgradeEverythingChangesExternalEtcd(t *testing.T) {
 	tt := newUpgraderTest(t)
-	tt.newSpec.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{}
+	tt.newSpec.Cluster.Spec.ExternalEtcdConfiguration = &v1alpha1.ExternalEtcdConfiguration{}
 	tt.newSpec.VersionsBundle.CertManager.Version = "v0.2.0"
 	tt.newSpec.VersionsBundle.ClusterAPI.Version = "v0.2.0"
 	tt.newSpec.VersionsBundle.ControlPlane.Version = "v0.2.0"

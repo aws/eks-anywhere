@@ -306,7 +306,7 @@ func newBootstrapper(t *testing.T) (*bootstrapper.Bootstrapper, *mocks.MockClust
 
 func given(t *testing.T, clusterName, kubeconfig string) (clusterSpec *cluster.Spec, wantCluster *types.Cluster) {
 	return test.NewClusterSpec(func(s *cluster.Spec) {
-			s.Name = clusterName
+			s.Cluster.Name = clusterName
 			s.VersionsBundle.KubeVersion = "1.19"
 			s.VersionsBundle.KubeDistro.CoreDNS.Tag = "v1.8.3-eks-1-20-1"
 		}), &types.Cluster{
