@@ -9,10 +9,14 @@ import (
 
 type IPGenerator struct {
 	netClient NetClient
+	rand      *rand.Rand
 }
 
 func NewIPGenerator(netClient NetClient) IPGenerator {
-	return IPGenerator{netClient: netClient}
+	return IPGenerator{
+		netClient: netClient,
+		rand:      rand.New(rand.NewSource(time.Now().UnixNano())),
+	}
 }
 
 func (ipgen IPGenerator) GenerateUniqueIP(cidrBlock string) (string, error) {
@@ -35,10 +39,9 @@ func (ipgen IPGenerator) GenerateUniqueIP(cidrBlock string) (string, error) {
 
 // generates a random ip within the specified cidr block
 func (ipgen IPGenerator) randIp(cidr *net.IPNet) (net.IP, error) {
-	rand.Seed(time.Now().UnixNano())
 	newIp := *new(net.IP)
 	for i := 0; i < 4; i++ {
-		newIp = append(newIp, byte(rand.Intn(256))&^cidr.Mask[i]|cidr.IP[i])
+		newIp = append(newIp, byte(ipgen.rand.Intn(255))&^cidr.Mask[i]|cidr.IP[i])
 	}
 	if !cidr.Contains(newIp) {
 		return nil, fmt.Errorf("random IP generation failed")
