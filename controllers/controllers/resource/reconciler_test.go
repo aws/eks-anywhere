@@ -1017,6 +1017,9 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 			},
 		},
 	}
+	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+	os.Setenv(features.CloudStackProviderEnvVar, "true")
+	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
