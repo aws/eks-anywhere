@@ -109,7 +109,7 @@ BUILD_FLAGS?=
 
 GO_ARCH:=$(shell go env GOARCH)
 GO_OS:=$(shell go env GOOS)
-GO_ROOT:=$(shell $(GO) env GOROOT)
+GO_ROOT:=$(shell $(GO) env GOPATH)
 
 
 BINARY_DEPS_DIR = $(OUTPUT_DIR)/dependencies
@@ -384,6 +384,7 @@ capd-test-%: e2e ## Run CAPD tests
 .PHONY: mocks
 mocks: ## Generate mocks
 	$(GO) install github.com/golang/mock/mockgen@v1.6.0
+	$(shell echo $GO_ROOT)
 	${GOPATH}/bin/mockgen -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
 	${GOPATH}/bin/mockgen -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable
 	${GOPATH}/bin/mockgen -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
