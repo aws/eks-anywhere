@@ -20,7 +20,7 @@ SHELL := /bin/bash
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git tag -l --sort -v:refname | head -1)
-GOLANG_VERSION?="1.16"
+GOLANG_VERSION?="1.17"
 GO ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))/go
 GO_TEST ?= $(GO) test
 
@@ -320,7 +320,7 @@ cluster-controller-images: cluster-controller-binaries $(ORGANIZE_BINARIES_TARGE
 
 
 .PHONY: generate-attribution
-generate-attribution: GOLANG_VERSION ?= "1.16"
+generate-attribution: GOLANG_VERSION ?= "1.17"
 generate-attribution:
 	scripts/make_attribution.sh $(GOLANG_VERSION)
 
