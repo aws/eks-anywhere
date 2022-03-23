@@ -26,9 +26,9 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 const (
-	// MachineFinalizer allows ReconcileAWSSnowMachine to clean up AWS resources associated with AWSSnowMachine before
+	// AWSSnowMachineFinalizer allows ReconcileAWSSnowMachine to clean up AWS Snow resources associated with AWSSnowMachine before
 	// removing it from the apiserver.
-	MachineFinalizer = "awssnowmachine.infrastructure.cluster.x-k8s.io"
+	AWSSnowMachineFinalizer = "awssnowmachine.infrastructure.cluster.x-k8s.io"
 )
 
 // AWSSnowMachineSpec defines the desired state of AWSSnowMachine.
@@ -139,6 +139,11 @@ type AWSSnowMachineSpec struct {
 	// +optional
 	CloudInit CloudInit `json:"cloudInit,omitempty"`
 
+	// PhysicalNetworkConnectorType is the physical network connector type to use for creating direct network interfaces. Valid values are a physical network connector type (SFP_PLUS or QSFP), or omitted (cluster-api selects a valid physical network interface, default is SFP_PLUS)
+	// +optional
+	// +kubebuilder:validation:Enum:=SFP_PLUS;QSFP
+	PhysicalNetworkConnectorType *string `json:"physicalNetworkConnectorType,omitempty"`
+
 	// SpotMarketOptions allows users to configure instances to be run using AWS Spot instances.
 	// TODO: Evaluate the need or remove completely.
 	// +optional
@@ -149,10 +154,6 @@ type AWSSnowMachineSpec struct {
 	// TODO: Evaluate the need or remove completely.
 	// +kubebuilder:validation:Enum:=default;dedicated;host
 	// Tenancy string `json:"tenancy,omitempty"`
-
-	// PhysicalNetworkConnectorType is the physical network connector type to use for creating direct network interfaces. Valid values are a physical network connector type (SFP_PLUS or QSFP), or omitted (cluster-api selects a valid physical network interface, default is SFP_PLUS)
-	// +optional
-	PhysicalNetworkConnectorType *string `json:"physicalNetworkConnectorType,omitempty"`
 }
 
 // CloudInit defines options related to the bootstrapping systems where
@@ -253,8 +254,9 @@ type AWSSnowMachine struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   AWSSnowMachineSpec   `json:"spec,omitempty"`
-	Status AWSSnowMachineStatus `json:"status,omitempty"`
+	DeviceIp string               `json:"deviceIp,omitempty"`
+	Spec     AWSSnowMachineSpec   `json:"spec,omitempty"`
+	Status   AWSSnowMachineStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -272,6 +274,11 @@ func (r *AWSSnowMachine) GetConditions() clusterv1.Conditions {
 
 func (r *AWSSnowMachine) SetConditions(conditions clusterv1.Conditions) {
 	r.Status.Conditions = conditions
+}
+
+func (r *AWSSnowMachine) IsControlPlane() bool {
+	_, keyExists := r.ObjectMeta.Labels[clusterv1.MachineControlPlaneLabelName]
+	return keyExists
 }
 
 func init() {

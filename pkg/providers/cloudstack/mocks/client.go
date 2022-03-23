@@ -99,7 +99,7 @@ func (mr *MockProviderCmkClientMockRecorder) ValidateDomainPresent(arg0, arg1 in
 }
 
 // ValidateNetworkPresent mocks base method.
-func (m *MockProviderCmkClient) ValidateNetworkPresent(arg0 context.Context, arg1 string, arg2 v1alpha1.CloudStackZoneRef, arg3 []v1alpha1.CloudStackResourceIdentifier, arg4 string, arg5 bool) error {
+func (m *MockProviderCmkClient) ValidateNetworkPresent(arg0 context.Context, arg1 string, arg2 v1alpha1.CloudStackZone, arg3 []v1alpha1.CloudStackResourceIdentifier, arg4 string, arg5 bool) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateNetworkPresent", arg0, arg1, arg2, arg3, arg4, arg5)
 	ret0, _ := ret[0].(error)
@@ -113,7 +113,7 @@ func (mr *MockProviderCmkClientMockRecorder) ValidateNetworkPresent(arg0, arg1, 
 }
 
 // ValidateServiceOfferingPresent mocks base method.
-func (m *MockProviderCmkClient) ValidateServiceOfferingPresent(arg0 context.Context, arg1 string, arg2 v1alpha1.CloudStackResourceRef) error {
+func (m *MockProviderCmkClient) ValidateServiceOfferingPresent(arg0 context.Context, arg1 string, arg2 v1alpha1.CloudStackResourceIdentifier) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateServiceOfferingPresent", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
@@ -127,7 +127,7 @@ func (mr *MockProviderCmkClientMockRecorder) ValidateServiceOfferingPresent(arg0
 }
 
 // ValidateTemplatePresent mocks base method.
-func (m *MockProviderCmkClient) ValidateTemplatePresent(arg0 context.Context, arg1, arg2, arg3 string, arg4 v1alpha1.CloudStackResourceRef) error {
+func (m *MockProviderCmkClient) ValidateTemplatePresent(arg0 context.Context, arg1, arg2, arg3 string, arg4 v1alpha1.CloudStackResourceIdentifier) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateTemplatePresent", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
@@ -141,7 +141,7 @@ func (mr *MockProviderCmkClientMockRecorder) ValidateTemplatePresent(arg0, arg1,
 }
 
 // ValidateZonesPresent mocks base method.
-func (m *MockProviderCmkClient) ValidateZonesPresent(arg0 context.Context, arg1 []v1alpha1.CloudStackZoneRef) ([]v1alpha1.CloudStackResourceIdentifier, error) {
+func (m *MockProviderCmkClient) ValidateZonesPresent(arg0 context.Context, arg1 []v1alpha1.CloudStackZone) ([]v1alpha1.CloudStackResourceIdentifier, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateZonesPresent", arg0, arg1)
 	ret0, _ := ret[0].([]v1alpha1.CloudStackResourceIdentifier)

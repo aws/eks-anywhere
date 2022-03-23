@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -56,20 +57,48 @@ type Kubectl struct {
 }
 
 func (k *Kubectl) SearchCloudStackMachineConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackMachineConfig, error) {
-	// Required implementation for Kubectl interface implementation
-	return nil, fmt.Errorf("cloudstack provider does not support this yet")
+	params := []string{
+		"get", eksaCloudStackMachineResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("searching eksa CloudStackMachineConfigResponse: %v", err)
+	}
+
+	response := &CloudStackMachineConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("parsing CloudStackMachineConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
 }
 
 func (k *Kubectl) SearchCloudStackDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackDatacenterConfig, error) {
-	// Required implementation for Kubectl interface implementation
-	return nil, fmt.Errorf("cloudstack provider does not support this yet")
+	params := []string{
+		"get", eksaCloudStackDatacenterResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("searching eksa CloudStackDatacenterConfigResponse: %v", err)
+	}
+
+	response := &CloudStackDatacenterConfigResponse{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("parsing CloudStackDatacenterConfigResponse response: %v", err)
+	}
+
+	return response.Items, nil
 }
 
 func (k *Kubectl) GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error) {
 	response := &v1alpha1.CloudStackMachineConfig{}
 	err := k.getObject(ctx, eksaCloudStackMachineResourceType, cloudstackMachineConfigName, namespace, kubeconfigFile, response)
 	if err != nil {
-		return nil, fmt.Errorf("error getting eksa cloudstack machineconfig: %v", err)
+		return nil, fmt.Errorf("getting eksa cloudstack machineconfig: %v", err)
 	}
 
 	return response, nil
@@ -79,7 +108,7 @@ func (k *Kubectl) DeleteEksaCloudStackDatacenterConfig(ctx context.Context, clou
 	params := []string{"delete", eksaCloudStackDatacenterResourceType, cloudstackDatacenterConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error deleting cloudstackdatacenterconfig cluster %s apply: %v", cloudstackDatacenterConfigName, err)
+		return fmt.Errorf("deleting cloudstackdatacenterconfig cluster %s apply: %v", cloudstackDatacenterConfigName, err)
 	}
 	return nil
 }
@@ -88,7 +117,7 @@ func (k *Kubectl) GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudst
 	response := &v1alpha1.CloudStackDatacenterConfig{}
 	err := k.getObject(ctx, eksaCloudStackDatacenterResourceType, cloudstackDatacenterConfigName, namespace, kubeconfigFile, response)
 	if err != nil {
-		return nil, fmt.Errorf("error getting eksa cloudstack machineconfig: %v", err)
+		return nil, fmt.Errorf("getting eksa cloudstack datacenterconfig: %v", err)
 	}
 
 	return response, nil
@@ -98,7 +127,7 @@ func (k *Kubectl) DeleteEksaCloudStackMachineConfig(ctx context.Context, cloudst
 	params := []string{"delete", eksaCloudStackMachineResourceType, cloudstackMachineConfigName, "--kubeconfig", kubeconfigFile, "--namespace", namespace, "--ignore-not-found=true"}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error deleting cloudstackmachineconfig cluster %s apply: %v", cloudstackMachineConfigName, err)
+		return fmt.Errorf("deleting cloudstackmachineconfig cluster %s apply: %v", cloudstackMachineConfigName, err)
 	}
 	return nil
 }
@@ -478,6 +507,24 @@ func (k *Kubectl) VsphereWorkerNodesMachineTemplate(ctx context.Context, cluster
 	return machineTemplateSpec, nil
 }
 
+func (k *Kubectl) CloudstackWorkerNodesMachineTemplate(ctx context.Context, clusterName string, kubeconfig string, namespace string) (*cloudstackv1.CloudStackMachineTemplate, error) {
+	machineTemplateName, err := k.MachineTemplateName(ctx, clusterName, kubeconfig, WithNamespace(namespace))
+	if err != nil {
+		return nil, err
+	}
+
+	params := []string{"get", "cloudstackmachinetemplates", machineTemplateName, "-o", "go-template", "--template", "{{.spec.template.spec}}", "-o", "yaml", "--kubeconfig", kubeconfig, "--namespace", namespace}
+	buffer, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, err
+	}
+	machineTemplateSpec := &cloudstackv1.CloudStackMachineTemplate{}
+	if err := yaml.Unmarshal(buffer.Bytes(), machineTemplateSpec); err != nil {
+		return nil, err
+	}
+	return machineTemplateSpec, nil
+}
+
 func (k *Kubectl) MachineTemplateName(ctx context.Context, clusterName string, kubeconfig string, opts ...KubectlOpt) (string, error) {
 	template := "{{.spec.template.spec.infrastructureRef.name}}"
 	params := []string{"get", "MachineDeployment", fmt.Sprintf("%s-md-0", clusterName), "-o", "go-template", "--template", template, "--kubeconfig", kubeconfig}
@@ -596,12 +643,20 @@ type VSphereDatacenterConfigResponse struct {
 	Items []*v1alpha1.VSphereDatacenterConfig `json:"items,omitempty"`
 }
 
+type CloudStackDatacenterConfigResponse struct {
+	Items []*v1alpha1.CloudStackDatacenterConfig `json:"items,omitempty"`
+}
+
 type IdentityProviderConfigResponse struct {
 	Items []*v1alpha1.Ref `json:"items,omitempty"`
 }
 
 type VSphereMachineConfigResponse struct {
 	Items []*v1alpha1.VSphereMachineConfig `json:"items,omitempty"`
+}
+
+type CloudStackMachineConfigResponse struct {
+	Items []*v1alpha1.CloudStackMachineConfig `json:"items,omitempty"`
 }
 
 func (k *Kubectl) ValidateClustersCRD(ctx context.Context, cluster *types.Cluster) error {

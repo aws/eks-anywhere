@@ -21,6 +21,12 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
+const (
+	// AWSSnowClusterFinalizer allows ReconcileAWSSnowCluster to clean up AWS Snow resources associated with AWSSnowCluster before
+	// removing it from the apiserver.
+	AWSSnowClusterFinalizer = "awssnowcluster.infrastructure.cluster.x-k8s.io"
+)
+
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
@@ -78,6 +84,7 @@ type AWSSnowClusterSpec struct {
 	ImageLookupBaseOS string `json:"imageLookupBaseOS,omitempty"`
 
 	// PhysicalNetworkConnectorType is the physical network connector type to use for creating direct network interfaces. Valid values are a physical network connector type (SFP_PLUS or QSFP), or omitted (cluster-api selects a valid physical network interface, default is SFP_PLUS)
+	// +kubebuilder:validation:Enum:=SFP_PLUS;QSFP
 	// +optional
 	PhysicalNetworkConnectorType *string `json:"physicalNetworkConnectorType,omitempty"`
 }

@@ -26,7 +26,7 @@ func NewKindnetd(client Client) *Kindnetd {
 	}
 }
 
-func (c *Kindnetd) GenerateManifest(ctx context.Context, clusterSpec *cluster.Spec) ([]byte, error) {
+func (c *Kindnetd) GenerateManifest(ctx context.Context, clusterSpec *cluster.Spec, namespaces []string) ([]byte, error) {
 	return generateManifest(clusterSpec)
 }
 

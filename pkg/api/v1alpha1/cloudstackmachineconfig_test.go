@@ -39,13 +39,39 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					Spec: CloudStackMachineConfigSpec{
-						Template: CloudStackResourceRef{
-							Value: "centos7-k8s-119",
-							Type:  Name,
+						Template: CloudStackResourceIdentifier{
+							Name: "centos7-k8s-119",
 						},
-						ComputeOffering: CloudStackResourceRef{
-							Value: "m4-large",
-							Type:  Name,
+						ComputeOffering: CloudStackResourceIdentifier{
+							Name: "m4-large",
+						},
+						Users: []UserConfiguration{{
+							Name:              "mySshUsername",
+							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
+						}},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			testName: "valid 1.21",
+			fileName: "testdata/cluster_1_21_cloudstack.yaml",
+			wantCloudStackMachineConfigs: map[string]*CloudStackMachineConfig{
+				"eksa-unit-test": {
+					TypeMeta: metav1.TypeMeta{
+						Kind:       CloudStackMachineConfigKind,
+						APIVersion: SchemeBuilder.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "eksa-unit-test",
+					},
+					Spec: CloudStackMachineConfigSpec{
+						Template: CloudStackResourceIdentifier{
+							Id: "centos7-k8s-121-id",
+						},
+						ComputeOffering: CloudStackResourceIdentifier{
+							Id: "m4-large-id",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -69,13 +95,11 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					Spec: CloudStackMachineConfigSpec{
-						Template: CloudStackResourceRef{
-							Value: "centos7-k8s-118",
-							Type:  Name,
+						Template: CloudStackResourceIdentifier{
+							Name: "centos7-k8s-118",
 						},
-						ComputeOffering: CloudStackResourceRef{
-							Value: "m4-large",
-							Type:  Name,
+						ComputeOffering: CloudStackResourceIdentifier{
+							Name: "m4-large",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -99,13 +123,11 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					Spec: CloudStackMachineConfigSpec{
-						Template: CloudStackResourceRef{
-							Value: "centos7-k8s-120",
-							Type:  Name,
+						Template: CloudStackResourceIdentifier{
+							Name: "centos7-k8s-120",
 						},
-						ComputeOffering: CloudStackResourceRef{
-							Value: "m4-large",
-							Type:  Name,
+						ComputeOffering: CloudStackResourceIdentifier{
+							Name: "m4-large",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -129,13 +151,11 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					Spec: CloudStackMachineConfigSpec{
-						Template: CloudStackResourceRef{
-							Value: "centos7-k8s-118",
-							Type:  Name,
+						Template: CloudStackResourceIdentifier{
+							Name: "centos7-k8s-118",
 						},
-						ComputeOffering: CloudStackResourceRef{
-							Value: "m4-large",
-							Type:  Name,
+						ComputeOffering: CloudStackResourceIdentifier{
+							Name: "m4-large",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -152,13 +172,11 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						Name: "eksa-unit-test-2",
 					},
 					Spec: CloudStackMachineConfigSpec{
-						Template: CloudStackResourceRef{
-							Value: "centos7-k8s-118",
-							Type:  Name,
+						Template: CloudStackResourceIdentifier{
+							Name: "centos7-k8s-118",
 						},
-						ComputeOffering: CloudStackResourceRef{
-							Value: "m5-xlarge",
-							Type:  Name,
+						ComputeOffering: CloudStackResourceIdentifier{
+							Name: "m5-xlarge",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",

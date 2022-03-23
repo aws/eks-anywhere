@@ -7,7 +7,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -53,7 +52,6 @@ func TestDockerKubernetes122AWSIamAuth(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -84,7 +82,6 @@ func TestVSphereKubernetes122AWSIamAuth(t *testing.T) {
 		framework.NewVSphere(t, framework.WithUbuntu122()),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -115,7 +112,6 @@ func TestVSphereKubernetes122BottleRocketAWSIamAuth(t *testing.T) {
 		framework.NewVSphere(t, framework.WithBottleRocket122()),
 		framework.WithAWSIam(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runAWSIamAuthFlow(test)
 }
@@ -132,7 +128,6 @@ func TestVSphereKubernetes121To122AWSIamAuthUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var()),
 	)
 }

@@ -97,7 +97,7 @@ func (c *createTestSetup) expectCreateWorkload() {
 		).Return(c.workloadCluster, nil),
 
 		c.clusterManager.EXPECT().InstallNetworking(
-			c.ctx, c.workloadCluster, c.clusterSpec,
+			c.ctx, c.workloadCluster, c.clusterSpec, c.provider,
 		),
 		c.clusterManager.EXPECT().InstallStorageClass(
 			c.ctx, c.workloadCluster, c.provider,
@@ -116,7 +116,7 @@ func (c *createTestSetup) expectCreateWorkloadSkipCAPI() {
 		).Return(c.workloadCluster, nil),
 
 		c.clusterManager.EXPECT().InstallNetworking(
-			c.ctx, c.workloadCluster, c.clusterSpec,
+			c.ctx, c.workloadCluster, c.clusterSpec, c.provider,
 		),
 		c.clusterManager.EXPECT().InstallStorageClass(
 			c.ctx, c.workloadCluster, c.provider,
