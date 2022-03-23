@@ -1732,7 +1732,7 @@ spec:
                       type: object
                     kubeVersion:
                       type: string
-                    packagecontroller:
+                    packageController:
                       properties:
                         packageController:
                           properties:
@@ -2774,7 +2774,7 @@ spec:
                   - flux
                   - kindnetd
                   - kubeVersion
-                  - packagecontroller
+                  - packageController
                   - vSphere
                   type: object
                 type: array
