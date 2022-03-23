@@ -49,6 +49,7 @@ spec:
     - network:
         name: "net1"
       name: "zone1"
+  managementApiEndpoint: "http://127.16.0.1:8080/client/api"
 
 
 ---

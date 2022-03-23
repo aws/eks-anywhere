@@ -9,6 +9,7 @@ import (
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 )
 
 type Validator struct {
@@ -60,6 +61,14 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 	_, err := getHostnameFromUrl(datacenterConfig.Spec.ManagementApiEndpoint)
 	if err != nil {
 		return fmt.Errorf("error while checking management api endpoint: %v", err)
+	}
+	execConfig, err := decoder.ParseCloudStackSecret()
+	if err != nil {
+		return fmt.Errorf("parsing cloudstack secret: %v", err)
+	}
+	if execConfig.ManagementUrl != datacenterConfig.Spec.ManagementApiEndpoint {
+		return fmt.Errorf("cloudstack secret management url (%s) differs from cluster spec management url (%s)",
+			execConfig.ManagementUrl, datacenterConfig.Spec.ManagementApiEndpoint)
 	}
 
 	domain, errDomain := v.cmk.ValidateDomainPresent(ctx, datacenterConfig.Spec.Domain)
