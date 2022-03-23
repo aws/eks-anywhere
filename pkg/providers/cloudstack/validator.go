@@ -59,24 +59,24 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 	}
 	_, err := getHostnameFromUrl(datacenterConfig.Spec.ManagementApiEndpoint)
 	if err != nil {
-		return fmt.Errorf("error while checking management api endpoint: %v", err)
+		return fmt.Errorf("checking management api endpoint: %v", err)
 	}
 
 	domain, errDomain := v.cmk.ValidateDomainPresent(ctx, datacenterConfig.Spec.Domain)
 	if errDomain != nil {
-		return fmt.Errorf("error while checking domain: %v", errDomain)
+		return fmt.Errorf("checking domain: %v", errDomain)
 	}
 
 	if len(datacenterConfig.Spec.Account) > 0 {
 		err := v.cmk.ValidateAccountPresent(ctx, datacenterConfig.Spec.Account, domain.Id)
 		if err != nil {
-			return fmt.Errorf("error while checking account %v", err)
+			return fmt.Errorf("checking account %v", err)
 		}
 	}
 
 	zones, errZone := v.cmk.ValidateZonesPresent(ctx, datacenterConfig.Spec.Zones)
 	if errZone != nil {
-		return fmt.Errorf("error while checking zones %v", errZone)
+		return fmt.Errorf("checking zones %v", errZone)
 	}
 
 	for _, zone := range datacenterConfig.Spec.Zones {
@@ -85,7 +85,7 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 		}
 		err := v.cmk.ValidateNetworkPresent(ctx, domain.Id, zone, zones, datacenterConfig.Spec.Account, len(zones) > 1)
 		if err != nil {
-			return fmt.Errorf("error while checking network %v", err)
+			return fmt.Errorf("checking network %v", err)
 		}
 	}
 
@@ -192,12 +192,12 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfigS
 	}
 	domain, errDomain := v.cmk.ValidateDomainPresent(ctx, datacenterConfigSpec.Domain)
 	if errDomain != nil {
-		return fmt.Errorf("error while checking domain: %v", errDomain)
+		return fmt.Errorf("checking domain: %v", errDomain)
 	}
 
 	zones, err := v.cmk.ValidateZonesPresent(ctx, datacenterConfigSpec.Zones)
 	if err != nil {
-		return fmt.Errorf("error while checking zones %v", err)
+		return fmt.Errorf("checking zones %v", err)
 	}
 	domainId := domain.Id
 	account := datacenterConfigSpec.Account

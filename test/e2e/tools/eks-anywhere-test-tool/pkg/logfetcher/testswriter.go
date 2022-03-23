@@ -18,7 +18,7 @@ type testsWriter struct {
 func newTestsWriter(folderPath string) (*testsWriter, error) {
 	writer, err := filewriter.NewWriter(folderPath)
 	if err != nil {
-		return nil, fmt.Errorf("error when setting up tests writer: %v", err)
+		return nil, fmt.Errorf("setting up tests writer: %v", err)
 	}
 
 	return &testsWriter{FileWriter: writer}, nil
@@ -26,7 +26,7 @@ func newTestsWriter(folderPath string) (*testsWriter, error) {
 
 func (w *testsWriter) writeCodeBuild(build *awscodebuild.Build) error {
 	if _, err := w.Write(constants.BuildDescriptionFile, []byte(build.String()), filewriter.PersistentFile); err != nil {
-		return fmt.Errorf("error when writing build description: %v", err)
+		return fmt.Errorf("writing build description: %v", err)
 	}
 
 	return nil

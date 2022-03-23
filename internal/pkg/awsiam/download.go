@@ -14,11 +14,11 @@ const awsIamClientBinary = "aws-iam-authenticator"
 func DownloadAwsIamAuthClient(eksdRelease *eksdv1alpha1.Release) error {
 	uri, err := getAwsIamAuthClientUri(eksdRelease, getKernelName())
 	if err != nil {
-		return fmt.Errorf("error getting %s uri: %v", awsIamClientBinary, err)
+		return fmt.Errorf("getting %s uri: %v", awsIamClientBinary, err)
 	}
 	err = files.GzipFileDownloadExtract(uri, awsIamClientBinary, "bin")
 	if err != nil {
-		return fmt.Errorf("error downloading %s binary: %v", awsIamClientBinary, err)
+		return fmt.Errorf("downloading %s binary: %v", awsIamClientBinary, err)
 	}
 	return nil
 }

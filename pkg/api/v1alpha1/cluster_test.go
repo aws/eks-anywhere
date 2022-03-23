@@ -1015,7 +1015,7 @@ func TestParseClusterConfig(t *testing.T) {
 				clusterConfig: &Cluster{},
 			},
 			wantErr:    true,
-			matchError: fmt.Errorf("error converting YAML to JSON: yaml: line 12: did not find expected key"),
+			matchError: fmt.Errorf("converting YAML to JSON: yaml: line 12: did not find expected key"),
 		},
 		{
 			name: "Invalid key",
@@ -1024,7 +1024,7 @@ func TestParseClusterConfig(t *testing.T) {
 				clusterConfig: &Cluster{},
 			},
 			wantErr:    true,
-			matchError: fmt.Errorf("error unmarshaling JSON: while decoding JSON: json: unknown field \"registryMirro rConfiguration\""),
+			matchError: fmt.Errorf("unmarshaling JSON: while decoding JSON: json: unknown field \"registryMirro rConfiguration\""),
 		},
 		{
 			name: "Invalid yaml",
@@ -1033,7 +1033,7 @@ func TestParseClusterConfig(t *testing.T) {
 				clusterConfig: &Cluster{},
 			},
 			wantErr:    true,
-			matchError: fmt.Errorf("error converting YAML to JSON: yaml: did not find expected node content"),
+			matchError: fmt.Errorf("converting YAML to JSON: yaml: did not find expected node content"),
 		},
 		{
 			name: "Invalid spec field",
@@ -1042,7 +1042,7 @@ func TestParseClusterConfig(t *testing.T) {
 				clusterConfig: &Cluster{},
 			},
 			wantErr:    true,
-			matchError: fmt.Errorf("error unmarshaling JSON: while decoding JSON: json: unknown field \"invalidField\""),
+			matchError: fmt.Errorf("unmarshaling JSON: while decoding JSON: json: unknown field \"invalidField\""),
 		},
 		{
 			name: "Cluster definition at the end",
@@ -1843,14 +1843,14 @@ func TestValidateCNIConfig(t *testing.T) {
 	}{
 		{
 			name:    "CNI plugin not specified",
-			wantErr: fmt.Errorf("error validating cniConfig: no cni plugin specified"),
+			wantErr: fmt.Errorf("validating cniConfig: no cni plugin specified"),
 			clusterNetwork: &ClusterNetwork{
 				CNIConfig: &CNIConfig{},
 			},
 		},
 		{
 			name:    "multiple CNI plugins specified",
-			wantErr: fmt.Errorf("error validating cniConfig: cannot specify more than one cni plugins"),
+			wantErr: fmt.Errorf("validating cniConfig: cannot specify more than one cni plugins"),
 			clusterNetwork: &ClusterNetwork{
 				CNIConfig: &CNIConfig{
 					Cilium:   &CiliumConfig{},
@@ -1860,7 +1860,7 @@ func TestValidateCNIConfig(t *testing.T) {
 		},
 		{
 			name:    "invalid cilium policy enforcement mode",
-			wantErr: fmt.Errorf("error validating cniConfig: cilium policyEnforcementMode \"invalid\" not supported"),
+			wantErr: fmt.Errorf("validating cniConfig: cilium policyEnforcementMode \"invalid\" not supported"),
 			clusterNetwork: &ClusterNetwork{
 				CNIConfig: &CNIConfig{
 					Cilium: &CiliumConfig{
@@ -1871,7 +1871,7 @@ func TestValidateCNIConfig(t *testing.T) {
 		},
 		{
 			name:    "invalid cilium policy enforcement mode and > 1 plugins",
-			wantErr: fmt.Errorf("error validating cniConfig: [cilium policyEnforcementMode \"invalid\" not supported, cannot specify more than one cni plugins]"),
+			wantErr: fmt.Errorf("validating cniConfig: [cilium policyEnforcementMode \"invalid\" not supported, cannot specify more than one cni plugins]"),
 			clusterNetwork: &ClusterNetwork{
 				CNIConfig: &CNIConfig{
 					Cilium: &CiliumConfig{

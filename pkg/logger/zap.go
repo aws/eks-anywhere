@@ -31,7 +31,7 @@ func InitZap(level int, opts ...LoggerOpt) error {
 
 	zapLog, err := cfg.Build()
 	if err != nil {
-		return fmt.Errorf("error creating zap logger: %v", err)
+		return fmt.Errorf("creating zap logger: %v", err)
 	}
 
 	logr := zapr.NewLogger(zapLog)

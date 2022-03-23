@@ -48,7 +48,7 @@ func AutoFillVSphereProvider(filename string, fillers ...VSphereFiller) ([]byte,
 	for _, r := range resources {
 		yamlContent, err := yaml.Marshal(r)
 		if err != nil {
-			return nil, fmt.Errorf("error marshalling vsphere resource: %v", err)
+			return nil, fmt.Errorf("marshalling vsphere resource: %v", err)
 		}
 
 		yamlResources = append(yamlResources, yamlContent)
