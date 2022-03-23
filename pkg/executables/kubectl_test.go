@@ -262,6 +262,67 @@ func TestKubectlWaitError(t *testing.T) {
 	}
 }
 
+func TestKubectlSearchCloudStackMachineConfigs(t *testing.T) {
+	var kubeconfig, namespace, name string
+	buffer := bytes.Buffer{}
+	buffer.WriteString(test.ReadFile(t, "testdata/kubectl_no_cs_machineconfigs.json"))
+	k, ctx, _, e := newKubectl(t)
+
+	expectedParam := []string{
+		"get", fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group), "-o", "json", "--kubeconfig",
+		kubeconfig, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(buffer, nil)
+	mc, err := k.SearchCloudStackMachineConfig(ctx, name, kubeconfig, namespace)
+	if err != nil {
+		t.Errorf("Kubectl.SearchCloudStackMachineConfig() error = %v, want nil", err)
+	}
+	if len(mc) > 0 {
+		t.Errorf("expected 0 machine configs, got %d", len(mc))
+	}
+}
+
+func TestKubectlSearchCloudStackDatacenterConfigs(t *testing.T) {
+	var kubeconfig, namespace, name string
+	buffer := bytes.Buffer{}
+	buffer.WriteString(test.ReadFile(t, "testdata/kubectl_no_cs_datacenterconfigs.json"))
+	k, ctx, _, e := newKubectl(t)
+
+	expectedParam := []string{
+		"get", fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group), "-o", "json", "--kubeconfig",
+		kubeconfig, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(buffer, nil)
+	mc, err := k.SearchCloudStackDatacenterConfig(ctx, name, kubeconfig, namespace)
+	if err != nil {
+		t.Errorf("Kubectl.SearchCloudStackDatacenterConfig() error = %v, want nil", err)
+	}
+	if len(mc) > 0 {
+		t.Errorf("expected 0 datacenter configs, got %d", len(mc))
+	}
+}
+
+func TestCloudStackWorkerNodesMachineTemplate(t *testing.T) {
+	var kubeconfig, namespace, clusterName, machineTemplateName string
+	machineTemplateNameBuffer := bytes.NewBufferString(machineTemplateName)
+	machineTemplatesBuffer := bytes.NewBufferString(test.ReadFile(t, "testdata/kubectl_no_cs_machineconfigs.json"))
+	k, ctx, _, e := newKubectl(t)
+	expectedParam1 := []string{
+		"get", "MachineDeployment", fmt.Sprintf("%s-md-0", clusterName), "-o", "go-template",
+		"--template", "{{.spec.template.spec.infrastructureRef.name}}", "--kubeconfig", kubeconfig, "--namespace", namespace,
+	}
+	expectedParam2 := []string{
+		"get", "cloudstackmachinetemplates", machineTemplateName, "-o", "go-template", "--template",
+		"{{.spec.template.spec}}", "-o", "yaml", "--kubeconfig", kubeconfig, "--namespace", namespace,
+	}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam1)).Return(*machineTemplateNameBuffer, nil)
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam2)).Return(*machineTemplatesBuffer, nil)
+	_, err := k.CloudstackWorkerNodesMachineTemplate(ctx, clusterName, kubeconfig, namespace)
+	if err != nil {
+		t.Errorf("Kubectl.GetNamespace() error = %v, want nil", err)
+	}
+}
+
 func TestKubectlSaveLogSuccess(t *testing.T) {
 	filename := "testfile"
 	_, writer := test.NewWriter(t)
