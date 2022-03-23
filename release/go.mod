@@ -1,6 +1,6 @@
 module github.com/aws/eks-anywhere/release
 
-go 1.16
+go 1.17
 
 require (
 	github.com/aws/aws-sdk-go v1.38.40
@@ -13,7 +13,7 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.1
 	k8s.io/apimachinery v0.22.2
-	sigs.k8s.io/controller-runtime v0.10.3
+	sigs.k8s.io/controller-runtime v0.11.1
 	sigs.k8s.io/yaml v1.2.0
 )
 
