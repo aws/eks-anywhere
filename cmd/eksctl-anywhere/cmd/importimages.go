@@ -89,14 +89,17 @@ func importImages(ctx context.Context, spec string) error {
 	if err != nil {
 		return err
 	}
+	endpoint := net.JoinHostPort(host, port)
+	if port == constants.DefaultHttpsPort {
+		endpoint = host
+	}
 	for _, image := range images {
-		if err := importImage(ctx, de, image.URI, net.JoinHostPort(host, port)); err != nil {
+		if err := importImage(ctx, de, image.URI, endpoint); err != nil {
 			return fmt.Errorf("error importing image %s: %v", image.URI, err)
 		}
 	}
 
-	endpoint := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
-	return importCharts(ctx, helmExecutable, bundle.Charts(), endpoint, registryUsername, registryPassword)
+	return importCharts(ctx, helmExecutable, bundle.Charts(), host, registryUsername, registryPassword)
 }
 
 func importImage(ctx context.Context, docker *executables.Docker, image string, endpoint string) error {
