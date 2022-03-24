@@ -4,6 +4,7 @@ import (
 	b64 "encoding/base64"
 	"fmt"
 	"os"
+	"strconv"
 
 	"gopkg.in/ini.v1"
 )
@@ -44,14 +45,18 @@ func ParseCloudStackSecret() (*CloudStackExecConfig, error) {
 		return nil, fmt.Errorf("failed to extract value of 'api-url' from %s: %v", EksacloudStackCloudConfigB64SecretKey, err)
 	}
 	verifySsl, err := section.GetKey("verify-ssl")
-	if err != nil {
-		return nil, fmt.Errorf("failed to extract value of 'verify-ssl' from %s: %v", EksacloudStackCloudConfigB64SecretKey, err)
+	verifySslValue := "true"
+	if err == nil {
+		verifySslValue = verifySsl.Value()
+		if _, err := strconv.ParseBool(verifySslValue); err != nil {
+			return nil, fmt.Errorf("'verify-ssl' has invalid boolean string %s: %v", verifySslValue, err)
+		}
 	}
 	return &CloudStackExecConfig{
 		ApiKey:        apiKey.Value(),
 		SecretKey:     secretKey.Value(),
 		ManagementUrl: apiUrl.Value(),
-		VerifySsl:     verifySsl.Value(),
+		VerifySsl:     verifySslValue,
 	}, nil
 }
 

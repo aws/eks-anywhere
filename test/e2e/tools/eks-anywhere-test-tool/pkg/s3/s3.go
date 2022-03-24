@@ -101,10 +101,10 @@ func (s *S3) GetObject(bucket string, key string) ([]byte, error) {
 
 func getObjectRetirer() *retrier.Retrier {
 	return retrier.New(time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
-		rand.Seed(time.Now().UnixNano())
+		generator := rand.New(rand.NewSource(time.Now().UnixNano()))
 		minWait := 1
 		maxWait := 5
-		waitWithJitter := time.Duration(rand.Intn(maxWait-minWait)+minWait) * time.Second
+		waitWithJitter := time.Duration(generator.Intn(maxWait-minWait)+minWait) * time.Second
 		if isThrottledError(err) && totalRetries < 15 {
 			logger.V(2).Info("Throttled by S3, retrying")
 			return true, waitWithJitter

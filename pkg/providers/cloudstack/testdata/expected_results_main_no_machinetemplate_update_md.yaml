@@ -65,7 +65,9 @@ metadata:
 spec:
   template:
     spec:
-      offering: m4-large
-      template: centos7-k8s-118
+      offering:
+        name: m4-large
+      template:
+        name: centos7-k8s-118
       affinitygroupids:
       - worker-affinity

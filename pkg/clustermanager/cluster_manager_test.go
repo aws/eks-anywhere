@@ -43,10 +43,11 @@ func TestClusterManagerInstallNetworkingSuccess(t *testing.T) {
 	clusterSpec := test.NewClusterSpec()
 
 	c, m := newClusterManager(t)
-	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec).Return(networkingManifest, nil)
+	m.provider.EXPECT().GetDeployments()
+	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec, []string{}).Return(networkingManifest, nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, networkingManifest)
 
-	if err := c.InstallNetworking(ctx, cluster, clusterSpec); err != nil {
+	if err := c.InstallNetworking(ctx, cluster, clusterSpec, m.provider); err != nil {
 		t.Errorf("ClusterManager.InstallNetworking() error = %v, wantErr nil", err)
 	}
 }
@@ -57,9 +58,10 @@ func TestClusterManagerInstallNetworkingNetworkingError(t *testing.T) {
 	clusterSpec := test.NewClusterSpec()
 
 	c, m := newClusterManager(t)
-	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec).Return(nil, errors.New("error in networking"))
+	m.provider.EXPECT().GetDeployments()
+	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec, []string{}).Return(nil, errors.New("error in networking"))
 
-	if err := c.InstallNetworking(ctx, cluster, clusterSpec); err == nil {
+	if err := c.InstallNetworking(ctx, cluster, clusterSpec, m.provider); err == nil {
 		t.Errorf("ClusterManager.InstallNetworking() error = nil, wantErr not nil")
 	}
 }
@@ -72,11 +74,12 @@ func TestClusterManagerInstallNetworkingClientError(t *testing.T) {
 	retries := 2
 
 	c, m := newClusterManager(t)
-	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec).Return(networkingManifest, nil)
+	m.provider.EXPECT().GetDeployments()
+	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec, []string{}).Return(networkingManifest, nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, networkingManifest).Return(errors.New("error from client")).Times(retries)
 
 	c.Retrier = retrier.NewWithMaxRetries(retries, 1*time.Microsecond)
-	if err := c.InstallNetworking(ctx, cluster, clusterSpec); err == nil {
+	if err := c.InstallNetworking(ctx, cluster, clusterSpec, m.provider); err == nil {
 		t.Errorf("ClusterManager.InstallNetworking() error = nil, wantErr not nil")
 	}
 }
@@ -860,7 +863,7 @@ func TestClusterManagerResumeEKSAControllerReconcileSuccessWithoutMachineConfig(
 	cm, m := newClusterManager(t)
 	m.provider.EXPECT().DatacenterResourceType().Return(eksaVSphereDatacenterResourceType)
 	m.provider.EXPECT().MachineResourceType().Return("")
-	m.provider.EXPECT().DatacenterConfig().Return(datacenterConfig)
+	m.provider.EXPECT().DatacenterConfig(clusterSpec).Return(datacenterConfig)
 	m.client.EXPECT().RemoveAnnotationInNamespace(ctx, eksaVSphereDatacenterResourceType, clusterSpec.Cluster.Spec.DatacenterRef.Name, pauseAnnotation, clusterObj, "").Return(nil)
 	m.client.EXPECT().RemoveAnnotationInNamespace(ctx, eksaClusterResourceType, clusterSpec.Cluster.Name, pauseAnnotation, clusterObj, "").Return(nil)
 

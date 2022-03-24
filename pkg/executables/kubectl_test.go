@@ -262,6 +262,67 @@ func TestKubectlWaitError(t *testing.T) {
 	}
 }
 
+func TestKubectlSearchCloudStackMachineConfigs(t *testing.T) {
+	var kubeconfig, namespace, name string
+	buffer := bytes.Buffer{}
+	buffer.WriteString(test.ReadFile(t, "testdata/kubectl_no_cs_machineconfigs.json"))
+	k, ctx, _, e := newKubectl(t)
+
+	expectedParam := []string{
+		"get", fmt.Sprintf("cloudstackmachineconfigs.%s", v1alpha1.GroupVersion.Group), "-o", "json", "--kubeconfig",
+		kubeconfig, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(buffer, nil)
+	mc, err := k.SearchCloudStackMachineConfig(ctx, name, kubeconfig, namespace)
+	if err != nil {
+		t.Errorf("Kubectl.SearchCloudStackMachineConfig() error = %v, want nil", err)
+	}
+	if len(mc) > 0 {
+		t.Errorf("expected 0 machine configs, got %d", len(mc))
+	}
+}
+
+func TestKubectlSearchCloudStackDatacenterConfigs(t *testing.T) {
+	var kubeconfig, namespace, name string
+	buffer := bytes.Buffer{}
+	buffer.WriteString(test.ReadFile(t, "testdata/kubectl_no_cs_datacenterconfigs.json"))
+	k, ctx, _, e := newKubectl(t)
+
+	expectedParam := []string{
+		"get", fmt.Sprintf("cloudstackdatacenterconfigs.%s", v1alpha1.GroupVersion.Group), "-o", "json", "--kubeconfig",
+		kubeconfig, "--namespace", namespace, "--field-selector=metadata.name=" + name,
+	}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam)).Return(buffer, nil)
+	mc, err := k.SearchCloudStackDatacenterConfig(ctx, name, kubeconfig, namespace)
+	if err != nil {
+		t.Errorf("Kubectl.SearchCloudStackDatacenterConfig() error = %v, want nil", err)
+	}
+	if len(mc) > 0 {
+		t.Errorf("expected 0 datacenter configs, got %d", len(mc))
+	}
+}
+
+func TestCloudStackWorkerNodesMachineTemplate(t *testing.T) {
+	var kubeconfig, namespace, clusterName, machineTemplateName string
+	machineTemplateNameBuffer := bytes.NewBufferString(machineTemplateName)
+	machineTemplatesBuffer := bytes.NewBufferString(test.ReadFile(t, "testdata/kubectl_no_cs_machineconfigs.json"))
+	k, ctx, _, e := newKubectl(t)
+	expectedParam1 := []string{
+		"get", "MachineDeployment", fmt.Sprintf("%s-md-0", clusterName), "-o", "go-template",
+		"--template", "{{.spec.template.spec.infrastructureRef.name}}", "--kubeconfig", kubeconfig, "--namespace", namespace,
+	}
+	expectedParam2 := []string{
+		"get", "cloudstackmachinetemplates", machineTemplateName, "-o", "go-template", "--template",
+		"{{.spec.template.spec}}", "-o", "yaml", "--kubeconfig", kubeconfig, "--namespace", namespace,
+	}
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam1)).Return(*machineTemplateNameBuffer, nil)
+	e.EXPECT().Execute(ctx, gomock.Eq(expectedParam2)).Return(*machineTemplatesBuffer, nil)
+	_, err := k.CloudstackWorkerNodesMachineTemplate(ctx, clusterName, kubeconfig, namespace)
+	if err != nil {
+		t.Errorf("Kubectl.GetNamespace() error = %v, want nil", err)
+	}
+}
+
 func TestKubectlSaveLogSuccess(t *testing.T) {
 	filename := "testfile"
 	_, writer := test.NewWriter(t)
@@ -644,13 +705,11 @@ func TestKubectlGetEksaCloudStackMachineConfig(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{Name: "test-etcd"},
 				Spec: v1alpha1.CloudStackMachineConfigSpec{
-					Template: v1alpha1.CloudStackResourceRef{
-						Type:  "name",
-						Value: "testTemplate",
+					Template: v1alpha1.CloudStackResourceIdentifier{
+						Name: "testTemplate",
 					},
-					ComputeOffering: v1alpha1.CloudStackResourceRef{
-						Type:  "name",
-						Value: "testOffering",
+					ComputeOffering: v1alpha1.CloudStackResourceIdentifier{
+						Name: "testOffering",
 					},
 					Users: []v1alpha1.UserConfiguration{
 						{
@@ -710,15 +769,11 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 				},
 				ObjectMeta: metav1.ObjectMeta{Name: "test"},
 				Spec: v1alpha1.CloudStackDatacenterConfigSpec{
-					Zones: []v1alpha1.CloudStackZoneRef{
+					Zones: []v1alpha1.CloudStackZone{
 						{
-							Zone: v1alpha1.CloudStackResourceRef{
-								Type:  v1alpha1.Name,
-								Value: "testZone",
-							},
-							Network: v1alpha1.CloudStackResourceRef{
-								Type:  v1alpha1.Name,
-								Value: "testNetwork",
+							Name: "testZone",
+							Network: v1alpha1.CloudStackResourceIdentifier{
+								Name: "testNetwork",
 							},
 						},
 					},

@@ -37,12 +37,9 @@ spec:
   account: "admin"
   domain: "domain1"
   zones:
-    - zone:
-        value: "zone1"
-        type: "Name"
+    - name: "zone1"
       network:
-        value: "net1"
-        type: "Name"
+        name: "net1"
   idont: "belonghere"
 
 ---
@@ -51,10 +48,12 @@ kind: CloudStackMachineConfig
 metadata:
   name: eksa-unit-test
 spec:
-  computeOffering: "m4-large"
+  computeOffering:
+    name: "m4-large"
   users:
     - name: "mySshUsername"
       sshAuthorizedKeys:
         - "mySshAuthorizedKey"
-  template: "centos7-k8s-118"
+  template:
+    name: "centos7-k8s-118"
   idont: "belonghere"

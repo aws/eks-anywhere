@@ -1,0 +1,15 @@
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-all-kube-system
+  namespace: kube-system
+spec:
+  podSelector: {}
+  ingress:
+  - {}
+  egress:
+  - {}
+  policyTypes:
+  - Ingress
+  - Egress

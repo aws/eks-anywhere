@@ -33,7 +33,9 @@ func TestCAPICluster(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	snowCluster := SnowCluster(tt.clusterSpec)
 	controlPlaneMachineTemplate := SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
-	kubeadmControlPlane := KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
+	kubeadmControlPlane, err := KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
+	tt.Expect(err).To(Succeed())
+
 	got := CAPICluster(tt.clusterSpec, snowCluster, kubeadmControlPlane)
 	want := &clusterv1.Cluster{
 		TypeMeta: metav1.TypeMeta{
@@ -78,7 +80,9 @@ func TestCAPICluster(t *testing.T) {
 func TestKubeadmControlPlane(t *testing.T) {
 	tt := newApiBuilerTest(t)
 	controlPlaneMachineTemplate := SnowMachineTemplate(tt.machineConfigs[tt.clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
-	got := KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
+	got, err := KubeadmControlPlane(tt.clusterSpec, controlPlaneMachineTemplate)
+	tt.Expect(err).To(Succeed())
+
 	wantReplicas := int32(3)
 	want := &controlplanev1.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
@@ -147,6 +151,7 @@ func TestKubeadmControlPlane(t *testing.T) {
 				PostKubeadmCommands: []string{
 					"/etc/eks/bootstrap-after.sh public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.1433 1.2.3.4",
 				},
+				Files: []bootstrapv1.File{},
 			},
 			Replicas: &wantReplicas,
 			Version:  "v1.21.5-eks-1-21-9",
@@ -157,7 +162,9 @@ func TestKubeadmControlPlane(t *testing.T) {
 
 func TestKubeadmConfigTemplates(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	got := KubeadmConfigTemplates(tt.clusterSpec)
+	got, err := KubeadmConfigTemplates(tt.clusterSpec)
+	tt.Expect(err).To(Succeed())
+
 	want := map[string]*bootstrapv1.KubeadmConfigTemplate{
 		"md-0": {
 			TypeMeta: metav1.TypeMeta{
@@ -192,6 +199,7 @@ func TestKubeadmConfigTemplates(t *testing.T) {
 							"/etc/eks/bootstrap.sh",
 						},
 						PostKubeadmCommands: []string{},
+						Files:               []bootstrapv1.File{},
 					},
 				},
 			},
@@ -202,7 +210,9 @@ func TestKubeadmConfigTemplates(t *testing.T) {
 
 func TestMachineDeployments(t *testing.T) {
 	tt := newApiBuilerTest(t)
-	kubeadmConfigTemplates := KubeadmConfigTemplates(tt.clusterSpec)
+	kubeadmConfigTemplates, err := KubeadmConfigTemplates(tt.clusterSpec)
+	tt.Expect(err).To(Succeed())
+
 	workerMachineTemplates := SnowMachineTemplates(tt.clusterSpec, tt.machineConfigs)
 	got := MachineDeployments(tt.clusterSpec, kubeadmConfigTemplates, workerMachineTemplates)
 	wantVersion := "v1.21.5-eks-1-21-9"

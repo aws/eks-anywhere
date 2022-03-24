@@ -2,12 +2,17 @@ package cilium
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/semver"
+	"github.com/aws/eks-anywhere/pkg/templater"
 )
+
+//go:embed network_policy.yaml
+var networkPolicyAllowAll string
 
 type Helm interface {
 	Template(ctx context.Context, ociURI, version, namespace string, values interface{}) ([]byte, error)
@@ -73,6 +78,36 @@ func (c *Templater) GenerateManifest(ctx context.Context, spec *cluster.Spec) ([
 	return manifest, nil
 }
 
+func (c *Templater) GenerateNetworkPolicyManifest(spec *cluster.Spec, namespaces []string) ([]byte, error) {
+	values := map[string]interface{}{
+		"managementCluster":  spec.Cluster.IsSelfManaged(),
+		"providerNamespaces": namespaces,
+	}
+
+	if spec.Cluster.Spec.GitOpsRef != nil {
+		values["gitopsEnabled"] = true
+		if spec.GitOpsConfig != nil {
+			values["fluxNamespace"] = spec.GitOpsConfig.Spec.Flux.Github.FluxSystemNamespace
+		}
+	}
+
+	/* k8s versions 1.21 and higher label each namespace with key `kubernetes.io/metadata.name:` and value is the namespace's name.
+	This can be used to create a networkPolicy that allows traffic only between pods within kube-system ns, which is ideal for workload clusters. (not needed
+	for mgmt clusters).
+	So we will create networkPolicy using this default label as namespaceSelector for all versions 1.21 and higher
+	For 1.20 we will create a networkPolicy that allows allow traffic to/from kube-system pods, and document this. Users can still modify it and add new policies
+	as needed*/
+	k8sVersion, err := semver.New(spec.VersionsBundle.KubeDistro.Kubernetes.Tag)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing kubernetes version %v: %v", spec.Cluster.Spec.KubernetesVersion, err)
+	}
+	if k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
+		values["kubeSystemNSHasLabel"] = true
+	}
+
+	return templater.Execute(networkPolicyAllowAll, values)
+}
+
 type values map[string]interface{}
 
 func (c values) set(value interface{}, path ...string) {
@@ -89,7 +124,7 @@ func (c values) set(value interface{}, path ...string) {
 }
 
 func templateValues(spec *cluster.Spec) values {
-	return values{
+	val := values{
 		"cni": values{
 			"chainingMode": "portmap",
 		},
@@ -118,6 +153,11 @@ func templateValues(spec *cluster.Spec) values {
 			},
 		},
 	}
+
+	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode != "" {
+		val["policyEnforcementMode"] = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode
+	}
+	return val
 }
 
 func getChartUriAndVersion(spec *cluster.Spec) (uri, version string) {

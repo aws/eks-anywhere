@@ -363,7 +363,7 @@ func (p *vsphereProvider) SetupAndValidateCreateCluster(ctx context.Context, clu
 
 	// TODO: move this to validator
 	if clusterSpec.Cluster.IsManaged() {
-		for _, mc := range p.MachineConfigs() {
+		for _, mc := range p.MachineConfigs(clusterSpec) {
 			em, err := p.providerKubectlClient.SearchVsphereMachineConfig(ctx, mc.GetName(), clusterSpec.ManagementCluster.KubeconfigFile, mc.GetNamespace())
 			if err != nil {
 				return err
@@ -1092,11 +1092,11 @@ func (p *vsphereProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *ty
 	return &infraBundle
 }
 
-func (p *vsphereProvider) DatacenterConfig() providers.DatacenterConfig {
+func (p *vsphereProvider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {
 	return p.datacenterConfig
 }
 
-func (p *vsphereProvider) MachineConfigs() []providers.MachineConfig {
+func (p *vsphereProvider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
 	configs := make(map[string]providers.MachineConfig, len(p.machineConfigs))
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}

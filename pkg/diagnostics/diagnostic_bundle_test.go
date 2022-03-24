@@ -108,7 +108,7 @@ func TestGenerateBundleConfigWithExternalEtcd(t *testing.T) {
 
 	t.Run(t.Name(), func(t *testing.T) {
 		p := givenProvider(t)
-		p.EXPECT().MachineConfigs().Return(machineConfigs())
+		p.EXPECT().MachineConfigs(spec).Return(machineConfigs())
 
 		a := givenMockAnalyzerFactory(t)
 		a.EXPECT().EksaExternalEtcdAnalyzers().Return(nil)
@@ -160,7 +160,7 @@ func TestGenerateBundleConfigWithOidc(t *testing.T) {
 
 	t.Run(t.Name(), func(t *testing.T) {
 		p := givenProvider(t)
-		p.EXPECT().MachineConfigs().Return(machineConfigs())
+		p.EXPECT().MachineConfigs(spec).Return(machineConfigs())
 
 		a := givenMockAnalyzerFactory(t)
 		a.EXPECT().EksaOidcAnalyzers().Return(nil)
@@ -212,7 +212,7 @@ func TestGenerateBundleConfigWithGitOps(t *testing.T) {
 
 	t.Run(t.Name(), func(t *testing.T) {
 		p := givenProvider(t)
-		p.EXPECT().MachineConfigs().Return(machineConfigs())
+		p.EXPECT().MachineConfigs(spec).Return(machineConfigs())
 
 		a := givenMockAnalyzerFactory(t)
 		a.EXPECT().EksaGitopsAnalyzers().Return(nil)
@@ -291,7 +291,7 @@ func TestBundleFromSpecComplete(t *testing.T) {
 		kubeconfig := "testcluster.kubeconfig"
 
 		p := givenProvider(t)
-		p.EXPECT().MachineConfigs().Return(machineConfigs())
+		p.EXPECT().MachineConfigs(spec).Return(machineConfigs())
 
 		a := givenMockAnalyzerFactory(t)
 		a.EXPECT().EksaExternalEtcdAnalyzers().Return(nil)

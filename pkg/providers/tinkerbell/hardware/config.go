@@ -11,6 +11,7 @@ import (
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -83,6 +84,10 @@ func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, tinkHardwareMa
 	for _, hw := range hc.Hardwares {
 		if hw.Name == "" {
 			return fmt.Errorf("hardware name is required")
+		}
+
+		if errs := apimachineryvalidation.IsDNS1123Subdomain(hw.Name); len(errs) > 0 {
+			return fmt.Errorf("invalid hardware name: %v: %v", hw.Name, errs)
 		}
 
 		if hw.Spec.ID == "" {

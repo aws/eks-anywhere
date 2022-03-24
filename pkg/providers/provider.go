@@ -25,10 +25,10 @@ type Provider interface {
 	EnvMap(clusterSpec *cluster.Spec) (map[string]string, error)
 	GetDeployments() map[string][]string
 	GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle
-	DatacenterConfig() DatacenterConfig
+	DatacenterConfig(clusterSpec *cluster.Spec) DatacenterConfig
 	DatacenterResourceType() string
 	MachineResourceType() string
-	MachineConfigs() []MachineConfig
+	MachineConfigs(clusterSpec *cluster.Spec) []MachineConfig
 	ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	GenerateMHC() ([]byte, error)
 	ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff

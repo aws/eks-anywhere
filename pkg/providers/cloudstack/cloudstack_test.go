@@ -27,10 +27,10 @@ const (
 
 	/* Generated from ini file (like the following) then b64 encoded: `cat fake-cloud-config.ini | base64 | tr -d '\n'`
 	[Global]
-	api-key = test-key
-	secret-key = secret-key
-	api-url = http://1.1.1.1:8080/client/api
-	verify-ssl = false
+	api-key    = test-key
+	secret-key = test-secret
+	api-url    = http://127.16.0.1:8080/client/api
+	verify-ssl = true
 	*/
 	expectedCloudStackCloudConfig = "W0dsb2JhbF0KYXBpLWtleSAgICA9IHRlc3Qta2V5CnNlY3JldC1rZXkgPSB0ZXN0LXNlY3JldAphcGktdXJsICAgID0gaHR0cDovLzEyNy4xNi4wLjE6ODA4MC9jbGllbnQvYXBpCnZlcmlmeS1zc2wgPSB0cnVlCg=="
 )
@@ -705,7 +705,7 @@ func TestGetDatacenterConfig(t *testing.T) {
 	provider := givenProvider(t)
 	provider.datacenterConfig.TypeMeta.Kind = "kind"
 
-	providerConfig := provider.DatacenterConfig()
+	providerConfig := provider.DatacenterConfig(givenEmptyClusterSpec())
 	if providerConfig.Kind() != "kind" {
 		t.Fatal("Unexpected error DatacenterConfig: kind field not found")
 	}

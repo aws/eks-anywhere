@@ -437,11 +437,11 @@ func (p *provider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.Inf
 	return &infraBundle
 }
 
-func (p *provider) DatacenterConfig() providers.DatacenterConfig {
+func (p *provider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {
 	return p.datacenterConfig
 }
 
-func (p *provider) MachineConfigs() []providers.MachineConfig {
+func (p *provider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
 	return nil
 }
 

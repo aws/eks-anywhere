@@ -210,7 +210,7 @@ func (e *ClusterE2ETest) GenerateClusterConfig(opts ...CommandOpt) {
 	e.GenerateClusterConfigForVersion("", opts...)
 }
 
-func (e *ClusterE2ETest) PowerOffHardware(opts ...CommandOpt) {
+func (e *ClusterE2ETest) PowerOffHardware() {
 	pbnjEndpoint := os.Getenv(tinkerbellPBnJGRPCAuthEnvVar)
 	pbnjClient, err := pbnj.NewPBNJClient(pbnjEndpoint)
 	if err != nil {
@@ -220,16 +220,40 @@ func (e *ClusterE2ETest) PowerOffHardware(opts ...CommandOpt) {
 	ctx := context.Background()
 
 	for _, h := range e.TestHardware {
-		bmcInfo := pbnj.BmcSecretConfig{
-			Host:     h.BmcIpAddress,
-			Username: h.BmcUsername,
-			Password: h.BmcPassword,
-			Vendor:   h.BmcVendor,
-		}
+		bmcInfo := api.NewBmcSecretConfig(h)
 		err := pbnjClient.PowerOff(ctx, bmcInfo)
 		if err != nil {
 			e.T.Fatalf("failed to power off hardware: %v", err)
 		}
+	}
+}
+
+func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
+	pbnjEndpoint := os.Getenv(tinkerbellPBnJGRPCAuthEnvVar)
+	pbnjClient, err := pbnj.NewPBNJClient(pbnjEndpoint)
+	if err != nil {
+		e.T.Fatalf("failed to create pbnj client: %v", err)
+	}
+
+	ctx := context.Background()
+
+	var failedToDecomm []*api.Hardware
+	for _, h := range e.TestHardware {
+		bmcInfo := api.NewBmcSecretConfig(h)
+
+		powerState, err := pbnjClient.GetPowerState(ctx, bmcInfo)
+		if err != nil {
+			e.T.Logf("failed to get power state for hardware (%v): %v", h, err)
+		}
+
+		if powerState != pbnj.PowerStateOff {
+			e.T.Logf("failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s", h.Id, h.Hostname, h.BmcIpAddress)
+			failedToDecomm = append(failedToDecomm, h)
+		}
+	}
+
+	if len(failedToDecomm) > 0 {
+		e.T.Fatalf("failed to decommision hardware during cluster deletion")
 	}
 }
 
@@ -251,7 +275,13 @@ func (e *ClusterE2ETest) generateHardwareConfig(opts ...CommandOpt) {
 		e.T.Fatalf("failed to create hardware csv for the test run: %v", err)
 	}
 
-	generateHardwareConfigArgs := []string{"generate", "hardware", "--dry-run", "-f", e.HardwareCsvLocation, "-o", e.ClusterConfigFolder}
+	generateHardwareConfigArgs := []string{
+		"generate", "hardware",
+		"--skip-registration",
+		"-f", e.HardwareCsvLocation,
+		"-o", e.ClusterConfigFolder,
+	}
+
 	e.RunEKSA(generateHardwareConfigArgs, opts...)
 }
 

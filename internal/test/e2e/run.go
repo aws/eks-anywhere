@@ -247,7 +247,7 @@ func splitTests(testsList []string, conf ParallelRunConf) []instanceRunConf {
 				jobId:               fmt.Sprintf("%s-%d", conf.JobId, len(runConfs)),
 				parentJobId:         conf.JobId,
 				subnetId:            conf.SubnetId,
-				regex:               fmt.Sprintf("\"%s\"", strings.Join(testsInCurrentInstance, "|")),
+				regex:               strings.Join(testsInCurrentInstance, "|"),
 				bundlesOverride:     conf.BundlesOverride,
 				testReportFolder:    conf.TestReportFolder,
 				branchName:          conf.BranchName,

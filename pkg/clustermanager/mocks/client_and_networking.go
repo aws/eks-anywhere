@@ -604,33 +604,33 @@ func (m *MockNetworking) EXPECT() *MockNetworkingMockRecorder {
 }
 
 // GenerateManifest mocks base method.
-func (m *MockNetworking) GenerateManifest(arg0 context.Context, arg1 *cluster.Spec) ([]byte, error) {
+func (m *MockNetworking) GenerateManifest(arg0 context.Context, arg1 *cluster.Spec, arg2 []string) ([]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GenerateManifest", arg0, arg1)
+	ret := m.ctrl.Call(m, "GenerateManifest", arg0, arg1, arg2)
 	ret0, _ := ret[0].([]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GenerateManifest indicates an expected call of GenerateManifest.
-func (mr *MockNetworkingMockRecorder) GenerateManifest(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockNetworkingMockRecorder) GenerateManifest(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifest", reflect.TypeOf((*MockNetworking)(nil).GenerateManifest), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateManifest", reflect.TypeOf((*MockNetworking)(nil).GenerateManifest), arg0, arg1, arg2)
 }
 
 // Upgrade mocks base method.
-func (m *MockNetworking) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
+func (m *MockNetworking) Upgrade(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec, arg4 []string) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "Upgrade", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*types.ChangeDiff)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Upgrade indicates an expected call of Upgrade.
-func (mr *MockNetworkingMockRecorder) Upgrade(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockNetworkingMockRecorder) Upgrade(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockNetworking)(nil).Upgrade), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Upgrade", reflect.TypeOf((*MockNetworking)(nil).Upgrade), arg0, arg1, arg2, arg3, arg4)
 }
 
 // MockAwsIamAuth is a mock of AwsIamAuth interface.

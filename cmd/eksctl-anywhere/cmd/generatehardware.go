@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -16,12 +15,12 @@ import (
 )
 
 type hardwareOptions struct {
-	csvPath      string
-	outputPath   string
-	tinkerbellIp string
-	grpcPort     string
-	certPort     string
-	dryRun       bool
+	csvPath          string
+	outputPath       string
+	tinkerbellIp     string
+	grpcPort         string
+	certPort         string
+	skipRegistration bool
 }
 
 const (
@@ -29,12 +28,22 @@ const (
 	defaultCertPort = "42114"
 )
 
+// Flag name constants
+const (
+	generateHardwareFilenameFlagName     = "filename"
+	generateHardwareTinkerbellIpFlagName = "tinkerbell-ip"
+)
+
 var hOpts = &hardwareOptions{}
 
 var generateHardwareCmd = &cobra.Command{
 	Use:   "hardware",
 	Short: "Generate hardware files",
-	Long:  "This command is used to generate hardware JSON and YAML files used for tinkerbell provider",
+	Long: `
+Generate hardware JSON and YAML files used for Tinkerbell provider. Tinkerbell 
+hardware JSON are registered with a Tinkerbell stack. Use --skip-registration 
+to prevent Tinkerbell stack interactions.
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return hOpts.generateHardware(cmd.Context())
 	},
@@ -42,21 +51,30 @@ var generateHardwareCmd = &cobra.Command{
 
 func init() {
 	generateCmd.AddCommand(generateHardwareCmd)
-	generateHardwareCmd.Flags().StringVarP(&hOpts.csvPath, "filename", "f", "", "path to csv file")
-	generateHardwareCmd.Flags().StringVarP(&hOpts.outputPath, "output", "o", "", "directory path to output hardware files")
-	generateHardwareCmd.Flags().StringVar(&hOpts.tinkerbellIp, "tinkerbell-ip", "", "Tinkerbell stack IP, required unless --dry-run flag is set")
-	generateHardwareCmd.Flags().StringVar(&hOpts.grpcPort, "grpc-port", defaultGrpcPort, "Tinkerbell GRPC Authority port")
-	generateHardwareCmd.Flags().StringVar(&hOpts.certPort, "cert-port", defaultCertPort, "Tinkerbell Cert URL port")
-	generateHardwareCmd.Flags().BoolVar(&hOpts.dryRun, "dry-run", false, "set this flag to skip pushing Hardware to tinkerbell stack automatically")
-	err := generateHardwareCmd.MarkFlagRequired("filename")
-	if err != nil {
-		log.Fatalf("Error marking flag as required: %v", err)
+
+	flags := generateHardwareCmd.Flags()
+
+	flags.StringVarP(&hOpts.csvPath, generateHardwareFilenameFlagName, "f", "", "CSV file path")
+	if err := generateHardwareCmd.MarkFlagRequired(generateHardwareFilenameFlagName); err != nil {
+		panic(err)
 	}
+
+	flags.StringVar(&hOpts.tinkerbellIp, generateHardwareTinkerbellIpFlagName, "", "Tinkerbell stack IP address; not required with --skip-registration")
+	if err := generateHardwareCmd.MarkFlagRequired(generateHardwareTinkerbellIpFlagName); err != nil {
+		panic(err)
+	}
+
+	flags.StringVarP(&hOpts.outputPath, "output", "o", "", "directory path to output hardware files; Tinkerbell JSON files are stored under a \"json\" subdirectory")
+	flags.StringVar(&hOpts.grpcPort, "grpc-port", defaultGrpcPort, "Tinkerbell GRPC Authority port")
+	flags.StringVar(&hOpts.certPort, "cert-port", defaultCertPort, "Tinkerbell Cert URL port")
+	flags.BoolVar(&hOpts.skipRegistration, "skip-registration", false, "skip hardware registration with the Tinkerbell stack")
 }
 
 func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
-	if err := validateOptions(hOpts); err != nil {
-		return err
+	if !hOpts.skipRegistration {
+		if err := validateOptions(hOpts); err != nil {
+			return err
+		}
 	}
 
 	csvFile, err := os.Open(hOpts.csvPath)
@@ -99,12 +117,12 @@ func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
 		return err
 	}
 
-	if !hOpts.dryRun {
-		tink, close, err := tinkExecutableFromOpts(ctx, hOpts)
+	if !hOpts.skipRegistration {
+		tink, closer, err := tinkExecutableFromOpts(ctx, hOpts)
 		if err != nil {
 			return err
 		}
-		defer close.Close(ctx)
+		defer closer.Close(ctx)
 
 		if err := hardware.RegisterTinkerbellHardware(ctx, tink, journal); err != nil {
 			return err
@@ -115,18 +133,16 @@ func (hOpts *hardwareOptions) generateHardware(ctx context.Context) error {
 }
 
 func validateOptions(opts *hardwareOptions) error {
-	if !opts.dryRun {
-		if err := networkutils.ValidateIP(opts.tinkerbellIp); err != nil {
-			return fmt.Errorf("invalid tinkerbell-ip: %v", err)
-		}
+	if err := networkutils.ValidateIP(opts.tinkerbellIp); err != nil {
+		return fmt.Errorf("invalid tinkerbell-ip: %v", err)
+	}
 
-		if !networkutils.IsPortValid(opts.grpcPort) {
-			return fmt.Errorf("invalid grpc-port: %v", opts.certPort)
-		}
+	if !networkutils.IsPortValid(opts.grpcPort) {
+		return fmt.Errorf("invalid grpc-port: %v", opts.certPort)
+	}
 
-		if !networkutils.IsPortValid(opts.certPort) {
-			return fmt.Errorf("invalid cert-port: %v", opts.certPort)
-		}
+	if !networkutils.IsPortValid(opts.certPort) {
+		return fmt.Errorf("invalid cert-port: %v", opts.certPort)
 	}
 
 	return nil

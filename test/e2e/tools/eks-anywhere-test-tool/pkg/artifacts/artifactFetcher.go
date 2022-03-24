@@ -142,10 +142,10 @@ func excludedKey(key string) bool {
 
 func fileWriterRetrier() *retrier.Retrier {
 	return retrier.New(time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
-		rand.Seed(time.Now().UnixNano())
+		generator := rand.New(rand.NewSource(time.Now().UnixNano()))
 		minWait := 1
 		maxWait := 5
-		waitWithJitter := time.Duration(rand.Intn(maxWait-minWait)+minWait) * time.Second
+		waitWithJitter := time.Duration(generator.Intn(maxWait-minWait)+minWait) * time.Second
 		if isTooManyOpenFilesError(err) && totalRetries < 15 {
 			logger.V(2).Info("Too many files open, retrying")
 			return true, waitWithJitter
