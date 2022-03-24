@@ -1,19 +1,29 @@
 package cmd
 
 import (
+	"context"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
+	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/spf13/cobra"
 	"log"
 )
 
 type generatePackageOptions struct {
-	directory string
+	directory   string
+	source      string
+	kubeversion string
 }
 
 func init() {
 	generateCmd.AddCommand(generatePackageCommand)
 	generatePackageCommand.Flags().StringVarP(&gepo.directory, "directory", "d", "", "Directory to save generated packages")
-	err := generatePackageCommand.MarkFlagRequired("directory")
-	if err != nil {
+	generatePackageCommand.Flags().StringVar(&gepo.source, "source", "", "Location to find curated packages: (cluster, registry)")
+	listPackagesCommand.Flags().StringVar(&lpo.kubeVersion, "kubeversion", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
+
+	if err := generatePackageCommand.MarkFlagRequired("directory"); err != nil {
+		log.Fatalf("Error marking flag as required: %v", err)
+	}
+	if err := generatePackageCommand.MarkFlagRequired("source"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
 	}
 }
@@ -23,11 +33,33 @@ var gepo = &generatePackageOptions{}
 var generatePackageCommand = &cobra.Command{
 	Use:          "packages [flags]",
 	Aliases:      []string{"package", "packages"},
-	Short:        "Get package(s)",
-	Long:         "This command is used to display the curated packages installed in the cluster",
+	Short:        "Generate package(s)",
+	Long:         "This command is used to generate curated packages",
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return getResources(cmd.Context(), "packages", gpo.output, args)
-	},
+	RunE:         runGeneratePackages(),
+}
+
+func runGeneratePackages() func(cmd *cobra.Command, args []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		if err := sourceValidation(lpo.source); err != nil {
+			return err
+		}
+
+		if err := kubeVersionValidation(lpo.kubeVersion, lpo.source); err != nil {
+			return err
+		}
+		// TODO: Validate directory
+		return generatePackages(cmd.Context(), gepo, args)
+	}
+}
+
+func generatePackages(ctx context.Context, gepo *generatePackageOptions, args []string) error {
+	kubeConfig := kubeconfig.FromEnvironment()
+	bundle, err := curatedpackages.GetLatestBundle(ctx, kubeConfig, gepo.source, gepo.kubeversion)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -36,3 +36,8 @@ func convertBundleVersionToPackageVersion(bundleVersions []api.SourceVersion) []
 	}
 	return versions
 }
+
+func generatePackages(bundle *api.PackageBundle, args []string) ([]*api.Package, error) {
+
+	return nil, nil
+}
