@@ -88,7 +88,7 @@ func Cluster(clusterSpec *cluster.Spec, infrastructureObject, controlPlaneObject
 	return cluster
 }
 
-func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObject) *controlplanev1.KubeadmControlPlane {
+func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObject) (*controlplanev1.KubeadmControlPlane, error) {
 	replicas := int32(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count)
 
 	etcd := bootstrapv1.Etcd{}
@@ -106,7 +106,7 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 		}
 	}
 
-	return &controlplanev1.KubeadmControlPlane{
+	kcp := &controlplanev1.KubeadmControlPlane{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: kubeadmControlPlaneAPIVersion,
 			Kind:       kubeadmControlPlaneKind,
@@ -154,15 +154,26 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, infrastructureObject APIObje
 				},
 				PreKubeadmCommands:  []string{},
 				PostKubeadmCommands: []string{},
+				Files:               []bootstrapv1.File{},
 			},
 			Replicas: &replicas,
 			Version:  clusterSpec.VersionsBundle.KubeDistro.Kubernetes.Tag,
 		},
 	}
+
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		containerdFiles, containerdCommands, err := registryMirrorConfig(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration)
+		if err != nil {
+			return nil, fmt.Errorf("failed setting registry mirror configuration: %v", err)
+		}
+		kcp.Spec.KubeadmConfigSpec.Files = append(kcp.Spec.KubeadmConfigSpec.Files, containerdFiles...)
+		kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands, containerdCommands...)
+	}
+	return kcp, nil
 }
 
-func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) bootstrapv1.KubeadmConfigTemplate {
-	return bootstrapv1.KubeadmConfigTemplate{
+func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) (*bootstrapv1.KubeadmConfigTemplate, error) {
+	kct := &bootstrapv1.KubeadmConfigTemplate{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: bootstrapAPIVersion,
 			Kind:       kubeadmConfigTemplateKind,
@@ -191,10 +202,20 @@ func KubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1al
 					},
 					PreKubeadmCommands:  []string{},
 					PostKubeadmCommands: []string{},
+					Files:               []bootstrapv1.File{},
 				},
 			},
 		},
 	}
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		containerdFiles, containerdCommands, err := registryMirrorConfig(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration)
+		if err != nil {
+			return nil, fmt.Errorf("failed setting registry mirror configuration: %v", err)
+		}
+		kct.Spec.Template.Spec.Files = append(kct.Spec.Template.Spec.Files, containerdFiles...)
+		kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands, containerdCommands...)
+	}
+	return kct, nil
 }
 
 func MachineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, bootstrapObject, infrastructureObject APIObject) clusterv1.MachineDeployment {
