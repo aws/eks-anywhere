@@ -75,16 +75,16 @@ func (k *Kind) CreateBootstrapCluster(ctx context.Context, clusterSpec *cluster.
 		return "", err
 	}
 
-	kubeconfigName, err := k.createKubeConfig(clusterSpec.Name, []byte(""))
+	kubeconfigName, err := k.createKubeConfig(clusterSpec.Cluster.Name, []byte(""))
 	if err != nil {
 		return "", err
 	}
-	executionArgs := k.execArguments(clusterSpec.Name, kubeconfigName)
+	executionArgs := k.execArguments(clusterSpec.Cluster.Name, kubeconfigName)
 
-	logger.V(4).Info("Creating kind cluster", "name", getInternalName(clusterSpec.Name), "kubeconfig", kubeconfigName)
+	logger.V(4).Info("Creating kind cluster", "name", getInternalName(clusterSpec.Cluster.Name), "kubeconfig", kubeconfigName)
 	_, err = k.ExecuteWithEnv(ctx, k.execConfig.env, executionArgs...)
 	if err != nil {
-		return "", fmt.Errorf("error executing create cluster: %v", err)
+		return "", fmt.Errorf("executing create cluster: %v", err)
 	}
 
 	return kubeconfigName, nil
@@ -94,7 +94,7 @@ func (k *Kind) ClusterExists(ctx context.Context, clusterName string) (bool, err
 	internalName := getInternalName(clusterName)
 	stdOut, err := k.Execute(ctx, "get", "clusters")
 	if err != nil {
-		return false, fmt.Errorf("error executing get clusters: %v", err)
+		return false, fmt.Errorf("executing get clusters: %v", err)
 	}
 
 	logger.V(5).Info("Executed kind get clusters", "response", stdOut.String())
@@ -117,7 +117,7 @@ func (k *Kind) GetKubeconfig(ctx context.Context, clusterName string) (string, e
 	internalName := getInternalName(clusterName)
 	stdOut, err := k.Execute(ctx, "get", "kubeconfig", "--name", internalName)
 	if err != nil {
-		return "", fmt.Errorf("error executing get kubeconfig: %v", err)
+		return "", fmt.Errorf("executing get kubeconfig: %v", err)
 	}
 	return k.createKubeConfig(clusterName, stdOut.Bytes())
 }
@@ -177,7 +177,7 @@ func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluste
 	logger.V(4).Info("Deleting kind cluster", "name", internalName)
 	_, err := k.Execute(ctx, "delete", "cluster", "--name", internalName)
 	if err != nil {
-		return fmt.Errorf("error executing delete cluster: %v", err)
+		return fmt.Errorf("executing delete cluster: %v", err)
 	}
 	return err
 }
@@ -185,7 +185,7 @@ func (k *Kind) DeleteBootstrapCluster(ctx context.Context, cluster *types.Cluste
 func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 	bundle := clusterSpec.VersionsBundle
 	k.execConfig = &kindExecConfig{
-		KindImage:            clusterSpec.UseImageMirror(bundle.EksD.KindNode.VersionedImage()),
+		KindImage:            clusterSpec.Cluster.UseImageMirror(bundle.EksD.KindNode.VersionedImage()),
 		KubernetesRepository: bundle.KubeDistro.Kubernetes.Repository,
 		KubernetesVersion:    bundle.KubeDistro.Kubernetes.Tag,
 		EtcdRepository:       bundle.KubeDistro.Etcd.Repository,
@@ -194,14 +194,14 @@ func (k *Kind) setupExecConfig(clusterSpec *cluster.Spec) error {
 		CorednsVersion:       bundle.KubeDistro.CoreDNS.Tag,
 		env:                  make(map[string]string),
 	}
-	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
-		k.execConfig.RegistryMirrorEndpoint = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Spec.RegistryMirrorConfiguration.Port)
-		if clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent != "" {
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		k.execConfig.RegistryMirrorEndpoint = net.JoinHostPort(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint, clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
+		if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent != "" {
 			path := filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d", k.execConfig.RegistryMirrorEndpoint)
 			if err := os.MkdirAll(path, os.ModePerm); err != nil {
 				return err
 			}
-			if err := ioutil.WriteFile(filepath.Join(path, "ca.crt"), []byte(clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent), 0o644); err != nil {
+			if err := ioutil.WriteFile(filepath.Join(path, "ca.crt"), []byte(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent), 0o644); err != nil {
 				return errors.New("error writing the registry certification file")
 			}
 			k.execConfig.RegistryCACertPath = filepath.Join(clusterSpec.Cluster.Name, "generated", "certs.d")
@@ -218,7 +218,7 @@ func (k *Kind) buildConfigFile() error {
 	t := templater.New(k.writer)
 	writtenFileName, err := t.WriteToFile(kindConfigTemplate, k.execConfig, configFileName)
 	if err != nil {
-		return fmt.Errorf("error creating file for kind config: %v", err)
+		return fmt.Errorf("creating file for kind config: %v", err)
 	}
 
 	k.execConfig.ConfigFile = writtenFileName
@@ -239,7 +239,7 @@ func (k *Kind) execArguments(clusterName string, kubeconfigName string) []string
 func (k *Kind) createKubeConfig(clusterName string, content []byte) (string, error) {
 	fileName, err := k.writer.Write(fmt.Sprintf("%s.kind.kubeconfig", clusterName), content)
 	if err != nil {
-		return "", fmt.Errorf("error generating temp file for storing kind kubeconfig: %v", err)
+		return "", fmt.Errorf("generating temp file for storing kind kubeconfig: %v", err)
 	}
 	return fileName, nil
 }

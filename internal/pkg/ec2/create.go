@@ -94,7 +94,7 @@ func CreateInstance(session *session.Session, amiId, key, tag, instanceProfileNa
 	}
 	err = service.WaitUntilInstanceRunning(input)
 	if err != nil {
-		return "", fmt.Errorf("error waiting for instance: %v", err)
+		return "", fmt.Errorf("waiting for instance: %v", err)
 	}
 	logger.V(2).Info("Instance is running")
 

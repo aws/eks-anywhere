@@ -43,7 +43,7 @@ func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provide
 func (c *Upgrade) Run(ctx context.Context, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, validator interfaces.Validator, forceCleanup bool) error {
 	if forceCleanup {
 		if err := c.bootstrapper.DeleteBootstrapCluster(ctx, &types.Cluster{
-			Name: clusterSpec.Name,
+			Name: clusterSpec.Cluster.Name,
 		}, true); err != nil {
 			return err
 		}
@@ -160,7 +160,7 @@ func (s *ensureEtcdCAPIComponentsExistTask) Run(ctx context.Context, commandCont
 	target := getManagementCluster(commandContext)
 
 	logger.Info("Ensuring etcd CAPI providers exist on management cluster before upgrade")
-	currentSpec, err := commandContext.ClusterManager.GetCurrentClusterSpec(ctx, target, commandContext.ClusterSpec.Name)
+	currentSpec, err := commandContext.ClusterManager.GetCurrentClusterSpec(ctx, target, commandContext.ClusterSpec.Cluster.Name)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -182,7 +182,7 @@ func (s *upgradeCoreComponents) Run(ctx context.Context, commandContext *task.Co
 
 	logger.Info("Upgrading core components")
 
-	changeDiff, err := commandContext.ClusterManager.UpgradeNetworking(ctx, target, commandContext.CurrentClusterSpec, commandContext.ClusterSpec)
+	changeDiff, err := commandContext.ClusterManager.UpgradeNetworking(ctx, target, commandContext.CurrentClusterSpec, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -234,8 +234,8 @@ func (s *upgradeNeeded) Run(ctx context.Context, commandContext *task.CommandCon
 
 	target := getManagementCluster(commandContext)
 
-	datacenterConfig := commandContext.Provider.DatacenterConfig()
-	machineConfigs := commandContext.Provider.MachineConfigs()
+	datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
+	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
 	newSpec := commandContext.ClusterSpec
 	diff, err := commandContext.ClusterManager.EKSAClusterSpecChanged(ctx, target, newSpec, datacenterConfig, machineConfigs)
 	if err != nil {
@@ -384,8 +384,8 @@ func (s *updateClusterAndGitResources) Run(ctx context.Context, commandContext *
 	target := getManagementCluster(commandContext)
 
 	logger.Info("Applying new EKS-A cluster resource; resuming reconcile")
-	datacenterConfig := commandContext.Provider.DatacenterConfig()
-	machineConfigs := commandContext.Provider.MachineConfigs()
+	datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
+	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
 	err := commandContext.ClusterManager.CreateEKSAResources(ctx, target, commandContext.ClusterSpec, datacenterConfig, machineConfigs)
 	if err != nil {
 		commandContext.SetError(err)
@@ -437,7 +437,7 @@ func (s *resumeFluxReconcile) Name() string {
 
 func (s *writeClusterConfigTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Writing cluster config file")
-	err := clustermarshaller.WriteClusterConfig(commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(), commandContext.Provider.MachineConfigs(), commandContext.Writer)
+	err := clustermarshaller.WriteClusterConfig(commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec), commandContext.Provider.MachineConfigs(commandContext.ClusterSpec), commandContext.Writer)
 	if err != nil {
 		commandContext.SetError(err)
 	}

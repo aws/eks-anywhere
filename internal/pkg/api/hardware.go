@@ -9,6 +9,7 @@ import (
 	"github.com/gocarina/gocsv"
 
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 )
 
 const (
@@ -18,9 +19,16 @@ const (
 	HardwareVendorUnspecified = "unspecified"
 )
 
-type Hardware struct {
-	Id string `csv:"guid"`
-	hardware.Machine
+// Alias for backwards compatibility.
+type Hardware = hardware.Machine
+
+func NewBmcSecretConfig(h *Hardware) pbnj.BmcSecretConfig {
+	return pbnj.BmcSecretConfig{
+		Host:     h.BmcIpAddress,
+		Username: h.BmcUsername,
+		Password: h.BmcPassword,
+		Vendor:   h.BmcVendor,
+	}
 }
 
 func NewHardwareSlice(r io.Reader) ([]*Hardware, error) {

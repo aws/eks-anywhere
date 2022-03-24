@@ -7,7 +7,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -45,7 +44,6 @@ func TestVSphereKubernetes122Labels(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
@@ -60,14 +58,14 @@ func TestVSphereKubernetes122Labels(t *testing.T) {
 	)
 }
 
-func TestVSphereKubernetes121LabelsBottlerocket(t *testing.T) {
-	provider := bottlerocket121ProviderWithLabels(t)
+func TestVSphereKubernetes122LabelsBottlerocket(t *testing.T) {
+	provider := bottlerocket122ProviderWithLabels(t)
 
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(v1alpha1.Kube121),
+			api.WithKubernetesVersion(v1alpha1.Kube122),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
@@ -76,7 +74,7 @@ func TestVSphereKubernetes121LabelsBottlerocket(t *testing.T) {
 
 	runLabelsUpgradeFlow(
 		test,
-		v1alpha1.Kube121,
+		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(
 			api.WithWorkerNodeGroup(worker0, api.WithLabel(key1, val1)),
 			api.WithWorkerNodeGroup(worker1, api.WithLabel(key2, val2)),
@@ -106,7 +104,7 @@ func ubuntu122ProviderWithLabels(t *testing.T) *framework.VSphere {
 	)
 }
 
-func bottlerocket121ProviderWithLabels(t *testing.T) *framework.VSphere {
+func bottlerocket122ProviderWithLabels(t *testing.T) *framework.VSphere {
 	return framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
 			worker0,
@@ -122,6 +120,6 @@ func bottlerocket121ProviderWithLabels(t *testing.T) *framework.VSphere {
 			framework.WithWorkerNodeGroup(worker2, api.WithCount(1),
 				api.WithLabel(key2, val2)),
 		),
-		framework.WithBottleRocket121(),
+		framework.WithBottleRocket122(),
 	)
 }

@@ -105,14 +105,26 @@ metadata:
 spec:
   template:
     spec:
-      offering: {{.cloudstackOffering}}
-      template: {{.cloudstackTemplate}}
-      {{- if .cloudstackCustomDetails }}
+      offering:
+{{- if .cloudstackOfferingId }}
+        id: {{.cloudstackOfferingId}}
+{{- end}}
+{{- if .cloudstackOfferingName }}
+        name: {{.cloudstackOfferingName}}
+{{- end}}
+      template:
+{{- if .cloudstackTemplateId }}
+        id: {{.cloudstackTemplateId}}
+{{- end}}
+{{- if .cloudstackTemplateName }}
+        name: {{.cloudstackTemplateName}}
+{{- end}}
+{{- if .cloudstackCustomDetails }}
       details:
-      {{- range $key, $value := .cloudstackCustomDetails}}
+{{- range $key, $value := .cloudstackCustomDetails}}
         {{$key}}: {{$value}}
-      {{- end}}
-      {{- end}}
+{{- end}}
+{{- end}}
 {{- if .cloudstackAffinityGroupIds }}
       affinitygroupids:
       {{- range .cloudstackAffinityGroupIds}}

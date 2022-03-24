@@ -266,7 +266,6 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		"cluster-api-provider-aws":        r.GetCapaAssets,
 		"cluster-api-provider-docker":     r.GetDockerAssets,
 		"cluster-api-provider-vsphere":    r.GetCapvAssets,
-		"cluster-api-provider-cloudstack": r.GetCapcAssets,
 		"vsphere-csi-driver":              r.GetVsphereCsiAssets,
 		"cert-manager":                    r.GetCertManagerAssets,
 		"cilium":                          r.GetCiliumAssets,

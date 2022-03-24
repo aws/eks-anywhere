@@ -34,10 +34,6 @@ var (
 )
 
 type snowProvider struct {
-	// TODO: once cluster.config is available, remove below objs
-	datacenterConfig      *v1alpha1.SnowDatacenterConfig
-	machineConfigs        map[string]*v1alpha1.SnowMachineConfig
-	clusterConfig         *v1alpha1.Cluster
 	providerKubectlClient ProviderKubectlClient
 	writer                filewriter.FileWriter
 	retrier               *retrier.Retrier
@@ -49,12 +45,9 @@ type ProviderKubectlClient interface {
 	DeleteEksaMachineConfig(ctx context.Context, snowMachineResourceType string, snowMachineConfigName string, kubeconfigFile string, namespace string) error
 }
 
-func NewProvider(datacenterConfig *v1alpha1.SnowDatacenterConfig, machineConfigs map[string]*v1alpha1.SnowMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc) *snowProvider {
+func NewProvider(providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc) *snowProvider {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	return &snowProvider{
-		datacenterConfig:      datacenterConfig,
-		machineConfigs:        machineConfigs,
-		clusterConfig:         clusterConfig,
 		providerKubectlClient: providerKubectlClient,
 		writer:                writer,
 		retrier:               retrier,
@@ -65,18 +58,18 @@ func (p *snowProvider) Name() string {
 	return constants.SnowProviderName
 }
 
-func (p *snowProvider) setupMachineConfigs() {
-	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
+func (p *snowProvider) setupMachineConfigs(clusterSpec *cluster.Spec) {
+	controlPlaneMachineName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	clusterSpec.SnowMachineConfigs[controlPlaneMachineName].Annotations = map[string]string{clusterSpec.Cluster.ControlPlaneAnnotation(): "true"}
 
-	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
+	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		clusterSpec.SnowMachineConfigs[etcdMachineName].Annotations = map[string]string{clusterSpec.Cluster.EtcdAnnotation(): "true"}
 	}
 
-	if p.clusterConfig.IsManaged() {
-		for _, mc := range p.machineConfigs {
-			mc.SetManagedBy(p.clusterConfig.ManagedBy())
+	if clusterSpec.Cluster.IsManaged() {
+		for _, mc := range clusterSpec.SnowMachineConfigs {
+			mc.SetManagedBy(clusterSpec.Cluster.ManagedBy())
 		}
 	}
 }
@@ -85,7 +78,7 @@ func (p *snowProvider) SetupAndValidateCreateCluster(ctx context.Context, cluste
 	if err := p.setupBootstrapCreds(); err != nil {
 		return fmt.Errorf("failed setting up credentials: %v", err)
 	}
-	p.setupMachineConfigs()
+	p.setupMachineConfigs(clusterSpec)
 	return nil
 }
 
@@ -104,17 +97,23 @@ func (p *snowProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster
 	return nil
 }
 
-func ControlPlaneObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) []runtime.Object {
+func ControlPlaneObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) ([]runtime.Object, error) {
 	snowCluster := SnowCluster(clusterSpec)
-	controlPlaneMachineTemplate := SnowMachineTemplate(machineConfigs[clusterSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
-	kubeadmControlPlane := KubeadmControlPlane(clusterSpec, controlPlaneMachineTemplate)
+	controlPlaneMachineTemplate := SnowMachineTemplate(machineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
+	kubeadmControlPlane, err := KubeadmControlPlane(clusterSpec, controlPlaneMachineTemplate)
+	if err != nil {
+		return nil, err
+	}
 	capiCluster := CAPICluster(clusterSpec, snowCluster, kubeadmControlPlane)
 
-	return []runtime.Object{capiCluster, snowCluster, kubeadmControlPlane, controlPlaneMachineTemplate}
+	return []runtime.Object{capiCluster, snowCluster, kubeadmControlPlane, controlPlaneMachineTemplate}, nil
 }
 
-func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) []runtime.Object {
-	kubeadmConfigTemplates := KubeadmConfigTemplates(clusterSpec)
+func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) ([]runtime.Object, error) {
+	kubeadmConfigTemplates, err := KubeadmConfigTemplates(clusterSpec)
+	if err != nil {
+		return nil, err
+	}
 	workerMachineTemplates := SnowMachineTemplates(clusterSpec, machineConfigs)
 	machineDeployments := MachineDeployments(clusterSpec, kubeadmConfigTemplates, workerMachineTemplates)
 
@@ -129,16 +128,26 @@ func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alph
 		workersObjs = append(workersObjs, item)
 	}
 
-	return workersObjs
+	return workersObjs, nil
 }
 
 func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, err = templater.ObjectsToYaml(ControlPlaneObjects(clusterSpec, p.machineConfigs)...)
+	controlPlaneObjs, err := ControlPlaneObjects(clusterSpec, clusterSpec.SnowMachineConfigs)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	workersSpec, err = templater.ObjectsToYaml(WorkersObjects(clusterSpec, p.machineConfigs)...)
+	controlPlaneSpec, err = templater.ObjectsToYaml(controlPlaneObjs...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	workersObjs, err := WorkersObjects(clusterSpec, clusterSpec.SnowMachineConfigs)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	workersSpec, err = templater.ObjectsToYaml(workersObjs...)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -200,8 +209,8 @@ func (p *snowProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types
 	return &infraBundle
 }
 
-func (p *snowProvider) DatacenterConfig() providers.DatacenterConfig {
-	return p.datacenterConfig
+func (p *snowProvider) DatacenterConfig(clusterSpec *cluster.Spec) providers.DatacenterConfig {
+	return clusterSpec.SnowDatacenter
 }
 
 func (p *snowProvider) DatacenterResourceType() string {
@@ -212,9 +221,9 @@ func (p *snowProvider) MachineResourceType() string {
 	return snowMachineResourceType
 }
 
-func (p *snowProvider) MachineConfigs() []providers.MachineConfig {
-	configs := make([]providers.MachineConfig, 0, len(p.machineConfigs))
-	for _, mc := range p.machineConfigs {
+func (p *snowProvider) MachineConfigs(clusterSpec *cluster.Spec) []providers.MachineConfig {
+	configs := make([]providers.MachineConfig, 0, len(clusterSpec.SnowMachineConfigs))
+	for _, mc := range clusterSpec.SnowMachineConfigs {
 		configs = append(configs, mc)
 	}
 	return configs
@@ -241,12 +250,12 @@ func (p *snowProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *
 }
 
 func (p *snowProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {
-	for _, mc := range p.machineConfigs {
+	for _, mc := range clusterSpec.SnowMachineConfigs {
 		if err := p.providerKubectlClient.DeleteEksaMachineConfig(ctx, snowMachineResourceType, mc.Name, clusterSpec.ManagementCluster.KubeconfigFile, mc.Namespace); err != nil {
 			return err
 		}
 	}
-	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx, snowDatacenterResourceType, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
+	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx, snowDatacenterResourceType, clusterSpec.SnowDatacenter.GetName(), clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.SnowDatacenter.GetNamespace())
 }
 
 func (p *snowProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {

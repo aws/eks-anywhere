@@ -15,10 +15,11 @@ func gitOpsEntry() *ConfigManagerEntry {
 		},
 		Processors: []ParsedProcessor{processGitOps},
 		Defaulters: []Defaulter{
-			func(c *Config) {
+			func(c *Config) error {
 				if c.GitOpsConfig != nil {
 					c.GitOpsConfig.SetDefaults()
 				}
+				return nil
 			},
 			SetDefaultFluxGitHubConfigPath,
 		},
@@ -56,14 +57,14 @@ func processGitOps(c *Config, objects ObjectLookup) {
 	}
 }
 
-func SetDefaultFluxGitHubConfigPath(c *Config) {
+func SetDefaultFluxGitHubConfigPath(c *Config) error {
 	if c.GitOpsConfig == nil {
-		return
+		return nil
 	}
 
 	gitops := c.GitOpsConfig
 	if gitops.Spec.Flux.Github.ClusterConfigPath != "" {
-		return
+		return nil
 	}
 
 	if c.Cluster.IsSelfManaged() {
@@ -71,4 +72,5 @@ func SetDefaultFluxGitHubConfigPath(c *Config) {
 	} else {
 		gitops.Spec.Flux.Github.ClusterConfigPath = path.Join("clusters", c.Cluster.ManagedBy())
 	}
+	return nil
 }

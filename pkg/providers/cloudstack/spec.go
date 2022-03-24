@@ -13,7 +13,7 @@ type Spec struct {
 
 func NewSpec(clusterSpec *cluster.Spec, machineConfigs map[string]*anywherev1.CloudStackMachineConfig, datacenterConfig *anywherev1.CloudStackDatacenterConfig) *Spec {
 	machineConfigsInCluster := map[string]*anywherev1.CloudStackMachineConfig{}
-	for _, m := range clusterSpec.MachineConfigRefs() {
+	for _, m := range clusterSpec.Cluster.MachineConfigRefs() {
 		machineConfig, ok := machineConfigs[m.Name]
 		if !ok {
 			continue

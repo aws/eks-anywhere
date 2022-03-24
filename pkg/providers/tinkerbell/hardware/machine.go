@@ -5,13 +5,14 @@ import (
 	"net"
 	"strings"
 
+	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
+
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
 
 // Machine is a machine configuration with optional BMC interface configuration.
 type Machine struct {
-	// Id uniquely identifies this machine. It is programmatically generated so is not readable from CSV.
-	Id          string      `csv:"-"`
+	Id          string      `csv:"id"`
 	IpAddress   string      `csv:"ip_address"`
 	Gateway     string      `csv:"gateway"`
 	Nameservers Nameservers `csv:"nameservers"`
@@ -25,7 +26,7 @@ type Machine struct {
 	BmcVendor    string `csv:"vendor"`
 }
 
-// HasBmc determines if m has a Bmc configuration. A Bmc connifiguration is present if any of the Bmc fields
+// HasBmc determines if m has a Bmc configuration. A Bmc configuration is present if any of the Bmc fields
 // contain non-empty strings.
 func (m *Machine) HasBmc() bool {
 	return m.BmcIpAddress != "" || m.BmcUsername != "" || m.BmcPassword != "" || m.BmcVendor != ""
@@ -77,6 +78,10 @@ func (m *Machine) Validate() error {
 
 	if m.Hostname == "" {
 		return newEmptyFieldError("Hostname")
+	}
+
+	if errs := apimachineryvalidation.IsDNS1123Subdomain(m.Hostname); len(errs) > 0 {
+		return fmt.Errorf("invalid hostname: %v: %v", m.Hostname, errs)
 	}
 
 	if m.HasBmc() {

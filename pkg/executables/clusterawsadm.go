@@ -22,7 +22,7 @@ func (c *Clusterawsadm) BootstrapIam(ctx context.Context, envs map[string]string
 	_, err := c.ExecuteWithEnv(ctx, envs, "bootstrap", "iam", "create-cloudformation-stack",
 		"--config", configFile)
 	if err != nil {
-		return fmt.Errorf("error executing bootstrap iam: %v", err)
+		return fmt.Errorf("executing bootstrap iam: %v", err)
 	}
 	return err
 }
@@ -30,7 +30,7 @@ func (c *Clusterawsadm) BootstrapIam(ctx context.Context, envs map[string]string
 func (c *Clusterawsadm) BootstrapCreds(ctx context.Context, envs map[string]string) (string, error) {
 	stdOut, err := c.ExecuteWithEnv(ctx, envs, "bootstrap", "credentials", "encode-as-profile")
 	if err != nil {
-		return "", fmt.Errorf("error executing bootstrap credentials: %v", err)
+		return "", fmt.Errorf("executing bootstrap credentials: %v", err)
 	}
 	return stdOut.String(), nil
 }
@@ -38,7 +38,7 @@ func (c *Clusterawsadm) BootstrapCreds(ctx context.Context, envs map[string]stri
 func (c *Clusterawsadm) ListAccessKeys(ctx context.Context, userName string) (string, error) {
 	stdOut, err := c.Execute(ctx, "aws", "iam", "list-access-keys", "--user-name", userName)
 	if err != nil {
-		return "", fmt.Errorf("error listing user keys: %v", err)
+		return "", fmt.Errorf("listing user keys: %v", err)
 	}
 	return stdOut.String(), nil
 }

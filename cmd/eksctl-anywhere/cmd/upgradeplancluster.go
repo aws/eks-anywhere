@@ -85,12 +85,12 @@ func (uc *upgradeClusterOptions) upgradePlanCluster(ctx context.Context) error {
 	}
 
 	workloadCluster := &types.Cluster{
-		Name:           newClusterSpec.Name,
-		KubeconfigFile: getKubeconfigPath(newClusterSpec.Name, uc.wConfig),
+		Name:           newClusterSpec.Cluster.Name,
+		KubeconfigFile: getKubeconfigPath(newClusterSpec.Cluster.Name, uc.wConfig),
 	}
 
 	logger.V(0).Info("Checking new release availability...")
-	currentSpec, err := deps.ClusterManager.GetCurrentClusterSpec(ctx, workloadCluster, newClusterSpec.Name)
+	currentSpec, err := deps.ClusterManager.GetCurrentClusterSpec(ctx, workloadCluster, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return err
 	}

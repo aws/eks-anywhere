@@ -131,5 +131,8 @@ func TestDockerUpgradeWorkloadClusterWithFlux(t *testing.T) {
 			api.WithControlPlaneCount(2),
 			api.WithWorkerNodeCount(2),
 		),
+		// Needed in order to replace the DockerDatacenterConfig namespace field with the value specified
+		// compared to when it was initially created without it.
+		provider.WithProviderUpgradeGit(),
 	)
 }

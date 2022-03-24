@@ -60,7 +60,7 @@ func newCreateTest(t *testing.T) *createTestSetup {
 		machineConfigs:   machineConfigs,
 		workflow:         workflow,
 		ctx:              context.Background(),
-		clusterSpec:      test.NewClusterSpec(func(s *cluster.Spec) { s.Name = "cluster-name"; s.Annotations = map[string]string{} }),
+		clusterSpec:      test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "cluster-name"; s.Cluster.Annotations = map[string]string{} }),
 		bootstrapCluster: &types.Cluster{Name: "bootstrap"},
 		workloadCluster:  &types.Cluster{Name: "workload"},
 	}
@@ -97,7 +97,7 @@ func (c *createTestSetup) expectCreateWorkload() {
 		).Return(c.workloadCluster, nil),
 
 		c.clusterManager.EXPECT().InstallNetworking(
-			c.ctx, c.workloadCluster, c.clusterSpec,
+			c.ctx, c.workloadCluster, c.clusterSpec, c.provider,
 		),
 		c.clusterManager.EXPECT().InstallStorageClass(
 			c.ctx, c.workloadCluster, c.provider,
@@ -116,7 +116,7 @@ func (c *createTestSetup) expectCreateWorkloadSkipCAPI() {
 		).Return(c.workloadCluster, nil),
 
 		c.clusterManager.EXPECT().InstallNetworking(
-			c.ctx, c.workloadCluster, c.clusterSpec,
+			c.ctx, c.workloadCluster, c.clusterSpec, c.provider,
 		),
 		c.clusterManager.EXPECT().InstallStorageClass(
 			c.ctx, c.workloadCluster, c.provider,
@@ -145,9 +145,9 @@ func (c *createTestSetup) expectInstallEksaComponents() {
 		c.clusterManager.EXPECT().InstallCustomComponents(
 			c.ctx, c.clusterSpec, c.workloadCluster),
 
-		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
+		c.provider.EXPECT().DatacenterConfig(c.clusterSpec).Return(c.datacenterConfig),
 
-		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
+		c.provider.EXPECT().MachineConfigs(c.clusterSpec).Return(c.machineConfigs),
 
 		c.clusterManager.EXPECT().CreateEKSAResources(
 			c.ctx, c.workloadCluster, c.clusterSpec, c.datacenterConfig, c.machineConfigs,
@@ -162,9 +162,9 @@ func (c *createTestSetup) skipInstallEksaComponents() {
 		c.clusterManager.EXPECT().InstallCustomComponents(
 			c.ctx, c.clusterSpec, c.workloadCluster).Times(0),
 
-		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
+		c.provider.EXPECT().DatacenterConfig(c.clusterSpec).Return(c.datacenterConfig),
 
-		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
+		c.provider.EXPECT().MachineConfigs(c.clusterSpec).Return(c.machineConfigs),
 
 		c.clusterManager.EXPECT().CreateEKSAResources(
 			c.ctx, c.bootstrapCluster, c.clusterSpec, c.datacenterConfig, c.machineConfigs,
@@ -176,8 +176,8 @@ func (c *createTestSetup) skipInstallEksaComponents() {
 
 func (c *createTestSetup) expectInstallAddonManager() {
 	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
-		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
+		c.provider.EXPECT().DatacenterConfig(c.clusterSpec).Return(c.datacenterConfig),
+		c.provider.EXPECT().MachineConfigs(c.clusterSpec).Return(c.machineConfigs),
 
 		c.addonManager.EXPECT().InstallGitOps(
 			c.ctx, c.workloadCluster, c.clusterSpec, c.datacenterConfig, c.machineConfigs),
@@ -186,8 +186,8 @@ func (c *createTestSetup) expectInstallAddonManager() {
 
 func (c *createTestSetup) expectWriteClusterConfig() {
 	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
-		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
+		c.provider.EXPECT().DatacenterConfig(c.clusterSpec).Return(c.datacenterConfig),
+		c.provider.EXPECT().MachineConfigs(c.clusterSpec).Return(c.machineConfigs),
 		c.writer.EXPECT().Write("cluster-name-eks-a-cluster.yaml", gomock.Any(), gomock.Any()),
 	)
 }

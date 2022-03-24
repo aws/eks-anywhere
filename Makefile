@@ -31,19 +31,20 @@ UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 BRANCH_NAME?=main
 ifeq (,$(findstring $(BRANCH_NAME),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
+DEV_GIT_VERSION:=v0.0.0-dev-${BRANCH_NAME}
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${BRANCH_NAME}/bundle-release.yaml
+RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${BRANCH_NAME}/eks-a-release.yaml
 LATEST=$(BRANCH_NAME)
-$(info    Using branch-specific BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
+$(info    Using branch-specific BUNDLE_MANIFEST_URL $(BUNDLE_MANIFEST_URL) and RELEASE_MANIFEST_URL $(RELEASE_MANIFEST_URL))
 else
 ## use the standard bundle manifest if the branch is 'main'
+DEV_GIT_VERSION:=v0.0.0-dev
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml
-$(info    Using stanard BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
+RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
+$(info    Using standard BUNDLE_MANIFEST_URL $(BUNDLE_MANIFEST_URL) and RELEASE_MANIFEST_URL $(RELEASE_MANIFEST_URL))
 LATEST=latest
 endif
 
-RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
-
-DEV_GIT_VERSION:=v0.0.0-dev
 CUSTOM_GIT_VERSION:=v0.0.0-custom
 
 AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output text)
@@ -332,7 +333,7 @@ clean: ## Clean up resources created by make targets
 	rm -rf ./bin/*
 	rm -rf ./pkg/executables/cluster-name/
 	rm -rf ./pkg/providers/vsphere/test/
-	find . -depth -name 'folderWriter*' -exec rm -rf {} \;
+	find . -depth -type d -regextype posix-egrep -regex '.*\/Test.*-[0-9]{9}\/.*' -exec rm -rf {} \;
 	rm -rf ./controllers/bin/*
 	rm -rf ./hack/tools/bin
 	rm -rf vendor
@@ -416,6 +417,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/cilium.go -package=mocks -source "pkg/networking/cilium/cilium.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networkutils/mocks/client.go -package=mocks -source "pkg/networkutils/netclient.go" NetClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/hardware/mocks/translate.go -package=mocks -source "pkg/providers/tinkerbell/hardware/translate.go" MachineReader,MachineWriter,MachineValidator
+	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/hardware/mocks/json.go -package=mocks -source "pkg/providers/tinkerbell/hardware/json.go" TinkerbellHardwareJsonFactory,TinkerbellHardwarePusher
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated

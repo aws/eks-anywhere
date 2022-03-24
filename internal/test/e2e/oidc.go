@@ -32,7 +32,7 @@ func (e *E2ESession) setupOIDC(testRegex string) error {
 	logger.V(1).Info("OIDC test found. Checking if OIDC folder present in bucket")
 	oidcPresent, err := s3.ObjectPresent(e.session, filepath.Join(e.jobId, keysPath), e.storageBucket)
 	if err != nil {
-		return fmt.Errorf("error checking if oidc is present in bucket: %v", err)
+		return fmt.Errorf("checking if oidc is present in bucket: %v", err)
 	}
 
 	if !oidcPresent {
@@ -67,28 +67,28 @@ func (e *E2ESession) setupOIDC(testRegex string) error {
 func (e *E2ESession) createOIDCFiles(issuerURL, folder string) error {
 	provider, err := oidc.GenerateMinimalProvider(issuerURL)
 	if err != nil {
-		return fmt.Errorf("error setting up generating oidc provider for s3: %v", err)
+		return fmt.Errorf("setting up generating oidc provider for s3: %v", err)
 	}
 
 	logger.V(2).Info("Uploading OIDC discovery file to S3")
 	discoveryKey := filepath.Join(folder, openIDConfPath)
 	err = s3.Upload(e.session, provider.Discovery, discoveryKey, e.storageBucket, s3.WithPublicRead())
 	if err != nil {
-		return fmt.Errorf("error uploading oidc openid-configuration to s3: %v", err)
+		return fmt.Errorf("uploading oidc openid-configuration to s3: %v", err)
 	}
 
 	logger.V(2).Info("Uploading OIDC keys file to S3")
 	keysKey := filepath.Join(folder, keysPath)
 	err = s3.Upload(e.session, provider.Keys, keysKey, e.storageBucket, s3.WithPublicRead())
 	if err != nil {
-		return fmt.Errorf("error uploading oidc keys.json to s3: %v", err)
+		return fmt.Errorf("uploading oidc keys.json to s3: %v", err)
 	}
 
 	logger.V(2).Info("Uploading OIDC signer key to S3")
 	saSignerKey := filepath.Join(folder, saSignerPath)
 	err = s3.Upload(e.session, provider.PrivateKey, saSignerKey, e.storageBucket)
 	if err != nil {
-		return fmt.Errorf("error uploading oidc sa-signer.key to s3: %v", err)
+		return fmt.Errorf("uploading oidc sa-signer.key to s3: %v", err)
 	}
 
 	return nil
@@ -99,12 +99,12 @@ func (e *E2ESession) getKeyID(folder string) (string, error) {
 	logger.V(2).Info("Downloading keys.json file from s3")
 	keysBytes, err := s3.Download(e.session, keysKey, e.storageBucket)
 	if err != nil {
-		return "", fmt.Errorf("error downloading keys.json to get kid: %v", err)
+		return "", fmt.Errorf("downloading keys.json to get kid: %v", err)
 	}
 
 	keyID, err := oidc.GetKeyID(keysBytes)
 	if err != nil {
-		return "", fmt.Errorf("error getting kid from s3: %v", err)
+		return "", fmt.Errorf("getting kid from s3: %v", err)
 	}
 
 	return keyID, nil
@@ -116,7 +116,7 @@ func (e *E2ESession) downloadSignerKeyInInstance(folder string) (pathInInstance 
 	command := fmt.Sprintf("aws s3 cp s3://%s/%s ./%s", e.storageBucket, saSignerKey, saSignerPath)
 
 	if err = ssm.Run(e.session, e.instanceId, command); err != nil {
-		return "", fmt.Errorf("error downloading signer key in instance: %v", err)
+		return "", fmt.Errorf("downloading signer key in instance: %v", err)
 	}
 	logger.V(1).Info("Successfully downloaded signer key")
 

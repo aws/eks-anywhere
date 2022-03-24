@@ -311,9 +311,11 @@ type ClusterNetwork struct {
 	// Defaults to 192.168.0.0/16 for pod subnet.
 	Pods     Pods     `json:"pods,omitempty"`
 	Services Services `json:"services,omitempty"`
-	// CNI specifies the CNI plugin to be installed in the cluster
+	// Deprecated. Use CNIConfig
 	CNI CNI `json:"cni,omitempty"`
-	DNS DNS `json:"dns,omitempty"`
+	// CNIConfig specifies the CNI plugin to be installed in the cluster
+	CNIConfig *CNIConfig `json:"cniConfig,omitempty"`
+	DNS       DNS        `json:"dns,omitempty"`
 }
 
 func (n *ClusterNetwork) Equal(o *ClusterNetwork) bool {
@@ -323,9 +325,121 @@ func (n *ClusterNetwork) Equal(o *ClusterNetwork) bool {
 	if n == nil || o == nil {
 		return false
 	}
-	return SliceEqual(n.Pods.CidrBlocks, o.Pods.CidrBlocks) &&
-		SliceEqual(n.Services.CidrBlocks, o.Services.CidrBlocks) &&
-		n.CNI == o.CNI && n.DNS.ResolvConf.Equal(o.DNS.ResolvConf)
+
+	if !CNIPluginSame(*n, *o) {
+		return false
+	}
+
+	oldCNIConfig := getCNIConfig(o)
+	newCNIConfig := getCNIConfig(n)
+	if !newCNIConfig.Equal(oldCNIConfig) {
+		return false
+	}
+
+	return n.Pods.Equal(&o.Pods) && n.Services.Equal(&o.Services) && n.DNS.Equal(&o.DNS)
+}
+
+func getCNIConfig(cn *ClusterNetwork) *CNIConfig {
+	/* Only needed since we're introducing CNIConfig to replace the deprecated CNI field. This way we can compare the individual fields
+	for the CNI plugin configuration*/
+	var tempCNIConfig *CNIConfig
+	if cn.CNIConfig == nil {
+		// This is for upgrading from release-0.7, to ensure that all oCNIConfig fields, such as policyEnforcementMode have the default values
+		switch cn.CNI {
+		case Cilium, CiliumEnterprise:
+			tempCNIConfig = &CNIConfig{Cilium: &CiliumConfig{}}
+		case Kindnetd:
+			tempCNIConfig = &CNIConfig{Kindnetd: &KindnetdConfig{}}
+		}
+	} else {
+		tempCNIConfig = cn.CNIConfig
+	}
+	return tempCNIConfig
+}
+
+func (n *Pods) Equal(o *Pods) bool {
+	return SliceEqual(n.CidrBlocks, o.CidrBlocks)
+}
+
+func (n *Services) Equal(o *Services) bool {
+	return SliceEqual(n.CidrBlocks, o.CidrBlocks)
+}
+
+func (n *DNS) Equal(o *DNS) bool {
+	return n.ResolvConf.Equal(o.ResolvConf)
+}
+
+func (n *CNIConfig) Equal(o *CNIConfig) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	if !n.Cilium.Equal(o.Cilium) {
+		return false
+	}
+	if !n.Kindnetd.Equal(o.Kindnetd) {
+		return false
+	}
+	return true
+}
+
+func (n *CiliumConfig) Equal(o *CiliumConfig) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return n.PolicyEnforcementMode == o.PolicyEnforcementMode
+}
+
+func (n *KindnetdConfig) Equal(o *KindnetdConfig) bool {
+	if n == o {
+		return true
+	}
+	if n == nil || o == nil {
+		return false
+	}
+	return true
+}
+
+func CNIPluginSame(n ClusterNetwork, o ClusterNetwork) bool {
+	if n.CNI != "" {
+		/*This shouldn't be required since we set CNIConfig and unset CNI as part of cluster_defaults. However, while upgrading an existing cluster, the eks-a controller
+		does not set any defaults (no mutating webhook), so it gets stuck in an error loop. Adding these checks to avoid that. We can remove it when removing the CNI field
+		in a later release*/
+		return o.CNI == n.CNI
+	}
+
+	if n.CNIConfig != nil {
+		if o.CNI != "" {
+			switch o.CNI {
+			case Cilium, CiliumEnterprise:
+				if n.CNIConfig.Cilium == nil {
+					return false
+				}
+			case Kindnetd:
+				if n.CNIConfig.Kindnetd == nil {
+					return false
+				}
+			default:
+				return false
+			}
+			return true
+		}
+		if o.CNIConfig != nil {
+			if (n.CNIConfig.Cilium != nil && o.CNIConfig.Cilium == nil) || (n.CNIConfig.Cilium == nil && o.CNIConfig.Cilium != nil) {
+				return false
+			}
+			if (n.CNIConfig.Kindnetd != nil && o.CNIConfig.Kindnetd == nil) || (n.CNIConfig.Kindnetd == nil && o.CNIConfig.Kindnetd != nil) {
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 func SliceEqual(a, b []string) bool {
@@ -410,6 +524,20 @@ const (
 
 type CNI string
 
+type CiliumPolicyEnforcementMode string
+
+type CNIConfig struct {
+	Cilium   *CiliumConfig   `json:"cilium,omitempty"`
+	Kindnetd *KindnetdConfig `json:"kindnetd,omitempty"`
+}
+
+type CiliumConfig struct {
+	// PolicyEnforcementMode determines communication allowed between pods. Accepted values are default, always, never.
+	PolicyEnforcementMode CiliumPolicyEnforcementMode `json:"policyEnforcementMode,omitempty"`
+}
+
+type KindnetdConfig struct{}
+
 const (
 	Cilium           CNI = "cilium"
 	CiliumEnterprise CNI = "cilium-enterprise"
@@ -419,6 +547,18 @@ const (
 var validCNIs = map[CNI]struct{}{
 	Cilium:   {},
 	Kindnetd: {},
+}
+
+const (
+	CiliumPolicyModeDefault CiliumPolicyEnforcementMode = "default"
+	CiliumPolicyModeAlways  CiliumPolicyEnforcementMode = "always"
+	CiliumPolicyModeNever   CiliumPolicyEnforcementMode = "never"
+)
+
+var validCiliumPolicyEnforcementModes = map[CiliumPolicyEnforcementMode]bool{
+	CiliumPolicyModeAlways:  true,
+	CiliumPolicyModeDefault: true,
+	CiliumPolicyModeNever:   true,
 }
 
 // ClusterStatus defines the observed state of Cluster

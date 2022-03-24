@@ -18,7 +18,9 @@ func TestParseConfig(t *testing.T) {
 		wantCluster               *anywherev1.Cluster
 		wantVsphereDatacenter     *anywherev1.VSphereDatacenterConfig
 		wantDockerDatacenter      *anywherev1.DockerDatacenterConfig
+		wantSnowDatacenter        *anywherev1.SnowDatacenterConfig
 		wantVsphereMachineConfigs []*anywherev1.VSphereMachineConfig
+		wantSnowMachineConfigs    []*anywherev1.SnowMachineConfig
 		wantOIDCConfigs           []*anywherev1.OIDCConfig
 		wantAWSIamConfigs         []*anywherev1.AWSIamConfig
 		wantGitOpsConfig          *anywherev1.GitOpsConfig
@@ -123,6 +125,93 @@ func TestParseConfig(t *testing.T) {
 							Name:              "mySshUsername",
 							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
 						}},
+					},
+				},
+			},
+		},
+		{
+			name:         "snow cluster",
+			yamlManifest: []byte(test.ReadFile(t, "testdata/cluster_snow_1_21.yaml")),
+			wantCluster: &anywherev1.Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       anywherev1.ClusterKind,
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: anywherev1.ClusterSpec{
+					KubernetesVersion: "1.21",
+					ControlPlaneConfiguration: anywherev1.ControlPlaneConfiguration{
+						Count:    1,
+						Endpoint: &anywherev1.Endpoint{Host: "myHostIp"},
+						MachineGroupRef: &anywherev1.Ref{
+							Kind: "SnowMachineConfig",
+							Name: "eksa-unit-test-cp",
+						},
+					},
+					WorkerNodeGroupConfigurations: []anywherev1.WorkerNodeGroupConfiguration{
+						{
+							Name:  "workers-1",
+							Count: 1,
+							MachineGroupRef: &anywherev1.Ref{
+								Kind: "SnowMachineConfig",
+								Name: "eksa-unit-test",
+							},
+						},
+					},
+					DatacenterRef: anywherev1.Ref{
+						Kind: "SnowDatacenterConfig",
+						Name: "eksa-unit-test",
+					},
+					ClusterNetwork: anywherev1.ClusterNetwork{
+						Pods: anywherev1.Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: anywherev1.Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+						CNI: "cilium",
+					},
+				},
+			},
+			wantSnowDatacenter: &anywherev1.SnowDatacenterConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       anywherev1.SnowDatacenterKind,
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: anywherev1.SnowDatacenterConfigSpec{},
+			},
+			wantSnowMachineConfigs: []*anywherev1.SnowMachineConfig{
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       anywherev1.SnowMachineConfigKind,
+						APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "eksa-unit-test-cp",
+					},
+					Spec: anywherev1.SnowMachineConfigSpec{
+						AMIID:        "eks-d-v1-21-ami",
+						InstanceType: "sbe-c.large",
+						SshKeyName:   "default",
+					},
+				},
+				{
+					TypeMeta: metav1.TypeMeta{
+						Kind:       anywherev1.SnowMachineConfigKind,
+						APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "eksa-unit-test",
+					},
+					Spec: anywherev1.SnowMachineConfigSpec{
+						AMIID:        "eks-d-v1-21-ami",
+						InstanceType: "sbe-c.xlarge",
+						SshKeyName:   "default",
 					},
 				},
 			},
@@ -408,9 +497,14 @@ func TestParseConfig(t *testing.T) {
 			g.Expect(got.Cluster).To(Equal(tt.wantCluster))
 			g.Expect(got.VSphereDatacenter).To(Equal(tt.wantVsphereDatacenter))
 			g.Expect(got.DockerDatacenter).To(Equal(tt.wantDockerDatacenter))
+			g.Expect(got.SnowDatacenter).To(Equal(tt.wantSnowDatacenter))
 			g.Expect(len(got.VSphereMachineConfigs)).To(Equal(len(tt.wantVsphereMachineConfigs)), "it should return the right number of VSphereMachineConfigs")
+			g.Expect(len(got.SnowMachineConfigs)).To(Equal(len(tt.wantSnowMachineConfigs)), "it should return the right number of SnowMachineConfigs")
 			for _, m := range tt.wantVsphereMachineConfigs {
 				g.Expect(got.VsphereMachineConfig(m.Name)).To(Equal(m))
+			}
+			for _, m := range tt.wantSnowMachineConfigs {
+				g.Expect(got.SnowMachineConfig(m.Name)).To(Equal(m))
 			}
 			g.Expect(len(got.OIDCConfigs)).To(Equal(len(tt.wantOIDCConfigs)), "it should return the right number of OIDCConfigs")
 			for _, o := range tt.wantOIDCConfigs {

@@ -4,12 +4,10 @@ import (
 	"embed"
 	"fmt"
 	"net/url"
-	"path"
 	"path/filepath"
 	"strings"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	eksav1alpha1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/features"
@@ -28,11 +26,9 @@ const (
 var releasesManifestURL string
 
 type Spec struct {
-	*eksav1alpha1.Cluster
+	*Config
 	OIDCConfig                *eksav1alpha1.OIDCConfig
 	AWSIamConfig              *eksav1alpha1.AWSIamConfig
-	GitOpsConfig              *eksav1alpha1.GitOpsConfig
-	DatacenterConfig          *metav1.ObjectMeta
 	releasesManifestURL       string
 	bundlesManifestURL        string
 	configFS                  embed.FS
@@ -47,9 +43,8 @@ type Spec struct {
 
 func (s *Spec) DeepCopy() *Spec {
 	return &Spec{
-		Cluster:             s.Cluster.DeepCopy(),
+		Config:              s.Config.DeepCopy(),
 		OIDCConfig:          s.OIDCConfig.DeepCopy(),
-		GitOpsConfig:        s.GitOpsConfig.DeepCopy(),
 		AWSIamConfig:        s.AWSIamConfig.DeepCopy(),
 		releasesManifestURL: s.releasesManifestURL,
 		bundlesManifestURL:  s.bundlesManifestURL,
@@ -63,26 +58,6 @@ func (s *Spec) DeepCopy() *Spec {
 		eksdRelease:               s.eksdRelease.DeepCopy(),
 		Bundles:                   s.Bundles.DeepCopy(),
 		TinkerbellTemplateConfigs: s.TinkerbellTemplateConfigs,
-	}
-}
-
-func (cs *Spec) SetDefaultGitOps() {
-	if cs != nil && cs.GitOpsConfig != nil {
-		c := &cs.GitOpsConfig.Spec.Flux
-		if len(c.Github.ClusterConfigPath) == 0 {
-			if cs.Cluster.IsSelfManaged() {
-				c.Github.ClusterConfigPath = path.Join("clusters", cs.Name)
-			} else {
-				c.Github.ClusterConfigPath = path.Join("clusters", cs.Cluster.ManagedBy())
-			}
-		}
-		if len(c.Github.FluxSystemNamespace) == 0 {
-			c.Github.FluxSystemNamespace = FluxDefaultNamespace
-		}
-
-		if len(c.Github.Branch) == 0 {
-			c.Github.Branch = FluxDefaultBranch
-		}
 	}
 }
 
@@ -166,6 +141,7 @@ func WithOIDCConfig(oidcConfig *eksav1alpha1.OIDCConfig) SpecOpt {
 
 func NewSpec(opts ...SpecOpt) *Spec {
 	s := &Spec{
+		Config:              &Config{},
 		releasesManifestURL: releasesManifestURL,
 		configFS:            configFS,
 		userAgent:           userAgent("unknown", "unknown"),
@@ -188,8 +164,11 @@ func newWithCliVersion(cliVersion version.Info, opts ...SpecOpt) *Spec {
 func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info, opts ...SpecOpt) (*Spec, error) {
 	s := newWithCliVersion(cliVersion, opts...)
 
-	clusterConfig, err := eksav1alpha1.GetClusterConfig(clusterConfigPath)
+	clusterConfig, err := ParseConfigFromFile(clusterConfigPath)
 	if err != nil {
+		return nil, err
+	}
+	if err = SetConfigDefaults(clusterConfig); err != nil {
 		return nil, err
 	}
 
@@ -198,7 +177,7 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 		return nil, err
 	}
 
-	versionsBundle, err := s.getVersionsBundle(clusterConfig.Spec.KubernetesVersion, bundles)
+	versionsBundle, err := s.getVersionsBundle(clusterConfig.Cluster.Spec.KubernetesVersion, bundles)
 	if err != nil {
 		return nil, err
 	}
@@ -214,57 +193,30 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	}
 
 	s.Bundles = bundles
-	s.Cluster = clusterConfig
+	s.Config = clusterConfig
 	s.VersionsBundle = &VersionsBundle{
 		VersionsBundle: versionsBundle,
 		KubeDistro:     kubeDistro,
 	}
 	s.eksdRelease = eksd
-	for _, identityProvider := range s.Cluster.Spec.IdentityProviderRefs {
-		switch identityProvider.Kind {
-		case eksav1alpha1.OIDCConfigKind:
-			oidcConfig, err := eksav1alpha1.GetAndValidateOIDCConfig(clusterConfigPath, identityProvider.Name, clusterConfig)
-			if err != nil {
-				return nil, err
-			}
-			s.OIDCConfig = oidcConfig
-		case eksav1alpha1.AWSIamConfigKind:
-			awsIamConfig, err := eksav1alpha1.GetAndValidateAWSIamConfig(clusterConfigPath, identityProvider.Name, clusterConfig)
-			if err != nil {
-				return nil, err
-			}
-			s.AWSIamConfig = awsIamConfig
-		}
+
+	// Get first aws iam config if it exists
+	// Config supports multiple configs because Cluster references a slice
+	// But we validate that only one of each type is referenced
+	for _, ac := range s.Config.AWSIAMConfigs {
+		s.AWSIamConfig = ac
+		break
 	}
 
-	if s.Cluster.Spec.GitOpsRef != nil {
-		gitOpsConfig, err := eksav1alpha1.GetAndValidateGitOpsConfig(clusterConfigPath, s.Cluster.Spec.GitOpsRef.Name, clusterConfig)
-		if err != nil {
-			return nil, err
-		}
-		s.GitOpsConfig = gitOpsConfig
+	// Get first oidc config if it exists
+	for _, oc := range s.Config.OIDCConfigs {
+		s.OIDCConfig = oc
+		break
 	}
 
 	switch s.Cluster.Spec.DatacenterRef.Kind {
-	case eksav1alpha1.VSphereDatacenterKind:
-		datacenterConfig, err := eksav1alpha1.GetVSphereDatacenterConfig(clusterConfigPath)
-		if err != nil {
-			return nil, err
-		}
-		s.DatacenterConfig = &datacenterConfig.ObjectMeta
-	case eksav1alpha1.DockerDatacenterKind:
-		datacenterConfig, err := eksav1alpha1.GetDockerDatacenterConfig(clusterConfigPath)
-		if err != nil {
-			return nil, err
-		}
-		s.DatacenterConfig = &datacenterConfig.ObjectMeta
 	case eksav1alpha1.TinkerbellDatacenterKind:
 		if features.IsActive(features.TinkerbellProvider()) {
-			datacenterConfig, err := eksav1alpha1.GetTinkerbellDatacenterConfig(clusterConfigPath)
-			if err != nil {
-				return nil, err
-			}
-			s.DatacenterConfig = &datacenterConfig.ObjectMeta
 			templateConfigs, err := eksav1alpha1.GetTinkerbellTemplateConfig(clusterConfigPath)
 			if err != nil {
 				return nil, err
@@ -276,9 +228,9 @@ func NewSpecFromClusterConfig(clusterConfigPath string, cliVersion version.Info,
 	}
 
 	if s.ManagementCluster != nil {
-		s.SetManagedBy(s.ManagementCluster.Name)
+		s.Cluster.SetManagedBy(s.ManagementCluster.Name)
 	} else {
-		s.SetSelfManaged()
+		s.Cluster.SetSelfManaged()
 	}
 
 	return s, nil
@@ -305,7 +257,7 @@ func BuildSpecFromBundles(cluster *eksav1alpha1.Cluster, bundles *v1alpha1.Bundl
 	}
 
 	s.Bundles = bundles
-	s.Cluster = cluster
+	s.Config.Cluster = cluster
 	s.VersionsBundle = &VersionsBundle{
 		VersionsBundle: versionsBundle,
 		KubeDistro:     kubeDistro,

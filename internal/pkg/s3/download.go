@@ -27,7 +27,7 @@ func download(session *session.Session, key, bucket string, w io.WriterAt) error
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		return fmt.Errorf("error downloading [%s] from [%s] bucket: %v", key, bucket, err)
+		return fmt.Errorf("downloading [%s] from [%s] bucket: %v", key, bucket, err)
 	}
 
 	return nil

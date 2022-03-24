@@ -37,7 +37,7 @@ func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider
 func (c *Create) Run(ctx context.Context, clusterSpec *cluster.Spec, validator interfaces.Validator, forceCleanup bool) error {
 	if forceCleanup {
 		if err := c.bootstrapper.DeleteBootstrapCluster(ctx, &types.Cluster{
-			Name: clusterSpec.Name,
+			Name: clusterSpec.Cluster.Name,
 		}, false); err != nil {
 			return err
 		}
@@ -182,7 +182,7 @@ func (s *CreateWorkloadClusterTask) Run(ctx context.Context, commandContext *tas
 	commandContext.WorkloadCluster = workloadCluster
 
 	logger.Info("Installing networking on workload cluster")
-	err = commandContext.ClusterManager.InstallNetworking(ctx, workloadCluster, commandContext.ClusterSpec)
+	err = commandContext.ClusterManager.InstallNetworking(ctx, workloadCluster, commandContext.ClusterSpec, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}
@@ -267,11 +267,11 @@ func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *tas
 	}
 
 	logger.Info("Creating EKS-A CRDs instances on workload cluster")
-	datacenterConfig := commandContext.Provider.DatacenterConfig()
-	machineConfigs := commandContext.Provider.MachineConfigs()
+	datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
+	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
 
 	// this disables create-webhook validation during create
-	commandContext.ClusterSpec.PauseReconcile()
+	commandContext.ClusterSpec.Cluster.PauseReconcile()
 	datacenterConfig.PauseReconcile()
 
 	targetCluster := commandContext.WorkloadCluster
@@ -300,7 +300,7 @@ func (s *InstallEksaComponentsTask) Name() string {
 func (s *InstallAddonManagerTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Installing AddonManager and GitOps Toolkit on workload cluster")
 
-	err := commandContext.AddonManager.InstallGitOps(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(), commandContext.Provider.MachineConfigs())
+	err := commandContext.AddonManager.InstallGitOps(ctx, commandContext.WorkloadCluster, commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec), commandContext.Provider.MachineConfigs(commandContext.ClusterSpec))
 	if err != nil {
 		logger.MarkFail("Error when installing GitOps toolkits on workload cluster; EKS-A will continue with cluster creation, but GitOps will not be enabled", "error", err)
 		return &WriteClusterConfigTask{}
@@ -314,7 +314,7 @@ func (s *InstallAddonManagerTask) Name() string {
 
 func (s *WriteClusterConfigTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Writing cluster config file")
-	err := clustermarshaller.WriteClusterConfig(commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(), commandContext.Provider.MachineConfigs(), commandContext.Writer)
+	err := clustermarshaller.WriteClusterConfig(commandContext.ClusterSpec, commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec), commandContext.Provider.MachineConfigs(commandContext.ClusterSpec), commandContext.Writer)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}

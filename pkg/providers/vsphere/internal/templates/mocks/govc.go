@@ -106,17 +106,17 @@ func (mr *MockGovcClientMockRecorder) DeleteLibraryElement(ctx, element interfac
 }
 
 // DeployTemplateFromLibrary mocks base method.
-func (m *MockGovcClient) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, resourcePool string, resizeDisk2 bool) error {
+func (m *MockGovcClient) DeployTemplateFromLibrary(ctx context.Context, templateDir, templateName, library, datacenter, datastore, resourcePool string, resizeBRDisk bool) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeployTemplateFromLibrary", ctx, templateDir, templateName, library, datacenter, datastore, resourcePool, resizeDisk2)
+	ret := m.ctrl.Call(m, "DeployTemplateFromLibrary", ctx, templateDir, templateName, library, datacenter, datastore, resourcePool, resizeBRDisk)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeployTemplateFromLibrary indicates an expected call of DeployTemplateFromLibrary.
-func (mr *MockGovcClientMockRecorder) DeployTemplateFromLibrary(ctx, templateDir, templateName, library, datacenter, datastore, resourcePool, resizeDisk2 interface{}) *gomock.Call {
+func (mr *MockGovcClientMockRecorder) DeployTemplateFromLibrary(ctx, templateDir, templateName, library, datacenter, datastore, resourcePool, resizeBRDisk interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployTemplateFromLibrary", reflect.TypeOf((*MockGovcClient)(nil).DeployTemplateFromLibrary), ctx, templateDir, templateName, library, datacenter, datastore, resourcePool, resizeDisk2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeployTemplateFromLibrary", reflect.TypeOf((*MockGovcClient)(nil).DeployTemplateFromLibrary), ctx, templateDir, templateName, library, datacenter, datastore, resourcePool, resizeBRDisk)
 }
 
 // GetLibraryElementContentVersion mocks base method.

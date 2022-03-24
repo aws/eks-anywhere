@@ -47,7 +47,8 @@ type EksaDiagnosticBundle struct {
 }
 
 func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactory, client BundleClient,
-	kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter) (*EksaDiagnosticBundle, error) {
+	kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter,
+) (*EksaDiagnosticBundle, error) {
 	b := &EksaDiagnosticBundle{
 		bundle: &supportBundle{
 			TypeMeta: metav1.TypeMeta{
@@ -72,14 +73,15 @@ func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactor
 
 	err := b.WriteBundleConfig()
 	if err != nil {
-		return nil, fmt.Errorf("error writing bundle config: %v", err)
+		return nil, fmt.Errorf("writing bundle config: %v", err)
 	}
 
 	return b, nil
 }
 
 func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *cluster.Spec, provider providers.Provider,
-	client BundleClient, kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter) (*EksaDiagnosticBundle, error) {
+	client BundleClient, kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter,
+) (*EksaDiagnosticBundle, error) {
 	b := &EksaDiagnosticBundle{
 		bundle: &supportBundle{
 			TypeMeta: metav1.TypeMeta{
@@ -87,7 +89,7 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 				APIVersion: troubleshootApiVersion,
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: spec.Name,
+				Name: spec.Cluster.Name,
 			},
 			Spec: supportBundleSpec{},
 		},
@@ -104,17 +106,17 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 	b = b.
 		WithGitOpsConfig(spec.GitOpsConfig).
 		WithOidcConfig(spec.OIDCConfig).
-		WithExternalEtcd(spec.Spec.ExternalEtcdConfiguration).
-		WithDatacenterConfig(spec.Spec.DatacenterRef).
-		WithMachineConfigs(provider.MachineConfigs()).
-		WithManagementCluster(spec.IsSelfManaged()).
+		WithExternalEtcd(spec.Cluster.Spec.ExternalEtcdConfiguration).
+		WithDatacenterConfig(spec.Cluster.Spec.DatacenterRef).
+		WithMachineConfigs(provider.MachineConfigs(spec)).
+		WithManagementCluster(spec.Cluster.IsSelfManaged()).
 		WithDefaultAnalyzers().
 		WithDefaultCollectors().
 		WithLogTextAnalyzers()
 
 	err := b.WriteBundleConfig()
 	if err != nil {
-		return nil, fmt.Errorf("error writing bundle config: %v", err)
+		return nil, fmt.Errorf("writing bundle config: %v", err)
 	}
 
 	return b, nil
@@ -165,7 +167,7 @@ func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeV
 	logger.Info("Analyzing support bundle", "bundle", e.bundlePath, "archive", archivePath)
 	analysis, err := e.client.Analyze(ctx, e.bundlePath, archivePath)
 	if err != nil {
-		return fmt.Errorf("error when analyzing bundle: %v", err)
+		return fmt.Errorf("analyzing bundle: %v", err)
 	}
 	e.analysis = analysis
 
@@ -182,7 +184,7 @@ func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeV
 func (e *EksaDiagnosticBundle) PrintBundleConfig() error {
 	bundleYaml, err := yaml.Marshal(e.bundle)
 	if err != nil {
-		return fmt.Errorf("error outputting yaml: %v", err)
+		return fmt.Errorf("outputting yaml: %v", err)
 	}
 	fmt.Println(string(bundleYaml))
 	return nil
@@ -191,7 +193,7 @@ func (e *EksaDiagnosticBundle) PrintBundleConfig() error {
 func (e *EksaDiagnosticBundle) WriteBundleConfig() error {
 	bundleYaml, err := yaml.Marshal(e.bundle)
 	if err != nil {
-		return fmt.Errorf("error outputing yaml: %v", err)
+		return fmt.Errorf("outputing yaml: %v", err)
 	}
 	timestamp := time.Now().Format(time.RFC3339)
 	filename := fmt.Sprintf(generatedBundleNameFormat, e.clusterName(), timestamp)
@@ -209,7 +211,7 @@ func (e *EksaDiagnosticBundle) PrintAnalysis() error {
 	}
 	analysis, err := yaml.Marshal(e.analysis)
 	if err != nil {
-		return fmt.Errorf("error outputing yaml: %v", err)
+		return fmt.Errorf("outputing yaml: %v", err)
 	}
 	fmt.Println(string(analysis))
 	return nil
@@ -222,7 +224,7 @@ func (e *EksaDiagnosticBundle) WriteAnalysisToFile() (path string, err error) {
 
 	yamlAnalysis, err := yaml.Marshal(e.analysis)
 	if err != nil {
-		return "", fmt.Errorf("error while writing analysis: %v", err)
+		return "", fmt.Errorf("writing analysis: %v", err)
 	}
 
 	timestamp := time.Now().Format(time.RFC3339)

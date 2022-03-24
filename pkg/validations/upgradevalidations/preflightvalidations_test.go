@@ -160,7 +160,7 @@ func TestPreflightValidations(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("spec.externalEtcdConfiguration is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				s.Spec.ExternalEtcdConfiguration.Count++
+				s.Cluster.Spec.ExternalEtcdConfiguration.Count++
 			},
 		},
 		{
@@ -174,7 +174,7 @@ func TestPreflightValidations(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("spec.controlPlaneConfiguration.endpoint is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				s.Spec.ControlPlaneConfiguration.Endpoint.Host = "2.3.4.5"
+				s.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host = "2.3.4.5"
 			},
 		},
 		{
@@ -230,7 +230,7 @@ func TestPreflightValidations(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("aws iam identity provider is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				s.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
+				s.Cluster.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
 					Kind: v1alpha1.AWSIamConfigKind,
 					Name: "aws-iam2",
 				}
@@ -247,7 +247,7 @@ func TestPreflightValidations(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("aws iam identity provider is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				s.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
+				s.Cluster.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
 					Kind: v1alpha1.OIDCConfigKind,
 					Name: "oidc",
 				}
@@ -264,7 +264,7 @@ func TestPreflightValidations(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            nil,
 			modifyFunc: func(s *cluster.Spec) {
-				s.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
+				s.Cluster.Spec.IdentityProviderRefs[1] = v1alpha1.Ref{
 					Kind: v1alpha1.AWSIamConfigKind,
 					Name: "aws-iam",
 				}
@@ -453,7 +453,7 @@ func TestPreflightValidations(t *testing.T) {
 			},
 		},
 		{
-			name:               "ValidationClusterNetworkImmutable",
+			name:               "ValidationClusterNetworkPodsImmutable",
 			clusterVersion:     "v1.19.16-eks-1-19-4",
 			upgradeVersion:     "1.19",
 			getClusterResponse: goodClusterResponse,
@@ -461,9 +461,37 @@ func TestPreflightValidations(t *testing.T) {
 			workerResponse:     nil,
 			nodeResponse:       nil,
 			crdResponse:        nil,
-			wantErr:            composeError("spec.clusterNetwork is immutable"),
+			wantErr:            composeError("spec.clusterNetwork.Pods is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				s.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{}
+				s.Cluster.Spec.ClusterNetwork.Pods = v1alpha1.Pods{}
+			},
+		},
+		{
+			name:               "ValidationClusterNetworkServicesImmutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            composeError("spec.clusterNetwork.Services is immutable"),
+			modifyFunc: func(s *cluster.Spec) {
+				s.Cluster.Spec.ClusterNetwork.Services = v1alpha1.Services{}
+			},
+		},
+		{
+			name:               "ValidationClusterNetworkDNSImmutable",
+			clusterVersion:     "v1.19.16-eks-1-19-4",
+			upgradeVersion:     "1.19",
+			getClusterResponse: goodClusterResponse,
+			cpResponse:         nil,
+			workerResponse:     nil,
+			nodeResponse:       nil,
+			crdResponse:        nil,
+			wantErr:            composeError("spec.clusterNetwork.DNS is immutable"),
+			modifyFunc: func(s *cluster.Spec) {
+				s.Cluster.Spec.ClusterNetwork.DNS = v1alpha1.DNS{}
 			},
 		},
 		{
@@ -477,7 +505,7 @@ func TestPreflightValidations(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("spec.proxyConfiguration is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				s.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{
+				s.Cluster.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{
 					HttpProxy:  "httpproxy2",
 					HttpsProxy: "httpsproxy2",
 					NoProxy: []string{
@@ -497,8 +525,8 @@ func TestPreflightValidations(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("spec.externalEtcdConfiguration is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				s.Spec.ExternalEtcdConfiguration.Count += 1
-				s.Spec.DatacenterRef = v1alpha1.Ref{
+				s.Cluster.Spec.ExternalEtcdConfiguration.Count += 1
+				s.Cluster.Spec.DatacenterRef = v1alpha1.Ref{
 					Kind: v1alpha1.VSphereDatacenterKind,
 					Name: "vsphere test",
 				}
@@ -515,8 +543,8 @@ func TestPreflightValidations(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("spec.externalEtcdConfiguration is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				s.Spec.ExternalEtcdConfiguration = nil
-				s.Spec.DatacenterRef = v1alpha1.Ref{
+				s.Cluster.Spec.ExternalEtcdConfiguration = nil
+				s.Cluster.Spec.DatacenterRef = v1alpha1.Ref{
 					Kind: v1alpha1.VSphereDatacenterKind,
 					Name: "vsphere test",
 				}
@@ -533,7 +561,7 @@ func TestPreflightValidations(t *testing.T) {
 			crdResponse:        nil,
 			wantErr:            composeError("management flag is immutable"),
 			modifyFunc: func(s *cluster.Spec) {
-				s.SetManagedBy(fmt.Sprintf("%s-1", s.ManagedBy()))
+				s.Cluster.SetManagedBy(fmt.Sprintf("%s-1", s.Cluster.ManagedBy()))
 			},
 		},
 	}
@@ -611,14 +639,14 @@ func TestPreflightValidations(t *testing.T) {
 	}
 
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Name = testclustername
-		s.Spec.ControlPlaneConfiguration = defaultControlPlane
-		s.Spec.ExternalEtcdConfiguration = defaultETCD
-		s.Spec.DatacenterRef = v1alpha1.Ref{
+		s.Cluster.Name = testclustername
+		s.Cluster.Spec.ControlPlaneConfiguration = defaultControlPlane
+		s.Cluster.Spec.ExternalEtcdConfiguration = defaultETCD
+		s.Cluster.Spec.DatacenterRef = v1alpha1.Ref{
 			Kind: v1alpha1.VSphereDatacenterKind,
 			Name: "vsphere test",
 		}
-		s.Spec.IdentityProviderRefs = []v1alpha1.Ref{
+		s.Cluster.Spec.IdentityProviderRefs = []v1alpha1.Ref{
 			{
 				Kind: v1alpha1.OIDCConfigKind,
 				Name: "oidc",
@@ -628,11 +656,11 @@ func TestPreflightValidations(t *testing.T) {
 				Name: "aws-iam",
 			},
 		}
-		s.Spec.GitOpsRef = &v1alpha1.Ref{
+		s.Cluster.Spec.GitOpsRef = &v1alpha1.Ref{
 			Kind: v1alpha1.GitOpsConfigKind,
 			Name: "gitops test",
 		}
-		s.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
+		s.Cluster.Spec.ClusterNetwork = v1alpha1.ClusterNetwork{
 			Pods: v1alpha1.Pods{
 				CidrBlocks: []string{
 					"1.2.3.4/5",
@@ -643,8 +671,11 @@ func TestPreflightValidations(t *testing.T) {
 					"1.2.3.4/6",
 				},
 			},
+			DNS: v1alpha1.DNS{
+				ResolvConf: &v1alpha1.ResolvConf{Path: "file.conf"},
+			},
 		}
-		s.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{
+		s.Cluster.Spec.ProxyConfiguration = &v1alpha1.ProxyConfiguration{
 			HttpProxy:  "httpproxy",
 			HttpsProxy: "httpsproxy",
 			NoProxy: []string{
@@ -678,7 +709,7 @@ func TestPreflightValidations(t *testing.T) {
 				TlsValidator:      tlsValidator,
 			}
 
-			clusterSpec.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
+			clusterSpec.Cluster.Spec.KubernetesVersion = v1alpha1.KubernetesVersion(tc.upgradeVersion)
 			existingClusterSpec := clusterSpec.DeepCopy()
 			existingProviderSpec := defaultDatacenterSpec.DeepCopy()
 			if tc.modifyFunc != nil {
@@ -690,18 +721,18 @@ func TestPreflightValidations(t *testing.T) {
 				},
 			}
 
-			provider.EXPECT().DatacenterConfig().Return(existingProviderSpec).MaxTimes(1)
+			provider.EXPECT().DatacenterConfig(clusterSpec).Return(existingProviderSpec).MaxTimes(1)
 			provider.EXPECT().ValidateNewSpec(ctx, workloadCluster, clusterSpec).Return(nil).MaxTimes(1)
-			k.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
-			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster, clusterSpec.Name).Return(tc.cpResponse)
+			k.EXPECT().GetEksaVSphereDatacenterConfig(ctx, clusterSpec.Cluster.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(existingProviderSpec, nil).MaxTimes(1)
+			k.EXPECT().ValidateControlPlaneNodes(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(tc.cpResponse)
 			k.EXPECT().ValidateWorkerNodes(ctx, workloadCluster.Name, workloadCluster.KubeconfigFile).Return(tc.workerResponse)
 			k.EXPECT().ValidateNodes(ctx, kubeconfigFilePath).Return(tc.nodeResponse)
 			k.EXPECT().ValidateClustersCRD(ctx, workloadCluster).Return(tc.crdResponse)
 			k.EXPECT().GetClusters(ctx, workloadCluster).Return(tc.getClusterResponse, nil)
-			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Name).Return(existingClusterSpec.Cluster, nil)
-			k.EXPECT().GetEksaGitOpsConfig(ctx, clusterSpec.Spec.GitOpsRef.Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.GitOpsConfig, nil).MaxTimes(1)
-			k.EXPECT().GetEksaOIDCConfig(ctx, clusterSpec.Spec.IdentityProviderRefs[0].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.OIDCConfig, nil).MaxTimes(1)
-			k.EXPECT().GetEksaAWSIamConfig(ctx, clusterSpec.Spec.IdentityProviderRefs[1].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.AWSIamConfig, nil).MaxTimes(1)
+			k.EXPECT().GetEksaCluster(ctx, workloadCluster, clusterSpec.Cluster.Name).Return(existingClusterSpec.Cluster, nil)
+			k.EXPECT().GetEksaGitOpsConfig(ctx, clusterSpec.Cluster.Spec.GitOpsRef.Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.GitOpsConfig, nil).MaxTimes(1)
+			k.EXPECT().GetEksaOIDCConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.OIDCConfig, nil).MaxTimes(1)
+			k.EXPECT().GetEksaAWSIamConfig(ctx, clusterSpec.Cluster.Spec.IdentityProviderRefs[1].Name, gomock.Any(), gomock.Any()).Return(existingClusterSpec.AWSIamConfig, nil).MaxTimes(1)
 			k.EXPECT().Version(ctx, workloadCluster).Return(versionResponse, nil)
 			upgradeValidations := upgradevalidations.New(opts)
 			err := upgradeValidations.PreflightValidations(ctx)

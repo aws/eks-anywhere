@@ -138,7 +138,7 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 	}
 	tinkWorkflowMap, err := getWorkflowMap(workflows)
 	if err != nil {
-		return fmt.Errorf("error validating if the workflow exist for the given list of hardwares %v", err)
+		return fmt.Errorf("validating if the workflow exist for the given list of hardwares %v", err)
 	}
 
 	if err := v.hardwareConfig.ValidateHardware(skipPowerActions, tinkHardwareMap, tinkWorkflowMap); err != nil {
@@ -155,7 +155,7 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 		}
 
 		if err := v.ValidateBMCSecretCreds(ctx, v.hardwareConfig); err != nil {
-			return err
+			return fmt.Errorf("failed validating BMC connection in hardware config: %v", err)
 		}
 		logger.MarkPass("BMC connectivity validated")
 	}
@@ -173,8 +173,8 @@ func (v *Validator) ValidateBMCSecretCreds(ctx context.Context, hc hardware.Hard
 			Password: string(hc.Secrets[index].Data["password"]),
 			Vendor:   bmc.Spec.Vendor,
 		}
-		if err := v.pbnj.ValidateBMCSecretCreds(ctx, bmcInfo); err != nil {
-			return fmt.Errorf("failed validating Hardware BMC credentials for the node %s, host %s : %v", hc.Hardwares[index].Name, bmcInfo.Host, err)
+		if _, err := v.pbnj.GetPowerState(ctx, bmcInfo); err != nil {
+			return fmt.Errorf("failed to connect to BMC (address=%s): %v", bmcInfo.Host, err)
 		}
 	}
 
@@ -229,7 +229,7 @@ func (v *Validator) ValidateMinimumRequiredTinkerbellHardwareAvailable(spec v1al
 
 func (v *Validator) validateControlPlaneIpUniqueness(tinkerBellClusterSpec *spec) error {
 	ip := tinkerBellClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
-	if !networkutils.NewIPGenerator(v.netClient).IsIPUnique(ip) {
+	if networkutils.IsIPInUse(v.netClient, ip) {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
 	}
 
@@ -322,7 +322,7 @@ func getWorkflowMap(workflowList []*tinkworkflow.Workflow) (map[string]*tinkwork
 		var macAddress map[string]string
 
 		if err := json.Unmarshal([]byte(data.GetHardware()), &macAddress); err != nil {
-			return nil, fmt.Errorf("error unmarshling workflow data: %v", err)
+			return nil, fmt.Errorf("unmarshling workflow data: %v", err)
 		}
 		for _, mac := range macAddress {
 			workflowMap[mac] = data

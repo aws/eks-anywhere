@@ -37,7 +37,7 @@ func TestKindnetdGenerateManifestSuccess(t *testing.T) {
 		s.VersionsBundle.Kindnetd = KindnetdBundle
 	})
 
-	gotFileContent, err := tt.k.GenerateManifest(context.Background(), clusterSpec)
+	gotFileContent, err := tt.k.GenerateManifest(context.Background(), clusterSpec, []string{})
 	if err != nil {
 		t.Fatalf("Kindnetd.GenerateManifestFile() error = %v, wantErr nil", err)
 	}
@@ -57,7 +57,7 @@ func TestKindnetdGenerateManifestWriterError(t *testing.T) {
 		s.VersionsBundle.Kindnetd.Manifest.URI = "testdata/missing_manifest.yaml"
 	})
 
-	if _, err := tt.k.GenerateManifest(context.Background(), clusterSpec); err == nil {
+	if _, err := tt.k.GenerateManifest(context.Background(), clusterSpec, []string{}); err == nil {
 		t.Fatalf("Kindnetd.GenerateManifestFile() error = nil, want not nil")
 	}
 }

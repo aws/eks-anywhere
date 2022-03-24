@@ -54,6 +54,11 @@ func (r *Cluster) ValidateCreate() error {
 	if r.IsSelfManaged() {
 		return apierrors.NewBadRequest("Creating new cluster on existing cluster is not supported")
 	}
+
+	if err := validateCNIPlugin(r.Spec.ClusterNetwork); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
 	return nil
 }
 

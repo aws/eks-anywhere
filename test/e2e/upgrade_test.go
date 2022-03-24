@@ -7,7 +7,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -59,7 +58,25 @@ func TestVSphereKubernetes121UbuntuTo122Upgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
+		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var()),
+	)
+}
+
+func TestVSphereKubernetes121UbuntuTo122UpgradeCiliumPolicyEnforcementMode(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithUbuntu121())
+	test := framework.NewClusterE2ETest(
+		t,
+		provider,
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
+		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+	)
+	runSimpleUpgradeFlow(
+		test,
+		v1alpha1.Kube122,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways)),
 		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var()),
 	)
 }
@@ -88,7 +105,6 @@ func TestVSphereKubernetes121UbuntuTo122MultipleFieldsUpgrade(t *testing.T) {
 			// Uncomment the network field once upgrade starts working with it
 			// api.WithNetwork(vsphereNetwork2UpdateVar),
 		),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 }
 
@@ -107,7 +123,6 @@ func TestVSphereKubernetes121UbuntuTo122WithFluxUpgrade(t *testing.T) {
 		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var()),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 }
 
@@ -127,7 +142,6 @@ func TestVSphereKubernetes121UbuntuTo122DifferentNamespaceWithFluxUpgrade(t *tes
 		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var()),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 }
 
@@ -139,13 +153,11 @@ func TestVSphereKubernetes122UbuntuControlPlaneNodeUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
 		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(api.WithControlPlaneCount(3)),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 }
 
@@ -157,44 +169,42 @@ func TestVSphereKubernetes122UbuntuWorkerNodeUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runSimpleUpgradeFlow(
 		test,
 		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(api.WithWorkerNodeCount(5)),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 }
 
-func TestVSphereKubernetes120BottlerocketTo121Upgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithBottleRocket120())
+func TestVSphereKubernetes121BottlerocketTo122Upgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithBottleRocket121())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube121,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate121()),
+		v1alpha1.Kube122,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate122()),
 	)
 }
 
-func TestVSphereKubernetes120BottlerocketTo121MultipleFieldsUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithBottleRocket120())
+func TestVSphereKubernetes121BottlerocketTo122MultipleFieldsUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithBottleRocket121())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube121,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		v1alpha1.Kube122,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		provider.WithProviderUpgrade(
-			framework.UpdateBottlerocketTemplate121(),
+			framework.UpdateBottlerocketTemplate122(),
 			api.WithNumCPUsForAllMachines(vsphereCpVmNumCpuUpdateVar),
 			api.WithMemoryMiBForAllMachines(vsphereCpVmMemoryUpdate),
 			api.WithDiskGiBForAllMachines(vsphereCpDiskGiBUpdateVar),
@@ -209,30 +219,30 @@ func TestVSphereKubernetes120BottlerocketTo121MultipleFieldsUpgrade(t *testing.T
 	)
 }
 
-func TestVSphereKubernetes120BottlerocketTo121WithFluxUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithBottleRocket120())
+func TestVSphereKubernetes121BottlerocketTo122WithFluxUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithBottleRocket121())
 	test := framework.NewClusterE2ETest(t,
 		provider,
 		framework.WithFlux(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 	)
 	runUpgradeFlowWithFlux(
 		test,
-		v1alpha1.Kube121,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate121()),
+		v1alpha1.Kube122,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate122()),
 	)
 }
 
-func TestVSphereKubernetes120BottlerocketTo121DifferentNamespaceWithFluxUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithBottleRocket120(), framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace)))
+func TestVSphereKubernetes121BottlerocketTo122DifferentNamespaceWithFluxUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithBottleRocket121(), framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace)))
 	test := framework.NewClusterE2ETest(t,
 		provider,
 		framework.WithFlux(api.WithGitOpsNamespace(clusterNamespace)),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
@@ -240,40 +250,40 @@ func TestVSphereKubernetes120BottlerocketTo121DifferentNamespaceWithFluxUpgrade(
 	)
 	runUpgradeFlowWithFlux(
 		test,
-		v1alpha1.Kube121,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate121()),
+		v1alpha1.Kube122,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate122()),
 	)
 }
 
-func TestVSphereKubernetes120BottlerocketControlPlaneNodeUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithBottleRocket120())
+func TestVSphereKubernetes122BottlerocketControlPlaneNodeUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithBottleRocket122())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube120,
+		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(api.WithControlPlaneCount(3)),
 	)
 }
 
-func TestVSphereKubernetes120BottlerocketWorkerNodeUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithBottleRocket120())
+func TestVSphereKubernetes122BottlerocketWorkerNodeUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithBottleRocket122())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube120,
+		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(api.WithWorkerNodeCount(5)),
 	)
 }
@@ -290,7 +300,6 @@ func TestDockerKubernetes121To122StackedEtcdUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 }
 
@@ -309,24 +318,23 @@ func TestVSphereKubernetes121UbuntuTo122StackedEtcdUpgrade(t *testing.T) {
 		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var()),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 }
 
-func TestVSphereKubernetes120BottlerocketTo121StackedEtcdUpgrade(t *testing.T) {
-	provider := framework.NewVSphere(t, framework.WithBottleRocket120())
+func TestVSphereKubernetes121BottlerocketTo122StackedEtcdUpgrade(t *testing.T) {
+	provider := framework.NewVSphere(t, framework.WithBottleRocket121())
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
 	)
 	runSimpleUpgradeFlow(
 		test,
-		v1alpha1.Kube121,
-		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate121()),
+		v1alpha1.Kube122,
+		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		provider.WithProviderUpgrade(framework.UpdateBottlerocketTemplate122()),
 	)
 }

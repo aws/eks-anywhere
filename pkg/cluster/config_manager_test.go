@@ -146,14 +146,15 @@ kind: MysteryCRD
 	g.Expect(c.Parse([]byte(manifest))).To(Equal(wantConfig))
 }
 
-func TestConfigManagerSetDefaults(t *testing.T) {
+func TestConfigManagerSetDefaultsSuccess(t *testing.T) {
 	g := NewWithT(t)
 	defaultNamespace := "default"
 	c := cluster.NewConfigManager()
-	c.RegisterDefaulters(func(c *cluster.Config) {
+	c.RegisterDefaulters(func(c *cluster.Config) error {
 		if c.Cluster.Namespace == "" {
 			c.Cluster.Namespace = defaultNamespace
 		}
+		return nil
 	})
 
 	config := &cluster.Config{
@@ -168,7 +169,7 @@ func TestConfigManagerSetDefaults(t *testing.T) {
 		},
 	}
 
-	c.SetDefaults(config)
+	g.Expect(c.SetDefaults(config)).To(Succeed())
 	g.Expect(config.Cluster.Namespace).To(Equal(defaultNamespace))
 }
 

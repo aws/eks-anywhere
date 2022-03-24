@@ -160,8 +160,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 	var cluster *types.Cluster
 	if clusterSpec.ManagementCluster == nil {
 		cluster = &types.Cluster{
-			Name:           clusterSpec.Name,
-			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Name),
+			Name:           clusterSpec.Cluster.Name,
+			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
 		}
 	} else {
 		cluster = &types.Cluster{
@@ -174,8 +174,8 @@ func (cc *createClusterOptions) createCluster(cmd *cobra.Command, _ []string) er
 		Kubectl: deps.Kubectl,
 		Spec:    clusterSpec,
 		WorkloadCluster: &types.Cluster{
-			Name:           clusterSpec.Name,
-			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Name),
+			Name:           clusterSpec.Cluster.Name,
+			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
 		},
 		ManagementCluster: cluster,
 		Provider:          deps.Provider,

@@ -84,7 +84,7 @@ func (l *testArtifactFetcher) FetchArtifacts(opts ...FetchArtifactsOpt) error {
 	objects, err := l.testAccountS3Client.ListObjects(config.bucket, config.buildId)
 	logger.V(5).Info("Listed objects", "bucket", config.bucket, "prefix", config.buildId, "objects", len(objects))
 	if err != nil {
-		return fmt.Errorf("error listing objects in bucket %s at key %s: %v", config.bucket, config.buildId, err)
+		return fmt.Errorf("listing objects in bucket %s at key %s: %v", config.bucket, config.buildId, err)
 	}
 
 	errs, _ := errgroup.WithContext(context.Background())
@@ -108,7 +108,7 @@ func (l *testArtifactFetcher) FetchArtifacts(opts ...FetchArtifactsOpt) error {
 			})
 			if err != nil {
 				logger.Info("error occured while writing file", "err", err)
-				return fmt.Errorf("error writing object %s from bucket %s to file: %v", *obj.Key, config.bucket, err)
+				return fmt.Errorf("writing object %s from bucket %s to file: %v", *obj.Key, config.bucket, err)
 			}
 			return nil
 		})
@@ -142,10 +142,10 @@ func excludedKey(key string) bool {
 
 func fileWriterRetrier() *retrier.Retrier {
 	return retrier.New(time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
-		rand.Seed(time.Now().UnixNano())
+		generator := rand.New(rand.NewSource(time.Now().UnixNano()))
 		minWait := 1
 		maxWait := 5
-		waitWithJitter := time.Duration(rand.Intn(maxWait-minWait)+minWait) * time.Second
+		waitWithJitter := time.Duration(generator.Intn(maxWait-minWait)+minWait) * time.Second
 		if isTooManyOpenFilesError(err) && totalRetries < 15 {
 			logger.V(2).Info("Too many files open, retrying")
 			return true, waitWithJitter

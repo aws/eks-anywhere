@@ -1,5 +1,5 @@
 package cluster
 
-func SetConfigDefaults(c *Config) {
-	manager().SetDefaults(c)
+func SetConfigDefaults(c *Config) error {
+	return manager().SetDefaults(c)
 }

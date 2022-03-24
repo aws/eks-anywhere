@@ -63,7 +63,7 @@ key2: values2
 func TestHelmTemplateSuccess(t *testing.T) {
 	tt := newHelmTemplateTest(t)
 	expectCommand(
-		tt.e, tt.ctx, "template", tt.ociURI, "--version", tt.version, "--namespace", tt.namespace, "-f", "-",
+		tt.e, tt.ctx, "template", tt.ociURI, "--version", tt.version, "--insecure-skip-tls-verify", "--namespace", tt.namespace, "-f", "-",
 	).withStdIn(tt.valuesYaml).withEnvVars(tt.envVars).to().Return(*bytes.NewBuffer(tt.wantTemplateContent), nil)
 
 	tt.Expect(tt.h.Template(tt.ctx, tt.ociURI, tt.version, tt.namespace, tt.values)).To(Equal(tt.wantTemplateContent), "helm.Template() should succeed return correct template content")

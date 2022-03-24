@@ -19,6 +19,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/clusterapi"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -267,7 +268,7 @@ func (p *cloudstackProvider) validateManagementApiEndpoint(rawurl string) error 
 func getHostnameFromUrl(rawurl string) (string, error) {
 	url, err := url.Parse(rawurl)
 	if err != nil {
-		return "", fmt.Errorf("#{rawurl} is not a valid url")
+		return "", fmt.Errorf("%s is not a valid url", rawurl)
 	}
 
 	return url.Hostname(), nil
@@ -324,8 +325,8 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
-	if clusterSpec.IsManaged() {
-		for _, mc := range p.MachineConfigs() {
+	if clusterSpec.Cluster.IsManaged() {
+		for _, mc := range p.MachineConfigs(clusterSpec) {
 			em, err := p.providerKubectlClient.SearchCloudStackMachineConfig(ctx, mc.GetName(), clusterSpec.ManagementCluster.KubeconfigFile, mc.GetNamespace())
 			if err != nil {
 				return err
@@ -334,7 +335,7 @@ func (p *cloudstackProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 				return fmt.Errorf("CloudStackMachineConfig %s already exists", mc.GetName())
 			}
 		}
-		existingDatacenter, err := p.providerKubectlClient.SearchCloudStackDatacenterConfig(ctx, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Namespace)
+		existingDatacenter, err := p.providerKubectlClient.SearchCloudStackDatacenterConfig(ctx, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.Namespace)
 		if err != nil {
 			return err
 		}
@@ -372,7 +373,7 @@ type CloudStackTemplateBuilder struct {
 
 func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
 	var etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineSpec = *cs.etcdMachineSpec
 	}
 	execConfig, err := decoder.ParseCloudStackSecret()
@@ -415,64 +416,82 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec, managementApiEndpoint string, verifySsl string) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
-	host, port, _ := net.SplitHostPort(clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	host, port, _ := net.SplitHostPort(clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host)
+	etcdExtraArgs := clusterapi.SecureEtcdTlsCipherSuitesExtraArgs()
+	sharedExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs()
+	kubeletExtraArgs := clusterapi.SecureTlsCipherSuitesExtraArgs().
+		Append(clusterapi.ResolvConfExtraArgs(clusterSpec.Cluster.Spec.ClusterNetwork.DNS.ResolvConf)).
+		Append(clusterapi.ControlPlaneNodeLabelsExtraArgs(clusterSpec.Cluster.Spec.ControlPlaneConfiguration))
+	apiServerExtraArgs := clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).
+		Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).
+		Append(clusterapi.PodIAMAuthExtraArgs(clusterSpec.Cluster.Spec.PodIAMConfig)).
+		Append(sharedExtraArgs)
 
 	values := map[string]interface{}{
-		"clusterName":                            clusterSpec.ObjectMeta.Name,
-		"controlPlaneEndpointHost":               host,
-		"controlPlaneEndpointPort":               port,
-		"controlPlaneReplicas":                   clusterSpec.Spec.ControlPlaneConfiguration.Count,
-		"kubernetesRepository":                   bundle.KubeDistro.Kubernetes.Repository,
-		"kubernetesVersion":                      bundle.KubeDistro.Kubernetes.Tag,
-		"etcdRepository":                         bundle.KubeDistro.Etcd.Repository,
-		"etcdImageTag":                           bundle.KubeDistro.Etcd.Tag,
-		"corednsRepository":                      bundle.KubeDistro.CoreDNS.Repository,
-		"corednsVersion":                         bundle.KubeDistro.CoreDNS.Tag,
-		"nodeDriverRegistrarImage":               bundle.KubeDistro.NodeDriverRegistrar.VersionedImage(),
-		"livenessProbeImage":                     bundle.KubeDistro.LivenessProbe.VersionedImage(),
-		"externalAttacherImage":                  bundle.KubeDistro.ExternalAttacher.VersionedImage(),
-		"externalProvisionerImage":               bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
-		"cloudstackManagementApiEndpoint":        managementApiEndpoint,
-		"managerImage":                           bundle.CloudStack.ClusterAPIController.VersionedImage(),
-		"verifySsl":                              verifySsl,
-		"cloudstackDomain":                       datacenterConfigSpec.Domain,
-		"cloudstackZones":                        datacenterConfigSpec.Zones,
-		"cloudstackAccount":                      datacenterConfigSpec.Account,
-		"cloudstackControlPlaneComputeOffering":  controlPlaneMachineSpec.ComputeOffering.Value,
-		"cloudstackControlPlaneTemplateOffering": controlPlaneMachineSpec.Template.Value,
-		"cloudstackControlPlaneCustomDetails":    controlPlaneMachineSpec.UserCustomDetails,
-		"affinityGroupIds":                       controlPlaneMachineSpec.AffinityGroupIds,
-		"cloudstackEtcdComputeOffering":          etcdMachineSpec.ComputeOffering.Value,
-		"cloudstackEtcdTemplateOffering":         etcdMachineSpec.Template.Value,
-		"cloudstackEtcdCustomDetails":            etcdMachineSpec.UserCustomDetails,
-		"cloudstackEtcdAffinityGroupIds":         etcdMachineSpec.AffinityGroupIds,
-		"controlPlaneSshUsername":                controlPlaneMachineSpec.Users[0].Name,
-		"podCidrs":                               clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
-		"serviceCidrs":                           clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
-		"apiserverExtraArgs":                     clusterapi.OIDCToExtraArgs(clusterSpec.OIDCConfig).Append(clusterapi.AwsIamAuthExtraArgs(clusterSpec.AWSIamConfig)).ToPartialYaml(),
-		"format":                                 format,
-		"externalEtcdVersion":                    bundle.KubeDistro.EtcdVersion,
-		"etcdImage":                              bundle.KubeDistro.EtcdImage.VersionedImage(),
-		"eksaSystemNamespace":                    constants.EksaSystemNamespace,
-		"auditPolicy":                            common.GetAuditPolicy(),
+		"clusterName":                                clusterSpec.Cluster.Name,
+		"controlPlaneEndpointHost":                   host,
+		"controlPlaneEndpointPort":                   port,
+		"controlPlaneReplicas":                       clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
+		"kubernetesRepository":                       bundle.KubeDistro.Kubernetes.Repository,
+		"kubernetesVersion":                          bundle.KubeDistro.Kubernetes.Tag,
+		"etcdRepository":                             bundle.KubeDistro.Etcd.Repository,
+		"etcdImageTag":                               bundle.KubeDistro.Etcd.Tag,
+		"corednsRepository":                          bundle.KubeDistro.CoreDNS.Repository,
+		"corednsVersion":                             bundle.KubeDistro.CoreDNS.Tag,
+		"nodeDriverRegistrarImage":                   bundle.KubeDistro.NodeDriverRegistrar.VersionedImage(),
+		"livenessProbeImage":                         bundle.KubeDistro.LivenessProbe.VersionedImage(),
+		"externalAttacherImage":                      bundle.KubeDistro.ExternalAttacher.VersionedImage(),
+		"externalProvisionerImage":                   bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
+		"cloudstackManagementApiEndpoint":            managementApiEndpoint,
+		"managerImage":                               bundle.CloudStack.ClusterAPIController.VersionedImage(),
+		"verifySsl":                                  verifySsl,
+		"cloudstackDomain":                           datacenterConfigSpec.Domain,
+		"cloudstackZones":                            datacenterConfigSpec.Zones,
+		"cloudstackAccount":                          datacenterConfigSpec.Account,
+		"cloudstackControlPlaneComputeOfferingId":    controlPlaneMachineSpec.ComputeOffering.Id,
+		"cloudstackControlPlaneComputeOfferingName":  controlPlaneMachineSpec.ComputeOffering.Name,
+		"cloudstackControlPlaneTemplateOfferingId":   controlPlaneMachineSpec.Template.Id,
+		"cloudstackControlPlaneTemplateOfferingName": controlPlaneMachineSpec.Template.Name,
+		"cloudstackControlPlaneCustomDetails":        controlPlaneMachineSpec.UserCustomDetails,
+		"affinityGroupIds":                           controlPlaneMachineSpec.AffinityGroupIds,
+		"cloudstackEtcdComputeOfferingId":            etcdMachineSpec.ComputeOffering.Id,
+		"cloudstackEtcdComputeOfferingName":          etcdMachineSpec.ComputeOffering.Name,
+		"cloudstackEtcdTemplateOfferingId":           etcdMachineSpec.Template.Id,
+		"cloudstackEtcdTemplateOfferingName":         etcdMachineSpec.Template.Name,
+		"cloudstackEtcdCustomDetails":                etcdMachineSpec.UserCustomDetails,
+		"cloudstackEtcdAffinityGroupIds":             etcdMachineSpec.AffinityGroupIds,
+		"controlPlaneSshUsername":                    controlPlaneMachineSpec.Users[0].Name,
+		"podCidrs":                                   clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
+		"serviceCidrs":                               clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
+		"apiserverExtraArgs":                         apiServerExtraArgs.ToPartialYaml(),
+		"kubeletExtraArgs":                           kubeletExtraArgs.ToPartialYaml(),
+		"etcdExtraArgs":                              etcdExtraArgs.ToPartialYaml(),
+		"etcdCipherSuites":                           crypto.SecureCipherSuitesString(),
+		"controllermanagerExtraArgs":                 sharedExtraArgs.ToPartialYaml(),
+		"schedulerExtraArgs":                         sharedExtraArgs.ToPartialYaml(),
+		"format":                                     format,
+		"externalEtcdVersion":                        bundle.KubeDistro.EtcdVersion,
+		"etcdImage":                                  bundle.KubeDistro.EtcdImage.VersionedImage(),
+		"eksaSystemNamespace":                        constants.EksaSystemNamespace,
+		"auditPolicy":                                common.GetAuditPolicy(),
 	}
 
-	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
-		values["registryMirrorConfiguration"] = clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
-		if len(clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
-			values["registryCACert"] = clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		values["registryMirrorConfiguration"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
+		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
+			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
 		}
 	}
 
-	if clusterSpec.Spec.ProxyConfiguration != nil {
+	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
 		values["proxyConfig"] = true
-		capacity := len(clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks) +
-			len(clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks) +
-			len(clusterSpec.Spec.ProxyConfiguration.NoProxy) + 4
+		capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
+			len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
+			len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 4
 		noProxyList := make([]string, 0, capacity)
-		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, common.NoProxyDefaults...)
@@ -481,17 +500,17 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
 		}
 		noProxyList = append(noProxyList,
-			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
+			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		)
 
-		values["httpProxy"] = clusterSpec.Spec.ProxyConfiguration.HttpProxy
-		values["httpsProxy"] = clusterSpec.Spec.ProxyConfiguration.HttpsProxy
+		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
+		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
 		values["noProxy"] = noProxyList
 	}
 
-	if clusterSpec.Spec.ExternalEtcdConfiguration != nil {
+	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
 		values["externalEtcd"] = true
-		values["externalEtcdReplicas"] = clusterSpec.Spec.ExternalEtcdConfiguration.Count
+		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
 		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
 	}
 
@@ -507,34 +526,36 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 	format := "cloud-config"
 
 	values := map[string]interface{}{
-		"clusterName":                clusterSpec.ObjectMeta.Name,
+		"clusterName":                clusterSpec.Cluster.Name,
 		"kubernetesVersion":          bundle.KubeDistro.Kubernetes.Tag,
-		"cloudstackTemplate":         workerNodeGroupMachineSpec.Template.Value,
-		"cloudstackOffering":         workerNodeGroupMachineSpec.ComputeOffering.Value,
+		"cloudstackTemplateId":       workerNodeGroupMachineSpec.Template.Id,
+		"cloudstackTemplateName":     workerNodeGroupMachineSpec.Template.Name,
+		"cloudstackOfferingId":       workerNodeGroupMachineSpec.ComputeOffering.Id,
+		"cloudstackOfferingName":     workerNodeGroupMachineSpec.ComputeOffering.Name,
 		"cloudstackCustomDetails":    workerNodeGroupMachineSpec.UserCustomDetails,
 		"cloudstackAffinityGroupIds": workerNodeGroupMachineSpec.AffinityGroupIds,
-		"workerReplicas":             clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count,
+		"workerReplicas":             clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count,
 		"workerSshUsername":          workerNodeGroupMachineSpec.Users[0].Name,
 		"format":                     format,
 		"eksaSystemNamespace":        constants.EksaSystemNamespace,
 	}
 
-	if clusterSpec.Spec.RegistryMirrorConfiguration != nil {
-		values["registryMirrorConfiguration"] = clusterSpec.Spec.RegistryMirrorConfiguration.Endpoint
-		if len(clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
-			values["registryCACert"] = clusterSpec.Spec.RegistryMirrorConfiguration.CACertContent
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration != nil {
+		values["registryMirrorConfiguration"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
+		if len(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent) > 0 {
+			values["registryCACert"] = clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.CACertContent
 		}
 	}
 
-	if clusterSpec.Spec.ProxyConfiguration != nil {
+	if clusterSpec.Cluster.Spec.ProxyConfiguration != nil {
 		values["proxyConfig"] = true
-		capacity := len(clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks) +
-			len(clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks) +
-			len(clusterSpec.Spec.ProxyConfiguration.NoProxy) + 4
+		capacity := len(clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks) +
+			len(clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks) +
+			len(clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy) + 4
 		noProxyList := make([]string, 0, capacity)
-		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks...)
-		noProxyList = append(noProxyList, clusterSpec.Spec.ProxyConfiguration.NoProxy...)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks...)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks...)
+		noProxyList = append(noProxyList, clusterSpec.Cluster.Spec.ProxyConfiguration.NoProxy...)
 
 		// Add no-proxy defaults
 		noProxyList = append(noProxyList, common.NoProxyDefaults...)
@@ -543,11 +564,11 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 			noProxyList = append(noProxyList, cloudStackManagementApiEndpointHostname)
 		}
 		noProxyList = append(noProxyList,
-			clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
+			clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		)
 
-		values["httpProxy"] = clusterSpec.Spec.ProxyConfiguration.HttpProxy
-		values["httpsProxy"] = clusterSpec.Spec.ProxyConfiguration.HttpsProxy
+		values["httpProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpProxy
+		values["httpsProxy"] = clusterSpec.Cluster.Spec.ProxyConfiguration.HttpsProxy
 		values["noProxy"] = noProxyList
 	}
 
@@ -555,7 +576,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 }
 
 func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	clusterName := clusterSpec.ObjectMeta.Name
+	clusterName := clusterSpec.Cluster.Name
 
 	cpOpt := func(values map[string]interface{}) {
 		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
@@ -568,7 +589,7 @@ func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, clus
 		return nil, nil, err
 	}
 	workersOpt := func(values map[string]interface{}) {
-		values["workloadTemplateName"] = common.WorkerMachineTemplateName(clusterName, clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Name, p.templateBuilder.now)
+		values["workloadTemplateName"] = common.WorkerMachineTemplateName(clusterName, clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name, p.templateBuilder.now)
 		values["cloudstackWorkerSshAuthorizedKey"] = p.workerSshAuthKey
 	}
 	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workersOpt)
@@ -585,7 +606,7 @@ func (p *cloudstackProvider) GenerateCAPISpecForUpgrade(ctx context.Context, boo
 func (p *cloudstackProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating cluster api Spec contents: %v", err)
+		return nil, nil, fmt.Errorf("generating cluster api Spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }
@@ -647,11 +668,11 @@ func (p *cloudstackProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) 
 	return &infraBundle
 }
 
-func (p *cloudstackProvider) DatacenterConfig() providers.DatacenterConfig {
+func (p *cloudstackProvider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {
 	return p.datacenterConfig
 }
 
-func (p *cloudstackProvider) MachineConfigs() []providers.MachineConfig {
+func (p *cloudstackProvider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
 	var configs []providers.MachineConfig
 	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	workerMachineName := p.clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
