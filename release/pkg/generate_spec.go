@@ -146,6 +146,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		return nil, errors.Wrapf(err, "Error getting bundle for Bottlerocket admin container")
 	}
 
+	var packageBundle anywherev1alpha1.PackageBundle
 	var tinkerbellBundle anywherev1alpha1.TinkerbellBundle
 	var snowBundle anywherev1alpha1.SnowBundle
 	if r.DevRelease && r.BuildRepoBranchName == "main" {
@@ -157,6 +158,11 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 		snowBundle, err = r.GetSnowBundle(imageDigests)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error getting bundle for Snow infrastructure provider")
+		}
+
+		packageBundle, err = r.GetPackagesBundle(imageDigests)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting bundle for Package controllers")
 		}
 	}
 
@@ -219,6 +225,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			Cilium:                 ciliumBundle,
 			Kindnetd:               kindnetdBundle,
 			Flux:                   fluxBundle,
+			PackageController:      packageBundle,
 			ExternalEtcdBootstrap:  etcdadmBootstrapBundle,
 			ExternalEtcdController: etcdadmControllerBundle,
 			BottleRocketBootstrap:  bottlerocketBootstrapBundle,
@@ -287,6 +294,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		eksAArtifactsFuncs["hub"] = r.GetHubAssets
 		eksAArtifactsFuncs["cluster-api-provider-aws-snow"] = r.GetCapasAssets
 		eksAArtifactsFuncs["hook"] = r.GetHookAssets
+		eksAArtifactsFuncs["eks-anywhere-packages"] = r.GetPackagesAssets
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
