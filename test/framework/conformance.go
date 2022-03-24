@@ -58,16 +58,16 @@ func (e *ClusterE2ETest) RunConformanceTests() {
 func (e *ClusterE2ETest) getEksdReleaseKubeVersion() (string, error) {
 	c, err := v1alpha1.GetClusterConfig(e.ClusterConfigLocation)
 	if err != nil {
-		return "", fmt.Errorf("error fetching cluster config from file: %v", err)
+		return "", fmt.Errorf("fetching cluster config from file: %v", err)
 	}
 	eksdRelease, _, err := cluster.GetEksdRelease(version.Get(), c)
 	if err != nil {
-		return "", fmt.Errorf("error getting EKS-D release spec from bundle: %v", err)
+		return "", fmt.Errorf("getting EKS-D release spec from bundle: %v", err)
 	}
 	if kubeVersion := eksdRelease.KubeVersion; kubeVersion != "" {
 		return kubeVersion, nil
 	}
-	return "", fmt.Errorf("error getting KubeVersion from EKS-D release spec: value empty")
+	return "", fmt.Errorf("getting KubeVersion from EKS-D release spec: value empty")
 }
 
 // Function to parse the conformace test results and look for any failed tests.

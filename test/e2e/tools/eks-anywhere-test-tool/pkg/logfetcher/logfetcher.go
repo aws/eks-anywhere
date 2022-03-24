@@ -163,7 +163,7 @@ func (l *testLogFetcher) GetBuildProjectLogs(project string, buildId string) ([]
 	logger.Info("Fetching build project logs...")
 	build, err := l.buildAccountCodebuildClient.FetchBuildForProject(buildId)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching build project logs for project %s: %v", project, err)
+		return nil, fmt.Errorf("fetching build project logs for project %s: %v", project, err)
 	}
 
 	g := build.Logs.GroupName
@@ -171,7 +171,7 @@ func (l *testLogFetcher) GetBuildProjectLogs(project string, buildId string) ([]
 
 	logs, err := l.buildAccountCwClient.GetLogs(*g, *s)
 	if err != nil {
-		return nil, fmt.Errorf("error when fetching cloudwatch logs: %v", err)
+		return nil, fmt.Errorf("fetching cloudwatch logs: %v", err)
 	}
 
 	allMsg := allMessages(logs)

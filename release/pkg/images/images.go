@@ -78,7 +78,7 @@ func CopyToDestination(sourceAuthConfig, releaseAuthConfig *docker.AuthConfigura
 	out, err := utils.ExecCommand(cmd)
 	fmt.Println(out)
 	if err != nil {
-		return fmt.Errorf("error executing skopeo copy command: %v", err)
+		return fmt.Errorf("executing skopeo copy command: %v", err)
 	}
 
 	return nil

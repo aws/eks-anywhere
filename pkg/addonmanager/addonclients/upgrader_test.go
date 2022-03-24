@@ -94,7 +94,7 @@ func TestFluxUpgradeSuccess(t *testing.T) {
 	f, m, g := newAddonClient(t)
 
 	if err := setupTestFiles(t, g); err != nil {
-		t.Errorf("error setting up files: %v", err)
+		t.Errorf("setting up files: %v", err)
 	}
 
 	wantDiff := &types.ChangeDiff{
@@ -133,7 +133,7 @@ func TestFluxUpgradeError(t *testing.T) {
 	f, m, g := newAddonClient(t)
 
 	if err := setupTestFiles(t, g); err != nil {
-		t.Errorf("error setting up files: %v", err)
+		t.Errorf("setting up files: %v", err)
 	}
 
 	m.git.EXPECT().GetRepo(tt.ctx).Return(&git.Repository{Name: tt.fluxConfig.Github.Repository}, nil)

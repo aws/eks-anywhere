@@ -37,7 +37,7 @@ func (e *E2ESession) mountRegistryCert(cert string, endpoint string) error {
 	command := fmt.Sprintf("sudo mkdir -p /etc/docker/certs.d/%s", endpoint)
 
 	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
-		return fmt.Errorf("error creating directory in instance: %v", err)
+		return fmt.Errorf("creating directory in instance: %v", err)
 	}
 	decodedCert, err := base64.StdEncoding.DecodeString(cert)
 	if err != nil {
@@ -46,7 +46,7 @@ func (e *E2ESession) mountRegistryCert(cert string, endpoint string) error {
 	command = fmt.Sprintf("sudo cat <<EOF>> /etc/docker/certs.d/%s/ca.crt\n%s\nEOF", endpoint, string(decodedCert))
 
 	if err := ssm.Run(e.session, e.instanceId, command); err != nil {
-		return fmt.Errorf("error mounting certificate in instance: %v", err)
+		return fmt.Errorf("mounting certificate in instance: %v", err)
 	}
 
 	return err

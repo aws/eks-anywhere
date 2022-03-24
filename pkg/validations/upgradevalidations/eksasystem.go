@@ -16,7 +16,7 @@ const (
 func ValidateEksaSystemComponents(ctx context.Context, k *executables.Kubectl, cluster *types.Cluster) error {
 	deployments, err := k.GetDeployments(ctx, executables.WithCluster(cluster), executables.WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
-		return fmt.Errorf("error getting deployments in namespace %s: %v", constants.EksaSystemNamespace, err)
+		return fmt.Errorf("getting deployments in namespace %s: %v", constants.EksaSystemNamespace, err)
 	}
 	for _, d := range deployments {
 		if d.Name == eksaControllerDeploymentName {

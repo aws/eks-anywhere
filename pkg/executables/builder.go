@@ -101,7 +101,7 @@ func checkMRToolsDisabled() bool {
 func NewExecutableBuilder(ctx context.Context, image string, mountDirs ...string) (*ExecutableBuilder, Closer, error) {
 	currentDir, err := os.Getwd()
 	if err != nil {
-		return nil, nil, fmt.Errorf("error getting current directory: %v", err)
+		return nil, nil, fmt.Errorf("getting current directory: %v", err)
 	}
 
 	mountDirs = append(mountDirs, currentDir)

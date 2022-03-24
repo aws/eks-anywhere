@@ -477,7 +477,7 @@ func (p *vsphereProvider) UpdateSecrets(ctx context.Context, cluster *types.Clus
 
 	err = p.providerKubectlClient.ApplyKubeSpecFromBytes(ctx, cluster, contents.Bytes())
 	if err != nil {
-		return fmt.Errorf("error loading secrets object: %v", err)
+		return fmt.Errorf("loading secrets object: %v", err)
 	}
 	return nil
 }
@@ -608,7 +608,7 @@ func (vs *VsphereTemplateBuilder) isCgroupDriverSystemd(clusterSpec *cluster.Spe
 	bundle := clusterSpec.VersionsBundle
 	k8sVersion, err := semver.New(bundle.KubeDistro.Kubernetes.Tag)
 	if err != nil {
-		return false, fmt.Errorf("error parsing kubernetes version %v: %v", bundle.KubeDistro.Kubernetes.Tag, err)
+		return false, fmt.Errorf("parsing kubernetes version %v: %v", bundle.KubeDistro.Kubernetes.Tag, err)
 	}
 	if vs.fromController && k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
 		return true, nil
@@ -996,7 +996,7 @@ func (p *vsphereProvider) generateCAPISpecForCreate(ctx context.Context, cluster
 func (p *vsphereProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, clusterSpec)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
+		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }
@@ -1004,7 +1004,7 @@ func (p *vsphereProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootst
 func (p *vsphereProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
+		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }
@@ -1033,7 +1033,7 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 	}
 	t, err := template.New("tmpl").Parse(defaultSecretObject)
 	if err != nil {
-		return fmt.Errorf("error creating secret object template: %v", err)
+		return fmt.Errorf("creating secret object template: %v", err)
 	}
 
 	values := map[string]string{
@@ -1046,7 +1046,7 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 	}
 	err = t.Execute(contents, values)
 	if err != nil {
-		return fmt.Errorf("error substituting values for secret object template: %v", err)
+		return fmt.Errorf("substituting values for secret object template: %v", err)
 	}
 	return nil
 }
@@ -1235,7 +1235,7 @@ func (p *vsphereProvider) secretContentsChanged(ctx context.Context, workloadClu
 	nPassword := os.Getenv(vSpherePasswordKey)
 	oSecret, err := p.providerKubectlClient.GetSecret(ctx, CredentialsObjectName, executables.WithCluster(workloadCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 	if err != nil {
-		return false, fmt.Errorf("error when obtaining VSphere secret %s from workload cluster: %v", CredentialsObjectName, err)
+		return false, fmt.Errorf("obtaining VSphere secret %s from workload cluster: %v", CredentialsObjectName, err)
 	}
 
 	if string(oSecret.Data["password"]) != nPassword {

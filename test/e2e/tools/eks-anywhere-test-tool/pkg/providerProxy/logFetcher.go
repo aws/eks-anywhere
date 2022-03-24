@@ -117,7 +117,7 @@ func (l *proxyLogFetcher) FetchProviderProxyLogsForbuild(project string, buildId
 	logger.Info("Fetching provider proxy logs...")
 	build, err := l.buildAccountCodebuildClient.FetchBuildForProject(buildId)
 	if err != nil {
-		return nil, fmt.Errorf("error fetching build for project %s: %v", project, err)
+		return nil, fmt.Errorf("fetching build for project %s: %v", project, err)
 	}
 
 	buildStart := build.StartTime.UnixNano() / 1e6
@@ -128,7 +128,7 @@ func (l *proxyLogFetcher) FetchProviderProxyLogsForbuild(project string, buildId
 
 	logs, err := l.buildAccountCwClient.GetLogsInTimeframe(constants.CiProxyLogGroup, constants.CiProxyLogStream, buildStart, buildEnd)
 	if err != nil {
-		return nil, fmt.Errorf("error when fetching cloudwatch logs: %v", err)
+		return nil, fmt.Errorf("fetching cloudwatch logs: %v", err)
 	}
 	filteredLogs, err := l.filterRequests(logs)
 	return filteredLogs, err

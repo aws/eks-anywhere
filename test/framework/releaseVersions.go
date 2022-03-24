@@ -121,7 +121,7 @@ func getBinary(release *releasev1alpha1.EksARelease) (string, error) {
 
 		binaryUri, err := r.binaryUri()
 		if err != nil {
-			return "", fmt.Errorf("error determining URI for EKS-A binary: %v", err)
+			return "", fmt.Errorf("determining URI for EKS-A binary: %v", err)
 		}
 		err = files.GzipFileDownloadExtract(binaryUri, releaseBinaryName, latestReleaseBinaryFolder)
 		if err != nil {

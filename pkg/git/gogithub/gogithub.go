@@ -118,7 +118,7 @@ func (g *GoGithub) GetAccessTokenPermissions(accessToken string) (string, error)
 	err = r.Retry(func() error {
 		resp, err = HttpClient.Do(req)
 		if err != nil {
-			return fmt.Errorf("error getting Github Personal Access Token permissions %v", err)
+			return fmt.Errorf("getting Github Personal Access Token permissions %v", err)
 		}
 		return nil
 	})
@@ -207,7 +207,7 @@ func (g *GoGithub) DeleteRepo(ctx context.Context, opts git.DeleteRepoOpts) erro
 	logger.V(3).Info("Deleting Github repository", "name", r, "owner", o)
 	_, err := g.Client.DeleteRepo(ctx, o, r)
 	if err != nil {
-		return fmt.Errorf("error when deleting repository %s: %v", r, err)
+		return fmt.Errorf("deleting repository %s: %v", r, err)
 	}
 	return nil
 }

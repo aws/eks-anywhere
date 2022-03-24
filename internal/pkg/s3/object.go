@@ -19,7 +19,7 @@ func ObjectPresent(session *session.Session, key, bucket string) (bool, error) {
 		if aerr, ok := err.(awserr.Error); ok && aerr.Code() == "NotFound" {
 			return false, nil
 		}
-		return false, fmt.Errorf("error getting s3 object head to check if present: %v", err)
+		return false, fmt.Errorf("getting s3 object head to check if present: %v", err)
 	}
 
 	return true, nil

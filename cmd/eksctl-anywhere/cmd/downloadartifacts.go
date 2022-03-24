@@ -82,7 +82,7 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 	if !opts.dryRun {
 		releaseManifestURL := clusterSpec.GetReleaseManifestUrl()
 		if err := downloadArtifact(filepath.Join(opts.downloadDir, filepath.Base(releaseManifestURL)), releaseManifestURL, reader); err != nil {
-			return fmt.Errorf("error downloading release manifest: %v", err)
+			return fmt.Errorf("downloading release manifest: %v", err)
 		}
 	}
 
@@ -97,7 +97,7 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 
 				filePath := filepath.Join(opts.downloadDir, bundle.KubeVersion, component, filepath.Base(*manifest))
 				if err = downloadArtifact(filePath, *manifest, reader); err != nil {
-					return fmt.Errorf("error downloading artifact for component %s: %v", component, err)
+					return fmt.Errorf("downloading artifact for component %s: %v", component, err)
 				}
 				*manifest = filePath
 			}
@@ -111,7 +111,7 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 
 	bundleReleaseContent, err := yaml.Marshal(clusterSpec.Bundles)
 	if err != nil {
-		return fmt.Errorf("error marshaling bundle-release.yaml: %v", err)
+		return fmt.Errorf("marshaling bundle-release.yaml: %v", err)
 	}
 	bundleReleaseFilePath := filepath.Join(opts.downloadDir, filepath.Base(bundlesManifestUrl))
 	if err = ioutil.WriteFile(bundleReleaseFilePath, bundleReleaseContent, 0o644); err != nil {
