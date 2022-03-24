@@ -11,14 +11,14 @@ import (
 type generatePackageOptions struct {
 	directory   string
 	source      string
-	kubeversion string
+	kubeVersion string
 }
 
 func init() {
 	generateCmd.AddCommand(generatePackageCommand)
 	generatePackageCommand.Flags().StringVarP(&gepo.directory, "directory", "d", "", "Directory to save generated packages")
 	generatePackageCommand.Flags().StringVar(&gepo.source, "source", "", "Location to find curated packages: (cluster, registry)")
-	listPackagesCommand.Flags().StringVar(&lpo.kubeVersion, "kubeversion", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
+	generatePackageCommand.Flags().StringVar(&gepo.kubeVersion, "kubeversion", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
 
 	if err := generatePackageCommand.MarkFlagRequired("directory"); err != nil {
 		log.Fatalf("Error marking flag as required: %v", err)
@@ -42,11 +42,11 @@ var generatePackageCommand = &cobra.Command{
 
 func runGeneratePackages() func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		if err := sourceValidation(lpo.source); err != nil {
+		if err := sourceValidation(gepo.source); err != nil {
 			return err
 		}
 
-		if err := kubeVersionValidation(lpo.kubeVersion, lpo.source); err != nil {
+		if err := kubeVersionValidation(gepo.kubeVersion, gepo.source); err != nil {
 			return err
 		}
 		// TODO: Validate directory
@@ -56,7 +56,7 @@ func runGeneratePackages() func(cmd *cobra.Command, args []string) error {
 
 func generatePackages(ctx context.Context, gepo *generatePackageOptions, args []string) error {
 	kubeConfig := kubeconfig.FromEnvironment()
-	bundle, err := curatedpackages.GetLatestBundle(ctx, kubeConfig, gepo.source, gepo.kubeversion)
+	bundle, err := curatedpackages.GetLatestBundle(ctx, kubeConfig, gepo.source, gepo.kubeVersion)
 	if err != nil {
 		return err
 	}
