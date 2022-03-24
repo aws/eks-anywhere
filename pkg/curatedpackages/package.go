@@ -17,7 +17,9 @@ const (
 	flags    = 0
 )
 
-func DisplayPackages(m map[string][]string) {
+func DisplayPackages(packages []api.BundlePackage) {
+	m := packagesToString(packages)
+
 	// initialize tabwriter
 	w := new(tabwriter.Writer)
 
@@ -31,17 +33,17 @@ func DisplayPackages(m map[string][]string) {
 	}
 }
 
-func GetPackages(bundle *api.PackageBundle) map[string][]string {
-	packages := getPackagesFromBundle(bundle)
-	return packages
+func GetPackages(bundle *api.PackageBundle) []api.BundlePackage {
+	packagesInBundle := bundle.Spec.Packages
+	return packagesInBundle
 }
 
-func getPackagesFromBundle(bundle *api.PackageBundle) map[string][]string {
-	packagesInBundle := make(map[string][]string)
-	for _, p := range bundle.Spec.Packages {
-		packagesInBundle[p.Name] = append(packagesInBundle[p.Name], convertBundleVersionToPackageVersion(p.Source.Versions)...)
+func packagesToString(packages []api.BundlePackage) map[string][]string {
+	ptopv := make(map[string][]string)
+	for _, p := range packages {
+		ptopv[p.Name] = append(ptopv[p.Name], convertBundleVersionToPackageVersion(p.Source.Versions)...)
 	}
-	return packagesInBundle
+	return ptopv
 }
 
 func convertBundleVersionToPackageVersion(bundleVersions []api.SourceVersion) []string {
