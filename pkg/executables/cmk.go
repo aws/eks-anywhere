@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -19,9 +20,10 @@ import (
 var cmkConfigTemplate string
 
 const (
-	cmkPath           = "cmk"
-	cmkConfigFileName = "cmk_tmp.ini"
-	Shared            = "Shared"
+	cmkPath                           = "cmk"
+	cmkConfigFileName                 = "cmk_tmp.ini"
+	Shared                            = "Shared"
+	defaultCloudStackPreflightTimeout = "30"
 )
 
 // Cmk this struct wraps around the CloudMonkey executable CLI to perform operations against a CloudStack endpoint
@@ -358,12 +360,18 @@ func (c *Cmk) exec(ctx context.Context, args ...string) (stdout bytes.Buffer, er
 
 func (c *Cmk) buildCmkConfigFile() (configFile string, err error) {
 	t := templater.New(c.writer)
+
+	cloudstackPreflightTimeout := defaultCloudStackPreflightTimeout
+	if timeout, isSet := os.LookupEnv("CLOUDSTACK_PREFLIGHT_TIMEOUT"); isSet {
+		cloudstackPreflightTimeout = timeout
+	}
+
 	cmkConfig := &cmkExecConfig{
 		CloudStackApiKey:        c.config.ApiKey,
 		CloudStackSecretKey:     c.config.SecretKey,
 		CloudStackManagementUrl: c.config.ManagementUrl,
 		CloudMonkeyVerifyCert:   c.config.VerifySsl,
-		CloudMonkeyTimeout:      c.config.Timeout,
+		CloudMonkeyTimeout:      cloudstackPreflightTimeout,
 	}
 	writtenFileName, err := t.WriteToFile(cmkConfigTemplate, cmkConfig, cmkConfigFileName)
 	if err != nil {
