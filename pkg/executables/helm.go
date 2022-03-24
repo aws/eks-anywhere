@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"sigs.k8s.io/yaml"
+
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 const (
@@ -17,12 +19,12 @@ var helmTemplateEnvVars = map[string]string{
 }
 
 type Helm struct {
-	executable Executable
+	Executable
 }
 
 func NewHelm(executable Executable) *Helm {
 	return &Helm{
-		executable: executable,
+		Executable: executable,
 	}
 }
 
@@ -32,7 +34,7 @@ func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, 
 		return nil, fmt.Errorf("failed marshalling values for helm template: %v", err)
 	}
 
-	result, err := h.executable.Command(
+	result, err := h.Command(
 		ctx, "template", ociURI, "--version", version, insecureSkipVerifyFlag, "--namespace", namespace, "-f", "-",
 	).WithStdIn(valuesYaml).WithEnvVars(helmTemplateEnvVars).Run()
 	if err != nil {
@@ -43,17 +45,18 @@ func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, 
 }
 
 func (h *Helm) PullChart(ctx context.Context, ociURI, version string) error {
-	_, err := h.executable.Command(ctx, "pull", ociURI, "--version", version, insecureSkipVerifyFlag).
+	_, err := h.Command(ctx, "pull", ociURI, "--version", version, insecureSkipVerifyFlag).
 		WithEnvVars(helmTemplateEnvVars).Run()
 	return err
 }
 
 func (h *Helm) PushChart(ctx context.Context, chart, registry string) error {
-	_, err := h.executable.Command(ctx, "push", chart, registry, insecureSkipVerifyFlag).WithEnvVars(helmTemplateEnvVars).Run()
+	logger.Info("Pushing to registry", "chart", chart, "registry", registry)
+	_, err := h.Command(ctx, "push", chart, registry, insecureSkipVerifyFlag).WithEnvVars(helmTemplateEnvVars).Run()
 	return err
 }
 
 func (h *Helm) RegistryLogin(ctx context.Context, registry, username, password string) error {
-	_, err := h.executable.Command(ctx, "registry", "login", registry, "--username", username, "--password", password, "--insecure").WithEnvVars(helmTemplateEnvVars).Run()
+	_, err := h.Command(ctx, "registry", "login", registry, "--username", username, "--password", password, "--insecure").WithEnvVars(helmTemplateEnvVars).Run()
 	return err
 }
