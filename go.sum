@@ -132,8 +132,9 @@ github.com/Microsoft/go-winio v0.4.16-0.20201130162521-d1ffc52c7331/go.mod h1:XB
 github.com/Microsoft/go-winio v0.4.16/go.mod h1:XB6nPKklQyQ7GC9LdcBEcBl8PF76WugXOPRXwdLnMv0=
 github.com/Microsoft/go-winio v0.4.17-0.20210211115548-6eac466e5fa3/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpzfwIujj1a84=
 github.com/Microsoft/go-winio v0.4.17-0.20210324224401-5516f17a5958/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpzfwIujj1a84=
-github.com/Microsoft/go-winio v0.4.17 h1:iT12IBVClFevaf8PuVyi3UmZOVh4OqnaLxDTW2O6j3w=
 github.com/Microsoft/go-winio v0.4.17/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpzfwIujj1a84=
+github.com/Microsoft/go-winio v0.5.0 h1:Elr9Wn+sGKPlkaBvwu4mTrxtmOp3F3yV9qhaHbXGjwU=
+github.com/Microsoft/go-winio v0.5.0/go.mod h1:JPGBdM1cNvN/6ISo+n8V5iA4v8pBzdOpzfwIujj1a84=
 github.com/Microsoft/hcsshim v0.8.6/go.mod h1:Op3hHsoHPAvb6lceZHDtd9OkTew38wNoXnJs8iY7rUg=
 github.com/Microsoft/hcsshim v0.8.14/go.mod h1:NtVKoYxQuTLx6gEq0L96c9Ju4JbRJ4nY2ow3VK6a9Lg=
 github.com/Microsoft/hcsshim v0.8.16/go.mod h1:o5/SZqmR7x9JNKsW3pu+nqHm0MF8vbA+VxGOoXdC600=
@@ -2249,6 +2250,8 @@ sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.15/go.mod h1:LEScyz
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.22/go.mod h1:LEScyzhFmoF5pso/YSeBstl57mOzx9xlU9n85RGrDQg=
 sigs.k8s.io/cluster-api-provider-vsphere v1.0.1 h1:qs7zSFkAL9tU8tHob7bmrEWfKsOU5JaskpeSIYrhQCc=
 sigs.k8s.io/cluster-api-provider-vsphere v1.0.1/go.mod h1:Z6MDQcZjX5DUcEFStotBptj2fMR4vgCVPAnw6inIY20=
+sigs.k8s.io/cluster-api/test v1.0.0 h1:PeWOLXtDGYMmzXwGX+NtH7Xxx6BtS83DT7vKzITY5X0=
+sigs.k8s.io/cluster-api/test v1.0.0/go.mod h1:8WQozDv62x2qHkCB1wTUeFjuwawuHKUTh8IMH5hePQs=
 sigs.k8s.io/controller-runtime v0.5.0/go.mod h1:REiJzC7Y00U+2YkMbT8wxgrsX5USpXKGhb2sCtAXiT8=
 sigs.k8s.io/controller-runtime v0.10.2/go.mod h1:CQp8eyUQZ/Q7PJvnIrB6/hgfTC1kBkGylwsLgOQi1WY=
 sigs.k8s.io/controller-runtime v0.10.3 h1:s5Ttmw/B4AuIbwrXD3sfBkXwnPMMWrqpVj4WRt1dano=

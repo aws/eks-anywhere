@@ -150,6 +150,36 @@ func (mr *MockResourceFetcherMockRecorder) ExistingCloudStackWorkerMachineConfig
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingCloudStackWorkerMachineConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingCloudStackWorkerMachineConfig), arg0, arg1, arg2)
 }
 
+// ExistingControlPlaneKindNodeImage mocks base method.
+func (m *MockResourceFetcher) ExistingControlPlaneKindNodeImage(arg0 context.Context, arg1 *v1alpha1.Cluster) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistingControlPlaneKindNodeImage", arg0, arg1)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistingControlPlaneKindNodeImage indicates an expected call of ExistingControlPlaneKindNodeImage.
+func (mr *MockResourceFetcherMockRecorder) ExistingControlPlaneKindNodeImage(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingControlPlaneKindNodeImage", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingControlPlaneKindNodeImage), arg0, arg1)
+}
+
+// ExistingKubeVersion mocks base method.
+func (m *MockResourceFetcher) ExistingKubeVersion(arg0 context.Context, arg1 *v1alpha1.Cluster) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistingKubeVersion", arg0, arg1)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistingKubeVersion indicates an expected call of ExistingKubeVersion.
+func (mr *MockResourceFetcherMockRecorder) ExistingKubeVersion(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingKubeVersion", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingKubeVersion), arg0, arg1)
+}
+
 // ExistingVSphereControlPlaneMachineConfig mocks base method.
 func (m *MockResourceFetcher) ExistingVSphereControlPlaneMachineConfig(arg0 context.Context, arg1 *v1alpha1.Cluster) (*v1alpha1.VSphereMachineConfig, error) {
 	m.ctrl.T.Helper()
@@ -208,6 +238,21 @@ func (m *MockResourceFetcher) ExistingVSphereWorkerMachineConfig(arg0 context.Co
 func (mr *MockResourceFetcherMockRecorder) ExistingVSphereWorkerMachineConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingVSphereWorkerMachineConfig", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingVSphereWorkerMachineConfig), arg0, arg1, arg2)
+}
+
+// ExistingWorkerKindNodeImage mocks base method.
+func (m *MockResourceFetcher) ExistingWorkerKindNodeImage(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 v1alpha1.WorkerNodeGroupConfiguration) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExistingWorkerKindNodeImage", arg0, arg1, arg2)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExistingWorkerKindNodeImage indicates an expected call of ExistingWorkerKindNodeImage.
+func (mr *MockResourceFetcherMockRecorder) ExistingWorkerKindNodeImage(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExistingWorkerKindNodeImage", reflect.TypeOf((*MockResourceFetcher)(nil).ExistingWorkerKindNodeImage), arg0, arg1, arg2)
 }
 
 // ExistingWorkerNodeGroupConfig mocks base method.

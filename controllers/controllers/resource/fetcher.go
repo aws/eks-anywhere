@@ -20,6 +20,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
+	dockerv1 "sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -46,6 +47,9 @@ type ResourceFetcher interface {
 	ExistingCloudStackEtcdMachineConfig(ctx context.Context, cs *anywherev1.Cluster) (*anywherev1.CloudStackMachineConfig, error)
 	ExistingCloudStackWorkerMachineConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.CloudStackMachineConfig, error)
 	ExistingWorkerNodeGroupConfig(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*anywherev1.WorkerNodeGroupConfiguration, error)
+	ExistingKubeVersion(ctx context.Context, cs *anywherev1.Cluster) (string, error)
+	ExistingControlPlaneKindNodeImage(ctx context.Context, cs *anywherev1.Cluster) (string, error)
+	ExistingWorkerKindNodeImage(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (string, error)
 	ControlPlane(ctx context.Context, cs *anywherev1.Cluster) (*controlplanev1.KubeadmControlPlane, error)
 	Etcd(ctx context.Context, cs *anywherev1.Cluster) (*etcdv1.EtcdadmCluster, error)
 	FetchAppliedSpec(ctx context.Context, cs *anywherev1.Cluster) (*cluster.Spec, error)
@@ -313,6 +317,33 @@ func (r *CapiResourceFetcher) CloudStackEtcdMachineTemplate(ctx context.Context,
 	return cloudstackMachineTemplate, nil
 }
 
+
+func (r *CapiResourceFetcher) DockerControlPlaneMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*dockerv1.DockerMachineTemplate, error) {
+	cp, err := r.ControlPlane(ctx, cs)
+	if err != nil {
+		return nil, err
+	}
+	dockerMachineTemplate := &dockerv1.DockerMachineTemplate{}
+	err = r.FetchObjectByName(ctx, cp.Spec.MachineTemplate.InfrastructureRef.Name, constants.EksaSystemNamespace, dockerMachineTemplate)
+	if err != nil {
+		return nil, err
+	}
+	return dockerMachineTemplate, nil
+}
+
+func (r *CapiResourceFetcher) DockerWorkerMachineTemplate(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*dockerv1.DockerMachineTemplate, error) {
+	md, err := r.MachineDeployment(ctx, cs, wnc)
+	if err != nil {
+		return nil, err
+	}
+	dockerMachineTemplate := &dockerv1.DockerMachineTemplate{}
+	err = r.FetchObjectByName(ctx, md.Spec.Template.Spec.InfrastructureRef.Name, constants.EksaSystemNamespace, dockerMachineTemplate)
+	if err != nil {
+		return nil, err
+	}
+	return dockerMachineTemplate, nil
+}
+
 func (r *CapiResourceFetcher) KubeadmConfigTemplate(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (*kubeadmv1.KubeadmConfigTemplate, error) {
 	machineDeployment, err := r.MachineDeployment(ctx, cs, wnc)
 	if err != nil {
@@ -495,6 +526,31 @@ func (r *CapiResourceFetcher) ExistingWorkerNodeGroupConfig(ctx context.Context,
 		return nil, err
 	}
 	return MapKubeadmConfigTemplateToWorkerNodeGroupConfiguration(*existingKubeadmConfigTemplate), nil
+}
+
+func (r *CapiResourceFetcher) ExistingKubeVersion(ctx context.Context, cs *anywherev1.Cluster) (string, error) {
+	existingControlPlane, err := r.ControlPlane(ctx, cs)
+	if err != nil {
+		return "", err
+	}
+	return existingControlPlane.Spec.Version, nil
+}
+
+// Control plane and external etcd are configured to use the same node image, so pulling it from control plane
+func (r *CapiResourceFetcher) ExistingControlPlaneKindNodeImage(ctx context.Context, cs *anywherev1.Cluster) (string, error) {
+	existingDockerMachineTemplate, err := r.DockerControlPlaneMachineTemplate(ctx, cs)
+	if err != nil {
+		return "", err
+	}
+	return existingDockerMachineTemplate.Spec.Template.Spec.CustomImage, nil
+}
+
+func (r *CapiResourceFetcher) ExistingWorkerKindNodeImage(ctx context.Context, cs *anywherev1.Cluster, wnc anywherev1.WorkerNodeGroupConfiguration) (string, error) {
+	existingDockerMachineTemplate, err := r.DockerWorkerMachineTemplate(ctx, cs, wnc)
+	if err != nil {
+		return "", err
+	}
+	return existingDockerMachineTemplate.Spec.Template.Spec.CustomImage, nil
 }
 
 func MapMachineTemplateToVSphereDatacenterConfigSpec(vsMachineTemplate *vspherev1.VSphereMachineTemplate) (*anywherev1.VSphereDatacenterConfig, error) {
