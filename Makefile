@@ -20,10 +20,11 @@ SHELL := /bin/bash
 ARTIFACTS_BUCKET?=my-s3-bucket
 GIT_VERSION?=$(shell git describe --tag)
 GIT_TAG?=$(shell git tag -l --sort -v:refname | head -1)
-GOLANG_VERSION?="1.16"
-GO ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))/go
+GOLANG_VERSION?="1.17"
+GO_VERSION ?= $(shell source ./scripts/common.sh && build::common::get_go_path $(GOLANG_VERSION))
+GO ?= $(GO_VERSION)/go
 GO_TEST ?= $(GO) test
-
+export PATH := $(GO_VERSION):$(PATH)
 # A regular expression defining what packages to exclude from the unit-test recipe.
 UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 
@@ -109,7 +110,6 @@ BUILD_FLAGS?=
 
 GO_ARCH:=$(shell go env GOARCH)
 GO_OS:=$(shell go env GOOS)
-
 
 BINARY_DEPS_DIR = $(OUTPUT_DIR)/dependencies
 CLUSTER_CONTROLLER_PLATFORMS ?= linux-amd64 linux-arm64
@@ -320,7 +320,7 @@ cluster-controller-images: cluster-controller-binaries $(ORGANIZE_BINARIES_TARGE
 
 
 .PHONY: generate-attribution
-generate-attribution: GOLANG_VERSION ?= "1.16"
+generate-attribution: GOLANG_VERSION ?= "1.17"
 generate-attribution:
 	scripts/make_attribution.sh $(GOLANG_VERSION)
 
@@ -382,7 +382,7 @@ capd-test-%: e2e ## Run CAPD tests
 
 .PHONY: mocks
 mocks: ## Generate mocks
-	$(GO) install github.com/golang/mock/mockgen@v1.5.0
+	$(GO) install github.com/golang/mock/mockgen@v1.6.0
 	${GOPATH}/bin/mockgen -destination=pkg/providers/mocks/providers.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers" Provider,DatacenterConfig,MachineConfig
 	${GOPATH}/bin/mockgen -destination=pkg/executables/mocks/executables.go -package=mocks "github.com/aws/eks-anywhere/pkg/executables" Executable
 	${GOPATH}/bin/mockgen -destination=pkg/providers/docker/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/providers/docker" ProviderClient,ProviderKubectlClient
@@ -410,7 +410,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/capiclient.go -package=mocks -source "pkg/clusterapi/manager.go" CAPIClient,KubectlClient
 	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/client.go -package=mocks -source "pkg/clusterapi/resourceset_manager.go" Client
 	${GOPATH}/bin/mockgen -destination=pkg/crypto/mocks/crypto.go -package=mocks -source "pkg/crypto/certificategen.go" CertificateGenerator
-	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/clients.go -package=mocks -source "pkg/networking/cilium/client.go" 
+	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/clients.go -package=mocks -source "pkg/networking/cilium/client.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/helm.go -package=mocks -source "pkg/networking/cilium/templater.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/upgrader.go -package=mocks -source "pkg/networking/cilium/upgrader.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networking/kindnetd/mocks/client.go -package=mocks -source "pkg/networking/kindnetd/upgrader.go"

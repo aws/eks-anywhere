@@ -2,9 +2,6 @@
 ** cloud.google.com/go/compute/metadata; version v0.93.3 --
 https://github.com/googleapis/google-cloud-go
 
-** github.com/aws/cluster-api-provider-cloudstack; version v0.4.1 --
-https://github.com/aws/cluster-api-provider-cloudstack
-
 ** github.com/aws/eks-distro-build-tooling/release/api/v1alpha1; version v0.0.0-20211103003257-a7e2379eae5e --
 https://github.com/aws/eks-distro-build-tooling/release
 
@@ -38,10 +35,10 @@ https://github.com/go-git/go-billy/v5
 ** github.com/go-git/go-git/v5; version v5.4.2 --
 https://github.com/go-git/go-git/v5
 
-** github.com/go-logr/logr; version v0.4.0 --
+** github.com/go-logr/logr; version v1.2.2 --
 https://github.com/go-logr/logr
 
-** github.com/go-logr/zapr; version v0.4.0 --
+** github.com/go-logr/zapr; version v1.2.0 --
 https://github.com/go-logr/zapr
 
 ** github.com/golang/groupcache/lru; version v0.0.0-20210331224755-41bb18bfe9da --
@@ -62,7 +59,7 @@ https://github.com/matttproud/golang_protobuf_extensions
 ** github.com/modern-go/concurrent; version v0.0.0-20180306012644-bacd9c7ef1dd --
 https://github.com/modern-go/concurrent
 
-** github.com/modern-go/reflect2; version v1.0.1 --
+** github.com/modern-go/reflect2; version v1.0.2 --
 https://github.com/modern-go/reflect2
 
 ** github.com/mrajashree/etcdadm-bootstrap-provider/api/v1beta1; version v1.0.0-rc3 --
@@ -113,7 +110,7 @@ https://github.com/xanzy/ssh-agent
 ** gomodules.xyz/jsonpatch/v2; version v2.2.0 --
 https://github.com/gomodules/jsonpatch
 
-** google.golang.org/genproto; version v0.0.0-20210828152312-66f60bf46e71 --
+** google.golang.org/genproto; version v0.0.0-20210831024726-fe130286e0e2 --
 https://github.com/googleapis/go-genproto
 
 ** google.golang.org/grpc; version v1.41.0 --
@@ -125,35 +122,35 @@ https://gopkg.in/ini.v1
 ** gopkg.in/yaml.v2; version v2.4.0 --
 https://gopkg.in/yaml.v2
 
-** k8s.io/api; version v0.22.2 --
+** k8s.io/api; version v0.23.0 --
 https://github.com/kubernetes/api
 
-** k8s.io/apiextensions-apiserver/pkg/apis/apiextensions; version v0.22.2 --
+** k8s.io/apiextensions-apiserver/pkg/apis/apiextensions; version v0.23.0 --
 https://github.com/kubernetes/apiextensions-apiserver
 
-** k8s.io/apimachinery/pkg; version v0.22.2 --
+** k8s.io/apimachinery/pkg; version v0.23.0 --
 https://github.com/kubernetes/apimachinery
 
-** k8s.io/client-go; version v0.22.2 --
+** k8s.io/client-go; version v0.23.0 --
 https://github.com/kubernetes/client-go
 
 ** k8s.io/cluster-bootstrap/token; version v0.22.2 --
 https://github.com/kubernetes/cluster-bootstrap
 
-** k8s.io/component-base; version v0.22.2 --
+** k8s.io/component-base; version v0.23.0 --
 https://github.com/kubernetes/component-base
 
-** k8s.io/klog/v2; version v2.10.0 --
+** k8s.io/klog/v2; version v2.30.0 --
 https://github.com/kubernetes/klog
 
-** k8s.io/kube-openapi/pkg/util/proto; version v0.0.0-20210421082810-95288971da7e --
+** k8s.io/kube-openapi/pkg; version v0.0.0-20211115234752-e816edb12b65 --
 https://github.com/kubernetes/kube-openapi
 
 ** k8s.io/utils; version v0.0.0-20210930125809-cb0fa318a74b --
 https://github.com/kubernetes/utils
 
-** github.com/mrajashree/cluster-api; version v1.0.3-0.20220301005127-382d70d4a76f --
-https://github.com/mrajashree/cluster-api
+** github.com/a-cool-train/cluster-api; version v1.0.3-custom.0.20220321135508-ebcbebe2dbfe --
+https://github.com/a-cool-train/cluster-api
 
 ** sigs.k8s.io/cluster-api-provider-vsphere/api/v1beta1; version v1.0.1 --
 https://github.com/kubernetes-sigs/cluster-api-provider-vsphere
@@ -161,10 +158,13 @@ https://github.com/kubernetes-sigs/cluster-api-provider-vsphere
 ** sigs.k8s.io/cluster-api/test/infrastructure/docker/api/v1beta1; version v1.0.0 --
 https://github.com/kubernetes-sigs/cluster-api
 
-** sigs.k8s.io/controller-runtime; version v0.10.3 --
+** sigs.k8s.io/controller-runtime; version v0.11.1 --
 https://github.com/kubernetes-sigs/controller-runtime
 
-** sigs.k8s.io/structured-merge-diff/v4; version v4.1.2 --
+** sigs.k8s.io/json; version v0.0.0-20211020170558-c049b76a60c6 --
+https://github.com/kubernetes-sigs/json
+
+** sigs.k8s.io/structured-merge-diff/v4; version v4.2.0 --
 https://github.com/kubernetes-sigs/structured-merge-diff
 
 
@@ -580,7 +580,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
-** github.com/evanphx/json-patch; version v4.11.0+incompatible --
+** github.com/evanphx/json-patch; version v4.12.0+incompatible --
 https://github.com/evanphx/json-patch
 
 Copyright (c) 2014, Evan Phoenix
@@ -995,7 +995,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** github.com/ProtonMail/go-crypto; version v0.0.0-20210428141323-04723f9f07d7 --
 https://github.com/ProtonMail/go-crypto
 
-** golang.org/go; version go1.16.12 --
+** golang.org/go; version go1.17.5 --
 https://github.com/golang/go
 
 ** golang.org/x/crypto; version v0.0.0-20210817164053-32db794688a5 --
@@ -1007,22 +1007,22 @@ https://go.googlesource.com/net
 ** golang.org/x/oauth2; version v0.0.0-20210819190943-2bc19b11175f --
 https://go.googlesource.com/oauth2
 
-** golang.org/x/sys; version v0.0.0-20210823070655-63515b42dcdf --
+** golang.org/x/sys; version v0.0.0-20211029165221-6e7872819dc8 --
 https://go.googlesource.com/sys
 
-** golang.org/x/term; version v0.0.0-20210220032956-6a3ed077a48d --
+** golang.org/x/term; version v0.0.0-20210615171337-6886f2dfbf5b --
 https://go.googlesource.com/term
 
-** golang.org/x/text; version v0.3.6 --
+** golang.org/x/text; version v0.3.7 --
 https://go.googlesource.com/text
 
 ** golang.org/x/time/rate; version v0.0.0-20210723032227-1f47c861a9ac --
 https://go.googlesource.com/time
 
-** k8s.io/apimachinery/third_party/forked/golang; version v0.22.2 --
+** k8s.io/apimachinery/third_party/forked/golang; version v0.23.0 --
 https://github.com/kubernetes/apimachinery
 
-** k8s.io/client-go/third_party/forked/golang/template; version v0.22.2 --
+** k8s.io/client-go/third_party/forked/golang/template; version v0.23.0 --
 https://github.com/kubernetes/client-go
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
@@ -1122,6 +1122,39 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
 
+** k8s.io/utils/internal/third_party/forked/golang/net; version v0.0.0-20210930125809-cb0fa318a74b --
+https://github.com/kubernetes/utils
+
+Copyright (c) 2012 The Go Authors. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+   * Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+   * Redistributions in binary form must reproduce the above
+copyright notice, this list of conditions and the following disclaimer
+in the documentation and/or other materials provided with the
+distribution.
+   * Neither the name of Google Inc. nor the names of its
+contributors may be used to endorse or promote products derived from
+this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+------
+
 ** github.com/davecgh/go-spew/spew; version v1.1.1 --
 https://github.com/davecgh/go-spew
 
@@ -1171,7 +1204,7 @@ Copyright (c) 2014 Jonathan Picques
 https://github.com/jbenet/go-context
 Copyright (c) 2014 Juan Batiz-Benet
 
-** github.com/json-iterator/go; version v1.1.11 --
+** github.com/json-iterator/go; version v1.1.12 --
 https://github.com/json-iterator/go
 Copyright (c) 2016 json-iterator
 
@@ -1219,7 +1252,7 @@ Copyright (c) 2016 Uber Technologies, Inc.
 https://github.com/uber-go/multierr
 Copyright (c) 2017 Uber Technologies, Inc.
 
-** go.uber.org/zap; version v1.19.0 --
+** go.uber.org/zap; version v1.19.1 --
 https://github.com/uber-go/zap
 Copyright (c) 2016-2017 Uber Technologies, Inc.
 
