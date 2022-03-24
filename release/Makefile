@@ -93,7 +93,7 @@ test: manifests generate fmt vet ## Run tests.
 ##@ Build
 
 build: clean fmt vet ## Build release binary.
-	go build -o bin/eks-anywhere-release main.go
+	go1.17.5 build -o bin/eks-anywhere-release main.go
 
 .PHONY: lint
 lint: bin/golangci-lint ## Run golangci-lint
