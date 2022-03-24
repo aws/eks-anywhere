@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -363,6 +364,9 @@ func (c *Cmk) buildCmkConfigFile() (configFile string, err error) {
 
 	cloudstackPreflightTimeout := defaultCloudStackPreflightTimeout
 	if timeout, isSet := os.LookupEnv("CLOUDSTACK_PREFLIGHT_TIMEOUT"); isSet {
+		if _, err := strconv.ParseUint(timeout, 10, 16); err != nil {
+			return "", fmt.Errorf("CLOUDSTACK_PREFLIGHT_TIMEOUT must be a number: %v", err)
+		}
 		cloudstackPreflightTimeout = timeout
 	}
 
