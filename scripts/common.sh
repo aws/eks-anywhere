@@ -93,6 +93,7 @@ function build::gather_licenses() {
 
   local -r outputdir=$1
   local -r patterns=$2
+  local -r GO=$3
 
   # reset the gopath change to make sure and always use
   # the latest go for generating deps list
@@ -112,7 +113,7 @@ function build::gather_licenses() {
   # data about each dependency to generate the amazon approved attribution.txt files
   # go-deps is needed for module versions
   # go-licenses are all the dependencies found from the module(s) that were passed in via patterns
-  go list -deps=true -json ./... | jq -s ''  > "${outputdir}/attribution/go-deps.json"
+  $GO list -deps=true -json ./... | jq -s ''  > "${outputdir}/attribution/go-deps.json"
 
   go-licenses save --force $patterns --save_path="${outputdir}/LICENSES"
 
@@ -195,7 +196,9 @@ function build::common::get_go_path() {
   if [[ $version == "1.16"* ]]; then
     gobinaryversion="1.16"
   fi
-
+  if [[ $version == "1.17"* ]]; then
+    gobinaryversion="1.17"
+  fi
   if [[ "$gobinaryversion" == "" ]]; then
     return
   fi
