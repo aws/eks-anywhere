@@ -95,7 +95,7 @@ func importImages(ctx context.Context, spec string) error {
 	}
 	for _, image := range images {
 		if err := importImage(ctx, de, image.URI, endpoint); err != nil {
-			return fmt.Errorf("error importing image %s: %v", image.URI, err)
+			return fmt.Errorf("importing image %s: %v", image.URI, err)
 		}
 	}
 

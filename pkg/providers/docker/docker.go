@@ -361,7 +361,7 @@ func (p *provider) generateCAPISpecForCreate(ctx context.Context, cluster *types
 func (p *provider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
+		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }
@@ -369,7 +369,7 @@ func (p *provider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types
 func (p *provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, newClusterSpec)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
+		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }

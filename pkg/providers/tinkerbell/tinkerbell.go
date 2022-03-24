@@ -202,7 +202,7 @@ func (p *tinkerbellProvider) PostBootstrapSetup(ctx context.Context, clusterConf
 	// TODO: figure out if we need something else here
 	err := p.providerKubectlClient.ApplyHardware(ctx, p.hardwareConfigFile, cluster.KubeconfigFile)
 	if err != nil {
-		return fmt.Errorf("error applying hardware yaml: %v", err)
+		return fmt.Errorf("applying hardware yaml: %v", err)
 	}
 	return nil
 }
@@ -457,7 +457,7 @@ func (vs *TinkerbellTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluste
 func (p *tinkerbellProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
+		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }

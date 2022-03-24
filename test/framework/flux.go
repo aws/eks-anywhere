@@ -407,7 +407,7 @@ func (e *ClusterE2ETest) validateDeploymentsInManagementCluster(ctx context.Cont
 			executables.WithNamespace(namespace),
 		)
 		if err != nil {
-			return fmt.Errorf("error getting deployments: %v", err)
+			return fmt.Errorf("getting deployments: %v", err)
 		}
 
 		for _, deployment := range deployments {
@@ -492,7 +492,7 @@ func (e *ClusterE2ETest) waitForWorkerNodeValidation() error {
 		e.T.Log("Attempting to validate worker nodes...")
 		if err := e.KubectlClient.ValidateWorkerNodes(ctx, e.ClusterConfig.Name, e.managementKubeconfigFilePath()); err != nil {
 			e.T.Logf("Worker node validation failed: %v", err)
-			return fmt.Errorf("error while validating worker nodes: %v", err)
+			return fmt.Errorf("validating worker nodes: %v", err)
 		}
 		return nil
 	})

@@ -20,7 +20,7 @@ func NewAwsCli(executable Executable) *AwsCli {
 func (ac *AwsCli) CreateAccessKey(ctx context.Context, username string) (string, error) {
 	stdOut, err := ac.Execute(ctx, "iam", "create-access-key", "--user-name", username)
 	if err != nil {
-		return "", fmt.Errorf("error executing iam create-access-key: %v", err)
+		return "", fmt.Errorf("executing iam create-access-key: %v", err)
 	}
 	return stdOut.String(), nil
 }
