@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sigs.k8s.io/yaml"
 
 	packagesv1 "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere-packages/pkg/bundle"
@@ -67,7 +68,7 @@ func (b *BundleReader) getLatestBundleFromRegistry(ctx context.Context) (*packag
 
 func (b *BundleReader) getActiveBundleFromCluster(ctx context.Context) (*packagesv1.PackageBundle, error) {
 	// Active BundleReader is set at the bundle Controller
-	bundleController, err := b.getActiveController(ctx)
+	bundleController, err := b.GetActiveController(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +92,7 @@ func (b *BundleReader) getPackageBundle(ctx context.Context, activeBundle string
 	return obj, nil
 }
 
-func (b *BundleReader) getActiveController(ctx context.Context) (*packagesv1.PackageBundleController, error) {
+func (b *BundleReader) GetActiveController(ctx context.Context) (*packagesv1.PackageBundleController, error) {
 	params := []string{"get", "packageBundleController", "-o", "json", "--kubeconfig", b.kubeConfig, "--namespace", constants.EksaPackagesName, bundle.PackageBundleControllerName}
 	stdOut, err := b.kubectl.ExecuteCommand(ctx, params...)
 	if err != nil {
@@ -102,4 +103,18 @@ func (b *BundleReader) getActiveController(ctx context.Context) (*packagesv1.Pac
 		return nil, fmt.Errorf("unmarshaling active package bundle controller: %w", err)
 	}
 	return obj, nil
+}
+
+func (b *BundleReader) UpgradeBundle(ctx context.Context, controller *packagesv1.PackageBundleController, newBundle string) error {
+	controller.Spec.ActiveBundle = newBundle
+	controllerYaml, err := yaml.Marshal(controller)
+	if err != nil {
+		return err
+	}
+	params := []string{"create", "-f", "-", "--kubeconfig", b.kubeConfig}
+	_, err = b.kubectl.CreateFromYaml(ctx, controllerYaml, params...)
+	if err != nil {
+		return err
+	}
+	return nil
 }
