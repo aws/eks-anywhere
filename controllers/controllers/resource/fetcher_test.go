@@ -333,6 +333,7 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 								Offering:         cloudstackv1.CloudStackResourceIdentifier{Name: "large"},
 								Template:         cloudstackv1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
 								AffinityGroupIDs: []string{"c", "d"},
+								Details:          map[string]string{"foo": "bar"},
 							},
 						},
 					},
@@ -340,9 +341,10 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 			},
 			want: &anywherev1.CloudStackMachineConfig{
 				Spec: anywherev1.CloudStackMachineConfigSpec{
-					Template:         anywherev1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
-					ComputeOffering:  anywherev1.CloudStackResourceIdentifier{Name: "large"},
-					AffinityGroupIds: []string{"c", "d"},
+					Template:          anywherev1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
+					ComputeOffering:   anywherev1.CloudStackResourceIdentifier{Name: "large"},
+					AffinityGroupIds:  []string{"c", "d"},
+					UserCustomDetails: map[string]string{"foo": "bar"},
 				},
 			},
 		},
