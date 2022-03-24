@@ -60,6 +60,10 @@ func generatePackages(ctx context.Context, gepo *generatePackageOptions, args []
 	if err != nil {
 		return err
 	}
-
+	packages, err := curatedpackages.GeneratePackages(bundle, args)
+	if err != nil {
+		return err
+	}
+	curatedpackages.WritePackagesToFile(packages, gepo.directory)
 	return nil
 }
