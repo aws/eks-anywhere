@@ -317,7 +317,6 @@ func (r *CapiResourceFetcher) CloudStackEtcdMachineTemplate(ctx context.Context,
 	return cloudstackMachineTemplate, nil
 }
 
-
 func (r *CapiResourceFetcher) DockerControlPlaneMachineTemplate(ctx context.Context, cs *anywherev1.Cluster) (*dockerv1.DockerMachineTemplate, error) {
 	cp, err := r.ControlPlane(ctx, cs)
 	if err != nil {
