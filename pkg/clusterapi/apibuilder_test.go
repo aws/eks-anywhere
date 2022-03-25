@@ -250,9 +250,9 @@ func wantRegistryMirrorFiles() []bootstrapv1.File {
 			Path:  "/etc/containerd/config_append.toml",
 			Owner: "root:root",
 			Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
     endpoint = ["https://1.2.3.4:443"]
-    [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
+  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
     ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"`,
 		},
 		{
