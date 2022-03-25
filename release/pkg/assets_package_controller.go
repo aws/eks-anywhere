@@ -67,15 +67,15 @@ func (r *ReleaseConfig) GetPackagesAssets() ([]Artifact, error) {
 		SourcedFromBranch: sourcedFromBranch,
 	}
 	// Remove the OS, and Arch for the Helm chart, and modify the tag based off build-tooling helm/push.sh script.
-	// Currently we must Trim leading v of the tag after the :, and add "-helm to the end of tag.
+	// Currently we must Trim leading v of the tag after the :, and add "-helm to the end of tag for source URI.
 	// 123456.dkr.ecr.us-west-2.amazonaws.com/eks-anywhere-packages:v0.1.2-2e9994fd1afb2216a51fa474ac5d7dc6a772bb62
 	// >>>
 	// 123456.dkr.ecr.us-west-2.amazonaws.com/eks-anywhere-packages:0.1.2-2e9994fd1afb2216a51fa474ac5d7dc6a772bb62-helm
 	artifacts := []Artifact{{Image: imageArtifact}}
 	helmImageArtifact := &ImageArtifact{
 		AssetName:         packagesHelmChart, // This needs to differ from the image name for later steps
-		SourceImageURI:    sourceImageUri,
-		ReleaseImageURI:   strings.ReplaceAll(fmt.Sprintf("%s-helm", releaseImageUri), "packages:v", "packages:"),
+		SourceImageURI:    strings.ReplaceAll(fmt.Sprintf("%s-helm", sourceImageUri), "packages:v", "packages:"),
+		ReleaseImageURI:   strings.ReplaceAll(releaseImageUri, "packages:v", "packages:"),
 		GitTag:            gitTag,
 		ProjectPath:       packagesRootPath,
 		SourcedFromBranch: sourcedFromBranch,
@@ -94,7 +94,7 @@ func (r *ReleaseConfig) GetPackagesBundle(imageDigests map[string]string) (anywh
 		bundleImageArtifact := anywherev1alpha1.Image{}
 		if strings.HasSuffix(imageArtifact.AssetName, "helm") {
 			bundleImageArtifact = anywherev1alpha1.Image{
-				Name:        imageArtifact.AssetName,
+				Name:        strings.TrimSuffix(imageArtifact.AssetName, "-helm"),
 				Description: fmt.Sprintf("Helm chart: %s", imageArtifact.AssetName),
 				URI:         imageArtifact.ReleaseImageURI,
 				ImageDigest: imageDigests[imageArtifact.ReleaseImageURI],
