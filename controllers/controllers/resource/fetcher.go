@@ -563,8 +563,12 @@ func MapMachineTemplateToCloudStackMachineConfigSpec(csMachineTemplate *cloudsta
 		Name: csMachineTemplate.Spec.Spec.Spec.Template.Name,
 	}
 
+	csSpec.Spec.Affinity = csMachineTemplate.Spec.Spec.Spec.Affinity
 	csSpec.Spec.AffinityGroupIds = csMachineTemplate.Spec.Spec.Spec.AffinityGroupIDs
 
+	if csSpec.Spec.UserCustomDetails == nil {
+		csSpec.Spec.UserCustomDetails = map[string]string{}
+	}
 	for key, element := range csMachineTemplate.Spec.Spec.Spec.Details {
 		csSpec.Spec.UserCustomDetails[key] = element
 	}

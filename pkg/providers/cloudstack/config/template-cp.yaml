@@ -81,6 +81,9 @@ spec:
         {{$key}}: {{$value}}
 {{- end}}
 {{- end}}
+{{- if .affinity }}
+      affinity: '{{ .affinity }}'
+{{- end }}
 {{- if .affinityGroupIds }}
       affinitygroupids:
       {{- range .affinityGroupIds}}
@@ -440,6 +443,9 @@ spec:
         {{$key}}: {{$value}}
 {{- end}}
 {{- end}}
+{{- if .cloudstackEtcdAffinity }}
+      affinity: '{{ .cloudstackEtcdAffinity }}'
+{{- end }}
 {{- if .cloudstackEtcdAffinityGroupIds }}
       affinitygroupids:
       {{- range .cloudstackEtcdAffinityGroupIds }}
