@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
@@ -366,16 +367,19 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		logger.V(3).Info("External etcd is ready")
 	}
 
+	logger.V(3).Info("Waiting for control plane upgrade to be in progress")
+	err = c.clusterClient.WaitForControlPlaneNotReady(ctx, managementCluster, ctrlPlaneInProgressStr, newClusterSpec.Cluster.Name)
+	if err != nil {
+		if !strings.Contains(fmt.Sprint(err), "timed out waiting for the condition on clusters") {
+			return fmt.Errorf("error waiting for control plane not ready: %v", err)
+		} else {
+			logger.V(3).Info("Timed out while waiting for control plane to be in progress, likely caused by no control plane upgrade")
+		}
+	}
 	logger.V(3).Info("Run post control plane upgrade operations")
 	err = provider.RunPostControlPlaneUpgrade(ctx, currentSpec, newClusterSpec, workloadCluster, managementCluster)
 	if err != nil {
 		return fmt.Errorf("error running post control plane upgrade operations: %v", err)
-	}
-
-	logger.V(3).Info("Waiting for control plane upgrade to be in progress")
-	err = c.clusterClient.WaitForControlPlaneNotReady(ctx, managementCluster, ctrlPlaneInProgressStr, newClusterSpec.Cluster.Name)
-	if err != nil {
-		logger.V(3).Info("no control plane upgrading")
 	}
 
 	logger.V(3).Info("Waiting for control plane to be ready")
