@@ -244,25 +244,6 @@ func wantKubeadmControlPlane() *controlplanev1.KubeadmControlPlane {
 	}
 }
 
-func wantRegistryMirrorFiles() []bootstrapv1.File {
-	return []bootstrapv1.File{
-		{
-			Path:  "/etc/containerd/config_append.toml",
-			Owner: "root:root",
-			Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
-    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
-    endpoint = ["https://1.2.3.4:443"]
-    [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
-    ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"`,
-		},
-		{
-			Path:    "/etc/containerd/certs.d/1.2.3.4:443/ca.crt",
-			Owner:   "root:root",
-			Content: "xyz",
-		},
-	}
-}
-
 func wantRegistryMirrorCommands() []string {
 	return []string{
 		"cat /etc/containerd/config_append.toml >> /etc/containerd/config.toml",
@@ -280,19 +261,95 @@ func TestKubeadmControlPlane(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
+var registryMirrorTests = []struct {
+	name                 string
+	registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration
+	wantFiles            []bootstrapv1.File
+}{
+	{
+		name: "with ca cert",
+		registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
+			Endpoint:      "1.2.3.4",
+			Port:          "443",
+			CACertContent: "xyz",
+		},
+		wantFiles: []bootstrapv1.File{
+			{
+				Path:  "/etc/containerd/config_append.toml",
+				Owner: "root:root",
+				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+    endpoint = ["https://1.2.3.4:443"]
+  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
+    ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"`,
+			},
+			{
+				Path:    "/etc/containerd/certs.d/1.2.3.4:443/ca.crt",
+				Owner:   "root:root",
+				Content: "xyz",
+			},
+		},
+	},
+	{
+		name: "with insecure skip",
+		registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
+			Endpoint:           "1.2.3.4",
+			Port:               "443",
+			InsecureSkipVerify: true,
+		},
+		wantFiles: []bootstrapv1.File{
+			{
+				Path:  "/etc/containerd/config_append.toml",
+				Owner: "root:root",
+				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+    endpoint = ["https://1.2.3.4:443"]
+  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
+    insecure_skip_verify = true`,
+			},
+		},
+	},
+	{
+		name: "with ca cert and insecure skip",
+		registryMirrorConfig: &v1alpha1.RegistryMirrorConfiguration{
+			Endpoint:           "1.2.3.4",
+			Port:               "443",
+			CACertContent:      "xyz",
+			InsecureSkipVerify: true,
+		},
+		wantFiles: []bootstrapv1.File{
+			{
+				Path:  "/etc/containerd/config_append.toml",
+				Owner: "root:root",
+				Content: `[plugins."io.containerd.grpc.v1.cri".registry.mirrors]
+  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."public.ecr.aws"]
+    endpoint = ["https://1.2.3.4:443"]
+  [plugins."io.containerd.grpc.v1.cri".registry.configs."1.2.3.4:443".tls]
+    ca_file = "/etc/containerd/certs.d/1.2.3.4:443/ca.crt"
+    insecure_skip_verify = true`,
+			},
+			{
+				Path:    "/etc/containerd/certs.d/1.2.3.4:443/ca.crt",
+				Owner:   "root:root",
+				Content: "xyz",
+			},
+		},
+	},
+}
+
 func TestKubeadmControlPlaneWithRegistryMirror(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
-		Endpoint:      "1.2.3.4",
-		Port:          "443",
-		CACertContent: "xyz",
+	for _, tt := range registryMirrorTests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
+			got, err := clusterapi.KubeadmControlPlane(g.clusterSpec, g.providerMachineTemplate)
+			g.Expect(err).To(Succeed())
+			want := wantKubeadmControlPlane()
+			want.Spec.KubeadmConfigSpec.Files = tt.wantFiles
+			want.Spec.KubeadmConfigSpec.PreKubeadmCommands = wantRegistryMirrorCommands()
+			g.Expect(got).To(Equal(want))
+		})
 	}
-	got, err := clusterapi.KubeadmControlPlane(tt.clusterSpec, tt.providerMachineTemplate)
-	tt.Expect(err).To(Succeed())
-	want := wantKubeadmControlPlane()
-	want.Spec.KubeadmConfigSpec.Files = wantRegistryMirrorFiles()
-	want.Spec.KubeadmConfigSpec.PreKubeadmCommands = wantRegistryMirrorCommands()
-	tt.Expect(got).To(Equal(want))
 }
 
 func wantKubeadmConfigTemplate() *bootstrapv1.KubeadmConfigTemplate {
@@ -341,18 +398,18 @@ func TestKubeadmConfigTemplate(t *testing.T) {
 }
 
 func TestKubeadmConfigTemplateWithRegistryMirror(t *testing.T) {
-	tt := newApiBuilerTest(t)
-	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
-		Endpoint:      "1.2.3.4",
-		Port:          "443",
-		CACertContent: "xyz",
+	for _, tt := range registryMirrorTests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := newApiBuilerTest(t)
+			g.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = tt.registryMirrorConfig
+			got, err := clusterapi.KubeadmConfigTemplate(g.clusterSpec, *g.workerNodeGroupConfig)
+			g.Expect(err).To(Succeed())
+			want := wantKubeadmConfigTemplate()
+			want.Spec.Template.Spec.Files = tt.wantFiles
+			want.Spec.Template.Spec.PreKubeadmCommands = wantRegistryMirrorCommands()
+			g.Expect(got).To(Equal(want))
+		})
 	}
-	got, err := clusterapi.KubeadmConfigTemplate(tt.clusterSpec, *tt.workerNodeGroupConfig)
-	tt.Expect(err).To(Succeed())
-	want := wantKubeadmConfigTemplate()
-	want.Spec.Template.Spec.Files = wantRegistryMirrorFiles()
-	want.Spec.Template.Spec.PreKubeadmCommands = wantRegistryMirrorCommands()
-	tt.Expect(got).To(Equal(want))
 }
 
 func TestMachineDeployment(t *testing.T) {

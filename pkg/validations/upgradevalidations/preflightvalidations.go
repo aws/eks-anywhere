@@ -22,7 +22,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		{
 			Name:        "validate certificate for registry mirror",
 			Remediation: fmt.Sprintf("provide a valid certificate for you registry endpoint using %s env var", anywherev1.RegistryMirrorCAKey),
-			Err:         validations.ValidateCertForRegistryMirror(u.Opts.Spec, u.Opts.TlsValidator),
+			Err:         validations.ValidateCertForRegistryMirror(u.Opts.Spec, u.Opts.TlsValidator, u.Opts.Provider),
 		},
 		{
 			Name:        "control plane ready",
