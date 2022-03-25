@@ -508,19 +508,21 @@ func (cs *CloudStackTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *c
 	return bytes, nil
 }
 
-func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	// Cloudstack provider currently does not support multiple work node groups yet
-	workerNodeGroupConfiguration := clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0]
-	values := buildTemplateMapMD(clusterSpec, *cs.datacenterConfigSpec, cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
+func (cs *CloudStackTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
+	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		values := buildTemplateMapMD(clusterSpec, *cs.datacenterConfigSpec, cs.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name], workerNodeGroupConfiguration)
+		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
+		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
 
-	for _, buildOption := range buildOptions {
-		buildOption(values)
+		bytes, err := templater.Execute(defaultClusterConfigMD, values)
+		if err != nil {
+			return nil, err
+		}
+		workerSpecs = append(workerSpecs, bytes)
 	}
-	bytes, err := templater.Execute(defaultClusterConfigMD, values)
-	if err != nil {
-		return nil, err
-	}
-	return bytes, nil
+
+	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
 func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1.CloudStackDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec v1alpha1.CloudStackMachineConfigSpec) map[string]interface{} {
@@ -715,11 +717,7 @@ func (p *cloudstackProvider) generateCAPISpecForCreate(ctx context.Context, clus
 		kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
 		p.templateBuilder.WorkerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
 	}
-	workerOpt := func(values map[string]interface{}) {
-		values["workloadTemplateName"] = workloadTemplateNames[clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name]
-		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Name]
-	}
-	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, workerOpt)
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
 	if err != nil {
 		return nil, nil, err
 	}

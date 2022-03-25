@@ -352,7 +352,7 @@ func generateTemplateResources(builder providers.TemplateBuilder, clusterSpec *c
 	if err != nil {
 		return nil, err
 	}
-	md, err := builder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames, workerOpt)
+	md, err := builder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
 	if err != nil {
 		return nil, err
 	}

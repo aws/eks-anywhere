@@ -468,18 +468,18 @@ func (mr *MockClusterClientMockRecorder) SaveLog(arg0, arg1, arg2, arg3, arg4 in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLog", reflect.TypeOf((*MockClusterClient)(nil).SaveLog), arg0, arg1, arg2, arg3, arg4)
 }
 
-// SetControllerCloudStackProviderEnv mocks base method.
-func (m *MockClusterClient) SetControllerCloudStackProviderEnv(arg0 context.Context, arg1 string) error {
+// SetControllerEnvVar mocks base method.
+func (m *MockClusterClient) SetControllerEnvVar(arg0 context.Context, arg1, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetControllerCloudStackProviderEnv", arg0, arg1)
+	ret := m.ctrl.Call(m, "SetControllerEnvVar", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SetControllerCloudStackProviderEnv indicates an expected call of SetControllerCloudStackProviderEnv.
-func (mr *MockClusterClientMockRecorder) SetControllerCloudStackProviderEnv(arg0, arg1 interface{}) *gomock.Call {
+// SetControllerEnvVar indicates an expected call of SetControllerEnvVar.
+func (mr *MockClusterClientMockRecorder) SetControllerEnvVar(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetControllerCloudStackProviderEnv", reflect.TypeOf((*MockClusterClient)(nil).SetControllerCloudStackProviderEnv), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetControllerEnvVar", reflect.TypeOf((*MockClusterClient)(nil).SetControllerEnvVar), arg0, arg1, arg2, arg3)
 }
 
 // UpdateAnnotationInNamespace mocks base method.
