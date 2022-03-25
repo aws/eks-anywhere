@@ -451,7 +451,8 @@ func (s *writeClusterConfigTask) Name() string {
 
 func (s *deleteBootstrapClusterTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	if commandContext.OriginalError != nil {
-		_ = s.CollectDiagnosticsTask.Run(ctx, commandContext)
+		c := CollectDiagnosticsTask{}
+		c.Run(ctx, commandContext)
 	}
 	if commandContext.BootstrapCluster != nil && !commandContext.BootstrapCluster.ExistingManagement {
 		if err := commandContext.Bootstrapper.DeleteBootstrapCluster(ctx, commandContext.BootstrapCluster, true); err != nil {
