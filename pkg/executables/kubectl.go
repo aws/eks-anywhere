@@ -12,6 +12,8 @@ import (
 	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
+	pbnjv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/pbnj/api/v1alpha1"
+	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/version"
@@ -50,6 +52,8 @@ var (
 	clusterResourceSetResourceType       = fmt.Sprintf("clusterresourcesets.%s", addons.GroupVersion.Group)
 	kubeadmControlPlaneResourceType      = fmt.Sprintf("kubeadmcontrolplanes.controlplane.%s", clusterv1.GroupVersion.Group)
 	eksdReleaseType                      = fmt.Sprintf("releases.%s", eksdv1alpha1.GroupVersion.Group)
+	captHardwareResourceType             = fmt.Sprintf("hardware.%s", tinkv1alpha1.GroupVersion.Group)
+	captBmcResourceType                  = fmt.Sprintf("bmc.%s", pbnjv1alpha1.GroupVersion.Group)
 )
 
 type Kubectl struct {
@@ -1406,4 +1410,54 @@ func (k *Kubectl) GetResources(ctx context.Context, resourceType string, opts ..
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
 	return stdOut.String(), err
+}
+
+// GetHardwareForCluster gets the hardwares with ownerName label.
+// Then iterates to filter the hardwares that correspond to the given clusterName.
+func (k *Kubectl) GetHardwareForCluster(ctx context.Context, clusterName, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error) {
+	params := []string{
+		"get", captHardwareResourceType, "-o", "json", "--kubeconfig",
+		kubeconfigFile, "--namespace", namespace, "--selector=v1alpha1.tinkerbell.org/ownerName",
+	}
+	stdOut, err := k.Execute(ctx, params...)
+	if err != nil {
+		return nil, fmt.Errorf("getting hardware with selector: %v", err)
+	}
+
+	response := &tinkv1alpha1.HardwareList{}
+	err = json.Unmarshal(stdOut.Bytes(), response)
+	if err != nil {
+		return nil, fmt.Errorf("parsing get hardware response: %v", err)
+	}
+
+	// Filtering the hardware with ownerName mapping to cluster name.
+	var filteredHardwareList []tinkv1alpha1.Hardware
+	for _, hw := range response.Items {
+		if strings.Contains(hw.Labels["v1alpha1.tinkerbell.org/ownerName"], clusterName) {
+			filteredHardwareList = append(filteredHardwareList, hw)
+		}
+	}
+
+	return filteredHardwareList, nil
+}
+
+// ValidateBmcsPowerState validates if the given BMC CRs all have the desired powerState.
+func (k *Kubectl) ValidateBmcsPowerState(ctx context.Context, bmcNames []string, powerState, kubeconfigFile, namespace string) error {
+	params := []string{"get", captBmcResourceType}
+	params = append(params, bmcNames...)
+	params = append(params, "-o", "jsonpath={.items[*].status.powerState}", "--kubeconfig", kubeconfigFile, "-n", namespace)
+
+	buffer, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("executing get: %v", err)
+	}
+
+	powerStates := strings.Fields(buffer.String())
+	for _, state := range powerStates {
+		if !strings.Contains(state, powerState) {
+			return fmt.Errorf("bmc current power state: %s expected power state: %s", state, powerState)
+		}
+	}
+
+	return nil
 }
