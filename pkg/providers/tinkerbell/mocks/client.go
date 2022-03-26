@@ -13,6 +13,7 @@ import (
 	pbnj "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
+	v1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	hardware "github.com/tinkerbell/tink/protos/hardware"
 	workflow "github.com/tinkerbell/tink/protos/workflow"
@@ -84,6 +85,21 @@ func (mr *MockProviderKubectlClientMockRecorder) DeleteEksaMachineConfig(arg0, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEksaMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).DeleteEksaMachineConfig), arg0, arg1, arg2, arg3, arg4)
 }
 
+// GetHardwareForCluster mocks base method.
+func (m *MockProviderKubectlClient) GetHardwareForCluster(arg0 context.Context, arg1, arg2, arg3 string) ([]v1alpha1.Hardware, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetHardwareForCluster", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([]v1alpha1.Hardware)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetHardwareForCluster indicates an expected call of GetHardwareForCluster.
+func (mr *MockProviderKubectlClientMockRecorder) GetHardwareForCluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardwareForCluster", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetHardwareForCluster), arg0, arg1, arg2, arg3)
+}
+
 // GetMachineDeployment mocks base method.
 func (m *MockProviderKubectlClient) GetMachineDeployment(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1beta1.MachineDeployment, error) {
 	m.ctrl.T.Helper()
@@ -102,6 +118,20 @@ func (mr *MockProviderKubectlClientMockRecorder) GetMachineDeployment(arg0, arg1
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineDeployment", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetMachineDeployment), varargs...)
+}
+
+// ValidateBmcsPowerState mocks base method.
+func (m *MockProviderKubectlClient) ValidateBmcsPowerState(arg0 context.Context, arg1 []string, arg2, arg3, arg4 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateBmcsPowerState", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ValidateBmcsPowerState indicates an expected call of ValidateBmcsPowerState.
+func (mr *MockProviderKubectlClientMockRecorder) ValidateBmcsPowerState(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateBmcsPowerState", reflect.TypeOf((*MockProviderKubectlClient)(nil).ValidateBmcsPowerState), arg0, arg1, arg2, arg3, arg4)
 }
 
 // MockProviderTinkClient is a mock of ProviderTinkClient interface.
