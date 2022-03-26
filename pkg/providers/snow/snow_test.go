@@ -252,7 +252,7 @@ func TestSetupAndValidateCreateClusterNoCertsEnv(t *testing.T) {
 func TestSetupAndValidateDeleteClusterSuccess(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
-	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx)
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster)
 	tt.Expect(err).To(Succeed())
 }
 
@@ -260,7 +260,7 @@ func TestSetupAndValidateDeleteClusterNoCredsEnv(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
 	os.Unsetenv(credsFileEnvVar)
-	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx)
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster)
 	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CREDENTIALS_FILE is not set or is empty")))
 }
 
@@ -268,7 +268,7 @@ func TestSetupAndValidateDeleteClusterNoCertsEnv(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
 	os.Unsetenv(certsFileEnvVar)
-	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx)
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster)
 	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CA_BUNDLES_FILE is not set or is empty")))
 }
 

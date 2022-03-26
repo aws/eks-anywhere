@@ -458,7 +458,7 @@ func TestSetupAndValidateDeleteCluster(t *testing.T) {
 	var tctx testContext
 	tctx.SaveContext()
 
-	err := provider.SetupAndValidateDeleteCluster(ctx)
+	err := provider.SetupAndValidateDeleteCluster(ctx, nil)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
