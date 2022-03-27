@@ -20,7 +20,6 @@ const (
 func DisplayPackages(packages []api.BundlePackage) {
 	m := packagesToString(packages)
 
-	// initialize tabwriter
 	w := new(tabwriter.Writer)
 
 	w.Init(os.Stdout, MinWidth, TabWidth, Padding, PadChar, flags)
@@ -38,13 +37,6 @@ func GetPackages(bundle *api.PackageBundle) []api.BundlePackage {
 	return packagesInBundle
 }
 
-func packagesToString(packages []api.BundlePackage) map[string][]string {
-	ptopv := make(map[string][]string)
-	for _, p := range packages {
-		ptopv[p.Name] = append(ptopv[p.Name], convertBundleVersionToPackageVersion(p.Source.Versions)...)
-	}
-	return ptopv
-}
 
 func convertBundleVersionToPackageVersion(bundleVersions []api.SourceVersion) []string {
 	var versions []string

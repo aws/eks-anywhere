@@ -23,22 +23,14 @@ const (
 )
 
 func GetLatestBundle(ctx context.Context, kubeConfig string, source string, kubeVersion string) (*api.PackageBundle, error) {
-	var (
-		packageBundle *api.PackageBundle
-		err           error
-	)
-
 	switch strings.ToLower(source) {
 	case Cluster:
-		packageBundle, err = getActiveBundleFromCluster(ctx, kubeConfig)
+		return getActiveBundleFromCluster(ctx, kubeConfig)
 	case Registry:
-		packageBundle, err = getLatestBundleFromRegistry(ctx, kubeVersion)
+		return getLatestBundleFromRegistry(ctx, kubeVersion)
+	default:
+		return nil, errors.New("unknown source")
 	}
-
-	if err != nil {
-		return nil, err
-	}
-	return packageBundle, nil
 }
 
 func createBundleManager(kubeVersion string) (manager bundle.Manager) {
@@ -47,14 +39,12 @@ func createBundleManager(kubeVersion string) (manager bundle.Manager) {
 	log := logr.Discard()
 	discovery := testutil.NewFakeDiscovery(major, minor)
 	puller := artifacts.NewRegistryPuller()
-	bm := bundle.NewBundleManager(log, discovery, puller)
-	return bm
+	return bundle.NewBundleManager(log, discovery, puller)
 }
 
 func getLatestBundleFromRegistry(ctx context.Context, kubeVersion string) (*api.PackageBundle, error) {
 	bm := createBundleManager(kubeVersion)
-	bundle, err := bm.LatestBundle(ctx, RegistryBaseRef)
-	return bundle, err
+	return bm.LatestBundle(ctx, RegistryBaseRef)
 }
 
 func getActiveBundleFromCluster(ctx context.Context, kubeConfig string) (*api.PackageBundle, error) {
@@ -70,8 +60,7 @@ func getActiveBundleFromCluster(ctx context.Context, kubeConfig string) (*api.Pa
 	if err != nil {
 		return nil, err
 	}
-	activeBundle := bundleController.Spec.ActiveBundle
-	params = append(params, executables.WithArg(activeBundle))
+	params = append(params, executables.WithArg(bundleController.Spec.ActiveBundle))
 	bundle, err := getPackageBundle(ctx, kubectl, params...)
 	if err != nil {
 		return nil, err
@@ -85,8 +74,8 @@ func getPackageBundle(ctx context.Context, kubectl *executables.Kubectl, opts ..
 		return nil, err
 	}
 	obj := &api.PackageBundle{}
-	if err = json.Unmarshal(stdOut.Bytes(), obj); err != nil {
-		return nil, fmt.Errorf("error parsing packageBundle response: %v", err)
+	if err = json.NewDecoder(stdOut).Decode(obj); err != nil {
+		return nil, fmt.Errorf("unmarshaling package bundle: %w", err)
 	}
 	return obj, nil
 }
@@ -97,8 +86,8 @@ func getActiveController(ctx context.Context, kubectl *executables.Kubectl, opts
 		return nil, err
 	}
 	obj := &api.PackageBundleControllerList{}
-	if err = json.Unmarshal(stdOut.Bytes(), obj); err != nil {
-		return nil, fmt.Errorf("error parsing packageBundleController response: %v", err)
+	if err = json.NewDecoder(stdOut).Decode(obj); err != nil {
+		return nil, fmt.Errorf("unmarshaling active package bundle controller: %w", err)
 	}
 	activeController, err := getActiveBundleController(obj)
 	if err != nil {
@@ -113,5 +102,5 @@ func getActiveBundleController(bc *api.PackageBundleControllerList) (*api.Packag
 			return &v, nil
 		}
 	}
-	return nil, fmt.Errorf("no Active Bundle Controller Found")
+	return nil, errors.New("no active bundle controller found")
 }
