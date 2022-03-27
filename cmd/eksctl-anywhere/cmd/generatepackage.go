@@ -6,6 +6,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/spf13/cobra"
 	"log"
+	"strings"
 )
 
 type generatePackageOptions struct {
@@ -41,12 +42,13 @@ var generatePackageCommand = &cobra.Command{
 }
 
 func runGeneratePackages() func(cmd *cobra.Command, args []string) error {
+	source := strings.ToLower(lpo.source)
 	return func(cmd *cobra.Command, args []string) error {
-		if err := sourceValidation(gepo.source); err != nil {
+		if err := validateSource(source); err != nil {
 			return err
 		}
 
-		if err := kubeVersionValidation(gepo.kubeVersion, gepo.source); err != nil {
+		if err := validateKubeVersion(gepo.kubeVersion, source); err != nil {
 			return err
 		}
 		// TODO: Validate directory
