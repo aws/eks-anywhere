@@ -31,7 +31,7 @@ const (
 )
 
 func GetLatestBundle(ctx context.Context, kubeConfig string, source BundleSource, kubeVersion string) (*api.PackageBundle, error) {
-	switch strings.ToLower(source) {
+	switch source {
 	case Cluster:
 		return getActiveBundleFromCluster(ctx, kubeConfig)
 	case Registry:

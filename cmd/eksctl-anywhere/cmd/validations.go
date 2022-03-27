@@ -41,7 +41,7 @@ func commonValidation(ctx context.Context, clusterConfigFile string) (*v1alpha1.
 }
 
 func validateSource(source string) error {
-	switch strings.ToLower(source) {
+	switch source {
 	case Cluster:
 		return nil
 	case Registry:

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"log"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -33,15 +34,16 @@ var listPackagesCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := validateSource(lpo.source); err != nil {
+		source := strings.ToLower(lpo.source)
+		if err := validateSource(source); err != nil {
 			return err
 		}
 
-		if err := validateKubeVersion(lpo.kubeVersion, lpo.source); err != nil {
+		if err := validateKubeVersion(lpo.kubeVersion, source); err != nil {
 			return err
 		}
 
-		if err := listPackages(cmd.Context(), lpo.source, lpo.kubeVersion); err != nil {
+		if err := listPackages(cmd.Context(), source, lpo.kubeVersion); err != nil {
 			return err
 		}
 		return nil
