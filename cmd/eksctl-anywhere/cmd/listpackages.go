@@ -29,7 +29,7 @@ func init() {
 
 var listPackagesCommand = &cobra.Command{
 	Use:          "packages",
-	Short:        "Generate a list of curated packages available to install",
+	Short:        "Lists curated packages available to install",
 	Long:         "This command is used to generate a list of curated packages available to install",
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
