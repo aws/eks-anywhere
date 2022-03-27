@@ -18,25 +18,16 @@ const (
 )
 
 func DisplayPackages(packages []api.BundlePackage) {
-	m := packagesToString(packages)
-
 	w := new(tabwriter.Writer)
-
 	w.Init(os.Stdout, MinWidth, TabWidth, Padding, PadChar, flags)
 	defer w.Flush()
-
 	fmt.Fprintf(w, "\n %s\t%s\t", "Package", "Version(s)")
 	fmt.Fprintf(w, "\n %s\t%s\t", "----", "----")
-	for key, values := range m {
-		fmt.Fprintf(w, "\n %s\t%s\t", key, strings.Join(values, ","))
+	for _, pkg := range packages {
+		versions := convertBundleVersionToPackageVersion(pkg.Source.Versions)
+		fmt.Fprintf(w, "\n %s\t%s\t", pkg.Name, strings.Join(versions, ","))
 	}
 }
-
-func GetPackages(bundle *api.PackageBundle) []api.BundlePackage {
-	packagesInBundle := bundle.Spec.Packages
-	return packagesInBundle
-}
-
 
 func convertBundleVersionToPackageVersion(bundleVersions []api.SourceVersion) []string {
 	var versions []string

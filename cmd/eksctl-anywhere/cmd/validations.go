@@ -40,7 +40,7 @@ func commonValidation(ctx context.Context, clusterConfigFile string) (*v1alpha1.
 	return clusterConfig, nil
 }
 
-func sourceValidation(source string) error {
+func validateSource(source string) error {
 	switch strings.ToLower(source) {
 	case Cluster:
 		return nil
@@ -50,7 +50,7 @@ func sourceValidation(source string) error {
 	return fmt.Errorf("invalid source flag specified. Please use either %v, or %v", Cluster, Registry)
 }
 
-func kubeVersionValidation(kubeVersion string, source string) error {
+func validateKubeVersion(kubeVersion string, source string) error {
 	if source != Registry {
 		return nil
 	}

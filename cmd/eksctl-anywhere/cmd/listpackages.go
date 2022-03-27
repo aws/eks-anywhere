@@ -30,15 +30,14 @@ func init() {
 var listPackagesCommand = &cobra.Command{
 	Use:          "packages",
 	Short:        "Lists curated packages available to install",
-	Long:         "This command is used to generate a list of curated packages available to install",
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if err := sourceValidation(lpo.source); err != nil {
+		if err := validateSource(lpo.source); err != nil {
 			return err
 		}
 
-		if err := kubeVersionValidation(lpo.kubeVersion, lpo.source); err != nil {
+		if err := validateKubeVersion(lpo.kubeVersion, lpo.source); err != nil {
 			return err
 		}
 
@@ -55,7 +54,7 @@ func listPackages(ctx context.Context, source string, kubeVersion string) error 
 	if err != nil {
 		return err
 	}
-	packages := curatedpackages.GetPackages(bundle)
+	packages := bundle.Spec.Packages
 	curatedpackages.DisplayPackages(packages)
 	return nil
 }
