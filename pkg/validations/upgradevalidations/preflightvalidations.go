@@ -7,6 +7,7 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -19,6 +20,12 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		KubeconfigFile: u.Opts.ManagementCluster.KubeconfigFile,
 	}
 	upgradeValidations := []validations.ValidationResult{
+		{
+			Name:        "validate kubernetes version 1.22 support",
+			Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s122SupportEnvVar),
+			Err:         validations.ValidateK8s122Support(u.Opts.Spec),
+			Silent:      true,
+		},
 		{
 			Name:        "validate certificate for registry mirror",
 			Remediation: fmt.Sprintf("provide a valid certificate for you registry endpoint using %s env var", anywherev1.RegistryMirrorCAKey),

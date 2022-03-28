@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -44,6 +45,7 @@ func TestVSphereKubernetes122Labels(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
@@ -70,6 +72,7 @@ func TestVSphereKubernetes122LabelsBottlerocket(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 
 	runLabelsUpgradeFlow(
