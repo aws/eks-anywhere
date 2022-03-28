@@ -5,6 +5,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"github.com/Masterminds/sprig"
 	"net"
 	"os"
 	"reflect"
@@ -1090,7 +1091,8 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 			return err
 		}
 	}
-	t, err := template.New("tmpl").Parse(defaultSecretObject)
+	t, err := template.New("tmpl").Funcs(sprig.TxtFuncMap()).Parse(defaultSecretObject)
+
 	if err != nil {
 		return fmt.Errorf("creating secret object template: %v", err)
 	}

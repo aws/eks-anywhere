@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"github.com/Masterminds/sprig"
 	"math"
 	"net"
 	"os"
@@ -1476,17 +1477,18 @@ func TestProviderBootstrapSetup(t *testing.T) {
 		"vsphereServer":     datacenterConfig.Spec.Server,
 		"vsphereDatacenter": datacenterConfig.Spec.Datacenter,
 		"vsphereNetwork":    datacenterConfig.Spec.Network,
+		"eksaLicense":       "",
 	}
 
 	var tctx testContext
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
 
-	template, err := template.New("test").Parse(defaultSecretObject)
+	tpl, err := template.New("test").Funcs(sprig.TxtFuncMap()).Parse(defaultSecretObject)
 	if err != nil {
 		t.Fatalf("template create error: %v", err)
 	}
-	err = template.Execute(&bytes.Buffer{}, values)
+	err = tpl.Execute(&bytes.Buffer{}, values)
 	if err != nil {
 		t.Fatalf("template execute error: %v", err)
 	}
@@ -1524,7 +1526,7 @@ func TestProviderUpdateSecret(t *testing.T) {
 	kubectl.EXPECT().CreateNamespace(ctx, gomock.Any(), constants.EksaSystemNamespace)
 	kubectl.EXPECT().ApplyKubeSpecFromBytes(ctx, gomock.Any(), gomock.Any())
 
-	template, err := template.New("test").Parse(defaultSecretObject)
+	template, err := template.New("test").Funcs(sprig.TxtFuncMap()).Parse(defaultSecretObject)
 	if err != nil {
 		t.Fatalf("template create error: %v", err)
 	}
