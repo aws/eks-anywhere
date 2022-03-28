@@ -13,6 +13,7 @@ import (
 	pbnj "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
+	v1 "github.com/tinkerbell/pbnj/api/v1"
 	hardware "github.com/tinkerbell/tink/protos/hardware"
 	workflow "github.com/tinkerbell/tink/protos/workflow"
 	v1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -192,6 +193,48 @@ func (m *MockProviderPbnjClient) GetPowerState(arg0 context.Context, arg1 pbnj.B
 func (mr *MockProviderPbnjClientMockRecorder) GetPowerState(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPowerState", reflect.TypeOf((*MockProviderPbnjClient)(nil).GetPowerState), arg0, arg1)
+}
+
+// PowerOff mocks base method.
+func (m *MockProviderPbnjClient) PowerOff(arg0 context.Context, arg1 pbnj.BmcSecretConfig) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PowerOff", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PowerOff indicates an expected call of PowerOff.
+func (mr *MockProviderPbnjClientMockRecorder) PowerOff(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PowerOff", reflect.TypeOf((*MockProviderPbnjClient)(nil).PowerOff), arg0, arg1)
+}
+
+// PowerOn mocks base method.
+func (m *MockProviderPbnjClient) PowerOn(arg0 context.Context, arg1 pbnj.BmcSecretConfig) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PowerOn", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PowerOn indicates an expected call of PowerOn.
+func (mr *MockProviderPbnjClientMockRecorder) PowerOn(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PowerOn", reflect.TypeOf((*MockProviderPbnjClient)(nil).PowerOn), arg0, arg1)
+}
+
+// SetBootDevice mocks base method.
+func (m *MockProviderPbnjClient) SetBootDevice(arg0 context.Context, arg1 pbnj.BmcSecretConfig, arg2 v1.BootDevice) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetBootDevice", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetBootDevice indicates an expected call of SetBootDevice.
+func (mr *MockProviderPbnjClientMockRecorder) SetBootDevice(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetBootDevice", reflect.TypeOf((*MockProviderPbnjClient)(nil).SetBootDevice), arg0, arg1, arg2)
 }
 
 // MockSSHAuthKeyGenerator is a mock of SSHAuthKeyGenerator interface.
