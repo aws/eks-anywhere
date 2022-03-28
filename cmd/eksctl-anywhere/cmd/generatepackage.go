@@ -3,11 +3,13 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
+
+	"github.com/spf13/cobra"
+
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
 	"github.com/aws/eks-anywhere/pkg/validations"
-	"github.com/spf13/cobra"
-	"log"
 )
 
 type generatePackageOptions struct {
@@ -52,11 +54,11 @@ func runGeneratePackages() func(cmd *cobra.Command, args []string) error {
 		if !validations.FileExists(gepo.directory) {
 			return fmt.Errorf("directory %s does not exist", gepo.directory)
 		}
-		return generatePackages(cmd.Context(), gepo, args)
+		return generatePackages(cmd.Context(), args)
 	}
 }
 
-func generatePackages(ctx context.Context, gepo *generatePackageOptions, args []string) error {
+func generatePackages(ctx context.Context, args []string) error {
 	kubeConfig := kubeconfig.FromEnvironment()
 	bundle, err := curatedpackages.GetLatestBundle(ctx, kubeConfig, gepo.source, gepo.kubeVersion)
 	if err != nil {
