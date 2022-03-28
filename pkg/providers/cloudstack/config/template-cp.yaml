@@ -81,12 +81,12 @@ spec:
         {{$key}}: {{$value}}
 {{- end}}
 {{- end}}
-{{- if .affinity }}
-      affinity: '{{ .affinity }}'
+{{- if .cloudstackControlPlaneAffinity }}
+      affinity: '{{ .cloudstackControlPlaneAffinity }}'
 {{- end }}
-{{- if .affinityGroupIds }}
+{{- if .cloudstackControlPlaneAffinityGroupIds }}
       affinitygroupids:
-      {{- range .affinityGroupIds}}
+      {{- range .cloudstackControlPlaneAffinityGroupIds}}
       - {{.}}
       {{- end }}
 {{- end }}
