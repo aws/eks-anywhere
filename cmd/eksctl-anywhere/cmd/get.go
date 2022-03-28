@@ -52,16 +52,15 @@ func getResources(ctx context.Context, resourceType string, output string, args 
 		params = append(params, executables.WithOutput(output))
 	}
 	stdOut, err := kubectl.GetResources(ctx, resourceType, params...)
-	packages := stdOut.String()
 	if err != nil {
-		fmt.Print(packages)
+		fmt.Print(stdOut)
 		return fmt.Errorf("kubectl execution failure: \n%v", err)
 	}
-	if packages == "" {
+	if &stdOut == nil {
 		fmt.Printf("No resources found in %v namespace", constants.EksaPackagesName)
 		return nil
 	}
-	fmt.Println(packages)
+	fmt.Println(stdOut)
 	return nil
 }
 
