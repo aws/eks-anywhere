@@ -52,7 +52,7 @@ func GeneratePackages(bundle *api.PackageBundle, args []string) ([]api.Package, 
 	var packages []api.Package
 	for _, v := range args {
 		bundlePackage := packageNameToPackage[strings.ToLower(v)]
-		if bundlePackage == nil {
+		if bundlePackage.Name == "" {
 			fmt.Println(fmt.Errorf("unknown package %s", v).Error())
 			continue
 		}
@@ -87,15 +87,15 @@ func writeToFile(dir string, packageName string, content []byte) {
 	}
 }
 
-func getPackageNameToPackage(packages []api.BundlePackage) map[string]*api.BundlePackage {
-	pntop := make(map[string]*api.BundlePackage)
+func getPackageNameToPackage(packages []api.BundlePackage) map[string]api.BundlePackage {
+	pntop := make(map[string]api.BundlePackage)
 	for _, p := range packages {
-		pntop[strings.ToLower(p.Name)] = &p
+		pntop[strings.ToLower(p.Name)] = p
 	}
 	return pntop
 }
 
-func convertBundlePackageToPackage(bp *api.BundlePackage, apiVersion string) api.Package {
+func convertBundlePackageToPackage(bp api.BundlePackage, apiVersion string) api.Package {
 	versionToUse := bp.Source.Versions[0]
 	p := api.Package{
 		ObjectMeta: metav1.ObjectMeta{
