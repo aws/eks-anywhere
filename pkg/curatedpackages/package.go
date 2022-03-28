@@ -110,13 +110,6 @@ func convertBundlePackageToPackage(bp *api.BundlePackage, apiVersion string) api
 			PackageVersion:  versionToUse.Name,
 			TargetNamespace: constants.EksaPackagesName,
 		},
-		Status: api.PackageStatus{
-			Source: api.PackageOCISource{
-				Registry:   bp.Source.Registry,
-				Repository: bp.Source.Repository,
-				Digest:     versionToUse.Digest,
-			},
-		},
 	}
 	return p
 }
