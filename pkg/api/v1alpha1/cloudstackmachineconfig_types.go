@@ -32,7 +32,7 @@ type CloudStackMachineConfigSpec struct {
 	ComputeOffering CloudStackResourceIdentifier `json:"computeOffering"`
 	// Users consists of an array of objects containing the username, as well as a list of their public keys. These users will be authorized to ssh into the machines
 	Users []UserConfiguration `json:"users,omitempty"`
-	// Defaults to `no`. Can be `pro` or `anti`. Will create an affinity group per machine set.
+	// Defaults to `no`. Can be `pro` or `anti`. If set to `pro` or `anti`, will create an affinity group per machine set of the corresponding type
 	Affinity string `json:"affinity,omitempty"`
 	// AffinityGroupIds allows users to pass in a list of UUIDs for previously-created Affinity Groups. Any VM’s created with this spec will be added to the affinity group, which will dictate which physical host(s) they can be placed on. Affinity groups can be type “affinity” or “anti-affinity” in CloudStack. If they are type “anti-affinity”, all VM’s in the group must be on separate physical hosts for high availability. If they are type “affinity”, all VM’s in the group must be on the same physical host for improved performance
 	AffinityGroupIds []string `json:"affinityGroupIds,omitempty"`
