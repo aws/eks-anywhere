@@ -19,7 +19,7 @@ const (
 
 func DisplayPackages(packages []api.BundlePackage) {
 	w := new(tabwriter.Writer)
-	w.Init(os.Stdout, MinWidth, TabWidth, Padding, PadChar, flags)
+	w.Init(os.Stdout, minWidth, tabWidth, padding, padChar, flags)
 	defer w.Flush()
 	fmt.Fprintf(w, "\n %s\t%s\t", "Package", "Version(s)")
 	fmt.Fprintf(w, "\n %s\t%s\t", "----", "----")
