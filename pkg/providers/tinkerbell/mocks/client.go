@@ -11,6 +11,7 @@ import (
 	executables "github.com/aws/eks-anywhere/pkg/executables"
 	filewriter "github.com/aws/eks-anywhere/pkg/filewriter"
 	pbnj "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
+	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
 	hardware "github.com/tinkerbell/tink/protos/hardware"
 	workflow "github.com/tinkerbell/tink/protos/workflow"
@@ -40,18 +41,18 @@ func (m *MockProviderKubectlClient) EXPECT() *MockProviderKubectlClientMockRecor
 	return m.recorder
 }
 
-// ApplyHardware mocks base method.
-func (m *MockProviderKubectlClient) ApplyHardware(arg0 context.Context, arg1, arg2 string) error {
+// ApplyKubeSpecFromBytesForce mocks base method.
+func (m *MockProviderKubectlClient) ApplyKubeSpecFromBytesForce(arg0 context.Context, arg1 *types.Cluster, arg2 []byte) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ApplyHardware", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "ApplyKubeSpecFromBytesForce", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// ApplyHardware indicates an expected call of ApplyHardware.
-func (mr *MockProviderKubectlClientMockRecorder) ApplyHardware(arg0, arg1, arg2 interface{}) *gomock.Call {
+// ApplyKubeSpecFromBytesForce indicates an expected call of ApplyKubeSpecFromBytesForce.
+func (mr *MockProviderKubectlClientMockRecorder) ApplyKubeSpecFromBytesForce(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyHardware", reflect.TypeOf((*MockProviderKubectlClient)(nil).ApplyHardware), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyKubeSpecFromBytesForce", reflect.TypeOf((*MockProviderKubectlClient)(nil).ApplyKubeSpecFromBytesForce), arg0, arg1, arg2)
 }
 
 // DeleteEksaDatacenterConfig mocks base method.

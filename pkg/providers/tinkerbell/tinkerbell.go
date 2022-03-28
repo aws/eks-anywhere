@@ -77,7 +77,7 @@ type TinkerbellClients struct {
 
 // TODO: Add necessary kubectl functions here
 type ProviderKubectlClient interface {
-	ApplyHardware(ctx context.Context, hardwareYaml string, kubeConfFile string) error
+	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
 	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType string, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType string, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) error
 	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
@@ -195,12 +195,17 @@ func (p *tinkerbellProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClu
 		env["HTTPS_PROXY"] = p.clusterConfig.Spec.ProxyConfiguration.HttpsProxy
 		env["NO_PROXY"] = noProxy
 	}
+
 	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}, nil
 }
 
 func (p *tinkerbellProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO: figure out if we need something else here
-	err := p.providerKubectlClient.ApplyHardware(ctx, p.hardwareConfigFile, cluster.KubeconfigFile)
+	hardwareSpec, err := p.validator.hardwareConfig.HardwareSpecMarshallable()
+	if err != nil {
+		return fmt.Errorf("failed marshalling resources for hardware spec: %v", err)
+	}
+	err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, hardwareSpec)
 	if err != nil {
 		return fmt.Errorf("applying hardware yaml: %v", err)
 	}
