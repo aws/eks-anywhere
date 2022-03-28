@@ -35,7 +35,7 @@ func GetLatestBundle(ctx context.Context, kubeConfig string, source BundleSource
 func createBundleManager(kubeVersion string) bundle.Manager {
 	versionSplit := strings.Split(kubeVersion, ".")
 	major, minor := versionSplit[0], versionSplit[1]
-	log := logr.Logger{}
+	log := logr.Discard()
 	discovery := testutil.NewFakeDiscovery(major, minor)
 	puller := artifacts.NewRegistryPuller()
 	return bundle.NewBundleManager(log, discovery, puller)
