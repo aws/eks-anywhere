@@ -55,8 +55,11 @@ func (t *writer) Dir() string {
 
 func (t *writer) WriteS3KeyToFile(key string, data []byte) error {
 	i := strings.LastIndex(key, "/")
-	d := path.Join(t.dir, key[:i])
-	f := path.Join(t.dir, key)
+	testName := path.Base(key[:i])
+	d := path.Join(t.dir, testName)
+
+	i = strings.LastIndex(key, testName)
+	f := path.Join(t.dir, key[i:])
 
 	err := os.MkdirAll(d, os.ModePerm)
 	if err != nil {
