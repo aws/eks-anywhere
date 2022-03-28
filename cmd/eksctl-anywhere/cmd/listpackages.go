@@ -2,10 +2,8 @@ package cmd
 
 import (
 	"context"
-	"log"
-	"strings"
-
 	"github.com/spf13/cobra"
+	"log"
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -13,14 +11,14 @@ import (
 
 type listPackagesOption struct {
 	kubeVersion string
-	source      string
+	source      curatedpackages.BundleSource
 }
 
 var lpo = &listPackagesOption{}
 
 func init() {
 	listCmd.AddCommand(listPackagesCommand)
-	listPackagesCommand.Flags().StringVar(&lpo.source, "source", "", "Discovery Location. Options (cluster, registry)")
+	listPackagesCommand.Flags().Var(&lpo.source, "source", "Discovery Location. Options (cluster, registry)")
 	listPackagesCommand.Flags().StringVar(&lpo.kubeVersion, "kubeversion", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
 	err := listPackagesCommand.MarkFlagRequired("source")
 	if err != nil {
@@ -34,23 +32,19 @@ var listPackagesCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		source := strings.ToLower(lpo.source)
-		if err := validateSource(source); err != nil {
+
+		if err := validateKubeVersion(lpo.kubeVersion, lpo.source); err != nil {
 			return err
 		}
 
-		if err := validateKubeVersion(lpo.kubeVersion, source); err != nil {
-			return err
-		}
-
-		if err := listPackages(cmd.Context(), source, lpo.kubeVersion); err != nil {
+		if err := listPackages(cmd.Context(), lpo.source, lpo.kubeVersion); err != nil {
 			return err
 		}
 		return nil
 	},
 }
 
-func listPackages(ctx context.Context, source string, kubeVersion string) error {
+func listPackages(ctx context.Context, source curatedpackages.BundleSource, kubeVersion string) error {
 	kubeConfig := kubeconfig.FromEnvironment()
 	bundle, err := curatedpackages.GetLatestBundle(ctx, kubeConfig, source, kubeVersion)
 	if err != nil {

@@ -3,17 +3,13 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"runtime"
 	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/validations"
-)
-
-const (
-	Cluster  = "cluster"
-	Registry = "registry"
 )
 
 func commonValidation(ctx context.Context, clusterConfigFile string) (*v1alpha1.Cluster, error) {
@@ -40,18 +36,8 @@ func commonValidation(ctx context.Context, clusterConfigFile string) (*v1alpha1.
 	return clusterConfig, nil
 }
 
-func validateSource(source string) error {
-	switch source {
-	case Cluster:
-		return nil
-	case Registry:
-		return nil
-	}
-	return fmt.Errorf("invalid source flag specified. Please use either %v, or %v", Cluster, Registry)
-}
-
-func validateKubeVersion(kubeVersion string, source string) error {
-	if source != Registry {
+func validateKubeVersion(kubeVersion string, bs curatedpackages.BundleSource) error {
+	if bs.String() != curatedpackages.Registry {
 		return nil
 	}
 	versionSplit := strings.Split(kubeVersion, ".")

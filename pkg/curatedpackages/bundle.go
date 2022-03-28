@@ -18,25 +18,17 @@ import (
 )
 
 const (
-	RegistryBaseRef             = "public.ecr.aws/q0f6t3x4/eksa-package-bundles"
-	PackageBundleControllerName = bundle.PackageBundleControllerName
+	RegistryBaseRef = "public.ecr.aws/q0f6t3x4/eksa-package-bundles"
 )
 
-type BundleSource = string
-
-const (
-	Cluster  BundleSource = "cluster"
-	Registry BundleSource = "registry"
-)
-
-func GetLatestBundle(ctx context.Context, kubeConfig string, source BundleSource, kubeVersion string) (*api.PackageBundle, error) {
-	switch source {
+func GetLatestBundle(ctx context.Context, kubeConfig string, b BundleSource, kubeVersion string) (*api.PackageBundle, error) {
+	switch b.source {
 	case Cluster:
 		return getActiveBundleFromCluster(ctx, kubeConfig)
 	case Registry:
 		return getLatestBundleFromRegistry(ctx, kubeVersion)
 	default:
-		return nil, fmt.Errorf("unknown source: %q", source)
+		return nil, fmt.Errorf("unknown source: %q", b.source)
 	}
 }
 
@@ -87,7 +79,7 @@ func getPackageBundle(ctx context.Context, kubectl *executables.Kubectl, kubeCon
 }
 
 func getActiveController(ctx context.Context, kubectl *executables.Kubectl, kubeConfig string) (*api.PackageBundleController, error) {
-	params := []executables.KubectlOpt{executables.WithOutput("json"), executables.WithKubeconfig(kubeConfig), executables.WithNamespace(constants.EksaPackagesName), executables.WithArg(PackageBundleControllerName)}
+	params := []executables.KubectlOpt{executables.WithOutput("json"), executables.WithKubeconfig(kubeConfig), executables.WithNamespace(constants.EksaPackagesName), executables.WithArg(bundle.PackageBundleControllerName)}
 	stdOut, err := kubectl.GetResources(ctx, "packageBundleController", params...)
 	if err != nil {
 		return nil, err
