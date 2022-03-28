@@ -46,3 +46,7 @@ func validateKubeVersion(kubeVersion string, source curatedpackages.BundleSource
 	}
 	return nil
 }
+
+func validateDirectory(directory string) {
+
+}

@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
+	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/spf13/cobra"
 	"log"
 	"strings"
@@ -14,6 +16,8 @@ type generatePackageOptions struct {
 	source      string
 	kubeVersion string
 }
+
+var gepo = &generatePackageOptions{}
 
 func init() {
 	generateCmd.AddCommand(generatePackageCommand)
@@ -29,8 +33,6 @@ func init() {
 	}
 }
 
-var gepo = &generatePackageOptions{}
-
 var generatePackageCommand = &cobra.Command{
 	Use:          "packages [flags]",
 	Aliases:      []string{"package", "packages"},
@@ -42,8 +44,8 @@ var generatePackageCommand = &cobra.Command{
 }
 
 func runGeneratePackages() func(cmd *cobra.Command, args []string) error {
-	source := strings.ToLower(lpo.source)
 	return func(cmd *cobra.Command, args []string) error {
+		source := strings.ToLower(gepo.source)
 		if err := validateSource(source); err != nil {
 			return err
 		}
@@ -51,7 +53,10 @@ func runGeneratePackages() func(cmd *cobra.Command, args []string) error {
 		if err := validateKubeVersion(gepo.kubeVersion, source); err != nil {
 			return err
 		}
-		// TODO: Validate directory
+
+		if !validations.FileExists(gepo.directory) {
+			return fmt.Errorf("directory %s does not exist", gepo.directory)
+		}
 		return generatePackages(cmd.Context(), gepo, args)
 	}
 }
@@ -66,6 +71,9 @@ func generatePackages(ctx context.Context, gepo *generatePackageOptions, args []
 	if err != nil {
 		return err
 	}
-	curatedpackages.WritePackagesToFile(packages, gepo.directory)
+	err = curatedpackages.WritePackagesToFile(packages, gepo.directory)
+	if err != nil {
+		return err
+	}
 	return nil
 }
