@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	MinWidth = 16
-	TabWidth = 8
-	Padding  = 0
-	PadChar  = '\t'
+	minWidth = 16
+	tabWidth = 8
+	padding  = 0
+	padChar  = '\t'
 	flags    = 0
 )
 
