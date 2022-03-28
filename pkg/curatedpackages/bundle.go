@@ -21,14 +21,14 @@ const (
 	RegistryBaseRef = "public.ecr.aws/q0f6t3x4/eksa-package-bundles"
 )
 
-func GetLatestBundle(ctx context.Context, kubeConfig string, b BundleSource, kubeVersion string) (*api.PackageBundle, error) {
-	switch b.source {
+func GetLatestBundle(ctx context.Context, kubeConfig string, source BundleSource, kubeVersion string) (*api.PackageBundle, error) {
+	switch source {
 	case Cluster:
 		return getActiveBundleFromCluster(ctx, kubeConfig)
 	case Registry:
 		return getLatestBundleFromRegistry(ctx, kubeVersion)
 	default:
-		return nil, fmt.Errorf("unknown source: %q", b.source)
+		return nil, fmt.Errorf("unknown source: %q", source)
 	}
 }
 
@@ -47,7 +47,7 @@ func getLatestBundleFromRegistry(ctx context.Context, kubeVersion string) (*api.
 }
 
 func getActiveBundleFromCluster(ctx context.Context, kubeConfig string) (*api.PackageBundle, error) {
-	deps, err := createKubectl(ctx)
+	deps, err := newDependencies(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize executables: %v", err)
 	}
@@ -91,7 +91,7 @@ func getActiveController(ctx context.Context, kubectl *executables.Kubectl, kube
 	return obj, nil
 }
 
-func createKubectl(ctx context.Context) (*dependencies.Dependencies, error) {
+func newDependencies(ctx context.Context) (*dependencies.Dependencies, error) {
 	return dependencies.NewFactory().
 		WithExecutableImage(executables.DefaultEksaImage()).
 		WithExecutableBuilder().

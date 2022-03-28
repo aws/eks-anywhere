@@ -5,9 +5,7 @@ import (
 	"strings"
 )
 
-type BundleSource struct {
-	source string
-}
+type BundleSource string
 
 const (
 	Cluster  = "cluster"
@@ -15,13 +13,13 @@ const (
 )
 
 func (b BundleSource) String() string {
-	return b.source
+	return string(b)
 }
 
 func (b *BundleSource) Set(s string) error {
 	switch strings.ToLower(s) {
 	case Cluster, Registry:
-		b.source = s
+		*b = BundleSource(s)
 	default:
 		return fmt.Errorf("unknown source: %q", s)
 	}
