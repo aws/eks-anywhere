@@ -97,17 +97,23 @@ func (p *snowProvider) UpdateSecrets(ctx context.Context, cluster *types.Cluster
 	return nil
 }
 
-func ControlPlaneObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) []runtime.Object {
+func ControlPlaneObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) ([]runtime.Object, error) {
 	snowCluster := SnowCluster(clusterSpec)
 	controlPlaneMachineTemplate := SnowMachineTemplate(machineConfigs[clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name])
-	kubeadmControlPlane := KubeadmControlPlane(clusterSpec, controlPlaneMachineTemplate)
+	kubeadmControlPlane, err := KubeadmControlPlane(clusterSpec, controlPlaneMachineTemplate)
+	if err != nil {
+		return nil, err
+	}
 	capiCluster := CAPICluster(clusterSpec, snowCluster, kubeadmControlPlane)
 
-	return []runtime.Object{capiCluster, snowCluster, kubeadmControlPlane, controlPlaneMachineTemplate}
+	return []runtime.Object{capiCluster, snowCluster, kubeadmControlPlane, controlPlaneMachineTemplate}, nil
 }
 
-func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) []runtime.Object {
-	kubeadmConfigTemplates := KubeadmConfigTemplates(clusterSpec)
+func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alpha1.SnowMachineConfig) ([]runtime.Object, error) {
+	kubeadmConfigTemplates, err := KubeadmConfigTemplates(clusterSpec)
+	if err != nil {
+		return nil, err
+	}
 	workerMachineTemplates := SnowMachineTemplates(clusterSpec, machineConfigs)
 	machineDeployments := MachineDeployments(clusterSpec, kubeadmConfigTemplates, workerMachineTemplates)
 
@@ -122,16 +128,26 @@ func WorkersObjects(clusterSpec *cluster.Spec, machineConfigs map[string]*v1alph
 		workersObjs = append(workersObjs, item)
 	}
 
-	return workersObjs
+	return workersObjs, nil
 }
 
 func (p *snowProvider) GenerateCAPISpecForCreate(ctx context.Context, _ *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	controlPlaneSpec, err = templater.ObjectsToYaml(ControlPlaneObjects(clusterSpec, clusterSpec.SnowMachineConfigs)...)
+	controlPlaneObjs, err := ControlPlaneObjects(clusterSpec, clusterSpec.SnowMachineConfigs)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	workersSpec, err = templater.ObjectsToYaml(WorkersObjects(clusterSpec, clusterSpec.SnowMachineConfigs)...)
+	controlPlaneSpec, err = templater.ObjectsToYaml(controlPlaneObjs...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	workersObjs, err := WorkersObjects(clusterSpec, clusterSpec.SnowMachineConfigs)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	workersSpec, err = templater.ObjectsToYaml(workersObjs...)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -15,7 +15,7 @@ func TerminateEc2Instances(session *session.Session, instances []*string) error 
 
 	_, err := service.TerminateInstances(input)
 	if err != nil {
-		return fmt.Errorf("error terminating EC2 instances: %v", err)
+		return fmt.Errorf("terminating EC2 instances: %v", err)
 	}
 
 	return nil

@@ -91,7 +91,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 		},
 	}
 
-	opts := WithDefaultActionsFromBundle(vBundle)
+	opts := GetDefaultActionsFromBundle(vBundle)
 	for _, opt := range opts {
 		opt(&givenActions)
 	}
@@ -102,13 +102,31 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 }
 
 func givenVersionBundle() v1alpha1.VersionsBundle {
-	return v1alpha1.VersionsBundle{EksD: v1alpha1.EksDRelease{
-		Raw: v1alpha1.OSImageBundle{
-			Ubuntu: v1alpha1.OSImage{
-				Archive: v1alpha1.Archive{
-					URI: "http://tinkerbell-example:8080/ubuntu-2004-kube-v1.21.5.gz",
+	return v1alpha1.VersionsBundle{
+		EksD: v1alpha1.EksDRelease{
+			Raw: v1alpha1.OSImageBundle{
+				Ubuntu: v1alpha1.OSImage{
+					Archive: v1alpha1.Archive{
+						URI: "http://tinkerbell-example:8080/ubuntu-2004-kube-v1.21.5.gz",
+					},
 				},
 			},
 		},
-	}}
+		Tinkerbell: v1alpha1.TinkerbellBundle{
+			Actions: v1alpha1.Actions{
+				Cexec: v1alpha1.Image{
+					URI: "cexec:v1.0.0",
+				},
+				Kexec: v1alpha1.Image{
+					URI: "kexec:v1.0.0",
+				},
+				ImageToDisk: v1alpha1.Image{
+					URI: "image2disk:v1.0.0",
+				},
+				WriteFile: v1alpha1.Image{
+					URI: "writefile:v1.0.0",
+				},
+			},
+		},
+	}
 }

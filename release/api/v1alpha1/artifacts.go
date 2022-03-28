@@ -144,6 +144,7 @@ func (vb *VersionsBundle) Images() []Image {
 
 func (vb *VersionsBundle) Charts() map[string]*Image {
 	return map[string]*Image{
-		"cilium": &vb.Cilium.HelmChart,
+		"cilium":                &vb.Cilium.HelmChart,
+		"eks-anywhere-packages": &vb.PackageController.HelmChart,
 	}
 }

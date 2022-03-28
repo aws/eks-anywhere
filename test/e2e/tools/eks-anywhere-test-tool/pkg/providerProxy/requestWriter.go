@@ -16,7 +16,7 @@ type requestWriter struct {
 func newRequestWriter(folderPath string) (*requestWriter, error) {
 	writer, err := filewriter.NewWriter(folderPath)
 	if err != nil {
-		return nil, fmt.Errorf("error when setting up tests writer: %v", err)
+		return nil, fmt.Errorf("setting up tests writer: %v", err)
 	}
 
 	return &requestWriter{FileWriter: writer}, nil

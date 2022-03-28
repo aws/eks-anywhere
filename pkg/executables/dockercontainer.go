@@ -40,7 +40,7 @@ func (d *dockerContainer) init(ctx context.Context) error {
 		var absWorkingDir string
 		absWorkingDir, err = filepath.Abs(d.workingDir)
 		if err != nil {
-			err = fmt.Errorf("error getting abs path for mount dir: %v", err)
+			err = fmt.Errorf("getting abs path for mount dir: %v", err)
 			return
 		}
 
@@ -50,7 +50,7 @@ func (d *dockerContainer) init(ctx context.Context) error {
 			var absMountDir string
 			absMountDir, err = filepath.Abs(m)
 			if err != nil {
-				err = fmt.Errorf("error getting abs path for mount dir: %v", err)
+				err = fmt.Errorf("getting abs path for mount dir: %v", err)
 				return
 			}
 			params = append(params, "-v", fmt.Sprintf("%[1]s:%[1]s", absMountDir))

@@ -7,8 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 func TestValidateClusterName(t *testing.T) {
@@ -1015,7 +1018,7 @@ func TestParseClusterConfig(t *testing.T) {
 				clusterConfig: &Cluster{},
 			},
 			wantErr:    true,
-			matchError: fmt.Errorf("error converting YAML to JSON: yaml: line 12: did not find expected key"),
+			matchError: fmt.Errorf("converting YAML to JSON: yaml: line 12: did not find expected key"),
 		},
 		{
 			name: "Invalid key",
@@ -1024,7 +1027,7 @@ func TestParseClusterConfig(t *testing.T) {
 				clusterConfig: &Cluster{},
 			},
 			wantErr:    true,
-			matchError: fmt.Errorf("error unmarshaling JSON: while decoding JSON: json: unknown field \"registryMirro rConfiguration\""),
+			matchError: fmt.Errorf("unmarshaling JSON: while decoding JSON: json: unknown field \"registryMirro rConfiguration\""),
 		},
 		{
 			name: "Invalid yaml",
@@ -1033,7 +1036,7 @@ func TestParseClusterConfig(t *testing.T) {
 				clusterConfig: &Cluster{},
 			},
 			wantErr:    true,
-			matchError: fmt.Errorf("error converting YAML to JSON: yaml: did not find expected node content"),
+			matchError: fmt.Errorf("converting YAML to JSON: yaml: did not find expected node content"),
 		},
 		{
 			name: "Invalid spec field",
@@ -1042,7 +1045,7 @@ func TestParseClusterConfig(t *testing.T) {
 				clusterConfig: &Cluster{},
 			},
 			wantErr:    true,
-			matchError: fmt.Errorf("error unmarshaling JSON: while decoding JSON: json: unknown field \"invalidField\""),
+			matchError: fmt.Errorf("unmarshaling JSON: while decoding JSON: json: unknown field \"invalidField\""),
 		},
 		{
 			name: "Cluster definition at the end",
@@ -1843,14 +1846,14 @@ func TestValidateCNIConfig(t *testing.T) {
 	}{
 		{
 			name:    "CNI plugin not specified",
-			wantErr: fmt.Errorf("error validating cniConfig: no cni plugin specified"),
+			wantErr: fmt.Errorf("validating cniConfig: no cni plugin specified"),
 			clusterNetwork: &ClusterNetwork{
 				CNIConfig: &CNIConfig{},
 			},
 		},
 		{
 			name:    "multiple CNI plugins specified",
-			wantErr: fmt.Errorf("error validating cniConfig: cannot specify more than one cni plugins"),
+			wantErr: fmt.Errorf("validating cniConfig: cannot specify more than one cni plugins"),
 			clusterNetwork: &ClusterNetwork{
 				CNIConfig: &CNIConfig{
 					Cilium:   &CiliumConfig{},
@@ -1860,7 +1863,7 @@ func TestValidateCNIConfig(t *testing.T) {
 		},
 		{
 			name:    "invalid cilium policy enforcement mode",
-			wantErr: fmt.Errorf("error validating cniConfig: cilium policyEnforcementMode \"invalid\" not supported"),
+			wantErr: fmt.Errorf("validating cniConfig: cilium policyEnforcementMode \"invalid\" not supported"),
 			clusterNetwork: &ClusterNetwork{
 				CNIConfig: &CNIConfig{
 					Cilium: &CiliumConfig{
@@ -1871,7 +1874,7 @@ func TestValidateCNIConfig(t *testing.T) {
 		},
 		{
 			name:    "invalid cilium policy enforcement mode and > 1 plugins",
-			wantErr: fmt.Errorf("error validating cniConfig: [cilium policyEnforcementMode \"invalid\" not supported, cannot specify more than one cni plugins]"),
+			wantErr: fmt.Errorf("validating cniConfig: [cilium policyEnforcementMode \"invalid\" not supported, cannot specify more than one cni plugins]"),
 			clusterNetwork: &ClusterNetwork{
 				CNIConfig: &CNIConfig{
 					Cilium: &CiliumConfig{
@@ -1920,6 +1923,90 @@ func TestValidateCNIConfig(t *testing.T) {
 			got := validateCNIConfig(tt.clusterNetwork.CNIConfig)
 			if !reflect.DeepEqual(tt.wantErr, got) {
 				t.Errorf("%v got = %v, want %v", tt.name, got, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateMirrorConfig(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr string
+		cluster *Cluster
+	}{
+		{
+			name:    "registry mirror not specified",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: nil,
+				},
+			},
+		},
+		{
+			name:    "endpoint not specified",
+			wantErr: "no value set for RegistryMirrorConfiguration.Endpoint",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "",
+					},
+				},
+			},
+		},
+		{
+			name:    "invalid port",
+			wantErr: "registry mirror port 65536 is invalid",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "65536",
+					},
+				},
+			},
+		},
+		{
+			name:    "insecureSkipVerify on non snow provider",
+			wantErr: "insecureSkipVerify is only supported for snow provider",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:           "1.2.3.4",
+						Port:               "443",
+						InsecureSkipVerify: true,
+					},
+					DatacenterRef: Ref{
+						Kind: "nonsnow",
+					},
+				},
+			},
+		},
+		{
+			name:    "insecureSkipVerify on snow provider",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:           "1.2.3.4",
+						Port:               "443",
+						InsecureSkipVerify: true,
+					},
+					DatacenterRef: Ref{
+						Kind: constants.SnowProviderName,
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateMirrorConfig(tt.cluster)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
 			}
 		})
 	}

@@ -35,18 +35,18 @@ var e2eFetchArtifactsCommand = &cobra.Command{
 
 		buildAccountCodebuild, err := codebuild.New(awsprofiles.BuildAccount)
 		if err != nil {
-			return fmt.Errorf("error when creating codebuild client: %v", err)
+			return fmt.Errorf("creating codebuild client: %v", err)
 		}
 
 		testAccountS3, err := s3.New(awsprofiles.TestAccount)
 		if err != nil {
-			return fmt.Errorf("error when creating s3 client: %v", err)
+			return fmt.Errorf("creating s3 client: %v", err)
 		}
 
 		now := time.Now().Format(time.RFC3339 + "-artifacts")
 		writer, err := filewriter.NewWriter(now)
 		if err != nil {
-			return fmt.Errorf("error when setting up writer: %v", err)
+			return fmt.Errorf("setting up writer: %v", err)
 		}
 
 		artifactFetcher := artifacts.New(testAccountS3, buildAccountCodebuild, writer)

@@ -72,6 +72,7 @@ type VersionsBundle struct {
 	Cilium                 CiliumBundle                `json:"cilium"`
 	Kindnetd               KindnetdBundle              `json:"kindnetd"`
 	Flux                   FluxBundle                  `json:"flux"`
+	PackageController      PackageBundle               `json:"packageController"`
 	BottleRocketBootstrap  BottlerocketBootstrapBundle `json:"bottlerocketBootstrap"`
 	BottleRocketAdmin      BottlerocketAdminBundle     `json:"bottlerocketAdmin"`
 	ExternalEtcdBootstrap  EtcdadmBootstrapBundle      `json:"etcdadmBootstrap"`
@@ -224,6 +225,12 @@ type FluxBundle struct {
 	KustomizeController    Image  `json:"kustomizeController"`
 	HelmController         Image  `json:"helmController"`
 	NotificationController Image  `json:"notificationController"`
+}
+
+type PackageBundle struct {
+	Version    string `json:"version,omitempty"`
+	Controller Image  `json:"packageController"`
+	HelmChart  Image  `json:"helmChart,omitempty"`
 }
 
 type EksaBundle struct {

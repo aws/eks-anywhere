@@ -73,7 +73,7 @@ func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactor
 
 	err := b.WriteBundleConfig()
 	if err != nil {
-		return nil, fmt.Errorf("error writing bundle config: %v", err)
+		return nil, fmt.Errorf("writing bundle config: %v", err)
 	}
 
 	return b, nil
@@ -116,7 +116,7 @@ func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *
 
 	err := b.WriteBundleConfig()
 	if err != nil {
-		return nil, fmt.Errorf("error writing bundle config: %v", err)
+		return nil, fmt.Errorf("writing bundle config: %v", err)
 	}
 
 	return b, nil
@@ -167,7 +167,7 @@ func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeV
 	logger.Info("Analyzing support bundle", "bundle", e.bundlePath, "archive", archivePath)
 	analysis, err := e.client.Analyze(ctx, e.bundlePath, archivePath)
 	if err != nil {
-		return fmt.Errorf("error when analyzing bundle: %v", err)
+		return fmt.Errorf("analyzing bundle: %v", err)
 	}
 	e.analysis = analysis
 
@@ -184,7 +184,7 @@ func (e *EksaDiagnosticBundle) CollectAndAnalyze(ctx context.Context, sinceTimeV
 func (e *EksaDiagnosticBundle) PrintBundleConfig() error {
 	bundleYaml, err := yaml.Marshal(e.bundle)
 	if err != nil {
-		return fmt.Errorf("error outputting yaml: %v", err)
+		return fmt.Errorf("outputting yaml: %v", err)
 	}
 	fmt.Println(string(bundleYaml))
 	return nil
@@ -193,7 +193,7 @@ func (e *EksaDiagnosticBundle) PrintBundleConfig() error {
 func (e *EksaDiagnosticBundle) WriteBundleConfig() error {
 	bundleYaml, err := yaml.Marshal(e.bundle)
 	if err != nil {
-		return fmt.Errorf("error outputing yaml: %v", err)
+		return fmt.Errorf("outputing yaml: %v", err)
 	}
 	timestamp := time.Now().Format(time.RFC3339)
 	filename := fmt.Sprintf(generatedBundleNameFormat, e.clusterName(), timestamp)
@@ -211,7 +211,7 @@ func (e *EksaDiagnosticBundle) PrintAnalysis() error {
 	}
 	analysis, err := yaml.Marshal(e.analysis)
 	if err != nil {
-		return fmt.Errorf("error outputing yaml: %v", err)
+		return fmt.Errorf("outputing yaml: %v", err)
 	}
 	fmt.Println(string(analysis))
 	return nil
@@ -224,7 +224,7 @@ func (e *EksaDiagnosticBundle) WriteAnalysisToFile() (path string, err error) {
 
 	yamlAnalysis, err := yaml.Marshal(e.analysis)
 	if err != nil {
-		return "", fmt.Errorf("error while writing analysis: %v", err)
+		return "", fmt.Errorf("writing analysis: %v", err)
 	}
 
 	timestamp := time.Now().Format(time.RFC3339)

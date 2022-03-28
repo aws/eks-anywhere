@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
@@ -474,7 +475,7 @@ func validateCNIConfig(cniConfig *CNIConfig) error {
 
 	if len(allErrs) > 0 {
 		aggregate := utilerrors.NewAggregate(allErrs)
-		return fmt.Errorf("error validating cniConfig: %v", aggregate)
+		return fmt.Errorf("validating cniConfig: %v", aggregate)
 	}
 
 	return nil
@@ -538,13 +539,16 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return nil
 	}
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint == "" {
-		return errors.New("no value set for ECRMirror.Endpoint")
+		return errors.New("no value set for RegistryMirrorConfiguration.Endpoint")
 	}
 
 	if !networkutils.IsPortValid(clusterConfig.Spec.RegistryMirrorConfiguration.Port) {
 		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterConfig.Spec.RegistryMirrorConfiguration.Port)
 	}
 
+	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != constants.SnowProviderName {
+		return errors.New("insecureSkipVerify is only supported for snow provider")
+	}
 	return nil
 }
 

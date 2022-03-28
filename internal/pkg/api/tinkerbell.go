@@ -72,7 +72,7 @@ func AutoFillTinkerbellProvider(filename string, fillers ...TinkerbellFiller) ([
 	for _, r := range resources {
 		yamlContent, err := yaml.Marshal(r)
 		if err != nil {
-			return nil, fmt.Errorf("error marshalling tinkerbell resource: %v", err)
+			return nil, fmt.Errorf("marshalling tinkerbell resource: %v", err)
 		}
 
 		yamlResources = append(yamlResources, yamlContent)

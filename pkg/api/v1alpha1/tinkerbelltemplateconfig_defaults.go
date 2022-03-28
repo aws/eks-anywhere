@@ -29,7 +29,7 @@ warnings:
 `
 )
 
-func WithDefaultActionsFromBundle(b v1alpha1.VersionsBundle) []ActionOpt {
+func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle) []ActionOpt {
 	return []ActionOpt{
 		withStreamImageAction(b),
 		withInstallOpensslAction(b),
@@ -44,7 +44,7 @@ func withStreamImageAction(b v1alpha1.VersionsBundle) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "stream-image",
-			Image:   "image2disk:v1.0.0",
+			Image:   b.Tinkerbell.Actions.ImageToDisk.URI,
 			Timeout: 360,
 			Environment: map[string]string{
 				"IMG_URL":    b.EksD.Raw.Ubuntu.URI,
@@ -55,13 +55,11 @@ func withStreamImageAction(b v1alpha1.VersionsBundle) ActionOpt {
 	}
 }
 
-// TODO(pokearu): The below functions currently dont use the bundle. Update functions to pull action images from bundle.
-
 func withInstallOpensslAction(b v1alpha1.VersionsBundle) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "install-openssl",
-			Image:   "cexec:v1.0.0",
+			Image:   b.Tinkerbell.Actions.Cexec.URI,
 			Timeout: 90,
 			Environment: map[string]string{
 				"BLOCK_DEVICE":        "/dev/sda1",
@@ -78,7 +76,7 @@ func withNetplanAction(b v1alpha1.VersionsBundle) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "write-netplan",
-			Image:   "writefile:v1.0.0",
+			Image:   b.Tinkerbell.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
 				"DEST_DISK": "/dev/sda1",
@@ -98,7 +96,7 @@ func withTinkCloudInitAction(b v1alpha1.VersionsBundle) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "add-tink-cloud-init-config",
-			Image:   "writefile:v1.0.0",
+			Image:   b.Tinkerbell.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
 				"DEST_DISK": "/dev/sda1",
@@ -118,7 +116,7 @@ func withDsCloudInitAction(b v1alpha1.VersionsBundle) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "add-tink-cloud-init-ds-config",
-			Image:   "writefile:v1.0.0",
+			Image:   b.Tinkerbell.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
 				"DEST_DISK": "/dev/sda1",
@@ -138,7 +136,7 @@ func withKexecAction(b v1alpha1.VersionsBundle) ActionOpt {
 	return func(a *[]tinkerbell.Action) {
 		*a = append(*a, tinkerbell.Action{
 			Name:    "kexec-image",
-			Image:   "kexec:v1.0.0",
+			Image:   b.Tinkerbell.Actions.Kexec.URI,
 			Timeout: 90,
 			Pid:     "host",
 			Environment: map[string]string{

@@ -134,6 +134,11 @@ type RegistryMirrorConfiguration struct {
 
 	// CACertContent defines the contents registry mirror CA certificate
 	CACertContent string `json:"caCertContent,omitempty"`
+
+	// InsecureSkipVerify skips the registry certificate verification.
+	// Only use this solution for isolated testing or in a tightly controlled, air-gapped environment.
+	// Currently only supported for snow provider
+	InsecureSkipVerify bool `json:"insecureSkipVerify,omitempty"`
 }
 
 func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool {
@@ -143,7 +148,7 @@ func (n *RegistryMirrorConfiguration) Equal(o *RegistryMirrorConfiguration) bool
 	if n == nil || o == nil {
 		return false
 	}
-	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent
+	return n.Endpoint == o.Endpoint && n.Port == o.Port && n.CACertContent == o.CACertContent && n.InsecureSkipVerify == o.InsecureSkipVerify
 }
 
 type ControlPlaneConfiguration struct {

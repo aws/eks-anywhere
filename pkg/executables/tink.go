@@ -37,7 +37,7 @@ func NewTink(executable Executable, tinkerbellCertUrl, tinkerbellGrpcAuthority s
 func (t *Tink) PushHardware(ctx context.Context, hardware []byte) error {
 	params := []string{"hardware", "push"}
 	if _, err := t.Command(ctx, params...).WithStdIn(hardware).WithEnvVars(t.envMap).Run(); err != nil {
-		return fmt.Errorf("error pushing hardware: %v", err)
+		return fmt.Errorf("pushing hardware: %v", err)
 	}
 	return nil
 }
@@ -46,7 +46,7 @@ func (t *Tink) GetHardware(ctx context.Context) ([]*hardware.Hardware, error) {
 	params := []string{"hardware", "get", "--tinkerbell-cert-url", t.tinkerbellCertUrl, "--tinkerbell-grpc-authority", t.tinkerbellGrpcAuthority, "--format", "json"}
 	data, err := t.Command(ctx, params...).Run()
 	if err != nil {
-		return nil, fmt.Errorf("error getting hardware list: %v", err)
+		return nil, fmt.Errorf("getting hardware list: %v", err)
 	}
 	var hardwareList []*hardware.Hardware
 	hardwareString := data.String()
@@ -55,7 +55,7 @@ func (t *Tink) GetHardware(ctx context.Context) ([]*hardware.Hardware, error) {
 		hardwareListData := map[string][]*hardware.Hardware{}
 
 		if err = json.Unmarshal([]byte(hardwareString), &hardwareListData); err != nil {
-			return nil, fmt.Errorf("error unmarshling hardware json: %v", err)
+			return nil, fmt.Errorf("unmarshling hardware json: %v", err)
 		}
 		if len(hardwareListData["data"]) > 0 {
 			hardwareList = append(hardwareList, hardwareListData["data"]...)
@@ -69,7 +69,7 @@ func (t *Tink) GetWorkflow(ctx context.Context) ([]*workflow.Workflow, error) {
 	params := []string{"workflow", "get", "--tinkerbell-cert-url", t.tinkerbellCertUrl, "--tinkerbell-grpc-authority", t.tinkerbellGrpcAuthority, "--format", "json"}
 	data, err := t.Command(ctx, params...).Run()
 	if err != nil {
-		return nil, fmt.Errorf("error getting workflow list: %v", err)
+		return nil, fmt.Errorf("getting workflow list: %v", err)
 	}
 	var workflowList []*workflow.Workflow
 	workflowString := data.String()
@@ -78,7 +78,7 @@ func (t *Tink) GetWorkflow(ctx context.Context) ([]*workflow.Workflow, error) {
 		workflowListData := map[string][]*workflow.Workflow{}
 
 		if err = json.Unmarshal([]byte(workflowString), &workflowListData); err != nil {
-			return nil, fmt.Errorf("error unmarshling workflow json: %v", err)
+			return nil, fmt.Errorf("unmarshling workflow json: %v", err)
 		}
 		if len(workflowListData["data"]) > 0 {
 			workflowList = append(workflowList, workflowListData["data"]...)
