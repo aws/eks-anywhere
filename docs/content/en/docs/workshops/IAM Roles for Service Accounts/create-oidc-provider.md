@@ -114,9 +114,7 @@ All steps listed below have to be executed on the admin machine, before creating
 
         ```bash
         aws iam create-role --role-name Sample-app-role --assume-role-policy-document file://trust-policy.json
-        aws iam attach-role-policy --role-name Sample-app-role --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-        aws iam attach-role-policy --role-name Sample-app-role --policy-arn arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
-        aws iam attach-role-policy --role-name Sample-app-role --policy-arn arn:aws:iam::aws:policy/AmazonS3FullAccess
+        aws iam attach-role-policy --role-name Sample-app-role --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
         ```
     1. After the role is created, note down the name of this IAM Role as OIDC_IAM_ROLE. After the cluster is created, you can create more service accounts on your EKS-A cluster and grant them this role if you want by editing the trust relationship of this role youcreated in step1. 
 
