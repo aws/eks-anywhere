@@ -149,7 +149,7 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		return fmt.Errorf("unsupport Provider %s", cs.Spec.DatacenterRef.Kind)
 	}
 
-	// Reconciling IdentityProviders
+	// Reconcile IdentityProviders
 	for _, identityProvider := range cs.Spec.IdentityProviderRefs {
 		switch identityProvider.Kind {
 		case anywherev1.AWSIamConfigKind:
