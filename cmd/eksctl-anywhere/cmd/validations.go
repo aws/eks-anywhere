@@ -37,7 +37,7 @@ func commonValidation(ctx context.Context, clusterConfigFile string) (*v1alpha1.
 }
 
 func validateKubeVersion(kubeVersion string, bs curatedpackages.BundleSource) error {
-	if bs.String() != curatedpackages.Registry {
+	if bs != curatedpackages.Registry {
 		return nil
 	}
 	versionSplit := strings.Split(kubeVersion, ".")
