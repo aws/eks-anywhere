@@ -94,7 +94,7 @@ func getActiveController(ctx context.Context, kubectl *executables.Kubectl, kube
 		return nil, err
 	}
 	obj := &api.PackageBundleController{}
-	if err = json.NewDecoder(&stdOut).Decode(obj); err != nil {
+	if err := json.Unmarshal(stdOut.Bytes(), obj); err != nil {
 		return nil, fmt.Errorf("unmarshaling active package bundle controller: %w", err)
 	}
 	return obj, nil
