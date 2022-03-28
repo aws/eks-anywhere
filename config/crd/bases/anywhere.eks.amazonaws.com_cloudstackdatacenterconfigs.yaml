@@ -81,8 +81,12 @@ spec:
                         situation, only 'Shared' network is supported.
                       properties:
                         id:
+                          description: Id of a resource in the CloudStack environment.
+                            Mutually exclusive with Name
                           type: string
                         name:
+                          description: Name of a resource in the CloudStack environment.
+                            Mutually exclusive with Id
                           type: string
                       type: object
                   required:
