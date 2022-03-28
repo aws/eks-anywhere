@@ -8,12 +8,11 @@ import (
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/spf13/cobra"
 	"log"
-	"strings"
 )
 
 type generatePackageOptions struct {
 	directory   string
-	source      string
+	source      curatedpackages.BundleSource
 	kubeVersion string
 }
 
@@ -22,7 +21,7 @@ var gepo = &generatePackageOptions{}
 func init() {
 	generateCmd.AddCommand(generatePackageCommand)
 	generatePackageCommand.Flags().StringVarP(&gepo.directory, "directory", "d", "", "Directory to save generated packages")
-	generatePackageCommand.Flags().StringVar(&gepo.source, "source", "", "Location to find curated packages: (cluster, registry)")
+	generatePackageCommand.Flags().Var(&gepo.source, "source", "Location to find curated packages: (cluster, registry)")
 	generatePackageCommand.Flags().StringVar(&gepo.kubeVersion, "kubeversion", "", "Kubernetes Version of the cluster to be used. Format <major>.<minor>")
 
 	if err := generatePackageCommand.MarkFlagRequired("directory"); err != nil {
@@ -45,12 +44,8 @@ var generatePackageCommand = &cobra.Command{
 
 func runGeneratePackages() func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		source := strings.ToLower(gepo.source)
-		if err := validateSource(source); err != nil {
-			return err
-		}
 
-		if err := validateKubeVersion(gepo.kubeVersion, source); err != nil {
+		if err := validateKubeVersion(gepo.kubeVersion, gepo.source); err != nil {
 			return err
 		}
 
