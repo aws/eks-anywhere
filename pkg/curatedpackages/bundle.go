@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	RepositoryName = "eksa-package-bundles"
+	RepositoryName = "eks-anywhere-packages-bundles"
 )
 
 type Reader interface {
