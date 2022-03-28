@@ -3,7 +3,6 @@ package curatedpackages
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -37,7 +36,7 @@ func GetLatestBundle(ctx context.Context, kubeConfig string, source BundleSource
 	case Registry:
 		return getLatestBundleFromRegistry(ctx, kubeVersion)
 	default:
-		return nil, fmt.Errorf("unknown source: %q", string(source))
+		return nil, fmt.Errorf("unknown source: %q", source)
 	}
 }
 
