@@ -2,8 +2,9 @@ package cmd
 
 import (
 	"context"
-	"github.com/spf13/cobra"
 	"log"
+
+	"github.com/spf13/cobra"
 
 	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/kubeconfig"
@@ -32,7 +33,6 @@ var listPackagesCommand = &cobra.Command{
 	PreRunE:      preRunPackages,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-
 		if err := validateKubeVersion(lpo.kubeVersion, lpo.source); err != nil {
 			return err
 		}
