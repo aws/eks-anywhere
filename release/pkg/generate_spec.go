@@ -270,7 +270,6 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		"cert-manager":                    r.GetCertManagerAssets,
 		"cilium":                          r.GetCiliumAssets,
 		"local-path-provisioner":          r.GetLocalPathProvisionerAssets,
-		"kube-rbac-proxy":                 r.GetKubeRbacProxyAssets,
 		"kube-vip":                        r.GetKubeVipAssets,
 		"flux":                            r.GetFluxAssets,
 		"etcdadm-bootstrap-provider":      r.GetEtcdadmBootstrapAssets,

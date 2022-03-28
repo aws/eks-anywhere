@@ -27,7 +27,6 @@ import (
 func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests map[string]string) (anywherev1alpha1.VSphereBundle, error) {
 	vsphereBundleArtifacts := map[string][]Artifact{
 		"cluster-api-provider-vsphere": r.BundleArtifactsTable["cluster-api-provider-vsphere"],
-		"kube-rbac-proxy":              r.BundleArtifactsTable["kube-rbac-proxy"],
 		"kube-vip":                     r.BundleArtifactsTable["kube-vip"],
 		"vsphere-csi-driver":           r.BundleArtifactsTable["vsphere-csi-driver"],
 	}
@@ -104,7 +103,6 @@ func (r *ReleaseConfig) GetVsphereBundle(eksDReleaseChannel string, imageDigests
 	bundle := anywherev1alpha1.VSphereBundle{
 		Version:              version,
 		ClusterAPIController: bundleImageArtifacts["cluster-api-vsphere-controller"],
-		KubeProxy:            bundleImageArtifacts["kube-rbac-proxy"],
 		Manager:              bundleImageArtifacts["cloud-provider-vsphere"],
 		KubeVip:              bundleImageArtifacts["kube-vip"],
 		Driver:               bundleImageArtifacts["vsphere-csi-driver"],

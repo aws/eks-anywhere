@@ -453,9 +453,6 @@ var versionsBundle = &cluster.VersionsBundle{
 			Manager: releasev1alpha1.Image{
 				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/capd-manager:v0.3.15-6bdb9fc78bb926135843c58ec8b77b54d8f2c82c",
 			},
-			KubeProxy: releasev1alpha1.Image{
-				URI: "public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244",
-			},
 			Components: releasev1alpha1.Manifest{
 				URI: "embed:///config/clusterctl/overrides/infrastructure-docker/v0.3.19/infrastructure-components-development.yaml",
 			},

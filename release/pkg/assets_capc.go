@@ -70,16 +70,11 @@ func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
 
 	var imageTagOverrides []ImageTagOverride
 
-	kubeRbacProxyImageTagOverride, err := r.GetKubeRbacProxyImageTagOverride()
-	if err != nil {
-		return nil, errors.Cause(err)
-	}
-
 	imageTagOverride := ImageTagOverride{
 		Repository: repoName,
 		ReleaseUri: imageArtifact.ReleaseImageURI,
 	}
-	imageTagOverrides = append(imageTagOverrides, imageTagOverride, kubeRbacProxyImageTagOverride)
+	imageTagOverrides = append(imageTagOverrides, imageTagOverride)
 
 	manifestList := []string{
 		"infrastructure-components.yaml",
@@ -130,7 +125,6 @@ func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
 func (r *ReleaseConfig) GetCloudStackBundle(imageDigests map[string]string) (anywherev1alpha1.CloudStackBundle, error) {
 	cloudstackBundleArtifacts := map[string][]Artifact{
 		"cluster-api-provider-cloudstack": r.BundleArtifactsTable["cluster-api-provider-cloudstack"],
-		"kube-rbac-proxy":                 r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
 	var version string

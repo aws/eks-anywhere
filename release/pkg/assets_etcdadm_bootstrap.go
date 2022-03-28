@@ -63,16 +63,11 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
 
 	var imageTagOverrides []ImageTagOverride
 
-	kubeRbacProxyImageTagOverride, err := r.GetKubeRbacProxyImageTagOverride()
-	if err != nil {
-		return nil, errors.Cause(err)
-	}
-
 	imageTagOverride := ImageTagOverride{
 		Repository: repoName,
 		ReleaseUri: imageArtifact.ReleaseImageURI,
 	}
-	imageTagOverrides = append(imageTagOverrides, imageTagOverride, kubeRbacProxyImageTagOverride)
+	imageTagOverrides = append(imageTagOverrides, imageTagOverride)
 
 	manifestList := []string{
 		"bootstrap-components.yaml",
@@ -122,7 +117,6 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapAssets() ([]Artifact, error) {
 func (r *ReleaseConfig) GetEtcdadmBootstrapBundle(imageDigests map[string]string) (anywherev1alpha1.EtcdadmBootstrapBundle, error) {
 	etcdadmBootstrapBundleArtifacts := map[string][]Artifact{
 		"etcdadm-bootstrap-provider": r.BundleArtifactsTable["etcdadm-bootstrap-provider"],
-		"kube-rbac-proxy":            r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 	sortedComponentNames := sortArtifactsMap(etcdadmBootstrapBundleArtifacts)
 
@@ -181,7 +175,6 @@ func (r *ReleaseConfig) GetEtcdadmBootstrapBundle(imageDigests map[string]string
 	bundle := anywherev1alpha1.EtcdadmBootstrapBundle{
 		Version:    version,
 		Controller: bundleImageArtifacts["etcdadm-bootstrap-provider"],
-		KubeProxy:  bundleImageArtifacts["kube-rbac-proxy"],
 		Components: bundleManifestArtifacts["bootstrap-components.yaml"],
 		Metadata:   bundleManifestArtifacts["metadata.yaml"],
 	}

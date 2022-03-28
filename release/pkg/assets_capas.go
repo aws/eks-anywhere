@@ -127,7 +127,6 @@ func (r *ReleaseConfig) GetCapasAssets() ([]Artifact, error) {
 func (r *ReleaseConfig) GetSnowBundle(imageDigests map[string]string) (anywherev1alpha1.SnowBundle, error) {
 	capasBundleArtifacts := map[string][]Artifact{
 		"cluster-api-provider-aws-snow": r.BundleArtifactsTable["cluster-api-provider-aws-snow"],
-		"kube-rbac-proxy":               r.BundleArtifactsTable["kube-rbac-proxy"],
 		"kube-vip":                      r.BundleArtifactsTable["kube-vip"],
 	}
 	sortedComponentNames := sortArtifactsMap(capasBundleArtifacts)

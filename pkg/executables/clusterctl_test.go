@@ -433,7 +433,6 @@ var versionBundle = &cluster.VersionsBundle{
 			Controller: v1alpha1.Image{
 				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/cluster-api-controller:v0.3.19-eks-a-0.0.1.build.38",
 			},
-			KubeProxy: kubeProxyVersion08,
 			Components: v1alpha1.Manifest{
 				URI: "testdata/fake_manifest.yaml",
 			},
@@ -446,7 +445,6 @@ var versionBundle = &cluster.VersionsBundle{
 			Controller: v1alpha1.Image{
 				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/kubeadm-bootstrap-controller:v0.3.19-eks-a-0.0.1.build.38",
 			},
-			KubeProxy: kubeProxyVersion08,
 			Components: v1alpha1.Manifest{
 				URI: "testdata/fake_manifest.yaml",
 			},
@@ -459,7 +457,6 @@ var versionBundle = &cluster.VersionsBundle{
 			Controller: v1alpha1.Image{
 				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/kubeadm-control-plane-controller:v0.3.19-eks-a-0.0.1.build.38",
 			},
-			KubeProxy: kubeProxyVersion08,
 			Components: v1alpha1.Manifest{
 				URI: "testdata/fake_manifest.yaml",
 			},
@@ -472,7 +469,6 @@ var versionBundle = &cluster.VersionsBundle{
 			Controller: v1alpha1.Image{
 				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-aws/cluster-api-aws-controller:v0.6.4-25df7d96779e2a305a22c6e3f9425c3465a77244",
 			},
-			KubeProxy: kubeProxyVersion08,
 		},
 		Snow: v1alpha1.SnowBundle{
 			Version: "v0.0.0",
@@ -482,7 +478,6 @@ var versionBundle = &cluster.VersionsBundle{
 			ClusterAPIController: v1alpha1.Image{
 				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api-provider-vsphere/release/manager:v0.7.8-eks-a-0.0.1.build.38",
 			},
-			KubeProxy: kubeProxyVersion08,
 		},
 		CloudStack: v1alpha1.CloudStackBundle{
 			Version: "v0.7.8",
@@ -495,7 +490,6 @@ var versionBundle = &cluster.VersionsBundle{
 			Manager: v1alpha1.Image{
 				URI: "public.ecr.aws/l0g8r8j6/kubernetes-sigs/cluster-api/capd-manager:v0.3.19-eks-a-0.0.1.build.38",
 			},
-			KubeProxy: kubeProxyVersion08,
 		},
 		Eksa: v1alpha1.EksaBundle{
 			CliTools: v1alpha1.Image{
@@ -513,7 +507,6 @@ var versionBundle = &cluster.VersionsBundle{
 			Controller: v1alpha1.Image{
 				URI: "public.ecr.aws/l0g8r8j6/mrajashree/etcdadm-bootstrap-provider:v0.1.0",
 			},
-			KubeProxy: kubeProxyVersion08,
 		},
 		ExternalEtcdController: v1alpha1.EtcdadmControllerBundle{
 			Version: "v0.1.0",
@@ -526,11 +519,6 @@ var versionBundle = &cluster.VersionsBundle{
 			Controller: v1alpha1.Image{
 				URI: "public.ecr.aws/l0g8r8j6/mrajashree/etcdadm-controller:v0.1.0",
 			},
-			KubeProxy: kubeProxyVersion08,
 		},
 	},
-}
-
-var kubeProxyVersion08 = v1alpha1.Image{
-	URI: "public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-25df7d96779e2a305a22c6e3f9425c3465a77244",
 }

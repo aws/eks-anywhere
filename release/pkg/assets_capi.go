@@ -86,11 +86,6 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 
 	var imageTagOverrides []ImageTagOverride
 
-	kubeRbacProxyImageTagOverride, err := r.GetKubeRbacProxyImageTagOverride()
-	if err != nil {
-		return nil, errors.Cause(err)
-	}
-
 	componentManifestMap := map[string][]string{
 		"bootstrap-kubeadm":     {"bootstrap-components.yaml", "metadata.yaml"},
 		"cluster-api":           {"core-components.yaml", "metadata.yaml"},
@@ -131,7 +126,7 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 				imageTagOverride = componentTagOverrideMap["kubeadm-control-plane-controller"]
 			}
 
-			imageTagOverrides = append(imageTagOverrides, imageTagOverride, kubeRbacProxyImageTagOverride)
+			imageTagOverrides = append(imageTagOverrides, imageTagOverride)
 
 			manifestArtifact := &ManifestArtifact{
 				SourceS3Key:       manifest,
@@ -156,7 +151,6 @@ func (r *ReleaseConfig) GetCAPIAssets() ([]Artifact, error) {
 func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) (anywherev1alpha1.CoreClusterAPI, error) {
 	coreClusterAPIBundleArtifacts := map[string][]Artifact{
 		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
-		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 	sortedComponentNames := sortArtifactsMap(coreClusterAPIBundleArtifacts)
 
@@ -221,7 +215,6 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 	bundle := anywherev1alpha1.CoreClusterAPI{
 		Version:    version,
 		Controller: bundleImageArtifacts["cluster-api-controller"],
-		KubeProxy:  bundleImageArtifacts["kube-rbac-proxy"],
 		Components: bundleManifestArtifacts["core-components.yaml"],
 		Metadata:   bundleManifestArtifacts["metadata.yaml"],
 	}
@@ -232,7 +225,6 @@ func (r *ReleaseConfig) GetCoreClusterAPIBundle(imageDigests map[string]string) 
 func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string) (anywherev1alpha1.KubeadmBootstrapBundle, error) {
 	kubeadmBootstrapBundleArtifacts := map[string][]Artifact{
 		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
-		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 	sortedComponentNames := sortArtifactsMap(kubeadmBootstrapBundleArtifacts)
 
@@ -297,7 +289,6 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 	bundle := anywherev1alpha1.KubeadmBootstrapBundle{
 		Version:    version,
 		Controller: bundleImageArtifacts["kubeadm-bootstrap-controller"],
-		KubeProxy:  bundleImageArtifacts["kube-rbac-proxy"],
 		Components: bundleManifestArtifacts["bootstrap-components.yaml"],
 		Metadata:   bundleManifestArtifacts["metadata.yaml"],
 	}
@@ -308,7 +299,6 @@ func (r *ReleaseConfig) GetKubeadmBootstrapBundle(imageDigests map[string]string
 func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]string) (anywherev1alpha1.KubeadmControlPlaneBundle, error) {
 	kubeadmControlPlaneBundleArtifacts := map[string][]Artifact{
 		"cluster-api":     r.BundleArtifactsTable["cluster-api"],
-		"kube-rbac-proxy": r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 	sortedComponentNames := sortArtifactsMap(kubeadmControlPlaneBundleArtifacts)
 
@@ -372,7 +362,6 @@ func (r *ReleaseConfig) GetKubeadmControlPlaneBundle(imageDigests map[string]str
 	bundle := anywherev1alpha1.KubeadmControlPlaneBundle{
 		Version:    version,
 		Controller: bundleImageArtifacts["kubeadm-control-plane-controller"],
-		KubeProxy:  bundleImageArtifacts["kube-rbac-proxy"],
 		Components: bundleManifestArtifacts["control-plane-components.yaml"],
 		Metadata:   bundleManifestArtifacts["metadata.yaml"],
 	}

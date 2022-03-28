@@ -258,6 +258,7 @@ spec:
                               type: string
                           type: object
                         kubeProxy:
+                          description: This field has been deprecated.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -298,7 +299,6 @@ spec:
                       - clusterTemplate
                       - components
                       - controller
-                      - kubeProxy
                       - metadata
                       - version
                       type: object
@@ -340,6 +340,7 @@ spec:
                               type: string
                           type: object
                         kubeProxy:
+                          description: This field has been deprecated.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -379,7 +380,6 @@ spec:
                       required:
                       - components
                       - controller
-                      - kubeProxy
                       - metadata
                       - version
                       type: object
@@ -775,6 +775,7 @@ spec:
                               type: string
                           type: object
                         kubeProxy:
+                          description: This field has been deprecated.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -814,7 +815,6 @@ spec:
                       required:
                       - components
                       - controller
-                      - kubeProxy
                       - metadata
                       - version
                       type: object
@@ -856,6 +856,7 @@ spec:
                               type: string
                           type: object
                         kubeProxy:
+                          description: This field has been deprecated.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -895,7 +896,6 @@ spec:
                       required:
                       - components
                       - controller
-                      - kubeProxy
                       - metadata
                       - version
                       type: object
@@ -914,6 +914,7 @@ spec:
                               type: string
                           type: object
                         kubeProxy:
+                          description: This field has been deprecated.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -982,7 +983,6 @@ spec:
                       required:
                       - clusterTemplate
                       - components
-                      - kubeProxy
                       - manager
                       - metadata
                       - version
@@ -1601,6 +1601,7 @@ spec:
                               type: string
                           type: object
                         kubeProxy:
+                          description: This field has been deprecated.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1640,7 +1641,6 @@ spec:
                       required:
                       - components
                       - controller
-                      - kubeProxy
                       - metadata
                       - version
                       type: object
@@ -1682,6 +1682,7 @@ spec:
                               type: string
                           type: object
                         kubeProxy:
+                          description: This field has been deprecated.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -1721,7 +1722,6 @@ spec:
                       required:
                       - components
                       - controller
-                      - kubeProxy
                       - metadata
                       - version
                       type: object
@@ -1902,6 +1902,35 @@ spec:
                       type: string
                     packageController:
                       properties:
+                        helmChart:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
                         packageController:
                           properties:
                             arch:
@@ -2790,6 +2819,7 @@ spec:
                               type: string
                           type: object
                         kubeProxy:
+                          description: This field has been deprecated.
                           properties:
                             arch:
                               description: Architectures of the asset
@@ -2918,7 +2948,6 @@ spec:
                       - clusterTemplate
                       - components
                       - driver
-                      - kubeProxy
                       - kubeVip
                       - manager
                       - metadata
@@ -4833,8 +4862,6 @@ spec:
     spec:
       containers:
       - args:
-        - --health-probe-bind-address=:8081
-        - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
         image: public.ecr.aws/l0g8r8j6/eks-anywhere-cluster-controller:v0.0.0-eks-a-v0.0.0-dev-build.251
         imagePullPolicy: Always
@@ -4858,16 +4885,6 @@ spec:
         - mountPath: /tmp/k8s-webhook-server/serving-certs
           name: cert
           readOnly: true
-      - args:
-        - --secure-listen-address=0.0.0.0:8443
-        - --upstream=http://127.0.0.1:8080/
-        - --logtostderr=true
-        - --v=10
-        image: public.ecr.aws/l0g8r8j6/brancz/kube-rbac-proxy:v0.8.0-eks-a-v0.0.0-dev-build.251
-        name: kube-rbac-proxy
-        ports:
-        - containerPort: 8443
-          name: https
       securityContext:
         fsGroup: 1000
       serviceAccountName: eksa-controller-manager

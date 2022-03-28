@@ -82,7 +82,6 @@ func (vb *VersionsBundle) VsphereImages() []Image {
 	return []Image{
 		vb.VSphere.ClusterAPIController,
 		vb.VSphere.Driver,
-		vb.VSphere.KubeProxy,
 		vb.VSphere.KubeVip,
 		vb.VSphere.Manager,
 		vb.VSphere.Syncer,
@@ -91,7 +90,6 @@ func (vb *VersionsBundle) VsphereImages() []Image {
 
 func (vb *VersionsBundle) DockerImages() []Image {
 	return []Image{
-		vb.Docker.KubeProxy,
 		vb.Docker.Manager,
 	}
 }
@@ -99,7 +97,6 @@ func (vb *VersionsBundle) DockerImages() []Image {
 func (vb *VersionsBundle) SharedImages() []Image {
 	return []Image{
 		vb.Bootstrap.Controller,
-		vb.Bootstrap.KubeProxy,
 		vb.BottleRocketBootstrap.Bootstrap,
 		vb.BottleRocketAdmin.Admin,
 		vb.CertManager.Acmesolver,
@@ -109,9 +106,7 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.Cilium.Cilium,
 		vb.Cilium.Operator,
 		vb.ClusterAPI.Controller,
-		vb.ClusterAPI.KubeProxy,
 		vb.ControlPlane.Controller,
-		vb.ControlPlane.KubeProxy,
 		vb.EksD.KindNode,
 		vb.Eksa.CliTools,
 		vb.Eksa.ClusterController,
@@ -120,9 +115,7 @@ func (vb *VersionsBundle) SharedImages() []Image {
 		vb.Flux.NotificationController,
 		vb.Flux.SourceController,
 		vb.ExternalEtcdBootstrap.Controller,
-		vb.ExternalEtcdBootstrap.KubeProxy,
 		vb.ExternalEtcdController.Controller,
-		vb.ExternalEtcdController.KubeProxy,
 		vb.Haproxy.Image,
 	}
 }

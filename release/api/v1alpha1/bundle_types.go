@@ -145,55 +145,61 @@ type CertManagerBundle struct {
 }
 
 type CoreClusterAPI struct {
-	Version    string   `json:"version"`
-	Controller Image    `json:"controller"`
-	KubeProxy  Image    `json:"kubeProxy"`
+	Version    string `json:"version"`
+	Controller Image  `json:"controller"`
+	// This field has been deprecated.
+	KubeProxy  Image    `json:"kubeProxy,omitempty"`
 	Components Manifest `json:"components"`
 	Metadata   Manifest `json:"metadata"`
 }
 
 type KubeadmBootstrapBundle struct {
-	Version    string   `json:"version"`
-	Controller Image    `json:"controller"`
-	KubeProxy  Image    `json:"kubeProxy"`
+	Version    string `json:"version"`
+	Controller Image  `json:"controller"`
+	// This field has been deprecated.
+	KubeProxy  Image    `json:"kubeProxy,omitempty"`
 	Components Manifest `json:"components"`
 	Metadata   Manifest `json:"metadata"`
 }
 
 type KubeadmControlPlaneBundle struct {
-	Version    string   `json:"version"`
-	Controller Image    `json:"controller"`
-	KubeProxy  Image    `json:"kubeProxy"`
+	Version    string `json:"version"`
+	Controller Image  `json:"controller"`
+	// This field has been deprecated.
+	KubeProxy  Image    `json:"kubeProxy,omitempty"`
 	Components Manifest `json:"components"`
 	Metadata   Manifest `json:"metadata"`
 }
 
 type AwsBundle struct {
-	Version         string   `json:"version"`
-	Controller      Image    `json:"controller"`
-	KubeProxy       Image    `json:"kubeProxy"`
+	Version    string `json:"version"`
+	Controller Image  `json:"controller"`
+	// This field has been deprecated.
+	KubeProxy       Image    `json:"kubeProxy,omitempty"`
 	Components      Manifest `json:"components"`
 	ClusterTemplate Manifest `json:"clusterTemplate"`
 	Metadata        Manifest `json:"metadata"`
 }
 
 type VSphereBundle struct {
-	Version              string   `json:"version"`
-	ClusterAPIController Image    `json:"clusterAPIController"`
-	KubeProxy            Image    `json:"kubeProxy"`
-	Manager              Image    `json:"manager"`
-	KubeVip              Image    `json:"kubeVip"`
-	Driver               Image    `json:"driver"`
-	Syncer               Image    `json:"syncer"`
-	Components           Manifest `json:"components"`
-	Metadata             Manifest `json:"metadata"`
-	ClusterTemplate      Manifest `json:"clusterTemplate"`
+	Version              string `json:"version"`
+	ClusterAPIController Image  `json:"clusterAPIController"`
+	// This field has been deprecated.
+	KubeProxy       Image    `json:"kubeProxy,omitempty"`
+	Manager         Image    `json:"manager"`
+	KubeVip         Image    `json:"kubeVip"`
+	Driver          Image    `json:"driver"`
+	Syncer          Image    `json:"syncer"`
+	Components      Manifest `json:"components"`
+	Metadata        Manifest `json:"metadata"`
+	ClusterTemplate Manifest `json:"clusterTemplate"`
 }
 
 type DockerBundle struct {
-	Version         string   `json:"version"`
-	Manager         Image    `json:"manager"`
-	KubeProxy       Image    `json:"kubeProxy"`
+	Version string `json:"version"`
+	Manager Image  `json:"manager"`
+	// This field has been deprecated.
+	KubeProxy       Image    `json:"kubeProxy,omitempty"`
 	Components      Manifest `json:"components"`
 	ClusterTemplate Manifest `json:"clusterTemplate"`
 	Metadata        Manifest `json:"metadata"`
@@ -242,17 +248,19 @@ type EksaBundle struct {
 }
 
 type EtcdadmBootstrapBundle struct {
-	Version    string   `json:"version"`
-	Controller Image    `json:"controller"`
-	KubeProxy  Image    `json:"kubeProxy"`
+	Version    string `json:"version"`
+	Controller Image  `json:"controller"`
+	// This field has been deprecated.
+	KubeProxy  Image    `json:"kubeProxy,omitempty"`
 	Components Manifest `json:"components"`
 	Metadata   Manifest `json:"metadata"`
 }
 
 type EtcdadmControllerBundle struct {
-	Version    string   `json:"version"`
-	Controller Image    `json:"controller"`
-	KubeProxy  Image    `json:"kubeProxy"`
+	Version    string `json:"version"`
+	Controller Image  `json:"controller"`
+	// This field has been deprecated.
+	KubeProxy  Image    `json:"kubeProxy,omitempty"`
 	Components Manifest `json:"components"`
 	Metadata   Manifest `json:"metadata"`
 }

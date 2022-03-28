@@ -89,13 +89,6 @@ func (r *ReleaseConfig) GetCapaAssets() ([]Artifact, error) {
 		}
 	}
 
-	kubeRbacProxyImageTagOverride, err := r.GetKubeRbacProxyImageTagOverride()
-	if err != nil {
-		return nil, errors.Cause(err)
-	}
-
-	imageTagOverrides = append(imageTagOverrides, kubeRbacProxyImageTagOverride)
-
 	manifestList := []string{
 		"infrastructure-components.yaml",
 		"cluster-template.yaml",
@@ -147,7 +140,6 @@ func (r *ReleaseConfig) GetCapaAssets() ([]Artifact, error) {
 func (r *ReleaseConfig) GetAwsBundle(imageDigests map[string]string) (anywherev1alpha1.AwsBundle, error) {
 	awsBundleArtifacts := map[string][]Artifact{
 		"cluster-api-provider-aws": r.BundleArtifactsTable["cluster-api-provider-aws"],
-		"kube-rbac-proxy":          r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 	sortedComponentNames := sortArtifactsMap(awsBundleArtifacts)
 
@@ -205,7 +197,6 @@ func (r *ReleaseConfig) GetAwsBundle(imageDigests map[string]string) (anywherev1
 	bundle := anywherev1alpha1.AwsBundle{
 		Version:         version,
 		Controller:      bundleImageArtifacts["cluster-api-aws-controller"],
-		KubeProxy:       bundleImageArtifacts["kube-rbac-proxy"],
 		Components:      bundleManifestArtifacts["infrastructure-components.yaml"],
 		ClusterTemplate: bundleManifestArtifacts["cluster-template.yaml"],
 		Metadata:        bundleManifestArtifacts["metadata.yaml"],

@@ -92,16 +92,11 @@ func (r *ReleaseConfig) GetClusterControllerAssets() ([]Artifact, error) {
 
 	var imageTagOverrides []ImageTagOverride
 
-	kubeRbacProxyImageTagOverride, err := r.GetKubeRbacProxyImageTagOverride()
-	if err != nil {
-		return nil, errors.Cause(err)
-	}
-
 	imageTagOverride := ImageTagOverride{
 		Repository: sourceRepoName,
 		ReleaseUri: imageArtifact.ReleaseImageURI,
 	}
-	imageTagOverrides = append(imageTagOverrides, imageTagOverride, kubeRbacProxyImageTagOverride)
+	imageTagOverrides = append(imageTagOverrides, imageTagOverride)
 
 	manifest := "eksa-components.yaml"
 

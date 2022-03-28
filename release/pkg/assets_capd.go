@@ -69,16 +69,11 @@ func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
 
 	var imageTagOverrides []ImageTagOverride
 
-	kubeRbacProxyImageTagOverride, err := r.GetKubeRbacProxyImageTagOverride()
-	if err != nil {
-		return nil, errors.Cause(err)
-	}
-
 	imageTagOverride := ImageTagOverride{
 		Repository: repoName,
 		ReleaseUri: imageArtifact.ReleaseImageURI,
 	}
-	imageTagOverrides = append(imageTagOverrides, imageTagOverride, kubeRbacProxyImageTagOverride)
+	imageTagOverrides = append(imageTagOverrides, imageTagOverride)
 
 	manifestList := []string{
 		"infrastructure-components-development.yaml",
@@ -128,7 +123,6 @@ func (r *ReleaseConfig) GetDockerAssets() ([]Artifact, error) {
 func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywherev1alpha1.DockerBundle, error) {
 	dockerBundleArtifacts := map[string][]Artifact{
 		"cluster-api-provider-docker": r.BundleArtifactsTable["cluster-api-provider-docker"],
-		"kube-rbac-proxy":             r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 	sortedComponentNames := sortArtifactsMap(dockerBundleArtifacts)
 
@@ -187,7 +181,6 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 	bundle := anywherev1alpha1.DockerBundle{
 		Version:         version,
 		Manager:         bundleImageArtifacts["capd-manager"],
-		KubeProxy:       bundleImageArtifacts["kube-rbac-proxy"],
 		Components:      bundleManifestArtifacts["infrastructure-components-development.yaml"],
 		ClusterTemplate: bundleManifestArtifacts["cluster-template-development.yaml"],
 		Metadata:        bundleManifestArtifacts["metadata.yaml"],
