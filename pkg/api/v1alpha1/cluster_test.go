@@ -7,8 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 func TestValidateClusterName(t *testing.T) {
@@ -1920,6 +1923,90 @@ func TestValidateCNIConfig(t *testing.T) {
 			got := validateCNIConfig(tt.clusterNetwork.CNIConfig)
 			if !reflect.DeepEqual(tt.wantErr, got) {
 				t.Errorf("%v got = %v, want %v", tt.name, got, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidateMirrorConfig(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr string
+		cluster *Cluster
+	}{
+		{
+			name:    "registry mirror not specified",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: nil,
+				},
+			},
+		},
+		{
+			name:    "endpoint not specified",
+			wantErr: "no value set for RegistryMirrorConfiguration.Endpoint",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "",
+					},
+				},
+			},
+		},
+		{
+			name:    "invalid port",
+			wantErr: "registry mirror port 65536 is invalid",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "65536",
+					},
+				},
+			},
+		},
+		{
+			name:    "insecureSkipVerify on non snow provider",
+			wantErr: "insecureSkipVerify is only supported for snow provider",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:           "1.2.3.4",
+						Port:               "443",
+						InsecureSkipVerify: true,
+					},
+					DatacenterRef: Ref{
+						Kind: "nonsnow",
+					},
+				},
+			},
+		},
+		{
+			name:    "insecureSkipVerify on snow provider",
+			wantErr: "",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint:           "1.2.3.4",
+						Port:               "443",
+						InsecureSkipVerify: true,
+					},
+					DatacenterRef: Ref{
+						Kind: constants.SnowProviderName,
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			err := validateMirrorConfig(tt.cluster)
+			if tt.wantErr == "" {
+				g.Expect(err).To(BeNil())
+			} else {
+				g.Expect(err).To(MatchError(ContainSubstring(tt.wantErr)))
 			}
 		})
 	}

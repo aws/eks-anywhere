@@ -1,24 +1,21 @@
 package validations
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
-	"github.com/aws/eks-anywhere/pkg/providers"
 )
 
-func ValidateCertForRegistryMirror(clusterSpec *cluster.Spec, tlsValidator TlsValidator, provider providers.Provider) error {
+func ValidateCertForRegistryMirror(clusterSpec *cluster.Spec, tlsValidator TlsValidator) error {
 	cluster := clusterSpec.Cluster
 	if cluster.Spec.RegistryMirrorConfiguration == nil {
 		return nil
 	}
 
-	insecureSkip := cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify
-	if insecureSkip && provider.Name() != constants.SnowProviderName {
-		return errors.New("insecureSkipVerify is only supported for snow provider")
+	if cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify {
+		logger.V(1).Info("Warning: skip registry certificate verification is enabled", "registryMirrorConfiguration.insecureSkipVerify", true)
+		return nil
 	}
 
 	host, port := cluster.Spec.RegistryMirrorConfiguration.Endpoint, cluster.Spec.RegistryMirrorConfiguration.Port
@@ -28,11 +25,6 @@ func ValidateCertForRegistryMirror(clusterSpec *cluster.Spec, tlsValidator TlsVa
 	}
 	if selfSigned {
 		logger.V(1).Info(fmt.Sprintf("Warning: registry mirror endpoint %s is using self-signed certs", cluster.Spec.RegistryMirrorConfiguration.Endpoint))
-	}
-
-	if insecureSkip {
-		logger.V(1).Info("Warning: skip registry certificate verification is enabled", "registryMirrorConfiguration.insecureSkipVerify", true)
-		return nil
 	}
 
 	certContent := cluster.Spec.RegistryMirrorConfiguration.CACertContent

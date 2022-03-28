@@ -10,7 +10,6 @@ import (
 	"github.com/aws/eks-anywhere/internal/test"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/cluster"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	providermocks "github.com/aws/eks-anywhere/pkg/providers/mocks"
 	"github.com/aws/eks-anywhere/pkg/validations"
 	"github.com/aws/eks-anywhere/pkg/validations/mocks"
@@ -49,7 +48,7 @@ func TestValidateCertForRegistryMirrorNoRegistryMirror(t *testing.T) {
 	tt := newTlsTest(t)
 	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration = nil
 
-	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator, tt.provider)).To(Succeed())
+	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
 }
 
 func TestValidateCertForRegistryMirrorCertInvalid(t *testing.T) {
@@ -58,7 +57,7 @@ func TestValidateCertForRegistryMirrorCertInvalid(t *testing.T) {
 	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(false, nil)
 	tt.tlsValidator.EXPECT().ValidateCert(tt.host, tt.port, tt.certContent).Return(errors.New("invalid cert"))
 
-	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator, tt.provider)).To(
+	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(
 		MatchError(ContainSubstring("invalid registry certificate: invalid cert")),
 	)
 }
@@ -69,40 +68,28 @@ func TestValidateCertForRegistryMirrorCertValid(t *testing.T) {
 	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(false, nil)
 	tt.tlsValidator.EXPECT().ValidateCert(tt.host, tt.port, tt.certContent).Return(nil)
 
-	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator, tt.provider)).To(Succeed())
+	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
 }
 
 func TestValidateCertForRegistryMirrorNoCertNoSelfSigned(t *testing.T) {
 	tt := newTlsTest(t)
 	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(false, nil)
 
-	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator, tt.provider)).To(Succeed())
+	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
 }
 
 func TestValidateCertForRegistryMirrorNoCertSelfSigned(t *testing.T) {
 	tt := newTlsTest(t)
 	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(true, nil)
 
-	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator, tt.provider)).To(
+	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(
 		MatchError(ContainSubstring("registry https://host.h is using self-signed certs, please provide the certificate using caCertContent field")),
 	)
 }
 
-func TestValidateCertForRegistryMirrorInsecureSkipNonSnowProvider(t *testing.T) {
+func TestValidateCertForRegistryMirrorInsecureSkip(t *testing.T) {
 	tt := newTlsTest(t)
 	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify = true
-	tt.provider.EXPECT().Name().Return("notsnow")
 
-	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator, tt.provider)).To(
-		MatchError(ContainSubstring("insecureSkipVerify is only supported for snow provider")),
-	)
-}
-
-func TestValidateCertForRegistryMirrorInsecureSkipSnowProvider(t *testing.T) {
-	tt := newTlsTest(t)
-	tt.clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify = true
-	tt.tlsValidator.EXPECT().HasSelfSignedCert(tt.host, tt.port).Return(true, nil)
-	tt.provider.EXPECT().Name().Return(constants.SnowProviderName)
-
-	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator, tt.provider)).To(Succeed())
+	tt.Expect(validations.ValidateCertForRegistryMirror(tt.clusterSpec, tt.tlsValidator)).To(Succeed())
 }
