@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/curatedpackages"
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -32,4 +34,15 @@ func commonValidation(ctx context.Context, clusterConfigFile string) (*v1alpha1.
 		return nil, fmt.Errorf("the cluster config file provided is invalid: %v", err)
 	}
 	return clusterConfig, nil
+}
+
+func validateKubeVersion(kubeVersion string, source curatedpackages.BundleSource) error {
+	if source != curatedpackages.Registry {
+		return nil
+	}
+	versionSplit := strings.Split(kubeVersion, ".")
+	if len(versionSplit) < 2 {
+		return fmt.Errorf("please specify kubeVersion as <major>.<minor>")
+	}
+	return nil
 }

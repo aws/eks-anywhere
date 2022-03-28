@@ -2,6 +2,7 @@ package executables
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -774,6 +775,10 @@ func WithArgs(args []string) KubectlOpt {
 	return appendOpt(args...)
 }
 
+func WithArg(arg string) KubectlOpt {
+	return appendOpt(arg)
+}
+
 func appendOpt(new ...string) KubectlOpt {
 	return func(args *[]string) {
 		*args = append(*args, new...)
@@ -1400,11 +1405,11 @@ func (k *Kubectl) GetDaemonSet(ctx context.Context, name, namespace, kubeconfig 
 	return obj, nil
 }
 
-func (k *Kubectl) GetResources(ctx context.Context, resourceType string, opts ...KubectlOpt) (string, error) {
+func (k *Kubectl) GetResources(ctx context.Context, resourceType string, opts ...KubectlOpt) (bytes.Buffer, error) {
 	params := []string{
 		"get", resourceType,
 	}
 	applyOpts(&params, opts...)
 	stdOut, err := k.Execute(ctx, params...)
-	return stdOut.String(), err
+	return stdOut, err
 }
