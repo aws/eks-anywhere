@@ -77,6 +77,10 @@ var machineDeployments = &clusterv1.MachineDeploymentList{
 	},
 }
 
+var cloudstackCluster = &cloudstackv1.CloudStackCluster{
+	Spec: cloudstackv1.CloudStackClusterSpec{},
+}
+
 func TestMapMachineTemplateToVSphereDatacenterConfigSpec(t *testing.T) {
 	type args struct {
 		vsMachineTemplate *vspherev1.VSphereMachineTemplate
@@ -352,6 +356,39 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 			}
 			if err == nil && !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("MapMachineTemplateToCloudStackWorkerMachineConfigSpec() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestFetchCloudStackCluster(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *anywherev1.Cluster
+	}{
+		{
+			name: "Fetch CloudStackCluster",
+			cluster: &anywherev1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "testCluster",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			mockCtrl := gomock.NewController(t)
+			reader := mocks.NewMockReader(mockCtrl)
+			logger := log.NullLogger{}
+			capiResourceFetcher := resource.NewCAPIResourceFetcher(reader, logger)
+			reader.EXPECT().Get(ctx, types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: tt.cluster.Name}, gomock.Any()).Do(
+				func(ctx context.Context, arg1 types.NamespacedName, arg2 *cloudstackv1.CloudStackCluster) {
+					cloudstackCluster.DeepCopyInto(arg2)
+				})
+			_, err := capiResourceFetcher.CloudStackCluster(ctx, tt.cluster, anywherev1.WorkerNodeGroupConfiguration{Name: "test"})
+			if err != nil {
+				t.Errorf("CloudStackEtcdMachineTemplate(): %v", err)
 			}
 		})
 	}
