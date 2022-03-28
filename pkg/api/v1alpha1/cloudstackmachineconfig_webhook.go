@@ -53,6 +53,11 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 		return nil
 	}
 
+	if oldCloudStackMachineConfig.IsManagement() {
+		cloudstackmachineconfiglog.Info("Machine config is associated with workload cluster", "name", oldCloudStackMachineConfig.Name)
+		return nil
+	}
+
 	return nil
 }
 
