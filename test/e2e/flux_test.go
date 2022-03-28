@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -57,6 +58,7 @@ func TestDockerKubernetes122Flux(t *testing.T) {
 		framework.NewDocker(t),
 		framework.WithFlux(),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -93,6 +95,7 @@ func TestVSphereKubernetes122Flux(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -128,6 +131,7 @@ func TestVSphereKubernetes122ThreeReplicasThreeWorkersFlux(t *testing.T) {
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
 		framework.WithFlux(),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -143,6 +147,7 @@ func TestDockerKubernetes122GitopsOptionsFlux(t *testing.T) {
 			api.WithFluxNamespace(fluxUserProvidedNamespace),
 			api.WithFluxConfigurationPath(fluxUserProvidedPath),
 		),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -159,6 +164,7 @@ func TestVSphereKubernetes122GitopsOptionsFlux(t *testing.T) {
 			api.WithFluxNamespace(fluxUserProvidedNamespace),
 			api.WithFluxConfigurationPath(fluxUserProvidedPath),
 		),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }
@@ -172,11 +178,13 @@ func TestVSphereKubernetes121To122FluxUpgrade(t *testing.T) {
 		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runUpgradeFlowWithFlux(
 		test,
 		v1alpha1.Kube122,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var()),
 	)
 }
