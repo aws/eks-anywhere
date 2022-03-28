@@ -81,7 +81,7 @@ func getPackageBundle(ctx context.Context, kubectl *executables.Kubectl, kubeCon
 		return nil, err
 	}
 	obj := &api.PackageBundle{}
-	if err = json.NewDecoder(&stdOut).Decode(obj); err != nil {
+	if err := json.Unmarshal(stdOut.Bytes(), obj); err != nil {
 		return nil, fmt.Errorf("unmarshaling package bundle: %w", err)
 	}
 	return obj, nil
