@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/test/framework"
 )
@@ -58,6 +59,7 @@ func TestDockerKubernetes122SimpleFlow(t *testing.T) {
 		t,
 		framework.NewDocker(t),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -85,6 +87,7 @@ func TestVSphereKubernetes122SimpleFlow(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithUbuntu122()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -96,6 +99,7 @@ func TestVSphereKubernetes122ThreeReplicasFiveWorkersSimpleFlow(t *testing.T) {
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(5)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -106,6 +110,7 @@ func TestVSphereKubernetes122DifferentNamespaceSimpleFlow(t *testing.T) {
 		framework.NewVSphere(t, framework.WithUbuntu122(), framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace))),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -115,6 +120,7 @@ func TestVSphereKubernetes122BottleRocketSimpleFlow(t *testing.T) {
 		t,
 		framework.NewVSphere(t, framework.WithBottleRocket122()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -126,6 +132,7 @@ func TestVSphereKubernetes122BottleRocketThreeReplicasFiveWorkersSimpleFlow(t *t
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
 		framework.WithClusterFiller(api.WithWorkerNodeCount(5)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
@@ -136,6 +143,7 @@ func TestVSphereKubernetes122BottleRocketDifferentNamespaceSimpleFlow(t *testing
 		framework.NewVSphere(t, framework.WithBottleRocket122(), framework.WithVSphereFillers(api.WithVSphereConfigNamespaceForAllMachinesAndDatacenter(clusterNamespace))),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithClusterNamespace(clusterNamespace)),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runSimpleFlow(test)
 }
