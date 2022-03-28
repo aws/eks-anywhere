@@ -1900,7 +1900,7 @@ spec:
                       type: object
                     kubeVersion:
                       type: string
-                    packagecontroller:
+                    packageController:
                       properties:
                         packageController:
                           properties:
@@ -2942,7 +2942,7 @@ spec:
                   - flux
                   - kindnetd
                   - kubeVersion
-                  - packagecontroller
+                  - packageController
                   - vSphere
                   type: object
                 type: array
@@ -3048,8 +3048,12 @@ spec:
                         situation, only 'Shared' network is supported.
                       properties:
                         id:
+                          description: Id of a resource in the CloudStack environment.
+                            Mutually exclusive with Name
                           type: string
                         name:
+                          description: Name of a resource in the CloudStack environment.
+                            Mutually exclusive with Id
                           type: string
                       type: object
                   required:
@@ -3134,8 +3138,12 @@ spec:
                   be specified as a UUID or name
                 properties:
                   id:
+                    description: Id of a resource in the CloudStack environment. Mutually
+                      exclusive with Name
                     type: string
                   name:
+                    description: Name of a resource in the CloudStack environment.
+                      Mutually exclusive with Id
                     type: string
                 type: object
               template:
@@ -3144,8 +3152,12 @@ spec:
                   as a UUID or name
                 properties:
                   id:
+                    description: Id of a resource in the CloudStack environment. Mutually
+                      exclusive with Name
                     type: string
                   name:
+                    description: Name of a resource in the CloudStack environment.
+                      Mutually exclusive with Id
                     type: string
                 type: object
               userCustomDetails:
@@ -3430,6 +3442,12 @@ spec:
                     description: Endpoint defines the registry mirror endpoint to
                       use for pulling images
                     type: string
+                  insecureSkipVerify:
+                    description: InsecureSkipVerify skips the registry certificate
+                      verification. Only use this solution for isolated testing or
+                      in a tightly controlled, air-gapped environment. Currently only
+                      supported for snow provider
+                    type: boolean
                   port:
                     description: Port defines the port exposed for registry mirror
                       endpoint

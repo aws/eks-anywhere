@@ -226,6 +226,12 @@ spec:
                     description: Endpoint defines the registry mirror endpoint to
                       use for pulling images
                     type: string
+                  insecureSkipVerify:
+                    description: InsecureSkipVerify skips the registry certificate
+                      verification. Only use this solution for isolated testing or
+                      in a tightly controlled, air-gapped environment. Currently only
+                      supported for snow provider
+                    type: boolean
                   port:
                     description: Port defines the port exposed for registry mirror
                       endpoint
