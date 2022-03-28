@@ -47,7 +47,8 @@ type EksaDiagnosticBundle struct {
 }
 
 func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactory, client BundleClient,
-	kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter) (*EksaDiagnosticBundle, error) {
+	kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter,
+) (*EksaDiagnosticBundle, error) {
 	b := &EksaDiagnosticBundle{
 		bundle: &supportBundle{
 			TypeMeta: metav1.TypeMeta{
@@ -79,7 +80,8 @@ func newDiagnosticBundleManagementCluster(af AnalyzerFactory, cf CollectorFactor
 }
 
 func newDiagnosticBundleFromSpec(af AnalyzerFactory, cf CollectorFactory, spec *cluster.Spec, provider providers.Provider,
-	client BundleClient, kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter) (*EksaDiagnosticBundle, error) {
+	client BundleClient, kubectl *executables.Kubectl, kubeconfig string, writer filewriter.FileWriter,
+) (*EksaDiagnosticBundle, error) {
 	b := &EksaDiagnosticBundle{
 		bundle: &supportBundle{
 			TypeMeta: metav1.TypeMeta{

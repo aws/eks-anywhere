@@ -282,7 +282,7 @@ func TestMapMachineTemplateToCloudStackWorkerMachineConfigSpec(t *testing.T) {
 				Spec: anywherev1.CloudStackMachineConfigSpec{
 					Template:          anywherev1.CloudStackResourceIdentifier{Name: "rhel8-1.20"},
 					ComputeOffering:   anywherev1.CloudStackResourceIdentifier{Name: "large"},
-					Affinity:         "anti",
+					Affinity:          "anti",
 					AffinityGroupIds:  []string{"c", "d"},
 					UserCustomDetails: map[string]string{"foo": "bar"},
 				},

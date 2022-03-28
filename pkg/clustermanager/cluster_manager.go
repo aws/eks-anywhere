@@ -929,7 +929,8 @@ func (c *ClusterManager) InstallEksdComponents(ctx context.Context, clusterSpec 
 }
 
 func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec,
-	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) error {
+	datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig,
+) error {
 	if clusterSpec.Namespace != "" {
 		if err := c.clusterClient.GetNamespace(ctx, cluster.KubeconfigFile, clusterSpec.Namespace); err != nil {
 			if err := c.clusterClient.CreateNamespace(ctx, cluster.KubeconfigFile, clusterSpec.Namespace); err != nil {
