@@ -111,12 +111,12 @@ func (csbo *createSupportBundleOptions) createBundle(ctx context.Context, since,
 
 	err = supportBundle.CollectAndAnalyze(ctx, sinceTimeValue)
 	if err != nil {
-		return fmt.Errorf("error while collecting and analyzing bundle: %v", err)
+		return fmt.Errorf("collecting and analyzing bundle: %v", err)
 	}
 
 	err = supportBundle.PrintAnalysis()
 	if err != nil {
-		return fmt.Errorf("error when printing analysis")
+		return fmt.Errorf("printing analysis")
 	}
 
 	return nil

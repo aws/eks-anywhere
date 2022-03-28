@@ -474,7 +474,7 @@ func validateCNIConfig(cniConfig *CNIConfig) error {
 
 	if len(allErrs) > 0 {
 		aggregate := utilerrors.NewAggregate(allErrs)
-		return fmt.Errorf("error validating cniConfig: %v", aggregate)
+		return fmt.Errorf("validating cniConfig: %v", aggregate)
 	}
 
 	return nil

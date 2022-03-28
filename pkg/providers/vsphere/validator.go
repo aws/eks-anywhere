@@ -154,7 +154,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 		var b bool                                                                                            // Temporary until we remove the need to pass a bool pointer
 		err := v.govc.ValidateVCenterSetupMachineConfig(ctx, vsphereClusterSpec.datacenterConfig, config, &b) // TODO: remove side effects from this implementation or directly move it to set defaults (pointer to bool is not needed)
 		if err != nil {
-			return fmt.Errorf("error validating vCenter setup for VSphereMachineConfig %v: %v", config.Name, err)
+			return fmt.Errorf("validating vCenter setup for VSphereMachineConfig %v: %v", config.Name, err)
 		}
 	}
 
@@ -169,16 +169,16 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, vsphereCl
 	if err := v.validateSSHUsername(controlPlaneMachineConfig); err == nil {
 		for _, wnConfig := range workerNodeGroupMachineConfigs {
 			if err = v.validateSSHUsername(wnConfig); err != nil {
-				return fmt.Errorf("error validating SSHUsername for worker node VSphereMachineConfig %v: %v", wnConfig.Name, err)
+				return fmt.Errorf("validating SSHUsername for worker node VSphereMachineConfig %v: %v", wnConfig.Name, err)
 			}
 		}
 		if etcdMachineConfig != nil {
 			if err = v.validateSSHUsername(etcdMachineConfig); err != nil {
-				return fmt.Errorf("error validating SSHUsername for etcd VSphereMachineConfig %v: %v", etcdMachineConfig.Name, err)
+				return fmt.Errorf("validating SSHUsername for etcd VSphereMachineConfig %v: %v", etcdMachineConfig.Name, err)
 			}
 		}
 	} else {
-		return fmt.Errorf("error validating SSHUsername for control plane VSphereMachineConfig %v: %v", controlPlaneMachineConfig.Name, err)
+		return fmt.Errorf("validating SSHUsername for control plane VSphereMachineConfig %v: %v", controlPlaneMachineConfig.Name, err)
 	}
 
 	for _, machineConfig := range vsphereClusterSpec.machineConfigsLookup {
@@ -237,7 +237,7 @@ func (v *Validator) validateTemplate(ctx context.Context, spec *Spec, machineCon
 func (v *Validator) validateTemplatePresence(ctx context.Context, datacenter string, machineConfig *anywherev1.VSphereMachineConfig) error {
 	templateFullPath, err := v.govc.SearchTemplate(ctx, datacenter, machineConfig)
 	if err != nil {
-		return fmt.Errorf("error validating template: %v", err)
+		return fmt.Errorf("validating template: %v", err)
 	}
 
 	if len(templateFullPath) <= 0 {
@@ -250,7 +250,7 @@ func (v *Validator) validateTemplatePresence(ctx context.Context, datacenter str
 func (v *Validator) validateTemplateTags(ctx context.Context, spec *Spec, machineConfig *anywherev1.VSphereMachineConfig) error {
 	tags, err := v.govc.GetTags(ctx, machineConfig.Spec.Template)
 	if err != nil {
-		return fmt.Errorf("error validating template tags: %v", err)
+		return fmt.Errorf("validating template tags: %v", err)
 	}
 
 	tagsLookup := types.SliceToLookup(tags)
@@ -275,7 +275,7 @@ func (v *Validator) validateDatastoreUsage(ctx context.Context, vsphereClusterSp
 	usage := make(map[string]*datastoreUsage)
 	controlPlaneAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, controlPlaneMachineConfig.Spec.Datastore) // TODO: remove dependency on machineConfig
 	if err != nil {
-		return fmt.Errorf("error getting datastore details: %v", err)
+		return fmt.Errorf("getting datastore details: %v", err)
 	}
 	controlPlaneNeedGiB := controlPlaneMachineConfig.Spec.DiskGiB * vsphereClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count
 	usage[controlPlaneMachineConfig.Spec.Datastore] = &datastoreUsage{
@@ -287,7 +287,7 @@ func (v *Validator) validateDatastoreUsage(ctx context.Context, vsphereClusterSp
 		workerMachineConfig := vsphereClusterSpec.workerMachineConfig(workerNodeGroupConfiguration)
 		workerAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, workerMachineConfig.Spec.Datastore)
 		if err != nil {
-			return fmt.Errorf("error getting datastore details: %v", err)
+			return fmt.Errorf("getting datastore details: %v", err)
 		}
 		workerNeedGiB := workerMachineConfig.Spec.DiskGiB * workerNodeGroupConfiguration.Count
 		_, ok := usage[workerMachineConfig.Spec.Datastore]
@@ -304,7 +304,7 @@ func (v *Validator) validateDatastoreUsage(ctx context.Context, vsphereClusterSp
 	if etcdMachineConfig != nil {
 		etcdAvailableSpace, err := v.govc.GetWorkloadAvailableSpace(ctx, etcdMachineConfig.Spec.Datastore)
 		if err != nil {
-			return fmt.Errorf("error getting datastore details: %v", err)
+			return fmt.Errorf("getting datastore details: %v", err)
 		}
 		etcdNeedGiB := etcdMachineConfig.Spec.DiskGiB * vsphereClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
 		if _, ok := usage[etcdMachineConfig.Spec.Datastore]; ok {

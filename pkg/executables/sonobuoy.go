@@ -34,7 +34,7 @@ func (k *Sonobuoy) Run(ctx context.Context, contextName string, args ...string) 
 	output, err := k.Execute(ctx, executionArgs...)
 	command := strings.Join(executionArgs, " ") + "\n"
 	if err != nil {
-		return command, fmt.Errorf("error executing sonobuoy: %v", err)
+		return command, fmt.Errorf("executing sonobuoy: %v", err)
 	}
 	return command + output.String(), err
 }
@@ -49,7 +49,7 @@ func (k *Sonobuoy) GetResults(ctx context.Context, contextName string, args ...s
 	var output bytes.Buffer
 	output, err := k.Execute(ctx, executionArgs...)
 	if err != nil {
-		return "", fmt.Errorf("error executing sonobuoy retrieve: %v", err)
+		return "", fmt.Errorf("executing sonobuoy retrieve: %v", err)
 	}
 	outputFile := strings.TrimSpace(output.String())
 	logger.Info("Sonobuoy results file: " + outputFile)
@@ -61,7 +61,7 @@ func (k *Sonobuoy) GetResults(ctx context.Context, contextName string, args ...s
 	output, err = k.Execute(ctx, executionArgs...)
 	command := strings.Join(executionArgs, " ") + "\n"
 	if err != nil {
-		return command, fmt.Errorf("error executing sonobuoy results command: %v", err)
+		return command, fmt.Errorf("executing sonobuoy results command: %v", err)
 	}
 	return command + output.String(), err
 }

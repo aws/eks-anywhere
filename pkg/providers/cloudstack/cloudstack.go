@@ -731,7 +731,7 @@ func (p *cloudstackProvider) GenerateCAPISpecForUpgrade(ctx context.Context, boo
 func (p *cloudstackProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating cluster api Spec contents: %v", err)
+		return nil, nil, fmt.Errorf("generating cluster api Spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }

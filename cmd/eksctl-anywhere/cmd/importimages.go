@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -52,11 +51,6 @@ var importImagesCmd = &cobra.Command{
 }
 
 func importImages(ctx context.Context, spec string) error {
-	registryUsername := os.Getenv("REGISTRY_USERNAME")
-	registryPassword := os.Getenv("REGISTRY_PASSWORD")
-	if registryUsername == "" || registryPassword == "" {
-		return fmt.Errorf("username or password not set. Provide REGISTRY_USERNAME and REGISTRY_PASSWORD for importing helm charts (e.g. cilium)")
-	}
 	clusterSpec, err := cluster.NewSpecFromClusterConfig(spec, version.Get())
 	if err != nil {
 		return err
@@ -91,12 +85,12 @@ func importImages(ctx context.Context, spec string) error {
 	}
 	for _, image := range images {
 		if err := importImage(ctx, de, image.URI, net.JoinHostPort(host, port)); err != nil {
-			return fmt.Errorf("error importing image %s: %v", image.URI, err)
+			return fmt.Errorf("importing image %s: %v", image.URI, err)
 		}
 	}
 
 	endpoint := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
-	return importCharts(ctx, helmExecutable, bundle.Charts(), endpoint, registryUsername, registryPassword)
+	return importCharts(ctx, helmExecutable, bundle.Charts(), endpoint)
 }
 
 func importImage(ctx context.Context, docker *executables.Docker, image string, endpoint string) error {
@@ -111,10 +105,7 @@ func importImage(ctx context.Context, docker *executables.Docker, image string, 
 	return docker.PushImage(ctx, image, endpoint)
 }
 
-func importCharts(ctx context.Context, helm *executables.Helm, charts map[string]*v1alpha1.Image, endpoint, username, password string) error {
-	if err := helm.RegistryLogin(ctx, endpoint, username, password); err != nil {
-		return err
-	}
+func importCharts(ctx context.Context, helm *executables.Helm, charts map[string]*v1alpha1.Image, endpoint string) error {
 	for _, chart := range charts {
 		if err := importChart(ctx, helm, *chart, endpoint); err != nil {
 			return err

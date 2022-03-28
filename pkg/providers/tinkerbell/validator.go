@@ -138,7 +138,7 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 	}
 	tinkWorkflowMap, err := getWorkflowMap(workflows)
 	if err != nil {
-		return fmt.Errorf("error validating if the workflow exist for the given list of hardwares %v", err)
+		return fmt.Errorf("validating if the workflow exist for the given list of hardwares %v", err)
 	}
 
 	if err := v.hardwareConfig.ValidateHardware(skipPowerActions, tinkHardwareMap, tinkWorkflowMap); err != nil {
@@ -322,7 +322,7 @@ func getWorkflowMap(workflowList []*tinkworkflow.Workflow) (map[string]*tinkwork
 		var macAddress map[string]string
 
 		if err := json.Unmarshal([]byte(data.GetHardware()), &macAddress); err != nil {
-			return nil, fmt.Errorf("error unmarshling workflow data: %v", err)
+			return nil, fmt.Errorf("unmarshling workflow data: %v", err)
 		}
 		for _, mac := range macAddress {
 			workflowMap[mac] = data

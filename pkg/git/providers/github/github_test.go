@@ -86,7 +86,7 @@ func TestValidate(t *testing.T) {
 			}
 			githubProvider, err := github.New(gitproviderclient, githubproviderclient, opts, auth)
 			if err != nil {
-				t.Errorf("error when instantiating github provider: %v, wanted nil", err)
+				t.Errorf("instantiating github provider: %v, wanted nil", err)
 			}
 
 			if !tt.personal {
@@ -191,11 +191,11 @@ func TestGetRepoSucceeds(t *testing.T) {
 			auth := git.TokenAuth{Token: validPATValue, Username: tt.owner}
 			githubProvider, err := github.New(gitproviderclient, githubproviderclient, githubProviderOpts, auth)
 			if err != nil {
-				t.Errorf("error when instantiating github provider: %v, wanted nil", err)
+				t.Errorf("instantiating github provider: %v, wanted nil", err)
 			}
 			repo, err := githubProvider.GetRepo(context.Background())
 			if err != nil {
-				t.Errorf("error when calling Repo %v, wanted nil", err)
+				t.Errorf("calling Repo %v, wanted nil", err)
 			}
 			assert.Equal(t, testRepo, repo)
 		})
@@ -247,11 +247,11 @@ func TestGetNonExistantRepoSucceeds(t *testing.T) {
 			auth := git.TokenAuth{Token: validPATValue, Username: tt.owner}
 			githubProvider, err := github.New(gitproviderclient, githubproviderclient, githubProviderOpts, auth)
 			if err != nil {
-				t.Errorf("error when instantiating github provider: %v, wanted nil", err)
+				t.Errorf("instantiating github provider: %v, wanted nil", err)
 			}
 			repo, err := githubProvider.GetRepo(context.Background())
 			if err != nil {
-				t.Errorf("error when calling Repo %v, wanted nil", err)
+				t.Errorf("calling Repo %v, wanted nil", err)
 			}
 			var nilRepo *git.Repository
 			assert.Equal(t, nilRepo, repo)
