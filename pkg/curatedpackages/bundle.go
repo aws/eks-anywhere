@@ -37,7 +37,7 @@ func GetLatestBundle(ctx context.Context, kubeConfig string, source BundleSource
 	case Registry:
 		return getLatestBundleFromRegistry(ctx, kubeVersion)
 	default:
-		return nil, errors.New("unknown source")
+		return nil, fmt.Errorf("unknown source: %q", string(source))
 	}
 }
 
