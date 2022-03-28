@@ -46,11 +46,9 @@ var generatePackageCommand = &cobra.Command{
 
 func runGeneratePackages() func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-
 		if err := validateKubeVersion(gepo.kubeVersion, gepo.source); err != nil {
 			return err
 		}
-
 		if !validations.FileExists(gepo.directory) {
 			return fmt.Errorf("directory %s does not exist", gepo.directory)
 		}
@@ -68,8 +66,7 @@ func generatePackages(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
-	err = curatedpackages.WritePackagesToFile(packages, gepo.directory)
-	if err != nil {
+	if err = curatedpackages.WritePackagesToFile(packages, gepo.directory); err != nil {
 		return err
 	}
 	return nil

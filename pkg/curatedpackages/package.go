@@ -47,8 +47,7 @@ func convertBundleVersionToPackageVersion(bundleVersions []api.SourceVersion) []
 }
 
 func GeneratePackages(bundle *api.PackageBundle, args []string) ([]api.Package, error) {
-	packagesInBundle := bundle.Spec.Packages
-	packageNameToPackage := getPackageNameToPackage(packagesInBundle)
+	packageNameToPackage := getPackageNameToPackage(bundle.Spec.Packages)
 	var packages []api.Package
 	for _, v := range args {
 		bundlePackage := packageNameToPackage[strings.ToLower(v)]
@@ -68,22 +67,20 @@ func WritePackagesToFile(packages []api.Package, d string) error {
 	}
 
 	for _, p := range packages {
-		e, err := yaml.Marshal(p)
+		content, err := yaml.Marshal(p)
 		if err != nil {
 			fmt.Println(fmt.Errorf("unable to parse package %s %v", p.Name, err).Error())
 			continue
 		}
-		writeToFile(directory, p.Name, e)
+		writeToFile(directory, p.Name, content)
 	}
 	return nil
 }
 
 func writeToFile(dir string, packageName string, content []byte) {
 	file := filepath.Join(dir, packageName) + ".yaml"
-	err := os.WriteFile(file, content, filePermission)
-	if err != nil {
-		err = fmt.Errorf("%v", err)
-		fmt.Println(err.Error())
+	if err := os.WriteFile(file, content, filePermission); err != nil {
+		fmt.Println(fmt.Errorf("unable to write to the file: %s %v", file, err))
 	}
 }
 
