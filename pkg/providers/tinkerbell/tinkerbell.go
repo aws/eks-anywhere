@@ -61,13 +61,15 @@ type tinkerbellProvider struct {
 	providerKubectlClient ProviderKubectlClient
 	providerTinkClient    ProviderTinkClient
 	templateBuilder       *TinkerbellTemplateBuilder
-	skipIpCheck           bool
 	hardwareConfigFile    string
 	validator             *Validator
-	skipPowerActions      bool
 	writer                filewriter.FileWriter
 	keyGenerator          SSHAuthKeyGenerator
 	// TODO: Update hardwareConfig to proper type
+
+	skipIpCheck      bool
+	skipPowerActions bool
+	force            bool
 }
 
 type TinkerbellClients struct {
@@ -108,6 +110,7 @@ func NewProvider(
 	skipIpCheck bool,
 	hardwareConfigFile string,
 	skipPowerActions bool,
+	force bool,
 ) *tinkerbellProvider {
 	return NewProviderCustomDep(
 		datacenterConfig,
@@ -122,6 +125,7 @@ func NewProvider(
 		skipIpCheck,
 		hardwareConfigFile,
 		skipPowerActions,
+		force,
 	)
 }
 
@@ -138,6 +142,7 @@ func NewProviderCustomDep(
 	skipIpCheck bool,
 	hardwareConfigFile string,
 	skipPowerActions bool,
+	force bool,
 ) *tinkerbellProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
@@ -170,14 +175,16 @@ func NewProviderCustomDep(
 		},
 		hardwareConfigFile: hardwareConfigFile,
 		validator:          NewValidator(providerTinkClient, netClient, hardware.HardwareConfig{}, pbnjClient),
-		skipIpCheck:        skipIpCheck,
-		skipPowerActions:   skipPowerActions,
 		writer:             writer,
 
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch
 		// directly. This is very much a hack for testability.
 		keyGenerator: sshAuthKeyGenerator{},
+
+		skipIpCheck:      skipIpCheck,
+		skipPowerActions: skipPowerActions,
+		force:            force,
 	}
 }
 
