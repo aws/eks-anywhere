@@ -14,21 +14,21 @@ import (
 )
 
 const (
-	MinWidth        = 16
-	TabWidth        = 8
-	Padding         = 0
-	PadChar         = '\t'
+	minWidth        = 16
+	tabWidth        = 8
+	padding         = 0
+	padChar         = '\t'
 	flags           = 0
-	CustomName      = "my-"
-	Kind            = "Package"
-	FilePermission  = 0644
-	DirPermission   = 0755
-	PackageLocation = "curated-packages"
+	customName      = "my-"
+	kind            = "Package"
+	filePermission  = 0644
+	dirPermission   = 0755
+	packageLocation = "curated-packages"
 )
 
 func DisplayPackages(packages []api.BundlePackage) {
 	w := new(tabwriter.Writer)
-	w.Init(os.Stdout, MinWidth, TabWidth, Padding, PadChar, flags)
+	w.Init(os.Stdout, minWidth, tabWidth, padding, padChar, flags)
 	defer w.Flush()
 	fmt.Fprintf(w, "\n %s\t%s\t", "Package", "Version(s)")
 	fmt.Fprintf(w, "\n %s\t%s\t", "----", "----")
@@ -62,8 +62,8 @@ func GeneratePackages(bundle *api.PackageBundle, args []string) ([]api.Package, 
 }
 
 func WritePackagesToFile(packages []api.Package, d string) error {
-	directory := filepath.Join(d, PackageLocation)
-	if err := os.Mkdir(directory, DirPermission); err != nil {
+	directory := filepath.Join(d, packageLocation)
+	if err := os.Mkdir(directory, dirPermission); err != nil {
 		return fmt.Errorf("unable to create directory %s", directory)
 	}
 
@@ -80,7 +80,7 @@ func WritePackagesToFile(packages []api.Package, d string) error {
 
 func writeToFile(dir string, packageName string, content []byte) {
 	file := filepath.Join(dir, packageName) + ".yaml"
-	err := os.WriteFile(file, content, FilePermission)
+	err := os.WriteFile(file, content, filePermission)
 	if err != nil {
 		err = fmt.Errorf("%v", err)
 		fmt.Println(err.Error())
@@ -99,10 +99,10 @@ func convertBundlePackageToPackage(bp api.BundlePackage, apiVersion string) api.
 	versionToUse := bp.Source.Versions[0]
 	p := api.Package{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: CustomName + strings.ToLower(bp.Name),
+			Name: customName + strings.ToLower(bp.Name),
 		},
 		TypeMeta: metav1.TypeMeta{
-			Kind:       Kind,
+			Kind:       kind,
 			APIVersion: apiVersion,
 		},
 		Spec: api.PackageSpec{
