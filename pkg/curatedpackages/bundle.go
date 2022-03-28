@@ -20,7 +20,7 @@ import (
 
 const (
 	RegistryBaseRef             = "public.ecr.aws/q0f6t3x4/eksa-package-bundles"
-	PackageBundleControllerName = "eksa-packages-bundle-controller"
+	PackageBundleControllerName = bundle.PackageBundleControllerName
 )
 
 type BundleSource = string
