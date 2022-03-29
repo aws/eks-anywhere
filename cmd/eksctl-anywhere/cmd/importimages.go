@@ -71,9 +71,12 @@ func importImages(ctx context.Context, spec string) error {
 	}
 	host := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
 	port := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port
+	var endpoint string
 	if port == "" {
 		logger.V(1).Info("RegistryMirrorConfiguration.Port is not specified, default port will be used", "Default Port", constants.DefaultHttpsPort)
-		port = constants.DefaultHttpsPort
+		endpoint = host
+	} else {
+		endpoint = net.JoinHostPort(host, port)
 	}
 	if !networkutils.IsPortValid(clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port) {
 		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Port)
@@ -84,12 +87,11 @@ func importImages(ctx context.Context, spec string) error {
 		return err
 	}
 	for _, image := range images {
-		if err := importImage(ctx, de, image.URI, net.JoinHostPort(host, port)); err != nil {
+		if err := importImage(ctx, de, image.URI, endpoint); err != nil {
 			return fmt.Errorf("importing image %s: %v", image.URI, err)
 		}
 	}
 
-	endpoint := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
 	return importCharts(ctx, helmExecutable, bundle.Charts(), endpoint)
 }
 
