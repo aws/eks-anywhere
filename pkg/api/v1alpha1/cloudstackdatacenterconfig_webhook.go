@@ -23,6 +23,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 // log is for logging in this package.
@@ -44,6 +46,9 @@ var _ webhook.Validator = &CloudStackDatacenterConfig{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *CloudStackDatacenterConfig) ValidateCreate() error {
 	cloudstackdatacenterconfiglog.Info("validate create", "name", r.Name)
+	if !features.IsActive(features.CloudStackProvider()) {
+		return apierrors.NewBadRequest("CloudStackProvider feature is not active, preventing CloudStackDataCenterConfig resource creation")
+	}
 	if r.IsReconcilePaused() {
 		cloudstackdatacenterconfiglog.Info("CloudStackDatacenterConfig is paused, so allowing create", "name", r.Name)
 		return nil

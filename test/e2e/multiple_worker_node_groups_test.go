@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -31,6 +32,7 @@ func TestVSphereKubernetes122BottlerocketAndAndRemoveWorkerNodeGroups(t *testing
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 
 	runSimpleUpgradeFlow(

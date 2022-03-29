@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
@@ -19,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -29,15 +31,16 @@ import (
 )
 
 const (
-	maxRetries        = 30
-	backOffPeriod     = 5 * time.Second
-	machineMaxWait    = 10 * time.Minute
-	machineBackoff    = 1 * time.Second
-	machinesMinWait   = 30 * time.Minute
-	moveCAPIWait      = 15 * time.Minute
-	ctrlPlaneWaitStr  = "60m"
-	etcdWaitStr       = "60m"
-	deploymentWaitStr = "30m"
+	maxRetries             = 30
+	backOffPeriod          = 5 * time.Second
+	machineMaxWait         = 10 * time.Minute
+	machineBackoff         = 1 * time.Second
+	machinesMinWait        = 30 * time.Minute
+	moveCAPIWait           = 15 * time.Minute
+	ctrlPlaneWaitStr       = "60m"
+	etcdWaitStr            = "60m"
+	deploymentWaitStr      = "30m"
+	ctrlPlaneInProgressStr = "1m"
 )
 
 type ClusterManager struct {
@@ -59,6 +62,7 @@ type ClusterClient interface {
 	ApplyKubeSpecFromBytesWithNamespace(ctx context.Context, cluster *types.Cluster, data []byte, namespace string) error
 	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
 	WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
+	WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error
 	GetWorkloadKubeconfig(ctx context.Context, clusterName string, cluster *types.Cluster) ([]byte, error)
 	GetEksaGitOpsConfig(ctx context.Context, gitOpsConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.GitOpsConfig, error)
@@ -79,6 +83,7 @@ type ClusterClient interface {
 	UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error
 	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
+	SetControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
@@ -345,7 +350,6 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	if err = c.writeCAPISpecFile(newClusterSpec.Cluster.Name, templater.AppendYamlResources(cpContent, mdContent)); err != nil {
 		return err
 	}
-
 	err = c.Retrier.Retry(
 		func() error {
 			return c.clusterClient.ApplyKubeSpecFromBytesWithNamespace(ctx, managementCluster, cpContent, constants.EksaSystemNamespace)
@@ -365,6 +369,15 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 		logger.V(3).Info("External etcd is ready")
 	}
 
+	logger.V(3).Info("Waiting for control plane upgrade to be in progress")
+	err = c.clusterClient.WaitForControlPlaneNotReady(ctx, managementCluster, ctrlPlaneInProgressStr, newClusterSpec.Cluster.Name)
+	if err != nil {
+		if !strings.Contains(fmt.Sprint(err), "timed out waiting for the condition on clusters") {
+			return fmt.Errorf("error waiting for control plane not ready: %v", err)
+		} else {
+			logger.V(3).Info("Timed out while waiting for control plane to be in progress, likely caused by no control plane upgrade")
+		}
+	}
 	logger.V(3).Info("Run post control plane upgrade operations")
 	err = provider.RunPostControlPlaneUpgrade(ctx, currentSpec, newClusterSpec, workloadCluster, managementCluster)
 	if err != nil {
@@ -904,6 +917,11 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	}
 	if err = c.InstallEksdComponents(ctx, clusterSpec, cluster); err != nil {
 		return err
+	}
+	if features.IsActive(features.CloudStackProvider()) {
+		if err = c.clusterClient.SetControllerEnvVar(ctx, features.CloudStackProviderEnvVar, "true", cluster.KubeconfigFile); err != nil {
+			return err
+		}
 	}
 	return c.ApplyBundles(ctx, clusterSpec, cluster)
 }

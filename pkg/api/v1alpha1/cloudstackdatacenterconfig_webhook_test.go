@@ -1,13 +1,25 @@
 package v1alpha1_test
 
 import (
+	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 )
+
+func TestCloudStackDatacenterValidateCreateFeatureDisabled(t *testing.T) {
+	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+	os.Unsetenv(features.CloudStackProviderEnvVar)
+	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+
+	c := cloudstackDatacenterConfig()
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
 
 func TestCloudStackDatacenterValidateUpdateDomainImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()

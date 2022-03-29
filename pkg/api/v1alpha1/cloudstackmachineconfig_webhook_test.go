@@ -1,13 +1,28 @@
 package v1alpha1_test
 
 import (
+	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 )
+
+func TestCloudStackMachineConfigValidateCreateFeatureDisabled(t *testing.T) {
+	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+	err := os.Unsetenv(features.CloudStackProviderEnvVar)
+	if err != nil {
+		return
+	}
+	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+
+	c := cloudstackMachineConfig()
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
 
 func TestCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()

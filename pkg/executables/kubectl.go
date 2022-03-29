@@ -262,6 +262,10 @@ func (k *Kubectl) WaitForControlPlaneReady(ctx context.Context, cluster *types.C
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ControlPlaneReady", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
 }
 
+func (k *Kubectl) WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ControlPlaneReady=false", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
+}
+
 func (k *Kubectl) WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ManagedEtcdReady", fmt.Sprintf("clusters.%s/%s", clusterv1.GroupVersion.Group, newClusterName), constants.EksaSystemNamespace)
 }
@@ -673,6 +677,15 @@ func (k *Kubectl) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cl
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("getting eksa clusters crd: %v", err)
+	}
+	return nil
+}
+
+func (k *Kubectl) SetControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error {
+	params := []string{"set", "env", "deployment/eksa-controller-manager", fmt.Sprintf("%s=%s", envVar, envVarVal), "--kubeconfig", kubeconfig}
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error setting %s=%s on eksa controller: %v", envVar, envVarVal, err)
 	}
 	return nil
 }
