@@ -42,7 +42,7 @@ kind: TinkerbellDatacenterConfig
 metadata:
   name: test
 spec:
-  tinkerbellCertURL: "http://1.2.3.4/cert"
+  tinkerbellCertURL: "http://1.2.3.4:42114/cert"
   tinkerbellGRPCAuth: "1.2.3.4:99"
   tinkerbellHegelURL: "http://1.2.3.4:50051"
   tinkerbellIP: "1.2.3.4"

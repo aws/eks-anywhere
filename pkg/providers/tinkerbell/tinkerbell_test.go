@@ -25,7 +25,7 @@ const (
 	testDataDir                         = "testdata"
 	expectedTinkerbellIP                = "1.2.3.4"
 	expectedTinkerbellGRPCAuth          = "1.2.3.4:42113"
-	expectedTinkerbellCertURL           = "1.2.3.4:42114/cert"
+	expectedTinkerbellCertURL           = "http://1.2.3.4:42114/cert"
 	expectedTinkerbellPBnJGRPCAuthority = "1.2.3.4:42000"
 	expectedTinkerbellHegelURL          = "http://1.2.3.4:50051"
 )

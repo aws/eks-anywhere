@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
@@ -275,12 +276,20 @@ func (v *Validator) validateTinkerbellCertURL(ctx context.Context, tinkerbellCer
 		return fmt.Errorf("tinkerbellCertURL is required")
 	}
 
+	if err := validateURLHostIp(tinkerbellCertURL); err != nil {
+		return fmt.Errorf("invalid tinkerbellCertURL URL: %v", err)
+	}
+
 	return nil
 }
 
 func (v *Validator) validateTinkerbellHegelURL(ctx context.Context, tinkerbellHegelURL string) error {
 	if tinkerbellHegelURL == "" {
 		return fmt.Errorf("tinkerbellHegelURL is required")
+	}
+
+	if err := validateURLHostIp(tinkerbellHegelURL); err != nil {
+		return fmt.Errorf("invalid tinkerbellHegelURL URL: %v", err)
 	}
 
 	return nil
@@ -316,6 +325,32 @@ func sumWorkerNodeCounts(nodes []v1alpha1.WorkerNodeGroupConfiguration) int {
 		requestedNodesCount += workerSpec.Count
 	}
 	return requestedNodesCount
+}
+
+func validateURLHostIp(urlAdress string) error {
+	if err := validateURL(urlAdress); err != nil {
+		return err
+	}
+
+	hostPort, err := url.Parse(urlAdress)
+	if err != nil {
+		return fmt.Errorf("invalid url: %v", err)
+	}
+
+	if err := validateAddressWithPort(hostPort.Host); err != nil {
+		return fmt.Errorf("invalid url: %v", err)
+	}
+
+	return nil
+}
+
+func validateURL(urlAddress string) error {
+	_, err := url.ParseRequestURI(urlAddress)
+	if err != nil {
+		return fmt.Errorf("invalid url: %v", urlAddress)
+	}
+
+	return nil
 }
 
 // validateAddressWithPort validates address is a hostname:port combination. The port is required.
