@@ -685,7 +685,7 @@ func (k *Kubectl) SetControllerEnvVar(ctx context.Context, envVar, envVarVal, ku
 	params := []string{"set", "env", "deployment/eksa-controller-manager", fmt.Sprintf("%s=%s", envVar, envVarVal), "--kubeconfig", kubeconfig}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error setting %s=%s on eksa controller: %v", envVar, envVarVal, err)
+		return fmt.Errorf("setting %s=%s on eksa controller: %v", envVar, envVarVal, err)
 	}
 	return nil
 }

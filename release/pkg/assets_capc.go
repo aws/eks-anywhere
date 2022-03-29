@@ -130,7 +130,6 @@ func (r *ReleaseConfig) GetCapcAssets() ([]Artifact, error) {
 func (r *ReleaseConfig) GetCloudStackBundle(imageDigests map[string]string) (anywherev1alpha1.CloudStackBundle, error) {
 	cloudstackBundleArtifacts := map[string][]Artifact{
 		"cluster-api-provider-cloudstack": r.BundleArtifactsTable["cluster-api-provider-cloudstack"],
-		"kube-rbac-proxy":                 r.BundleArtifactsTable["kube-rbac-proxy"],
 	}
 
 	var version string

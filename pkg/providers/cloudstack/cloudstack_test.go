@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/eks-anywhere/internal/test"
@@ -250,6 +251,32 @@ func TestProviderGenerateDeploymentFileWithMirrorAndCertConfig(t *testing.T) {
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_mirror_config_with_cert_md.yaml")
 }
 
+func TestProviderGenerateDeploymentFileWithProxyConfig(t *testing.T) {
+	clusterSpecManifest := "cluster_minimal_proxy.yaml"
+	mockCtrl := gomock.NewController(t)
+	setupContext()
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	cluster := &types.Cluster{Name: "test"}
+	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
+	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
+	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
+	ctx := context.Background()
+	cmk := givenWildcardCmk(mockCtrl)
+	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
+
+	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err != nil {
+		t.Fatalf("failed to setup and validate: %v", err)
+	}
+
+	cp, md, err := provider.GenerateCAPISpecForCreate(context.Background(), cluster, clusterSpec)
+	if err != nil {
+		t.Fatalf("failed to generate cluster api spec contents: %v", err)
+	}
+
+	test.AssertContentToFile(t, string(cp), "testdata/expected_results_minimal_proxy_cp.yaml")
+	test.AssertContentToFile(t, string(md), "testdata/expected_results_minimal_proxy_md.yaml")
+}
+
 func TestUpdateKubeConfig(t *testing.T) {
 	provider := givenProvider(t)
 	content := []byte{}
@@ -421,7 +448,7 @@ func TestSetupAndValidateCreateWorkloadClusterFailsIfDatacenterExists(t *testing
 
 	err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec)
 
-	thenErrorExpected(t, fmt.Sprintf("CloudStackDeployment %s already exists", datacenterConfig.Name), err)
+	thenErrorExpected(t, fmt.Sprintf("CloudStackDatacenter %s already exists", datacenterConfig.Name), err)
 }
 
 func TestSetupAndValidateSelfManagedClusterSkipDatacenterNameValidateSuccess(t *testing.T) {
@@ -738,7 +765,7 @@ spec:
       status: "False"
       timeout: 300s
 ---
-apiVersion: cluster.x-k8s.io/v1alpha3
+apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineHealthCheck
 metadata:
   name: test-kcp-unhealthy-5m
@@ -761,4 +788,58 @@ spec:
 	mch, err := provider.GenerateMHC()
 	assert.NoError(t, err, "Expected successful execution of GenerateMHC() but got an error", "error", err)
 	assert.Equal(t, string(mch), mhcTemplate, "generated MachineHealthCheck is different from the expected one")
+}
+
+func TestChangeDiffNoChange(t *testing.T) {
+	provider := givenProvider(t)
+	clusterSpec := givenEmptyClusterSpec()
+	assert.Nil(t, provider.ChangeDiff(clusterSpec, clusterSpec))
+}
+
+func TestChangeDiffWithChange(t *testing.T) {
+	provider := givenProvider(t)
+	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.VersionsBundle.CloudStack.Version = "v0.2.0"
+	})
+	newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+		s.VersionsBundle.CloudStack.Version = "v0.1.0"
+	})
+
+	wantDiff := &types.ComponentChangeDiff{
+		ComponentName: "cloudstack",
+		NewVersion:    "v0.1.0",
+		OldVersion:    "v0.2.0",
+	}
+
+	assert.Equal(t, wantDiff, provider.ChangeDiff(clusterSpec, newClusterSpec))
+}
+
+func TestProviderUpgradeNeeded(t *testing.T) {
+	testCases := []struct {
+		testName               string
+		newManager, oldManager string
+		want                   bool
+	}{
+		{
+			testName:   "different manager",
+			newManager: "a", oldManager: "b",
+			want: true,
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.testName, func(t *testing.T) {
+			provider := givenProvider(t)
+			clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundle.CloudStack.ClusterAPIController.ImageDigest = tt.oldManager
+			})
+
+			newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
+				s.VersionsBundle.CloudStack.ClusterAPIController.ImageDigest = tt.newManager
+			})
+
+			g := NewWithT(t)
+			g.Expect(provider.UpgradeNeeded(context.Background(), clusterSpec, newClusterSpec)).To(Equal(tt.want))
+		})
+	}
 }

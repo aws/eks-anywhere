@@ -19,7 +19,7 @@ spec:
           [Service]
           Environment="HTTP_PROXY=1.1.1.1:8080"
           Environment="HTTPS_PROXY=1.1.1.1:8443"
-          Environment="NO_PROXY=192.168.0.0/16,10.96.0.0/12,localhost,127.0.0.1,.svc,1.1.1.1,1.2.3.4:6443"
+          Environment="NO_PROXY=192.168.0.0/16,10.96.0.0/12,localhost,127.0.0.1,.svc,127.16.0.1,1.2.3.4:6443"
         owner: root:root
         path: /etc/systemd/system/containerd.service.d/http-proxy.conf
       preKubeadmCommands:
@@ -79,3 +79,5 @@ spec:
         name: m4-large
       template:
         name: centos7-k8s-118
+
+---
