@@ -35,6 +35,7 @@ const (
 	tinkerbellGRPCAuthKey          = "TINKERBELL_GRPC_AUTHORITY"
 	tinkerbellIPKey                = "TINKERBELL_IP"
 	tinkerbellPBnJGRPCAuthorityKey = "PBNJ_GRPC_AUTHORITY"
+	tinkerbellHegelURLKey          = "TINKERBELL_HEGEL_URL"
 )
 
 //go:embed config/template-cp.yaml
@@ -51,7 +52,7 @@ const defaultUsername = "ec2-user"
 var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey, tinkerbellPBnJGRPCAuthorityKey}
+	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey, tinkerbellPBnJGRPCAuthorityKey, tinkerbellHegelURLKey}
 )
 
 type tinkerbellProvider struct {
@@ -330,11 +331,11 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return err
 	}
 
-	if err := p.validator.ValidateTinkerbellTemplate(ctx, tinkerbellClusterSpec.datacenterConfig.Spec.TinkerbellIP, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.controlPlaneMachineConfig().Spec.TemplateRef.Name]); err != nil {
+	if err := p.validator.ValidateAndPopulateTemplate(ctx, tinkerbellClusterSpec.datacenterConfig, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.controlPlaneMachineConfig().Spec.TemplateRef.Name]); err != nil {
 		return fmt.Errorf("failed validating control plane template config: %v", err)
 	}
 
-	if err := p.validator.ValidateTinkerbellTemplate(ctx, tinkerbellClusterSpec.datacenterConfig.Spec.TinkerbellIP, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.firstWorkerMachineConfig().Spec.TemplateRef.Name]); err != nil {
+	if err := p.validator.ValidateAndPopulateTemplate(ctx, tinkerbellClusterSpec.datacenterConfig, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.firstWorkerMachineConfig().Spec.TemplateRef.Name]); err != nil {
 		return fmt.Errorf("failed validating worker node template config: %v", err)
 	}
 

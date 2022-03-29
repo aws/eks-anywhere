@@ -42,6 +42,8 @@ spec:
                 type: string
               tinkerbellGRPCAuth:
                 type: string
+              tinkerbellHegelURL:
+                type: string
               tinkerbellIP:
                 description: 'Important: Run "make generate" to regenerate code after
                   modifying this file'
@@ -51,6 +53,7 @@ spec:
             required:
             - tinkerbellCertURL
             - tinkerbellGRPCAuth
+            - tinkerbellHegelURL
             - tinkerbellIP
             - tinkerbellPBnJGRPCAuth
             type: object

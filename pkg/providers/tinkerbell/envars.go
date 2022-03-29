@@ -23,5 +23,9 @@ func setupEnvVars(datacenterConfig *anywherev1.TinkerbellDatacenterConfig) error
 	if err := os.Setenv(tinkerbellPBnJGRPCAuthorityKey, datacenterConfig.Spec.TinkerbellPBnJGRPCAuth); err != nil {
 		return fmt.Errorf("unable to set %s: %v", tinkerbellPBnJGRPCAuthorityKey, err)
 	}
+
+	if err := os.Setenv(tinkerbellHegelURLKey, datacenterConfig.Spec.TinkerbellHegelURL); err != nil {
+		return fmt.Errorf("unable to set %s: %v", tinkerbellHegelURLKey, err)
+	}
 	return nil
 }
