@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"sigs.k8s.io/yaml"
+
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 const (
@@ -49,11 +51,13 @@ func (h *Helm) PullChart(ctx context.Context, ociURI, version string) error {
 }
 
 func (h *Helm) PushChart(ctx context.Context, chart, registry string) error {
+	logger.Info("Pushing", "chart", chart)
 	_, err := h.executable.Command(ctx, "push", chart, registry, insecureSkipVerifyFlag).WithEnvVars(helmTemplateEnvVars).Run()
 	return err
 }
 
 func (h *Helm) RegistryLogin(ctx context.Context, registry, username, password string) error {
+	logger.Info("Logging in to helm registry", "registry", registry)
 	_, err := h.executable.Command(ctx, "registry", "login", registry, "--username", username, "--password", password, "--insecure").WithEnvVars(helmTemplateEnvVars).Run()
 	return err
 }
