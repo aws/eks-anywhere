@@ -46,6 +46,15 @@ brew install aws/tap/eks-anywhere
 
 #### Manually (macOS and Linux)
 
+Install kubectl
+
+```bash
+sudo curl --silent --location -o /usr/local/bin/kubectl \
+   https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
+
+sudo chmod +x /usr/local/bin/kubectl
+```
+
 Install the latest release of `eksctl`.
 The EKS Anywhere plugin requires `eksctl` version 0.66.0 or newer.
 
@@ -59,10 +68,9 @@ sudo mv /tmp/eksctl /usr/local/bin/
 Install the `eksctl-anywhere` plugin.
 
 ```bash
-export EKSA_RELEASE="0.7.0" OS="$(uname -s | tr A-Z a-z)" RELEASE_NUMBER=5
-curl "https://anywhere-assets.eks.amazonaws.com/releases/eks-a/${RELEASE_NUMBER}/artifacts/eks-a/v${EKSA_RELEASE}/${OS}/amd64/eksctl-anywhere-v${EKSA_RELEASE}-${OS}-amd64.tar.gz" \
-    --silent --location \
-    | tar xz ./eksctl-anywhere
+export EKSA_RELEASE="0.7.2" OS="$(uname -s | tr A-Z a-z)"
+wget "https://github.com/aws/eks-anywhere/releases/download/v${EKSA_RELEASE}/eksctl-anywhere-v${EKSA_RELEASE}-${OS}-amd64.tar.gz" 
+tar xz ./eksctl-anywhere
 sudo mv ./eksctl-anywhere /usr/local/bin/
 ```
 
