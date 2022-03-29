@@ -1001,6 +1001,22 @@ func TestKubectlGetGetApiServerUrlSuccess(t *testing.T) {
 	}
 }
 
+func TestKubectlSetControllerEnvVarSuccess(t *testing.T) {
+	envVar := "TEST_VAR"
+	envVarValue := "TEST_VALUE"
+	k, ctx, cluster, e := newKubectl(t)
+	e.EXPECT().Execute(
+		ctx,
+		[]string{"set", "env", "deployment/eksa-controller-manager", fmt.Sprintf("%s=%s", envVar, envVarValue),
+			"--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace},
+	).Return(bytes.Buffer{}, nil)
+
+	err := k.SetControllerEnvVar(ctx, envVar, envVarValue, cluster.KubeconfigFile)
+	if err != nil {
+		t.Fatalf("Kubectl.GetApiServerUrl() error = %v, want nil", err)
+	}
+}
+
 func TestKubectlGetGetApiServerUrlError(t *testing.T) {
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(
