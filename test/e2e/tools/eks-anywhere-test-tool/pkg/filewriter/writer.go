@@ -53,10 +53,20 @@ func (t *writer) Dir() string {
 	return t.dir
 }
 
-func (t *writer) WriteS3KeyToFile(key string, data []byte) error {
+// This method writes the e2e test artifacts from S3 to files in a directory named after the e2e test name.
+// Since OIDC tests have an additional folder within the S3 directory, we must take an additional step to
+// ensure that the OIDC files for the associated e2e test are placed in the correct directory
+func (t *writer) WriteTestArtifactsS3ToFile(key string, data []byte) error {
 	i := strings.LastIndex(key, "/")
-	d := path.Join(t.dir, key[:i])
-	f := path.Join(t.dir, key)
+	filePath := path.Base(key[:i])
+	if filePath == "oidc" {
+		j := strings.LastIndex(key[:i], "/")
+		filePath = path.Base(key[:j])
+	}
+	d := path.Join(t.dir, filePath)
+
+	i = strings.LastIndex(key, filePath)
+	f := path.Join(t.dir, key[i:])
 
 	err := os.MkdirAll(d, os.ModePerm)
 	if err != nil {
