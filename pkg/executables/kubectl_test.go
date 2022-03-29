@@ -1007,8 +1007,10 @@ func TestKubectlSetControllerEnvVarSuccess(t *testing.T) {
 	k, ctx, cluster, e := newKubectl(t)
 	e.EXPECT().Execute(
 		ctx,
-		[]string{"set", "env", "deployment/eksa-controller-manager", fmt.Sprintf("%s=%s", envVar, envVarValue),
-			"--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace},
+		[]string{
+			"set", "env", "deployment/eksa-controller-manager", fmt.Sprintf("%s=%s", envVar, envVarValue),
+			"--kubeconfig", cluster.KubeconfigFile, "--namespace", constants.EksaSystemNamespace,
+		},
 	).Return(bytes.Buffer{}, nil)
 
 	err := k.SetControllerEnvVar(ctx, envVar, envVarValue, cluster.KubeconfigFile)
