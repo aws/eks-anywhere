@@ -882,6 +882,12 @@ func TestClusterManagerResumeEKSAControllerReconcileSuccessWithoutMachineConfig(
 }
 
 func TestClusterManagerInstallCustomComponentsSuccess(t *testing.T) {
+	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+	err := os.Unsetenv(features.CloudStackProviderEnvVar)
+	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+	if err != nil {
+		return
+	}
 	ctx := context.Background()
 	tt := newTest(t)
 	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "testdata/testClusterSpec.yaml"

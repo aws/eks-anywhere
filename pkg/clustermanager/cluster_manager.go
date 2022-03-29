@@ -937,7 +937,15 @@ func (c *ClusterManager) removeOldWorkerNodeGroups(ctx context.Context, workload
 }
 
 func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	return c.clusterClient.installCustomComponents(ctx, clusterSpec, cluster)
+	if err := c.clusterClient.installCustomComponents(ctx, clusterSpec, cluster); err != nil {
+		return err
+	}
+	if features.IsActive(features.CloudStackProvider()) {
+		if err := c.clusterClient.SetControllerEnvVar(ctx, features.CloudStackProviderEnvVar, "true", cluster.KubeconfigFile); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *ClusterManager) InstallEksdComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
@@ -965,11 +973,6 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	}
 	if err = c.InstallEksdComponents(ctx, clusterSpec, cluster); err != nil {
 		return err
-	}
-	if features.IsActive(features.CloudStackProvider()) {
-		if err = c.clusterClient.SetControllerEnvVar(ctx, features.CloudStackProviderEnvVar, "true", cluster.KubeconfigFile); err != nil {
-			return err
-		}
 	}
 	return c.ApplyBundles(ctx, clusterSpec, cluster)
 }
