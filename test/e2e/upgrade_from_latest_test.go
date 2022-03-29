@@ -7,7 +7,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -174,7 +173,6 @@ func TestVSphereKubernetes121To122UbuntuUpgradeFromLatestMinorRelease(t *testing
 			framework.UpdateUbuntuTemplate122Var(), // Set the template so it doesn't get autoimported
 		),
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube122)),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 }
 
@@ -192,6 +190,5 @@ func TestDockerKubernetes121to122UpgradeFromLatestMinorRelease(t *testing.T) {
 		test,
 		anywherev1.Kube122,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(anywherev1.Kube122)),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 }

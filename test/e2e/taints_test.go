@@ -9,7 +9,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -43,7 +42,6 @@ func TestVSphereKubernetes122Taints(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
@@ -70,7 +68,6 @@ func TestVSphereKubernetes122TaintsBottlerocket(t *testing.T) {
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
 		),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 
 	runTaintsUpgradeFlow(
