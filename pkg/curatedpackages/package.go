@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sigs.k8s.io/yaml"
 	"strings"
 	"text/tabwriter"
-
-	"sigs.k8s.io/yaml"
 
 	api "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -68,7 +67,8 @@ func WritePackagesToFile(packages []api.Package, d string) error {
 	}
 
 	for _, p := range packages {
-		content, err := yaml.Marshal(p)
+		displayPackage := NewDisplayPackage(p)
+		content, err := yaml.Marshal(displayPackage)
 		if err != nil {
 			fmt.Println(fmt.Errorf("unable to parse package %s %v", p.Name, err).Error())
 			continue
