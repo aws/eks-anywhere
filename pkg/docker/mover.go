@@ -16,8 +16,9 @@ type ImageDiskWriter interface {
 	SaveToFile(ctx context.Context, filepath string, images ...string) error
 }
 
-type ImagePusher interface {
+type ImageTaggerPusher interface {
 	PushImage(ctx context.Context, image string, endpoint string) error
+	TagImage(ctx context.Context, image string, endpoint string) error
 }
 
 type ImagePuller interface {
@@ -28,7 +29,6 @@ type DockerClient interface {
 	ImageDiskLoader
 	ImageDiskWriter
 	ImagePuller
-	ImagePusher
 }
 
 // ImageSource represents a generic source for container images that can be loaded

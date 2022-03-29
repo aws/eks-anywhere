@@ -7,11 +7,11 @@ import (
 // ImageRegistryDestination implements the ImageDestination interface, writing images and tags from
 // from the local docker cache to an external registry
 type ImageRegistryDestination struct {
-	client   ImagePusher
+	client   ImageTaggerPusher
 	endpoint string
 }
 
-func NewRegistryDestination(client ImagePusher, registryEndpoint string) *ImageRegistryDestination {
+func NewRegistryDestination(client ImageTaggerPusher, registryEndpoint string) *ImageRegistryDestination {
 	return &ImageRegistryDestination{
 		client:   client,
 		endpoint: registryEndpoint,
@@ -21,6 +21,10 @@ func NewRegistryDestination(client ImagePusher, registryEndpoint string) *ImageR
 // Write pushes images and tags from from the local docker cache to an external registry
 func (d *ImageRegistryDestination) Write(ctx context.Context, images ...string) error {
 	for _, i := range images {
+		if err := d.client.TagImage(ctx, i, d.endpoint); err != nil {
+			return err
+		}
+
 		if err := d.client.PushImage(ctx, i, d.endpoint); err != nil {
 			return err
 		}

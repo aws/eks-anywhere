@@ -90,31 +90,31 @@ func (mr *MockImageDiskWriterMockRecorder) SaveToFile(ctx, filepath interface{},
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveToFile", reflect.TypeOf((*MockImageDiskWriter)(nil).SaveToFile), varargs...)
 }
 
-// MockImagePusher is a mock of ImagePusher interface.
-type MockImagePusher struct {
+// MockImageTaggerPusher is a mock of ImageTaggerPusher interface.
+type MockImageTaggerPusher struct {
 	ctrl     *gomock.Controller
-	recorder *MockImagePusherMockRecorder
+	recorder *MockImageTaggerPusherMockRecorder
 }
 
-// MockImagePusherMockRecorder is the mock recorder for MockImagePusher.
-type MockImagePusherMockRecorder struct {
-	mock *MockImagePusher
+// MockImageTaggerPusherMockRecorder is the mock recorder for MockImageTaggerPusher.
+type MockImageTaggerPusherMockRecorder struct {
+	mock *MockImageTaggerPusher
 }
 
-// NewMockImagePusher creates a new mock instance.
-func NewMockImagePusher(ctrl *gomock.Controller) *MockImagePusher {
-	mock := &MockImagePusher{ctrl: ctrl}
-	mock.recorder = &MockImagePusherMockRecorder{mock}
+// NewMockImageTaggerPusher creates a new mock instance.
+func NewMockImageTaggerPusher(ctrl *gomock.Controller) *MockImageTaggerPusher {
+	mock := &MockImageTaggerPusher{ctrl: ctrl}
+	mock.recorder = &MockImageTaggerPusherMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockImagePusher) EXPECT() *MockImagePusherMockRecorder {
+func (m *MockImageTaggerPusher) EXPECT() *MockImageTaggerPusherMockRecorder {
 	return m.recorder
 }
 
 // PushImage mocks base method.
-func (m *MockImagePusher) PushImage(ctx context.Context, image, endpoint string) error {
+func (m *MockImageTaggerPusher) PushImage(ctx context.Context, image, endpoint string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PushImage", ctx, image, endpoint)
 	ret0, _ := ret[0].(error)
@@ -122,9 +122,23 @@ func (m *MockImagePusher) PushImage(ctx context.Context, image, endpoint string)
 }
 
 // PushImage indicates an expected call of PushImage.
-func (mr *MockImagePusherMockRecorder) PushImage(ctx, image, endpoint interface{}) *gomock.Call {
+func (mr *MockImageTaggerPusherMockRecorder) PushImage(ctx, image, endpoint interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushImage", reflect.TypeOf((*MockImagePusher)(nil).PushImage), ctx, image, endpoint)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushImage", reflect.TypeOf((*MockImageTaggerPusher)(nil).PushImage), ctx, image, endpoint)
+}
+
+// TagImage mocks base method.
+func (m *MockImageTaggerPusher) TagImage(ctx context.Context, image, endpoint string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "TagImage", ctx, image, endpoint)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// TagImage indicates an expected call of TagImage.
+func (mr *MockImageTaggerPusherMockRecorder) TagImage(ctx, image, endpoint interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TagImage", reflect.TypeOf((*MockImageTaggerPusher)(nil).TagImage), ctx, image, endpoint)
 }
 
 // MockImagePuller is a mock of ImagePuller interface.
@@ -213,20 +227,6 @@ func (m *MockDockerClient) PullImage(ctx context.Context, image string) error {
 func (mr *MockDockerClientMockRecorder) PullImage(ctx, image interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PullImage", reflect.TypeOf((*MockDockerClient)(nil).PullImage), ctx, image)
-}
-
-// PushImage mocks base method.
-func (m *MockDockerClient) PushImage(ctx context.Context, image, endpoint string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PushImage", ctx, image, endpoint)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// PushImage indicates an expected call of PushImage.
-func (mr *MockDockerClientMockRecorder) PushImage(ctx, image, endpoint interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushImage", reflect.TypeOf((*MockDockerClient)(nil).PushImage), ctx, image, endpoint)
 }
 
 // SaveToFile mocks base method.
