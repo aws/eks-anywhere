@@ -28,7 +28,7 @@ func newMoverTest(t *testing.T) *moverTest {
 		ctx:    context.Background(),
 		src:    mocks.NewMockImageSource(ctrl),
 		dst:    mocks.NewMockImageDestination(ctrl),
-		images: []string{"image1:1", "image2:2"},
+		images: []string{"image1:1", "image2:2", "image1:1", "image2:2"},
 	}
 }
 
