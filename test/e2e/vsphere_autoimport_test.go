@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -83,7 +82,6 @@ func TestVSphereKubernetes122UbuntuAutoimport(t *testing.T) {
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runAutoImportFlow(test, provider)
 }
@@ -129,7 +127,6 @@ func TestVSphereKubernetes122BottlerocketAutoimport(t *testing.T) {
 		t,
 		provider,
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runAutoImportFlow(test, provider)
 }
