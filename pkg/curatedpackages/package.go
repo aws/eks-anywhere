@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sigs.k8s.io/yaml"
 	"strings"
 	"text/tabwriter"
+
+	"sigs.k8s.io/yaml"
 
 	api "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
@@ -21,8 +22,8 @@ const (
 	flags           = 0
 	customName      = "my-"
 	kind            = "Package"
-	filePermission  = 0644
-	dirPermission   = 0755
+	filePermission  = 0o644
+	dirPermission   = 0o755
 	packageLocation = "curated-packages"
 )
 
