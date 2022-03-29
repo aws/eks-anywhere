@@ -81,9 +81,12 @@ spec:
         {{$key}}: {{$value}}
 {{- end}}
 {{- end}}
-{{- if .affinityGroupIds }}
+{{- if .cloudstackControlPlaneAffinity }}
+      affinity: '{{ .cloudstackControlPlaneAffinity }}'
+{{- end }}
+{{- if .cloudstackControlPlaneAffinityGroupIds }}
       affinitygroupids:
-      {{- range .affinityGroupIds}}
+      {{- range .cloudstackControlPlaneAffinityGroupIds}}
       - {{.}}
       {{- end }}
 {{- end }}
@@ -386,6 +389,9 @@ spec:
         {{$key}}: {{$value}}
 {{- end}}
 {{- end}}
+{{- if .cloudstackEtcdAffinity }}
+      affinity: '{{ .cloudstackEtcdAffinity }}'
+{{- end }}
 {{- if .cloudstackEtcdAffinityGroupIds }}
       affinitygroupids:
       {{- range .cloudstackEtcdAffinityGroupIds }}
