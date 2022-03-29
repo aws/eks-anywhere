@@ -157,6 +157,7 @@ func newValidTinkerbellDatacenterConfig() *v1alpha1.TinkerbellDatacenterConfig {
 			TinkerbellCertURL:      "http://domain.com/path",
 			TinkerbellGRPCAuth:     "1.1.1.1:444",
 			TinkerbellPBnJGRPCAuth: "1.1.1.1:444",
+			TinkerbellHegelURL:     "1.1.1.1:444",
 		},
 	}
 }

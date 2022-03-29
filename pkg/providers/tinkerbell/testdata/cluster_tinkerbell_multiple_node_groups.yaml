@@ -50,6 +50,7 @@ metadata:
 spec:
   tinkerbellCertURL: "http://1.2.3.4/cert"
   tinkerbellGRPCAuth: "1.2.3.4:99"
+  tinkerbellHegelURL: "http://1.2.3.4:50051"
   tinkerbellIP: "1.2.3.4"
   tinkerbellPBnJGRPCAuth: "1.2.3.4:99"
 
@@ -153,18 +154,18 @@ spec:
       - environment:
           CONTENTS: |
             datasource:
-            Ec2:
-              metadata_urls: ["http://1.2.3.4:50061"]
-              strict_id: false
+              Ec2:
+                metadata_urls: []
+                strict_id: false
             system_info:
-            default_user:
-              name: tink
-              groups: [wheel, adm]
-              sudo: ["ALL=(ALL) NOPASSWD:ALL"]
-              shell: /bin/bash
+              default_user:
+                name: tink
+                groups: [wheel, adm]
+                sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+                shell: /bin/bash
             manage_etc_hosts: localhost
             warnings:
-            dsid_missing_source: off
+              dsid_missing_source: off
           DEST_DISK: /dev/sda1
           DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
           DIRMODE: "0700"

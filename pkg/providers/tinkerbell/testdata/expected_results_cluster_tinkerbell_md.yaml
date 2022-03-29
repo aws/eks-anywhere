@@ -86,18 +86,22 @@ spec:
           - environment:
               CONTENTS: |
                 datasource:
-                Ec2:
-                  metadata_urls: ["http://1.2.3.4:50061"]
-                  strict_id: false
-                system_info:
-                default_user:
-                  name: tink
-                  groups: [wheel, adm]
-                  sudo: ["ALL=(ALL) NOPASSWD:ALL"]
-                  shell: /bin/bash
+                  Ec2:
+                    metadata_urls:
+                    - http://1.2.3.4:50051
+                    strict_id: false
                 manage_etc_hosts: localhost
+                system_info:
+                  default_user:
+                    groups:
+                    - wheel
+                    - adm
+                    name: tink
+                    shell: /bin/bash
+                    sudo:
+                    - ALL=(ALL) NOPASSWD:ALL
                 warnings:
-                dsid_missing_source: off
+                  dsid_missing_source: false
               DEST_DISK: /dev/sda1
               DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
               DIRMODE: "0700"
