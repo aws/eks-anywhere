@@ -682,10 +682,11 @@ func (k *Kubectl) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cl
 }
 
 func (k *Kubectl) SetControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error {
-	params := []string{"set", "env", "deployment/eksa-controller-manager", fmt.Sprintf("%s=%s", envVar, envVarVal), "--kubeconfig", kubeconfig}
+	params := []string{"set", "env", "deployment/eksa-controller-manager", fmt.Sprintf("%s=%s", envVar, envVarVal),
+		"--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace}
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error setting %s=%s on eksa controller: %v", envVar, envVarVal, err)
+		return fmt.Errorf("setting %s=%s on eksa controller: %v", envVar, envVarVal, err)
 	}
 	return nil
 }
