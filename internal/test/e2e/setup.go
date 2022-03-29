@@ -208,13 +208,15 @@ func (e *E2ESession) createTestNameFile(testName string) error {
 }
 
 func clusterName(branch string, instanceId string) (clusterName string) {
+	if branch == "" {
+		return instanceId
+	}
 	clusterNameTemplate := "%s-%s"
 	forbiddenChars := []string{"."}
-	sanitizedBranch := branch
+	sanitizedBranch := strings.ToLower(branch)
 	for _, char := range forbiddenChars {
-		sanitizedBranch = strings.ReplaceAll(branch, char, "-")
+		sanitizedBranch = strings.ReplaceAll(sanitizedBranch, char, "-")
 	}
-	sanitizedBranch = strings.ToLower(sanitizedBranch)
 	clusterName = fmt.Sprintf(clusterNameTemplate, sanitizedBranch, instanceId)
 	if len(clusterName) > 80 {
 		logger.Info("Cluster name is longer than 80 characters; truncating to 80 characters.", "original cluster name", clusterName, "truncated cluster name", clusterName[:80])
