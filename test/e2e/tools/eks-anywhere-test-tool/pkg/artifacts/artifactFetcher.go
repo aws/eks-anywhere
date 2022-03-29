@@ -2,14 +2,18 @@ package artifacts
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
 	"strings"
 	"time"
 
+	cb "github.com/aws/aws-sdk-go/service/codebuild"
+	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/aws/eks-anywhere-test-tool/pkg/cloudwatch"
 	"github.com/aws/eks-anywhere-test-tool/pkg/codebuild"
 	"github.com/aws/eks-anywhere-test-tool/pkg/constants"
 	"github.com/aws/eks-anywhere-test-tool/pkg/filewriter"
@@ -36,6 +40,15 @@ func WithCodebuildProject(project string) FetchArtifactsOpt {
 	}
 }
 
+type testResult struct {
+	InstanceId string `json:"instanceId"`
+	JobId      string `json:"jobId"`
+	CommandId  string `json:"commandId"`
+	Tests      string `json:"tests"`
+	Status     string `json:"status"`
+	Error      string `json:"error"`
+}
+
 type fetchArtifactConfig struct {
 	buildId string
 	bucket  string
@@ -45,16 +58,18 @@ type fetchArtifactConfig struct {
 type testArtifactFetcher struct {
 	testAccountS3Client         *s3.S3
 	buildAccountCodebuildClient *codebuild.Codebuild
+	buildAccountCwClient        *cloudwatch.Cloudwatch
 	writer                      filewriter.FileWriter
 	retrier                     *retrier.Retrier
 }
 
-func New(testAccountS3Client *s3.S3, buildAccountCodebuildCient *codebuild.Codebuild, writer filewriter.FileWriter) *testArtifactFetcher {
+func New(testAccountS3Client *s3.S3, buildAccountCodebuildCient *codebuild.Codebuild, writer filewriter.FileWriter, cwClient *cloudwatch.Cloudwatch) *testArtifactFetcher {
 	return &testArtifactFetcher{
 		testAccountS3Client:         testAccountS3Client,
 		buildAccountCodebuildClient: buildAccountCodebuildCient,
 		writer:                      writer,
 		retrier:                     fileWriterRetrier(),
+		buildAccountCwClient:        cwClient,
 	}
 }
 
@@ -71,13 +86,36 @@ func (l *testArtifactFetcher) FetchArtifacts(opts ...FetchArtifactsOpt) error {
 		}
 	}
 
+	var p *cb.Build
+	var err error
+
 	if config.buildId == "" {
-		p, err := l.buildAccountCodebuildClient.FetchLatestBuildForProject(config.project)
+		p, err = l.buildAccountCodebuildClient.FetchLatestBuildForProject(config.project)
 		if err != nil {
 			return fmt.Errorf("failed to get latest build for project: %v", err)
 		}
 		config.buildId = *p.Id
+
+	} else {
+		p, err = l.buildAccountCodebuildClient.FetchBuildForProject(config.buildId)
+		if err != nil {
+			return fmt.Errorf("failed to get build for project: %v", err)
+		}
 	}
+
+	g := p.Logs.GroupName
+	s := p.Logs.StreamName
+
+	logs, err := l.buildAccountCwClient.GetLogs(*g, *s)
+	if err != nil {
+		return fmt.Errorf("fetching cloudwatch logs: %v", err)
+	}
+
+	failedTests, err := filterFailedTests(logs)
+	if err != nil {
+		return err
+	}
+	failedTestsMap := testResultMap(failedTests)
 
 	logger.Info("Fetching build artifacts...")
 
@@ -94,6 +132,12 @@ func (l *testArtifactFetcher) FetchArtifacts(opts ...FetchArtifactsOpt) error {
 			continue
 		}
 		obj := *object
+		key := strings.Split(*obj.Key, "/")
+
+		if _, ok := failedTestsMap[key[0]]; !ok {
+			continue
+		}
+
 		errs.Go(func() error {
 			logger.Info("Fetching object", "key", obj.Key, "bucket", config.bucket)
 			o, err := l.testAccountS3Client.GetObject(config.bucket, *obj.Key)
@@ -156,4 +200,33 @@ func fileWriterRetrier() *retrier.Retrier {
 
 func isTooManyOpenFilesError(err error) bool {
 	return strings.Contains(err.Error(), "too many open files")
+}
+
+func filterFailedTests(logs []*cloudwatchlogs.OutputLogEvent) (failedTestResults []testResult, err error) {
+	var failedTests []testResult
+	for _, event := range logs {
+		if strings.Contains(*event.Message, constants.FailedMessage) {
+			msg := *event.Message
+			i := strings.Index(msg, "{")
+			subMsg := msg[i:]
+			var r testResult
+			err = json.Unmarshal([]byte(subMsg), &r)
+			if err != nil {
+				logger.Info("error when unmarshalling json of test results", "error", err)
+				return nil, err
+			}
+			failedTests = append(failedTests, r)
+		}
+	}
+
+	return failedTests, nil
+}
+
+func testResultMap(tests []testResult) map[string]bool {
+	m := make(map[string]bool, len(tests))
+
+	for _, test := range tests {
+		m[test.JobId] = true
+	}
+	return m
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/eks-anywhere-test-tool/pkg/artifacts"
 	"github.com/aws/eks-anywhere-test-tool/pkg/awsprofiles"
+	"github.com/aws/eks-anywhere-test-tool/pkg/cloudwatch"
 	"github.com/aws/eks-anywhere-test-tool/pkg/codebuild"
 	"github.com/aws/eks-anywhere-test-tool/pkg/constants"
 	"github.com/aws/eks-anywhere-test-tool/pkg/filewriter"
@@ -49,7 +50,12 @@ var e2eFetchArtifactsCommand = &cobra.Command{
 			return fmt.Errorf("setting up writer: %v", err)
 		}
 
-		artifactFetcher := artifacts.New(testAccountS3, buildAccountCodebuild, writer)
+		buildAccountCw, err := cloudwatch.New(awsprofiles.BuildAccount)
+		if err != nil {
+			return fmt.Errorf("creating cloudwatch logs client: %v", err)
+		}
+
+		artifactFetcher := artifacts.New(testAccountS3, buildAccountCodebuild, writer, buildAccountCw)
 
 		var opts []artifacts.FetchArtifactsOpt
 		if fa.forBuildId != "" {
