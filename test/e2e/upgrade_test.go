@@ -80,6 +80,7 @@ func TestVSphereKubernetes121UbuntuTo122UpgradeCiliumPolicyEnforcementMode(t *te
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithClusterFiller(api.WithCiliumPolicyEnforcementMode(v1alpha1.CiliumPolicyModeAlways)),
 		provider.WithProviderUpgrade(framework.UpdateUbuntuTemplate122Var()),
+		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 }
 
