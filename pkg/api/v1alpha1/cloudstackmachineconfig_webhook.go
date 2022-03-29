@@ -78,21 +78,21 @@ func validateImmutableFieldsCloudStackMachineConfig(new, old *CloudStackMachineC
 		)
 	}
 
-	afffinityGroupIdsMutated := false
+	affinityGroupIdsMutated := false
 	if len(old.Spec.AffinityGroupIds) != len(new.Spec.AffinityGroupIds) {
-		afffinityGroupIdsMutated = true
+		affinityGroupIdsMutated = true
 	} else {
 		for index, id := range old.Spec.AffinityGroupIds {
 			if id != new.Spec.AffinityGroupIds[index] {
-				afffinityGroupIdsMutated = true
+				affinityGroupIdsMutated = true
 				break
 			}
 		}
 	}
-	if afffinityGroupIdsMutated {
+	if affinityGroupIdsMutated {
 		allErrs = append(
 			allErrs,
-			field.Invalid(field.NewPath("spec", "afffinityGroupIdsMutated"), new.Spec.AffinityGroupIds, "field is immutable"),
+			field.Invalid(field.NewPath("spec", "affinityGroupIdsMutated"), new.Spec.AffinityGroupIds, "field is immutable"),
 		)
 	}
 

@@ -191,7 +191,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 			return fmt.Errorf("machine config %s validation failed: %v", machineConfig.Name, err)
 		}
 		if len(machineConfig.Spec.Affinity) > 0 && len(machineConfig.Spec.AffinityGroupIds) > 0 {
-			return fmt.Errorf("affinity and affinityGroupIds cannot be set at the same timefor CloudStackMachineConfig %s. Please provide either one of them or none", machineConfig.Name)
+			return fmt.Errorf("affinity and affinityGroupIds cannot be set at the same time for CloudStackMachineConfig %s. Please provide either one of them or none", machineConfig.Name)
 		}
 		if len(machineConfig.Spec.Affinity) > 0 {
 			if machineConfig.Spec.Affinity != "pro" && machineConfig.Spec.Affinity != "anti" && machineConfig.Spec.Affinity != "no" {
