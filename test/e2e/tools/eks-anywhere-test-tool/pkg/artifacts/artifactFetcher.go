@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	cb "github.com/aws/aws-sdk-go/service/codebuild"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
+	cb "github.com/aws/aws-sdk-go/service/codebuild"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/aws/eks-anywhere-test-tool/pkg/cloudwatch"
@@ -40,6 +40,13 @@ func WithCodebuildProject(project string) FetchArtifactsOpt {
 	}
 }
 
+func WithAllArtifacts() FetchArtifactsOpt {
+	return func(options *fetchArtifactConfig) (err error) {
+		options.fetchAll = true
+		return err
+	}
+}
+
 type testResult struct {
 	InstanceId string `json:"instanceId"`
 	JobId      string `json:"jobId"`
@@ -50,9 +57,10 @@ type testResult struct {
 }
 
 type fetchArtifactConfig struct {
-	buildId string
-	bucket  string
-	project string
+	buildId  string
+	bucket   string
+	project  string
+	fetchAll bool
 }
 
 type testArtifactFetcher struct {
@@ -132,9 +140,10 @@ func (l *testArtifactFetcher) FetchArtifacts(opts ...FetchArtifactsOpt) error {
 			continue
 		}
 		obj := *object
-		key := strings.Split(*obj.Key, "/")
+		keySplit := strings.Split(*obj.Key, "/")
 
-		if _, ok := failedTestsMap[key[0]]; !ok {
+		_, ok := failedTestsMap[keySplit[0]]
+		if !ok && !config.fetchAll {
 			continue
 		}
 

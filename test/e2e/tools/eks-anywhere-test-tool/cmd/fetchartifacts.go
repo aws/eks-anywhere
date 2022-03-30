@@ -66,6 +66,10 @@ var e2eFetchArtifactsCommand = &cobra.Command{
 			opts = append(opts, artifacts.WithCodebuildProject(fa.forProject))
 		}
 
+		if fa.fetchAll {
+			opts = append(opts, artifacts.WithAllArtifacts())
+		}
+
 		return artifactFetcher.FetchArtifacts(opts...)
 	},
 }
@@ -74,6 +78,7 @@ func init() {
 	e2eFetchCommand.AddCommand(e2eFetchArtifactsCommand)
 	e2eFetchArtifactsCommand.Flags().StringVar(&fa.forBuildId, "buildId", "", "Build ID to fetch artifacts for")
 	e2eFetchArtifactsCommand.Flags().StringVar(&fa.forProject, "project", "", "Project to fetch builds from")
+	e2eFetchArtifactsCommand.Flags().BoolVar(&fa.fetchAll, "all", false, "Fetch all artifacts")
 	err := viper.BindPFlags(e2eFetchArtifactsCommand.Flags())
 	if err != nil {
 		log.Fatalf("Error initializing flags: %v", err)
