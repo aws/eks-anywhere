@@ -17,6 +17,8 @@ menu:
 - OIDC configuration is now mutable [#676](https://github.com/aws/eks-anywhere/issues/676)
 - Add support for Cilium's policy enforcement mode [#726](https://github.com/aws/eks-anywhere/issues/726)
 
+### Changed
+- Install Cilium networking through Helm instead of static manifest
 ## [v0.7.2](https://github.com/aws/eks-anywhere/releases/tag/v0.7.2) - 2022-02-28
 
 ### Fixed
