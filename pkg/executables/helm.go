@@ -7,6 +7,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/utils/urls"
 )
 
 const (
@@ -19,13 +20,28 @@ var helmTemplateEnvVars = map[string]string{
 }
 
 type Helm struct {
-	executable Executable
+	executable     Executable
+	registryMirror string
 }
 
-func NewHelm(executable Executable) *Helm {
-	return &Helm{
+type HelmOpt func(*Helm)
+
+func WithRegistryMirror(mirror string) HelmOpt {
+	return func(h *Helm) {
+		h.registryMirror = mirror
+	}
+}
+
+func NewHelm(executable Executable, opts ...HelmOpt) *Helm {
+	h := &Helm{
 		executable: executable,
 	}
+
+	for _, o := range opts {
+		o(h)
+	}
+
+	return h
 }
 
 func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, values interface{}) ([]byte, error) {
@@ -35,7 +51,7 @@ func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, 
 	}
 
 	result, err := h.executable.Command(
-		ctx, "template", ociURI, "--version", version, insecureSkipVerifyFlag, "--namespace", namespace, "-f", "-",
+		ctx, "template", h.url(ociURI), "--version", version, insecureSkipVerifyFlag, "--namespace", namespace, "-f", "-",
 	).WithStdIn(valuesYaml).WithEnvVars(helmTemplateEnvVars).Run()
 	if err != nil {
 		return nil, err
@@ -45,7 +61,7 @@ func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, 
 }
 
 func (h *Helm) PullChart(ctx context.Context, ociURI, version string) error {
-	_, err := h.executable.Command(ctx, "pull", ociURI, "--version", version, insecureSkipVerifyFlag).
+	_, err := h.executable.Command(ctx, "pull", h.url(ociURI), "--version", version, insecureSkipVerifyFlag).
 		WithEnvVars(helmTemplateEnvVars).Run()
 	return err
 }
@@ -60,4 +76,8 @@ func (h *Helm) RegistryLogin(ctx context.Context, registry, username, password s
 	logger.Info("Logging in to helm registry", "registry", registry)
 	_, err := h.executable.Command(ctx, "registry", "login", registry, "--username", username, "--password", password, "--insecure").WithEnvVars(helmTemplateEnvVars).Run()
 	return err
+}
+
+func (h *Helm) url(originalURL string) string {
+	return urls.ReplaceHost(originalURL, h.registryMirror)
 }

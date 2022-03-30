@@ -26,6 +26,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/urls"
 )
 
 type Dependencies struct {
@@ -71,7 +72,8 @@ func (d *Dependencies) Close(ctx context.Context) error {
 func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
 	return NewFactory().
-		WithExecutableImage(clusterSpec.Cluster.UseImageMirror(eksaToolsImage.VersionedImage())).
+		WithExecutableImage(eksaToolsImage.VersionedImage()).
+		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
 }
@@ -80,6 +82,7 @@ type Factory struct {
 	executableBuilder        *executables.ExecutableBuilder
 	providerFactory          *factory.ProviderFactory
 	executablesImage         string
+	registryMirror           string
 	executablesMountDirs     []string
 	writerFolder             string
 	diagnosticCollectorImage string
@@ -117,6 +120,11 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 	return f
 }
 
+func (f *Factory) WithRegistryMirror(mirror string) *Factory {
+	f.registryMirror = mirror
+	return f
+}
+
 func (f *Factory) WithExecutableImage(image string) *Factory {
 	f.executablesImage = image
 	return f
@@ -133,7 +141,8 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 			return nil
 		}
 
-		b, close, err := executables.NewExecutableBuilder(ctx, f.executablesImage, f.executablesMountDirs...)
+		image := urls.ReplaceHost(f.executablesImage, f.registryMirror)
+		b, close, err := executables.NewExecutableBuilder(ctx, image, f.executablesMountDirs...)
 		if err != nil {
 			return err
 		}
@@ -414,7 +423,12 @@ func (f *Factory) WithHelm() *Factory {
 			return nil
 		}
 
-		f.dependencies.Helm = f.executableBuilder.BuildHelmExecutable()
+		var opts []executables.HelmOpt
+		if f.registryMirror != "" {
+			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
+		}
+
+		f.dependencies.Helm = f.executableBuilder.BuildHelmExecutable(opts...)
 		return nil
 	})
 

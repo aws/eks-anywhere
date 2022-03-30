@@ -2011,3 +2011,35 @@ func TestValidateMirrorConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestClusterRegistryMirror(t *testing.T) {
+	tests := []struct {
+		name    string
+		cluster *Cluster
+		want    string
+	}{
+		{
+			name: "with registry mirror",
+			cluster: &Cluster{
+				Spec: ClusterSpec{
+					RegistryMirrorConfiguration: &RegistryMirrorConfiguration{
+						Endpoint: "1.2.3.4",
+						Port:     "443",
+					},
+				},
+			},
+			want: "1.2.3.4:443",
+		},
+		{
+			name:    "without registry mirror",
+			cluster: &Cluster{},
+			want:    "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(tt.cluster.RegistryMirror()).To(Equal(tt.want))
+		})
+	}
+}

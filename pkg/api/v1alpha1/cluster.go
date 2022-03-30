@@ -276,12 +276,12 @@ func (c *Cluster) ClearPauseAnnotation() {
 	}
 }
 
-func (c *Cluster) UseImageMirror(defaultImage string) string {
+func (c *Cluster) RegistryMirror() string {
 	if c.Spec.RegistryMirrorConfiguration == nil {
-		return defaultImage
+		return ""
 	}
-	imageUrl, _ := url.Parse("https://" + defaultImage)
-	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port) + imageUrl.Path
+
+	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port)
 }
 
 func (c *Cluster) IsReconcilePaused() bool {

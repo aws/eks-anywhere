@@ -61,8 +61,8 @@ func (b *ExecutableBuilder) BuildTroubleshootExecutable() *Troubleshoot {
 	return NewTroubleshoot(b.buildExecutable(troubleshootPath))
 }
 
-func (b *ExecutableBuilder) BuildHelmExecutable() *Helm {
-	return NewHelm(b.buildExecutable(helmPath))
+func (b *ExecutableBuilder) BuildHelmExecutable(opts ...HelmOpt) *Helm {
+	return NewHelm(b.buildExecutable(helmPath), opts...)
 }
 
 func (b *ExecutableBuilder) Close(ctx context.Context) *Troubleshoot {
