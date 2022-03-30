@@ -498,7 +498,7 @@ func (mr *MockClusterClientMockRecorder) SaveLog(arg0, arg1, arg2, arg3, arg4 in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLog", reflect.TypeOf((*MockClusterClient)(nil).SaveLog), arg0, arg1, arg2, arg3, arg4)
 }
 
-// SetControllerEnvVar mocks base method.
+// SetEksaControllerEnvVar mocks base method.
 func (m *MockClusterClient) SetEksaControllerEnvVar(arg0 context.Context, arg1, arg2, arg3 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetEksaControllerEnvVar", arg0, arg1, arg2, arg3)
@@ -506,8 +506,8 @@ func (m *MockClusterClient) SetEksaControllerEnvVar(arg0 context.Context, arg1, 
 	return ret0
 }
 
-// SetControllerEnvVar indicates an expected call of SetControllerEnvVar.
-func (mr *MockClusterClientMockRecorder) SetControllerEnvVar(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+// SetEksaControllerEnvVar indicates an expected call of SetEksaControllerEnvVar.
+func (mr *MockClusterClientMockRecorder) SetEksaControllerEnvVar(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetEksaControllerEnvVar", reflect.TypeOf((*MockClusterClient)(nil).SetEksaControllerEnvVar), arg0, arg1, arg2, arg3)
 }

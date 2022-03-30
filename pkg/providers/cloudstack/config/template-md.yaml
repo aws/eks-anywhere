@@ -9,12 +9,24 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
+{{- if .workerNodeGroupTaints }}
+          taints:{{ range .workerNodeGroupTaints}}
+          - key: {{ .Key }}
+            value: {{ .Value }}
+            effect: {{ .Effect }}
+{{- if .TimeAdded }}
+            timeAdded: {{ .TimeAdded }}
+{{- end }}
+{{- end }}
+{{- else}}
+          taints: []
+{{- end }}
           kubeletExtraArgs:
             provider-id: cloudstack:///'{{`{{ ds.meta_data.instance_id }}`}}'
             read-only-port: "0"
             anonymous-auth: "false"
-{{- if .cgroupDriverSystemd}}
-            cgroup-driver: systemd
+{{- if .kubeletExtraArgs }}
+{{ .kubeletExtraArgs.ToYaml | indent 12 }}
 {{- end }}
           name: '{{`{{ ds.meta_data.local_hostname }}`}}'
 {{- if or .proxyConfig .registryMirrorConfiguration }}

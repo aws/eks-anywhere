@@ -115,6 +115,48 @@ func (c *CloudStackMachineConfig) OSFamily() OSFamily {
 	return ""
 }
 
+func (c *CloudStackMachineConfigSpec) Equals(o *CloudStackMachineConfigSpec) bool {
+	if c == o {
+		return true
+	}
+	if c == nil || o == nil {
+		return false
+	}
+	if !c.Template.Equals(&o.Template) ||
+		!c.ComputeOffering.Equals(&o.ComputeOffering) {
+		return false
+	}
+	if len(c.AffinityGroupIds) != len(o.AffinityGroupIds) ||
+		len(c.Users) != len(o.Users) ||
+		len(c.UserCustomDetails) != len(o.UserCustomDetails) {
+		return false
+	}
+	for i, groupId := range c.AffinityGroupIds {
+		if groupId != o.AffinityGroupIds[i] {
+			return false
+		}
+	}
+	for i, user := range c.Users {
+		if user.Name != o.Users[i].Name {
+			return false
+		}
+		if len(user.SshAuthorizedKeys) != len(o.Users[i].SshAuthorizedKeys) {
+			return false
+		}
+		for j, key := range user.SshAuthorizedKeys {
+			if key != o.Users[i].SshAuthorizedKeys[j] {
+				return false
+			}
+		}
+	}
+	for detail, value := range c.UserCustomDetails {
+		if value != o.UserCustomDetails[detail] {
+			return false
+		}
+	}
+	return true
+}
+
 func (c *CloudStackMachineConfig) ConvertConfigToConfigGenerateStruct() *CloudStackMachineConfigGenerate {
 	namespace := defaultEksaNamespace
 	if c.Namespace != "" {

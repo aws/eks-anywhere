@@ -9,10 +9,12 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
+          taints: []
           kubeletExtraArgs:
             provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
             read-only-port: "0"
             anonymous-auth: "false"
+            tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           name: '{{ ds.meta_data.local_hostname }}'
       preKubeadmCommands:
       - swapoff -a
