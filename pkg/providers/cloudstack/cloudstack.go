@@ -135,7 +135,7 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 		return fmt.Errorf("spec.zones is immutable. Previous value %s, new value %s", oSpec.Zones, nSpec.Zones)
 	} else {
 		for i, zone := range nSpec.Zones {
-			if !zone.Equals(&oSpec.Zones[i]) {
+			if !zone.Equal(&oSpec.Zones[i]) {
 				return fmt.Errorf("spec.zones is immutable. Previous value %s, new value %s", zone, oSpec.Zones[i])
 			}
 		}
@@ -527,7 +527,7 @@ func (p *cloudstackProvider) needsNewKubeadmConfigTemplate(workerNodeGroupConfig
 
 func AnyImmutableFieldChanged(oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
 	for index, zone := range oldCsdc.Spec.Zones {
-		if !zone.Equals(&newCsdc.Spec.Zones[index]) {
+		if !zone.Equal(&newCsdc.Spec.Zones[index]) {
 			return true
 		}
 	}

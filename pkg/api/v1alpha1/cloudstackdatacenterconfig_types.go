@@ -135,7 +135,7 @@ func (v *CloudStackDatacenterConfig) Marshallable() Marshallable {
 	return v.ConvertConfigToConfigGenerateStruct()
 }
 
-func (s *CloudStackDatacenterConfigSpec) Equals(o *CloudStackDatacenterConfigSpec) bool {
+func (s *CloudStackDatacenterConfigSpec) Equal(o *CloudStackDatacenterConfigSpec) bool {
 	if s == o {
 		return true
 	}
@@ -146,7 +146,7 @@ func (s *CloudStackDatacenterConfigSpec) Equals(o *CloudStackDatacenterConfigSpe
 		return false
 	}
 	for i, z := range s.Zones {
-		if !z.Equals(&o.Zones[i]) {
+		if !z.Equal(&o.Zones[i]) {
 			return false
 		}
 	}
@@ -155,7 +155,7 @@ func (s *CloudStackDatacenterConfigSpec) Equals(o *CloudStackDatacenterConfigSpe
 		s.Account == o.Account
 }
 
-func (z *CloudStackZone) Equals(o *CloudStackZone) bool {
+func (z *CloudStackZone) Equal(o *CloudStackZone) bool {
 	if z == o {
 		return true
 	}

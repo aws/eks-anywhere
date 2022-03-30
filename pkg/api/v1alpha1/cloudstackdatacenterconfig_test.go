@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -151,4 +152,37 @@ func TestGetCloudStackDatacenterConfig(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDeepCopyCloudStackDatacenterConfigSpec(t *testing.T) {
+	cloudStackDatacenterConfigSpec1 := &CloudStackDatacenterConfigSpec{
+		Domain:  "domain1",
+		Account: "admin",
+		Zones: []CloudStackZone{
+			{
+				Name: "zone1",
+				Network: CloudStackResourceIdentifier{
+					Name: "net1",
+				},
+			},
+		},
+		ManagementApiEndpoint: "testEndpoint",
+	}
+	cloudStackDatacenterConfigSpec2 := cloudStackDatacenterConfigSpec1.DeepCopy()
+	assert.True(t, cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2), "deep copy CloudStackDatacenterConfigSpec showing as non-equal")
+
+	cloudStackDatacenterConfigSpec2.ManagementApiEndpoint = "newEndpoint"
+	assert.False(t, cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2), "ManagementApiEndpoint comparison in CloudStackDatacenterConfigSpec not detected")
+	cloudStackDatacenterConfigSpec2 = cloudStackDatacenterConfigSpec1.DeepCopy()
+
+	cloudStackDatacenterConfigSpec1.Domain = "newDomain"
+	assert.False(t, cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2), "Domain comparison in CloudStackDatacenterConfigSpec not detected")
+	cloudStackDatacenterConfigSpec2 = cloudStackDatacenterConfigSpec1.DeepCopy()
+
+	cloudStackDatacenterConfigSpec1.Account = "newAccount"
+	assert.False(t, cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2), "Account comparison in CloudStackDatacenterConfigSpec not detected")
+	cloudStackDatacenterConfigSpec2 = cloudStackDatacenterConfigSpec1.DeepCopy()
+
+	cloudStackDatacenterConfigSpec1.Zones = nil
+	assert.False(t, cloudStackDatacenterConfigSpec1.Equal(cloudStackDatacenterConfigSpec2), "Zones comparison in CloudStackDatacenterConfigSpec not detected")
 }

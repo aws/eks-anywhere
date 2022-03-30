@@ -115,7 +115,7 @@ func (c *CloudStackMachineConfig) OSFamily() OSFamily {
 	return ""
 }
 
-func (c *CloudStackMachineConfigSpec) Equals(o *CloudStackMachineConfigSpec) bool {
+func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool {
 	if c == o {
 		return true
 	}

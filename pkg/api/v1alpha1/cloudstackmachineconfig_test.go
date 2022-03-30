@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -205,4 +206,58 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEqualCloudStackMachineConfigSpec(t *testing.T) {
+	cloudStackMachineConfigSpec1 := &CloudStackMachineConfigSpec{
+		Template: CloudStackResourceIdentifier{
+			Name: "template1",
+		},
+		ComputeOffering: CloudStackResourceIdentifier{
+			Name: "offering1",
+		},
+		Users: []UserConfiguration{
+			{
+				Name:              "zone1",
+				SshAuthorizedKeys: []string{"key"},
+			},
+		},
+		UserCustomDetails: map[string]string{
+			"foo": "bar",
+		},
+		AffinityGroupIds: []string{"affinityGroupId1"},
+	}
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	assert.True(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "deep copy CloudStackMachineConfigSpec showing as non-equal")
+
+	cloudStackMachineConfigSpec2.Template.Name = "newName"
+	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "Template name comparison in CloudStackMachineConfigSpec not detected")
+	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+
+	cloudStackMachineConfigSpec2.Template.Id = "newId"
+	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "Template id comparison in CloudStackMachineConfigSpec not detected")
+	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+
+	cloudStackMachineConfigSpec2.ComputeOffering.Name = "newComputeOffering"
+	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "Compute offering name comparison in CloudStackMachineConfigSpec not detected")
+	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+
+	cloudStackMachineConfigSpec2.ComputeOffering.Id = "newComputeOffering"
+	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "Compute offering id comparison in CloudStackMachineConfigSpec not detected")
+	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+
+	cloudStackMachineConfigSpec2.Users = nil
+	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "Account comparison in CloudStackMachineConfigSpec not detected")
+	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+
+	cloudStackMachineConfigSpec2.Users = append(cloudStackMachineConfigSpec2.Users, UserConfiguration{Name: "newUser", SshAuthorizedKeys: []string{"newKey"}})
+	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "Account comparison in CloudStackMachineConfigSpec not detected")
+	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+
+	cloudStackMachineConfigSpec2.UserCustomDetails = nil
+	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "UserCustomDetails comparison in CloudStackMachineConfigSpec not detected")
+	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+
+	cloudStackMachineConfigSpec2.UserCustomDetails["i"] = "j"
+	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "UserCustomDetails comparison in CloudStackMachineConfigSpec not detected")
 }

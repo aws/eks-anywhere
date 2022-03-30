@@ -533,7 +533,7 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 			return false, err
 		}
 		csDc := datacenterConfig.(*v1alpha1.CloudStackDatacenterConfig)
-		if !existingCsdc.Spec.Equals(&csDc.Spec) {
+		if !existingCsdc.Spec.Equal(&csDc.Spec) {
 			logger.V(3).Info("New provider spec is different from the new spec")
 			return true, nil
 		}
@@ -547,7 +547,7 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 			return false, err
 		}
 		cpCsmc := machineConfigMap[newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-		if !existingCpCsmc.Spec.Equals(&cpCsmc.Spec) {
+		if !existingCpCsmc.Spec.Equal(&cpCsmc.Spec) {
 			logger.V(3).Info("New control plane machine config spec is different from the existing spec")
 			return true, nil
 		}
@@ -556,7 +556,7 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 			return false, err
 		}
 		wnCsmc := machineConfigMap[newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
-		if !existingWnCsmc.Spec.Equals(&wnCsmc.Spec) {
+		if !existingWnCsmc.Spec.Equal(&wnCsmc.Spec) {
 			logger.V(3).Info("New worker node machine config spec is different from the existing spec")
 			return true, nil
 		}
@@ -566,7 +566,7 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 				return false, err
 			}
 			etcdCsmc := machineConfigMap[newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-			if !existingEtcdCsmc.Spec.Equals(&etcdCsmc.Spec) {
+			if !existingEtcdCsmc.Spec.Equal(&etcdCsmc.Spec) {
 				logger.V(3).Info("New etcd machine config spec is different from the existing spec")
 				return true, nil
 			}
