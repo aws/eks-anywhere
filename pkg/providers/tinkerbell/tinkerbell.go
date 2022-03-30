@@ -10,6 +10,8 @@ import (
 
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
+	corev1 "k8s.io/api/core/v1"
+	errorutil "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -61,12 +63,12 @@ type tinkerbellProvider struct {
 	machineConfigs        map[string]*v1alpha1.TinkerbellMachineConfig
 	providerKubectlClient ProviderKubectlClient
 	providerTinkClient    ProviderTinkClient
+	pbnj                  ProviderPbnjClient
 	templateBuilder       *TinkerbellTemplateBuilder
 	hardwareConfigFile    string
 	validator             *Validator
 	writer                filewriter.FileWriter
 	keyGenerator          SSHAuthKeyGenerator
-	// TODO: Update hardwareConfig to proper type
 
 	skipIpCheck      bool
 	skipPowerActions bool
@@ -93,6 +95,9 @@ type ProviderTinkClient interface {
 
 type ProviderPbnjClient interface {
 	GetPowerState(ctx context.Context, bmc pbnj.BmcSecretConfig) (pbnj.PowerState, error)
+	PowerOff(context.Context, pbnj.BmcSecretConfig) error
+	PowerOn(context.Context, pbnj.BmcSecretConfig) error
+	SetBootDevice(ctx context.Context, info pbnj.BmcSecretConfig, mode pbnj.BootDevice) error
 }
 
 // KeyGenerator generates ssh keys and writes them to a FileWriter.
@@ -167,6 +172,7 @@ func NewProviderCustomDep(
 		machineConfigs:        machineConfigs,
 		providerKubectlClient: providerKubectlClient,
 		providerTinkClient:    providerTinkClient,
+		pbnj:                  pbnjClient,
 		templateBuilder: &TinkerbellTemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
@@ -183,6 +189,7 @@ func NewProviderCustomDep(
 		// directly. This is very much a hack for testability.
 		keyGenerator: sshAuthKeyGenerator{},
 
+		// Behavioral flags.
 		skipIpCheck:      skipIpCheck,
 		skipPowerActions: skipPowerActions,
 		force:            force,
@@ -316,14 +323,21 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return err
 	}
 
-	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
-		return err
-	}
-
 	// ValidateHardwareConfig performs a lazy load of hardware configuration. Given subsequent steps need the hardware
 	// read into memory it needs to be done first. It also needs connection to
 	// Tinkerbell steps to verify hardware availability on the stack
 	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile, p.skipPowerActions); err != nil {
+		return err
+	}
+
+	// If the force flag was set we want to force machines off and set them to boot from PXE.
+	if p.force && !p.skipPowerActions {
+		if err := p.setMachinesToPXEBoot(ctx); err != nil {
+			return err
+		}
+	}
+
+	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
 		return err
 	}
 
@@ -352,6 +366,48 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	}
 
 	return nil
+}
+
+// setMachinesToPXEBoot iterates over all p.validator.hardwareConfig.Bmcs and instructs them to turn off
+// and boot from PXE and turn on.
+func (p *tinkerbellProvider) setMachinesToPXEBoot(ctx context.Context) error {
+	// We're reaching into an unexported member of p.validator because of the lazy loading we're doing with
+	// hardware configuration. This effectively defines a concrete tight coupling between the validator and the
+	// Tinkerbell construct that desperately needs teething apart.
+
+	secrets := make(map[string]corev1.Secret, len(p.validator.hardwareConfig.Secrets))
+	for _, secret := range p.validator.hardwareConfig.Secrets {
+		secrets[secret.Name] = secret
+	}
+
+	var errs []error
+	for _, bmc := range p.validator.hardwareConfig.Bmcs {
+		secret, found := secrets[bmc.Spec.AuthSecretRef.Name]
+		if !found {
+			errs = append(errs, fmt.Errorf("could not find bmc secret for '%v'", bmc.Name))
+		}
+
+		conf := pbnj.BmcSecretConfig{
+			Host:     bmc.Spec.Host,
+			Username: string(secret.Data["username"]),
+			Password: string(secret.Data["password"]),
+			Vendor:   bmc.Spec.Vendor,
+		}
+
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+
+		if err := p.pbnj.PowerOff(ctx, conf); err != nil {
+			errs = append(errs, err)
+		}
+
+		if err := p.pbnj.SetBootDevice(ctx, conf, pbnj.BootDevicePXE); err != nil {
+			errs = append(errs, err)
+		}
+
+		cancel()
+	}
+
+	return errorutil.NewAggregate(errs)
 }
 
 func (p *tinkerbellProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
