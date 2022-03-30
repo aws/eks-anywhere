@@ -176,16 +176,6 @@ func (k *Kubectl) LoadSecret(ctx context.Context, secretObject string, secretObj
 	return nil
 }
 
-func (k *Kubectl) ApplyHardware(ctx context.Context, hardwareYaml string, kubeConfFile string) error {
-	params := []string{"apply", "-f", hardwareYaml}
-	params = append(params, "--kubeconfig", kubeConfFile)
-	_, err := k.Execute(ctx, params...)
-	if err != nil {
-		return fmt.Errorf("executing hardware yaml apply: %v", err)
-	}
-	return nil
-}
-
 func (k *Kubectl) ApplyKubeSpec(ctx context.Context, cluster *types.Cluster, spec string) error {
 	params := []string{"apply", "-f", spec}
 	if cluster.KubeconfigFile != "" {
@@ -260,6 +250,10 @@ func (k *Kubectl) DeleteKubeSpecFromBytes(ctx context.Context, cluster *types.Cl
 
 func (k *Kubectl) WaitForControlPlaneReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
 	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ControlPlaneReady", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
+}
+
+func (k *Kubectl) WaitForControlPlaneNotReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
+	return k.Wait(ctx, cluster.KubeconfigFile, timeout, "ControlPlaneReady=false", fmt.Sprintf("%s/%s", capiClustersResourceType, newClusterName), constants.EksaSystemNamespace)
 }
 
 func (k *Kubectl) WaitForManagedExternalEtcdReady(ctx context.Context, cluster *types.Cluster, timeout string, newClusterName string) error {
@@ -673,6 +667,15 @@ func (k *Kubectl) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cl
 	_, err := k.Execute(ctx, params...)
 	if err != nil {
 		return fmt.Errorf("getting eksa clusters crd: %v", err)
+	}
+	return nil
+}
+
+func (k *Kubectl) SetControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error {
+	params := []string{"set", "env", "deployment/eksa-controller-manager", fmt.Sprintf("%s=%s", envVar, envVarVal), "--kubeconfig", kubeconfig}
+	_, err := k.Execute(ctx, params...)
+	if err != nil {
+		return fmt.Errorf("error setting %s=%s on eksa controller: %v", envVar, envVarVal, err)
 	}
 	return nil
 }

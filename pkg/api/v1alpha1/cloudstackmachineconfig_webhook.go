@@ -8,6 +8,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"github.com/aws/eks-anywhere/pkg/features"
 )
 
 // log is for logging in this package.
@@ -30,6 +32,10 @@ var _ webhook.Validator = &CloudStackMachineConfig{}
 func (r *CloudStackMachineConfig) ValidateCreate() error {
 	cloudstackmachineconfiglog.Info("validate create", "name", r.Name)
 
+	if !features.IsActive(features.CloudStackProvider()) {
+		return apierrors.NewBadRequest("CloudStackProvider feature is not active, preventing CloudStackMachineConfig resource creation")
+	}
+
 	return nil
 }
 
@@ -44,6 +50,11 @@ func (r *CloudStackMachineConfig) ValidateUpdate(old runtime.Object) error {
 
 	if oldCloudStackMachineConfig.IsReconcilePaused() {
 		cloudstackmachineconfiglog.Info("Reconciliation is paused")
+		return nil
+	}
+
+	if oldCloudStackMachineConfig.IsManagement() {
+		cloudstackmachineconfiglog.Info("Machine config is associated with workload cluster", "name", oldCloudStackMachineConfig.Name)
 		return nil
 	}
 

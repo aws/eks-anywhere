@@ -10,6 +10,8 @@ import (
 
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
+	corev1 "k8s.io/api/core/v1"
+	errorutil "k8s.io/apimachinery/pkg/util/errors"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -35,6 +37,7 @@ const (
 	tinkerbellGRPCAuthKey          = "TINKERBELL_GRPC_AUTHORITY"
 	tinkerbellIPKey                = "TINKERBELL_IP"
 	tinkerbellPBnJGRPCAuthorityKey = "PBNJ_GRPC_AUTHORITY"
+	tinkerbellHegelURLKey          = "TINKERBELL_HEGEL_URL"
 )
 
 //go:embed config/template-cp.yaml
@@ -51,7 +54,7 @@ const defaultUsername = "ec2-user"
 var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
-	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey, tinkerbellPBnJGRPCAuthorityKey}
+	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey, tinkerbellPBnJGRPCAuthorityKey, tinkerbellHegelURLKey}
 )
 
 type tinkerbellProvider struct {
@@ -60,14 +63,16 @@ type tinkerbellProvider struct {
 	machineConfigs        map[string]*v1alpha1.TinkerbellMachineConfig
 	providerKubectlClient ProviderKubectlClient
 	providerTinkClient    ProviderTinkClient
+	pbnj                  ProviderPbnjClient
 	templateBuilder       *TinkerbellTemplateBuilder
-	skipIpCheck           bool
 	hardwareConfigFile    string
 	validator             *Validator
-	skipPowerActions      bool
 	writer                filewriter.FileWriter
 	keyGenerator          SSHAuthKeyGenerator
-	// TODO: Update hardwareConfig to proper type
+
+	skipIpCheck      bool
+	skipPowerActions bool
+	force            bool
 }
 
 type TinkerbellClients struct {
@@ -77,7 +82,7 @@ type TinkerbellClients struct {
 
 // TODO: Add necessary kubectl functions here
 type ProviderKubectlClient interface {
-	ApplyHardware(ctx context.Context, hardwareYaml string, kubeConfFile string) error
+	ApplyKubeSpecFromBytesForce(ctx context.Context, cluster *types.Cluster, data []byte) error
 	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType string, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType string, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) error
 	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
@@ -90,6 +95,9 @@ type ProviderTinkClient interface {
 
 type ProviderPbnjClient interface {
 	GetPowerState(ctx context.Context, bmc pbnj.BmcSecretConfig) (pbnj.PowerState, error)
+	PowerOff(context.Context, pbnj.BmcSecretConfig) error
+	PowerOn(context.Context, pbnj.BmcSecretConfig) error
+	SetBootDevice(ctx context.Context, info pbnj.BmcSecretConfig, mode pbnj.BootDevice) error
 }
 
 // KeyGenerator generates ssh keys and writes them to a FileWriter.
@@ -108,6 +116,7 @@ func NewProvider(
 	skipIpCheck bool,
 	hardwareConfigFile string,
 	skipPowerActions bool,
+	force bool,
 ) *tinkerbellProvider {
 	return NewProviderCustomDep(
 		datacenterConfig,
@@ -122,6 +131,7 @@ func NewProvider(
 		skipIpCheck,
 		hardwareConfigFile,
 		skipPowerActions,
+		force,
 	)
 }
 
@@ -138,6 +148,7 @@ func NewProviderCustomDep(
 	skipIpCheck bool,
 	hardwareConfigFile string,
 	skipPowerActions bool,
+	force bool,
 ) *tinkerbellProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
 	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
@@ -161,6 +172,7 @@ func NewProviderCustomDep(
 		machineConfigs:        machineConfigs,
 		providerKubectlClient: providerKubectlClient,
 		providerTinkClient:    providerTinkClient,
+		pbnj:                  pbnjClient,
 		templateBuilder: &TinkerbellTemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
@@ -170,14 +182,17 @@ func NewProviderCustomDep(
 		},
 		hardwareConfigFile: hardwareConfigFile,
 		validator:          NewValidator(providerTinkClient, netClient, hardware.HardwareConfig{}, pbnjClient),
-		skipIpCheck:        skipIpCheck,
-		skipPowerActions:   skipPowerActions,
 		writer:             writer,
 
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch
 		// directly. This is very much a hack for testability.
 		keyGenerator: sshAuthKeyGenerator{},
+
+		// Behavioral flags.
+		skipIpCheck:      skipIpCheck,
+		skipPowerActions: skipPowerActions,
+		force:            force,
 	}
 }
 
@@ -195,12 +210,17 @@ func (p *tinkerbellProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClu
 		env["HTTPS_PROXY"] = p.clusterConfig.Spec.ProxyConfiguration.HttpsProxy
 		env["NO_PROXY"] = noProxy
 	}
+
 	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}, nil
 }
 
 func (p *tinkerbellProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO: figure out if we need something else here
-	err := p.providerKubectlClient.ApplyHardware(ctx, p.hardwareConfigFile, cluster.KubeconfigFile)
+	hardwareSpec, err := p.validator.hardwareConfig.HardwareSpecMarshallable()
+	if err != nil {
+		return fmt.Errorf("failed marshalling resources for hardware spec: %v", err)
+	}
+	err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, hardwareSpec)
 	if err != nil {
 		return fmt.Errorf("applying hardware yaml: %v", err)
 	}
@@ -303,10 +323,6 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return err
 	}
 
-	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
-		return err
-	}
-
 	// ValidateHardwareConfig performs a lazy load of hardware configuration. Given subsequent steps need the hardware
 	// read into memory it needs to be done first. It also needs connection to
 	// Tinkerbell steps to verify hardware availability on the stack
@@ -314,15 +330,26 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		return err
 	}
 
+	// If the force flag was set we want to force machines off and set them to boot from PXE.
+	if p.force && !p.skipPowerActions {
+		if err := p.setMachinesToPXEBoot(ctx); err != nil {
+			return err
+		}
+	}
+
+	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
+		return err
+	}
+
 	if err := p.validator.ValidateClusterMachineConfigs(ctx, tinkerbellClusterSpec); err != nil {
 		return err
 	}
 
-	if err := p.validator.ValidateTinkerbellTemplate(ctx, tinkerbellClusterSpec.datacenterConfig.Spec.TinkerbellIP, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.controlPlaneMachineConfig().Spec.TemplateRef.Name]); err != nil {
+	if err := p.validator.ValidateAndPopulateTemplate(ctx, tinkerbellClusterSpec.datacenterConfig, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.controlPlaneMachineConfig().Spec.TemplateRef.Name]); err != nil {
 		return fmt.Errorf("failed validating control plane template config: %v", err)
 	}
 
-	if err := p.validator.ValidateTinkerbellTemplate(ctx, tinkerbellClusterSpec.datacenterConfig.Spec.TinkerbellIP, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.firstWorkerMachineConfig().Spec.TemplateRef.Name]); err != nil {
+	if err := p.validator.ValidateAndPopulateTemplate(ctx, tinkerbellClusterSpec.datacenterConfig, tinkerbellClusterSpec.Spec.TinkerbellTemplateConfigs[tinkerbellClusterSpec.firstWorkerMachineConfig().Spec.TemplateRef.Name]); err != nil {
 		return fmt.Errorf("failed validating worker node template config: %v", err)
 	}
 
@@ -339,6 +366,48 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	}
 
 	return nil
+}
+
+// setMachinesToPXEBoot iterates over all p.validator.hardwareConfig.Bmcs and instructs them to turn off
+// and boot from PXE and turn on.
+func (p *tinkerbellProvider) setMachinesToPXEBoot(ctx context.Context) error {
+	// We're reaching into an unexported member of p.validator because of the lazy loading we're doing with
+	// hardware configuration. This effectively defines a concrete tight coupling between the validator and the
+	// Tinkerbell construct that desperately needs teething apart.
+
+	secrets := make(map[string]corev1.Secret, len(p.validator.hardwareConfig.Secrets))
+	for _, secret := range p.validator.hardwareConfig.Secrets {
+		secrets[secret.Name] = secret
+	}
+
+	var errs []error
+	for _, bmc := range p.validator.hardwareConfig.Bmcs {
+		secret, found := secrets[bmc.Spec.AuthSecretRef.Name]
+		if !found {
+			errs = append(errs, fmt.Errorf("could not find bmc secret for '%v'", bmc.Name))
+		}
+
+		conf := pbnj.BmcSecretConfig{
+			Host:     bmc.Spec.Host,
+			Username: string(secret.Data["username"]),
+			Password: string(secret.Data["password"]),
+			Vendor:   bmc.Spec.Vendor,
+		}
+
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+
+		if err := p.pbnj.PowerOff(ctx, conf); err != nil {
+			errs = append(errs, err)
+		}
+
+		if err := p.pbnj.SetBootDevice(ctx, conf, pbnj.BootDevicePXE); err != nil {
+			errs = append(errs, err)
+		}
+
+		cancel()
+	}
+
+	return errorutil.NewAggregate(errs)
 }
 
 func (p *tinkerbellProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {

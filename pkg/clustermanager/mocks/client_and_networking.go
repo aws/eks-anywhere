@@ -468,6 +468,20 @@ func (mr *MockClusterClientMockRecorder) SaveLog(arg0, arg1, arg2, arg3, arg4 in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveLog", reflect.TypeOf((*MockClusterClient)(nil).SaveLog), arg0, arg1, arg2, arg3, arg4)
 }
 
+// SetControllerEnvVar mocks base method.
+func (m *MockClusterClient) SetControllerEnvVar(arg0 context.Context, arg1, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetControllerEnvVar", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetControllerEnvVar indicates an expected call of SetControllerEnvVar.
+func (mr *MockClusterClientMockRecorder) SetControllerEnvVar(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetControllerEnvVar", reflect.TypeOf((*MockClusterClient)(nil).SetControllerEnvVar), arg0, arg1, arg2, arg3)
+}
+
 // UpdateAnnotationInNamespace mocks base method.
 func (m *MockClusterClient) UpdateAnnotationInNamespace(arg0 context.Context, arg1, arg2 string, arg3 map[string]string, arg4 *types.Cluster, arg5 string) error {
 	m.ctrl.T.Helper()
@@ -522,6 +536,20 @@ func (m *MockClusterClient) ValidateWorkerNodes(arg0 context.Context, arg1, arg2
 func (mr *MockClusterClientMockRecorder) ValidateWorkerNodes(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateWorkerNodes", reflect.TypeOf((*MockClusterClient)(nil).ValidateWorkerNodes), arg0, arg1, arg2)
+}
+
+// WaitForControlPlaneNotReady mocks base method.
+func (m *MockClusterClient) WaitForControlPlaneNotReady(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WaitForControlPlaneNotReady", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// WaitForControlPlaneNotReady indicates an expected call of WaitForControlPlaneNotReady.
+func (mr *MockClusterClientMockRecorder) WaitForControlPlaneNotReady(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForControlPlaneNotReady", reflect.TypeOf((*MockClusterClient)(nil).WaitForControlPlaneNotReady), arg0, arg1, arg2, arg3)
 }
 
 // WaitForControlPlaneReady mocks base method.

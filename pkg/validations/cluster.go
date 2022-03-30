@@ -13,6 +13,11 @@ func ValidateCertForRegistryMirror(clusterSpec *cluster.Spec, tlsValidator TlsVa
 		return nil
 	}
 
+	if cluster.Spec.RegistryMirrorConfiguration.InsecureSkipVerify {
+		logger.V(1).Info("Warning: skip registry certificate verification is enabled", "registryMirrorConfiguration.insecureSkipVerify", true)
+		return nil
+	}
+
 	host, port := cluster.Spec.RegistryMirrorConfiguration.Endpoint, cluster.Spec.RegistryMirrorConfiguration.Port
 	selfSigned, err := tlsValidator.HasSelfSignedCert(host, port)
 	if err != nil {
@@ -24,7 +29,7 @@ func ValidateCertForRegistryMirror(clusterSpec *cluster.Spec, tlsValidator TlsVa
 
 	certContent := cluster.Spec.RegistryMirrorConfiguration.CACertContent
 	if certContent == "" && selfSigned {
-		return fmt.Errorf("registry %s is using self-signed certs, please provide the certificate using caCertContent field", cluster.Spec.RegistryMirrorConfiguration.Endpoint)
+		return fmt.Errorf("registry %s is using self-signed certs, please provide the certificate using caCertContent field. Or use insecureSkipVerify field to skip registry certificate verification", cluster.Spec.RegistryMirrorConfiguration.Endpoint)
 	}
 
 	if certContent != "" {

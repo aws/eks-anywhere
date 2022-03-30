@@ -16,10 +16,11 @@ var containerdConfig string
 
 type values map[string]interface{}
 
-func registryMirrorConfigContent(registryAddress, registryCert string) (string, error) {
+func registryMirrorConfigContent(registryAddress, registryCert string, insecureSkip bool) (string, error) {
 	val := values{
 		"registryMirrorAddress": registryAddress,
 		"registryCACert":        registryCert,
+		"insecureSkip":          insecureSkip,
 	}
 
 	config, err := templater.Execute(containerdConfig, val)
@@ -31,7 +32,7 @@ func registryMirrorConfigContent(registryAddress, registryCert string) (string, 
 
 func registryMirrorConfig(registryMirrorConfig *v1alpha1.RegistryMirrorConfiguration) (files []bootstrapv1.File, preKubeadmCommands []string, err error) {
 	registryAddress := net.JoinHostPort(registryMirrorConfig.Endpoint, registryMirrorConfig.Port)
-	registryConfig, err := registryMirrorConfigContent(registryAddress, registryMirrorConfig.CACertContent)
+	registryConfig, err := registryMirrorConfigContent(registryAddress, registryMirrorConfig.CACertContent, registryMirrorConfig.InsecureSkipVerify)
 	if err != nil {
 		return nil, nil, err
 	}

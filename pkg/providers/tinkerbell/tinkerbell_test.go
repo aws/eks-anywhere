@@ -25,8 +25,9 @@ const (
 	testDataDir                         = "testdata"
 	expectedTinkerbellIP                = "1.2.3.4"
 	expectedTinkerbellGRPCAuth          = "1.2.3.4:42113"
-	expectedTinkerbellCertURL           = "1.2.3.4:42114/cert"
+	expectedTinkerbellCertURL           = "http://1.2.3.4:42114/cert"
 	expectedTinkerbellPBnJGRPCAuthority = "1.2.3.4:42000"
+	expectedTinkerbellHegelURL          = "http://1.2.3.4:50051"
 )
 
 func givenClusterSpec(t *testing.T, fileName string) *cluster.Spec {
@@ -72,6 +73,7 @@ func newProvider(datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, machineC
 		true,
 		"testdata/hardware_config.yaml",
 		false,
+		false,
 	)
 }
 
@@ -84,6 +86,8 @@ type testContext struct {
 	isTinkerbellGRPCAuthSet          bool
 	oldTinkerbellPBnJGRPCAuthority   string
 	isTinkerbellPBnJGRPCAuthoritySet bool
+	isTinkerbellHegelURLSet          bool
+	oldTinkerbellHegelURL            string
 }
 
 func (tctx *testContext) SaveContext() {
@@ -91,10 +95,12 @@ func (tctx *testContext) SaveContext() {
 	tctx.oldTinkerbellCertURL, tctx.isTinkerbellCertURLSet = os.LookupEnv(tinkerbellCertURLKey)
 	tctx.oldtinkerbellGRPCAuth, tctx.isTinkerbellGRPCAuthSet = os.LookupEnv(tinkerbellGRPCAuthKey)
 	tctx.oldTinkerbellPBnJGRPCAuthority, tctx.isTinkerbellPBnJGRPCAuthoritySet = os.LookupEnv(tinkerbellPBnJGRPCAuthorityKey)
+	tctx.oldTinkerbellHegelURL, tctx.isTinkerbellHegelURLSet = os.LookupEnv(tinkerbellHegelURLKey)
 	os.Setenv(tinkerbellIPKey, expectedTinkerbellIP)
 	os.Setenv(tinkerbellCertURLKey, expectedTinkerbellCertURL)
 	os.Setenv(tinkerbellGRPCAuthKey, expectedTinkerbellGRPCAuth)
 	os.Setenv(tinkerbellPBnJGRPCAuthorityKey, expectedTinkerbellPBnJGRPCAuthority)
+	os.Setenv(tinkerbellHegelURLKey, expectedTinkerbellHegelURL)
 	os.Setenv(features.TinkerbellProviderEnvVar, "true")
 }
 
@@ -118,6 +124,11 @@ func (tctx *testContext) RestoreContext() {
 		os.Setenv(tinkerbellPBnJGRPCAuthorityKey, tctx.oldTinkerbellPBnJGRPCAuthority)
 	} else {
 		os.Unsetenv(tinkerbellPBnJGRPCAuthorityKey)
+	}
+	if tctx.isTinkerbellHegelURLSet {
+		os.Setenv(tinkerbellHegelURLKey, tctx.oldTinkerbellHegelURL)
+	} else {
+		os.Unsetenv(tinkerbellHegelURLKey)
 	}
 }
 

@@ -76,8 +76,6 @@ spec:
                 value: "true"
               - name: port
                 value: "6443"
-              - name: vip_interface
-                value: eno1
               - name: vip_cidr
                 value: "32"
               - name: cp_enable
@@ -89,15 +87,15 @@ spec:
               - name: vip_leaderelection
                 value: "true"
               - name: vip_leaseduration
-                value: "5"
+                value: "15"
               - name: vip_renewdeadline
-                value: "3"
+                value: "10"
               - name: vip_retryperiod
-                value: "1"
+                value: "2"
               - name: address
                 value: 1.2.3.4
               image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.7-eks-a-v0.0.0-dev-build.581
-              imagePullPolicy: Always
+              imagePullPolicy: IfNotPresent
               name: kube-vip
               resources: {}
               securityContext:
@@ -108,10 +106,6 @@ spec:
               volumeMounts:
               - mountPath: /etc/kubernetes/admin.conf
                 name: kubeconfig
-            hostAliases:
-            - hostnames:
-              - kubernetes
-              ip: 127.0.0.1
             hostNetwork: true
             volumes:
             - hostPath:
@@ -221,18 +215,22 @@ spec:
           - environment:
               CONTENTS: |
                 datasource:
-                Ec2:
-                  metadata_urls: ["http://1.2.3.4:50061"]
-                  strict_id: false
-                system_info:
-                default_user:
-                  name: tink
-                  groups: [wheel, adm]
-                  sudo: ["ALL=(ALL) NOPASSWD:ALL"]
-                  shell: /bin/bash
+                  Ec2:
+                    metadata_urls:
+                    - http://1.2.3.4:50051
+                    strict_id: false
                 manage_etc_hosts: localhost
+                system_info:
+                  default_user:
+                    groups:
+                    - wheel
+                    - adm
+                    name: tink
+                    shell: /bin/bash
+                    sudo:
+                    - ALL=(ALL) NOPASSWD:ALL
                 warnings:
-                dsid_missing_source: off
+                  dsid_missing_source: false
               DEST_DISK: /dev/sda1
               DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
               DIRMODE: "0700"
@@ -328,18 +326,22 @@ spec:
           - environment:
               CONTENTS: |
                 datasource:
-                Ec2:
-                  metadata_urls: ["http://1.2.3.4:50061"]
-                  strict_id: false
-                system_info:
-                default_user:
-                  name: tink
-                  groups: [wheel, adm]
-                  sudo: ["ALL=(ALL) NOPASSWD:ALL"]
-                  shell: /bin/bash
+                  Ec2:
+                    metadata_urls:
+                    - http://1.2.3.4:50051
+                    strict_id: false
                 manage_etc_hosts: localhost
+                system_info:
+                  default_user:
+                    groups:
+                    - wheel
+                    - adm
+                    name: tink
+                    shell: /bin/bash
+                    sudo:
+                    - ALL=(ALL) NOPASSWD:ALL
                 warnings:
-                dsid_missing_source: off
+                  dsid_missing_source: false
               DEST_DISK: /dev/sda1
               DEST_PATH: /etc/cloud/cloud.cfg.d/10_tinkerbell.cfg
               DIRMODE: "0700"
