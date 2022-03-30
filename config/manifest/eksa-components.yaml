@@ -3148,6 +3148,11 @@ spec:
             description: CloudStackMachineConfigSpec defines the desired state of
               CloudStackMachineConfig
             properties:
+              affinity:
+                description: Defaults to `no`. Can be `pro` or `anti`. If set to `pro`
+                  or `anti`, will create an affinity group per machine set of the
+                  corresponding type
+                type: string
               affinityGroupIds:
                 description: AffinityGroupIds allows users to pass in a list of UUIDs
                   for previously-created Affinity Groups. Any VM’s created with this
@@ -4024,6 +4029,8 @@ spec:
                 type: string
               tinkerbellGRPCAuth:
                 type: string
+              tinkerbellHegelURL:
+                type: string
               tinkerbellIP:
                 description: 'Important: Run "make generate" to regenerate code after
                   modifying this file'
@@ -4033,6 +4040,7 @@ spec:
             required:
             - tinkerbellCertURL
             - tinkerbellGRPCAuth
+            - tinkerbellHegelURL
             - tinkerbellIP
             - tinkerbellPBnJGRPCAuth
             type: object

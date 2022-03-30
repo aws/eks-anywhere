@@ -146,3 +146,29 @@ func cloudstackMachineConfig() v1alpha1.CloudStackMachineConfig {
 		Status:     v1alpha1.CloudStackMachineConfigStatus{},
 	}
 }
+
+func TestCloudStackMachineValidateUpdateAffinityImmutable(t *testing.T) {
+	vOld := cloudstackMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.Affinity = "pro"
+	c := vOld.DeepCopy()
+
+	c.Spec.Affinity = "anti"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).ToNot(Succeed())
+}
+
+func TestCloudStackMachineValidateUpdateAffinityGroupIdsImmutable(t *testing.T) {
+	vOld := cloudstackMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.AffinityGroupIds = []string{"affinity-group-1"}
+	c := vOld.DeepCopy()
+
+	c.Spec.AffinityGroupIds = []string{}
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).ToNot(Succeed())
+
+	c.Spec.AffinityGroupIds = []string{"affinity-group-2"}
+	g = NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).ToNot(Succeed())
+}
