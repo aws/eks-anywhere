@@ -226,6 +226,7 @@ func TestEqualCloudStackMachineConfigSpec(t *testing.T) {
 			"foo": "bar",
 		},
 		AffinityGroupIds: []string{"affinityGroupId1"},
+		Affinity: "pro",
 	}
 	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
 	assert.True(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "deep copy CloudStackMachineConfigSpec showing as non-equal")
@@ -244,6 +245,10 @@ func TestEqualCloudStackMachineConfigSpec(t *testing.T) {
 
 	cloudStackMachineConfigSpec2.ComputeOffering.Id = "newComputeOffering"
 	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "Compute offering id comparison in CloudStackMachineConfigSpec not detected")
+	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+
+	cloudStackMachineConfigSpec2.Affinity = "anti"
+	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "Affinity comparison in CloudStackMachineConfigSpec not detected")
 	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
 
 	cloudStackMachineConfigSpec2.Users = nil

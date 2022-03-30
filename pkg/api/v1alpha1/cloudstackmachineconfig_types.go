@@ -128,6 +128,9 @@ func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool
 		!c.ComputeOffering.Equals(&o.ComputeOffering) {
 		return false
 	}
+	if c.Affinity != o.Affinity {
+		return false
+	}
 	if len(c.AffinityGroupIds) != len(o.AffinityGroupIds) ||
 		len(c.Users) != len(o.Users) ||
 		len(c.UserCustomDetails) != len(o.UserCustomDetails) {
