@@ -681,7 +681,7 @@ func (k *Kubectl) ValidateEKSAClustersCRD(ctx context.Context, cluster *types.Cl
 	return nil
 }
 
-func (k *Kubectl) SetControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error {
+func (k *Kubectl) SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error {
 	params := []string{
 		"set", "env", "deployment/eksa-controller-manager", fmt.Sprintf("%s=%s", envVar, envVarVal),
 		"--kubeconfig", kubeconfig, "--namespace", constants.EksaSystemNamespace,

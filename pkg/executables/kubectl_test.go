@@ -1013,7 +1013,7 @@ func TestKubectlSetControllerEnvVarSuccess(t *testing.T) {
 		},
 	).Return(bytes.Buffer{}, nil)
 
-	err := k.SetControllerEnvVar(ctx, envVar, envVarValue, cluster.KubeconfigFile)
+	err := k.SetEksaControllerEnvVar(ctx, envVar, envVarValue, cluster.KubeconfigFile)
 	if err != nil {
 		t.Fatalf("Kubectl.GetApiServerUrl() error = %v, want nil", err)
 	}
