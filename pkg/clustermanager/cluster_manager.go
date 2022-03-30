@@ -571,6 +571,10 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 				return true, nil
 			}
 		}
+		// TODO: Refactor into smaller methods, consider moving to provider with new method in interface (ClusterSpecChanged)
+		// TODO: use cluster.MachineConfigRefs() to get list of machine configs and then iterate over them to check spec equality. Include machine group ref name
+		// in error message
+		// TODO: Make sure happy paths at least are unit tested, especially if moving code to provider
 	default:
 		// Run upgrade flow
 		return true, nil
