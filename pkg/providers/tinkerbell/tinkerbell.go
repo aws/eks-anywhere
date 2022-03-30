@@ -3,6 +3,7 @@ package tinkerbell
 import (
 	"context"
 	_ "embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -98,6 +99,7 @@ type ProviderKubectlClient interface {
 type ProviderTinkClient interface {
 	GetHardware(ctx context.Context) ([]*tinkhardware.Hardware, error)
 	GetWorkflow(ctx context.Context) ([]*tinkworkflow.Workflow, error)
+	DeleteWorkflow(ctx context.Context, workflowIDs ...string) error
 }
 
 type ProviderPbnjClient interface {
@@ -351,6 +353,12 @@ func (p *tinkerbellProvider) configureSshKeys() error {
 func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The tinkerbell infrastructure provider is still in development and should not be used in production")
 
+	hardware, err := p.providerTinkClient.GetHardware(ctx)
+	if err != nil {
+		return fmt.Errorf("retrieving tinkerbell hardware: %v", err)
+	}
+	logger.MarkPass("Connected to tinkerbell stack")
+
 	if err := setupEnvVars(p.datacenterConfig); err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -364,13 +372,18 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	// ValidateHardwareConfig performs a lazy load of hardware configuration. Given subsequent steps need the hardware
 	// read into memory it needs to be done first. It also needs connection to
 	// Tinkerbell steps to verify hardware availability on the stack
-	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile, p.skipPowerActions); err != nil {
+	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile, hardware, p.skipPowerActions); err != nil {
 		return err
 	}
 
-	// If the force flag was set we want to force machines off and set them to boot from PXE.
-	if p.force && !p.skipPowerActions {
-		if err := p.setMachinesToPXEBoot(ctx); err != nil {
+	if p.force {
+		if !p.skipPowerActions {
+			if err := p.setMachinesToPXEBoot(ctx); err != nil {
+				return err
+			}
+		}
+
+		if err := p.scrubWorkflowsFromTinkerbell(ctx, p.validator.hardwareConfig.Hardwares, hardware); err != nil {
 			return err
 		}
 	}
@@ -446,6 +459,102 @@ func (p *tinkerbellProvider) setMachinesToPXEBoot(ctx context.Context) error {
 	}
 
 	return errorutil.NewAggregate(errs)
+}
+
+// scrubWorkflowsFromTinkerbell removes all workflows in the Tinkerbell stack that feature in hardware by retrieving
+// hardware MAC addresses using tinkerbellHardware. tinkerbellHardware is necessary because MAC addresses aren't
+// available on the Hardware object type.
+func (p *tinkerbellProvider) scrubWorkflowsFromTinkerbell(ctx context.Context, hardware []tinkv1alpha1.Hardware, tinkerbellHardware []*tinkhardware.Hardware) error {
+	workflows, err := p.providerTinkClient.GetWorkflow(ctx)
+	if err != nil {
+		return fmt.Errorf("retrieving workflows: %w", err)
+	}
+
+	hardwareMACLookup, err := createHardwareIDToMACMapping(tinkerbellHardware)
+	if err != nil {
+		return err
+	}
+
+	manifestHardwareMACs, err := createMACSetFromHardwareManifests(hardwareMACLookup, hardware)
+	if err != nil {
+		return err
+	}
+
+	workflowIDs, err := getWorkflowsIDsFromMACs(manifestHardwareMACs, workflows)
+	if err != nil {
+		return err
+	}
+
+	if err := p.providerTinkClient.DeleteWorkflow(ctx, workflowIDs...); err != nil {
+		return fmt.Errorf("could not delete tinkerbell workflow: %v", err)
+	}
+
+	return nil
+}
+
+func createHardwareIDToMACMapping(hardware []*tinkhardware.Hardware) (map[string]string, error) {
+	hardwareMACLookup := make(map[string]string)
+	for _, h := range hardware {
+		if len(h.Network.Interfaces) == 0 {
+			return nil, fmt.Errorf("hardware manifest without interface: hardware ID = '%v'", h.Id)
+		}
+		hardwareMACLookup[h.Id] = h.Network.Interfaces[0].Dhcp.Mac
+	}
+
+	return hardwareMACLookup, nil
+}
+
+func createMACSetFromHardwareManifests(hardwareMACLookup map[string]string, hardware []tinkv1alpha1.Hardware) (macAddressSet, error) {
+	manifestHardwareMACs := make(macAddressSet)
+	for _, h := range hardware {
+		mac, found := hardwareMACLookup[h.Spec.ID]
+		if !found {
+			return nil, fmt.Errorf("couldn't find mac address for hardware manifest: manifest hardware ID = '%v'", h.Spec.ID)
+		}
+
+		manifestHardwareMACs.Insert(mac)
+	}
+
+	return manifestHardwareMACs, nil
+}
+
+func getWorkflowsIDsFromMACs(hardwareMACs macAddressSet, workflows []*tinkworkflow.Workflow) ([]string, error) {
+	var workflowIDs []string
+	for _, w := range workflows {
+		mac, err := macFromWorkflow(w)
+		if err != nil {
+			return nil, err
+		}
+
+		if hardwareMACs.Contains(mac) {
+			workflowIDs = append(workflowIDs, w.Id)
+		}
+	}
+
+	return workflowIDs, nil
+}
+
+func macFromWorkflow(workflow *tinkworkflow.Workflow) (string, error) {
+	var data struct {
+		Mac string `json:"device_1"` // Assume the hardware device data uses device_1 as the key.
+	}
+
+	if err := json.Unmarshal([]byte(workflow.Hardware), &data); err != nil {
+		return "", err
+	}
+
+	return data.Mac, nil
+}
+
+type macAddressSet map[string]struct{}
+
+func (m *macAddressSet) Contains(mac string) bool {
+	_, found := (*m)[strings.ToLower(mac)]
+	return found
+}
+
+func (m *macAddressSet) Insert(mac string) {
+	(*m)[strings.ToLower(mac)] = struct{}{}
 }
 
 func (p *tinkerbellProvider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster) error {
