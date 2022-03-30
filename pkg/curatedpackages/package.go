@@ -98,7 +98,8 @@ func convertBundlePackageToPackage(bp api.BundlePackage, apiVersion string) api.
 	versionToUse := bp.Source.Versions[0]
 	p := api.Package{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: customName + strings.ToLower(bp.Name),
+			Name:      customName + strings.ToLower(bp.Name),
+			Namespace: constants.EksaPackagesName,
 		},
 		TypeMeta: metav1.TypeMeta{
 			Kind:       kind,
