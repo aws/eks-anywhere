@@ -7,11 +7,10 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"sigs.k8s.io/yaml"
-
 	api "github.com/aws/eks-anywhere-packages/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 )
 
 const (
