@@ -15,7 +15,7 @@ const (
 `
 	cloudInit = `datasource:
   Ec2:
-    metadata_urls: ["http://<REPLACE WITH TINKERBELL IP>:50061"]
+    metadata_urls: []
     strict_id: false
 system_info:
   default_user:
@@ -32,7 +32,6 @@ warnings:
 func GetDefaultActionsFromBundle(b v1alpha1.VersionsBundle) []ActionOpt {
 	return []ActionOpt{
 		withStreamImageAction(b),
-		withInstallOpensslAction(b),
 		withNetplanAction(b),
 		withTinkCloudInitAction(b),
 		withDsCloudInitAction(b),
@@ -50,23 +49,6 @@ func withStreamImageAction(b v1alpha1.VersionsBundle) ActionOpt {
 				"IMG_URL":    b.EksD.Raw.Ubuntu.URI,
 				"DEST_DISK":  "/dev/sda",
 				"COMPRESSED": "true",
-			},
-		})
-	}
-}
-
-func withInstallOpensslAction(b v1alpha1.VersionsBundle) ActionOpt {
-	return func(a *[]tinkerbell.Action) {
-		*a = append(*a, tinkerbell.Action{
-			Name:    "install-openssl",
-			Image:   b.Tinkerbell.Actions.Cexec.URI,
-			Timeout: 90,
-			Environment: map[string]string{
-				"BLOCK_DEVICE":        "/dev/sda1",
-				"FS_TYPE":             "ext4",
-				"CHROOT":              "y",
-				"DEFAULT_INTERPRETER": "/bin/sh -c",
-				"CMD_LINE":            "apt -y update && apt -y install openssl",
 			},
 		})
 	}
