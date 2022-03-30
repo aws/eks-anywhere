@@ -190,18 +190,25 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 		if err = v.validateMachineConfig(ctx, cloudStackClusterSpec.datacenterConfig.Spec, machineConfig); err != nil {
 			return fmt.Errorf("machine config %s validation failed: %v", machineConfig.Name, err)
 		}
-		if len(machineConfig.Spec.Affinity) > 0 && len(machineConfig.Spec.AffinityGroupIds) > 0 {
-			return fmt.Errorf("affinity and affinityGroupIds cannot be set at the same time for CloudStackMachineConfig %s. Please provide either one of them or none", machineConfig.Name)
-		}
-		if len(machineConfig.Spec.Affinity) > 0 {
-			if machineConfig.Spec.Affinity != "pro" && machineConfig.Spec.Affinity != "anti" && machineConfig.Spec.Affinity != "no" {
-				return fmt.Errorf("invalid affinity type %s for CloudStackMachineConfig %s. Please provide \"pro\", \"anti\" or \"no\"", machineConfig.Spec.Affinity, machineConfig.Name)
-			}
+		if err = v.validateAffinityConfig(machineConfig); err != nil {
+			return err
 		}
 	}
 
 	logger.MarkPass("Validated cluster Machine Configs")
 
+	return nil
+}
+
+func (v *Validator) validateAffinityConfig(machineConfig *anywherev1.CloudStackMachineConfig) error {
+	if len(machineConfig.Spec.Affinity) > 0 && len(machineConfig.Spec.AffinityGroupIds) > 0 {
+		return fmt.Errorf("affinity and affinityGroupIds cannot be set at the same time for CloudStackMachineConfig %s. Please provide either one of them or none", machineConfig.Name)
+	}
+	if len(machineConfig.Spec.Affinity) > 0 {
+		if machineConfig.Spec.Affinity != "pro" && machineConfig.Spec.Affinity != "anti" && machineConfig.Spec.Affinity != "no" {
+			return fmt.Errorf("invalid affinity type %s for CloudStackMachineConfig %s. Please provide \"pro\", \"anti\" or \"no\"", machineConfig.Spec.Affinity, machineConfig.Name)
+		}
+	}
 	return nil
 }
 
