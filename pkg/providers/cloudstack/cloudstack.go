@@ -1097,7 +1097,7 @@ func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Co
 			return err
 		}
 		if len(em) > 0 {
-			return fmt.Errorf("control plane VSphereMachineConfig %s already exists", cpMachineConfigName)
+			return fmt.Errorf("control plane CloudStackMachineConfig %s already exists", cpMachineConfigName)
 		}
 	}
 
