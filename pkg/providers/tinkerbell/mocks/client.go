@@ -85,19 +85,34 @@ func (mr *MockProviderKubectlClientMockRecorder) DeleteEksaMachineConfig(arg0, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEksaMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).DeleteEksaMachineConfig), arg0, arg1, arg2, arg3, arg4)
 }
 
-// GetHardwareForCluster mocks base method.
-func (m *MockProviderKubectlClient) GetHardwareForCluster(arg0 context.Context, arg1, arg2, arg3 string) ([]v1alpha1.Hardware, error) {
+// GetBmcsPowerState mocks base method.
+func (m *MockProviderKubectlClient) GetBmcsPowerState(arg0 context.Context, arg1 []string, arg2, arg3 string) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetHardwareForCluster", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "GetBmcsPowerState", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBmcsPowerState indicates an expected call of GetBmcsPowerState.
+func (mr *MockProviderKubectlClientMockRecorder) GetBmcsPowerState(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBmcsPowerState", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetBmcsPowerState), arg0, arg1, arg2, arg3)
+}
+
+// GetHardwareWithOwnerName mocks base method.
+func (m *MockProviderKubectlClient) GetHardwareWithOwnerName(arg0 context.Context, arg1, arg2 string) ([]v1alpha1.Hardware, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetHardwareWithOwnerName", arg0, arg1, arg2)
 	ret0, _ := ret[0].([]v1alpha1.Hardware)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetHardwareForCluster indicates an expected call of GetHardwareForCluster.
-func (mr *MockProviderKubectlClientMockRecorder) GetHardwareForCluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+// GetHardwareWithOwnerName indicates an expected call of GetHardwareWithOwnerName.
+func (mr *MockProviderKubectlClientMockRecorder) GetHardwareWithOwnerName(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardwareForCluster", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetHardwareForCluster), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardwareWithOwnerName", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetHardwareWithOwnerName), arg0, arg1, arg2)
 }
 
 // GetMachineDeployment mocks base method.
@@ -118,20 +133,6 @@ func (mr *MockProviderKubectlClientMockRecorder) GetMachineDeployment(arg0, arg1
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineDeployment", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetMachineDeployment), varargs...)
-}
-
-// ValidateBmcsPowerState mocks base method.
-func (m *MockProviderKubectlClient) ValidateBmcsPowerState(arg0 context.Context, arg1 []string, arg2, arg3, arg4 string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateBmcsPowerState", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// ValidateBmcsPowerState indicates an expected call of ValidateBmcsPowerState.
-func (mr *MockProviderKubectlClientMockRecorder) ValidateBmcsPowerState(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateBmcsPowerState", reflect.TypeOf((*MockProviderKubectlClient)(nil).ValidateBmcsPowerState), arg0, arg1, arg2, arg3, arg4)
 }
 
 // MockProviderTinkClient is a mock of ProviderTinkClient interface.

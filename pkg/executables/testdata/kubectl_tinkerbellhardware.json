@@ -19,26 +19,6 @@
               },
               "name": "hw2"
             }
-        },
-        {
-            "apiVersion": "tinkerbell.org/v1alpha1",
-            "kind": "Hardware",
-            "metadata": {
-              "labels": {
-                "v1alpha1.tinkerbell.org/ownerName": "tink-nottest-controlplane-0-ccl90"
-              },
-              "name": "hw3"
-            }
-        },
-        {
-            "apiVersion": "tinkerbell.org/v1alpha1",
-            "kind": "Hardware",
-            "metadata": {
-              "labels": {
-                "v1alpha1.tinkerbell.org/ownerName": "tink-nottest-controlplane-0-ccl90"
-              },
-              "name": "hw3"
-            }
         }
     ]
 }

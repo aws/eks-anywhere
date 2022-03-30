@@ -1685,7 +1685,7 @@ func TestApplyTolerationsFromTaints(t *testing.T) {
 	tt.Expect(tt.k.ApplyTolerationsFromTaints(tt.ctx, taints, taints, "ds", "test", tt.cluster.KubeconfigFile, "testNs", "/test")).To(Succeed())
 }
 
-func TestValidateBmcsPowerState(t *testing.T) {
+func TestGetBmcsPowerState(t *testing.T) {
 	tt := newKubectlTest(t)
 	bmcNames := []string{"bmc-1", "bmc-2"}
 	params := []string{
@@ -1693,11 +1693,14 @@ func TestValidateBmcsPowerState(t *testing.T) {
 		"-o", "jsonpath={.items[*].status.powerState}",
 		"--kubeconfig", tt.cluster.KubeconfigFile, "-n", tt.namespace,
 	}
+	want := []string{"POWER_ACTION_HARDOFF", "POWER_ACTION_HARDOFF"}
 	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString("POWER_ACTION_HARDOFF POWER_ACTION_HARDOFF"), nil)
-	tt.Expect(tt.k.ValidateBmcsPowerState(tt.ctx, bmcNames, "POWER_ACTION_HARDOFF", tt.cluster.KubeconfigFile, tt.namespace)).To(Succeed())
+	got, err := tt.k.GetBmcsPowerState(tt.ctx, bmcNames, tt.cluster.KubeconfigFile, tt.namespace)
+	tt.Expect(err).To(BeNil())
+	tt.Expect(got).To(Equal(want))
 }
 
-func TestGetHardwareForCluster(t *testing.T) {
+func TestGetHardwareWithOwnerName(t *testing.T) {
 	tt := newKubectlTest(t)
 	hardwaresJson := test.ReadFile(t, "testdata/kubectl_tinkerbellhardware.json")
 	wantHardwares := []tinkv1alpha1.Hardware{
@@ -1733,7 +1736,7 @@ func TestGetHardwareForCluster(t *testing.T) {
 	}
 	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(hardwaresJson), nil)
 
-	got, err := tt.k.GetHardwareForCluster(tt.ctx, "tink-test", tt.cluster.KubeconfigFile, tt.namespace)
+	got, err := tt.k.GetHardwareWithOwnerName(tt.ctx, tt.cluster.KubeconfigFile, tt.namespace)
 	tt.Expect(err).To(BeNil())
 	tt.Expect(got).To(Equal(wantHardwares))
 }

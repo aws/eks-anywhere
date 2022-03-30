@@ -1412,9 +1412,8 @@ func (k *Kubectl) GetResources(ctx context.Context, resourceType string, opts ..
 	return stdOut.String(), err
 }
 
-// GetHardwareForCluster gets the hardwares with ownerName label.
-// Then iterates to filter the hardwares that correspond to the given clusterName.
-func (k *Kubectl) GetHardwareForCluster(ctx context.Context, clusterName, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error) {
+// GetHardwareWithOwnerName gets the hardwares with ownerName label.
+func (k *Kubectl) GetHardwareWithOwnerName(ctx context.Context, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error) {
 	params := []string{
 		"get", captHardwareResourceType, "-o", "json", "--kubeconfig",
 		kubeconfigFile, "--namespace", namespace, "--selector=v1alpha1.tinkerbell.org/ownerName",
@@ -1430,34 +1429,19 @@ func (k *Kubectl) GetHardwareForCluster(ctx context.Context, clusterName, kubeco
 		return nil, fmt.Errorf("parsing get hardware response: %v", err)
 	}
 
-	// Filtering the hardware with ownerName mapping to cluster name.
-	var filteredHardwareList []tinkv1alpha1.Hardware
-	for _, hw := range response.Items {
-		if strings.Contains(hw.Labels["v1alpha1.tinkerbell.org/ownerName"], clusterName) {
-			filteredHardwareList = append(filteredHardwareList, hw)
-		}
-	}
-
-	return filteredHardwareList, nil
+	return response.Items, nil
 }
 
-// ValidateBmcsPowerState validates if the given BMC CRs all have the desired powerState.
-func (k *Kubectl) ValidateBmcsPowerState(ctx context.Context, bmcNames []string, powerState, kubeconfigFile, namespace string) error {
+// GetBmcsPowerState gets the .status.powerState for the Bmcs.
+func (k *Kubectl) GetBmcsPowerState(ctx context.Context, bmcNames []string, kubeconfigFile, namespace string) ([]string, error) {
 	params := []string{"get", captBmcResourceType}
 	params = append(params, bmcNames...)
 	params = append(params, "-o", "jsonpath={.items[*].status.powerState}", "--kubeconfig", kubeconfigFile, "-n", namespace)
 
 	buffer, err := k.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("executing get: %v", err)
+		return nil, fmt.Errorf("executing get: %v", err)
 	}
 
-	powerStates := strings.Fields(buffer.String())
-	for _, state := range powerStates {
-		if !strings.Contains(state, powerState) {
-			return fmt.Errorf("bmc current power state: %s expected power state: %s", state, powerState)
-		}
-	}
-
-	return nil
+	return strings.Fields(buffer.String()), nil
 }

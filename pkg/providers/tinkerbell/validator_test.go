@@ -129,24 +129,6 @@ func TestValidateTinkerbellConfig_InvalidPbnjAuthority(t *testing.T) {
 	}
 }
 
-func TestValidateHardwaresAreFound_Success(t *testing.T) {
-	hardwares := make([]tinkv1alpha1.Hardware, 3)
-	var validator tinkerbell.Validator
-
-	err := validator.ValidateHardwaresAreFound(hardwares)
-
-	assert.NoError(t, err)
-}
-
-func TestValidateHardwaresAreFound_Error(t *testing.T) {
-	hardwares := make([]tinkv1alpha1.Hardware, 0, 3)
-	var validator tinkerbell.Validator
-
-	err := validator.ValidateHardwaresAreFound(hardwares)
-
-	assert.Error(t, err)
-}
-
 func newValidClusterSpec(cp, etcd, worker int) v1alpha1.ClusterSpec {
 	return v1alpha1.ClusterSpec{
 		ControlPlaneConfiguration: v1alpha1.ControlPlaneConfiguration{

@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/url"
 
-	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
 	"sigs.k8s.io/yaml"
@@ -249,15 +248,6 @@ func (v *Validator) ValidateMinimumRequiredTinkerbellHardwareAvailable(spec v1al
 			len(v.hardwareConfig.Hardwares),
 			requestedNodesCount,
 		)
-	}
-
-	return nil
-}
-
-// ValidateHardwaresAreFound ensures that there are one or more hardware CRDs presnt in the hardware list for a cluster.
-func (v *Validator) ValidateHardwaresAreFound(hardwares []tinkv1alpha1.Hardware) error {
-	if len(hardwares) == 0 {
-		return fmt.Errorf("no hardware found for cluster")
 	}
 
 	return nil

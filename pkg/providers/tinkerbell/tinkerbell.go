@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	tinkv1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
@@ -90,8 +91,8 @@ type ProviderKubectlClient interface {
 	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType string, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType string, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) error
 	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
-	GetHardwareForCluster(ctx context.Context, clusterName, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error)
-	ValidateBmcsPowerState(ctx context.Context, bmcNames []string, powerState, kubeconfigFile, namespace string) error
+	GetHardwareWithOwnerName(ctx context.Context, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error)
+	GetBmcsPowerState(ctx context.Context, bmcNames []string, kubeconfigFile, namespace string) ([]string, error)
 }
 
 type ProviderTinkClient interface {
@@ -262,10 +263,21 @@ func (p *tinkerbellProvider) PostClusterDeleteValidate(ctx context.Context, mana
 		bmcRefs = append(bmcRefs, hw.Spec.BmcRef)
 	}
 
-	// TODO (pokearu): The retry logic can be substituted by changing ValidateBmcsPowerState to use kubectl wait --for
+	// TODO (pokearu): The retry logic can be substituted by changing GetBmcsPowerState to use kubectl wait --for
 	// In the current version of kubectl in EKSA --for does not support jsonpath.
 	err := retrier.Retry(10, 10*time.Second, func() error {
-		return p.providerKubectlClient.ValidateBmcsPowerState(ctx, bmcRefs, bmcStatePowerActionHardoff, managementCluster.KubeconfigFile, constants.EksaSystemNamespace)
+		powerStates, err := p.providerKubectlClient.GetBmcsPowerState(ctx, bmcRefs, managementCluster.KubeconfigFile, constants.EksaSystemNamespace)
+		if err != nil {
+			return err
+		}
+
+		for _, state := range powerStates {
+			if !strings.Contains(state, bmcStatePowerActionHardoff) {
+				return fmt.Errorf("bmc current power state: %s expected power state: %s", state, bmcStatePowerActionHardoff)
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
 		return fmt.Errorf("cluster nodes not in power off state: %v", err)
@@ -442,17 +454,32 @@ func (p *tinkerbellProvider) SetupAndValidateDeleteCluster(ctx context.Context, 
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
-	hardwares, err := p.providerKubectlClient.GetHardwareForCluster(ctx, cluster.Name, cluster.KubeconfigFile, constants.EksaSystemNamespace)
+	hardwares, err := p.providerKubectlClient.GetHardwareWithOwnerName(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace)
 	if err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
-	p.hardwares = hardwares
-
-	if err = p.validator.ValidateHardwaresAreFound(p.hardwares); err != nil {
+	filteredHws, err := filterHardwareForCluster(hardwares, cluster.Name)
+	if err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
+	p.hardwares = filteredHws
 
 	return nil
+}
+
+// filterHardwareForCluster filters hardware with ownerName label that contains cluster name.
+func filterHardwareForCluster(hardwares []tinkv1alpha1.Hardware, clusterName string) ([]tinkv1alpha1.Hardware, error) {
+	var filteredHardwareList []tinkv1alpha1.Hardware
+	for _, hw := range hardwares {
+		if strings.Contains(hw.Labels["v1alpha1.tinkerbell.org/ownerName"], clusterName) {
+			filteredHardwareList = append(filteredHardwareList, hw)
+		}
+	}
+	// Ensure that there are one or more hardware CRDs presnt in the hardware list for a cluster.
+	if len(filteredHardwareList) == 0 {
+		return nil, fmt.Errorf("no hardware found for cluster %s", clusterName)
+	}
+	return filteredHardwareList, nil
 }
 
 func (p *tinkerbellProvider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec) error {
