@@ -49,10 +49,16 @@ spec:
 
 From here, we can use `kubectl apply` to apply the content from the EKSD release CRD & manifest to the cluster.
 
-#### Cluster status changes
+#### Cluster spec changes
 
 We will need a way to refer to the EKSD release object on the cluster when calling it from the controller.
-One way to achieve this is by adding a field `eksdReleaseRef` to the cluster status.
+One way to achieve this is by grabbing the EKSD bundle from the bundles object.
+We already apply the bundles to the cluster, and we fetch the bundles object in the controller.
+However, we depend on the cluster name to fetch this bundle.
+A more accurate way to fetch this bundle is by adding a field `bundlesRef` to the cluster spec.
+This will serve as our source of truth for the bundles object on the cluster.
+
+
 ```
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: Cluster
@@ -61,15 +67,14 @@ metadata:
 spec:
   controlPlaneConfiguration:
     ...
-status:
-  eksdReleaseRef:
-    apiGroup: distro.eks.amazonaws.com/v1alpha1
-    kind: Release
-    name: "name of resource"
-    namespace: "namespace for resource" (default: eksa-system)
+  bundlesRef:
+    apiGroup: anywhere.eks.amazonaws.com/v1alpha1
+    kind: Bundles
+    name: "bundle-name"
+    namespace: eksa-system 
 ```
 
-From here, we can call `kubectl get release` using the `eksdReleaseRef.Name` to access the EKSD release manifest from the controller.
+This bundles ref will allow us to accurately fetch the bundle from the cluster, access the EKSD bundle, and grab the correct release manifest in the controller.
 
 ### Upgrading EKSD components
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -22,6 +23,7 @@ import (
 	mocksmanager "github.com/aws/eks-anywhere/pkg/clustermanager/mocks"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	mocksdiagnostics "github.com/aws/eks-anywhere/pkg/diagnostics/interfaces/mocks"
+	"github.com/aws/eks-anywhere/pkg/features"
 	mockswriter "github.com/aws/eks-anywhere/pkg/filewriter/mocks"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	mocksprovider "github.com/aws/eks-anywhere/pkg/providers/mocks"
@@ -43,10 +45,11 @@ func TestClusterManagerInstallNetworkingSuccess(t *testing.T) {
 	clusterSpec := test.NewClusterSpec()
 
 	c, m := newClusterManager(t)
-	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec).Return(networkingManifest, nil)
+	m.provider.EXPECT().GetDeployments()
+	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec, []string{}).Return(networkingManifest, nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, networkingManifest)
 
-	if err := c.InstallNetworking(ctx, cluster, clusterSpec); err != nil {
+	if err := c.InstallNetworking(ctx, cluster, clusterSpec, m.provider); err != nil {
 		t.Errorf("ClusterManager.InstallNetworking() error = %v, wantErr nil", err)
 	}
 }
@@ -57,9 +60,10 @@ func TestClusterManagerInstallNetworkingNetworkingError(t *testing.T) {
 	clusterSpec := test.NewClusterSpec()
 
 	c, m := newClusterManager(t)
-	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec).Return(nil, errors.New("error in networking"))
+	m.provider.EXPECT().GetDeployments()
+	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec, []string{}).Return(nil, errors.New("error in networking"))
 
-	if err := c.InstallNetworking(ctx, cluster, clusterSpec); err == nil {
+	if err := c.InstallNetworking(ctx, cluster, clusterSpec, m.provider); err == nil {
 		t.Errorf("ClusterManager.InstallNetworking() error = nil, wantErr not nil")
 	}
 }
@@ -72,11 +76,12 @@ func TestClusterManagerInstallNetworkingClientError(t *testing.T) {
 	retries := 2
 
 	c, m := newClusterManager(t)
-	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec).Return(networkingManifest, nil)
+	m.provider.EXPECT().GetDeployments()
+	m.networking.EXPECT().GenerateManifest(ctx, clusterSpec, []string{}).Return(networkingManifest, nil)
 	m.client.EXPECT().ApplyKubeSpecFromBytes(ctx, cluster, networkingManifest).Return(errors.New("error from client")).Times(retries)
 
 	c.Retrier = retrier.NewWithMaxRetries(retries, 1*time.Microsecond)
-	if err := c.InstallNetworking(ctx, cluster, clusterSpec); err == nil {
+	if err := c.InstallNetworking(ctx, cluster, clusterSpec, m.provider); err == nil {
 		t.Errorf("ClusterManager.InstallNetworking() error = nil, wantErr not nil")
 	}
 }
@@ -476,6 +481,7 @@ func TestClusterManagerUpgradeWorkloadClusterSuccess(t *testing.T) {
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace).Times(2)
 	tt.mocks.provider.EXPECT().RunPostControlPlaneUpgrade(tt.ctx, tt.clusterSpec, tt.clusterSpec, wCluster, mCluster)
 	tt.mocks.client.EXPECT().WaitForControlPlaneReady(tt.ctx, mCluster, "60m", clusterName).MaxTimes(2)
+	tt.mocks.client.EXPECT().WaitForControlPlaneNotReady(tt.ctx, mCluster, "1m", clusterName)
 	tt.mocks.client.EXPECT().GetMachines(tt.ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil).Times(2)
 	tt.mocks.provider.EXPECT().MachineDeploymentsToDelete(wCluster, tt.clusterSpec, tt.clusterSpec.DeepCopy()).Return([]string{})
 	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
@@ -510,6 +516,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForMachinesTimeout(t *testing.T
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	tt.mocks.provider.EXPECT().RunPostControlPlaneUpgrade(tt.ctx, tt.clusterSpec, tt.clusterSpec, wCluster, mCluster)
 	tt.mocks.client.EXPECT().WaitForControlPlaneReady(ctx, mCluster, "60m", clusterName)
+	tt.mocks.client.EXPECT().WaitForControlPlaneNotReady(tt.ctx, mCluster, "1m", clusterName)
 	tt.mocks.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 	// Fail once
 	tt.mocks.client.EXPECT().GetMachines(ctx, mCluster, mCluster.Name).Times(1).Return(nil, errors.New("error get machines"))
@@ -553,6 +560,7 @@ func TestClusterManagerCreateWorkloadClusterWaitForMachinesFailedWithUnhealthyNo
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace)
 	tt.mocks.provider.EXPECT().RunPostControlPlaneUpgrade(tt.ctx, tt.clusterSpec, tt.clusterSpec, wCluster, mCluster)
 	tt.mocks.client.EXPECT().WaitForControlPlaneReady(tt.ctx, mCluster, "60m", clusterName).MaxTimes(5)
+	tt.mocks.client.EXPECT().WaitForControlPlaneNotReady(tt.ctx, mCluster, "1m", clusterName)
 	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).MaxTimes(10)
 	tt.mocks.writer.EXPECT().Write(clusterName+"-eks-a-cluster.yaml", gomock.Any(), gomock.Not(gomock.Nil()))
 	// Return a machine with no nodeRef the rest of the retries
@@ -581,6 +589,7 @@ func TestClusterManagerUpgradeWorkloadClusterWaitForCAPITimeout(t *testing.T) {
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytesWithNamespace(tt.ctx, mCluster, test.OfType("[]uint8"), constants.EksaSystemNamespace).Times(2)
 	tt.mocks.provider.EXPECT().RunPostControlPlaneUpgrade(tt.ctx, tt.clusterSpec, tt.clusterSpec, wCluster, mCluster)
 	tt.mocks.client.EXPECT().WaitForControlPlaneReady(tt.ctx, mCluster, "60m", clusterName).MaxTimes(2)
+	tt.mocks.client.EXPECT().WaitForControlPlaneNotReady(tt.ctx, mCluster, "1m", clusterName)
 	tt.mocks.client.EXPECT().GetMachines(tt.ctx, mCluster, mCluster.Name).Return([]types.Machine{}, nil).Times(2)
 	tt.mocks.provider.EXPECT().MachineDeploymentsToDelete(wCluster, tt.clusterSpec, tt.clusterSpec.DeepCopy()).Return([]string{})
 	tt.mocks.client.EXPECT().WaitForDeployment(tt.ctx, wCluster, "30m", "Available", gomock.Any(), gomock.Any()).Return(errors.New("time out"))
@@ -726,6 +735,9 @@ func TestClusterManagerMoveCAPIErrorGetMachines(t *testing.T) {
 }
 
 func TestClusterManagerCreateEKSAResourcesSuccess(t *testing.T) {
+	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+	os.Unsetenv(features.CloudStackProviderEnvVar)
+	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
 	ctx := context.Background()
 	tt := newTest(t)
 	tt.clusterSpec.VersionsBundle.EksD.Components = "testdata/eksa_components.yaml"

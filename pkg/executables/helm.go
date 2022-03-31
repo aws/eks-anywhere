@@ -5,10 +5,13 @@ import (
 	"fmt"
 
 	"sigs.k8s.io/yaml"
+
+	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
 const (
-	helmPath = "helm"
+	helmPath               = "helm"
+	insecureSkipVerifyFlag = "--insecure-skip-tls-verify"
 )
 
 var helmTemplateEnvVars = map[string]string{
@@ -32,11 +35,29 @@ func (h *Helm) Template(ctx context.Context, ociURI, version, namespace string, 
 	}
 
 	result, err := h.executable.Command(
-		ctx, "template", ociURI, "--version", version, "--namespace", namespace, "-f", "-",
+		ctx, "template", ociURI, "--version", version, insecureSkipVerifyFlag, "--namespace", namespace, "-f", "-",
 	).WithStdIn(valuesYaml).WithEnvVars(helmTemplateEnvVars).Run()
 	if err != nil {
 		return nil, err
 	}
 
 	return result.Bytes(), nil
+}
+
+func (h *Helm) PullChart(ctx context.Context, ociURI, version string) error {
+	_, err := h.executable.Command(ctx, "pull", ociURI, "--version", version, insecureSkipVerifyFlag).
+		WithEnvVars(helmTemplateEnvVars).Run()
+	return err
+}
+
+func (h *Helm) PushChart(ctx context.Context, chart, registry string) error {
+	logger.Info("Pushing", "chart", chart)
+	_, err := h.executable.Command(ctx, "push", chart, registry, insecureSkipVerifyFlag).WithEnvVars(helmTemplateEnvVars).Run()
+	return err
+}
+
+func (h *Helm) RegistryLogin(ctx context.Context, registry, username, password string) error {
+	logger.Info("Logging in to helm registry", "registry", registry)
+	_, err := h.executable.Command(ctx, "registry", "login", registry, "--username", username, "--password", password, "--insecure").WithEnvVars(helmTemplateEnvVars).Run()
+	return err
 }

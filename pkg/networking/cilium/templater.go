@@ -99,7 +99,7 @@ func (c *Templater) GenerateNetworkPolicyManifest(spec *cluster.Spec, namespaces
 	as needed*/
 	k8sVersion, err := semver.New(spec.VersionsBundle.KubeDistro.Kubernetes.Tag)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing kubernetes version %v: %v", spec.Cluster.Spec.KubernetesVersion, err)
+		return nil, fmt.Errorf("parsing kubernetes version %v: %v", spec.Cluster.Spec.KubernetesVersion, err)
 	}
 	if k8sVersion.Major == 1 && k8sVersion.Minor >= 21 {
 		values["kubeSystemNSHasLabel"] = true
@@ -124,7 +124,7 @@ func (c values) set(value interface{}, path ...string) {
 }
 
 func templateValues(spec *cluster.Spec) values {
-	return values{
+	val := values{
 		"cni": values{
 			"chainingMode": "portmap",
 		},
@@ -153,6 +153,11 @@ func templateValues(spec *cluster.Spec) values {
 			},
 		},
 	}
+
+	if spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode != "" {
+		val["policyEnforcementMode"] = spec.Cluster.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode
+	}
+	return val
 }
 
 func getChartUriAndVersion(spec *cluster.Spec) (uri, version string) {

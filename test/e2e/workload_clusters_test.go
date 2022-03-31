@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"testing"
+	"time"
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -17,6 +18,7 @@ func runWorkloadClusterFlow(test *framework.MulticlusterE2ETest) {
 		w.CreateCluster()
 		w.DeleteCluster()
 	})
+	time.Sleep(5 * time.Minute)
 	test.DeleteManagementCluster()
 }
 
@@ -26,8 +28,10 @@ func runWorkloadClusterFlowWithGitOps(test *framework.MulticlusterE2ETest, clust
 		w.GenerateClusterConfig()
 		w.CreateCluster()
 		w.UpgradeWithGitOps(clusterOpts...)
+		time.Sleep(5 * time.Minute)
 		w.DeleteCluster()
 	})
+	time.Sleep(5 * time.Minute)
 	test.DeleteManagementCluster()
 }
 
@@ -131,5 +135,8 @@ func TestDockerUpgradeWorkloadClusterWithFlux(t *testing.T) {
 			api.WithControlPlaneCount(2),
 			api.WithWorkerNodeCount(2),
 		),
+		// Needed in order to replace the DockerDatacenterConfig namespace field with the value specified
+		// compared to when it was initially created without it.
+		provider.WithProviderUpgradeGit(),
 	)
 }

@@ -25,8 +25,11 @@ func CAPICluster(clusterSpec *cluster.Spec, snowCluster *snowv1.AWSSnowCluster, 
 	return cluster
 }
 
-func KubeadmControlPlane(clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) *controlplanev1.KubeadmControlPlane {
-	kcp := clusterapi.KubeadmControlPlane(clusterSpec, snowMachineTemplate)
+func KubeadmControlPlane(clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) (*controlplanev1.KubeadmControlPlane, error) {
+	kcp, err := clusterapi.KubeadmControlPlane(clusterSpec, snowMachineTemplate)
+	if err != nil {
+		return nil, fmt.Errorf("failed generating KubeadmControlPlane: %v", err)
+	}
 
 	// TODO: support unstacked etcd
 	stackedEtcdExtraArgs := kcp.Spec.KubeadmConfigSpec.ClusterConfiguration.Etcd.Local.ExtraArgs
@@ -39,37 +42,43 @@ func KubeadmControlPlane(clusterSpec *cluster.Spec, snowMachineTemplate *snowv1.
 	joinConfigKubeletExtraArg := kcp.Spec.KubeadmConfigSpec.JoinConfiguration.NodeRegistration.KubeletExtraArgs
 	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
-	kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = []string{
+	kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PreKubeadmCommands,
 		fmt.Sprintf("/etc/eks/bootstrap.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host),
-	}
+	)
 
-	kcp.Spec.KubeadmConfigSpec.PostKubeadmCommands = []string{
+	kcp.Spec.KubeadmConfigSpec.PostKubeadmCommands = append(kcp.Spec.KubeadmConfigSpec.PostKubeadmCommands,
 		fmt.Sprintf("/etc/eks/bootstrap-after.sh %s %s", clusterSpec.VersionsBundle.Snow.KubeVip.VersionedImage(), clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host),
-	}
+	)
 
-	return kcp
+	return kcp, nil
 }
 
-func kubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) bootstrapv1.KubeadmConfigTemplate {
-	kct := clusterapi.KubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
+func kubeadmConfigTemplate(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration) (*bootstrapv1.KubeadmConfigTemplate, error) {
+	kct, err := clusterapi.KubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed generating KubeadmConfigTemplate: %v", err)
+	}
 
 	joinConfigKubeletExtraArg := kct.Spec.Template.Spec.JoinConfiguration.NodeRegistration.KubeletExtraArgs
 	joinConfigKubeletExtraArg["provider-id"] = "aws-snow:////'{{ ds.meta_data.instance_id }}'"
 
-	kct.Spec.Template.Spec.PreKubeadmCommands = []string{
+	kct.Spec.Template.Spec.PreKubeadmCommands = append(kct.Spec.Template.Spec.PreKubeadmCommands,
 		"/etc/eks/bootstrap.sh",
-	}
-	return kct
+	)
+	return kct, nil
 }
 
-func KubeadmConfigTemplates(clusterSpec *cluster.Spec) map[string]*bootstrapv1.KubeadmConfigTemplate {
+func KubeadmConfigTemplates(clusterSpec *cluster.Spec) (map[string]*bootstrapv1.KubeadmConfigTemplate, error) {
 	m := make(map[string]*bootstrapv1.KubeadmConfigTemplate, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 
 	for _, workerNodeGroupConfig := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		template := kubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
-		m[workerNodeGroupConfig.Name] = &template
+		template, err := kubeadmConfigTemplate(clusterSpec, workerNodeGroupConfig)
+		if err != nil {
+			return nil, err
+		}
+		m[workerNodeGroupConfig.Name] = template
 	}
-	return m
+	return m, nil
 }
 
 func machineDeployment(clusterSpec *cluster.Spec, workerNodeGroupConfig v1alpha1.WorkerNodeGroupConfiguration, kubeadmConfigTemplate *bootstrapv1.KubeadmConfigTemplate, snowMachineTemplate *snowv1.AWSSnowMachineTemplate) clusterv1.MachineDeployment {

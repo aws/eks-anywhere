@@ -81,9 +81,12 @@ spec:
         {{$key}}: {{$value}}
 {{- end}}
 {{- end}}
-{{- if .affinityGroupIds }}
+{{- if .cloudstackControlPlaneAffinity }}
+      affinity: '{{ .cloudstackControlPlaneAffinity }}'
+{{- end }}
+{{- if .cloudstackControlPlaneAffinityGroupIds }}
       affinitygroupids:
-      {{- range .affinityGroupIds}}
+      {{- range .cloudstackControlPlaneAffinityGroupIds}}
       - {{.}}
       {{- end }}
 {{- end }}
@@ -143,11 +146,6 @@ spec:
           mountPath: /var/log/kubernetes
           name: audit-log-dir
           pathType: DirectoryOrCreate
-          readOnly: false
-        - hostPath: /var/log/kubernetes/api-audit.log
-          mountPath: /var/log/kubernetes/api-audit.log
-          name: audit-log
-          pathType: FileOrCreate
           readOnly: false
 {{- if .awsIamAuth}}
         - hostPath: /var/lib/kubeadm/aws-iam-authenticator/
@@ -440,6 +438,9 @@ spec:
         {{$key}}: {{$value}}
 {{- end}}
 {{- end}}
+{{- if .cloudstackEtcdAffinity }}
+      affinity: '{{ .cloudstackEtcdAffinity }}'
+{{- end }}
 {{- if .cloudstackEtcdAffinityGroupIds }}
       affinitygroupids:
       {{- range .cloudstackEtcdAffinityGroupIds }}

@@ -39,6 +39,7 @@ func thenErrorExpected(t *testing.T, expected string, err error) {
 
 func TestValidateCloudStackDatacenterConfig(t *testing.T) {
 	ctx := context.Background()
+	setupContext()
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
 	validator := NewValidator(cmk)
 
@@ -116,6 +117,7 @@ func TestValidateMachineConfigsMultipleWorkerNodeGroupsUnsupported(t *testing.T)
 
 func TestValidateDatacenterConfigsNoNetwork(t *testing.T) {
 	ctx := context.Background()
+	setupContext()
 	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
 	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
 	if err != nil {
@@ -157,7 +159,29 @@ func TestValidateDatacenterBadManagementEndpoint(t *testing.T) {
 	datacenterConfig.Spec.ManagementApiEndpoint = ":1234.5234"
 	err = validator.ValidateCloudStackDatacenterConfig(ctx, cloudStackClusterSpec.datacenterConfig)
 
-	thenErrorExpected(t, "error while checking management api endpoint: :1234.5234 is not a valid url", err)
+	thenErrorExpected(t, "checking management api endpoint: :1234.5234 is not a valid url", err)
+}
+
+func TestValidateDatacenterInconsistentManagementEndpoints(t *testing.T) {
+	ctx := context.Background()
+	setupContext()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get datacenter config from file")
+	}
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	cloudStackClusterSpec := &Spec{
+		Spec:                 clusterSpec,
+		datacenterConfig:     datacenterConfig,
+		machineConfigsLookup: nil,
+	}
+	validator := NewValidator(cmk)
+
+	datacenterConfig.Spec.ManagementApiEndpoint = "abcefg.com"
+	err = validator.ValidateCloudStackDatacenterConfig(ctx, cloudStackClusterSpec.datacenterConfig)
+
+	thenErrorExpected(t, "cloudstack secret management url (http://127.16.0.1:8080/client/api) differs from cluster spec management url (abcefg.com)", err)
 }
 
 func TestSetupAndValidateUsersNil(t *testing.T) {
@@ -487,4 +511,56 @@ func TestValidateCloudStackMachineConfig(t *testing.T) {
 			t.Fatalf("failed to validate CloudStackMachineConfig: %v", err)
 		}
 	}
+}
+
+func TestValidateMachineConfigsWithAffinity(t *testing.T) {
+	ctx := context.Background()
+	cmk := mocks.NewMockProviderCmkClient(gomock.NewController(t))
+	machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get machine configs from file %s", testClusterConfigMainFilename)
+	}
+	datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(path.Join(testDataDir, testClusterConfigMainFilename))
+	if err != nil {
+		t.Fatalf("unable to get datacenter config from file")
+	}
+	clusterSpec := test.NewFullClusterSpec(t, path.Join(testDataDir, testClusterConfigMainFilename))
+	cloudStackClusterSpec := &Spec{
+		Spec:                 clusterSpec,
+		datacenterConfig:     datacenterConfig,
+		machineConfigsLookup: machineConfigs,
+	}
+	cloudStackClusterSpec.controlPlaneMachineConfig().Spec.Affinity = "pro"
+	cloudStackClusterSpec.controlPlaneMachineConfig().Spec.AffinityGroupIds = []string{}
+	cloudStackClusterSpec.etcdMachineConfig().Spec.Affinity = "anti"
+	cloudStackClusterSpec.etcdMachineConfig().Spec.AffinityGroupIds = []string{}
+	for _, machineConfig := range machineConfigs {
+		machineConfig.Spec.Affinity = "no"
+		machineConfig.Spec.AffinityGroupIds = []string{}
+	}
+
+	validator := NewValidator(cmk)
+	cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any()).AnyTimes()
+	cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).AnyTimes().Return([]v1alpha1.CloudStackResourceIdentifier{{Name: "zone1", Id: "4e3b338d-87a6-4189-b931-a1747edeea8f"}}, nil)
+	cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(),
+		gomock.Any(), datacenterConfig.Spec.Account, testTemplate).AnyTimes()
+	cmk.EXPECT().ValidateServiceOfferingPresent(ctx, gomock.Any(), testOffering).AnyTimes()
+	cmk.EXPECT().ValidateAffinityGroupsPresent(ctx, gomock.Any(), datacenterConfig.Spec.Account, gomock.Any()).AnyTimes()
+
+	// Valid affinity types
+	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
+	assert.Nil(t, err)
+
+	// Bad affinity type
+	originalValue := cloudStackClusterSpec.controlPlaneMachineConfig().Spec.Affinity
+	cloudStackClusterSpec.controlPlaneMachineConfig().Spec.Affinity = "xxx"
+	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
+	assert.NotNil(t, err)
+	cloudStackClusterSpec.controlPlaneMachineConfig().Spec.Affinity = originalValue
+
+	// Both affinity and affinityGroupIds are defined
+	cloudStackClusterSpec.controlPlaneMachineConfig().Spec.AffinityGroupIds = []string{"affinity-group-1"}
+	err = validator.ValidateClusterMachineConfigs(ctx, cloudStackClusterSpec)
+	assert.NotNil(t, err)
+	cloudStackClusterSpec.controlPlaneMachineConfig().Spec.Affinity = originalValue
 }

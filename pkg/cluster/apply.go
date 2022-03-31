@@ -24,7 +24,7 @@ func ApplyExtraObjects(ctx context.Context, clusterClient ClusterClient, cluster
 	logger.V(4).Info("Applying extra objects", "cluster", clusterSpec.Cluster.Name, "resources", extraObjects.Names())
 	err := clusterClient.ApplyKubeSpecFromBytes(ctx, cluster, resourcesSpec)
 	if err != nil {
-		return fmt.Errorf("error applying spec for extra resources to cluster %s: %v", cluster.Name, err)
+		return fmt.Errorf("applying spec for extra resources to cluster %s: %v", cluster.Name, err)
 	}
 
 	return nil

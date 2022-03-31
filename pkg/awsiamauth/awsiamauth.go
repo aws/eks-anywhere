@@ -60,17 +60,17 @@ func (a *AwsIamAuthTemplateBuilder) GenerateManifest(clusterSpec *cluster.Spec, 
 
 	mapRoles, err := a.mapRolesToYaml(clusterSpec.AWSIamConfig.Spec.MapRoles)
 	if err != nil {
-		return nil, fmt.Errorf("error generating aws-iam-authenticator manifest: %v", err)
+		return nil, fmt.Errorf("generating aws-iam-authenticator manifest: %v", err)
 	}
 	data["mapRoles"] = mapRoles
 	mapUsers, err := a.mapUsersToYaml(clusterSpec.AWSIamConfig.Spec.MapUsers)
 	if err != nil {
-		return nil, fmt.Errorf("error generating aws-iam-authenticator manifest: %v", err)
+		return nil, fmt.Errorf("generating aws-iam-authenticator manifest: %v", err)
 	}
 	data["mapUsers"] = mapUsers
 	awsIamAuthManifest, err := templater.Execute(awsIamAuthTemplate, data)
 	if err != nil {
-		return nil, fmt.Errorf("error generating aws-iam-authenticator manifest: %v", err)
+		return nil, fmt.Errorf("generating aws-iam-authenticator manifest: %v", err)
 	}
 	return awsIamAuthManifest, nil
 }
@@ -82,7 +82,7 @@ func (a *AwsIamAuth) GenerateManifest(clusterSpec *cluster.Spec) ([]byte, error)
 func (a *AwsIamAuth) GenerateCertKeyPairSecret() ([]byte, error) {
 	certPemBytes, keyPemBytes, err := a.certgen.GenerateIamAuthSelfSignCertKeyPair()
 	if err != nil {
-		return nil, fmt.Errorf("error generating aws-iam-authenticator cert key pair secret: %v", err)
+		return nil, fmt.Errorf("generating aws-iam-authenticator cert key pair secret: %v", err)
 	}
 	data := map[string]string{
 		"namespace":    constants.EksaSystemNamespace,
@@ -91,7 +91,7 @@ func (a *AwsIamAuth) GenerateCertKeyPairSecret() ([]byte, error) {
 	}
 	awsIamAuthCaSecret, err := templater.Execute(awsIamAuthCaSecretTemplate, data)
 	if err != nil {
-		return nil, fmt.Errorf("error generating aws-iam-authenticator cert key pair secret: %v", err)
+		return nil, fmt.Errorf("generating aws-iam-authenticator cert key pair secret: %v", err)
 	}
 	return awsIamAuthCaSecret, nil
 }
@@ -105,7 +105,7 @@ func (a *AwsIamAuth) GenerateAwsIamAuthKubeconfig(clusterSpec *cluster.Spec, ser
 	}
 	awsIamAuthKubeconfig, err := templater.Execute(awsIamAuthKubeconfigTemplate, data)
 	if err != nil {
-		return nil, fmt.Errorf("error generating aws-iam-authenticator kubeconfig content: %v", err)
+		return nil, fmt.Errorf("generating aws-iam-authenticator kubeconfig content: %v", err)
 	}
 	return awsIamAuthKubeconfig, nil
 }
@@ -116,7 +116,7 @@ func (a *AwsIamAuthTemplateBuilder) mapRolesToYaml(m []v1alpha1.MapRoles) (strin
 	}
 	b, err := yaml.Marshal(m)
 	if err != nil {
-		return "", fmt.Errorf("error marshalling AWSIamConfig MapRoles: %v", err)
+		return "", fmt.Errorf("marshalling AWSIamConfig MapRoles: %v", err)
 	}
 	s := string(b)
 	s = strings.TrimSuffix(s, "\n")
@@ -130,7 +130,7 @@ func (a *AwsIamAuthTemplateBuilder) mapUsersToYaml(m []v1alpha1.MapUsers) (strin
 	}
 	b, err := yaml.Marshal(m)
 	if err != nil {
-		return "", fmt.Errorf("error marshalling AWSIamConfig MapUsers: %v", err)
+		return "", fmt.Errorf("marshalling AWSIamConfig MapUsers: %v", err)
 	}
 	s := string(b)
 	s = strings.TrimSuffix(s, "\n")

@@ -167,7 +167,7 @@ func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResul
 		opt,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error running e2e tests on instance %s: %v", e.instanceId, err)
+		return nil, fmt.Errorf("running e2e tests on instance %s: %v", e.instanceId, err)
 	}
 
 	return testCommandResult, nil
@@ -190,7 +190,7 @@ func (c instanceRunConf) runPostTestsProcessing(e *E2ESession, testCommandResult
 	value := "TRUE"
 	err := ec2.TagInstance(e.session, e.instanceId, key, value)
 	if err != nil {
-		return fmt.Errorf("error tagging instance for e2e success: %v", err)
+		return fmt.Errorf("tagging instance for e2e success: %v", err)
 	}
 
 	return nil

@@ -115,19 +115,19 @@ func autofill(ctx context.Context) error {
 
 	clusterOutput, err := yaml.Marshal(clusterConfig)
 	if err != nil {
-		return fmt.Errorf("error outputting yaml: %v", err)
+		return fmt.Errorf("outputting yaml: %v", err)
 	}
 	datacenterOutput, err := yaml.Marshal(datacenterConfig)
 	if err != nil {
-		return fmt.Errorf("error outputting yaml: %v", err)
+		return fmt.Errorf("outputting yaml: %v", err)
 	}
 	controlPlaneMachineOutput, err := yaml.Marshal(controlPlaneMachineConfig)
 	if err != nil {
-		return fmt.Errorf("error outputting yaml: %v", err)
+		return fmt.Errorf("outputting yaml: %v", err)
 	}
 	workerMachineOutput, err := yaml.Marshal(workerMachineConfig)
 	if err != nil {
-		return fmt.Errorf("error outputting yaml: %v", err)
+		return fmt.Errorf("outputting yaml: %v", err)
 	}
 	result := strings.ReplaceAll(string(datacenterOutput), "  aws: {}\n", "")
 	result = strings.ReplaceAll(result, "  vsphere: {}\n", "")
@@ -139,7 +139,7 @@ func autofill(ctx context.Context) error {
 	}
 	_, err = writer.Write(filepath.Base(clusterConfig.Name), []byte(result))
 	if err != nil {
-		return fmt.Errorf("error writing to file %s: %v", clusterConfig.Name, err)
+		return fmt.Errorf("writing to file %s: %v", clusterConfig.Name, err)
 	}
 	fmt.Printf("The following fields were updated: %v\n", updatedFields)
 	return nil

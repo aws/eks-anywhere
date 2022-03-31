@@ -1305,7 +1305,7 @@ func TestSetupAndValidateDeleteCluster(t *testing.T) {
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
 
-	err := provider.SetupAndValidateDeleteCluster(ctx)
+	err := provider.SetupAndValidateDeleteCluster(ctx, nil)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1319,7 +1319,7 @@ func TestSetupAndValidateDeleteClusterNoPassword(t *testing.T) {
 	defer tctx.RestoreContext()
 	os.Unsetenv(EksavSpherePasswordKey)
 
-	err := provider.SetupAndValidateDeleteCluster(ctx)
+	err := provider.SetupAndValidateDeleteCluster(ctx, nil)
 
 	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_PASSWORD is not set or is empty", err)
 }
@@ -2335,7 +2335,7 @@ func TestSetupAndValidateCreateClusterErrorCheckingTemplate(t *testing.T) {
 
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 
-	thenErrorExpected(t, "failed setting default values for vsphere machine configs: error setting template full path: "+errorMessage, err)
+	thenErrorExpected(t, "failed setting default values for vsphere machine configs: setting template full path: "+errorMessage, err)
 }
 
 func TestSetupAndValidateCreateClusterTemplateMissingTags(t *testing.T) {
@@ -2379,7 +2379,7 @@ func TestSetupAndValidateCreateClusterErrorGettingTags(t *testing.T) {
 
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 
-	thenErrorExpected(t, "error validating template tags: failed getting tags", err)
+	thenErrorExpected(t, "validating template tags: failed getting tags", err)
 }
 
 func TestSetupAndValidateCreateClusterDefaultTemplate(t *testing.T) {

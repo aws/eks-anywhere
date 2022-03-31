@@ -93,6 +93,11 @@ func (p *provider) DeleteResources(_ context.Context, _ *cluster.Spec) error {
 	return nil
 }
 
+func (p *provider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
+	// No validations
+	return nil
+}
+
 func (p *provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The docker infrastructure provider is meant for local development and testing only")
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint != nil && clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host != "" {
@@ -101,7 +106,7 @@ func (p *provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	return nil
 }
 
-func (p *provider) SetupAndValidateDeleteCluster(ctx context.Context) error {
+func (p *provider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
 	return nil
 }
 
@@ -361,7 +366,7 @@ func (p *provider) generateCAPISpecForCreate(ctx context.Context, cluster *types
 func (p *provider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForCreate(ctx, cluster, clusterSpec)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
+		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }
@@ -369,7 +374,7 @@ func (p *provider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types
 func (p *provider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
 	controlPlaneSpec, workersSpec, err = p.generateCAPISpecForUpgrade(ctx, bootstrapCluster, workloadCluster, currentSpec, newClusterSpec)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating cluster api spec contents: %v", err)
+		return nil, nil, fmt.Errorf("generating cluster api spec contents: %v", err)
 	}
 	return controlPlaneSpec, workersSpec, nil
 }

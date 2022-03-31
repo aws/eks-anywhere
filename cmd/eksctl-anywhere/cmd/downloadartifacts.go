@@ -20,6 +20,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/logger"
+	"github.com/aws/eks-anywhere/pkg/releases"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
@@ -65,19 +66,18 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 		return err
 	}
 
-	release, err := clusterSpec.GetRelease(cliVersion)
-	if err != nil {
-		return err
+	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration == nil || clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint == "" {
+		return fmt.Errorf("endpoint not set. It is necessary to define a valid endpoint in your spec (registryMirrorConfiguration.endpoint)")
 	}
-	bundlesManifestUrl := release.BundleManifestUrl
+	endpoint := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
 
 	reader := files.NewReader(files.WithUserAgent(fmt.Sprintf("eks-a-cli-download/%s", version.Get().GitVersion)))
 
 	// download the eks-a-release.yaml
 	if !opts.dryRun {
-		releaseManifestURL := clusterSpec.GetReleaseManifestUrl()
+		releaseManifestURL := releases.ManifestURL()
 		if err := downloadArtifact(filepath.Join(opts.downloadDir, filepath.Base(releaseManifestURL)), releaseManifestURL, reader); err != nil {
-			return fmt.Errorf("error downloading release manifest: %v", err)
+			return fmt.Errorf("downloading release manifest: %v", err)
 		}
 	}
 
@@ -92,19 +92,23 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 
 				filePath := filepath.Join(opts.downloadDir, bundle.KubeVersion, component, filepath.Base(*manifest))
 				if err = downloadArtifact(filePath, *manifest, reader); err != nil {
-					return fmt.Errorf("error downloading artifact for component %s: %v", component, err)
+					return fmt.Errorf("downloading artifact for component %s: %v", component, err)
 				}
 				*manifest = filePath
 			}
+		}
+		for component, chart := range bundle.Charts() {
+			chartRegistry := fmt.Sprintf("%s/%s/%s", endpoint, chart.Name, component)
+			chart.URI = fmt.Sprintf("%s:%s", chartRegistry, chart.Tag())
 		}
 		clusterSpec.Bundles.Spec.VersionsBundles[i] = bundle
 	}
 
 	bundleReleaseContent, err := yaml.Marshal(clusterSpec.Bundles)
 	if err != nil {
-		return fmt.Errorf("error marshaling bundle-release.yaml: %v", err)
+		return fmt.Errorf("marshaling bundle-release.yaml: %v", err)
 	}
-	bundleReleaseFilePath := filepath.Join(opts.downloadDir, filepath.Base(bundlesManifestUrl))
+	bundleReleaseFilePath := filepath.Join(opts.downloadDir, "bundle-release.yaml")
 	if err = ioutil.WriteFile(bundleReleaseFilePath, bundleReleaseContent, 0o644); err != nil {
 		return err
 	}

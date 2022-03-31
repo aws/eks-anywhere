@@ -1,12 +1,10 @@
 package factory
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
@@ -30,7 +28,7 @@ type ProviderFactory struct {
 	ClusterResourceSetManager vsphere.ClusterResourceSetManager
 }
 
-func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string, skipPowerActions bool) (providers.Provider, error) {
+func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string, skipPowerActions, force bool) (providers.Provider, error) {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetVSphereDatacenterConfig(clusterConfigFileName)
@@ -63,7 +61,7 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 		if err != nil {
 			return nil, fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFileName, err)
 		}
-		return tinkerbell.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.Writer, p.TinkerbellKubectlClient, p.TinkerbellClients, time.Now, skipIpCheck, hardwareConfigFile, skipPowerActions), nil
+		return tinkerbell.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.Writer, p.TinkerbellKubectlClient, p.TinkerbellClients, time.Now, skipIpCheck, hardwareConfigFile, skipPowerActions, force), nil
 	case v1alpha1.DockerDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetDockerDatacenterConfig(clusterConfigFileName)
 		if err != nil {
@@ -71,5 +69,5 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 		}
 		return docker.NewProvider(datacenterConfig, p.DockerClient, p.DockerKubectlClient, time.Now), nil
 	}
-	return nil, errors.New("valid providers include: " + constants.DockerProviderName + ", " + constants.VSphereProviderName)
+	return nil, fmt.Errorf("no provider support for datacenter kind: %s", clusterConfig.Spec.DatacenterRef.Kind)
 }

@@ -48,6 +48,10 @@ func (r *Cluster) ValidateCreate() error {
 		clusterlog.Info("cluster is paused, so allowing create", "name", r.Name)
 		return nil
 	}
+	if features.IsActive(features.CloudStackProvider()) && r.Spec.DatacenterRef.Kind == CloudStackDatacenterKind &&
+		len(r.Spec.WorkerNodeGroupConfigurations) > 1 {
+		return apierrors.NewBadRequest("Multiple worker node groups is not supported for CloudStack provider")
+	}
 	if !features.IsActive(features.FullLifecycleAPI()) {
 		return apierrors.NewBadRequest("Creating new cluster on existing cluster is not supported")
 	}

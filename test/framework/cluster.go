@@ -242,13 +242,22 @@ func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 		bmcInfo := api.NewBmcSecretConfig(h)
 
 		powerState, err := pbnjClient.GetPowerState(ctx, bmcInfo)
-		if err != nil {
-			e.T.Logf("failed to get power state for hardware (%v): %v", h, err)
+		// add sleep retries to give the machine time to power off
+		timeout := 15
+		for powerState != pbnj.PowerStateOff && timeout > 0 {
+			if err != nil {
+				e.T.Logf("failed to get power state for hardware (%v): %v", h, err)
+			}
+			time.Sleep(5 * time.Second)
+			timeout = timeout - 5
+			powerState, err = pbnjClient.GetPowerState(ctx, bmcInfo)
 		}
 
 		if powerState != pbnj.PowerStateOff {
 			e.T.Logf("failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s", h.Id, h.Hostname, h.BmcIpAddress)
 			failedToDecomm = append(failedToDecomm, h)
+		} else {
+			e.T.Logf("successfully decommissioned hardware: id=%s, hostname=%s, bmc_ip=%s", h.Id, h.Hostname, h.BmcIpAddress)
 		}
 	}
 
@@ -346,7 +355,7 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 	err := r.Retry(func() error {
 		err := e.KubectlClient.ValidateNodes(ctx, e.cluster().KubeconfigFile)
 		if err != nil {
-			return fmt.Errorf("error validating nodes status: %v", err)
+			return fmt.Errorf("validating nodes status: %v", err)
 		}
 		return nil
 	})
@@ -356,7 +365,7 @@ func (e *ClusterE2ETest) ValidateCluster(kubeVersion v1alpha1.KubernetesVersion)
 	e.T.Log("Validating cluster node version")
 	err = retrier.Retry(180, 1*time.Second, func() error {
 		if err = e.KubectlClient.ValidateNodesVersion(ctx, e.cluster().KubeconfigFile, kubeVersion); err != nil {
-			return fmt.Errorf("error validating nodes version: %v", err)
+			return fmt.Errorf("validating nodes version: %v", err)
 		}
 		return nil
 	})

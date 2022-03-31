@@ -44,36 +44,36 @@ func (r *ReleaseConfig) SetRepoHeads() error {
 	fmt.Println("Cloning CLI repository")
 	r.CliRepoSource = filepath.Join(parentSourceDir, "eks-a-cli")
 	out, err := git.CloneRepo(r.CliRepoUrl, r.CliRepoSource)
+	fmt.Println(out)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	fmt.Println(out)
 
 	// Clone the build-tooling repository
 	fmt.Println("Cloning build-tooling repository")
 	r.BuildRepoSource = filepath.Join(parentSourceDir, "eks-a-build")
 	out, err = git.CloneRepo(r.BuildRepoUrl, r.BuildRepoSource)
+	fmt.Println(out)
 	if err != nil {
 		return errors.Cause(err)
 	}
-	fmt.Println(out)
 
 	if r.BuildRepoBranchName != "main" {
 		fmt.Printf("Checking out build-tooling repo at branch %s\n", r.BuildRepoBranchName)
 		out, err = git.CheckoutRepo(r.BuildRepoSource, r.BuildRepoBranchName)
+		fmt.Println(out)
 		if err != nil {
 			return errors.Cause(err)
 		}
-		fmt.Println(out)
 	}
 
 	if r.CliRepoBranchName != "main" {
 		fmt.Printf("Checking out CLI repo at branch %s\n", r.CliRepoBranchName)
 		out, err = git.CheckoutRepo(r.CliRepoSource, r.CliRepoBranchName)
+		fmt.Println(out)
 		if err != nil {
 			return errors.Cause(err)
 		}
-		fmt.Println(out)
 	}
 
 	// Set HEADs of the repos
@@ -404,12 +404,12 @@ func (r *ReleaseConfig) UploadArtifacts(eksArtifacts map[string][]Artifact) erro
 				fmt.Printf("Destination Image - %s\n", releaseImageUri)
 				exists, err := ecrpublic.CheckImageExistence(releaseImageUri, r.ReleaseContainerRegistry, r.ReleaseClients.ECRPublic.Client)
 				if err != nil {
-					return fmt.Errorf("error checking for image existence in ECR Public: %v", err)
+					return fmt.Errorf("checking for image existence in ECR Public: %v", err)
 				}
 				if !exists {
 					err := images.CopyToDestination(sourceEcrAuthConfig, releaseEcrAuthConfig, sourceImageUri, releaseImageUri)
 					if err != nil {
-						return fmt.Errorf("error copying image from source to destination: %v", err)
+						return fmt.Errorf("copying image from source to destination: %v", err)
 					}
 				}
 			}

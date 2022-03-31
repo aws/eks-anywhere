@@ -84,11 +84,7 @@ func execute(ctx context.Context, cli string, in []byte, args ...string) (stdout
 	cmd := exec.CommandContext(ctx, cli, args...)
 	logger.V(6).Info("Executing command", "cmd", redactCreds(cmd.String()))
 	cmd.Stdout = &stdout
-	if logger.MaxLogging() {
-		cmd.Stderr = os.Stderr
-	} else {
-		cmd.Stderr = &stderr
-	}
+	cmd.Stderr = &stderr
 	if len(in) != 0 {
 		cmd.Stdin = bytes.NewReader(in)
 	}
@@ -96,6 +92,9 @@ func execute(ctx context.Context, cli string, in []byte, args ...string) (stdout
 	err = cmd.Run()
 	if err != nil {
 		if stderr.Len() > 0 {
+			if logger.MaxLogging() {
+				logger.V(logger.MaxLoggingLevel()).Info(cli, "stderr", stderr.String())
+			}
 			return stdout, errors.New(stderr.String())
 		} else {
 			if !logger.MaxLogging() {

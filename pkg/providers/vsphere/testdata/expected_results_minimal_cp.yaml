@@ -123,22 +123,30 @@ spec:
         spec:
           containers:
           - args:
-            - start
+            - manager
             env:
             - name: vip_arp
               value: "true"
+            - name: port
+              value: "6443"
+            - name: vip_cidr
+              value: "32"
+            - name: cp_enable
+              value: "true"
+            - name: cp_namespace
+              value: kube-system
+            - name: vip_ddns
+              value: "false"
             - name: vip_leaderelection
               value: "true"
-            - name: vip_address
-              value: 1.2.3.4
-            - name: vip_interface
-              value: eth0
             - name: vip_leaseduration
               value: "15"
             - name: vip_renewdeadline
               value: "10"
             - name: vip_retryperiod
               value: "2"
+            - name: address
+              value: 1.2.3.4
             image: public.ecr.aws/l0g8r8j6/plunder-app/kube-vip:v0.3.2-2093eaeda5a4567f0e516d652e0b25b1d7abc774
             imagePullPolicy: IfNotPresent
             name: kube-vip
@@ -147,7 +155,7 @@ spec:
               capabilities:
                 add:
                 - NET_ADMIN
-                - SYS_TIME
+                - NET_RAW
             volumeMounts:
             - mountPath: /etc/kubernetes/admin.conf
               name: kubeconfig
@@ -155,7 +163,6 @@ spec:
           volumes:
           - hostPath:
               path: /etc/kubernetes/admin.conf
-              type: FileOrCreate
             name: kubeconfig
         status: {}
       owner: root:root

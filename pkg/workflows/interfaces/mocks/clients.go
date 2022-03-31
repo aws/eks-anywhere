@@ -268,17 +268,17 @@ func (mr *MockClusterManagerMockRecorder) InstallMachineHealthChecks(arg0, arg1,
 }
 
 // InstallNetworking mocks base method.
-func (m *MockClusterManager) InstallNetworking(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) error {
+func (m *MockClusterManager) InstallNetworking(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec, arg3 providers.Provider) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallNetworking", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "InstallNetworking", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InstallNetworking indicates an expected call of InstallNetworking.
-func (mr *MockClusterManagerMockRecorder) InstallNetworking(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) InstallNetworking(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallNetworking", reflect.TypeOf((*MockClusterManager)(nil).InstallNetworking), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallNetworking", reflect.TypeOf((*MockClusterManager)(nil).InstallNetworking), arg0, arg1, arg2, arg3)
 }
 
 // InstallStorageClass mocks base method.
@@ -400,18 +400,18 @@ func (mr *MockClusterManagerMockRecorder) UpgradeCluster(arg0, arg1, arg2, arg3,
 }
 
 // UpgradeNetworking mocks base method.
-func (m *MockClusterManager) UpgradeNetworking(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec) (*types.ChangeDiff, error) {
+func (m *MockClusterManager) UpgradeNetworking(arg0 context.Context, arg1 *types.Cluster, arg2, arg3 *cluster.Spec, arg4 providers.Provider) (*types.ChangeDiff, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpgradeNetworking", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "UpgradeNetworking", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*types.ChangeDiff)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // UpgradeNetworking indicates an expected call of UpgradeNetworking.
-func (mr *MockClusterManagerMockRecorder) UpgradeNetworking(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) UpgradeNetworking(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeNetworking", reflect.TypeOf((*MockClusterManager)(nil).UpgradeNetworking), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpgradeNetworking", reflect.TypeOf((*MockClusterManager)(nil).UpgradeNetworking), arg0, arg1, arg2, arg3, arg4)
 }
 
 // MockAddonManager is a mock of AddonManager interface.

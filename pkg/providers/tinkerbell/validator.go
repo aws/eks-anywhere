@@ -6,10 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"strings"
+	"net/url"
 
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
+	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/logger"
@@ -40,6 +41,10 @@ func (v *Validator) ValidateTinkerbellConfig(ctx context.Context, datacenterConf
 	}
 
 	if err := v.validateTinkerbellCertURL(ctx, datacenterConfig.Spec.TinkerbellCertURL); err != nil {
+		return err
+	}
+
+	if err := v.validateTinkerbellHegelURL(ctx, datacenterConfig.Spec.TinkerbellHegelURL); err != nil {
 		return err
 	}
 
@@ -119,13 +124,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 	return nil
 }
 
-func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string, skipPowerActions bool) error {
-	hardwares, err := v.tink.GetHardware(ctx)
-	if err != nil {
-		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
-	}
-	logger.MarkPass("Connected to tinkerbell stack")
-
+func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string, hardwares []*tinkhardware.Hardware, skipPowerActions bool) error {
 	if err := v.hardwareConfig.ParseHardwareConfig(hardwareConfigFile); err != nil {
 		return fmt.Errorf("failed to get hardware Config: %v", err)
 	}
@@ -138,7 +137,7 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 	}
 	tinkWorkflowMap, err := getWorkflowMap(workflows)
 	if err != nil {
-		return fmt.Errorf("error validating if the workflow exist for the given list of hardwares %v", err)
+		return fmt.Errorf("validating if the workflow exist for the given list of hardwares %v", err)
 	}
 
 	if err := v.hardwareConfig.ValidateHardware(skipPowerActions, tinkHardwareMap, tinkWorkflowMap); err != nil {
@@ -181,16 +180,37 @@ func (v *Validator) ValidateBMCSecretCreds(ctx context.Context, hc hardware.Hard
 	return nil
 }
 
-func (v *Validator) ValidateTinkerbellTemplate(ctx context.Context, tinkerbellIp string, templateConfig *v1alpha1.TinkerbellTemplateConfig) error {
+func (v *Validator) ValidateAndPopulateTemplate(ctx context.Context, datacenterConfig *v1alpha1.TinkerbellDatacenterConfig, templateConfig *v1alpha1.TinkerbellTemplateConfig) error {
 	for _, task := range templateConfig.Spec.Template.Tasks {
 		for _, action := range task.Actions {
-			// check if the metadata_url provided by the user is valid or not
+			// set metadata_urls to Hegel URL provided in the cluster config file
 			// TODO(pjshah):: add more validations around metadata_url field and parse
 			if action.Name == "add-tink-cloud-init-config" {
-				metadataUrl := fmt.Sprintf("http://%s:50061", tinkerbellIp)
-				if !strings.Contains(action.Environment["CONTENTS"], metadataUrl) {
-					return fmt.Errorf("failed validating metadata_url, template metadata_url should be set to %s", metadataUrl)
+				metadataList := make([]string, 0)
+				metadataList = append(metadataList, datacenterConfig.Spec.TinkerbellHegelURL)
+
+				var content map[string]interface{}
+				err := yaml.Unmarshal([]byte(action.Environment["CONTENTS"]), &content)
+				if err != nil {
+					return fmt.Errorf("failed to unmarshal %s action data: %v", action.Name, err)
 				}
+
+				if _, ok := content["datasource"]; ok {
+					ec2 := content["datasource"].(map[string]interface{})
+					if _, ok := ec2["Ec2"]; ok {
+						metadataUrl := ec2["Ec2"].(map[string]interface{})
+						if _, ok := metadataUrl["metadata_urls"]; ok {
+							metadataUrl["metadata_urls"] = metadataList
+
+							patchedContent, err := yaml.Marshal(&content)
+							if err != nil {
+								return fmt.Errorf("failed to marshal %s action data: %v", action.Name, err)
+							}
+							action.Environment["CONTENTS"] = string(patchedContent)
+						}
+					}
+				}
+
 			}
 		}
 	}
@@ -229,7 +249,7 @@ func (v *Validator) ValidateMinimumRequiredTinkerbellHardwareAvailable(spec v1al
 
 func (v *Validator) validateControlPlaneIpUniqueness(tinkerBellClusterSpec *spec) error {
 	ip := tinkerBellClusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host
-	if !networkutils.NewIPGenerator(v.netClient).IsIPUnique(ip) {
+	if networkutils.IsIPInUse(v.netClient, ip) {
 		return fmt.Errorf("cluster controlPlaneConfiguration.Endpoint.Host <%s> is already in use, please provide a unique IP", ip)
 	}
 
@@ -248,6 +268,22 @@ func (v *Validator) validateTinkerbellIP(ctx context.Context, ip string) error {
 func (v *Validator) validateTinkerbellCertURL(ctx context.Context, tinkerbellCertURL string) error {
 	if tinkerbellCertURL == "" {
 		return fmt.Errorf("tinkerbellCertURL is required")
+	}
+
+	if err := validateURLHostIp(tinkerbellCertURL); err != nil {
+		return fmt.Errorf("invalid tinkerbellCertURL URL: %v", err)
+	}
+
+	return nil
+}
+
+func (v *Validator) validateTinkerbellHegelURL(ctx context.Context, tinkerbellHegelURL string) error {
+	if tinkerbellHegelURL == "" {
+		return fmt.Errorf("tinkerbellHegelURL is required")
+	}
+
+	if err := validateURLHostIp(tinkerbellHegelURL); err != nil {
+		return fmt.Errorf("invalid tinkerbellHegelURL URL: %v", err)
 	}
 
 	return nil
@@ -283,6 +319,32 @@ func sumWorkerNodeCounts(nodes []v1alpha1.WorkerNodeGroupConfiguration) int {
 		requestedNodesCount += workerSpec.Count
 	}
 	return requestedNodesCount
+}
+
+func validateURLHostIp(urlAdress string) error {
+	if err := validateURL(urlAdress); err != nil {
+		return err
+	}
+
+	hostPort, err := url.Parse(urlAdress)
+	if err != nil {
+		return fmt.Errorf("invalid url: %v", err)
+	}
+
+	if err := validateAddressWithPort(hostPort.Host); err != nil {
+		return fmt.Errorf("invalid url: %v", err)
+	}
+
+	return nil
+}
+
+func validateURL(urlAddress string) error {
+	_, err := url.ParseRequestURI(urlAddress)
+	if err != nil {
+		return fmt.Errorf("invalid url: %v", urlAddress)
+	}
+
+	return nil
 }
 
 // validateAddressWithPort validates address is a hostname:port combination. The port is required.
@@ -322,7 +384,7 @@ func getWorkflowMap(workflowList []*tinkworkflow.Workflow) (map[string]*tinkwork
 		var macAddress map[string]string
 
 		if err := json.Unmarshal([]byte(data.GetHardware()), &macAddress); err != nil {
-			return nil, fmt.Errorf("error unmarshling workflow data: %v", err)
+			return nil, fmt.Errorf("unmarshling workflow data: %v", err)
 		}
 		for _, mac := range macAddress {
 			workflowMap[mac] = data

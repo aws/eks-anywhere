@@ -55,7 +55,7 @@ func (f *Flux) BootstrapToolkitsComponents(ctx context.Context, cluster *types.C
 
 	token, err := github.GetGithubAccessTokenFromEnv()
 	if err != nil {
-		return fmt.Errorf("error setting token env: %v", err)
+		return fmt.Errorf("setting token env: %v", err)
 	}
 
 	env := make(map[string]string)
@@ -63,7 +63,7 @@ func (f *Flux) BootstrapToolkitsComponents(ctx context.Context, cluster *types.C
 
 	_, err = f.ExecuteWithEnv(ctx, env, params...)
 	if err != nil {
-		return fmt.Errorf("error executing flux bootstrap: %v", err)
+		return fmt.Errorf("executing flux bootstrap: %v", err)
 	}
 
 	return err
@@ -84,7 +84,7 @@ func (f *Flux) UninstallToolkitsComponents(ctx context.Context, cluster *types.C
 
 	_, err := f.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error uninstalling flux: %v", err)
+		return fmt.Errorf("uninstalling flux: %v", err)
 	}
 	return err
 }
@@ -92,7 +92,7 @@ func (f *Flux) UninstallToolkitsComponents(ctx context.Context, cluster *types.C
 func (f *Flux) PauseKustomization(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error {
 	c := gitOpsConfig.Spec.Flux.Github
 	if c.FluxSystemNamespace == "" {
-		return fmt.Errorf("error executing flux suspend kustomization: namespace empty")
+		return fmt.Errorf("executing flux suspend kustomization: namespace empty")
 	}
 	params := []string{"suspend", "ks", c.FluxSystemNamespace, "--namespace", c.FluxSystemNamespace}
 
@@ -102,7 +102,7 @@ func (f *Flux) PauseKustomization(ctx context.Context, cluster *types.Cluster, g
 
 	_, err := f.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error executing flux suspend kustomization: %v", err)
+		return fmt.Errorf("executing flux suspend kustomization: %v", err)
 	}
 
 	return err
@@ -111,7 +111,7 @@ func (f *Flux) PauseKustomization(ctx context.Context, cluster *types.Cluster, g
 func (f *Flux) ResumeKustomization(ctx context.Context, cluster *types.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig) error {
 	c := gitOpsConfig.Spec.Flux.Github
 	if c.FluxSystemNamespace == "" {
-		return fmt.Errorf("error executing flux resume kustomization: namespace empty")
+		return fmt.Errorf("executing flux resume kustomization: namespace empty")
 	}
 	params := []string{"resume", "ks", c.FluxSystemNamespace, "--namespace", c.FluxSystemNamespace}
 
@@ -121,7 +121,7 @@ func (f *Flux) ResumeKustomization(ctx context.Context, cluster *types.Cluster, 
 
 	_, err := f.Execute(ctx, params...)
 	if err != nil {
-		return fmt.Errorf("error executing flux resume kustomization: %v", err)
+		return fmt.Errorf("executing flux resume kustomization: %v", err)
 	}
 
 	return err
@@ -142,7 +142,7 @@ func (f *Flux) Reconcile(ctx context.Context, cluster *types.Cluster, gitOpsConf
 	}
 
 	if _, err := f.Execute(ctx, params...); err != nil {
-		return fmt.Errorf("error executing flux reconcile: %v", err)
+		return fmt.Errorf("executing flux reconcile: %v", err)
 	}
 
 	return nil
