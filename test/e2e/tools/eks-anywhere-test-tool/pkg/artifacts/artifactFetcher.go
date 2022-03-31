@@ -2,14 +2,12 @@ package artifacts
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"os"
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	cb "github.com/aws/aws-sdk-go/service/codebuild"
 	"golang.org/x/sync/errgroup"
 
@@ -18,6 +16,7 @@ import (
 	"github.com/aws/eks-anywhere-test-tool/pkg/constants"
 	"github.com/aws/eks-anywhere-test-tool/pkg/filewriter"
 	"github.com/aws/eks-anywhere-test-tool/pkg/s3"
+	"github.com/aws/eks-anywhere-test-tool/pkg/testResults"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
@@ -45,15 +44,6 @@ func WithAllArtifacts() FetchArtifactsOpt {
 		options.fetchAll = true
 		return err
 	}
-}
-
-type testResult struct {
-	InstanceId string `json:"instanceId"`
-	JobId      string `json:"jobId"`
-	CommandId  string `json:"commandId"`
-	Tests      string `json:"tests"`
-	Status     string `json:"status"`
-	Error      string `json:"error"`
 }
 
 type fetchArtifactConfig struct {
@@ -119,11 +109,11 @@ func (l *testArtifactFetcher) FetchArtifacts(opts ...FetchArtifactsOpt) error {
 		return fmt.Errorf("fetching cloudwatch logs: %v", err)
 	}
 
-	failedTests, err := filterFailedTests(logs)
+	_, failedTests, err := testResults.GetFailedTests(logs)
 	if err != nil {
 		return err
 	}
-	failedTestsMap := testResultMap(failedTests)
+	failedTestIds := testResults.TestResultsJobIdMap(failedTests)
 
 	logger.Info("Fetching build artifacts...")
 
@@ -142,7 +132,7 @@ func (l *testArtifactFetcher) FetchArtifacts(opts ...FetchArtifactsOpt) error {
 		obj := *object
 		keySplit := strings.Split(*obj.Key, "/")
 
-		_, ok := failedTestsMap[keySplit[0]]
+		_, ok := failedTestIds[keySplit[0]]
 		if !ok && !config.fetchAll {
 			continue
 		}
@@ -209,33 +199,4 @@ func fileWriterRetrier() *retrier.Retrier {
 
 func isTooManyOpenFilesError(err error) bool {
 	return strings.Contains(err.Error(), "too many open files")
-}
-
-func filterFailedTests(logs []*cloudwatchlogs.OutputLogEvent) (failedTestResults []testResult, err error) {
-	var failedTests []testResult
-	for _, event := range logs {
-		if strings.Contains(*event.Message, constants.FailedMessage) {
-			msg := *event.Message
-			i := strings.Index(msg, "{")
-			subMsg := msg[i:]
-			var r testResult
-			err = json.Unmarshal([]byte(subMsg), &r)
-			if err != nil {
-				logger.Info("error when unmarshalling json of test results", "error", err)
-				return nil, err
-			}
-			failedTests = append(failedTests, r)
-		}
-	}
-
-	return failedTests, nil
-}
-
-func testResultMap(tests []testResult) map[string]bool {
-	m := make(map[string]bool, len(tests))
-
-	for _, test := range tests {
-		m[test.JobId] = true
-	}
-	return m
 }
