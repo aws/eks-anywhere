@@ -433,7 +433,7 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 	return fmt.Errorf("upgrade is not yet supported for CloudStack cluster")
 }
 
-func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
+func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
 	err := p.validateEnv(ctx)
 	if err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
@@ -563,12 +563,14 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackControlPlaneTemplateOfferingId":   controlPlaneMachineSpec.Template.Id,
 		"cloudstackControlPlaneTemplateOfferingName": controlPlaneMachineSpec.Template.Name,
 		"cloudstackControlPlaneCustomDetails":        controlPlaneMachineSpec.UserCustomDetails,
-		"affinityGroupIds":                           controlPlaneMachineSpec.AffinityGroupIds,
+		"cloudstackControlPlaneAffinity":             controlPlaneMachineSpec.Affinity,
+		"cloudstackControlPlaneAffinityGroupIds":     controlPlaneMachineSpec.AffinityGroupIds,
 		"cloudstackEtcdComputeOfferingId":            etcdMachineSpec.ComputeOffering.Id,
 		"cloudstackEtcdComputeOfferingName":          etcdMachineSpec.ComputeOffering.Name,
 		"cloudstackEtcdTemplateOfferingId":           etcdMachineSpec.Template.Id,
 		"cloudstackEtcdTemplateOfferingName":         etcdMachineSpec.Template.Name,
 		"cloudstackEtcdCustomDetails":                etcdMachineSpec.UserCustomDetails,
+		"cloudstackEtcdAffinity":                     etcdMachineSpec.Affinity,
 		"cloudstackEtcdAffinityGroupIds":             etcdMachineSpec.AffinityGroupIds,
 		"controlPlaneSshUsername":                    controlPlaneMachineSpec.Users[0].Name,
 		"podCidrs":                                   clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
@@ -646,6 +648,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"cloudstackOfferingId":             workerNodeGroupMachineSpec.ComputeOffering.Id,
 		"cloudstackOfferingName":           workerNodeGroupMachineSpec.ComputeOffering.Name,
 		"cloudstackCustomDetails":          workerNodeGroupMachineSpec.UserCustomDetails,
+		"cloudstackAffinity":               workerNodeGroupMachineSpec.Affinity,
 		"cloudstackAffinityGroupIds":       workerNodeGroupMachineSpec.AffinityGroupIds,
 		"workerReplicas":                   clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count,
 		"workerSshUsername":                workerNodeGroupMachineSpec.Users[0].Name,
@@ -839,6 +842,11 @@ func (p *cloudstackProvider) DeleteResources(ctx context.Context, clusterSpec *c
 		}
 	}
 	return p.providerKubectlClient.DeleteEksaCloudStackDatacenterConfig(ctx, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
+}
+
+func (p *cloudstackProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
+	// No validations
+	return nil
 }
 
 func (p *cloudstackProvider) GenerateStorageClass() []byte {

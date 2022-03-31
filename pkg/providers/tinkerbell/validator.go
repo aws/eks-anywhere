@@ -124,13 +124,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 	return nil
 }
 
-func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string, skipPowerActions bool) error {
-	hardwares, err := v.tink.GetHardware(ctx)
-	if err != nil {
-		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
-	}
-	logger.MarkPass("Connected to tinkerbell stack")
-
+func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string, hardwares []*tinkhardware.Hardware, skipPowerActions bool) error {
 	if err := v.hardwareConfig.ParseHardwareConfig(hardwareConfigFile); err != nil {
 		return fmt.Errorf("failed to get hardware Config: %v", err)
 	}

@@ -13,6 +13,7 @@ import (
 	pbnj "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
+	v1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	hardware "github.com/tinkerbell/tink/protos/hardware"
 	workflow "github.com/tinkerbell/tink/protos/workflow"
@@ -84,6 +85,36 @@ func (mr *MockProviderKubectlClientMockRecorder) DeleteEksaMachineConfig(arg0, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEksaMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).DeleteEksaMachineConfig), arg0, arg1, arg2, arg3, arg4)
 }
 
+// GetBmcsPowerState mocks base method.
+func (m *MockProviderKubectlClient) GetBmcsPowerState(arg0 context.Context, arg1 []string, arg2, arg3 string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBmcsPowerState", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBmcsPowerState indicates an expected call of GetBmcsPowerState.
+func (mr *MockProviderKubectlClientMockRecorder) GetBmcsPowerState(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBmcsPowerState", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetBmcsPowerState), arg0, arg1, arg2, arg3)
+}
+
+// GetHardwareWithLabel mocks base method.
+func (m *MockProviderKubectlClient) GetHardwareWithLabel(arg0 context.Context, arg1, arg2, arg3 string) ([]v1alpha1.Hardware, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetHardwareWithLabel", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([]v1alpha1.Hardware)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetHardwareWithLabel indicates an expected call of GetHardwareWithLabel.
+func (mr *MockProviderKubectlClientMockRecorder) GetHardwareWithLabel(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardwareWithLabel", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetHardwareWithLabel), arg0, arg1, arg2, arg3)
+}
+
 // GetMachineDeployment mocks base method.
 func (m *MockProviderKubectlClient) GetMachineDeployment(arg0 context.Context, arg1 string, arg2 ...executables.KubectlOpt) (*v1beta1.MachineDeployment, error) {
 	m.ctrl.T.Helper()
@@ -125,6 +156,25 @@ func NewMockProviderTinkClient(ctrl *gomock.Controller) *MockProviderTinkClient 
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockProviderTinkClient) EXPECT() *MockProviderTinkClientMockRecorder {
 	return m.recorder
+}
+
+// DeleteWorkflow mocks base method.
+func (m *MockProviderTinkClient) DeleteWorkflow(arg0 context.Context, arg1 ...string) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0}
+	for _, a := range arg1 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteWorkflow", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteWorkflow indicates an expected call of DeleteWorkflow.
+func (mr *MockProviderTinkClientMockRecorder) DeleteWorkflow(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0}, arg1...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWorkflow", reflect.TypeOf((*MockProviderTinkClient)(nil).DeleteWorkflow), varargs...)
 }
 
 // GetHardware mocks base method.

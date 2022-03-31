@@ -3,9 +3,11 @@ package executables_test
 import (
 	"bytes"
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"github.com/onsi/gomega"
 
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/executables/mocks"
@@ -60,4 +62,71 @@ func TestTinkGetWorkflow(t *testing.T) {
 	if _, err := tink.GetWorkflow(ctx); err != nil {
 		t.Errorf("Tink.GetWorkflow() error = %v, want nil", err)
 	}
+}
+
+func TestTinkDeleteWorkflowSingle(t *testing.T) {
+	g := gomega.NewWithT(t)
+	ctrl := gomock.NewController(t)
+	mockExecutable := mocks.NewMockExecutable(ctrl)
+
+	tink := executables.NewTink(mockExecutable, tinkerbellCertUrl, tinkerbellGrpcAuthority)
+
+	ctx := context.Background()
+	workflowID := "abc"
+	expectedParam := []string{
+		"workflow", "delete",
+		"--tinkerbell-cert-url", tinkerbellCertUrl,
+		"--tinkerbell-grpc-authority", tinkerbellGrpcAuthority,
+		workflowID,
+	}
+
+	expectCommand(mockExecutable, ctx, expectedParam...).to().Return(bytes.Buffer{}, nil)
+
+	err := tink.DeleteWorkflow(ctx, workflowID)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+}
+
+func TestTinkDeleteWorkflowMulti(t *testing.T) {
+	g := gomega.NewWithT(t)
+	ctrl := gomock.NewController(t)
+	mockExecutable := mocks.NewMockExecutable(ctrl)
+
+	tink := executables.NewTink(mockExecutable, tinkerbellCertUrl, tinkerbellGrpcAuthority)
+
+	ctx := context.Background()
+	workflowIDs := []string{"abc", "def", "ghi"}
+	expectedParam := []string{
+		"workflow", "delete",
+		"--tinkerbell-cert-url", tinkerbellCertUrl,
+		"--tinkerbell-grpc-authority", tinkerbellGrpcAuthority,
+	}
+	expectedParam = append(expectedParam, workflowIDs...)
+
+	expectCommand(mockExecutable, ctx, expectedParam...).to().Return(bytes.Buffer{}, nil)
+
+	err := tink.DeleteWorkflow(ctx, workflowIDs...)
+	g.Expect(err).ToNot(gomega.HaveOccurred())
+}
+
+func TestTinkDeleteWorkflowCmdError(t *testing.T) {
+	g := gomega.NewWithT(t)
+	ctrl := gomock.NewController(t)
+	mockExecutable := mocks.NewMockExecutable(ctrl)
+
+	tink := executables.NewTink(mockExecutable, tinkerbellCertUrl, tinkerbellGrpcAuthority)
+
+	ctx := context.Background()
+	workflowIDs := []string{"abc", "def", "ghi"}
+	expectedParam := []string{
+		"workflow", "delete",
+		"--tinkerbell-cert-url", tinkerbellCertUrl,
+		"--tinkerbell-grpc-authority", tinkerbellGrpcAuthority,
+	}
+	expectedParam = append(expectedParam, workflowIDs...)
+
+	expect := errors.New("hello world")
+	expectCommand(mockExecutable, ctx, expectedParam...).to().Return(bytes.Buffer{}, expect)
+
+	err := tink.DeleteWorkflow(ctx, workflowIDs...)
+	g.Expect(err).To(gomega.HaveOccurred())
 }
