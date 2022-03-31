@@ -1,6 +1,10 @@
 package docker
 
-import "context"
+import (
+	"context"
+
+	"github.com/aws/eks-anywhere/pkg/logger"
+)
 
 // ImageDiskSource implements the ImageSource interface, loading images and tags from
 // a tarbal into the local docker cache
@@ -18,6 +22,7 @@ func NewDiskSource(client ImageDiskLoader, file string) *ImageDiskSource {
 
 // Load reads images and tags from a tarbal into the local docker cache
 func (s *ImageDiskSource) Load(ctx context.Context, images ...string) error {
+	logger.Info("Loading images from disk")
 	return s.client.LoadFromFile(ctx, s.file)
 }
 
@@ -37,5 +42,6 @@ func NewDiskDestination(client ImageDiskWriter, file string) *ImageDiskDestinati
 
 // Write creates a tarball including images and tags from the the local docker cache
 func (s *ImageDiskDestination) Write(ctx context.Context, images ...string) error {
+	logger.Info("Writing images to disk")
 	return s.client.SaveToFile(ctx, s.file, images...)
 }

@@ -125,6 +125,9 @@ spec:
         {{$key}}: {{$value}}
 {{- end}}
 {{- end}}
+{{- if .cloudstackAffinity }}
+      affinity: '{{ .cloudstackAffinity }}'
+{{- end }}
 {{- if .cloudstackAffinityGroupIds }}
       affinitygroupids:
       {{- range .cloudstackAffinityGroupIds}}

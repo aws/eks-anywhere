@@ -27,7 +27,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 			Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK": "/dev/sda1",
+				"DEST_DISK": "/dev/sda2",
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/netplan/config.yaml",
 				"CONTENTS":  netplan,
@@ -42,7 +42,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 			Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK": "/dev/sda1",
+				"DEST_DISK": "/dev/sda2",
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
 				"CONTENTS":  cloudInit,
@@ -57,7 +57,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 			Image:   "public.ecr.aws/eks-anywhere/writefile:latest",
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK": "/dev/sda1",
+				"DEST_DISK": "/dev/sda2",
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/cloud/ds-identify.cfg",
 				"CONTENTS":  "datasource: Ec2\n",
@@ -73,7 +73,7 @@ func TestWithDefaultActionsFromBundle(t *testing.T) {
 			Timeout: 90,
 			Pid:     "host",
 			Environment: map[string]string{
-				"BLOCK_DEVICE": "/dev/sda1",
+				"BLOCK_DEVICE": "/dev/sda2",
 				"FS_TYPE":      "ext4",
 			},
 		},
