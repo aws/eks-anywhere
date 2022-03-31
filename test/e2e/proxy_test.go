@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
@@ -28,7 +27,6 @@ func TestVSphereKubernetes122UbuntuProxyConfig(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithProxy(),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runProxyConfigFlow(test)
 }
@@ -43,7 +41,6 @@ func TestVSphereKubernetes122BottlerocketProxyConfig(t *testing.T) {
 		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube122)),
 		framework.WithProxy(),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runProxyConfigFlow(test)
 }

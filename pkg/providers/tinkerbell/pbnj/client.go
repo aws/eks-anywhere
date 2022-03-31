@@ -12,9 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/logger"
 )
 
-const (
-	PbnjGrpcAuth = "PBNJ_GRPC_AUTHORITY"
-)
+const PbnjGrpcAuth = client.PbnjGrpcAuthorityEnv
 
 type PowerState string
 
@@ -22,6 +20,18 @@ const (
 	PowerStateOn      PowerState = "on"
 	PowerStateOff     PowerState = "off"
 	PowerStateUnknown PowerState = "unknown"
+)
+
+// Boot devices patched from upstream PBNJ so consumers don't need to depend on the upstream package.
+type BootDevice = v1.BootDevice
+
+const (
+	BootDeviceUnspecified BootDevice = v1.BootDevice_BOOT_DEVICE_UNSPECIFIED
+	BootDeviceNone                   = v1.BootDevice_BOOT_DEVICE_NONE
+	BootDeviceBIOS                   = v1.BootDevice_BOOT_DEVICE_BIOS
+	BootDeviceCDROM                  = v1.BootDevice_BOOT_DEVICE_CDROM
+	BootDeviceDisk                   = v1.BootDevice_BOOT_DEVICE_DISK
+	BootDevicePXE                    = v1.BootDevice_BOOT_DEVICE_PXE
 )
 
 const (
@@ -93,6 +103,46 @@ func (p *Pbnj) PowerOn(ctx context.Context, bmcInfo BmcSecretConfig) error {
 	}
 
 	return nil
+}
+
+func (p *Pbnj) SetBootDevice(ctx context.Context, info BmcSecretConfig, mode BootDevice) error {
+	logger := logger.V(4).WithValues("component", "pbnj-client")
+
+	request := newBootDeviceRequest(info, mode)
+	logger.Info(
+		"Set boot device request",
+		"host", request.Authn.GetDirectAuthn().Host,
+		"boot_device", request.BootDevice,
+	)
+
+	response, err := p.pbnj.MachineBootDev(ctx, request)
+	if err != nil {
+		return err
+	}
+	logger.Info("Set boot device response", "response", response)
+
+	return nil
+}
+
+func newBootDeviceRequest(bmc BmcSecretConfig, device v1.BootDevice) *v1.DeviceRequest {
+	return &v1.DeviceRequest{
+		Authn: &v1.Authn{
+			Authn: &v1.Authn_DirectAuthn{
+				DirectAuthn: &v1.DirectAuthn{
+					Host: &v1.Host{
+						Host: bmc.Host,
+					},
+					Username: bmc.Username,
+					Password: bmc.Password,
+				},
+			},
+		},
+		Vendor: &v1.Vendor{
+			Name: bmc.Vendor,
+		},
+		BootDevice: device,
+		EfiBoot:    true, // hardcoded for our use-case.
+	}
 }
 
 func NewPowerRequest(bmcInfo BmcSecretConfig, powerAction v1.PowerAction) *v1.PowerRequest {

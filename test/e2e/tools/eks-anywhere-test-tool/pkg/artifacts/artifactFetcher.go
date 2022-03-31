@@ -104,10 +104,10 @@ func (l *testArtifactFetcher) FetchArtifacts(opts ...FetchArtifactsOpt) error {
 
 			logger.Info("Writing object to file", "key", obj.Key, "bucket", config.bucket)
 			err = l.retrier.Retry(func() error {
-				return l.writer.WriteS3KeyToFile(*obj.Key, o)
+				return l.writer.WriteTestArtifactsS3ToFile(*obj.Key, o)
 			})
 			if err != nil {
-				logger.Info("error occured while writing file", "err", err)
+				logger.Info("error occurred while writing file", "err", err)
 				return fmt.Errorf("writing object %s from bucket %s to file: %v", *obj.Key, config.bucket, err)
 			}
 			return nil
