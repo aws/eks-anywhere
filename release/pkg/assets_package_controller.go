@@ -40,9 +40,11 @@ func (r *ReleaseConfig) GetPackagesAssets() ([]Artifact, error) {
 		"gitTag":      gitTag,
 		"projectPath": packagesRootPath,
 	}
-
 	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(packagesImageName, repoName, tagOptions)
-	sourceHelmURI, sourcedFromBranch, err := r.GetSourceHelmURI(repoName)
+	if err != nil {
+		return nil, errors.Cause(err)
+	}
+	sourceHelmURI, err := r.GetSourceHelmURI(repoName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}

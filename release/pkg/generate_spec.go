@@ -494,23 +494,22 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 	return sourceImageUri, sourcedFromBranch, nil
 }
 
-func (r *ReleaseConfig) GetSourceHelmURI(repoName string) (string, string, error) {
+func (r *ReleaseConfig) GetSourceHelmURI(repoName string) (string, error) {
 	var sourceImageUri string
-	sourcedFromBranch := r.BuildRepoBranchName
 	ecrClient, err := NewECRClient()
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	latestTag, err := ecrClient.GetLatestUploadHelmSha(repoName)
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 	sourceImageUri = fmt.Sprintf("%s/%s:%s",
 		r.SourceContainerRegistry,
 		repoName,
 		latestTag,
 	)
-	return sourceImageUri, sourcedFromBranch, nil
+	return sourceImageUri, nil
 }
 
 func (r *ReleaseConfig) GetReleaseImageURI(name, repoName string, tagOptions map[string]string) (string, error) {
