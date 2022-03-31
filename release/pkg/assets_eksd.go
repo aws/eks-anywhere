@@ -78,7 +78,7 @@ func (r *ReleaseConfig) GetEksDChannelAssets(eksDReleaseChannel, kubeVer, eksDRe
 					arch,
 					imageExtensions[imageFormat],
 				)
-				sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/%s/%s", r.BundleNumber, eksDReleaseChannel, imageFormat)
+				sourceS3Prefix = fmt.Sprintf("releases/bundles/%d/artifacts/%s/%s", r.BundleNumber, imageFormat, eksDReleaseChannel)
 			}
 
 			if r.DevRelease {
