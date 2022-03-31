@@ -387,6 +387,8 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		if err := p.scrubWorkflowsFromTinkerbell(ctx, p.validator.hardwareConfig.Hardwares, hardware); err != nil {
 			return err
 		}
+	} else if err := p.validator.ValidateMachinesPoweredOff(ctx); err != nil {
+		return fmt.Errorf("validating machines are powered off: %w", err)
 	}
 
 	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
