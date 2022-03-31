@@ -61,7 +61,7 @@ func withNetplanAction(b v1alpha1.VersionsBundle) ActionOpt {
 			Image:   b.Tinkerbell.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK": "/dev/sda1",
+				"DEST_DISK": "/dev/sda2",
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/netplan/config.yaml",
 				"CONTENTS":  netplan,
@@ -81,7 +81,7 @@ func withTinkCloudInitAction(b v1alpha1.VersionsBundle) ActionOpt {
 			Image:   b.Tinkerbell.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK": "/dev/sda1",
+				"DEST_DISK": "/dev/sda2",
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/cloud/cloud.cfg.d/10_tinkerbell.cfg",
 				"CONTENTS":  cloudInit,
@@ -101,7 +101,7 @@ func withDsCloudInitAction(b v1alpha1.VersionsBundle) ActionOpt {
 			Image:   b.Tinkerbell.Actions.WriteFile.URI,
 			Timeout: 90,
 			Environment: map[string]string{
-				"DEST_DISK": "/dev/sda1",
+				"DEST_DISK": "/dev/sda2",
 				"FS_TYPE":   "ext4",
 				"DEST_PATH": "/etc/cloud/ds-identify.cfg",
 				"CONTENTS":  "datasource: Ec2\n",
@@ -122,7 +122,7 @@ func withKexecAction(b v1alpha1.VersionsBundle) ActionOpt {
 			Timeout: 90,
 			Pid:     "host",
 			Environment: map[string]string{
-				"BLOCK_DEVICE": "/dev/sda1",
+				"BLOCK_DEVICE": "/dev/sda2",
 				"FS_TYPE":      "ext4",
 			},
 		})
