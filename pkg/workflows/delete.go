@@ -19,8 +19,7 @@ type Delete struct {
 }
 
 func NewDelete(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
-	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager,
-) *Delete {
+	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager) *Delete {
 	return &Delete{
 		bootstrapper:   bootstrapper,
 		provider:       provider,

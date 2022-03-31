@@ -27,8 +27,7 @@ type Upgrade struct {
 
 func NewUpgrade(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
 	capiManager interfaces.CAPIManager,
-	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter,
-) *Upgrade {
+	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter) *Upgrade {
 	upgradeChangeDiff := types.NewChangeDiff()
 	return &Upgrade{
 		bootstrapper:      bootstrapper,

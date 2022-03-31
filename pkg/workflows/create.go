@@ -24,8 +24,7 @@ type Create struct {
 }
 
 func NewCreate(bootstrapper interfaces.Bootstrapper, provider providers.Provider,
-	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter,
-) *Create {
+	clusterManager interfaces.ClusterManager, addonManager interfaces.AddonManager, writer filewriter.FileWriter) *Create {
 	return &Create{
 		bootstrapper:   bootstrapper,
 		provider:       provider,

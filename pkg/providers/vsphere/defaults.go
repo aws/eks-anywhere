@@ -162,8 +162,7 @@ func (d *Defaulter) setDiskDefaults(ctx context.Context, machineConfig *anywhere
 
 func (d *Defaulter) setTemplateFullPath(ctx context.Context,
 	datacenterConfig *anywherev1.VSphereDatacenterConfig,
-	machine *anywherev1.VSphereMachineConfig,
-) error {
+	machine *anywherev1.VSphereMachineConfig) error {
 	templateFullPath, err := d.govc.SearchTemplate(ctx, datacenterConfig.Spec.Datacenter, machine)
 	if err != nil {
 		return fmt.Errorf("setting template full path: %v", err)
