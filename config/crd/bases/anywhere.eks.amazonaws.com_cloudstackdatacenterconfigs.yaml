@@ -51,7 +51,14 @@ spec:
                   contain multiple accounts that have some logical relationship to
                   each other and a set of delegated administrators with some authority
                   over the domain and its subdomains
-                type: string
+                properties:
+                  id:
+                    description: Id of a resource in the CloudStack environment.
+                    type: string
+                  name:
+                    description: Name of a resource in the CloudStack environment.
+                    type: string
+                type: object
               managementApiEndpoint:
                 description: CloudStack Management API endpoint's IP. It is added
                   to VM's noproxy list
@@ -82,11 +89,9 @@ spec:
                       properties:
                         id:
                           description: Id of a resource in the CloudStack environment.
-                            Mutually exclusive with Name
                           type: string
                         name:
                           description: Name of a resource in the CloudStack environment.
-                            Mutually exclusive with Id
                           type: string
                       type: object
                   required:
@@ -101,6 +106,11 @@ spec:
           status:
             description: CloudStackDatacenterConfigStatus defines the observed state
               of CloudStackDatacenterConfig
+            properties:
+              domainId:
+                description: 'Important: Run "make" to regenerate code after modifying
+                  this file'
+                type: string
             type: object
         type: object
     served: true

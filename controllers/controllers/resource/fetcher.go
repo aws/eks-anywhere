@@ -601,7 +601,10 @@ func MapClusterToCloudStackDatacenterConfigSpec(csCluster *cloudstackv1.CloudSta
 		})
 	}
 	csSpec.Spec.Zones = zones
-	csSpec.Spec.Domain = csCluster.Spec.Domain
+	csSpec.Spec.Domain = anywherev1.CloudStackResourceIdentifier{
+		Id:   "",
+		Name: csCluster.Spec.Domain,
+	}
 	csSpec.Spec.Account = csCluster.Spec.Account
 
 	return csSpec

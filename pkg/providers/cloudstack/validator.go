@@ -41,7 +41,7 @@ type ProviderCmkClient interface {
 	ValidateAffinityGroupsPresent(ctx context.Context, domainId string, account string, affinityGroupIds []string) error
 	ValidateZonesPresent(ctx context.Context, zones []anywherev1.CloudStackZone) ([]anywherev1.CloudStackResourceIdentifier, error)
 	ValidateNetworkPresent(ctx context.Context, domainId string, zoneRef anywherev1.CloudStackZone, zones []anywherev1.CloudStackResourceIdentifier, account string, multipleZone bool) error
-	ValidateDomainPresent(ctx context.Context, domain string) (anywherev1.CloudStackResourceIdentifier, error)
+	ValidateDomainPresent(ctx context.Context, domain anywherev1.CloudStackResourceIdentifier) (string, error)
 	ValidateAccountPresent(ctx context.Context, account string, domainId string) error
 }
 
@@ -55,9 +55,6 @@ func (v *Validator) validateCloudStackAccess(ctx context.Context) error {
 }
 
 func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, datacenterConfig *anywherev1.CloudStackDatacenterConfig) error {
-	if len(datacenterConfig.Spec.Domain) <= 0 {
-		return fmt.Errorf("CloudStackDatacenterConfig domain is not set or is empty")
-	}
 	if datacenterConfig.Spec.ManagementApiEndpoint == "" {
 		return fmt.Errorf("CloudStackDatacenterConfig managementApiEndpoint is not set or is empty")
 	}
@@ -74,13 +71,16 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 			execConfig.ManagementUrl, datacenterConfig.Spec.ManagementApiEndpoint)
 	}
 
-	domain, errDomain := v.cmk.ValidateDomainPresent(ctx, datacenterConfig.Spec.Domain)
-	if errDomain != nil {
-		return fmt.Errorf("checking domain: %v", errDomain)
-	}
-
 	if len(datacenterConfig.Spec.Account) > 0 {
-		err := v.cmk.ValidateAccountPresent(ctx, datacenterConfig.Spec.Account, domain.Id)
+		if datacenterConfig.Spec.Domain.Id == "" && datacenterConfig.Spec.Domain.Name == "" {
+			return fmt.Errorf("CloudStackDatacenterConfig domain Name and/or Id are not set or are empty when account is set")
+		}
+		domainId, errDomain := v.cmk.ValidateDomainPresent(ctx, datacenterConfig.Spec.Domain)
+		if errDomain != nil {
+			return fmt.Errorf("checking domain: %v", errDomain)
+		}
+		datacenterConfig.Status.DomainId = domainId
+		err := v.cmk.ValidateAccountPresent(ctx, datacenterConfig.Spec.Account, domainId)
 		if err != nil {
 			return fmt.Errorf("checking account %v", err)
 		}
@@ -95,7 +95,7 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 		if len(zone.Network.Id) == 0 && len(zone.Network.Name) == 0 {
 			return fmt.Errorf("zone network is not set or is empty")
 		}
-		err := v.cmk.ValidateNetworkPresent(ctx, domain.Id, zone, zones, datacenterConfig.Spec.Account, len(zones) > 1)
+		err := v.cmk.ValidateNetworkPresent(ctx, datacenterConfig.Status.DomainId, zone, zones, datacenterConfig.Spec.Account, len(zones) > 1)
 		if err != nil {
 			return fmt.Errorf("checking network %v", err)
 		}
@@ -194,24 +194,16 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, cloudStac
 }
 
 func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfigSpec anywherev1.CloudStackDatacenterConfigSpec, machineConfig *anywherev1.CloudStackMachineConfig) error {
-	if len(datacenterConfigSpec.Domain) <= 0 {
-		return fmt.Errorf("CloudStackDatacenterConfig domain is not set or is empty")
-	}
 	for _, restrictedKey := range restrictedUserCustomDetails {
 		if _, found := machineConfig.Spec.UserCustomDetails[restrictedKey]; found {
 			return fmt.Errorf("restricted key %s found in custom user details", restrictedKey)
 		}
 	}
-	domain, errDomain := v.cmk.ValidateDomainPresent(ctx, datacenterConfigSpec.Domain)
-	if errDomain != nil {
-		return fmt.Errorf("checking domain: %v", errDomain)
-	}
-
 	zones, err := v.cmk.ValidateZonesPresent(ctx, datacenterConfigSpec.Zones)
 	if err != nil {
 		return fmt.Errorf("checking zones %v", err)
 	}
-	domainId := domain.Id
+	domainId := datacenterConfigSpec.Domain.Id
 	account := datacenterConfigSpec.Account
 
 	for _, zone := range zones {

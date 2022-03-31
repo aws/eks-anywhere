@@ -1902,6 +1902,35 @@ spec:
                       type: string
                     packageController:
                       properties:
+                        helmChart:
+                          properties:
+                            arch:
+                              description: Architectures of the asset
+                              items:
+                                type: string
+                              type: array
+                            description:
+                              type: string
+                            imageDigest:
+                              description: The SHA256 digest of the image manifest
+                              type: string
+                            name:
+                              description: The asset name
+                              type: string
+                            os:
+                              description: Operating system of the asset
+                              enum:
+                              - linux
+                              - darwin
+                              - windows
+                              type: string
+                            osName:
+                              description: Name of the OS like ubuntu, bottlerocket
+                              type: string
+                            uri:
+                              description: The image repository, name, and tag
+                              type: string
+                          type: object
                         packageController:
                           properties:
                             arch:
@@ -3018,7 +3047,14 @@ spec:
                   contain multiple accounts that have some logical relationship to
                   each other and a set of delegated administrators with some authority
                   over the domain and its subdomains
-                type: string
+                properties:
+                  id:
+                    description: Id of a resource in the CloudStack environment.
+                    type: string
+                  name:
+                    description: Name of a resource in the CloudStack environment.
+                    type: string
+                type: object
               managementApiEndpoint:
                 description: CloudStack Management API endpoint's IP. It is added
                   to VM's noproxy list
@@ -3049,11 +3085,9 @@ spec:
                       properties:
                         id:
                           description: Id of a resource in the CloudStack environment.
-                            Mutually exclusive with Name
                           type: string
                         name:
                           description: Name of a resource in the CloudStack environment.
-                            Mutually exclusive with Id
                           type: string
                       type: object
                   required:
@@ -3068,6 +3102,11 @@ spec:
           status:
             description: CloudStackDatacenterConfigStatus defines the observed state
               of CloudStackDatacenterConfig
+            properties:
+              domainId:
+                description: 'Important: Run "make" to regenerate code after modifying
+                  this file'
+                type: string
             type: object
         type: object
     served: true
@@ -3138,12 +3177,10 @@ spec:
                   be specified as a UUID or name
                 properties:
                   id:
-                    description: Id of a resource in the CloudStack environment. Mutually
-                      exclusive with Name
+                    description: Id of a resource in the CloudStack environment.
                     type: string
                   name:
                     description: Name of a resource in the CloudStack environment.
-                      Mutually exclusive with Id
                     type: string
                 type: object
               template:
@@ -3152,12 +3189,10 @@ spec:
                   as a UUID or name
                 properties:
                   id:
-                    description: Id of a resource in the CloudStack environment. Mutually
-                      exclusive with Name
+                    description: Id of a resource in the CloudStack environment.
                     type: string
                   name:
                     description: Name of a resource in the CloudStack environment.
-                      Mutually exclusive with Id
                     type: string
                 type: object
               userCustomDetails:

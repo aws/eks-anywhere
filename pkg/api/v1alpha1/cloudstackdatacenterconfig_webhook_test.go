@@ -23,10 +23,10 @@ func TestCloudStackDatacenterValidateCreateFeatureDisabled(t *testing.T) {
 
 func TestCloudStackDatacenterValidateUpdateDomainImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.Domain = "oldCruftyDomain"
+	vOld.Spec.Domain.Name = "oldCruftyDomain"
 	c := vOld.DeepCopy()
 
-	c.Spec.Domain = "shinyNewDomain"
+	c.Spec.Domain.Name = "shinyNewDomain"
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }

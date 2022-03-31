@@ -35,7 +35,8 @@ metadata:
   name: eksa-unit-test
 spec:
   account: "admin"
-  domain: "domain1"
+  domain:
+    name: "domain1"
   zones:
     - name: "zone1"
       network:

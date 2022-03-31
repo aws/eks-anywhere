@@ -211,7 +211,9 @@ func TestMapClusterToCloudStackDatacenterConfigSpec(t *testing.T) {
 						},
 					},
 					Account: "account",
-					Domain:  "domain",
+					Domain: anywherev1.CloudStackResourceIdentifier{
+						Name: "domain",
+					},
 				},
 			},
 		},

@@ -34,7 +34,8 @@ kind: CloudStackDatacenterConfig
 metadata:
   name: test_cluster
 spec:
-  domain: "root"
+  domain:
+    name: "root"
   account: "admin"
   zones:
     - name: "zone1"

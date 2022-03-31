@@ -4,7 +4,8 @@ metadata:
   creationTimestamp: null
   name: test_cluster
 spec:
-  domain: domain1
+  domain:
+    name: domain1
   account: account1
   zones:
     - name: zone1

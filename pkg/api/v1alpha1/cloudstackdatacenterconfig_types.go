@@ -27,7 +27,7 @@ type CloudStackDatacenterConfigSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
-	Domain string `json:"domain"`
+	Domain CloudStackResourceIdentifier `json:"domain"`
 	// Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
 	Zones []CloudStackZone `json:"zones"`
 	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain name must also be provided.
@@ -36,11 +36,12 @@ type CloudStackDatacenterConfigSpec struct {
 	ManagementApiEndpoint string `json:"managementApiEndpoint"`
 }
 
+// CloudStackResourceIdentifier defines the identifier to CloudStack resources such as templates, service offerings, domains, etc.
 type CloudStackResourceIdentifier struct {
-	// Id of a resource in the CloudStack environment. Mutually exclusive with Name
+	// Id of a resource in the CloudStack environment.
 	// +optional
 	Id string `json:"id,omitempty"`
-	// Name of a resource in the CloudStack environment. Mutually exclusive with Id
+	// Name of a resource in the CloudStack environment.
 	// +optional
 	Name string `json:"name,omitempty"`
 }
@@ -58,6 +59,7 @@ type CloudStackZone struct {
 // CloudStackDatacenterConfigStatus defines the observed state of CloudStackDatacenterConfig
 type CloudStackDatacenterConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	DomainId string `json:"domainId,omitempty"`
 }
 
 //+kubebuilder:object:root=true

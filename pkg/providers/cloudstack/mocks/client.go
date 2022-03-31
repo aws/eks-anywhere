@@ -84,10 +84,10 @@ func (mr *MockProviderCmkClientMockRecorder) ValidateCloudStackConnection(arg0 i
 }
 
 // ValidateDomainPresent mocks base method.
-func (m *MockProviderCmkClient) ValidateDomainPresent(arg0 context.Context, arg1 string) (v1alpha1.CloudStackResourceIdentifier, error) {
+func (m *MockProviderCmkClient) ValidateDomainPresent(arg0 context.Context, arg1 v1alpha1.CloudStackResourceIdentifier) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ValidateDomainPresent", arg0, arg1)
-	ret0, _ := ret[0].(v1alpha1.CloudStackResourceIdentifier)
+	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

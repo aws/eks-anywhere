@@ -777,7 +777,9 @@ func TestKubectlGetEksaCloudStackDatacenterConfig(t *testing.T) {
 							},
 						},
 					},
-					Domain:  "testDomain",
+					Domain: v1alpha1.CloudStackResourceIdentifier{
+						Name: "testDomain",
+					},
 					Account: "testAccount",
 				},
 			},

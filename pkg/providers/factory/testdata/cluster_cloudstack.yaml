@@ -38,7 +38,8 @@ spec:
     - network:
         name: "Shared1"
       name: "zone1"
-  domain: "dribinm"
+  domain:
+    name: domain"dribinm"
   account: "dribinm-admin"
 
 ---

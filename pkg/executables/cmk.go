@@ -189,35 +189,37 @@ func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudSt
 	return zoneIdentifiers, nil
 }
 
-func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha1.CloudStackResourceIdentifier, error) {
-	domainIdentifier := v1alpha1.CloudStackResourceIdentifier{Name: domain, Id: ""}
+func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain v1alpha1.CloudStackResourceIdentifier) (string, error) {
 	command := newCmkCommand("list domains")
-	applyCmkArgs(&command, withCloudStackName(domain), appendArgs("listall=true"))
+	if len(domain.Name) > 0 {
+		applyCmkArgs(&command, withCloudStackName(domain.Name))
+	}
+	if len(domain.Id) > 0 {
+		applyCmkArgs(&command, withCloudStackId(domain.Id))
+	}
+	applyCmkArgs(&command, appendArgs("listall=true"))
 	result, err := c.exec(ctx, command...)
 	if err != nil {
-		return domainIdentifier, fmt.Errorf("getting domain info - %s: %v", result.String(), err)
+		return "", fmt.Errorf("getting domain info - %s: %v", result.String(), err)
 	}
 	if result.Len() == 0 {
-		return domainIdentifier, fmt.Errorf("domain %s not found", domain)
+		return "", fmt.Errorf("domain %s/%s not found", domain.Name, domain.Id)
 	}
 
 	response := struct {
 		CmkDomains []cmkDomain `json:"domain"`
 	}{}
 	if err = json.Unmarshal(result.Bytes(), &response); err != nil {
-		return domainIdentifier, fmt.Errorf("failed to parse response into json: %v", err)
+		return "", fmt.Errorf("failed to parse response into json: %v", err)
 	}
 	domains := response.CmkDomains
 	if len(domains) > 1 {
-		return domainIdentifier, fmt.Errorf("duplicate domain %s found", domain)
+		return "", fmt.Errorf("duplicate domain %s/%s found", domain.Name, domain.Id)
 	} else if len(domains) == 0 {
-		return domainIdentifier, fmt.Errorf("domain %s not found", domain)
+		return "", fmt.Errorf("domain %s/%s not found", domain.Name, domain.Id)
 	}
 
-	domainIdentifier.Id = domains[0].Id
-	domainIdentifier.Name = domains[0].Name
-
-	return domainIdentifier, nil
+	return domains[0].Id, nil
 }
 
 func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zone v1alpha1.CloudStackZone, zones []v1alpha1.CloudStackResourceIdentifier, account string, multipleZone bool) error {
@@ -229,7 +231,6 @@ func (c *Cmk) ValidateNetworkPresent(ctx context.Context, domainId string, zone 
 		applyCmkArgs(&command, withCloudStackNetworkType(Shared))
 	}
 	// account must be specified within a domainId
-	// domainId can be specified without account
 	if len(domainId) > 0 {
 		applyCmkArgs(&command, withCloudStackDomainId(domainId))
 		if len(account) > 0 {

@@ -6,7 +6,9 @@
   },
   "spec": {
     "insecure": true,
-    "domain": "testDomain",
+    "domain": {
+      "name": "testDomain"
+    },
     "account": "testAccount",
     "zones": [
       {

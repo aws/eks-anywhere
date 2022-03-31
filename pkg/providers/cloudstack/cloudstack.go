@@ -124,8 +124,11 @@ func (p *cloudstackProvider) ValidateNewSpec(ctx context.Context, cluster *types
 		}
 	}
 
-	if nSpec.Domain != oSpec.Domain {
-		return fmt.Errorf("spec.domain is immutable. Previous value %s, new value %s", oSpec.Domain, nSpec.Domain)
+	if nSpec.Domain.Name != oSpec.Domain.Name {
+		return fmt.Errorf("spec.domain.name is immutable. Previous value %s, new value %s", oSpec.Domain.Name, nSpec.Domain.Name)
+	}
+	if nSpec.Domain.Id != oSpec.Domain.Id {
+		return fmt.Errorf("spec.domain.id is immutable. Previous value %s, new value %s", oSpec.Domain.Id, nSpec.Domain.Id)
 	}
 	if nSpec.Account != oSpec.Account {
 		return fmt.Errorf("spec.account is immutable. Previous value %s, new value %s", oSpec.Account, nSpec.Account)
@@ -555,7 +558,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, datacenterConfigSpec v1alpha1
 		"externalAttacherImage":                      bundle.KubeDistro.ExternalAttacher.VersionedImage(),
 		"externalProvisionerImage":                   bundle.KubeDistro.ExternalProvisioner.VersionedImage(),
 		"managerImage":                               bundle.CloudStack.ClusterAPIController.VersionedImage(),
-		"cloudstackDomain":                           datacenterConfigSpec.Domain,
+		"cloudstackDomainId":                         datacenterConfigSpec.Domain.Id,
+		"cloudstackDomainName":                       datacenterConfigSpec.Domain.Name,
 		"cloudstackZones":                            datacenterConfigSpec.Zones,
 		"cloudstackAccount":                          datacenterConfigSpec.Account,
 		"cloudstackControlPlaneComputeOfferingId":    controlPlaneMachineSpec.ComputeOffering.Id,

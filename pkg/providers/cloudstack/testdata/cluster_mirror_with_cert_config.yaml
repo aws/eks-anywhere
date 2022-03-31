@@ -61,7 +61,8 @@ metadata:
   namespace: test-namespace
 spec:
   account: "admin"
-  domain: "domain1"
+  domain:
+    name: "domain1"
   zones:
     - network:
         name: "net1"

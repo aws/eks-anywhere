@@ -33,7 +33,8 @@ spec:
     - network:
         name: net1
       name: zone1
-  domain: domain1
+  domain:
+    name: domain1
   account: admin
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1

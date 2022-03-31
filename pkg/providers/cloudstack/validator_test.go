@@ -49,7 +49,7 @@ func TestValidateCloudStackDatacenterConfig(t *testing.T) {
 	}
 
 	cmk.EXPECT().ValidateZonesPresent(ctx, cloudstackDatacenter.Spec.Zones).Return([]v1alpha1.CloudStackResourceIdentifier{{Name: "zone1", Id: "4e3b338d-87a6-4189-b931-a1747edeea8f"}}, nil)
-	cmk.EXPECT().ValidateDomainPresent(ctx, cloudstackDatacenter.Spec.Domain).Return(v1alpha1.CloudStackResourceIdentifier{Id: "5300cdac-74d5-11ec-8696-c81f66d3e965", Name: cloudstackDatacenter.Spec.Domain}, nil)
+	cmk.EXPECT().ValidateDomainPresent(ctx, cloudstackDatacenter.Spec.Domain).Return("5300cdac-74d5-11ec-8696-c81f66d3e965", nil)
 	cmk.EXPECT().ValidateAccountPresent(ctx, gomock.Any(), gomock.Any()).Return(nil)
 	cmk.EXPECT().ValidateNetworkPresent(ctx, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), false).Return(nil)
 	err = validator.ValidateCloudStackDatacenterConfig(ctx, cloudstackDatacenter)
@@ -130,8 +130,8 @@ func TestValidateDatacenterConfigsNoNetwork(t *testing.T) {
 		machineConfigsLookup: nil,
 	}
 	validator := NewValidator(cmk)
-	cmk.EXPECT().ValidateZonesPresent(ctx, gomock.Any()).Return([]v1alpha1.CloudStackResourceIdentifier{{Name: "zone1", Id: "4e3b338d-87a6-4189-b931-a1747edeea8f"}}, nil)
-	cmk.EXPECT().ValidateDomainPresent(ctx, gomock.Any()).Return(v1alpha1.CloudStackResourceIdentifier{Id: "5300cdac-74d5-11ec-8696-c81f66d3e965", Name: "ROOT"}, nil)
+	cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).Return([]v1alpha1.CloudStackResourceIdentifier{{Name: "zone1", Id: "4e3b338d-87a6-4189-b931-a1747edeea8f"}}, nil)
+	cmk.EXPECT().ValidateDomainPresent(ctx, gomock.Any()).Return("5300cdac-74d5-11ec-8696-c81f66d3e965", nil)
 	cmk.EXPECT().ValidateAccountPresent(ctx, gomock.Any(), gomock.Any()).Return(nil)
 
 	datacenterConfig.Spec.Zones[0].Network.Id = ""
@@ -208,7 +208,7 @@ func TestSetupAndValidateUsersNil(t *testing.T) {
 	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.Users = nil
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.Users = nil
-	cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any()).Times(3)
+
 	cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).Times(3).Return([]v1alpha1.CloudStackResourceIdentifier{{Name: "zone1", Id: "4e3b338d-87a6-4189-b931-a1747edeea8f"}}, nil)
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
@@ -276,7 +276,6 @@ func TestSetupAndValidateSshAuthorizedKeysNil(t *testing.T) {
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys = nil
 
-	cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).Times(3).Return([]v1alpha1.CloudStackResourceIdentifier{{Name: "zone1", Id: "4e3b338d-87a6-4189-b931-a1747edeea8f"}}, nil)
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
@@ -474,7 +473,6 @@ func TestValidateMachineConfigsHappyCase(t *testing.T) {
 		machineConfigsLookup: machineConfigs,
 	}
 	validator := NewValidator(cmk)
-	cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).Times(3).Return([]v1alpha1.CloudStackResourceIdentifier{{Name: "zone1", Id: "4e3b338d-87a6-4189-b931-a1747edeea8f"}}, nil)
 	cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(),
 		gomock.Any(), datacenterConfig.Spec.Account, testTemplate).Times(3)
@@ -499,7 +497,6 @@ func TestValidateCloudStackMachineConfig(t *testing.T) {
 	validator := NewValidator(cmk)
 
 	for _, machineConfig := range machineConfigs {
-		cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any())
 		cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).Return([]v1alpha1.CloudStackResourceIdentifier{{Name: "zone1", Id: "4e3b338d-87a6-4189-b931-a1747edeea8f"}}, nil)
 		cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(), gomock.Any(), "admin", machineConfig.Spec.Template).Return(nil)
 		cmk.EXPECT().ValidateServiceOfferingPresent(ctx, gomock.Any(), machineConfig.Spec.ComputeOffering).Return(nil)

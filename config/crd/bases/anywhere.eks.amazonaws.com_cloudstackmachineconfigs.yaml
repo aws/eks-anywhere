@@ -57,12 +57,10 @@ spec:
                   be specified as a UUID or name
                 properties:
                   id:
-                    description: Id of a resource in the CloudStack environment. Mutually
-                      exclusive with Name
+                    description: Id of a resource in the CloudStack environment.
                     type: string
                   name:
                     description: Name of a resource in the CloudStack environment.
-                      Mutually exclusive with Id
                     type: string
                 type: object
               template:
@@ -71,12 +69,10 @@ spec:
                   as a UUID or name
                 properties:
                   id:
-                    description: Id of a resource in the CloudStack environment. Mutually
-                      exclusive with Name
+                    description: Id of a resource in the CloudStack environment.
                     type: string
                   name:
                     description: Name of a resource in the CloudStack environment.
-                      Mutually exclusive with Id
                     type: string
                 type: object
               userCustomDetails:

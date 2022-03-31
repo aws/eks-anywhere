@@ -50,8 +50,18 @@ spec:
       name: {{ $zone.Name }}
 {{- end}}
 {{- end}}
-  {{ if .cloudstackDomain }}domain: {{.cloudstackDomain}}{{- end}}
-  {{ if .cloudstackAccount }}account: {{.cloudstackAccount}}{{- end}}
+{{- if or .cloudstackDomainId .cloudstackDomainName }}
+  domain:
+  {{- if .cloudstackDomainId}}
+    id: {{.cloudstackDomainId}}
+  {{- end}}
+  {{- if .cloudstackDomainName}}
+    name: {{.cloudstackDomainName}}
+  {{- end}}
+{{- end}}
+{{- if .cloudstackAccount }}
+  account: {{.cloudstackAccount}}
+{{- end}}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: CloudStackMachineTemplate
