@@ -46,7 +46,8 @@ func (r *ReleaseConfig) GetPackagesAssets() ([]Artifact, error) {
 	}
 	sourceHelmURI, err := r.GetSourceHelmURI(repoName)
 	if err != nil {
-		return nil, errors.Cause(err)
+		// This is for Prow, where it's running e2e test's in an account where the ECR lookup will fail.
+		sourceHelmURI = "857151390494.dkr.ecr.us-west-2.amazonaws.com/eks-anywhere-packages:0.1.2-bba7e1fcefed9c41bda1b66ffb39cb02aa89c9e7-helm"
 	}
 	if sourcedFromBranch != r.BuildRepoBranchName {
 		gitTag, err = r.readGitTag(packagesRootPath, sourcedFromBranch)
