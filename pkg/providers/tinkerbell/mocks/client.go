@@ -158,6 +158,25 @@ func (m *MockProviderTinkClient) EXPECT() *MockProviderTinkClientMockRecorder {
 	return m.recorder
 }
 
+// DeleteWorkflow mocks base method.
+func (m *MockProviderTinkClient) DeleteWorkflow(arg0 context.Context, arg1 ...string) error {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0}
+	for _, a := range arg1 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteWorkflow", varargs...)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteWorkflow indicates an expected call of DeleteWorkflow.
+func (mr *MockProviderTinkClientMockRecorder) DeleteWorkflow(arg0 interface{}, arg1 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0}, arg1...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteWorkflow", reflect.TypeOf((*MockProviderTinkClient)(nil).DeleteWorkflow), varargs...)
+}
+
 // GetHardware mocks base method.
 func (m *MockProviderTinkClient) GetHardware(arg0 context.Context) ([]*hardware.Hardware, error) {
 	m.ctrl.T.Helper()
