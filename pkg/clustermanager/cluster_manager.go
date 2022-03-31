@@ -526,8 +526,6 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 			}
 		}
 	case v1alpha1.CloudStackDatacenterKind:
-		machineConfigMap := make(map[string]*v1alpha1.CloudStackMachineConfig)
-
 		existingCsdc, err := c.clusterClient.GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 		if err != nil {
 			return false, err
@@ -540,40 +538,16 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 
 		for _, config := range machineConfigs {
 			mc := config.(*v1alpha1.CloudStackMachineConfig)
-			machineConfigMap[mc.Name] = mc
-		}
-		existingCpCsmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, cc.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return false, err
-		}
-		cpCsmc := machineConfigMap[newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-		if !existingCpCsmc.Spec.Equal(&cpCsmc.Spec) {
-			logger.V(3).Info("New control plane machine config spec is different from the existing spec")
-			return true, nil
-		}
-		existingWnCsmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, cc.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return false, err
-		}
-		wnCsmc := machineConfigMap[newClusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name]
-		if !existingWnCsmc.Spec.Equal(&wnCsmc.Spec) {
-			logger.V(3).Info("New worker node machine config spec is different from the existing spec")
-			return true, nil
-		}
-		if cc.Spec.ExternalEtcdConfiguration != nil {
-			existingEtcdCsmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, cc.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
+			existingMc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, mc.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 			if err != nil {
 				return false, err
 			}
-			etcdCsmc := machineConfigMap[newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-			if !existingEtcdCsmc.Spec.Equal(&etcdCsmc.Spec) {
-				logger.V(3).Info("New etcd machine config spec is different from the existing spec")
+			if !existingMc.Spec.Equal(&mc.Spec) {
+				logger.V(3).Info(fmt.Sprintf("New machine config spec %s is different from the existing spec", mc.Name))
 				return true, nil
 			}
 		}
-		// TODO: Refactor into smaller methods, consider moving to provider with new method in interface (ClusterSpecChanged)
-		// TODO: use cluster.MachineConfigRefs() to get list of machine configs and then iterate over them to check spec equality. Include machine group ref name
-		// in error message
+		// TODO: Move provider specific logic to provider with new method in interface (ClusterSpecChanged)
 		// TODO: Make sure happy paths at least are unit tested, especially if moving code to provider
 	default:
 		// Run upgrade flow
