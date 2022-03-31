@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -16,6 +17,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
+	"github.com/aws/eks-anywhere/pkg/utils/urls"
 	"github.com/aws/eks-anywhere/pkg/version"
 	"github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
@@ -95,7 +97,7 @@ func importImages(ctx context.Context, spec string) error {
 		}
 	}
 
-	endpoint := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
+	endpoint := clusterSpec.Cluster.RegistryMirror()
 	return importCharts(ctx, helmExecutable, bundle.Charts(), endpoint, registryUsername, registryPassword)
 }
 
@@ -128,7 +130,7 @@ func importChart(ctx context.Context, helm *executables.Helm, chart v1alpha1.Ima
 	if err := helm.PullChart(ctx, uri, chartVersion); err != nil {
 		return err
 	}
-	return helm.PushChart(ctx, chart.ChartName(), fmt.Sprintf("%s%s/%s", ociPrefix, endpoint, chart.Name))
+	return helm.PushChart(ctx, chart.ChartName(), pushChartURI(chart, endpoint))
 }
 
 func preRunImportImagesCmd(cmd *cobra.Command, args []string) error {
@@ -145,4 +147,9 @@ func getChartUriAndVersion(chart v1alpha1.Image) (uri, version string) {
 	uri = fmt.Sprintf("%s%s", ociPrefix, chart.Image())
 	version = chart.Tag()
 	return uri, version
+}
+
+func pushChartURI(chart v1alpha1.Image, registryEndpoint string) string {
+	orgURL := fmt.Sprintf("%s%s", ociPrefix, filepath.Dir(chart.Image()))
+	return urls.ReplaceHost(orgURL, registryEndpoint)
 }
