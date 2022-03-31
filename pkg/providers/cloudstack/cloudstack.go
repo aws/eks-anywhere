@@ -460,7 +460,7 @@ func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context) 
 	return nil
 }
 
-func NeedsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
+func needsNewControlPlaneTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
 	// Another option is to generate MachineTemplates based on the old and new eksa spec,
 	// remove the name field and compare them with DeepEqual
 	// We plan to approach this way since it's more flexible to add/remove fields and test out for validation
@@ -494,24 +494,24 @@ func NeedsNewKubeadmConfigTemplate(newWorkerNodeGroup *v1alpha1.WorkerNodeGroupC
 	return !v1alpha1.TaintsSliceEqual(newWorkerNodeGroup.Taints, oldWorkerNodeGroup.Taints) || !v1alpha1.LabelsMapEqual(newWorkerNodeGroup.Labels, oldWorkerNodeGroup.Labels)
 }
 
-func NeedsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldVdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
+func needsNewEtcdTemplate(oldSpec, newSpec *cluster.Spec, oldCsdc, newCsdc *v1alpha1.CloudStackDatacenterConfig, oldCsmc, newCsmc *v1alpha1.CloudStackMachineConfig) bool {
 	if oldSpec.Cluster.Spec.KubernetesVersion != newSpec.Cluster.Spec.KubernetesVersion {
 		return true
 	}
 	if oldSpec.Bundles.Spec.Number != newSpec.Bundles.Spec.Number {
 		return true
 	}
-	return AnyImmutableFieldChanged(oldVdc, newCsdc, oldCsmc, newCsmc)
+	return AnyImmutableFieldChanged(oldCsdc, newCsdc, oldCsmc, newCsmc)
 }
 
-func (p *cloudstackProvider) needsNewMachineTemplate(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, vdc *v1alpha1.CloudStackDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
+func (p *cloudstackProvider) needsNewMachineTemplate(ctx context.Context, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec, workerNodeGroupConfiguration v1alpha1.WorkerNodeGroupConfiguration, csdc *v1alpha1.CloudStackDatacenterConfig, prevWorkerNodeGroupConfigs map[string]v1alpha1.WorkerNodeGroupConfiguration) (bool, error) {
 	if _, ok := prevWorkerNodeGroupConfigs[workerNodeGroupConfiguration.Name]; ok {
 		workerMachineConfig := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name]
 		workerVmc, err := p.providerKubectlClient.GetEksaCloudStackMachineConfig(ctx, workerNodeGroupConfiguration.MachineGroupRef.Name, workloadCluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 		if err != nil {
 			return false, err
 		}
-		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, vdc, p.datacenterConfig, workerVmc, workerMachineConfig)
+		needsNewWorkloadTemplate := NeedsNewWorkloadTemplate(currentSpec, newClusterSpec, csdc, p.datacenterConfig, workerVmc, workerMachineConfig)
 		return needsNewWorkloadTemplate, nil
 	}
 	return true, nil
@@ -818,7 +818,7 @@ func (p *cloudstackProvider) getControlPlaneNameForCAPISpecUpgrade(ctx context.C
 	if err != nil {
 		return "", err
 	}
-	needsNewControlPlaneTemplate := NeedsNewControlPlaneTemplate(currentSpec, newClusterSpec, csdc, p.datacenterConfig, controlPlaneVmc, controlPlaneMachineConfig)
+	needsNewControlPlaneTemplate := needsNewControlPlaneTemplate(currentSpec, newClusterSpec, csdc, p.datacenterConfig, controlPlaneVmc, controlPlaneMachineConfig)
 	if !needsNewControlPlaneTemplate {
 		cp, err := p.providerKubectlClient.GetKubeadmControlPlane(ctx, workloadCluster, oldCluster.Name, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -881,7 +881,7 @@ func (p *cloudstackProvider) getEtcdTemplateNameForCAPISpecUpgrade(ctx context.C
 	if err != nil {
 		return "", err
 	}
-	needsNewEtcdTemplate := NeedsNewEtcdTemplate(currentSpec, newClusterSpec, csdc, p.datacenterConfig, etcdMachineVmc, etcdMachineConfig)
+	needsNewEtcdTemplate := needsNewEtcdTemplate(currentSpec, newClusterSpec, csdc, p.datacenterConfig, etcdMachineVmc, etcdMachineConfig)
 	if !needsNewEtcdTemplate {
 		etcdadmCluster, err := p.providerKubectlClient.GetEtcdadmCluster(ctx, workloadCluster, clusterName, executables.WithCluster(bootstrapCluster), executables.WithNamespace(constants.EksaSystemNamespace))
 		if err != nil {
@@ -1112,28 +1112,33 @@ func (p *cloudstackProvider) validateMachineConfigsNameUniqueness(ctx context.Co
 
 	cpMachineConfigName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	if prevSpec.Spec.ControlPlaneConfiguration.MachineGroupRef.Name != cpMachineConfigName {
-		em, err := p.providerKubectlClient.SearchCloudStackMachineConfig(ctx, cpMachineConfigName, cluster.KubeconfigFile, clusterSpec.Cluster.GetNamespace())
+		err := p.validateMachineConfigNameUniqueness(ctx, cpMachineConfigName, clusterSpec)
 		if err != nil {
 			return err
-		}
-		if len(em) > 0 {
-			return fmt.Errorf("control plane CloudStackMachineConfig %s already exists", cpMachineConfigName)
 		}
 	}
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil && prevSpec.Spec.ExternalEtcdConfiguration != nil {
 		etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 		if prevSpec.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name != etcdMachineConfigName {
-			em, err := p.providerKubectlClient.SearchCloudStackMachineConfig(ctx, etcdMachineConfigName, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.GetNamespace())
+			err := p.validateMachineConfigNameUniqueness(ctx, etcdMachineConfigName, clusterSpec)
 			if err != nil {
 				return err
-			}
-			if len(em) > 0 {
-				return fmt.Errorf("external etcd machineconfig %s already exists", etcdMachineConfigName)
 			}
 		}
 	}
 
+	return nil
+}
+
+func (p *cloudstackProvider) validateMachineConfigNameUniqueness(ctx context.Context, machineConfigName string, clusterSpec *cluster.Spec) error {
+	em, err := p.providerKubectlClient.SearchCloudStackMachineConfig(ctx, machineConfigName, clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.Cluster.GetNamespace())
+	if err != nil {
+		return err
+	}
+	if len(em) > 0 {
+		return fmt.Errorf("machineconfig %s already exists", machineConfigName)
+	}
 	return nil
 }
 
