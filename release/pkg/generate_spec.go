@@ -261,26 +261,26 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 
 	artifactsTable := map[string][]Artifact{}
 	eksAArtifactsFuncs := map[string]func() ([]Artifact, error){
-		"eks-a-tools":                     r.GetEksAToolsAssets,
-		"cluster-api":                     r.GetCAPIAssets,
-		"cluster-api-provider-aws":        r.GetCapaAssets,
-		"cluster-api-provider-docker":     r.GetDockerAssets,
-		"cluster-api-provider-vsphere":    r.GetCapvAssets,
-		"vsphere-csi-driver":              r.GetVsphereCsiAssets,
-		"cert-manager":                    r.GetCertManagerAssets,
-		"cilium":                          r.GetCiliumAssets,
-		"local-path-provisioner":          r.GetLocalPathProvisionerAssets,
-		"kube-rbac-proxy":                 r.GetKubeRbacProxyAssets,
-		"kube-vip":                        r.GetKubeVipAssets,
-		"flux":                            r.GetFluxAssets,
-		"etcdadm-bootstrap-provider":      r.GetEtcdadmBootstrapAssets,
-		"etcdadm-controller":              r.GetEtcdadmControllerAssets,
-		"cluster-controller":              r.GetClusterControllerAssets,
-		"kindnetd":                        r.GetKindnetdAssets,
-		"etcdadm":                         r.GetEtcdadmAssets,
-		"cri-tools":                       r.GetCriToolsAssets,
-		"diagnostic-collector":            r.GetDiagnosticCollectorAssets,
-		"haproxy":                         r.GetHaproxyAssets,
+		"eks-a-tools":                  r.GetEksAToolsAssets,
+		"cluster-api":                  r.GetCAPIAssets,
+		"cluster-api-provider-aws":     r.GetCapaAssets,
+		"cluster-api-provider-docker":  r.GetDockerAssets,
+		"cluster-api-provider-vsphere": r.GetCapvAssets,
+		"vsphere-csi-driver":           r.GetVsphereCsiAssets,
+		"cert-manager":                 r.GetCertManagerAssets,
+		"cilium":                       r.GetCiliumAssets,
+		"local-path-provisioner":       r.GetLocalPathProvisionerAssets,
+		"kube-rbac-proxy":              r.GetKubeRbacProxyAssets,
+		"kube-vip":                     r.GetKubeVipAssets,
+		"flux":                         r.GetFluxAssets,
+		"etcdadm-bootstrap-provider":   r.GetEtcdadmBootstrapAssets,
+		"etcdadm-controller":           r.GetEtcdadmControllerAssets,
+		"cluster-controller":           r.GetClusterControllerAssets,
+		"kindnetd":                     r.GetKindnetdAssets,
+		"etcdadm":                      r.GetEtcdadmAssets,
+		"cri-tools":                    r.GetCriToolsAssets,
+		"diagnostic-collector":         r.GetDiagnosticCollectorAssets,
+		"haproxy":                      r.GetHaproxyAssets,
 	}
 
 	if r.DevRelease && r.BuildRepoBranchName == "main" {
@@ -491,6 +491,25 @@ func (r *ReleaseConfig) GetSourceImageURI(name, repoName string, tagOptions map[
 		}
 	}
 
+	return sourceImageUri, sourcedFromBranch, nil
+}
+
+func (r *ReleaseConfig) GetSourceHelmURI(repoName string) (string, string, error) {
+	var sourceImageUri string
+	sourcedFromBranch := r.BuildRepoBranchName
+	ecrClient, err := NewECRClient()
+	if err != nil {
+		return "", "", err
+	}
+	latestTag, err := ecrClient.GetLatestUploadHelmSha(repoName)
+	if err != nil {
+		return "", "", err
+	}
+	sourceImageUri = fmt.Sprintf("%s/%s:%s",
+		r.SourceContainerRegistry,
+		repoName,
+		latestTag,
+	)
 	return sourceImageUri, sourcedFromBranch, nil
 }
 

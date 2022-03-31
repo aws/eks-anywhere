@@ -42,6 +42,7 @@ func (r *ReleaseConfig) GetPackagesAssets() ([]Artifact, error) {
 	}
 
 	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(packagesImageName, repoName, tagOptions)
+	sourceHelmURI, sourcedFromBranch, err := r.GetSourceHelmURI(repoName)
 	if err != nil {
 		return nil, errors.Cause(err)
 	}
@@ -73,8 +74,8 @@ func (r *ReleaseConfig) GetPackagesAssets() ([]Artifact, error) {
 	// 123456.dkr.ecr.us-west-2.amazonaws.com/eks-anywhere-packages:0.1.2-2e9994fd1afb2216a51fa474ac5d7dc6a772bb62-helm
 	artifacts := []Artifact{{Image: imageArtifact}}
 	helmImageArtifact := &ImageArtifact{
-		AssetName:         packagesHelmChart,                                                                                                   // This needs to differ from the image name for later steps
-		SourceImageURI:    "857151390494.dkr.ecr.us-west-2.amazonaws.com/eks-anywhere-packages:0.1.3_3cebf296e12fc3d5c00856bcf9e67b6a610574f2", // Hardcoding until we come up with helm workaround since it lacks latest.
+		AssetName:         packagesHelmChart, // This needs to differ from the image name for later steps
+		SourceImageURI:    sourceHelmURI,     // Hardcoding until we come up with helm workaround since it lacks latest.
 		ReleaseImageURI:   strings.ReplaceAll(releaseImageUri, "packages:v", "packages:"),
 		GitTag:            gitTag,
 		ProjectPath:       packagesRootPath,
