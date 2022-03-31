@@ -433,7 +433,7 @@ func (p *cloudstackProvider) SetupAndValidateUpgradeCluster(ctx context.Context,
 	return fmt.Errorf("upgrade is not yet supported for CloudStack cluster")
 }
 
-func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
+func (p *cloudstackProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
 	err := p.validateEnv(ctx)
 	if err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
@@ -842,6 +842,11 @@ func (p *cloudstackProvider) DeleteResources(ctx context.Context, clusterSpec *c
 		}
 	}
 	return p.providerKubectlClient.DeleteEksaCloudStackDatacenterConfig(ctx, p.datacenterConfig.Name, clusterSpec.ManagementCluster.KubeconfigFile, p.datacenterConfig.Namespace)
+}
+
+func (p *cloudstackProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
+	// No validations
+	return nil
 }
 
 func (p *cloudstackProvider) GenerateStorageClass() []byte {

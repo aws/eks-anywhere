@@ -13,6 +13,7 @@ import (
 	pbnj "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
+	v1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
 	hardware "github.com/tinkerbell/tink/protos/hardware"
 	workflow "github.com/tinkerbell/tink/protos/workflow"
@@ -82,6 +83,36 @@ func (m *MockProviderKubectlClient) DeleteEksaMachineConfig(arg0 context.Context
 func (mr *MockProviderKubectlClientMockRecorder) DeleteEksaMachineConfig(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEksaMachineConfig", reflect.TypeOf((*MockProviderKubectlClient)(nil).DeleteEksaMachineConfig), arg0, arg1, arg2, arg3, arg4)
+}
+
+// GetBmcsPowerState mocks base method.
+func (m *MockProviderKubectlClient) GetBmcsPowerState(arg0 context.Context, arg1 []string, arg2, arg3 string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBmcsPowerState", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBmcsPowerState indicates an expected call of GetBmcsPowerState.
+func (mr *MockProviderKubectlClientMockRecorder) GetBmcsPowerState(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBmcsPowerState", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetBmcsPowerState), arg0, arg1, arg2, arg3)
+}
+
+// GetHardwareWithOwnerName mocks base method.
+func (m *MockProviderKubectlClient) GetHardwareWithOwnerName(arg0 context.Context, arg1, arg2 string) ([]v1alpha1.Hardware, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetHardwareWithOwnerName", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]v1alpha1.Hardware)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetHardwareWithOwnerName indicates an expected call of GetHardwareWithOwnerName.
+func (mr *MockProviderKubectlClientMockRecorder) GetHardwareWithOwnerName(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardwareWithOwnerName", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetHardwareWithOwnerName), arg0, arg1, arg2)
 }
 
 // GetMachineDeployment mocks base method.
