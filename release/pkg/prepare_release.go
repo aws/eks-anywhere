@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"sort"
 	"strings"
@@ -584,8 +583,8 @@ func getLastestImageSha(details []types.ImageDetail) (string, error) {
 			latest = detail
 		}
 	}
-	// Check if latest is equal to empty struct, and return error if that's the case.
-	if reflect.DeepEqual(latest, types.ImageDetail{}) {
+	// Check if latest is empty, and return error if that's the case.
+	if latest.ImageTags[0] == "" {
 		return "", fmt.Errorf("error no images found")
 	}
 	return latest.ImageTags[0], nil
