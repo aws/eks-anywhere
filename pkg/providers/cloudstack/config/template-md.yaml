@@ -85,7 +85,7 @@ kind: MachineDeployment
 metadata:
   labels:
     cluster.x-k8s.io/cluster-name: {{.clusterName}}
-  name: {{.workloadkubeadmconfigTemplateName}}
+  name: {{.workerNodeGroupName}}
   namespace: {{.eksaSystemNamespace}}
 spec:
   clusterName: {{.clusterName}}
