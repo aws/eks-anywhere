@@ -332,7 +332,11 @@ func (c *ClusterManager) DeleteCluster(ctx context.Context, managementCluster, c
 				}
 			}
 
-			return c.clusterClient.DeleteCluster(ctx, managementCluster, clusterToDelete)
+			if err := c.clusterClient.DeleteCluster(ctx, managementCluster, clusterToDelete); err != nil {
+				return err
+			}
+
+			return provider.PostClusterDeleteValidate(ctx, managementCluster)
 		},
 	)
 }

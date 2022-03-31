@@ -124,13 +124,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 	return nil
 }
 
-func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string, skipPowerActions bool) error {
-	hardwares, err := v.tink.GetHardware(ctx)
-	if err != nil {
-		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
-	}
-	logger.MarkPass("Connected to tinkerbell stack")
-
+func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string, hardwares []*tinkhardware.Hardware, skipPowerActions, force bool) error {
 	if err := v.hardwareConfig.ParseHardwareConfig(hardwareConfigFile); err != nil {
 		return fmt.Errorf("failed to get hardware Config: %v", err)
 	}
@@ -146,7 +140,7 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 		return fmt.Errorf("validating if the workflow exist for the given list of hardwares %v", err)
 	}
 
-	if err := v.hardwareConfig.ValidateHardware(skipPowerActions, tinkHardwareMap, tinkWorkflowMap); err != nil {
+	if err := v.hardwareConfig.ValidateHardware(skipPowerActions, force, tinkHardwareMap, tinkWorkflowMap); err != nil {
 		return fmt.Errorf("failed validating Hardware BMC refs in hardware config: %v", err)
 	}
 

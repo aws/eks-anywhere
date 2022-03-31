@@ -87,3 +87,18 @@ func (t *Tink) GetWorkflow(ctx context.Context) ([]*workflow.Workflow, error) {
 
 	return workflowList, nil
 }
+
+func (t *Tink) DeleteWorkflow(ctx context.Context, workflowIDs ...string) error {
+	params := []string{
+		"workflow", "delete",
+		"--tinkerbell-cert-url", t.tinkerbellCertUrl,
+		"--tinkerbell-grpc-authority", t.tinkerbellGrpcAuthority,
+	}
+	params = append(params, workflowIDs...)
+
+	if _, err := t.Command(ctx, params...).Run(); err != nil {
+		return fmt.Errorf("deleting workflow(s): %v", err)
+	}
+
+	return nil
+}
