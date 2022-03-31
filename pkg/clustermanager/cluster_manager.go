@@ -20,7 +20,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -914,16 +913,11 @@ func (c *ClusterManager) removeOldWorkerNodeGroups(ctx context.Context, workload
 	return nil
 }
 
-func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
+func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {
 	if err := c.clusterClient.installCustomComponents(ctx, clusterSpec, cluster); err != nil {
 		return err
 	}
-	if features.IsActive(features.CloudStackProvider()) {
-		if err := c.clusterClient.SetEksaControllerEnvVar(ctx, features.CloudStackProviderEnvVar, "true", cluster.KubeconfigFile); err != nil {
-			return err
-		}
-	}
-	return nil
+	return provider.InstallCustomProviderComponents(ctx, cluster.KubeconfigFile)
 }
 
 func (c *ClusterManager) InstallEksdComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {

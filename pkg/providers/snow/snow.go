@@ -265,3 +265,7 @@ func (p *snowProvider) RunPostControlPlaneCreation(ctx context.Context, clusterS
 func (p *snowProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
 	return nil
 }
+
+func (p *snowProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
+}

@@ -260,7 +260,7 @@ func (s *MoveClusterManagementTask) Name() string {
 func (s *InstallEksaComponentsTask) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	if !commandContext.BootstrapCluster.ExistingManagement {
 		logger.Info("Installing EKS-A custom components (CRD and controller) on workload cluster")
-		err := commandContext.ClusterManager.InstallCustomComponents(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster)
+		err := commandContext.ClusterManager.InstallCustomComponents(ctx, commandContext.ClusterSpec, commandContext.WorkloadCluster, commandContext.Provider)
 		if err != nil {
 			commandContext.SetError(err)
 			return &CollectDiagnosticsTask{}

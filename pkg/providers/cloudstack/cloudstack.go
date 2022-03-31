@@ -21,6 +21,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -192,6 +193,7 @@ type ProviderKubectlClient interface {
 	SearchCloudStackDatacenterConfig(ctx context.Context, name string, kubeconfigFile string, namespace string) ([]*v1alpha1.CloudStackDatacenterConfig, error)
 	DeleteEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) error
+	SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
 }
 
 func NewProvider(datacenterConfig *v1alpha1.CloudStackDatacenterConfig, machineConfigs map[string]*v1alpha1.CloudStackMachineConfig, clusterConfig *v1alpha1.Cluster, providerKubectlClient ProviderKubectlClient, providerCmkClient ProviderCmkClient, writer filewriter.FileWriter, now types.NowFunc, skipIpCheck bool) *cloudstackProvider {
@@ -1140,6 +1142,10 @@ func (p *cloudstackProvider) validateMachineConfigNameUniqueness(ctx context.Con
 		return fmt.Errorf("machineconfig %s already exists", machineConfigName)
 	}
 	return nil
+}
+
+func (p *cloudstackProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return p.providerKubectlClient.SetEksaControllerEnvVar(ctx, features.CloudStackProviderEnvVar, "true", kubeconfigFile)
 }
 
 func machineDeploymentName(clusterName, nodeGroupName string) string {

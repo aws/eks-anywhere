@@ -899,7 +899,8 @@ func TestClusterManagerInstallCustomComponentsSuccess(t *testing.T) {
 			tt.mocks.client.EXPECT().WaitForDeployment(ctx, tt.cluster, "30m", "Available", deployment, namespace)
 		}
 	}
-	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.clusterSpec, tt.cluster); err != nil {
+	tt.mocks.provider.EXPECT().InstallCustomProviderComponents(ctx, tt.cluster.KubeconfigFile)
+	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.clusterSpec, tt.cluster, tt.mocks.provider); err != nil {
 		t.Errorf("ClusterManager.InstallCustomComponents() error = %v, wantErr nil", err)
 	}
 }
@@ -908,7 +909,7 @@ func TestClusterManagerInstallCustomComponentsErrorReadingManifest(t *testing.T)
 	tt := newTest(t)
 	tt.clusterSpec.VersionsBundle.Eksa.Components.URI = "fake.yaml"
 
-	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.clusterSpec, tt.cluster); err == nil {
+	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.clusterSpec, tt.cluster, tt.mocks.provider); err == nil {
 		t.Error("ClusterManager.InstallCustomComponents() error = nil, wantErr not nil")
 	}
 }
@@ -919,7 +920,7 @@ func TestClusterManagerInstallCustomComponentsErrorApplying(t *testing.T) {
 
 	tt.mocks.client.EXPECT().ApplyKubeSpecFromBytes(tt.ctx, tt.cluster, gomock.Not(gomock.Nil())).Return(errors.New("error from apply")).Times(2)
 
-	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.clusterSpec, tt.cluster); err == nil {
+	if err := tt.clusterManager.InstallCustomComponents(tt.ctx, tt.clusterSpec, tt.cluster, nil); err == nil {
 		t.Error("ClusterManager.InstallCustomComponents() error = nil, wantErr not nil")
 	}
 }
