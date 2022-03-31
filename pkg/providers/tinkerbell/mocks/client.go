@@ -100,19 +100,19 @@ func (mr *MockProviderKubectlClientMockRecorder) GetBmcsPowerState(arg0, arg1, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBmcsPowerState", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetBmcsPowerState), arg0, arg1, arg2, arg3)
 }
 
-// GetHardwareWithOwnerName mocks base method.
-func (m *MockProviderKubectlClient) GetHardwareWithOwnerName(arg0 context.Context, arg1, arg2 string) ([]v1alpha1.Hardware, error) {
+// GetHardwareWithLabel mocks base method.
+func (m *MockProviderKubectlClient) GetHardwareWithLabel(arg0 context.Context, arg1, arg2, arg3 string) ([]v1alpha1.Hardware, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetHardwareWithOwnerName", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "GetHardwareWithLabel", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].([]v1alpha1.Hardware)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetHardwareWithOwnerName indicates an expected call of GetHardwareWithOwnerName.
-func (mr *MockProviderKubectlClientMockRecorder) GetHardwareWithOwnerName(arg0, arg1, arg2 interface{}) *gomock.Call {
+// GetHardwareWithLabel indicates an expected call of GetHardwareWithLabel.
+func (mr *MockProviderKubectlClientMockRecorder) GetHardwareWithLabel(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardwareWithOwnerName", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetHardwareWithOwnerName), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardwareWithLabel", reflect.TypeOf((*MockProviderKubectlClient)(nil).GetHardwareWithLabel), arg0, arg1, arg2, arg3)
 }
 
 // GetMachineDeployment mocks base method.

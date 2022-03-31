@@ -1700,15 +1700,16 @@ func TestGetBmcsPowerState(t *testing.T) {
 	tt.Expect(got).To(Equal(want))
 }
 
-func TestGetHardwareWithOwnerName(t *testing.T) {
+func TestGetHardwareWithLabel(t *testing.T) {
 	tt := newKubectlTest(t)
+	ownerNameLabel := "v1alpha1.tinkerbell.org/ownerName"
 	hardwaresJson := test.ReadFile(t, "testdata/kubectl_tinkerbellhardware.json")
 	wantHardwares := []tinkv1alpha1.Hardware{
 		{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "hw1",
 				Labels: map[string]string{
-					"v1alpha1.tinkerbell.org/ownerName": "tink-test-md-0-clc85",
+					ownerNameLabel: "tink-test-md-0-clc85",
 				},
 			},
 			TypeMeta: metav1.TypeMeta{
@@ -1720,7 +1721,7 @@ func TestGetHardwareWithOwnerName(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "hw2",
 				Labels: map[string]string{
-					"v1alpha1.tinkerbell.org/ownerName": "tink-test-controlplane-0-ccl90",
+					ownerNameLabel: "tink-test-controlplane-0-ccl90",
 				},
 			},
 			TypeMeta: metav1.TypeMeta{
@@ -1732,11 +1733,11 @@ func TestGetHardwareWithOwnerName(t *testing.T) {
 
 	params := []string{
 		"get", "hardware.tinkerbell.org", "-o", "json", "--kubeconfig",
-		tt.cluster.KubeconfigFile, "--namespace", tt.namespace, "--selector=v1alpha1.tinkerbell.org/ownerName",
+		tt.cluster.KubeconfigFile, "--namespace", tt.namespace, fmt.Sprintf("--selector=%s", ownerNameLabel),
 	}
 	tt.e.EXPECT().Execute(tt.ctx, gomock.Eq(params)).Return(*bytes.NewBufferString(hardwaresJson), nil)
 
-	got, err := tt.k.GetHardwareWithOwnerName(tt.ctx, tt.cluster.KubeconfigFile, tt.namespace)
+	got, err := tt.k.GetHardwareWithLabel(tt.ctx, ownerNameLabel, tt.cluster.KubeconfigFile, tt.namespace)
 	tt.Expect(err).To(BeNil())
 	tt.Expect(got).To(Equal(wantHardwares))
 }

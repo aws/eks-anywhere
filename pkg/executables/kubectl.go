@@ -1412,11 +1412,11 @@ func (k *Kubectl) GetResources(ctx context.Context, resourceType string, opts ..
 	return stdOut.String(), err
 }
 
-// GetHardwareWithOwnerName gets the hardwares with ownerName label.
-func (k *Kubectl) GetHardwareWithOwnerName(ctx context.Context, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error) {
+// GetHardwareWithLabel gets the hardwares with given label.
+func (k *Kubectl) GetHardwareWithLabel(ctx context.Context, label, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error) {
 	params := []string{
 		"get", captHardwareResourceType, "-o", "json", "--kubeconfig",
-		kubeconfigFile, "--namespace", namespace, "--selector=v1alpha1.tinkerbell.org/ownerName",
+		kubeconfigFile, "--namespace", namespace, fmt.Sprintf("--selector=%s", label),
 	}
 	stdOut, err := k.Execute(ctx, params...)
 	if err != nil {

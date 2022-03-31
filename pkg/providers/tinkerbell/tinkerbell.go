@@ -43,6 +43,7 @@ const (
 	tinkerbellPBnJGRPCAuthorityKey = "PBNJ_GRPC_AUTHORITY"
 	tinkerbellHegelURLKey          = "TINKERBELL_HEGEL_URL"
 	bmcStatePowerActionHardoff     = "POWER_ACTION_HARDOFF"
+	tinkerbellOwnerNameLabel       = "v1alpha1.tinkerbell.org/ownerName"
 )
 
 //go:embed config/template-cp.yaml
@@ -92,7 +93,7 @@ type ProviderKubectlClient interface {
 	DeleteEksaDatacenterConfig(ctx context.Context, eksaTinkerbellDatacenterResourceType string, tinkerbellDatacenterConfigName string, kubeconfigFile string, namespace string) error
 	DeleteEksaMachineConfig(ctx context.Context, eksaTinkerbellMachineResourceType string, tinkerbellMachineConfigName string, kubeconfigFile string, namespace string) error
 	GetMachineDeployment(ctx context.Context, machineDeploymentName string, opts ...executables.KubectlOpt) (*clusterv1.MachineDeployment, error)
-	GetHardwareWithOwnerName(ctx context.Context, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error)
+	GetHardwareWithLabel(ctx context.Context, label, kubeconfigFile, namespace string) ([]tinkv1alpha1.Hardware, error)
 	GetBmcsPowerState(ctx context.Context, bmcNames []string, kubeconfigFile, namespace string) ([]string, error)
 }
 
@@ -270,19 +271,19 @@ func (p *tinkerbellProvider) PostClusterDeleteValidate(ctx context.Context, mana
 	err := retrier.Retry(10, 10*time.Second, func() error {
 		powerStates, err := p.providerKubectlClient.GetBmcsPowerState(ctx, bmcRefs, managementCluster.KubeconfigFile, constants.EksaSystemNamespace)
 		if err != nil {
-			return err
+			return fmt.Errorf("retrieving bmc power state: %w", err)
 		}
 
 		for _, state := range powerStates {
 			if !strings.Contains(state, bmcStatePowerActionHardoff) {
-				return fmt.Errorf("bmc current power state: %s expected power state: %s", state, bmcStatePowerActionHardoff)
+				return fmt.Errorf("bmc current power state '%s'; expected power state '%s'", state, bmcStatePowerActionHardoff)
 			}
 		}
 
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("cluster nodes not in power off state: %v", err)
+		return err
 	}
 
 	return nil
@@ -563,7 +564,7 @@ func (p *tinkerbellProvider) SetupAndValidateDeleteCluster(ctx context.Context, 
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
 
-	hardwares, err := p.providerKubectlClient.GetHardwareWithOwnerName(ctx, cluster.KubeconfigFile, constants.EksaSystemNamespace)
+	hardwares, err := p.providerKubectlClient.GetHardwareWithLabel(ctx, tinkerbellOwnerNameLabel, cluster.KubeconfigFile, constants.EksaSystemNamespace)
 	if err != nil {
 		return fmt.Errorf("failed setup and validations: %v", err)
 	}
@@ -580,7 +581,7 @@ func (p *tinkerbellProvider) SetupAndValidateDeleteCluster(ctx context.Context, 
 func filterHardwareForCluster(hardwares []tinkv1alpha1.Hardware, clusterName string) ([]tinkv1alpha1.Hardware, error) {
 	var filteredHardwareList []tinkv1alpha1.Hardware
 	for _, hw := range hardwares {
-		if strings.Contains(hw.Labels["v1alpha1.tinkerbell.org/ownerName"], clusterName) {
+		if strings.Contains(hw.Labels[tinkerbellOwnerNameLabel], clusterName) {
 			filteredHardwareList = append(filteredHardwareList, hw)
 		}
 	}
