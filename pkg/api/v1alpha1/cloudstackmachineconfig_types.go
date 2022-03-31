@@ -124,8 +124,8 @@ func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool
 	if c == nil || o == nil {
 		return false
 	}
-	if !c.Template.Equals(&o.Template) ||
-		!c.ComputeOffering.Equals(&o.ComputeOffering) {
+	if !c.Template.Equal(&o.Template) ||
+		!c.ComputeOffering.Equal(&o.ComputeOffering) {
 		return false
 	}
 	if c.Affinity != o.Affinity {

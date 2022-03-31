@@ -45,7 +45,7 @@ type CloudStackResourceIdentifier struct {
 	Name string `json:"name,omitempty"`
 }
 
-func (r *CloudStackResourceIdentifier) Equals(o *CloudStackResourceIdentifier) bool {
+func (r *CloudStackResourceIdentifier) Equal(o *CloudStackResourceIdentifier) bool {
 	if r == o {
 		return true
 	}
