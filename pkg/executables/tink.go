@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	tinkHardware "github.com/tinkerbell/tink/protos/hardware"
 	"github.com/tinkerbell/tink/protos/workflow"
+
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 )
 
 const (

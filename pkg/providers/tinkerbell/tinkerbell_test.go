@@ -141,11 +141,13 @@ func setupContext(t *testing.T) {
 }
 
 func setupHardware() []*tinkhardware.Hardware {
+	metadata := `{"state": "provisioning"}`
+
 	var hardwares []*tinkhardware.Hardware
-	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "b14d7f5b-8903-4a4c-b38d-55889ba820ba"})
-	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "b14d7f5b-8903-4a4c-b38d-55889ba820bb"})
-	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "d2c14d26-640a-48f0-baee-a737c68a75f5"})
-	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "0c9d1701-f884-499e-80b8-6dcfc0973e85"})
+	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "b14d7f5b-8903-4a4c-b38d-55889ba820ba", Metadata: metadata})
+	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "b14d7f5b-8903-4a4c-b38d-55889ba820bb", Metadata: metadata})
+	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "d2c14d26-640a-48f0-baee-a737c68a75f5", Metadata: metadata})
+	hardwares = append(hardwares, &tinkhardware.Hardware{Id: "0c9d1701-f884-499e-80b8-6dcfc0973e85", Metadata: metadata})
 
 	return hardwares
 }
