@@ -178,7 +178,7 @@ enable = false
         desc = "Development takes place here!"
 
 [[params.versions]]
-fullversion = "v0.7"
-version = "v0.7"
+fullversion = "v0.8"
+version = "v0.8"
 docsbranch = "main"
 url = "/docs"

@@ -86,7 +86,7 @@ func (p *snowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, clust
 	return nil
 }
 
-func (p *snowProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
+func (p *snowProvider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
 	if err := p.setupBootstrapCreds(); err != nil {
 		return fmt.Errorf("failed setting up credentials: %v", err)
 	}
@@ -256,6 +256,11 @@ func (p *snowProvider) DeleteResources(ctx context.Context, clusterSpec *cluster
 		}
 	}
 	return p.providerKubectlClient.DeleteEksaDatacenterConfig(ctx, snowDatacenterResourceType, clusterSpec.SnowDatacenter.GetName(), clusterSpec.ManagementCluster.KubeconfigFile, clusterSpec.SnowDatacenter.GetNamespace())
+}
+
+func (p *snowProvider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
+	// No validations
+	return nil
 }
 
 func (p *snowProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
