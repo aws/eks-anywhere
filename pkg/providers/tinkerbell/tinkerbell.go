@@ -44,6 +44,7 @@ const (
 	tinkerbellHegelURLKey          = "TINKERBELL_HEGEL_URL"
 	bmcStatePowerActionHardoff     = "POWER_ACTION_HARDOFF"
 	tinkerbellOwnerNameLabel       = "v1alpha1.tinkerbell.org/ownerName"
+	Provisioning                   = "provisioning"
 )
 
 //go:embed config/template-cp.yaml
@@ -99,6 +100,8 @@ type ProviderKubectlClient interface {
 
 type ProviderTinkClient interface {
 	GetHardware(ctx context.Context) ([]*tinkhardware.Hardware, error)
+	GetHardwareByUuid(ctx context.Context, uuid string) (*hardware.Hardware, error)
+	PushHardware(ctx context.Context, hardware []byte) error
 	GetWorkflow(ctx context.Context) ([]*tinkworkflow.Workflow, error)
 	DeleteWorkflow(ctx context.Context, workflowIDs ...string) error
 }
@@ -373,11 +376,15 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 	// ValidateHardwareConfig performs a lazy load of hardware configuration. Given subsequent steps need the hardware
 	// read into memory it needs to be done first. It also needs connection to
 	// Tinkerbell steps to verify hardware availability on the stack
-	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile, hardware, p.skipPowerActions); err != nil {
+	if err := p.validator.ValidateHardwareConfig(ctx, p.hardwareConfigFile, hardware, p.skipPowerActions, p.force); err != nil {
 		return err
 	}
 
 	if p.force {
+		if err := p.setHardwareStateToProvisining(ctx); err != nil {
+			return err
+		}
+
 		if !p.skipPowerActions {
 			if err := p.setMachinesToPXEBoot(ctx); err != nil {
 				return err
@@ -387,6 +394,8 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		if err := p.scrubWorkflowsFromTinkerbell(ctx, p.validator.hardwareConfig.Hardwares, hardware); err != nil {
 			return err
 		}
+	} else if err := p.validator.ValidateMachinesPoweredOff(ctx); err != nil {
+		return fmt.Errorf("validating machines are powered off: %w", err)
 	}
 
 	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
@@ -417,6 +426,31 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		logger.Info("Skipping check for whether control plane ip is in use")
 	}
 
+	return nil
+}
+
+func (p *tinkerbellProvider) setHardwareStateToProvisining(ctx context.Context) error {
+	for _, hardware := range p.validator.hardwareConfig.Hardwares {
+		tinkHardware, err := p.providerTinkClient.GetHardwareByUuid(ctx, hardware.Spec.ID)
+		if err != nil {
+			return fmt.Errorf("getting hardware with UUID '%s': %v", hardware.Spec.ID, err)
+		}
+
+		if tinkHardware.Metadata.State != Provisioning {
+			tinkHardware.Metadata.State = Provisioning
+
+			patchedHardware, err := json.Marshal(tinkHardware)
+			if err != nil {
+				return fmt.Errorf("marshaling hardware %s: %v", tinkHardware.Id, err)
+			}
+
+			logger.Info(fmt.Sprintf("Attempting to set state of hardware '%s' to '%s'", tinkHardware.Id, Provisioning))
+
+			if err := p.providerTinkClient.PushHardware(ctx, patchedHardware); err != nil {
+				return fmt.Errorf("patching hardware state: %v", err)
+			}
+		}
+	}
 	return nil
 }
 

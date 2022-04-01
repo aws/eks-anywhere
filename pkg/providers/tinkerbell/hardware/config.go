@@ -1,6 +1,7 @@
 package hardware
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -17,9 +18,12 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
+
+const Provisioning = "provisioning"
 
 type HardwareConfig struct {
 	Hardwares []tinkv1alpha1.Hardware
@@ -74,7 +78,7 @@ func (hc *HardwareConfig) setHardwareConfigFromFile(hardwareFileName string) err
 	return nil
 }
 
-func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, tinkHardwareMap map[string]*tinkhardware.Hardware, tinkWorkflowMap map[string]*tinkworkflow.Workflow) error {
+func (hc *HardwareConfig) ValidateHardware(skipPowerActions, force bool, tinkHardwareMap map[string]*tinkhardware.Hardware, tinkWorkflowMap map[string]*tinkworkflow.Workflow) error {
 	bmcRefMap := map[string]*tinkv1alpha1.Hardware{}
 	if !skipPowerActions {
 		bmcRefMap = hc.initBmcRefMap()
@@ -109,7 +113,30 @@ func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, tinkHardwareMa
 		for _, interfaces := range hardwareInterface {
 			mac := interfaces.GetDhcp()
 			if _, ok := tinkWorkflowMap[mac.Mac]; ok {
-				return fmt.Errorf("workflow %s already exixts for the hardware id %s", tinkWorkflowMap[mac.Mac].Id, hw.Spec.ID)
+				message := fmt.Sprintf("workflow %s already exixts for the hardware id %s", tinkWorkflowMap[mac.Mac].Id, hw.Spec.ID)
+
+				// If the --force-cleanup flag was set we have to warn. This is beacuse we haven't separated static
+				// and interactive validations so there's no opportunity, after performing static yaml validation, to
+				// delete any workflows before we check if workflows alredy exist. To avoid erroring out before getting
+				// the chance to delete workflows this code assumes workflows will be deleted at a later stage,
+				// therefore warns only.
+				if !force {
+					return fmt.Errorf(message)
+				}
+				logger.V(2).Info(fmt.Sprintf("Warn: %v", message))
+			}
+		}
+
+		if !force {
+			hardwareMetadata := make(map[string]interface{})
+			tinkHardware := tinkHardwareMap[hw.Spec.ID]
+
+			if err := json.Unmarshal([]byte(tinkHardware.GetMetadata()), &hardwareMetadata); err != nil {
+				return fmt.Errorf("unmarshaling hardware metadata: %v", err)
+			}
+
+			if hardwareMetadata["state"] != Provisioning {
+				return fmt.Errorf("expecting hardware state to be '%s' but it is '%s'; use --force-cleanup flag to reset the state", "provisioning", hardwareMetadata["state"])
 			}
 		}
 

@@ -82,3 +82,14 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.Troubleshoot).NotTo(BeNil())
 	tt.Expect(deps.CAPIManager).NotTo(BeNil())
 }
+
+func TestFactoryBuildWithRegistryMirror(t *testing.T) {
+	tt := newTest(t)
+	deps, err := dependencies.NewFactory().
+		WithRegistryMirror("1.2.3.4:443").
+		WithHelm().
+		Build(context.Background())
+
+	tt.Expect(err).To(BeNil())
+	tt.Expect(deps.Helm).NotTo(BeNil())
+}
