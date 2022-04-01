@@ -211,7 +211,6 @@ func TestCloudStackKubernetes121GitopsOptionsFlux(t *testing.T) {
 			api.WithFluxNamespace(fluxUserProvidedNamespace),
 			api.WithFluxConfigurationPath(fluxUserProvidedPath),
 		),
-		framework.WithEnvVar(features.K8s122SupportEnvVar, "true"),
 	)
 	runFluxFlow(test)
 }

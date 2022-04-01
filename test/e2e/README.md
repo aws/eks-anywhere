@@ -82,8 +82,8 @@ T_CLOUDSTACK_CONTROL_PLANE_HOST
 T_CLOUDSTACK_POD_CIDR
 T_CLOUDSTACK_SERVICE_CIDR
 
-EKSA_CLOUDSTACK_B64ENCODED_SECRET (when running against local eks-a)
-CLOUDSTACK_PROVIDER=true (when running against local eks-a and cloudstack provider is under development)
+EKSA_CLOUDSTACK_B64ENCODED_SECRET
+CLOUDSTACK_PROVIDER=true (while cloudstack provider is under development)
 ```
 
 ## Tinkerbell hardware-inventory.csv example
