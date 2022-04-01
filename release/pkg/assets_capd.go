@@ -133,6 +133,7 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 	sortedComponentNames := sortArtifactsMap(dockerBundleArtifacts)
 
 	var sourceBranch string
+	var componentChecksum string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
@@ -175,7 +176,11 @@ func (r *ReleaseConfig) GetDockerBundle(imageDigests map[string]string) (anywher
 		}
 	}
 
-	componentChecksum := generateComponentHash(artifactHashes)
+	if r.DryRun {
+		componentChecksum = fakeComponentChecksum
+	} else {
+		componentChecksum = generateComponentHash(artifactHashes)
+	}
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, capiProjectPath, sourceBranch, r),
 		componentChecksum,
