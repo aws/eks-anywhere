@@ -13,6 +13,7 @@ type TinkerbellDatacenterConfigSpec struct {
 	TinkerbellCertURL      string `json:"tinkerbellCertURL"`
 	TinkerbellGRPCAuth     string `json:"tinkerbellGRPCAuth"`
 	TinkerbellPBnJGRPCAuth string `json:"tinkerbellPBnJGRPCAuth"`
+	TinkerbellHegelURL     string `json:"tinkerbellHegelURL"`
 }
 
 // TinkerbellDatacenterConfigStatus defines the observed state of TinkerbellDatacenterConfig

@@ -242,13 +242,22 @@ func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 		bmcInfo := api.NewBmcSecretConfig(h)
 
 		powerState, err := pbnjClient.GetPowerState(ctx, bmcInfo)
-		if err != nil {
-			e.T.Logf("failed to get power state for hardware (%v): %v", h, err)
+		// add sleep retries to give the machine time to power off
+		timeout := 15
+		for powerState != pbnj.PowerStateOff && timeout > 0 {
+			if err != nil {
+				e.T.Logf("failed to get power state for hardware (%v): %v", h, err)
+			}
+			time.Sleep(5 * time.Second)
+			timeout = timeout - 5
+			powerState, err = pbnjClient.GetPowerState(ctx, bmcInfo)
 		}
 
 		if powerState != pbnj.PowerStateOff {
 			e.T.Logf("failed to decommission hardware: id=%s, hostname=%s, bmc_ip=%s", h.Id, h.Hostname, h.BmcIpAddress)
 			failedToDecomm = append(failedToDecomm, h)
+		} else {
+			e.T.Logf("successfully decommissioned hardware: id=%s, hostname=%s, bmc_ip=%s", h.Id, h.Hostname, h.BmcIpAddress)
 		}
 	}
 

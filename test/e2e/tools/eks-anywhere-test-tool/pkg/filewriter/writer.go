@@ -53,17 +53,17 @@ func (t *writer) Dir() string {
 	return t.dir
 }
 
-func (t *writer) WriteS3KeyToFile(key string, data []byte) error {
-	i := strings.LastIndex(key, "/")
-	d := path.Join(t.dir, key[:i])
-	f := path.Join(t.dir, key)
+// This method writes the e2e test artifacts from S3 to files in a directory named after the e2e test name
+func (t *writer) WriteTestArtifactsS3ToFile(key string, data []byte) error {
+	i := strings.LastIndex(key, "/Test")
+	p := path.Join(t.dir, key[i:])
 
-	err := os.MkdirAll(d, os.ModePerm)
+	err := os.MkdirAll(path.Dir(p), os.ModePerm)
 	if err != nil {
 		return err
 	}
 
-	err = ioutil.WriteFile(f, data, os.ModePerm)
+	err = ioutil.WriteFile(p, data, os.ModePerm)
 	if err != nil {
 		return err
 	}
