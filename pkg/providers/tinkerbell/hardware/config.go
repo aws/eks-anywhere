@@ -1,6 +1,7 @@
 package hardware
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -21,6 +22,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 	"github.com/aws/eks-anywhere/pkg/templater"
 )
+
+const Provisioning = "provisioning"
 
 type HardwareConfig struct {
 	Hardwares []tinkv1alpha1.Hardware
@@ -121,6 +124,19 @@ func (hc *HardwareConfig) ValidateHardware(skipPowerActions, force bool, tinkHar
 					return fmt.Errorf(message)
 				}
 				logger.V(2).Info(fmt.Sprintf("Warn: %v", message))
+			}
+		}
+
+		if !force {
+			hardwareMetadata := make(map[string]interface{})
+			tinkHardware := tinkHardwareMap[hw.Spec.ID]
+
+			if err := json.Unmarshal([]byte(tinkHardware.GetMetadata()), &hardwareMetadata); err != nil {
+				return fmt.Errorf("unmarshaling hardware metadata: %v", err)
+			}
+
+			if hardwareMetadata["state"] != Provisioning {
+				return fmt.Errorf("expecting hardware state to be '%s' but it is '%s'; use --force-cleanup flag to reset the state", "provisioning", hardwareMetadata["state"])
 			}
 		}
 
