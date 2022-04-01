@@ -561,9 +561,8 @@ func (c *ClusterManager) cloudstackMachineConfigsSpecChanged(ctx context.Context
 		mc := config.(*v1alpha1.CloudStackMachineConfig)
 		machineConfigMap[mc.Name] = mc
 	}
-	oldMcRefs := cc.MachineConfigRefs()
 
-	for _, oldMcRef := range oldMcRefs {
+	for _, oldMcRef := range cc.MachineConfigRefs() {
 		existingCsmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, oldMcRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
 		if err != nil {
 			return false, err
