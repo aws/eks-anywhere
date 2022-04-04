@@ -93,6 +93,11 @@ func (p *provider) DeleteResources(_ context.Context, _ *cluster.Spec) error {
 	return nil
 }
 
+func (p *provider) PostClusterDeleteValidate(_ context.Context, _ *types.Cluster) error {
+	// No validations
+	return nil
+}
+
 func (p *provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The docker infrastructure provider is meant for local development and testing only")
 	if clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint != nil && clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host != "" {
@@ -101,7 +106,7 @@ func (p *provider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpe
 	return nil
 }
 
-func (p *provider) SetupAndValidateDeleteCluster(ctx context.Context) error {
+func (p *provider) SetupAndValidateDeleteCluster(ctx context.Context, _ *types.Cluster) error {
 	return nil
 }
 

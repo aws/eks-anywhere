@@ -1305,7 +1305,7 @@ func TestSetupAndValidateDeleteCluster(t *testing.T) {
 	tctx.SaveContext()
 	defer tctx.RestoreContext()
 
-	err := provider.SetupAndValidateDeleteCluster(ctx)
+	err := provider.SetupAndValidateDeleteCluster(ctx, nil)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1319,7 +1319,7 @@ func TestSetupAndValidateDeleteClusterNoPassword(t *testing.T) {
 	defer tctx.RestoreContext()
 	os.Unsetenv(EksavSpherePasswordKey)
 
-	err := provider.SetupAndValidateDeleteCluster(ctx)
+	err := provider.SetupAndValidateDeleteCluster(ctx, nil)
 
 	thenErrorExpected(t, "failed setup and validations: EKSA_VSPHERE_PASSWORD is not set or is empty", err)
 }

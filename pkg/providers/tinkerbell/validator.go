@@ -10,6 +10,7 @@ import (
 
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
@@ -124,13 +125,7 @@ func (v *Validator) ValidateClusterMachineConfigs(ctx context.Context, tinkerbel
 	return nil
 }
 
-func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string, skipPowerActions bool) error {
-	hardwares, err := v.tink.GetHardware(ctx)
-	if err != nil {
-		return fmt.Errorf("failed validating connection to tinkerbell stack: %v", err)
-	}
-	logger.MarkPass("Connected to tinkerbell stack")
-
+func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFile string, hardwares []*tinkhardware.Hardware, skipPowerActions, force bool) error {
 	if err := v.hardwareConfig.ParseHardwareConfig(hardwareConfigFile); err != nil {
 		return fmt.Errorf("failed to get hardware Config: %v", err)
 	}
@@ -146,7 +141,7 @@ func (v *Validator) ValidateHardwareConfig(ctx context.Context, hardwareConfigFi
 		return fmt.Errorf("validating if the workflow exist for the given list of hardwares %v", err)
 	}
 
-	if err := v.hardwareConfig.ValidateHardware(skipPowerActions, tinkHardwareMap, tinkWorkflowMap); err != nil {
+	if err := v.hardwareConfig.ValidateHardware(skipPowerActions, force, tinkHardwareMap, tinkWorkflowMap); err != nil {
 		return fmt.Errorf("failed validating Hardware BMC refs in hardware config: %v", err)
 	}
 
@@ -247,6 +242,41 @@ func (v *Validator) ValidateMinimumRequiredTinkerbellHardwareAvailable(spec v1al
 			"have %v tinkerbell hardware; cluster spec requires >= %v hardware",
 			len(v.hardwareConfig.Hardwares),
 			requestedNodesCount,
+		)
+	}
+
+	return nil
+}
+
+// ValidateMachinesPoweredOff validates the hardware submitted for provisioning is powered off.
+func (v *Validator) ValidateMachinesPoweredOff(ctx context.Context) error {
+	secrets := make(map[string]corev1.Secret)
+	for _, s := range v.hardwareConfig.Secrets {
+		secrets[s.Name] = s
+	}
+
+	var poweredOnHosts []string
+	for _, bmc := range v.hardwareConfig.Bmcs {
+		secret := secrets[bmc.Spec.AuthSecretRef.Name]
+		state, err := v.pbnj.GetPowerState(ctx, pbnj.BmcSecretConfig{
+			Host:     bmc.Spec.Host,
+			Username: string(secret.Data["username"]),
+			Password: string(secret.Data["password"]),
+			Vendor:   bmc.Spec.Vendor,
+		})
+		if err != nil {
+			return fmt.Errorf("retrieving power state (bmc host = '%v'): %w", bmc.Spec.Host, err)
+		}
+
+		if state != pbnj.PowerStateOff {
+			poweredOnHosts = append(poweredOnHosts, bmc.Spec.Host)
+		}
+	}
+
+	if len(poweredOnHosts) > 0 {
+		return fmt.Errorf(
+			"expected host machines to be powered off; use --force-cleanup flag to power off machine: bmc hosts = %v",
+			poweredOnHosts,
 		)
 	}
 

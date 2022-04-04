@@ -109,7 +109,11 @@ func (p *Pbnj) SetBootDevice(ctx context.Context, info BmcSecretConfig, mode Boo
 	logger := logger.V(4).WithValues("component", "pbnj-client")
 
 	request := newBootDeviceRequest(info, mode)
-	logger.Info("Set boot device request", "request", request)
+	logger.Info(
+		"Set boot device request",
+		"host", request.Authn.GetDirectAuthn().Host,
+		"boot_device", request.BootDevice,
+	)
 
 	response, err := p.pbnj.MachineBootDev(ctx, request)
 	if err != nil {

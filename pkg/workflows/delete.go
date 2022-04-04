@@ -70,7 +70,7 @@ type deleteManagementCluster struct{}
 
 func (s *setupAndValidate) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	logger.Info("Performing provider setup and validations")
-	err := commandContext.Provider.SetupAndValidateDeleteCluster(ctx)
+	err := commandContext.Provider.SetupAndValidateDeleteCluster(ctx, commandContext.WorkloadCluster)
 	if err != nil {
 		commandContext.SetError(err)
 		return nil

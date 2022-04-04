@@ -69,7 +69,6 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration == nil || clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint == "" {
 		return fmt.Errorf("endpoint not set. It is necessary to define a valid endpoint in your spec (registryMirrorConfiguration.endpoint)")
 	}
-	endpoint := clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint
 
 	reader := files.NewReader(files.WithUserAgent(fmt.Sprintf("eks-a-cli-download/%s", version.Get().GitVersion)))
 
@@ -96,10 +95,6 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 				}
 				*manifest = filePath
 			}
-		}
-		for component, chart := range bundle.Charts() {
-			chartRegistry := fmt.Sprintf("%s/%s/%s", endpoint, chart.Name, component)
-			chart.URI = fmt.Sprintf("%s:%s", chartRegistry, chart.Tag())
 		}
 		clusterSpec.Bundles.Spec.VersionsBundles[i] = bundle
 	}

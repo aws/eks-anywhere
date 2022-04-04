@@ -85,17 +85,21 @@ environment variables to run `govc` GOVC_USERNAME, GOVC_PASSWORD and GOVC_URL.
     ```
     govc library.deploy -pool <resource pool> -folder <folder location to deploy template> /<library name>/<template name> <name of new VM>
     ```
-   2a. If using Bottlerocket template, resize disk 2 to 20G
+   2a. If using Bottlerocket template for newer Kubernetes version than 1.20 and 1.21, resize disk 1 to 22G
    ```
-   govc vm.disk.change -vm <template name> -disk.label "Hard disk 2" -size 20G
+   govc vm.disk.change -vm <template name> -disk.label "Hard disk 1" -size 22G
    ```
+   2b. If using Bottlerocket template for Kubernetes version 1.20 or 1.21, resize disk 2 to 20G
+      ```
+      govc vm.disk.change -vm <template name> -disk.label "Hard disk 2" -size 20G
+      ```
 
 
 3. Take a snapshot of the VM (It is highly recommended that you snapshot the VM. This will reduce the time it takes to provision machines
    and cluster creation will be faster. If you prefer not to take snapshot, skip this step)
 
     ```
-    govc snapshot.create -vm ubuntu-2004-kube-v1.19.6 root
+    govc snapshot.create -vm ubuntu-2004-kube-v1.22.6 root
     ```
 
 4. Mark the new VM as a template
@@ -123,7 +127,7 @@ environment variables to run `govc` GOVC_USERNAME, GOVC_PASSWORD and GOVC_URL.
    ![Import ova wizard](/images/ss10.jpg)
 1. Click *Assign* -> *Add Tag* to create a new tag and attach it
    ![Import ova wizard](/images/ss11.jpg)
-1. Name the tag *eksdRelease:{eksd release for the selected ova}*, for example *eksdRelease:kubernetes-1-20-eks-5* for the 1.20 ova. You can find the rest of eksd releases in the previous [section](#import-an-ovaovf-template-to-vsphere). If it's the first time you add an `eksdRelease` tag, you would need to create the category first. Click on "Create New Category" and name it `eksdRelease`.
+1. Name the tag *eksdRelease:{eksd release for the selected ova}*, for example *eksdRelease:kubernetes-1-22-eks-4* for the 1.22 ova. You can find the rest of eksd releases in the previous [section](#import-an-ovaovf-template-to-vsphere). If it's the first time you add an `eksdRelease` tag, you would need to create the category first. Click on "Create New Category" and name it `eksdRelease`.
    ![Import ova wizard](/images/ss13.png)
 
 ### Using govc
@@ -158,13 +162,13 @@ govc tags.ls <Template Path>
 ```
 govc tags.category.create -t VirtualMachine eksdRelease
 ```
-2. Create the proper eksd release Tag, depending on your template. You can find the eksd releases in the previous [section](#import-an-ovaovf-template-to-vsphere). For example *eksdRelease:kubernetes-1-20-eks-5* for the 1.20 template.
+2. Create the proper eksd release Tag, depending on your template. You can find the eksd releases in the previous [section](#import-an-ovaovf-template-to-vsphere). For example *eksdRelease:kubernetes-1-22-eks-4* for the 1.22 template.
 ```
-govc tags.create -c eksdRelease eksdRelease:kubernetes-1-20-eks-2
+govc tags.create -c eksdRelease eksdRelease:kubernetes-1-22-eks-4
 ```
 3. Attach newly created tag to the template
 ```
-govc tags.attach eksdRelease:kubernetes-1-20-eks-2 <Template Path>
+govc tags.attach eksdRelease:kubernetes-1-22-eks-4 <Template Path>
 ```
 4. Verify tag is attached to the template 
 
