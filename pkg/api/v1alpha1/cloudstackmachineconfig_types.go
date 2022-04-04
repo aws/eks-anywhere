@@ -131,28 +131,14 @@ func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool
 	if c.Affinity != o.Affinity {
 		return false
 	}
-	if len(c.AffinityGroupIds) != len(o.AffinityGroupIds) ||
-		len(c.Users) != len(o.Users) ||
-		len(c.UserCustomDetails) != len(o.UserCustomDetails) {
+	if !SliceEqual(c.AffinityGroupIds, o.AffinityGroupIds) {
 		return false
 	}
-	for i, groupId := range c.AffinityGroupIds {
-		if groupId != o.AffinityGroupIds[i] {
-			return false
-		}
+	if !UsersSliceEqual(c.Users, o.Users) {
+		return false
 	}
-	for i, user := range c.Users {
-		if user.Name != o.Users[i].Name {
-			return false
-		}
-		if len(user.SshAuthorizedKeys) != len(o.Users[i].SshAuthorizedKeys) {
-			return false
-		}
-		for j, key := range user.SshAuthorizedKeys {
-			if key != o.Users[i].SshAuthorizedKeys[j] {
-				return false
-			}
-		}
+	if len(c.UserCustomDetails) != len(o.UserCustomDetails) {
+		return false
 	}
 	for detail, value := range c.UserCustomDetails {
 		if value != o.UserCustomDetails[detail] {
