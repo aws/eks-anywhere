@@ -135,6 +135,11 @@ func (f *Factory) UseExecutableImage(image string) *Factory {
 	return f
 }
 
+// WithExecutableImage sets the right cli tools image for the executable builder, reading
+// from the Bundle and using the first VersionsBundle
+// This is just the default for when there is not an specific kubernetes version available
+// For commands that receive a cluster config file or a kubernetes version directly as input,
+// use UseExecutableImage to specify the image directly
 func (f *Factory) WithExecutableImage() *Factory {
 	f.WithManifestReader()
 
