@@ -17,7 +17,9 @@ import (
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -27,6 +29,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/utils/urls"
+	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 type Dependencies struct {
@@ -55,6 +58,8 @@ type Dependencies struct {
 	DignosticCollectorFactory diagnostics.DiagnosticBundleFactory
 	CAPIManager               *clusterapi.Manager
 	ResourceSetManager        *clusterapi.ResourceSetManager
+	FileReader                *files.Reader
+	ManifestReader            *manifests.Reader
 	closers                   []types.Closer
 }
 
@@ -633,6 +638,36 @@ func (f *Factory) WithCAPIClusterResourceSetManager() *Factory {
 		}
 
 		f.dependencies.ResourceSetManager = clusterapi.NewResourceSetManager(f.dependencies.Kubectl)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithFileReader() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.FileReader != nil {
+			return nil
+		}
+
+		f.dependencies.FileReader = files.NewReader(files.WithUserAgent(
+			fmt.Sprintf("eks-a-cli/%s", version.Get().GitVersion)),
+		)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithManifestReader() *Factory {
+	f.WithFileReader()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.ManifestReader != nil {
+			return nil
+		}
+
+		f.dependencies.ManifestReader = manifests.NewReader(f.dependencies.FileReader)
 		return nil
 	})
 
