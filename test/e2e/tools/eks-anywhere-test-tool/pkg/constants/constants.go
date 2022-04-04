@@ -12,4 +12,5 @@ const (
 	LogOutputFile             = "codebuild-log.txt"
 	CiProxyLogGroup           = "nginx-vcenter-proxy.log"
 	CiProxyLogStream          = "nginx-vcenter-proxy.log"
+	InvalidParameterError     = "InvalidParameterException"
 )
