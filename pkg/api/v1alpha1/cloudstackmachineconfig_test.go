@@ -4,9 +4,29 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+var cloudStackMachineConfigSpec1 = &CloudStackMachineConfigSpec{
+	Template: CloudStackResourceIdentifier{
+		Name: "template1",
+	},
+	ComputeOffering: CloudStackResourceIdentifier{
+		Name: "offering1",
+	},
+	Users: []UserConfiguration{
+		{
+			Name:              "zone1",
+			SshAuthorizedKeys: []string{"key"},
+		},
+	},
+	UserCustomDetails: map[string]string{
+		"foo": "bar",
+	},
+	AffinityGroupIds: []string{"affinityGroupId1"},
+	Affinity:         "pro",
+}
 
 func TestGetCloudStackMachineConfigs(t *testing.T) {
 	tests := []struct {
@@ -208,61 +228,71 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 	}
 }
 
-func TestEqualCloudStackMachineConfigSpec(t *testing.T) {
-	cloudStackMachineConfigSpec1 := &CloudStackMachineConfigSpec{
-		Template: CloudStackResourceIdentifier{
-			Name: "template1",
-		},
-		ComputeOffering: CloudStackResourceIdentifier{
-			Name: "offering1",
-		},
-		Users: []UserConfiguration{
-			{
-				Name:              "zone1",
-				SshAuthorizedKeys: []string{"key"},
-			},
-		},
-		UserCustomDetails: map[string]string{
-			"foo": "bar",
-		},
-		AffinityGroupIds: []string{"affinityGroupId1"},
-		Affinity:         "pro",
-	}
+func TestCloudStackMachineConfigSpecEqual(t *testing.T) {
+	g := NewWithT(t)
 	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
-	assert.True(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "deep copy CloudStackMachineConfigSpec showing as non-equal")
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeTrue(), "deep copy CloudStackMachineConfigSpec showing as non-equal")
+}
 
+func TestCloudStackMachineNotEqualTemplateName(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
 	cloudStackMachineConfigSpec2.Template.Name = "newName"
-	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "Template name comparison in CloudStackMachineConfigSpec not detected")
-	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Template name comparison in CloudStackMachineConfigSpec not detected")
+}
 
+func TestCloudStackMachineNotEqualTemplateId(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
 	cloudStackMachineConfigSpec2.Template.Id = "newId"
-	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "Template id comparison in CloudStackMachineConfigSpec not detected")
-	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Template id comparison in CloudStackMachineConfigSpec not detected")
+}
 
+func TestCloudStackMachineNotEqualComputeOfferingName(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
 	cloudStackMachineConfigSpec2.ComputeOffering.Name = "newComputeOffering"
-	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "Compute offering name comparison in CloudStackMachineConfigSpec not detected")
-	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Compute offering name comparison in CloudStackMachineConfigSpec not detected")
+}
 
+func TestCloudStackMachineNotEqualComputeOfferingId(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
 	cloudStackMachineConfigSpec2.ComputeOffering.Id = "newComputeOffering"
-	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "Compute offering id comparison in CloudStackMachineConfigSpec not detected")
-	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Compute offering id comparison in CloudStackMachineConfigSpec not detected")
+}
 
+func TestCloudStackMachineNotEqualAffinity(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
 	cloudStackMachineConfigSpec2.Affinity = "anti"
-	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "Affinity comparison in CloudStackMachineConfigSpec not detected")
-	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Affinity comparison in CloudStackMachineConfigSpec not detected")
+}
 
+func TestCloudStackMachineNotEqualUsersNil(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
 	cloudStackMachineConfigSpec2.Users = nil
-	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "Account comparison in CloudStackMachineConfigSpec not detected")
-	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Account comparison in CloudStackMachineConfigSpec not detected")
+}
 
+func TestCloudStackMachineNotEqualUsers(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
 	cloudStackMachineConfigSpec2.Users = append(cloudStackMachineConfigSpec2.Users, UserConfiguration{Name: "newUser", SshAuthorizedKeys: []string{"newKey"}})
-	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "Account comparison in CloudStackMachineConfigSpec not detected")
-	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Account comparison in CloudStackMachineConfigSpec not detected")
+}
 
+func TestCloudStackMachineNotEqualUserCustomDetailsNil(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
 	cloudStackMachineConfigSpec2.UserCustomDetails = nil
-	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "UserCustomDetails comparison in CloudStackMachineConfigSpec not detected")
-	cloudStackMachineConfigSpec2 = cloudStackMachineConfigSpec1.DeepCopy()
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "UserCustomDetails comparison in CloudStackMachineConfigSpec not detected")
+}
 
+func TestCloudStackMachineNotEqualUserCustomDetails(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
 	cloudStackMachineConfigSpec2.UserCustomDetails["i"] = "j"
-	assert.False(t, cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2), "UserCustomDetails comparison in CloudStackMachineConfigSpec not detected")
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "UserCustomDetails comparison in CloudStackMachineConfigSpec not detected")
 }
