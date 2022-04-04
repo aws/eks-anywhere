@@ -222,14 +222,21 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha
 	if len(domains) == 1 {
 		domainIdentifier.Id = domains[0].Id
 		domainIdentifier.Name = domains[0].Name
-	} else {
+	} else if len(domains) > 1 {
+		domainPath := rootDomain + domainDelimiter + domain
 		for _, d := range domains {
-			if d.Path == rootDomain+domainDelimiter+domain {
+			if d.Path == domainPath {
 				domainIdentifier.Id = d.Id
 				domainIdentifier.Name = d.Name
 				break
 			}
 		}
+
+		if domainIdentifier.Id == "" {
+			return domainIdentifier, fmt.Errorf("multiple domains found for domain name %s, but not found a domain with domain path %s", domain, domainPath)
+		}
+	} else {
+		return domainIdentifier, fmt.Errorf("domain %s not found", domain)
 	}
 
 	return domainIdentifier, nil

@@ -74,8 +74,8 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 			execConfig.ManagementUrl, datacenterConfig.Spec.ManagementApiEndpoint)
 	}
 
-	if errDomainAndAccount := v.validateDomainAndAccount(ctx, datacenterConfig); err != nil {
-		return errDomainAndAccount
+	if err := v.validateDomainAndAccount(ctx, datacenterConfig); err != nil {
+		return err
 	}
 
 	zones, errZone := v.cmk.ValidateZonesPresent(ctx, datacenterConfig.Spec.Zones)
@@ -111,7 +111,7 @@ func (v *Validator) validateDomainAndAccount(ctx context.Context, datacenterConf
 
 		errAccount := v.cmk.ValidateAccountPresent(ctx, datacenterConfig.Spec.Account, domain.Id)
 		if errAccount != nil {
-			return fmt.Errorf("checking account %v", errAccount)
+			return fmt.Errorf("checking account: %v", errAccount)
 		}
 
 		datacenterConfig.Status.DomainId = domain.Id
