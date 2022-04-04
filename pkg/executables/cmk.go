@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
@@ -25,6 +26,8 @@ const (
 	cmkConfigFileName                 = "cmk_tmp.ini"
 	Shared                            = "Shared"
 	defaultCloudStackPreflightTimeout = "30"
+	rootDomain                        = "ROOT"
+	domainDelimiter                   = "/"
 )
 
 // Cmk this struct wraps around the CloudMonkey executable CLI to perform operations against a CloudStack endpoint
@@ -192,7 +195,15 @@ func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudSt
 func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha1.CloudStackResourceIdentifier, error) {
 	domainIdentifier := v1alpha1.CloudStackResourceIdentifier{Name: domain, Id: ""}
 	command := newCmkCommand("list domains")
-	applyCmkArgs(&command, withCloudStackName(domain), appendArgs("listall=true"))
+
+	if domain == rootDomain {
+		applyCmkArgs(&command, withCloudStackName(domain))
+	} else {
+		tokens := strings.Split(domain, domainDelimiter)
+		domainName := tokens[len(tokens)-1]
+		applyCmkArgs(&command, withCloudStackName(domainName), appendArgs("listall=true"))
+	}
+
 	result, err := c.exec(ctx, command...)
 	if err != nil {
 		return domainIdentifier, fmt.Errorf("getting domain info - %s: %v", result.String(), err)
@@ -208,14 +219,18 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha
 		return domainIdentifier, fmt.Errorf("failed to parse response into json: %v", err)
 	}
 	domains := response.CmkDomains
-	if len(domains) > 1 {
-		return domainIdentifier, fmt.Errorf("duplicate domain %s found", domain)
-	} else if len(domains) == 0 {
-		return domainIdentifier, fmt.Errorf("domain %s not found", domain)
+	if len(domains) == 1 {
+		domainIdentifier.Id = domains[0].Id
+		domainIdentifier.Name = domains[0].Name
+	} else {
+		for _, d := range domains {
+			if d.Path == rootDomain+domainDelimiter+domain {
+				domainIdentifier.Id = d.Id
+				domainIdentifier.Name = d.Name
+				break
+			}
+		}
 	}
-
-	domainIdentifier.Id = domains[0].Id
-	domainIdentifier.Name = domains[0].Name
 
 	return domainIdentifier, nil
 }
@@ -422,6 +437,7 @@ type cmkNetwork struct {
 type cmkDomain struct {
 	Id   string `json:"id"`
 	Name string `json:"name"`
+	Path string `json:"path"`
 }
 
 type cmkAccount struct {

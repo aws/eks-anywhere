@@ -55,9 +55,12 @@ type CloudStackZone struct {
 	Network CloudStackResourceIdentifier `json:"network"`
 }
 
+// Important: Run "make" to regenerate code after modifying this file
+
 // CloudStackDatacenterConfigStatus defines the observed state of CloudStackDatacenterConfig
 type CloudStackDatacenterConfigStatus struct { // INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// UUID of the CloudStack domain
+	DomainId string `json:"domainId"`
 }
 
 //+kubebuilder:object:root=true

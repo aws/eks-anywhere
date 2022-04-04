@@ -101,6 +101,12 @@ spec:
           status:
             description: CloudStackDatacenterConfigStatus defines the observed state
               of CloudStackDatacenterConfig
+            properties:
+              domainId:
+                description: UUID of the CloudStack domain
+                type: string
+            required:
+            - domainId
             type: object
         type: object
     served: true
