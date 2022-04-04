@@ -7,13 +7,16 @@ package cmd
 import (
 	"context"
 	"log"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
-	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands"
+	"github.com/aws/eks-anywhere/cmd/eksctl-anywhere/cmd/internal/commands/artifacts"
 	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/docker"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/helm"
+	"github.com/aws/eks-anywhere/pkg/tar"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
@@ -48,8 +51,10 @@ type downloadImagesCommand struct {
 }
 
 func (c downloadImagesCommand) Run(ctx context.Context) error {
-	deps, err := dependencies.NewFactory().
+	factory := dependencies.NewFactory()
+	deps, err := factory.
 		WithManifestReader().
+		WithHelm().
 		Build(ctx)
 	if err != nil {
 		return err
@@ -57,15 +62,21 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 	defer deps.Close(ctx)
 
 	dockerClient := executables.BuildDockerExecutable()
-	mover := docker.NewImageMover(
-		docker.NewOriginalRegistrySource(dockerClient),
-		docker.NewDiskDestination(dockerClient, c.outputFile),
-	)
-	moveImages := commands.MoveImages{
-		Reader:  deps.ManifestReader,
-		Mover:   mover,
-		Version: version.Get(),
+	downloadFolder := "tmp-eks-a-artifacts-download"
+	imagesFile := filepath.Join(downloadFolder, "images.tar")
+
+	downloadArtifacts := artifacts.Download{
+		Reader: deps.ManifestReader,
+		ImageMover: docker.NewImageMover(
+			docker.NewOriginalRegistrySource(dockerClient),
+			docker.NewDiskDestination(dockerClient, imagesFile),
+		),
+		ChartDownloader:  helm.NewChartRegistryDownloader(deps.Helm, downloadFolder),
+		Version:          version.Get(),
+		TmpDowloadFolder: downloadFolder,
+		DstFile:          c.outputFile,
+		Packager:         tar.NewPackager(),
 	}
 
-	return moveImages.Run(ctx)
+	return downloadArtifacts.Run(ctx)
 }

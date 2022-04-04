@@ -182,3 +182,33 @@ spec:
 	_, err := r.ReadImages("v0.0.1")
 	g.Expect(err).ToNot(HaveOccurred())
 }
+
+func TestReaderReadCharts(t *testing.T) {
+	g := NewWithT(t)
+	ctrl := gomock.NewController(t)
+	reader := mocks.NewMockReader(ctrl)
+
+	releasesURL := releases.ManifestURL()
+
+	releasesManifest := `apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Release
+metadata:
+  name: release-1
+spec:
+  releases:
+    - bundleManifestUrl: "https://bundles/bundles.yaml"
+      version: v0.0.1`
+	reader.EXPECT().ReadFile(releasesURL).Return([]byte(releasesManifest), nil)
+
+	bundlesManifest := `apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Bundles
+metadata:
+  name: bundles-1`
+
+	reader.EXPECT().ReadFile("https://bundles/bundles.yaml").Return([]byte(bundlesManifest), nil)
+
+	r := manifests.NewReader(reader)
+	charts, err := r.ReadCharts("v0.0.1")
+	g.Expect(err).ToNot(HaveOccurred())
+	g.Expect(charts).To(BeEmpty())
+}

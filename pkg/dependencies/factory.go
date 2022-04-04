@@ -77,7 +77,7 @@ func (d *Dependencies) Close(ctx context.Context) error {
 func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
 	return NewFactory().
-		WithExecutableImage(eksaToolsImage.VersionedImage()).
+		UseExecutableImage(eksaToolsImage.VersionedImage()).
 		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
@@ -130,8 +130,27 @@ func (f *Factory) WithRegistryMirror(mirror string) *Factory {
 	return f
 }
 
-func (f *Factory) WithExecutableImage(image string) *Factory {
+func (f *Factory) UseExecutableImage(image string) *Factory {
 	f.executablesImage = image
+	return f
+}
+
+func (f *Factory) WithExecutableImage() *Factory {
+	f.WithManifestReader()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.executablesImage != "" {
+			return nil
+		}
+
+		bundles, err := f.dependencies.ManifestReader.ReadBundlesForVersion(version.Get().GitVersion)
+		if err != nil {
+			return fmt.Errorf("retrieving executable tools image from bundle in dependency factory: %v", err)
+		}
+
+		f.executablesImage = bundles.Spec.VersionsBundles[0].Eksa.CliTools.VersionedImage()
+		return nil
+	})
 	return f
 }
 
@@ -141,6 +160,8 @@ func (f *Factory) WithExecutableMountDirs(mountDirs ...string) *Factory {
 }
 
 func (f *Factory) WithExecutableBuilder() *Factory {
+	f.WithExecutableImage()
+
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.executableBuilder != nil {
 			return nil
