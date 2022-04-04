@@ -14,9 +14,10 @@ import (
 
 type helmTest struct {
 	*WithT
-	ctx context.Context
-	h   *executables.Helm
-	e   *mocks.MockExecutable
+	ctx     context.Context
+	h       *executables.Helm
+	e       *mocks.MockExecutable
+	envVars map[string]string
 }
 
 func newHelmTest(t *testing.T) *helmTest {
@@ -27,6 +28,9 @@ func newHelmTest(t *testing.T) *helmTest {
 		ctx:   context.Background(),
 		h:     executables.NewHelm(e),
 		e:     e,
+		envVars: map[string]string{
+			"HELM_EXPERIMENTAL_OCI": "1",
+		},
 	}
 }
 
@@ -36,7 +40,6 @@ type helmTemplateTest struct {
 	valuesYaml                 []byte
 	ociURI, version, namespace string
 	wantTemplateContent        []byte
-	envVars                    map[string]string
 }
 
 func newHelmTemplateTest(t *testing.T) *helmTemplateTest {
@@ -54,9 +57,6 @@ key2: values2
 		version:             "1.1.1",
 		namespace:           "kube-system",
 		wantTemplateContent: []byte("template-content"),
-		envVars: map[string]string{
-			"HELM_EXPERIMENTAL_OCI": "1",
-		},
 	}
 }
 
@@ -86,4 +86,16 @@ func TestHelmTemplateErrorYaml(t *testing.T) {
 	_, gotErr := tt.h.Template(tt.ctx, tt.ociURI, tt.version, tt.namespace, values)
 	tt.Expect(gotErr).To(HaveOccurred(), "helm.Template() should fail marshalling values to yaml")
 	tt.Expect(gotErr).To(MatchError(ContainSubstring("failed marshalling values for helm template: error marshaling into JSON")))
+}
+
+func TestHelmSaveChartSuccess(t *testing.T) {
+	tt := newHelmTest(t)
+	url := "url"
+	version := "1.1"
+	destinationFolder := "folder"
+	expectCommand(
+		tt.e, tt.ctx, "pull", url, "--version", version, "--insecure-skip-tls-verify", "--destination", destinationFolder,
+	).withEnvVars(tt.envVars).to().Return(bytes.Buffer{}, nil)
+
+	tt.Expect(tt.h.SaveChart(tt.ctx, url, version, destinationFolder)).To(Succeed())
 }

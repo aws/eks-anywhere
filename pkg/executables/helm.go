@@ -78,6 +78,12 @@ func (h *Helm) RegistryLogin(ctx context.Context, registry, username, password s
 	return err
 }
 
+func (h *Helm) SaveChart(ctx context.Context, ociURI, version, folder string) error {
+	_, err := h.executable.Command(ctx, "pull", h.url(ociURI), "--version", version, insecureSkipVerifyFlag, "--destination", folder).
+		WithEnvVars(helmTemplateEnvVars).Run()
+	return err
+}
+
 func (h *Helm) url(originalURL string) string {
 	return urls.ReplaceHost(originalURL, h.registryMirror)
 }

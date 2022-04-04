@@ -78,3 +78,12 @@ func (r *Reader) ReadImages(eksaVersion string) ([]releasev1.Image, error) {
 
 	return bundles.ReadImages(r, bundle)
 }
+
+func (r *Reader) ReadCharts(eksaVersion string) ([]releasev1.Image, error) {
+	bundle, err := r.ReadBundlesForVersion(eksaVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	return bundles.Charts(bundle), nil
+}

@@ -421,7 +421,8 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/hardware/mocks/json.go -package=mocks -source "pkg/providers/tinkerbell/hardware/json.go" TinkerbellHardwareJsonFactory,TinkerbellHardwarePusher
 	${GOPATH}/bin/mockgen -destination=pkg/docker/mocks/mocks.go -package=mocks -source "pkg/docker/mover.go"
 	${GOPATH}/bin/mockgen -destination=internal/test/mocks/reader.go -package=mocks -source "internal/test/reader.go"
-	${GOPATH}/bin/mockgen -destination=cmd/eksctl-anywhere/cmd/internal/commands/mocks/move_images.go -package=mocks -source "cmd/eksctl-anywhere/cmd/internal/commands/move_images.go"
+	${GOPATH}/bin/mockgen -destination=cmd/eksctl-anywhere/cmd/internal/commands/artifacts/mocks/download.go -package=mocks -source "cmd/eksctl-anywhere/cmd/internal/commands/artifacts/download.go"
+	${GOPATH}/bin/mockgen -destination=pkg/helm/mocks/download.go -package=mocks -source "pkg/helm/download.go"
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
