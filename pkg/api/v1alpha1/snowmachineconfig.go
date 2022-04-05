@@ -62,11 +62,6 @@ func setSnowMachineConfigDefaults(config *SnowMachineConfig) {
 		logger.V(1).Info("SnowMachineConfig InstanceType is empty. Using default", "default instance type", DefaultSnowInstanceType)
 	}
 
-	if config.Spec.SshKeyName == "" {
-		config.Spec.SshKeyName = DefaultSnowSshKeyName
-		logger.V(1).Info("SnowMachineConfig SshKeyName is empty. Using default", "default SSH key name", DefaultSnowSshKeyName)
-	}
-
 	if config.Spec.PhysicalNetworkConnector == "" {
 		config.Spec.PhysicalNetworkConnector = DefaultSnowPhysicalNetworkConnectorType
 		logger.V(1).Info("SnowMachineConfig PhysicalNetworkConnector is empty. Using default", "default physical network connector", DefaultSnowPhysicalNetworkConnectorType)

@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/aws"
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack"
@@ -24,8 +26,10 @@ type ProviderFactory struct {
 	TinkerbellKubectlClient   tinkerbell.ProviderKubectlClient
 	TinkerbellClients         tinkerbell.TinkerbellClients
 	SnowKubectlClient         snow.ProviderKubectlClient
+	SnowAwsClients            aws.Clients
 	Writer                    filewriter.FileWriter
 	ClusterResourceSetManager vsphere.ClusterResourceSetManager
+	ConfigManager             *cluster.ConfigManager
 }
 
 func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string, skipPowerActions, force bool) (providers.Provider, error) {
@@ -51,7 +55,7 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 		}
 		return cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.CloudStackKubectlClient, p.CloudStackCmkClient, p.Writer, time.Now, skipIpCheck), nil
 	case v1alpha1.SnowDatacenterKind:
-		return snow.NewProvider(p.SnowKubectlClient, p.Writer, time.Now), nil
+		return snow.NewProvider(p.SnowKubectlClient, p.Writer, p.SnowAwsClients, time.Now), nil
 	case v1alpha1.TinkerbellDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFileName)
 		if err != nil {

@@ -708,29 +708,29 @@ func (c *Cluster) EtcdAnnotation() string {
 	return etcdAnnotation
 }
 
-func (s *Cluster) IsSelfManaged() bool {
-	return s.Spec.ManagementCluster.Name == "" || s.Spec.ManagementCluster.Name == s.Name
+func (c *Cluster) IsSelfManaged() bool {
+	return c.Spec.ManagementCluster.Name == "" || c.Spec.ManagementCluster.Name == c.Name
 }
 
-func (s *Cluster) SetManagedBy(managementClusterName string) {
-	if s.Annotations == nil {
-		s.Annotations = map[string]string{}
+func (c *Cluster) SetManagedBy(managementClusterName string) {
+	if c.Annotations == nil {
+		c.Annotations = map[string]string{}
 	}
 
-	s.Annotations[managementAnnotation] = managementClusterName
-	s.Spec.ManagementCluster.Name = managementClusterName
+	c.Annotations[managementAnnotation] = managementClusterName
+	c.Spec.ManagementCluster.Name = managementClusterName
 }
 
-func (s *Cluster) SetSelfManaged() {
-	s.Spec.ManagementCluster.Name = s.Name
+func (c *Cluster) SetSelfManaged() {
+	c.Spec.ManagementCluster.Name = c.Name
 }
 
 func (c *ClusterGenerate) SetSelfManaged() {
 	c.Spec.ManagementCluster.Name = c.Name
 }
 
-func (s *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
-	return s.IsSelfManaged() && s2.IsSelfManaged() || s.Spec.ManagementCluster.Equal(s2.Spec.ManagementCluster)
+func (c *Cluster) ManagementClusterEqual(s2 *Cluster) bool {
+	return c.IsSelfManaged() && s2.IsSelfManaged() || c.Spec.ManagementCluster.Equal(s2.Spec.ManagementCluster)
 }
 
 func (c *Cluster) MachineConfigRefs() []Ref {

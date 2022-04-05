@@ -20,7 +20,6 @@ func TestSnowSetDefaults(t *testing.T) {
 			after: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					InstanceType:             DefaultSnowInstanceType,
-					SshKeyName:               DefaultSnowSshKeyName,
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 				},
 			},
@@ -35,7 +34,6 @@ func TestSnowSetDefaults(t *testing.T) {
 			after: &SnowMachineConfig{
 				Spec: SnowMachineConfigSpec{
 					InstanceType:             "instance-type-1",
-					SshKeyName:               DefaultSnowSshKeyName,
 					PhysicalNetworkConnector: DefaultSnowPhysicalNetworkConnectorType,
 				},
 			},
@@ -66,7 +64,6 @@ func TestSnowSetDefaults(t *testing.T) {
 				Spec: SnowMachineConfigSpec{
 					PhysicalNetworkConnector: "network-1",
 					InstanceType:             DefaultSnowInstanceType,
-					SshKeyName:               DefaultSnowSshKeyName,
 				},
 			},
 		},
