@@ -84,6 +84,10 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 	for i, bundle := range versionBundles {
 		for component, manifestList := range bundle.Manifests() {
 			for _, manifest := range manifestList {
+				if *manifest == "" {
+					// This can happen if the provider is not GA and not added to the bundle-release corresponding to an EKS-A release
+					continue
+				}
 				if opts.dryRun {
 					logger.Info(fmt.Sprintf("Found artifact: %s\n", *manifest))
 					continue
