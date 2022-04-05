@@ -21,12 +21,14 @@ import (
 const (
 	cmkConfigFileName = "cmk_tmp.ini"
 	accountName       = "account1"
-	rootDomainName    = "ROOT"
+	rootDomain        = "ROOT"
 	rootDomainId      = "5300cdac-74d5-11ec-8696-c81f66d3e965"
+	domain            = "foo/domain1"
 	domainName        = "domain1"
 	domainId          = "7700cdac-74d5-11ec-8696-c81f66d3e965"
-	domainPath        = "foo/bar/domain1"
-	domainPathId      = "8800cdac-74d5-11ec-8696-c81f66d3e965"
+	domain2           = "foo/bar/domain1"
+	domain2Name       = "domain1"
+	domain2Id         = "8800cdac-74d5-11ec-8696-c81f66d3e965"
 	zoneId            = "4e3b338d-87a6-4189-b931-a1747edeea8f"
 )
 
@@ -101,10 +103,10 @@ func TestCmkListOperations(t *testing.T) {
 			jsonResponseFile: "testdata/cmk_list_domain_root.json",
 			argumentsExecCall: []string{
 				"-c", configFilePath,
-				"list", "domains", fmt.Sprintf("name=\"%s\"", rootDomainName),
+				"list", "domains", fmt.Sprintf("name=\"%s\"", rootDomain), "listall=true",
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				domain, err := cmk.ValidateDomainPresent(ctx, rootDomainName)
+				domain, err := cmk.ValidateDomainPresent(ctx, rootDomain)
 				if domain.Id != rootDomainId {
 					t.Fatalf("Expected domain id: %s, actual domain id: %s", rootDomainId, domain.Id)
 				}
@@ -123,7 +125,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "domains", fmt.Sprintf("name=\"%s\"", domainName), "listall=true",
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				domain, err := cmk.ValidateDomainPresent(ctx, domainName)
+				domain, err := cmk.ValidateDomainPresent(ctx, domain)
 				if domain.Id != domainId {
 					t.Fatalf("Expected domain id: %s, actual domain id: %s", domainId, domain.Id)
 				}
@@ -155,12 +157,12 @@ func TestCmkListOperations(t *testing.T) {
 			jsonResponseFile: "testdata/cmk_list_domain_multiple.json",
 			argumentsExecCall: []string{
 				"-c", configFilePath,
-				"list", "domains", fmt.Sprintf("name=\"%s\"", domainName), "listall=true",
+				"list", "domains", fmt.Sprintf("name=\"%s\"", domain2Name), "listall=true",
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				domain, err := cmk.ValidateDomainPresent(ctx, domainPath)
-				if domain.Id != domainPathId {
-					t.Fatalf("Expected domain id: %s, actual domain id: %s", domainPathId, domain.Id)
+				domain, err := cmk.ValidateDomainPresent(ctx, domain2)
+				if domain.Id != domain2Id {
+					t.Fatalf("Expected domain id: %s, actual domain id: %s", domain2Id, domain.Id)
 				}
 				return err
 			},
@@ -177,7 +179,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "domains", fmt.Sprintf("name=\"%s\"", domainName), "listall=true",
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateDomainPresent(ctx, domainName)
+				_, err := cmk.ValidateDomainPresent(ctx, domain)
 				return err
 			},
 			cmkResponseError:      nil,
@@ -193,7 +195,7 @@ func TestCmkListOperations(t *testing.T) {
 				"list", "domains", fmt.Sprintf("name=\"%s\"", domainName), "listall=true",
 			},
 			cmkFunc: func(cmk executables.Cmk, ctx context.Context) error {
-				_, err := cmk.ValidateDomainPresent(ctx, domainName)
+				_, err := cmk.ValidateDomainPresent(ctx, domain)
 				return err
 			},
 			cmkResponseError:      nil,

@@ -195,14 +195,9 @@ func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudSt
 func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha1.CloudStackResourceIdentifier, error) {
 	domainIdentifier := v1alpha1.CloudStackResourceIdentifier{Name: domain, Id: ""}
 	command := newCmkCommand("list domains")
-
-	if domain == rootDomain {
-		applyCmkArgs(&command, withCloudStackName(domain))
-	} else {
-		tokens := strings.Split(domain, domainDelimiter)
-		domainName := tokens[len(tokens)-1]
-		applyCmkArgs(&command, withCloudStackName(domainName), appendArgs("listall=true"))
-	}
+	tokens := strings.Split(domain, domainDelimiter)
+	domainName := tokens[len(tokens)-1]
+	applyCmkArgs(&command, withCloudStackName(domainName), appendArgs("listall=true"))
 
 	result, err := c.exec(ctx, command...)
 	if err != nil {
@@ -219,24 +214,21 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha
 		return domainIdentifier, fmt.Errorf("failed to parse response into json: %v", err)
 	}
 	domains := response.CmkDomains
-	if len(domains) == 1 {
-		domainIdentifier.Id = domains[0].Id
-		domainIdentifier.Name = domains[0].Name
-	} else if len(domains) > 1 {
-		domainPath := strings.Join([]string{rootDomain, domain}, domainDelimiter)
-		for _, d := range domains {
-			if d.Path == domainPath {
-				domainIdentifier.Id = d.Id
-				domainIdentifier.Name = d.Name
-				break
-			}
-		}
-
-		if domainIdentifier.Id == "" {
-			return domainIdentifier, fmt.Errorf("multiple domains found for domain name %s, but not found a domain with domain path %s", domain, domainPath)
-		}
+	var domainPath string
+	if domain == rootDomain {
+		domainPath = rootDomain
 	} else {
-		return domainIdentifier, fmt.Errorf("domain %s not found", domain)
+		domainPath = strings.Join([]string{rootDomain, domain}, domainDelimiter)
+	}
+	for _, d := range domains {
+		if d.Path == domainPath {
+			domainIdentifier.Id = d.Id
+			domainIdentifier.Name = d.Name
+			break
+		}
+	}
+	if domainIdentifier.Id == "" {
+		return domainIdentifier, fmt.Errorf("domain(s) found for domain name %s, but not found a domain with domain path %s", domain, domainPath)
 	}
 
 	return domainIdentifier, nil
