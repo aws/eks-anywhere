@@ -40,10 +40,18 @@ func (r *ReleaseConfig) GetPackagesAssets() ([]Artifact, error) {
 		"gitTag":      gitTag,
 		"projectPath": packagesRootPath,
 	}
-
 	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(packagesImageName, repoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)
+	}
+	sourceHelmURI, err := r.GetSourceHelmURI(repoName)
+	if err != nil {
+		// This is for Prow, where it's running e2e test's in an account where the ECR lookup will fail, we check for Prow accountID and bypass the error out.
+		if strings.Contains(err.Error(), "316434458148") == true {
+			sourceHelmURI = "857151390494.dkr.ecr.us-west-2.amazonaws.com/eks-anywhere-packages:0.1.2-bba7e1fcefed9c41bda1b66ffb39cb02aa89c9e7-helm"
+		} else {
+			return nil, errors.Cause(err)
+		}
 	}
 	if sourcedFromBranch != r.BuildRepoBranchName {
 		gitTag, err = r.readGitTag(packagesRootPath, sourcedFromBranch)
@@ -73,8 +81,8 @@ func (r *ReleaseConfig) GetPackagesAssets() ([]Artifact, error) {
 	// 123456.dkr.ecr.us-west-2.amazonaws.com/eks-anywhere-packages:0.1.2-2e9994fd1afb2216a51fa474ac5d7dc6a772bb62-helm
 	artifacts := []Artifact{{Image: imageArtifact}}
 	helmImageArtifact := &ImageArtifact{
-		AssetName:         packagesHelmChart,                                                                                                        // This needs to differ from the image name for later steps
-		SourceImageURI:    "857151390494.dkr.ecr.us-west-2.amazonaws.com/eks-anywhere-packages:0.1.2-bba7e1fcefed9c41bda1b66ffb39cb02aa89c9e7-helm", // Hardcoding until we come up with helm workaround since it lacks latest.
+		AssetName:         packagesHelmChart, // This needs to differ from the image name for later steps
+		SourceImageURI:    sourceHelmURI,     // Hardcoding until we come up with helm workaround since it lacks latest.
 		ReleaseImageURI:   strings.ReplaceAll(releaseImageUri, "packages:v", "packages:"),
 		GitTag:            gitTag,
 		ProjectPath:       packagesRootPath,
