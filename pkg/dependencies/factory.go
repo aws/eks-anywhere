@@ -17,7 +17,9 @@ import (
 	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
+	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/networking/kindnetd"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -26,6 +28,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/types"
+	"github.com/aws/eks-anywhere/pkg/utils/urls"
+	"github.com/aws/eks-anywhere/pkg/version"
 )
 
 type Dependencies struct {
@@ -54,6 +58,8 @@ type Dependencies struct {
 	DignosticCollectorFactory diagnostics.DiagnosticBundleFactory
 	CAPIManager               *clusterapi.Manager
 	ResourceSetManager        *clusterapi.ResourceSetManager
+	FileReader                *files.Reader
+	ManifestReader            *manifests.Reader
 	closers                   []types.Closer
 }
 
@@ -71,7 +77,8 @@ func (d *Dependencies) Close(ctx context.Context) error {
 func ForSpec(ctx context.Context, clusterSpec *cluster.Spec) *Factory {
 	eksaToolsImage := clusterSpec.VersionsBundle.Eksa.CliTools
 	return NewFactory().
-		WithExecutableImage(clusterSpec.Cluster.UseImageMirror(eksaToolsImage.VersionedImage())).
+		UseExecutableImage(eksaToolsImage.VersionedImage()).
+		WithRegistryMirror(clusterSpec.Cluster.RegistryMirror()).
 		WithWriterFolder(clusterSpec.Cluster.Name).
 		WithDiagnosticCollectorImage(clusterSpec.VersionsBundle.Eksa.DiagnosticCollector.VersionedImage())
 }
@@ -80,6 +87,7 @@ type Factory struct {
 	executableBuilder        *executables.ExecutableBuilder
 	providerFactory          *factory.ProviderFactory
 	executablesImage         string
+	registryMirror           string
 	executablesMountDirs     []string
 	writerFolder             string
 	diagnosticCollectorImage string
@@ -117,8 +125,37 @@ func (f *Factory) WithWriterFolder(folder string) *Factory {
 	return f
 }
 
-func (f *Factory) WithExecutableImage(image string) *Factory {
+func (f *Factory) WithRegistryMirror(mirror string) *Factory {
+	f.registryMirror = mirror
+	return f
+}
+
+func (f *Factory) UseExecutableImage(image string) *Factory {
 	f.executablesImage = image
+	return f
+}
+
+// WithExecutableImage sets the right cli tools image for the executable builder, reading
+// from the Bundle and using the first VersionsBundle
+// This is just the default for when there is not an specific kubernetes version available
+// For commands that receive a cluster config file or a kubernetes version directly as input,
+// use UseExecutableImage to specify the image directly
+func (f *Factory) WithExecutableImage() *Factory {
+	f.WithManifestReader()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.executablesImage != "" {
+			return nil
+		}
+
+		bundles, err := f.dependencies.ManifestReader.ReadBundlesForVersion(version.Get().GitVersion)
+		if err != nil {
+			return fmt.Errorf("retrieving executable tools image from bundle in dependency factory: %v", err)
+		}
+
+		f.executablesImage = bundles.Spec.VersionsBundles[0].Eksa.CliTools.VersionedImage()
+		return nil
+	})
 	return f
 }
 
@@ -128,12 +165,15 @@ func (f *Factory) WithExecutableMountDirs(mountDirs ...string) *Factory {
 }
 
 func (f *Factory) WithExecutableBuilder() *Factory {
+	f.WithExecutableImage()
+
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.executableBuilder != nil {
 			return nil
 		}
 
-		b, close, err := executables.NewExecutableBuilder(ctx, f.executablesImage, f.executablesMountDirs...)
+		image := urls.ReplaceHost(f.executablesImage, f.registryMirror)
+		b, close, err := executables.NewExecutableBuilder(ctx, image, f.executablesMountDirs...)
 		if err != nil {
 			return err
 		}
@@ -414,7 +454,12 @@ func (f *Factory) WithHelm() *Factory {
 			return nil
 		}
 
-		f.dependencies.Helm = f.executableBuilder.BuildHelmExecutable()
+		var opts []executables.HelmOpt
+		if f.registryMirror != "" {
+			opts = append(opts, executables.WithRegistryMirror(f.registryMirror))
+		}
+
+		f.dependencies.Helm = f.executableBuilder.BuildHelmExecutable(opts...)
 		return nil
 	})
 
@@ -619,6 +664,36 @@ func (f *Factory) WithCAPIClusterResourceSetManager() *Factory {
 		}
 
 		f.dependencies.ResourceSetManager = clusterapi.NewResourceSetManager(f.dependencies.Kubectl)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithFileReader() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.FileReader != nil {
+			return nil
+		}
+
+		f.dependencies.FileReader = files.NewReader(files.WithUserAgent(
+			fmt.Sprintf("eks-a-cli/%s", version.Get().GitVersion)),
+		)
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithManifestReader() *Factory {
+	f.WithFileReader()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.ManifestReader != nil {
+			return nil
+		}
+
+		f.dependencies.ManifestReader = manifests.NewReader(f.dependencies.FileReader)
 		return nil
 	})
 

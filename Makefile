@@ -245,7 +245,7 @@ lint: bin/golangci-lint ## Run golangci-lint
 	bin/golangci-lint run
 
 bin/golangci-lint: ## Download golangci-lint
-bin/golangci-lint: GOLANGCI_LINT_VERSION?=$(shell cat .github/workflows/golangci-lint.yml | sed -n -e 's/^\s*version: //p')
+bin/golangci-lint: GOLANGCI_LINT_VERSION?=$(shell cat .github/workflows/golangci-lint.yml | yq e '.jobs.golangci.steps[] | select(.name == "golangci-lint") .with.version' -)
 bin/golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s $(GOLANGCI_LINT_VERSION)
 
@@ -421,6 +421,8 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/hardware/mocks/json.go -package=mocks -source "pkg/providers/tinkerbell/hardware/json.go" TinkerbellHardwareJsonFactory,TinkerbellHardwarePusher
 	${GOPATH}/bin/mockgen -destination=pkg/docker/mocks/mocks.go -package=mocks -source "pkg/docker/mover.go"
 	${GOPATH}/bin/mockgen -destination=internal/test/mocks/reader.go -package=mocks -source "internal/test/reader.go"
+	${GOPATH}/bin/mockgen -destination=cmd/eksctl-anywhere/cmd/internal/commands/artifacts/mocks/download.go -package=mocks -source "cmd/eksctl-anywhere/cmd/internal/commands/artifacts/download.go"
+	${GOPATH}/bin/mockgen -destination=pkg/helm/mocks/download.go -package=mocks -source "pkg/helm/download.go"
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated

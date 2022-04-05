@@ -10,12 +10,13 @@ import (
 
 	executables "github.com/aws/eks-anywhere/pkg/executables"
 	filewriter "github.com/aws/eks-anywhere/pkg/filewriter"
+	hardware "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	pbnj "github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	types "github.com/aws/eks-anywhere/pkg/types"
 	gomock "github.com/golang/mock/gomock"
 	v1alpha1 "github.com/tinkerbell/cluster-api-provider-tinkerbell/tink/api/v1alpha1"
 	v1 "github.com/tinkerbell/pbnj/api/v1"
-	hardware "github.com/tinkerbell/tink/protos/hardware"
+	hardware0 "github.com/tinkerbell/tink/protos/hardware"
 	workflow "github.com/tinkerbell/tink/protos/workflow"
 	v1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
@@ -178,10 +179,10 @@ func (mr *MockProviderTinkClientMockRecorder) DeleteWorkflow(arg0 interface{}, a
 }
 
 // GetHardware mocks base method.
-func (m *MockProviderTinkClient) GetHardware(arg0 context.Context) ([]*hardware.Hardware, error) {
+func (m *MockProviderTinkClient) GetHardware(arg0 context.Context) ([]*hardware0.Hardware, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetHardware", arg0)
-	ret0, _ := ret[0].([]*hardware.Hardware)
+	ret0, _ := ret[0].([]*hardware0.Hardware)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -190,6 +191,21 @@ func (m *MockProviderTinkClient) GetHardware(arg0 context.Context) ([]*hardware.
 func (mr *MockProviderTinkClientMockRecorder) GetHardware(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardware", reflect.TypeOf((*MockProviderTinkClient)(nil).GetHardware), arg0)
+}
+
+// GetHardwareByUuid mocks base method.
+func (m *MockProviderTinkClient) GetHardwareByUuid(arg0 context.Context, arg1 string) (*hardware.Hardware, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetHardwareByUuid", arg0, arg1)
+	ret0, _ := ret[0].(*hardware.Hardware)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetHardwareByUuid indicates an expected call of GetHardwareByUuid.
+func (mr *MockProviderTinkClientMockRecorder) GetHardwareByUuid(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHardwareByUuid", reflect.TypeOf((*MockProviderTinkClient)(nil).GetHardwareByUuid), arg0, arg1)
 }
 
 // GetWorkflow mocks base method.
@@ -205,6 +221,20 @@ func (m *MockProviderTinkClient) GetWorkflow(arg0 context.Context) ([]*workflow.
 func (mr *MockProviderTinkClientMockRecorder) GetWorkflow(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkflow", reflect.TypeOf((*MockProviderTinkClient)(nil).GetWorkflow), arg0)
+}
+
+// PushHardware mocks base method.
+func (m *MockProviderTinkClient) PushHardware(arg0 context.Context, arg1 []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PushHardware", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PushHardware indicates an expected call of PushHardware.
+func (mr *MockProviderTinkClientMockRecorder) PushHardware(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushHardware", reflect.TypeOf((*MockProviderTinkClient)(nil).PushHardware), arg0, arg1)
 }
 
 // MockProviderPbnjClient is a mock of ProviderPbnjClient interface.
