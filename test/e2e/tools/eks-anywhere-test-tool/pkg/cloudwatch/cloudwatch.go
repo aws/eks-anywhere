@@ -93,7 +93,7 @@ func (c Cloudwatch) getLogSegment(logGroupName string, logStreamName string, sta
 
 func isInvalidParameterError(err error) bool {
 	if awsErr, ok := err.(awserr.Error); ok {
-		return awsErr.Code() == constants.InvalidParameterError
+		return awsErr.Code() == cloudwatchlogs.ErrCodeInvalidParameterException
 	}
 	return false
 }
