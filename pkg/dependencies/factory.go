@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/flux"
@@ -41,6 +42,7 @@ type Dependencies struct {
 	Cmk                       *executables.Cmk
 	Tink                      *executables.Tink
 	Pbnj                      *pbnj.Pbnj
+	AwsSnowClient             aws.Clients
 	TinkerbellClients         tinkerbell.TinkerbellClients
 	Writer                    filewriter.FileWriter
 	Kind                      *executables.Kind
@@ -216,6 +218,8 @@ func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
 		f.WithKubectl().WithTink(clusterConfigFile).WithPbnj(clusterConfigFile)
+	case v1alpha1.SnowDatacenterKind:
+		f.WithKubectl().WithAwsSnow().WithWriter()
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -231,6 +235,7 @@ func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v
 			VSphereGovcClient:         f.dependencies.Govc,
 			VSphereKubectlClient:      f.dependencies.Kubectl,
 			SnowKubectlClient:         f.dependencies.Kubectl,
+			SnowAwsClients:            f.dependencies.AwsSnowClient,
 			TinkerbellKubectlClient:   f.dependencies.Kubectl,
 			TinkerbellClients:         tinkerbell.TinkerbellClients{ProviderTinkClient: f.dependencies.Tink, ProviderPbnjClient: f.dependencies.Pbnj},
 			Writer:                    f.dependencies.Writer,
@@ -319,6 +324,43 @@ func (f *Factory) WithCmk() *Factory {
 
 		f.dependencies.Cmk = f.executableBuilder.BuildCmkExecutable(f.dependencies.Writer, *execConfig)
 		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Cmk)
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithAwsSnow() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.AwsSnowClient != nil {
+			return nil
+		}
+		credsFile, err := aws.AwsCredentialsFile()
+		if err != nil {
+			return fmt.Errorf("fetching aws credentials from env: %v", err)
+		}
+		certsFile, err := aws.AwsCABundlesFile()
+		if err != nil {
+			return fmt.Errorf("fetching aws CA bundles from env: %v", err)
+		}
+
+		deviceIps, err := aws.ParseDeviceIPsFromFile(credsFile)
+		if err != nil {
+			return fmt.Errorf("getting device ips from aws credentials: %v", err)
+		}
+
+		deviceClientMap := make(aws.Clients, len(deviceIps))
+
+		for _, ip := range deviceIps {
+			config, err := aws.LoadConfig(ctx, aws.WithSnow(ip, certsFile, credsFile))
+			if err != nil {
+				return fmt.Errorf("setting up aws client: %v", err)
+			}
+			deviceClientMap[ip] = aws.NewClient(ctx, config)
+		}
+
+		f.dependencies.AwsSnowClient = deviceClientMap
 
 		return nil
 	})
