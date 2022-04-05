@@ -28,6 +28,8 @@ var restrictedUserCustomDetails = [...]string{
 	"keypairnames", "controlNodeLoginUser",
 }
 
+var domainId string
+
 func NewValidator(cmk ProviderCmkClient) *Validator {
 	return &Validator{
 		cmk: cmk,
@@ -87,7 +89,7 @@ func (v *Validator) ValidateCloudStackDatacenterConfig(ctx context.Context, data
 		if len(zone.Network.Id) == 0 && len(zone.Network.Name) == 0 {
 			return fmt.Errorf("zone network is not set or is empty")
 		}
-		err := v.cmk.ValidateNetworkPresent(ctx, datacenterConfig.Status.DomainId, zone, zones, datacenterConfig.Spec.Account, len(zones) > 1)
+		err := v.cmk.ValidateNetworkPresent(ctx, domainId, zone, zones, datacenterConfig.Spec.Account, len(zones) > 1)
 		if err != nil {
 			return fmt.Errorf("checking network %v", err)
 		}
@@ -114,7 +116,7 @@ func (v *Validator) validateDomainAndAccount(ctx context.Context, datacenterConf
 			return fmt.Errorf("checking account: %v", errAccount)
 		}
 
-		datacenterConfig.Status.DomainId = domain.Id
+		domainId = domain.Id
 	}
 	return nil
 }
@@ -239,7 +241,7 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 	account := datacenterConfig.Spec.Account
 
 	for _, zone := range zones {
-		if err = v.cmk.ValidateTemplatePresent(ctx, datacenterConfig.Status.DomainId, zone.Id, account, machineConfig.Spec.Template); err != nil {
+		if err = v.cmk.ValidateTemplatePresent(ctx, domainId, zone.Id, account, machineConfig.Spec.Template); err != nil {
 			return fmt.Errorf("validating template: %v", err)
 		}
 		if err = v.cmk.ValidateServiceOfferingPresent(ctx, zone.Id, machineConfig.Spec.ComputeOffering); err != nil {
@@ -248,7 +250,7 @@ func (v *Validator) validateMachineConfig(ctx context.Context, datacenterConfig 
 	}
 
 	if len(machineConfig.Spec.AffinityGroupIds) > 0 {
-		if err = v.cmk.ValidateAffinityGroupsPresent(ctx, datacenterConfig.Status.DomainId, account, machineConfig.Spec.AffinityGroupIds); err != nil {
+		if err = v.cmk.ValidateAffinityGroupsPresent(ctx, domainId, account, machineConfig.Spec.AffinityGroupIds); err != nil {
 			return fmt.Errorf("validating affinity group ids: %v", err)
 		}
 	}

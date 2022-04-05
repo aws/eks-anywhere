@@ -146,7 +146,7 @@ func TestCmkListOperations(t *testing.T) {
 				return err
 			},
 			cmkResponseError:      nil,
-			wantErr:               false,
+			wantErr:               true,
 			shouldSecondCallOccur: true,
 			wantResultCount:       0,
 		},

@@ -223,7 +223,7 @@ func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha
 		domainIdentifier.Id = domains[0].Id
 		domainIdentifier.Name = domains[0].Name
 	} else if len(domains) > 1 {
-		domainPath := rootDomain + domainDelimiter + domain
+		domainPath := strings.Join([]string{rootDomain, domain}, domainDelimiter)
 		for _, d := range domains {
 			if d.Path == domainPath {
 				domainIdentifier.Id = d.Id
