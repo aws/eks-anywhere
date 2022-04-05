@@ -54,15 +54,15 @@ var (
 )
 
 type cloudstackProvider struct {
-	datacenterConfig       *v1alpha1.CloudStackDatacenterConfig
-	machineConfigs         map[string]*v1alpha1.CloudStackMachineConfig
-	clusterConfig          *v1alpha1.Cluster
-	providerKubectlClient  ProviderKubectlClient
-	writer                 filewriter.FileWriter
-	selfSigned             bool
-	templateBuilder        *CloudStackTemplateBuilder
-	skipIpCheck            bool
-	validator              *Validator
+	datacenterConfig      *v1alpha1.CloudStackDatacenterConfig
+	machineConfigs        map[string]*v1alpha1.CloudStackMachineConfig
+	clusterConfig         *v1alpha1.Cluster
+	providerKubectlClient ProviderKubectlClient
+	writer                filewriter.FileWriter
+	selfSigned            bool
+	templateBuilder       *CloudStackTemplateBuilder
+	skipIpCheck           bool
+	validator             *Validator
 }
 
 func (p *cloudstackProvider) PreBootstrapSetup(ctx context.Context, cluster *types.Cluster) error {
