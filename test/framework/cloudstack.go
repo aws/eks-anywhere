@@ -1,6 +1,7 @@
 package framework
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -18,7 +19,7 @@ const (
 	cloudstackTemplateRedhat121Var     = "T_CLOUDSTACK_TEMPLATE_REDHAT_1_21"
 	cloudstackComputeOfferingLargeVar  = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGE"
 	cloudstackComputeOfferingLargerVar = "T_CLOUDSTACK_COMPUTE_OFFERING_LARGER"
-	cloudstackK8sControlPlaneHostVar   = "T_CLOUDSTACK_CONTROL_PLANE_HOST"
+	cloudStackClusterIPPoolEnvVar      = "T_CLOUDSTACK_CLUSTER_IP_POOL"
 	podCidrVar                         = "T_CLOUDSTACK_POD_CIDR"
 	serviceCidrVar                     = "T_CLOUDSTACK_SERVICE_CIDR"
 )
@@ -34,7 +35,6 @@ var requiredCloudStackEnvVars = []string{
 	cloudstackTemplateRedhat121Var,
 	cloudstackComputeOfferingLargeVar,
 	cloudstackComputeOfferingLargerVar,
-	cloudstackK8sControlPlaneHostVar,
 	podCidrVar,
 	serviceCidrVar,
 }
@@ -132,12 +132,27 @@ func (v *CloudStack) WithProviderUpgrade(fillers ...api.CloudStackFiller) Cluste
 	}
 }
 
+func (v *CloudStack) getControlPlaneIP() (string, error) {
+	value, ok := os.LookupEnv(cloudStackClusterIPPoolEnvVar)
+	if ok && value != "" {
+		clusterIP, err := PopIPFromEnv(cloudStackClusterIPPoolEnvVar)
+		if err != nil {
+			v.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
+		}
+		return clusterIP, err
+	}
+	return "", fmt.Errorf("failed to generate ip for cloudstack from IP pool %s", value)
+}
+
 func (v *CloudStack) ClusterConfigFillers() []api.ClusterFiller {
+	controlPlaneIP, err := v.getControlPlaneIP()
+	if err != nil {
+		v.t.Fatalf("failed to pop cluster ip from test environment: %v", err)
+	}
 	return []api.ClusterFiller{
 		api.WithPodCidr(os.Getenv(podCidrVar)),
 		api.WithServiceCidr(os.Getenv(serviceCidrVar)),
-		api.WithControlPlaneCount(1),
-		api.WithControlPlaneEndpointIP(os.Getenv(cloudstackK8sControlPlaneHostVar)),
+		api.WithControlPlaneEndpointIP(controlPlaneIP),
 	}
 }
 

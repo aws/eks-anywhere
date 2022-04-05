@@ -143,7 +143,6 @@ func TestDockerUpgradeWorkloadClusterWithFlux(t *testing.T) {
 }
 
 func TestCloudStackKubernetes121WorkloadClusterDemo(t *testing.T) {
-	t.Skip("Skipping CloudStack in CI/CD")
 	provider := framework.NewCloudStack(t, framework.WithRedhat121())
 	test := framework.NewMulticlusterE2ETest(
 		t,
