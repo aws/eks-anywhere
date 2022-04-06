@@ -53,115 +53,13 @@ All steps listed below should be executed on the admin machine with reachability
       --provider vsphere > $MGMT_CLUSTER_NAME.yaml
    ```
 
-   The command above creates a file named mgmt-cluster.yaml with the below contents in the path where it is executed.
+   The command above creates a config file named mgmt-cluster.yaml in the path where it is executed. Refer to [vsphere configuration]({{< relref "../../reference/clusterspec/vsphere" >}}) for information on configuring this cluster config for a vSphere provider.
 
    The configuration specification is divided into three sections:
    * Cluster
    * VSphereDatacenterConfig
    * VSphereMachineConfig
 
-   ``` yaml
-   apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-   kind: Cluster
-   metadata:
-   name: mgmt-cluster
-   spec:
-   clusterNetwork:
-      cni: cilium
-      pods:
-         cidrBlocks:
-         - 192.168.0.0/16
-      services:
-         cidrBlocks:
-         - 10.96.0.0/12
-   controlPlaneConfiguration:
-      count: 2
-      endpoint:
-         host: ""
-      machineGroupRef:
-         kind: VSphereMachineConfig
-         name: mgmt-cluster-cp
-   datacenterRef:
-      kind: VSphereDatacenterConfig
-      name: mgmt-cluster
-   externalEtcdConfiguration:
-      count: 3
-      machineGroupRef:
-         kind: VSphereMachineConfig
-         name: mgmt-cluster-etcd
-   kubernetesVersion: "1.21"
-   managementCluster:
-      name: mgmt-cluster
-   workerNodeGroupConfigurations:
-   - count: 2
-      machineGroupRef:
-         kind: VSphereMachineConfig
-         name: mgmt-cluster
-      name: md-0
-   ---
-   apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-   kind: VSphereDatacenterConfig
-   metadata:
-   name: mgmt-cluster
-   spec:
-   datacenter: ""
-   insecure: false
-   network: ""
-   server: ""
-   thumbprint: ""
-   ---
-   apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-   kind: VSphereMachineConfig
-   metadata:
-   name: mgmt-cluster-cp
-   spec:
-   datastore: ""
-   diskGiB: 25
-   folder: ""
-   memoryMiB: 8192
-   numCPUs: 2
-   osFamily: bottlerocket
-   resourcePool: ""
-   users:
-   - name: ec2-user
-      sshAuthorizedKeys:
-      - ssh-rsa AAAA...
-   ---
-   apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-   kind: VSphereMachineConfig
-   metadata:
-   name: mgmt-cluster
-   spec:
-   datastore: ""
-   diskGiB: 25
-   folder: ""
-   memoryMiB: 8192
-   numCPUs: 2
-   osFamily: bottlerocket
-   resourcePool: ""
-   users:
-   - name: ec2-user
-      sshAuthorizedKeys:
-      - ssh-rsa AAAA...
-
-   ---
-   apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-   kind: VSphereMachineConfig
-   metadata:
-   name: mgmt-cluster-etcd
-   spec:
-   datastore: ""
-   diskGiB: 25
-   folder: ""
-   memoryMiB: 8192
-   numCPUs: 2
-   osFamily: bottlerocket
-   resourcePool: ""
-   users:
-   - name: ec2-user
-      sshAuthorizedKeys:
-      - ssh-rsa AAAA...   
-   ```
    Some key considerations and configuration parameters:
       * Create at least two control plane nodes, three worker nodes, and three etcd nodes for a production cluster, to provide high availability and rolling upgrades.   
       * osFamily (operating System on virtual machines) parameter in VSphereMachineConfig by default is set to bottlerocket. Permitted values: ubuntu, bottlerocket.
