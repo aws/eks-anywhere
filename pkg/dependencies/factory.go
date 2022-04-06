@@ -155,7 +155,7 @@ func (f *Factory) WithExecutableImage() *Factory {
 			return fmt.Errorf("retrieving executable tools image from bundle in dependency factory: %v", err)
 		}
 
-		f.executablesImage = bundles.Spec.VersionsBundles[0].Eksa.CliTools.VersionedImage()
+		f.executablesImage = bundles.DefaultEksAToolsImage().VersionedImage()
 		return nil
 	})
 	return f
