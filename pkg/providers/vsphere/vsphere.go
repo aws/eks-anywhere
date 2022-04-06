@@ -1331,3 +1331,7 @@ func (p *vsphereProvider) MachineDeploymentsToDelete(workloadCluster *types.Clus
 	}
 	return machineDeployments
 }
+
+func (p *vsphereProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
+}

@@ -19,9 +19,9 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
-
 	"github.com/pkg/errors"
+
+	anywherev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 const capcProjectPath = "projects/aws/cluster-api-provider-cloudstack"
@@ -134,6 +134,7 @@ func (r *ReleaseConfig) GetCloudStackBundle(imageDigests map[string]string) (any
 	}
 
 	var version string
+	var componentChecksum string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	artifactHashes := []string{}
@@ -142,7 +143,11 @@ func (r *ReleaseConfig) GetCloudStackBundle(imageDigests map[string]string) (any
 			if artifact.Image != nil {
 				imageArtifact := artifact.Image
 				if componentName == "cluster-api-provider-cloudstack" {
-					componentChecksum := generateComponentHash(artifactHashes)
+					if r.DryRun {
+						componentChecksum = fakeComponentChecksum
+					} else {
+						componentChecksum = generateComponentHash(artifactHashes)
+					}
 					componentVersion, err := BuildComponentVersion(
 						newVersionerWithGITTAG(r.BuildRepoSource, capcProjectPath, imageArtifact.SourcedFromBranch, r),
 						componentChecksum,
