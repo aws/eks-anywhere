@@ -5,18 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 )
-
-type Packager struct{}
-
-func NewPackager() Packager {
-	return Packager{}
-}
-
-func (Packager) Package(sourceFolder, dstFile string) error {
-	return TarFolder(sourceFolder, dstFile)
-}
 
 func TarFolder(sourceFolder, dstFile string) error {
 	tarfile, err := os.Create(dstFile)
@@ -34,8 +23,10 @@ func TarFolder(sourceFolder, dstFile string) error {
 	return nil
 }
 
+type TarFunc func(file string, info os.FileInfo, header *tar.Header) error
+
 type Walker interface {
-	Walk(fn filepath.WalkFunc) error
+	Walk(TarFunc) error
 }
 
 func Tar(source Walker, dst io.Writer) error {
@@ -49,23 +40,14 @@ func Tar(source Walker, dst io.Writer) error {
 	return nil
 }
 
-func addToTar(tw *tar.Writer) filepath.WalkFunc {
-	return func(file string, info os.FileInfo, err error) error {
-		if err != nil {
+func addToTar(tw *tar.Writer) TarFunc {
+	return func(file string, info os.FileInfo, header *tar.Header) error {
+		if err := tw.WriteHeader(header); err != nil {
 			return err
 		}
 
-		if !info.Mode().IsRegular() {
+		if info.IsDir() {
 			return nil
-		}
-
-		header, err := tar.FileInfoHeader(info, info.Name())
-		if err != nil {
-			return err
-		}
-
-		if err = tw.WriteHeader(header); err != nil {
-			return err
 		}
 
 		f, err := os.Open(file)
