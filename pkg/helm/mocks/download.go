@@ -34,6 +34,20 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 	return m.recorder
 }
 
+// PushChart mocks base method.
+func (m *MockClient) PushChart(ctx context.Context, chart, registry string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PushChart", ctx, chart, registry)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PushChart indicates an expected call of PushChart.
+func (mr *MockClientMockRecorder) PushChart(ctx, chart, registry interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushChart", reflect.TypeOf((*MockClient)(nil).PushChart), ctx, chart, registry)
+}
+
 // RegistryLogin mocks base method.
 func (m *MockClient) RegistryLogin(ctx context.Context, registry, username, password string) error {
 	m.ctrl.T.Helper()
