@@ -13,12 +13,18 @@ const (
 )
 
 type Validator struct {
-	awsClients aws.Clients
+	awsClientMap AwsClientMap
 }
 
 func NewValidator(aws aws.Clients) *Validator {
 	return &Validator{
-		awsClients: aws,
+		awsClientMap: NewAwsClientMap(aws),
+	}
+}
+
+func NewValidatorFromAwsClientMap(awsClientMap AwsClientMap) *Validator {
+	return &Validator{
+		awsClientMap: awsClientMap,
 	}
 }
 
@@ -27,8 +33,8 @@ func (v *Validator) validateSshKeyPair(ctx context.Context, m *v1alpha1.SnowMach
 		return nil
 	}
 
-	for ip, client := range v.awsClients {
-		keyExists, err := client.KeyPairExists(ctx, m.Spec.SshKeyName)
+	for ip, client := range v.awsClientMap {
+		keyExists, err := client.EC2KeyNameExists(ctx, m.Spec.SshKeyName)
 		if err != nil {
 			return fmt.Errorf("describe key pair on snow device [%s]: %v", ip, err)
 		}
@@ -40,9 +46,9 @@ func (v *Validator) validateSshKeyPair(ctx context.Context, m *v1alpha1.SnowMach
 	return nil
 }
 
-func (v *Validator) validateImageExistsOnDevice(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
-	for ip, client := range v.awsClients {
-		imageExists, err := client.ImageExists(ctx, m.Spec.AMIID)
+func (v *Validator) validateEC2ImageExistsOnDevice(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+	for ip, client := range v.awsClientMap {
+		imageExists, err := client.EC2ImageExists(ctx, m.Spec.AMIID)
 		if err != nil {
 			return fmt.Errorf("describe image on snow device [%s]: %v", ip, err)
 		}

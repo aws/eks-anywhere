@@ -11,14 +11,20 @@ import (
 )
 
 type Defaulters struct {
-	awsClients aws.Clients
-	writer     filewriter.FileWriter
+	awsClientMap AwsClientMap
+	writer       filewriter.FileWriter
 }
 
 func NewDefaulters(aws aws.Clients, writer filewriter.FileWriter) *Defaulters {
 	return &Defaulters{
-		awsClients: aws,
-		writer:     writer,
+		awsClientMap: NewAwsClientMap(aws),
+		writer:       writer,
+	}
+}
+
+func NewDefaultersFromAwsClientMap(awsClientMap AwsClientMap, writer filewriter.FileWriter) *Defaulters {
+	return &Defaulters{
+		awsClientMap: awsClientMap,
 	}
 }
 
@@ -33,11 +39,11 @@ func (d *Defaulters) setDefaultSshKey(ctx context.Context, m *v1alpha1.SnowMachi
 
 	// Only need to fetch IP from single device to create ssh key pair. The created key will then be validated in validateSshKeyPair method
 	var anyDeviceIP string
-	for ip := range d.awsClients {
+	for ip := range d.awsClientMap {
 		anyDeviceIP = ip
 		break
 	}
-	keyVal, err = d.awsClients[anyDeviceIP].CreateEC2KeyPairs(ctx, keyName)
+	keyVal, err = d.awsClientMap[anyDeviceIP].EC2CreateKeyPair(ctx, keyName)
 	if err != nil {
 		return "", "", fmt.Errorf("creating ssh key pair in snow: %v", err)
 	}

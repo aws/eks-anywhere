@@ -12,7 +12,7 @@ func TestSetDefaultSshKey(t *testing.T) {
 	g.machineConfig.Spec.SshKeyName = ""
 	wantKey := "eksa-default-cp-machine.pem"
 	wantVal := "pem val"
-	g.aws.EXPECT().CreateEC2KeyPairs(g.ctx, wantKey).Return(wantVal, nil)
+	g.aws.EXPECT().EC2CreateKeyPair(g.ctx, wantKey).Return(wantVal, nil)
 	k, v, err := g.defaulters.setDefaultSshKey(g.ctx, g.machineConfig)
 	g.Expect(err).To(Succeed())
 	g.Expect(k).To(Equal(wantKey))
@@ -30,7 +30,7 @@ func TestSetDefaultSshKeySkip(t *testing.T) {
 func TestSetDefaultSshKeyError(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.machineConfig.Spec.SshKeyName = ""
-	g.aws.EXPECT().CreateEC2KeyPairs(g.ctx, "eksa-default-cp-machine.pem").Return("v", errors.New("error"))
+	g.aws.EXPECT().EC2CreateKeyPair(g.ctx, "eksa-default-cp-machine.pem").Return("v", errors.New("error"))
 	k, v, err := g.defaulters.setDefaultSshKey(g.ctx, g.machineConfig)
 	g.Expect(err).NotTo(Succeed())
 	g.Expect(k).To(Equal(""))
