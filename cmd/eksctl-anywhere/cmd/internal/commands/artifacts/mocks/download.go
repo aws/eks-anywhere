@@ -50,6 +50,20 @@ func (mr *MockReaderMockRecorder) ReadBundlesForVersion(eksaVersion interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadBundlesForVersion", reflect.TypeOf((*MockReader)(nil).ReadBundlesForVersion), eksaVersion)
 }
 
+// ReadChartsFromBundles mocks base method.
+func (m *MockReader) ReadChartsFromBundles(bundles *v1alpha1.Bundles) []v1alpha1.Image {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadChartsFromBundles", bundles)
+	ret0, _ := ret[0].([]v1alpha1.Image)
+	return ret0
+}
+
+// ReadChartsFromBundles indicates an expected call of ReadChartsFromBundles.
+func (mr *MockReaderMockRecorder) ReadChartsFromBundles(bundles interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadChartsFromBundles", reflect.TypeOf((*MockReader)(nil).ReadChartsFromBundles), bundles)
+}
+
 // ReadImagesFromBundles mocks base method.
 func (m *MockReader) ReadImagesFromBundles(bundles *v1alpha1.Bundles) ([]v1alpha1.Image, error) {
 	m.ctrl.T.Helper()
