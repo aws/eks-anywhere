@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aws/eks-anywhere/pkg/bundles"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/version"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -14,6 +13,7 @@ import (
 type Reader interface {
 	ReadBundlesForVersion(eksaVersion string) (*releasev1.Bundles, error)
 	ReadImagesFromBundles(bundles *releasev1.Bundles) ([]releasev1.Image, error)
+	ReadChartsFromBundles(bundles *releasev1.Bundles) []releasev1.Image
 }
 
 type ImageMover interface {
@@ -62,7 +62,7 @@ func (d Download) Run(ctx context.Context) error {
 		return err
 	}
 
-	charts := bundles.Charts(b)
+	charts := d.Reader.ReadChartsFromBundles(b)
 
 	if err := d.ChartDownloader.Download(ctx, artifactNames(charts)...); err != nil {
 		return err
