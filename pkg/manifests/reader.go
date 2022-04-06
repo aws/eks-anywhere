@@ -69,3 +69,29 @@ func (r *Reader) ReadEKSD(eksaVersion, kubeVersion string) (*eksdv1.Release, err
 
 	return bundles.ReadEKSD(r, *versionsBundle)
 }
+
+func (r *Reader) ReadImages(eksaVersion string) ([]releasev1.Image, error) {
+	bundle, err := r.ReadBundlesForVersion(eksaVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	return bundles.ReadImages(r, bundle)
+}
+
+func (r *Reader) ReadImagesFromBundles(b *releasev1.Bundles) ([]releasev1.Image, error) {
+	return bundles.ReadImages(r, b)
+}
+
+func (r *Reader) ReadCharts(eksaVersion string) ([]releasev1.Image, error) {
+	bundle, err := r.ReadBundlesForVersion(eksaVersion)
+	if err != nil {
+		return nil, err
+	}
+
+	return bundles.Charts(bundle), nil
+}
+
+func (r *Reader) ReadChartsFromBundles(b *releasev1.Bundles) []releasev1.Image {
+	return bundles.Charts(b)
+}

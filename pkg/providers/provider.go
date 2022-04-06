@@ -37,6 +37,7 @@ type Provider interface {
 	DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error
 	RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error
 	MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string
+	InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error
 	PostClusterDeleteValidate(ctx context.Context, managementCluster *types.Cluster) error
 }
 

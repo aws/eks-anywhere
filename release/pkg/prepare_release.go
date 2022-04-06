@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -9,6 +10,10 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ecr"
+	"github.com/aws/aws-sdk-go-v2/service/ecr/types"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/pkg/errors"
@@ -432,7 +437,7 @@ func (r *ReleaseConfig) GenerateImageDigestsTable(eksArtifacts map[string][]Arti
 				var imageDigestStr string
 				var err error
 				if r.DryRun {
-					sha256sum, err := GenerateRandomSha(256)
+					sha256sum, err := utils.GetFakeSHA(256)
 					if err != nil {
 						return nil, errors.Cause(err)
 					}
@@ -515,4 +520,72 @@ func sortArtifactsMap(m map[string][]Artifact) []string {
 	sort.Strings(keys)
 
 	return keys
+}
+
+type ecrClient struct {
+	*ecr.Client
+}
+
+// NewECRClient Creates a new ECR Client Public client
+func NewECRClient() (*ecrClient, error) {
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-west-2"))
+	if err != nil {
+		return nil, fmt.Errorf("Unable to complete AWS Client connection %s", err)
+	}
+	ecrClient := &ecrClient{Client: ecr.NewFromConfig(cfg)}
+	if err != nil {
+		return nil, err
+	}
+	return ecrClient, nil
+}
+
+func (c *ecrClient) GetLatestUploadHelmSha(repoName string) (string, error) {
+	ImageDetails, err := c.Describe(&ecr.DescribeImagesInput{
+		RepositoryName: aws.String(repoName),
+	})
+	if err != nil {
+		return "", err
+	}
+	sha, err := getLastestImageSha(ImageDetails)
+	if err != nil {
+		return "", err
+	}
+	return sha, nil
+}
+
+func (c *ecrClient) Describe(describeInput *ecr.DescribeImagesInput) ([]types.ImageDetail, error) {
+	var images []types.ImageDetail
+	resp, err := c.DescribeImages(context.TODO(), describeInput)
+	if err != nil {
+		return nil, fmt.Errorf("error: Unable to complete DescribeImagesRequest to ECR. %s", err)
+	}
+	images = append(images, resp.ImageDetails...)
+	if resp.NextToken != nil {
+		next := describeInput
+		next.NextToken = resp.NextToken
+		nextdetails, _ := c.Describe(next)
+		images = append(images, nextdetails...)
+	}
+	return images, nil
+}
+
+func getLastestImageSha(details []types.ImageDetail) (string, error) {
+	if len(details) == 0 {
+		return "", fmt.Errorf("no details provided")
+	}
+	var latest types.ImageDetail
+	latest.ImagePushedAt = &time.Time{}
+	for _, detail := range details {
+		if len(details) < 1 || detail.ImagePushedAt == nil || detail.ImageDigest == nil || detail.ImageTags == nil || len(detail.ImageTags) == 0 || *detail.ImageManifestMediaType != "application/vnd.oci.image.manifest.v1+json" {
+			continue
+		}
+		if detail.ImagePushedAt != nil && latest.ImagePushedAt.Before(*detail.ImagePushedAt) {
+			latest = detail
+		}
+	}
+	// Check if latest is empty, and return error if that's the case.
+	if latest.ImageTags[0] == "" {
+		return "", fmt.Errorf("error no images found")
+	}
+	return latest.ImageTags[0], nil
 }

@@ -45,6 +45,19 @@ type CloudStackResourceIdentifier struct {
 	Name string `json:"name,omitempty"`
 }
 
+func (r *CloudStackResourceIdentifier) Equal(o *CloudStackResourceIdentifier) bool {
+	if r == o {
+		return true
+	}
+	if r == nil || o == nil {
+		return false
+	}
+	if r.Id != o.Id {
+		return false
+	}
+	return r.Id == "" && o.Id == "" && r.Name == o.Name
+}
+
 // CloudStackZone is an organizational construct typically used to represent a single datacenter, and all its physical and virtual resources exist inside that zone. It can either be specified as a UUID or name
 type CloudStackZone struct {
 	// Zone is the name or UUID of the CloudStack zone in which clusters should be created. Zones should be managed by a single CloudStack Management endpoint.
@@ -122,7 +135,27 @@ func (v *CloudStackDatacenterConfig) Marshallable() Marshallable {
 	return v.ConvertConfigToConfigGenerateStruct()
 }
 
-func (z *CloudStackZone) Equals(o *CloudStackZone) bool {
+func (s *CloudStackDatacenterConfigSpec) Equal(o *CloudStackDatacenterConfigSpec) bool {
+	if s == o {
+		return true
+	}
+	if s == nil || o == nil {
+		return false
+	}
+	if len(s.Zones) != len(o.Zones) {
+		return false
+	}
+	for i, z := range s.Zones {
+		if !z.Equal(&o.Zones[i]) {
+			return false
+		}
+	}
+	return s.ManagementApiEndpoint == o.ManagementApiEndpoint &&
+		s.Domain == o.Domain &&
+		s.Account == o.Account
+}
+
+func (z *CloudStackZone) Equal(o *CloudStackZone) bool {
 	if z == o {
 		return true
 	}

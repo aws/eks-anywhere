@@ -40,10 +40,18 @@ func (r *ReleaseConfig) GetPackagesAssets() ([]Artifact, error) {
 		"gitTag":      gitTag,
 		"projectPath": packagesRootPath,
 	}
-
 	sourceImageUri, sourcedFromBranch, err := r.GetSourceImageURI(packagesImageName, repoName, tagOptions)
 	if err != nil {
 		return nil, errors.Cause(err)
+	}
+	sourceHelmURI, err := r.GetSourceHelmURI(repoName)
+	if err != nil {
+		// This is for Prow, where it's running e2e tests in an account where the ECR lookup will fail, we check for Prow accountID and bypass the error out.
+		if r.DryRun || strings.Contains(err.Error(), "316434458148") == true {
+			sourceHelmURI = "857151390494.dkr.ecr.us-west-2.amazonaws.com/eks-anywhere-packages:0.1.2-bba7e1fcefed9c41bda1b66ffb39cb02aa89c9e7-helm"
+		} else {
+			return nil, errors.Cause(err)
+		}
 	}
 	if sourcedFromBranch != r.BuildRepoBranchName {
 		gitTag, err = r.readGitTag(packagesRootPath, sourcedFromBranch)
@@ -73,8 +81,8 @@ func (r *ReleaseConfig) GetPackagesAssets() ([]Artifact, error) {
 	// 123456.dkr.ecr.us-west-2.amazonaws.com/eks-anywhere-packages:0.1.2-2e9994fd1afb2216a51fa474ac5d7dc6a772bb62-helm
 	artifacts := []Artifact{{Image: imageArtifact}}
 	helmImageArtifact := &ImageArtifact{
-		AssetName:         packagesHelmChart,                                                                                                        // This needs to differ from the image name for later steps
-		SourceImageURI:    "857151390494.dkr.ecr.us-west-2.amazonaws.com/eks-anywhere-packages:0.1.2-bba7e1fcefed9c41bda1b66ffb39cb02aa89c9e7-helm", // Hardcoding until we come up with helm workaround since it lacks latest.
+		AssetName:         packagesHelmChart, // This needs to differ from the image name for later steps
+		SourceImageURI:    sourceHelmURI,     // Hardcoding until we come up with helm workaround since it lacks latest.
 		ReleaseImageURI:   strings.ReplaceAll(releaseImageUri, "packages:v", "packages:"),
 		GitTag:            gitTag,
 		ProjectPath:       packagesRootPath,
@@ -88,9 +96,12 @@ func (r *ReleaseConfig) GetPackagesBundle(imageDigests map[string]string) (anywh
 	artifacts := r.BundleArtifactsTable["eks-anywhere-packages"]
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	artifactHashes := []string{}
+	var sourceBranch string
+	var componentChecksum string
 
 	for _, artifact := range artifacts {
 		imageArtifact := artifact.Image
+		sourceBranch = imageArtifact.SourcedFromBranch
 		bundleImageArtifact := anywherev1alpha1.Image{}
 		if strings.HasSuffix(imageArtifact.AssetName, "helm") {
 			bundleImageArtifact = anywherev1alpha1.Image{
@@ -113,8 +124,15 @@ func (r *ReleaseConfig) GetPackagesBundle(imageDigests map[string]string) (anywh
 		artifactHashes = append(artifactHashes, bundleImageArtifact.ImageDigest)
 	}
 
-	componentChecksum := generateComponentHash(artifactHashes)
-	version, err := BuildComponentVersion(newCliVersioner(r.ReleaseVersion, r.CliRepoSource), componentChecksum)
+	if r.DryRun {
+		componentChecksum = fakeComponentChecksum
+	} else {
+		componentChecksum = generateComponentHash(artifactHashes)
+	}
+	version, err := BuildComponentVersion(
+		newVersionerWithGITTAG(r.BuildRepoSource, packagesRootPath, sourceBranch, r),
+		componentChecksum,
+	)
 	if err != nil {
 		return anywherev1alpha1.PackageBundle{}, errors.Wrap(err, "failed generating version for package bundle")
 	}

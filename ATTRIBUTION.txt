@@ -101,7 +101,7 @@ https://github.com/spf13/cobra
 ** github.com/pokearu/cluster-api-provider-tinkerbell; version v0.0.0-20220128001529-79d851d0861f --
 https://github.com/pokearu/cluster-api-provider-tinkerbell
 
-** github.com/tinkerbell/pbnj; version v0.0.0-20211027151347-2fb19ffbe7ad --
+** github.com/tinkerbell/pbnj; version v0.0.0-20220204202246-b98856895e1c --
 https://github.com/tinkerbell/pbnj
 
 ** github.com/tinkerbell/tink/protos; version v0.6.0 --
@@ -995,7 +995,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ** github.com/ProtonMail/go-crypto; version v0.0.0-20210428141323-04723f9f07d7 --
 https://github.com/ProtonMail/go-crypto
 
-** golang.org/go; version go1.16.12 --
+** golang.org/go; version go1.16.15 --
 https://github.com/golang/go
 
 ** golang.org/x/crypto; version v0.0.0-20210817164053-32db794688a5 --

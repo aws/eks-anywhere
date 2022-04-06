@@ -5,6 +5,7 @@ import (
 	"flag"
 	"os"
 
+	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
 	eksdv1alpha1 "github.com/aws/eks-distro-build-tooling/release/api/v1alpha1"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	"github.com/spf13/pflag"
@@ -47,6 +48,7 @@ func init() {
 	utilruntime.Must(clusterv1.AddToScheme(scheme))
 	utilruntime.Must(controlplanev1.AddToScheme(scheme))
 	utilruntime.Must(vspherev1.AddToScheme(scheme))
+	utilruntime.Must(cloudstackv1.AddToScheme(scheme))
 	utilruntime.Must(dockerv1.AddToScheme(scheme))
 	utilruntime.Must(etcdv1.AddToScheme(scheme))
 	utilruntime.Must(kubeadmv1.AddToScheme(scheme))
