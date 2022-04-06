@@ -20,7 +20,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/diagnostics"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
@@ -79,11 +78,13 @@ type ClusterClient interface {
 	GetClusters(ctx context.Context, cluster *types.Cluster) ([]types.CAPICluster, error)
 	GetEksaCluster(ctx context.Context, cluster *types.Cluster, clusterName string) (*v1alpha1.Cluster, error)
 	GetEksaVSphereDatacenterConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereDatacenterConfig, error)
+	GetEksaCloudStackDatacenterConfig(ctx context.Context, cloudstackDatacenterConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackDatacenterConfig, error)
 	UpdateEnvironmentVariablesInNamespace(ctx context.Context, resourceType, resourceName string, envMap map[string]string, cluster *types.Cluster, namespace string) error
 	UpdateAnnotationInNamespace(ctx context.Context, resourceType, objectName string, annotations map[string]string, cluster *types.Cluster, namespace string) error
 	RemoveAnnotationInNamespace(ctx context.Context, resourceType, objectName, key string, cluster *types.Cluster, namespace string) error
 	GetEksaVSphereMachineConfig(ctx context.Context, VSphereDatacenterName string, kubeconfigFile string, namespace string) (*v1alpha1.VSphereMachineConfig, error)
-	SetControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
+	GetEksaCloudStackMachineConfig(ctx context.Context, cloudstackMachineConfigName string, kubeconfigFile string, namespace string) (*v1alpha1.CloudStackMachineConfig, error)
+	SetEksaControllerEnvVar(ctx context.Context, envVar, envVarVal, kubeconfig string) error
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	GetNamespace(ctx context.Context, kubeconfig string, namespace string) error
 	ValidateControlPlaneNodes(ctx context.Context, cluster *types.Cluster, clusterName string) error
@@ -527,9 +528,54 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 				return true, nil
 			}
 		}
+	case v1alpha1.CloudStackDatacenterKind:
+		existingCsdc, err := c.clusterClient.GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
+		if err != nil {
+			return false, err
+		}
+		csDc := datacenterConfig.(*v1alpha1.CloudStackDatacenterConfig)
+		if !existingCsdc.Spec.Equal(&csDc.Spec) {
+			logger.V(3).Info("New provider spec is different from the new spec")
+			return true, nil
+		}
+
+		machineConfigsSpecChanged, err := c.cloudstackMachineConfigsSpecChanged(ctx, cc, cluster, newClusterSpec, machineConfigs)
+		if err != nil {
+			return false, err
+		}
+		if machineConfigsSpecChanged {
+			return true, nil
+		}
+		// TODO: Make sure happy paths at least are unit tested, especially if moving code to provider
 	default:
 		// Run upgrade flow
 		return true, nil
+	}
+
+	return false, nil
+}
+
+func (c *ClusterManager) cloudstackMachineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, machineConfigs []providers.MachineConfig) (bool, error) {
+	machineConfigMap := make(map[string]*v1alpha1.CloudStackMachineConfig)
+	for _, config := range machineConfigs {
+		mc := config.(*v1alpha1.CloudStackMachineConfig)
+		machineConfigMap[mc.Name] = mc
+	}
+
+	for _, oldMcRef := range cc.MachineConfigRefs() {
+		existingCsmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, oldMcRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
+		if err != nil {
+			return false, err
+		}
+		csmc, ok := machineConfigMap[oldMcRef.Name]
+		if !ok {
+			logger.V(3).Info(fmt.Sprintf("Old machine config spec %s not found in the existing spec", oldMcRef.Name))
+			return true, nil
+		}
+		if !existingCsmc.Spec.Equal(&csmc.Spec) {
+			logger.V(3).Info(fmt.Sprintf("New machine config spec %s is different from the existing spec", oldMcRef.Name))
+			return true, nil
+		}
 	}
 
 	return false, nil
@@ -892,8 +938,11 @@ func (c *ClusterManager) removeOldWorkerNodeGroups(ctx context.Context, workload
 	return nil
 }
 
-func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	return c.clusterClient.installCustomComponents(ctx, clusterSpec, cluster)
+func (c *ClusterManager) InstallCustomComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {
+	if err := c.clusterClient.installCustomComponents(ctx, clusterSpec, cluster); err != nil {
+		return err
+	}
+	return provider.InstallCustomProviderComponents(ctx, cluster.KubeconfigFile)
 }
 
 func (c *ClusterManager) InstallEksdComponents(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
@@ -921,11 +970,6 @@ func (c *ClusterManager) CreateEKSAResources(ctx context.Context, cluster *types
 	}
 	if err = c.InstallEksdComponents(ctx, clusterSpec, cluster); err != nil {
 		return err
-	}
-	if features.IsActive(features.CloudStackProvider()) {
-		if err = c.clusterClient.SetControllerEnvVar(ctx, features.CloudStackProviderEnvVar, "true", cluster.KubeconfigFile); err != nil {
-			return err
-		}
 	}
 	return c.ApplyBundles(ctx, clusterSpec, cluster)
 }

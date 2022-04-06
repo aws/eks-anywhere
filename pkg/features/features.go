@@ -1,12 +1,13 @@
 package features
 
 const (
-	TinkerbellProviderEnvVar = "TINKERBELL_PROVIDER"
-	CloudStackProviderEnvVar = "CLOUDSTACK_PROVIDER"
-	SnowProviderEnvVar       = "SNOW_PROVIDER"
-	FullLifecycleAPIEnvVar   = "FULL_LIFECYCLE_API"
-	FullLifecycleGate        = "FullLifecycleAPI"
-	CuratedPackagesEnvVar    = "CURATED_PACKAGES_SUPPORT"
+	TinkerbellProviderEnvVar        = "TINKERBELL_PROVIDER"
+	CloudStackProviderEnvVar        = "CLOUDSTACK_PROVIDER"
+	CloudStackKubeVipDisabledEnvVar = "CLOUDSTACK_KUBE_VIP_DISABLED"
+	SnowProviderEnvVar              = "SNOW_PROVIDER"
+	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
+	FullLifecycleGate               = "FullLifecycleAPI"
+	CuratedPackagesEnvVar           = "CURATED_PACKAGES_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
@@ -40,6 +41,13 @@ func CloudStackProvider() Feature {
 	return Feature{
 		Name:     "CloudStack provider support",
 		IsActive: globalFeatures.isActiveForEnvVar(CloudStackProviderEnvVar),
+	}
+}
+
+func CloudStackKubeVipDisabled() Feature {
+	return Feature{
+		Name:     "Kube-vip support disabled in CloudStack provider",
+		IsActive: globalFeatures.isActiveForEnvVar(CloudStackKubeVipDisabledEnvVar),
 	}
 }
 

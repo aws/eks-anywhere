@@ -275,7 +275,7 @@ func (v *Validator) ValidateMachinesPoweredOff(ctx context.Context) error {
 
 	if len(poweredOnHosts) > 0 {
 		return fmt.Errorf(
-			"expected host machines to be powered off; use --force-cleanup flag to power off machine and set pxe boot: bmc hosts = %v",
+			"expected host machines to be powered off; use --force-cleanup flag to power off machine: bmc hosts = %v",
 			poweredOnHosts,
 		)
 	}

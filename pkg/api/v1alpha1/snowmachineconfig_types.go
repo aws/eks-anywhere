@@ -71,6 +71,22 @@ func (s *SnowMachineConfig) Validate() error {
 	return validateSnowMachineConfig(s)
 }
 
+func (s *SnowMachineConfig) SetControlPlaneAnnotation() {
+	if s.Annotations == nil {
+		s.Annotations = map[string]string{}
+	}
+
+	s.Annotations[controlPlaneAnnotation] = "true"
+}
+
+func (s *SnowMachineConfig) SetEtcdAnnotation() {
+	if s.Annotations == nil {
+		s.Annotations = map[string]string{}
+	}
+
+	s.Annotations[etcdAnnotation] = "true"
+}
+
 // +kubebuilder:object:generate=false
 
 // Same as SnowMachineConfig except stripped down for generation of yaml file during generate clusterconfig

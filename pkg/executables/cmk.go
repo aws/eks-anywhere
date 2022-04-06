@@ -192,7 +192,7 @@ func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudSt
 func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha1.CloudStackResourceIdentifier, error) {
 	domainIdentifier := v1alpha1.CloudStackResourceIdentifier{Name: domain, Id: ""}
 	command := newCmkCommand("list domains")
-	applyCmkArgs(&command, withCloudStackName(domain))
+	applyCmkArgs(&command, withCloudStackName(domain), appendArgs("listall=true"))
 	result, err := c.exec(ctx, command...)
 	if err != nil {
 		return domainIdentifier, fmt.Errorf("getting domain info - %s: %v", result.String(), err)

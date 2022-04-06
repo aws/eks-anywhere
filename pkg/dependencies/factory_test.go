@@ -38,6 +38,7 @@ func newTest(t *testing.T) *factoryTest {
 func TestFactoryBuildWithProvider(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
+		UseExecutableImage("image:1").
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, false).
 		Build(context.Background())
 
@@ -49,6 +50,7 @@ func TestFactoryBuildWithProvider(t *testing.T) {
 func TestFactoryBuildWithClusterManager(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
+		UseExecutableImage("image:1").
 		WithClusterManager(tt.clusterSpec.Cluster).
 		Build(context.Background())
 
@@ -59,6 +61,7 @@ func TestFactoryBuildWithClusterManager(t *testing.T) {
 func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
+		UseExecutableImage("image:1").
 		WithBootstrapper().
 		WithClusterManager(tt.clusterSpec.Cluster).
 		WithProvider(tt.clusterConfigFile, tt.clusterSpec.Cluster, false, tt.hardwareConfigFile, false, false).
@@ -69,6 +72,7 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 		WithCollectorFactory().
 		WithTroubleshoot().
 		WithCAPIManager().
+		WithManifestReader().
 		Build(context.Background())
 
 	tt.Expect(err).To(BeNil())
@@ -81,11 +85,13 @@ func TestFactoryBuildWithMultipleDependencies(t *testing.T) {
 	tt.Expect(deps.CollectorFactory).NotTo(BeNil())
 	tt.Expect(deps.Troubleshoot).NotTo(BeNil())
 	tt.Expect(deps.CAPIManager).NotTo(BeNil())
+	tt.Expect(deps.ManifestReader).NotTo(BeNil())
 }
 
 func TestFactoryBuildWithRegistryMirror(t *testing.T) {
 	tt := newTest(t)
 	deps, err := dependencies.NewFactory().
+		UseExecutableImage("image:1").
 		WithRegistryMirror("1.2.3.4:443").
 		WithHelm().
 		Build(context.Background())

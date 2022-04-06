@@ -4,9 +4,13 @@ go 1.16
 
 require (
 	github.com/aws/aws-sdk-go v1.38.40
+	github.com/aws/aws-sdk-go-v2 v1.16.2
+	github.com/aws/aws-sdk-go-v2/config v1.15.3
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.34.0
 	github.com/aws/cluster-api-provider-cloudstack v0.4.1
 	github.com/aws/eks-anywhere/release v0.0.0-20211130194657-f6e9593c6551
 	github.com/aws/eks-distro-build-tooling/release v0.0.0-20211103003257-a7e2379eae5e
+	github.com/aws/smithy-go v1.11.2
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.4.0
@@ -22,7 +26,7 @@ require (
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
 	github.com/tinkerbell/cluster-api-provider-tinkerbell v0.1.0
-	github.com/tinkerbell/pbnj v0.0.0-20211027151347-2fb19ffbe7ad
+	github.com/tinkerbell/pbnj v0.0.0-20220204202246-b98856895e1c
 	github.com/tinkerbell/tink v0.6.0
 	go.uber.org/zap v1.19.0
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5

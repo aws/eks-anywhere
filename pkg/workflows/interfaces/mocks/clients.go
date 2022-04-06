@@ -226,17 +226,17 @@ func (mr *MockClusterManagerMockRecorder) InstallCAPI(arg0, arg1, arg2, arg3 int
 }
 
 // InstallCustomComponents mocks base method.
-func (m *MockClusterManager) InstallCustomComponents(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster) error {
+func (m *MockClusterManager) InstallCustomComponents(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster, arg3 providers.Provider) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InstallCustomComponents", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "InstallCustomComponents", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // InstallCustomComponents indicates an expected call of InstallCustomComponents.
-func (mr *MockClusterManagerMockRecorder) InstallCustomComponents(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockClusterManagerMockRecorder) InstallCustomComponents(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallCustomComponents", reflect.TypeOf((*MockClusterManager)(nil).InstallCustomComponents), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallCustomComponents", reflect.TypeOf((*MockClusterManager)(nil).InstallCustomComponents), arg0, arg1, arg2, arg3)
 }
 
 // InstallEksdComponents mocks base method.
