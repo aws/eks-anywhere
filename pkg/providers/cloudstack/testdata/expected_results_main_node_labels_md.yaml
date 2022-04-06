@@ -14,6 +14,7 @@ spec:
             provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
             read-only-port: "0"
             anonymous-auth: "false"
+            node-labels: label1=foo,label2=bar
             tls-cipher-suites: TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
           name: '{{ ds.meta_data.local_hostname }}'
       preKubeadmCommands:
@@ -73,6 +74,7 @@ spec:
         name: centos7-k8s-118
       details:
         foo: bar
-      affinity: 'anti'
+      affinitygroupids:
+      - worker-affinity
 
 ---

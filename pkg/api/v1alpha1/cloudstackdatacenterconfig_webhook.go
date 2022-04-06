@@ -95,7 +95,7 @@ func validateImmutableFieldsCloudStackCluster(new, old *CloudStackDatacenterConf
 		zonesMutated = true
 	} else {
 		for i, z := range old.Spec.Zones {
-			if !z.Equals(&new.Spec.Zones[i]) {
+			if !z.Equal(&new.Spec.Zones[i]) {
 				zonesMutated = true
 				break
 			}

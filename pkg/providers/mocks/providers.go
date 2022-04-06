@@ -214,6 +214,20 @@ func (mr *MockProviderMockRecorder) GetInfrastructureBundle(arg0 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInfrastructureBundle", reflect.TypeOf((*MockProvider)(nil).GetInfrastructureBundle), arg0)
 }
 
+// InstallCustomProviderComponents mocks base method.
+func (m *MockProvider) InstallCustomProviderComponents(arg0 context.Context, arg1 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InstallCustomProviderComponents", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InstallCustomProviderComponents indicates an expected call of InstallCustomProviderComponents.
+func (mr *MockProviderMockRecorder) InstallCustomProviderComponents(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstallCustomProviderComponents", reflect.TypeOf((*MockProvider)(nil).InstallCustomProviderComponents), arg0, arg1)
+}
+
 // MachineConfigs mocks base method.
 func (m *MockProvider) MachineConfigs(arg0 *cluster.Spec) []providers.MachineConfig {
 	m.ctrl.T.Helper()

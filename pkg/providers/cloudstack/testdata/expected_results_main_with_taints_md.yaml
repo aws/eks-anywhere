@@ -9,7 +9,10 @@ spec:
       joinConfiguration:
         nodeRegistration:
           criSocket: /var/run/containerd/containerd.sock
-          taints: []
+          taints:
+          - key: key1
+            value: val1
+            effect: PreferNoSchedule
           kubeletExtraArgs:
             provider-id: cloudstack:///'{{ ds.meta_data.instance_id }}'
             read-only-port: "0"
@@ -73,6 +76,7 @@ spec:
         name: centos7-k8s-118
       details:
         foo: bar
-      affinity: 'anti'
+      affinitygroupids:
+      - worker-affinity
 
 ---

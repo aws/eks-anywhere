@@ -955,3 +955,7 @@ func (p *tinkerbellProvider) MachineDeploymentsToDelete(workloadCluster *types.C
 	}
 	return machineDeployments
 }
+
+func (p *tinkerbellProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
+}
