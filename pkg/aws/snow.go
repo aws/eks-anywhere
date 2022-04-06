@@ -1,9 +1,9 @@
 package aws
 
 import (
-	"bytes"
+	"bufio"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -21,18 +21,28 @@ func snowEndpoint(deviceIP string) *ServiceEndpoint {
 	}
 }
 
-func WithCustomCABundleFile(certsFile string) config.LoadOptionsFunc {
-	caPEM, err := ioutil.ReadFile(certsFile)
-	if err != nil {
-		return func(*config.LoadOptions) error {
-			return fmt.Errorf("reading aws certificates file: %v", err)
+// WithCustomCABundleFile is a helper function to construct functional options
+// that reads an aws certificates file and sets CustomCABundle on config's LoadOptions.
+func WithCustomCABundleFile(certsFile string) AwsConfigOpt {
+	return func(opts *config.LoadOptions) error {
+		caPEM, err := os.Open(certsFile)
+		if err != nil {
+			return fmt.Errorf("reading aws certificates file: %w", err)
 		}
-	}
 
-	return config.WithCustomCABundle(bytes.NewReader(caPEM))
+		customBundleOpt := config.WithCustomCABundle(bufio.NewReader(caPEM))
+		if err := customBundleOpt(opts); err != nil {
+			return err
+		}
+
+		return nil
+	}
 }
 
-func WithSnow(deviceIP string, certsFile, credsFile string) AwsConfigOpt {
+// WithSnowEndpointAccess gatheres all the config's LoadOptions for snow,
+// which includes snowball ec2 endpoint, snow credentials for a specific profile,
+// and CA bundles for accessing the https endpoint.
+func WithSnowEndpointAccess(deviceIP string, certsFile, credsFile string) AwsConfigOpt {
 	return AwsConfigOptSet(
 		WithCustomCABundleFile(certsFile),
 		config.WithSharedCredentialsFiles([]string{credsFile}),
@@ -42,8 +52,8 @@ func WithSnow(deviceIP string, certsFile, credsFile string) AwsConfigOpt {
 }
 
 func SnowEndpointResolver(deviceIP string) aws.EndpointResolverWithOptionsFunc {
-	endpoint := snowEndpoint(deviceIP)
 	return aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+		endpoint := snowEndpoint(deviceIP)
 		if service == endpoint.ServiceID {
 			return aws.Endpoint{
 				URL:           endpoint.URL,

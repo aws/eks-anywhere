@@ -63,13 +63,18 @@ func (c downloadImagesCommand) Run(ctx context.Context) error {
 
 	dockerClient := executables.BuildDockerExecutable()
 	downloadFolder := "tmp-eks-a-artifacts-download"
-	imagesFile := filepath.Join(downloadFolder, "images.tar")
+	imagesFile := filepath.Join(downloadFolder, imagesTarFile)
+	eksaToolsImageFile := filepath.Join(downloadFolder, eksaToolsImageTarFile)
 
 	downloadArtifacts := artifacts.Download{
 		Reader: deps.ManifestReader,
-		ImageMover: docker.NewImageMover(
+		BundlesImagesDownloader: docker.NewImageMover(
 			docker.NewOriginalRegistrySource(dockerClient),
 			docker.NewDiskDestination(dockerClient, imagesFile),
+		),
+		EksaToolsImageDownloader: docker.NewImageMover(
+			docker.NewOriginalRegistrySource(dockerClient),
+			docker.NewDiskDestination(dockerClient, eksaToolsImageFile),
 		),
 		ChartDownloader:  helm.NewChartRegistryDownloader(deps.Helm, downloadFolder),
 		Version:          version.Get(),

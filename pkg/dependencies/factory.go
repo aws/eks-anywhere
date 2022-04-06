@@ -235,7 +235,6 @@ func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v
 			VSphereGovcClient:         f.dependencies.Govc,
 			VSphereKubectlClient:      f.dependencies.Kubectl,
 			SnowKubectlClient:         f.dependencies.Kubectl,
-			SnowAwsClients:            f.dependencies.AwsSnowClient,
 			TinkerbellKubectlClient:   f.dependencies.Kubectl,
 			TinkerbellClients:         tinkerbell.TinkerbellClients{ProviderTinkClient: f.dependencies.Tink, ProviderPbnjClient: f.dependencies.Pbnj},
 			Writer:                    f.dependencies.Writer,
@@ -353,7 +352,7 @@ func (f *Factory) WithAwsSnow() *Factory {
 		deviceClientMap := make(aws.Clients, len(deviceIps))
 
 		for _, ip := range deviceIps {
-			config, err := aws.LoadConfig(ctx, aws.WithSnow(ip, certsFile, credsFile))
+			config, err := aws.LoadConfig(ctx, aws.WithSnowEndpointAccess(ip, certsFile, credsFile))
 			if err != nil {
 				return fmt.Errorf("setting up aws client: %v", err)
 			}

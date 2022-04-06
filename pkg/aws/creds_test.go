@@ -1,4 +1,4 @@
-package aws
+package aws_test
 
 import (
 	"os"
@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+
+	"github.com/aws/eks-anywhere/pkg/aws"
 )
 
 const (
@@ -26,48 +28,48 @@ func setupContext(t *testing.T, key, val string) {
 
 func TestAwsCredentialsFile(t *testing.T) {
 	tt := newAwsTest(t)
-	setupContext(t, EksaAwsCredentialsFileKey, credentialsFile)
-	_, err := AwsCredentialsFile()
+	setupContext(t, aws.EksaAwsCredentialsFileKey, credentialsFile)
+	_, err := aws.AwsCredentialsFile()
 	tt.Expect(err).To(Succeed())
 }
 
 func TestAwsCredentialsFileEnvNotSet(t *testing.T) {
 	tt := newAwsTest(t)
-	_, err := AwsCredentialsFile()
+	_, err := aws.AwsCredentialsFile()
 	tt.Expect(err).To((MatchError(ContainSubstring("env 'EKSA_AWS_CREDENTIALS_FILE' is not set or is empty"))))
 }
 
 func TestAwsCredentialsFileNotExists(t *testing.T) {
 	tt := newAwsTest(t)
-	setupContext(t, EksaAwsCredentialsFileKey, "testdata/not_exists_credentials")
-	_, err := AwsCredentialsFile()
+	setupContext(t, aws.EksaAwsCredentialsFileKey, "testdata/not_exists_credentials")
+	_, err := aws.AwsCredentialsFile()
 	tt.Expect(err).To((MatchError(ContainSubstring("file 'testdata/not_exists_credentials' does not exist"))))
 }
 
 func TestAwsCABundlesFile(t *testing.T) {
 	tt := newAwsTest(t)
-	setupContext(t, EksaAwsCABundlesFileKey, "testdata/valid_certificates")
-	_, err := AwsCABundlesFile()
+	setupContext(t, aws.EksaAwsCABundlesFileKey, "testdata/valid_certificates")
+	_, err := aws.AwsCABundlesFile()
 	tt.Expect(err).To(Succeed())
 }
 
 func TestAwsCABundlesFileEnvNotSet(t *testing.T) {
 	tt := newAwsTest(t)
-	_, err := AwsCABundlesFile()
+	_, err := aws.AwsCABundlesFile()
 	tt.Expect(err).To((MatchError(ContainSubstring("env 'EKSA_AWS_CA_BUNDLES_FILE' is not set or is empty"))))
 }
 
 func TestAwsCABundlesFileNotExists(t *testing.T) {
 	tt := newAwsTest(t)
-	setupContext(t, EksaAwsCABundlesFileKey, "testdata/not_exists_certificates")
-	_, err := AwsCABundlesFile()
+	setupContext(t, aws.EksaAwsCABundlesFileKey, "testdata/not_exists_certificates")
+	_, err := aws.AwsCABundlesFile()
 	tt.Expect(err).To((MatchError(ContainSubstring("file 'testdata/not_exists_certificates' does not exist"))))
 }
 
 func TestEncodeFileFromEnv(t *testing.T) {
 	tt := newAwsTest(t)
-	setupContext(t, EksaAwsCredentialsFileKey, credentialsFile)
-	strB64, err := EncodeFileFromEnv(EksaAwsCredentialsFileKey)
+	setupContext(t, aws.EksaAwsCredentialsFileKey, credentialsFile)
+	strB64, err := aws.EncodeFileFromEnv(aws.EksaAwsCredentialsFileKey)
 	tt.Expect(err).To(Succeed())
 	tt.Expect(strB64).To(Equal("WzEuMi4zLjRdCmF3c19hY2Nlc3Nfa2V5X2lkID0gQUJDREVGR0hJSktMTU5PUFFSMlQKYXdzX3NlY3JldF9hY2Nlc3Nfa2V5ID0gQWZTRDdzWXovVEJadHprUmVCbDZQdXVJU3pKMld0TmtlZVB3K25OekoKcmVnaW9uID0gc25vdwoKWzEuMi4zLjVdCmF3c19hY2Nlc3Nfa2V5X2lkID0gQUJDREVGR0hJSktMTU5PUFFSMlQKYXdzX3NlY3JldF9hY2Nlc3Nfa2V5ID0gQWZTRDdzWXovVEJadHprUmVCbDZQdXVJU3pKMld0TmtlZVB3K25OekoKcmVnaW9uID0gc25vdw=="))
 }
@@ -110,7 +112,7 @@ region = snow`,
 		t.Run(tt.name, func(t *testing.T) {
 			g := newAwsTest(t)
 
-			got, err := ParseDeviceIPs(strings.NewReader(tt.creds))
+			got, err := aws.ParseDeviceIPs(strings.NewReader(tt.creds))
 
 			if tt.wantErr == "" {
 				g.Expect(err).To(Succeed())

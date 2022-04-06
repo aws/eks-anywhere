@@ -1,10 +1,12 @@
-package aws
+package aws_test
 
 import (
 	"context"
 	"testing"
 
 	. "github.com/onsi/gomega"
+
+	"github.com/aws/eks-anywhere/pkg/aws"
 )
 
 type awsTest struct {
@@ -21,6 +23,6 @@ func newAwsTest(t *testing.T) *awsTest {
 
 func TestLoadConfig(t *testing.T) {
 	tt := newAwsTest(t)
-	_, err := LoadConfig(tt.ctx)
+	_, err := aws.LoadConfig(tt.ctx)
 	tt.Expect(err).To(Succeed())
 }

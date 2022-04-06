@@ -20,11 +20,15 @@ func NewEC2Client(config aws.Config) *ec2.Client {
 	return ec2.NewFromConfig(config)
 }
 
-func (a *client) ImageExists(ctx context.Context, imageID string) (bool, error) {
+// EC2ImageExists calls aws sdk ec2.DescribeImages with filter imageID to fetch a
+// specified images (AMIs, AKIs, and ARIs) available.
+// Returns (false, nil) if the image does not exist, (true, nil) if image exists,
+// and (false, err) if there is an non 400 status code error from ec2.DescribeImages.
+func (c *Client) EC2ImageExists(ctx context.Context, imageID string) (bool, error) {
 	params := &ec2.DescribeImagesInput{
 		ImageIds: []string{imageID},
 	}
-	_, err := a.ec2.DescribeImages(ctx, params)
+	_, err := c.ec2.DescribeImages(ctx, params)
 	if err == nil {
 		return true, nil
 	}
@@ -33,16 +37,20 @@ func (a *client) ImageExists(ctx context.Context, imageID string) (bool, error) 
 	if errors.As(err, &apiErr) && apiErr.ErrorCode() == "400" {
 		return false, nil
 	}
-	return false, fmt.Errorf("aws describe image [%s]: %v", imageID, err)
+	return false, fmt.Errorf("aws describe image [imageID=%s]: %v", imageID, err)
 }
 
-func (a *client) KeyPairExists(ctx context.Context, keyName string) (bool, error) {
+// EC2KeyNameExists calls aws sdk ec2.DescribeKeyPairs with filter keyName to fetch a
+// specified key pair available in aws.
+// Returns (false, nil) if the key pair does not exist, (true, nil) if key pair exists,
+// and (false, err) if there is an error from ec2.DescribeKeyPairs.
+func (c *Client) EC2KeyNameExists(ctx context.Context, keyName string) (bool, error) {
 	params := &ec2.DescribeKeyPairsInput{
 		KeyNames: []string{keyName},
 	}
-	out, err := a.ec2.DescribeKeyPairs(ctx, params)
+	out, err := c.ec2.DescribeKeyPairs(ctx, params)
 	if err != nil {
-		return false, fmt.Errorf("aws describe key pair [%s]: %v", keyName, err)
+		return false, fmt.Errorf("aws describe key pair [keyName=%s]: %v", keyName, err)
 	}
 	if len(out.KeyPairs) <= 0 {
 		return false, nil
@@ -50,11 +58,13 @@ func (a *client) KeyPairExists(ctx context.Context, keyName string) (bool, error
 	return true, nil
 }
 
-func (a *client) CreateEC2KeyPairs(ctx context.Context, keyName string) (keyVal string, err error) {
+// EC2CreateKeyPair calls aws sdk ec2.CreateKeyPair to create a key pair with
+// name specified from the arg.
+func (c *Client) EC2CreateKeyPair(ctx context.Context, keyName string) (keyVal string, err error) {
 	params := &ec2.CreateKeyPairInput{
 		KeyName: &keyName,
 	}
-	out, err := a.ec2.CreateKeyPair(ctx, params)
+	out, err := c.ec2.CreateKeyPair(ctx, params)
 	if err != nil {
 		return "", fmt.Errorf("creating key pairs in ec2: %v", err)
 	}

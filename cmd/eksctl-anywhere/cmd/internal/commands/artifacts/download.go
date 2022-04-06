@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/aws/eks-anywhere/pkg/bundles"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/version"
 	releasev1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 type Reader interface {
-	ReadImages(eksaVersion string) ([]releasev1.Image, error)
-	ReadCharts(eksaVersion string) ([]releasev1.Image, error)
-	ReadBundlesForVersion(version string) (*releasev1.Bundles, error)
+	ReadBundlesForVersion(eksaVersion string) (*releasev1.Bundles, error)
+	ReadImagesFromBundles(bundles *releasev1.Bundles) ([]releasev1.Image, error)
 }
 
 type ImageMover interface {
@@ -29,33 +29,40 @@ type Packager interface {
 }
 
 type Download struct {
-	Reader           Reader
-	Version          version.Info
-	ImageMover       ImageMover
-	ChartDownloader  ChartDownloader
-	Packager         Packager
-	TmpDowloadFolder string
-	DstFile          string
+	Reader                   Reader
+	Version                  version.Info
+	BundlesImagesDownloader  ImageMover
+	EksaToolsImageDownloader ImageMover
+	ChartDownloader          ChartDownloader
+	Packager                 Packager
+	TmpDowloadFolder         string
+	DstFile                  string
 }
 
 func (d Download) Run(ctx context.Context) error {
 	if err := os.MkdirAll(d.TmpDowloadFolder, os.ModePerm); err != nil {
 		return fmt.Errorf("creating tmp artifact download folder: %v", err)
 	}
-
-	images, err := d.Reader.ReadImages(d.Version.GitVersion)
+	b, err := d.Reader.ReadBundlesForVersion(d.Version.GitVersion)
 	if err != nil {
 		return fmt.Errorf("downloading images: %v", err)
 	}
 
-	if err = d.ImageMover.Move(ctx, artifactNames(images)...); err != nil {
+	toolsImage := b.Spec.VersionsBundles[0].Eksa.CliTools.VersionedImage()
+	if err = d.EksaToolsImageDownloader.Move(ctx, toolsImage); err != nil {
+		return fmt.Errorf("downloading eksa tools image: %v", err)
+	}
+
+	images, err := d.Reader.ReadImagesFromBundles(b)
+	if err != nil {
+		return fmt.Errorf("downloading images: %v", err)
+	}
+
+	if err = d.BundlesImagesDownloader.Move(ctx, artifactNames(images)...); err != nil {
 		return err
 	}
 
-	charts, err := d.Reader.ReadCharts(d.Version.GitVersion)
-	if err != nil {
-		return fmt.Errorf("downloading charts: %v", err)
-	}
+	charts := bundles.Charts(b)
 
 	if err := d.ChartDownloader.Download(ctx, artifactNames(charts)...); err != nil {
 		return err

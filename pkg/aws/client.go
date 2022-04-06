@@ -9,18 +9,12 @@ import (
 )
 
 // Client provides the single API client to make operations call to aws services
-type Client interface {
-	ImageExists(ctx context.Context, imageID string) (bool, error)
-	KeyPairExists(ctx context.Context, keyName string) (bool, error)
-	CreateEC2KeyPairs(ctx context.Context, keyName string) (keyVal string, err error)
-}
-
-type client struct {
+type Client struct {
 	ec2 EC2Client
 }
 
 // Clients are a map between aws profile and its aws client
-type Clients map[string]Client
+type Clients map[string]*Client
 
 type ServiceEndpoint struct {
 	ServiceID     string
@@ -42,6 +36,8 @@ func AwsConfigOptSet(opts ...AwsConfigOpt) AwsConfigOpt {
 	}
 }
 
+// LoadConfig reads the optional aws configurations, and populates an AWS Config
+// with the values from the configurations.
 func LoadConfig(ctx context.Context, opts ...AwsConfigOpt) (aws.Config, error) {
 	optFns := []func(*config.LoadOptions) error{}
 
@@ -56,8 +52,14 @@ func LoadConfig(ctx context.Context, opts ...AwsConfigOpt) (aws.Config, error) {
 	return cfg, nil
 }
 
-func NewClient(ctx context.Context, cfg aws.Config) Client {
-	return &client{
+func NewClient(ctx context.Context, cfg aws.Config) *Client {
+	return &Client{
 		ec2: NewEC2Client(cfg),
+	}
+}
+
+func NewClientFromEC2(ec2 EC2Client) *Client {
+	return &Client{
+		ec2: ec2,
 	}
 }

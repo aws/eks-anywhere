@@ -1,9 +1,11 @@
-package aws
+package aws_test
 
 import (
 	"testing"
 
 	. "github.com/onsi/gomega"
+
+	"github.com/aws/eks-anywhere/pkg/aws"
 )
 
 func TestLoadConfigWithSnow(t *testing.T) {
@@ -32,7 +34,7 @@ func TestLoadConfigWithSnow(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := newAwsTest(t)
-			_, err := LoadConfig(g.ctx, WithSnow("device-ip", tt.certsFilePath, ""))
+			_, err := aws.LoadConfig(g.ctx, aws.WithSnowEndpointAccess("device-ip", tt.certsFilePath, ""))
 			if tt.wantErr == "" {
 				g.Expect(err).To(Succeed())
 			} else {
