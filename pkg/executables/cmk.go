@@ -195,6 +195,7 @@ func (c *Cmk) ValidateZonesPresent(ctx context.Context, zones []v1alpha1.CloudSt
 func (c *Cmk) ValidateDomainPresent(ctx context.Context, domain string) (v1alpha1.CloudStackResourceIdentifier, error) {
 	domainIdentifier := v1alpha1.CloudStackResourceIdentifier{Name: domain, Id: ""}
 	command := newCmkCommand("list domains")
+	// "list domains" API does not support querying by domain path, so here we extract the domain name which is the last part of the input domain
 	tokens := strings.Split(domain, domainDelimiter)
 	domainName := tokens[len(tokens)-1]
 	applyCmkArgs(&command, withCloudStackName(domainName), appendArgs("listall=true"))
