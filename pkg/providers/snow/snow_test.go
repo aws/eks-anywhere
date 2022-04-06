@@ -238,7 +238,7 @@ func TestSetupAndValidateCreateClusterNoCredsEnv(t *testing.T) {
 	setupContext(t)
 	os.Unsetenv(credsFileEnvVar)
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
-	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CREDENTIALS_FILE is not set or is empty")))
+	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_SNOW_DEVICES_CREDENTIALS_FILE' is not set or is empty")))
 }
 
 func TestSetupAndValidateCreateClusterNoCertsEnv(t *testing.T) {
@@ -246,7 +246,7 @@ func TestSetupAndValidateCreateClusterNoCertsEnv(t *testing.T) {
 	setupContext(t)
 	os.Unsetenv(certsFileEnvVar)
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
-	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CA_BUNDLES_FILE is not set or is empty")))
+	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_SNOW_DEVICES_CA_BUNDLES_FILE' is not set or is empty")))
 }
 
 func TestSetupAndValidateDeleteClusterSuccess(t *testing.T) {
@@ -261,7 +261,7 @@ func TestSetupAndValidateDeleteClusterNoCredsEnv(t *testing.T) {
 	setupContext(t)
 	os.Unsetenv(credsFileEnvVar)
 	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster)
-	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CREDENTIALS_FILE is not set or is empty")))
+	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_SNOW_DEVICES_CREDENTIALS_FILE' is not set or is empty")))
 }
 
 func TestSetupAndValidateDeleteClusterNoCertsEnv(t *testing.T) {
@@ -269,7 +269,7 @@ func TestSetupAndValidateDeleteClusterNoCertsEnv(t *testing.T) {
 	setupContext(t)
 	os.Unsetenv(certsFileEnvVar)
 	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster)
-	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CA_BUNDLES_FILE is not set or is empty")))
+	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_SNOW_DEVICES_CA_BUNDLES_FILE' is not set or is empty")))
 }
 
 // TODO: add more tests (multi worker node groups, unstacked etcd, etc.)

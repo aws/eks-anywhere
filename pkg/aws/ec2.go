@@ -20,7 +20,7 @@ func NewEC2Client(config aws.Config) *ec2.Client {
 	return ec2.NewFromConfig(config)
 }
 
-func (a *Client) ImageExists(ctx context.Context, imageID string) (bool, error) {
+func (a *client) ImageExists(ctx context.Context, imageID string) (bool, error) {
 	params := &ec2.DescribeImagesInput{
 		ImageIds: []string{imageID},
 	}
@@ -36,7 +36,7 @@ func (a *Client) ImageExists(ctx context.Context, imageID string) (bool, error) 
 	return false, fmt.Errorf("aws describe image [%s]: %v", imageID, err)
 }
 
-func (a *Client) KeyPairExists(ctx context.Context, keyName string) (bool, error) {
+func (a *client) KeyPairExists(ctx context.Context, keyName string) (bool, error) {
 	params := &ec2.DescribeKeyPairsInput{
 		KeyNames: []string{keyName},
 	}
@@ -50,7 +50,7 @@ func (a *Client) KeyPairExists(ctx context.Context, keyName string) (bool, error
 	return true, nil
 }
 
-func (a *Client) CreateEC2KeyPairs(ctx context.Context, keyName string) (keyVal string, err error) {
+func (a *client) CreateEC2KeyPairs(ctx context.Context, keyName string) (keyVal string, err error) {
 	params := &ec2.CreateKeyPairInput{
 		KeyName: &keyName,
 	}

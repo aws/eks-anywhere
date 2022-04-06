@@ -16,7 +16,7 @@ import (
 type ec2Test struct {
 	*WithT
 	ctx    context.Context
-	client *Client
+	client *client
 	ec2    *mocks.MockEC2Client
 }
 
@@ -28,7 +28,7 @@ func newEC2Test(t *testing.T) *ec2Test {
 		WithT: NewWithT(t),
 		ctx:   ctx,
 		ec2:   ec2,
-		client: &Client{
+		client: &client{
 			ec2: ec2,
 		},
 	}
