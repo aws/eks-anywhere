@@ -2,6 +2,7 @@ package oci
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 )
 
@@ -23,6 +24,12 @@ func Split(artifact string) (path, tag string) {
 func ChartURLAndVersion(chart string) (url, version string) {
 	path, version := Split(chart)
 	return URL(path), version
+}
+
+func ChartPushURL(chart string) string {
+	path, _ := Split(chart)
+	path = filepath.Dir(path)
+	return URL(path)
 }
 
 func URL(artifactPath string) string {
