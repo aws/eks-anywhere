@@ -318,5 +318,5 @@ func buildVSphereWorkerNodeGroupClusterFiller(machineConfigName string, workerNo
 	// Set worker node group ref to vsphere machine config
 	workerNodeGroup.MachineConfigKind = anywherev1.VSphereMachineConfigKind
 	workerNodeGroup.MachineConfigName = machineConfigName
-	return workerNodeGroup.clusterFiller()
+	return workerNodeGroup.ClusterFiller()
 }
