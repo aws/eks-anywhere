@@ -132,6 +132,12 @@ func (v *CloudStack) WithProviderUpgrade(fillers ...api.CloudStackFiller) Cluste
 	}
 }
 
+func (v *CloudStack) WithProviderUpgradeGit(fillers ...api.CloudStackFiller) ClusterE2ETestOpt {
+	return func(e *ClusterE2ETest) {
+		e.ProviderConfigB = v.customizeProviderConfig(e.clusterConfigGitPath(), fillers...)
+	}
+}
+
 func (v *CloudStack) getControlPlaneIP() (string, error) {
 	value, ok := os.LookupEnv(cloudStackClusterIPPoolEnvVar)
 	if ok && value != "" {
