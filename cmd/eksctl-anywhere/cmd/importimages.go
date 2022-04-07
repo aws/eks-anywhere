@@ -31,15 +31,15 @@ var opts = &importImagesOptions{}
 const ociPrefix = "oci://"
 
 func init() {
-	rootCmd.AddCommand(importImagesCmd)
-	importImagesCmd.Flags().StringVarP(&opts.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
-	err := importImagesCmd.MarkFlagRequired("filename")
+	rootCmd.AddCommand(importImagesCmdDeprecated)
+	importImagesCmdDeprecated.Flags().StringVarP(&opts.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
+	err := importImagesCmdDeprecated.MarkFlagRequired("filename")
 	if err != nil {
 		log.Fatalf("Error marking filename flag as required: %v", err)
 	}
 }
 
-var importImagesCmd = &cobra.Command{
+var importImagesCmdDeprecated = &cobra.Command{
 	Use:          "import-images",
 	Short:        "Push EKS Anywhere images to a private registry",
 	Long:         "This command is used to import images from an EKS Anywhere release bundle into a private registry",

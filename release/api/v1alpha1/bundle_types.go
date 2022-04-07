@@ -44,6 +44,10 @@ type Bundles struct {
 	Status BundlesStatus `json:"status,omitempty"`
 }
 
+func (b *Bundles) DefaultEksAToolsImage() Image {
+	return b.Spec.VersionsBundles[0].Eksa.CliTools
+}
+
 //+kubebuilder:object:root=true
 
 // BundlesList contains a list of Bundles

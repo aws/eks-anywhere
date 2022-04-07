@@ -6,12 +6,6 @@ import (
 	"os"
 )
 
-type UnPackager struct{}
-
-func NewUnPackager() UnPackager {
-	return UnPackager{}
-}
-
 func UntarFile(tarFile, dstFolder string) error {
 	reader, err := os.Open(tarFile)
 	if err != nil {

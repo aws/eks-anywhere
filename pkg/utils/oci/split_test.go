@@ -85,3 +85,23 @@ func TestChartURLAndVersion(t *testing.T) {
 		})
 	}
 }
+
+func TestChartPushURL(t *testing.T) {
+	tests := []struct {
+		name    string
+		chart   string
+		wantURL string
+	}{
+		{
+			name:    "normal chart",
+			chart:   "public.ecr.aws/folder/folder2/name:v1.0.0",
+			wantURL: "oci://public.ecr.aws/folder/folder2",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := NewWithT(t)
+			g.Expect(oci.ChartPushURL(tt.chart)).To(Equal(tt.wantURL))
+		})
+	}
+}

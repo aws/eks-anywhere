@@ -437,7 +437,7 @@ func (r *ReleaseConfig) GenerateImageDigestsTable(eksArtifacts map[string][]Arti
 				var imageDigestStr string
 				var err error
 				if r.DryRun {
-					sha256sum, err := GenerateRandomSha(256)
+					sha256sum, err := utils.GetFakeSHA(256)
 					if err != nil {
 						return nil, errors.Cause(err)
 					}
