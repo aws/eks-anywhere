@@ -20,6 +20,10 @@ func withKubeconfig(kubeconfigFile string) CommandOpt {
 	return appendOpt("--kubeconfig", kubeconfigFile)
 }
 
+func WithForce() CommandOpt {
+	return appendOpt("--force-cleanup")
+}
+
 func ExecuteWithEksaVersion(version *semver.Version) CommandOpt {
 	return executeWithBinaryCommandOpt(func() (string, error) {
 		return GetReleaseBinaryFromVersion(version)
