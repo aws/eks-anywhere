@@ -26,6 +26,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/factory"
+	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -42,7 +43,8 @@ type Dependencies struct {
 	Cmk                       *executables.Cmk
 	Tink                      *executables.Tink
 	Pbnj                      *pbnj.Pbnj
-	AwsSnowClient             aws.Clients
+	SnowAwsClient             aws.Clients
+	SnowConfigManager         *snow.ConfigManager
 	TinkerbellClients         tinkerbell.TinkerbellClients
 	Writer                    filewriter.FileWriter
 	Kind                      *executables.Kind
@@ -219,7 +221,7 @@ func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v
 	case v1alpha1.TinkerbellDatacenterKind:
 		f.WithKubectl().WithTink(clusterConfigFile).WithPbnj(clusterConfigFile)
 	case v1alpha1.SnowDatacenterKind:
-		f.WithKubectl().WithAwsSnow().WithWriter()
+		f.WithKubectl().WithSnowConfigManager()
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -235,6 +237,7 @@ func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v
 			VSphereGovcClient:         f.dependencies.Govc,
 			VSphereKubectlClient:      f.dependencies.Kubectl,
 			SnowKubectlClient:         f.dependencies.Kubectl,
+			SnowConfigManager:         f.dependencies.SnowConfigManager,
 			TinkerbellKubectlClient:   f.dependencies.Kubectl,
 			TinkerbellClients:         tinkerbell.TinkerbellClients{ProviderTinkClient: f.dependencies.Tink, ProviderPbnjClient: f.dependencies.Pbnj},
 			Writer:                    f.dependencies.Writer,
@@ -330,9 +333,28 @@ func (f *Factory) WithCmk() *Factory {
 	return f
 }
 
+func (f *Factory) WithSnowConfigManager() *Factory {
+	f.WithAwsSnow().WithWriter()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.SnowConfigManager != nil {
+			return nil
+		}
+
+		validator := snow.NewValidator(f.dependencies.SnowAwsClient)
+		defaulters := snow.NewDefaulters(f.dependencies.SnowAwsClient, f.dependencies.Writer)
+
+		f.dependencies.SnowConfigManager = snow.NewConfigManager(defaulters, validator)
+
+		return nil
+	})
+
+	return f
+}
+
 func (f *Factory) WithAwsSnow() *Factory {
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
-		if f.dependencies.AwsSnowClient != nil {
+		if f.dependencies.SnowAwsClient != nil {
 			return nil
 		}
 		credsFile, err := aws.AwsCredentialsFile()
@@ -359,7 +381,7 @@ func (f *Factory) WithAwsSnow() *Factory {
 			deviceClientMap[ip] = aws.NewClient(ctx, config)
 		}
 
-		f.dependencies.AwsSnowClient = deviceClientMap
+		f.dependencies.SnowAwsClient = deviceClientMap
 
 		return nil
 	})
