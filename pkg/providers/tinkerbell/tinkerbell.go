@@ -80,6 +80,7 @@ type tinkerbellProvider struct {
 
 	skipIpCheck      bool
 	skipPowerActions bool
+	setupTinkerbell  bool
 	force            bool
 }
 
@@ -129,6 +130,7 @@ func NewProvider(
 	skipIpCheck bool,
 	hardwareConfigFile string,
 	skipPowerActions bool,
+	setupTinkerbell bool,
 	force bool,
 ) *tinkerbellProvider {
 	return NewProviderCustomDep(
@@ -144,6 +146,7 @@ func NewProvider(
 		skipIpCheck,
 		hardwareConfigFile,
 		skipPowerActions,
+		setupTinkerbell,
 		force,
 	)
 }
@@ -161,6 +164,7 @@ func NewProviderCustomDep(
 	skipIpCheck bool,
 	hardwareConfigFile string,
 	skipPowerActions bool,
+	setupTinkerbell bool,
 	force bool,
 ) *tinkerbellProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
@@ -205,6 +209,7 @@ func NewProviderCustomDep(
 		// Behavioral flags.
 		skipIpCheck:      skipIpCheck,
 		skipPowerActions: skipPowerActions,
+		setupTinkerbell:  setupTinkerbell,
 		force:            force,
 	}
 }
