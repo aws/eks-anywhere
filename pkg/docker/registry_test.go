@@ -40,6 +40,8 @@ func TestNewRegistryDestinationErrorTag(t *testing.T) {
 	ctx := context.Background()
 	dstLoader := docker.NewRegistryDestination(client, registry)
 	client.EXPECT().TagImage(test.AContext(), images[0], registry).Return(errors.New("error tagging"))
+	client.EXPECT().TagImage(test.AContext(), images[1], registry).MaxTimes(1)
+	client.EXPECT().PushImage(test.AContext(), images[1], registry).MaxTimes(1)
 
 	g.Expect(dstLoader.Write(ctx, images...)).To(MatchError(ContainSubstring("error tagging")))
 }
@@ -55,6 +57,8 @@ func TestNewRegistryDestinationErrorPush(t *testing.T) {
 	dstLoader := docker.NewRegistryDestination(client, registry)
 	client.EXPECT().TagImage(test.AContext(), images[0], registry)
 	client.EXPECT().PushImage(test.AContext(), images[0], registry).Return(errors.New("error pushing"))
+	client.EXPECT().TagImage(test.AContext(), images[1], registry).MaxTimes(1)
+	client.EXPECT().PushImage(test.AContext(), images[1], registry).MaxTimes(1)
 
 	g.Expect(dstLoader.Write(ctx, images...)).To(MatchError(ContainSubstring("error pushing")))
 }
@@ -83,6 +87,7 @@ func TestOriginalRegistrySourceError(t *testing.T) {
 	ctx := context.Background()
 	dstLoader := docker.NewOriginalRegistrySource(client)
 	client.EXPECT().PullImage(test.AContext(), images[0]).Return(errors.New("error pulling"))
+	client.EXPECT().PullImage(test.AContext(), images[1]).MaxTimes(1)
 
 	g.Expect(dstLoader.Load(ctx, images...)).To(MatchError(ContainSubstring("error pulling")))
 }
