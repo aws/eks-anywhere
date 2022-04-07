@@ -42,7 +42,7 @@ func (cm *ConfigManager) snowEntry(ctx context.Context) *cluster.ConfigManagerEn
 		Defaulters: []cluster.Defaulter{
 			func(c *cluster.Config) error {
 				for _, m := range c.SnowMachineConfigs {
-					if err := cm.defaulters.setDefaultSshKeyAndSaveToFile(ctx, m); err != nil {
+					if err := cm.defaulters.GenerateDefaultSshKeyAndSaveToFile(ctx, m); err != nil {
 						return err
 					}
 				}
@@ -55,7 +55,7 @@ func (cm *ConfigManager) snowEntry(ctx context.Context) *cluster.ConfigManagerEn
 			},
 			func(c *cluster.Config) error {
 				for _, m := range c.SnowMachineConfigs {
-					if err := cm.validator.validateEC2ImageExistsOnDevice(ctx, m); err != nil {
+					if err := cm.validator.ValidateEC2ImageExistsOnDevice(ctx, m); err != nil {
 						return err
 					}
 				}
@@ -63,7 +63,7 @@ func (cm *ConfigManager) snowEntry(ctx context.Context) *cluster.ConfigManagerEn
 			},
 			func(c *cluster.Config) error {
 				for _, m := range c.SnowMachineConfigs {
-					if err := cm.validator.validateSshKeyPair(ctx, m); err != nil {
+					if err := cm.validator.ValidateEC2SshKeyNameExists(ctx, m); err != nil {
 						return err
 					}
 				}

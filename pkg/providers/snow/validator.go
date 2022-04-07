@@ -28,7 +28,7 @@ func NewValidatorFromAwsClientMap(awsClientMap AwsClientMap) *Validator {
 	}
 }
 
-func (v *Validator) validateSshKeyPair(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+func (v *Validator) ValidateEC2SshKeyNameExists(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
 	if m.Spec.SshKeyName == "" {
 		return nil
 	}
@@ -46,7 +46,7 @@ func (v *Validator) validateSshKeyPair(ctx context.Context, m *v1alpha1.SnowMach
 	return nil
 }
 
-func (v *Validator) validateEC2ImageExistsOnDevice(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+func (v *Validator) ValidateEC2ImageExistsOnDevice(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
 	for ip, client := range v.awsClientMap {
 		imageExists, err := client.EC2ImageExists(ctx, m.Spec.AMIID)
 		if err != nil {

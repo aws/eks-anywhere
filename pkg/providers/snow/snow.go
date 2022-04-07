@@ -19,8 +19,8 @@ import (
 )
 
 const (
-	eksaSnowCredentialsFileKey = "EKSA_SNOW_DEVICES_CREDENTIALS_FILE"
-	eksaSnowCABundlesFileKey   = "EKSA_SNOW_DEVICES_CA_BUNDLES_FILE"
+	eksaSnowCredentialsFileKey = "EKSA_AWS_CREDENTIALS_FILE"
+	eksaSnowCABundlesFileKey   = "EKSA_AWS_CA_BUNDLES_FILE"
 	snowCredentialsKey         = "AWS_B64ENCODED_CREDENTIALS"
 	snowCertsKey               = "AWS_B64ENCODED_CA_BUNDLES"
 	maxRetries                 = 30

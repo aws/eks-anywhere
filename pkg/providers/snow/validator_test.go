@@ -1,4 +1,4 @@
-package snow
+package snow_test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/snow/mocks"
 )
 
@@ -17,8 +18,8 @@ type configManagerTest struct {
 	*WithT
 	ctx           context.Context
 	aws           *mocks.MockAwsClient
-	validator     *Validator
-	defaulters    *Defaulters
+	validator     *snow.Validator
+	defaulters    *snow.Defaulters
 	machineConfig *v1alpha1.SnowMachineConfig
 }
 
@@ -26,7 +27,7 @@ func newConfigManagerTest(t *testing.T) *configManagerTest {
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
 	mockaws := mocks.NewMockAwsClient(ctrl)
-	awsClients := AwsClientMap{
+	awsClients := snow.AwsClientMap{
 		"device-1": mockaws,
 		"device-2": mockaws,
 	}
@@ -43,50 +44,50 @@ func newConfigManagerTest(t *testing.T) *configManagerTest {
 		WithT:         NewWithT(t),
 		ctx:           ctx,
 		aws:           mockaws,
-		validator:     NewValidatorFromAwsClientMap(awsClients),
-		defaulters:    NewDefaultersFromAwsClientMap(awsClients, nil),
+		validator:     snow.NewValidatorFromAwsClientMap(awsClients),
+		defaulters:    snow.NewDefaultersFromAwsClientMap(awsClients, nil),
 		machineConfig: m,
 	}
 }
 
-func TestValidateSshKeyPair(t *testing.T) {
+func TestValidateEC2SshKeyNameExists(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.aws.EXPECT().EC2KeyNameExists(g.ctx, g.machineConfig.Spec.SshKeyName).Return(true, nil).Times(2)
-	err := g.validator.validateSshKeyPair(g.ctx, g.machineConfig)
+	err := g.validator.ValidateEC2SshKeyNameExists(g.ctx, g.machineConfig)
 	g.Expect(err).To(Succeed())
 }
 
-func TestValidateSshKeyPairNotExists(t *testing.T) {
+func TestValidateEC2SshKeyNameExistsNotExists(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.aws.EXPECT().EC2KeyNameExists(g.ctx, g.machineConfig.Spec.SshKeyName).Return(false, nil)
-	err := g.validator.validateSshKeyPair(g.ctx, g.machineConfig)
+	err := g.validator.ValidateEC2SshKeyNameExists(g.ctx, g.machineConfig)
 	g.Expect(err).To(MatchError(ContainSubstring("does not exist")))
 }
 
-func TestValidateSshKeyPairError(t *testing.T) {
+func TestValidateEC2SshKeyNameExistsError(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.aws.EXPECT().EC2KeyNameExists(g.ctx, g.machineConfig.Spec.SshKeyName).Return(false, errors.New("error"))
-	err := g.validator.validateSshKeyPair(g.ctx, g.machineConfig)
+	err := g.validator.ValidateEC2SshKeyNameExists(g.ctx, g.machineConfig)
 	g.Expect(err).NotTo(Succeed())
 }
 
 func TestValidateEC2ImageExistsOnDevice(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.aws.EXPECT().EC2ImageExists(g.ctx, g.machineConfig.Spec.AMIID).Return(true, nil).Times(2)
-	err := g.validator.validateEC2ImageExistsOnDevice(g.ctx, g.machineConfig)
+	err := g.validator.ValidateEC2ImageExistsOnDevice(g.ctx, g.machineConfig)
 	g.Expect(err).To(Succeed())
 }
 
 func TestValidateEC2ImageExistsOnDeviceNotExists(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.aws.EXPECT().EC2ImageExists(g.ctx, g.machineConfig.Spec.AMIID).Return(false, nil)
-	err := g.validator.validateEC2ImageExistsOnDevice(g.ctx, g.machineConfig)
+	err := g.validator.ValidateEC2ImageExistsOnDevice(g.ctx, g.machineConfig)
 	g.Expect(err).To(MatchError(ContainSubstring("does not exist")))
 }
 
 func TestValidateEC2ImageExistsOnDeviceError(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.aws.EXPECT().EC2ImageExists(g.ctx, g.machineConfig.Spec.AMIID).Return(false, errors.New("error"))
-	err := g.validator.validateEC2ImageExistsOnDevice(g.ctx, g.machineConfig)
+	err := g.validator.ValidateEC2ImageExistsOnDevice(g.ctx, g.machineConfig)
 	g.Expect(err).NotTo(Succeed())
 }

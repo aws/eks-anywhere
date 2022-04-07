@@ -1,4 +1,4 @@
-package snow
+package snow_test
 
 import (
 	"errors"
@@ -13,7 +13,7 @@ func TestSetDefaultSshKey(t *testing.T) {
 	wantKey := "eksa-default-cp-machine.pem"
 	wantVal := "pem val"
 	g.aws.EXPECT().EC2CreateKeyPair(g.ctx, wantKey).Return(wantVal, nil)
-	k, v, err := g.defaulters.setDefaultSshKey(g.ctx, g.machineConfig)
+	k, v, err := g.defaulters.GenerateDefaultSshKey(g.ctx, g.machineConfig)
 	g.Expect(err).To(Succeed())
 	g.Expect(k).To(Equal(wantKey))
 	g.Expect(v).To(Equal(wantVal))
@@ -21,7 +21,7 @@ func TestSetDefaultSshKey(t *testing.T) {
 
 func TestSetDefaultSshKeySkip(t *testing.T) {
 	g := newConfigManagerTest(t)
-	k, v, err := g.defaulters.setDefaultSshKey(g.ctx, g.machineConfig)
+	k, v, err := g.defaulters.GenerateDefaultSshKey(g.ctx, g.machineConfig)
 	g.Expect(err).To(Succeed())
 	g.Expect(k).To(Equal(""))
 	g.Expect(v).To(Equal(""))
@@ -31,7 +31,7 @@ func TestSetDefaultSshKeyError(t *testing.T) {
 	g := newConfigManagerTest(t)
 	g.machineConfig.Spec.SshKeyName = ""
 	g.aws.EXPECT().EC2CreateKeyPair(g.ctx, "eksa-default-cp-machine.pem").Return("v", errors.New("error"))
-	k, v, err := g.defaulters.setDefaultSshKey(g.ctx, g.machineConfig)
+	k, v, err := g.defaulters.GenerateDefaultSshKey(g.ctx, g.machineConfig)
 	g.Expect(err).NotTo(Succeed())
 	g.Expect(k).To(Equal(""))
 	g.Expect(v).To(Equal(""))

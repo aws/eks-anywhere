@@ -28,7 +28,7 @@ func NewDefaultersFromAwsClientMap(awsClientMap AwsClientMap, writer filewriter.
 	}
 }
 
-func (d *Defaulters) setDefaultSshKey(ctx context.Context, m *v1alpha1.SnowMachineConfig) (keyName, keyVal string, err error) {
+func (d *Defaulters) GenerateDefaultSshKey(ctx context.Context, m *v1alpha1.SnowMachineConfig) (keyName, keyVal string, err error) {
 	if m.Spec.SshKeyName != "" {
 		return "", "", nil
 	}
@@ -51,14 +51,14 @@ func (d *Defaulters) setDefaultSshKey(ctx context.Context, m *v1alpha1.SnowMachi
 	return keyName, keyVal, nil
 }
 
-func (d *Defaulters) setDefaultSshKeyAndSaveToFile(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
-	keyName, keyVal, err := d.setDefaultSshKey(ctx, m)
-	if err != nil {
-		return err
+func (d *Defaulters) GenerateDefaultSshKeyAndSaveToFile(ctx context.Context, m *v1alpha1.SnowMachineConfig) error {
+	if m.Spec.SshKeyName != "" {
+		return nil
 	}
 
-	if keyName == "" {
-		return nil
+	keyName, keyVal, err := d.GenerateDefaultSshKey(ctx, m)
+	if err != nil {
+		return err
 	}
 
 	path, err := d.writer.Write(keyName, []byte(keyVal), filewriter.PersistentFile, filewriter.Permission0600)
