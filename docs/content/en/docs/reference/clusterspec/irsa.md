@@ -98,7 +98,8 @@ Set the remaining fields in [cluster spec](https://anywhere.eks.amazonaws.com/do
 
 1. Check out [this commit](https://github.com/aws/amazon-eks-pod-identity-webhook/commit/a65cc3d9c61cf6fc43f0f985818c474e0867d786) of the amazon-eks-pod-identity-webhook.
 
-1. Set the $KUBECONFIG env var to the path of the EKS Anywhere cluster. Run the following command:
+1. Set the $KUBECONFIG env var to the path of the EKS Anywhere cluster.
+1. Run the following command:
 
     ```bash
     make cluster-up IMAGE=amazon/amazon-eks-pod-identity-webhook:a65cc3d
