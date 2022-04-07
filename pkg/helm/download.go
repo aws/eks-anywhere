@@ -12,6 +12,7 @@ import (
 
 type Client interface {
 	RegistryLogin(ctx context.Context, registry, username, password string) error
+	PushChart(ctx context.Context, chart, registry string) error
 	SaveChart(ctx context.Context, ociURI, version, folder string) error
 }
 
