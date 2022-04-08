@@ -15,7 +15,7 @@ func init() {
 		dockerEntry(),
 		snowEntry(),
 		tinkerbellEntry(),
-    nutanixEntry(),
+		nutanixEntry(),
 	)
 	if err != nil {
 		panic(err)
