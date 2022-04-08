@@ -65,6 +65,7 @@ func generateClusterConfig(clusterName string) error {
 	var machineGroupYaml [][]byte
 	var tinkerbellTemplateYaml []byte
 	var clusterConfigOpts []v1alpha1.ClusterGenerateOpt
+	fmt.Printf("provider=%s", strings.ToLower(viper.GetString("provider")))
 	switch strings.ToLower(viper.GetString("provider")) {
 	case constants.DockerProviderName:
 		datacenterConfig := v1alpha1.NewDockerDatacenterConfigGenerate(clusterName)

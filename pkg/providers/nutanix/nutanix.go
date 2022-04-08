@@ -224,7 +224,6 @@ func (ntb *NutanixTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.
 		}
 		workerSpecs = append(workerSpecs, bytes)
 	}
-
 	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
@@ -273,7 +272,6 @@ func (p *nutanixProvider) GenerateMHC() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return mhc, nil
 }
 
