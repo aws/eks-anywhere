@@ -36,36 +36,39 @@ var (
 type nutanixProvider struct {
 	clusterConfig    *v1alpha1.Cluster
 	datacenterConfig *v1alpha1.NutanixDatacenterConfig
+	machineConfigs   map[string]*v1alpha1.NutanixMachineConfig
 	// providerKubectlClient ProviderKubectlClient
-	// templateBuilder NutanixTemplateBuilder
+	// templateBuilder       NutanixTemplateBuilder
 }
 
 // type ProviderKubectlClient interface {
 // 	// TODO: Add necessary kubectl functions here
+// 	foo() error
 // }
 
-func NewProvider(hardwareConfig string) *nutanixProvider {
-	return &nutanixProvider{}
+func NewProvider(
+	datacenterConfig *v1alpha1.NutanixDatacenterConfig,
+	machineConfigs map[string]*v1alpha1.NutanixMachineConfig,
+	clusterConfig *v1alpha1.Cluster,
+	now types.NowFunc,
+) *nutanixProvider {
+	return &nutanixProvider{
+		clusterConfig:    clusterConfig,
+		datacenterConfig: datacenterConfig,
+	}
 }
-
 func (p *nutanixProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
 	env := map[string]string{}
-	// Adding proxy environment vars to the bootstrap cluster
-	if p.clusterConfig.Spec.ProxyConfiguration != nil {
-		noProxy := fmt.Sprintf("%s,%s", p.clusterConfig.Spec.ControlPlaneConfiguration.Endpoint.Host, p.datacenterConfig.Spec.NutanixIP)
-		for _, s := range p.clusterConfig.Spec.ProxyConfiguration.NoProxy {
-			if s != "" {
-				noProxy += "," + s
-			}
-		}
-		env["HTTP_PROXY"] = p.clusterConfig.Spec.ProxyConfiguration.HttpProxy
-		env["HTTPS_PROXY"] = p.clusterConfig.Spec.ProxyConfiguration.HttpsProxy
-		env["NO_PROXY"] = noProxy
-	}
+
 	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}, nil
 }
 
 func (p *nutanixProvider) BootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	// TODO: figure out if we need something else here
+	return nil
+}
+
+func (p *nutanixProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	// TODO: figure out if we need something else here
 	return nil
 }
@@ -87,13 +90,18 @@ func (p *nutanixProvider) DeleteResources(_ context.Context, _ *cluster.Spec) er
 	return nil
 }
 
+func (p *nutanixProvider) PostClusterDeleteValidate(ctx context.Context, managementCluster *types.Cluster) error {
+	// TODO:
+	return nil
+}
+
 func (p *nutanixProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The nutanix infrastructure provider is still in development and should not be used in production")
 	// TODO: Add more validations
 	return nil
 }
 
-func (p *nutanixProvider) SetupAndValidateDeleteCluster(ctx context.Context) error {
+func (p *nutanixProvider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster) error {
 	// TODO: validations?
 	return nil
 }
@@ -194,7 +202,7 @@ func (p *nutanixProvider) Version(clusterSpec *cluster.Spec) string {
 	return "nutanix-dev"
 }
 
-func (p *nutanixProvider) EnvMap() (map[string]string, error) {
+func (p *nutanixProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 	// TODO: determine if any env vars are needed and add them to requiredEnvs
 	envMap := make(map[string]string)
 	for _, key := range requiredEnvs {
@@ -230,11 +238,11 @@ func (p *nutanixProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *ty
 	return nil
 }
 
-func (p *nutanixProvider) DatacenterConfig() providers.DatacenterConfig {
+func (p *nutanixProvider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {
 	return p.datacenterConfig
 }
 
-func (p *nutanixProvider) MachineConfigs() []providers.MachineConfig {
+func (p *nutanixProvider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
 	// TODO: Figure out if something is needed here
 	return nil
 }
@@ -264,22 +272,26 @@ func (p *nutanixProvider) RunPostControlPlaneCreation(ctx context.Context, clust
 	return nil
 }
 
+func machineDeploymentName(clusterName, nodeGroupName string) string {
+	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
+}
+
 func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alpha1.NutanixMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
 	values := map[string]interface{}{
-		"clusterName":                  clusterSpec.ObjectMeta.Name,
-		"controlPlaneEndpointIp":       clusterSpec.Spec.ControlPlaneConfiguration.Endpoint.Host,
-		"controlPlaneReplicas":         clusterSpec.Spec.ControlPlaneConfiguration.Count,
+		"clusterName":                  clusterSpec.Cluster.Name,
+		"controlPlaneEndpointIp":       clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
+		"controlPlaneReplicas":         clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
 		"controlPlaneSshAuthorizedKey": controlPlaneMachineSpec.Users[0].SshAuthorizedKeys,
 		"controlPlaneSshUsername":      controlPlaneMachineSpec.Users[0].Name,
 		"eksaSystemNamespace":          constants.EksaSystemNamespace,
 		"format":                       format,
 		"kubernetesVersion":            bundle.KubeDistro.Kubernetes.Tag,
 		"kubeVipImage":                 "ghcr.io/kube-vip/kube-vip:latest",
-		"podCidrs":                     clusterSpec.Spec.ClusterNetwork.Pods.CidrBlocks,
-		"serviceCidrs":                 clusterSpec.Spec.ClusterNetwork.Services.CidrBlocks,
+		"podCidrs":                     clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
+		"serviceCidrs":                 clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
 	}
 	return values
 }
@@ -289,14 +301,24 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 	format := "cloud-config"
 
 	values := map[string]interface{}{
-		"clusterName":            clusterSpec.ObjectMeta.Name,
+		"clusterName":            clusterSpec.Cluster.Name,
 		"eksaSystemNamespace":    constants.EksaSystemNamespace,
 		"format":                 format,
 		"kubernetesVersion":      bundle.KubeDistro.Kubernetes.Tag,
-		"workerReplicas":         clusterSpec.Spec.WorkerNodeGroupConfigurations[0].Count,
+		"workerReplicas":         clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count,
 		"workerPoolName":         "md-0",
 		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys,
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
 	}
 	return values
+}
+
+func (p *nutanixProvider) MachineDeploymentsToDelete(workloadCluster *types.Cluster, currentSpec, newSpec *cluster.Spec) []string {
+	nodeGroupsToDelete := cluster.NodeGroupsToDelete(currentSpec, newSpec)
+	machineDeployments := make([]string, 0, len(nodeGroupsToDelete))
+	for _, nodeGroup := range nodeGroupsToDelete {
+		mdName := machineDeploymentName(workloadCluster.Name, nodeGroup.Name)
+		machineDeployments = append(machineDeployments, mdName)
+	}
+	return machineDeployments
 }

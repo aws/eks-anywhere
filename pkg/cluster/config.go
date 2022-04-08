@@ -9,8 +9,10 @@ type Config struct {
 	VSphereDatacenter     *anywherev1.VSphereDatacenterConfig
 	DockerDatacenter      *anywherev1.DockerDatacenterConfig
 	SnowDatacenter        *anywherev1.SnowDatacenterConfig
+	NutanixDatacenter     *anywherev1.NutanixDatacenterConfig
 	VSphereMachineConfigs map[string]*anywherev1.VSphereMachineConfig
 	SnowMachineConfigs    map[string]*anywherev1.SnowMachineConfig
+	NutanixMachineConfigs map[string]*anywherev1.NutanixMachineConfig
 	OIDCConfigs           map[string]*anywherev1.OIDCConfig
 	AWSIAMConfigs         map[string]*anywherev1.AWSIamConfig
 	GitOpsConfig          *anywherev1.GitOpsConfig
@@ -23,6 +25,10 @@ func (c *Config) VsphereMachineConfig(name string) *anywherev1.VSphereMachineCon
 
 func (c *Config) SnowMachineConfig(name string) *anywherev1.SnowMachineConfig {
 	return c.SnowMachineConfigs[name]
+}
+
+func (c *Config) NutanixMachineConfig(name string) *anywherev1.NutanixMachineConfig {
+	return c.NutanixMachineConfigs[name]
 }
 
 func (c *Config) OIDCConfig(name string) *anywherev1.OIDCConfig {
@@ -39,6 +45,7 @@ func (c *Config) DeepCopy() *Config {
 		VSphereDatacenter: c.VSphereDatacenter.DeepCopy(),
 		DockerDatacenter:  c.DockerDatacenter.DeepCopy(),
 		GitOpsConfig:      c.GitOpsConfig.DeepCopy(),
+		NutanixDatacenter: c.NutanixDatacenter.DeepCopy(),
 	}
 
 	if c.VSphereMachineConfigs != nil {
@@ -46,6 +53,13 @@ func (c *Config) DeepCopy() *Config {
 	}
 	for k, v := range c.VSphereMachineConfigs {
 		c2.VSphereMachineConfigs[k] = v.DeepCopy()
+	}
+
+	if c.NutanixMachineConfigs != nil {
+		c2.NutanixMachineConfigs = make(map[string]*anywherev1.NutanixMachineConfig, len(c.NutanixMachineConfigs))
+	}
+	for k, v := range c.NutanixMachineConfigs {
+		c2.NutanixMachineConfigs[k] = v.DeepCopy()
 	}
 
 	if c.OIDCConfigs != nil {

@@ -81,6 +81,10 @@ func (t *NutanixDatacenterConfig) Marshallable() Marshallable {
 	return t.ConvertConfigToConfigGenerateStruct()
 }
 
+func (d *NutanixDatacenterConfig) Validate() error {
+	return nil
+}
+
 // +kubebuilder:object:generate=false
 
 // Same as NutanixDatacenterConfig except stripped down for generation of yaml file during generate clusterconfig
