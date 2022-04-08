@@ -80,6 +80,7 @@ type tinkerbellProvider struct {
 
 	skipIpCheck      bool
 	skipPowerActions bool
+	setupTinkerbell  bool
 	force            bool
 }
 
@@ -129,6 +130,7 @@ func NewProvider(
 	skipIpCheck bool,
 	hardwareConfigFile string,
 	skipPowerActions bool,
+	setupTinkerbell bool,
 	force bool,
 ) *tinkerbellProvider {
 	return NewProviderCustomDep(
@@ -144,6 +146,7 @@ func NewProvider(
 		skipIpCheck,
 		hardwareConfigFile,
 		skipPowerActions,
+		setupTinkerbell,
 		force,
 	)
 }
@@ -161,6 +164,7 @@ func NewProviderCustomDep(
 	skipIpCheck bool,
 	hardwareConfigFile string,
 	skipPowerActions bool,
+	setupTinkerbell bool,
 	force bool,
 ) *tinkerbellProvider {
 	var controlPlaneMachineSpec, workerNodeGroupMachineSpec, etcdMachineSpec *v1alpha1.TinkerbellMachineConfigSpec
@@ -200,11 +204,12 @@ func NewProviderCustomDep(
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch
 		// directly. This is very much a hack for testability.
-		keyGenerator: sshAuthKeyGenerator{},
+		keyGenerator: common.SshAuthKeyGenerator{},
 
 		// Behavioral flags.
 		skipIpCheck:      skipIpCheck,
 		skipPowerActions: skipPowerActions,
+		setupTinkerbell:  setupTinkerbell,
 		force:            force,
 	}
 }
@@ -394,8 +399,10 @@ func (p *tinkerbellProvider) SetupAndValidateCreateCluster(ctx context.Context, 
 		if err := p.scrubWorkflowsFromTinkerbell(ctx, p.validator.hardwareConfig.Hardwares, hardware); err != nil {
 			return err
 		}
-	} else if err := p.validator.ValidateMachinesPoweredOff(ctx); err != nil {
-		return fmt.Errorf("validating machines are powered off: %w", err)
+	} else if !p.skipPowerActions {
+		if err := p.validator.ValidateMachinesPoweredOff(ctx); err != nil {
+			return fmt.Errorf("validating machines are powered off: %w", err)
+		}
 	}
 
 	if err := p.validator.ValidateTinkerbellConfig(ctx, tinkerbellClusterSpec.datacenterConfig); err != nil {
@@ -954,4 +961,8 @@ func (p *tinkerbellProvider) MachineDeploymentsToDelete(workloadCluster *types.C
 		machineDeployments = append(machineDeployments, mdName)
 	}
 	return machineDeployments
+}
+
+func (p *tinkerbellProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
 }

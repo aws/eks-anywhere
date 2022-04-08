@@ -410,6 +410,25 @@ func (n *KindnetdConfig) Equal(o *KindnetdConfig) bool {
 	return true
 }
 
+func UsersSliceEqual(a, b []UserConfiguration) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	m := make(map[string][]string, len(a))
+	for _, v := range a {
+		m[v.Name] = v.SshAuthorizedKeys
+	}
+	for _, v := range b {
+		if _, ok := m[v.Name]; !ok {
+			return false
+		}
+		if !SliceEqual(v.SshAuthorizedKeys, m[v.Name]) {
+			return false
+		}
+	}
+	return true
+}
+
 func CNIPluginSame(n ClusterNetwork, o ClusterNetwork) bool {
 	if n.CNI != "" {
 		/*This shouldn't be required since we set CNIConfig and unset CNI as part of cluster_defaults. However, while upgrading an existing cluster, the eks-a controller

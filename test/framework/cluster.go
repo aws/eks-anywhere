@@ -228,6 +228,24 @@ func (e *ClusterE2ETest) PowerOffHardware() {
 	}
 }
 
+func (e *ClusterE2ETest) PowerOnHardware() {
+	pbnjEndpoint := os.Getenv(tinkerbellPBnJGRPCAuthEnvVar)
+	pbnjClient, err := pbnj.NewPBNJClient(pbnjEndpoint)
+	if err != nil {
+		e.T.Fatalf("failed to create pbnj client: %v", err)
+	}
+
+	ctx := context.Background()
+
+	for _, h := range e.TestHardware {
+		bmcInfo := api.NewBmcSecretConfig(h)
+		err := pbnjClient.PowerOn(ctx, bmcInfo)
+		if err != nil {
+			e.T.Fatalf("failed to power on hardware: %v", err)
+		}
+	}
+}
+
 func (e *ClusterE2ETest) ValidateHardwareDecommissioned() {
 	pbnjEndpoint := os.Getenv(tinkerbellPBnJGRPCAuthEnvVar)
 	pbnjClient, err := pbnj.NewPBNJClient(pbnjEndpoint)

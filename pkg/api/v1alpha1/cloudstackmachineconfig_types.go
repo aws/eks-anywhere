@@ -117,6 +117,37 @@ func (c *CloudStackMachineConfig) OSFamily() OSFamily {
 	return ""
 }
 
+func (c *CloudStackMachineConfigSpec) Equal(o *CloudStackMachineConfigSpec) bool {
+	if c == o {
+		return true
+	}
+	if c == nil || o == nil {
+		return false
+	}
+	if !c.Template.Equal(&o.Template) ||
+		!c.ComputeOffering.Equal(&o.ComputeOffering) {
+		return false
+	}
+	if c.Affinity != o.Affinity {
+		return false
+	}
+	if !SliceEqual(c.AffinityGroupIds, o.AffinityGroupIds) {
+		return false
+	}
+	if !UsersSliceEqual(c.Users, o.Users) {
+		return false
+	}
+	if len(c.UserCustomDetails) != len(o.UserCustomDetails) {
+		return false
+	}
+	for detail, value := range c.UserCustomDetails {
+		if value != o.UserCustomDetails[detail] {
+			return false
+		}
+	}
+	return true
+}
+
 func (c *CloudStackMachineConfig) ConvertConfigToConfigGenerateStruct() *CloudStackMachineConfigGenerate {
 	namespace := defaultEksaNamespace
 	if c.Namespace != "" {

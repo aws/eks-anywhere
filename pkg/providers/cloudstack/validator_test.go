@@ -208,7 +208,7 @@ func TestSetupAndValidateUsersNil(t *testing.T) {
 	cloudStackClusterSpec.machineConfigsLookup[workerNodeMachineConfigName].Spec.Users = nil
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.Users = nil
-	cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any()).Times(3)
+
 	cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).Times(3).Return([]v1alpha1.CloudStackResourceIdentifier{{Name: "zone1", Id: "4e3b338d-87a6-4189-b931-a1747edeea8f"}}, nil)
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
@@ -276,7 +276,6 @@ func TestSetupAndValidateSshAuthorizedKeysNil(t *testing.T) {
 	etcdMachineConfigName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
 	cloudStackClusterSpec.machineConfigsLookup[etcdMachineConfigName].Spec.Users[0].SshAuthorizedKeys = nil
 
-	cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).Times(3).Return([]v1alpha1.CloudStackResourceIdentifier{{Name: "zone1", Id: "4e3b338d-87a6-4189-b931-a1747edeea8f"}}, nil)
 	cmk.EXPECT().ValidateTemplatePresent(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateServiceOfferingPresent(gomock.Any(), gomock.Any(), gomock.Any()).Times(3)
@@ -474,7 +473,6 @@ func TestValidateMachineConfigsHappyCase(t *testing.T) {
 		machineConfigsLookup: machineConfigs,
 	}
 	validator := NewValidator(cmk)
-	cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any()).Times(3)
 	cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).Times(3).Return([]v1alpha1.CloudStackResourceIdentifier{{Name: "zone1", Id: "4e3b338d-87a6-4189-b931-a1747edeea8f"}}, nil)
 	cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(),
 		gomock.Any(), datacenterConfig.Spec.Account, testTemplate).Times(3)
@@ -499,14 +497,13 @@ func TestValidateCloudStackMachineConfig(t *testing.T) {
 	validator := NewValidator(cmk)
 
 	for _, machineConfig := range machineConfigs {
-		cmk.EXPECT().ValidateDomainPresent(gomock.Any(), gomock.Any())
 		cmk.EXPECT().ValidateZonesPresent(gomock.Any(), gomock.Any()).Return([]v1alpha1.CloudStackResourceIdentifier{{Name: "zone1", Id: "4e3b338d-87a6-4189-b931-a1747edeea8f"}}, nil)
 		cmk.EXPECT().ValidateTemplatePresent(ctx, gomock.Any(), gomock.Any(), "admin", machineConfig.Spec.Template).Return(nil)
 		cmk.EXPECT().ValidateServiceOfferingPresent(ctx, gomock.Any(), machineConfig.Spec.ComputeOffering).Return(nil)
 		if len(machineConfig.Spec.AffinityGroupIds) > 0 {
 			cmk.EXPECT().ValidateAffinityGroupsPresent(ctx, gomock.Any(), "admin", machineConfig.Spec.AffinityGroupIds).Return(nil)
 		}
-		err := validator.validateMachineConfig(ctx, datacenterConfig.Spec, machineConfig)
+		err := validator.validateMachineConfig(ctx, datacenterConfig, machineConfig)
 		if err != nil {
 			t.Fatalf("failed to validate CloudStackMachineConfig: %v", err)
 		}

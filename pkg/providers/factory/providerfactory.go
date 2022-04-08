@@ -25,11 +25,12 @@ type ProviderFactory struct {
 	TinkerbellKubectlClient   tinkerbell.ProviderKubectlClient
 	TinkerbellClients         tinkerbell.TinkerbellClients
 	SnowKubectlClient         snow.ProviderKubectlClient
+	SnowConfigManager         *snow.ConfigManager
 	Writer                    filewriter.FileWriter
 	ClusterResourceSetManager vsphere.ClusterResourceSetManager
 }
 
-func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string, skipPowerActions, force bool) (providers.Provider, error) {
+func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string, skipPowerActions, setupTinkerbell, force bool) (providers.Provider, error) {
 	switch clusterConfig.Spec.DatacenterRef.Kind {
 	case v1alpha1.VSphereDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetVSphereDatacenterConfig(clusterConfigFileName)
@@ -52,7 +53,7 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 		}
 		return cloudstack.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.CloudStackKubectlClient, p.CloudStackCmkClient, p.Writer, time.Now, skipIpCheck), nil
 	case v1alpha1.SnowDatacenterKind:
-		return snow.NewProvider(p.SnowKubectlClient, p.Writer, time.Now), nil
+		return snow.NewProvider(p.SnowKubectlClient, p.SnowConfigManager, time.Now), nil
 	case v1alpha1.TinkerbellDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetTinkerbellDatacenterConfig(clusterConfigFileName)
 		if err != nil {
@@ -62,7 +63,7 @@ func (p *ProviderFactory) BuildProvider(clusterConfigFileName string, clusterCon
 		if err != nil {
 			return nil, fmt.Errorf("unable to get machine config from file %s: %v", clusterConfigFileName, err)
 		}
-		return tinkerbell.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.Writer, p.TinkerbellKubectlClient, p.TinkerbellClients, time.Now, skipIpCheck, hardwareConfigFile, skipPowerActions, force), nil
+		return tinkerbell.NewProvider(datacenterConfig, machineConfigs, clusterConfig, p.Writer, p.TinkerbellKubectlClient, p.TinkerbellClients, time.Now, skipIpCheck, hardwareConfigFile, skipPowerActions, setupTinkerbell, force), nil
 	case v1alpha1.DockerDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetDockerDatacenterConfig(clusterConfigFileName)
 		if err != nil {

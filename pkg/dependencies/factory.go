@@ -8,6 +8,7 @@ import (
 
 	"github.com/aws/eks-anywhere/pkg/addonmanager/addonclients"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/aws"
 	"github.com/aws/eks-anywhere/pkg/awsiamauth"
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/clients/flux"
@@ -25,6 +26,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/factory"
+	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -41,6 +43,8 @@ type Dependencies struct {
 	Cmk                       *executables.Cmk
 	Tink                      *executables.Tink
 	Pbnj                      *pbnj.Pbnj
+	SnowAwsClient             aws.Clients
+	SnowConfigManager         *snow.ConfigManager
 	TinkerbellClients         tinkerbell.TinkerbellClients
 	Writer                    filewriter.FileWriter
 	Kind                      *executables.Kind
@@ -153,7 +157,7 @@ func (f *Factory) WithExecutableImage() *Factory {
 			return fmt.Errorf("retrieving executable tools image from bundle in dependency factory: %v", err)
 		}
 
-		f.executablesImage = bundles.Spec.VersionsBundles[0].Eksa.CliTools.VersionedImage()
+		f.executablesImage = bundles.DefaultEksAToolsImage().VersionedImage()
 		return nil
 	})
 	return f
@@ -187,7 +191,7 @@ func (f *Factory) WithExecutableBuilder() *Factory {
 	return f
 }
 
-func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string, skipPowerActions, force bool) *Factory {
+func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1.Cluster, skipIpCheck bool, hardwareConfigFile string, skipPowerActions, setupTinkerbell, force bool) *Factory {
 	f.WithProviderFactory(clusterConfigFile, clusterConfig)
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
 		if f.dependencies.Provider != nil {
@@ -195,7 +199,7 @@ func (f *Factory) WithProvider(clusterConfigFile string, clusterConfig *v1alpha1
 		}
 
 		var err error
-		f.dependencies.Provider, err = f.providerFactory.BuildProvider(clusterConfigFile, clusterConfig, skipIpCheck, hardwareConfigFile, skipPowerActions, force)
+		f.dependencies.Provider, err = f.providerFactory.BuildProvider(clusterConfigFile, clusterConfig, skipIpCheck, hardwareConfigFile, skipPowerActions, setupTinkerbell, force)
 		if err != nil {
 			return err
 		}
@@ -216,6 +220,8 @@ func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v
 		f.WithDocker().WithKubectl()
 	case v1alpha1.TinkerbellDatacenterKind:
 		f.WithKubectl().WithTink(clusterConfigFile).WithPbnj(clusterConfigFile)
+	case v1alpha1.SnowDatacenterKind:
+		f.WithKubectl().WithSnowConfigManager()
 	}
 
 	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
@@ -231,6 +237,7 @@ func (f *Factory) WithProviderFactory(clusterConfigFile string, clusterConfig *v
 			VSphereGovcClient:         f.dependencies.Govc,
 			VSphereKubectlClient:      f.dependencies.Kubectl,
 			SnowKubectlClient:         f.dependencies.Kubectl,
+			SnowConfigManager:         f.dependencies.SnowConfigManager,
 			TinkerbellKubectlClient:   f.dependencies.Kubectl,
 			TinkerbellClients:         tinkerbell.TinkerbellClients{ProviderTinkClient: f.dependencies.Tink, ProviderPbnjClient: f.dependencies.Pbnj},
 			Writer:                    f.dependencies.Writer,
@@ -319,6 +326,62 @@ func (f *Factory) WithCmk() *Factory {
 
 		f.dependencies.Cmk = f.executableBuilder.BuildCmkExecutable(f.dependencies.Writer, *execConfig)
 		f.dependencies.closers = append(f.dependencies.closers, f.dependencies.Cmk)
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithSnowConfigManager() *Factory {
+	f.WithAwsSnow().WithWriter()
+
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.SnowConfigManager != nil {
+			return nil
+		}
+
+		validator := snow.NewValidator(f.dependencies.SnowAwsClient)
+		defaulters := snow.NewDefaulters(f.dependencies.SnowAwsClient, f.dependencies.Writer)
+
+		f.dependencies.SnowConfigManager = snow.NewConfigManager(defaulters, validator)
+
+		return nil
+	})
+
+	return f
+}
+
+func (f *Factory) WithAwsSnow() *Factory {
+	f.buildSteps = append(f.buildSteps, func(ctx context.Context) error {
+		if f.dependencies.SnowAwsClient != nil {
+			return nil
+		}
+		credsFile, err := aws.AwsCredentialsFile()
+		if err != nil {
+			return fmt.Errorf("fetching aws credentials from env: %v", err)
+		}
+		certsFile, err := aws.AwsCABundlesFile()
+		if err != nil {
+			return fmt.Errorf("fetching aws CA bundles from env: %v", err)
+		}
+
+		deviceIps, err := aws.ParseDeviceIPsFromFile(credsFile)
+		if err != nil {
+			return fmt.Errorf("getting device ips from aws credentials: %v", err)
+		}
+
+		deviceClientMap := make(aws.Clients, len(deviceIps))
+
+		for _, ip := range deviceIps {
+			config, err := aws.LoadConfig(ctx, aws.WithSnowEndpointAccess(ip, certsFile, credsFile))
+			if err != nil {
+				return fmt.Errorf("setting up aws client: %v", err)
+			}
+			deviceClientMap[ip] = aws.NewClient(ctx, config)
+		}
+
+		f.dependencies.SnowAwsClient = deviceClientMap
 
 		return nil
 	})

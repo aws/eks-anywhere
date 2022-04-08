@@ -24,7 +24,7 @@ type downloadArtifactsTest struct {
 	toolsDownloader *mocks.MockImageMover
 	packager        *mocks.MockPackager
 	command         *artifacts.Download
-	images          []releasev1.Image
+	images, charts  []releasev1.Image
 	bundles         *releasev1.Bundles
 }
 
@@ -50,6 +50,17 @@ func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
 		},
 	}
 
+	charts := []releasev1.Image{
+		{
+			Name: "chart 1",
+			URI:  "chart:v1.0.0",
+		},
+		{
+			Name: "chart 2",
+			URI:  "package-chart:v1.0.0",
+		},
+	}
+
 	return &downloadArtifactsTest{
 		WithT:           NewWithT(t),
 		ctx:             context.Background(),
@@ -59,6 +70,7 @@ func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
 		downloader:      downloader,
 		packager:        packager,
 		images:          images,
+		charts:          charts,
 		command: &artifacts.Download{
 			Reader:                   reader,
 			BundlesImagesDownloader:  mover,
@@ -78,16 +90,6 @@ func newDownloadArtifactsTest(t *testing.T) *downloadArtifactsTest {
 								URI: "tools:v1.0.0",
 							},
 						},
-						Cilium: releasev1.CiliumBundle{
-							HelmChart: releasev1.Image{
-								URI: "chart:v1.0.0",
-							},
-						},
-						PackageController: releasev1.PackageBundle{
-							HelmChart: releasev1.Image{
-								URI: "package-chart:v1.0.0",
-							},
-						},
 					},
 				},
 			},
@@ -101,6 +103,7 @@ func TestDownloadRun(t *testing.T) {
 	tt.toolsDownloader.EXPECT().Move(tt.ctx, "tools:v1.0.0")
 	tt.reader.EXPECT().ReadImagesFromBundles(tt.bundles).Return(tt.images, nil)
 	tt.mover.EXPECT().Move(tt.ctx, "image1:1", "image2:1")
+	tt.reader.EXPECT().ReadChartsFromBundles(tt.bundles).Return(tt.charts)
 	tt.downloader.EXPECT().Download(tt.ctx, "chart:v1.0.0", "package-chart:v1.0.0")
 	tt.packager.EXPECT().Package("tmp-folder", "artifacts.tar")
 

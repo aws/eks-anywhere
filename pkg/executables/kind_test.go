@@ -90,6 +90,18 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 			registryMirrorTest: false,
 		},
 		{
+			name:           "With extra port mappings option",
+			wantKubeconfig: kubeConfigFile,
+			options: []testKindOption{
+				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
+					return k.WithExtraPortMappings([]int{80, 443})
+				},
+			},
+			env:                map[string]string{},
+			wantKindConfig:     "testdata/kind_config_extra_port_mappings.yaml",
+			registryMirrorTest: false,
+		},
+		{
 			name:           "With docker option and disable CNI option",
 			wantKubeconfig: kubeConfigFile,
 			options: []testKindOption{
