@@ -26,8 +26,8 @@ func TestSetDefaultSshKeyExistsOnAllDevices(t *testing.T) {
 	g.machineConfig.Spec.SshKeyName = ""
 	g.aws.EXPECT().EC2KeyNameExists(g.ctx, "eksa-default").Return(true, nil).Times(2)
 	err := g.machineConfigDefaulters.SetupDefaultSshKey(g.ctx, g.machineConfig)
-	g.Expect(err).To(Succeed())
 	g.Expect(g.machineConfig.Spec.SshKeyName).To(Equal("eksa-default"))
+	g.Expect(err).To(Succeed())
 }
 
 func TestSetDefaultSshKeyExistsOnPartialDevices(t *testing.T) {
