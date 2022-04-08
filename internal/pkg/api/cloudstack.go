@@ -22,24 +22,11 @@ type CloudStackFiller func(config CloudStackConfig)
 func AutoFillCloudStackProvider(filename string, fillers ...CloudStackFiller) ([]byte, error) {
 	var etcdMachineConfig *v1alpha1.CloudStackMachineConfig
 	// only to get name of control plane and worker node machine configs
-	clusterConfig, err := v1alpha1.GetClusterConfig(filename)
+	clusterConfig, err := v1alpha1.GetAndValidateClusterConfig(filename)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get cluster config from file: %v", err)
+		return nil, fmt.Errorf("the cluster config file provided is invalid: %v", err)
 	}
-	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef == nil {
-		return nil, fmt.Errorf("no machineGroupRef defined for control plane")
-	}
-	if len(clusterConfig.Spec.WorkerNodeGroupConfigurations) == 0 {
-		return nil, fmt.Errorf("no worker nodes defined")
-	}
-	if clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef == nil {
-		return nil, fmt.Errorf("no machineGroupRef defined for worker nodes")
-	}
-	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
-		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef == nil {
-			return nil, fmt.Errorf("no machineGroupRef defined for etcd machines")
-		}
-	}
+
 	cpName := clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
 	workerName := clusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name
 	cloudstackDatacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(filename)
