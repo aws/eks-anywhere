@@ -322,3 +322,7 @@ func (p *nutanixProvider) MachineDeploymentsToDelete(workloadCluster *types.Clus
 	}
 	return machineDeployments
 }
+
+func (p *nutanixProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
+	return nil
+}
