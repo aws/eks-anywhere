@@ -253,6 +253,28 @@ func generateClusterConfig(clusterName string) error {
 				return fmt.Errorf("failed to generate cluster yaml: %v", err)
 			}
 			datacenterYaml = dcyaml
+
+			cpMachineConfig := v1alpha1.NewNutanixMachineConfigGenerate(providers.GetControlPlaneNodeName(clusterName))
+			workerMachineConfig := v1alpha1.NewNutanixMachineConfigGenerate(clusterName)
+			etcdMachineConfig := v1alpha1.NewNutanixMachineConfigGenerate(providers.GetEtcdNodeName(clusterName))
+			clusterConfigOpts = append(clusterConfigOpts,
+				v1alpha1.WithCPMachineGroupRef(cpMachineConfig),
+				v1alpha1.WithWorkerMachineGroupRef(workerMachineConfig),
+				v1alpha1.WithEtcdMachineGroupRef(etcdMachineConfig),
+			)
+			cpMcYaml, err := yaml.Marshal(cpMachineConfig)
+			if err != nil {
+				return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			}
+			workerMcYaml, err := yaml.Marshal(workerMachineConfig)
+			if err != nil {
+				return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			}
+			etcdMcYaml, err := yaml.Marshal(etcdMachineConfig)
+			if err != nil {
+				return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			}
+			machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml, etcdMcYaml)
 		} else {
 			return fmt.Errorf("the nutanix infrastructure provider is still under development")
 		}
