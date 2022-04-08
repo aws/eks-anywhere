@@ -200,7 +200,7 @@ func newProvider(t *testing.T, kubectl ProviderKubectlClient, mockaws *mocks.Moc
 		"device-2": mockaws,
 	}
 	validator := NewValidatorFromAwsClientMap(awsClients)
-	defaulters := NewDefaultersFromAwsClientMap(awsClients, nil)
+	defaulters := NewDefaultersFromAwsClientMap(awsClients, nil, nil)
 	configManager := NewConfigManager(defaulters, validator)
 	return NewProvider(
 		kubectl,

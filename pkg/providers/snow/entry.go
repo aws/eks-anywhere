@@ -41,12 +41,7 @@ func (cm *ConfigManager) snowEntry(ctx context.Context) *cluster.ConfigManagerEn
 	return &cluster.ConfigManagerEntry{
 		Defaulters: []cluster.Defaulter{
 			func(c *cluster.Config) error {
-				for _, m := range c.SnowMachineConfigs {
-					if err := cm.defaulters.GenerateDefaultSshKeyAndSaveToFile(ctx, m); err != nil {
-						return err
-					}
-				}
-				return nil
+				return cm.defaulters.GenerateDefaultSshKeys(ctx, c.SnowMachineConfigs)
 			},
 		},
 		Validations: []cluster.Validation{

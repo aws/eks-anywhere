@@ -427,6 +427,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/helm/mocks/download.go -package=mocks -source "pkg/helm/download.go"
 	${GOPATH}/bin/mockgen -destination=pkg/aws/mocks/ec2.go -package=mocks -source "pkg/aws/ec2.go"
 	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/aws.go -package=mocks -source "pkg/providers/snow/aws.go"
+	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/defaults.go -package=mocks -source "pkg/providers/snow/defaults.go"
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated

@@ -9,7 +9,7 @@ import (
 type AwsClient interface {
 	EC2KeyNameExists(ctx context.Context, imageID string) (bool, error)
 	EC2ImageExists(ctx context.Context, keyName string) (bool, error)
-	EC2CreateKeyPair(ctx context.Context, keyName string) (keyVal string, err error)
+	EC2ImportKeyPair(ctx context.Context, keyName string, keyMaterial []byte) error
 }
 
 type AwsClientMap map[string]AwsClient

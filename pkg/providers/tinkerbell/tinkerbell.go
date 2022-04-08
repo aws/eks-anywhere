@@ -204,7 +204,7 @@ func NewProviderCustomDep(
 		// (chrisdoherty4) We're hard coding the dependency and monkey patching in testing because the provider
 		// isn't very testable right now and we already have tests in the `tinkerbell` package so can monkey patch
 		// directly. This is very much a hack for testability.
-		keyGenerator: sshAuthKeyGenerator{},
+		keyGenerator: common.SshAuthKeyGenerator{},
 
 		// Behavioral flags.
 		skipIpCheck:      skipIpCheck,

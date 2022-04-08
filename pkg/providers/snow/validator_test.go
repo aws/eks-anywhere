@@ -9,24 +9,30 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/aws/eks-anywhere/internal/test"
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers/snow"
 	"github.com/aws/eks-anywhere/pkg/providers/snow/mocks"
 )
 
 type configManagerTest struct {
 	*WithT
-	ctx           context.Context
-	aws           *mocks.MockAwsClient
-	validator     *snow.Validator
-	defaulters    *snow.Defaulters
-	machineConfig *v1alpha1.SnowMachineConfig
+	ctx                     context.Context
+	aws                     *mocks.MockAwsClient
+	keyGenerator            *mocks.MockSshKeyGenerator
+	writer                  filewriter.FileWriter
+	validator               *snow.Validator
+	defaulters              *snow.Defaulters
+	machineConfigDefaulters *snow.MachineConfigDefaulters
+	machineConfig           *v1alpha1.SnowMachineConfig
 }
 
 func newConfigManagerTest(t *testing.T) *configManagerTest {
 	ctx := context.Background()
 	ctrl := gomock.NewController(t)
 	mockaws := mocks.NewMockAwsClient(ctrl)
+	mockKeyGenerator := mocks.NewMockSshKeyGenerator(ctrl)
 	awsClients := snow.AwsClientMap{
 		"device-1": mockaws,
 		"device-2": mockaws,
@@ -40,13 +46,19 @@ func newConfigManagerTest(t *testing.T) *configManagerTest {
 			SshKeyName: "default",
 		},
 	}
+	_, writer := test.NewWriter(t)
+	validators := snow.NewValidatorFromAwsClientMap(awsClients)
+	defaulters := snow.NewDefaultersFromAwsClientMap(awsClients, writer, mockKeyGenerator)
 	return &configManagerTest{
-		WithT:         NewWithT(t),
-		ctx:           ctx,
-		aws:           mockaws,
-		validator:     snow.NewValidatorFromAwsClientMap(awsClients),
-		defaulters:    snow.NewDefaultersFromAwsClientMap(awsClients, nil),
-		machineConfig: m,
+		WithT:                   NewWithT(t),
+		ctx:                     ctx,
+		aws:                     mockaws,
+		keyGenerator:            mockKeyGenerator,
+		writer:                  writer,
+		validator:               validators,
+		defaulters:              defaulters,
+		machineConfigDefaulters: snow.NewMachineConfigDefaulters(defaulters),
+		machineConfig:           m,
 	}
 }
 
