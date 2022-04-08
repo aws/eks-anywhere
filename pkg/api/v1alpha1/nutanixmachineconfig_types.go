@@ -11,7 +11,6 @@ import (
 
 // NutanixMachineConfigSpec defines the desired state of NutanixMachineConfig
 type NutanixMachineConfigSpec struct {
-	TemplateRef Ref                 `json:"templateRef,omitempty"`
 	OSFamily    OSFamily            `json:"osFamily"`
 	Users       []UserConfiguration `json:"users,omitempty"`
 	// vcpusPerSocket is the number of vCPUs per socket of the VM

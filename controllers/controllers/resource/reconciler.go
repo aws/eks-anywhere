@@ -28,6 +28,7 @@ type clusterReconciler struct {
 	cloudStackTemplate   CloudStackTemplate
 	dockerTemplate       DockerTemplate
 	awsIamConfigTemplate AWSIamConfigTemplate
+	nutanixTemplate      NutanixTemplate
 }
 
 func NewClusterReconciler(resourceFetcher ResourceFetcher, resourceUpdater ResourceUpdater, now anywhereTypes.NowFunc, log logr.Logger) *clusterReconciler {
@@ -51,6 +52,10 @@ func NewClusterReconciler(resourceFetcher ResourceFetcher, resourceUpdater Resou
 		},
 		awsIamConfigTemplate: AWSIamConfigTemplate{
 			ResourceFetcher: resourceFetcher,
+		},
+		nutanixTemplate: NutanixTemplate{
+			ResourceFetcher: resourceFetcher,
+			now:             now,
 		},
 	}
 }
@@ -141,6 +146,38 @@ func (cor *clusterReconciler) Reconcile(ctx context.Context, objectKey types.Nam
 		resources = append(resources, r...)
 	case anywherev1.DockerDatacenterKind:
 		r, err := cor.dockerTemplate.TemplateResources(ctx, cs, spec)
+		if err != nil {
+			return err
+		}
+		resources = append(resources, r...)
+	case anywherev1.NutanixDatacenterKind:
+		ndc := &anywherev1.NutanixDatacenterConfig{}
+		cpNmc := &anywherev1.NutanixMachineConfig{}
+		etcdNmc := &anywherev1.NutanixMachineConfig{}
+		workerNmc := &anywherev1.NutanixMachineConfig{}
+		workerNmcs := make(map[string]anywherev1.NutanixMachineConfig, len(cs.Spec.WorkerNodeGroupConfigurations))
+		err := cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.DatacenterRef.Name}, ndc)
+		if err != nil {
+			return err
+		}
+		err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.ControlPlaneConfiguration.MachineGroupRef.Name}, cpVmc)
+		if err != nil {
+			return err
+		}
+		for _, workerNodeGroupConfiguration := range cs.Spec.WorkerNodeGroupConfigurations {
+			err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: workerNodeGroupConfiguration.MachineGroupRef.Name}, workerVmc)
+			if err != nil {
+				return err
+			}
+			workerNmcs[workerNodeGroupConfiguration.MachineGroupRef.Name] = *workerNmc
+		}
+		if cs.Spec.ExternalEtcdConfiguration != nil {
+			err = cor.FetchObject(ctx, types.NamespacedName{Namespace: objectKey.Namespace, Name: cs.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name}, etcdVmc)
+			if err != nil {
+				return err
+			}
+		}
+		r, err := cor.nutanixTemplate.TemplateResources(ctx, cs, spec, *ndc, *cpNmc, *etcdNmc, workerNmcs)
 		if err != nil {
 			return err
 		}

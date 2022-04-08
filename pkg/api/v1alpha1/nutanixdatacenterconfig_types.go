@@ -1,6 +1,8 @@
 package v1alpha1
 
 import (
+	"errors"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -9,9 +11,18 @@ import (
 // NutanixDatacenterConfigSpec defines the desired state of NutanixDatacenterConfig
 type NutanixDatacenterConfigSpec struct {
 	// Important: Run "make generate" to regenerate code after modifying this file
+	// NutanixEndpoint is the Endpoint of Nutanix Prism Central
+	// +kubebuilder:validation:Required
 	NutanixEndpoint string `json:"nutanixEndpoint"`
+	// NutanixPort is the Port of Nutanix Prism Central
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=9440
 	NutanixPort     int    `json:"nutanixPort"`
+	// NutanixUser is the User name for Nutanix Prism Central
+	// +kubebuilder:validation:Required
 	NutanixUser     string `json:"nutanixUser"`
+	// NutanixPassword is the Password for Nutanix Prism Central
+	// +kubebuilder:validation:Required
 	NutanixPassword string `json:"nutanixPassword"`
 }
 
@@ -81,7 +92,22 @@ func (t *NutanixDatacenterConfig) Marshallable() Marshallable {
 	return t.ConvertConfigToConfigGenerateStruct()
 }
 
-func (d *NutanixDatacenterConfig) Validate() error {
+func (t *NutanixDatacenterConfig) Validate() error {
+	if len(t.Spec.NutanixEndpoint) <= 0 {
+		return errors.New("NutanixDatacenterConfig nutanixEndpoint is not set or is empty")
+	}
+
+	if t.Spec.NutanixPort == 0 {
+		return errors.New("NutanixDatacenterConfig nutanixPort is not set or is empty")
+	}
+
+	if len(t.Spec.NutanixUser) <= 0 {
+		return errors.New("NutanixDatacenterConfig nutanixUser is not set or is empty")
+	}
+
+	if len(t.Spec.NutanixPassword) <= 0 {
+		return errors.New("NutanixDatacenterConfig nutanixPassword is not set or is empty")
+	}
 	return nil
 }
 

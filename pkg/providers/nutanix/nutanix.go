@@ -16,6 +16,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
+
+	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
 //go:embed config/template-cp.yaml
@@ -38,7 +40,7 @@ type nutanixProvider struct {
 	datacenterConfig *v1alpha1.NutanixDatacenterConfig
 	machineConfigs   map[string]*v1alpha1.NutanixMachineConfig
 	// providerKubectlClient ProviderKubectlClient
-	// templateBuilder       NutanixTemplateBuilder
+	templateBuilder *NutanixTemplateBuilder
 }
 
 // type ProviderKubectlClient interface {
@@ -52,9 +54,28 @@ func NewProvider(
 	clusterConfig *v1alpha1.Cluster,
 	now types.NowFunc,
 ) *nutanixProvider {
+	var controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.NutanixMachineConfigSpec
+	if clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name] != nil {
+		controlPlaneMachineSpec = &machineConfigs[clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name].Spec
+	}
+
+	workerNodeGroupMachineSpecs := make(map[string]v1alpha1.NutanixMachineConfigSpec, len(machineConfigs))
+
+	if clusterConfig.Spec.ExternalEtcdConfiguration != nil {
+		if clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef != nil && machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name] != nil {
+			etcdMachineSpec = &machineConfigs[clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name].Spec
+		}
+	}
 	return &nutanixProvider{
 		clusterConfig:    clusterConfig,
 		datacenterConfig: datacenterConfig,
+		templateBuilder: &NutanixTemplateBuilder{
+			datacenterSpec:              &datacenterConfig.Spec,
+			controlPlaneMachineSpec:     controlPlaneMachineSpec,
+			etcdMachineSpec:             etcdMachineSpec,
+			workerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
+			now:                         now,
+		},
 	}
 }
 func (p *nutanixProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
@@ -117,41 +138,58 @@ func (p *nutanixProvider) UpdateSecrets(ctx context.Context, cluster *types.Clus
 }
 
 type NutanixTemplateBuilder struct {
-	now types.NowFunc
+	datacenterSpec              *v1alpha1.NutanixDatacenterConfigSpec
+	controlPlaneMachineSpec     *v1alpha1.NutanixMachineConfigSpec
+	etcdMachineSpec             *v1alpha1.NutanixMachineConfigSpec
+	workerNodeGroupMachineSpecs map[string]v1alpha1.NutanixMachineConfigSpec
+	now                         types.NowFunc
 }
 
 func NewNutanixTemplateBuilder(datacenterSpec *v1alpha1.NutanixDatacenterConfigSpec, controlPlaneMachineSpec, etcdMachineSpec *v1alpha1.NutanixMachineConfigSpec, workerNodeGroupMachineSpecs map[string]v1alpha1.NutanixMachineConfigSpec, now types.NowFunc) providers.TemplateBuilder {
 	return &NutanixTemplateBuilder{
-		now: now,
+		datacenterSpec:              datacenterSpec,
+		controlPlaneMachineSpec:     controlPlaneMachineSpec,
+		etcdMachineSpec:             etcdMachineSpec,
+		workerNodeGroupMachineSpecs: workerNodeGroupMachineSpecs,
+		now:                         now,
 	}
 }
 
-func (vs *NutanixTemplateBuilder) WorkerMachineTemplateName(clusterName string) string {
-	t := vs.now().UnixNano() / int64(time.Millisecond)
+func (ntb *NutanixTemplateBuilder) WorkerMachineTemplateName(clusterName string) string {
+	t := ntb.now().UnixNano() / int64(time.Millisecond)
 	return fmt.Sprintf("%s-worker-node-template-%d", clusterName, t)
 }
 
-func (vs *NutanixTemplateBuilder) CPMachineTemplateName(clusterName string) string {
-	t := vs.now().UnixNano() / int64(time.Millisecond)
+func (ntb *NutanixTemplateBuilder) CPMachineTemplateName(clusterName string) string {
+	t := ntb.now().UnixNano() / int64(time.Millisecond)
 	return fmt.Sprintf("%s-control-plane-template-%d", clusterName, t)
 }
 
-func (vs *NutanixTemplateBuilder) EtcdMachineTemplateName(clusterName string) string {
-	t := vs.now().UnixNano() / int64(time.Millisecond)
+func (ntb *NutanixTemplateBuilder) EtcdMachineTemplateName(clusterName string) string {
+	t := ntb.now().UnixNano() / int64(time.Millisecond)
 	return fmt.Sprintf("%s-etcd-template-%d", clusterName, t)
 }
 
-func (vs *NutanixTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	var values map[string]interface{}
+func (ntb *NutanixTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
+	// var etcdMachineSpec v1alpha1.NutanixMachineConfigSpec
+	// if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+	// 	etcdMachineSpec = *ntb.etcdMachineSpec
+	// }
+	values := buildTemplateMapCP(clusterSpec, *ntb.controlPlaneMachineSpec)
+
+	for _, buildOption := range buildOptions {
+		buildOption(values)
+	}
 
 	bytes, err := templater.Execute(defaultCAPIConfigCP, values)
 	if err != nil {
 		return nil, err
 	}
+
 	return bytes, nil
 }
 
-func (vs *NutanixTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
+func (ntb *NutanixTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, _ = range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
 		var values map[string]interface{}
@@ -222,20 +260,18 @@ func (p *nutanixProvider) GetDeployments() map[string][]string {
 }
 
 func (p *nutanixProvider) GetInfrastructureBundle(clusterSpec *cluster.Spec) *types.InfrastructureBundle {
-	// TODO: uncomment below when nutanix is added to bundle
-	// bundle := clusterSpec.VersionsBundle
-	// folderName := fmt.Sprintf("infrastructure-nutanix/%s/", bundle.Nutanix.Version)
+	bundle := clusterSpec.VersionsBundle
+	folderName := fmt.Sprintf("infrastructure-nutanix/%s/", bundle.Nutanix.Version)
 
-	// infraBundle := types.InfrastructureBundle{
-	// 	FolderName: folderName,
-	// 	Manifests: []releasev1alpha1.Manifest{
-	// 		bundle.Nutanix.Components,
-	// 		bundle.Nutanix.Metadata,
-	// 		bundle.Nutanix.ClusterTemplate,
-	// 	},
-	// }
-	// return &infraBundle
-	return nil
+	infraBundle := types.InfrastructureBundle{
+		FolderName: folderName,
+		Manifests: []releasev1alpha1.Manifest{
+			bundle.Nutanix.Components,
+			bundle.Nutanix.Metadata,
+			bundle.Nutanix.ClusterTemplate,
+		},
+	}
+	return &infraBundle
 }
 
 func (p *nutanixProvider) DatacenterConfig(_ *cluster.Spec) providers.DatacenterConfig {

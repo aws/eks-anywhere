@@ -5,11 +5,20 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/yaml"
 )
 
-const NutanixMachineConfigKind = "NutanixMachineConfig"
+const (
+	NutanixMachineConfigKind        = "NutanixMachineConfig"
+	DefaultNutanixOSFamily          = Ubuntu
+	DefaultNutanixSystemDiskSizeGi  = "20Gi"
+	DefaultNutanixMemorySizeGi      = "2Gi"
+	DefaultNutanixVCPUsPerSocket    = 1
+	DefaultNutanixVCPUSockets       = 1
+	DefaultNutanixMachineConfigUser = "nutanix-user"
+)
 
 // +kubebuilder:object:generate=false
 type NutanixMachineConfigGenerateOpt func(config *NutanixMachineConfigGenerate)
@@ -25,13 +34,20 @@ func NewNutanixMachineConfigGenerate(name string, opts ...NutanixMachineConfigGe
 			Name: name,
 		},
 		Spec: NutanixMachineConfigSpec{
-			OSFamily: Ubuntu,
+			OSFamily: DefaultNutanixOSFamily,
 			Users: []UserConfiguration{
 				{
-					Name:              "nutanix-user",
+					Name:              DefaultNutanixMachineConfigUser,
 					SshAuthorizedKeys: []string{"ssh-rsa AAAA..."},
 				},
 			},
+			VCPUsPerSocket: DefaultNutanixVCPUsPerSocket,
+			VCPUSockets:    DefaultNutanixVCPUSockets,
+			MemorySize:     resource.MustParse(DefaultNutanixMemorySizeGi),
+			// Image:          NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: nil},
+			// Cluster:        NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: nil},
+			// Subnet:         NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: nil},
+			SystemDiskSize: resource.MustParse(DefaultNutanixSystemDiskSizeGi),
 		},
 	}
 

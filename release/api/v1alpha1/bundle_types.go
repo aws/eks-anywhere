@@ -84,6 +84,7 @@ type VersionsBundle struct {
 	Tinkerbell             TinkerbellBundle            `json:"tinkerbell,omitempty"`
 	Haproxy                HaproxyBundle               `json:"haproxy,omitempty"`
 	Snow                   SnowBundle                  `json:"snow,omitempty"`
+	Nutanix                NutanixBundle               `json:"nutanix,omitempty"`
 }
 
 type EksDRelease struct {
@@ -313,4 +314,11 @@ type SnowBundle struct {
 	KubeVip    Image    `json:"kubeVip"`
 	Components Manifest `json:"components"`
 	Metadata   Manifest `json:"metadata"`
+}
+
+type NutanixBundle struct {
+	Version         string   `json:"version"`
+	Components      Manifest `json:"components"`
+	Metadata        Manifest `json:"metadata"`
+	ClusterTemplate Manifest `json:"clusterTemplate"`
 }
