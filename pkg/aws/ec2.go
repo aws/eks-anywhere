@@ -13,7 +13,7 @@ import (
 type EC2Client interface {
 	DescribeImages(ctx context.Context, params *ec2.DescribeImagesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeImagesOutput, error)
 	DescribeKeyPairs(ctx context.Context, params *ec2.DescribeKeyPairsInput, optFns ...func(*ec2.Options)) (*ec2.DescribeKeyPairsOutput, error)
-	CreateKeyPair(ctx context.Context, params *ec2.CreateKeyPairInput, optFns ...func(*ec2.Options)) (*ec2.CreateKeyPairOutput, error)
+	ImportKeyPair(ctx context.Context, params *ec2.ImportKeyPairInput, optFns ...func(*ec2.Options)) (*ec2.ImportKeyPairOutput, error)
 }
 
 func NewEC2Client(config aws.Config) *ec2.Client {
@@ -58,15 +58,15 @@ func (c *Client) EC2KeyNameExists(ctx context.Context, keyName string) (bool, er
 	return true, nil
 }
 
-// EC2CreateKeyPair calls aws sdk ec2.CreateKeyPair to create a key pair with
-// name specified from the arg.
-func (c *Client) EC2CreateKeyPair(ctx context.Context, keyName string) (keyVal string, err error) {
-	params := &ec2.CreateKeyPairInput{
-		KeyName: &keyName,
+// EC2ImportKeyPair calls aws sdk ec2.ImportKeyPair to import a key pair to ec2.
+func (c *Client) EC2ImportKeyPair(ctx context.Context, keyName string, keyMaterial []byte) error {
+	params := &ec2.ImportKeyPairInput{
+		KeyName:           &keyName,
+		PublicKeyMaterial: keyMaterial,
 	}
-	out, err := c.ec2.CreateKeyPair(ctx, params)
+	_, err := c.ec2.ImportKeyPair(ctx, params)
 	if err != nil {
-		return "", fmt.Errorf("creating key pairs in ec2: %v", err)
+		return fmt.Errorf("importing key pairs in ec2: %v", err)
 	}
-	return *out.KeyMaterial, nil
+	return nil
 }

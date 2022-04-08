@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	defaultAwsSshKeyNamePrefix = "eksa-default"
+	defaultAwsSshKeyName = "eksa-default"
 )
 
 type Validator struct {

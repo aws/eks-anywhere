@@ -34,21 +34,6 @@ func (m *MockAwsClient) EXPECT() *MockAwsClientMockRecorder {
 	return m.recorder
 }
 
-// EC2CreateKeyPair mocks base method.
-func (m *MockAwsClient) EC2CreateKeyPair(ctx context.Context, keyName string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EC2CreateKeyPair", ctx, keyName)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// EC2CreateKeyPair indicates an expected call of EC2CreateKeyPair.
-func (mr *MockAwsClientMockRecorder) EC2CreateKeyPair(ctx, keyName interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EC2CreateKeyPair", reflect.TypeOf((*MockAwsClient)(nil).EC2CreateKeyPair), ctx, keyName)
-}
-
 // EC2ImageExists mocks base method.
 func (m *MockAwsClient) EC2ImageExists(ctx context.Context, keyName string) (bool, error) {
 	m.ctrl.T.Helper()
@@ -62,6 +47,20 @@ func (m *MockAwsClient) EC2ImageExists(ctx context.Context, keyName string) (boo
 func (mr *MockAwsClientMockRecorder) EC2ImageExists(ctx, keyName interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EC2ImageExists", reflect.TypeOf((*MockAwsClient)(nil).EC2ImageExists), ctx, keyName)
+}
+
+// EC2ImportKeyPair mocks base method.
+func (m *MockAwsClient) EC2ImportKeyPair(ctx context.Context, keyName string, keyMaterial []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EC2ImportKeyPair", ctx, keyName, keyMaterial)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// EC2ImportKeyPair indicates an expected call of EC2ImportKeyPair.
+func (mr *MockAwsClientMockRecorder) EC2ImportKeyPair(ctx, keyName, keyMaterial interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EC2ImportKeyPair", reflect.TypeOf((*MockAwsClient)(nil).EC2ImportKeyPair), ctx, keyName, keyMaterial)
 }
 
 // EC2KeyNameExists mocks base method.
