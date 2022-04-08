@@ -100,6 +100,7 @@ type NutanixDatacenterConfigList struct {
 	Items           []NutanixDatacenterConfig `json:"items"`
 }
 
+//var _ providers.DatacenterConfig = = (*NutanixDatacenterConfig)(nil)
 func init() {
 	SchemeBuilder.Register(&NutanixDatacenterConfig{}, &NutanixDatacenterConfigList{})
 }

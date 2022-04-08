@@ -1,0 +1,51 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: { { .clusterName } }
+  name: "{{.clusterName}}-wmd"
+  namespace: "${NAMESPACE}"
+spec:
+  clusterName: "{{.clusterName}}"
+  replicas: ${WORKER_MACHINE_COUNT}
+  selector:
+    matchLabels: {}
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: "{{.clusterName}}-kcfg-0"
+      clusterName: "{{.clusterName}}"
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: NutanixMachineTemplate
+        name: "{{.clusterName}}-mt-0"
+      version: "${KUBERNETES_VERSION}"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixMachineTemplate
+metadata:
+  name: "{{.clusterName}}-mt-0"
+  namespace: "${NAMESPACE}"
+spec:
+  template:
+    spec:
+      providerID: "nutanix://{{.clusterName}}-m1"
+      vcpusPerSocket: ${NUTANIX_MACHINE_VCPU_PER_SOCKET=1}
+      vcpuSockets: ${NUTANIX_MACHINE_VCPU_SOCKET=2}
+      memorySize: "${NUTANIX_MACHINE_MEMORY_SIZE=4Gi}"
+      systemDiskSize: "${NUTANIX_SYSTEMDISK_SIZE=40Gi}"
+      image:
+        type: name
+        name: "${NUTANIX_MACHINE_TEMPLATE_IMAGE_NAME}"
+      cluster:
+        type: name
+        name: "${NUTANIX_PRISM_ELEMENT_CLUSTER_NAME}"
+      subnet:
+        type: name
+        name: "${NUTANIX_SUBNET_NAME}"

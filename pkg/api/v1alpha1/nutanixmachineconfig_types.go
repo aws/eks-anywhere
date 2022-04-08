@@ -11,8 +11,9 @@ import (
 
 // NutanixMachineConfigSpec defines the desired state of NutanixMachineConfig
 type NutanixMachineConfigSpec struct {
-	OSFamily OSFamily            `json:"osFamily"`
-	Users    []UserConfiguration `json:"users,omitempty"`
+	TemplateRef Ref                 `json:"templateRef,omitempty"`
+	OSFamily    OSFamily            `json:"osFamily"`
+	Users       []UserConfiguration `json:"users,omitempty"`
 	// vcpusPerSocket is the number of vCPUs per socket of the VM
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:Minimum=1
@@ -185,6 +186,8 @@ type NutanixMachineConfigList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []NutanixMachineConfig `json:"items"`
 }
+
+//var _ providers.MachineConfig = (*NutanixMachineConfig)(nil)
 
 func init() {
 	SchemeBuilder.Register(&NutanixMachineConfig{}, &NutanixMachineConfigList{})

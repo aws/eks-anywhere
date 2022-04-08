@@ -32,6 +32,7 @@ const (
 	SnowProviderName       = "snow"
 	TinkerbellProviderName = "tinkerbell"
 	CloudStackProviderName = "cloudstack"
+	NutanixProviderName    = "nutanix"
 
 	VSphereCredentialsName = "vsphere-credentials"
 	EksaLicenseName        = "eksa-license"

@@ -1,0 +1,105 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: NutanixCluster
+metadata:
+  name: "{{.clusterName}}"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  controlPlaneEndpoint:
+    host: "${CONTROL_PLANE_ENDPOINT_IP}"
+    port: ${CONTROLPLANE_ENDPOINT_PORT=6443}
+
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  labels:
+    cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
+  name: "{{.clusterName}}"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  clusterNetwork:
+    services:
+      cidrBlocks: ["172.19.0.0/16"]
+    pods:
+      cidrBlocks: ["172.20.0.0/16"]
+    serviceDomain: "cluster.local"
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: "{{.clusterName}}-kcp"
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: NutanixCluster
+    name: "{{.clusterName}}"
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: "{{.clusterName}}-kcp"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  replicas: ${CONTROL_PLANE_MACHINE_COUNT=1}
+  version: ${KUBERNETES_VERSION}
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: NutanixMachineTemplate
+      name: "{{.clusterName}}-mt-0"
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      apiServer:
+        certSANs:
+          - localhost
+          - 127.0.0.1
+          - 0.0.0.0
+      controllerManager:
+        extraArgs:
+          enable-hostpath-provisioner: "true"
+    initConfiguration:
+      nodeRegistration:
+        kubeletExtraArgs:
+          # We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
+          # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
+          #cgroup-driver: cgroupfs
+          eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+    users:
+      - name: capiuser
+        lockPassword: false
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        sshAuthorizedKeys:
+          - ${NUTANIX_SSH_AUTHORIZED_KEY}
+    preKubeadmCommands:
+      - echo "before kubeadm call" > /var/log/prekubeadm.log
+    postKubeadmCommands:
+      - echo export KUBECONFIG=/etc/kubernetes/admin.conf >> /root/.bashrc
+      - echo "after kubeadm call" > /var/log/postkubeadm.log
+    verbosity: 10
+
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: "{{.clusterName}}-kcfg-0"
+  namespace: "{{.eksaSystemNamespace}}"
+spec:
+  template:
+    spec:
+      joinConfiguration:
+        nodeRegistration:
+          kubeletExtraArgs:
+            # We have to pin the cgroupDriver to cgroupfs as kubeadm >=1.21 defaults to systemd
+            # kind will implement systemd support in: https://github.com/kubernetes-sigs/kind/issues/1726
+            #cgroup-driver: cgroupfs
+            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+      users:
+        - name: capiuser
+          lockPassword: false
+          sudo: ALL=(ALL) NOPASSWD:ALL
+          sshAuthorizedKeys:
+            - ${NUTANIX_SSH_AUTHORIZED_KEY}
+      preKubeadmCommands:
+        - echo "before kubeadm call" > /var/log/prekubeadm.log
+      postKubeadmCommands:
+        - echo "after kubeadm call" > /var/log/postkubeadm.log
+      verbosity: 10
+      #useExperimentalRetryJoin: true

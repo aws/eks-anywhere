@@ -52,7 +52,7 @@ func preRunGenerateClusterConfig(cmd *cobra.Command, args []string) {
 
 func init() {
 	generateCmd.AddCommand(generateClusterConfigCmd)
-	generateClusterConfigCmd.Flags().StringP("provider", "p", "", "Provider to use (vsphere or docker)")
+	generateClusterConfigCmd.Flags().StringP("provider", "p", "", "Provider to use (docker, vsphere or nutanix)")
 	err := generateClusterConfigCmd.MarkFlagRequired("provider")
 	if err != nil {
 		log.Fatalf("failed marking flag as required: %v", err)
@@ -65,6 +65,7 @@ func generateClusterConfig(clusterName string) error {
 	var machineGroupYaml [][]byte
 	var tinkerbellTemplateYaml []byte
 	var clusterConfigOpts []v1alpha1.ClusterGenerateOpt
+	fmt.Printf("provider=%s", strings.ToLower(viper.GetString("provider")))
 	switch strings.ToLower(viper.GetString("provider")) {
 	case constants.DockerProviderName:
 		datacenterConfig := v1alpha1.NewDockerDatacenterConfigGenerate(clusterName)
@@ -237,6 +238,24 @@ func generateClusterConfig(clusterName string) error {
 			machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml)
 		} else {
 			return fmt.Errorf("the tinkerbell infrastructure provider is still under development")
+		}
+	case constants.NutanixProviderName:
+		if features.IsActive(features.NutanixProvider()) {
+			datacenterConfig := v1alpha1.NewNutanixDatacenterConfigGenerate(clusterName)
+			clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))
+			clusterConfigOpts = append(clusterConfigOpts,
+				v1alpha1.ControlPlaneConfigCount(1),
+				v1alpha1.ExternalETCDConfigCount(1),
+				v1alpha1.WorkerNodeConfigCount(1),
+				v1alpha1.WorkerNodeConfigName(constants.DefaultWorkerNodeGroupName),
+			)
+			dcyaml, err := yaml.Marshal(datacenterConfig)
+			if err != nil {
+				return fmt.Errorf("failed to generate cluster yaml: %v", err)
+			}
+			datacenterYaml = dcyaml
+		} else {
+			return fmt.Errorf("the nutanix infrastructure provider is still under development")
 		}
 	default:
 		return fmt.Errorf("not a valid provider")
