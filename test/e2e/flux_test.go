@@ -164,55 +164,28 @@ func TestVSphereKubernetes122GitopsOptionsFlux(t *testing.T) {
 	runFluxFlow(test)
 }
 
-func TestCloudStackKubernetes120Flux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewCloudStack(t, framework.WithRedhat120()),
-		framework.WithFlux(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
-func TestCloudStackKubernetes121Flux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewCloudStack(t, framework.WithRedhat121()),
-		framework.WithFlux(),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-	)
-	runFluxFlow(test)
-}
-
-func TestCloudStackKubernetes121ThreeReplicasThreeWorkersFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewCloudStack(t, framework.WithRedhat121()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(3)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(3)),
-		framework.WithFlux(),
-	)
-	runFluxFlow(test)
-}
-
 func TestCloudStackKubernetes121GitopsOptionsFlux(t *testing.T) {
-	test := framework.NewClusterE2ETest(t,
-		framework.NewCloudStack(t, framework.WithRedhat121()),
-		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube121)),
-		framework.WithClusterFiller(api.WithExternalEtcdTopology(1)),
-		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
-		framework.WithClusterFiller(api.WithWorkerNodeCount(1)),
-		framework.WithFlux(
-			api.WithFluxBranch(fluxUserProvidedBranch),
-			api.WithFluxNamespace(fluxUserProvidedNamespace),
-			api.WithFluxConfigurationPath(fluxUserProvidedPath),
+	provider := framework.NewCloudStack(t, framework.WithRedhat120())
+	test := framework.NewClusterE2ETest(
+			t,
+			provider,
+			framework.WithFlux(),
+			framework.WithClusterFiller(
+				api.WithKubernetesVersion(v1alpha1.Kube120),
+				api.WithControlPlaneCount(1),
+				api.WithWorkerNodeCount(1),
+				api.WithStackedEtcdTopology(),
+			),
+	)
+
+	test.RunClusterFlowWithGitOps(
+		framework.WithClusterUpgradeGit(
+			api.WithWorkerNodeCount(3),
+		),
+		provider.WithProviderUpgradeGit(
+			framework.UpdateRedhatTemplate121Var(),
 		),
 	)
-	runFluxFlow(test)
 }
 
 func TestVSphereKubernetes121To122FluxUpgrade(t *testing.T) {
