@@ -11,6 +11,11 @@ menu:
 
 ### Added
 
+## [v0.8.1](https://github.com/aws/eks-anywhere/releases/tag/v0.8.1)
+
+### Fixed
+- Fix issue with downloading artifacts [#1753](https://github.com/aws/eks-anywhere/issues/1753)
+
 ## [v0.8.0](https://github.com/aws/eks-anywhere/releases/tag/v0.8.0)
 ### Added
 - SSH keys and Users are now mutable [#1208](https://github.com/aws/eks-anywhere/issues/1208)
