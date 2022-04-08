@@ -8,6 +8,9 @@ func nutanixEntry() *ConfigManagerEntry {
 			anywherev1.NutanixDatacenterKind: func() APIObject {
 				return &anywherev1.NutanixDatacenterConfig{}
 			},
+			anywherev1.NutanixMachineConfigKind: func() APIObject {
+				return &anywherev1.NutanixMachineConfig{}
+			},
 		},
 		Processors: []ParsedProcessor{
 			processNutanixDatacenter,

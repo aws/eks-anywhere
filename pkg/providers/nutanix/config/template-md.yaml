@@ -4,10 +4,10 @@ metadata:
   labels:
     cluster.x-k8s.io/cluster-name: { { .clusterName } }
   name: "{{.clusterName}}-wmd"
-  namespace: "${NAMESPACE}"
+  namespace: "{{.eksaSystemNamespace}}"
 spec:
   clusterName: "{{.clusterName}}"
-  replicas: ${WORKER_MACHINE_COUNT}
+  replicas: {{.workerReplicas}}
   selector:
     matchLabels: {}
   template:
@@ -25,13 +25,13 @@ spec:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: NutanixMachineTemplate
         name: "{{.clusterName}}-mt-0"
-      version: "${KUBERNETES_VERSION}"
+      version: "{{.kubernetesVersion}}"
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: NutanixMachineTemplate
 metadata:
   name: "{{.clusterName}}-mt-0"
-  namespace: "${NAMESPACE}"
+  namespace: "{{.eksaSystemNamespace}}"
 spec:
   template:
     spec:

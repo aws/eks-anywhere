@@ -5,8 +5,8 @@ metadata:
   namespace: "{{.eksaSystemNamespace}}"
 spec:
   controlPlaneEndpoint:
-    host: "${CONTROL_PLANE_ENDPOINT_IP}"
-    port: ${CONTROLPLANE_ENDPOINT_PORT=6443}
+    host: "{{.controlPlaneEndpointIp}}"
+    port: 6443
 
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
@@ -38,8 +38,8 @@ metadata:
   name: "{{.clusterName}}-kcp"
   namespace: "{{.eksaSystemNamespace}}"
 spec:
-  replicas: ${CONTROL_PLANE_MACHINE_COUNT=1}
-  version: ${KUBERNETES_VERSION}
+  replicas: {{.controlPlaneReplicas}}
+  version: {{.kubernetesVersion}}
   machineTemplate:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -63,11 +63,11 @@ spec:
           #cgroup-driver: cgroupfs
           eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
     users:
-      - name: capiuser
+      - name: {{.controlPlaneSshUsername}}
         lockPassword: false
         sudo: ALL=(ALL) NOPASSWD:ALL
         sshAuthorizedKeys:
-          - ${NUTANIX_SSH_AUTHORIZED_KEY}
+          - {{.controlPlaneSshAuthorizedKey}}
     preKubeadmCommands:
       - echo "before kubeadm call" > /var/log/prekubeadm.log
     postKubeadmCommands:
@@ -92,11 +92,11 @@ spec:
             #cgroup-driver: cgroupfs
             eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
       users:
-        - name: capiuser
+        - name: {{.controlPlaneSshUsername}}
           lockPassword: false
           sudo: ALL=(ALL) NOPASSWD:ALL
           sshAuthorizedKeys:
-            - ${NUTANIX_SSH_AUTHORIZED_KEY}
+            - {{.controlPlaneSshAuthorizedKey}}
       preKubeadmCommands:
         - echo "before kubeadm call" > /var/log/prekubeadm.log
       postKubeadmCommands:

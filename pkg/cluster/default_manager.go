@@ -13,6 +13,7 @@ func init() {
 		vsphereEntry(),
 		dockerEntry(),
 		snowEntry(),
+		nutanixEntry(),
 	)
 	if err != nil {
 		panic(err)
