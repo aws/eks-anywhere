@@ -413,8 +413,8 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"etcdRepository":               bundle.KubeDistro.Etcd.Repository,
 		"etcdImageTag":                 bundle.KubeDistro.Etcd.Tag,
 		"kubeVipImage":                 "ghcr.io/kube-vip/kube-vip:latest",
-		"externalEtcdVersion":          bundle.KubeDistro.EtcdVersion,
-		"etcdCipherSuites":             crypto.SecureCipherSuitesString(),
+		"podCidrs":                     clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
+		"serviceCidrs":                 clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
 	}
 
 	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
@@ -435,7 +435,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"eksaSystemNamespace":    constants.EksaSystemNamespace,
 		"format":                 format,
 		"kubernetesVersion":      bundle.KubeDistro.Kubernetes.Tag,
-		"workerReplicas":         workerNodeGroupConfiguration.Count,
+		"workerReplicas":         clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count,
 		"workerPoolName":         "md-0",
 		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
@@ -458,8 +458,4 @@ func (p *nutanixProvider) MachineDeploymentsToDelete(workloadCluster *types.Clus
 		machineDeployments = append(machineDeployments, mdName)
 	}
 	return machineDeployments
-}
-
-func (p *nutanixProvider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
-	return nil
 }

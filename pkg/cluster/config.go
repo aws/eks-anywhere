@@ -78,6 +78,13 @@ func (c *Config) DeepCopy() *Config {
 		c2.CloudStackMachineConfigs[k] = v.DeepCopy()
 	}
 
+	if c.NutanixMachineConfigs != nil {
+		c2.NutanixMachineConfigs = make(map[string]*anywherev1.NutanixMachineConfig, len(c.NutanixMachineConfigs))
+	}
+	for k, v := range c.NutanixMachineConfigs {
+		c2.NutanixMachineConfigs[k] = v.DeepCopy()
+	}
+
 	if c.OIDCConfigs != nil {
 		c2.OIDCConfigs = make(map[string]*anywherev1.OIDCConfig, len(c.OIDCConfigs))
 	}
