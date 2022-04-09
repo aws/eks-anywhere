@@ -30,7 +30,7 @@ fi
 
 REPO_ROOT=$(git rev-parse --show-toplevel)
 BIN_FOLDER=$REPO_ROOT/bin
-TEST_REGEX="${1:-TestDockerKubernetes121SimpleFlow}"
+TEST_REGEX="${1:-TestDockerKubernetes122AWSIamAuth}"
 
 cat << EOF > config_file
 [default]
@@ -46,6 +46,7 @@ EOF
 export AWS_SDK_LOAD_CONFIG=true
 export AWS_CONFIG_FILE=$(pwd)/config_file
 export AWS_PROFILE=e2e-docker-test
+export T_AWS_IAM_ROLE_ARN=$AWS_ROLE_ARN
 unset AWS_ROLE_ARN AWS_WEB_IDENTITY_TOKEN_FILE
 
 BUNDLES_OVERRIDE=false

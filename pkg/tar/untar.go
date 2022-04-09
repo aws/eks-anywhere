@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 func UntarFile(tarFile, dstFolder string) error {
@@ -34,7 +35,7 @@ func Untar(source io.Reader, router Router) error {
 
 		info := header.FileInfo()
 		if info.IsDir() {
-			if err = os.MkdirAll(path, info.Mode()); err != nil {
+			if err = os.MkdirAll(filepath.Dir(path), info.Mode()); err != nil {
 				return err
 			}
 			continue

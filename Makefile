@@ -121,7 +121,7 @@ EKS_A_PLATFORMS ?= linux-amd64 linux-arm64 darwin-arm64 darwin-amd64
 EKS_A_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-cross-platform-$(platform))
 EKS_A_RELEASE_CROSS_PLATFORMS := $(foreach platform,$(EKS_A_PLATFORMS),eks-a-release-cross-platform-$(platform))
 
-DOCKER_E2E_TEST := TestDockerKubernetes121SimpleFlow
+DOCKER_E2E_TEST := TestDockerKubernetes122AWSIamAuth
 LOCAL_E2E_TESTS ?= $(DOCKER_E2E_TEST)
 
 export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.21.x
