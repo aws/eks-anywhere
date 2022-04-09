@@ -210,6 +210,11 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			return nil, errors.Wrapf(err, "Error getting bundle for bottlerocket bootstrap")
 		}
 
+		nutanixBundle, err := r.GetNutanixBundle(channel, imageDigests)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error getting bundle for nutanix infrastructure provider")
+		}
+
 		versionsBundle := anywherev1alpha1.VersionsBundle{
 			KubeVersion:            shortKubeVersion,
 			EksD:                   eksDReleaseBundle,
@@ -233,6 +238,7 @@ func (r *ReleaseConfig) GetVersionsBundles(imageDigests map[string]string) ([]an
 			Tinkerbell:             tinkerbellBundle,
 			Haproxy:                haproxyBundle,
 			Snow:                   snowBundle,
+			Nutanix:                nutanixBundle,
 		}
 		versionsBundles = append(versionsBundles, versionsBundle)
 	}
@@ -281,6 +287,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		"cri-tools":                    r.GetCriToolsAssets,
 		"diagnostic-collector":         r.GetDiagnosticCollectorAssets,
 		"haproxy":                      r.GetHaproxyAssets,
+		"cluster-api-provider-nutanix": r.GetCapxAssets,
 	}
 
 	if r.DevRelease && (r.BuildRepoBranchName == "main" || r.BuildRepoBranchName == "cloudstack") {
@@ -295,6 +302,7 @@ func (r *ReleaseConfig) GenerateBundleArtifactsTable() (map[string][]Artifact, e
 		eksAArtifactsFuncs["cluster-api-provider-aws-snow"] = r.GetCapasAssets
 		eksAArtifactsFuncs["hook"] = r.GetHookAssets
 		eksAArtifactsFuncs["eks-anywhere-packages"] = r.GetPackagesAssets
+		eksAArtifactsFuncs["cluster-api-provider-nutanix"] = r.GetCapxAssets
 	}
 
 	for componentName, artifactFunc := range eksAArtifactsFuncs {
