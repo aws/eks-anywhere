@@ -313,7 +313,7 @@ func (mr *MockProviderMockRecorder) PostClusterDeleteValidate(arg0, arg1 interfa
 }
 
 // PreCapiInstallOnBootstrap mocks base method.
-func (m *MockProvider) PreCapiInstallOnBootstrap(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 *types.Cluster) error {
+func (m *MockProvider) PreCapiInstallOnBootstrap(arg0 context.Context, arg1 *types.Cluster, arg2 *cluster.Spec) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "PreCapiInstallOnBootstrap", arg0, arg1, arg2)
 	ret0, _ := ret[0].(error)

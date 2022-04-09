@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hegel
+  namespace: {{.namespace}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hegel
+  template:
+    metadata:
+      labels:
+        app: hegel
+    spec:
+      containers:
+      - name: hegel
+        image: {{.hegelImage}}
+        env:
+        - name: GRPC_PORT
+          value: "42115"
+        - name: HEGEL_FACILITY
+          value: onprem
+        - name: HEGEL_USE_TLS
+          value: "0"
+        - name: TINKERBELL_GRPC_AUTHORITY
+          value: tink-server.default.svc.cluster.local:{{.tinkGrpcPort}}
+        - name: TINKERBELL_CERT_URL
+          value: http://tink-server.default.svc.cluster.local:{{.tinkCertPort}}/cert
+        - name: DATA_MODEL_VERSION
+          value: "1"
+        - name: CUSTOM_ENDPOINTS
+          value: '{"/metadata":""}'
+        ports:
+        - containerPort: 50060
+        - containerPort: {{.hegelPort}}
+          hostPort: {{.hegelPort}}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+status: {}

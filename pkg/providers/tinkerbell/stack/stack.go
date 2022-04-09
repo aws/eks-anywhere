@@ -2,41 +2,57 @@ package stack
 
 import (
 	_ "embed"
-	"fmt"
 
+	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/templater"
-	appsv1 "k8s.io/api/apps/v1"
-	"sigs.k8s.io/yaml"
 )
 
-//go:embed manifests/pbnj.yaml
-var pbnjManifest string
+//go:embed manifests/database.yaml
+var databaseManifest string
 
 //go:embed manifests/tink.yaml
 var tinkManifest string
 
+//go:embed manifests/hegel.yaml
+var hegelManifest string
+
+//go:embed manifests/pbnj.yaml
+var pbnjManifest string
+
 const defaultEksaNamespace = "eksa-system"
 
-func GeneratePbnjManifest(image string) ([]byte, error) {
-	pbnjDeployment := appsv1.Deployment{}
-
-	if err := yaml.UnmarshalStrict([]byte(pbnjManifest), &pbnjDeployment); err != nil {
-		return nil, fmt.Errorf("unmarshalling PBNJ deployment: %v", err)
-	}
-
-	pbnjDeployment.Spec.Template.Spec.Containers[0].Image = image
-
-	return yaml.Marshal(pbnjDeployment)
+type TinkerbellStack struct {
+	values map[string]string
 }
 
-func GenerateTinkManifest(image, tinkerbellIp string) ([]byte, error) {
-	values := map[string]string{
-		"tinkServerImage":  image,
-		"tinkerbellHostIp": tinkerbellIp,
-		"namespace":        defaultEksaNamespace,
-		"grpcPort":         "42113",
-		"certPort":         "42114",
+func NewTinkerbellStack(bundle cluster.VersionsBundle, tinkerbellIp string) *TinkerbellStack {
+	return &TinkerbellStack{
+		values: map[string]string{
+			"tinkServerImage":  bundle.Tinkerbell.TinkServer.URI,
+			"pbnjImage":        bundle.Tinkerbell.Pbnj.URI,
+			"hegelImage":       bundle.Tinkerbell.Hegel.URI,
+			"namespace":        defaultEksaNamespace,
+			"tinkerbellHostIp": tinkerbellIp,
+			"tinkGrpcPort":     "42113",
+			"tinkCertPort":     "42114",
+			"pbnjGrpcPort":     "50051",
+			"hegelPort":        "50061",
+		},
 	}
+}
 
-	return templater.Execute(tinkManifest, values)
+func (s *TinkerbellStack) GenerateDatabaseManifest() ([]byte, error) {
+	return templater.Execute(databaseManifest, s.values)
+}
+
+func (s *TinkerbellStack) GenerateTinkManifest() ([]byte, error) {
+	return templater.Execute(tinkManifest, s.values)
+}
+
+func (s *TinkerbellStack) GenerateHegelManifest() ([]byte, error) {
+	return templater.Execute(hegelManifest, s.values)
+}
+
+func (s *TinkerbellStack) GeneratePbnjManifest() ([]byte, error) {
+	return templater.Execute(pbnjManifest, s.values)
 }

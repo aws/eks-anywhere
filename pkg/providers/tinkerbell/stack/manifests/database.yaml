@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tinkerbell/component: postgres
+  template:
+    metadata:
+      labels:
+        tinkerbell/component: postgres
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_DB
+          value: tinkerbell
+        - name: POSTGRES_PASSWORD
+          value: tinkerbell
+        - name: POSTGRES_USER
+          value: tinkerbell
+        - name: PGDATA
+          value: /var/lib/postgresql/data
+        image: postgres:10-alpine
+        imagePullPolicy: Always
+        livenessProbe:
+          exec:
+            command:
+              - pg_isready
+              - -U
+              - tinkerbell
+          failureThreshold: 30
+          periodSeconds: 1
+          timeoutSeconds: 1
+        name: postgres
+        ports:
+        - containerPort: 5432
+          protocol: TCP
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: postgres-data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      volumes:
+      - hostPath:
+          path: /postgres
+        name: postgres-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    tinkerbell/component: postgres
+spec:
+  selector:
+    tinkerbell/component: postgres
+  ports:
+  - name: pg-port
+    port: 5432
+    protocol: TCP
+    targetPort: 5432
+  type: ClusterIP
+

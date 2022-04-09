@@ -215,19 +215,9 @@ data:
     EOF
     )
 
-    write_csr() {
+    write_file() {
       echo "Writing file: $1"
-      echo $csr | sed "s/TINKERBELL_HOST_IP/$2/g" > $1
-    }
-
-    write_ca_csr() {
-      echo "Writing file: $1"
-      echo $ca_csr > $1
-    }
-
-    write_ca_config() {
-      echo "Writing file: $1"
-      echo $ca_config > $1
+      echo $2 > $1
     }
 
     # cleanup will remove unneeded files
@@ -267,9 +257,9 @@ data:
       local bundle_crt_file="${certs_dir}/bundle.pem"
 
       # Writing the files required to generate certs
-      write_csr "${csr_file}" "${sans_ip}"
-      write_ca_csr "${ca_csr_file}"
-      write_ca_config "${ca_config_file}"
+      write_file "${csr_file}" "${csr}"
+      write_file "${ca_csr_file}" "${ca_csr}"
+      write_file "${ca_config_file}" "${ca_config}"
 
       # Generate the certs
       gen "${ca_crt_file}" "${server_crt_file}" "${server_key_file}" "${csr_file}" "${ca_csr_file}" "${ca_config_file}"

@@ -148,7 +148,7 @@ func (p *snowProvider) GenerateStorageClass() []byte {
 	return nil
 }
 
-func (p *snowProvider) PreCapiInstallOnBootstrap(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+func (p *snowProvider) PreCapiInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
 

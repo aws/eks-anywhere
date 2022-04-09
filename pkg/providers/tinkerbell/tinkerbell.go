@@ -240,9 +240,9 @@ func (p *tinkerbellProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClu
 	return opts, nil
 }
 
-func (p *tinkerbellProvider) PreCapiInstallOnBootstrap(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+func (p *tinkerbellProvider) PreCapiInstallOnBootstrap(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	if p.setupTinkerbell {
-		if err := p.installTinkerbell(ctx, cluster); err != nil {
+		if err := p.installTinkerbell(ctx, cluster, clusterSpec); err != nil {
 			return fmt.Errorf("installing tinkerbell stack on the bootstrap cluster: %v", err)
 		}
 	}
@@ -261,15 +261,42 @@ func (p *tinkerbellProvider) PostBootstrapSetup(ctx context.Context, clusterConf
 	return nil
 }
 
-func (p *tinkerbellProvider) installTinkerbell(ctx context.Context, cluster *types.Cluster) error {
-	pbnj, err := stack.GeneratePbnjManifest("public.ecr.aws/l0g8r8j6/tinkerbell/pbnj:9a09ef8e6fd38d1e54359743a4c6a64dc598748f-eks-a-v0.0.0-dev-build.2174")
+func (p *tinkerbellProvider) installTinkerbell(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
+	tinkerbellStack := stack.NewTinkerbellStack(*clusterSpec.VersionsBundle, p.datacenterConfig.Spec.TinkerbellIP)
+
+	db, err := tinkerbellStack.GenerateDatabaseManifest()
 	if err != nil {
-		return fmt.Errorf("generating tinkerbell stack manifests: %v", err)
+		return fmt.Errorf("generating tinkerbell database manifest: %v", err)
 	}
-	fmt.Println(string(pbnj))
+
+	if err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, db); err != nil {
+		return fmt.Errorf("applying tinkerbell database manifest: %v", err)
+	}
+
+	tink, err := tinkerbellStack.GenerateTinkManifest()
+	if err != nil {
+		return fmt.Errorf("generating tink-server manifest: %v", err)
+	}
+
+	if err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, tink); err != nil {
+		return fmt.Errorf("applying tink-server manifest: %v", err)
+	}
+
+	hegel, err := tinkerbellStack.GenerateHegelManifest()
+	if err != nil {
+		return fmt.Errorf("generating hegel manifest: %v", err)
+	}
+
+	if err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, hegel); err != nil {
+		return fmt.Errorf("applying hegel manifest: %v", err)
+	}
+	pbnj, err := tinkerbellStack.GeneratePbnjManifest()
+	if err != nil {
+		return fmt.Errorf("generating pbnj manifest: %v", err)
+	}
 
 	if err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, pbnj); err != nil {
-		return fmt.Errorf("applying hardware yaml: %v", err)
+		return fmt.Errorf("applying pbnj manifest: %v", err)
 	}
 	return nil
 }

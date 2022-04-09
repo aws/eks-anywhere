@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pbnj
-  namespace: {{.namespace}}
+  namespace: eksa-system
 spec:
   replicas: 1
   selector:
@@ -14,8 +14,8 @@ spec:
         app: pbnj
     spec:
       containers:
-      - image: {{.pbnjImage}}
+      - image: public.ecr.aws/eks-anywhere/pbnj:latest
         name: pbnj
         ports:
-        - containerPort: {{.pbnjGrpcPort}}
-          hostPort: {{.pbnjGrpcPort}}
+        - containerPort: 50051
+          hostPort: 50051
