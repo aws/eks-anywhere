@@ -148,6 +148,10 @@ func (p *snowProvider) GenerateStorageClass() []byte {
 	return nil
 }
 
+func (p *snowProvider) PreCapiInstallOnBootstrap(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
 func (p *snowProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }

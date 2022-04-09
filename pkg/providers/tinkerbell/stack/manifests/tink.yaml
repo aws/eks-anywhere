@@ -1,0 +1,286 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tink-server
+  namespace: {{.namespace}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tink-server
+  template:
+    metadata:
+      labels:
+        app: tink-server
+    spec:
+      initContainers:
+      - name: generate-certificates
+        image: cfssl/cfssl
+        command: ["/code/tls/generate.sh"]
+        env:
+        - name: TINKERBELL_HOST_IP
+          value: {{.tinkerbellHostIp}}
+        volumeMounts:
+        - name: tls-gen-code
+          mountPath: /code/tls
+        - name: certs
+          mountPath: /certs/onprem
+      - name: apply-migrations
+        image: {{.tinkServerImage}}
+        env:
+          - name: ONLY_MIGRATION
+            value: "true"
+          - name: FACILITY
+            value: onprem
+          - name: PACKET_ENV
+            value: testing
+          - name: PACKET_VERSION
+            value: ignored
+          - name: PGDATABASE
+            value: tinkerbell
+          - name: PGHOST
+            value: postgres.default.svc.cluster.local
+          - name: PGPASSWORD
+            value: tinkerbell
+          - name: PGPORT
+            value: "5432"
+          - name: PGSSLMODE
+            value: disable
+          - name: PGUSER
+            value: tinkerbell
+          - name: ROLLBAR_DISABLE
+            value: "-1"
+          - name: ROLLBAR_TOKEN
+            value: ignored
+          - name: TINKERBELL_GRPC_AUTHORITY
+            value: :{{.grpcPort}}
+          - name: TINKERBELL_HTTP_AUTHORITY
+            value: :{{.certPort}}
+          - name: TINK_AUTH_PASSWORD
+            value: admin
+          - name: TINK_AUTH_USERNAME
+            value: admin        
+        volumeMounts:
+          - mountPath: /certs/onprem
+            name: certs
+      containers:
+      - env:
+          - name: PGDATABASE
+            value: tinkerbell
+          - name: PGHOST
+            value: postgres.default.svc.cluster.local
+          - name: PGPASSWORD
+            value: tinkerbell
+          - name: PGPORT
+            value: "5432"
+          - name: PGSSLMODE
+            value: disable
+          - name: PGUSER
+            value: tinkerbell
+          - name: FACILITY
+            value: onprem
+          - name: PACKET_ENV
+            value: testing
+          - name: PACKET_VERSION
+            value: ignored
+          - name: ROLLBAR_DISABLE
+            value: "-1"
+          - name: ROLLBAR_TOKEN
+            value: ignored
+          - name: TINK_AUTH_PASSWORD
+            value: admin
+          - name: TINK_AUTH_USERNAME
+            value: admin
+          - name: TINKERBELL_GRPC_AUTHORITY
+            value: :{{.grpcPort}}
+          - name: TINKERBELL_HTTP_AUTHORITY
+            value: :{{.certPort}}
+        image: {{.tinkServerImage}}
+        name: tink-server
+        ports:
+          - containerPort: {{.grpcPort}}
+            hostPort: {{.grpcPort}}
+            name: grpc
+          - containerPort: {{.certPort}}
+            hostPort: {{.certPort}}
+            name: cert
+        livenessProbe:
+          httpGet:
+            scheme: HTTP
+            path: /cert
+            port: {{.certPort}}
+        volumeMounts:
+        - mountPath: /certs/onprem
+          name: certs
+      restartPolicy: Always
+      volumes:
+      - name: tls-gen-code
+        configMap: 
+          name: tls-gen-scripts
+          defaultMode: 0744
+      - name: certs
+        hostPath:
+          path: /certs
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tink-server
+  labels:
+    app: tink-server
+spec:
+  ports:
+    - name: grpc
+      port: {{.grpcPort}}
+      targetPort: {{.grpcPort}}
+    - name: cert
+      port: {{.certPort}}
+      targetPort: {{.certPort}}
+  selector:
+    app: tink-server
+  type: ClusterIP
+---
+apiVersion: v1
+data:
+  generate.sh: |
+    #!/usr/bin/env bash
+
+    set -euxo pipefail
+
+    csr=$(cat <<"EOF"
+    {
+      "CN": "Tinkerbell",
+      "hosts": [
+        "{{.tinkerbellHostIp}}",
+        "tink-server.default.svc.cluster.local",
+        "tink-server",
+        "127.0.0.1",
+        "localhost"
+      ],
+      "key": {
+        "algo": "ecdsa",
+        "size": 256
+      },
+      "names": [
+        {
+          "L": "@FACILITY@"
+        }
+      ]
+    }
+    EOF
+    )
+
+    ca_csr=$(cat <<"EOF"
+    {
+      "CN": "Tinkerbell CA",
+      "key": {
+        "algo": "ecdsa",
+        "size": 256
+      },
+      "names": [
+        {
+          "L": "@FACILITY@"
+        }
+      ]
+    }
+    EOF
+    )
+
+    ca_config=$(cat <<"EOF"
+    {
+      "signing": {
+        "default": {
+          "expiry": "168h"
+        },
+        "profiles": {
+          "server": {
+            "expiry": "8760h",
+            "usages": [
+              "signing",
+              "key encipherment",
+              "server auth"
+            ]
+          },
+          "signing": {
+            "expiry": "8760h",
+            "usages": [
+              "signing",
+              "key encipherment"
+            ]
+          }
+        }
+      }
+    }
+    EOF
+    )
+
+    write_csr() {
+      echo "Writing file: $1"
+      echo $csr | sed "s/TINKERBELL_HOST_IP/$2/g" > $1
+    }
+
+    write_ca_csr() {
+      echo "Writing file: $1"
+      echo $ca_csr > $1
+    }
+
+    write_ca_config() {
+      echo "Writing file: $1"
+      echo $ca_config > $1
+    }
+
+    # cleanup will remove unneeded files
+    cleanup() {
+      rm -rf ca-key.pem ca.csr ca.pem server.csr server.pem
+    }
+
+    # gen will generate the key and certificate
+    gen() {
+      local ca_crt_destination="$1"
+      local server_crt_destination="$2"
+      local server_key_destination="$3"
+      local csr_file="$4"
+      local ca_csr_file="$5"
+      local ca_config_file="$6"
+
+      cfssl gencert -initca "${ca_csr_file}" | cfssljson -bare ca -
+      cfssl gencert -config "${ca_config_file}" -ca ca.pem -ca-key ca-key.pem -profile server "${csr_file}" | cfssljson -bare server
+      mv ca.pem "${ca_crt_destination}"
+      mv server.pem "${server_crt_destination}"
+      mv server-key.pem "${server_key_destination}"
+    }
+
+    # main orchestrates the process
+    main() {
+      local sans_ip="${TINKERBELL_HOST_IP}"
+      local certs_dir="/certs/onprem"
+      local csr_file="${certs_dir}/csr.json"
+      local ca_csr_file="${certs_dir}/ca-csr.json"
+      local ca_config_file="${certs_dir}/ca-config.json"
+      local ca_crt_file="${certs_dir}/ca-crt.pem"
+      local server_crt_file="${certs_dir}/server-crt.pem"
+      local server_key_file="${certs_dir}/server-key.pem"
+      # NB this is required for backward compat.
+      # TODO once the other think-* services use server-crt.pem this should
+      #      be removed.
+      local bundle_crt_file="${certs_dir}/bundle.pem"
+
+      # Writing the files required to generate certs
+      write_csr "${csr_file}" "${sans_ip}"
+      write_ca_csr "${ca_csr_file}"
+      write_ca_config "${ca_config_file}"
+
+      # Generate the certs
+      gen "${ca_crt_file}" "${server_crt_file}" "${server_key_file}" "${csr_file}" "${ca_csr_file}" "${ca_config_file}"
+      cp "${server_crt_file}" "${bundle_crt_file}"
+
+      # Perform cleanup
+      cleanup
+    }
+
+    main
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: tls-gen-scripts

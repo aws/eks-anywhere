@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pbnj
+  namespace: {{.namespace}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pbnj
+  template:
+    metadata:
+      labels:
+        app: pbnj
+    spec:
+      containers:
+      - image: {{.image}}
+        name: pbnj
+        ports:
+        - containerPort: 50051
+          hostPort: 50051

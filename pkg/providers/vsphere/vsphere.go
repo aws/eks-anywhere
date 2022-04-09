@@ -1056,6 +1056,10 @@ func (p *vsphereProvider) createSecret(ctx context.Context, cluster *types.Clust
 	return nil
 }
 
+func (p *vsphereProvider) PreCapiInstallOnBootstrap(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	return nil
+}
+
 func (p *vsphereProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
 	return nil
 }

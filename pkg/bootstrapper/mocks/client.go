@@ -213,3 +213,17 @@ func (mr *MockClusterClientMockRecorder) WithExtraDockerMounts() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithExtraDockerMounts", reflect.TypeOf((*MockClusterClient)(nil).WithExtraDockerMounts))
 }
+
+// WithExtraPortMappings mocks base method.
+func (m *MockClusterClient) WithExtraPortMappings(arg0 []int) bootstrapper.BootstrapClusterClientOption {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WithExtraPortMappings", arg0)
+	ret0, _ := ret[0].(bootstrapper.BootstrapClusterClientOption)
+	return ret0
+}
+
+// WithExtraPortMappings indicates an expected call of WithExtraPortMappings.
+func (mr *MockClusterClientMockRecorder) WithExtraPortMappings(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithExtraPortMappings", reflect.TypeOf((*MockClusterClient)(nil).WithExtraPortMappings), arg0)
+}

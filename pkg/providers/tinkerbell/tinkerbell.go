@@ -30,6 +30,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/hardware"
 	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/pbnj"
+	"github.com/aws/eks-anywhere/pkg/providers/tinkerbell/stack"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -62,6 +63,7 @@ var (
 	eksaTinkerbellDatacenterResourceType = fmt.Sprintf("tinkerbelldatacenterconfigs.%s", v1alpha1.GroupVersion.Group)
 	eksaTinkerbellMachineResourceType    = fmt.Sprintf("tinkerbellmachineconfigs.%s", v1alpha1.GroupVersion.Group)
 	requiredEnvs                         = []string{tinkerbellCertURLKey, tinkerbellGRPCAuthKey, tinkerbellIPKey, tinkerbellPBnJGRPCAuthorityKey, tinkerbellHegelURLKey}
+	tinkerbellStackPorts                 = []int{42113, 42114, 50051, 50061}
 )
 
 type tinkerbellProvider struct {
@@ -229,17 +231,44 @@ func (p *tinkerbellProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClu
 		env["NO_PROXY"] = noProxy
 	}
 
-	return []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}, nil
+	opts := []bootstrapper.BootstrapClusterOption{bootstrapper.WithEnv(env)}
+
+	if p.setupTinkerbell {
+		opts = append(opts, bootstrapper.WithExtraPortMappings(tinkerbellStackPorts))
+	}
+
+	return opts, nil
+}
+
+func (p *tinkerbellProvider) PreCapiInstallOnBootstrap(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
+	if p.setupTinkerbell {
+		if err := p.installTinkerbell(ctx, cluster); err != nil {
+			return fmt.Errorf("installing tinkerbell stack on the bootstrap cluster: %v", err)
+		}
+	}
+	return nil
 }
 
 func (p *tinkerbellProvider) PostBootstrapSetup(ctx context.Context, clusterConfig *v1alpha1.Cluster, cluster *types.Cluster) error {
-	// TODO: figure out if we need something else here
 	hardwareSpec, err := p.validator.hardwareConfig.HardwareSpecMarshallable()
 	if err != nil {
 		return fmt.Errorf("failed marshalling resources for hardware spec: %v", err)
 	}
 	err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, hardwareSpec)
 	if err != nil {
+		return fmt.Errorf("applying hardware yaml: %v", err)
+	}
+	return nil
+}
+
+func (p *tinkerbellProvider) installTinkerbell(ctx context.Context, cluster *types.Cluster) error {
+	pbnj, err := stack.GeneratePbnjManifest("public.ecr.aws/l0g8r8j6/tinkerbell/pbnj:9a09ef8e6fd38d1e54359743a4c6a64dc598748f-eks-a-v0.0.0-dev-build.2174")
+	if err != nil {
+		return fmt.Errorf("generating tinkerbell stack manifests: %v", err)
+	}
+	fmt.Println(string(pbnj))
+
+	if err = p.providerKubectlClient.ApplyKubeSpecFromBytesForce(ctx, cluster, pbnj); err != nil {
 		return fmt.Errorf("applying hardware yaml: %v", err)
 	}
 	return nil

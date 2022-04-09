@@ -312,6 +312,20 @@ func (mr *MockProviderMockRecorder) PostClusterDeleteValidate(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PostClusterDeleteValidate", reflect.TypeOf((*MockProvider)(nil).PostClusterDeleteValidate), arg0, arg1)
 }
 
+// PreCapiInstallOnBootstrap mocks base method.
+func (m *MockProvider) PreCapiInstallOnBootstrap(arg0 context.Context, arg1 *v1alpha1.Cluster, arg2 *types.Cluster) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PreCapiInstallOnBootstrap", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PreCapiInstallOnBootstrap indicates an expected call of PreCapiInstallOnBootstrap.
+func (mr *MockProviderMockRecorder) PreCapiInstallOnBootstrap(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PreCapiInstallOnBootstrap", reflect.TypeOf((*MockProvider)(nil).PreCapiInstallOnBootstrap), arg0, arg1, arg2)
+}
+
 // RunPostControlPlaneCreation mocks base method.
 func (m *MockProvider) RunPostControlPlaneCreation(arg0 context.Context, arg1 *cluster.Spec, arg2 *types.Cluster) error {
 	m.ctrl.T.Helper()
