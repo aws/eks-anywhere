@@ -235,9 +235,7 @@ func (p *nutanixProvider) UpdateKubeConfig(content *[]byte, clusterName string) 
 }
 
 func (p *nutanixProvider) Version(clusterSpec *cluster.Spec) string {
-	// TODO: Add Nutanix to the bundle and add it's versions
-	// return clusterSpec.VersionsBundle.Nutanix.Version
-	return "nutanix-dev"
+	return clusterSpec.VersionsBundle.Nutanix.Version
 }
 
 func (p *nutanixProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {

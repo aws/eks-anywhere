@@ -317,8 +317,9 @@ type SnowBundle struct {
 }
 
 type NutanixBundle struct {
-	Version         string   `json:"version"`
-	Components      Manifest `json:"components"`
-	Metadata        Manifest `json:"metadata"`
-	ClusterTemplate Manifest `json:"clusterTemplate"`
+	ClusterAPIController Image    `json:"clusterAPIController"`
+	Version              string   `json:"version"`
+	Components           Manifest `json:"components"`
+	Metadata             Manifest `json:"metadata"`
+	ClusterTemplate      Manifest `json:"clusterTemplate"`
 }

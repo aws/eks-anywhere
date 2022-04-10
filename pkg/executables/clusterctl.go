@@ -227,6 +227,11 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		tinkerbellProvider = "true"
 	}
 
+	nutanixProvider := "false"
+	if features.IsActive(features.NutanixProvider()) {
+		nutanixProvider = "true"
+	}
+
 	data := map[string]string{
 		"CertManagerInjectorRepository":                   imageRepository(bundle.CertManager.Cainjector),
 		"CertManagerInjectorTag":                          bundle.CertManager.Cainjector.Tag(),
@@ -253,6 +258,8 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		"ClusterApiAwsKubeRbacProxyTag":                   bundle.Aws.KubeProxy.Tag(),
 		"ClusterApiVSphereControllerRepository":           imageRepository(bundle.VSphere.ClusterAPIController),
 		"ClusterApiVSphereControllerTag":                  bundle.VSphere.ClusterAPIController.Tag(),
+		"ClusterApiNutanixControllerRepository":           imageRepository(bundle.Nutanix.ClusterAPIController),
+		"ClusterApiNutanixControllerTag":                  bundle.Nutanix.ClusterAPIController.Tag(),
 		"ClusterApiCloudStackManagerRepository":           imageRepository(bundle.CloudStack.ClusterAPIController),
 		"ClusterApiCloudStackManagerTag":                  bundle.CloudStack.ClusterAPIController.Tag(),
 		"ClusterApiVSphereKubeRbacProxyRepository":        imageRepository(bundle.VSphere.KubeProxy),
@@ -271,11 +278,13 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 		"EtcdadmControllerKubeRbacProxyTag":               bundle.ExternalEtcdController.KubeProxy.Tag(),
 		"DockerProviderVersion":                           bundle.Docker.Version,
 		"VSphereProviderVersion":                          bundle.VSphere.Version,
+		"NutanixProviderVersion":                          bundle.Nutanix.Version,
 		"CloudStackProviderVersion":                       bundle.CloudStack.Version,
 		"AwsProviderVersion":                              bundle.Aws.Version,
 		"SnowProviderVersion":                             bundle.Snow.Version,
 		"TinkerbellProviderVersion":                       "v0.1.0", // TODO - version should come from the bundle
 		"IsActiveTinkerbellProvider":                      tinkerbellProvider,
+		"IsActiveNutanixProvider":                         nutanixProvider,
 		"ClusterApiProviderVersion":                       bundle.ClusterAPI.Version,
 		"KubeadmControlPlaneProviderVersion":              bundle.ControlPlane.Version,
 		"KubeadmBootstrapProviderVersion":                 bundle.Bootstrap.Version,
@@ -304,6 +313,7 @@ func (c *Clusterctl) buildConfig(clusterSpec *cluster.Spec, clusterName string, 
 
 var providerNamespaces = map[string]string{
 	constants.VSphereProviderName:    constants.CapvSystemNamespace,
+	constants.NutanixProviderName:    constants.CapxSystemNamespace,
 	constants.DockerProviderName:     constants.CapdSystemNamespace,
 	constants.CloudStackProviderName: constants.CapcSystemNamespace,
 	constants.AWSProviderName:        constants.CapaSystemNamespace,
