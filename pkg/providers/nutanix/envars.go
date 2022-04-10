@@ -8,7 +8,6 @@ import (
 )
 
 func SetupEnvVars(datacenterConfig *anywherev1.NutanixDatacenterConfig) error {
-	fmt.Printf("datacenterConfig: %#v\n", datacenterConfig)
 	if err := os.Setenv(nutanixUsernameKey, datacenterConfig.Spec.NutanixUser); err != nil {
 		return fmt.Errorf("unable to set %s: %v", nutanixUsernameKey, err)
 	}
@@ -20,6 +19,5 @@ func SetupEnvVars(datacenterConfig *anywherev1.NutanixDatacenterConfig) error {
 	if err := os.Setenv(nutanixEndpointKey, datacenterConfig.Spec.NutanixEndpoint); err != nil {
 		return fmt.Errorf("unable to set %s: %v", nutanixEndpointKey, err)
 	}
-
 	return nil
 }
