@@ -20,6 +20,12 @@ import (
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
 )
 
+const (
+	nutanixUsernameKey = "NUTANIX_USER"
+	nutanixPasswordKey = "NUTANIX_PASSWORD"
+	nutanixEndpointKey = "NUTANIX_ENDPOINT"
+)
+
 //go:embed config/template-cp.yaml
 var defaultCAPIConfigCP string
 
@@ -118,17 +124,30 @@ func (p *nutanixProvider) PostClusterDeleteValidate(ctx context.Context, managem
 
 func (p *nutanixProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	logger.Info("Warning: The nutanix infrastructure provider is still in development and should not be used in production")
-	// TODO: Add more validations
+	if err := SetupEnvVars(p.datacenterConfig); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+
+	// TODO
 	return nil
 }
 
 func (p *nutanixProvider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster) error {
-	// TODO: validations?
+	if err := SetupEnvVars(p.datacenterConfig); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+
+	// TODO
 	return nil
 }
 
 func (p *nutanixProvider) SetupAndValidateUpgradeCluster(ctx context.Context, _ *types.Cluster, _ *cluster.Spec) error {
 	// TODO: Add validations when this is supported
+	if err := SetupEnvVars(p.datacenterConfig); err != nil {
+		return fmt.Errorf("failed setup and validations: %v", err)
+	}
+
+	// TODO
 	return errors.New("upgrade for nutanix provider isn't currently supported")
 }
 
