@@ -213,14 +213,18 @@ func (ntb *NutanixTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *clu
 
 func (ntb *NutanixTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.Spec, workloadTemplateNames, kubeadmconfigTemplateNames map[string]string) (content []byte, err error) {
 	workerSpecs := make([][]byte, 0, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
-	for _, _ = range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		var values map[string]interface{}
+	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		values := buildTemplateMapMD(clusterSpec, ntb.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name])
+		values["workloadTemplateName"] = workloadTemplateNames[workerNodeGroupConfiguration.Name]
+		values["workloadkubeadmconfigTemplateName"] = kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name]
+
 		bytes, err := templater.Execute(defaultClusterConfigMD, values)
 		if err != nil {
 			return nil, err
 		}
 		workerSpecs = append(workerSpecs, bytes)
 	}
+
 	return templater.AppendYamlResources(workerSpecs...), nil
 }
 
