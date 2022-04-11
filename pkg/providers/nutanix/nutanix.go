@@ -14,6 +14,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
+	"github.com/aws/eks-anywhere/pkg/providers/common"
 	"github.com/aws/eks-anywhere/pkg/templater"
 	"github.com/aws/eks-anywhere/pkg/types"
 
@@ -75,6 +76,7 @@ func NewProvider(
 	return &nutanixProvider{
 		clusterConfig:    clusterConfig,
 		datacenterConfig: datacenterConfig,
+		machineConfigs:   machineConfigs,
 		templateBuilder: &NutanixTemplateBuilder{
 			datacenterSpec:              &datacenterConfig.Spec,
 			controlPlaneMachineSpec:     controlPlaneMachineSpec,
@@ -190,11 +192,11 @@ func (ntb *NutanixTemplateBuilder) EtcdMachineTemplateName(clusterName string) s
 }
 
 func (ntb *NutanixTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *cluster.Spec, buildOptions ...providers.BuildMapOption) (content []byte, err error) {
-	// var etcdMachineSpec v1alpha1.NutanixMachineConfigSpec
-	// if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-	// 	etcdMachineSpec = *ntb.etcdMachineSpec
-	// }
-	values := buildTemplateMapCP(clusterSpec, *ntb.controlPlaneMachineSpec)
+	var etcdMachineSpec v1alpha1.NutanixMachineConfigSpec
+	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineSpec = *ntb.etcdMachineSpec
+	}
+	values := buildTemplateMapCP(clusterSpec, *ntb.controlPlaneMachineSpec, etcdMachineSpec)
 
 	for _, buildOption := range buildOptions {
 		buildOption(values)
@@ -205,6 +207,7 @@ func (ntb *NutanixTemplateBuilder) GenerateCAPISpecControlPlane(clusterSpec *clu
 		return nil, err
 	}
 
+	fmt.Printf("template applied bytes: %s", string(bytes))
 	return bytes, nil
 }
 
@@ -222,8 +225,31 @@ func (ntb *NutanixTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.
 }
 
 func (p *nutanixProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
-	// TODO: implement
-	return nil, nil, nil
+	clusterName := clusterSpec.Cluster.Name
+
+	cpOpt := func(values map[string]interface{}) {
+		values["controlPlaneTemplateName"] = common.CPMachineTemplateName(clusterName, p.templateBuilder.now)
+		values["etcdTemplateName"] = common.EtcdMachineTemplateName(clusterName, p.templateBuilder.now)
+	}
+	controlPlaneSpec, err = p.templateBuilder.GenerateCAPISpecControlPlane(clusterSpec, cpOpt)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	workloadTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
+	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
+	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
+		fmt.Printf("workerNodeGroupConfiguration: %#v\n", workerNodeGroupConfiguration)
+		workloadTemplateNames[workerNodeGroupConfiguration.Name] = common.WorkerMachineTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
+		kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
+		fmt.Printf("p.machineConfigs: %#v\n", p.machineConfigs)
+		p.templateBuilder.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
+	}
+	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
+	if err != nil {
+		return nil, nil, err
+	}
+	return controlPlaneSpec, workersSpec, nil
 }
 
 func (p *nutanixProvider) GenerateCAPISpecForUpgrade(ctx context.Context, bootstrapCluster, workloadCluster *types.Cluster, currentSpec, newClusterSpec *cluster.Spec) (controlPlaneSpec, workersSpec []byte, err error) {
@@ -272,7 +298,7 @@ func (p *nutanixProvider) EnvMap(_ *cluster.Spec) (map[string]string, error) {
 
 func (p *nutanixProvider) GetDeployments() map[string][]string {
 	return map[string][]string{
-		"capx-system": {"capx-controller-manager"},
+		"capx-system": {"controller-manager"},
 	}
 }
 
@@ -296,8 +322,45 @@ func (p *nutanixProvider) DatacenterConfig(_ *cluster.Spec) providers.Datacenter
 }
 
 func (p *nutanixProvider) MachineConfigs(_ *cluster.Spec) []providers.MachineConfig {
-	// TODO: Figure out if something is needed here
-	return nil
+	configs := make(map[string]providers.MachineConfig, len(p.machineConfigs))
+	controlPlaneMachineName := p.clusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
+	p.machineConfigs[controlPlaneMachineName].Annotations = map[string]string{p.clusterConfig.ControlPlaneAnnotation(): "true"}
+	if p.clusterConfig.IsManaged() {
+		p.machineConfigs[controlPlaneMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
+	}
+	configs[controlPlaneMachineName] = p.machineConfigs[controlPlaneMachineName]
+
+	if p.clusterConfig.Spec.ExternalEtcdConfiguration != nil {
+		etcdMachineName := p.clusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
+		p.machineConfigs[etcdMachineName].Annotations = map[string]string{p.clusterConfig.EtcdAnnotation(): "true"}
+		if etcdMachineName != controlPlaneMachineName {
+			configs[etcdMachineName] = p.machineConfigs[etcdMachineName]
+			if p.clusterConfig.IsManaged() {
+				p.machineConfigs[etcdMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
+			}
+		}
+	}
+
+	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
+		workerMachineName := workerNodeGroupConfiguration.MachineGroupRef.Name
+		if _, ok := configs[workerMachineName]; !ok {
+			configs[workerMachineName] = p.machineConfigs[workerMachineName]
+			fmt.Printf("p.machineConfigs[workerMachineName]: %#v\n", p.machineConfigs[workerMachineName])
+			if p.clusterConfig.IsManaged() {
+				p.machineConfigs[workerMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
+			}
+		}
+	}
+	return configsMapToSlice(configs)
+}
+
+func configsMapToSlice(c map[string]providers.MachineConfig) []providers.MachineConfig {
+	configs := make([]providers.MachineConfig, 0, len(c))
+	for _, config := range c {
+		configs = append(configs, config)
+	}
+
+	return configs
 }
 
 func (p *nutanixProvider) ValidateNewSpec(_ context.Context, _ *types.Cluster, _ *cluster.Spec) error {
@@ -329,7 +392,7 @@ func machineDeploymentName(clusterName, nodeGroupName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, nodeGroupName)
 }
 
-func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alpha1.NutanixMachineConfigSpec) map[string]interface{} {
+func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alpha1.NutanixMachineConfigSpec, etcdMachineSpec v1alpha1.NutanixMachineConfigSpec) map[string]interface{} {
 	bundle := clusterSpec.VersionsBundle
 	format := "cloud-config"
 
