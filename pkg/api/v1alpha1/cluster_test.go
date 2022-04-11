@@ -10,8 +10,6 @@ import (
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 func TestValidateClusterName(t *testing.T) {
@@ -1993,7 +1991,7 @@ func TestValidateMirrorConfig(t *testing.T) {
 						InsecureSkipVerify: true,
 					},
 					DatacenterRef: Ref{
-						Kind: constants.SnowProviderName,
+						Kind: SnowDatacenterKind,
 					},
 				},
 			},
