@@ -239,10 +239,8 @@ func (p *nutanixProvider) GenerateCAPISpecForCreate(ctx context.Context, cluster
 	workloadTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	kubeadmconfigTemplateNames := make(map[string]string, len(clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations))
 	for _, workerNodeGroupConfiguration := range clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations {
-		fmt.Printf("workerNodeGroupConfiguration: %#v\n", workerNodeGroupConfiguration)
 		workloadTemplateNames[workerNodeGroupConfiguration.Name] = common.WorkerMachineTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
 		kubeadmconfigTemplateNames[workerNodeGroupConfiguration.Name] = common.KubeadmConfigTemplateName(clusterSpec.Cluster.Name, workerNodeGroupConfiguration.Name, p.templateBuilder.now)
-		fmt.Printf("p.machineConfigs: %#v\n", p.machineConfigs)
 		p.templateBuilder.workerNodeGroupMachineSpecs[workerNodeGroupConfiguration.MachineGroupRef.Name] = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec
 	}
 	workersSpec, err = p.templateBuilder.GenerateCAPISpecWorkers(clusterSpec, workloadTemplateNames, kubeadmconfigTemplateNames)
@@ -345,7 +343,6 @@ func (p *nutanixProvider) MachineConfigs(_ *cluster.Spec) []providers.MachineCon
 		workerMachineName := workerNodeGroupConfiguration.MachineGroupRef.Name
 		if _, ok := configs[workerMachineName]; !ok {
 			configs[workerMachineName] = p.machineConfigs[workerMachineName]
-			fmt.Printf("p.machineConfigs[workerMachineName]: %#v\n", p.machineConfigs[workerMachineName])
 			if p.clusterConfig.IsManaged() {
 				p.machineConfigs[workerMachineName].SetManagedBy(p.clusterConfig.ManagedBy())
 			}

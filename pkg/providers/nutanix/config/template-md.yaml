@@ -2,7 +2,7 @@ apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
   labels:
-    cluster.x-k8s.io/cluster-name: { { .clusterName } }
+    cluster.x-k8s.io/cluster-name: "{{.clusterName}}"
   name: "{{.clusterName}}-wmd"
   namespace: "{{.eksaSystemNamespace}}"
 spec:
