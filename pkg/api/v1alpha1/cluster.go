@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
 )
@@ -546,7 +545,7 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterConfig.Spec.RegistryMirrorConfiguration.Port)
 	}
 
-	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != constants.SnowProviderName {
+	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != SnowDatacenterKind {
 		return errors.New("insecureSkipVerify is only supported for snow provider")
 	}
 	return nil
