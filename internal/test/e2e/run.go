@@ -150,7 +150,7 @@ func RunTests(conf instanceRunConf) (testInstanceID string, testCommandResult *t
 
 func (e *E2ESession) runTests(regex string) (testCommandResult *testCommandResult, err error) {
 	logger.V(1).Info("Running e2e tests", "regex", regex)
-	command := "GOVERSION=go1.16.6 gotestsum --junitfile=junit-testing.xml --raw-command --format=standard-verbose --hide-summary=all --ignore-non-json-output-lines -- test2json -t -p e2e ./bin/e2e.test -test.v"
+	command := fmt.Sprintf("GOVERSION=go1.16.6 gotestsum --junitfile=junit-testing.xml --junitfile-testsuite-name=%s --raw-command --format=standard-verbose --hide-summary=all --ignore-non-json-output-lines -- test2json -t -p e2e ./bin/e2e.test -test.v", regex)
 
 	if regex != "" {
 		command = fmt.Sprintf("%s -test.run %s", command, regex)
