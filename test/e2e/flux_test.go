@@ -164,7 +164,7 @@ func TestVSphereKubernetes122GitopsOptionsFlux(t *testing.T) {
 	runFluxFlow(test)
 }
 
-func TestCloudStackKubernetes121GitopsOptionsFlux(t *testing.T) {
+func TestCloudStackKubernetes120GitopsOptionsFlux(t *testing.T) {
 	provider := framework.NewCloudStack(t, framework.WithRedhat120())
 	test := framework.NewClusterE2ETest(
 			t,
