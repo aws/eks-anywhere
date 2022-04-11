@@ -25,6 +25,7 @@ type NutanixMachineConfigGenerateOpt func(config *NutanixMachineConfigGenerate)
 
 // Used for generating yaml for generate clusterconfig command
 func NewNutanixMachineConfigGenerate(name string, opts ...NutanixMachineConfigGenerateOpt) *NutanixMachineConfigGenerate {
+	emptyString := ""
 	machineConfig := &NutanixMachineConfigGenerate{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       NutanixMachineConfigKind,
@@ -44,9 +45,9 @@ func NewNutanixMachineConfigGenerate(name string, opts ...NutanixMachineConfigGe
 			VCPUsPerSocket: DefaultNutanixVCPUsPerSocket,
 			VCPUSockets:    DefaultNutanixVCPUSockets,
 			MemorySize:     resource.MustParse(DefaultNutanixMemorySizeGi),
-			// Image:          NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: nil},
-			// Cluster:        NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: nil},
-			// Subnet:         NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: nil},
+			Image:          NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: &emptyString},
+			Cluster:        NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: &emptyString},
+			Subnet:         NutanixResourceIdentifier{Type: NutanixIdentifierName, Name: &emptyString},
 			SystemDiskSize: resource.MustParse(DefaultNutanixSystemDiskSizeGi),
 		},
 	}

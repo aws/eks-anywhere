@@ -21,9 +21,9 @@ type NutanixResourceIdentifier struct {
 
 	// uuid is the UUID of the resource in the PC.
 	// +optional
-	UUID *string `json:"uuid,omitempty"`
+	UUID *string `json:"uuid"`
 
 	// name is the resource name in the PC
 	// +optional
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name"`
 }

@@ -222,6 +222,7 @@ func (ntb *NutanixTemplateBuilder) GenerateCAPISpecWorkers(clusterSpec *cluster.
 		if err != nil {
 			return nil, err
 		}
+		fmt.Printf("template applied bytes: %s", string(bytes))
 		workerSpecs = append(workerSpecs, bytes)
 	}
 
@@ -426,6 +427,13 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"workerPoolName":         "md-0",
 		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys,
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
+		"vcpusPerSocket":         workerNodeGroupMachineSpec.VCPUsPerSocket,
+		"vcpuSockets":            workerNodeGroupMachineSpec.VCPUSockets,
+		"memorySize":             workerNodeGroupMachineSpec.MemorySize.String(),
+		"systemDiskSize":         workerNodeGroupMachineSpec.SystemDiskSize.String(),
+		"imageName":              workerNodeGroupMachineSpec.Image.Name,   //TODO pass name or uuid
+		"nutanixPEClusterName":   workerNodeGroupMachineSpec.Cluster.Name, //TODO pass name or uuid
+		"subnetName":             workerNodeGroupMachineSpec.Subnet.Name,  //TODO pass name or uuid
 	}
 	return values
 }

@@ -36,16 +36,16 @@ spec:
   template:
     spec:
       providerID: "nutanix://{{.clusterName}}-m1"
-      vcpusPerSocket: ${NUTANIX_MACHINE_VCPU_PER_SOCKET=1}
-      vcpuSockets: ${NUTANIX_MACHINE_VCPU_SOCKET=2}
-      memorySize: "${NUTANIX_MACHINE_MEMORY_SIZE=4Gi}"
-      systemDiskSize: "${NUTANIX_SYSTEMDISK_SIZE=40Gi}"
+      vcpusPerSocket: {{.vcpusPerSocket}}
+      vcpuSockets: {{.vcpuSockets}}
+      memorySize: {{.memorySize}}
+      systemDiskSize: {{.systemDiskSize}}
       image:
         type: name
-        name: "${NUTANIX_MACHINE_TEMPLATE_IMAGE_NAME}"
+        name: "{{.imageName}}"
       cluster:
         type: name
-        name: "${NUTANIX_PRISM_ELEMENT_CLUSTER_NAME}"
+        name: "{{.nutanixPEClusterName}}"
       subnet:
         type: name
-        name: "${NUTANIX_SUBNET_NAME}"
+        name: "{{.subnetName}}"
