@@ -182,9 +182,9 @@ func TestCloudStackKubernetes121GitopsOptionsFlux(t *testing.T) {
 		framework.WithClusterUpgradeGit(
 			api.WithWorkerNodeCount(3),
 		),
-		provider.WithProviderUpgradeGit(
-			framework.UpdateRedhatTemplate121Var(),
-		),
+		// Needed in order to replace the CloudStackDatacenterConfig namespace field with the value specified
+		// compared to when it was initially created without it.
+		provider.WithProviderUpgradeGit(),
 	)
 }
 
