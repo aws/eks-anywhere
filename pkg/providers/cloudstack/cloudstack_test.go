@@ -1353,7 +1353,7 @@ func TestClusterSpecChangedMachineConfigsChanged(t *testing.T) {
 	}
 	modifiedMachineConfig := machineConfigsMap[cc.MachineConfigRefs()[0].Name].DeepCopy()
 	modifiedMachineConfig.Spec.Affinity = "shiny-new-affinity"
-	kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, cc.MachineConfigRefs()[0].Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(modifiedMachineConfig, nil)
+	kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(modifiedMachineConfig, nil)
 	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl, nil)
 	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(dcConfig, nil)
 
