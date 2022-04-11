@@ -31,6 +31,7 @@ type Provider interface {
 	MachineConfigs(clusterSpec *cluster.Spec) []MachineConfig
 	ValidateNewSpec(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error
 	GenerateMHC() ([]byte, error)
+	SpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig DatacenterConfig, machineConfigs []MachineConfig) (bool, error)
 	ChangeDiff(currentSpec, newSpec *cluster.Spec) *types.ComponentChangeDiff
 	RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpec *cluster.Spec, clusterSpec *cluster.Spec, workloadCluster *types.Cluster, managementCluster *types.Cluster) error
 	UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error)

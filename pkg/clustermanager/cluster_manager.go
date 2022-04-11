@@ -449,7 +449,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	return nil
 }
 
-func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
+func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig, provider providers.Provider) (bool, error) {
 	cc, err := c.clusterClient.GetEksaCluster(ctx, cluster, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return false, err
@@ -529,53 +529,12 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 			}
 		}
 	case v1alpha1.CloudStackDatacenterKind:
-		existingCsdc, err := c.clusterClient.GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return false, err
-		}
-		csDc := datacenterConfig.(*v1alpha1.CloudStackDatacenterConfig)
-		if !existingCsdc.Spec.Equal(&csDc.Spec) {
-			logger.V(3).Info("New provider spec is different from the new spec")
-			return true, nil
-		}
-
-		machineConfigsSpecChanged, err := c.cloudstackMachineConfigsSpecChanged(ctx, cc, cluster, newClusterSpec, machineConfigs)
-		if err != nil {
-			return false, err
-		}
-		if machineConfigsSpecChanged {
-			return true, nil
-		}
+		// TODO: Move outside of just the CloudStack workflow
+		return provider.SpecChanged(ctx, cc, cluster, newClusterSpec, datacenterConfig, machineConfigs)
 		// TODO: Make sure happy paths at least are unit tested, especially if moving code to provider
 	default:
 		// Run upgrade flow
 		return true, nil
-	}
-
-	return false, nil
-}
-
-func (c *ClusterManager) cloudstackMachineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, machineConfigs []providers.MachineConfig) (bool, error) {
-	machineConfigMap := make(map[string]*v1alpha1.CloudStackMachineConfig)
-	for _, config := range machineConfigs {
-		mc := config.(*v1alpha1.CloudStackMachineConfig)
-		machineConfigMap[mc.Name] = mc
-	}
-
-	for _, oldMcRef := range cc.MachineConfigRefs() {
-		existingCsmc, err := c.clusterClient.GetEksaCloudStackMachineConfig(ctx, oldMcRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return false, err
-		}
-		csmc, ok := machineConfigMap[oldMcRef.Name]
-		if !ok {
-			logger.V(3).Info(fmt.Sprintf("Old machine config spec %s not found in the existing spec", oldMcRef.Name))
-			return true, nil
-		}
-		if !existingCsmc.Spec.Equal(&csmc.Spec) {
-			logger.V(3).Info(fmt.Sprintf("New machine config spec %s is different from the existing spec", oldMcRef.Name))
-			return true, nil
-		}
 	}
 
 	return false, nil

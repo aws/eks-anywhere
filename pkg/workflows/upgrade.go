@@ -238,7 +238,7 @@ func (s *upgradeNeeded) Run(ctx context.Context, commandContext *task.CommandCon
 	datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
 	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
 	newSpec := commandContext.ClusterSpec
-	diff, err := commandContext.ClusterManager.EKSAClusterSpecChanged(ctx, target, newSpec, datacenterConfig, machineConfigs)
+	diff, err := commandContext.ClusterManager.EKSAClusterSpecChanged(ctx, target, newSpec, datacenterConfig, machineConfigs, commandContext.Provider)
 	if err != nil {
 		commandContext.SetError(err)
 		return &CollectDiagnosticsTask{}

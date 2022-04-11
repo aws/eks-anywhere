@@ -67,6 +67,11 @@ func (p *snowProvider) SetupAndValidateCreateCluster(ctx context.Context, cluste
 	return nil
 }
 
+func (p *snowProvider) SpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
+	// TODO: Implement this method
+	return false, nil
+}
+
 func (p *snowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }

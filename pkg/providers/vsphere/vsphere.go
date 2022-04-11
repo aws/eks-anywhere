@@ -199,6 +199,11 @@ func (p *vsphereProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 	return nil
 }
 
+func (p *vsphereProvider) SpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
+	// Not implemented yet
+	return false, nil
+}
+
 func (p *vsphereProvider) BootstrapClusterOpts() ([]bootstrapper.BootstrapClusterOption, error) {
 	return common.BootstrapClusterOpts(p.datacenterConfig.Spec.Server, p.clusterConfig)
 }

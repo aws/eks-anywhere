@@ -50,6 +50,11 @@ type provider struct {
 	templateBuilder       *DockerTemplateBuilder
 }
 
+func (p *provider) SpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
+	// Do nothing as of now
+	return false, nil
+}
+
 func (p *provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
 	return nil
 }

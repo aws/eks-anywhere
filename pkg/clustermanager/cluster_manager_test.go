@@ -1035,7 +1035,7 @@ func TestClusterManagerClusterSpecChangedNoChanges(t *testing.T) {
 	tt.mocks.client.EXPECT().GetEksaVSphereMachineConfig(tt.ctx, tt.oldClusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(tt.oldControlPlaneMachineConfig, nil)
 	tt.mocks.client.EXPECT().GetEksaVSphereMachineConfig(tt.ctx, tt.oldClusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(tt.oldWorkerMachineConfig, nil)
 	tt.mocks.client.EXPECT().GetEksaOIDCConfig(tt.ctx, tt.oldClusterConfig.Spec.IdentityProviderRefs[0].Name, tt.cluster.KubeconfigFile, tt.clusterSpec.Cluster.Namespace).Return(tt.oldOIDCConfig, nil)
-	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig})
+	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig}, nil)
 	assert.Nil(t, err, "Error should be nil")
 	assert.False(t, diff, "No changes should have been detected")
 }
@@ -1045,7 +1045,7 @@ func TestClusterManagerClusterSpecChangedClusterChanged(t *testing.T) {
 	tt.newClusterConfig.Spec.KubernetesVersion = "1.20"
 
 	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Cluster.Name).Return(tt.oldClusterConfig, nil)
-	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig})
+	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig}, nil)
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, diff, "Changes should have been detected")
 }
@@ -1058,7 +1058,23 @@ func TestClusterManagerClusterSpecChangedEksDReleaseChanged(t *testing.T) {
 	tt.mocks.client.EXPECT().GetBundles(tt.ctx, tt.cluster.KubeconfigFile, tt.cluster.Name, "").Return(test.Bundles(t), nil)
 	tt.mocks.client.EXPECT().GetEksdRelease(tt.ctx, gomock.Any(), constants.EksaSystemNamespace, gomock.Any())
 	tt.mocks.client.EXPECT().GetEksaOIDCConfig(tt.ctx, tt.clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, tt.cluster.KubeconfigFile, tt.clusterSpec.Cluster.Namespace).Return(tt.oldOIDCConfig, nil)
-	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig})
+	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig}, nil)
+	assert.Nil(t, err, "Error should be nil")
+	assert.True(t, diff, "Changes should have been detected")
+}
+
+func TestClusterManagerClusterSpecChangedCloudStackDatacenterKind(t *testing.T) {
+	tt := newSpecChangedTest(t)
+	tt.oldClusterConfig.Spec.DatacenterRef.Kind = v1alpha1.CloudStackDatacenterKind
+	tt.clusterSpec.Cluster.Spec.DatacenterRef.Kind = v1alpha1.CloudStackDatacenterKind
+
+	tt.mocks.client.EXPECT().GetEksaCluster(tt.ctx, tt.cluster, tt.clusterSpec.Cluster.Name).Return(tt.oldClusterConfig, nil)
+	tt.mocks.client.EXPECT().GetBundles(tt.ctx, tt.cluster.KubeconfigFile, tt.cluster.Name, "").Return(test.Bundles(t), nil)
+	tt.mocks.client.EXPECT().GetEksdRelease(tt.ctx, gomock.Any(), constants.EksaSystemNamespace, gomock.Any())
+	tt.mocks.client.EXPECT().GetEksaOIDCConfig(tt.ctx, tt.clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, tt.cluster.KubeconfigFile, tt.clusterSpec.Cluster.Namespace).Return(tt.oldOIDCConfig, nil)
+	machineConfigs := []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig}
+	tt.mocks.provider.EXPECT().SpecChanged(tt.ctx, tt.oldClusterConfig, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, machineConfigs).Return(true, nil)
+	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, machineConfigs, tt.mocks.provider)
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, diff, "Changes should have been detected")
 }
@@ -1073,7 +1089,7 @@ func TestClusterManagerClusterSpecChangedNoChangesDatacenterSpecChanged(t *testi
 	tt.mocks.client.EXPECT().GetEksdRelease(tt.ctx, gomock.Any(), constants.EksaSystemNamespace, gomock.Any())
 	tt.mocks.client.EXPECT().GetEksaOIDCConfig(tt.ctx, tt.clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, tt.cluster.KubeconfigFile, tt.clusterSpec.Cluster.Namespace).Return(tt.oldOIDCConfig, nil)
 	tt.mocks.client.EXPECT().GetEksaVSphereDatacenterConfig(tt.ctx, tt.oldClusterConfig.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(tt.oldDatacenterConfig, nil)
-	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig})
+	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig}, nil)
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, diff, "Changes should have been detected")
 }
@@ -1089,7 +1105,7 @@ func TestClusterManagerClusterSpecChangedNoChangesControlPlaneMachineConfigSpecC
 	tt.mocks.client.EXPECT().GetEksaVSphereDatacenterConfig(tt.ctx, tt.oldClusterConfig.Spec.DatacenterRef.Name, gomock.Any(), gomock.Any()).Return(tt.oldDatacenterConfig, nil)
 	tt.mocks.client.EXPECT().GetEksaVSphereMachineConfig(tt.ctx, tt.oldClusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(tt.oldControlPlaneMachineConfig, nil)
 	tt.mocks.client.EXPECT().GetEksaOIDCConfig(tt.ctx, tt.clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, tt.cluster.KubeconfigFile, tt.clusterSpec.Cluster.Namespace).Return(tt.oldOIDCConfig, nil)
-	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig})
+	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig}, nil)
 
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, diff, "Changes should have been detected")
@@ -1107,7 +1123,7 @@ func TestClusterManagerClusterSpecChangedNoChangesWorkerNodeMachineConfigSpecCha
 	tt.mocks.client.EXPECT().GetEksaVSphereMachineConfig(tt.ctx, tt.oldClusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(tt.oldControlPlaneMachineConfig, nil)
 	tt.mocks.client.EXPECT().GetEksaVSphereMachineConfig(tt.ctx, tt.oldClusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(tt.oldWorkerMachineConfig, nil)
 	tt.mocks.client.EXPECT().GetEksaOIDCConfig(tt.ctx, tt.clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, tt.cluster.KubeconfigFile, tt.clusterSpec.Cluster.Namespace).Return(tt.oldOIDCConfig, nil)
-	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig})
+	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig}, nil)
 
 	assert.Nil(t, err, "Error should be nil")
 	assert.True(t, diff, "Changes should have been detected")
@@ -1129,7 +1145,7 @@ func TestClusterManagerClusterSpecChangedGitOpsDefault(t *testing.T) {
 	tt.mocks.client.EXPECT().GetEksaVSphereMachineConfig(tt.ctx, tt.oldClusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(tt.oldControlPlaneMachineConfig, nil)
 	tt.mocks.client.EXPECT().GetEksaVSphereMachineConfig(tt.ctx, tt.oldClusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name, gomock.Any(), gomock.Any()).Return(tt.oldWorkerMachineConfig, nil)
 	tt.mocks.client.EXPECT().GetEksaOIDCConfig(tt.ctx, tt.clusterSpec.Cluster.Spec.IdentityProviderRefs[0].Name, tt.cluster.KubeconfigFile, tt.clusterSpec.Cluster.Namespace).Return(tt.oldOIDCConfig, nil)
-	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig})
+	diff, err := tt.clusterManager.EKSAClusterSpecChanged(tt.ctx, tt.cluster, tt.clusterSpec, tt.newDatacenterConfig, []providers.MachineConfig{tt.newControlPlaneMachineConfig, tt.newWorkerMachineConfig}, nil)
 
 	assert.Nil(t, err, "Error should be nil")
 	assert.False(t, diff, "No changes should have been detected")

@@ -288,7 +288,7 @@ func (c *upgradeTestSetup) expectVerifyClusterSpecChanged(expectedCluster *types
 	gomock.InOrder(
 		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig),
 		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs),
-		c.clusterManager.EXPECT().EKSAClusterSpecChanged(c.ctx, expectedCluster, c.newClusterSpec, c.datacenterConfig, c.machineConfigs).Return(true, nil),
+		c.clusterManager.EXPECT().EKSAClusterSpecChanged(c.ctx, expectedCluster, c.newClusterSpec, c.datacenterConfig, c.machineConfigs, c.provider).Return(true, nil),
 	)
 }
 
@@ -317,7 +317,7 @@ func (c *upgradeTestSetup) expectVerifyClusterSpecNoChanges() {
 	gomock.InOrder(
 		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig),
 		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs),
-		c.clusterManager.EXPECT().EKSAClusterSpecChanged(c.ctx, c.workloadCluster, c.newClusterSpec, c.datacenterConfig, c.machineConfigs).Return(false, nil),
+		c.clusterManager.EXPECT().EKSAClusterSpecChanged(c.ctx, c.workloadCluster, c.newClusterSpec, c.datacenterConfig, c.machineConfigs, c.provider).Return(false, nil),
 	)
 }
 
