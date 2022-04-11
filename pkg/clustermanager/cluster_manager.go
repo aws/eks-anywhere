@@ -531,7 +531,6 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 	case v1alpha1.CloudStackDatacenterKind:
 		// TODO: Move outside of just the CloudStack workflow
 		return provider.SpecChanged(ctx, cc, cluster, newClusterSpec, datacenterConfig, machineConfigs)
-		// TODO: Make sure happy paths at least are unit tested, especially if moving code to provider
 	default:
 		// Run upgrade flow
 		return true, nil
