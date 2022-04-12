@@ -136,6 +136,14 @@ func (e *ClusterE2ETest) GetHardwarePool() map[string]*api.Hardware {
 	return e.HardwarePool
 }
 
+func (e *ClusterE2ETest) RunClusterFlowWithGitOps(clusterOpts ...ClusterE2ETestOpt) {
+	e.GenerateClusterConfig()
+	e.createCluster()
+	e.UpgradeWithGitOps(clusterOpts...)
+	time.Sleep(5 * time.Minute)
+	e.deleteCluster()
+}
+
 func WithClusterFiller(f ...api.ClusterFiller) ClusterE2ETestOpt {
 	return func(e *ClusterE2ETest) {
 		e.clusterFillers = append(e.clusterFillers, f...)
@@ -224,6 +232,24 @@ func (e *ClusterE2ETest) PowerOffHardware() {
 		err := pbnjClient.PowerOff(ctx, bmcInfo)
 		if err != nil {
 			e.T.Fatalf("failed to power off hardware: %v", err)
+		}
+	}
+}
+
+func (e *ClusterE2ETest) PowerOnHardware() {
+	pbnjEndpoint := os.Getenv(tinkerbellPBnJGRPCAuthEnvVar)
+	pbnjClient, err := pbnj.NewPBNJClient(pbnjEndpoint)
+	if err != nil {
+		e.T.Fatalf("failed to create pbnj client: %v", err)
+	}
+
+	ctx := context.Background()
+
+	for _, h := range e.TestHardware {
+		bmcInfo := api.NewBmcSecretConfig(h)
+		err := pbnjClient.PowerOn(ctx, bmcInfo)
+		if err != nil {
+			e.T.Fatalf("failed to power on hardware: %v", err)
 		}
 	}
 }

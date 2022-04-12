@@ -48,7 +48,7 @@ func (d Download) Run(ctx context.Context) error {
 		return fmt.Errorf("downloading images: %v", err)
 	}
 
-	toolsImage := b.Spec.VersionsBundles[0].Eksa.CliTools.VersionedImage()
+	toolsImage := b.DefaultEksAToolsImage().VersionedImage()
 	if err = d.EksaToolsImageDownloader.Move(ctx, toolsImage); err != nil {
 		return fmt.Errorf("downloading eksa tools image: %v", err)
 	}

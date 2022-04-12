@@ -27,10 +27,13 @@ type CloudStackDatacenterConfigSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Domain contains a grouping of accounts. Domains usually contain multiple accounts that have some logical relationship to each other and a set of delegated administrators with some authority over the domain and its subdomains
+	// This field is considered as a fully qualified domain name which is the same as the domain path without "ROOT/" prefix. For example, if "foo" is specified then a domain with "ROOT/foo" domain path is picked.
+	// The value "ROOT" is a special case that points to "the" ROOT domain of the CloudStack. That is, a domain with a path "ROOT/ROOT" is not allowed.
+	//
 	Domain string `json:"domain"`
 	// Zones is a list of one or more zones that are managed by a single CloudStack management endpoint.
 	Zones []CloudStackZone `json:"zones"`
-	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain name must also be provided.
+	// Account typically represents a customer of the service provider or a department in a large organization. Multiple users can exist in an account, and all CloudStack resources belong to an account. Accounts have users and users have credentials to operate on resources within that account. If an account name is provided, a domain must also be provided.
 	Account string `json:"account,omitempty"`
 	// CloudStack Management API endpoint's IP. It is added to VM's noproxy list
 	ManagementApiEndpoint string `json:"managementApiEndpoint"`

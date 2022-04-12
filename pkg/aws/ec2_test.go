@@ -103,18 +103,16 @@ func TestEC2KeyNameExistsError(t *testing.T) {
 	g.Expect(got).To(Equal(false))
 }
 
-func TestEC2CreateKeyPairs(t *testing.T) {
+func TestEC2ImportKeyPair(t *testing.T) {
 	g := newEC2Test(t)
 	key := "default"
-	val := "pem"
-	params := &ec2.CreateKeyPairInput{
-		KeyName: &key,
+	val := []byte("pem")
+	params := &ec2.ImportKeyPairInput{
+		KeyName:           &key,
+		PublicKeyMaterial: []byte(val),
 	}
-	out := &ec2.CreateKeyPairOutput{
-		KeyMaterial: &val,
-	}
-	g.ec2.EXPECT().CreateKeyPair(g.ctx, params).Return(out, nil)
-	got, err := g.client.EC2CreateKeyPair(g.ctx, key)
+	out := &ec2.ImportKeyPairOutput{}
+	g.ec2.EXPECT().ImportKeyPair(g.ctx, params).Return(out, nil)
+	err := g.client.EC2ImportKeyPair(g.ctx, key, val)
 	g.Expect(err).To(Succeed())
-	g.Expect(got).To(Equal(val))
 }

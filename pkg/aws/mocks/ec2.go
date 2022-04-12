@@ -35,26 +35,6 @@ func (m *MockEC2Client) EXPECT() *MockEC2ClientMockRecorder {
 	return m.recorder
 }
 
-// CreateKeyPair mocks base method.
-func (m *MockEC2Client) CreateKeyPair(ctx context.Context, params *ec2.CreateKeyPairInput, optFns ...func(*ec2.Options)) (*ec2.CreateKeyPairOutput, error) {
-	m.ctrl.T.Helper()
-	varargs := []interface{}{ctx, params}
-	for _, a := range optFns {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "CreateKeyPair", varargs...)
-	ret0, _ := ret[0].(*ec2.CreateKeyPairOutput)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateKeyPair indicates an expected call of CreateKeyPair.
-func (mr *MockEC2ClientMockRecorder) CreateKeyPair(ctx, params interface{}, optFns ...interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]interface{}{ctx, params}, optFns...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateKeyPair", reflect.TypeOf((*MockEC2Client)(nil).CreateKeyPair), varargs...)
-}
-
 // DescribeImages mocks base method.
 func (m *MockEC2Client) DescribeImages(ctx context.Context, params *ec2.DescribeImagesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeImagesOutput, error) {
 	m.ctrl.T.Helper()
@@ -93,4 +73,24 @@ func (mr *MockEC2ClientMockRecorder) DescribeKeyPairs(ctx, params interface{}, o
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{ctx, params}, optFns...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DescribeKeyPairs", reflect.TypeOf((*MockEC2Client)(nil).DescribeKeyPairs), varargs...)
+}
+
+// ImportKeyPair mocks base method.
+func (m *MockEC2Client) ImportKeyPair(ctx context.Context, params *ec2.ImportKeyPairInput, optFns ...func(*ec2.Options)) (*ec2.ImportKeyPairOutput, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, params}
+	for _, a := range optFns {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ImportKeyPair", varargs...)
+	ret0, _ := ret[0].(*ec2.ImportKeyPairOutput)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ImportKeyPair indicates an expected call of ImportKeyPair.
+func (mr *MockEC2ClientMockRecorder) ImportKeyPair(ctx, params interface{}, optFns ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, params}, optFns...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ImportKeyPair", reflect.TypeOf((*MockEC2Client)(nil).ImportKeyPair), varargs...)
 }

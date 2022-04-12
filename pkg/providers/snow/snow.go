@@ -11,7 +11,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
-	"github.com/aws/eks-anywhere/pkg/filewriter"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 	"github.com/aws/eks-anywhere/pkg/templater"
@@ -20,8 +19,8 @@ import (
 )
 
 const (
-	eksaSnowCredentialsFileKey = "EKSA_SNOW_DEVICES_CREDENTIALS_FILE"
-	eksaSnowCABundlesFileKey   = "EKSA_SNOW_DEVICES_CA_BUNDLES_FILE"
+	eksaSnowCredentialsFileKey = "EKSA_AWS_CREDENTIALS_FILE"
+	eksaSnowCABundlesFileKey   = "EKSA_AWS_CA_BUNDLES_FILE"
 	snowCredentialsKey         = "AWS_B64ENCODED_CREDENTIALS"
 	snowCertsKey               = "AWS_B64ENCODED_CA_BUNDLES"
 	maxRetries                 = 30
@@ -35,9 +34,9 @@ var (
 
 type snowProvider struct {
 	providerKubectlClient ProviderKubectlClient
-	writer                filewriter.FileWriter
 	retrier               *retrier.Retrier
 	bootstrapCreds        bootstrapCreds
+	configManager         *ConfigManager
 }
 
 type ProviderKubectlClient interface {
@@ -45,12 +44,12 @@ type ProviderKubectlClient interface {
 	DeleteEksaMachineConfig(ctx context.Context, snowMachineResourceType string, snowMachineConfigName string, kubeconfigFile string, namespace string) error
 }
 
-func NewProvider(providerKubectlClient ProviderKubectlClient, writer filewriter.FileWriter, now types.NowFunc) *snowProvider {
+func NewProvider(providerKubectlClient ProviderKubectlClient, configManager *ConfigManager, now types.NowFunc) *snowProvider {
 	retrier := retrier.NewWithMaxRetries(maxRetries, backOffPeriod)
 	return &snowProvider{
 		providerKubectlClient: providerKubectlClient,
-		writer:                writer,
 		retrier:               retrier,
+		configManager:         configManager,
 	}
 }
 
@@ -58,27 +57,13 @@ func (p *snowProvider) Name() string {
 	return constants.SnowProviderName
 }
 
-func (p *snowProvider) setupMachineConfigs(clusterSpec *cluster.Spec) {
-	controlPlaneMachineName := clusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name
-	clusterSpec.SnowMachineConfigs[controlPlaneMachineName].Annotations = map[string]string{clusterSpec.Cluster.ControlPlaneAnnotation(): "true"}
-
-	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
-		etcdMachineName := clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-		clusterSpec.SnowMachineConfigs[etcdMachineName].Annotations = map[string]string{clusterSpec.Cluster.EtcdAnnotation(): "true"}
-	}
-
-	if clusterSpec.Cluster.IsManaged() {
-		for _, mc := range clusterSpec.SnowMachineConfigs {
-			mc.SetManagedBy(clusterSpec.Cluster.ManagedBy())
-		}
-	}
-}
-
 func (p *snowProvider) SetupAndValidateCreateCluster(ctx context.Context, clusterSpec *cluster.Spec) error {
 	if err := p.setupBootstrapCreds(); err != nil {
-		return fmt.Errorf("failed setting up credentials: %v", err)
+		return fmt.Errorf("setting up credentials: %v", err)
 	}
-	p.setupMachineConfigs(clusterSpec)
+	if err := p.configManager.SetDefaultsAndValidate(ctx, clusterSpec.Config); err != nil {
+		return fmt.Errorf("setting defaults and validate snow config: %v", err)
+	}
 	return nil
 }
 

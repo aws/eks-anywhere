@@ -17,7 +17,7 @@ import (
 	"github.com/spf13/viper"
 	"sigs.k8s.io/yaml"
 
-	"github.com/aws/eks-anywhere/pkg/cluster"
+	"github.com/aws/eks-anywhere/pkg/dependencies"
 	"github.com/aws/eks-anywhere/pkg/files"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/releases"
@@ -35,14 +35,10 @@ var downloadArtifactsopts = &downloadArtifactsOptions{}
 
 func init() {
 	downloadCmd.AddCommand(downloadArtifactsCmd)
-	downloadArtifactsCmd.Flags().StringVarP(&downloadArtifactsopts.fileName, "filename", "f", "", "Filename that contains EKS-A cluster configuration")
+	downloadArtifactsCmd.Flags().StringVarP(&downloadArtifactsopts.fileName, "filename", "f", "", "[Deprecated] Filename that contains EKS-A cluster configuration")
 	downloadArtifactsCmd.Flags().StringVarP(&downloadArtifactsopts.downloadDir, "download-dir", "d", "eks-anywhere-downloads", "Directory to download the artifacts to")
 	downloadArtifactsCmd.Flags().BoolVarP(&downloadArtifactsopts.dryRun, "dry-run", "", false, "Print the manifest URIs without downloading them")
 	downloadArtifactsCmd.Flags().BoolVarP(&downloadArtifactsopts.retainDir, "retain-dir", "r", false, "Do not delete the download folder after creating a tarball")
-	err := downloadArtifactsCmd.MarkFlagRequired("filename")
-	if err != nil {
-		log.Fatalf("Error marking filename flag as required: %v", err)
-	}
 }
 
 var downloadArtifactsCmd = &cobra.Command{
@@ -60,17 +56,21 @@ var downloadArtifactsCmd = &cobra.Command{
 }
 
 func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) error {
-	cliVersion := version.Get()
-	clusterSpec, err := cluster.NewSpecFromClusterConfig(opts.fileName, cliVersion)
+	factory := dependencies.NewFactory()
+	deps, err := factory.
+		WithFileReader().
+		WithManifestReader().
+		Build(context)
 	if err != nil {
 		return err
 	}
 
-	if clusterSpec.Cluster.Spec.RegistryMirrorConfiguration == nil || clusterSpec.Cluster.Spec.RegistryMirrorConfiguration.Endpoint == "" {
-		return fmt.Errorf("endpoint not set. It is necessary to define a valid endpoint in your spec (registryMirrorConfiguration.endpoint)")
-	}
+	reader := deps.FileReader
 
-	reader := files.NewReader(files.WithUserAgent(fmt.Sprintf("eks-a-cli-download/%s", version.Get().GitVersion)))
+	bundles, err := deps.ManifestReader.ReadBundlesForVersion(version.Get().GitVersion)
+	if err != nil {
+		return err
+	}
 
 	// download the eks-a-release.yaml
 	if !opts.dryRun {
@@ -80,7 +80,7 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 		}
 	}
 
-	versionBundles := clusterSpec.Bundles.Spec.VersionsBundles
+	versionBundles := bundles.Spec.VersionsBundles
 	for i, bundle := range versionBundles {
 		for component, manifestList := range bundle.Manifests() {
 			for _, manifest := range manifestList {
@@ -100,10 +100,10 @@ func downloadArtifacts(context context.Context, opts *downloadArtifactsOptions) 
 				*manifest = filePath
 			}
 		}
-		clusterSpec.Bundles.Spec.VersionsBundles[i] = bundle
+		bundles.Spec.VersionsBundles[i] = bundle
 	}
 
-	bundleReleaseContent, err := yaml.Marshal(clusterSpec.Bundles)
+	bundleReleaseContent, err := yaml.Marshal(bundles)
 	if err != nil {
 		return fmt.Errorf("marshaling bundle-release.yaml: %v", err)
 	}

@@ -48,6 +48,7 @@ type kindExecConfig struct {
 	KubernetesVersion      string
 	RegistryMirrorEndpoint string
 	RegistryCACertPath     string
+	ExtraPortMappings      []int
 	DockerExtraMounts      bool
 	DisableDefaultCNI      bool
 }
@@ -130,6 +131,22 @@ func (k *Kind) WithExtraDockerMounts() bootstrapper.BootstrapClusterClientOption
 		}
 
 		k.execConfig.DockerExtraMounts = true
+		return nil
+	}
+}
+
+func (k *Kind) WithExtraPortMappings(ports []int) bootstrapper.BootstrapClusterClientOption {
+	return func() error {
+		if k.execConfig == nil {
+			return errors.New("kind exec config is not ready")
+		}
+
+		if len(ports) == 0 {
+			return errors.New("no ports found in the list")
+		}
+
+		k.execConfig.ExtraPortMappings = ports
+
 		return nil
 	}
 }
