@@ -63,11 +63,11 @@ type GitOptions struct {
 	Writer filewriter.FileWriter
 }
 
-func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, gitOpsConfig *v1alpha1.GitOpsConfig, writer filewriter.FileWriter) (*GitOptions, error) {
-	if gitOpsConfig == nil {
+func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, fluxConfig *v1alpha1.FluxConfig, writer filewriter.FileWriter) (*GitOptions, error) {
+	if fluxConfig == nil {
 		return nil, nil
 	}
-	localGitRepoPath := filepath.Join(cluster.Name, "git", gitOpsConfig.Spec.Flux.Github.Repository)
+	localGitRepoPath := filepath.Join(cluster.Name, "git", fluxConfig.Spec.Github.Repository)
 	gogitOptions := gogit.Options{
 		RepositoryDirectory: localGitRepoPath,
 	}
@@ -75,7 +75,7 @@ func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, gitOpsConfig 
 
 	gitProviderFactoryOptions := gitFactory.Options{GithubGitClient: goGit}
 	gitProviderFactory := gitFactory.New(gitProviderFactoryOptions)
-	gitProvider, err := gitProviderFactory.BuildProvider(ctx, &gitOpsConfig.Spec)
+	gitProvider, err := gitProviderFactory.BuildProvider(ctx, &fluxConfig.Spec)
 	if err != nil {
 		return nil, fmt.Errorf("creating Git provider: %v", err)
 	}
@@ -83,7 +83,7 @@ func NewGitOptions(ctx context.Context, cluster *v1alpha1.Cluster, gitOpsConfig 
 	if err != nil {
 		return nil, err
 	}
-	localGitWriterPath := filepath.Join("git", gitOpsConfig.Spec.Flux.Github.Repository)
+	localGitWriterPath := filepath.Join("git", fluxConfig.Spec.Github.Repository)
 	gitwriter, err := writer.WithDir(localGitWriterPath)
 	if err != nil {
 		return nil, fmt.Errorf("creating file writer: %v", err)
