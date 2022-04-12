@@ -47,5 +47,5 @@ spec:
         type: name
         name: "{{.nutanixPEClusterName}}"
       subnet:
-        type: name
-        name: "{{.subnetName}}"
+        - type: name
+          name: "{{.subnetName}}"

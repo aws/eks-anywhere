@@ -13,10 +13,10 @@ import (
 const (
 	NutanixMachineConfigKind        = "NutanixMachineConfig"
 	DefaultNutanixOSFamily          = Ubuntu
-	DefaultNutanixSystemDiskSizeGi  = "20Gi"
-	DefaultNutanixMemorySizeGi      = "2Gi"
+	DefaultNutanixSystemDiskSizeGi  = "40Gi"
+	DefaultNutanixMemorySizeGi      = "4Gi"
 	DefaultNutanixVCPUsPerSocket    = 1
-	DefaultNutanixVCPUSockets       = 1
+	DefaultNutanixVCPUSockets       = 2
 	DefaultNutanixMachineConfigUser = "nutanix-user"
 )
 

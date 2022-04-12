@@ -274,6 +274,8 @@ func (p *nutanixProvider) GenerateMHC() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("template applied bytes: %s", string(mhc))
 	return mhc, nil
 }
 
@@ -402,7 +404,7 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"clusterName":                  clusterSpec.Cluster.Name,
 		"controlPlaneEndpointIp":       clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Endpoint.Host,
 		"controlPlaneReplicas":         clusterSpec.Cluster.Spec.ControlPlaneConfiguration.Count,
-		"controlPlaneSshAuthorizedKey": controlPlaneMachineSpec.Users[0].SshAuthorizedKeys,
+		"controlPlaneSshAuthorizedKey": controlPlaneMachineSpec.Users[0].SshAuthorizedKeys[0],
 		"controlPlaneSshUsername":      controlPlaneMachineSpec.Users[0].Name,
 		"eksaSystemNamespace":          constants.EksaSystemNamespace,
 		"format":                       format,
@@ -425,7 +427,7 @@ func buildTemplateMapMD(clusterSpec *cluster.Spec, workerNodeGroupMachineSpec v1
 		"kubernetesVersion":      bundle.KubeDistro.Kubernetes.Tag,
 		"workerReplicas":         clusterSpec.Cluster.Spec.WorkerNodeGroupConfigurations[0].Count,
 		"workerPoolName":         "md-0",
-		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys,
+		"workerSshAuthorizedKey": workerNodeGroupMachineSpec.Users[0].SshAuthorizedKeys[0],
 		"workerSshUsername":      workerNodeGroupMachineSpec.Users[0].Name,
 		"vcpusPerSocket":         workerNodeGroupMachineSpec.VCPUsPerSocket,
 		"vcpuSockets":            workerNodeGroupMachineSpec.VCPUSockets,
