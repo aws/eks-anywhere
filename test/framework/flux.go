@@ -489,25 +489,6 @@ func (e *ClusterE2ETest) providerConfig(clusterConfGitPath string) (*providerCon
 			e.ClusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name,
 			etcdName,
 			machineConfigs)
-	case v1alpha1.CloudStackDatacenterKind:
-		datacenterConfig, err := v1alpha1.GetCloudStackDatacenterConfig(clusterConfGitPath)
-		if err != nil {
-			return nil, err
-		}
-		machineConfigs, err := v1alpha1.GetCloudStackMachineConfigs(clusterConfGitPath)
-		if err != nil {
-			return nil, err
-		}
-		providerConfig.datacenterConfig = datacenterConfig
-		etcdName := ""
-		if e.ClusterConfig.Spec.ExternalEtcdConfiguration != nil {
-			etcdName = e.ClusterConfig.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name
-		}
-		providerConfig.machineConfigs = e.convertCloudStackMachineConfigs(
-			e.ClusterConfig.Spec.ControlPlaneConfiguration.MachineGroupRef.Name,
-			e.ClusterConfig.Spec.WorkerNodeGroupConfigurations[0].MachineGroupRef.Name,
-			etcdName,
-			machineConfigs)
 	case v1alpha1.DockerDatacenterKind:
 		datacenterConfig, err := v1alpha1.GetDockerDatacenterConfig(clusterConfGitPath)
 		if err != nil {
