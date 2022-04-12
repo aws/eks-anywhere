@@ -1,6 +1,6 @@
 ---
 title: "Welcome to EKS Anywhere Workshop!"
-linkTitle: "EKS Anywhere Workshop"
+linkTitle: "Workshop"
 weight: 00
 date: 2021-11-11
 description: >
