@@ -14,7 +14,7 @@ Here are some key customer benefits of using Amazon EKS Anywhere:
 
 ## Use-cases supported by EKS Anywhere
 
-EKS-Anywhere is suitable for the following use-cases:
+EKS Anywhere is suitable for the following use-cases:
 
 * **Hybrid cloud consistency** - You may have lots of Kubernetes workloads on Amazon EKS but also need to operate Kubernetes clusters on-premises. Amazon EKS Anywhere offers strong operational consistency with Amazon EKS so you can standardize your Kubernetes operations based on a unified toolset.
 * **Disconnected environment** - You may need to secure your applications in disconnected environment or run applications in areas without internet connectivity. Amazon EKS Anywhere allows you to deploy and operate highly-available clusters with the same Kubernetes distribution that powers Amazon EKS on AWS.
