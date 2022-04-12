@@ -1,6 +1,6 @@
 ---
 title: "vSphere cluster"
-linkTitle: "VSphere/Production Cluster Setup"
+linkTitle: "vSphere cluster"
 weight: 50
 date: 2021-11-11
 description: >  
