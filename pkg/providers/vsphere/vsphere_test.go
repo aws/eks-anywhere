@@ -29,6 +29,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/vsphere/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
 	releasev1alpha1 "github.com/aws/eks-anywhere/release/api/v1alpha1"
@@ -3045,4 +3046,96 @@ func TestSetupAndValidateCreateManagementDoesNotCheckIfMachineAndDataCenterExist
 		t.Fatalf("unexpected failure %v", err)
 	}
 	assert.NoError(t, err, "No error should be returned")
+}
+
+func TestClusterSpecChangedNoChanges(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenEmptyClusterSpec()
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	cluster := &types.Cluster{
+		KubeconfigFile: "test",
+	}
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+	machineConfigs := make([]providers.MachineConfig, 0, len(machineConfigsMap))
+
+	for _, value := range machineConfigsMap {
+		arr := []providers.MachineConfig{value}
+		machineConfigs = append(machineConfigs, arr...)
+		kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, value.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(value, nil)
+	}
+	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(dcConfig, nil)
+
+	specChanged, err := provider.SpecChanged(ctx, cc, cluster, clusterSpec, dcConfig, machineConfigs)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+	if specChanged {
+		t.Fatalf("expected no spec change to be detected")
+	}
+}
+
+func TestClusterSpecChangedDatacenterConfigChanged(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenEmptyClusterSpec()
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	cluster := &types.Cluster{
+		KubeconfigFile: "test",
+	}
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	shinyModifiedDcConfig := dcConfig.DeepCopy()
+	shinyModifiedDcConfig.Spec.Datacenter = "shiny-new-api-datacenter"
+	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+	machineConfigs := make([]providers.MachineConfig, 0, len(machineConfigsMap))
+
+	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(shinyModifiedDcConfig, nil)
+
+	specChanged, err := provider.SpecChanged(ctx, cc, cluster, clusterSpec, dcConfig, machineConfigs)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+	if !specChanged {
+		t.Fatalf("expected spec change but none was detected")
+	}
+}
+
+func TestClusterSpecChangedMachineConfigsChanged(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenEmptyClusterSpec()
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	cluster := &types.Cluster{
+		KubeconfigFile: "test",
+	}
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+	machineConfigs := make([]providers.MachineConfig, 0, len(machineConfigsMap))
+
+	for _, value := range machineConfigsMap {
+		arr := []providers.MachineConfig{value}
+		machineConfigs = append(machineConfigs, arr...)
+	}
+	modifiedMachineConfig := machineConfigsMap[cc.MachineConfigRefs()[0].Name].DeepCopy()
+	modifiedMachineConfig.Spec.NumCPUs = 4
+	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(modifiedMachineConfig, nil)
+	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl)
+	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(dcConfig, nil)
+
+	specChanged, err := provider.SpecChanged(ctx, cc, cluster, clusterSpec, dcConfig, machineConfigs)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+	if !specChanged {
+		t.Fatalf("expected spec change but none was detected")
+	}
 }

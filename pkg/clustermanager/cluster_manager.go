@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 	"time"
 
@@ -480,63 +479,12 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 	logger.V(3).Info("Clusters are the same, checking provider spec")
 	// compare provider spec
 	switch cc.Spec.DatacenterRef.Kind {
-	case v1alpha1.VSphereDatacenterKind:
-		machineConfigMap := make(map[string]*v1alpha1.VSphereMachineConfig)
-
-		existingVdc, err := c.clusterClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return false, err
-		}
-		vdc := datacenterConfig.(*v1alpha1.VSphereDatacenterConfig)
-		if !reflect.DeepEqual(existingVdc.Spec, vdc.Spec) {
-			logger.V(3).Info("New provider spec is different from the new spec")
-			return true, nil
-		}
-
-		for _, config := range machineConfigs {
-			mc := config.(*v1alpha1.VSphereMachineConfig)
-			machineConfigMap[mc.Name] = mc
-		}
-		existingCpVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ControlPlaneConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-		if err != nil {
-			return false, err
-		}
-		cpVmc := machineConfigMap[newClusterSpec.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
-		if !reflect.DeepEqual(existingCpVmc.Spec, cpVmc.Spec) {
-			logger.V(3).Info("New control plane machine config spec is different from the existing spec")
-			return true, nil
-		}
-		for _, workerNodeGroupConfiguration := range cc.Spec.WorkerNodeGroupConfigurations {
-			existingWnVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, workerNodeGroupConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-			if err != nil {
-				return false, err
-			}
-			wnVmc := machineConfigMap[workerNodeGroupConfiguration.MachineGroupRef.Name]
-			if !reflect.DeepEqual(existingWnVmc.Spec, wnVmc.Spec) {
-				logger.V(3).Info("New worker node machine config spec is different from the existing spec")
-				return true, nil
-			}
-		}
-		if cc.Spec.ExternalEtcdConfiguration != nil {
-			existingEtcdVmc, err := c.clusterClient.GetEksaVSphereMachineConfig(ctx, cc.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-			if err != nil {
-				return false, err
-			}
-			etcdVmc := machineConfigMap[newClusterSpec.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
-			if !reflect.DeepEqual(existingEtcdVmc.Spec, etcdVmc.Spec) {
-				logger.V(3).Info("New etcd machine config spec is different from the existing spec")
-				return true, nil
-			}
-		}
-	case v1alpha1.CloudStackDatacenterKind:
-		// TODO: Move outside of just the CloudStack workflow
+	case v1alpha1.VSphereDatacenterKind, v1alpha1.CloudStackDatacenterKind:
 		return provider.SpecChanged(ctx, cc, cluster, newClusterSpec, datacenterConfig, machineConfigs)
 	default:
 		// Run upgrade flow
 		return true, nil
 	}
-
-	return false, nil
 }
 
 func (c *ClusterManager) InstallCAPI(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {

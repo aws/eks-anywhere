@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"reflect"
 	"text/template"
 	"time"
 
@@ -200,7 +201,46 @@ func (p *vsphereProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 }
 
 func (p *vsphereProvider) SpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
-	// Not implemented yet
+	existingVdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
+	if err != nil {
+		return false, err
+	}
+	vdc := datacenterConfig.(*v1alpha1.VSphereDatacenterConfig)
+	if !reflect.DeepEqual(existingVdc.Spec, vdc.Spec) {
+		logger.V(3).Info("New provider spec is different from the new spec")
+		return true, nil
+	}
+
+	machineConfigsSpecChanged, err := p.machineConfigsSpecChanged(ctx, cc, cluster, newClusterSpec, machineConfigs)
+	if err != nil {
+		return false, err
+	}
+	return machineConfigsSpecChanged, nil
+}
+
+func (p *vsphereProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, machineConfigs []providers.MachineConfig) (bool, error) {
+	machineConfigMap := make(map[string]*v1alpha1.VSphereMachineConfig)
+	for _, config := range machineConfigs {
+		mc := config.(*v1alpha1.VSphereMachineConfig)
+		machineConfigMap[mc.Name] = mc
+	}
+
+	for _, oldMcRef := range cc.MachineConfigRefs() {
+		existingVmc, err := p.providerKubectlClient.GetEksaVSphereMachineConfig(ctx, oldMcRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
+		if err != nil {
+			return false, err
+		}
+		csmc, ok := machineConfigMap[oldMcRef.Name]
+		if !ok {
+			logger.V(3).Info(fmt.Sprintf("Old machine config spec %s not found in the existing spec", oldMcRef.Name))
+			return true, nil
+		}
+		if !reflect.DeepEqual(existingVmc.Spec, csmc.Spec) {
+			logger.V(3).Info(fmt.Sprintf("New machine config spec %s is different from the existing spec", oldMcRef.Name))
+			return true, nil
+		}
+	}
+
 	return false, nil
 }
 

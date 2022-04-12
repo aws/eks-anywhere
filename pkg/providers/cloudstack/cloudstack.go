@@ -982,14 +982,14 @@ func (p *cloudstackProvider) SpecChanged(ctx context.Context, cc *v1alpha1.Clust
 		return true, nil
 	}
 
-	machineConfigsSpecChanged, err := p.cloudstackMachineConfigsSpecChanged(ctx, cc, cluster, newClusterSpec, machineConfigs)
+	machineConfigsSpecChanged, err := p.machineConfigsSpecChanged(ctx, cc, cluster, newClusterSpec, machineConfigs)
 	if err != nil {
 		return false, err
 	}
 	return machineConfigsSpecChanged, nil
 }
 
-func (p *cloudstackProvider) cloudstackMachineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, machineConfigs []providers.MachineConfig) (bool, error) {
+func (p *cloudstackProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, machineConfigs []providers.MachineConfig) (bool, error) {
 	machineConfigMap := make(map[string]*v1alpha1.CloudStackMachineConfig)
 	for _, config := range machineConfigs {
 		mc := config.(*v1alpha1.CloudStackMachineConfig)
