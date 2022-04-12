@@ -1,5 +1,5 @@
 ---
-title: "VSphere/Production Cluster Setup"
+title: "vSphere cluster"
 linkTitle: "VSphere/Production Cluster Setup"
 weight: 50
 date: 2021-11-11
