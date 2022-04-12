@@ -250,16 +250,26 @@ func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 // from a multiobject yaml content. It doesn't set defaults nor validates the object
 func ParseClusterConfigFromContent(content []byte, clusterConfig KindAccessor) error {
 	for _, c := range strings.Split(string(content), YamlSeparator) {
-		if err := yaml.Unmarshal([]byte(c), clusterConfig); err != nil {
-			return err
+		if kind := parseKind(c); kind != clusterConfig.ExpectedKind() {
+			continue
 		}
-
-		if clusterConfig.Kind() == clusterConfig.ExpectedKind() {
-			return yaml.UnmarshalStrict([]byte(c), clusterConfig)
-		}
+		return yaml.UnmarshalStrict([]byte(c), clusterConfig)
 	}
 
 	return fmt.Errorf("yamlop content is invalid or does not contain kind %s", clusterConfig.ExpectedKind())
+}
+
+func parseKind(spec string) string {
+	kindRegex := regexp.MustCompile(`(?m)^kind: (.*)`)
+	if !kindRegex.MatchString(spec) {
+		return ""
+	}
+	match := kindRegex.FindStringSubmatch(spec)
+	if len(match) < 2 {
+		return ""
+	}
+	kind := match[1]
+	return kind
 }
 
 func (c *Cluster) PauseReconcile() {

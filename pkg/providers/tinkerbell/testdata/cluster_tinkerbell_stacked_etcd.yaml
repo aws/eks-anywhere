@@ -36,6 +36,7 @@ apiVersion: anywhere.eks.amazonaws.com/v1alpha1
 kind: TinkerbellDatacenterConfig
 metadata:
   name: test
+  namespace: test-namespace
 spec:
   tinkerbellCertURL: "http://1.2.3.4:42114/cert"
   tinkerbellGRPCAuth: "1.2.3.4:99"

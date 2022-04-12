@@ -1034,7 +1034,7 @@ func TestParseClusterConfig(t *testing.T) {
 				clusterConfig: &Cluster{},
 			},
 			wantErr:    true,
-			matchError: fmt.Errorf("converting YAML to JSON: yaml: did not find expected node content"),
+			matchError: fmt.Errorf("unable to parse testdata/invalid_format.yaml file: yamlop content is invalid or does not contain kind Cluster"),
 		},
 		{
 			name: "Invalid spec field",
