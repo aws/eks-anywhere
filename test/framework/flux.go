@@ -328,20 +328,6 @@ func (e *ClusterE2ETest) convertVSphereMachineConfigs(cpName, workerName, etcdNa
 	return configs
 }
 
-func (e *ClusterE2ETest) convertCloudStackMachineConfigs(cpName, workerName, etcdName string, cloudstackMachineConfigs map[string]*v1alpha1.CloudStackMachineConfig) []providers.MachineConfig {
-	var configs []providers.MachineConfig
-	if cloudstackMachineConfigs[cpName] != nil {
-		configs = append(configs, cloudstackMachineConfigs[cpName])
-	}
-	if workerName != cpName && cloudstackMachineConfigs[workerName] != nil {
-		configs = append(configs, cloudstackMachineConfigs[workerName])
-	}
-	if etcdName != "" && etcdName != cpName && etcdName != workerName && cloudstackMachineConfigs[etcdName] != nil {
-		configs = append(configs, cloudstackMachineConfigs[etcdName])
-	}
-	return configs
-}
-
 func (e *ClusterE2ETest) validateWorkerNodeReplicaUpdates(ctx context.Context) error {
 	machineTemplateName, err := e.machineTemplateName(ctx)
 	if err != nil {
