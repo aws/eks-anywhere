@@ -1,5 +1,5 @@
 ---
-title: "Local/Dev Cluster Setup"
+title: "Local cluster setup"
 linkTitle: "Local/Dev Cluster Setup"
 weight: 30
 date: 2021-11-11
