@@ -28,6 +28,10 @@ func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.Da
 		marshallables = append(marshallables, clusterSpec.GitOpsConfig.ConvertConfigToConfigGenerateStruct())
 	}
 
+	if clusterSpec.FluxConfig != nil {
+		marshallables = append(marshallables, clusterSpec.FluxConfig.ConvertConfigToConfigGenerateStruct())
+	}
+
 	if clusterSpec.OIDCConfig != nil {
 		marshallables = append(marshallables, clusterSpec.OIDCConfig.ConvertConfigToConfigGenerateStruct())
 	}
