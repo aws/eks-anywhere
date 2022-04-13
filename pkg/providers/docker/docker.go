@@ -50,11 +50,6 @@ type provider struct {
 	templateBuilder       *DockerTemplateBuilder
 }
 
-func (p *provider) SpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
-	// Do nothing as of now
-	return false, nil
-}
-
 func (p *provider) InstallCustomProviderComponents(ctx context.Context, kubeconfigFile string) error {
 	return nil
 }
@@ -479,7 +474,7 @@ func (p *provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpe
 	return nil
 }
 
-func (p *provider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec) (bool, error) {
+func (p *provider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
 	return false, nil
 }
 

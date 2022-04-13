@@ -2886,7 +2886,7 @@ func TestProviderUpgradeNeeded(t *testing.T) {
 			})
 
 			g := NewWithT(t)
-			g.Expect(provider.UpgradeNeeded(context.Background(), clusterSpec, newClusterSpec)).To(Equal(tt.want))
+			g.Expect(provider.UpgradeNeeded(context.Background(), clusterSpec, newClusterSpec, nil, nil, nil)).To(Equal(tt.want))
 		})
 	}
 }
@@ -3069,8 +3069,9 @@ func TestClusterSpecChangedNoChanges(t *testing.T) {
 	}
 	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl)
 	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(dcConfig, nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(cc, nil)
 
-	specChanged, err := provider.SpecChanged(ctx, cc, cluster, clusterSpec, dcConfig, machineConfigs)
+	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster, dcConfig, machineConfigs)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -3097,8 +3098,9 @@ func TestClusterSpecChangedDatacenterConfigChanged(t *testing.T) {
 
 	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl)
 	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(shinyModifiedDcConfig, nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(cc, nil)
 
-	specChanged, err := provider.SpecChanged(ctx, cc, cluster, clusterSpec, dcConfig, machineConfigs)
+	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster, dcConfig, machineConfigs)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -3130,8 +3132,9 @@ func TestClusterSpecChangedMachineConfigsChanged(t *testing.T) {
 	kubectl.EXPECT().GetEksaVSphereMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(modifiedMachineConfig, nil)
 	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl)
 	kubectl.EXPECT().GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(dcConfig, nil)
+	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(cc, nil)
 
-	specChanged, err := provider.SpecChanged(ctx, cc, cluster, clusterSpec, dcConfig, machineConfigs)
+	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster, dcConfig, machineConfigs)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}

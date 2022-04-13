@@ -67,11 +67,6 @@ func (p *snowProvider) SetupAndValidateCreateCluster(ctx context.Context, cluste
 	return nil
 }
 
-func (p *snowProvider) SpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
-	// TODO: Implement this method
-	return false, nil
-}
-
 func (p *snowProvider) SetupAndValidateUpgradeCluster(ctx context.Context, cluster *types.Cluster, clusterSpec *cluster.Spec) error {
 	return nil
 }
@@ -235,7 +230,7 @@ func (p *snowProvider) RunPostControlPlaneUpgrade(ctx context.Context, oldCluste
 	return nil
 }
 
-func (p *snowProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error) {
+func (p *snowProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
 	return false, nil
 }
 

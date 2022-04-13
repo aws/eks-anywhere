@@ -971,24 +971,6 @@ func (p *cloudstackProvider) GenerateCAPISpecForCreate(ctx context.Context, clus
 	return controlPlaneSpec, workersSpec, nil
 }
 
-func (p *cloudstackProvider) SpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
-	existingCsdc, err := p.providerKubectlClient.GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newClusterSpec.Cluster.Namespace)
-	if err != nil {
-		return false, err
-	}
-	csDc := datacenterConfig.(*v1alpha1.CloudStackDatacenterConfig)
-	if !existingCsdc.Spec.Equal(&csDc.Spec) {
-		logger.V(3).Info("New provider spec is different from the new spec")
-		return true, nil
-	}
-
-	machineConfigsSpecChanged, err := p.machineConfigsSpecChanged(ctx, cc, cluster, newClusterSpec, machineConfigs)
-	if err != nil {
-		return false, err
-	}
-	return machineConfigsSpecChanged, nil
-}
-
 func (p *cloudstackProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, machineConfigs []providers.MachineConfig) (bool, error) {
 	machineConfigMap := make(map[string]*v1alpha1.CloudStackMachineConfig)
 	for _, config := range machineConfigs {
@@ -1101,10 +1083,32 @@ func (p *cloudstackProvider) MachineConfigs(_ *cluster.Spec) []providers.Machine
 	return configs
 }
 
-func (p *cloudstackProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec) (bool, error) {
+func (p *cloudstackProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
 	newV, oldV := newSpec.VersionsBundle.CloudStack, currentSpec.VersionsBundle.CloudStack
 
-	return newV.ClusterAPIController.ImageDigest != oldV.ClusterAPIController.ImageDigest, nil
+	if newV.ClusterAPIController.ImageDigest != oldV.ClusterAPIController.ImageDigest {
+		logger.V(3).Info("New provider controller is different from the old spec")
+		return true, nil
+	}
+	cc, err := p.providerKubectlClient.GetEksaCluster(ctx, cluster, newSpec.Cluster.Name)
+	if err != nil {
+		return false, err
+	}
+	existingCsdc, err := p.providerKubectlClient.GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newSpec.Cluster.Namespace)
+	if err != nil {
+		return false, err
+	}
+	csDc := datacenterConfig.(*v1alpha1.CloudStackDatacenterConfig)
+	if !existingCsdc.Spec.Equal(&csDc.Spec) {
+		logger.V(3).Info("New provider spec is different from the new spec")
+		return true, nil
+	}
+
+	machineConfigsSpecChanged, err := p.machineConfigsSpecChanged(ctx, cc, cluster, newSpec, machineConfigs)
+	if err != nil {
+		return false, err
+	}
+	return machineConfigsSpecChanged, nil
 }
 
 func (p *cloudstackProvider) DeleteResources(ctx context.Context, clusterSpec *cluster.Spec) error {

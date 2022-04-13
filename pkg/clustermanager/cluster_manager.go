@@ -448,7 +448,7 @@ func (c *ClusterManager) UpgradeCluster(ctx context.Context, managementCluster, 
 	return nil
 }
 
-func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig, provider providers.Provider) (bool, error) {
+func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
 	cc, err := c.clusterClient.GetEksaCluster(ctx, cluster, newClusterSpec.Cluster.Name)
 	if err != nil {
 		return false, err
@@ -476,15 +476,8 @@ func (c *ClusterManager) EKSAClusterSpecChanged(ctx context.Context, cluster *ty
 		}
 	}
 
-	logger.V(3).Info("Clusters are the same, checking provider spec")
-	// compare provider spec
-	switch cc.Spec.DatacenterRef.Kind {
-	case v1alpha1.VSphereDatacenterKind, v1alpha1.CloudStackDatacenterKind:
-		return provider.SpecChanged(ctx, cc, cluster, newClusterSpec, datacenterConfig, machineConfigs)
-	default:
-		// Run upgrade flow
-		return true, nil
-	}
+	logger.V(3).Info("Clusters are the same")
+	return false, nil
 }
 
 func (c *ClusterManager) InstallCAPI(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster, provider providers.Provider) error {
