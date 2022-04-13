@@ -10,7 +10,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -862,36 +861,6 @@ func TestChangeDiffWithChange(t *testing.T) {
 	}
 
 	assert.Equal(t, wantDiff, provider.ChangeDiff(clusterSpec, newClusterSpec))
-}
-
-func TestProviderUpgradeNeeded(t *testing.T) {
-	testCases := []struct {
-		testName               string
-		newManager, oldManager string
-		want                   bool
-	}{
-		{
-			testName:   "different manager",
-			newManager: "a", oldManager: "b",
-			want: true,
-		},
-	}
-
-	for _, tt := range testCases {
-		t.Run(tt.testName, func(t *testing.T) {
-			provider := givenProvider(t)
-			clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.CloudStack.ClusterAPIController.ImageDigest = tt.oldManager
-			})
-
-			newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.CloudStack.ClusterAPIController.ImageDigest = tt.newManager
-			})
-
-			g := NewWithT(t)
-			g.Expect(provider.UpgradeNeeded(context.Background(), clusterSpec, newClusterSpec, nil)).To(Equal(tt.want))
-		})
-	}
 }
 
 func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {

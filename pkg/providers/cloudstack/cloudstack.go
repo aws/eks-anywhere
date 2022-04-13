@@ -1084,12 +1084,6 @@ func (p *cloudstackProvider) MachineConfigs(_ *cluster.Spec) []providers.Machine
 }
 
 func (p *cloudstackProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
-	newV, oldV := newSpec.VersionsBundle.CloudStack, currentSpec.VersionsBundle.CloudStack
-
-	if newV.ClusterAPIController.ImageDigest != oldV.ClusterAPIController.ImageDigest {
-		logger.V(3).Info("New provider controller is different from the old spec")
-		return true, nil
-	}
 	cc := currentSpec.Cluster
 	existingCsdc, err := p.providerKubectlClient.GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newSpec.Cluster.Namespace)
 	if err != nil {
