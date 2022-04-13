@@ -599,11 +599,6 @@ func (m *macAddressSet) Insert(mac string) {
 	(*m)[strings.ToLower(mac)] = struct{}{}
 }
 
-func (p *tinkerbellProvider) SpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
-	// TODO: Implement
-	return false, nil
-}
-
 func (p *tinkerbellProvider) SetupAndValidateDeleteCluster(ctx context.Context, cluster *types.Cluster) error {
 	// TODO: validations?
 	if err := setupEnvVars(p.datacenterConfig); err != nil {
@@ -889,7 +884,7 @@ func (p *tinkerbellProvider) RunPostControlPlaneUpgrade(ctx context.Context, old
 	return nil
 }
 
-func (p *tinkerbellProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
+func (p *tinkerbellProvider) UpgradeNeeded(_ context.Context, _, _ *cluster.Spec, _ *types.Cluster) (bool, error) {
 	// TODO: Figure out if something is needed here
 	return false, nil
 }
