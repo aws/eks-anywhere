@@ -1,6 +1,10 @@
 package cluster
 
-import anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+import (
+	"path"
+
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+)
 
 func fluxEntry() *ConfigManagerEntry {
 	return &ConfigManagerEntry{
@@ -10,6 +14,15 @@ func fluxEntry() *ConfigManagerEntry {
 			},
 		},
 		Processors: []ParsedProcessor{processFlux},
+		Defaulters: []Defaulter{
+			func(c *Config) error {
+				if c.FluxConfig != nil {
+					c.FluxConfig.SetDefaults()
+				}
+				return nil
+			},
+			SetDefaultFluxConfigPath,
+		},
 	}
 }
 
@@ -26,4 +39,22 @@ func processFlux(c *Config, objects ObjectLookup) {
 
 		c.FluxConfig = flux.(*anywherev1.FluxConfig)
 	}
+}
+
+func SetDefaultFluxConfigPath(c *Config) error {
+	if c.FluxConfig == nil {
+		return nil
+	}
+
+	fluxConfig := c.FluxConfig
+	if fluxConfig.Spec.ClusterConfigPath != "" {
+		return nil
+	}
+
+	if c.Cluster.IsSelfManaged() {
+		fluxConfig.Spec.ClusterConfigPath = path.Join("clusters", c.Cluster.Name)
+	} else {
+		fluxConfig.Spec.ClusterConfigPath = path.Join("clusters", c.Cluster.ManagedBy())
+	}
+	return nil
 }
