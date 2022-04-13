@@ -474,7 +474,7 @@ func (p *provider) RunPostControlPlaneUpgrade(ctx context.Context, oldClusterSpe
 	return nil
 }
 
-func (p *provider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
+func (p *provider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
 	return false, nil
 }
 

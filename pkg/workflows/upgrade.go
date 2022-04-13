@@ -226,12 +226,9 @@ func (s *upgradeCoreComponents) Name() string {
 
 func (s *upgradeNeeded) Run(ctx context.Context, commandContext *task.CommandContext) task.Task {
 	target := getManagementCluster(commandContext)
-
-	datacenterConfig := commandContext.Provider.DatacenterConfig(commandContext.ClusterSpec)
-	machineConfigs := commandContext.Provider.MachineConfigs(commandContext.ClusterSpec)
 	newSpec := commandContext.ClusterSpec
 
-	if upgradeNeeded, err := commandContext.Provider.UpgradeNeeded(ctx, newSpec, commandContext.CurrentClusterSpec, target, datacenterConfig, machineConfigs); err != nil {
+	if upgradeNeeded, err := commandContext.Provider.UpgradeNeeded(ctx, newSpec, commandContext.CurrentClusterSpec, target); err != nil {
 		commandContext.SetError(err)
 		return nil
 	} else if upgradeNeeded {

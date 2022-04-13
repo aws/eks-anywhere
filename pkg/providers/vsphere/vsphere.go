@@ -200,9 +200,9 @@ func (p *vsphereProvider) UpdateKubeConfig(_ *[]byte, _ string) error {
 	return nil
 }
 
-func (p *vsphereProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec, machineConfigs []providers.MachineConfig) (bool, error) {
+func (p *vsphereProvider) machineConfigsSpecChanged(ctx context.Context, cc *v1alpha1.Cluster, cluster *types.Cluster, newClusterSpec *cluster.Spec) (bool, error) {
 	machineConfigMap := make(map[string]*v1alpha1.VSphereMachineConfig)
-	for _, config := range machineConfigs {
+	for _, config := range p.MachineConfigs(nil) {
 		mc := config.(*v1alpha1.VSphereMachineConfig)
 		machineConfigMap[mc.Name] = mc
 	}
@@ -1315,7 +1315,7 @@ func resourceSetName(clusterSpec *cluster.Spec) string {
 	return fmt.Sprintf("%s-crs-0", clusterSpec.Cluster.Name)
 }
 
-func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
+func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
 	newV, oldV := newSpec.VersionsBundle.VSphere, currentSpec.VersionsBundle.VSphere
 
 	if newV.Driver.ImageDigest != oldV.Driver.ImageDigest ||
@@ -1324,21 +1324,17 @@ func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpe
 		newV.KubeVip.ImageDigest != oldV.KubeVip.ImageDigest {
 		return true, nil
 	}
-	cc, err := p.providerKubectlClient.GetEksaCluster(ctx, cluster, newSpec.Cluster.Name)
-	if err != nil {
-		return false, err
-	}
+	cc := currentSpec.Cluster
 	existingVdc, err := p.providerKubectlClient.GetEksaVSphereDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, newSpec.Cluster.Namespace)
 	if err != nil {
 		return false, err
 	}
-	vdc := datacenterConfig.(*v1alpha1.VSphereDatacenterConfig)
-	if !reflect.DeepEqual(existingVdc.Spec, vdc.Spec) {
+	if !reflect.DeepEqual(existingVdc.Spec, p.datacenterConfig.Spec) {
 		logger.V(3).Info("New provider spec is different from the new spec")
 		return true, nil
 	}
 
-	machineConfigsSpecChanged, err := p.machineConfigsSpecChanged(ctx, cc, cluster, newSpec, machineConfigs)
+	machineConfigsSpecChanged, err := p.machineConfigsSpecChanged(ctx, cc, cluster, newSpec)
 	if err != nil {
 		return false, err
 	}

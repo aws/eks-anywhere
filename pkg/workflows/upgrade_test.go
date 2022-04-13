@@ -286,8 +286,6 @@ func (c *upgradeTestSetup) expectResumeGitOpsKustomization(expectedCluster *type
 
 func (c *upgradeTestSetup) expectVerifyClusterSpecChanged(expectedCluster *types.Cluster) {
 	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig),
-		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs),
 		c.clusterManager.EXPECT().EKSAClusterSpecChanged(c.ctx, expectedCluster, c.newClusterSpec).Return(true, nil),
 	)
 }
@@ -306,17 +304,15 @@ func (c *upgradeTestSetup) run() error {
 }
 
 func (c *upgradeTestSetup) expectProviderNoUpgradeNeeded(expectedCluster *types.Cluster) {
-	c.provider.EXPECT().UpgradeNeeded(c.ctx, c.newClusterSpec, c.currentClusterSpec, expectedCluster, c.datacenterConfig, c.machineConfigs).Return(false, nil)
+	c.provider.EXPECT().UpgradeNeeded(c.ctx, c.newClusterSpec, c.currentClusterSpec, expectedCluster).Return(false, nil)
 }
 
 func (c *upgradeTestSetup) expectProviderUpgradeNeeded() {
-	c.provider.EXPECT().UpgradeNeeded(c.ctx, c.newClusterSpec, c.currentClusterSpec, c.workloadCluster, c.datacenterConfig, c.machineConfigs).Return(true, nil)
+	c.provider.EXPECT().UpgradeNeeded(c.ctx, c.newClusterSpec, c.currentClusterSpec, c.workloadCluster).Return(true, nil)
 }
 
 func (c *upgradeTestSetup) expectVerifyClusterSpecNoChanges() {
 	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig),
-		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs),
 		c.clusterManager.EXPECT().EKSAClusterSpecChanged(c.ctx, c.workloadCluster, c.newClusterSpec).Return(false, nil),
 	)
 }
@@ -396,8 +392,6 @@ func TestUpgradeRunProviderNeedsUpgradeSuccess(t *testing.T) {
 	test.expectUpdateSecrets(test.workloadCluster)
 	test.expectEnsureEtcdCAPIComponentsExistTask(test.workloadCluster)
 	test.expectUpgradeCoreComponents(test.workloadCluster)
-	test.expectDatacenterConfig()
-	test.expectMachineConfigs()
 	test.expectProviderUpgradeNeeded()
 	test.expectPauseEKSAControllerReconcile(test.workloadCluster)
 	test.expectPauseGitOpsKustomization(test.workloadCluster)

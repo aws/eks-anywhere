@@ -889,7 +889,7 @@ func (p *tinkerbellProvider) RunPostControlPlaneUpgrade(ctx context.Context, old
 	return nil
 }
 
-func (p *tinkerbellProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster, datacenterConfig providers.DatacenterConfig, machineConfigs []providers.MachineConfig) (bool, error) {
+func (p *tinkerbellProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpec *cluster.Spec, cluster *types.Cluster) (bool, error) {
 	// TODO: Figure out if something is needed here
 	return false, nil
 }

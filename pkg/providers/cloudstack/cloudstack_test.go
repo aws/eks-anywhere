@@ -21,7 +21,6 @@ import (
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/aws/eks-anywhere/pkg/executables"
-	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/decoder"
 	"github.com/aws/eks-anywhere/pkg/providers/cloudstack/mocks"
 	"github.com/aws/eks-anywhere/pkg/types"
@@ -890,7 +889,7 @@ func TestProviderUpgradeNeeded(t *testing.T) {
 			})
 
 			g := NewWithT(t)
-			g.Expect(provider.UpgradeNeeded(context.Background(), clusterSpec, newClusterSpec, nil, nil, nil)).To(Equal(tt.want))
+			g.Expect(provider.UpgradeNeeded(context.Background(), clusterSpec, newClusterSpec, nil)).To(Equal(tt.want))
 		})
 	}
 }
@@ -1286,18 +1285,13 @@ func TestClusterUpgradeNeededNoChanges(t *testing.T) {
 	}
 	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-	machineConfigs := make([]providers.MachineConfig, 0, len(machineConfigsMap))
-
 	for _, value := range machineConfigsMap {
-		arr := []providers.MachineConfig{value}
-		machineConfigs = append(machineConfigs, arr...)
 		kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, value.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(value, nil)
 	}
 	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl, nil)
 	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(dcConfig, nil)
-	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(cc, nil)
 
-	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster, dcConfig, machineConfigs)
+	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1320,13 +1314,11 @@ func TestClusterUpgradeNeededDatacenterConfigChanged(t *testing.T) {
 	shinyModifiedDcConfig := dcConfig.DeepCopy()
 	shinyModifiedDcConfig.Spec.ManagementApiEndpoint = "shiny-new-api-endpoint"
 	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-	machineConfigs := make([]providers.MachineConfig, 0, len(machineConfigsMap))
 
 	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl, nil)
 	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(shinyModifiedDcConfig, nil)
-	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(cc, nil)
 
-	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster, dcConfig, machineConfigs)
+	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
@@ -1347,20 +1339,13 @@ func TestClusterUpgradeNeededMachineConfigsChanged(t *testing.T) {
 	}
 	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
 	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
-	machineConfigs := make([]providers.MachineConfig, 0, len(machineConfigsMap))
-
-	for _, value := range machineConfigsMap {
-		arr := []providers.MachineConfig{value}
-		machineConfigs = append(machineConfigs, arr...)
-	}
 	modifiedMachineConfig := machineConfigsMap[cc.MachineConfigRefs()[0].Name].DeepCopy()
 	modifiedMachineConfig.Spec.Affinity = "shiny-new-affinity"
 	kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(modifiedMachineConfig, nil)
 	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl, nil)
 	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(dcConfig, nil)
-	kubectl.EXPECT().GetEksaCluster(ctx, cluster, clusterSpec.Cluster.Name).Return(cc, nil)
 
-	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster, dcConfig, machineConfigs)
+	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster)
 	if err != nil {
 		t.Fatalf("unexpected failure %v", err)
 	}
