@@ -8,12 +8,15 @@ import (
 	"strings"
 	"time"
 
+	cb "github.com/aws/aws-sdk-go/service/codebuild"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/aws/eks-anywhere-test-tool/pkg/cloudwatch"
 	"github.com/aws/eks-anywhere-test-tool/pkg/codebuild"
 	"github.com/aws/eks-anywhere-test-tool/pkg/constants"
 	"github.com/aws/eks-anywhere-test-tool/pkg/filewriter"
 	"github.com/aws/eks-anywhere-test-tool/pkg/s3"
+	"github.com/aws/eks-anywhere-test-tool/pkg/testResults"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/retrier"
 )
@@ -36,25 +39,35 @@ func WithCodebuildProject(project string) FetchArtifactsOpt {
 	}
 }
 
+func WithAllArtifacts() FetchArtifactsOpt {
+	return func(options *fetchArtifactConfig) (err error) {
+		options.fetchAll = true
+		return err
+	}
+}
+
 type fetchArtifactConfig struct {
-	buildId string
-	bucket  string
-	project string
+	buildId  string
+	bucket   string
+	project  string
+	fetchAll bool
 }
 
 type testArtifactFetcher struct {
 	testAccountS3Client         *s3.S3
 	buildAccountCodebuildClient *codebuild.Codebuild
+	buildAccountCwClient        *cloudwatch.Cloudwatch
 	writer                      filewriter.FileWriter
 	retrier                     *retrier.Retrier
 }
 
-func New(testAccountS3Client *s3.S3, buildAccountCodebuildCient *codebuild.Codebuild, writer filewriter.FileWriter) *testArtifactFetcher {
+func New(testAccountS3Client *s3.S3, buildAccountCodebuildCient *codebuild.Codebuild, writer filewriter.FileWriter, cwClient *cloudwatch.Cloudwatch) *testArtifactFetcher {
 	return &testArtifactFetcher{
 		testAccountS3Client:         testAccountS3Client,
 		buildAccountCodebuildClient: buildAccountCodebuildCient,
 		writer:                      writer,
 		retrier:                     fileWriterRetrier(),
+		buildAccountCwClient:        cwClient,
 	}
 }
 
@@ -71,20 +84,43 @@ func (l *testArtifactFetcher) FetchArtifacts(opts ...FetchArtifactsOpt) error {
 		}
 	}
 
+	var p *cb.Build
+	var err error
+
 	if config.buildId == "" {
-		p, err := l.buildAccountCodebuildClient.FetchLatestBuildForProject(config.project)
+		p, err = l.buildAccountCodebuildClient.FetchLatestBuildForProject(config.project)
 		if err != nil {
 			return fmt.Errorf("failed to get latest build for project: %v", err)
 		}
 		config.buildId = *p.Id
+
+	} else {
+		p, err = l.buildAccountCodebuildClient.FetchBuildForProject(config.buildId)
+		if err != nil {
+			return fmt.Errorf("failed to get build for project: %v", err)
+		}
 	}
+
+	g := p.Logs.GroupName
+	s := p.Logs.StreamName
+
+	logs, err := l.buildAccountCwClient.GetLogs(*g, *s)
+	if err != nil {
+		return fmt.Errorf("fetching cloudwatch logs: %v", err)
+	}
+
+	_, failedTests, err := testResults.GetFailedTests(logs)
+	if err != nil {
+		return err
+	}
+	failedTestIds := testResults.TestResultsJobIdMap(failedTests)
 
 	logger.Info("Fetching build artifacts...")
 
 	objects, err := l.testAccountS3Client.ListObjects(config.bucket, config.buildId)
 	logger.V(5).Info("Listed objects", "bucket", config.bucket, "prefix", config.buildId, "objects", len(objects))
 	if err != nil {
-		return fmt.Errorf("error listing objects in bucket %s at key %s: %v", config.bucket, config.buildId, err)
+		return fmt.Errorf("listing objects in bucket %s at key %s: %v", config.bucket, config.buildId, err)
 	}
 
 	errs, _ := errgroup.WithContext(context.Background())
@@ -94,6 +130,13 @@ func (l *testArtifactFetcher) FetchArtifacts(opts ...FetchArtifactsOpt) error {
 			continue
 		}
 		obj := *object
+		keySplit := strings.Split(*obj.Key, "/")
+
+		_, ok := failedTestIds[keySplit[0]]
+		if !ok && !config.fetchAll {
+			continue
+		}
+
 		errs.Go(func() error {
 			logger.Info("Fetching object", "key", obj.Key, "bucket", config.bucket)
 			o, err := l.testAccountS3Client.GetObject(config.bucket, *obj.Key)
@@ -104,11 +147,11 @@ func (l *testArtifactFetcher) FetchArtifacts(opts ...FetchArtifactsOpt) error {
 
 			logger.Info("Writing object to file", "key", obj.Key, "bucket", config.bucket)
 			err = l.retrier.Retry(func() error {
-				return l.writer.WriteS3KeyToFile(*obj.Key, o)
+				return l.writer.WriteTestArtifactsS3ToFile(*obj.Key, o)
 			})
 			if err != nil {
-				logger.Info("error occured while writing file", "err", err)
-				return fmt.Errorf("error writing object %s from bucket %s to file: %v", *obj.Key, config.bucket, err)
+				logger.Info("error occurred while writing file", "err", err)
+				return fmt.Errorf("writing object %s from bucket %s to file: %v", *obj.Key, config.bucket, err)
 			}
 			return nil
 		})
@@ -142,10 +185,10 @@ func excludedKey(key string) bool {
 
 func fileWriterRetrier() *retrier.Retrier {
 	return retrier.New(time.Minute, retrier.WithRetryPolicy(func(totalRetries int, err error) (retry bool, wait time.Duration) {
-		rand.Seed(time.Now().UnixNano())
+		generator := rand.New(rand.NewSource(time.Now().UnixNano()))
 		minWait := 1
 		maxWait := 5
-		waitWithJitter := time.Duration(rand.Intn(maxWait-minWait)+minWait) * time.Second
+		waitWithJitter := time.Duration(generator.Intn(maxWait-minWait)+minWait) * time.Second
 		if isTooManyOpenFilesError(err) && totalRetries < 15 {
 			logger.V(2).Info("Too many files open, retrying")
 			return true, waitWithJitter

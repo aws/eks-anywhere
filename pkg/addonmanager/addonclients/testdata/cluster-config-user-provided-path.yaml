@@ -5,6 +5,7 @@ metadata:
   namespace: default
 spec:
   clusterNetwork:
+    cniConfig: {}
     pods: {}
     services: {}
   controlPlaneConfiguration: {}

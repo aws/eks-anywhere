@@ -112,3 +112,23 @@ func (d *Docker) Login(ctx context.Context, endpoint, username, password string)
 	_, err := d.ExecuteWithStdin(ctx, []byte(password), params...)
 	return err
 }
+
+func (d *Docker) LoadFromFile(ctx context.Context, filepath string) error {
+	if _, err := d.Execute(ctx, "load", "-i", filepath); err != nil {
+		return fmt.Errorf("loading images from file: %v", err)
+	}
+
+	return nil
+}
+
+func (d *Docker) SaveToFile(ctx context.Context, filepath string, images ...string) error {
+	params := make([]string, 0, 3+len(images))
+	params = append(params, "save", "-o", filepath)
+	params = append(params, images...)
+
+	if _, err := d.Execute(ctx, params...); err != nil {
+		return fmt.Errorf("saving images to file: %v", err)
+	}
+
+	return nil
+}

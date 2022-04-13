@@ -17,10 +17,11 @@ func vsphereEntry() *ConfigManagerEntry {
 			machineConfigsProcessor(processVSphereMachineConfig),
 		},
 		Defaulters: []Defaulter{
-			func(c *Config) {
+			func(c *Config) error {
 				if c.VSphereDatacenter != nil {
 					c.VSphereDatacenter.SetDefaults()
 				}
+				return nil
 			},
 		},
 		Validations: []Validation{

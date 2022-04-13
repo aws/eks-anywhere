@@ -97,7 +97,7 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, cc.skipPowerActions).
+		WithProvider(dc.fileName, clusterSpec.Cluster, cc.skipIpCheck, dc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, false).
 		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
 		WithWriter().
 		Build(ctx)
@@ -123,12 +123,12 @@ func (dc *deleteClusterOptions) deleteCluster(ctx context.Context) error {
 	var cluster *types.Cluster
 	if clusterSpec.ManagementCluster == nil {
 		cluster = &types.Cluster{
-			Name:           clusterSpec.Name,
-			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Name),
+			Name:           clusterSpec.Cluster.Name,
+			KubeconfigFile: kubeconfig.FromClusterName(clusterSpec.Cluster.Name),
 		}
 	} else {
 		cluster = &types.Cluster{
-			Name:           clusterSpec.Name,
+			Name:           clusterSpec.Cluster.Name,
 			KubeconfigFile: clusterSpec.ManagementCluster.KubeconfigFile,
 		}
 	}

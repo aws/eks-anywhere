@@ -4,8 +4,29 @@ import (
 	"reflect"
 	"testing"
 
+	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+var cloudStackMachineConfigSpec1 = &CloudStackMachineConfigSpec{
+	Template: CloudStackResourceIdentifier{
+		Name: "template1",
+	},
+	ComputeOffering: CloudStackResourceIdentifier{
+		Name: "offering1",
+	},
+	Users: []UserConfiguration{
+		{
+			Name:              "zone1",
+			SshAuthorizedKeys: []string{"key"},
+		},
+	},
+	UserCustomDetails: map[string]string{
+		"foo": "bar",
+	},
+	AffinityGroupIds: []string{"affinityGroupId1"},
+	Affinity:         "pro",
+}
 
 func TestGetCloudStackMachineConfigs(t *testing.T) {
 	tests := []struct {
@@ -39,13 +60,39 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					Spec: CloudStackMachineConfigSpec{
-						Template: CloudStackResourceRef{
-							Value: "centos7-k8s-119",
-							Type:  Name,
+						Template: CloudStackResourceIdentifier{
+							Name: "centos7-k8s-119",
 						},
-						ComputeOffering: CloudStackResourceRef{
-							Value: "m4-large",
-							Type:  Name,
+						ComputeOffering: CloudStackResourceIdentifier{
+							Name: "m4-large",
+						},
+						Users: []UserConfiguration{{
+							Name:              "mySshUsername",
+							SshAuthorizedKeys: []string{"mySshAuthorizedKey"},
+						}},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			testName: "valid 1.21",
+			fileName: "testdata/cluster_1_21_cloudstack.yaml",
+			wantCloudStackMachineConfigs: map[string]*CloudStackMachineConfig{
+				"eksa-unit-test": {
+					TypeMeta: metav1.TypeMeta{
+						Kind:       CloudStackMachineConfigKind,
+						APIVersion: SchemeBuilder.GroupVersion.String(),
+					},
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "eksa-unit-test",
+					},
+					Spec: CloudStackMachineConfigSpec{
+						Template: CloudStackResourceIdentifier{
+							Id: "centos7-k8s-121-id",
+						},
+						ComputeOffering: CloudStackResourceIdentifier{
+							Id: "m4-large-id",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -69,13 +116,11 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					Spec: CloudStackMachineConfigSpec{
-						Template: CloudStackResourceRef{
-							Value: "centos7-k8s-118",
-							Type:  Name,
+						Template: CloudStackResourceIdentifier{
+							Name: "centos7-k8s-118",
 						},
-						ComputeOffering: CloudStackResourceRef{
-							Value: "m4-large",
-							Type:  Name,
+						ComputeOffering: CloudStackResourceIdentifier{
+							Name: "m4-large",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -99,13 +144,11 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					Spec: CloudStackMachineConfigSpec{
-						Template: CloudStackResourceRef{
-							Value: "centos7-k8s-120",
-							Type:  Name,
+						Template: CloudStackResourceIdentifier{
+							Name: "centos7-k8s-120",
 						},
-						ComputeOffering: CloudStackResourceRef{
-							Value: "m4-large",
-							Type:  Name,
+						ComputeOffering: CloudStackResourceIdentifier{
+							Name: "m4-large",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -129,13 +172,11 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						Name: "eksa-unit-test",
 					},
 					Spec: CloudStackMachineConfigSpec{
-						Template: CloudStackResourceRef{
-							Value: "centos7-k8s-118",
-							Type:  Name,
+						Template: CloudStackResourceIdentifier{
+							Name: "centos7-k8s-118",
 						},
-						ComputeOffering: CloudStackResourceRef{
-							Value: "m4-large",
-							Type:  Name,
+						ComputeOffering: CloudStackResourceIdentifier{
+							Name: "m4-large",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -152,13 +193,11 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 						Name: "eksa-unit-test-2",
 					},
 					Spec: CloudStackMachineConfigSpec{
-						Template: CloudStackResourceRef{
-							Value: "centos7-k8s-118",
-							Type:  Name,
+						Template: CloudStackResourceIdentifier{
+							Name: "centos7-k8s-118",
 						},
-						ComputeOffering: CloudStackResourceRef{
-							Value: "m5-xlarge",
-							Type:  Name,
+						ComputeOffering: CloudStackResourceIdentifier{
+							Name: "m5-xlarge",
 						},
 						Users: []UserConfiguration{{
 							Name:              "mySshUsername",
@@ -187,4 +226,73 @@ func TestGetCloudStackMachineConfigs(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCloudStackMachineConfigSpecEqual(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeTrue(), "deep copy CloudStackMachineConfigSpec showing as non-equal")
+}
+
+func TestCloudStackMachineNotEqualTemplateName(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.Template.Name = "newName"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Template name comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualTemplateId(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.Template.Id = "newId"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Template id comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualComputeOfferingName(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.ComputeOffering.Name = "newComputeOffering"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Compute offering name comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualComputeOfferingId(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.ComputeOffering.Id = "newComputeOffering"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Compute offering id comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualAffinity(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.Affinity = "anti"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Affinity comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualUsersNil(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.Users = nil
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Account comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualUsers(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.Users = append(cloudStackMachineConfigSpec2.Users, UserConfiguration{Name: "newUser", SshAuthorizedKeys: []string{"newKey"}})
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "Account comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualUserCustomDetailsNil(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.UserCustomDetails = nil
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "UserCustomDetails comparison in CloudStackMachineConfigSpec not detected")
+}
+
+func TestCloudStackMachineNotEqualUserCustomDetails(t *testing.T) {
+	g := NewWithT(t)
+	cloudStackMachineConfigSpec2 := cloudStackMachineConfigSpec1.DeepCopy()
+	cloudStackMachineConfigSpec2.UserCustomDetails["i"] = "j"
+	g.Expect(cloudStackMachineConfigSpec1.Equal(cloudStackMachineConfigSpec2)).To(BeFalse(), "UserCustomDetails comparison in CloudStackMachineConfigSpec not detected")
 }

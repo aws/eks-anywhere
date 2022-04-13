@@ -1,13 +1,14 @@
 package features
 
 const (
-	TinkerbellProviderEnvVar = "TINKERBELL_PROVIDER"
-	CloudStackProviderEnvVar = "CLOUDSTACK_PROVIDER"
-	SnowProviderEnvVar       = "SNOW_PROVIDER"
-	FullLifecycleAPIEnvVar   = "FULL_LIFECYCLE_API"
-	FullLifecycleGate        = "FullLifecycleAPI"
-	K8s122SupportEnvVar      = "K8S_1_22_SUPPORT"
-	CuratedPackagesEnvVar    = "CURATED_PACKAGES_SUPPORT"
+	TinkerbellProviderEnvVar        = "TINKERBELL_PROVIDER"
+	TinkebellStackSetupEnvVar       = "TINKERBELL_ENABLE_STACK_CREATION"
+	CloudStackProviderEnvVar        = "CLOUDSTACK_PROVIDER"
+	CloudStackKubeVipDisabledEnvVar = "CLOUDSTACK_KUBE_VIP_DISABLED"
+	SnowProviderEnvVar              = "SNOW_PROVIDER"
+	FullLifecycleAPIEnvVar          = "FULL_LIFECYCLE_API"
+	FullLifecycleGate               = "FullLifecycleAPI"
+	CuratedPackagesEnvVar           = "CURATED_PACKAGES_SUPPORT"
 )
 
 func FeedGates(featureGates []string) {
@@ -37,6 +38,13 @@ func TinkerbellProvider() Feature {
 	}
 }
 
+func TinkerbellStackSetup() Feature {
+	return Feature{
+		Name:     "Tinkerbell stack creation support",
+		IsActive: globalFeatures.isActiveForEnvVar(TinkebellStackSetupEnvVar),
+	}
+}
+
 func CloudStackProvider() Feature {
 	return Feature{
 		Name:     "CloudStack provider support",
@@ -44,17 +52,17 @@ func CloudStackProvider() Feature {
 	}
 }
 
+func CloudStackKubeVipDisabled() Feature {
+	return Feature{
+		Name:     "Kube-vip support disabled in CloudStack provider",
+		IsActive: globalFeatures.isActiveForEnvVar(CloudStackKubeVipDisabledEnvVar),
+	}
+}
+
 func SnowProvider() Feature {
 	return Feature{
 		Name:     "Snow provider support",
 		IsActive: globalFeatures.isActiveForEnvVar(SnowProviderEnvVar),
-	}
-}
-
-func K8s122Support() Feature {
-	return Feature{
-		Name:     "Kubernetes version 1.22 support",
-		IsActive: globalFeatures.isActiveForEnvVar(K8s122SupportEnvVar),
 	}
 }
 

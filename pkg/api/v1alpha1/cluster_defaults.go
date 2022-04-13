@@ -12,6 +12,7 @@ import (
 var clusterDefaults = []func(*Cluster) error{
 	setRegistryMirrorConfigDefaults,
 	setWorkerNodeGroupDefaults,
+	setCNIConfigDefault,
 }
 
 func setClusterDefaults(cluster *Cluster) error {
@@ -35,7 +36,7 @@ func setRegistryMirrorConfigDefaults(clusterConfig *Cluster) error {
 		if caCert, set := os.LookupEnv(RegistryMirrorCAKey); set && len(caCert) > 0 {
 			content, err := ioutil.ReadFile(caCert)
 			if err != nil {
-				return fmt.Errorf("error reading the cert file %s: %v", caCert, err)
+				return fmt.Errorf("reading the cert file %s: %v", caCert, err)
 			}
 			logger.V(4).Info(fmt.Sprintf("%s is set, using %s as ca cert for registry", RegistryMirrorCAKey, caCert))
 			clusterConfig.Spec.RegistryMirrorConfiguration.CACertContent = string(content)
@@ -49,5 +50,22 @@ func setWorkerNodeGroupDefaults(cluster *Cluster) error {
 		logger.V(1).Info("First worker node group name not specified. Defaulting name to md-0.")
 		cluster.Spec.WorkerNodeGroupConfigurations[0].Name = "md-0"
 	}
+	return nil
+}
+
+func setCNIConfigDefault(cluster *Cluster) error {
+	if cluster.Spec.ClusterNetwork.CNIConfig != nil {
+		return nil
+	}
+
+	cluster.Spec.ClusterNetwork.CNIConfig = &CNIConfig{}
+	switch cluster.Spec.ClusterNetwork.CNI {
+	case Cilium, CiliumEnterprise:
+		cluster.Spec.ClusterNetwork.CNIConfig.Cilium = &CiliumConfig{}
+	case Kindnetd:
+		cluster.Spec.ClusterNetwork.CNIConfig.Kindnetd = &KindnetdConfig{}
+	}
+
+	cluster.Spec.ClusterNetwork.CNI = ""
 	return nil
 }

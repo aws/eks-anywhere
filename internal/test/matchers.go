@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/golang/mock/gomock"
@@ -18,4 +19,11 @@ func (o *ofType) Matches(x interface{}) bool {
 
 func (o *ofType) String() string {
 	return "is of type " + o.t
+}
+
+// AContext returns a gomock matchers that evaluates if the receive value can
+// fullfills the context.Context interface
+func AContext() gomock.Matcher {
+	ctxInterface := reflect.TypeOf((*context.Context)(nil)).Elem()
+	return gomock.AssignableToTypeOf(ctxInterface)
 }

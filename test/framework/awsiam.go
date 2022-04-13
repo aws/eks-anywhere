@@ -11,8 +11,9 @@ import (
 
 	"github.com/aws/eks-anywhere/internal/pkg/api"
 	"github.com/aws/eks-anywhere/internal/pkg/awsiam"
-	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/executables"
+	"github.com/aws/eks-anywhere/pkg/files"
+	"github.com/aws/eks-anywhere/pkg/manifests"
 	"github.com/aws/eks-anywhere/pkg/version"
 )
 
@@ -89,7 +90,7 @@ func (e *ClusterE2ETest) setIamAuthClientPATH() error {
 	envPath := os.Getenv("PATH")
 	workDir, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("error finding current working directory: %v", err)
+		return fmt.Errorf("finding current working directory: %v", err)
 	}
 	iamAuthClientPath := fmt.Sprintf("%s/bin", workDir)
 	if strings.Contains(envPath, iamAuthClientPath) {
@@ -97,16 +98,17 @@ func (e *ClusterE2ETest) setIamAuthClientPATH() error {
 	}
 	err = os.Setenv("PATH", fmt.Sprintf("%s:%s", iamAuthClientPath, envPath))
 	if err != nil {
-		return fmt.Errorf("error setting %s to PATH: %v", iamAuthClientPath, err)
+		return fmt.Errorf("setting %s to PATH: %v", iamAuthClientPath, err)
 	}
 	return nil
 }
 
 func (e *ClusterE2ETest) getEksdReleaseManifest() (*eksdv1alpha1.Release, error) {
 	c := e.clusterConfig()
-	_, eksdRelease, err := cluster.GetEksdRelease(version.Get(), c)
+	r := manifests.NewReader(files.NewReader())
+	eksdRelease, err := r.ReadEKSD(version.Get().GitVersion, string(c.Spec.KubernetesVersion))
 	if err != nil {
-		return nil, fmt.Errorf("error getting EKS-D release spec from bundle: %v", err)
+		return nil, fmt.Errorf("getting EKS-D release spec from bundle: %v", err)
 	}
 	return eksdRelease, nil
 }

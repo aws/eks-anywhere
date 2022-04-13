@@ -39,6 +39,7 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 	sortedComponentNames := sortArtifactsMap(tinkerbellBundleArtifacts)
 
 	var sourceBranch string
+	var componentChecksum string
 	bundleImageArtifacts := map[string]anywherev1alpha1.Image{}
 	bundleManifestArtifacts := map[string]anywherev1alpha1.Manifest{}
 	bundleArchiveArtifacts := map[string]anywherev1alpha1.Archive{}
@@ -92,7 +93,11 @@ func (r *ReleaseConfig) GetTinkerbellBundle(imageDigests map[string]string) (any
 		}
 	}
 
-	componentChecksum := generateComponentHash(artifactHashes)
+	if r.DryRun {
+		componentChecksum = fakeComponentChecksum
+	} else {
+		componentChecksum = generateComponentHash(artifactHashes)
+	}
 	version, err := BuildComponentVersion(
 		newVersionerWithGITTAG(r.BuildRepoSource, captProjectPath, sourceBranch, r),
 		componentChecksum,

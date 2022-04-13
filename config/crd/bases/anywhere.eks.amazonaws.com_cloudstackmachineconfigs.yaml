@@ -38,6 +38,11 @@ spec:
             description: CloudStackMachineConfigSpec defines the desired state of
               CloudStackMachineConfig
             properties:
+              affinity:
+                description: Defaults to `no`. Can be `pro` or `anti`. If set to `pro`
+                  or `anti`, will create an affinity group per machine set of the
+                  corresponding type
+                type: string
               affinityGroupIds:
                 description: AffinityGroupIds allows users to pass in a list of UUIDs
                   for previously-created Affinity Groups. Any VM’s created with this
@@ -56,26 +61,28 @@ spec:
                   size including number of CPU’s, memory, and CPU speed. It can either
                   be specified as a UUID or name
                 properties:
-                  type:
+                  id:
+                    description: Id of a resource in the CloudStack environment. Mutually
+                      exclusive with Name
                     type: string
-                  value:
+                  name:
+                    description: Name of a resource in the CloudStack environment.
+                      Mutually exclusive with Id
                     type: string
-                required:
-                - type
-                - value
                 type: object
               template:
                 description: Template refers to a VM image template which has been
                   previously registered in CloudStack. It can either be specified
                   as a UUID or name
                 properties:
-                  type:
+                  id:
+                    description: Id of a resource in the CloudStack environment. Mutually
+                      exclusive with Name
                     type: string
-                  value:
+                  name:
+                    description: Name of a resource in the CloudStack environment.
+                      Mutually exclusive with Id
                     type: string
-                required:
-                - type
-                - value
                 type: object
               userCustomDetails:
                 additionalProperties:

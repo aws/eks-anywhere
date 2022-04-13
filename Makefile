@@ -31,19 +31,20 @@ UNIT_TEST_PACKAGE_EXCLUSION_REGEX ?=mocks$
 BRANCH_NAME?=main
 ifeq (,$(findstring $(BRANCH_NAME),main))
 ## use the branch-specific bundle manifest if the branch is not 'main'
+DEV_GIT_VERSION:=v0.0.0-dev-${BRANCH_NAME}
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${BRANCH_NAME}/bundle-release.yaml
+RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/${BRANCH_NAME}/eks-a-release.yaml
 LATEST=$(BRANCH_NAME)
-$(info    Using branch-specific BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
+$(info    Using branch-specific BUNDLE_MANIFEST_URL $(BUNDLE_MANIFEST_URL) and RELEASE_MANIFEST_URL $(RELEASE_MANIFEST_URL))
 else
 ## use the standard bundle manifest if the branch is 'main'
+DEV_GIT_VERSION:=v0.0.0-dev
 BUNDLE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/bundle-release.yaml
-$(info    Using stanard BUNDLE_RELEASE_MANIFEST_URL $(BUNDLE_MANIFEST_URL))
+RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
+$(info    Using standard BUNDLE_MANIFEST_URL $(BUNDLE_MANIFEST_URL) and RELEASE_MANIFEST_URL $(RELEASE_MANIFEST_URL))
 LATEST=latest
 endif
 
-RELEASE_MANIFEST_URL?=https://dev-release-prod-pdx.s3.us-west-2.amazonaws.com/eks-a-release.yaml
-
-DEV_GIT_VERSION:=v0.0.0-dev
 CUSTOM_GIT_VERSION:=v0.0.0-custom
 
 AWS_ACCOUNT_ID?=$(shell aws sts get-caller-identity --query Account --output text)
@@ -135,7 +136,7 @@ build: eks-a eks-a-tool unit-test ## Generate binaries and run unit tests
 release: eks-a-release unit-test ## Generate release binary and run unit tests
 
 .PHONY: eks-a-binary
-eks-a-binary: ALL_LINKER_FLAGS := $(LINKER_FLAGS) -X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL)
+eks-a-binary: ALL_LINKER_FLAGS := $(LINKER_FLAGS) -X github.com/aws/eks-anywhere/pkg/version.gitVersion=$(GIT_VERSION) -X github.com/aws/eks-anywhere/pkg/cluster.releasesManifestURL=$(RELEASE_MANIFEST_URL) -X github.com/aws/eks-anywhere/pkg/releases.manifestURL=$(RELEASE_MANIFEST_URL)
 eks-a-binary: LINKER_FLAGS_ARG := -ldflags "$(ALL_LINKER_FLAGS)"
 eks-a-binary: BUILD_TAGS_ARG := -tags "$(BUILD_TAGS)"
 eks-a-binary: OUTPUT_FILE ?= bin/eksctl-anywhere
@@ -244,7 +245,7 @@ lint: bin/golangci-lint ## Run golangci-lint
 	bin/golangci-lint run
 
 bin/golangci-lint: ## Download golangci-lint
-bin/golangci-lint: GOLANGCI_LINT_VERSION?=$(shell cat .github/workflows/golangci-lint.yml | sed -n -e 's/^\s*version: //p')
+bin/golangci-lint: GOLANGCI_LINT_VERSION?=$(shell cat .github/workflows/golangci-lint.yml | yq e '.jobs.golangci.steps[] | select(.name == "golangci-lint") .with.version' -)
 bin/golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s $(GOLANGCI_LINT_VERSION)
 
@@ -332,7 +333,7 @@ clean: ## Clean up resources created by make targets
 	rm -rf ./bin/*
 	rm -rf ./pkg/executables/cluster-name/
 	rm -rf ./pkg/providers/vsphere/test/
-	find . -depth -name 'folderWriter*' -exec rm -rf {} \;
+	find . -depth -type d -regextype posix-egrep -regex '.*\/Test.*-[0-9]{9}\/.*' -exec rm -rf {} \;
 	rm -rf ./controllers/bin/*
 	rm -rf ./hack/tools/bin
 	rm -rf vendor
@@ -401,6 +402,7 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/git/gogit/mocks/client.go -package=mocks "github.com/aws/eks-anywhere/pkg/git/gogit" GoGitClient
 	${GOPATH}/bin/mockgen -destination=pkg/validations/mocks/docker.go -package=mocks "github.com/aws/eks-anywhere/pkg/validations" DockerExecutable
 	${GOPATH}/bin/mockgen -destination=controllers/controllers/resource/mocks/resource.go -package=mocks "github.com/aws/eks-anywhere/controllers/controllers/resource" ResourceFetcher,ResourceUpdater
+	${GOPATH}/bin/mockgen -destination=controllers/controllers/resource/mocks/reader.go -package=mocks "sigs.k8s.io/controller-runtime/pkg/client" Reader
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/internal/templates/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/templates/factory.go" GovcClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/vsphere/internal/tags/mocks/govc.go -package=mocks -source "pkg/providers/vsphere/internal/tags/factory.go" GovcClient
 	${GOPATH}/bin/mockgen -destination=pkg/validations/mocks/kubectl.go -package=mocks -source "pkg/validations/kubectl.go" KubectlClient
@@ -409,13 +411,23 @@ mocks: ## Generate mocks
 	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/capiclient.go -package=mocks -source "pkg/clusterapi/manager.go" CAPIClient,KubectlClient
 	${GOPATH}/bin/mockgen -destination=pkg/clusterapi/mocks/client.go -package=mocks -source "pkg/clusterapi/resourceset_manager.go" Client
 	${GOPATH}/bin/mockgen -destination=pkg/crypto/mocks/crypto.go -package=mocks -source "pkg/crypto/certificategen.go" CertificateGenerator
-	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/clients.go -package=mocks -source "pkg/networking/cilium/client.go" 
+	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/clients.go -package=mocks -source "pkg/networking/cilium/client.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/helm.go -package=mocks -source "pkg/networking/cilium/templater.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/upgrader.go -package=mocks -source "pkg/networking/cilium/upgrader.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networking/kindnetd/mocks/client.go -package=mocks -source "pkg/networking/kindnetd/upgrader.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networking/cilium/mocks/cilium.go -package=mocks -source "pkg/networking/cilium/cilium.go"
 	${GOPATH}/bin/mockgen -destination=pkg/networkutils/mocks/client.go -package=mocks -source "pkg/networkutils/netclient.go" NetClient
 	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/hardware/mocks/translate.go -package=mocks -source "pkg/providers/tinkerbell/hardware/translate.go" MachineReader,MachineWriter,MachineValidator
+	${GOPATH}/bin/mockgen -destination=pkg/providers/tinkerbell/hardware/mocks/json.go -package=mocks -source "pkg/providers/tinkerbell/hardware/json.go" TinkerbellHardwareJsonFactory,TinkerbellHardwarePusher
+	${GOPATH}/bin/mockgen -destination=pkg/docker/mocks/mocks.go -package=mocks -source "pkg/docker/mover.go"
+	${GOPATH}/bin/mockgen -destination=internal/test/mocks/reader.go -package=mocks -source "internal/test/reader.go"
+	${GOPATH}/bin/mockgen -destination=cmd/eksctl-anywhere/cmd/internal/commands/artifacts/mocks/download.go -package=mocks -source "cmd/eksctl-anywhere/cmd/internal/commands/artifacts/download.go"
+	${GOPATH}/bin/mockgen -destination=cmd/eksctl-anywhere/cmd/internal/commands/artifacts/mocks/import.go -package=mocks -source "cmd/eksctl-anywhere/cmd/internal/commands/artifacts/import.go"
+	${GOPATH}/bin/mockgen -destination=cmd/eksctl-anywhere/cmd/internal/commands/artifacts/mocks/import_tools_image.go -package=mocks -source "cmd/eksctl-anywhere/cmd/internal/commands/artifacts/import_tools_image.go"
+	${GOPATH}/bin/mockgen -destination=pkg/helm/mocks/download.go -package=mocks -source "pkg/helm/download.go"
+	${GOPATH}/bin/mockgen -destination=pkg/aws/mocks/ec2.go -package=mocks -source "pkg/aws/ec2.go"
+	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/aws.go -package=mocks -source "pkg/providers/snow/aws.go"
+	${GOPATH}/bin/mockgen -destination=pkg/providers/snow/mocks/defaults.go -package=mocks -source "pkg/providers/snow/defaults.go"
 
 .PHONY: verify-mocks
 verify-mocks: mocks ## Verify if mocks need to be updated
@@ -510,11 +522,11 @@ docker-build:
 
 .PHONY: docker-build-core
 docker-build-core: docker-pull-prerequisites ## Build the docker image for controller-manager
-	DOCKER_BUILDKIT=1 docker build --build-arg ARCH=$(ARCH) --build-arg ldflags="$(LDFLAGS)" . -t CONTROLLER_IMG_TAGGED -f build/Dockerfile
+	DOCKER_BUILDKIT=1 docker build --build-arg ARCH=$(ARCH) --build-arg ldflags="$(LDFLAGS)" . -t $(CONTROLLER_IMG_TAGGED) -f build/Dockerfile
 
 .PHONY: docker-push
 docker-push: ## Push the docker image
-	docker push CONTROLLER_IMG_TAGGED
+	docker push $(CONTROLLER_IMG_TAGGED)
 
 .PHONY: docker-pull-prerequisites
 docker-pull-prerequisites:

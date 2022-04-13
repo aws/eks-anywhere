@@ -104,6 +104,9 @@ bin/golangci-lint: GOLANGCI_LINT_VERSION?=$(shell cat $(REPO_ROOT)/.github/workf
 bin/golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s $(GOLANGCI_LINT_VERSION)
 
+unit-test: ## Run go test against code.
+	go test -count=1 ./...
+
 run: manifests generate fmt vet ## Run a controller from your host.
 	go run ./main.go
 

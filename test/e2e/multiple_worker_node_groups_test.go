@@ -10,7 +10,7 @@ import (
 	"github.com/aws/eks-anywhere/test/framework"
 )
 
-func TestVSphereKubernetes121BottlerocketAndAndRemoveWorkerNodeGroups(t *testing.T) {
+func TestVSphereKubernetes122BottlerocketAndAndRemoveWorkerNodeGroups(t *testing.T) {
 	provider := framework.NewVSphere(t,
 		framework.WithVSphereWorkerNodeGroup(
 			"worker-1",
@@ -20,13 +20,13 @@ func TestVSphereKubernetes121BottlerocketAndAndRemoveWorkerNodeGroups(t *testing
 			"worker-1",
 			framework.WithWorkerNodeGroup("workers-2", api.WithCount(1)),
 		),
-		framework.WithBottleRocket121(),
+		framework.WithBottleRocket122(),
 	)
 	test := framework.NewClusterE2ETest(
 		t,
 		provider,
 		framework.WithClusterFiller(
-			api.WithKubernetesVersion(anywherev1.Kube121),
+			api.WithKubernetesVersion(anywherev1.Kube122),
 			api.WithExternalEtcdTopology(1),
 			api.WithControlPlaneCount(1),
 			api.RemoveAllWorkerNodeGroups(), // This gives us a blank slate
@@ -35,7 +35,7 @@ func TestVSphereKubernetes121BottlerocketAndAndRemoveWorkerNodeGroups(t *testing
 
 	runSimpleUpgradeFlow(
 		test,
-		anywherev1.Kube121,
+		anywherev1.Kube122,
 		framework.WithClusterUpgrade(
 			api.RemoveWorkerNodeGroup("workers-2"),
 			api.WithWorkerNodeGroup("workers-1", api.WithCount(1)),

@@ -14,11 +14,8 @@ import (
 	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
-// File writing constants for default output path construction.
-const (
-	yamlDirectory = "hardware-manifests"
-	yamlFile      = "hardware.yaml"
-)
+// DefaultHardwareManifestYamlFilename is the default file for writing yinkerbell yaml manifests
+const DefaultHardwareManifestYamlFilename = "hardware.yaml"
 
 // Kubernetes related constants for describing kinds and api versions.
 const (

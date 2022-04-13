@@ -18,6 +18,7 @@ const (
 	tinkerbellPBnJGRPCAuthEnvVar         = "T_TINKERBELL_PBNJ_GRPC_AUTHORITY"
 	tinkerbellImageUbuntu120EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_20"
 	tinkerbellImageUbuntu121EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_21"
+	tinkerbellImageUbuntu122EnvVar       = "T_TINKERBELL_IMAGE_UBUNTU_1_22"
 	tinkerbellInventoryCsvFilePathEnvVar = "T_TINKERBELL_INVENTORY_CSV"
 	tinkerbellSSHAuthorizedKey           = "T_TINKERBELL_SSH_AUTHORIZED_KEY"
 )
@@ -113,6 +114,15 @@ func WithUbuntu121Tinkerbell() TinkerbellOpt {
 	return func(t *Tinkerbell) {
 		t.fillers = append(t.fillers,
 			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu121EnvVar, api.WithImageUrlForAllTinkerbellMachines),
+			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
+		)
+	}
+}
+
+func WithUbuntu122Tinkerbell() TinkerbellOpt {
+	return func(t *Tinkerbell) {
+		t.fillers = append(t.fillers,
+			api.WithStringFromEnvVarTinkerbell(tinkerbellImageUbuntu122EnvVar, api.WithImageUrlForAllTinkerbellMachines),
 			api.WithOsFamilyForAllTinkerbellMachines(anywherev1.Ubuntu),
 		)
 	}

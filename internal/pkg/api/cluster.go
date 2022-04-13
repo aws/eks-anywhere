@@ -35,7 +35,7 @@ func AutoFillClusterFromYaml(yamlContent []byte, fillers ...ClusterFiller) ([]by
 
 	clusterOutput, err := yaml.Marshal(clusterConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error marshalling cluster config: %v", err)
+		return nil, fmt.Errorf("marshalling cluster config: %v", err)
 	}
 
 	return clusterOutput, nil
@@ -44,6 +44,15 @@ func AutoFillClusterFromYaml(yamlContent []byte, fillers ...ClusterFiller) ([]by
 func WithKubernetesVersion(v anywherev1.KubernetesVersion) ClusterFiller {
 	return func(c *anywherev1.Cluster) {
 		c.Spec.KubernetesVersion = v
+	}
+}
+
+func WithCiliumPolicyEnforcementMode(mode anywherev1.CiliumPolicyEnforcementMode) ClusterFiller {
+	return func(c *anywherev1.Cluster) {
+		if c.Spec.ClusterNetwork.CNIConfig == nil {
+			c.Spec.ClusterNetwork.CNIConfig = &anywherev1.CNIConfig{Cilium: &anywherev1.CiliumConfig{}}
+		}
+		c.Spec.ClusterNetwork.CNIConfig.Cilium.PolicyEnforcementMode = mode
 	}
 }
 

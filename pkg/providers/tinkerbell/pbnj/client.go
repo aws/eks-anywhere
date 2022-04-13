@@ -2,14 +2,40 @@ package pbnj
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/tinkerbell/cluster-api-provider-tinkerbell/pbnj/client"
-	"github.com/tinkerbell/pbnj/api/v1"
+	v1 "github.com/tinkerbell/pbnj/api/v1"
+
+	"github.com/aws/eks-anywhere/pkg/logger"
+)
+
+const PbnjGrpcAuth = client.PbnjGrpcAuthorityEnv
+
+type PowerState string
+
+const (
+	PowerStateOn      PowerState = "on"
+	PowerStateOff     PowerState = "off"
+	PowerStateUnknown PowerState = "unknown"
+)
+
+// Boot devices patched from upstream PBNJ so consumers don't need to depend on the upstream package.
+type BootDevice = v1.BootDevice
+
+const (
+	BootDeviceUnspecified BootDevice = v1.BootDevice_BOOT_DEVICE_UNSPECIFIED
+	BootDeviceNone                   = v1.BootDevice_BOOT_DEVICE_NONE
+	BootDeviceBIOS                   = v1.BootDevice_BOOT_DEVICE_BIOS
+	BootDeviceCDROM                  = v1.BootDevice_BOOT_DEVICE_CDROM
+	BootDeviceDisk                   = v1.BootDevice_BOOT_DEVICE_DISK
+	BootDevicePXE                    = v1.BootDevice_BOOT_DEVICE_PXE
 )
 
 const (
-	PbnjGrpcAuth = "PBNJ_GRPC_AUTHORITY"
+	machineAlreadyPoweredOffErrorMsg = "server is already off"
 )
 
 type Pbnj struct {
@@ -37,16 +63,89 @@ func NewPBNJClient(pbnjGrpcAuth string) (*Pbnj, error) {
 	return pbnjObj, nil
 }
 
-func (p *Pbnj) ValidateBMCSecretCreds(ctx context.Context, bmcInfo BmcSecretConfig) error {
-	_, err := p.pbnj.MachinePower(ctx, p.NewPowerRequest(bmcInfo))
+func (p *Pbnj) GetPowerState(ctx context.Context, bmcInfo BmcSecretConfig) (PowerState, error) {
+	status, err := p.pbnj.MachinePower(ctx, NewPowerRequest(bmcInfo, v1.PowerAction_POWER_ACTION_STATUS))
 	if err != nil {
-		return err
+		return PowerStateUnknown, err
+	}
+
+	result := strings.ToLower(status.Result)
+
+	if strings.Contains(result, string(PowerStateOn)) {
+		return PowerStateOn, nil
+	} else if strings.Contains(result, string(PowerStateOff)) {
+		return PowerStateOff, nil
+	}
+
+	return PowerStateUnknown, nil
+}
+
+func (p *Pbnj) PowerOff(ctx context.Context, bmcInfo BmcSecretConfig) error {
+	logger.V(4).Info("Attempting to power off machine", "machine", bmcInfo.Host)
+	_, err := p.pbnj.MachinePower(ctx, NewPowerRequest(bmcInfo, v1.PowerAction_POWER_ACTION_OFF))
+	if err != nil {
+		if strings.Contains(strings.ToLower(err.Error()), machineAlreadyPoweredOffErrorMsg) {
+			logger.Info("WARNING: Machine is already powered off", "machine", bmcInfo.Host, "msg", err.Error())
+			return nil
+		}
+
+		return fmt.Errorf("failed to power off machine: %s %v", bmcInfo.Host, err)
+	}
+
+	logger.V(4).Info("Successfully powered off machine", "machine", bmcInfo.Host)
+	return nil
+}
+
+func (p *Pbnj) PowerOn(ctx context.Context, bmcInfo BmcSecretConfig) error {
+	_, err := p.pbnj.MachinePower(ctx, NewPowerRequest(bmcInfo, v1.PowerAction_POWER_ACTION_ON))
+	if err != nil {
+		return fmt.Errorf("failed to power on machine: %s %v", bmcInfo.Host, err)
 	}
 
 	return nil
 }
 
-func (p *Pbnj) NewPowerRequest(bmcInfo BmcSecretConfig) *v1.PowerRequest {
+func (p *Pbnj) SetBootDevice(ctx context.Context, info BmcSecretConfig, mode BootDevice) error {
+	logger := logger.V(4).WithValues("component", "pbnj-client")
+
+	request := newBootDeviceRequest(info, mode)
+	logger.Info(
+		"Set boot device request",
+		"host", request.Authn.GetDirectAuthn().Host,
+		"boot_device", request.BootDevice,
+	)
+
+	response, err := p.pbnj.MachineBootDev(ctx, request)
+	if err != nil {
+		return err
+	}
+	logger.Info("Set boot device response", "response", response)
+
+	return nil
+}
+
+func newBootDeviceRequest(bmc BmcSecretConfig, device v1.BootDevice) *v1.DeviceRequest {
+	return &v1.DeviceRequest{
+		Authn: &v1.Authn{
+			Authn: &v1.Authn_DirectAuthn{
+				DirectAuthn: &v1.DirectAuthn{
+					Host: &v1.Host{
+						Host: bmc.Host,
+					},
+					Username: bmc.Username,
+					Password: bmc.Password,
+				},
+			},
+		},
+		Vendor: &v1.Vendor{
+			Name: bmc.Vendor,
+		},
+		BootDevice: device,
+		EfiBoot:    true, // hardcoded for our use-case.
+	}
+}
+
+func NewPowerRequest(bmcInfo BmcSecretConfig, powerAction v1.PowerAction) *v1.PowerRequest {
 	return &v1.PowerRequest{
 		Authn: &v1.Authn{
 			Authn: &v1.Authn_DirectAuthn{
@@ -62,6 +161,6 @@ func (p *Pbnj) NewPowerRequest(bmcInfo BmcSecretConfig) *v1.PowerRequest {
 		Vendor: &v1.Vendor{
 			Name: bmcInfo.Vendor,
 		},
-		PowerAction: v1.PowerAction_POWER_ACTION_STATUS,
+		PowerAction: powerAction,
 	}
 }

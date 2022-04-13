@@ -28,7 +28,7 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 
 	clusterName := "test_cluster"
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Name = clusterName
+		s.Cluster.Name = clusterName
 		s.VersionsBundle = versionBundle
 	})
 	eksClusterName := "test_cluster-eks-a-cluster"
@@ -38,9 +38,9 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 	registryMirrorWithPort := net.JoinHostPort(registryMirror, constants.DefaultHttpsPort)
 	kindImageMirror := fmt.Sprintf("%s/l0g8r8j6/kubernetes-sigs/kind/node:v1.20.2", registryMirrorWithPort)
 	clusterSpecWithMirror := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Name = clusterName
+		s.Cluster.Name = clusterName
 		s.VersionsBundle = versionBundle
-		s.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
+		s.Cluster.Spec.RegistryMirrorConfiguration = &v1alpha1.RegistryMirrorConfiguration{
 			Endpoint: registryMirror,
 			Port:     constants.DefaultHttpsPort,
 		}
@@ -87,6 +87,18 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 			},
 			env:                map[string]string{},
 			wantKindConfig:     "testdata/kind_config_docker_mount_networking.yaml",
+			registryMirrorTest: false,
+		},
+		{
+			name:           "With extra port mappings option",
+			wantKubeconfig: kubeConfigFile,
+			options: []testKindOption{
+				func(k *executables.Kind) bootstrapper.BootstrapClusterClientOption {
+					return k.WithExtraPortMappings([]int{80, 443})
+				},
+			},
+			env:                map[string]string{},
+			wantKindConfig:     "testdata/kind_config_extra_port_mappings.yaml",
 			registryMirrorTest: false,
 		},
 		{
@@ -207,7 +219,7 @@ func TestKindCreateBootstrapClusterSuccess(t *testing.T) {
 
 func TestKindCreateBootstrapClusterExecutableError(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-		s.Name = "clusterName"
+		s.Cluster.Name = "clusterName"
 		s.VersionsBundle = versionBundle
 	})
 

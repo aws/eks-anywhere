@@ -79,7 +79,8 @@ func TestSetDefaultFluxGitHubConfigPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := NewWithT(t)
-			cluster.SetDefaultFluxGitHubConfigPath(tt.config)
+
+			g.Expect(cluster.SetDefaultFluxGitHubConfigPath(tt.config)).To(Succeed())
 			g.Expect(tt.config.GitOpsConfig.Spec.Flux.Github.ClusterConfigPath).To(Equal(tt.wantConfigPath))
 		})
 	}
@@ -89,6 +90,6 @@ func TestSetConfigDefaults(t *testing.T) {
 	g := NewWithT(t)
 	c := clusterConfigFromFile(t, "testdata/cluster_1_19.yaml")
 	originalC := clusterConfigFromFile(t, "testdata/cluster_1_19.yaml")
-	cluster.SetConfigDefaults(c)
+	g.Expect(cluster.SetConfigDefaults(c)).To(Succeed())
 	g.Expect(c).NotTo(Equal(originalC))
 }

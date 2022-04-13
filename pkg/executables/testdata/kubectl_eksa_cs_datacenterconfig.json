@@ -10,13 +10,9 @@
     "account": "testAccount",
     "zones": [
       {
-        "zone": {
-          "type": "Name",
-          "value": "testZone"
-        },
+        "name": "testZone",
         "network": {
-          "type": "Name",
-          "value": "testNetwork"
+          "name": "testNetwork"
         }
       }
     ]

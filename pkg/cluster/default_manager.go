@@ -12,6 +12,8 @@ func init() {
 		fluxEntry(),
 		vsphereEntry(),
 		dockerEntry(),
+		snowEntry(),
+		tinkerbellEntry(),
 	)
 	if err != nil {
 		panic(err)

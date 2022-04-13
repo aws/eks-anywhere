@@ -44,6 +44,10 @@ type Bundles struct {
 	Status BundlesStatus `json:"status,omitempty"`
 }
 
+func (b *Bundles) DefaultEksAToolsImage() Image {
+	return b.Spec.VersionsBundles[0].Eksa.CliTools
+}
+
 //+kubebuilder:object:root=true
 
 // BundlesList contains a list of Bundles
@@ -72,6 +76,7 @@ type VersionsBundle struct {
 	Cilium                 CiliumBundle                `json:"cilium"`
 	Kindnetd               KindnetdBundle              `json:"kindnetd"`
 	Flux                   FluxBundle                  `json:"flux"`
+	PackageController      PackageBundle               `json:"packageController"`
 	BottleRocketBootstrap  BottlerocketBootstrapBundle `json:"bottlerocketBootstrap"`
 	BottleRocketAdmin      BottlerocketAdminBundle     `json:"bottlerocketAdmin"`
 	ExternalEtcdBootstrap  EtcdadmBootstrapBundle      `json:"etcdadmBootstrap"`
@@ -201,6 +206,7 @@ type DockerBundle struct {
 type CloudStackBundle struct {
 	Version              string   `json:"version"`
 	ClusterAPIController Image    `json:"clusterAPIController"`
+	KubeVip              Image    `json:"kubeVip"`
 	Components           Manifest `json:"components"`
 	Metadata             Manifest `json:"metadata"`
 }
@@ -224,6 +230,12 @@ type FluxBundle struct {
 	KustomizeController    Image  `json:"kustomizeController"`
 	HelmController         Image  `json:"helmController"`
 	NotificationController Image  `json:"notificationController"`
+}
+
+type PackageBundle struct {
+	Version    string `json:"version,omitempty"`
+	Controller Image  `json:"packageController"`
+	HelmChart  Image  `json:"helmChart,omitempty"`
 }
 
 type EksaBundle struct {

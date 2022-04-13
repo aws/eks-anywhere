@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/eks-anywhere-test-tool/pkg/artifacts"
 	"github.com/aws/eks-anywhere-test-tool/pkg/awsprofiles"
+	"github.com/aws/eks-anywhere-test-tool/pkg/cloudwatch"
 	"github.com/aws/eks-anywhere-test-tool/pkg/codebuild"
 	"github.com/aws/eks-anywhere-test-tool/pkg/constants"
 	"github.com/aws/eks-anywhere-test-tool/pkg/filewriter"
@@ -35,21 +36,26 @@ var e2eFetchArtifactsCommand = &cobra.Command{
 
 		buildAccountCodebuild, err := codebuild.New(awsprofiles.BuildAccount)
 		if err != nil {
-			return fmt.Errorf("error when creating codebuild client: %v", err)
+			return fmt.Errorf("creating codebuild client: %v", err)
 		}
 
 		testAccountS3, err := s3.New(awsprofiles.TestAccount)
 		if err != nil {
-			return fmt.Errorf("error when creating s3 client: %v", err)
+			return fmt.Errorf("creating s3 client: %v", err)
 		}
 
 		now := time.Now().Format(time.RFC3339 + "-artifacts")
 		writer, err := filewriter.NewWriter(now)
 		if err != nil {
-			return fmt.Errorf("error when setting up writer: %v", err)
+			return fmt.Errorf("setting up writer: %v", err)
 		}
 
-		artifactFetcher := artifacts.New(testAccountS3, buildAccountCodebuild, writer)
+		buildAccountCw, err := cloudwatch.New(awsprofiles.BuildAccount)
+		if err != nil {
+			return fmt.Errorf("creating cloudwatch logs client: %v", err)
+		}
+
+		artifactFetcher := artifacts.New(testAccountS3, buildAccountCodebuild, writer, buildAccountCw)
 
 		var opts []artifacts.FetchArtifactsOpt
 		if fa.forBuildId != "" {
@@ -60,6 +66,10 @@ var e2eFetchArtifactsCommand = &cobra.Command{
 			opts = append(opts, artifacts.WithCodebuildProject(fa.forProject))
 		}
 
+		if fa.fetchAll {
+			opts = append(opts, artifacts.WithAllArtifacts())
+		}
+
 		return artifactFetcher.FetchArtifacts(opts...)
 	},
 }
@@ -68,6 +78,7 @@ func init() {
 	e2eFetchCommand.AddCommand(e2eFetchArtifactsCommand)
 	e2eFetchArtifactsCommand.Flags().StringVar(&fa.forBuildId, "buildId", "", "Build ID to fetch artifacts for")
 	e2eFetchArtifactsCommand.Flags().StringVar(&fa.forProject, "project", "", "Project to fetch builds from")
+	e2eFetchArtifactsCommand.Flags().BoolVar(&fa.fetchAll, "all", false, "Fetch all artifacts")
 	err := viper.BindPFlags(e2eFetchArtifactsCommand.Flags())
 	if err != nil {
 		log.Fatalf("Error initializing flags: %v", err)

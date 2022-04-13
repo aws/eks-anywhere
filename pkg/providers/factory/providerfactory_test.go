@@ -99,7 +99,7 @@ func TestProviderFactoryBuildProvider(t *testing.T) {
 				}},
 				clusterConfigFileName: "testdata/cluster_aws.yaml",
 			},
-			wantErr: fmt.Errorf("valid providers include: %s, %s", constants.DockerProviderName, constants.VSphereProviderName),
+			wantErr: fmt.Errorf("no provider support for datacenter kind: %s", v1alpha1.AWSDatacenterKind),
 		},
 	}
 	for _, tt := range tests {
@@ -113,7 +113,7 @@ func TestProviderFactoryBuildProvider(t *testing.T) {
 				CloudStackKubectlClient: cloudstackMocks.NewMockProviderKubectlClient(mockCtrl),
 				Writer:                  mockswriter.NewMockFileWriter(mockCtrl),
 			}
-			got, err := p.BuildProvider(tt.args.clusterConfigFileName, tt.args.clusterConfig, false, tt.args.hardwareFileName, false)
+			got, err := p.BuildProvider(tt.args.clusterConfigFileName, tt.args.clusterConfig, false, tt.args.hardwareFileName, false, false, false)
 			if err == nil {
 				if got.Name() != tt.want.kind || got.Version(clusterSpec) != tt.want.version {
 					t.Errorf("BuildProvider() got = %v, want %v", got, tt.want)

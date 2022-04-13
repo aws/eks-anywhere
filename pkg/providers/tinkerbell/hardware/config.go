@@ -1,6 +1,7 @@
 package hardware
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"strings"
@@ -10,13 +11,19 @@ import (
 	tinkhardware "github.com/tinkerbell/tink/protos/hardware"
 	tinkworkflow "github.com/tinkerbell/tink/protos/workflow"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	apimachineryvalidation "k8s.io/apimachinery/pkg/util/validation"
 	"sigs.k8s.io/yaml"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/networkutils"
+	"github.com/aws/eks-anywhere/pkg/templater"
 )
+
+const Provisioning = "provisioning"
 
 type HardwareConfig struct {
 	Hardwares []tinkv1alpha1.Hardware
@@ -71,7 +78,7 @@ func (hc *HardwareConfig) setHardwareConfigFromFile(hardwareFileName string) err
 	return nil
 }
 
-func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, tinkHardwareMap map[string]*tinkhardware.Hardware, tinkWorkflowMap map[string]*tinkworkflow.Workflow) error {
+func (hc *HardwareConfig) ValidateHardware(skipPowerActions, force bool, tinkHardwareMap map[string]*tinkhardware.Hardware, tinkWorkflowMap map[string]*tinkworkflow.Workflow) error {
 	bmcRefMap := map[string]*tinkv1alpha1.Hardware{}
 	if !skipPowerActions {
 		bmcRefMap = hc.initBmcRefMap()
@@ -83,6 +90,10 @@ func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, tinkHardwareMa
 	for _, hw := range hc.Hardwares {
 		if hw.Name == "" {
 			return fmt.Errorf("hardware name is required")
+		}
+
+		if errs := apimachineryvalidation.IsDNS1123Subdomain(hw.Name); len(errs) > 0 {
+			return fmt.Errorf("invalid hardware name: %v: %v", hw.Name, errs)
 		}
 
 		if hw.Spec.ID == "" {
@@ -102,7 +113,30 @@ func (hc *HardwareConfig) ValidateHardware(skipPowerActions bool, tinkHardwareMa
 		for _, interfaces := range hardwareInterface {
 			mac := interfaces.GetDhcp()
 			if _, ok := tinkWorkflowMap[mac.Mac]; ok {
-				return fmt.Errorf("workflow %s already exixts for the hardware id %s", tinkWorkflowMap[mac.Mac].Id, hw.Spec.ID)
+				message := fmt.Sprintf("workflow %s already exixts for the hardware id %s", tinkWorkflowMap[mac.Mac].Id, hw.Spec.ID)
+
+				// If the --force-cleanup flag was set we have to warn. This is beacuse we haven't separated static
+				// and interactive validations so there's no opportunity, after performing static yaml validation, to
+				// delete any workflows before we check if workflows alredy exist. To avoid erroring out before getting
+				// the chance to delete workflows this code assumes workflows will be deleted at a later stage,
+				// therefore warns only.
+				if !force {
+					return fmt.Errorf(message)
+				}
+				logger.V(2).Info(fmt.Sprintf("Warn: %v", message))
+			}
+		}
+
+		if !force {
+			hardwareMetadata := make(map[string]interface{})
+			tinkHardware := tinkHardwareMap[hw.Spec.ID]
+
+			if err := json.Unmarshal([]byte(tinkHardware.GetMetadata()), &hardwareMetadata); err != nil {
+				return fmt.Errorf("unmarshaling hardware metadata: %v", err)
+			}
+
+			if hardwareMetadata["state"] != Provisioning {
+				return fmt.Errorf("expecting hardware state to be '%s' but it is '%s'; use --force-cleanup flag to reset the state", "provisioning", hardwareMetadata["state"])
 			}
 		}
 
@@ -210,4 +244,73 @@ func (hc *HardwareConfig) initSecretRefMap() map[string]struct{} {
 	}
 
 	return secretRefMap
+}
+
+func (hc *HardwareConfig) HardwareSpecMarshallable() ([]byte, error) {
+	var marshallables []v1alpha1.Marshallable
+
+	for _, hw := range hc.Hardwares {
+		marshallables = append(marshallables, hardwareMarshallable(hw))
+	}
+	for _, bmc := range hc.Bmcs {
+		marshallables = append(marshallables, bmcMarshallable(bmc))
+	}
+	for _, secret := range hc.Secrets {
+		marshallables = append(marshallables, secretsMarshallable(secret))
+	}
+
+	resources := make([][]byte, 0, len(marshallables))
+	for _, marshallable := range marshallables {
+		resource, err := yaml.Marshal(marshallable)
+		if err != nil {
+			return nil, fmt.Errorf("failed marshalling resource for hardware spec: %v", err)
+		}
+		resources = append(resources, resource)
+	}
+	return templater.AppendYamlResources(resources...), nil
+}
+
+func hardwareMarshallable(hw tinkv1alpha1.Hardware) *tinkv1alpha1.Hardware {
+	config := &tinkv1alpha1.Hardware{
+		TypeMeta: hw.TypeMeta,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        hw.Name,
+			Annotations: hw.Annotations,
+			Namespace:   hw.Namespace,
+			Labels:      hw.Labels,
+		},
+		Spec: hw.Spec,
+	}
+
+	return config
+}
+
+func bmcMarshallable(bmc pbnjv1alpha1.BMC) *pbnjv1alpha1.BMC {
+	config := &pbnjv1alpha1.BMC{
+		TypeMeta: bmc.TypeMeta,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        bmc.Name,
+			Annotations: bmc.Annotations,
+			Namespace:   bmc.Namespace,
+			Labels:      bmc.Labels,
+		},
+		Spec: bmc.Spec,
+	}
+
+	return config
+}
+
+func secretsMarshallable(secret corev1.Secret) *corev1.Secret {
+	config := &corev1.Secret{
+		TypeMeta: secret.TypeMeta,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        secret.Name,
+			Annotations: secret.Annotations,
+			Namespace:   secret.Namespace,
+			Labels:      secret.Labels,
+		},
+		Data: secret.Data,
+	}
+
+	return config
 }

@@ -39,9 +39,23 @@ spec:
               clusterNetwork:
                 properties:
                   cni:
-                    description: CNI specifies the CNI plugin to be installed in the
-                      cluster
+                    description: Deprecated. Use CNIConfig
                     type: string
+                  cniConfig:
+                    description: CNIConfig specifies the CNI plugin to be installed
+                      in the cluster
+                    properties:
+                      cilium:
+                        properties:
+                          policyEnforcementMode:
+                            description: PolicyEnforcementMode determines communication
+                              allowed between pods. Accepted values are default, always,
+                              never.
+                            type: string
+                        type: object
+                      kindnetd:
+                        type: object
+                    type: object
                   dns:
                     properties:
                       resolvConf:
@@ -212,6 +226,12 @@ spec:
                     description: Endpoint defines the registry mirror endpoint to
                       use for pulling images
                     type: string
+                  insecureSkipVerify:
+                    description: InsecureSkipVerify skips the registry certificate
+                      verification. Only use this solution for isolated testing or
+                      in a tightly controlled, air-gapped environment. Currently only
+                      supported for snow provider
+                    type: boolean
                   port:
                     description: Port defines the port exposed for registry mirror
                       endpoint

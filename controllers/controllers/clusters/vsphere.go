@@ -19,6 +19,7 @@ import (
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
 	c "github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/executables"
 	"github.com/aws/eks-anywhere/pkg/networking/cilium"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
@@ -178,10 +179,10 @@ func (v *VSphereClusterReconciler) Reconcile(ctx context.Context, cluster *anywh
 		workerNodeGroupMachineSpecs[wnConfig.MachineGroupRef.Name] = machineConfigMap[wnConfig.MachineGroupRef.Name].Spec
 	}
 
-	cp := machineConfigMap[specWithBundles.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
+	cp := machineConfigMap[specWithBundles.Cluster.Spec.ControlPlaneConfiguration.MachineGroupRef.Name]
 	var etcdSpec *anywherev1.VSphereMachineConfigSpec
-	if specWithBundles.Spec.ExternalEtcdConfiguration != nil {
-		etcd := machineConfigMap[specWithBundles.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
+	if specWithBundles.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		etcd := machineConfigMap[specWithBundles.Cluster.Spec.ExternalEtcdConfiguration.MachineGroupRef.Name]
 		etcdSpec = &etcd.Spec
 	}
 
@@ -266,13 +267,13 @@ func (v *VSphereClusterReconciler) reconcileCNI(ctx context.Context, cluster *an
 
 		v.Log.Info("About to apply CNI")
 
-		// TODO use NewCilium
-		cilium := cilium.Cilium{}
+		helm := executables.NewHelm(executables.NewExecutable("helm"))
+		cilium := cilium.NewCilium(nil, helm)
+
 		if err != nil {
 			return reconciler.Result{}, err
 		}
-
-		ciliumSpec, err := cilium.GenerateManifest(ctx, specWithBundles)
+		ciliumSpec, err := cilium.GenerateManifest(ctx, specWithBundles, []string{constants.CapvSystemNamespace})
 		if err != nil {
 			return reconciler.Result{}, err
 		}

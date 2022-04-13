@@ -81,7 +81,7 @@ func newUpgradeTest(t *testing.T) *upgradeTestSetup {
 		machineConfigs:   machineConfigs,
 		workflow:         workflow,
 		ctx:              context.Background(),
-		newClusterSpec:   test.NewClusterSpec(func(s *cluster.Spec) { s.Name = "cluster-name" }),
+		newClusterSpec:   test.NewClusterSpec(func(s *cluster.Spec) { s.Cluster.Name = "cluster-name" }),
 		bootstrapCluster: &types.Cluster{Name: "bootstrap"},
 		workloadCluster:  &types.Cluster{Name: "workload"},
 	}
@@ -126,8 +126,8 @@ func (c *upgradeTestSetup) expectUpgradeCoreComponents(expectedCluster *types.Cl
 		NewVersion:    "v0.0.2",
 	})
 	gomock.InOrder(
-		c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, expectedCluster, c.newClusterSpec.Name).Return(currentSpec, nil),
-		c.clusterManager.EXPECT().UpgradeNetworking(c.ctx, expectedCluster, currentSpec, c.newClusterSpec).Return(networkingChangeDiff, nil),
+		c.clusterManager.EXPECT().GetCurrentClusterSpec(c.ctx, expectedCluster, c.newClusterSpec.Cluster.Name).Return(currentSpec, nil),
+		c.clusterManager.EXPECT().UpgradeNetworking(c.ctx, expectedCluster, currentSpec, c.newClusterSpec, c.provider).Return(networkingChangeDiff, nil),
 		c.capiManager.EXPECT().Upgrade(c.ctx, expectedCluster, c.provider, currentSpec, c.newClusterSpec).Return(capiChangeDiff, nil),
 		c.addonManager.EXPECT().UpdateLegacyFileStructure(c.ctx, currentSpec, c.newClusterSpec),
 		c.addonManager.EXPECT().Upgrade(c.ctx, expectedCluster, currentSpec, c.newClusterSpec).Return(fluxChangeDiff, nil),
@@ -161,8 +161,8 @@ func (c *upgradeTestSetup) expectNotToCreateBootstrap() {
 
 func (c *upgradeTestSetup) expectWriteClusterConfig() {
 	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
-		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
+		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig),
+		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs),
 		c.writer.EXPECT().Write("cluster-name-eks-a-cluster.yaml", gomock.Any(), gomock.Any()),
 	)
 }
@@ -242,13 +242,13 @@ func (c *upgradeTestSetup) expectPauseGitOpsKustomization(expectedCluster *types
 
 func (c *upgradeTestSetup) expectDatacenterConfig() {
 	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
+		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig),
 	)
 }
 
 func (c *upgradeTestSetup) expectMachineConfigs() {
 	gomock.InOrder(
-		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
+		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs),
 	)
 }
 
@@ -286,8 +286,8 @@ func (c *upgradeTestSetup) expectResumeGitOpsKustomization(expectedCluster *type
 
 func (c *upgradeTestSetup) expectVerifyClusterSpecChanged(expectedCluster *types.Cluster) {
 	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
-		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
+		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig),
+		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs),
 		c.clusterManager.EXPECT().EKSAClusterSpecChanged(c.ctx, expectedCluster, c.newClusterSpec, c.datacenterConfig, c.machineConfigs).Return(true, nil),
 	)
 }
@@ -315,8 +315,8 @@ func (c *upgradeTestSetup) expectProviderUpgradeNeeded() {
 
 func (c *upgradeTestSetup) expectVerifyClusterSpecNoChanges() {
 	gomock.InOrder(
-		c.provider.EXPECT().DatacenterConfig().Return(c.datacenterConfig),
-		c.provider.EXPECT().MachineConfigs().Return(c.machineConfigs),
+		c.provider.EXPECT().DatacenterConfig(c.newClusterSpec).Return(c.datacenterConfig),
+		c.provider.EXPECT().MachineConfigs(c.newClusterSpec).Return(c.machineConfigs),
 		c.clusterManager.EXPECT().EKSAClusterSpecChanged(c.ctx, c.workloadCluster, c.newClusterSpec, c.datacenterConfig, c.machineConfigs).Return(false, nil),
 	)
 }
@@ -444,7 +444,7 @@ func TestUpgradeRunFailedUpgrade(t *testing.T) {
 
 func TestUpgradeWorkloadRunSuccess(t *testing.T) {
 	test := newUpgradeTest(t)
-	test.newClusterSpec.SetSelfManaged()
+	test.newClusterSpec.Cluster.SetSelfManaged()
 
 	test.bootstrapCluster.Name = "management-cluster"
 	test.bootstrapCluster.ExistingManagement = true

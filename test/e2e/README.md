@@ -20,6 +20,10 @@ or
 go test -tags e2e -run [test name regex]
 ```
 
+### Using bundle overrides
+In order to use bundle overrides, take your bundle overrides yaml file and move it to `ROOT_DIR/bin/local-bundle-release.yaml`.
+You will also need to set the environment variable `T_BUNDLES_OVERRIDE=true`
+
 # VSphere tests requisites
 The following env variables need to be set:
 
@@ -58,6 +62,28 @@ T_TINKERBELL_IMAGE_UBUNTU_1_21
 T_TINKERBELL_NETWORK_CIDR
 T_TINKERBELL_INVENTORY_CSV # path to hardware-inventory.csv file
 T_TINKERBELL_SSH_AUTHORIZED_KEY # ssh public key for connectioning to machines
+```
+
+# CloudStack tests requisites
+
+The following env variables need to be set:
+```
+T_CLOUDSTACK_DOMAIN
+T_CLOUDSTACK_ZONE
+T_CLOUDSTACK_ACCOUNT
+T_CLOUDSTACK_NETWORK
+T_CLOUDSTACK_MANAGEMENT_SERVER
+T_CLOUDSTACK_SSH_AUTHORIZED_KEY
+T_CLOUDSTACK_TEMPLATE_REDHAT_1_20
+T_CLOUDSTACK_TEMPLATE_REDHAT_1_21
+T_CLOUDSTACK_COMPUTE_OFFERING_LARGE
+T_CLOUDSTACK_COMPUTE_OFFERING_LARGER
+T_CLOUDSTACK_POD_CIDR
+T_CLOUDSTACK_SERVICE_CIDR
+T_CLOUDSTACK_CLUSTER_IP_POOL # Comma separated list of control plane IP's
+
+EKSA_CLOUDSTACK_B64ENCODED_SECRET
+CLOUDSTACK_PROVIDER=true (while cloudstack provider is under development)
 ```
 
 ## Tinkerbell hardware-inventory.csv example

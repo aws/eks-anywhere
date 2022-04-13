@@ -76,7 +76,7 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).WithExecutableMountDirs(cc.mountDirs()...).
 		WithBootstrapper().
 		WithClusterManager(clusterSpec.Cluster).
-		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareFileName, cc.skipPowerActions).
+		WithProvider(uc.fileName, clusterSpec.Cluster, cc.skipIpCheck, uc.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, uc.forceClean).
 		WithFluxAddonClient(ctx, clusterSpec.Cluster, clusterSpec.GitOpsConfig).
 		WithWriter().
 		WithCAPIManager().
@@ -101,15 +101,15 @@ func (uc *upgradeClusterOptions) upgradeCluster(ctx context.Context) error {
 	)
 
 	workloadCluster := &types.Cluster{
-		Name:           clusterSpec.Name,
-		KubeconfigFile: getKubeconfigPath(clusterSpec.Name, uc.wConfig),
+		Name:           clusterSpec.Cluster.Name,
+		KubeconfigFile: getKubeconfigPath(clusterSpec.Cluster.Name, uc.wConfig),
 	}
 
 	var cluster *types.Cluster
 	if clusterSpec.ManagementCluster == nil {
 		cluster = &types.Cluster{
-			Name:           clusterSpec.Name,
-			KubeconfigFile: getKubeconfigPath(clusterSpec.Name, uc.wConfig),
+			Name:           clusterSpec.Cluster.Name,
+			KubeconfigFile: getKubeconfigPath(clusterSpec.Cluster.Name, uc.wConfig),
 		}
 	} else {
 		cluster = &types.Cluster{

@@ -7,7 +7,6 @@ import (
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 
 	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/features"
 	"github.com/aws/eks-anywhere/pkg/types"
 	"github.com/aws/eks-anywhere/pkg/validations"
 )
@@ -21,12 +20,6 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 	}
 	upgradeValidations := []validations.ValidationResult{
 		{
-			Name:        "validate kubernetes version 1.22 support",
-			Remediation: fmt.Sprintf("ensure %v env variable is set", features.K8s122SupportEnvVar),
-			Err:         validations.ValidateK8s122Support(u.Opts.Spec),
-			Silent:      true,
-		},
-		{
 			Name:        "validate certificate for registry mirror",
 			Remediation: fmt.Sprintf("provide a valid certificate for you registry endpoint using %s env var", anywherev1.RegistryMirrorCAKey),
 			Err:         validations.ValidateCertForRegistryMirror(u.Opts.Spec, u.Opts.TlsValidator),
@@ -39,7 +32,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		{
 			Name:        "worker nodes ready",
 			Remediation: fmt.Sprintf("ensure machine deployments for cluster %s are Ready", u.Opts.WorkloadCluster.Name),
-			Err:         k.ValidateWorkerNodes(ctx, u.Opts.Spec.Name, targetCluster.KubeconfigFile),
+			Err:         k.ValidateWorkerNodes(ctx, u.Opts.Spec.Cluster.Name, targetCluster.KubeconfigFile),
 		},
 		{
 			Name:        "nodes ready",
@@ -59,7 +52,7 @@ func (u *UpgradeValidations) PreflightValidations(ctx context.Context) (err erro
 		{
 			Name:        "upgrade cluster kubernetes version increment",
 			Remediation: "ensure that the cluster kubernetes version is incremented by one minor version exactly (e.g. 1.18 -> 1.19)",
-			Err:         ValidateServerVersionSkew(ctx, u.Opts.Spec.Spec.KubernetesVersion, u.Opts.WorkloadCluster, k),
+			Err:         ValidateServerVersionSkew(ctx, u.Opts.Spec.Cluster.Spec.KubernetesVersion, u.Opts.WorkloadCluster, k),
 		},
 		{
 			Name:        "validate immutable fields",

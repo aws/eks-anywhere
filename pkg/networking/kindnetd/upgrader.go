@@ -23,7 +23,7 @@ func NewUpgrader(client Client) *Upgrader {
 	}
 }
 
-func (u Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec) (*types.ChangeDiff, error) {
+func (u Upgrader) Upgrade(ctx context.Context, cluster *types.Cluster, currentSpec, newSpec *cluster.Spec, namespaces []string) (*types.ChangeDiff, error) {
 	diff := kindnetdChangeDiff(currentSpec, newSpec)
 	if diff == nil {
 		logger.V(1).Info("Nothing to upgrade for Kindnetd")

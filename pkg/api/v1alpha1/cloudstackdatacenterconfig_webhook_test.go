@@ -1,13 +1,25 @@
 package v1alpha1_test
 
 import (
+	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 )
+
+func TestCloudStackDatacenterValidateCreateFeatureDisabled(t *testing.T) {
+	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+	os.Unsetenv(features.CloudStackProviderEnvVar)
+	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+
+	c := cloudstackDatacenterConfig()
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
 
 func TestCloudStackDatacenterValidateUpdateDomainImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
@@ -19,31 +31,34 @@ func TestCloudStackDatacenterValidateUpdateDomainImmutable(t *testing.T) {
 	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
 }
 
+func TestCloudStackDatacenterValidateUpdateManagementApiEndpointImmutable(t *testing.T) {
+	vOld := cloudstackDatacenterConfig()
+	vOld.Spec.ManagementApiEndpoint = "oldCruftyManagementApiEndpoint"
+	c := vOld.DeepCopy()
+
+	c.Spec.ManagementApiEndpoint = "shinyNewManagementApiEndpoint"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).NotTo(Succeed())
+}
+
 func TestCloudStackDatacenterValidateUpdateZonesImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.Zones = []v1alpha1.CloudStackZoneRef{
+	vOld.Spec.Zones = []v1alpha1.CloudStackZone{
 		{
-			Zone: v1alpha1.CloudStackResourceRef{
-				Type:  v1alpha1.Name,
-				Value: "oldCruftyZone",
-			},
-			Network: v1alpha1.CloudStackResourceRef{
-				Type:  v1alpha1.Name,
-				Value: "GuestNet1",
+			Name: "oldCruftyZone",
+			Network: v1alpha1.CloudStackResourceIdentifier{
+				Name: "GuestNet1",
 			},
 		},
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.Zones = []v1alpha1.CloudStackZoneRef{
+	c.Spec.Zones = []v1alpha1.CloudStackZone{
 		{
-			Zone: v1alpha1.CloudStackResourceRef{
-				Type:  v1alpha1.Name,
-				Value: "shinyNewZone",
-			},
-			Network: v1alpha1.CloudStackResourceRef{
-				Type:  v1alpha1.Name,
-				Value: "GuestNet1",
+			Name: "shinyNewZone",
+
+			Network: v1alpha1.CloudStackResourceIdentifier{
+				Name: "GuestNet1",
 			},
 		},
 	}
@@ -63,29 +78,21 @@ func TestCloudStackDatacenterValidateUpdateAccountImmutable(t *testing.T) {
 
 func TestCloudStackDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.Zones = []v1alpha1.CloudStackZoneRef{
+	vOld.Spec.Zones = []v1alpha1.CloudStackZone{
 		{
-			Zone: v1alpha1.CloudStackResourceRef{
-				Type:  v1alpha1.Name,
-				Value: "oldCruftyZone",
-			},
-			Network: v1alpha1.CloudStackResourceRef{
-				Type:  v1alpha1.Name,
-				Value: "GuestNet1",
+			Name: "oldCruftyZone",
+			Network: v1alpha1.CloudStackResourceIdentifier{
+				Name: "GuestNet1",
 			},
 		},
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.Zones = []v1alpha1.CloudStackZoneRef{
+	c.Spec.Zones = []v1alpha1.CloudStackZone{
 		{
-			Zone: v1alpha1.CloudStackResourceRef{
-				Type:  v1alpha1.Name,
-				Value: "oldCruftyZone",
-			},
-			Network: v1alpha1.CloudStackResourceRef{
-				Type:  v1alpha1.Name,
-				Value: "GuestNet2",
+			Name: "oldCruftyZone",
+			Network: v1alpha1.CloudStackResourceIdentifier{
+				Name: "GuestNet2",
 			},
 		},
 	}
@@ -95,29 +102,21 @@ func TestCloudStackDatacenterValidateUpdateNetworkImmutable(t *testing.T) {
 
 func TestCloudStackDatacenterValidateUpdateWithPausedAnnotation(t *testing.T) {
 	vOld := cloudstackDatacenterConfig()
-	vOld.Spec.Zones = []v1alpha1.CloudStackZoneRef{
+	vOld.Spec.Zones = []v1alpha1.CloudStackZone{
 		{
-			Zone: v1alpha1.CloudStackResourceRef{
-				Type:  v1alpha1.Name,
-				Value: "oldCruftyZone",
-			},
-			Network: v1alpha1.CloudStackResourceRef{
-				Type:  v1alpha1.Name,
-				Value: "GuestNet1",
+			Name: "oldCruftyZone",
+			Network: v1alpha1.CloudStackResourceIdentifier{
+				Name: "GuestNet1",
 			},
 		},
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.Zones = []v1alpha1.CloudStackZoneRef{
+	c.Spec.Zones = []v1alpha1.CloudStackZone{
 		{
-			Zone: v1alpha1.CloudStackResourceRef{
-				Type:  v1alpha1.Name,
-				Value: "oldCruftyZone",
-			},
-			Network: v1alpha1.CloudStackResourceRef{
-				Type:  v1alpha1.Name,
-				Value: "GuestNet2",
+			Name: "oldCruftyZone",
+			Network: v1alpha1.CloudStackResourceIdentifier{
+				Name: "GuestNet2",
 			},
 		},
 	}

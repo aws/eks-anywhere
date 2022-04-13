@@ -2,9 +2,9 @@ SHELL := /bin/bash
 GIT_TAG?=$(shell git describe --tag | cut -d'-' -f1)
 GITHUB_USER?=$(shell git config --get remote.origin.url|sed -e 's/.*://' -e 's,/.*,,')
 SONOBUOY_OSARCH?=darwin_amd64
-TARGET_RELEASE?=1.21
+TARGET_RELEASE?=1.22
 TARGET_DIR=k8s-conformance/v$(TARGET_RELEASE)/eks-a
-K8S_VERSION=v1.21.5
+K8S_VERSION=v1.22.6
 
 .PHONY: default
 default: clean k8s-conformance sonobuoy sonobuoy-run sonobuoy-results generate git-commit

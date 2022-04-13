@@ -93,7 +93,7 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 	}
 
 	deps, err := dependencies.ForSpec(ctx, clusterSpec).
-		WithProvider(f, clusterSpec.Cluster, cc.skipIpCheck, gsbo.hardwareFileName, cc.skipPowerActions).
+		WithProvider(f, clusterSpec.Cluster, cc.skipIpCheck, gsbo.hardwareFileName, cc.skipPowerActions, cc.setupTinkerbell, false).
 		WithDiagnosticBundleFactory().
 		Build(ctx)
 	if err != nil {
@@ -101,5 +101,5 @@ func (gsbo *generateSupportBundleOptions) generateBundleConfig(ctx context.Conte
 	}
 	defer close(ctx, deps)
 
-	return deps.DignosticCollectorFactory.DiagnosticBundleFromSpec(clusterSpec, deps.Provider, kubeconfig.FromClusterName(clusterSpec.Name))
+	return deps.DignosticCollectorFactory.DiagnosticBundleFromSpec(clusterSpec, deps.Provider, kubeconfig.FromClusterName(clusterSpec.Cluster.Name))
 }

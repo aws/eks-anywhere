@@ -48,7 +48,7 @@ func AutoFillVSphereProvider(filename string, fillers ...VSphereFiller) ([]byte,
 	for _, r := range resources {
 		yamlContent, err := yaml.Marshal(r)
 		if err != nil {
-			return nil, fmt.Errorf("error marshalling vsphere resource: %v", err)
+			return nil, fmt.Errorf("marshalling vsphere resource: %v", err)
 		}
 
 		yamlResources = append(yamlResources, yamlContent)
@@ -176,15 +176,15 @@ func WithDatacenter(value string) VSphereFiller {
 	}
 }
 
-func WithStringFromEnvVar(envVar string, opt func(string) VSphereFiller) VSphereFiller {
+func WithVSphereStringFromEnvVar(envVar string, opt func(string) VSphereFiller) VSphereFiller {
 	return opt(os.Getenv(envVar))
 }
 
-func WithBoolFromEnvVar(envVar string, opt func(bool) VSphereFiller) VSphereFiller {
+func WithVSphereBoolFromEnvVar(envVar string, opt func(bool) VSphereFiller) VSphereFiller {
 	return opt(os.Getenv(envVar) == "true")
 }
 
-func WithMachineConfig(name string, fillers ...VSphereMachineConfigFiller) VSphereFiller {
+func WithVSphereMachineConfig(name string, fillers ...VSphereMachineConfigFiller) VSphereFiller {
 	return func(config VSphereConfig) {
 		m, ok := config.machineConfigs[name]
 		if !ok {

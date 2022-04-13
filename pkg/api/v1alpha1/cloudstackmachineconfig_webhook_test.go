@@ -1,26 +1,39 @@
 package v1alpha1_test
 
 import (
+	"os"
 	"testing"
 
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/features"
 )
+
+func TestCloudStackMachineConfigValidateCreateFeatureDisabled(t *testing.T) {
+	oldCloudstackProviderFeatureValue := os.Getenv(features.CloudStackProviderEnvVar)
+	err := os.Unsetenv(features.CloudStackProviderEnvVar)
+	if err != nil {
+		return
+	}
+	defer os.Setenv(features.CloudStackProviderEnvVar, oldCloudstackProviderFeatureValue)
+
+	c := cloudstackMachineConfig()
+	g := NewWithT(t)
+	g.Expect(c.ValidateCreate()).NotTo(Succeed())
+}
 
 func TestCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
-	vOld.Spec.Template = v1alpha1.CloudStackResourceRef{
-		Value: "oldTemplate",
-		Type:  v1alpha1.Name,
+	vOld.Spec.Template = v1alpha1.CloudStackResourceIdentifier{
+		Name: "oldTemplate",
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.Template = v1alpha1.CloudStackResourceRef{
-		Value: "newTemplate",
-		Type:  v1alpha1.Name,
+	c.Spec.Template = v1alpha1.CloudStackResourceIdentifier{
+		Name: "newTemplate",
 	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
@@ -28,15 +41,13 @@ func TestCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 
 func TestWorkersCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
-	vOld.Spec.Template = v1alpha1.CloudStackResourceRef{
-		Value: "oldTemplate",
-		Type:  v1alpha1.Name,
+	vOld.Spec.Template = v1alpha1.CloudStackResourceIdentifier{
+		Name: "oldTemplate",
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.Template = v1alpha1.CloudStackResourceRef{
-		Value: "newTemplate",
-		Type:  v1alpha1.Name,
+	c.Spec.Template = v1alpha1.CloudStackResourceIdentifier{
+		Name: "newTemplate",
 	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
@@ -45,15 +56,13 @@ func TestWorkersCPCloudStackMachineValidateUpdateTemplateMutable(t *testing.T) {
 func TestCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
 	vOld.SetControlPlane()
-	vOld.Spec.ComputeOffering = v1alpha1.CloudStackResourceRef{
-		Value: "oldComputeOffering",
-		Type:  v1alpha1.Name,
+	vOld.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+		Name: "oldComputeOffering",
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.ComputeOffering = v1alpha1.CloudStackResourceRef{
-		Value: "newComputeOffering",
-		Type:  v1alpha1.Name,
+	c.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+		Name: "newComputeOffering",
 	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
@@ -61,15 +70,13 @@ func TestCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testing.T) {
 
 func TestWorkersCPCloudStackMachineValidateUpdateComputeOfferingMutable(t *testing.T) {
 	vOld := cloudstackMachineConfig()
-	vOld.Spec.ComputeOffering = v1alpha1.CloudStackResourceRef{
-		Value: "oldComputeOffering",
-		Type:  v1alpha1.Name,
+	vOld.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+		Name: "oldComputeOffering",
 	}
 	c := vOld.DeepCopy()
 
-	c.Spec.ComputeOffering = v1alpha1.CloudStackResourceRef{
-		Value: "newComputeOffering",
-		Type:  v1alpha1.Name,
+	c.Spec.ComputeOffering = v1alpha1.CloudStackResourceIdentifier{
+		Name: "newComputeOffering",
 	}
 	g := NewWithT(t)
 	g.Expect(c.ValidateUpdate(&vOld)).To(Succeed())
@@ -138,4 +145,30 @@ func cloudstackMachineConfig() v1alpha1.CloudStackMachineConfig {
 		Spec:       v1alpha1.CloudStackMachineConfigSpec{},
 		Status:     v1alpha1.CloudStackMachineConfigStatus{},
 	}
+}
+
+func TestCloudStackMachineValidateUpdateAffinityImmutable(t *testing.T) {
+	vOld := cloudstackMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.Affinity = "pro"
+	c := vOld.DeepCopy()
+
+	c.Spec.Affinity = "anti"
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).ToNot(Succeed())
+}
+
+func TestCloudStackMachineValidateUpdateAffinityGroupIdsImmutable(t *testing.T) {
+	vOld := cloudstackMachineConfig()
+	vOld.SetControlPlane()
+	vOld.Spec.AffinityGroupIds = []string{"affinity-group-1"}
+	c := vOld.DeepCopy()
+
+	c.Spec.AffinityGroupIds = []string{}
+	g := NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).ToNot(Succeed())
+
+	c.Spec.AffinityGroupIds = []string{"affinity-group-2"}
+	g = NewWithT(t)
+	g.Expect(c.ValidateUpdate(&vOld)).ToNot(Succeed())
 }

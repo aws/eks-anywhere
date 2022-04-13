@@ -18,18 +18,18 @@ import (
 )
 
 const (
-	expectedSnowProviderName  = "snow"
-	testClusterConfigFilename = "cluster_main_1_21.yaml"
-	credsFileEnvVar           = "EKSA_SNOW_DEVICES_CREDENTIALS_FILE"
-	credsFilePath             = "testdata/credentials"
-	certsFileEnvVar           = "EKSA_SNOW_DEVICES_CA_BUNDLES_FILE"
-	certsFilePath             = "testdata/certificates"
+	expectedSnowProviderName = "snow"
+	credsFileEnvVar          = "EKSA_AWS_CREDENTIALS_FILE"
+	credsFilePath            = "testdata/credentials"
+	certsFileEnvVar          = "EKSA_AWS_CA_BUNDLES_FILE"
+	certsFilePath            = "testdata/certificates"
 )
 
 type snowTest struct {
 	*WithT
 	ctx         context.Context
 	kubectl     *mocks.MockProviderKubectlClient
+	aws         *mocks.MockAwsClient
 	provider    *snowProvider
 	cluster     *types.Cluster
 	clusterSpec *cluster.Spec
@@ -38,26 +38,20 @@ type snowTest struct {
 func newSnowTest(t *testing.T) snowTest {
 	ctrl := gomock.NewController(t)
 	kubectl := mocks.NewMockProviderKubectlClient(ctrl)
-	o := givenFullAPIObjects(t, testClusterConfigFilename)
+	mockaws := mocks.NewMockAwsClient(ctrl)
 	cluster := &types.Cluster{
 		Name: "cluster",
 	}
-	provider := newProvider(t, o.datacenterConfig, o.machineConfigs, o.cluster, kubectl)
+	provider := newProvider(t, kubectl, mockaws)
 	return snowTest{
 		WithT:       NewWithT(t),
 		ctx:         context.Background(),
 		kubectl:     kubectl,
+		aws:         mockaws,
 		provider:    provider,
 		cluster:     cluster,
-		clusterSpec: o.clusterSpec,
+		clusterSpec: givenClusterSpec(),
 	}
-}
-
-type apiObjects struct {
-	cluster          *v1alpha1.Cluster
-	clusterSpec      *cluster.Spec
-	datacenterConfig *v1alpha1.SnowDatacenterConfig
-	machineConfigs   map[string]*v1alpha1.SnowMachineConfig
 }
 
 func givenClusterSpec() *cluster.Spec {
@@ -108,6 +102,8 @@ func givenClusterSpec() *cluster.Spec {
 				},
 			},
 		}
+		s.SnowDatacenter = givenDatacenterConfig()
+		s.SnowMachineConfigs = givenMachineConfigs()
 		s.VersionsBundle = &cluster.VersionsBundle{
 			KubeDistro: &cluster.KubeDistro{
 				Kubernetes: cluster.VersionedRepository{
@@ -167,9 +163,10 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 				Namespace: "test-namespace",
 			},
 			Spec: v1alpha1.SnowMachineConfigSpec{
-				AMIID:        "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
-				InstanceType: "sbe-c.large",
-				SshKeyName:   "default",
+				AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
+				InstanceType:             "sbe-c.large",
+				SshKeyName:               "default",
+				PhysicalNetworkConnector: "SFP_PLUS",
 			},
 		},
 		"test-wn": {
@@ -178,29 +175,17 @@ func givenMachineConfigs() map[string]*v1alpha1.SnowMachineConfig {
 				Namespace: "test-namespace",
 			},
 			Spec: v1alpha1.SnowMachineConfigSpec{
-				AMIID:        "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
-				InstanceType: "sbe-c.xlarge",
-				SshKeyName:   "default",
+				AMIID:                    "eks-d-v1-21-5-ubuntu-ami-02833ca9a8f29c2ea",
+				InstanceType:             "sbe-c.xlarge",
+				SshKeyName:               "default",
+				PhysicalNetworkConnector: "SFP_PLUS",
 			},
 		},
 	}
 }
 
-func givenFullAPIObjects(t *testing.T, fileName string) apiObjects {
-	clusterSpec := givenClusterSpec()
-	datacenterConfig := givenDatacenterConfig()
-	machineConfigs := givenMachineConfigs()
-
-	return apiObjects{
-		cluster:          clusterSpec.Cluster,
-		clusterSpec:      clusterSpec,
-		datacenterConfig: datacenterConfig,
-		machineConfigs:   machineConfigs,
-	}
-}
-
 func givenProvider(t *testing.T) *snowProvider {
-	return newProvider(t, nil, nil, nil, nil)
+	return newProvider(t, nil, nil)
 }
 
 func givenEmptyClusterSpec() *cluster.Spec {
@@ -209,13 +194,17 @@ func givenEmptyClusterSpec() *cluster.Spec {
 	})
 }
 
-func newProvider(t *testing.T, datacenterConfig *v1alpha1.SnowDatacenterConfig, machineConfigs map[string]*v1alpha1.SnowMachineConfig, clusterConfig *v1alpha1.Cluster, kubectl ProviderKubectlClient) *snowProvider {
+func newProvider(t *testing.T, kubectl ProviderKubectlClient, mockaws *mocks.MockAwsClient) *snowProvider {
+	awsClients := AwsClientMap{
+		"device-1": mockaws,
+		"device-2": mockaws,
+	}
+	validator := NewValidatorFromAwsClientMap(awsClients)
+	defaulters := NewDefaultersFromAwsClientMap(awsClients, nil, nil)
+	configManager := NewConfigManager(defaulters, validator)
 	return NewProvider(
-		datacenterConfig,
-		machineConfigs,
-		clusterConfig,
 		kubectl,
-		nil,
+		configManager,
 		test.FakeNow,
 	)
 }
@@ -250,6 +239,8 @@ func TestName(t *testing.T) {
 func TestSetupAndValidateCreateClusterSuccess(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
+	tt.aws.EXPECT().EC2ImageExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
+	tt.aws.EXPECT().EC2KeyNameExists(tt.ctx, gomock.Any()).Return(true, nil).Times(4)
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
 	tt.Expect(err).To(Succeed())
 }
@@ -259,7 +250,7 @@ func TestSetupAndValidateCreateClusterNoCredsEnv(t *testing.T) {
 	setupContext(t)
 	os.Unsetenv(credsFileEnvVar)
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
-	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CREDENTIALS_FILE is not set or is empty")))
+	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CREDENTIALS_FILE' is not set or is empty")))
 }
 
 func TestSetupAndValidateCreateClusterNoCertsEnv(t *testing.T) {
@@ -267,13 +258,13 @@ func TestSetupAndValidateCreateClusterNoCertsEnv(t *testing.T) {
 	setupContext(t)
 	os.Unsetenv(certsFileEnvVar)
 	err := tt.provider.SetupAndValidateCreateCluster(tt.ctx, tt.clusterSpec)
-	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CA_BUNDLES_FILE is not set or is empty")))
+	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CA_BUNDLES_FILE' is not set or is empty")))
 }
 
 func TestSetupAndValidateDeleteClusterSuccess(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
-	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx)
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster)
 	tt.Expect(err).To(Succeed())
 }
 
@@ -281,16 +272,16 @@ func TestSetupAndValidateDeleteClusterNoCredsEnv(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
 	os.Unsetenv(credsFileEnvVar)
-	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx)
-	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CREDENTIALS_FILE is not set or is empty")))
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster)
+	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CREDENTIALS_FILE' is not set or is empty")))
 }
 
 func TestSetupAndValidateDeleteClusterNoCertsEnv(t *testing.T) {
 	tt := newSnowTest(t)
 	setupContext(t)
 	os.Unsetenv(certsFileEnvVar)
-	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx)
-	tt.Expect(err).To(MatchError(ContainSubstring("EKSA_SNOW_DEVICES_CA_BUNDLES_FILE is not set or is empty")))
+	err := tt.provider.SetupAndValidateDeleteCluster(tt.ctx, tt.cluster)
+	tt.Expect(err).To(MatchError(ContainSubstring("'EKSA_AWS_CA_BUNDLES_FILE' is not set or is empty")))
 }
 
 // TODO: add more tests (multi worker node groups, unstacked etcd, etc.)
@@ -327,7 +318,7 @@ func TestGetInfrastructureBundle(t *testing.T) {
 
 func TestGetDatacenterConfig(t *testing.T) {
 	tt := newSnowTest(t)
-	tt.Expect(tt.provider.DatacenterConfig().Kind()).To(Equal("SnowDatacenterConfig"))
+	tt.Expect(tt.provider.DatacenterConfig(tt.clusterSpec).Kind()).To(Equal("SnowDatacenterConfig"))
 }
 
 func TestDatacenterResourceType(t *testing.T) {
@@ -344,7 +335,7 @@ func TestMachineResourceType(t *testing.T) {
 
 func TestMachineConfigs(t *testing.T) {
 	tt := newSnowTest(t)
-	want := tt.provider.MachineConfigs()
+	want := tt.provider.MachineConfigs(tt.clusterSpec)
 	tt.Expect(len(want)).To(Equal(2))
 }
 
@@ -352,14 +343,14 @@ func TestDeleteResources(t *testing.T) {
 	tt := newSnowTest(t)
 	tt.kubectl.EXPECT().DeleteEksaDatacenterConfig(
 		tt.ctx,
-		snowDatacenterResourceType,
-		tt.provider.datacenterConfig.Name,
+		"snowdatacenterconfigs.anywhere.eks.amazonaws.com",
+		tt.clusterSpec.SnowDatacenter.Name,
 		tt.clusterSpec.ManagementCluster.KubeconfigFile,
-		tt.provider.datacenterConfig.Namespace,
+		tt.clusterSpec.SnowDatacenter.Namespace,
 	).Return(nil)
 	tt.kubectl.EXPECT().DeleteEksaMachineConfig(
 		tt.ctx,
-		snowMachineResourceType,
+		"snowmachineconfigs.anywhere.eks.amazonaws.com",
 		gomock.Any(),
 		tt.clusterSpec.ManagementCluster.KubeconfigFile,
 		gomock.Any(),

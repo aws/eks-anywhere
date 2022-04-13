@@ -12,6 +12,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/validation"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/yaml"
 
@@ -47,7 +48,7 @@ func NewClusterGenerate(clusterName string, opts ...ClusterGenerateOpt) *Cluster
 				Services: Services{
 					CidrBlocks: []string{"10.96.0.0/12"},
 				},
-				CNI: Cilium,
+				CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
 			},
 		},
 	}
@@ -190,14 +191,10 @@ func GetClusterConfig(fileName string) (*Cluster, error) {
 }
 
 // GetClusterConfigFromContent parses a Cluster object from a multiobject yaml content
-// and sets defaults if necessary
 func GetClusterConfigFromContent(content []byte) (*Cluster, error) {
 	clusterConfig := &Cluster{}
 	err := ParseClusterConfigFromContent(content, clusterConfig)
 	if err != nil {
-		return clusterConfig, err
-	}
-	if err := setClusterDefaults(clusterConfig); err != nil {
 		return clusterConfig, err
 	}
 	return clusterConfig, nil
@@ -220,7 +217,7 @@ func GetAndValidateClusterConfig(fileName string) (*Cluster, error) {
 
 // GetClusterDefaultKubernetesVersion returns the default kubernetes version for a Cluster
 func GetClusterDefaultKubernetesVersion() KubernetesVersion {
-	return Kube121
+	return Kube122
 }
 
 // ValidateClusterConfigContent validates a Cluster object without modifying it
@@ -278,12 +275,12 @@ func (c *Cluster) ClearPauseAnnotation() {
 	}
 }
 
-func (c *Cluster) UseImageMirror(defaultImage string) string {
+func (c *Cluster) RegistryMirror() string {
 	if c.Spec.RegistryMirrorConfiguration == nil {
-		return defaultImage
+		return ""
 	}
-	imageUrl, _ := url.Parse("https://" + defaultImage)
-	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port) + imageUrl.Path
+
+	return net.JoinHostPort(c.Spec.RegistryMirrorConfiguration.Endpoint, c.Spec.RegistryMirrorConfiguration.Port)
 }
 
 func (c *Cluster) IsReconcilePaused() bool {
@@ -433,11 +430,62 @@ func validateNetworking(clusterConfig *Cluster) error {
 	if err != nil {
 		return fmt.Errorf("invalid CIDR block for Services: %s. Please specify a valid CIDR block for service subnet", clusterConfig.Spec.ClusterNetwork.Services)
 	}
-	if clusterConfig.Spec.ClusterNetwork.CNI == "" {
-		return errors.New("cni not specified or empty")
+
+	return validateCNIPlugin(clusterConfig.Spec.ClusterNetwork)
+}
+
+func validateCNIPlugin(network ClusterNetwork) error {
+	if network.CNI != "" {
+		if network.CNIConfig != nil {
+			return fmt.Errorf("invalid format for cni plugin: both old and new formats used, use only the CNIConfig field")
+		}
+		logger.Info("Warning: CNI field is deprecated. Provide CNI information through CNIConfig")
+		if _, ok := validCNIs[network.CNI]; !ok {
+			return fmt.Errorf("cni %s not supported", network.CNI)
+		}
+		return nil
 	}
-	if _, ok := validCNIs[clusterConfig.Spec.ClusterNetwork.CNI]; !ok {
-		return fmt.Errorf("cni %s not supported", clusterConfig.Spec.ClusterNetwork.CNI)
+	return validateCNIConfig(network.CNIConfig)
+}
+
+func validateCNIConfig(cniConfig *CNIConfig) error {
+	if cniConfig == nil {
+		return fmt.Errorf("cni not specified")
+	}
+	var cniPluginSpecified int
+	var allErrs []error
+
+	if cniConfig.Cilium != nil {
+		cniPluginSpecified++
+		if err := validateCiliumConfig(cniConfig.Cilium); err != nil {
+			allErrs = append(allErrs, err)
+		}
+	}
+
+	if cniConfig.Kindnetd != nil {
+		cniPluginSpecified++
+	}
+
+	if cniPluginSpecified == 0 {
+		allErrs = append(allErrs, fmt.Errorf("no cni plugin specified"))
+	} else if cniPluginSpecified > 1 {
+		allErrs = append(allErrs, fmt.Errorf("cannot specify more than one cni plugins"))
+	}
+
+	if len(allErrs) > 0 {
+		aggregate := utilerrors.NewAggregate(allErrs)
+		return fmt.Errorf("validating cniConfig: %v", aggregate)
+	}
+
+	return nil
+}
+
+func validateCiliumConfig(cilium *CiliumConfig) error {
+	if cilium.PolicyEnforcementMode == "" {
+		return nil
+	}
+	if !validCiliumPolicyEnforcementModes[cilium.PolicyEnforcementMode] {
+		return fmt.Errorf("cilium policyEnforcementMode \"%s\" not supported", cilium.PolicyEnforcementMode)
 	}
 	return nil
 }
@@ -490,13 +538,16 @@ func validateMirrorConfig(clusterConfig *Cluster) error {
 		return nil
 	}
 	if clusterConfig.Spec.RegistryMirrorConfiguration.Endpoint == "" {
-		return errors.New("no value set for ECRMirror.Endpoint")
+		return errors.New("no value set for RegistryMirrorConfiguration.Endpoint")
 	}
 
 	if !networkutils.IsPortValid(clusterConfig.Spec.RegistryMirrorConfiguration.Port) {
 		return fmt.Errorf("registry mirror port %s is invalid, please provide a valid port", clusterConfig.Spec.RegistryMirrorConfiguration.Port)
 	}
 
+	if clusterConfig.Spec.RegistryMirrorConfiguration.InsecureSkipVerify && clusterConfig.Spec.DatacenterRef.Kind != SnowDatacenterKind {
+		return errors.New("insecureSkipVerify is only supported for snow provider")
+	}
 	return nil
 }
 

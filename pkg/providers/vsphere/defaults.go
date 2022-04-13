@@ -143,7 +143,7 @@ func (d *Defaulter) setupDefaultTemplate(ctx context.Context, spec *Spec, machin
 func (d *Defaulter) setDiskDefaults(ctx context.Context, machineConfig *anywherev1.VSphereMachineConfig) error {
 	templateHasSnapshot, err := d.govc.TemplateHasSnapshot(ctx, machineConfig.Spec.Template)
 	if err != nil {
-		return fmt.Errorf("error getting template details: %v", err)
+		return fmt.Errorf("getting template details: %v", err)
 	}
 
 	if !templateHasSnapshot {
@@ -162,10 +162,11 @@ func (d *Defaulter) setDiskDefaults(ctx context.Context, machineConfig *anywhere
 
 func (d *Defaulter) setTemplateFullPath(ctx context.Context,
 	datacenterConfig *anywherev1.VSphereDatacenterConfig,
-	machine *anywherev1.VSphereMachineConfig) error {
+	machine *anywherev1.VSphereMachineConfig,
+) error {
 	templateFullPath, err := d.govc.SearchTemplate(ctx, datacenterConfig.Spec.Datacenter, machine)
 	if err != nil {
-		return fmt.Errorf("error setting template full path: %v", err)
+		return fmt.Errorf("setting template full path: %v", err)
 	}
 
 	if len(templateFullPath) <= 0 {
