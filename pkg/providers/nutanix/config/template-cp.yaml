@@ -47,6 +47,7 @@ spec:
       name: "{{.clusterName}}-mt-0"
   kubeadmConfigSpec:
     clusterConfiguration:
+      imageRepository: "{{.kubernetesRepository}}"
       apiServer:
         certSANs:
           - localhost
@@ -55,6 +56,21 @@ spec:
       controllerManager:
         extraArgs:
           enable-hostpath-provisioner: "true"
+      dns:
+        imageRepository: {{.corednsRepository}}
+        imageTag: {{.corednsVersion}}
+      etcd:
+{{- if .externalEtcd }}
+        external:
+          endpoints: []
+          caFile: "/etc/kubernetes/pki/etcd/ca.crt"
+          certFile: "/etc/kubernetes/pki/apiserver-etcd-client.crt"
+          keyFile: "/etc/kubernetes/pki/apiserver-etcd-client.key"
+{{- else }}
+        local:
+          imageRepository: {{.etcdRepository}}
+          imageTag: {{.etcdImageTag}}
+{{- end }}
     files:
       - content: |
           apiVersion: v1
@@ -66,7 +82,7 @@ spec:
           spec:
             containers:
               - name: kube-vip
-                image: ghcr.io/kube-vip/kube-vip:v0.4.2
+                image: {{.kubeVipImage}}
                 imagePullPolicy: IfNotPresent
                 args:
                   - manager

@@ -12,6 +12,7 @@ import (
 	"github.com/aws/eks-anywhere/pkg/bootstrapper"
 	"github.com/aws/eks-anywhere/pkg/cluster"
 	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/aws/eks-anywhere/pkg/crypto"
 	"github.com/aws/eks-anywhere/pkg/logger"
 	"github.com/aws/eks-anywhere/pkg/providers"
 	"github.com/aws/eks-anywhere/pkg/providers/common"
@@ -408,11 +409,25 @@ func buildTemplateMapCP(clusterSpec *cluster.Spec, controlPlaneMachineSpec v1alp
 		"controlPlaneSshUsername":      controlPlaneMachineSpec.Users[0].Name,
 		"eksaSystemNamespace":          constants.EksaSystemNamespace,
 		"format":                       format,
-		"kubernetesVersion":            bundle.KubeDistro.Kubernetes.Tag,
-		"kubeVipImage":                 "ghcr.io/kube-vip/kube-vip:latest",
 		"podCidrs":                     clusterSpec.Cluster.Spec.ClusterNetwork.Pods.CidrBlocks,
 		"serviceCidrs":                 clusterSpec.Cluster.Spec.ClusterNetwork.Services.CidrBlocks,
+		"kubernetesVersion":            bundle.KubeDistro.Kubernetes.Tag,
+		"kubernetesRepository":         bundle.KubeDistro.Kubernetes.Repository,
+		"corednsRepository":            bundle.KubeDistro.CoreDNS.Repository,
+		"corednsVersion":               bundle.KubeDistro.CoreDNS.Tag,
+		"etcdRepository":               bundle.KubeDistro.Etcd.Repository,
+		"etcdImageTag":                 bundle.KubeDistro.Etcd.Tag,
+		"kubeVipImage":                 "ghcr.io/kube-vip/kube-vip:latest",
+		"externalEtcdVersion":          bundle.KubeDistro.EtcdVersion,
+		"etcdCipherSuites":             crypto.SecureCipherSuitesString(),
 	}
+
+	if clusterSpec.Cluster.Spec.ExternalEtcdConfiguration != nil {
+		values["externalEtcd"] = true
+		values["externalEtcdReplicas"] = clusterSpec.Cluster.Spec.ExternalEtcdConfiguration.Count
+		values["etcdSshUsername"] = etcdMachineSpec.Users[0].Name
+	}
+
 	return values
 }
 
