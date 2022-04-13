@@ -246,30 +246,25 @@ func ParseClusterConfig(fileName string, clusterConfig KindAccessor) error {
 	return nil
 }
 
+type kindObject struct {
+	Kind string `json:"kind,omitempty"`
+}
+
 // ParseClusterConfigFromContent unmarshalls an API object implementing the KindAccessor interface
 // from a multiobject yaml content. It doesn't set defaults nor validates the object
 func ParseClusterConfigFromContent(content []byte, clusterConfig KindAccessor) error {
 	for _, c := range strings.Split(string(content), YamlSeparator) {
-		if kind := parseKind(c); kind != clusterConfig.ExpectedKind() {
-			continue
+		k := &kindObject{}
+		if err := yaml.Unmarshal([]byte(c), k); err != nil {
+			return err
 		}
-		return yaml.UnmarshalStrict([]byte(c), clusterConfig)
+
+		if k.Kind == clusterConfig.ExpectedKind() {
+			return yaml.UnmarshalStrict([]byte(c), clusterConfig)
+		}
 	}
 
 	return fmt.Errorf("yamlop content is invalid or does not contain kind %s", clusterConfig.ExpectedKind())
-}
-
-func parseKind(spec string) string {
-	kindRegex := regexp.MustCompile(`(?m)^kind: (.*)`)
-	if !kindRegex.MatchString(spec) {
-		return ""
-	}
-	match := kindRegex.FindStringSubmatch(spec)
-	if len(match) < 2 {
-		return ""
-	}
-	kind := match[1]
-	return kind
 }
 
 func (c *Cluster) PauseReconcile() {

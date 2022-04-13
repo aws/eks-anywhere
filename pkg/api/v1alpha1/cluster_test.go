@@ -303,6 +303,16 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			testName: "namespace mismatch between cluster and datacenter",
+			fileName: "cluster_1_20_namespace_mismatch_between_cluster_and_datacenter.yaml",
+			wantErr:  true,
+		},
+		{
+			testName: "namespace mismatch between cluster and machineconfigs",
+			fileName: "cluster_1_20_namespace_mismatch_between_cluster_and_machineconfigs",
+			wantErr:  true,
+		},
+		{
 			testName: "valid different machine configs",
 			fileName: "testdata/cluster_different_machine_configs.yaml",
 			wantCluster: &Cluster{
@@ -1034,7 +1044,7 @@ func TestParseClusterConfig(t *testing.T) {
 				clusterConfig: &Cluster{},
 			},
 			wantErr:    true,
-			matchError: fmt.Errorf("unable to parse testdata/invalid_format.yaml file: yamlop content is invalid or does not contain kind Cluster"),
+			matchError: fmt.Errorf("unable to parse testdata/invalid_format.yaml file: error converting YAML to JSON: yaml: did not find expected node content"),
 		},
 		{
 			name: "Invalid spec field",

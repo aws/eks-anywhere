@@ -220,40 +220,6 @@ func TestProviderGenerateCAPISpecForCreate(t *testing.T) {
 	test.AssertContentToFile(t, string(md), "testdata/expected_results_main_md.yaml")
 }
 
-func TestNamespaceMismatchBetweenClusterAndDatacenter(t *testing.T) {
-	clusterSpecManifest := "cluster_namespace_mismatch_between_cluster_and_datacenter.yaml"
-	mockCtrl := gomock.NewController(t)
-	setupContext()
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
-	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
-	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
-	ctx := context.Background()
-	cmk := givenWildcardCmk(mockCtrl)
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
-
-	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err == nil {
-		t.Fatalf("An error is expected, but err is %v", err)
-	}
-}
-
-func TestNamespaceMismatchBetweenClusterAndMachineConfigs(t *testing.T) {
-	clusterSpecManifest := "cluster_namespace_mismatch_between_cluster_and_machineconfigs.yaml"
-	mockCtrl := gomock.NewController(t)
-	setupContext()
-	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
-	clusterSpec := givenClusterSpec(t, clusterSpecManifest)
-	datacenterConfig := givenDatacenterConfig(t, clusterSpecManifest)
-	machineConfigs := givenMachineConfigs(t, clusterSpecManifest)
-	ctx := context.Background()
-	cmk := givenWildcardCmk(mockCtrl)
-	provider := newProviderWithKubectl(t, datacenterConfig, machineConfigs, clusterSpec.Cluster, kubectl, cmk)
-
-	if err := provider.SetupAndValidateCreateCluster(ctx, clusterSpec); err == nil {
-		t.Fatalf("An error is expected, but err is %v", err)
-	}
-}
-
 func TestProviderGenerateDeploymentFileWithNonEksaResources(t *testing.T) {
 	clusterSpecManifest := "cluster_with_non_eksa_resources.yaml"
 	mockCtrl := gomock.NewController(t)
