@@ -1370,10 +1370,6 @@ func (p *vsphereProvider) UpgradeNeeded(ctx context.Context, newSpec, currentSpe
 	return machineConfigsSpecChanged, nil
 }
 
-func (p *vsphereProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	return nil
-}
-
 func configsMapToSlice(c map[string]providers.MachineConfig) []providers.MachineConfig {
 	configs := make([]providers.MachineConfig, 0, len(c))
 	for _, config := range c {
