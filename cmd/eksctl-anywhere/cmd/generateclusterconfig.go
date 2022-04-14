@@ -246,9 +246,9 @@ func generateClusterConfig(clusterName string) error {
 		datacenterConfig := v1alpha1.NewNutanixDatacenterConfigGenerate(clusterName)
 		clusterConfigOpts = append(clusterConfigOpts, v1alpha1.WithDatacenterRef(datacenterConfig))
 		clusterConfigOpts = append(clusterConfigOpts,
-			v1alpha1.ControlPlaneConfigCount(1),
-			v1alpha1.ExternalETCDConfigCount(1),
-			v1alpha1.WorkerNodeConfigCount(1),
+			v1alpha1.ControlPlaneConfigCount(3),
+			// v1alpha1.ExternalETCDConfigCount(1),
+			v1alpha1.WorkerNodeConfigCount(3),
 			v1alpha1.WorkerNodeConfigName(constants.DefaultWorkerNodeGroupName),
 		)
 		dcyaml, err := yaml.Marshal(datacenterConfig)
@@ -259,11 +259,11 @@ func generateClusterConfig(clusterName string) error {
 
 		cpMachineConfig := v1alpha1.NewNutanixMachineConfigGenerate(providers.GetControlPlaneNodeName(clusterName))
 		workerMachineConfig := v1alpha1.NewNutanixMachineConfigGenerate(clusterName)
-		etcdMachineConfig := v1alpha1.NewNutanixMachineConfigGenerate(providers.GetEtcdNodeName(clusterName))
+		//etcdMachineConfig := v1alpha1.NewNutanixMachineConfigGenerate(providers.GetEtcdNodeName(clusterName))
 		clusterConfigOpts = append(clusterConfigOpts,
 			v1alpha1.WithCPMachineGroupRef(cpMachineConfig),
 			v1alpha1.WithWorkerMachineGroupRef(workerMachineConfig),
-			v1alpha1.WithEtcdMachineGroupRef(etcdMachineConfig),
+			//v1alpha1.WithEtcdMachineGroupRef(etcdMachineConfig),
 		)
 		cpMcYaml, err := yaml.Marshal(cpMachineConfig)
 		if err != nil {
@@ -273,11 +273,11 @@ func generateClusterConfig(clusterName string) error {
 		if err != nil {
 			return fmt.Errorf("failed to generate cluster yaml: %v", err)
 		}
-		etcdMcYaml, err := yaml.Marshal(etcdMachineConfig)
-		if err != nil {
-			return fmt.Errorf("failed to generate cluster yaml: %v", err)
-		}
-		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml, etcdMcYaml)
+		// etcdMcYaml, err := yaml.Marshal(etcdMachineConfig)
+		// if err != nil {
+		// 	return fmt.Errorf("failed to generate cluster yaml: %v", err)
+		// }
+		machineGroupYaml = append(machineGroupYaml, cpMcYaml, workerMcYaml) //, etcdMcYaml)
 
 	default:
 		return fmt.Errorf("not a valid provider")
