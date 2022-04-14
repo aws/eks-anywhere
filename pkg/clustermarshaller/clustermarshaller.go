@@ -24,8 +24,14 @@ func MarshalClusterSpec(clusterSpec *cluster.Spec, datacenterConfig providers.Da
 		marshallables = append(marshallables, machineConfig.Marshallable())
 	}
 
+	// If a GitOpsConfig is present, marshal the GitOpsConfig to file; otherwise, use the FluxConfig
+	// Allows us to use the FluxConfig internally but preserve the provided spec while GitOpsConfig is being deprecated
 	if clusterSpec.GitOpsConfig != nil {
 		marshallables = append(marshallables, clusterSpec.GitOpsConfig.ConvertConfigToConfigGenerateStruct())
+	}
+
+	if clusterSpec.FluxConfig != nil && clusterSpec.GitOpsConfig == nil {
+		marshallables = append(marshallables, clusterSpec.FluxConfig.ConvertConfigToConfigGenerateStruct())
 	}
 
 	if clusterSpec.OIDCConfig != nil {

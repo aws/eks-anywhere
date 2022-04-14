@@ -1,0 +1,74 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  name: mycluster
+  namespace: default
+spec:
+  clusterNetwork:
+    pods: {}
+    services: {}
+  controlPlaneConfiguration: {}
+  datacenterRef: {}
+  externalEtcdConfiguration:
+    count: 3
+  gitOpsRef:
+    kind: FluxConfig
+    name: config
+  managementCluster:
+    name: mycluster
+  workerNodeGroupConfigurations:
+  - {}
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereDatacenterConfig
+metadata:
+  name: config
+  namespace: default
+spec:
+  datacenter: ""
+  insecure: false
+  network: ""
+  server: https://url
+  thumbprint: ""
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: machineconf-1
+  namespace: default
+spec:
+  datastore: ""
+  folder: my-folder
+  memoryMiB: 0
+  numCPUs: 0
+  osFamily: ""
+  resourcePool: ""
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: VSphereMachineConfig
+metadata:
+  name: machineconf-2
+  namespace: default
+spec:
+  datastore: ""
+  folder: my-folder
+  memoryMiB: 0
+  numCPUs: 0
+  osFamily: ""
+  resourcePool: ""
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: FluxConfig
+metadata:
+  name: config
+  namespace: default
+spec:
+  github:
+    owner: test
+    repository: test
+
+---
