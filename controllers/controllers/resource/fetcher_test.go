@@ -2,10 +2,15 @@ package resource_test
 
 import (
 	"context"
+	"github.com/go-logr/logr"
 	"reflect"
 	"testing"
 
 	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
+	"github.com/aws/eks-anywhere/controllers/controllers/resource"
+	"github.com/aws/eks-anywhere/controllers/controllers/resource/mocks"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -18,12 +23,6 @@ import (
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	"github.com/aws/eks-anywhere/controllers/controllers/resource"
-	"github.com/aws/eks-anywhere/controllers/controllers/resource/mocks"
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 var etcdadmCluster = &etcdv1.EtcdadmCluster{
@@ -384,7 +383,7 @@ func TestFetchCloudStackCluster(t *testing.T) {
 			ctx := context.Background()
 			mockCtrl := gomock.NewController(t)
 			reader := mocks.NewMockReader(mockCtrl)
-			logger := log.NullLogger{}
+			logger := logr.Discard()
 			capiResourceFetcher := resource.NewCAPIResourceFetcher(reader, logger)
 			reader.EXPECT().Get(ctx, types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: tt.cluster.Name}, gomock.Any()).Do(
 				func(ctx context.Context, arg1 types.NamespacedName, arg2 *cloudstackv1.CloudStackCluster) {
@@ -417,7 +416,7 @@ func TestFetchCloudStackEtcdMachineTemplate(t *testing.T) {
 			ctx := context.Background()
 			mockCtrl := gomock.NewController(t)
 			reader := mocks.NewMockReader(mockCtrl)
-			logger := log.NullLogger{}
+			logger := logr.Discard()
 			capiResourceFetcher := resource.NewCAPIResourceFetcher(reader, logger)
 			reader.EXPECT().Get(ctx, types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: "testCluster-etcd"}, gomock.Any()).Do(
 				func(ctx context.Context, arg1 types.NamespacedName, arg2 *etcdv1.EtcdadmCluster) {
@@ -452,7 +451,7 @@ func TestFetchCloudStackCPMachineTemplate(t *testing.T) {
 			ctx := context.Background()
 			mockCtrl := gomock.NewController(t)
 			reader := mocks.NewMockReader(mockCtrl)
-			logger := log.NullLogger{}
+			logger := logr.Discard()
 			capiResourceFetcher := resource.NewCAPIResourceFetcher(reader, logger)
 			reader.EXPECT().Get(ctx, types.NamespacedName{Namespace: constants.EksaSystemNamespace, Name: tt.cluster.Name}, gomock.Any()).Do(
 				func(ctx context.Context, arg1 types.NamespacedName, arg2 *clusterv1.Cluster) {
@@ -491,7 +490,7 @@ func TestFetchCloudStackMDMachineTemplate(t *testing.T) {
 			ctx := context.Background()
 			mockCtrl := gomock.NewController(t)
 			reader := mocks.NewMockReader(mockCtrl)
-			logger := log.NullLogger{}
+			logger := logr.Discard()
 			capiResourceFetcher := resource.NewCAPIResourceFetcher(reader, logger)
 			reader.EXPECT().List(ctx, gomock.Any(), gomock.Any()).Do(
 				func(ctx context.Context, arg1 *clusterv1.MachineDeploymentList, arg2 *client.ListOptions) {
@@ -685,7 +684,7 @@ func TestCAPIResourceFetcherFetchCluster(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := resource.NewCAPIResourceFetcher(tt.fields.client, log.NullLogger{})
+			r := resource.NewCAPIResourceFetcher(tt.fields.client, logr.Discard())
 			got, err := r.FetchCluster(context.Background(), tt.args.objectKey)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FetchCluster() error = %v, wantErr %v", err, tt.wantErr)

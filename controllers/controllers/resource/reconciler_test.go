@@ -1028,7 +1028,7 @@ func TestClusterReconcilerReconcileCloudStack(t *testing.T) {
 			resourceUpdater := mocks.NewMockResourceUpdater(mockCtrl)
 			tt.prepare(ctx, fetcher, resourceUpdater, tt.args.name, tt.args.namespace)
 
-			cor := resource.NewClusterReconciler(fetcher, resourceUpdater, test.FakeNow, log.NullLogger{})
+			cor := resource.NewClusterReconciler(fetcher, resourceUpdater, test.FakeNow, logr.Discard())
 
 			if err := cor.Reconcile(ctx, tt.args.objectKey, false); (err != nil) != tt.wantErr {
 				t.Errorf("Reconcile() error = %v, wantErr %v", err, tt.wantErr)
