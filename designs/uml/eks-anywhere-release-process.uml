@@ -1,0 +1,136 @@
+@startuml
+legend top
+    | Legend | |
+    |<#FEFECE>| Manual|
+    |<#CBC3E3>| Automated|
+    |<#ADD8E6>| Not Implemented|
+endlegend
+
+start
+partition "EKS Anywhere Release Process" {
+:Trigger release;
+if (Patch Release?) then (yes)
+else (no)
+:[[https://github.com/aws/eks-anywhere/issues/1699 Create Build Tooling Release Branch]];
+:[[https://github.com/aws/eks-anywhere/issues/1699 Create CLI Release Branch]];
+partition "Integration Test Setup" {
+            :AwsModelRocketBuildInfrastructure CDK CR;
+                split
+                    #ADD8E6:Slack Notification;
+                    detach
+                split again
+                    :Manual Approval;
+                end split
+            #CBC3E3:AwsModelRocketBuildInfrastructure Deployment;
+                split
+                    #ADD8E6:Slack Notification;
+                    detach
+                split again
+            :AwsModelRocketTestInfrastructure Permissions CR;
+                split
+                    #ADD8E6:Slack Notification;
+                    detach
+                split again
+                    :Manual Approval;
+                end split
+            #CBC3E3:AwsModelRocketTestInfrastructure Pipeline Deployment;
+                end split
+}
+endif
+    partition "Staging Release" {
+        if (Bundle Release?) then (yes)
+        partition "Staging Bundle Release" {
+            :[[https://github.com/aws/eks-anywhere/issues/1701 Staging Bundle Trigger PR]];
+                split
+                    #ADD8E6:Slack Notification;
+                    detach
+                split again
+                    :Manual Approval;
+                    #CBC3E3:Staging Bundle Build;
+                    #CBC3E3:Staging Bundle Test;
+                    split
+                        :Slack Notification;
+                        detach
+                    split again
+                        :Manual Approval;
+                     end split
+                     end split
+                #CBC3E3:Staging Bundle Release;
+         }
+        else (no)
+        endif
+        if (CLI Release?) then (yes)
+         partition "Staging CLI Release" {
+            :[[https://github.com/aws/eks-anywhere/issues/1701 Staging CLI Trigger PR]];
+                split
+                    #ADD8E6:Slack Notification;
+                    detach
+                split again
+                    :Manual Approval;
+                    #CBC3E3:Staging CLI Build;
+                    #CBC3E3:Staging CLI Test;
+                    split
+                        :Slack Notification;
+                        detach
+                    split again
+                        :Manual Approval;
+                     end split
+                     end split
+                #CBC3E3:Staging CLI Release;
+         }
+         else (no)
+         endif
+     }
+     partition "Prod Release" {
+     	if (Bundle Release?) then (yes)
+        partition "Prod Bundle Release" {
+            :[[https://github.com/aws/eks-anywhere/issues/1701 Prod Bundle Trigger PR]];
+                split
+                    :Slack Notification;
+                    detach
+                split again
+                    :Manual Approval;
+                end split
+                #CBC3E3:Prod Bundle Release;
+        }
+        else (no)
+        endif
+        if (CLI Release?) then (yes)
+        partition "Prod CLI Release" {
+            :[[https://github.com/aws/eks-anywhere/issues/1701 Prod Bundle Trigger PR]];
+                split
+                    :Slack Notification;
+                    detach
+                split again
+                    :Manual Approval;
+                end split
+                #CBC3E3:Prod CLI Release;
+        }
+        else (no)
+        endif
+     }
+partition "[[https://github.com/aws/eks-anywhere/issues/1657 Github Release]]" {
+    :Create Git Tag;
+    :[[https://github.com/aws/eks-anywhere/issues/1656 Generate Checksums]];
+    :[[https://github.com/aws/eks-anywhere/issues/1657 Create GitHub Release]];
+}
+partition "[[https://github.com/aws/eks-anywhere/issues/1785 Homebrew Release]]" {
+    :aws/homebrew-tap PR;
+}
+partition "[[https://github.com/aws/eks-anywhere/issues/1741 Docs Release]]" {
+    if (Bundle Release) then (yes)
+        :Bundle Update Documentation PR;
+    else (no)
+    endif
+    if (CLI Release) then (yes)
+    	:CLI Update Documentation PR;
+    else (no)
+    endif
+    :Documentation Branch Pointer PR;
+    :Documentation Branch Pointer CR;
+    #CBC3E3:EKS Anywhere Build Tooling Pipeline Deployment;
+    #CBC3E3:Amplify Deployment;
+}
+stop
+}
+@enduml
