@@ -313,6 +313,54 @@ func TestGetAndValidateClusterConfig(t *testing.T) {
 			wantErr:  true,
 		},
 		{
+			testName: "valid 1.20 with non eksa resources",
+			fileName: "testdata/cluster_1_20_with_non_eksa_resources.yaml",
+			wantCluster: &Cluster{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       ClusterKind,
+					APIVersion: SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: ClusterSpec{
+					KubernetesVersion: Kube120,
+					ControlPlaneConfiguration: ControlPlaneConfiguration{
+						Count: 3,
+						Endpoint: &Endpoint{
+							Host: "test-ip",
+						},
+						MachineGroupRef: &Ref{
+							Kind: VSphereMachineConfigKind,
+							Name: "eksa-unit-test",
+						},
+					},
+					WorkerNodeGroupConfigurations: []WorkerNodeGroupConfiguration{{
+						Name:  "md-0",
+						Count: 3,
+						MachineGroupRef: &Ref{
+							Kind: VSphereMachineConfigKind,
+							Name: "eksa-unit-test",
+						},
+					}},
+					DatacenterRef: Ref{
+						Kind: VSphereDatacenterKind,
+						Name: "eksa-unit-test",
+					},
+					ClusterNetwork: ClusterNetwork{
+						CNIConfig: &CNIConfig{Cilium: &CiliumConfig{}},
+						Pods: Pods{
+							CidrBlocks: []string{"192.168.0.0/16"},
+						},
+						Services: Services{
+							CidrBlocks: []string{"10.96.0.0/12"},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			testName: "valid different machine configs",
 			fileName: "testdata/cluster_different_machine_configs.yaml",
 			wantCluster: &Cluster{
