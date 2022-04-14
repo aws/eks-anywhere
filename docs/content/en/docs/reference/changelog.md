@@ -11,6 +11,11 @@ menu:
 
 ### Added
 
+## [v0.8.2](https://github.com/aws/eks-anywhere/releases/tag/v0.8.2)
+
+### Fixed
+- Fix issue with upgrading cluster from a previous minor version [#1819](https://github.com/aws/eks-anywhere/issues/1819)
+
 ## [v0.8.1](https://github.com/aws/eks-anywhere/releases/tag/v0.8.1)
 
 ### Fixed
