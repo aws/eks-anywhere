@@ -10,7 +10,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
-	. "github.com/onsi/gomega"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
 	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
@@ -864,36 +863,6 @@ func TestChangeDiffWithChange(t *testing.T) {
 	assert.Equal(t, wantDiff, provider.ChangeDiff(clusterSpec, newClusterSpec))
 }
 
-func TestProviderUpgradeNeeded(t *testing.T) {
-	testCases := []struct {
-		testName               string
-		newManager, oldManager string
-		want                   bool
-	}{
-		{
-			testName:   "different manager",
-			newManager: "a", oldManager: "b",
-			want: true,
-		},
-	}
-
-	for _, tt := range testCases {
-		t.Run(tt.testName, func(t *testing.T) {
-			provider := givenProvider(t)
-			clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.CloudStack.ClusterAPIController.ImageDigest = tt.oldManager
-			})
-
-			newClusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
-				s.VersionsBundle.CloudStack.ClusterAPIController.ImageDigest = tt.newManager
-			})
-
-			g := NewWithT(t)
-			g.Expect(provider.UpgradeNeeded(context.Background(), clusterSpec, newClusterSpec)).To(Equal(tt.want))
-		})
-	}
-}
-
 func TestProviderGenerateCAPISpecForUpgradeUpdateMachineTemplate(t *testing.T) {
 	tests := []struct {
 		testName          string
@@ -1271,4 +1240,85 @@ func TestSetupAndValidateForUpgradeSSHAuthorizedKeyInvalidEtcd(t *testing.T) {
 	cluster := &types.Cluster{}
 	err := provider.SetupAndValidateUpgradeCluster(ctx, cluster, clusterSpec)
 	thenErrorExpected(t, "failed setup and validations: ssh: no key found", err)
+}
+
+func TestClusterUpgradeNeededNoChanges(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenEmptyClusterSpec()
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	cluster := &types.Cluster{
+		KubeconfigFile: "test",
+	}
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+	for _, value := range machineConfigsMap {
+		kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, value.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(value, nil)
+	}
+	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl, nil)
+	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(dcConfig, nil)
+
+	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+	if specChanged {
+		t.Fatalf("expected no spec change to be detected")
+	}
+}
+
+func TestClusterUpgradeNeededDatacenterConfigChanged(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenEmptyClusterSpec()
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	cluster := &types.Cluster{
+		KubeconfigFile: "test",
+	}
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	shinyModifiedDcConfig := dcConfig.DeepCopy()
+	shinyModifiedDcConfig.Spec.ManagementApiEndpoint = "shiny-new-api-endpoint"
+	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+
+	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl, nil)
+	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(shinyModifiedDcConfig, nil)
+
+	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+	if !specChanged {
+		t.Fatalf("expected spec change but none was detected")
+	}
+}
+
+func TestClusterUpgradeNeededMachineConfigsChanged(t *testing.T) {
+	ctx := context.Background()
+	mockCtrl := gomock.NewController(t)
+	kubectl := mocks.NewMockProviderKubectlClient(mockCtrl)
+	clusterSpec := givenEmptyClusterSpec()
+	cc := givenClusterConfig(t, testClusterConfigMainFilename)
+	fillClusterSpecWithClusterConfig(clusterSpec, cc)
+	cluster := &types.Cluster{
+		KubeconfigFile: "test",
+	}
+	dcConfig := givenDatacenterConfig(t, testClusterConfigMainFilename)
+	machineConfigsMap := givenMachineConfigs(t, testClusterConfigMainFilename)
+	modifiedMachineConfig := machineConfigsMap[cc.MachineConfigRefs()[0].Name].DeepCopy()
+	modifiedMachineConfig.Spec.Affinity = "shiny-new-affinity"
+	kubectl.EXPECT().GetEksaCloudStackMachineConfig(ctx, gomock.Any(), cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(modifiedMachineConfig, nil)
+	provider := newProviderWithKubectl(t, dcConfig, machineConfigsMap, cc, kubectl, nil)
+	kubectl.EXPECT().GetEksaCloudStackDatacenterConfig(ctx, cc.Spec.DatacenterRef.Name, cluster.KubeconfigFile, clusterSpec.Cluster.Namespace).Return(dcConfig, nil)
+
+	specChanged, err := provider.UpgradeNeeded(ctx, clusterSpec, clusterSpec, cluster)
+	if err != nil {
+		t.Fatalf("unexpected failure %v", err)
+	}
+	if !specChanged {
+		t.Fatalf("expected spec change but none was detected")
+	}
 }
