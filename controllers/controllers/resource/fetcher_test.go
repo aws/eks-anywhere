@@ -2,15 +2,11 @@ package resource_test
 
 import (
 	"context"
-	"github.com/go-logr/logr"
 	"reflect"
 	"testing"
 
 	cloudstackv1 "github.com/aws/cluster-api-provider-cloudstack/api/v1beta1"
-	"github.com/aws/eks-anywhere/controllers/controllers/resource"
-	"github.com/aws/eks-anywhere/controllers/controllers/resource/mocks"
-	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
-	"github.com/aws/eks-anywhere/pkg/constants"
+	"github.com/go-logr/logr"
 	"github.com/golang/mock/gomock"
 	etcdv1 "github.com/mrajashree/etcdadm-controller/api/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -23,6 +19,11 @@ import (
 	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
 	controlplanev1 "sigs.k8s.io/cluster-api/controlplane/kubeadm/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/aws/eks-anywhere/controllers/controllers/resource"
+	"github.com/aws/eks-anywhere/controllers/controllers/resource/mocks"
+	anywherev1 "github.com/aws/eks-anywhere/pkg/api/v1alpha1"
+	"github.com/aws/eks-anywhere/pkg/constants"
 )
 
 var etcdadmCluster = &etcdv1.EtcdadmCluster{
