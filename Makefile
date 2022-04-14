@@ -320,7 +320,7 @@ cluster-controller-images: cluster-controller-binaries $(ORGANIZE_BINARIES_TARGE
 
 
 .PHONY: generate-attribution
-generate-attribution: GOLANG_VERSION ?= "1.17"
+generate-attribution: GOLANG_VERSION ?= "1.16"
 generate-attribution:
 	scripts/make_attribution.sh $(GOLANG_VERSION)
 
