@@ -296,6 +296,21 @@ func TestParseConfig(t *testing.T) {
 					},
 				},
 			},
+			wantFluxConfig: &anywherev1.FluxConfig{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "FluxConfig",
+					APIVersion: anywherev1.SchemeBuilder.GroupVersion.String(),
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "eksa-unit-test",
+				},
+				Spec: anywherev1.FluxConfigSpec{
+					Github: &anywherev1.GithubProviderConfig{
+						Owner:      "janedoe",
+						Repository: "flux-fleet",
+					},
+				},
+			},
 			wantOIDCConfigs: []*anywherev1.OIDCConfig{
 				{
 					TypeMeta: metav1.TypeMeta{

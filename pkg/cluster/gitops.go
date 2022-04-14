@@ -15,29 +15,16 @@ func gitOpsEntry() *ConfigManagerEntry {
 		},
 		Processors: []ParsedProcessor{processGitOps},
 		Defaulters: []Defaulter{
-			func(c *Config) error {
-				if c.GitOpsConfig != nil {
-					c.GitOpsConfig.SetDefaults()
-				}
-				return nil
-			},
+			setGitOpsDefaults,
 			SetDefaultFluxGitHubConfigPath,
+			setFluxDefaults,
+			SetDefaultFluxConfigPath,
 		},
 		Validations: []Validation{
-			func(c *Config) error {
-				if c.GitOpsConfig != nil {
-					return c.GitOpsConfig.Validate()
-				}
-				return nil
-			},
-			func(c *Config) error {
-				if c.GitOpsConfig != nil {
-					if err := validateSameNamespace(c, c.GitOpsConfig); err != nil {
-						return err
-					}
-				}
-				return nil
-			},
+			validateGitOps,
+			validateGitOpsNamespace,
+			validateFlux,
+			validateFluxNamespace,
 		},
 	}
 }
@@ -53,8 +40,36 @@ func processGitOps(c *Config, objects ObjectLookup) {
 			return
 		}
 
-		c.GitOpsConfig = gitOps.(*anywherev1.GitOpsConfig)
+		// GitOpsConfig will be deprecated.
+		// During the deprecation window, FluxConfig will be used internally
+		// GitOpsConfig will preserved it was in the original spec
+		gitOpsConf := gitOps.(*anywherev1.GitOpsConfig)
+		c.GitOpsConfig = gitOpsConf
+		c.FluxConfig = gitOpsConf.ConvertToFluxConfig()
 	}
+}
+
+func validateGitOps(c *Config) error {
+	if c.GitOpsConfig != nil {
+		return c.GitOpsConfig.Validate()
+	}
+	return nil
+}
+
+func validateGitOpsNamespace(c *Config) error {
+	if c.GitOpsConfig != nil {
+		if err := validateSameNamespace(c, c.GitOpsConfig); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func setGitOpsDefaults(c *Config) error {
+	if c.GitOpsConfig != nil {
+		c.GitOpsConfig.SetDefaults()
+	}
+	return nil
 }
 
 func SetDefaultFluxGitHubConfigPath(c *Config) error {
