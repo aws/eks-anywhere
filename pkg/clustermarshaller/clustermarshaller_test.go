@@ -123,7 +123,7 @@ func TestWriteClusterConfigWithOIDCAndGitOps(t *testing.T) {
 	test.AssertFilesEquals(t, gotFile, "testdata/expected_marshalled_cluster.yaml")
 }
 
-func TestWriteClusterConfigFailsWithFluxAndGitOpsConfigs(t *testing.T) {
+func TestWriteClusterConfigWithFluxAndGitOpsConfigs(t *testing.T) {
 	clusterSpec := test.NewClusterSpec(func(s *cluster.Spec) {
 		s.Cluster.APIVersion = v1alpha1.GroupVersion.String()
 		s.Cluster.TypeMeta.Kind = v1alpha1.ClusterKind
@@ -170,6 +170,7 @@ func TestWriteClusterConfigFailsWithFluxAndGitOpsConfigs(t *testing.T) {
 						Branch:              "main",
 						ClusterConfigPath:   "clusters/mycluster",
 						FluxSystemNamespace: "flux-system",
+						Repository:          "test",
 					},
 				},
 			},
@@ -221,9 +222,11 @@ func TestWriteClusterConfigFailsWithFluxAndGitOpsConfigs(t *testing.T) {
 	}
 	g := NewWithT(t)
 
-	_, writer := test.NewWriter(t)
+	folder, writer := test.NewWriter(t)
+	gotFile := filepath.Join(folder, "mycluster-eks-a-cluster.yaml")
 
-	g.Expect(clustermarshaller.WriteClusterConfig(clusterSpec, datacenterConfig, machineConfigs, writer)).Error()
+	g.Expect(clustermarshaller.WriteClusterConfig(clusterSpec, datacenterConfig, machineConfigs, writer)).To(Succeed())
+	test.AssertFilesEquals(t, gotFile, "testdata/expected_marshalled_cluster_flux_and_gitops.yaml")
 }
 
 func TestWriteClusterConfigWithFluxConfig(t *testing.T) {

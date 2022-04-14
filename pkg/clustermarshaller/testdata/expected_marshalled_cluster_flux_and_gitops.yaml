@@ -12,7 +12,7 @@ spec:
   externalEtcdConfiguration:
     count: 3
   gitOpsRef:
-    kind: FluxConfig
+    kind: GitOpsConfig
     name: config
   managementCluster:
     name: mycluster
@@ -62,14 +62,17 @@ spec:
 
 ---
 apiVersion: anywhere.eks.amazonaws.com/v1alpha1
-kind: FluxConfig
+kind: GitOpsConfig
 metadata:
   name: config
   namespace: default
 spec:
-  github:
-    owner: test
-    repository: test
-status: {}
+  flux:
+    github:
+      branch: main
+      clusterConfigPath: clusters/mycluster
+      fluxSystemNamespace: flux-system
+      owner: me
+      repository: test
 
 ---
