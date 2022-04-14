@@ -234,37 +234,19 @@ func (c *ClusterManager) CreateWorkloadCluster(ctx context.Context, managementCl
 		// the condition external etcd ready if true indicates that all etcd machines are ready and the etcd cluster is ready to accept requests
 	}
 
-	logger.V(3).Info("Waiting for workload kubeconfig secret to be ready", "cluster", workloadCluster.Name)
-	err = c.Retrier.Retry(
-		func() error {
-			found, err := c.clusterClient.KubeconfigSecretAvailable(ctx, managementCluster.KubeconfigFile, workloadCluster.Name, constants.EksaSystemNamespace)
-			if err == nil && !found {
-				err = fmt.Errorf("kubeconfig secret does not exist")
-			}
-			return err
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("checking availability of kubeconfig secret: %v", err)
-	}
-
-	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", workloadCluster.Name)
-	workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
-	if err != nil {
-		return nil, fmt.Errorf("generating workload kubeconfig: %v", err)
-	}
-
-	logger.V(3).Info("Run post control plane creation operations")
-	err = provider.RunPostControlPlaneCreation(ctx, clusterSpec, workloadCluster)
-	if err != nil {
-		return nil, fmt.Errorf("running post control plane creation operations: %v", err)
-	}
-
 	logger.V(3).Info("Waiting for control plane to be ready")
 	err = c.clusterClient.WaitForControlPlaneReady(ctx, managementCluster, ctrlPlaneWaitStr, workloadCluster.Name)
 	if err != nil {
 		return nil, fmt.Errorf("waiting for workload cluster control plane to be ready: %v", err)
 	}
+
+	logger.V(3).Info("Waiting for workload kubeconfig generation", "cluster", workloadCluster.Name)
+	err = c.Retrier.Retry(
+		func() error {
+			workloadCluster.KubeconfigFile, err = c.generateWorkloadKubeconfig(ctx, workloadCluster.Name, managementCluster, provider)
+			return err
+		},
+	)
 
 	logger.V(3).Info("Waiting for controlplane and worker machines to be ready")
 	labels := []string{clusterv1.MachineControlPlaneLabelName, clusterv1.MachineDeploymentLabelName}

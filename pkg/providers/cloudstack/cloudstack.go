@@ -169,11 +169,6 @@ func (p *cloudstackProvider) RunPostControlPlaneUpgrade(ctx context.Context, old
 	return nil
 }
 
-func (p *cloudstackProvider) RunPostControlPlaneCreation(ctx context.Context, clusterSpec *cluster.Spec, cluster *types.Cluster) error {
-	// Nothing to do
-	return nil
-}
-
 type ProviderKubectlClient interface {
 	ApplyKubeSpecFromBytes(ctx context.Context, cluster *types.Cluster, data []byte) error
 	CreateNamespace(ctx context.Context, kubeconfig string, namespace string) error
