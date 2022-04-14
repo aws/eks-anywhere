@@ -277,7 +277,7 @@ func (p *cloudstackProvider) setupSSHAuthKeysForCreate() error {
 	}
 	var workerUser v1alpha1.UserConfiguration
 	for _, workerNodeGroupConfiguration := range p.clusterConfig.Spec.WorkerNodeGroupConfigurations {
-		workerUser := p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users[0]
+		workerUser = p.machineConfigs[workerNodeGroupConfiguration.MachineGroupRef.Name].Spec.Users[0]
 		if len(workerUser.SshAuthorizedKeys[0]) > 0 {
 			workerUser.SshAuthorizedKeys[0], err = common.StripSshAuthorizedKeyComment(workerUser.SshAuthorizedKeys[0])
 			if err != nil {
