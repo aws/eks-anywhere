@@ -114,11 +114,11 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager) {
 			setupLog.Error(err, "unable to build dependencies")
 			os.Exit(1)
 		}
-
+		logger := ctrl.Log.WithName("remote").WithName("ClusterCacheTracker")
 		tracker, err := remote.NewClusterCacheTracker(
 			mgr,
 			remote.ClusterCacheTrackerOptions{
-				Log:     ctrl.Log.WithName("remote").WithName("ClusterCacheTracker"),
+				Log:     &logger,
 				Indexes: remote.DefaultIndexes,
 			},
 		)
