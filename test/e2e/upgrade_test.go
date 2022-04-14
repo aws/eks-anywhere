@@ -347,6 +347,7 @@ func TestCloudStackKubernetes120RedhatTo121Upgrade(t *testing.T) {
 		provider,
 		framework.WithClusterFiller(api.WithStackedEtcdTopology()),
 		framework.WithClusterFiller(api.WithKubernetesVersion(v1alpha1.Kube120)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 	)
 	runSimpleUpgradeFlow(
 		test,
@@ -368,6 +369,7 @@ func TestCloudStackKubernetes120RedhatTo121MultipleFieldsUpgrade(t *testing.T) {
 		test,
 		v1alpha1.Kube121,
 		framework.WithClusterUpgrade(api.WithKubernetesVersion(v1alpha1.Kube121)),
+		framework.WithClusterFiller(api.WithControlPlaneCount(1)),
 		provider.WithProviderUpgrade(
 			framework.UpdateRedhatTemplate121Var(),
 			framework.UpdateLargerCloudStackComputeOffering(),
